@@ -1,0 +1,258 @@
+/*
+Copyright 2014 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+body {
+  background: #f1f1f1;
+  margin:0;
+}
+
+header {
+    background: #333;
+    color:#fff;
+    height: 45px;
+    padding:10px;
+    padding-left:15px;
+    padding-right:15px;
+}
+
+table {
+    table-layout: fixed;
+    word-wrap: break-word;
+}
+
+textarea {
+    outline: none;
+    border:1px solid lightgrey !important;
+    box-shadow:none !important;
+}
+
+#subheader {
+    min-height: 75px;
+    background: #e7e7e7;
+    border-bottom: 1px solid #e1e1e1;
+    margin-bottom: 20px;
+    color:#fff;
+}
+
+#main {
+    margin-left: 15px;
+    margin-right: 15px;
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #e7e7e7;
+}
+
+#main-explore {
+    margin-left: 15px;
+    margin-right: 15px;
+    background: #fff;
+    border: 1px solid #e7e7e7;
+}
+
+#butterbar {
+    display:none;
+    width:150px;
+    background: #333;
+    opacity: 0.6;
+    color:#fff;
+    padding:10px;
+    position: absolute;
+    left:0;
+    right:0;
+    margin-left:auto;
+    margin-right:auto;
+    text-align: center;
+    font-weight: bold;
+}
+
+.select {
+    background: #fff;
+    padding: 12px;
+    padding-top:11px;
+    padding-bottom:13px;
+    border:1px solid #c5c5c5;
+    width:130px;
+}
+
+#description {
+    letter-spacing: .01rem;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 16px;
+    line-height: 1.5;
+    max-width: 900px;
+}
+
+#filter-box {
+    margin-left: 15px;
+    margin-right: 15px;
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #e7e7e7;
+    margin-bottom: 5px;
+}
+
+.btn {
+    border-radius: 0;
+}
+
+.btn:focus {
+   outline-color: transparent !important;
+}
+
+#search-input {
+    max-width: 690px;
+    outline: none;
+    border:none !important;
+    box-shadow:none !important;
+    font-size: 1.2em;
+    background: #fff;
+    border-radius: 0;
+    padding: 10px;
+}
+
+#label-input {
+    max-width: 200px;
+    outline: none;
+    border:1px solid lightgrey !important;
+    box-shadow:none !important;
+    background: #fff;
+}
+
+.timerange-input {
+    max-width: 200px;
+    outline: none;
+    border:1px solid lightgrey !important;
+    box-shadow:none !important;
+    background: #fff;
+}
+
+.icon-yellow {
+    color: #ffe300;
+    -webkit-text-stroke-width: 0.5px;
+    -webkit-text-stroke-color: silver;
+}
+
+.icon-grey {
+    color: #d2d2d2;
+}
+
+.label {
+    border-radius: 0;
+}
+
+.event-container {
+    padding-left:10px;
+    padding-right:10px;
+}
+
+.event-message {
+    background: #f9f9f9;
+    padding: 10px;
+    padding-left: 5px;
+    cursor: pointer;
+}
+
+.event-message:hover {
+    background: #e7e7e7;
+}
+
+.event-detail-container {
+    margin-top:5px;
+    padding: 0;
+    max-width: 100%;
+}
+
+.event-detail {
+    padding: 10px;
+    margin-top: 5px;
+}
+
+.event-bar {
+    padding:10px;
+    background:#f5f5f5;
+    margin-bottom: 20px;
+}
+
+.event-focused {
+    #box-shadow: 0 0 5px #c1c1c1;
+    #margin-bottom: 10px;
+    #margin-top: 10px;
+}
+
+.comment-wrapper {
+    margin-top:20px;
+    margin-bottom:10px;
+    max-width: 600px;
+}
+
+.comment-box {
+    margin-bottom: 10px;
+    background:#fff;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.comment {
+    margin-bottom:5px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.comment-body {
+    overflow: hidden;
+    margin-top:5px;
+}
+
+
+.comment-avatar {
+    float: left;
+    margin-right:20px;
+    margin-left:5px;
+}
+
+.comment-name {
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.comment-timestamp {
+    font-weight: normal;
+    font-size: 0.8em;
+    color:#777;
+}
+
+.color-box {
+    width:30px;
+    height:30px;
+}
+
+.index-enabled {
+    color: #333;
+}
+
+.index-disabled {
+    color: #d2d2d2;
+    text-decoration: line-through;
+}
+
+.alert {
+    border-radius: 0;
+}
+
+.timing {
+    padding: 10px;
+}
+

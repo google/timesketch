@@ -1,0 +1,126 @@
+<!--
+Copyright 2014 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+{% extends "timesketch/base.html" %}
+{% load staticfiles %}
+
+{% block header %}
+
+            <!--
+            <div id="search-box" style="margin-top:15px;margin-left:15px;border:1px solid #d1d1d1;">
+                <form class="form-inline" ng-submit="search()">
+                    <input ng-model="query" type="search" class="form-control" id="search-input" placeholder="Search for sketches and timelines" autofocus required>
+                </form>
+            </div>
+            -->
+
+                <button class="btn btn-success pull-left" data-toggle="modal" data-target="#create-sketch-modal" style="margin-top: 15px;margin-left: 15px; padding:10px;"><i class="glyphicon glyphicon-plus"></i> Create new sketch</button>
+{% endblock %}
+
+{% block body %}
+    <body ng-controller="TimeSketchCtrl">
+
+        <!-- Create sketch modal -->
+        <div class="modal" id="create-sketch-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Create a new sketch</h4>
+              </div>
+              <div class="modal-body">
+               <form>
+                    <input type="text" ng-model="sketch.title" class="form-control" placeholder="Title" required>
+                    <br>
+                    <textarea class="form-control" ng-model="sketch.description" rows="10" placeholder="Description" required></textarea>
+                </form>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal"  onclick="window.location.reload()" ng-click="createSketch()">Create</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        {% if my_sketches %}
+
+        <div style="padding-left:15px;">
+            <img src="/static/img/avatar_unknown.jpg" style="width:25px;float:left;margin-right:7px;margin-top:-3px;">
+            <h4>My sketches</h4>
+        </div>
+
+        <div id="main" style="margin-top:15px;">
+
+        <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>Sketch</th>
+            <!-- <th>Created by</th> -->
+            <th width="150px">Last modified</th>
+        </tr>
+        <tbody>
+        {% for sketch in my_sketches %}
+            <tr>
+            <td><a href="/sketch/{{ sketch.id }}">{{ sketch.title }}</a></td>
+            <!-- <td>{{ sketch.owner.get_full_name }}</td> -->
+            <td>{{ sketch.updated|date:"Y-m-d H:i" }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        </table>
+        {% else %}
+            <div id="main">
+
+            You do not have any sketches yet. <a style="cursor: pointer;" data-toggle="modal" data-target="#create-sketch-modal">Create a new one </a> to get started!
+        {% endif %}
+
+        </div>
+
+        <br>
+
+        {% if public_sketches %}
+        <div style="padding-left:15px;">
+            <h4>Shared with me</h4>
+        </div>
+
+        <div id="main">
+
+        <table class="table table-hover">
+        <thead>
+        <tr>
+            <th width="40px;"></th>
+            <th>Sketch</th>
+            <th>Owner</th>
+            <th width="150px">Last modified</th>
+        </tr>
+        <tbody>
+        {% for sketch in public_sketches %}
+            <tr>
+            <td><img src="/static/img/avatar_unknown.jpg" style="width:25px;float:left;margin-right:7px;margin-top:-3px;"></td>
+            <td><a href="/sketch/{{ sketch.id }}">{{ sketch.title }}</a></td>
+            <td>{{ sketch.owner.get_full_name }}</td>
+            <td>{{ sketch.updated|date:"Y-m-d H:i" }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        </table>
+        </div>
+        {% endif %}
+
+    </body>
+{% endblock %}

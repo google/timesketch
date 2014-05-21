@@ -1,0 +1,4 @@
+*.pyc
+database.db
+settings.py
+.idea/
