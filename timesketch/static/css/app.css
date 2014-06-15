@@ -19,14 +19,6 @@ body {
   margin:0;
 }
 
-header {
-    background: #333;
-    color:#fff;
-    height: 45px;
-    padding:10px;
-    padding-left:15px;
-    padding-right:15px;
-}
 
 table {
     table-layout: fixed;
@@ -39,27 +31,41 @@ textarea {
     box-shadow:none !important;
 }
 
-#subheader {
-    min-height: 75px;
-    background: #e7e7e7;
-    border-bottom: 1px solid #e1e1e1;
-    margin-bottom: 20px;
-    color:#fff;
+header {
+    height:76px;
+    background: #f9f9f9;
+    border-bottom:1px solid #e7e7e7;
+    padding: 10px 20px 10px 10px;
+    position: fixed;
+    top:0;
+    z-index:9997;
+    width: 100%;
 }
 
 #main {
-    margin-left: 15px;
-    margin-right: 15px;
-    background: #fff;
-    padding: 15px;
-    border: 1px solid #e7e7e7;
+    margin-left:200px;
+    margin-top:90px;
 }
 
-#main-explore {
-    margin-left: 15px;
-    margin-right: 15px;
-    background: #fff;
-    border: 1px solid #e7e7e7;
+#logo {
+    width:200px;
+    height:75px;
+    padding:20px;
+    background: #4fa6c0;
+    position: fixed;
+    top:0;
+    z-index:9999;
+}
+
+#navigation {
+  width: 200px;
+  overflow: hidden;
+  position: fixed;
+  left: 0;
+  height: 100%;
+  background: #333;
+  top:75px;
+  z-index:9998;
 }
 
 #butterbar {
@@ -72,19 +78,11 @@ textarea {
     position: absolute;
     left:0;
     right:0;
+    top:0;
     margin-left:auto;
     margin-right:auto;
     text-align: center;
     font-weight: bold;
-}
-
-.select {
-    background: #fff;
-    padding: 12px;
-    padding-top:11px;
-    padding-bottom:13px;
-    border:1px solid #c5c5c5;
-    width:130px;
 }
 
 #description {
@@ -96,40 +94,30 @@ textarea {
     max-width: 900px;
 }
 
-#filter-box {
+#search-input {
+    outline: none;
+    box-shadow:none !important;
+    font-size: 1.2em;
+    background: #f9f9f9;
+    border-radius: 0;
+    border:none !important;
+    padding: 20px;
+}
+
+.card {
     margin-left: 15px;
     margin-right: 15px;
+    margin-bottom:10px;
     background: #fff;
     padding: 15px;
     border: 1px solid #e7e7e7;
-    margin-bottom: 5px;
 }
 
-.btn {
-    border-radius: 0;
-}
-
-.btn:focus {
-   outline-color: transparent !important;
-}
-
-#search-input {
-    max-width: 690px;
-    outline: none;
-    border:none !important;
-    box-shadow:none !important;
-    font-size: 1.2em;
+.select {
     background: #fff;
-    border-radius: 0;
-    padding: 10px;
-}
-
-#label-input {
-    max-width: 200px;
-    outline: none;
-    border:1px solid lightgrey !important;
-    box-shadow:none !important;
-    background: #fff;
+    padding: 6px;
+    border:1px solid #c5c5c5;
+    width:130px;
 }
 
 .timerange-input {
@@ -142,7 +130,7 @@ textarea {
 
 .icon-yellow {
     color: #ffe300;
-    -webkit-text-stroke-width: 0.5px;
+    -webkit-text-stroke-width: 1px;
     -webkit-text-stroke-color: silver;
 }
 
@@ -161,8 +149,7 @@ textarea {
 
 .event-message {
     background: #f9f9f9;
-    padding: 10px;
-    padding-left: 5px;
+    padding: 10px 10px 10px 5px;
     cursor: pointer;
 }
 
@@ -181,16 +168,7 @@ textarea {
     margin-top: 5px;
 }
 
-.event-bar {
-    padding:10px;
-    background:#f5f5f5;
-    margin-bottom: 20px;
-}
-
 .event-focused {
-    #box-shadow: 0 0 5px #c1c1c1;
-    #margin-bottom: 10px;
-    #margin-top: 10px;
 }
 
 .comment-wrapper {
@@ -206,14 +184,13 @@ textarea {
 }
 
 .comment {
-    margin-bottom:5px;
     overflow: hidden;
     margin-bottom: 10px;
 }
 
 .comment-body {
     overflow: hidden;
-    margin-top:5px;
+    margin-top:2px;
 }
 
 
@@ -248,11 +225,58 @@ textarea {
     text-decoration: line-through;
 }
 
-.alert {
-    border-radius: 0;
+.card-alert {
+    background:#e73f3f;
+    color:#fff;
 }
 
 .timing {
     padding: 10px;
 }
 
+.btn-search {
+    padding: 10px;
+    border: 0;
+    background: #f1f1f1;
+}
+
+.btn:focus {
+    outline:none;
+}
+
+.leftnav {
+    padding-left:0;
+}
+
+ul, .leftnav {
+    color:#d1d1d1;
+}
+
+.leftnav li {
+    padding: 15px 15px 15px 30px;
+    font-size: 1.1em;
+    list-style: none;
+}
+
+
+.leftnav a {
+    color:#fff;
+}
+
+.leftnav a:hover {
+    text-decoration: none;
+}
+
+.leftnav li:hover {
+    background: #444;
+    cursor: pointer;
+}
+
+.leftnav .leftnav-active {
+    background: #555;
+    color: #fff;
+}
+
+.modal-dialog {
+    margin-top:90px;
+}

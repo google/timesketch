@@ -15,6 +15,7 @@ limitations under the License.
 -->
 
 {% load staticfiles %}
+
 <!DOCTYPE html>
 <html ng-app="timesketch">
   <head>
@@ -28,12 +29,23 @@ limitations under the License.
     <script type="text/javascript" language="javascript" src="{% static "js/services.js" %}"></script>
     <script type="text/javascript" language="javascript" src="{% static "js/controllers.js" %}"></script>
   </head>
+
   <header>
-    <img src="/static/img/logo.png">
-    <div class="pull-right">{{ user.get_full_name }}</div>
-  </header>
-  <div id="subheader">
+    <div class="pull-right">
+        <img style="margin-left:15px;margin-right:5px;margin-top:2px;" width="50px" class="img-circle" src="/static/img/avatar_unknown.jpg">
+    </div>
     {% block header %}{% endblock %}
+  </header>
+
+  <div id="logo">
+    <a href="/"><img width="150px" height="25px" style="margin-left:3px;margin-top:5px;" src="/static/img/logo.png"></a>
   </div>
-  {% block body %}{% endblock %}
+
+  <div id="navigation">
+    {% block navigation %}{% endblock %}
+  </div>
+
+  <div id="main">
+    {% block body %}{% endblock %}
+  </div>
 </html>

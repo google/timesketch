@@ -15,45 +15,27 @@ limitations under the License.
 -->
 
 {% verbatim %}
-
 <div class="event-detail-container">
-
-                    <!--
-        <div class="event-bar">
-            <button class="btn btn-default">Comments</button>
-            <button class="btn btn-default"><i class="glyphicon glyphicon-tag"></i></button>
-
-
-
-            <form name="labelForm" class="form-inline" ng-submit="addLabel()">
-                <input ng-model="newLabel" type="text" class="form-control" placeholder="Add label" required id="label-input">
-            </form>
-        </div>
-            -->
-
     <div ng-controller="EventCommentCtrl" ng-init="getComments()">
-
-
         <ul class="nav nav-tabs">
-          <li class="active"><a href="#comments-{{ event.es_id }}" data-toggle="tab"> {{ comments.length }} comments</a></li>
-          <li><a href="#details-{{ event.es_id }}" data-toggle="tab">Details</a></li>
+            <li class="active"><a href="#comments-{{ event.es_id }}" data-toggle="tab"> {{ comments.length }} comments</a></li>
+            <li><a href="#details-{{ event.es_id }}" data-toggle="tab">Details</a></li>
         </ul>
-
         <div class="tab-content">
-          <div class="tab-pane active" id="comments-{{ event.es_id }}">
-        
+            <div class="tab-pane active" id="comments-{{ event.es_id }}">
+
                 <div class="comment-wrapper">
                     <div class="comment-box" ng-repeat="comment in comments">
                         <div class="comment">
                             <div class="comment-avatar">
-                                <img src="/static/img/avatar_unknown.jpg">
+                                <img width="40px" class="img-circle" src="/static/img/avatar_unknown.jpg">
                             </div>
                             <div class="comment-name">
                                 {{ comment.user.first_name }} {{ comment.user.last_name }}
                                 <span class="comment-timestamp">{{ comment.created | date:'mediumDate' }}</span>
                             </div>
                             <div class="comment-body">
-                            {{ comment.body }}
+                                {{ comment.body }}
                             </div>
                         </div>
                     </div>
@@ -69,29 +51,19 @@ limitations under the License.
                         </div>
                     </form>
                 </div>
-
-
-          </div>
-          
-          <div class="tab-pane" id="details-{{ event.es_id }}" ng-controller="EventDetailCtrl" ng-init="getDetail()">
-
-            <br>
-            <table class="table table-bordered table-hover" style="background:#fff">
-                <tbody>
-                <tr ng-repeat="(key, value) in details" ng-show="value">
-                    <td width="150px">{{ key }}</td>
-                    <td>{{ value }}</td>
-                </tr>
-                </tbody>
-            </table>
-
-          </div>
+            </div>
+            <div class="tab-pane" id="details-{{ event.es_id }}" ng-controller="EventDetailCtrl" ng-init="getDetail()">
+                <br>
+                <table class="table table-bordered table-hover" style="background:#fff">
+                    <tbody>
+                    <tr ng-repeat="(key, value) in details" ng-show="value">
+                        <td width="150px">{{ key }}</td>
+                        <td>{{ value }}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-
-
-
     </div>
 </div>
-
-
 {% endverbatim %}

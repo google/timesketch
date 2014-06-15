@@ -64,10 +64,19 @@ timesketch.controller('TimeSketchCtrl', function($scope, $http) {
                 } else {
                     $scope.search();
                 }
+
+                if($scope.filter.time_start) {
+                    $scope.showFilters = true
+                }
+
             });
         }
 
         $scope.search = function() {
+            if ($scope.filter.star) {
+                $scope.search_starred()
+                return
+            }
             $scope.filter.star = false
             $scope.noisy = false
             if (!$scope.query) {
@@ -91,6 +100,9 @@ timesketch.controller('TimeSketchCtrl', function($scope, $http) {
 
         $scope.search_starred = function() {
             $scope.filter.star = true
+            $scope.filter.time_start = ""
+            $scope.filter.time_end = ""
+            $scope.showFilters = false
             $scope.noisy = false
 
             var params = {params: {

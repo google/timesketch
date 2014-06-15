@@ -14,142 +14,125 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-{% extends "timesketch/base.html" %}
+{% extends "timesketch/sketch_base.html" %}
 {% load staticfiles %}
 
-{% block header %}
-    <a href="/sketch/{{ sketch.id }}/" class="pull-left btn btn-primary" style="margin-left:15px;margin-top:15px;padding: 10px;"><i class="glyphicon glyphicon-chevron-left"></i> Back</a>
-
-    <!-- Search -->
-    <div class="pull-left" style="min-width: 600px;margin-top: 14px;margin-left: 10px;margin-right:7px;border: 1px solid #d1d1d1;padding:4px;background: #fff;">
-        <form class="form-inline" ng-submit="search()">
-            <input ng-model="query" type="search" class="form-control" id="search-input" placeholder="Search" autofocus required>
-        </form>
-    </div>
-    <button class="btn btn-default pull-left" style="padding: 11px;margin-top: 14px" ng-click="search_starred()"><i class="fa fa-lg fa-star icon-yellow"></i> Starred</button>
-    <button class="btn btn-default pull-left" style="padding: 11px;margin-top: 14px;margin-left: 3px" data-toggle="modal" data-target="#save-view-modal"><i class="glyphicon glyphicon-floppy-disk"></i> Save view</button>
-    <select class="select pull-left" style="margin-top:14px;margin-left: 3px;" onchange="location = this.options[this.selectedIndex].value;">
-        <option disabled selected>Choose view</option>
-        {% for view in sketch.get_named_views %}
-            <option value="?view={{ view.id }}">{{ view.name }}</option>
-        {% endfor %}
-    </select>
-    <!-- End search -->
-
-    <div butterbar id="butterbar">Loading..</div>
-{% endblock %}
+{% block navigation %}
+    <ul class="leftnav" style="margin-top:16px;">
+        <a href="/sketch/{{ sketch.id }}/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li></a>
+        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-th-large"></i> Activity</li>
+        <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li>
+        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li>
+        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li>
+        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li>
+        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li>
+    </ul>
+{%  endblock %}
 
 {% block body %}
     <body ng-cloak ng-controller="TimeSketchCtrl" ng-init="init('{{ sketch.id }}', '{{ view }}', '{{ timelines }}')">
 
-        <!-- Save view modal -->
-        <div class="modal" id="save-view-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
+    <!-- Save view modal -->
+    <div class="modal" id="save-view-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
             <div class="modal-content">
-              <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="myModalLabel">Save this view</h4>
-              </div>
-              <div class="modal-body">
-               <form>
-                    <input type="text" ng-model="view_name" class="form-control" placeholder="Name this view" required>
-                </form>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="submit" class="btn btn-primary" data-dismiss="modal" ng-click="saveView()">Save</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- End modal -->
-
-           <div ng-show="multipleTimelines" id="filter-box" style="overflow: hidden; position: relative;">
-           <span style="font-weight: bold">Timelines to query</span>
-           <br><br>
-           {% for timeline in sketch.timelines.all %}
-                <div filter="filter" search="search" search_starred="search_starred" meta="meta" index-chooser index="{{ timeline.timeline.datastore_index }}" style="background:#f7f7f7;padding: 10px;margin-right: 10px;cursor: pointer;margin-bottom: 5px;" class="pull-left">
-                    <div class="color-box pull-left" style="background: #{{ timeline.color }};margin-right: 10px;"></div>
-                    <div class="t pull-left" style="margin-top:5px;">
-                        {{ timeline.timeline.title }}
-                    </div>
-                <div class="pull-right" style="margin-top:5px;margin-left: 10px"><input type="checkbox"></div>
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">Save this view</h4>
                 </div>
-            {% endfor %}
-            </div>
-
-           <div id="filter-box" style="overflow: hidden; position: relative;">
-           <span style="font-weight: bold">Filters</span>
-           <br><br>
-
-                <form class="form-inline" role="form">
-                    <div class="form-group" style="margin-right: 5px;">
-                        <input style="width:300px;" ng-model="filter.time_start" type="text" class="form-control timerange-input" placeholder="Start 2014-01-01T23:00:00">
-                    </div>
-                    <div class="form-group" style="margin-right: 10px;">
-                        <input style="width:300px;" ng-model="filter.time_end" type="text" class="form-control timerange-input" placeholder="End 2014-01-01T23:00:00">
-                    </div>
-                    <input type="submit" class="btn btn-success" value="Apply filter" ng-click="search()"></input>
-                    <input type="reset" class="btn btn-default" value="Clear" ng-click="clearFilter()"></input>
-
-                </form>
-
-            </div>
-
-
-
-        <div id="main-explore" style="margin-top:10px;">
-            <!--
-            <div id="search-header">
-                <div id="search-box">
-                    <form class="form-inline" ng-submit="search()">
-                        <input ng-model="query" type="search" class="form-control" id="search-input" placeholder="Search" autofocus required>
+                <div class="modal-body">
+                    <form>
+                        <input type="text" ng-model="view_name" class="form-control" placeholder="Name this view" required>
                     </form>
                 </div>
-                <button class="btn btn-default" style="padding: 11px;" ng-click="search_starred()"><i class="icon-large icon-star icon-yellow"></i> Starred</button>
-                <button class="btn btn-default" style="padding: 11px;" data-toggle="modal" data-target="#save-view-modal"><i class="glyphicon glyphicon-floppy-disk"></i> Save view</button>
-                <select class="select" onchange="location = this.options[this.selectedIndex].value;">
-                    <option disabled selected>Choose view</option>
-                    {% for view in sketch.get_named_views %}
-                        <option value="?view={{ view.id }}">{{ view.name }}</option>
-                    {% endfor %}
-                </select>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" data-dismiss="modal" ng-click="saveView()">Save</button>
+                </div>
             </div>
+        </div>
+    </div>
+    <!-- End modal -->
+
+    <div class="card">
+            <form class="form-inline" ng-submit="search()">
+                <div class="input-group">
+                    <input ng-model="query" type="search" class="form-control" id="search-input" placeholder="Search" autofocus>
+                    <div class="input-group-btn">
+                        <button class="btn btn-default btn-search" type="submit"><i class="fa fa-search fa-1x" style="color: #c5c5c5"></i></button>
+                    </div>
+                </div>
+            </form>
+
             <br>
-            -->
+            <button class="btn btn-link" style="color: #333;" ng-click="showFilters = !showFilters"><i class="fa fa-filter"></i> Filters</button>
+            <button class="btn btn-link" style="color: #333;" ng-click="search_starred()"><i class="fa fa-star icon-yellow"></i> Starred</button>
+            <button class="btn btn-link" style="color: #333;" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
 
+            <select class="select" style="border:0px;outline:0px;margin-right:10px;" onchange="location = this.options[this.selectedIndex].value;">
+                <option disabled selected>Choose view</option>
+                {% for view in sketch.get_named_views %}
+                    <option value="?view={{ view.id }}">{{ view.name }}</option>
+                {% endfor %}
+            </select>
+    </div>
 
-                {% verbatim %}
+    <div class="card" ng-show="showFilters" style="overflow: hidden; position: relative;">
+        <span style="font-weight: bold">Filters</span>
+        <br><br>
+        <form class="form-inline" role="form">
+            <div class="form-group" style="margin-right: 5px;">
+                <input style="width:300px;" ng-model="filter.time_start" type="text" class="form-control timerange-input" placeholder="Start 2014-01-01T23:00:00">
+            </div>
+            <div class="form-group" style="margin-right: 10px;">
+                <input style="width:300px;" ng-model="filter.time_end" type="text" class="form-control timerange-input" placeholder="End 2014-01-01T23:00:00">
+            </div>
+            <input type="submit" class="btn btn-success" value="Apply filter" ng-click="search()"></input>
+            <input type="reset" class="btn btn-default" value="Clear" ng-click="clearFilter()"></input>
+        </form>
+    </div>
 
-                <div ng-show="noisy" class="alert alert-danger">
-                    <h4>I will only show you the first 500 events</h4>
-                    <p>May I suggest you narrow down the results with a filter?</p>
+    <div ng-show="multipleTimelines" class="card" style="overflow: hidden; position: relative;">
+        <!-- <span style="font-weight: bold">Timelines to query</span>
+        <br><br> -->
+        {% for timeline in sketch.timelines.all %}
+            <div filter="filter" search="search" search_starred="search_starred" meta="meta" index-chooser index="{{ timeline.timeline.datastore_index }}" style="background:#f7f7f7;padding: 10px;margin-right: 10px;cursor: pointer;margin-bottom: 5px;" class="pull-left">
+                <div class="color-box pull-left" style="background: #{{ timeline.color }};margin-right: 10px;"></div>
+                <div class="t pull-left" style="margin-top:5px;">
+                    {{ timeline.timeline.title }}
                 </div>
+                <div class="pull-right" style="margin-top:5px;margin-left: 10px"><input type="checkbox"></div>
+            </div>
+        {% endfor %}
+    </div>
 
-                <div ng-show="meta" class="timing" class="pull-left">
-                    {{ meta.es_total_count }} events ({{ meta.es_time/1000 }}s)
-                </div>
 
+    {% verbatim %}
 
-                <div ng-controller="EventCtrl" class="event-container" ng-repeat="event in events" ng-class="{true: 'event-focused', false: ''}[showDetails]">
+    <div ng-show="noisy" class="card card-alert">
+        <h4>I will only show you the first 500 events</h4>
+        <p>May I suggest you narrow down the results with a filter?</p>
+    </div>
+    {% endverbatim %}
 
-                    <table style="table-layout: fixed; margin-bottom: 1px;" width="100%">
-
-                    <tr>
-
+    <div class="card" style="padding:0;">
+        {% verbatim %}
+        <div ng-show="meta" class="timing" class="pull-left">
+            {{ meta.es_total_count }} events ({{ meta.es_time/1000 }}s)
+        </div>
+        <div ng-controller="EventCtrl" class="event-container" ng-repeat="event in events" ng-class="{true: 'event-focused', false: ''}[showDetails]">
+            <table style="table-layout: fixed; margin-bottom: 1px;" width="100%">
+                <tr>
                     <td timeline-color width="210px;" style="vertical-align: top; padding: 10px;">
                         <div class="event-timestamp-off">{{ event.datetime }}</div>
                     </td>
-
                     <td width="35px;" style="vertical-align: top;padding-left: 10px; background: #f9f9f9; padding: 10px;">
                         <i ng-click="star = !star;toggleStar()" ng-class="{true: 'fa fa-lg fa-star icon-yellow', false: 'fa fa-lg fa-star-o icon-grey'}[star]"></i>
                     </td>
-
                     <td class="event-message">
                         <div class="event-message-off" ng-click="showDetails = !showDetails; url = 'event/' + event.es_id + '/'" >
                             <span ng-show="comment">
                                 <i class="fa fa-lg fa-comments"></i>
-                                <!-- <i class="glyphicon glyphicon-comment" style="color:#777;margin-right:5px;"></i> -->
                             </span>
                             <span class="label label-danger" style="margin-right:10px;" ng-repeat="label in event.label">
                                 {{ label }}
@@ -158,24 +141,18 @@ limitations under the License.
                             {{ event.message }}
                         </div>
                     </td>
-
                     <td style="width: 150px; text-align: right; vertical-align: top; background: #f5f5f5; padding: 10px;">
                         <div timeline-name></div>
                     </td>
-
-                    </tr>
-                    </table>
-
-                    <div ng-show="showDetails" class="event-detail">
-                        <div ng-include="url"></div>
-                    </div>
-                </div>
-
-
-
-                <br>
-                {% endverbatim %}
+                </tr>
+            </table>
+            <div ng-show="showDetails" class="event-detail">
+                <div ng-include="url"></div>
+            </div>
         </div>
         <br>
+        {% endverbatim %}
+    </div>
+    <br>
     </body>
 {% endblock %}
