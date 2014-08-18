@@ -18,13 +18,13 @@ limitations under the License.
 {% load staticfiles %}
 
 {% block navigation %}
-    <ul class="leftnav" style="margin-top:16px;">
+    <ul class="leftnav">
         <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li>
         <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-th-large"></i> Activity</li> -->
         <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
-        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li>
+        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li> -->
         <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li> -->
-        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li>
+        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li> -->
         <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li> -->
     </ul>
 {% endblock %}
@@ -107,7 +107,7 @@ limitations under the License.
                         </form>
                     {% endifequal %}
                     <br><br>
-                    <img src="/static/img/avatar_unknown.jpg" class="im" width="30px;" style="margin-right: 10px;"> <b>Owner</b> - {{ sketch.owner.first_name }} {{ sketch.owner.last_name }}
+                    <img src="/static/img/avatar_unknown.jpg" class="img-rounded" width="30px;" style="margin-right: 10px;"> <b>Owner</b> - {{ sketch.owner.first_name }} {{ sketch.owner.last_name }}
 
                 </div>
                 <div class="modal-footer">

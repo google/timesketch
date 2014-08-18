@@ -18,13 +18,13 @@ limitations under the License.
 {% load staticfiles %}
 
 {% block navigation %}
-    <ul class="leftnav" style="margin-top:16px;">
+    <ul class="leftnav">
         <a href="/sketch/{{ sketch.id }}/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li></a>
         <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-th-large"></i> Activity</li> -->
         <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li>
-        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li>
+        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li> -->
         <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li> -->
-        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li>
+        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li> -->
         <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li> -->
     </ul>
 {%  endblock %}
@@ -59,7 +59,7 @@ limitations under the License.
                 <div class="input-group">
                     <input ng-model="query" type="search" class="form-control" id="search-input" placeholder="Search" autofocus>
                     <div class="input-group-btn">
-                        <button class="btn btn-default btn-search" type="submit"><i class="fa fa-search fa-1x" style="color: #c5c5c5"></i></button>
+                        <button class="btn btn-default btn-search" type="submit"><i class="fa fa-search fa-1x" style="color: #333"></i></button>
                     </div>
                 </div>
             </form>

@@ -196,7 +196,7 @@ header {
 
 .comment-avatar {
     float: left;
-    margin-right:20px;
+    margin-right:10px;
     margin-left:5px;
 }
 
@@ -279,4 +279,10 @@ ul, .leftnav {
 
 .modal-dialog {
     margin-top:90px;
+}
+
+#login-box {
+    margin:auto;
+    width:500px;
+    margin-top:100px;
 }

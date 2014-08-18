@@ -17,12 +17,22 @@ limitations under the License.
 {% extends "timesketch/base.html" %}
 {% load staticfiles %}
 
+{% block header %}
+            <form class="form-inline" ng-submit="search()" style="margin-left:206px;margin-top:10px;max-width: 500px;">
+                <div class="input-group">
+                    <input style="background:#fff;" ng-model="query" type="search" class="form-control" id="search-input" placeholder="Search sketches" autofocus>
+                    <div class="input-group-btn">
+                        <button class="btn btn-default btn-search" type="submit"><i class="fa fa-search fa-1x" style="color: #333"></i></button>
+                    </div>
+                </div>
+            </form>
+{% endblock %}
+
 {% block navigation %}
-    <button style="margin:15px;width:165px;" class="btn btn-danger" data-toggle="modal" data-target="#create-sketch-modal"><i class="glyphicon glyphicon-plus"></i> Sketch</button>
-    <br>
+    <!-- <button style="margin:15px;width:165px;" class="btn btn-default" data-toggle="modal" data-target="#create-sketch-modal"><i class="glyphicon glyphicon-plus"></i> Sketch</button>-->
     <ul class="leftnav">
-        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-user"></i> My sketches</li>
-        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-users"></i> Shared with me</li>
+        <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-user"></i> My sketches</li>
+        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-users"></i> Shared with me</li> -->
     </ul>
 {% endblock %}
 

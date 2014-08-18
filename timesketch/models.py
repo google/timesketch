@@ -22,8 +22,8 @@ import random
 class Sketch(models.Model):
     """Database model for an Sketch"""
     owner = models.ForeignKey(User)
-    collaborators = models.ManyToManyField("Collaborator", blank=True, 
-        null=True)
+    collaborators = models.ManyToManyField("Collaborator", blank=True,
+                                           null=True)
     acl_public = models.BooleanField(default=False)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -53,7 +53,7 @@ class Timeline(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     datastore_index = models.CharField(max_length=32)
-    created = models.DateTimeField(auto_created=True)
+    created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
@@ -91,7 +91,7 @@ class EventComment(models.Model):
     sketch = models.ForeignKey(Sketch)
     datastore_id = models.CharField(max_length=255)
     datastore_index = models.CharField(max_length=32)
-    created = models.DateTimeField(auto_created=True)
+    created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
@@ -117,7 +117,7 @@ class Collaborator(models.Model):
     """Database model for an collaborator."""
     user = models.ForeignKey(User)
     can_edit = models.BooleanField(default=True)
-    created = models.DateTimeField(auto_created=True)
+    created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):

@@ -21,23 +21,16 @@ limitations under the License.
     <link rel="stylesheet" media="screen" href="{% static "third_party/bootstrap/css/bootstrap.min.css" %}">
     <link rel='stylesheet' media="screen" href="{% static "third_party/font-awesome/css/font-awesome.min.css" %}">
     <link rel='stylesheet' media="screen" href="{% static "css/app.css" %}">
-    <style>
-        html {
-          background: url("/static/img/bg.jpg") no-repeat center center fixed;
-          -webkit-background-size: cover;
-          -moz-background-size: cover;
-          -o-background-size: cover;
-          background-size: cover;
-        }
-        body {
-            background: transparent;
-        }
-    </style>
   </head>
+  <style>
+      body {
+          background: #333;
+      }
+  </style>
   <body>
   <div id="login-box">
-
-      <div class="logo">Welcome to Timesketch</div>
+      <img width="150px" height="25px" style="margin-left:3px;margin-top:5px;" src="/static/img/logo.png">
+      <br>
       <br>
       <form class="form-horizontal" role="form" method="post" action="{% url 'django.contrib.auth.views.login' %}">
         {% csrf_token %}
