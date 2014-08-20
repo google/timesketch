@@ -37,7 +37,7 @@ timesketch.config(function($httpProvider) {
     $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
 });
 
-timesketch.controller('TimeSketchCtrl', function($scope, $http) {
+timesketch.controller('ExploreCtrl', function($scope, $http) {
         $scope.init = function(sketch, view, timelines) {
             $scope.sketch = sketch;
             $scope.star = false;

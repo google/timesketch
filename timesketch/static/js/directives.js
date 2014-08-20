@@ -61,7 +61,7 @@ directives.directive('indexChooser', function() {
       scope: {
         filter: '=',
         search: '=',
-        meta: '='
+        meta: '=',
       },
       link: function (scope, elem, attrs) {
         scope.$watch("filter", function(value) {

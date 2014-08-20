@@ -33,7 +33,6 @@ services.factory('AddComment', function($http) {
 });
 
 services.factory('AddLabel', function($http) {
-    console.log("in service")
     var AddLabel = {};
     AddLabel.post = function(callback, index, id, sketch, label) {
         $http.post('/api/v1/label/', {data: {

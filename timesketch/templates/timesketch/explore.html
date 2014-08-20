@@ -30,7 +30,7 @@ limitations under the License.
 {%  endblock %}
 
 {% block body %}
-    <body ng-cloak ng-controller="TimeSketchCtrl" ng-init="init('{{ sketch.id }}', '{{ view }}', '{{ timelines }}')">
+    <body ng-cloak ng-controller="ExploreCtrl" ng-init="init('{{ sketch.id }}', '{{ view }}', '{{ timelines }}')">
 
     <!-- Save view modal -->
     <div class="modal" id="save-view-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -52,31 +52,32 @@ limitations under the License.
             </div>
         </div>
     </div>
-    <!-- End modal -->
 
+    <!-- Search card -->
     <div class="card">
-            <form class="form-inline" ng-submit="search()">
-                <div class="input-group">
-                    <input ng-model="query" type="search" class="form-control" id="search-input" placeholder="Search" autofocus>
-                    <div class="input-group-btn">
-                        <button class="btn btn-default btn-search" type="submit"><i class="fa fa-search fa-1x" style="color: #333"></i></button>
-                    </div>
+        <form class="form-inline" ng-submit="search()">
+            <div class="input-group">
+                <input ng-model="query" type="search" class="form-control" id="search-input" placeholder="Search" autofocus>
+                <div class="input-group-btn">
+                    <button class="btn btn-default btn-search" type="submit"><i class="fa fa-search fa-1x" style="color: #333"></i></button>
                 </div>
-            </form>
+            </div>
+        </form>
 
-            <br>
-            <button class="btn btn-link" style="color: #333;" ng-click="showFilters = !showFilters"><i class="fa fa-filter"></i> Filters</button>
-            <button class="btn btn-link" style="color: #333;" ng-click="search_starred()"><i class="fa fa-star icon-yellow"></i> Starred</button>
-            <button class="btn btn-link" style="color: #333;" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
+        <br>
+        <button class="btn btn-link" style="color: #333;" ng-click="showFilters = !showFilters"><i class="fa fa-filter"></i> Filters</button>
+        <button class="btn btn-link" style="color: #333;" ng-click="search_starred()"><i class="fa fa-star icon-yellow"></i> Starred</button>
+        <button class="btn btn-link" style="color: #333;" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
 
-            <select class="select" style="border:0px;outline:0px;margin-right:10px;" onchange="location = this.options[this.selectedIndex].value;">
-                <option disabled selected>Choose view</option>
-                {% for view in sketch.get_named_views %}
-                    <option value="?view={{ view.id }}">{{ view.name }}</option>
-                {% endfor %}
-            </select>
+        <select class="select" style="border:0px;outline:0px;margin-right:10px;" onchange="location = this.options[this.selectedIndex].value;">
+            <option disabled selected>Choose view</option>
+            {% for view in sketch.get_named_views %}
+                <option value="?view={{ view.id }}">{{ view.name }}</option>
+            {% endfor %}
+        </select>
     </div>
 
+    <!-- Filter card -->
     <div class="card" ng-show="showFilters" style="overflow: hidden; position: relative;">
         <span style="font-weight: bold">Filters</span>
         <br><br>
@@ -92,11 +93,11 @@ limitations under the License.
         </form>
     </div>
 
+    <!-- Timeline picker card -->
     <div ng-show="multipleTimelines" class="card" style="overflow: hidden; position: relative;">
-        <!-- <span style="font-weight: bold">Timelines to query</span>
-        <br><br> -->
+        <button ng-click="deselect_all = !deselect_all">Select all</button>
         {% for timeline in sketch.timelines.all %}
-            <div filter="filter" search="search" search_starred="search_starred" meta="meta" index-chooser index="{{ timeline.timeline.datastore_index }}" style="background:#f7f7f7;padding: 10px;margin-right: 10px;cursor: pointer;margin-bottom: 5px;" class="pull-left">
+            <div filter="filter" search="search" search_starred="search_starred" meta="meta" index-chooser index="{{ timeline.timeline.datastore_index }}" style="background:#f7f7f7;padding: 10px;margin-right: 10px;cursor: pointer;margin-bottom: 5px;" class="pull-left timelinebox">
                 <div class="color-box pull-left" style="background: #{{ timeline.color }};margin-right: 10px;"></div>
                 <div class="t pull-left" style="margin-top:5px;">
                     {{ timeline.timeline.title }}
@@ -106,21 +107,24 @@ limitations under the License.
         {% endfor %}
     </div>
 
-
+    <!-- Show big red warning if > 500 results -->
     {% verbatim %}
-
     <div ng-show="noisy" class="card card-alert">
         <h4>I will only show you the first 500 events</h4>
         <p>May I suggest you narrow down the results with a filter?</p>
     </div>
     {% endverbatim %}
 
-    <div class="card" style="padding:0;">
-        {% verbatim %}
+    <!-- Query result card -->
+    {% verbatim %}
+    <div class="card">
+        <!-- Metadata about the query, i.e. timing, number of results -->
         <div ng-show="meta" class="timing" class="pull-left">
             {{ meta.es_total_count }} events ({{ meta.es_time/1000 }}s)
         </div>
-        <div ng-controller="EventCtrl" class="event-container" ng-repeat="event in events" ng-class="{true: 'event-focused', false: ''}[showDetails]">
+
+        <!-- Loop over all events -->
+        <div ng-repeat="event in events" ng-controller="EventCtrl" ng-class="{true: 'event-focused', false: ''}[showDetails]" class="event-container">
             <table style="table-layout: fixed; margin-bottom: 1px;" width="100%">
                 <tr>
                     <td timeline-color width="210px;" style="vertical-align: top; padding: 10px;">
@@ -150,9 +154,7 @@ limitations under the License.
                 <div ng-include="url"></div>
             </div>
         </div>
-        <br>
         {% endverbatim %}
     </div>
-    <br>
     </body>
 {% endblock %}
