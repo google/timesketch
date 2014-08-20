@@ -95,7 +95,6 @@ limitations under the License.
 
     <!-- Timeline picker card -->
     <div ng-show="multipleTimelines" class="card" style="overflow: hidden; position: relative;">
-        <button ng-click="deselect_all = !deselect_all">Select all</button>
         {% for timeline in sketch.timelines.all %}
             <div filter="filter" search="search" search_starred="search_starred" meta="meta" index-chooser index="{{ timeline.timeline.datastore_index }}" style="background:#f7f7f7;padding: 10px;margin-right: 10px;cursor: pointer;margin-bottom: 5px;" class="pull-left timelinebox">
                 <div class="color-box pull-left" style="background: #{{ timeline.color }};margin-right: 10px;"></div>
@@ -105,6 +104,13 @@ limitations under the License.
                 <div class="pull-right" style="margin-top:5px;margin-left: 10px"><input type="checkbox"></div>
             </div>
         {% endfor %}
+
+        <br>
+        <br>
+        <br>
+        <button class="btn btn-default" filter="filter" search="search" meta="meta" index-enabler>Enable all</button>
+        <button class="btn btn-default" filter="filter" search="search" meta="meta" index-disabler>Disable all</button>
+
     </div>
 
     <!-- Show big red warning if > 500 results -->

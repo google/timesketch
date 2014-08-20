@@ -61,7 +61,7 @@ directives.directive('indexChooser', function() {
       scope: {
         filter: '=',
         search: '=',
-        meta: '=',
+        meta: '='
       },
       link: function (scope, elem, attrs) {
         scope.$watch("filter", function(value) {
@@ -94,6 +94,68 @@ directives.directive('indexChooser', function() {
 
             }
             scope.search()
+        })
+      }
+    }
+});
+
+directives.directive('indexDisabler', function() {
+    return {
+      restrict: 'A',
+      scope: {
+        filter: '=',
+        search: '=',
+        meta: '='
+      },
+      link: function (scope, elem, attrs) {
+        elem.bind('click', function() {
+            var b = document.getElementsByClassName("timelinebox")
+            for (var i=0; i < b.length; i++) {
+                var e = $(b[i])
+                e.css('color', '#d1d1d1');
+                e.find(".color-box").css('background', '#e9e9e9');
+                e.find(".t").css('text-decoration', 'line-through');
+                e.find("input").prop("checked", false);
+            }
+
+            scope.filter.indexes = []
+            scope.search()
+        })
+      }
+    }
+});
+
+directives.directive('indexEnabler', function() {
+    return {
+      restrict: 'A',
+      scope: {
+        filter: '=',
+        search: '=',
+        meta: '='
+      },
+      link: function (scope, elem, attrs) {
+
+        elem.bind('click', function() {
+            var name_to_index = {}
+            for (var index in scope.meta.timeline_names) {
+                var _name = scope.meta.timeline_names[index]
+                name_to_index[_name] = index
+            }
+            var b = document.getElementsByClassName("timelinebox")
+            for (var i=0; i < b.length; i++) {
+                var e = $(b[i]);
+                var name = String(e[0].innerText).trim();
+                e.css('color', '#333');
+                e.find(".t").css('text-decoration', 'normal');
+                e.find('.color-box').css('background', "#" + scope.meta.timeline_colors[name_to_index[name]])
+                e.find("input").prop("checked", true);
+            }
+            scope.filter.indexes = []
+            for (var n in scope.meta.timeline_names) {
+                scope.filter.indexes.push(n)
+            }
+            scope.search()
+
         })
       }
     }
