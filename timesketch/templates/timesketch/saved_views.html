@@ -1,0 +1,57 @@
+<!--
+Copyright 2014 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+{% extends "timesketch/sketch_base.html" %}
+{% load staticfiles %}
+
+{% block navigation %}
+    <ul class="leftnav">
+        <a href="/sketch/{{ sketch.id }}/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li></a>
+        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-th-large"></i> Activity</li> -->
+        <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
+        <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li>
+        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li>
+        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li>
+        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li>
+    </ul>
+{% endblock %}
+
+{% block body %}
+    <body>
+    {% if views %}
+        <div class="card">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>View</th>
+                    <th>Created by</th>
+                    <th width="150px">Created</th>
+                </tr>
+                <tbody>
+                {% for view in views %}
+                    <tr>
+                        <td><a href="/sketch/{{ sketch.id }}/explore/?view={{ view.id }}">{{ view.name }}</a></td>
+
+                        <td>{{ view.user.get_full_name }}</td>
+                        <td>{{ view.updated|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+    </body>
+{% endblock %}
