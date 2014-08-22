@@ -38,6 +38,7 @@ urlpatterns = patterns(
     # Views
     url(r'^$', 'timesketch.views.home_view'),
     url(r'^sketch/(\w+)/$', 'timesketch.views.sketch_view'),
+    url(r'^sketch/(\w+)/saved_views/$', 'timesketch.views.saved_views_view'),
     url(r'^sketch/(\w+)/explore/$', 'timesketch.views.explore_view'),
     url(r'^sketch/(\w+)/explore/event/([a-zA-Z0-9_-]{22})/$',
         'timesketch.views.event_view'),

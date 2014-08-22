@@ -21,11 +21,11 @@ limitations under the License.
     <ul class="leftnav">
         <a href="/sketch/{{ sketch.id }}/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li></a>
         <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-th-large"></i> Activity</li> -->
-        <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li>
-        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li> -->
-        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li> -->
-        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li> -->
-        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li> -->
+        <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
+        <a href="/sketch/{{ sketch.id }}/saved_views/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li></a>
+        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li>
+        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li>
+        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li>
     </ul>
 {%  endblock %}
 

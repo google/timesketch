@@ -26,7 +26,7 @@ def home_view(request):
     mine = Sketch.objects.filter(owner=request.user).order_by("-created")
     public = Sketch.objects.filter(acl_public=True).exclude(owner=request.user)
     return render(request, 'timesketch/home.html',
-      {"my_sketches": mine, "public_sketches": public})
+                  {"my_sketches": mine, "public_sketches": public})
 
 
 @login_required
@@ -35,10 +35,19 @@ def sketch_view(request, sketch_id):
     sketch = Sketch.objects.get(id=sketch_id)
     timelines = Timeline.objects.all()
     views = SavedView.objects.filter(sketch=sketch)
-    views = views.exclude(name="").order_by("-created")
+    views = views.exclude(name="").order_by("created")
     return render(request, 'timesketch/sketch.html',
                   {"sketch": sketch, "timelines": timelines, "views": views})
 
+
+@login_required
+def saved_views_view(request, sketch_id):
+    """List of all saved views in a specific sketch."""
+    sketch = Sketch.objects.get(id=sketch_id)
+    views = SavedView.objects.filter(sketch=sketch)
+    views = views.exclude(name="").order_by("created")
+    return render(request, 'timesketch/saved_views.html', {"sketch": sketch,
+                                                            "views": views})
 
 @login_required
 def explore_view(request, sketch_id):
@@ -47,7 +56,7 @@ def explore_view(request, sketch_id):
     view = request.GET.get('view', 0)
     timelines = [t.timeline.datastore_index for t in sketch.timelines.all()]
     timelines = ",".join(timelines)
-    return render(request, 'timesketch/explore.html', {"timelines": timelines, 
+    return render(request, 'timesketch/explore.html', {"timelines": timelines,
       "sketch": sketch, "view": view})
 
 

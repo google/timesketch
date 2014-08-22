@@ -22,10 +22,10 @@ limitations under the License.
         <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li>
         <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-th-large"></i> Activity</li> -->
         <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
-        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li> -->
-        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li> -->
-        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li> -->
-        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li> -->
+        <a href="/sketch/{{ sketch.id }}/saved_views/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li></a>
+        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li>
+        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li>
+        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li>
     </ul>
 {% endblock %}
 
@@ -178,7 +178,6 @@ limitations under the License.
                 </tbody>
             </table>
             <button data-toggle="modal" data-target="#add-timeline-modal" class="btn btn-danger"><i class="glyphicon glyphicon-plus"></i> Add timeline</button>
-            <!-- <a class="btn btn-default" href="/create_timeline/" style="margin-left: 10px;"><i class="glyphicon glyphicon-cloud-upload"></i> Create timeline</a> -->
         </div>
     {% else %}
         <div class="card">
