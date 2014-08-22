@@ -23,9 +23,11 @@ limitations under the License.
         <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-th-large"></i> Activity</li> -->
         <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
         <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li>
-        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li>
+        <a href="/sketch/{{ sketch.id }}/timelines/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li></a>
+        <!--
         <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li>
         <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li>
+        -->
     </ul>
 {% endblock %}
 
@@ -44,7 +46,6 @@ limitations under the License.
                 {% for view in views %}
                     <tr>
                         <td><a href="/sketch/{{ sketch.id }}/explore/?view={{ view.id }}">{{ view.name }}</a></td>
-
                         <td>{{ view.user.get_full_name }}</td>
                         <td>{{ view.updated|date:"Y-m-d H:i" }}</td>
                     </tr>

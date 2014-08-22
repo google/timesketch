@@ -17,6 +17,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from timesketch.models import Sketch
 from timesketch.models import Timeline
+from timesketch.models import SketchTimeline
 from timesketch.models import SavedView
 
 
@@ -33,7 +34,7 @@ def home_view(request):
 def sketch_view(request, sketch_id):
     """Renders specific sketch."""  
     sketch = Sketch.objects.get(id=sketch_id)
-    timelines = Timeline.objects.all()
+    timelines = SketchTimeline.objects.filter(sketch=sketch)
     views = SavedView.objects.filter(sketch=sketch)
     views = views.exclude(name="").order_by("created")
     return render(request, 'timesketch/sketch.html',
@@ -50,6 +51,14 @@ def saved_views_view(request, sketch_id):
                                                             "views": views})
 
 @login_required
+def timelines_view(request, sketch_id):
+    """List of all timelines in a specific sketch."""
+    sketch = Sketch.objects.get(id=sketch_id)
+    timelines = SketchTimeline.objects.filter(sketch=sketch)
+    return render(request, 'timesketch/timelines.html', {"sketch": sketch,
+                                                         "timelines": timelines})
+
+@login_required
 def explore_view(request, sketch_id):
     """Renders the search interface."""
     sketch = Sketch.objects.get(id=sketch_id)
@@ -57,7 +66,8 @@ def explore_view(request, sketch_id):
     timelines = [t.timeline.datastore_index for t in sketch.timelines.all()]
     timelines = ",".join(timelines)
     return render(request, 'timesketch/explore.html', {"timelines": timelines,
-      "sketch": sketch, "view": view})
+                                                       "sketch": sketch,
+                                                       "view": view})
 
 
 @login_required
