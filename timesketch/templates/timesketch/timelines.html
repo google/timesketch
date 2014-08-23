@@ -59,7 +59,7 @@ limitations under the License.
             </div>
         </div>
     </div>
-    {% if timelines %}
+    {% if sketch.timelines.all %}
         <div class="card">
             <table class="table table-hover">
                 <thead>
@@ -69,7 +69,7 @@ limitations under the License.
                     <th width="150px">Created</th>
                 </tr>
                 <tbody>
-                {% for timeline in timelines %}
+                {% for timeline in sketch.timelines.all %}
                     <tr>
                         <td><div class="color-box" style="background: #{{ timeline.color }};{% ifequal timeline.color "ffffff" %}border:1px solid #d1d1d1;{% endifequal %}"></div></td>
                         <td>{{ timeline.timeline.title }}</td>

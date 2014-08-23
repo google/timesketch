@@ -17,6 +17,14 @@ limitations under the License.
 {% extends "timesketch/sketch_base.html" %}
 {% load staticfiles %}
 
+{% block header %}
+    <span class="pull-right" style="margin-top:10px;margin-right:10px;">
+        <button class="btn btn-info" data-toggle="modal" data-target="#share-modal"><i class="fa fa-lg fa-user"></i> Share</button>
+    </span>
+    <span class="pull-left" style="margin-left:220px;padding-top:12px;font-size: 25px">{{ sketch.title }}</span>
+    <div butterbar id="butterbar">Loading..</div>
+{% endblock %}
+
 {% block navigation %}
     <ul class="leftnav">
         <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li>
@@ -183,8 +191,7 @@ limitations under the License.
         </div>
     {% else %}
         <div class="card">
-            <p style="color:red;">Add a timeline to get started!</p>
-            <button data-toggle="modal" data-target="#add-timeline-modal" class="btn btn-default">+ Add timeline</button>
+            <button data-toggle="modal" data-target="#add-timeline-modal" class="btn btn-danger"><i class="glyphicon glyphicon-plus"></i> Add timeline</button>
         </div>
     {% endif %}
     </body>

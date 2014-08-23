@@ -121,20 +121,10 @@ timesketch.controller('ExploreCtrl', function($scope, $http) {
             }
         }
 
-
         $scope.clearFilter = function() {
             $scope.filter.time_start = ""
             $scope.filter.time_end = ""
             $scope.search()
-        }
-
-        $scope.createSketch = function() {
-            var params = {data: {
-                title: $scope.sketch.title,
-                description: $scope.sketch.description
-            }}
-            $http.post('/api/v1/sketch/', params).success(
-                function(data) {});
         }
 
         $scope.saveView = function() {
@@ -178,6 +168,15 @@ timesketch.controller('SketchCtrl', function($scope, $http) {
         var params = {params: {
             sketch: $scope.sketch
         }}
+    }
+
+    $scope.createSketch = function() {
+        var params = {data: {
+            title: $scope.sketch.title,
+            description: $scope.sketch.description
+        }}
+        $http.post('/api/v1/sketch/', params).success(
+            function(data) {});
     }
 
     $scope.addTimeline = function() {
