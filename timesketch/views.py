@@ -21,56 +21,58 @@ from timesketch.models import SavedView
 
 
 @login_required
-def home_view(request):
+def home(request):
     """Renders the available sketches for the user."""
-    mine = Sketch.objects.filter(owner=request.user).order_by("-created")
-    public = Sketch.objects.filter(acl_public=True).exclude(owner=request.user)
-    return render(request, 'timesketch/home.html',
-                  {"my_sketches": mine, "public_sketches": public})
+    my_sketches = Sketch.objects.filter(owner=request.user).order_by("-created")
+    public_sketches = Sketch.objects.filter(acl_public=True).exclude(
+        owner=request.user)
+    context = {"my_sketches": my_sketches, "public_sketches": public_sketches}
+    return render(request, 'timesketch/home.html', context)
 
 
 @login_required
-def sketch_view(request, sketch_id):
+def sketch(request, sketch_id):
     """Renders specific sketch."""  
     sketch = Sketch.objects.get(id=sketch_id)
     timelines = Timeline.objects.all()
-    views = SavedView.objects.filter(sketch=sketch)
-    views = views.exclude(name="").order_by("created")
-    return render(request, 'timesketch/sketch.html',
-                  {"sketch": sketch, "timelines": timelines, "views": views})
+    saved_views = SavedView.objects.filter(sketch=sketch).exclude(
+        name="").order_by("created")
+    context = {"sketch": sketch, "timelines": timelines, "views": saved_views}
+    return render(request, 'timesketch/sketch.html', context)
 
 
 @login_required
-def saved_views_view(request, sketch_id):
+def saved_views(request, sketch_id):
     """List of all saved views in a specific sketch."""
     sketch = Sketch.objects.get(id=sketch_id)
-    views = SavedView.objects.filter(sketch=sketch)
-    views = views.exclude(name="").order_by("created")
-    return render(request, 'timesketch/saved_views.html', {"sketch": sketch,
-                                                            "views": views})
+    views = SavedView.objects.filter(sketch=sketch).exclude(
+        name="").order_by("created")
+    context = {"sketch": sketch, "views": views}
+    return render(request, 'timesketch/saved_views.html', context)
+
 
 @login_required
-def timelines_view(request, sketch_id):
+def timelines(request, sketch_id):
     """List of all timelines in a specific sketch."""
     sketch = Sketch.objects.get(id=sketch_id)
     timelines = Timeline.objects.all()
-    return render(request, 'timesketch/timelines.html', {"sketch": sketch,
-                                                         "timelines": timelines})
+    context = {"sketch": sketch, "timelines": timelines}
+    return render(request, 'timesketch/timelines.html', context)
+
 
 @login_required
-def explore_view(request, sketch_id):
+def explore(request, sketch_id):
     """Renders the search interface."""
     sketch = Sketch.objects.get(id=sketch_id)
     view = request.GET.get('view', 0)
     timelines = [t.timeline.datastore_index for t in sketch.timelines.all()]
     timelines = ",".join(timelines)
-    return render(request, 'timesketch/explore.html', {"timelines": timelines,
-                                                       "sketch": sketch,
-                                                       "view": view})
+    context = {"timelines": timelines, "sketch": sketch, "view": view}
+    return render(request, 'timesketch/explore.html', context)
 
 
 @login_required
-def event_view(request, index_id, event_id):
+def event(request, index_id, event_id):
     """Renders the event page. This is used for ng-include in the tamplates."""
-    return render(request, 'timesketch/event.html', {"index_id": index_id,
-      "event_id": event_id})
+    context = {"index_id": index_id, "event_id": event_id}
+    return render(request, 'timesketch/event.html', context)

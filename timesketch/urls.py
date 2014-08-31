@@ -36,13 +36,13 @@ urlpatterns = patterns(
     url(r'^admin/', include(admin.site.urls)),
 
     # Views
-    url(r'^$', 'timesketch.views.home_view'),
-    url(r'^sketch/(\w+)/$', 'timesketch.views.sketch_view'),
-    url(r'^sketch/(\w+)/saved_views/$', 'timesketch.views.saved_views_view'),
-    url(r'^sketch/(\w+)/timelines/$', 'timesketch.views.timelines_view'),
-    url(r'^sketch/(\w+)/explore/$', 'timesketch.views.explore_view'),
+    url(r'^$', 'timesketch.views.home'),
+    url(r'^sketch/(\w+)/$', 'timesketch.views.sketch'),
+    url(r'^sketch/(\w+)/saved_views/$', 'timesketch.views.saved_views'),
+    url(r'^sketch/(\w+)/timelines/$', 'timesketch.views.timelines'),
+    url(r'^sketch/(\w+)/explore/$', 'timesketch.views.explore'),
     url(r'^sketch/(\w+)/explore/event/([a-zA-Z0-9_-]{22})/$',
-        'timesketch.views.event_view'),
+        'timesketch.views.event'),
 
     # API
     (r'^api/', include(v1_api.urls)),
