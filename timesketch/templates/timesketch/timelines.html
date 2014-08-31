@@ -78,12 +78,11 @@ limitations under the License.
                 {% endfor %}
                 </tbody>
             </table>
-            <button data-toggle="modal" data-target="#add-timeline-modal" class="btn btn-danger"><i class="glyphicon glyphicon-plus"></i> Add timeline</button>
+            <a href="add/" class="btn btn-default">+ Add timeline</a>
         </div>
     {% else %}
         <div class="card">
-            <p style="color:red;">Add a timeline to get started!</p>
-            <button data-toggle="modal" data-target="#add-timeline-modal" class="btn btn-default">+ Add timeline</button>
+            <a href="add/" class="btn btn-default">+ Add timeline</a>
         </div>
     {% endif %}
     </body>

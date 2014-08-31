@@ -15,6 +15,7 @@
 
 from django.conf.urls import patterns, include, url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.conf import settings
 from tastypie.api import Api
 from timesketch.api import v1_resources
 
@@ -37,9 +38,11 @@ urlpatterns = patterns(
 
     # Views
     url(r'^$', 'timesketch.views.home'),
+    url(r'^sketch/new/$', 'timesketch.views.new_sketch'),
     url(r'^sketch/(\w+)/$', 'timesketch.views.sketch'),
     url(r'^sketch/(\w+)/saved_views/$', 'timesketch.views.saved_views'),
     url(r'^sketch/(\w+)/timelines/$', 'timesketch.views.timelines'),
+    url(r'^sketch/(\w+)/timelines/add/$', 'timesketch.views.add_timeline'),
     url(r'^sketch/(\w+)/explore/$', 'timesketch.views.explore'),
     url(r'^sketch/(\w+)/explore/event/([a-zA-Z0-9_-]{22})/$',
         'timesketch.views.event'),
@@ -49,6 +52,7 @@ urlpatterns = patterns(
 
     # Login/Logout
     url('^accounts/', include('django.contrib.auth.urls')),
+
 )
 
 urlpatterns += staticfiles_urlpatterns()

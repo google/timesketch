@@ -14,8 +14,12 @@
 """This module implements timesketch Django views."""
 
 from django.shortcuts import render
+from django.shortcuts import redirect
+from django.http import HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from timesketch.models import Sketch
+from timesketch.models import SketchTimeline
 from timesketch.models import Timeline
 from timesketch.models import SavedView
 
@@ -34,11 +38,50 @@ def home(request):
 def sketch(request, sketch_id):
     """Renders specific sketch."""  
     sketch = Sketch.objects.get(id=sketch_id)
-    timelines = Timeline.objects.all()
+    if not sketch.can_access(request.user):
+        return HttpResponseForbidden()
+    timelines = Timeline.objects.filter(Q(owner=request.user) | Q(acl_public=True))
     saved_views = SavedView.objects.filter(sketch=sketch).exclude(
         name="").order_by("created")
     context = {"sketch": sketch, "timelines": timelines, "views": saved_views}
     return render(request, 'timesketch/sketch.html', context)
+
+
+@login_required
+def new_sketch(request):
+    """Create new sketch."""
+    if request.method == 'POST':
+        title = request.POST.get('inputTitle')
+        description = request.POST.get('inputDescription')
+        obj, created = Sketch.objects.get_or_create(title=title,
+                                                    description=description,
+                                                    owner=request.user)
+        return redirect("/sketch/%s/" % obj.id)
+    return render(request, 'timesketch/new_sketch.html', {})
+
+
+@login_required
+def add_timeline(request, sketch_id):
+    """Add timeline to sketch."""
+    sketch = Sketch.objects.get(id=sketch_id)
+    if request.method == 'POST':
+        form_timelines = request.POST.getlist('timelines')
+        if form_timelines:
+            for timeline_id in form_timelines:
+                t = Timeline.objects.get(id=timeline_id)
+                sketch_timeline = SketchTimeline.objects.create(timeline=t)
+                sketch_timeline.color = sketch_timeline.generate_color()
+                sketch_timeline.save()
+                sketch.timelines.add(sketch_timeline)
+                sketch.save()
+        return redirect("/sketch/%s/timelines/" % sketch.id)
+    timelines = set()
+    for timeline in Timeline.objects.filter(Q(owner=request.user) | Q(acl_public=True)):
+        if not timeline in [x.timeline for x in sketch.timelines.all()]:
+            if timeline.can_access(request.user):
+                timelines.add(timeline)
+    return render(request, 'timesketch/add_timeline.html', {'sketch': sketch,
+                                                            'timelines': timelines})
 
 
 @login_required

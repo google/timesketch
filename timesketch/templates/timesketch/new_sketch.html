@@ -1,0 +1,46 @@
+<!--
+Copyright 2014 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+{% extends "timesketch/base.html" %}
+{% load staticfiles %}
+
+{% block header %}
+    <span class="pull-left" style="margin-left:220px;padding-top:12px;font-size: 25px">New sketch</span>
+{% endblock %}
+
+{% block navigation %}
+    <ul class="leftnav">
+        <a href="/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-user"></i> My sketches</li></a>
+    </ul>
+{% endblock %}
+
+{% block body %}
+<body>
+    <div class="card">
+        <form role="form" method="post" action="/sketch/new/"> {% csrf_token %}
+            <div class="form-group">
+                <label for="inputTitle">Title</label>
+                <input type="text" class="form-control" name="inputTitle" id="inputTitle" placeholder="Title" required>
+            </div>
+            <div class="form-group">
+                <label for="inputDescrption">Description</label>
+                <textarea class="form-control" name="inputDescription" id="inputDescription" rows="10" placeholder="Description" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-default">Submit</button>
+        </form>
+    </div>
+</body>
+{% endblock %}

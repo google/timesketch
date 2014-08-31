@@ -41,53 +41,6 @@ limitations under the License.
 
 {% block body %}
     <body ng-controller="SketchCtrl" ng-init="init('{{ sketch.id }}')">
-    <!-- Add timeline modal -->
-    <div class="modal" id="add-timeline-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title" id="myModalLabel">Add timeline</h4>
-                </div>
-                <div class="modal-body">
-                    Select the timeline you want to add to this sketch
-                    <br><br>
-                    <form>
-                        <select ng-model="addtimeline" name="timeline" class="form-control">
-                            {% for timeline in timelines %}
-                                <option value="{{ timeline.id }}">{{ timeline }}</option>
-                            {% endfor %}
-                        </select>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="addTimeline()" onclick="window.location.reload()">Save changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Add story modal -->
-    <div class="modal" id="add-story-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title" id="myModalLabel">Create a new story</h4>
-                </div>
-                <div class="modal-body">
-                    <form>
-                        <input type="text" ng-model="share" name="share" class="form-control" placeholder="Title">
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- ACL modal -->
     <div class="modal" id="share-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -120,29 +73,20 @@ limitations under the License.
                     <img src="/static/img/avatar_unknown.jpg" class="img-rounded" width="30px;" style="margin-right: 10px;"> <b>Owner</b> - {{ sketch.owner.first_name }} {{ sketch.owner.last_name }}
 
                 </div>
+                {% ifequal user sketch.owner %}
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="setAcl()">Save changes</button>
                 </div>
+                {% endifequal %}
             </div>
         </div>
     </div>
 
     <div class="card">
-        <!--<h2 style="margin-bottom:15px;">{{ sketch.title }}</h2>-->
         <div id="description">
             <p>{{ sketch.description }}</p>
         </div>
-
-        <!--
-        <hr>
-        {% if sketch.timelines.all %}
-            <a href="explore/" class="btn btn-success" style="margin-right:15px;margin-top:15px;">Explore this sketch</a>
-        {% else %}
-            <a href="explore/" class="btn btn-default disabled" style="margin-right:15px;margin-top:15px;">Explore this sketch</a>
-        {% endif %}
-        -->
-
     </div>
 
     {% if views %}
@@ -187,11 +131,13 @@ limitations under the License.
                 {% endfor %}
                 </tbody>
             </table>
-            <button data-toggle="modal" data-target="#add-timeline-modal" class="btn btn-danger"><i class="glyphicon glyphicon-plus"></i> Add timeline</button>
+            <a href="timelines/">Manage timelines</a>
+
         </div>
     {% else %}
         <div class="card">
-            <button data-toggle="modal" data-target="#add-timeline-modal" class="btn btn-danger"><i class="glyphicon glyphicon-plus"></i> Add timeline</button>
+            There are no timelines added to this sketch.
+            <a href="timelines/add/">Add a timeline</a> to get started.
         </div>
     {% endif %}
     </body>

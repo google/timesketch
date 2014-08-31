@@ -40,6 +40,13 @@ class Sketch(models.Model):
         """
         return SavedView.objects.filter(sketch=self).exclude(name="")
 
+    def can_access(self, user):
+        if self.owner == user:
+            return True
+        if self.acl_public:
+            return True
+        return False
+
     def __unicode__(self):
         return '%s' % self.title
 
@@ -48,13 +55,20 @@ class Timeline(models.Model):
     """Database model for an timeline."""
     owner = models.ForeignKey(User)
     collaborators = models.ManyToManyField("Collaborator", blank=True,
-        null=True)
+                                           null=True)
     acl_public = models.BooleanField(default=False)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     datastore_index = models.CharField(max_length=32)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+
+    def can_access(self, user):
+        if self.owner == user:
+            return True
+        if self.acl_public:
+            return True
+        return False
 
     def __unicode__(self):
         return '%s' % self.title

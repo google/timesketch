@@ -26,8 +26,7 @@ limitations under the License.
                     </div>
                 </div>
             </form>
-            <button style="margin-right:50px;margin-top:-40px;" class="btn btn-danger pull-right" data-toggle="modal" data-target="#create-sketch-modal"><i class="glyphicon glyphicon-plus"></i> Sketch</button>
-
+            <a href="/sketch/new/" style="margin-right:50px;margin-top:-40px;" class="btn btn-danger pull-right"><i class="glyphicon glyphicon-plus"></i> Sketch</a>
 {% endblock %}
 
 {% block navigation %}
@@ -38,28 +37,6 @@ limitations under the License.
 
 {% block body %}
     <body ng-controller="SketchCtrl">
-        <!-- Create sketch modal -->
-        <div class="modal" id="create-sketch-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="myModalLabel">Create a new sketch</h4>
-              </div>
-              <div class="modal-body">
-               <form>
-                    <input type="text" ng-model="sketch.title" class="form-control" placeholder="Title" required>
-                    <br>
-                    <textarea class="form-control" ng-model="sketch.description" rows="10" placeholder="Description" required></textarea>
-                </form>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" data-dismiss="modal"  onclick="window.location.reload()" ng-click="createSketch()">Create</button>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {% if my_sketches %}
         <div class="card">
