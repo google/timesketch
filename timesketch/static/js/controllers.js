@@ -252,6 +252,7 @@ timesketch.controller('EventCommentCtrl', function($scope, $http, AddComment) {
         var callback = function(response) {
             $scope.formData.body = '';
             $scope.commentForm.$setPristine()
+            console.log(response)
             $scope.comments.push(response)
         }
         AddComment.post(callback,

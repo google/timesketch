@@ -22,6 +22,7 @@ from timesketch.models import Sketch
 from timesketch.models import SketchTimeline
 from timesketch.models import Timeline
 from timesketch.models import SavedView
+from django.contrib.auth.models import User
 
 
 @login_required
@@ -119,3 +120,9 @@ def event(request, index_id, event_id):
     """Renders the event page. This is used for ng-include in the tamplates."""
     context = {"index_id": index_id, "event_id": event_id}
     return render(request, 'timesketch/event.html', context)
+
+
+@login_required
+def user_profile(request):
+    """Profile for the user."""
+    return render(request, 'timesketch/profile.html', {})

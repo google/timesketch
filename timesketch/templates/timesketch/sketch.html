@@ -36,6 +36,8 @@ limitations under the License.
         <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li>
         <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li>
         -->
+        <a href="https://github.com/google/timesketch/issues/new" target="newpage"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-bug"></i> Report bug</li></a>
+
     </ul>
 {% endblock %}
 
@@ -70,7 +72,7 @@ limitations under the License.
                         </form>
                     {% endifequal %}
                     <br><br>
-                    <img src="/static/img/avatar_unknown.jpg" class="img-rounded" width="30px;" style="margin-right: 10px;"> <b>Owner</b> - {{ sketch.owner.first_name }} {{ sketch.owner.last_name }}
+                    <img src="{{ sketch.owner.get_profile.avatar }}" class="img-rounded" width="30px;" style="margin-right: 10px;"> <b>Owner</b> - {{ sketch.owner.first_name }} {{ sketch.owner.last_name }}
 
                 </div>
                 {% ifequal user sketch.owner %}

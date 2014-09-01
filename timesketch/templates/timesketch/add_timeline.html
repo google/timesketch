@@ -32,15 +32,17 @@ limitations under the License.
         <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li>
         <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li>
         -->
+        <a href="https://github.com/google/timesketch/issues/new"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-bug"></i> Report bug</li></a>
+
     </ul>
 {% endblock %}
 
 {% block body %}
 <body>
     <div class="card">
+        {% if timelines %}
         <h4>Add timeline</h4>
         <br>
-        {% if timelines %}
         <form role="form" method="post" action="/sketch/{{ sketch.id }}/timelines/add/"> {% csrf_token %}
             <div class="form-group">
                 {% for timeline in timelines %}
@@ -52,7 +54,7 @@ limitations under the License.
             <button type="submit" class="btn btn-success">Add to sketch</button>
         </form>
         {% else %}
-        Wow, you added every possible timeline to this sketch already!
+        There are no available timelines to add
         {% endif %}
     </div>
 </body>

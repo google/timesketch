@@ -18,6 +18,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf import settings
 from tastypie.api import Api
 from timesketch.api import v1_resources
+from django.conf.urls.static import static
 
 v1_api = Api(api_name='v1')
 v1_api.register(v1_resources.SearchResource())
@@ -28,6 +29,8 @@ v1_api.register(v1_resources.ViewResource())
 v1_api.register(v1_resources.SketchTimelineResource())
 v1_api.register(v1_resources.SketchAclResource())
 v1_api.register(v1_resources.SketchResource())
+v1_api.register(v1_resources.UserResource())
+v1_api.register(v1_resources.UserProfileResource())
 
 from django.contrib import admin
 admin.autodiscover()
@@ -46,6 +49,7 @@ urlpatterns = patterns(
     url(r'^sketch/(\w+)/explore/$', 'timesketch.views.explore'),
     url(r'^sketch/(\w+)/explore/event/([a-zA-Z0-9_-]{22})/$',
         'timesketch.views.event'),
+    url(r'^user/profile/$', 'timesketch.views.user_profile'),
 
     # API
     (r'^api/', include(v1_api.urls)),
@@ -56,3 +60,4 @@ urlpatterns = patterns(
 )
 
 urlpatterns += staticfiles_urlpatterns()
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

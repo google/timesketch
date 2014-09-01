@@ -31,6 +31,7 @@ from timesketch.models import EventComment
 from timesketch.models import SavedView
 from timesketch.models import Timeline
 from timesketch.models import SketchTimeline
+from timesketch.models import UserProfile
 
 # Set the type of datastore.
 DATASTORE = elasticsearch_datastore.ElasticSearchDataStore
@@ -73,8 +74,25 @@ class DatastoreObject(object):
         self.__dict__['_data'][name] = value
 
 
+class UserProfileResource(ModelResource):
+    """Model resource for UserProfile."""
+    class Meta:
+        resource_name = 'userprofile'
+        queryset = UserProfile.objects.all()
+        fields = ['']
+        authorization = Authorization()
+        authentication = SessionAuthentication()
+
+    def dehydrate(self, bundle):
+        bundle.data['avatar'] = bundle.obj.get_avatar_url()
+        return bundle
+
+
 class UserResource(ModelResource):
     """Model resource for User."""
+    profile = fields.OneToOneField(UserProfileResource, attribute='userprofile',
+                                   full=True)
+
     class Meta:
         resource_name = 'user'
         queryset = User.objects.all()
@@ -226,6 +244,8 @@ class CommentResource(ModelResource):
         bundle.data['data']['user'] = {}
         bundle.data['data']['user']['first_name'] = result.user.first_name
         bundle.data['data']['user']['last_name'] = result.user.last_name
+        bundle.data['data']['user']['profile'] = {}
+        bundle.data['data']['user']['profile']['avatar'] = result.user.get_profile().get_avatar_url()
         datastore = DATASTORE(datastore_index)
         datastore.add_label_to_event(datastore_id, sketch_id,
             bundle.request.user.id, "__ts_comment")
