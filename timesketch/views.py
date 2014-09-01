@@ -22,7 +22,6 @@ from timesketch.models import Sketch
 from timesketch.models import SketchTimeline
 from timesketch.models import Timeline
 from timesketch.models import SavedView
-from django.contrib.auth.models import User
 
 
 @login_required
@@ -126,3 +125,17 @@ def event(request, index_id, event_id):
 def user_profile(request):
     """Profile for the user."""
     return render(request, 'timesketch/profile.html', {})
+
+
+@login_required
+def search_sketches(request):
+    """Search sketches."""
+    result = set()
+    if request.method == 'POST':
+        q = request.POST['search']
+        if q:
+            result = Sketch.objects.filter(Q(title__icontains=q) |
+                                           Q(description__icontains=q),
+                                           Q(owner=request.user) |
+                                           Q(acl_public=True) )
+    return render(request, 'timesketch/search.html', {'result':result})

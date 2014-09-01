@@ -30,62 +30,35 @@ limitations under the License.
 
 {% block navigation %}
     <ul class="leftnav">
-        <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-user"></i> My sketches</li>
+        <a href="/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-user"></i> My sketches</li></a>
         <a href="https://github.com/google/timesketch/issues/new" target="newpage"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-bug"></i> Report bug</li></a>
     </ul>
 {% endblock %}
 
 {% block body %}
     <body>
-        {% if my_sketches %}
-        <div class="card">
-            <table class="table table-hover">
-            <thead>
-            <tr>
-                <th>My sketches</th>
-                <th width="150px">Last modified</th>
-            </tr>
-            <tbody>
-            {% for sketch in my_sketches %}
-                <tr>
-                <td><a href="/sketch/{{ sketch.id }}">{{ sketch.title }}</a></td>
-                <!-- <td>{{ sketch.owner.get_full_name }}</td> -->
-                <td>{{ sketch.updated|date:"Y-m-d H:i" }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-            </table>
-            <a href="/sketch/new/" class="btn btn-default">+ New sketch</a>
-
-            {% else %}
-                <div class="card">
-
-                You do not have any sketches yet. <a href="/sketch/new/">Create a new one </a> to get started!
-            {% endif %}
-        </div>
-
-        {% if public_sketches %}
+        {% if result %}
         <div class="card">
             <table class="table table-hover">
                 <thead>
-                    <tr>
-                        <th>Shared with me</th>
-                        <th>Owner</th>
-                        <th width="150px">Last modified</th>
-                    </tr>
-                </thead>
+                <tr>
+                    <th>Search result</th>
+                    <th width="150px">Last modified</th>
+                </tr>
                 <tbody>
-                    {% for sketch in public_sketches %}
-                        <tr>
-                            <td><a href="/sketch/{{ sketch.id }}">{{ sketch.title }}</a></td>
-                            <td>{{ sketch.owner.get_full_name }}</td>
-                            <td>{{ sketch.updated|date:"Y-m-d H:i" }}</td>
-                        </tr>
-                    {% endfor %}
+                {% for sketch in result %}
+                    <tr>
+                        <td><a href="/sketch/{{ sketch.id }}">{{ sketch.title }}</a></td>
+                        <td>{{ sketch.updated|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                {% endfor %}
                 </tbody>
-
             </table>
         </div>
+        {% else %}
+            <div class="card">
+            No search results
+            </div>
         {% endif %}
     </body>
 {% endblock %}

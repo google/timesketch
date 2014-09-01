@@ -41,6 +41,7 @@ urlpatterns = patterns(
 
     # Views
     url(r'^$', 'timesketch.views.home'),
+    url(r'^search/$', 'timesketch.views.search_sketches'),
     url(r'^sketch/new/$', 'timesketch.views.new_sketch'),
     url(r'^sketch/(\w+)/$', 'timesketch.views.sketch'),
     url(r'^sketch/(\w+)/saved_views/$', 'timesketch.views.saved_views'),

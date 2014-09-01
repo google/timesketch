@@ -24,7 +24,7 @@ from PIL import Image
 
 
 class Sketch(models.Model):
-    """Database model for an Sketch"""
+    """Database model for a Sketch"""
     owner = models.ForeignKey(User)
     collaborators = models.ManyToManyField("Collaborator", blank=True,
                                            null=True)
@@ -56,7 +56,7 @@ class Sketch(models.Model):
 
 
 class Timeline(models.Model):
-    """Database model for an timeline."""
+    """Database model for a timeline."""
     owner = models.ForeignKey(User)
     collaborators = models.ManyToManyField("Collaborator", blank=True,
                                            null=True)
@@ -79,7 +79,7 @@ class Timeline(models.Model):
 
 
 class SketchTimeline(models.Model):
-    """Database model for annotating an timeline."""
+    """Database model for annotating a timeline."""
     timeline = models.ForeignKey(Timeline)
     color = models.CharField(max_length=6, default="FFFFFF")
     visible = models.BooleanField(default=True)
@@ -103,7 +103,7 @@ class SketchTimeline(models.Model):
 
 
 class EventComment(models.Model):
-    """Database model for an event comment."""
+    """Database model for a event comment."""
     user = models.ForeignKey(User)
     body = models.TextField(null=False, blank=False)
     sketch = models.ForeignKey(Sketch)
@@ -117,7 +117,7 @@ class EventComment(models.Model):
 
 
 class SavedView(models.Model):
-    """Database model for an saved view."""
+    """Database model for a saved view."""
     user = models.ForeignKey(User)
     sketch = models.ForeignKey(Sketch)
     query = models.CharField(max_length=255)
@@ -132,7 +132,7 @@ class SavedView(models.Model):
 
 
 class Collaborator(models.Model):
-    """Database model for an collaborator."""
+    """Database model for a collaborator."""
     user = models.ForeignKey(User)
     can_edit = models.BooleanField(default=True)
     created = models.DateTimeField(auto_now_add=True)
