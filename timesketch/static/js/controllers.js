@@ -99,11 +99,11 @@ timesketch.controller('ExploreCtrl', function($scope, $http) {
         }
 
         $scope.search_starred = function() {
-            $scope.filter.star = true
-            $scope.filter.time_start = ""
-            $scope.filter.time_end = ""
-            $scope.showFilters = false
-            $scope.noisy = false
+            $scope.filter.star = true;
+            $scope.filter.time_start = "";
+            $scope.filter.time_end = "";
+            $scope.showFilters = false;
+            $scope.noisy = false;
 
             var params = {params: {
                 q: "",
@@ -111,19 +111,20 @@ timesketch.controller('ExploreCtrl', function($scope, $http) {
                 filter: $scope.filter,
                 limit: 500
             }}
-            $scope.events = []
-            $scope.query = ""
+            $scope.events = [];
+            $scope.query = "";
             if ($scope.filter.indexes.length > 0) {
                 $http.get("/api/v1/search/", params).success(function(data) {
                     $scope.events = data.objects;
                     $scope.meta = data.meta;
+                    $scope.filter.star = false;
                 });
             }
         }
 
         $scope.clearFilter = function() {
-            $scope.filter.time_start = ""
-            $scope.filter.time_end = ""
+            $scope.filter.time_start = "";
+            $scope.filter.time_end = "";
             $scope.search()
         }
 
