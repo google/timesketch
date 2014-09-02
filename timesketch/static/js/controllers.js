@@ -73,7 +73,7 @@ timesketch.controller('ExploreCtrl', function($scope, $http) {
         }
 
         $scope.search = function() {
-            if ($scope.filter.star) {
+            if ($scope.filter.star && !$scope.query ) {
                 $scope.search_starred()
                 return
             }
@@ -113,13 +113,10 @@ timesketch.controller('ExploreCtrl', function($scope, $http) {
             }}
             $scope.events = [];
             $scope.query = "";
-            if ($scope.filter.indexes.length > 0) {
-                $http.get("/api/v1/search/", params).success(function(data) {
-                    $scope.events = data.objects;
-                    $scope.meta = data.meta;
-                    $scope.filter.star = false;
-                });
-            }
+            $http.get("/api/v1/search/", params).success(function(data) {
+                $scope.events = data.objects;
+                $scope.meta = data.meta;
+            });
         }
 
         $scope.clearFilter = function() {
