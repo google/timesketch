@@ -185,5 +185,9 @@ LOGGING = {
 # machine that you use a browser on. This could lead to your computer being
 # remotely accessable to anyone. Run elasticsearch on a VM or another computer.
 #
+
+# Make tests work in > Django 1.7
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
+
 ELASTICSEARCH_SERVER_IP = "127.0.0.1"
 ELASTICSEARCH_PORT = "9200"
