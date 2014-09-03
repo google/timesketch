@@ -245,7 +245,7 @@ class CommentResource(ModelResource):
         bundle.data['data']['user']['first_name'] = result.user.first_name
         bundle.data['data']['user']['last_name'] = result.user.last_name
         bundle.data['data']['user']['profile'] = {}
-        bundle.data['data']['user']['profile']['avatar'] = result.user.get_profile().get_avatar_url()
+        bundle.data['data']['user']['profile']['avatar'] = result.user.userprofile.get_avatar_url()
         datastore = DATASTORE(datastore_index)
         datastore.add_label_to_event(datastore_id, sketch_id,
             bundle.request.user.id, "__ts_comment")

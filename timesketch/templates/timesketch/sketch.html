@@ -72,7 +72,7 @@ limitations under the License.
                         </form>
                     {% endifequal %}
                     <br><br>
-                    <img src="{{ sketch.owner.get_profile.get_avatar_url }}" class="img-rounded" width="30px;" style="margin-right: 10px;"> <b>Owner</b> - {{ sketch.owner.first_name }} {{ sketch.owner.last_name }}
+                    <img src="{{ sketch.owner.userprofile.get_avatar_url }}" class="img-rounded" width="30px;" style="margin-right: 10px;"> <b>Owner</b> - {{ sketch.owner.first_name }} {{ sketch.owner.last_name }}
 
                 </div>
                 {% ifequal user sketch.owner %}
