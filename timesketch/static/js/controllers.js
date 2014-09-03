@@ -16,8 +16,8 @@ limitations under the License.
 
 'use strict';
 
-var timesketch = angular.module('timesketch', ['timesketch.directives', 
-    'timesketch.services']);
+var timesketch = angular.module('timesketch', ['timesketch.directives',
+    'timesketch.services', 'colorpicker.module']);
 
 // config
 timesketch.config(function($httpProvider) {
@@ -41,13 +41,13 @@ timesketch.controller('ExploreCtrl', function($scope, $http) {
         $scope.init = function(sketch, view, timelines) {
             $scope.sketch = sketch;
             $scope.star = false;
-            $scope.filter = {}
-            $scope.filter.indexes = []
-            $scope.filter.indexes = timelines.split(",")
+            $scope.filter = {};
+            $scope.filter.indexes = [];
+            $scope.filter.indexes = timelines.split(",");
             var params = {params: {
                 sketch: $scope.sketch,
                 view: view
-            }}
+            }};
             if ($scope.filter.indexes.length > 1) {
                 $scope.multipleTimelines = true
             }

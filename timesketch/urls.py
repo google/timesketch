@@ -47,6 +47,7 @@ urlpatterns = patterns(
     url(r'^sketch/(\w+)/saved_views/$', 'timesketch.views.saved_views'),
     url(r'^sketch/(\w+)/timelines/$', 'timesketch.views.timelines'),
     url(r'^sketch/(\w+)/timelines/add/$', 'timesketch.views.add_timeline'),
+    url(r'^sketch/(\w+)/timelines/(\w+)/edit/$', 'timesketch.views.edit_timeline'),
     url(r'^sketch/(\w+)/explore/$', 'timesketch.views.explore'),
     url(r'^sketch/(\w+)/explore/event/([a-zA-Z0-9_-]{22})/$',
         'timesketch.views.event'),

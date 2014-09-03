@@ -28,54 +28,30 @@ limitations under the License.
         <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li>
         <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li>
         -->
-        <a href="https://github.com/google/timesketch/issues/new"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-bug"></i> Report bug</li></a>
+        <a href="https://github.com/google/timesketch/issues/new" target="newpage"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-bug"></i> Report bug</li></a>
 
     </ul>
 {% endblock %}
 
 {% block body %}
     <body ng-controller="SketchCtrl" ng-init="init('{{ sketch.id }}')">
-    <!-- Add timeline modal -->
-    <div class="modal" id="add-timeline-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title" id="myModalLabel">Add timeline</h4>
-                </div>
-                <div class="modal-body">
-                    Select the timeline you want to add to this sketch
-                    <br><br>
-                    <form>
-                        <select ng-model="addtimeline" name="timeline" class="form-control">
-                            {% for timeline in timelines %}
-                                <option value="{{ timeline.id }}">{{ timeline }}</option>
-                            {% endfor %}
-                        </select>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="addTimeline()" onclick="window.location.reload()">Save changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
     {% if sketch.timelines.all %}
         <div class="card">
             <table class="table table-hover">
                 <thead>
                 <tr>
-                    <th width="74px">Timeline</th>
-                    <th></th>
+                    <th width="74px"></th>
+                    <th>Timeline</th>
                     <th width="150px">Created</th>
+                    <th width="70px"></th>
                 </tr>
                 <tbody>
                 {% for timeline in sketch.timelines.all %}
                     <tr>
                         <td><div class="color-box" style="background: #{{ timeline.color }};{% ifequal timeline.color "ffffff" %}border:1px solid #d1d1d1;{% endifequal %}"></div></td>
-                        <td>{{ timeline.timeline.title }}</td>
-                        <td>{{ timeline.timeline.created|date:"Y-m-d H:i" }}</td>
+                        <td><div style="margin-top:5px;">{{ timeline.timeline.title }}</div></td>
+                        <td><div style="margin-top:5px;">{{ timeline.timeline.created|date:"Y-m-d H:i" }}</div></td>
+                        <td><a href="{{ timeline.id }}/edit/" class="btn btn-default">Edit</a></td>
                     </tr>
                 {% endfor %}
                 </tbody>

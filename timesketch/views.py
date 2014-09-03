@@ -22,6 +22,7 @@ from timesketch.models import Sketch
 from timesketch.models import SketchTimeline
 from timesketch.models import Timeline
 from timesketch.models import SavedView
+import re
 
 
 @login_required
@@ -40,10 +41,9 @@ def sketch(request, sketch_id):
     sketch = Sketch.objects.get(id=sketch_id)
     if not sketch.can_access(request.user):
         return HttpResponseForbidden()
-    timelines = Timeline.objects.filter(Q(owner=request.user) | Q(acl_public=True))
     saved_views = SavedView.objects.filter(sketch=sketch).exclude(
         name="").order_by("created")
-    context = {"sketch": sketch, "timelines": timelines, "views": saved_views}
+    context = {"sketch": sketch, "views": saved_views}
     return render(request, 'timesketch/sketch.html', context)
 
 
@@ -125,6 +125,20 @@ def event(request, index_id, event_id):
 def user_profile(request):
     """Profile for the user."""
     return render(request, 'timesketch/profile.html', {})
+
+@login_required
+def edit_timeline(request, sketch_id, timeline_id):
+    """Edit timeline."""
+    sketch = Sketch.objects.get(id=sketch_id)
+    timeline = SketchTimeline.objects.get(id=timeline_id)
+    if request.method == 'POST':
+        color_in_hex = request.POST.get('color').replace('#', '')[:6]
+        if re.match("[0-9a-fA-F]{3,6}", color_in_hex):
+            timeline.color = color_in_hex
+            timeline.save()
+        return redirect('/sketch/%s/timelines/' % sketch.id)
+    return render(request, 'timesketch/edit_timeline.html', {'sketch': sketch,
+                                                             'timeline': timeline})
 
 
 @login_required

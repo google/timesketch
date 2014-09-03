@@ -72,7 +72,7 @@ limitations under the License.
                         </form>
                     {% endifequal %}
                     <br><br>
-                    <img src="{{ user.get_profile.get_avatar_url }}" class="img-rounded" width="30px;" style="margin-right: 10px;"> <b>Owner</b> - {{ sketch.owner.first_name }} {{ sketch.owner.last_name }}
+                    <img src="{{ sketch.owner.get_profile.get_avatar_url }}" class="img-rounded" width="30px;" style="margin-right: 10px;"> <b>Owner</b> - {{ sketch.owner.first_name }} {{ sketch.owner.last_name }}
 
                 </div>
                 {% ifequal user sketch.owner %}
@@ -114,29 +114,7 @@ limitations under the License.
         </div>
     {% endif %}
 
-    {% if sketch.timelines.all %}
-        <div class="card">
-            <table class="table table-hover">
-                <thead>
-                <tr>
-                    <th width="74px">Timeline</th>
-                    <th></th>
-                    <th width="150px">Created</th>
-                </tr>
-                <tbody>
-                {% for timeline in sketch.timelines.all %}
-                    <tr>
-                        <td><div class="color-box" style="background: #{{ timeline.color }};{% ifequal timeline.color "ffffff" %}border:1px solid #d1d1d1;{% endifequal %}"></div></td>
-                        <td>{{ timeline.timeline.title }}</td>
-                        <td>{{ timeline.timeline.created|date:"Y-m-d H:i" }}</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-            <a href="timelines/">Manage timelines</a>
-
-        </div>
-    {% else %}
+    {% if not sketch.timelines.all %}
         <div class="card">
             There are no timelines added to this sketch.
             <a href="timelines/add/">Add a timeline</a> to get started.
