@@ -14,12 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-{% extends "timesketch/base.html" %}
+{% extends "sketch_base.html" %}
 {% load staticfiles %}
-
-{% block header %}
-    <span class="pull-left" style="margin-left:220px;padding-top:12px;font-size: 25px">{{ sketch.title }}</span>
-{% endblock %}
 
 {% block navigation %}
     <ul class="leftnav">
@@ -27,7 +23,7 @@ limitations under the License.
         <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-th-large"></i> Activity</li> -->
         <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
         <a href="/sketch/{{ sketch.id }}/saved_views/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li></a>
-        <a href="/sketch/{{ sketch.id }}/timelines/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li></a>
+        <li class="leftnav  leftnav-active"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li>
         <!--
         <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li>
         <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li>
@@ -38,24 +34,34 @@ limitations under the License.
 {% endblock %}
 
 {% block body %}
-<body>
-    <div class="card">
-        {% if timelines %}
-        <h4>Add timeline</h4>
-        <br>
-        <form role="form" method="post" action="/sketch/{{ sketch.id }}/timelines/add/"> {% csrf_token %}
-            <div class="form-group">
-                {% for timeline in timelines %}
-                    <input type="checkbox" name="timelines" value="{{ timeline.id }}">
-                    {{ timeline }}
-                    <br>
+    <body ng-controller="SketchCtrl" ng-init="init('{{ sketch.id }}')">
+    {% if sketch.timelines.all %}
+        <div class="card">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th width="74px"></th>
+                    <th>Timeline</th>
+                    <th width="150px">Created</th>
+                    <th width="70px"></th>
+                </tr>
+                <tbody>
+                {% for timeline in sketch.timelines.all %}
+                    <tr>
+                        <td><div class="color-box" style="background: #{{ timeline.color }};{% ifequal timeline.color "ffffff" %}border:1px solid #d1d1d1;{% endifequal %}"></div></td>
+                        <td><div style="margin-top:5px;">{{ timeline.timeline.title }}</div></td>
+                        <td><div style="margin-top:5px;">{{ timeline.timeline.created|date:"Y-m-d H:i" }}</div></td>
+                        <td><a href="{{ timeline.id }}/edit/" class="btn btn-default">Edit</a></td>
+                    </tr>
                 {% endfor %}
-            </div>
-            <button type="submit" class="btn btn-success">Add to sketch</button>
-        </form>
-        {% else %}
-        There are no available timelines to add
-        {% endif %}
-    </div>
-</body>
+                </tbody>
+            </table>
+            <a href="add/" class="btn btn-default">+ Add timeline</a>
+        </div>
+    {% else %}
+        <div class="card">
+            <a href="add/" class="btn btn-default">+ Add timeline</a>
+        </div>
+    {% endif %}
+    </body>
 {% endblock %}

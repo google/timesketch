@@ -34,7 +34,7 @@ def home(request):
     public_sketches = Sketch.objects.filter(acl_public=True).exclude(
         owner=request.user)
     context = {"my_sketches": my_sketches, "public_sketches": public_sketches}
-    return render(request, 'timesketch/home.html', context)
+    return render(request, 'home.html', context)
 
 
 @login_required
@@ -46,7 +46,7 @@ def sketch(request, sketch_id):
     saved_views = SavedView.objects.filter(sketch=sketch).exclude(
         name="").order_by("created")
     context = {"sketch": sketch, "views": saved_views}
-    return render(request, 'timesketch/sketch.html', context)
+    return render(request, 'sketch.html', context)
 
 
 @login_required
@@ -59,7 +59,7 @@ def new_sketch(request):
                                                     description=description,
                                                     owner=request.user)
         return redirect("/sketch/%s/" % obj.id)
-    return render(request, 'timesketch/new_sketch.html', {})
+    return render(request, 'new_sketch.html', {})
 
 
 @login_required
@@ -82,7 +82,7 @@ def add_timeline(request, sketch_id):
         if not timeline in [x.timeline for x in sketch.timelines.all()]:
             if timeline.can_access(request.user):
                 timelines.add(timeline)
-    return render(request, 'timesketch/add_timeline.html', {'sketch': sketch,
+    return render(request, 'add_timeline.html', {'sketch': sketch,
                                                             'timelines': timelines})
 
 
@@ -93,7 +93,7 @@ def saved_views(request, sketch_id):
     views = SavedView.objects.filter(sketch=sketch).exclude(
         name="").order_by("created")
     context = {"sketch": sketch, "views": views}
-    return render(request, 'timesketch/saved_views.html', context)
+    return render(request, 'saved_views.html', context)
 
 
 @login_required
@@ -102,7 +102,7 @@ def timelines(request, sketch_id):
     sketch = Sketch.objects.get(id=sketch_id)
     timelines = Timeline.objects.all()
     context = {"sketch": sketch, "timelines": timelines}
-    return render(request, 'timesketch/timelines.html', context)
+    return render(request, 'timelines.html', context)
 
 
 @login_required
@@ -113,20 +113,20 @@ def explore(request, sketch_id):
     timelines = [t.timeline.datastore_index for t in sketch.timelines.all()]
     timelines = ",".join(timelines)
     context = {"timelines": timelines, "sketch": sketch, "view": view}
-    return render(request, 'timesketch/explore.html', context)
+    return render(request, 'explore.html', context)
 
 
 @login_required
 def event(request, index_id, event_id):
     """Renders the event page. This is used for ng-include in the tamplates."""
     context = {"index_id": index_id, "event_id": event_id}
-    return render(request, 'timesketch/event.html', context)
+    return render(request, 'event.html', context)
 
 
 @login_required
 def user_profile(request):
     """Profile for the user."""
-    return render(request, 'timesketch/profile.html', {})
+    return render(request, 'profile.html', {})
 
 @login_required
 def edit_timeline(request, sketch_id, timeline_id):
@@ -139,7 +139,7 @@ def edit_timeline(request, sketch_id, timeline_id):
             timeline.color = color_in_hex
             timeline.save()
         return redirect('/sketch/%s/timelines/' % sketch.id)
-    return render(request, 'timesketch/edit_timeline.html', {'sketch': sketch,
+    return render(request, 'edit_timeline.html', {'sketch': sketch,
                                                              'timeline': timeline})
 
 
@@ -154,4 +154,4 @@ def search_sketches(request):
                                            Q(description__icontains=q),
                                            Q(owner=request.user) |
                                            Q(acl_public=True) )
-    return render(request, 'timesketch/search.html', {'result':result})
+    return render(request, 'search.html', {'result':result})

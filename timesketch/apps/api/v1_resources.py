@@ -29,7 +29,7 @@ from timesketch.apps.sketch.models import EventComment
 from timesketch.apps.sketch.models import SavedView
 from timesketch.apps.sketch.models import Timeline
 from timesketch.apps.sketch.models import SketchTimeline
-from timesketch.apps.sketch.models import UserProfile
+from timesketch.apps.userprofile.models import UserProfile
 
 # Set the type of datastore.
 DATASTORE = elasticsearch_datastore.ElasticSearchDataStore

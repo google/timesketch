@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-{% extends "timesketch/sketch_base.html" %}
+{% extends "sketch_base.html" %}
 {% load staticfiles %}
 
 {% block navigation %}
@@ -23,7 +23,7 @@ limitations under the License.
         <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-th-large"></i> Activity</li> -->
         <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
         <a href="/sketch/{{ sketch.id }}/saved_views/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li></a>
-        <li class="leftnav  leftnav-active"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li>
+        <a href="/sketch/{{ sketch.id }}/timelines/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li></a>
         <!--
         <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li>
         <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li>
@@ -34,34 +34,17 @@ limitations under the License.
 {% endblock %}
 
 {% block body %}
-    <body ng-controller="SketchCtrl" ng-init="init('{{ sketch.id }}')">
-    {% if sketch.timelines.all %}
+    <body>
         <div class="card">
-            <table class="table table-hover">
-                <thead>
-                <tr>
-                    <th width="74px"></th>
-                    <th>Timeline</th>
-                    <th width="150px">Created</th>
-                    <th width="70px"></th>
-                </tr>
-                <tbody>
-                {% for timeline in sketch.timelines.all %}
-                    <tr>
-                        <td><div class="color-box" style="background: #{{ timeline.color }};{% ifequal timeline.color "ffffff" %}border:1px solid #d1d1d1;{% endifequal %}"></div></td>
-                        <td><div style="margin-top:5px;">{{ timeline.timeline.title }}</div></td>
-                        <td><div style="margin-top:5px;">{{ timeline.timeline.created|date:"Y-m-d H:i" }}</div></td>
-                        <td><a href="{{ timeline.id }}/edit/" class="btn btn-default">Edit</a></td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-            <a href="add/" class="btn btn-default">+ Add timeline</a>
+
+        <form role="form" method="post" action="/sketch/{{ sketch.id }}/timelines/{{ timeline.id }}/edit/"> {% csrf_token %}
+            <div class="form-group">
+                <input colorpicker colorpicker-with-input="true" class="form-control" style="width:100px;" name="color" type="text" ng-model="your_model" placeholder="{{ timeline.color }}" />
+            </div>
+            <button type="submit" class="btn btn-default">Save</button>
+        </form>
+
+
         </div>
-    {% else %}
-        <div class="card">
-            <a href="add/" class="btn btn-default">+ Add timeline</a>
-        </div>
-    {% endif %}
     </body>
 {% endblock %}

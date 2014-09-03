@@ -14,48 +14,48 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-{% extends "timesketch/sketch_base.html" %}
+{% extends "base.html" %}
 {% load staticfiles %}
+
+{% block header %}
+    <span class="pull-left" style="margin-left:220px;padding-top:12px;font-size: 25px">{{ sketch.title }}</span>
+{% endblock %}
 
 {% block navigation %}
     <ul class="leftnav">
         <a href="/sketch/{{ sketch.id }}/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li></a>
         <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-th-large"></i> Activity</li> -->
         <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
-        <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li>
+        <a href="/sketch/{{ sketch.id }}/saved_views/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li></a>
         <a href="/sketch/{{ sketch.id }}/timelines/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li></a>
         <!--
         <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li>
         <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li>
         -->
         <a href="https://github.com/google/timesketch/issues/new" target="newpage"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-bug"></i> Report bug</li></a>
+
     </ul>
 {% endblock %}
 
 {% block body %}
-    <body>
+<body>
     <div class="card">
-        {% if views %}
-            <table class="table table-hover">
-                <thead>
-                <tr>
-                    <th>View</th>
-                    <th>Created by</th>
-                    <th width="150px">Created</th>
-                </tr>
-                <tbody>
-                {% for view in views %}
-                    <tr>
-                        <td><a href="/sketch/{{ sketch.id }}/explore/?view={{ view.id }}">{{ view.name }}</a></td>
-                        <td>{{ view.user.get_full_name }}</td>
-                        <td>{{ view.updated|date:"Y-m-d H:i" }}</td>
-                    </tr>
+        {% if timelines %}
+        <h4>Add timeline</h4>
+        <br>
+        <form role="form" method="post" action="/sketch/{{ sketch.id }}/timelines/add/"> {% csrf_token %}
+            <div class="form-group">
+                {% for timeline in timelines %}
+                    <input type="checkbox" name="timelines" value="{{ timeline.id }}">
+                    {{ timeline }}
+                    <br>
                 {% endfor %}
-                </tbody>
-            </table>
+            </div>
+            <button type="submit" class="btn btn-success">Add to sketch</button>
+        </form>
         {% else %}
-            No saved views
+        There are no available timelines to add
         {% endif %}
     </div>
-    </body>
+</body>
 {% endblock %}

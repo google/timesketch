@@ -16,11 +16,7 @@
 from django.db import models
 from django.contrib import admin
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
-from django.conf import settings
 import random
-import os
-from PIL import Image
 
 
 class Sketch(models.Model):
@@ -142,46 +138,6 @@ class Collaborator(models.Model):
         return '%s' % self.user.username
 
 
-class UserProfile(models.Model):
-    user = models.OneToOneField(User)
-    avatar = models.ImageField(upload_to="avatars", null=True)
-
-    def resize_avatar(self):
-        if self.avatar:
-            filename = self.avatar.path
-            image = Image.open(filename)
-            image.thumbnail((50, 50), Image.ANTIALIAS)
-            image.save(filename)
-
-    def get_avatar_url(self):
-        """
-        Return avatar URL to use in templates.
-        """
-        if not self.avatar:
-            return settings.STATIC_URL + "img/avatar_unknown.jpg"
-        image = os.path.basename(self.avatar.url)
-        #if image == "avatar_unknown.jpg":
-        #    return settings.STATIC_URL + "img/avatar_unknown.jpg"
-        return settings.MEDIA_URL + "avatars/" + image
-
-    def __unicode__(self):
-        return '%s' % self.user.username
-
-
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        user_profile = UserProfile.objects.create(user=instance)
-        user_profile.save()
-
-
-def update_user_profile(sender, instance, created, **kwargs):
-    if not created:
-        instance.resize_avatar()
-
-
-post_save.connect(create_user_profile, sender=User)
-post_save.connect(update_user_profile, sender=UserProfile)
-
 # Register the models so the admin interface can use them.
 admin.site.register(Sketch)
 admin.site.register(SketchTimeline)
@@ -189,4 +145,3 @@ admin.site.register(Timeline)
 admin.site.register(EventComment)
 admin.site.register(Collaborator)
 admin.site.register(SavedView)
-admin.site.register(UserProfile)
