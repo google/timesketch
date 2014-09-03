@@ -13,16 +13,18 @@
 # limitations under the License.
 """This module implements timesketch Django views."""
 
+import re
+
 from django.shortcuts import render
 from django.shortcuts import redirect
 from django.http import HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from timesketch.models import Sketch
-from timesketch.models import SketchTimeline
-from timesketch.models import Timeline
-from timesketch.models import SavedView
-import re
+
+from timesketch.apps.sketch.models import Sketch
+from timesketch.apps.sketch.models import SketchTimeline
+from timesketch.apps.sketch.models import Timeline
+from timesketch.apps.sketch.models import SavedView
 
 
 @login_required

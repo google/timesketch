@@ -13,17 +13,16 @@
 # limitations under the License.
 """Add Plaso timeline to timesketch"""
 
-from pyelasticsearch import ElasticSearch
 import os
 import sys
 
+from pyelasticsearch import ElasticSearch
+
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "timesketch.settings")
-from django.conf import settings
 from django.contrib.auth.models import User
 
-from timesketch.models import Sketch
-from timesketch.models import Timeline
-from timesketch.models import SketchTimeline
+from timesketch.apps.sketch.models import Timeline
 
 
 user = User.objects.get(id=2)

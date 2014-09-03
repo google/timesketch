@@ -17,8 +17,10 @@ from django.conf.urls import patterns, include, url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf import settings
 from tastypie.api import Api
-from timesketch.api import v1_resources
 from django.conf.urls.static import static
+
+from timesketch.apps.api import v1_resources
+
 
 v1_api = Api(api_name='v1')
 v1_api.register(v1_resources.SearchResource())
@@ -40,18 +42,21 @@ urlpatterns = patterns(
     url(r'^admin/', include(admin.site.urls)),
 
     # Views
-    url(r'^$', 'timesketch.views.home'),
-    url(r'^search/$', 'timesketch.views.search_sketches'),
-    url(r'^sketch/new/$', 'timesketch.views.new_sketch'),
-    url(r'^sketch/(\w+)/$', 'timesketch.views.sketch'),
-    url(r'^sketch/(\w+)/saved_views/$', 'timesketch.views.saved_views'),
-    url(r'^sketch/(\w+)/timelines/$', 'timesketch.views.timelines'),
-    url(r'^sketch/(\w+)/timelines/add/$', 'timesketch.views.add_timeline'),
-    url(r'^sketch/(\w+)/timelines/(\w+)/edit/$', 'timesketch.views.edit_timeline'),
-    url(r'^sketch/(\w+)/explore/$', 'timesketch.views.explore'),
+    url(r'^$', 'timesketch.apps.sketch.views.home'),
+    url(r'^search/$', 'timesketch.apps.sketch.views.search_sketches'),
+    url(r'^sketch/new/$', 'timesketch.apps.sketch.views.new_sketch'),
+    url(r'^sketch/(\w+)/$', 'timesketch.apps.sketch.views.sketch'),
+    url(r'^sketch/(\w+)/saved_views/$',
+        'timesketch.apps.sketch.views.saved_views'),
+    url(r'^sketch/(\w+)/timelines/$', 'timesketch.apps.sketch.views.timelines'),
+    url(r'^sketch/(\w+)/timelines/add/$',
+        'timesketch.apps.sketch.views.add_timeline'),
+    url(r'^sketch/(\w+)/timelines/(\w+)/edit/$',
+        'timesketch.apps.sketch.views.edit_timeline'),
+    url(r'^sketch/(\w+)/explore/$', 'timesketch.apps.sketch.views.explore'),
     url(r'^sketch/(\w+)/explore/event/([a-zA-Z0-9_-]{22})/$',
-        'timesketch.views.event'),
-    url(r'^user/profile/$', 'timesketch.views.user_profile'),
+        'timesketch.apps.sketch.views.event'),
+    url(r'^user/profile/$', 'timesketch.apps.sketch.views.user_profile'),
 
     # API
     (r'^api/', include(v1_api.urls)),

@@ -16,22 +16,20 @@
 import json
 
 from django.contrib.auth.models import User
-
 from tastypie.resources import Resource
 from tastypie.resources import ModelResource
 from tastypie.authorization import Authorization
 from tastypie.authentication import SessionAuthentication
 from tastypie import fields, utils
-
-from timesketch.lib.datastores import elasticsearch_datastore
 from pyelasticsearch.exceptions import ElasticHttpNotFoundError
 
-from timesketch.models import Sketch
-from timesketch.models import EventComment
-from timesketch.models import SavedView
-from timesketch.models import Timeline
-from timesketch.models import SketchTimeline
-from timesketch.models import UserProfile
+from timesketch.lib.datastores import elasticsearch_datastore
+from timesketch.apps.sketch.models import Sketch
+from timesketch.apps.sketch.models import EventComment
+from timesketch.apps.sketch.models import SavedView
+from timesketch.apps.sketch.models import Timeline
+from timesketch.apps.sketch.models import SketchTimeline
+from timesketch.apps.sketch.models import UserProfile
 
 # Set the type of datastore.
 DATASTORE = elasticsearch_datastore.ElasticSearchDataStore

@@ -17,10 +17,10 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from django.db.models.query import QuerySet
 
-from timesketch.models import Sketch
-from timesketch.models import SavedView
-from timesketch.models import Timeline
-from timesketch.models import SketchTimeline
+from timesketch.apps.sketch.models import Sketch
+from timesketch.apps.sketch.models import SavedView
+from timesketch.apps.sketch.models import Timeline
+from timesketch.apps.sketch.models import SketchTimeline
 
 
 class ModelSketchTest(TestCase):
