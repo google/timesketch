@@ -23,7 +23,7 @@ from PIL import Image
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User)
-    avatar = models.ImageField(upload_to="avatars", null=True)
+    avatar = models.ImageField(upload_to="avatars", null=True, blank=True)
 
     def resize_avatar(self):
         if self.avatar:
