@@ -22,8 +22,6 @@ import random
 class Sketch(models.Model):
     """Database model for a Sketch"""
     owner = models.ForeignKey(User)
-    collaborators = models.ManyToManyField("Collaborator", blank=True,
-                                           null=True)
     acl_public = models.BooleanField(default=False)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -54,8 +52,6 @@ class Sketch(models.Model):
 class Timeline(models.Model):
     """Database model for a timeline."""
     owner = models.ForeignKey(User)
-    collaborators = models.ManyToManyField("Collaborator", blank=True,
-                                           null=True)
     acl_public = models.BooleanField(default=False)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -123,19 +119,8 @@ class SavedView(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
-        return '%s %s %s %s' % (self.created, self.user, self.sketch, 
-            self.name)
-
-
-class Collaborator(models.Model):
-    """Database model for a collaborator."""
-    user = models.ForeignKey(User)
-    can_edit = models.BooleanField(default=True)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __unicode__(self):
-        return '%s' % self.user.username
+        return '%s %s %s %s' % (self.created, self.user, self.sketch,
+                                self.name)
 
 
 # Register the models so the admin interface can use them.
@@ -143,5 +128,4 @@ admin.site.register(Sketch)
 admin.site.register(SketchTimeline)
 admin.site.register(Timeline)
 admin.site.register(EventComment)
-admin.site.register(Collaborator)
 admin.site.register(SavedView)
