@@ -43,4 +43,6 @@ mapping = {
 }
 
 es.put_mapping(index, "plaso_event", mapping)
-timeline = Timeline.objects.create(owner=user, acl_public=True, title=name, description=name, datastore_index=index)
+timeline = Timeline.objects.create(owner=user, title=name, description=name,
+                                   datastore_index=index)
+timeline.make_public()

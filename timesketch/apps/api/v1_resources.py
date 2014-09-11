@@ -327,11 +327,10 @@ class SketchAclResource(ModelResource):
     def obj_create(self, bundle, **kwargs):
         req_data = json.loads(bundle.request.body)['data']
         sketch = Sketch.objects.get(id=req_data['sketch'])
-        new_acl = False
         if req_data['sketch_acl'] == "public":
-            new_acl = True
-        sketch.acl_public = new_acl
-        sketch.save()
+            sketch.make_public(bundle.request.user)
+        else:
+            sketch.make_private(bundle.request.user)
         return bundle
 
 

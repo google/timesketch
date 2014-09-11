@@ -31,8 +31,10 @@ from timesketch.apps.sketch.models import SavedView
 def home(request):
     """Renders the available sketches for the user."""
     my_sketches = Sketch.objects.filter(owner=request.user).order_by("-created")
-    public_sketches = Sketch.objects.filter(acl_public=True).exclude(
-        owner=request.user)
+    public_sketches = set()
+    for sketch in Sketch.objects.all().exclude(owner=request.user):
+        if sketch.is_public():
+            public_sketches.add(sketch)
     context = {"my_sketches": my_sketches, "public_sketches": public_sketches}
     return render(request, 'home.html', context)
 
@@ -41,7 +43,7 @@ def home(request):
 def sketch(request, sketch_id):
     """Renders specific sketch."""  
     sketch = Sketch.objects.get(id=sketch_id)
-    if not sketch.can_access(request.user):
+    if not sketch.can_read(request.user):
         return HttpResponseForbidden()
     saved_views = SavedView.objects.filter(sketch=sketch).exclude(
         name="").order_by("created")
@@ -78,12 +80,12 @@ def add_timeline(request, sketch_id):
                 sketch.save()
         return redirect("/sketch/%s/timelines/" % sketch.id)
     timelines = set()
-    for timeline in Timeline.objects.filter(Q(owner=request.user) | Q(acl_public=True)):
+    for timeline in Timeline.objects.all():
         if not timeline in [x.timeline for x in sketch.timelines.all()]:
-            if timeline.can_access(request.user):
+            if timeline.can_read(request.user):
                 timelines.add(timeline)
     return render(request, 'add_timeline.html', {'sketch': sketch,
-                                                            'timelines': timelines})
+                                                 'timelines': timelines})
 
 
 @login_required
@@ -150,8 +152,8 @@ def search_sketches(request):
     if request.method == 'POST':
         q = request.POST['search']
         if q:
-            result = Sketch.objects.filter(Q(title__icontains=q) |
-                                           Q(description__icontains=q),
-                                           Q(owner=request.user) |
-                                           Q(acl_public=True) )
+            for sketch in Sketch.objects.filter(Q(title__icontains=q) |
+                                                Q(description__icontains=q)):
+                if sketch.can_read(request.user):
+                    result.add(sketch)
     return render(request, 'search.html', {'result':result})

@@ -32,10 +32,10 @@ class ModelSketchTest(TestCase):
                                  filter="")
 
     def test_get_named_views(self):
-        self.assertIsInstance(self.sketch1.get_named_views(), QuerySet)
-        self.assertIsInstance(self.sketch2.get_named_views(), QuerySet)
-        self.assertEqual(self.sketch1.get_named_views().count(), 0)
-        self.assertEqual(self.sketch2.get_named_views().count(), 1)
+        self.assertIsInstance(self.sketch1.savedview_set.all(), QuerySet)
+        self.assertIsInstance(self.sketch2.savedview_set.all(), QuerySet)
+        self.assertEqual(self.sketch1.savedview_set.all().count(), 0)
+        self.assertEqual(self.sketch2.savedview_set.all().count(), 1)
 
 
 class ModelSketchTimelineTest(TestCase):

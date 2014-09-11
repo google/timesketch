@@ -57,14 +57,14 @@ limitations under the License.
                         <form>
                             <div class="radio">
                                 <label>
-                                    <input type="radio" ng-model="sketch_acl" value="public" {% if sketch.acl_public %}ng-checked="true"{% endif %}>
+                                    <input type="radio" ng-model="sketch_acl" value="public" {% if sketch.is_public %}ng-checked="true"{% endif %}>
                                     <i class="glyphicon glyphicon-globe" style="margin-left: 10px;margin-right: 5px;"></i>
                                     Public -  All users of the system can access this sketch
                                 </label>
                             </div>
                             <div class="radio">
                                 <label>
-                                    <input type="radio" ng-model="sketch_acl" value="private" {% if not sketch.acl_public %}ng-checked="true"{% endif %}>
+                                    <input type="radio" ng-model="sketch_acl" value="private" {% if not sketch.is_public %}ng-checked="true"{% endif %}>
                                     <i class="glyphicon glyphicon-lock" style="margin-left: 10px;margin-right: 5px;"></i>
                                     Private - Only people explicitly granted permission can access this sketch
                                 </label>
