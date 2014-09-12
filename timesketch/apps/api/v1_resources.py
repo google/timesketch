@@ -112,8 +112,6 @@ class SearchResource(Resource):
 
     def __init__(self):
         self.query_result = {}
-        self.timeline_colors = {}
-        self.timeline_names = {}
         super(SearchResource, self).__init__()
 
     class Meta:
@@ -142,19 +140,27 @@ class SearchResource(Resource):
             event["_source"]["sketch"] = str(sketch.id)
             result.append(DatastoreObject(initial=event))
         # Save state to an unnamed view
-        SavedView.objects.create(user=bundle.request.user, sketch=sketch, 
-            query=query, filter=json.dumps(query_filter), name="")
+        SavedView.objects.create(user=bundle.request.user, sketch=sketch,
+                                 query=query, filter=json.dumps(query_filter),
+                                 name="")
         return result
 
     def alter_list_data_to_serialize(self, request, data):
+        timeline_colors = {}
+        timeline_names = {}
+        sketch = Sketch.objects.get(id=bundle.request.GET['sketch'])
+        for t in sketch.timelines.all():
+            timeline_colors[t.timeline.datastore_index] = t.color
+            timeline_names[t.timeline.datastore_index] = t.timeline.title
+
         try:
             data['meta']['es_time'] = self.query_result['took']
             data['meta']['es_total_count'] = self.query_result['hits']['total']
         except KeyError:
             data['meta']['es_time'] = 0
             data['meta']['es_total_count'] = 0
-        data['meta']['timeline_colors'] = self.timeline_colors
-        data['meta']['timeline_names'] = self.timeline_names
+        data['meta']['timeline_colors'] = timeline_colors
+        data['meta']['timeline_names'] = timeline_names
         return data
 
 
