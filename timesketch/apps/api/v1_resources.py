@@ -125,9 +125,6 @@ class SearchResource(Resource):
         query_filter = json.loads(bundle.request.GET['filter'])
         indexes_to_search = query_filter.get("indexes")
         sketch = Sketch.objects.get(id=bundle.request.GET['sketch'])
-        for t in sketch.timelines.all():
-            self.timeline_colors[t.timeline.datastore_index] = t.color
-            self.timeline_names[t.timeline.datastore_index] = t.timeline.title
         datastore = DATASTORE(indexes_to_search)
         result = []
         try:
@@ -148,11 +145,10 @@ class SearchResource(Resource):
     def alter_list_data_to_serialize(self, request, data):
         timeline_colors = {}
         timeline_names = {}
-        sketch = Sketch.objects.get(id=bundle.request.GET['sketch'])
+        sketch = Sketch.objects.get(id=request.GET['sketch'])
         for t in sketch.timelines.all():
             timeline_colors[t.timeline.datastore_index] = t.color
             timeline_names[t.timeline.datastore_index] = t.timeline.title
-
         try:
             data['meta']['es_time'] = self.query_result['took']
             data['meta']['es_total_count'] = self.query_result['hits']['total']
@@ -166,8 +162,8 @@ class SearchResource(Resource):
 
 class EventResource(Resource):
     """Get all details for an event."""
-    es_index =  fields.CharField(attribute='es_index')
-    es_id =     fields.CharField(attribute='es_id')
+    es_index = fields.CharField(attribute='es_index')
+    es_id = fields.CharField(attribute='es_id')
     label = fields.CharField(attribute='label', null=True)
     timestamp = fields.IntegerField(attribute='timestamp')
     timestamp_desc = fields.CharField(attribute='timestamp_desc')
