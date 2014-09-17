@@ -24,6 +24,7 @@ import random
 
 class Sketch(models.Model):
     """Database model for a Sketch."""
+    # ToDo (jbn) Create base class or mixin to make this cleaner
     owner = models.ForeignKey(User)
     acl = GenericRelation('AccessControlEntry')
     title = models.CharField(max_length=255)
@@ -84,6 +85,7 @@ class Sketch(models.Model):
 
 class Timeline(models.Model):
     """Database model for a timeline."""
+    # ToDo (jbn) Create base class or mixin to make this cleaner
     owner = models.ForeignKey(User)
     acl = GenericRelation('AccessControlEntry')
     title = models.CharField(max_length=255)
