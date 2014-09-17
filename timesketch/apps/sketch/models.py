@@ -14,21 +14,21 @@
 """This module implements timesketch Django database models."""
 
 from django.db import models
-from django.contrib.auth.models import User
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.generic import GenericRelation
 from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.models import User
 import random
 
 
 class Sketch(models.Model):
-    """Database model for a Sketch"""
+    """Database model for a Sketch."""
     owner = models.ForeignKey(User)
     acl = GenericRelation('AccessControlEntry')
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    timelines = models.ManyToManyField("SketchTimeline", blank=True)
+    timelines = models.ManyToManyField('SketchTimeline', blank=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -36,7 +36,7 @@ class Sketch(models.Model):
         """Determine if this sketch is readable to anyone.
 
         Returns:
-            True or False
+            True if the sketch is readable by anyone, False otherwise.
         """
         return ace_is_public(self)
 
@@ -52,7 +52,7 @@ class Sketch(models.Model):
         """Make the sketch private.
 
         Args:
-            user. django.contrib.auth.models.User object
+            user. user object (instance of django.contrib.auth.models.User)
         """
         ace_make_private(self, user)
 
@@ -60,13 +60,13 @@ class Sketch(models.Model):
         """Determine if user can access this sketch.
 
         Args:
-            user. django.contrib.auth.models.User object
+            user. user object (instance of django.contrib.auth.models.User)
         Returns:
-            True or False
+            Boolean value to indicate if the sketch is readable to user.
         """
         return ace_can_read(self, user)
 
-    def collaborators(self):
+    def get_collaborators(self):
         """Function to get all users that has rw access to this sketch.
 
         Returns:
@@ -96,7 +96,7 @@ class Timeline(models.Model):
         """Determine if this timeline is readable to anyone.
 
         Returns:
-            True or False
+            Boolean value to indicate if the timeline is readable by everyone.
         """
         return ace_is_public(self)
 
@@ -104,7 +104,7 @@ class Timeline(models.Model):
         """Make the timeline public.
 
         Args:
-            user. django.contrib.auth.models.User object
+            user. user object (instance of django.contrib.auth.models.User)
         """
         ace_make_public(self, user)
 
@@ -112,7 +112,7 @@ class Timeline(models.Model):
         """Make the timeline private.
 
         Args:
-            user. django.contrib.auth.models.User object
+            user. user object (instance of django.contrib.auth.models.User)
         """
         ace_make_private(self, user)
 
@@ -120,9 +120,9 @@ class Timeline(models.Model):
         """Determine if user can access this timeline.
 
         Args:
-            user. django.contrib.auth.models.User object
+            user. user object (instance of django.contrib.auth.models.User)
         Returns:
-            True or False
+            Boolean value to indicate if the timeline is readable by user.
         """
         return ace_can_read(self, user)
 
@@ -144,9 +144,9 @@ class SketchTimeline(models.Model):
         """Picks a random color used when creating a SketchTimeline.
 
         Returns:
-            String
+            String. HEX color as string
         """
-        colors = ["ECEEE1", "A8DACF", "F0D697", "D8D692", "F2B7DC", "9798DE"]
+        colors = ['ECEEE1', 'A8DACF', 'F0D697', 'D8D692', 'F2B7DC', '9798DE']
         return random.choice(colors)
 
     def __unicode__(self):
@@ -202,78 +202,78 @@ class AccessControlEntry(models.Model):
                                         self.content_object)
 
 
-def ace_is_public(obj):
+def ace_is_public(object):
     """Function to determine if the ACL is open to everyone for the specific
     object.
 
     Args:
-        obj. django.db model object
+        object. django.db model object
     Returns:
-        True or False
+        Boolean value to indicate if the object is readable by everyone.
     """
     # ACE without any user is used as the public ACE.
     try:
-        obj.acl.get(user=None, permission_read=True)
+        object.acl.get(user=None, permission_read=True)
         return True
     except ObjectDoesNotExist:
         return False
 
 
-def ace_make_public(obj, user):
+def ace_make_public(object, user):
     """Function to make object public.
 
     Args:
-        obj. django.db model object
-        user. django.contrib.auth.models.User object
+        object. django.db model object
+        user. user object (instance of django.contrib.auth.models.User)
     """
     # First see if the user is allowed to make this change.
-    if not ace_can_write(obj, user):
+    if not ace_can_write(object, user):
         return
     try:
-        ace = obj.acl.get(user=None)
+        ace = object.acl.get(user=None)
         if not ace.read:
             ace.permission_read = True
             ace.save()
     except ObjectDoesNotExist:
-        obj.acl.create(user=None, permission_read=True)
+        object.acl.create(user=None, permission_read=True)
 
 
-def ace_make_private(obj, user):
+def ace_make_private(object, user):
     """Function to make object private.
 
     Args:
-        obj. django.db model object
-        user. django.contrib.auth.models.User object
+        object. django.db model object
+        user. user object (instance of django.contrib.auth.models.User)
     """
     # First see if the user is allowed to make this change.
-    if not ace_can_write(obj, user):
+    if not ace_can_write(object, user):
         return
     try:
-        ace = obj.acl.get(user=None)
+        ace = object.acl.get(user=None)
         ace.delete()
     except ObjectDoesNotExist:
         pass
 
 
-def ace_can_read(obj, user):
+def ace_can_read(object, user):
     """Function to determine if the user have read access to the specific object.
 
     Args:
-        obj. django.db model object
-        user. django.contrib.auth.models.User object
+        object. django.db model object
+        user. user object (instance of django.contrib.auth.models.User)
     Returns:
-        True or False
+        Boolean value to indicate if the object is readable by user.
     """
     # Is the objects owner is same as user or the object is public then access
     # is granted.
-    if obj.owner == user:
+    if object.owner == user:
         return True
-    if ace_is_public(obj):
+    if ace_is_public(object):
         return True
     # Private object. If we have a ACE for the user on this object and that ACE
     # has read rights. If so, then access is granted.
     try:
-        ace = obj.acl.get(user=user)
+        ace = object.acl.get(user=user)
     except ObjectDoesNotExist:
         return False
     if ace.permission_read:
@@ -281,23 +281,23 @@ def ace_can_read(obj, user):
     return False
 
 
-def ace_can_write(obj, user):
+def ace_can_write(object, user):
     """Function to determine if the user have write access to the object.
 
     Args:
-        obj. django.db model object
-        user. django.contrib.auth.models.User object
+        object. django.db model object
+        user. user object (instance of django.contrib.auth.models.User)
     Returns:
-        True or False
+        Boolean value to indicate if the object is writable by user.
     """
     # Is the objects owner is same as user or the object is public then write
     # access is granted.
-    if obj.owner == user:
+    if object.owner == user:
         return True
     # Private object. If we have a ACE for the user on this object and that ACE
     # has write rights. If so, then access is granted.
     try:
-        obj.acl.get(user=user, permission_write=True)
+        object.acl.get(user=user, permission_write=True)
         return True
     except ObjectDoesNotExist:
         return False

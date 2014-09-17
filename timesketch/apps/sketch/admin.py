@@ -13,12 +13,12 @@
 # limitations under the License.
 
 from django.contrib import admin
+from timesketch.apps.sketch.models import AccessControlEntry
+from timesketch.apps.sketch.models import EventComment
+from timesketch.apps.sketch.models import SavedView
 from timesketch.apps.sketch.models import Sketch
 from timesketch.apps.sketch.models import SketchTimeline
 from timesketch.apps.sketch.models import Timeline
-from timesketch.apps.sketch.models import EventComment
-from timesketch.apps.sketch.models import SavedView
-from timesketch.apps.sketch.models import AccessControlEntry
 
 
 # Register your models here.
