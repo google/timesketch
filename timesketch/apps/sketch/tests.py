@@ -25,26 +25,53 @@ from timesketch.apps.sketch.models import SketchTimeline
 
 class ModelSketchTest(TestCase):
     def setUp(self):
-        _user = User.objects.create(username="testuser")
-        self.sketch1 = Sketch.objects.create(owner=_user, title="testsketch1")
-        self.sketch2 = Sketch.objects.create(owner=_user, title="testsketch2")
-        SavedView.objects.create(user=_user, sketch=self.sketch2, query="",
+        self.user1 = User.objects.create(username="testuser1")
+        self.user2 = User.objects.create(username="testuser2")
+        self.sketch1 = Sketch.objects.create(owner=self.user1, title="testsketch1")
+        self.sketch2 = Sketch.objects.create(owner=self.user1, title="testsketch2")
+        SavedView.objects.create(user=self.user1, sketch=self.sketch2, query="",
                                  filter="")
+        self.sketch1.make_public(self.user1)
+        self.sketch2.make_private(self.user1)
 
     def test_get_named_views(self):
         self.assertIsInstance(self.sketch1.savedview_set.all(), QuerySet)
-        self.assertIsInstance(self.sketch2.savedview_set.all(), QuerySet)
         self.assertEqual(self.sketch1.savedview_set.all().count(), 0)
+
+        self.assertIsInstance(self.sketch2.savedview_set.all(), QuerySet)
         self.assertEqual(self.sketch2.savedview_set.all().count(), 1)
+
+    def test_ace(self):
+        self.assertEqual(self.sketch1.is_public(), True)
+        self.assertEqual(self.sketch1.can_read(self.user1), True)
+        self.assertEqual(self.sketch2.is_public(), False)
+        self.assertEqual(self.sketch2.can_read(self.user1), True)
+        self.assertIsInstance(self.sketch1.get_collaborators(), set)
+
+
+class ModelTimelineTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(username="testuser1")
+        self.timeline1 = Timeline.objects.create(owner=self.user, title="test1",
+                                                 datastore_index="1")
+        self.timeline2 = Timeline.objects.create(owner=self.user, title="test2",
+                                                 datastore_index="2")
+        self.timeline1.make_public(self.user)
+        self.timeline2.make_private(self.user)
+
+    def test_ace(self):
+        self.assertEqual(self.timeline1.is_public(), True)
+        self.assertEqual(self.timeline2.is_public(), False)
+        self.assertEqual(self.timeline1.can_read(self.user), True)
 
 
 class ModelSketchTimelineTest(TestCase):
     def setUp(self):
-        _user = User.objects.create(username="testuser")
-        _timeline = Timeline.objects.create(owner=_user, title="test",
-                                            datastore_index="123456")
-        self.timeline = SketchTimeline.objects.create(timeline=_timeline)
+        self.user = User.objects.create(username="testuser")
+        self.timeline = Timeline.objects.create(owner=self.user, title="test",
+                                                datastore_index="123456")
+        self.sketch_timeline = SketchTimeline.objects.create(timeline=self.timeline)
 
     def test_generate_color(self):
-        self.assertIsInstance(self.timeline.generate_color(), str)
-        self.assertEqual(len(self.timeline.generate_color()), 6)
+        self.assertIsInstance(self.sketch_timeline.generate_color(), str)
+        self.assertEqual(len(self.sketch_timeline.generate_color()), 6)

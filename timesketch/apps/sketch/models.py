@@ -22,50 +22,96 @@ from django.contrib.auth.models import User
 import random
 
 
-class Sketch(models.Model):
-    """Database model for a Sketch."""
-    # ToDo (jbn) Create base class or mixin to make this cleaner
-    owner = models.ForeignKey(User)
-    acl = GenericRelation('AccessControlEntry')
-    title = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-    timelines = models.ManyToManyField('SketchTimeline', blank=True)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
+class AceMixin(object):
     def is_public(self):
-        """Determine if this sketch is readable to anyone.
+        """Function to determine if the ACL is open to everyone for the
+        specific object.
 
         Returns:
-            True if the sketch is readable by anyone, False otherwise.
+            Boolean value to indicate if the object is readable by everyone.
         """
-        return ace_is_public(self)
+        try:
+            self.acl.get(user=None, permission_read=True)
+            return True
+        except ObjectDoesNotExist:
+            return False
 
     def make_public(self, user):
-        """Make the sketch public.
-
-        Args:
-            user. django.contrib.auth.models.User object
-        """
-        ace_make_public(self, user)
-
-    def make_private(self, user):
-        """Make the sketch private.
+        """Function to make object public.
 
         Args:
             user. user object (instance of django.contrib.auth.models.User)
         """
-        ace_make_private(self, user)
+        # First see if the user is allowed to make this change.
+        if not self.can_write(user):
+            return
+        try:
+            ace = self.acl.get(user=None)
+            if not ace.read:
+                ace.permission_read = True
+                ace.save()
+        except ObjectDoesNotExist:
+            self.acl.create(user=None, permission_read=True)
+
+    def make_private(self, user):
+        """Function to make object private.
+
+        Args:
+            user. user object (instance of django.contrib.auth.models.User)
+        """
+        # First see if the user is allowed to make this change.
+        if not self.can_write(user):
+            return
+        try:
+            ace = self.acl.get(user=None)
+            ace.delete()
+        except ObjectDoesNotExist:
+            pass
 
     def can_read(self, user):
-        """Determine if user can access this sketch.
+        """Function to determine if the user have read access to the specific
+        object.
 
         Args:
             user. user object (instance of django.contrib.auth.models.User)
         Returns:
-            Boolean value to indicate if the sketch is readable to user.
+            Boolean value to indicate if the object is readable by user.
         """
-        return ace_can_read(self, user)
+        # Is the objects owner is same as user or the object is public
+        # then access is granted.
+        if self.owner == user:
+            return True
+        if self.is_public():
+            return True
+        # Private object. If we have a ACE for the user on this object
+        # and that ACE has read rights. If so, then access is granted.
+        try:
+            ace = self.acl.get(user=user)
+        except ObjectDoesNotExist:
+            return False
+        if ace.permission_read:
+            return True
+        return False
+
+    def can_write(self, user):
+        """Function to determine if the user have write access to the object.
+
+        Args:
+            user. user object (instance of django.contrib.auth.models.User)
+        Returns:
+            Boolean value to indicate if the object is writable by user.
+        """
+        # Is the objects owner is same as user or the object is public then
+        # write access is granted.
+        if self.owner == user:
+            return True
+        # Private object. If we have a ACE for the user on this object and
+        # that ACE has write rights. If so, then access is granted.
+        try:
+            self.acl.get(user=user, permission_write=True)
+            return True
+        except ObjectDoesNotExist:
+            return False
 
     def get_collaborators(self):
         """Function to get all users that has rw access to this sketch.
@@ -79,13 +125,23 @@ class Sketch(models.Model):
                 collaborators_set.add(ace)
         return collaborators_set
 
+
+class Sketch(AceMixin, models.Model):
+    """Database model for a Sketch."""
+    owner = models.ForeignKey(User)
+    acl = GenericRelation('AccessControlEntry')
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    timelines = models.ManyToManyField('SketchTimeline', blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
     def __unicode__(self):
         return '%s' % self.title
 
 
-class Timeline(models.Model):
+class Timeline(AceMixin, models.Model):
     """Database model for a timeline."""
-    # ToDo (jbn) Create base class or mixin to make this cleaner
     owner = models.ForeignKey(User)
     acl = GenericRelation('AccessControlEntry')
     title = models.CharField(max_length=255)
@@ -93,40 +149,6 @@ class Timeline(models.Model):
     datastore_index = models.CharField(max_length=32)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-
-    def is_public(self):
-        """Determine if this timeline is readable to anyone.
-
-        Returns:
-            Boolean value to indicate if the timeline is readable by everyone.
-        """
-        return ace_is_public(self)
-
-    def make_public(self, user):
-        """Make the timeline public.
-
-        Args:
-            user. user object (instance of django.contrib.auth.models.User)
-        """
-        ace_make_public(self, user)
-
-    def make_private(self, user):
-        """Make the timeline private.
-
-        Args:
-            user. user object (instance of django.contrib.auth.models.User)
-        """
-        ace_make_private(self, user)
-
-    def can_read(self, user):
-        """Determine if user can access this timeline.
-
-        Args:
-            user. user object (instance of django.contrib.auth.models.User)
-        Returns:
-            Boolean value to indicate if the timeline is readable by user.
-        """
-        return ace_can_read(self, user)
 
     def __unicode__(self):
         return '%s' % self.title
@@ -204,102 +226,3 @@ class AccessControlEntry(models.Model):
                                         self.content_object)
 
 
-def ace_is_public(object):
-    """Function to determine if the ACL is open to everyone for the specific
-    object.
-
-    Args:
-        object. django.db model object
-    Returns:
-        Boolean value to indicate if the object is readable by everyone.
-    """
-    # ACE without any user is used as the public ACE.
-    try:
-        object.acl.get(user=None, permission_read=True)
-        return True
-    except ObjectDoesNotExist:
-        return False
-
-
-def ace_make_public(object, user):
-    """Function to make object public.
-
-    Args:
-        object. django.db model object
-        user. user object (instance of django.contrib.auth.models.User)
-    """
-    # First see if the user is allowed to make this change.
-    if not ace_can_write(object, user):
-        return
-    try:
-        ace = object.acl.get(user=None)
-        if not ace.read:
-            ace.permission_read = True
-            ace.save()
-    except ObjectDoesNotExist:
-        object.acl.create(user=None, permission_read=True)
-
-
-def ace_make_private(object, user):
-    """Function to make object private.
-
-    Args:
-        object. django.db model object
-        user. user object (instance of django.contrib.auth.models.User)
-    """
-    # First see if the user is allowed to make this change.
-    if not ace_can_write(object, user):
-        return
-    try:
-        ace = object.acl.get(user=None)
-        ace.delete()
-    except ObjectDoesNotExist:
-        pass
-
-
-def ace_can_read(object, user):
-    """Function to determine if the user have read access to the specific object.
-
-    Args:
-        object. django.db model object
-        user. user object (instance of django.contrib.auth.models.User)
-    Returns:
-        Boolean value to indicate if the object is readable by user.
-    """
-    # Is the objects owner is same as user or the object is public then access
-    # is granted.
-    if object.owner == user:
-        return True
-    if ace_is_public(object):
-        return True
-    # Private object. If we have a ACE for the user on this object and that ACE
-    # has read rights. If so, then access is granted.
-    try:
-        ace = object.acl.get(user=user)
-    except ObjectDoesNotExist:
-        return False
-    if ace.permission_read:
-        return True
-    return False
-
-
-def ace_can_write(object, user):
-    """Function to determine if the user have write access to the object.
-
-    Args:
-        object. django.db model object
-        user. user object (instance of django.contrib.auth.models.User)
-    Returns:
-        Boolean value to indicate if the object is writable by user.
-    """
-    # Is the objects owner is same as user or the object is public then write
-    # access is granted.
-    if object.owner == user:
-        return True
-    # Private object. If we have a ACE for the user on this object and that ACE
-    # has write rights. If so, then access is granted.
-    try:
-        object.acl.get(user=user, permission_write=True)
-        return True
-    except ObjectDoesNotExist:
-        return False
