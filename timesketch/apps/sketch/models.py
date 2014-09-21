@@ -25,7 +25,7 @@ import random
 class Sketch(models.Model):
     """Database model for a Sketch."""
     # ToDo (jbn) Create base class or mixin to make this cleaner
-    owner = models.ForeignKey(User)
+    user = models.ForeignKey(User)
     acl = GenericRelation('AccessControlEntry')
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -75,7 +75,7 @@ class Sketch(models.Model):
         """
         collaborators_set = set()
         for ace in self.acl.all():
-            if ace.user and not ace.user == self.owner:
+            if ace.user and not ace.user == self.user:
                 collaborators_set.add(ace)
         return collaborators_set
 
@@ -86,7 +86,7 @@ class Sketch(models.Model):
 class Timeline(models.Model):
     """Database model for a timeline."""
     # ToDo (jbn) Create base class or mixin to make this cleaner
-    owner = models.ForeignKey(User)
+    user = models.ForeignKey(User)
     acl = GenericRelation('AccessControlEntry')
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -268,7 +268,7 @@ def ace_can_read(object, user):
     """
     # Is the objects owner is same as user or the object is public then access
     # is granted.
-    if object.owner == user:
+    if object.user == user:
         return True
     if ace_is_public(object):
         return True
@@ -294,7 +294,7 @@ def ace_can_write(object, user):
     """
     # Is the objects owner is same as user or the object is public then write
     # access is granted.
-    if object.owner == user:
+    if object.user == user:
         return True
     # Private object. If we have a ACE for the user on this object and that ACE
     # has write rights. If so, then access is granted.

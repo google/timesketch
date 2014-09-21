@@ -26,8 +26,8 @@ from timesketch.apps.sketch.models import SketchTimeline
 class ModelSketchTest(TestCase):
     def setUp(self):
         _user = User.objects.create(username="testuser")
-        self.sketch1 = Sketch.objects.create(owner=_user, title="testsketch1")
-        self.sketch2 = Sketch.objects.create(owner=_user, title="testsketch2")
+        self.sketch1 = Sketch.objects.create(user=_user, title="testsketch1")
+        self.sketch2 = Sketch.objects.create(user=_user, title="testsketch2")
         SavedView.objects.create(user=_user, sketch=self.sketch2, query="",
                                  filter="")
 
@@ -41,7 +41,7 @@ class ModelSketchTest(TestCase):
 class ModelSketchTimelineTest(TestCase):
     def setUp(self):
         _user = User.objects.create(username="testuser")
-        _timeline = Timeline.objects.create(owner=_user, title="test",
+        _timeline = Timeline.objects.create(user=_user, title="test",
                                             datastore_index="123456")
         self.timeline = SketchTimeline.objects.create(timeline=_timeline)
 
