@@ -52,9 +52,9 @@ class ModelSketchTest(TestCase):
 class ModelTimelineTest(TestCase):
     def setUp(self):
         self.user = User.objects.create(username="testuser1")
-        self.timeline1 = Timeline.objects.create(owner=self.user, title="test1",
+        self.timeline1 = Timeline.objects.create(user=self.user, title="test1",
                                                  datastore_index="1")
-        self.timeline2 = Timeline.objects.create(owner=self.user, title="test2",
+        self.timeline2 = Timeline.objects.create(user=self.user, title="test2",
                                                  datastore_index="2")
         self.timeline1.make_public(self.user)
         self.timeline2.make_private(self.user)

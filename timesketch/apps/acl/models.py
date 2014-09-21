@@ -96,7 +96,7 @@ class AccessControlEntryMixIn(object):
         """
         # Is the objects owner is same as user or the object is public
         # then access is granted.
-        if self.owner == user:
+        if self.user == user:
             return True
         if self.is_public():
             return True
@@ -120,7 +120,7 @@ class AccessControlEntryMixIn(object):
         """
         # Is the objects owner is same as user or the object is public then
         # write access is granted.
-        if self.owner == user:
+        if self.user == user:
             return True
         # Private object. If we have a ACE for the user on this object and
         # that ACE has write rights. If so, then access is granted.
@@ -138,6 +138,6 @@ class AccessControlEntryMixIn(object):
         """
         collaborators_set = set()
         for ace in self.acl.all():
-            if ace.user and not ace.user == self.owner:
+            if ace.user and not ace.user == self.user:
                 collaborators_set.add(ace)
         return collaborators_set
