@@ -13,15 +13,17 @@
 # limitations under the License.
 """This module implements timesketch Django database models."""
 
+import random
+
 from django.db import models
 from django.contrib.contenttypes.generic import GenericRelation
 from django.contrib.auth.models import User
-import random
+
 from timesketch.apps.acl.models import AccessControlEntry
-from timesketch.apps.acl.models import AccessControlEntryMixIn
+from timesketch.apps.acl.models import AccessControlMixIn
 
 
-class Sketch(AccessControlEntryMixIn, models.Model):
+class Sketch(AccessControlMixIn, models.Model):
     """Database model for a Sketch."""
     user = models.ForeignKey(User)
     acl = GenericRelation(AccessControlEntry)
@@ -35,7 +37,7 @@ class Sketch(AccessControlEntryMixIn, models.Model):
         return '%s' % self.title
 
 
-class Timeline(AccessControlEntryMixIn, models.Model):
+class Timeline(AccessControlMixIn, models.Model):
     """Database model for a timeline."""
     user = models.ForeignKey(User)
     acl = GenericRelation(AccessControlEntry)

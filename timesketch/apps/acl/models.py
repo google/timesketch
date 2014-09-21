@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Django database model for creating Access Control Lists."""
 
 from django.db import models
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
 
 
@@ -35,11 +36,11 @@ class AccessControlEntry(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
-        return 'ACE for %s on %s %s' % (self.user, self.content_type,
-                                        self.content_object)
+        return 'ACE for %s on %s %s' % (
+            self.user, self.content_type, self.content_object)
 
 
-class AccessControlEntryMixIn(object):
+class AccessControlMixIn(object):
     def is_public(self):
         """Function to determine if the ACL is open to everyone for the
         specific object.

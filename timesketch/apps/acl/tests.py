@@ -12,5 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from django.contrib.auth.models import User
 from django.test import TestCase
 
+from timesketch.apps.acl.models import AccessControlEntry
+from timesketch.apps.sketch.models import Sketch
+
+
+class ModelAccessControlEntryTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(username='user1')
+        self.sketch1 = Sketch.objects.create(user=self.user, title='sketch1')
+        self.sketch2 = Sketch.objects.create(user=self.user, title='sketch2')
+        self.sketch1.make_public(self.user)
+        self.sketch2.make_private(self.user)
+        self.ace = self.sketch1.acl.create(user=self.user)
+
+    def test_access_control_entry(self):
+        self.assertEqual(self.sketch1.is_public(), True)
+        self.assertEqual(self.sketch1.can_read(self.user), True)
+        self.assertEqual(self.sketch2.is_public(), False)
+        self.assertEqual(self.sketch2.can_read(self.user), True)
+        self.assertIsInstance(self.sketch1.get_collaborators(), set)
+        self.assertIsInstance(self.ace, AccessControlEntry)
