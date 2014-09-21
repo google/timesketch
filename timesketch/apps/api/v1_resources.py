@@ -287,7 +287,7 @@ class SketchResource(ModelResource):
 
     def obj_create(self, bundle, **kwargs):
         req_data = json.loads(bundle.request.body)['data'] 
-        Sketch.objects.create(owner=bundle.request.user, 
+        Sketch.objects.create(user=bundle.request.user,
             title=req_data['title'], description=req_data['description'])
         return bundle
 

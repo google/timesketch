@@ -30,9 +30,9 @@ from timesketch.apps.sketch.models import SavedView
 @login_required
 def home(request):
     """Renders the available sketches for the user."""
-    my_sketches = Sketch.objects.filter(owner=request.user).order_by("-created")
+    my_sketches = Sketch.objects.filter(user=request.user).order_by("-created")
     public_sketches = set()
-    for sketch in Sketch.objects.all().exclude(owner=request.user):
+    for sketch in Sketch.objects.all().exclude(user=request.user):
         if sketch.is_public():
             public_sketches.add(sketch)
     context = {"my_sketches": my_sketches, "public_sketches": public_sketches}
@@ -59,7 +59,7 @@ def new_sketch(request):
         description = request.POST.get('inputDescription')
         obj, created = Sketch.objects.get_or_create(title=title,
                                                     description=description,
-                                                    owner=request.user)
+                                                    user=request.user)
         return redirect("/sketch/%s/" % obj.id)
     return render(request, 'new_sketch.html', {})
 
