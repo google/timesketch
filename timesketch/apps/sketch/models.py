@@ -23,7 +23,7 @@ from timesketch.apps.acl.models import AccessControlEntryMixIn
 
 class Sketch(AccessControlEntryMixIn, models.Model):
     """Database model for a Sketch."""
-    owner = models.ForeignKey(User)
+    user = models.ForeignKey(User)
     acl = GenericRelation(AccessControlEntry)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -37,7 +37,7 @@ class Sketch(AccessControlEntryMixIn, models.Model):
 
 class Timeline(AccessControlEntryMixIn, models.Model):
     """Database model for a timeline."""
-    owner = models.ForeignKey(User)
+    user = models.ForeignKey(User)
     acl = GenericRelation(AccessControlEntry)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -97,4 +97,5 @@ class SavedView(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
-        return '%s %s %s %s' % (self.created, self.user, self.sketch, self.name)
+        return '%s %s %s %s' % (self.created, self.user, self.sketch,
+                                self.name)

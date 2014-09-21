@@ -27,8 +27,8 @@ class ModelSketchTest(TestCase):
     def setUp(self):
         self.user1 = User.objects.create(username="testuser1")
         self.user2 = User.objects.create(username="testuser2")
-        self.sketch1 = Sketch.objects.create(owner=self.user1, title="testsketch1")
-        self.sketch2 = Sketch.objects.create(owner=self.user1, title="testsketch2")
+        self.sketch1 = Sketch.objects.create(user=self.user1, title="testsketch1")
+        self.sketch2 = Sketch.objects.create(user=self.user1, title="testsketch2")
         SavedView.objects.create(user=self.user1, sketch=self.sketch2, query="",
                                  filter="")
         self.sketch1.make_public(self.user1)
@@ -68,7 +68,7 @@ class ModelTimelineTest(TestCase):
 class ModelSketchTimelineTest(TestCase):
     def setUp(self):
         self.user = User.objects.create(username="testuser")
-        self.timeline = Timeline.objects.create(owner=self.user, title="test",
+        self.timeline = Timeline.objects.create(user=self.user, title="test",
                                                 datastore_index="123456")
         self.sketch_timeline = SketchTimeline.objects.create(timeline=self.timeline)
 
