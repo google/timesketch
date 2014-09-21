@@ -53,7 +53,7 @@ limitations under the License.
                 </div>
                 <div class="modal-body">
                     Who has access
-                    {% ifequal user sketch.owner %}
+                    {% ifequal user sketch.user %}
                         <form>
                             <div class="radio">
                                 <label>
@@ -72,10 +72,10 @@ limitations under the License.
                         </form>
                     {% endifequal %}
                     <br><br>
-                    <img src="{{ sketch.owner.userprofile.get_avatar_url }}" class="img-rounded" width="30px;" style="margin-right: 10px;"> <b>Owner</b> - {{ sketch.owner.first_name }} {{ sketch.owner.last_name }}
+                    <img src="{{ sketch.user.userprofile.get_avatar_url }}" class="img-rounded" width="30px;" style="margin-right: 10px;"> <b>Owner</b> - {{ sketch.user.first_name }} {{ sketch.user.last_name }}
 
                 </div>
-                {% ifequal user sketch.owner %}
+                {% ifequal user sketch.user %}
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="setAcl()">Save changes</button>

@@ -49,7 +49,7 @@ limitations under the License.
             {% for sketch in my_sketches %}
                 <tr>
                 <td><a href="/sketch/{{ sketch.id }}">{{ sketch.title }}</a></td>
-                <!-- <td>{{ sketch.owner.get_full_name }}</td> -->
+                <!-- <td>{{ sketch.user.get_full_name }}</td> -->
                 <td>{{ sketch.updated|date:"Y-m-d H:i" }}</td>
                 </tr>
             {% endfor %}
@@ -78,7 +78,7 @@ limitations under the License.
                     {% for sketch in public_sketches %}
                         <tr>
                             <td><a href="/sketch/{{ sketch.id }}">{{ sketch.title }}</a></td>
-                            <td>{{ sketch.owner.get_full_name }}</td>
+                            <td>{{ sketch.user.get_full_name }}</td>
                             <td>{{ sketch.updated|date:"Y-m-d H:i" }}</td>
                         </tr>
                     {% endfor %}
