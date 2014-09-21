@@ -12,18 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from django.contrib import admin
-from timesketch.apps.sketch.models import AccessControlEntry
-from timesketch.apps.sketch.models import EventComment
-from timesketch.apps.sketch.models import SavedView
-from timesketch.apps.sketch.models import Sketch
-from timesketch.apps.sketch.models import SketchTimeline
-from timesketch.apps.sketch.models import Timeline
+from django.test import TestCase
 
-
-# Register your models here.
-admin.site.register(Sketch)
-admin.site.register(SketchTimeline)
-admin.site.register(Timeline)
-admin.site.register(EventComment)
-admin.site.register(SavedView)
