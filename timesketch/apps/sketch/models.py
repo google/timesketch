@@ -33,6 +33,15 @@ class Sketch(AccessControlMixIn, models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
+    def get_named_views(self):
+        """
+        Get named views for this sketch. Used in templates.
+
+        Returns:
+            A query set.
+        """
+        return SavedView.objects.filter(sketch=self).exclude(name="")
+
     def __unicode__(self):
         return '%s' % self.title
 
