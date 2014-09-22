@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for acl models."""
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -19,7 +20,9 @@ from timesketch.apps.acl.models import AccessControlEntry
 from timesketch.apps.sketch.models import Sketch
 
 
+# pylint: disable=no-member, too-many-public-methods
 class ModelAccessControlEntryTest(TestCase):
+    """Test for AccessControlEntry model."""
     def setUp(self):
         self.user = User.objects.create(username='user1')
         self.sketch1 = Sketch.objects.create(user=self.user, title='sketch1')
@@ -29,6 +32,7 @@ class ModelAccessControlEntryTest(TestCase):
         self.ace = self.sketch1.acl.create(user=self.user)
 
     def test_access_control_entry(self):
+        """Test AccessControlEntry on the created objects."""
         self.assertEqual(self.sketch1.is_public(), True)
         self.assertEqual(self.sketch1.can_read(self.user), True)
         self.assertEqual(self.sketch2.is_public(), False)

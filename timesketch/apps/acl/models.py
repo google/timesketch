@@ -27,10 +27,11 @@ class AccessControlEntry(models.Model):
     permission_read = models.BooleanField(default=False)
     permission_write = models.BooleanField(default=False)
     permission_delete = models.BooleanField(default=False)
-    # This is the django content type framework for generic relations
+    # This is the django content type framework for generic relations.
+    # pylint: disable=no-value-for-parameter
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey()
+    content_object = GenericForeignKey('content_type', 'object_id')
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -40,6 +41,7 @@ class AccessControlEntry(models.Model):
 
 
 class AccessControlMixIn(object):
+    """MixIn for classes with generic relationship with AccessControlEntry."""
     def is_public(self):
         """Function to determine if the ACL is open to everyone for the
         specific object.

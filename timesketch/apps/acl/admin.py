@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Register ACL app models for the admin site."""
 
 from django.contrib import admin
 from timesketch.apps.acl.models import AccessControlEntry
