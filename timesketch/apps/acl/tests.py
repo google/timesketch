@@ -32,7 +32,7 @@ class ModelAccessControlEntryTest(TestCase):
         self.ace = self.sketch1.acl.create(user=self.user)
 
     def test_access_control_entry(self):
-        """Test AccessControlEntry on the created objects."""
+        """Test AccessControlEntry."""
         self.assertEqual(self.sketch1.is_public(), True)
         self.assertEqual(self.sketch1.can_read(self.user), True)
         self.assertEqual(self.sketch2.is_public(), False)

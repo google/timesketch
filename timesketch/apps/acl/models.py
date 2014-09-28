@@ -21,13 +21,20 @@ from django.contrib.auth.models import User
 
 
 class AccessControlEntry(models.Model):
-    """Model for an access control entry."""
+    """Model for an access control entry.
+    The permission model is simple. You have read, write and delete permissions
+    on Django ORM objects.
+
+    The model is using the Django content type framework:
+        https://docs.djangoproject.com/en/dev/ref/contrib/contenttypes/
+
+    The content type framework gives us a generic interface to work with
+    other Django models.
+    """
     user = models.ForeignKey(User, blank=True, null=True)
-    # Permissions
     permission_read = models.BooleanField(default=False)
     permission_write = models.BooleanField(default=False)
     permission_delete = models.BooleanField(default=False)
-    # This is the django content type framework for generic relations.
     # pylint: disable=no-value-for-parameter
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
@@ -41,7 +48,9 @@ class AccessControlEntry(models.Model):
 
 
 class AccessControlMixIn(object):
-    """MixIn for classes with generic relationship with AccessControlEntry."""
+    """MixIn for classes with generic relationship with AccessControlEntry.
+    Common functions to manipulate and use the permission system.
+    """
     def is_public(self):
         """Function to determine if the ACL is open to everyone for the
         specific object.
@@ -61,7 +70,6 @@ class AccessControlMixIn(object):
         Args:
             user. user object (instance of django.contrib.auth.models.User)
         """
-        # First see if the user is allowed to make this change.
         if not self.can_write(user):
             return
         try:
@@ -78,7 +86,6 @@ class AccessControlMixIn(object):
         Args:
             user. user object (instance of django.contrib.auth.models.User)
         """
-        # First see if the user is allowed to make this change.
         if not self.can_write(user):
             return
         try:
@@ -96,14 +103,14 @@ class AccessControlMixIn(object):
         Returns:
             Boolean value to indicate if the object is readable by user.
         """
-        # Is the objects owner is same as user or the object is public
-        # then access is granted.
+        # If the objects owner is the same as the user in the request, or the
+        # object is public then access is granted.
         if self.user == user:
             return True
         if self.is_public():
             return True
-        # Private object. If we have a ACE for the user on this object
-        # and that ACE has read rights. If so, then access is granted.
+        # If the user in the request have aa ACE entry for the object and the
+        # read permission is set to True then access is granted.
         try:
             ace = self.acl.get(user=user)
         except ObjectDoesNotExist:
@@ -120,12 +127,12 @@ class AccessControlMixIn(object):
         Returns:
             Boolean value to indicate if the object is writable by user.
         """
-        # Is the objects owner is same as user or the object is public then
-        # write access is granted.
+        # If the objects owner is the same as the user in the request
+        # then access is granted.
         if self.user == user:
             return True
-        # Private object. If we have a ACE for the user on this object and
-        # that ACE has write rights. If so, then access is granted.
+        # If the user in the request have aa ACE entry for the object and the
+        # write permission is set to True then access is granted.
         try:
             self.acl.get(user=user, permission_write=True)
             return True
