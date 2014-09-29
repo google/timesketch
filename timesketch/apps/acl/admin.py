@@ -16,4 +16,5 @@
 from django.contrib import admin
 from timesketch.apps.acl.models import AccessControlEntry
 
+
 admin.site.register(AccessControlEntry)

@@ -52,8 +52,7 @@ class AccessControlMixIn(object):
     Common functions to manipulate and use the permission system.
     """
     def is_public(self):
-        """Function to determine if the ACL is open to everyone for the
-        specific object.
+        """Determine if the ACL is open to everyone for the specific object.
 
         Returns:
             Boolean value to indicate if the object is readable by everyone.
@@ -65,7 +64,7 @@ class AccessControlMixIn(object):
             return False
 
     def make_public(self, user):
-        """Function to make object public.
+        """Make object public.
 
         Args:
             user. user object (instance of django.contrib.auth.models.User)
@@ -81,7 +80,7 @@ class AccessControlMixIn(object):
             self.acl.create(user=None, permission_read=True)
 
     def make_private(self, user):
-        """Function to make object private.
+        """Make object private.
 
         Args:
             user. user object (instance of django.contrib.auth.models.User)
@@ -95,22 +94,22 @@ class AccessControlMixIn(object):
             pass
 
     def can_read(self, user):
-        """Function to determine if the user have read access to the specific
-        object.
+        """Determine if the user have read access to the specific object.
+        1) If the objects owner is the same as the user in the request, or the
+           object is public then access is granted.
+
+        2) If the user in the request have an AccessControlEntry for the object
+           and the read permission is set to True then access is granted.
 
         Args:
             user. user object (instance of django.contrib.auth.models.User)
         Returns:
             Boolean value to indicate if the object is readable by user.
         """
-        # If the objects owner is the same as the user in the request, or the
-        # object is public then access is granted.
         if self.user == user:
             return True
         if self.is_public():
             return True
-        # If the user in the request have aa ACE entry for the object and the
-        # read permission is set to True then access is granted.
         try:
             ace = self.acl.get(user=user)
         except ObjectDoesNotExist:
@@ -120,19 +119,20 @@ class AccessControlMixIn(object):
         return False
 
     def can_write(self, user):
-        """Function to determine if the user have write access to the object.
+        """Determine if the user have write access to the object.
+        1) If the objects owner is the same as the user in the request
+           then access is granted.
+
+        2) If the user in the request have an ACE entry for the object and the
+           write permission is set to True then access is granted.
 
         Args:
             user. user object (instance of django.contrib.auth.models.User)
         Returns:
             Boolean value to indicate if the object is writable by user.
         """
-        # If the objects owner is the same as the user in the request
-        # then access is granted.
         if self.user == user:
             return True
-        # If the user in the request have aa ACE entry for the object and the
-        # write permission is set to True then access is granted.
         try:
             self.acl.get(user=user, permission_write=True)
             return True
@@ -140,7 +140,7 @@ class AccessControlMixIn(object):
             return False
 
     def get_collaborators(self):
-        """Function to get all users that has rw access to this sketch.
+        """Get all users that has read-write access to this sketch.
 
         Returns:
             A set() of User objects

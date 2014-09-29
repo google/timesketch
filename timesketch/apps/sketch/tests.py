@@ -23,6 +23,7 @@ from timesketch.apps.sketch.models import SketchTimeline
 
 
 class ModelSketchTest(TestCase):
+    """Test creating Sketch model and helper functions."""
     def setUp(self):
         self.user1 = User.objects.create(username="testuser1")
         self.user2 = User.objects.create(username="testuser2")
@@ -47,6 +48,7 @@ class ModelSketchTest(TestCase):
 
 
 class ModelTimelineTest(TestCase):
+    """Test creating Timeline model."""
     def setUp(self):
         self.user = User.objects.create(username="testuser1")
         self.timeline = Timeline.objects.create(
@@ -58,6 +60,7 @@ class ModelTimelineTest(TestCase):
 
 
 class ModelSketchTimelineTest(TestCase):
+    """Test creating SketchTimeline model."""
     def setUp(self):
         self.user = User.objects.create(username="testuser")
         self.timeline = Timeline.objects.create(
