@@ -71,9 +71,12 @@ class AccessControlMixIn(object):
         """
         if not self.can_write(user):
             return
+        # Because of Django's content type framework get_or_create() will
+        # not work here. We have to catch the exception and create the
+        # object on our own.
         try:
             ace = self.acl.get(user=None)
-            if not ace.read:
+            if not ace.permission_read:
                 ace.permission_read = True
                 ace.save()
         except ObjectDoesNotExist:
