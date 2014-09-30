@@ -15,34 +15,55 @@
 
 import os
 import sys
+import argparse
 
+import django
 from pyelasticsearch import ElasticSearch
 
-
+# We need to add the parent directory to the Python path in order to be able
+# to import timesketch modules.
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, parent_dir)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "timesketch.settings")
-from django.contrib.auth.models import User
+django.setup()
 
+# Django and timesketch imports
+from django.contrib.auth.models import User
 from timesketch.apps.sketch.models import Timeline
 
 
-user = User.objects.get(id=2)
-es_server = sys.argv[1]
-es_port = sys.argv[2]
-name = sys.argv[3]
-index = sys.argv[4]
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--user", help="Timesketch username to set as owner of the timeline")
+    parser.add_argument(
+        "--es_server", help="IP address or hostname for Elasticsearch server")
+    parser.add_argument(
+        "--es_port", help="Port number on Elasticsearch server")
+    parser.add_argument(
+        "--timeline_name", help="The name of the timeline in Timesketch")
+    parser.add_argument(
+        "--index_name", help="The name of the index in Elasticsearch")
+    parser.parse_args()
+    args = parser.parse_args()
 
-es = ElasticSearch("http://%s:%s" % (es_server, es_port))
+    user = User.objects.get(username=args.user)
+    es = ElasticSearch("http://%s:%s" % (args.es_server, args.es_port))
 
-mapping = {
-        "plaso_event": {
-            u'properties': {
-                u'timesketch_label': {
-                    "type": "nested"}
-            }
-        },
-}
+    mapping = {
+            "plaso_event": {
+                u'properties': {
+                    u'timesketch_label': {
+                        "type": "nested"}
+                }
+            },
+    }
 
-es.put_mapping(index, "plaso_event", mapping)
-timeline = Timeline.objects.create(owner=user, title=name, description=name,
-                                   datastore_index=index)
-timeline.make_public()
+    timeline, created = Timeline.objects.get_or_create(
+        user=user, title=args.timeline_name, description=args.timeline_name,
+        datastore_index=args.index_name)
+    if not created:
+        print "Timeline already exists!"
+        sys.exit()
+    timeline.make_public(user)
+    es.put_mapping(args.index_name, "plaso_event", mapping)
