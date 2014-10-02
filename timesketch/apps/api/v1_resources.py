@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""This module implements timesketch API."""
+"""This module implements the timesketch API."""
 
 import json
 
@@ -36,7 +36,7 @@ DATASTORE = elasticsearch_datastore.ElasticSearchDataStore
 
 
 class DatastoreObject(object):
-    """Tastypie need this. Generic object to get data in and out."""
+    """Tastypie needs this. Generic object to get data in and out."""
     def __init__(self, initial=None):
         self.__dict__['_data'] = {}
 
