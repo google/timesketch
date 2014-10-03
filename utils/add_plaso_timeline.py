@@ -51,12 +51,12 @@ if __name__ == "__main__":
     es = ElasticSearch("http://%s:%s" % (args.es_server, args.es_port))
 
     mapping = {
-            "plaso_event": {
-                u'properties': {
-                    u'timesketch_label': {
-                        "type": "nested"}
-                }
-            },
+        "plaso_event": {
+            u'properties': {
+                u'timesketch_label': {
+                    "type": "nested"}
+            }
+        },
     }
 
     timeline, created = Timeline.objects.get_or_create(
