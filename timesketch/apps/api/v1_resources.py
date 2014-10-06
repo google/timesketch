@@ -276,6 +276,7 @@ class LabelResource(Resource):
 
 
 class SketchResource(ModelResource):
+    # ToDo: This resource is not used any more. Remove.
     class Meta:
         resource_name = 'sketch'
         authorization = Authorization()
@@ -294,6 +295,7 @@ class SketchResource(ModelResource):
 
 class SketchTimelineResource(ModelResource):
     """Create new timeline bound to a specific sketch."""
+    # ToDo: This resource is not used any more. Remove.
     class Meta:
         resource_name = 'sketchtimeline'
         authorization = Authorization()
