@@ -177,3 +177,16 @@ class CommentResourceTest(BaseResourceTest):
         self.assertEqual( self.deserialize(response)['datastore_id'], 'test')
         self.assertEqual(self.deserialize(response)['datastore_index'], 'test')
         self.assertEqual(self.deserialize(response)['body'], 'test')
+
+
+class SearchResourceTest(BaseResourceTest):
+    def test_get_list_unauthorized(self):
+        self.assertHttpUnauthorized(
+            self.api_client.get('/api/v1/search/', format='json'))
+
+    def test_get_list_json(self):
+        data = {'q': 'test', '"filter"': 'test', 'indexes': "test", "sketch": 1}
+        response = self.api_client.get(
+            '/api/v1/search/', format='json', authentication=self.auth(),
+            data=data)
+        print response
