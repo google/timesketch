@@ -22,6 +22,7 @@ from django.contrib.auth.models import User
 from timesketch.apps.sketch.models import Sketch, EventComment
 from tastypie.test import ResourceTestCase, TestApiClient
 import mock
+import json
 
 
 class MockDataStore(object):
@@ -69,6 +70,9 @@ class MockDataStore(object):
 
     def add_label_to_event(self, datastore_id, sketch_id, user_id, label):
         return
+
+    def search(self, sketch, query, filter):
+        return {'hits': {'hits': []}}
 
 
 class BaseResourceTest(ResourceTestCase):
@@ -185,8 +189,7 @@ class SearchResourceTest(BaseResourceTest):
             self.api_client.get('/api/v1/search/', format='json'))
 
     def test_get_list_json(self):
-        data = {'q': 'test', '"filter"': 'test', 'indexes': "test", "sketch": 1}
+        data = {'q': 'test', 'filter': json.dumps({'foo': 'bar'}), 'indexes': "test", "sketch": 1}
         response = self.api_client.get(
             '/api/v1/search/', format='json', authentication=self.auth(),
             data=data)
-        print response
