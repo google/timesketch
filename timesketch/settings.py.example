@@ -140,8 +140,10 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-    'timesketch',
-    'timesketch.api',
+    'timesketch.apps.sketch',
+    'timesketch.apps.ui',
+    'timesketch.apps.userprofile',
+    'timesketch.apps.api',
 )
 
 # A sample logging configuration. The only tangible logging
