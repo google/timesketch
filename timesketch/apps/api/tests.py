@@ -29,36 +29,15 @@ class MockDataStore(object):
             "_index": self.index_list,
             "_id": event_id,
             "_source": {
-                "xml_string": "",
-                "event_level": 1,
-                "parser": "",
-                "datetime": "2014-09-16T19:23:40+00:00",
-                "source_name": "",
-                "message": "",
-                "label": [],
-                "inode": 1,
-                "display_name": "",
-                "uuid": "",
-                "hostname": "",
-                "filename": "",
-                "source_short": "",
-                "event_identifier": 1,
-                "recovered": "false",
-                "username": "",
-                "store_number": 1,
-                "data_type": "",
-                "user_sid": "",
-                "timestamp": 1410895419859714,
-                "req_user": 1,
-                "store_index": 1,
-                "source_long": "",
-                "record_number": 1,
                 "es_index": "",
-                "computer_name": "",
-                "offset": 0,
-                "timestamp_desc": "",
                 "es_id": "",
-                "strings": []
+                "label": "",
+                "timestamp": 1410895419859714,
+                "timestamp_desc": "",
+                "datetime": "2014-09-16T19:23:40+00:00",
+                "source_short": "",
+                "source_long": "",
+                "message": "",
             }
         }
         return result_dict
@@ -77,40 +56,26 @@ class MockDataStore(object):
                             1410900180000
                         ],
                         "_type": "plaso_event",
-                        "_source": {"username": "SYSTEM",
-                                    "comment": "Created by NetScheduleJobAdd.",
-                                    "parser": "winjob",
-                                    "display_name": "OS:/media/disk/Windows/Tasks/At2.job",
-                                    "uuid": "6c0beea72f32400297b8d9514c260d8a",
-                                    "timestamp_desc": "Last Time Executed",
-                                    "store_number": 2,
-                                    "timestamp": 1410900180184000,
-                                    "hostname": "STUDENT-PC2",
-                                    "tag": [],
-                                    "filename": "/media/disk/Windows/Tasks/At2.job",
-                                    "data_type": "windows:tasks:job",
-                                    "application": "C:\\windows\\temp\\exploder.exe",
-                                    "store_index": 423074,
-                                    "source_long": "Windows Scheduled Task Job",
-                                    "source_short": "JOB",
-                                    "timesketch_label": [
-                                        {
-                                            "sketch": "1",
-                                            "name": "__ts_star",
-                                            "user": 1
-                                        }
-                                    ],
-                                    "message": "Application: C:\\windows\\temp\\exploder.exe Scheduled by: SYSTEM Run Iteration: ONCE",
-                                    "datetime": "2014-09-16T20:43:00+00:00",
-                                    "inode": 148551,
-                                    "trigger": "ONCE"
+                        "_source": {
+                            "timestamp_desc": "A timestamp",
+                            "timestamp": 1410900180184000,
+                            "tag": [],
+                            "timesketch_label": [
+                                {
+                                    "sketch": "1",
+                                    "name": "__ts_star",
+                                    "user": 1
+                                }
+                            ],
+                            "message": "Test event",
+                            "datetime": "2014-09-16T20:43:00+00:00",
                         },
                         "_score": "null",
-                        "_index": "abff427e72d44dd7bd1bc981d41fd98d",
-                        "_id": "itdKmmP9RdWiOB1Enj4QBA"
+                        "_index": "abc123",
+                        "_id": "def345"
                     }
                 ],
-                "total": 2,
+                "total": 1,
                 "max_score": "null"
             },
             "_shards": {
@@ -127,7 +92,7 @@ class MockDataStore(object):
 class BaseResourceTest(ResourceTestCase):
     def setUp(self):
         super(BaseResourceTest, self).setUp()
-        # Create a user.
+        # Create a user
         self.username = 'john'
         self.password = 'pass'
         self.user = User.objects.create_user(
