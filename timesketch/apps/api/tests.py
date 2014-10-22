@@ -11,15 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-This file demonstrates writing tests using the unittest module. These will pass
-when you run "manage.py test".
-
-Replace this with more appropriate tests for your application.
-"""
+"""Tests for version 1 of the Timesketch API."""
 
 from django.contrib.auth.models import User
-from timesketch.apps.sketch.models import Sketch, EventComment
+from timesketch.apps.sketch.models import Sketch, EventComment, SavedView
 from tastypie.test import ResourceTestCase, TestApiClient
 import mock
 import json
@@ -68,11 +63,65 @@ class MockDataStore(object):
         }
         return result_dict
 
-    def add_label_to_event(self, datastore_id, sketch_id, user_id, label):
+    @staticmethod
+    def add_label_to_event(datastore_id, sketch_id, user_id, label, toggle=False):
         return
 
-    def search(self, sketch, query, filter):
-        return {'hits': {'hits': []}}
+    @staticmethod
+    def search(sketch, query, filter):
+        result = {
+            "hits": {
+                "hits": [
+                    {
+                        "sort": [
+                            1410900180000
+                        ],
+                        "_type": "plaso_event",
+                        "_source": {"username": "SYSTEM",
+                                    "comment": "Created by NetScheduleJobAdd.",
+                                    "parser": "winjob",
+                                    "display_name": "OS:/media/disk/Windows/Tasks/At2.job",
+                                    "uuid": "6c0beea72f32400297b8d9514c260d8a",
+                                    "timestamp_desc": "Last Time Executed",
+                                    "store_number": 2,
+                                    "timestamp": 1410900180184000,
+                                    "hostname": "STUDENT-PC2",
+                                    "tag": [],
+                                    "filename": "/media/disk/Windows/Tasks/At2.job",
+                                    "data_type": "windows:tasks:job",
+                                    "application": "C:\\windows\\temp\\exploder.exe",
+                                    "store_index": 423074,
+                                    "source_long": "Windows Scheduled Task Job",
+                                    "source_short": "JOB",
+                                    "timesketch_label": [
+                                        {
+                                            "sketch": "1",
+                                            "name": "__ts_star",
+                                            "user": 1
+                                        }
+                                    ],
+                                    "message": "Application: C:\\windows\\temp\\exploder.exe Scheduled by: SYSTEM Run Iteration: ONCE",
+                                    "datetime": "2014-09-16T20:43:00+00:00",
+                                    "inode": 148551,
+                                    "trigger": "ONCE"
+                        },
+                        "_score": "null",
+                        "_index": "abff427e72d44dd7bd1bc981d41fd98d",
+                        "_id": "itdKmmP9RdWiOB1Enj4QBA"
+                    }
+                ],
+                "total": 2,
+                "max_score": "null"
+            },
+            "_shards": {
+                "successful": 15,
+                "failed": 0,
+                "total": 15
+            },
+            "took": 24,
+            "timed_out": "false"
+        }
+        return result
 
 
 class BaseResourceTest(ResourceTestCase):
@@ -88,16 +137,102 @@ class BaseResourceTest(ResourceTestCase):
         self.comment = EventComment.objects.create(
             user=self.user, body="test", sketch=self.sketch,
             datastore_id="test", datastore_index="test")
+        self.view = SavedView.objects.create(
+            user=self.user, sketch=self.sketch, query="Test",
+            filter=json.dumps({'foo': 'bar'}), name="Test")
 
     def auth(self):
         return self.api_client.client.login(
             username=self.username, password=self.password)
 
 
+class CommentResourceTest(BaseResourceTest):
+    """Test to create and get comment."""
+    @mock.patch(
+        'timesketch.lib.datastores.elasticsearch_datastore.ElasticSearchDataStore',
+        MockDataStore)
+    def test_create(self):
+        data = {
+            'data': {
+                'sketch': 1,
+                'id': 'test',
+                'index': 'test',
+                'body': 'test'
+            }
+        }
+        response = self.api_client.post(
+            '/api/v1/comment/', format='json', authentication=self.auth(),
+            data=data)
+        self.assertEqual(len(self.deserialize(response)['data']), 6)
+        self.assertEqual(self.deserialize(response)['data']['body'], 'test')
+        self.assertEqual(self.deserialize(response)['datastore_id'], 'test')
+        self.assertEqual(self.deserialize(response)['datastore_index'], 'test')
+        self.assertEqual(self.deserialize(response)['body'], 'test')
+
+    def test_get_list_unauthorized(self):
+        self.assertHttpUnauthorized(
+            self.api_client.get('/api/v1/comment/', format='json'))
+
+    def test_get_list_json(self):
+        data = {
+            'id': 'test',
+            'index': "test",
+            "sketch": 1
+        }
+        response = self.api_client.get(
+            '/api/v1/comment/', format='json', authentication=self.auth(),
+            data=data)
+        self.assertValidJSONResponse(response)
+        self.assertEqual(len(self.deserialize(response)['objects']), 1)
+        self.assertEqual(
+            self.deserialize(response)['objects'][0]['body'], 'test')
+        self.assertEqual(
+            self.deserialize(response)['objects'][0]['datastore_id'], 'test')
+        self.assertEqual(
+            self.deserialize(response)['objects'][0]['datastore_index'], 'test')
+
+
+class EventResourceTest(BaseResourceTest):
+    def test_get_list_unauthorized(self):
+        self.assertHttpUnauthorized(
+            self.api_client.get('/api/v1/event/', format='json'))
+
+    def test_get_list_json(self):
+        data = {
+            'id': 'test_id',
+            'index': 'test_index'
+        }
+        resp = self.api_client.get(
+            '/api/v1/event/', format='json', authentication=self.auth(),
+            data=data)
+        self.assertValidJSONResponse(resp)
+        self.assertEqual(len(self.deserialize(resp)['objects']), 1)
+        self.assertEqual(len(self.deserialize(resp)['objects'][0]), 25)
+
+
+class SearchResourceTest(BaseResourceTest):
+    def test_get_list_unauthorized(self):
+        self.assertHttpUnauthorized(
+            self.api_client.get('/api/v1/search/', format='json'))
+
+    def test_get_list_json(self):
+        data = {
+            'q': 'test',
+            'filter': json.dumps({'foo': 'bar'}),
+            'indexes': 'test',
+            'sketch': 1
+        }
+        response = self.api_client.get(
+            '/api/v1/search/', format='json', authentication=self.auth(),
+            data=data)
+        self.assertValidJSONResponse(response)
+        # ToDo: Add more assertions
+
+
 class UserProfileResourceTest(BaseResourceTest):
     def test_get_list_unauthorized(self):
-        self.assertHttpUnauthorized(self.api_client.get(
-            '/api/v1/userprofile/', format='json'))
+        self.assertHttpUnauthorized(
+            self.api_client.get('/api/v1/userprofile/', format='json'))
 
     def test_get_list_json(self):
         resp = self.api_client.get(
@@ -113,8 +248,8 @@ class UserProfileResourceTest(BaseResourceTest):
 
 class UserResourceTest(BaseResourceTest):
     def test_get_list_unauthorized(self):
-        self.assertHttpUnauthorized(self.api_client.get(
-            '/api/v1/user/', format='json'))
+        self.assertHttpUnauthorized(
+            self.api_client.get('/api/v1/user/', format='json'))
 
     def test_get_list_json(self):
         resp = self.api_client.get(
@@ -134,62 +269,71 @@ class UserResourceTest(BaseResourceTest):
         self.assertEqual(self.deserialize(resp)['objects'][0], expected_result)
 
 
-class EventResourceTest(BaseResourceTest):
-    def test_get_list_unauthorized(self):
-        self.assertHttpUnauthorized(
-            self.api_client.get('/api/v1/event/', format='json'))
-
-    @mock.patch('timesketch.lib.datastores.elasticsearch_datastore.ElasticSearchDataStore', MockDataStore)
-    def test_get_list_json(self):
-        data = {'id': 'test_id', 'index': "test_index"}
-        resp = self.api_client.get(
-            '/api/v1/event/', format='json', authentication=self.auth(),
+class SketchAclResourceTest(BaseResourceTest):
+    def test_create(self):
+        data = {
+            'data': {
+                'sketch': 1,
+                'sketch_acl': 'public'
+            }
+        }
+        response = self.api_client.post(
+            '/api/v1/sketch_acl/', format='json', authentication=self.auth(),
             data=data)
-        self.assertValidJSONResponse(resp)
-        self.assertEqual(len(self.deserialize(resp)['objects']), 1)
-        self.assertEqual(len(self.deserialize(resp)['objects'][0]), 25)
+        self.assertHttpCreated(response)
 
-
-class CommentResourceTest(BaseResourceTest):
     def test_get_list_unauthorized(self):
         self.assertHttpUnauthorized(
-            self.api_client.get('/api/v1/comment/', format='json'))
+            self.api_client.get('/api/v1/sketch_acl/', format='json'))
 
-    @mock.patch('timesketch.lib.datastores.elasticsearch_datastore.ElasticSearchDataStore', MockDataStore)
-    def test_get_list_json(self):
-        data = {'id': 'test', 'index': "test", "sketch": 1}
+
+class ViewResourceTest(BaseResourceTest):
+    def test_create(self):
+        data = {
+            'data': {
+                'sketch': 1,
+                'name': 'test',
+                'query': "test query",
+                'query_filter': json.dumps({'foo': 'bar'})
+            }
+        }
+        response = self.api_client.post(
+            '/api/v1/view/', format='json', authentication=self.auth(),
+            data=data)
+        self.assertHttpCreated(response)
+
+    def test_get_list_unauthorized(self):
+        self.assertHttpUnauthorized(
+            self.api_client.get('/api/v1/view/', format='json'))
+
+    def test_get_view_json(self):
+        data = {
+            'sketch': 1,
+            'view': 1
+        }
         response = self.api_client.get(
-            '/api/v1/comment/', format='json', authentication=self.auth(),
+            '/api/v1/view/', format='json', authentication=self.auth(),
             data=data)
         self.assertValidJSONResponse(response)
-        self.assertEqual(len(self.deserialize(response)['objects']), 1)
-        self.assertEqual(
-            self.deserialize(response)['objects'][0]['body'], 'test')
-        self.assertEqual(
-            self.deserialize(response)['objects'][0]['datastore_id'], 'test')
-        self.assertEqual(
-            self.deserialize(response)['objects'][0]['datastore_index'], 'test')
+        self.assertHttpOK(response)
 
-    @mock.patch('timesketch.lib.datastores.elasticsearch_datastore.ElasticSearchDataStore', MockDataStore)
+
+class LabelResourceTest(BaseResourceTest):
     def test_create(self):
-        data = {'data': {'id': 'test', 'index': 'test', 'sketch': 1, 'body': 'test'}}
+        data = {
+            'data': {
+                'sketch': 1,
+                'id': 'test',
+                'index': 'test',
+                'label': "test",
+            }
+        }
         response = self.api_client.post(
-            '/api/v1/comment/', format='json', authentication=self.auth(),
+            '/api/v1/label/', format='json', authentication=self.auth(),
             data=data)
-        self.assertEqual(len(self.deserialize(response)['data']), 6)
-        self.assertEqual(self.deserialize(response)['data']['body'], 'test')
-        self.assertEqual( self.deserialize(response)['datastore_id'], 'test')
-        self.assertEqual(self.deserialize(response)['datastore_index'], 'test')
-        self.assertEqual(self.deserialize(response)['body'], 'test')
+        self.assertHttpCreated(response)
+        self.assertEqual(data['data'], json.loads(response.content)['data'])
 
-
-class SearchResourceTest(BaseResourceTest):
     def test_get_list_unauthorized(self):
         self.assertHttpUnauthorized(
-            self.api_client.get('/api/v1/search/', format='json'))
-
-    def test_get_list_json(self):
-        data = {'q': 'test', 'filter': json.dumps({'foo': 'bar'}), 'indexes': "test", "sketch": 1}
-        response = self.api_client.get(
-            '/api/v1/search/', format='json', authentication=self.auth(),
-            data=data)
+            self.api_client.get('/api/v1/label/', format='json'))

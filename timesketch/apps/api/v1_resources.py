@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""This module implements the timesketch API."""
+"""This module implements timesketch API."""
 
 import json
 
@@ -36,7 +36,7 @@ DATASTORE = elasticsearch_datastore.ElasticSearchDataStore
 
 
 class DatastoreObject(object):
-    """Tastypie needs this. Generic object to get data in and out."""
+    """Tastypie need this. Generic object to get data in and out."""
     def __init__(self, initial=None):
         self.__dict__['_data'] = {}
 
@@ -276,7 +276,6 @@ class LabelResource(Resource):
 
 
 class SketchResource(ModelResource):
-    # ToDo: This resource is not used any more. Remove.
     class Meta:
         resource_name = 'sketch'
         authorization = Authorization()
@@ -295,7 +294,6 @@ class SketchResource(ModelResource):
 
 class SketchTimelineResource(ModelResource):
     """Create new timeline bound to a specific sketch."""
-    # ToDo: This resource is not used any more. Remove.
     class Meta:
         resource_name = 'sketchtimeline'
         authorization = Authorization()
