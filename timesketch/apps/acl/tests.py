@@ -30,6 +30,9 @@ class ModelAccessControlEntryTest(TestCase):
         self.sketch1.make_public(self.user)
         self.sketch2.make_private(self.user)
         self.ace = self.sketch1.acl.create(user=self.user)
+        # Make the sketch public again to catch the case where an public ace is
+        # already present.
+        self.sketch1.make_public(self.user)
 
     def test_access_control_entry(self):
         """Test AccessControlEntry."""
