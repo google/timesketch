@@ -145,311 +145,253 @@ class BaseResourceTest(ResourceTestCase):
         # This is a test client from the tastypie project.
         self.api_client = TestApiClient()
 
-    def get_credentials(self):
-        """Performs Django session based authentication."""
-        return self.api_client.client.login(
-            username=self.user.username, password=self.password)
+    @mock.patch(
+        'timesketch.lib.datastores.elasticsearch_datastore.ElasticSearchDataStore',
+        MockDataStore)
+    def api_request(self, method='get', data=None, auth=True):
+        """Make a HTTP request to the api."""
+        resource_url = '/api/v1/%s/' % self.resource_name
+        test_api_client = TestApiClient()
+        if auth:
+            # Authenticate this session
+            test_api_client.client.login(
+                username=self.user.username, password=self.password)
+        # Default method is GET
+        api_client = test_api_client.get
+        if method == 'post':
+            api_client = test_api_client.post
+        response = api_client(resource_url, format='json', data=data)
+        return response
 
     def test_get_unauthenticated(self):
         """Access the resource with an unauthenticated session."""
+        # There should not be any resource reachable without authentication so
+        # run this test on all resources by default.
+
         # Prevent this test to run on any class that does not have a
         # resource_name set, e.g. the base class it self.
         if not getattr(self, 'resource_name', False):
             return
-        resource_url = '/api/v1/%s/' % self.resource_name
-        self.assertHttpUnauthorized(
-            self.api_client.get(resource_url, format='json'))
+        self.assertHttpUnauthorized(self.api_request(auth=False))
+
+    def _test_get_resources(self):
+        """Send a request to the API to retrieve a list of resources."""
+        if not getattr(self, 'request_get_data', False):
+            self.request_get_data = None
+
+        response = self.api_request(method='get', data=self.request_get_data)
+        self.assertHttpOK(response)
+        if getattr(self, 'expected_get_keys', False):
+            response_dict = self.deserialize(response)
+            self.assertValidJSONResponse(response)
+            self.assertKeys(response_dict['objects'][0], self.expected_get_keys)
+
+    def _test_post_resources(self):
+        """Send a request to the API to create a resource."""
+        response = self.api_request(method='post', data=self.request_post_data)
+        self.assertHttpCreated(response)
+
+        if getattr(self, 'expected_post_keys', False):
+            response_dict = self.deserialize(response)
+            self.assertKeys(response_dict['data'], self.expected_post_keys)
 
 
 class CommentResourceTest(BaseResourceTest):
     """Test the comment API resource."""
 
     resource_name = 'comment'
-
-    @mock.patch(
-        'timesketch.lib.datastores.elasticsearch_datastore.ElasticSearchDataStore',
-        MockDataStore)
-    def test_create_comment(self):
-        """Send a request to the API to create a comment."""
-        # Data to send in the request.
-        data = {
-            'data': {
-                'sketch': 1,
-                'id': 'test',
-                'index': 'test',
-                'body': 'test'
-            }
-        }
-        response = self.api_client.post(
-            '/api/v1/comment/', format='json',
-            authentication=self.get_credentials(), data=data)
-        # The API will return the created comment object in the response because
-        # we need it for the UI for displaying the comment without reload.
-        created_comment_dict = self.deserialize(response)
-        self.assertHttpCreated(response)
-        self.assertEqual(len(created_comment_dict['data']), 6)
-
-        expected_keys = frozenset([
-            u'body',
-            u'updated',
-            u'created',
-            u'user',
-            u'datastore_id',
-            u'datastore_index',
-            u'data',
-            u'resource_uri'
-        ])
-
-        self.assertKeys(created_comment_dict, expected_keys)
-
-    def test_get_comments(self):
-        """Send a request to the API to retrieve a list of comments."""
-        # Data to send in the request.
-        data = {
+    request_post_data = {
+        'data': {
             'id': 'test',
             'index': 'test',
-            'sketch': 1
+            'sketch': 1,
+            'body': 'test'
         }
-        response = self.api_client.get(
-            '/api/v1/comment/', format='json',
-            authentication=self.get_credentials(), data=data)
-        comment_dict = self.deserialize(response)['objects']
-        self.assertValidJSONResponse(response)
-        self.assertEqual(len(comment_dict), 1)
+    }
+    request_get_data = {
+        'id': 'test',
+        'index': 'test',
+        'sketch': 1
+    }
+    expected_post_keys = frozenset([
+        u'body',
+        u'index',
+        u'sketch',
+        u'created',
+        u'user',
+        u'id'])
+    expected_get_keys = frozenset([
+        u'body',
+        u'updated',
+        u'created',
+        u'user',
+        u'datastore_id',
+        u'datastore_index',
+        u'resource_uri'])
 
-        expected_keys = frozenset([
-            u'body',
-            u'updated',
-            u'created',
-            u'user',
-            u'datastore_id',
-            u'datastore_index',
-            u'resource_uri'])
+    def test_get_resources(self):
+        self._test_get_resources()
 
-        self.assertKeys(comment_dict[0], expected_keys)
+    def test_post_resources(self):
+        self._test_post_resources()
 
 
 class EventResourceTest(BaseResourceTest):
     """Test the event API resource."""
 
     resource_name = 'event'
+    request_get_data = {
+        'id': 'test',
+        'index': 'test'
+    }
+    expected_get_keys = frozenset([
+        u'parser',
+        u'datetime',
+        u'tag',
+        u'allocated',
+        u'filename',
+        u'inode',
+        u'message',
+        u'size',
+        u'display_name',
+        u'uuid',
+        u'hostname',
+        u'label',
+        u'source_short',
+        u'username',
+        u'store_number',
+        u'data_type',
+        u'timestamp',
+        u'store_index',
+        u'source_long',
+        u'es_index',
+        u'offset',
+        u'timestamp_desc',
+        u'fs_type',
+        u'es_id',
+        u'resource_uri'])
 
-    def test_get_event(self):
-        """Send a request to the API to retrieve an event."""
-        # Data to send in the request.
-        data = {
-            'id': 'test_id',
-            'index': 'test_index'
-        }
-        response = self.api_client.get(
-            '/api/v1/event/', format='json',
-            authentication=self.get_credentials(), data=data)
-        event_dict = self.deserialize(response)['objects'][0]
-        self.assertValidJSONResponse(response)
-
-        expected_keys = frozenset([
-            u'parser',
-            u'datetime',
-            u'tag',
-            u'allocated',
-            u'filename',
-            u'inode',
-            u'message',
-            u'size',
-            u'display_name',
-            u'uuid',
-            u'hostname',
-            u'label',
-            u'source_short',
-            u'username',
-            u'store_number',
-            u'data_type',
-            u'timestamp',
-            u'store_index',
-            u'source_long',
-            u'es_index',
-            u'offset',
-            u'timestamp_desc',
-            u'fs_type',
-            u'es_id',
-            u'resource_uri'])
-
-        self.assertKeys(event_dict, expected_keys)
+    def test_get_resources(self):
+        self._test_get_resources()
 
 
 class SearchResourceTest(BaseResourceTest):
     """Test the search API resource."""
 
     resource_name = 'search'
+    request_get_data = {
+        'q': 'test',
+        'filter': json.dumps({'foo': 'bar'}),
+        'indexes': 'test',
+        'sketch': 1
+    }
+    expected_get_keys = frozenset([
+        u'timestamp_desc',
+        u'timestamp',
+        u'label',
+        u'tag',
+        u'es_index',
+        u'es_id',
+        u'message',
+        u'datetime',
+        u'resource_uri'])
 
-    def test_search(self):
-        """Send a request to the API to perform a search."""
-        # Data to send in the request.
-        data = {
-            'q': 'test',
-            'filter': json.dumps({'foo': 'bar'}),
-            'indexes': 'test',
-            'sketch': 1
-        }
-        response = self.api_client.get(
-            '/api/v1/search/', format='json',
-            authentication=self.get_credentials(), data=data)
-        search_result_dict = self.deserialize(response)['objects'][0]
-        self.assertValidJSONResponse(response)
-
-        expected_keys = frozenset([
-            u'timestamp_desc',
-            u'timestamp',
-            u'label',
-            u'tag',
-            u'es_index',
-            u'es_id',
-            u'message',
-            u'datetime',
-            u'resource_uri'])
-
-        self.assertKeys(search_result_dict, expected_keys)
+    def test_get_resources(self):
+        self._test_get_resources()
 
 
 class UserProfileResourceTest(BaseResourceTest):
     """Test the user profile API resource."""
 
     resource_name = 'userprofile'
+    expected_get_keys = frozenset([
+        u'avatar',
+        u'resource_uri'])
 
-    def test_get_profile(self):
-        """Send a request to the API to get user profiles."""
-        response = self.api_client.get(
-            '/api/v1/userprofile/', format='json',
-            authentication=self.get_credentials())
-        userprofile_dict = self.deserialize(response)['objects'][0]
-        self.assertValidJSONResponse(response)
-
-        expected_keys = frozenset([
-            u'avatar',
-            u'resource_uri'])
-
-        self.assertKeys(userprofile_dict, expected_keys)
+    def test_get_resources(self):
+        self._test_get_resources()
 
 
 class UserResourceTest(BaseResourceTest):
     """Test the user API resource."""
 
     resource_name = 'user'
+    expected_get_keys = frozenset([
+        u'profile',
+        u'username',
+        u'first_name',
+        u'last_name',
+        u'resource_uri'])
 
-    def test_get_user(self):
-        """Send a request to the API to get users."""
-        response = self.api_client.get(
-            '/api/v1/user/', format='json',
-            authentication=self.get_credentials())
-        user_dict = self.deserialize(response)['objects'][0]
-        self.assertValidJSONResponse(response)
-
-        expected_keys = frozenset([
-            u'profile',
-            u'username',
-            u'first_name',
-            u'last_name',
-            u'resource_uri'])
-
-        self.assertKeys(user_dict, expected_keys)
+    def test_get_resources(self):
+        self._test_get_resources()
 
 
 class SketchAclResourceTest(BaseResourceTest):
     """Test the sketch ACL API resource."""
 
     resource_name = 'sketch_acl'
-
-    def test_create_acl(self):
-        """Test to create a ACL on a specific sketch."""
-        # Data to send in the request.
-        data = {
-            'data': {
-                'sketch': 1,
-                'sketch_acl': 'public'
-            }
+    request_post_data = {
+        'data': {
+            'sketch': 1,
+            'sketch_acl': 'public'
         }
-        response = self.api_client.post(
-            '/api/v1/sketch_acl/', format='json',
-            authentication=self.get_credentials(), data=data)
-        self.assertHttpCreated(response)
+    }
+
+    def test_post_resources(self):
+        self._test_post_resources()
 
 
 class ViewResourceTest(BaseResourceTest):
     """Test the view API resource."""
 
     resource_name = 'view'
-
-    def test_create_view(self):
-        """Test to create a view."""
-        # Data to send in the request.
-        data = {
-            'data': {
-                'sketch': 1,
-                'name': 'test',
-                'query': 'test query',
-                'query_filter': json.dumps({'foo': 'bar'})
-            }
-        }
-        response = self.api_client.post(
-            '/api/v1/view/', format='json',
-            authentication=self.get_credentials(), data=data)
-        self.assertHttpCreated(response)
-
-    def test_get_views(self):
-        """Send a request to the API to get views."""
-        # Data to send in the request.
-        data = {
+    request_post_data = {
+        'data': {
             'sketch': 1,
-            'view': 1
+            'name': 'test',
+            'query': 'test query',
+            'query_filter': json.dumps({'foo': 'bar'})
         }
-        response = self.api_client.get(
-            '/api/v1/view/', format='json',
-            authentication=self.get_credentials(), data=data)
-        view_dict = self.deserialize(response)['objects'][0]
-        self.assertValidJSONResponse(response)
-        self.assertHttpOK(response)
+    }
+    request_get_data = {
+        'sketch': 1,
+        'view': 1
+    }
+    expected_get_keys = frozenset([
+        u'updated',
+        u'name',
+        u'created',
+        u'filter',
+        u'query',
+        u'id',
+        u'resource_uri'])
 
-        expected_keys = frozenset([
-            u'updated',
-            u'name',
-            u'created',
-            u'filter',
-            u'query',
-            u'id',
-            u'resource_uri'])
+    def test_get_resources(self):
+        self._test_get_resources()
 
-        self.assertKeys(view_dict, expected_keys)
+    def test_post_resources(self):
+        self._test_post_resources()
 
 
 class LabelResourceTest(BaseResourceTest):
     """Test the label API resource."""
 
     resource_name = 'label'
-
-    def test_create_label(self):
-        """Send a request to the API to create a label."""
-        # Data to send in the request.
-        data = {
-            'data': {
-                'sketch': 1,
-                'id': 'test',
-                'index': 'test',
-                'label': 'test',
-            }
+    request_post_data = {
+        'data': {
+            'sketch': 1,
+            'id': 'test',
+            'index': 'test',
+            'label': 'test',
         }
-        response = self.api_client.post(
-            '/api/v1/label/', format='json',
-            authentication=self.get_credentials(), data=data)
-        # The API will return the created label object in the response because
-        # we need it for the UI for displaying the label without reload.
-        created_label_dict = self.deserialize(response)['data']
-        self.assertHttpCreated(response)
+    }
+    expected_post_keys = frozenset([
+        u'index',
+        u'sketch',
+        u'id',
+        u'label'])
 
-        expected_keys = frozenset([
-            u'index',
-            u'sketch',
-            u'id',
-            u'label'])
-
-        self.assertKeys(created_label_dict, expected_keys)
+    def test_post_resources(self):
+        self._test_post_resources()
 
