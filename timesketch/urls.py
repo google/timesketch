@@ -50,6 +50,7 @@ urlpatterns = patterns(
         'timesketch.apps.ui.views.saved_views'),
     url(r'^sketch/(\w+)/timelines/$', 'timesketch.apps.ui.views.timelines'),
     url(r'^sketch/(\w+)/settings/$', 'timesketch.apps.ui.views.settings'),
+    url(r'^sketch/(\w+)/settings/sharing/$', 'timesketch.apps.ui.views.settings_sharing'),
     url(r'^sketch/(\w+)/timelines/add/$',
         'timesketch.apps.ui.views.add_timeline'),
     url(r'^sketch/(\w+)/timelines/(\w+)/edit/$',

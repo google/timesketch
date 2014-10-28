@@ -141,8 +141,8 @@ def edit_timeline(request, sketch_id, timeline_id):
             timeline.color = color_in_hex
             timeline.save()
         return redirect('/sketch/%s/timelines/' % sketch.id)
-    return render(request, 'edit_timeline.html', {'sketch': sketch,
-                                                             'timeline': timeline})
+    return render(
+        request, 'edit_timeline.html', {'sketch': sketch, 'timeline': timeline})
 
 
 @login_required
@@ -156,7 +156,7 @@ def search_sketches(request):
                                                 Q(description__icontains=q)):
                 if sketch.can_read(request.user):
                     result.add(sketch)
-    return render(request, 'search.html', {'result':result})
+    return render(request, 'search.html', {'result': result})
 
 
 def settings(request, sketch_id):
@@ -164,3 +164,18 @@ def settings(request, sketch_id):
     sketch = Sketch.objects.get(id=sketch_id)
     context = {"sketch": sketch}
     return render(request, 'settings.html', context)
+
+
+@login_required
+def settings_sharing(request, sketch_id):
+    """Set sharing options."""
+    sketch = Sketch.objects.get(id=sketch_id)
+    if request.method == 'POST':
+        permission = request.POST.getlist('optionsPermission')[0]
+        if permission == "public":
+            sketch.make_public(request.user)
+        else:
+            sketch.make_private(request.user)
+
+        print
+    return redirect("/sketch/%i/" % sketch.id)

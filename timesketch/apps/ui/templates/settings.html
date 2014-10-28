@@ -31,9 +31,26 @@ limitations under the License.
     <body>
 
     <div class="card">
-
-        Settings
-
+        <h4>Sharing options</h4>
+        <hr>
+        <form method="post" action="/sketch/{{ sketch.id }}/settings/sharing/"> {% csrf_token %}
+            <div class="radio">
+                <label>
+                    <input type="radio" name="optionsPermission" id="optionsPermissionsPublic" value="public" {% if sketch.is_public %}checked{% endif %}>
+                    <i class="glyphicon glyphicon-globe" style="margin-left: 10px;margin-right: 5px;"></i>
+                    Public -  All users of the system can access this sketch
+                </label>
+            </div>
+            <div class="radio">
+                <label>
+                    <input type="radio" name="optionsPermission" id="optionsPermissionsPrivate" value="private" {% if not sketch.is_public %}checked{% endif %}>
+                    <i class="glyphicon glyphicon-lock" style="margin-left: 10px;margin-right: 5px;"></i>
+                    Private - Only people explicitly granted permission can access this sketch
+                </label>
+            </div>
+            <br>
+            <input type="submit" class="btn btn-success" value="Save">
+        </form>
     </div>
 
     </body>
