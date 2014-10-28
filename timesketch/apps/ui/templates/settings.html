@@ -21,36 +21,20 @@ limitations under the License.
     <ul class="leftnav">
         <a href="/sketch/{{ sketch.id }}/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li></a>
         <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
-        <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-eye"></i> Views</li>
+        <a href="/sketch/{{ sketch.id }}/saved_views/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-eye"></i> Views</li></a>
         <a href="/sketch/{{ sketch.id }}/timelines/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li></a>
-        <a href="/sketch/{{ sketch.id }}/settings/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li></a>
+        <li class="leftnav  leftnav-active"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li>
     </ul>
 {% endblock %}
 
 {% block body %}
     <body>
+
     <div class="card">
-        {% if views %}
-            <table class="table table-hover">
-                <thead>
-                <tr>
-                    <th>View</th>
-                    <th>Created by</th>
-                    <th width="150px">Created</th>
-                </tr>
-                <tbody>
-                {% for view in views %}
-                    <tr>
-                        <td><a href="/sketch/{{ sketch.id }}/explore/?view={{ view.id }}">{{ view.name }}</a></td>
-                        <td>{{ view.user.get_full_name }}</td>
-                        <td>{{ view.updated|date:"Y-m-d H:i" }}</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            No saved views
-        {% endif %}
+
+        Settings
+
     </div>
+
     </body>
 {% endblock %}
