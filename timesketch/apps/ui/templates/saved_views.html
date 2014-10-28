@@ -14,21 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-{% extends "sketch_base.html" %}
+{% extends "base.html" %}
 {% load staticfiles %}
 
 {% block navigation %}
     <ul class="leftnav">
         <a href="/sketch/{{ sketch.id }}/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li></a>
-        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-th-large"></i> Activity</li> -->
         <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
         <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li>
         <a href="/sketch/{{ sketch.id }}/timelines/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li></a>
-        <!--
-        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li>
-        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li>
-        -->
-        <a href="https://github.com/google/timesketch/issues/new" target="newpage"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-bug"></i> Report bug</li></a>
     </ul>
 {% endblock %}
 

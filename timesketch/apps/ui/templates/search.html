@@ -17,8 +17,16 @@ limitations under the License.
 {% extends "base.html" %}
 {% load staticfiles %}
 
-{% block header %}
-            <form class="form-inline" action="/search/" method="post" style="margin-left:206px;margin-top:10px;max-width: 500px;"> {% csrf_token %}
+{% block navigation %}
+    <ul class="leftnav">
+        <a href="/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-user"></i> My sketches</li></a>
+    </ul>
+{% endblock %}
+
+{% block body %}
+    <body>
+        <div class="card">
+            <form class="form-inline" action="/search/" method="post"> {% csrf_token %}
                 <div class="input-group">
                     <input style="background:#fff;" type="search" class="form-control" id="search-input" name="search" placeholder="Search sketches" autofocus>
                     <div class="input-group-btn">
@@ -26,17 +34,8 @@ limitations under the License.
                     </div>
                 </div>
             </form>
-{% endblock %}
+        </div>
 
-{% block navigation %}
-    <ul class="leftnav">
-        <a href="/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-user"></i> My sketches</li></a>
-        <a href="https://github.com/google/timesketch/issues/new" target="newpage"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-bug"></i> Report bug</li></a>
-    </ul>
-{% endblock %}
-
-{% block body %}
-    <body>
         {% if result %}
         <div class="card">
             <table class="table table-hover">

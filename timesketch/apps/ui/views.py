@@ -157,3 +157,10 @@ def search_sketches(request):
                 if sketch.can_read(request.user):
                     result.add(sketch)
     return render(request, 'search.html', {'result':result})
+
+
+def settings(request, sketch_id):
+    """Settings for a sketch."""
+    sketch = Sketch.objects.get(id=sketch_id)
+    context = {"sketch": sketch}
+    return render(request, 'settings.html', context)

@@ -31,26 +31,23 @@ textarea {
 }
 
 header {
-    height:76px;
-    background: #f9f9f9;
-    border-bottom:1px solid #e7e7e7;
-    padding: 10px 20px 10px 10px;
-    position: fixed;
-    top:0;
-    z-index:9997;
     width: 100%;
 }
 
+h3 {
+    margin:0 0 0 0;
+    padding:0;
+}
+
 #main {
-    margin-left:200px;
-    margin-top:90px;
+    margin:15px 15px 15px 215px;
 }
 
 #logo {
     width:200px;
     height:75px;
     padding:20px;
-    background: #4fa6c0;
+    background: #333;
     position: fixed;
     top:0;
     z-index:9999;
@@ -67,6 +64,17 @@ header {
   z-index:9998;
 }
 
+#navigation div.bug {
+  background: #333;
+  position: absolute;
+  width: 200px;
+  left: 0px;
+  bottom: 0px;
+  height: 115px;
+  overflow: hidden;
+}
+
+
 #butterbar {
     display:none;
     width:150px;
@@ -82,6 +90,7 @@ header {
     margin-right:auto;
     text-align: center;
     font-weight: bold;
+  z-index:9998;
 }
 
 #description {
@@ -91,6 +100,8 @@ header {
     font-size: 16px;
     line-height: 1.5;
     max-width: 900px;
+    margin-left:3px;
+    margin-top:15px;
 }
 
 #search-input {
@@ -104,8 +115,6 @@ header {
 }
 
 .card {
-    margin-left: 15px;
-    margin-right: 15px;
     margin-bottom:10px;
     background: #fff;
     padding: 15px;
@@ -225,7 +234,7 @@ header {
 }
 
 .card-alert {
-    background:#e73f3f;
+    background: #d44444;
     color:#fff;
 }
 

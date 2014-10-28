@@ -14,30 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-{% extends "sketch_base.html" %}
+{% extends "base.html" %}
 {% load staticfiles %}
-
-{% block header %}
-    <span class="pull-right" style="margin-top:10px;margin-right:10px;">
-        <button class="btn btn-info" data-toggle="modal" data-target="#share-modal"><i class="fa fa-lg fa-user"></i> Share</button>
-    </span>
-    <span class="pull-left" style="margin-left:220px;padding-top:12px;font-size: 25px">{{ sketch.title }}</span>
-    <div butterbar id="butterbar">Loading..</div>
-{% endblock %}
 
 {% block navigation %}
     <ul class="leftnav">
         <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li>
-        <!-- <li class="leftnav"><i style="margin-right:10px;" class="fa fa-th-large"></i> Activity</li> -->
         <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
         <a href="/sketch/{{ sketch.id }}/saved_views/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-save"></i> Saved views</li></a>
         <a href="/sketch/{{ sketch.id }}/timelines/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li></a>
-        <!--
-        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-book"></i> Stories</li>
-        <li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li>
-        -->
-        <a href="https://github.com/google/timesketch/issues/new" target="newpage"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-bug"></i> Report bug</li></a>
-
+        <a href="/sketch/{{ sketch.id }}/settings/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li></a>
     </ul>
 {% endblock %}
 
@@ -86,10 +72,28 @@ limitations under the License.
     </div>
 
     <div class="card">
+        <h3>{{ sketch.title }}</h3>
+
         <div id="description">
             <p>{{ sketch.description }}</p>
         </div>
+        <hr>
+
+        {% if sketch.is_public %}
+                <i class="glyphicon glyphicon-globe" style="margin-top:4px;margin-right: 5px;"></i> This sketch is public (<a href="/sketch/{{ sketch.id }}/settings/">change</a>)
+        {% else %}
+            <span style="margin-right: 10px;"><i class="glyphicon glyphicon-lock" style="margin-left:3px;margin-top:4px;margin-right: 5px;"></i> This sketch is private (<a href="/sketch/{{ sketch.id }}/settings/">change</a>)</span>
+            <img src="{{ sketch.user.userprofile.get_avatar_url }}" class="img-rounded" width="30px" style="margin-right: 5px;">
+        {% endif %}
+
     </div>
+
+    {% if not sketch.timelines.all %}
+        <div class="card card-alert">
+            There are no timelines added to this sketch.
+            <a style="color:#fff;font-weight:bold;text-decoration:underline" href="timelines/add/">Add a timeline</a> to get started.
+        </div>
+    {% endif %}
 
     {% if views %}
         <div class="card">
@@ -114,11 +118,6 @@ limitations under the License.
         </div>
     {% endif %}
 
-    {% if not sketch.timelines.all %}
-        <div class="card">
-            There are no timelines added to this sketch.
-            <a href="timelines/add/">Add a timeline</a> to get started.
-        </div>
-    {% endif %}
+
     </body>
 {% endblock %}
