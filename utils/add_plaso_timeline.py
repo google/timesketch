@@ -19,6 +19,7 @@ import argparse
 
 import django
 from pyelasticsearch import ElasticSearch
+from pyelasticsearch.exceptions import ConnectionError
 
 # We need to add the parent directory to the Python path in order to be able
 # to import timesketch modules.
@@ -29,41 +30,66 @@ django.setup()
 
 # Django and timesketch imports
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from timesketch.apps.sketch.models import Timeline
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--user", help="Timesketch username to set as owner of the timeline")
+        '-u', '--user', required=True,
+        help='Timesketch username to set as owner of the timeline')
     parser.add_argument(
-        "--es_server", help="IP address or hostname for Elasticsearch server")
+        '-s', '--server', default='127.0.0.1',
+        help='IP address or hostname for ElasticSearch server')
     parser.add_argument(
-        "--es_port", help="Port number on Elasticsearch server")
+        '-p', '--port', default='9200',
+        help='Port number on ElasticSearch server')
     parser.add_argument(
-        "--timeline_name", help="The name of the timeline in Timesketch")
+        '-n', '--name', required=True,
+        help='The name of the timeline in Timesketch')
     parser.add_argument(
-        "--index_name", help="The name of the index in Elasticsearch")
+        '-i', '--index', required=True,
+        help='The name of the index in ElasticSearch')
     parser.parse_args()
     args = parser.parse_args()
 
-    user = User.objects.get(username=args.user)
-    es = ElasticSearch("http://%s:%s" % (args.es_server, args.es_port))
+    try:
+        user = User.objects.get(username=args.user)
+    except ObjectDoesNotExist:
+        sys.stderr.write(
+            'ERROR: User does not exist\n')
+        return 1
+
+    elasticsearch = ElasticSearch('http://{server}:{port}'.format(
+        server=args.server, port=args.port))
 
     mapping = {
-        "plaso_event": {
+        'plaso_event': {
             u'properties': {
                 u'timesketch_label': {
-                    "type": "nested"}
+                    'type': 'nested'}
             }
         },
     }
 
+    try:
+        elasticsearch.health(wait_for_status='yellow')
+        elasticsearch.put_mapping(args.index, 'plaso_event', mapping)
+    except ConnectionError:
+        sys.stderr.write(
+            'ERROR: Unable to connect to the ElasticSearch backend\n')
+        return 1
+
     timeline, created = Timeline.objects.get_or_create(
-        user=user, title=args.timeline_name, description=args.timeline_name,
-        datastore_index=args.index_name)
+        user=user, title=args.name, description=args.name,
+        datastore_index=args.index)
     if not created:
-        print "Timeline already exists!"
-        sys.exit()
+        sys.stderr.write('ERROR: Timeline already exists\n')
+        return 1
     timeline.make_public(user)
-    es.put_mapping(args.index_name, "plaso_event", mapping)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
