@@ -28,29 +28,29 @@ limitations under the License.
 {% endblock %}
 
 {% block body %}
-    <body>
-    <div class="card">
-        {% if views %}
-            <table class="table table-hover">
-                <thead>
-                <tr>
-                    <th>View</th>
-                    <th>Created by</th>
-                    <th width="150px">Created</th>
-                </tr>
-                <tbody>
-                {% for view in views %}
-                    <tr>
-                        <td><a href="/sketch/{{ sketch.id }}/explore/?view={{ view.id }}">{{ view.name }}</a></td>
-                        <td>{{ view.user.get_full_name }}</td>
-                        <td>{{ view.updated|date:"Y-m-d H:i" }}</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            No saved views
-        {% endif %}
-    </div>
-    </body>
+<body>
+<div class="card">
+    {% if views %}
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th>View</th>
+                <th width="150px">Created</th>
+                <th width="50px"></th>
+            </tr>
+            <tbody>
+            {% for view in views %}
+            <tr>
+                <td><div style="margin-top:5px;font-size: 1.1em;font-weight: bold"><a href="explore/?view={{ view.id }}">{{ view.name }}</a></div> <span style="color:#777;">{{ view.query }}</span></td>
+                <td><div style="margin-top:15px;">{{ view.updated|date:"Y-m-d H:i" }}</div></td>
+                <td><div style="margin-top:10px;"><img src="{{ view.user.userprofile.get_avatar_url }}" class="img-circle" width="30px"></div></td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        No saved views
+    {% endif %}
+</div>
+</body>
 {% endblock %}

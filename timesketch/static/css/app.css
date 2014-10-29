@@ -47,7 +47,8 @@ h3 {
     width:200px;
     height:75px;
     padding:20px;
-    background: #4a9bb3;
+    #background: #4a9bb3;
+    background: #333;
     position: fixed;
     top:0;
     z-index:9999;
