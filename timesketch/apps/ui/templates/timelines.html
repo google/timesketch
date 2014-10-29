@@ -28,34 +28,40 @@ limitations under the License.
 {% endblock %}
 
 {% block body %}
-    <body ng-controller="SketchCtrl" ng-init="init('{{ sketch.id }}')">
-    {% if sketch.timelines.all %}
+    <body>
         <div class="card">
-            <table class="table table-hover">
-                <thead>
-                <tr>
-                    <th width="74px"></th>
-                    <th>Timeline</th>
-                    <th width="150px">Created</th>
-                    <th width="70px"></th>
-                </tr>
-                <tbody>
-                {% for timeline in sketch.timelines.all %}
+
+        {% if not sketch.timelines.all %}
+                There are no timelines added to this sketch yet.
+                <br><br>
+                <a href="add/" class="btn btn-success">Add timeline to get started</a>
+
+        {% else %}
+                <table class="table table-hover">
+                    <thead>
                     <tr>
-                        <td><div class="color-box" style="background: #{{ timeline.color }};{% ifequal timeline.color "ffffff" %}border:1px solid #d1d1d1;{% endifequal %}"></div></td>
-                        <td><div style="margin-top:5px;">{{ timeline.timeline.title }}</div></td>
-                        <td><div style="margin-top:5px;">{{ timeline.timeline.created|date:"Y-m-d H:i" }}</div></td>
-                        <td><a href="{{ timeline.id }}/edit/" class="btn btn-default">Edit</a></td>
+                        <th width="74px"></th>
+                        <th>Timeline</th>
+                        <th width="150px">Created</th>
+                        <th width="70px"></th>
                     </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-            <a href="add/" class="btn btn-default">+ Add timeline</a>
-        </div>
-    {% else %}
-        <div class="card">
-            <a href="add/" class="btn btn-default">+ Add timeline</a>
-        </div>
-    {% endif %}
+                    <tbody>
+                    {% for timeline in sketch.timelines.all %}
+                        <tr>
+                            <td><div class="color-box" style="background: #{{ timeline.color }};{% ifequal timeline.color "ffffff" %}border:1px solid #d1d1d1;{% endifequal %}"></div></td>
+                            <td><div style="margin-top:5px;">{{ timeline.timeline.title }}</div></td>
+                            <td><div style="margin-top:5px;">{{ timeline.timeline.created|date:"Y-m-d H:i" }}</div></td>
+                            <td><a href="{{ timeline.id }}/edit/" class="btn btn-default">Edit</a></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <br><br>
+                <a href="add/" class="btn btn-success">Add timeline</a>
+
+        {% endif %}
+
+            </div>
+
     </body>
 {% endblock %}
