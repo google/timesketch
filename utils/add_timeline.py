@@ -27,7 +27,7 @@ from pyelasticsearch.exceptions import ConnectionError
 # to import timesketch modules.
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, parent_dir)
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "timesketch.settings")
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'timesketch.settings')
 django.setup()
 
 # Django and timesketch imports
@@ -104,5 +104,5 @@ def main():
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())
