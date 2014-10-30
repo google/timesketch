@@ -11,11 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Add Plaso timeline to timesketch"""
+"""Add ElasticSearch index to Timesketch"""
 
+# Note: The reason we need to do some funky import order here is because Django
+# needs some special setup in order to get it's environment correct.
+import argparse
 import os
 import sys
-import argparse
 
 import django
 from pyelasticsearch import ElasticSearch
@@ -35,6 +37,13 @@ from timesketch.apps.sketch.models import Timeline
 
 
 def main():
+    """
+    Create timeline in Timesketch and bind to a specific index in
+    ElasticSearch.
+
+    Returns:
+        0 on success and 1 on error.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-u', '--user', required=True,
@@ -64,6 +73,8 @@ def main():
     elasticsearch = ElasticSearch('http://{server}:{port}'.format(
         server=args.server, port=args.port))
 
+    # Tell ElasticSearch that a timesketch label is a nested documents.
+    # This makes it possible to filter on labels.
     mapping = {
         'plaso_event': {
             u'properties': {
@@ -74,6 +85,7 @@ def main():
     }
 
     try:
+        # Make sure ElasticSearch is ready.
         elasticsearch.health(wait_for_status='yellow')
         elasticsearch.put_mapping(args.index, 'plaso_event', mapping)
     except ConnectionError:
@@ -87,6 +99,7 @@ def main():
     if not created:
         sys.stderr.write('ERROR: Timeline already exists\n')
         return 1
+    # Make the timeline public by default.
     timeline.make_public(user)
     return 0
 
