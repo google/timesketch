@@ -89,13 +89,13 @@ def add_timeline(request, sketch_id):
 
 
 @login_required
-def saved_views(request, sketch_id):
+def views(request, sketch_id):
     """List of all saved views in a specific sketch."""
     sketch = Sketch.objects.get(id=sketch_id)
     views = SavedView.objects.filter(sketch=sketch).exclude(
         name="").order_by("created")
     context = {"sketch": sketch, "views": views}
-    return render(request, 'saved_views.html', context)
+    return render(request, 'views.html', context)
 
 
 @login_required

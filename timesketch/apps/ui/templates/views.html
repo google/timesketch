@@ -40,7 +40,10 @@ limitations under the License.
             <tbody>
             {% for view in views %}
             <tr>
-                <td><div style="margin-top:5px;font-size: 1.1em;font-weight: bold"><a href="explore/?view={{ view.id }}">{{ view.name }}</a></div> <span style="color:#777;">{{ view.query }}</span></td>
+                <td>
+                    <div style="margin-top:5px;font-size: 1.1em;font-weight: bold"><a href="/sketch/{{ sketch.id }}/explore/?view={{ view.id }}">{{ view.name }}</a>
+                    </div> <span style="color:#777;">{{ view.query }}</span>
+                </td>
                 <td><div style="margin-top:15px;">{{ view.updated|date:"Y-m-d H:i" }}</div></td>
                 <td><div style="margin-top:10px;"><img src="{{ view.user.userprofile.get_avatar_url }}" class="img-circle" width="30px"></div></td>
             </tr>
