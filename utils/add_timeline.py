@@ -22,6 +22,8 @@ import sys
 import django
 from pyelasticsearch import ElasticSearch
 from pyelasticsearch.exceptions import ConnectionError
+from pyelasticsearch.exceptions import ElasticHttpNotFoundError
+
 
 # We need to add the parent directory to the Python path in order to be able
 # to import timesketch modules.
@@ -33,6 +35,7 @@ django.setup()
 # Django and timesketch imports
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import IntegrityError
 from timesketch.apps.sketch.models import Timeline
 
 
@@ -66,8 +69,7 @@ def main():
     try:
         user = User.objects.get(username=args.user)
     except ObjectDoesNotExist:
-        sys.stderr.write(
-            'ERROR: User does not exist\n')
+        sys.stderr.write('ERROR: User does not exist\n')
         return 1
 
     elasticsearch = ElasticSearch('http://{server}:{port}'.format(
@@ -88,16 +90,19 @@ def main():
         # Make sure ElasticSearch is ready.
         elasticsearch.health(wait_for_status='yellow')
         elasticsearch.put_mapping(args.index, 'plaso_event', mapping)
-    except ConnectionError:
-        sys.stderr.write(
-            'ERROR: Unable to connect to the ElasticSearch backend\n')
+    except (ConnectionError, ElasticHttpNotFoundError) as e:
+        sys.stderr.write('ERROR: ElasticSearch - {}\n'.format(repr(e)))
         return 1
 
-    timeline, created = Timeline.objects.get_or_create(
-        user=user, title=args.name, description=args.name,
-        datastore_index=args.index)
-    if not created:
-        sys.stderr.write('ERROR: Timeline already exists\n')
+    try:
+        timeline, created = Timeline.objects.get_or_create(
+            user=user, title=args.name, description=args.name,
+            datastore_index=args.index)
+        if not created:
+            sys.stderr.write('ERROR: Timeline already exists\n')
+            return 1
+    except (IntegrityError, ValueError) as e:
+        sys.stderr.write('ERROR: Timesketch - {}\n'.format(repr(e)))
         return 1
     # Make the timeline public by default.
     timeline.make_public(user)
