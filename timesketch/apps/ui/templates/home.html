@@ -16,83 +16,76 @@ limitations under the License.
 
 {% extends "base.html" %}
 
-{% block header %}
-            <form class="form-inline" action="/search/" method="post" style="margin-left:206px;margin-top:10px;max-width: 500px;"> {% csrf_token %}
-                <div class="input-group">
-                    <input style="background:#fff;" type="search" class="form-control" id="search-input" name="search" placeholder="Search sketches" autofocus>
-                    <div class="input-group-btn">
-                        <button class="btn btn-default btn-search" type="submit"><i class="fa fa-search fa-1x" style="color: #333"></i></button>
-                    </div>
-                </div>
-            </form>
-{% endblock %}
-
 {% block navigation %}
     <ul class="leftnav">
-        <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-user"></i> My sketches</li>
+        <li class="leftnav leftnav-active">
+            <i style="margin-right:10px;" class="fa fa-user"></i> My sketches
+        </li>
     </ul>
 {% endblock %}
 
 {% block body %}
     <body>
-        <div class="card">
-            <form class="form-inline" action="/search/" method="post"> {% csrf_token %}
-                <div class="input-group">
-                    <input style="background:#fff;" type="search" class="form-control" id="search-input" name="search" placeholder="Search sketches" autofocus>
-                    <div class="input-group-btn">
-                        <button class="btn btn-default btn-search" type="submit"><i class="fa fa-search fa-1x" style="color: #333"></i></button>
-                    </div>
+
+    <div class="card">
+        <form class="form-inline" action="/search/" method="post">
+            {% csrf_token %}
+            <div class="input-group">
+                <input style="background:#fff;" type="search" class="form-control" id="search-input" name="search" placeholder="Search sketches" autofocus>
+                <div class="input-group-btn">
+                    <button class="btn btn-default btn-search" type="submit"><i class="fa fa-search fa-1x" style="color: #333"></i></button>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
+    </div>
 
-        {% if my_sketches %}
-        <div class="card">
-            <table class="table table-hover">
-            <thead>
-            <tr>
-                <th>My sketches</th>
-                <th width="150px">Last modified</th>
-            </tr>
-            <tbody>
-            {% for sketch in my_sketches %}
-                <tr>
-                <td><a href="/sketch/{{ sketch.id }}">{{ sketch.title }}</a></td>
-                <td>{{ sketch.updated|date:"Y-m-d H:i" }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-            </table>
-            <a href="/sketch/new/" class="btn btn-success">New sketch</a>
-
-            {% else %}
-                <div class="card">
-                You do not have any sketches yet. <a href="/sketch/new/">Create a new one </a> to get started!
-            {% endif %}
-        </div>
-
-        {% if public_sketches %}
+    {% if my_sketches %}
         <div class="card">
             <table class="table table-hover">
                 <thead>
+                <tr>
+                    <th>My sketches</th>
+                    <th width="150px">Last modified</th>
+                </tr>
+                <tbody>
+                {% for sketch in my_sketches %}
                     <tr>
-                        <th>Shared with me</th>
-                        <th>Owner</th>
-                        <th width="150px">Last modified</th>
+                        <td><a href="/sketch/{{ sketch.id }}">{{ sketch.title }}</a></td>
+                        <td>{{ sketch.updated|date:"Y-m-d H:i" }}</td>
                     </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <a href="/sketch/new/" class="btn btn-success">New sketch</a>
+        </div>
+    {% else %}
+        <div class="card">
+            You do not have any sketches yet. <a href="/sketch/new/">Create a new one </a> to get started!
+        </div>
+    {% endif %}
+
+    {% if public_sketches %}
+        <div class="card">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>Shared with me</th>
+                    <th>Owner</th>
+                    <th width="150px">Last modified</th>
+                </tr>
                 </thead>
                 <tbody>
-                    {% for sketch in public_sketches %}
-                        <tr>
-                            <td><a href="/sketch/{{ sketch.id }}">{{ sketch.title }}</a></td>
-                            <td>{{ sketch.user.get_full_name }}</td>
-                            <td>{{ sketch.updated|date:"Y-m-d H:i" }}</td>
-                        </tr>
-                    {% endfor %}
+                {% for sketch in public_sketches %}
+                    <tr>
+                        <td><a href="/sketch/{{ sketch.id }}">{{ sketch.title }}</a></td>
+                        <td>{{ sketch.user.get_full_name }}</td>
+                        <td>{{ sketch.updated|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                {% endfor %}
                 </tbody>
-
             </table>
         </div>
-        {% endif %}
+    {% endif %}
+
     </body>
 {% endblock %}

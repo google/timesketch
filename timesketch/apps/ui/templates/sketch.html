@@ -27,78 +27,76 @@ limitations under the License.
 {% endblock %}
 
 {% block body %}
-<body>
+    <body>
+    <div class="card">
+        <h3>{{ sketch.title }}</h3>
 
-<div class="card">
-    <h3>{{ sketch.title }}</h3>
+        <div id="description">
+            <p>{{ sketch.description|linebreaks }}</p>
+        </div>
 
-    <div id="description">
-       <p>{{ sketch.description|linebreaks }}</p>
+        <hr>
+
+        {% if sketch.is_public %}
+            <i class="glyphicon glyphicon-globe" style="margin-top:4px;margin-right: 5px;"></i> This sketch is public (<a href="/sketch/{{ sketch.id }}/settings/">change</a>)
+        {% else %}
+            <span style="margin-right: 10px;"><i class="glyphicon glyphicon-lock" style="margin-left:3px;margin-top:4px;margin-right: 5px;"></i> This sketch is private (<a href="/sketch/{{ sketch.id }}/settings/">change</a>)</span>
+            <div style="margin-top:10px;"><img src="{{ sketch.user.userprofile.get_avatar_url }}" class="img-rounded" width="30px" style="margin-right: 5px;"></div>
+        {% endif %}
+
+        {% if not sketch.timelines.all %}
+            <br><br>
+            <a href="timelines/add/" class="btn btn-success">Add timeline to get started</a>
+        {% endif %}
     </div>
 
-    <hr>
-
-    {% if sketch.is_public %}
-        <i class="glyphicon glyphicon-globe" style="margin-top:4px;margin-right: 5px;"></i> This sketch is public (<a href="/sketch/{{ sketch.id }}/settings/">change</a>)
-    {% else %}
-        <span style="margin-right: 10px;"><i class="glyphicon glyphicon-lock" style="margin-left:3px;margin-top:4px;margin-right: 5px;"></i> This sketch is private (<a href="/sketch/{{ sketch.id }}/settings/">change</a>)</span>
-        <div style="margin-top:10px;"><img src="{{ sketch.user.userprofile.get_avatar_url }}" class="img-rounded" width="30px" style="margin-right: 5px;"></div>
+    {% if views %}
+        <div class="card">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>View</th>
+                    <th width="150px">Created</th>
+                    <th width="50px"></th>
+                </tr>
+                <tbody>
+                {% for view in views %}
+                    <tr>
+                        <td>
+                            <div style="margin-top:5px;font-size: 1.1em;font-weight: bold"><a href="explore/?view={{ view.id }}">{{ view.name }}</a>
+                            </div> <span style="color:#777;">{{ view.query }}</span>
+                        </td>
+                        <td><div style="margin-top:15px;">{{ view.updated|date:"Y-m-d H:i" }}</div></td>
+                        <td><div style="margin-top:10px;"><img src="{{ view.user.userprofile.get_avatar_url }}" class="img-circle" width="30px"></div></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endif %}
 
-    {% if not sketch.timelines.all %}
-        <br><br>
-        <a href="timelines/add/" class="btn btn-success">Add timeline to get started</a>
+    {% if sketch.timelines.all %}
+        <div class="card">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th width="73px">Timeline</th>
+                    <th></th>
+                    <th width="150px">Created</th>
+                </tr>
+
+                <tbody>
+                {% for timeline in sketch.timelines.all %}
+                    <tr>
+                        <td><div class="color-box" style="background:#{{ timeline.color }};{% ifequal timeline.color "ffffff" %}border:1px solid #d1d1d1;{% endifequal %}"></div></td>
+                        <td><div style="margin-top:5px;">{{ timeline.timeline.title }}</div></td>
+                        <td><div style="margin-top:5px;">{{ timeline.timeline.created|date:"Y-m-d H:i" }}</div></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <a href="timelines/add/" class="btn btn-success">Add timeline</a>
+        </div>
     {% endif %}
-</div>
-
-{% if views %}
-<div class="card">
-    <table class="table table-hover">
-        <thead>
-        <tr>
-            <th>View</th>
-            <th width="150px">Created</th>
-            <th width="50px"></th>
-        </tr>
-        <tbody>
-        {% for view in views %}
-        <tr>
-            <td>
-                <div style="margin-top:5px;font-size: 1.1em;font-weight: bold"><a href="explore/?view={{ view.id }}">{{ view.name }}</a>
-                </div> <span style="color:#777;">{{ view.query }}</span>
-            </td>
-            <td><div style="margin-top:15px;">{{ view.updated|date:"Y-m-d H:i" }}</div></td>
-            <td><div style="margin-top:10px;"><img src="{{ view.user.userprofile.get_avatar_url }}" class="img-circle" width="30px"></div></td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</div>
-{% endif %}
-
-{% if sketch.timelines.all %}
-<div class="card">
-    <table class="table table-hover">
-        <thead>
-        <tr>
-            <th width="73px">Timeline</th>
-            <th></th>
-            <th width="150px">Created</th>
-        </tr>
-
-        <tbody>
-        {% for timeline in sketch.timelines.all %}
-            <tr>
-                <td><div class="color-box" style="background: #{{ timeline.color }};{% ifequal timeline.color "ffffff" %}border:1px solid #d1d1d1;{% endifequal %}"></div></td>
-                <td><div style="margin-top:5px;">{{ timeline.timeline.title }}</div></td>
-                <td><div style="margin-top:5px;">{{ timeline.timeline.created|date:"Y-m-d H:i" }}</div></td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    <a href="timelines/add/" class="btn btn-success">Add timeline</a>
-</div>
-{% endif %}
-
-</body>
+    </body>
 {% endblock %}
