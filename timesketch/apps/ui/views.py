@@ -158,7 +158,7 @@ def search_sketches(request):
                     result.add(sketch)
     return render(request, 'search.html', {'result': result})
 
-
+@login_required
 def settings(request, sketch_id):
     """Settings for a sketch."""
     sketch = Sketch.objects.get(id=sketch_id)
