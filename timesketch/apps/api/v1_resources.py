@@ -186,7 +186,8 @@ class EventResource(Resource):
     offset = fields.IntegerField(attribute='offset', null=True)
     allocated = fields.CharField(attribute='allocated', null=True)
     inode = fields.IntegerField(attribute='inode', null=True)
-    size = fields.IntegerField(attribute='size', null=True)
+    # Disable until bug (size is a list sometimes) is fixed in Plaso
+    #size = fields.IntegerField(attribute='size', null=True)
 
     class Meta:
         resource_name = 'event'
