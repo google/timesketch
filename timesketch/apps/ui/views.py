@@ -176,6 +176,4 @@ def settings_sharing(request, sketch_id):
             sketch.make_public(request.user)
         else:
             sketch.make_private(request.user)
-
-        print
     return redirect("/sketch/%i/" % sketch.id)
