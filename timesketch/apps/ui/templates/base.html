@@ -32,27 +32,18 @@ limitations under the License.
     <script type="text/javascript" language="javascript" src="{% static 'js/controllers.js' %}"></script>
   </head>
 
-<!--
-  <header>
-    <div class="pull-right">
-        <a href="/user/profile"><img style="margin-left:5px;margin-top:10px;" width=35px" class="img-rounded" src="{{ user.userprofile.get_avatar_url }}"></a>
-    </div>
-  {% block header %}{% endblock %}
-  </header>
--->
-
   <header>
       <div butterbar id="butterbar">Loading..</div>
   </header>
 
   <div id="logo">
-    <a href="/"><img width="150px" height="25px" style="margin-left:3px;margin-top:5px;" src="/static/img/logo.png"></a>
+    <a href="/"><img src="/static/img/logo.png"></a>
   </div>
 
   <div id="navigation">
     {% block navigation %}{% endblock %}
     <div class="bug">
-        <a style="color:#777;margin-left:60px;" href="https://github.com/google/timesketch/issues/new" target="newpage">Report bug</a>
+        <a href="https://github.com/google/timesketch/issues/new" target="newpage">Report bug</a>
     </div>
   </div>
 

@@ -18,11 +18,11 @@ limitations under the License.
 
 {% block navigation %}
 <ul class="leftnav">
-    <a href="/sketch/{{ sketch.id }}/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li></a>
-    <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
-    <a href="/sketch/{{ sketch.id }}/views/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-eye"></i> Views</li></a>
-    <a href="/sketch/{{ sketch.id }}/timelines/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li></a>
-    <a href="/sketch/{{ sketch.id }}/settings/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li></a>
+    <li><a href="/sketch/{{ sketch.id }}/"><i class="fa fa-cube"></i> Overview</a></li>
+    <li class="leftnav-active"><a href="/sketch/{{ sketch.id }}/explore/"><i class="fa fa-search"></i> Explore</a></li>
+    <li><a href="/sketch/{{ sketch.id }}/views/"><i class="fa fa-eye"></i> Views</a></li>
+    <li><a href="/sketch/{{ sketch.id }}/timelines/"><i class="fa fa-clock-o"></i> Timelines</a></li>
+    <li><a href="/sketch/{{ sketch.id }}/settings/"><i class="fa fa-cog"></i> Settings</a></li>
 </ul>
 {%  endblock %}
 
@@ -56,17 +56,17 @@ limitations under the License.
             <div class="input-group">
                 <input ng-model="query" type="search" class="form-control" id="search-input" placeholder="Search" autofocus>
                 <div class="input-group-btn">
-                    <button class="btn btn-default btn-search" type="submit"><i class="fa fa-search fa-1x" style="color: #333"></i></button>
+                    <button class="btn btn-default btn-search" type="submit"><i class="fa fa-search fa-1x"></i></button>
                 </div>
             </div>
         </form>
 
         <br>
-        <button class="btn btn-link" style="color: #333;" ng-click="showFilters = !showFilters"><i class="fa fa-filter"></i> Filters</button>
-        <button class="btn btn-link" style="color: #333;" ng-click="search_starred()"><i class="fa fa-star icon-yellow"></i> Starred</button>
-        <button class="btn btn-link" style="color: #333;" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
+        <button class="btn btn-default" ng-click="showFilters = !showFilters"><i class="fa fa-filter"></i> Filters</button>
+        <button class="btn btn-default" ng-click="search_starred()"><i class="fa fa-star icon-yellow"></i> Starred</button>
+        <button class="btn btn-default" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
 
-        <select class="select" style="border:0px;outline:0px;margin-right:10px;" onchange="location = this.options[this.selectedIndex].value;">
+        <select class="select select-view" onchange="location = this.options[this.selectedIndex].value;">
             <option disabled selected>Choose view</option>
             {% for view in sketch.get_named_views %}
                 <option value="?view={{ view.id }}">{{ view.name }}</option>
@@ -75,41 +75,40 @@ limitations under the License.
     </div>
 
     <!-- Filter card -->
-    <div class="card" ng-show="showFilters" style="overflow: hidden; position: relative;">
-        <span style="font-weight: bold">Filters</span>
-        <br><br>
+    <div class="card filter-card" ng-show="showFilters">
+        <h5>Filters</h5>
         <form class="form-inline" role="form">
-            <div class="form-group" style="margin-right: 5px;">
-                <input style="width:300px;" ng-model="filter.time_start" type="text" class="form-control timerange-input" placeholder="Start 2014-01-01T23:00:00">
+            <div class="form-group">
+                <input ng-model="filter.time_start" type="text" class="form-control timerange-input" placeholder="Start 2014-01-01T23:00:00">
             </div>
-            <div class="form-group" style="margin-right: 10px;">
-                <input style="width:300px;" ng-model="filter.time_end" type="text" class="form-control timerange-input" placeholder="End 2014-01-01T23:00:00">
+            <div class="form-group">
+                <input ng-model="filter.time_end" type="text" class="form-control timerange-input" placeholder="End 2014-01-01T23:00:00">
             </div>
-            <input type="submit" class="btn btn-success" value="Apply filter" ng-click="search()"></input>
-            <input type="reset" class="btn btn-default" value="Clear" ng-click="clearFilter()"></input>
+            <input type="submit" class="btn btn-success" value="Apply filter" ng-click="search()">
+            <input type="reset" class="btn btn-default" value="Clear" ng-click="clearFilter()">
         </form>
     </div>
 
     {% if not sketch.timelines.all %}
         <div class="card card-alert">
             There are no timelines added to this sketch.
-            <a style="color:#fff;font-weight:bold;text-decoration:underline" href="/sketch/{{ sketch.id }}/timelines/add/">Add a timeline</a> to get started.
+            <a href="/sketch/{{ sketch.id }}/timelines/add/">Add a timeline</a> to get started.
         </div>
     {% endif %}
 
     <!-- Timeline picker card -->
-    <div ng-show="multipleTimelines" class="card" style="overflow: hidden; position: relative;">
+    <div ng-show="multipleTimelines" class="card timeline-picker-card">
         <button class="btn btn-default" filter="filter" search="search" meta="meta" index-enabler>Enable all</button>
         <button class="btn btn-default" filter="filter" search="search" meta="meta" index-disabler>Disable all</button>
         <br>
         <br>
         {% for timeline in sketch.timelines.all %}
             <div filter="filter" search="search" search_starred="search_starred" meta="meta" index-chooser index="{{ timeline.timeline.datastore_index }}" style="background:#f7f7f7;padding: 10px;margin-right: 10px;cursor: pointer;margin-bottom: 5px;" class="pull-left timelinebox">
-                <div class="color-box pull-left" style="background: #{{ timeline.color }};margin-right: 10px;"></div>
-                <div class="t pull-left" style="margin-top:5px;">
-                    {{ timeline.timeline.title }}
-                </div>
-                <div class="pull-right" style="margin-top:5px;margin-left: 10px"><input type="checkbox"></div>
+                <div class="color-box pull-left" style="background:#{{ timeline.color }};"></div>
+                    <div class="timeline-title pull-left">
+                        {{ timeline.timeline.title }}
+                    </div>
+                <div class="timeline-checkbox pull-right"><input type="checkbox"></div>
             </div>
         {% endfor %}
     </div>
@@ -132,12 +131,12 @@ limitations under the License.
 
         <!-- Loop over all events -->
         <div ng-repeat="event in events" ng-controller="EventCtrl" ng-class="{true: 'event-focused', false: ''}[showDetails]" class="event-container">
-            <table style="table-layout: fixed; margin-bottom: 1px;" width="100%">
+            <table id="search-result-table" width="100%">
                 <tr>
-                    <td timeline-color width="210px;" style="vertical-align: top; padding: 10px;">
+                    <td timeline-color width="210px;">
                         <div class="event-timestamp-off">{{ event.datetime }}</div>
                     </td>
-                    <td width="35px;" style="vertical-align: top;padding-left: 10px; background: #f9f9f9; padding: 10px;">
+                    <td width="35px;" >
                         <i ng-click="star = !star;toggleStar()" ng-class="{true: 'fa fa-lg fa-star icon-yellow', false: 'fa fa-lg fa-star-o icon-grey'}[star]"></i>
                     </td>
                     <td class="event-message">
@@ -145,14 +144,14 @@ limitations under the License.
                             <span ng-show="comment">
                                 <i class="fa fa-lg fa-comments"></i>
                             </span>
-                            <span class="label label-danger" style="margin-right:10px;" ng-repeat="label in event.label">
+                            <span class="label label-danger" ng-repeat="label in event.label">
                                 {{ label }}
                             </span>
                             [{{ event.timestamp_desc }}]
                             {{ event.message }}
                         </div>
                     </td>
-                    <td style="width: 150px; text-align: right; vertical-align: top; background: #f5f5f5; padding: 10px;">
+                    <td width="150px" style="text-align: right;">
                         <div timeline-name></div>
                     </td>
                 </tr>

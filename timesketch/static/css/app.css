@@ -47,11 +47,17 @@ h3 {
     width:200px;
     height:75px;
     padding:20px;
-    #background: #4a9bb3;
     background: #333;
     position: fixed;
     top:0;
     z-index:9999;
+}
+
+#logo img {
+    margin-left:3px;
+    margin-top:5px;
+    width:150px;
+    height:25px;
 }
 
 #navigation {
@@ -66,13 +72,18 @@ h3 {
 }
 
 #navigation div.bug {
-  background: #333;
-  position: absolute;
-  width: 200px;
-  left: 0px;
-  bottom: 0px;
-  height: 115px;
-  overflow: hidden;
+    background: #333;
+    position: absolute;
+    width: 200px;
+    left: 0px;
+    bottom: 0px;
+    height: 115px;
+    overflow: hidden;
+}
+
+.bug a {
+    color:#777;
+    margin-left:60px;
 }
 
 
@@ -91,7 +102,7 @@ h3 {
     margin-right:auto;
     text-align: center;
     font-weight: bold;
-  z-index:9998;
+    z-index:9998;
 }
 
 #description {
@@ -113,6 +124,7 @@ h3 {
     border-radius: 0;
     border:none !important;
     padding: 20px;
+    background:#fff;
 }
 
 .card {
@@ -120,6 +132,15 @@ h3 {
     background: #fff;
     padding: 15px;
     border: 1px solid #e7e7e7;
+}
+
+.card h5 {
+    font-weight: bold;
+}
+
+.filter-card {
+    overflow: hidden;
+    position: relative;
 }
 
 .select {
@@ -130,11 +151,16 @@ h3 {
 }
 
 .timerange-input {
-    max-width: 200px;
+    width: 200px;
     outline: none;
     border:1px solid lightgrey !important;
     box-shadow:none !important;
     background: #fff;
+}
+
+.timeline-picker-card {
+    overflow: hidden;
+    position: relative;
 }
 
 .icon-yellow {
@@ -223,6 +249,7 @@ h3 {
 .color-box {
     width:30px;
     height:30px;
+    margin-right: 10px;
 }
 
 .index-enabled {
@@ -239,6 +266,12 @@ h3 {
     color:#fff;
 }
 
+.card-alert a {
+    color:#fff;
+    font-weight:bold;
+    text-decoration:underline
+}
+
 .timing {
     padding: 10px;
 }
@@ -251,6 +284,12 @@ h3 {
 
 .btn:focus {
     outline:none;
+}
+
+.select-view {
+    border:0px;
+    outline:0px;
+    margin-right:10px;
 }
 
 .leftnav {
@@ -267,9 +306,13 @@ ul, .leftnav {
     list-style: none;
 }
 
+.leftnav i {
+    margin-right:10px;
+}
+
 
 .leftnav a {
-    color:#fff;
+    color:#d1d1d1;
 }
 
 .leftnav a:hover {
@@ -294,4 +337,27 @@ ul, .leftnav {
     margin:auto;
     width:500px;
     margin-top:100px;
+}
+
+.cpicker {
+    width:100px;
+}
+
+.timeline-title {
+    margin-top:5px;
+}
+
+.timeline-checkbox {
+    margin-top:5px;
+    margin-left: 10px
+}
+
+#search-result-table {
+    table-layout: fixed;
+    margin-bottom: 1px
+}
+
+#search-result-table td {
+    vertical-align: top;
+    padding: 10px;
 }

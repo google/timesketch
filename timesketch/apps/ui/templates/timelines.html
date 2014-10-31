@@ -18,49 +18,44 @@ limitations under the License.
 
 {% block navigation %}
     <ul class="leftnav">
-        <a href="/sketch/{{ sketch.id }}/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li></a>
-        <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
-        <a href="/sketch/{{ sketch.id }}/views/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-eye"></i> Views</li></a>
-        <li class="leftnav  leftnav-active"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li>
-        <a href="/sketch/{{ sketch.id }}/settings/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li></a>
-   </ul>
+        <li><a href="/sketch/{{ sketch.id }}/"><i class="fa fa-cube"></i> Overview</a></li>
+        <li><a href="/sketch/{{ sketch.id }}/explore/"><i class="fa fa-search"></i> Explore</a></li>
+        <li><a href="/sketch/{{ sketch.id }}/views/"><i class="fa fa-eye"></i> Views</a></li>
+        <li class="leftnav-active"><i class="fa fa-clock-o"></i> Timelines</li>
+        <li><a href="/sketch/{{ sketch.id }}/settings/"><i class="fa fa-cog"></i> Settings</a></li>
+    </ul>
 {% endblock %}
 
 {% block body %}
     <body>
-        <div class="card">
-
+    <div class="card">
         {% if not sketch.timelines.all %}
-                There are no timelines added to this sketch yet.
-                <br><br>
-                <a href="add/" class="btn btn-success">Add timeline to get started</a>
+            There are no timelines added to this sketch yet.
+            <br><br>
+            <a href="add/" class="btn btn-success">Add timeline to get started</a>
 
         {% else %}
-                <table class="table table-hover">
-                    <thead>
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th width="73px">Timeline</th>
+                    <th></th>
+                    <th width="150px">Created</th>
+                    <th width="70px"></th>
+                </tr>
+                <tbody>
+                {% for timeline in sketch.timelines.all %}
                     <tr>
-                        <th width="73px">Timeline</th>
-                        <th></th>
-                        <th width="150px">Created</th>
-                        <th width="70px"></th>
+                        <td><div class="color-box" style="background: #{{ timeline.color }};{% ifequal timeline.color "ffffff" %}border:1px solid #d1d1d1;{% endifequal %}"></div></td>
+                        <td><div style="margin-top:5px;">{{ timeline.timeline.title }}</div></td>
+                        <td><div style="margin-top:5px;">{{ timeline.timeline.created|date:"Y-m-d H:i" }}</div></td>
+                        <td><a href="{{ timeline.id }}/edit/" class="btn btn-default">Edit</a></td>
                     </tr>
-                    <tbody>
-                    {% for timeline in sketch.timelines.all %}
-                        <tr>
-                            <td><div class="color-box" style="background: #{{ timeline.color }};{% ifequal timeline.color "ffffff" %}border:1px solid #d1d1d1;{% endifequal %}"></div></td>
-                            <td><div style="margin-top:5px;">{{ timeline.timeline.title }}</div></td>
-                            <td><div style="margin-top:5px;">{{ timeline.timeline.created|date:"Y-m-d H:i" }}</div></td>
-                            <td><a href="{{ timeline.id }}/edit/" class="btn btn-default">Edit</a></td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-
-                <a href="add/" class="btn btn-success">Add timeline</a>
-
+                {% endfor %}
+                </tbody>
+            </table>
+            <a href="add/" class="btn btn-success">Add timeline</a>
         {% endif %}
-
-            </div>
-
+    </div>
     </body>
 {% endblock %}

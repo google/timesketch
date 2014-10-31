@@ -18,11 +18,11 @@ limitations under the License.
 
 {% block navigation %}
     <ul class="leftnav">
-        <a href="/sketch/{{ sketch.id }}/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li></a>
-        <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
-        <a href="/sketch/{{ sketch.id }}/views/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-eye"></i> Views</li></a>
-        <a href="/sketch/{{ sketch.id }}/timelines/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li></a>
-        <li class="leftnav  leftnav-active"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li>
+        <li class="leftnav"><a href="/sketch/{{ sketch.id }}/"><i class="fa fa-cube"></i> Overview</a></li>
+        <li class="leftnav"><a href="/sketch/{{ sketch.id }}/explore/"><i class="fa fa-search"></i> Explore</a></li>
+        <li class="leftnav"><a href="/sketch/{{ sketch.id }}/views/"><i class="fa fa-eye"></i> Views</a></li>
+        <li class="leftnav"><a href="/sketch/{{ sketch.id }}/timelines/"><i class="fa fa-clock-o"></i> Timelines</a></li>
+        <li class="leftnav  leftnav-active"><i class="fa fa-cog"></i> Settings</li>
     </ul>
 {% endblock %}
 
@@ -36,14 +36,14 @@ limitations under the License.
             <div class="radio">
                 <label>
                     <input type="radio" name="optionsPermission" id="optionsPermissionsPublic" value="public" {% if sketch.is_public %}checked{% endif %}>
-                    <i class="glyphicon glyphicon-globe" style="margin-left: 10px;margin-right: 5px;"></i>
+                    <i class="fa fa-globe"></i>
                     Public -  All users of the system can access this sketch
                 </label>
             </div>
             <div class="radio">
                 <label>
                     <input type="radio" name="optionsPermission" id="optionsPermissionsPrivate" value="private" {% if not sketch.is_public %}checked{% endif %}>
-                    <i class="glyphicon glyphicon-lock" style="margin-left: 10px;margin-right: 5px;"></i>
+                    <i class="fa fa-lock"></i>
                     Private - Only people explicitly granted permission can access this sketch
                 </label>
             </div>

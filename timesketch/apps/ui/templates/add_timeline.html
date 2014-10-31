@@ -16,17 +16,13 @@ limitations under the License.
 
 {% extends "base.html" %}
 
-{% block header %}
-    <span class="pull-left" style="margin-left:220px;padding-top:12px;font-size: 25px">{{ sketch.title }}</span>
-{% endblock %}
-
 {% block navigation %}
     <ul class="leftnav">
-        <a href="/sketch/{{ sketch.id }}/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li></a>
-        <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
-        <a href="/sketch/{{ sketch.id }}/views/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-eye"></i> Views</li></a>
-        <a href="/sketch/{{ sketch.id }}/timelines/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li></a>
-        <a href="/sketch/{{ sketch.id }}/settings/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li></a>
+        <li><a href="/sketch/{{ sketch.id }}/"><i class="fa fa-cube"></i> Overview</a></li>
+        <li><a href="/sketch/{{ sketch.id }}/explore/"><i class="fa fa-search"></i> Explore</a></li>
+        <li><a href="/sketch/{{ sketch.id }}/views/"><i class="fa fa-eye"></i> Views</a></li>
+        <li><a href="/sketch/{{ sketch.id }}/timelines/"><i class="fa fa-clock-o"></i> Timelines</a></li>
+        <li><a href="/sketch/{{ sketch.id }}/settings/"><i class="fa fa-cog"></i> Settings</a></li>
     </ul>
 {% endblock %}
 

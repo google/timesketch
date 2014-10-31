@@ -18,11 +18,11 @@ limitations under the License.
 
 {% block navigation %}
     <ul class="leftnav">
-        <li class="leftnav leftnav-active"><i style="margin-right:10px;" class="fa fa-cube"></i> Overview</li>
-        <a href="/sketch/{{ sketch.id }}/explore/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-search"></i> Explore</li></a>
-        <a href="/sketch/{{ sketch.id }}/views/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-eye"></i> Views</li></a>
-        <a href="/sketch/{{ sketch.id }}/timelines/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-clock-o"></i> Timelines</li></a>
-        <a href="/sketch/{{ sketch.id }}/settings/"><li class="leftnav"><i style="margin-right:10px;" class="fa fa-cog"></i> Settings</li></a>
+        <li class="leftnav-active"><i class="fa fa-cube"></i> Overview</li>
+        <li><a href="/sketch/{{ sketch.id }}/explore/"><i class="fa fa-search"></i> Explore</a></li>
+        <li><a href="/sketch/{{ sketch.id }}/views/"><i class="fa fa-eye"></i> Views</a></li>
+        <li><a href="/sketch/{{ sketch.id }}/timelines/"><i class="fa fa-clock-o"></i> Timelines</a></li>
+        <li><a href="/sketch/{{ sketch.id }}/settings/"><i class="fa fa-cog"></i> Settings</a></li>
     </ul>
 {% endblock %}
 
@@ -38,10 +38,11 @@ limitations under the License.
         <hr>
 
         {% if sketch.is_public %}
-            <i class="glyphicon glyphicon-globe" style="margin-top:4px;margin-right: 5px;"></i> This sketch is public (<a href="/sketch/{{ sketch.id }}/settings/">change</a>)
+            <i class="fa fa-globe"></i> This sketch is public (<a href="/sketch/{{ sketch.id }}/settings/">change</a>)
         {% else %}
-            <span style="margin-right: 10px;"><i class="glyphicon glyphicon-lock" style="margin-left:3px;margin-top:4px;margin-right: 5px;"></i> This sketch is private (<a href="/sketch/{{ sketch.id }}/settings/">change</a>)</span>
-            <div style="margin-top:10px;"><img src="{{ sketch.user.userprofile.get_avatar_url }}" class="img-rounded" width="30px" style="margin-right: 5px;"></div>
+            <i class="fa fa-lock"></i> This sketch is private (<a href="/sketch/{{ sketch.id }}/settings/">change</a>)
+            <br><br>
+            <span><img src="{{ sketch.user.userprofile.get_avatar_url }}" class="img-rounded" width="30px"></span>
         {% endif %}
 
         {% if not sketch.timelines.all %}
@@ -63,8 +64,8 @@ limitations under the License.
                 {% for view in views %}
                     <tr>
                         <td>
-                            <div style="margin-top:5px;font-size: 1.1em;font-weight: bold"><a href="explore/?view={{ view.id }}">{{ view.name }}</a>
-                            </div> <span style="color:#777;">{{ view.query }}</span>
+                            <div style="margin-top:5px;font-size: 1.1em;font-weight: bold"><a href="explore/?view={{ view.id }}">{{ view.name }}</a></div>
+                            <span style="color:#777;">{{ view.query }}</span>
                         </td>
                         <td><div style="margin-top:15px;">{{ view.updated|date:"Y-m-d H:i" }}</div></td>
                         <td><div style="margin-top:10px;"><img src="{{ view.user.userprofile.get_avatar_url }}" class="img-circle" width="30px"></div></td>
