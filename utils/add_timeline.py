@@ -91,7 +91,7 @@ def main():
         elasticsearch.health(wait_for_status='yellow')
         elasticsearch.put_mapping(args.index, 'plaso_event', mapping)
     except (ConnectionError, ElasticHttpNotFoundError) as e:
-        sys.stderr.write('ERROR: ElasticSearch - {}\n'.format(repr(e)))
+        sys.stderr.write('ERROR: ElasticSearch - {0:s}\n'.format(repr(e)))
         return 1
 
     try:
@@ -102,7 +102,7 @@ def main():
             sys.stderr.write('ERROR: Timeline already exists\n')
             return 1
     except (IntegrityError, ValueError) as e:
-        sys.stderr.write('ERROR: Timesketch - {}\n'.format(repr(e)))
+        sys.stderr.write('ERROR: Timesketch - {0:s}\n'.format(repr(e)))
         return 1
     # Make the timeline public by default.
     timeline.make_public(user)
