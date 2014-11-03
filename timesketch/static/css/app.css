@@ -78,7 +78,6 @@ h3 {
     width:170px;
     overflow: hidden;
     color:#d1d1d1;
-    border-top:1px solid #444;
     padding-left:10px;
     padding-top:10px;
 }
@@ -307,10 +306,11 @@ ul, .leftnav {
     list-style: none;
 }
 
-.leftnav i {
+
+.leftnav i, img {
+    padding-left:0;
     margin-right:10px;
 }
-
 
 .leftnav a {
     color:#d1d1d1;

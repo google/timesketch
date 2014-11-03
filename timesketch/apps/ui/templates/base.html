@@ -37,26 +37,13 @@ limitations under the License.
   </header>
 
   <div id="logo">
-
     <a href="/"><img src="/static/img/logo.png"></a>
   </div>
 
   <div id="navigation">
-
-
     {% block navigation %}{% endblock %}
-
-
     <div class="bug">
-        <a href="/user/profile/">
-            <img src="{{ user.userprofile.get_avatar_url }}" class="img-circle" width="30px">
-            <span style="margin-left:10px;">
-                {{ user.username }}
-            </span>
-        </a>
-        <br>
-        <!--<a href="https://github.com/google/timesketch/issues/new" target="newpage">Report bug</a>-->
-
+        <li class="fa fa-bug"></li><a href="https://github.com/google/timesketch/issues/new" target="newpage"> Report bug</a>
     </div>
   </div>
 
