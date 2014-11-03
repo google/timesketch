@@ -42,7 +42,7 @@ limitations under the License.
         {% else %}
             <i class="fa fa-lock"></i> This sketch is private (<a href="/sketch/{{ sketch.id }}/settings/">change</a>)
             <br><br>
-            <span><img src="{{ sketch.user.userprofile.get_avatar_url }}" class="img-rounded" width="30px"></span>
+            <span><img src="{{ sketch.user.userprofile.get_avatar_url }}" class="img-circle" width="35px"></span>
         {% endif %}
 
         {% if not sketch.timelines.all %}

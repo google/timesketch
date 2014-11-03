@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 body {
-  background: #f1f1f1;
-  margin:0;
+    background: #f1f1f1;
+    margin:0;
 }
 
 table {
@@ -40,11 +40,11 @@ h3 {
 }
 
 #main {
-    margin:15px 15px 15px 215px;
+    margin:15px 15px 15px 185px;
 }
 
 #logo {
-    width:200px;
+    width:170px;
     height:75px;
     padding:20px;
     background: #333;
@@ -56,12 +56,12 @@ h3 {
 #logo img {
     margin-left:3px;
     margin-top:5px;
-    width:150px;
-    height:25px;
+    width:120px;
+    height:20px;
 }
 
 #navigation {
-  width: 200px;
+  width: 170px;
   overflow: hidden;
   position: fixed;
   left: 0;
@@ -74,16 +74,17 @@ h3 {
 #navigation div.bug {
     background: #333;
     position: absolute;
-    width: 200px;
-    left: 0px;
-    bottom: 0px;
-    height: 115px;
+    bottom: 85px;
+    width:170px;
     overflow: hidden;
+    color:#d1d1d1;
+    border-top:1px solid #444;
+    padding-left:10px;
+    padding-top:10px;
 }
 
 .bug a {
-    color:#777;
-    margin-left:60px;
+    color:#c1c1c1;
 }
 
 
@@ -302,7 +303,7 @@ ul, .leftnav {
 
 .leftnav li {
     padding: 15px 15px 15px 30px;
-    font-size: 1.1em;
+    font-size: 1.0em;
     list-style: none;
 }
 
@@ -360,4 +361,8 @@ ul, .leftnav {
 #search-result-table td {
     vertical-align: top;
     padding: 10px;
+}
+
+.profile-avatar {
+    margin-right:20px;
 }
