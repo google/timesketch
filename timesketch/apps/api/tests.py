@@ -253,7 +253,7 @@ class EventResourceTest(BaseResourceTest):
         u'filename',
         u'inode',
         u'message',
-        u'size',
+        #u'size',
         u'display_name',
         u'uuid',
         u'hostname',
