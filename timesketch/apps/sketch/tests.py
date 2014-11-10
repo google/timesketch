@@ -63,10 +63,12 @@ class ModelSketchTimelineTest(TestCase):
     """Test creating SketchTimeline model."""
     def setUp(self):
         self.user = User.objects.create(username="testuser")
+        self.sketch = Sketch.objects.create(
+            user=self.user, title="testsketch1")
         self.timeline = Timeline.objects.create(
             user=self.user, title="test", datastore_index="123456")
         self.sketch_timeline = SketchTimeline.objects.create(
-            timeline=self.timeline)
+            timeline=self.timeline, user=self.user, sketch=self.sketch)
 
     def test_generate_color(self):
         self.assertIsInstance(self.sketch_timeline.generate_color(), str)
