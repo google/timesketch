@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """This module implements timesketch Django database models."""
+# ToDo: Clean up the models (see github issue #25)
 
 import random
 
@@ -24,7 +25,7 @@ from timesketch.apps.acl.models import AccessControlMixIn
 
 
 class Sketch(AccessControlMixIn, models.Model):
-    """Database model for a Sketch."""
+    """Database model for a Sketch entry."""
     user = models.ForeignKey(User)
     acl = GenericRelation(AccessControlEntry)
     title = models.CharField(max_length=255)
@@ -35,20 +36,21 @@ class Sketch(AccessControlMixIn, models.Model):
     @property
     def timelines(self):
         """
-        Get timelines for this sketch.
+        Get timelines for this sketch. This is used in both Django views and
+        templates.
 
         Returns:
-            A SketchTimeline query set.
+            A Django QuerySet for SketchTimeline.
         """
         return SketchTimeline.objects.filter(sketch=self)
 
-    @staticmethod
-    def get_named_views():
+    # ToDo: Make this a property
+    def get_named_views(self):
         """
-        Get named views for this sketch. Used in templates.
+        Get named saved views for this sketch.
 
         Returns:
-            A query set.
+            A Django QuerySet for SavedView.
         """
         return SavedView.objects.filter(sketch=self).exclude(name="")
 
@@ -81,7 +83,8 @@ class SketchTimeline(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
-    def generate_color(self):
+    @staticmethod
+    def generate_color():
         """Picks a random color used when creating a SketchTimeline.
 
         Returns:
