@@ -29,9 +29,18 @@ class Sketch(AccessControlMixIn, models.Model):
     acl = GenericRelation(AccessControlEntry)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    timelines = models.ManyToManyField('SketchTimeline', blank=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+
+    @property
+    def timelines(self):
+        """
+        Get timelines for this sketch.
+
+        Returns:
+            A SketchTimeline query set.
+        """
+        return SketchTimeline.objects.filter(sketch=self)
 
     def get_named_views(self):
         """
@@ -62,6 +71,8 @@ class Timeline(AccessControlMixIn, models.Model):
 
 class SketchTimeline(models.Model):
     """Database model for annotating a timeline."""
+    user = models.ForeignKey(User)
+    sketch = models.ForeignKey(Sketch)
     timeline = models.ForeignKey(Timeline)
     color = models.CharField(max_length=6, default="FFFFFF")
     visible = models.BooleanField(default=True)
@@ -69,8 +80,7 @@ class SketchTimeline(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
-    @staticmethod
-    def generate_color():
+    def generate_color(self):
         """Picks a random color used when creating a SketchTimeline.
 
         Returns:
