@@ -42,7 +42,8 @@ class Sketch(AccessControlMixIn, models.Model):
         """
         return SketchTimeline.objects.filter(sketch=self)
 
-    def get_named_views(self):
+    @staticmethod
+    def get_named_views():
         """
         Get named views for this sketch. Used in templates.
 
