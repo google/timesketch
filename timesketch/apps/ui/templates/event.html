@@ -31,7 +31,7 @@ limitations under the License.
                                 <img width="40px" class="img-rounded" src="{{ comment.user.profile.avatar }}">
                             </div>
                             <div class="comment-name">
-                                {{ comment.user.first_name }} {{ comment.user.last_name }}
+                                {{ comment.user.username }}
                                 <span class="comment-timestamp">{{ comment.created | date:'mediumDate' }}</span>
                             </div>
                             <div class="comment-body">

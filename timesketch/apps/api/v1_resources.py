@@ -16,11 +16,13 @@
 import json
 
 from django.contrib.auth.models import User
-from tastypie.resources import Resource
-from tastypie.resources import ModelResource
+from tastypie import fields
+from tastypie import utils
 from tastypie.authorization import Authorization
 from tastypie.authentication import SessionAuthentication
-from tastypie import fields, utils
+from tastypie.resources import Resource
+from tastypie.resources import ModelResource
+from tastypie.serializers import Serializer
 from pyelasticsearch.exceptions import ElasticHttpNotFoundError
 
 from timesketch.lib.datastores import elasticsearch_datastore
@@ -70,6 +72,17 @@ class DatastoreObject(object):
 
     def __setattr__(self, name, value):
         self.__dict__['_data'][name] = value
+
+
+class DateTimeSerializer(Serializer):
+    """
+    Serializer to format the datetime output.
+
+    All django datetime fields in the database are UTC. Make the output format
+    reflect this.
+    """
+    def format_datetime(self, data):
+        return data.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 class UserProfileResource(ModelResource):
@@ -213,14 +226,15 @@ class CommentResource(ModelResource):
     body = fields.CharField(attribute='body', null=True)
     datastore_index = fields.CharField(attribute='datastore_index', null=True)
     datastore_id = fields.CharField(attribute='datastore_id', null=True)
-    created = fields.CharField(attribute='created', default=utils.now)
-    updated = fields.CharField(attribute='updated')
+    created = fields.DateTimeField(attribute='created', default=utils.now)
+    updated = fields.DateTimeField(attribute='updated')
 
     class Meta:
         resource_name = 'comment'
         always_return_data = True
         authorization = Authorization()
         authentication = SessionAuthentication()
+        serializer = DateTimeSerializer()
 
     def obj_get_list(self, bundle, **kwargs):
         datastore_index = bundle.request.GET['index']
