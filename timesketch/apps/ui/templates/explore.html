@@ -62,10 +62,12 @@ limitations under the License.
         </form>
 
         <br>
-        <button class="btn btn-default" ng-click="showFilters = !showFilters"><i class="fa fa-filter"></i> Filters</button>
-        <button class="btn btn-default" ng-click="search_starred()"><i class="fa fa-star icon-yellow"></i> Starred</button>
-        <button class="btn btn-default" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
 
+        <div class="btn-group">
+            <button class="btn btn-default" ng-click="showFilters = !showFilters"><i class="fa fa-filter"></i> Filters</button>
+            <button class="btn btn-default" ng-click="search_starred()"><i class="fa fa-star icon-yellow"></i> Starred</button>
+            <button class="btn btn-default" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
+        </div>
         <select class="select select-view" onchange="location = this.options[this.selectedIndex].value;">
             <option disabled selected>Choose view</option>
             {% for view in sketch.get_named_views %}
@@ -98,9 +100,11 @@ limitations under the License.
 
     <!-- Timeline picker card -->
     <div ng-show="multipleTimelines" class="card timeline-picker-card">
-        <button class="btn btn-default" filter="filter" search="search" meta="meta" index-enabler>Enable all</button>
-        <button class="btn btn-default" filter="filter" search="search" meta="meta" index-disabler>Disable all</button>
-        <br>
+        <div class="btn-group">
+            <button class="btn btn-default" filter="filter" search="search" meta="meta" index-enabler>Enable all</button>
+            <button class="btn btn-default" filter="filter" search="search" meta="meta" index-disabler>Disable all</button>
+        </div>
+            <br>
         <br>
         {% for timeline in sketch.timelines.all %}
             <div filter="filter" search="search" search_starred="search_starred" meta="meta" index-chooser index="{{ timeline.timeline.datastore_index }}" style="background:#f7f7f7;padding: 10px;margin-right: 10px;cursor: pointer;margin-bottom: 5px;" class="pull-left timelinebox">
