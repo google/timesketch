@@ -79,11 +79,12 @@ class DateTimeSerializer(Serializer):
     """
     Serializer to format the datetime output.
 
-    All django datetime fields in the database are UTC. Make the output format
-    reflect this.
+    Datetime fields in the database are UTC, so let's reflect that in
+    the output. Some implementations of javascript Date(), e.g. Firefox do not
+    like the string representation from the default serializer.
     """
-    def format_datetime(self, data):
-        return data.strftime("%Y-%m-%dT%H:%M:%SZ")
+    def format_datetime(self, date):
+        return date.strftime("%Y-%m-%dT%H:%M:%S%z")
 
 
 class UserProfileResource(ModelResource):
