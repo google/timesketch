@@ -27,14 +27,8 @@ limitations under the License.
     <body>
 
     <div class="card">
-        <form class="form-inline" action="/search/" method="post">
-            {% csrf_token %}
-            <div class="input-group">
-                <input type="search" class="form-control" id="search-input" name="search" placeholder="Search sketches" autofocus>
-                <div class="input-group-btn">
-                    <button class="btn btn-default btn-search" type="submit"><i class="fa fa-search fa-1x"></i></button>
-                </div>
-            </div>
+        <form class="form-inline" action="/search/" method="post"> {% csrf_token %}
+            <input type="search" class="form-control" id="search-input" name="search" placeholder="Search sketches" autofocus>
         </form>
     </div>
 

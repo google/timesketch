@@ -123,8 +123,8 @@ h3 {
     background: #f9f9f9;
     border-radius: 0;
     border:none !important;
-    padding: 20px;
-    background:#fff;
+    padding:15px;
+    height: 100%;
 }
 
 .card {
