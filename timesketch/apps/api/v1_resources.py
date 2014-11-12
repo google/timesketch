@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """This module implements timesketch API."""
+# ToDo: Refactor and clean up. This is tracked in issue #9
 
 import json
 
