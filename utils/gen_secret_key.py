@@ -18,7 +18,8 @@ import string
 
 
 def generate_secret_key():
-    allowed_chars = string.letters + string.digits + string.punctuation
+    allowed_chars = string.letters + string.digits + \
+        string.punctuation.replace("'", "")
     return get_random_string(length=50, allowed_chars=allowed_chars)
 
 if __name__ == "__main__":
