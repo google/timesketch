@@ -45,7 +45,8 @@ limitations under the License.
                             </div> <span style="color:#777;">{{ view.query }}</span>
                         </td>
                         <td><div style="margin-top:15px;">{{ view.updated|date:"Y-m-d H:i" }}</div></td>
-                        <td><div style="margin-top:10px;"><img src="{{ view.user.userprofile.get_avatar_url }}" class="img-circle" width="30px"></div></td>
+                        <td><div style="margin-top:3px;"><img src="{{ view.user.userprofile.get_avatar_url }}" width="40px"></div></td>
+
                     </tr>
                 {% endfor %}
                 </tbody>
