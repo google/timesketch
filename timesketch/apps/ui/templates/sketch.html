@@ -42,7 +42,7 @@ limitations under the License.
         {% else %}
             <i class="fa fa-lock"></i> This sketch is private (<a href="/sketch/{{ sketch.id }}/settings/">change</a>)
             <br><br>
-            <span><img src="{{ sketch.user.userprofile.get_avatar_url }}" class="img-circle" width="35px"></span>
+            <span><img src="{{ sketch.user.userprofile.get_avatar_url }}" class="img-circle" width="45px"></span>
         {% endif %}
 
         {% if not sketch.timelines.all %}
@@ -68,7 +68,7 @@ limitations under the License.
                             <span style="color:#777;">{{ view.query }}</span>
                         </td>
                         <td><div style="margin-top:15px;">{{ view.updated|date:"Y-m-d H:i" }}</div></td>
-                        <td><div style="margin-top:10px;"><img src="{{ view.user.userprofile.get_avatar_url }}" class="img-circle" width="30px"></div></td>
+                        <td><div style="margin-top:5px;"><img src="{{ view.user.userprofile.get_avatar_url }}" class="img-circle" width="40px"></div></td>
                     </tr>
                 {% endfor %}
                 </tbody>
