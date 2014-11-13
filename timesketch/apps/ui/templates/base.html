@@ -33,7 +33,7 @@ limitations under the License.
   </head>
 
   <header>
-      <div butterbar id="butterbar">Loading..</div>
+        <div butterbar id="butterbar">Loading..</div>
   </header>
 
   <div id="logo">
@@ -43,7 +43,7 @@ limitations under the License.
   <div id="navigation">
     {% block navigation %}{% endblock %}
     <div class="bug">
-        <li class="fa fa-bug"></li><a href="https://github.com/google/timesketch/issues/new" target="newpage"> Report bug</a>
+        <a href="/user/profile/"><img style="margin-right:15px;" src="{{ user.userprofile.get_avatar_url }}" class="img-circle" width="40px">{{ user.username }}</a>
     </div>
   </div>
 
