@@ -231,7 +231,7 @@ class CommentResourceTest(BaseResourceTest):
         response = self._test_get_resources(
             request_data=self.request_get_data,
             expected_keys=self.expected_get_keys)
-        self.assertTrue("+0000" in response['objects'][0]['created'])
+        self.assertTrue(response['objects'][0]['created'].endswith("+0000"))
 
     def test_post_resources(self):
         self._test_post_resources(
