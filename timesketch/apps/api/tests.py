@@ -183,6 +183,7 @@ class BaseResourceTest(ResourceTestCase):
             response_dict = self.deserialize(response)
             self.assertValidJSONResponse(response)
             self.assertKeys(response_dict['objects'][0], expected_keys)
+        return response_dict
 
     def _test_post_resources(self, request_data=None, expected_keys=None):
         """Send a request to the API to create a resource."""
@@ -227,9 +228,10 @@ class CommentResourceTest(BaseResourceTest):
         u'resource_uri'])
 
     def test_get_resources(self):
-        self._test_get_resources(
+        response = self._test_get_resources(
             request_data=self.request_get_data,
             expected_keys=self.expected_get_keys)
+        self.assertTrue(response['objects'][0]['created'].endswith("+0000"))
 
     def test_post_resources(self):
         self._test_post_resources(

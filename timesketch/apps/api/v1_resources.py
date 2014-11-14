@@ -12,15 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """This module implements timesketch API."""
+# ToDo: Refactor and clean up. This is tracked in issue #9
 
 import json
 
 from django.contrib.auth.models import User
-from tastypie.resources import Resource
-from tastypie.resources import ModelResource
+from tastypie import fields
+from tastypie import utils
 from tastypie.authorization import Authorization
 from tastypie.authentication import SessionAuthentication
-from tastypie import fields, utils
+from tastypie.resources import Resource
+from tastypie.resources import ModelResource
+from tastypie.serializers import Serializer
 from pyelasticsearch.exceptions import ElasticHttpNotFoundError
 
 from timesketch.lib.datastores import elasticsearch_datastore
@@ -70,6 +73,18 @@ class DatastoreObject(object):
 
     def __setattr__(self, name, value):
         self.__dict__['_data'][name] = value
+
+
+class DateTimeSerializer(Serializer):
+    """
+    Serializer to format the datetime output.
+
+    Datetime fields in the database are UTC, so let's reflect that in
+    the output. Some implementations of javascript Date(), e.g. Firefox do not
+    like the string representation from the default serializer.
+    """
+    def format_datetime(self, date):
+        return date.strftime("%Y-%m-%dT%H:%M:%S%z")
 
 
 class UserProfileResource(ModelResource):
@@ -213,14 +228,15 @@ class CommentResource(ModelResource):
     body = fields.CharField(attribute='body', null=True)
     datastore_index = fields.CharField(attribute='datastore_index', null=True)
     datastore_id = fields.CharField(attribute='datastore_id', null=True)
-    created = fields.CharField(attribute='created', default=utils.now)
-    updated = fields.CharField(attribute='updated')
+    created = fields.DateTimeField(attribute='created', default=utils.now)
+    updated = fields.DateTimeField(attribute='updated')
 
     class Meta:
         resource_name = 'comment'
         always_return_data = True
         authorization = Authorization()
         authentication = SessionAuthentication()
+        serializer = DateTimeSerializer()
 
     def obj_get_list(self, bundle, **kwargs):
         datastore_index = bundle.request.GET['index']
