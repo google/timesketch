@@ -11,4 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""This package implements the view handlers for the web UI."""
+"""Tests for the home view."""
+
+from timesketch.lib.testlib import BaseTest
+
+
+class HomeViewTest(BaseTest):
+    """Class for the view handler tests."""
+    resource_url = '/'
+
+    def test_home_view(self):
+        """Test the home view handler."""
+        self.login()
+        response = self.client.get(self.resource_url)
+        self.assert200(response)
+        self.assert_template_used('home/home.html')
