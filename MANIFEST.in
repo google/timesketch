@@ -1,0 +1,2 @@
+recursive-include timesketch/ui/static *
+recursive-include timesketch/ui/templates *
