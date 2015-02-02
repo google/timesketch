@@ -24,7 +24,6 @@ from flask import abort
 from flask_login import current_user
 from flask_sqlalchemy import BaseQuery
 
-
 # The database session
 engine = None
 session_maker = sessionmaker()
