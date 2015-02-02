@@ -35,6 +35,8 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
+from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
 
 # Register flask blueprint
@@ -58,7 +60,7 @@ def overview(sketch_id):
     # Edit sketch form POST
     if sketch_form.validate_on_submit():
         if not sketch.has_permission(current_user, 'write'):
-            abort(403)
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
         sketch.name = sketch_form.name.data
         sketch.description = sketch_form.description.data
         db_session.commit()
@@ -68,7 +70,7 @@ def overview(sketch_id):
     # Toggle public/private form POST
     if permission_form.validate_on_submit():
         if not sketch.has_permission(current_user, 'write'):
-            abort(403)
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
         if permission_form.permission.data == 'public':
             sketch.grant_permission(user=None, permission='read')
         else:
@@ -80,7 +82,7 @@ def overview(sketch_id):
     # Change status form POST
     if status_form.validate_on_submit():
         if not sketch.has_permission(current_user, 'write'):
-            abort(403)
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
         sketch.set_status(status=status_form.status.data)
         return redirect(
             url_for('sketch_views.overview', sketch_id=sketch.id))
@@ -88,7 +90,7 @@ def overview(sketch_id):
     # Trash form POST
     if trash_form.validate_on_submit():
         if not sketch.has_permission(current_user, 'delete'):
-            abort(403)
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
         sketch.set_status(status='deleted')
         return redirect(
             url_for('home_views.home'))
@@ -162,7 +164,7 @@ def timelines(sketch_id):
     # Create new timeline form POST
     if form.validate_on_submit():
         if not sketch.has_permission(current_user, 'write'):
-            abort(403)
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
         for searchindex_id in form.timelines.data:
             searchindex = SearchIndex.query.get_with_acl(searchindex_id)
             if searchindex not in [t.searchindex for t in sketch.timelines]:
@@ -193,11 +195,11 @@ def timeline(sketch_id, timeline_id):
     sketch_timeline = Timeline.query.filter(
         Timeline.id == timeline_id, Timeline.sketch == sketch).first()
     if not sketch_timeline:
-        abort(404)
+        abort(HTTP_STATUS_CODE_NOT_FOUND)
 
     if timeline_form.validate_on_submit():
         if not sketch.has_permission(current_user, 'write'):
-            abort(403)
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
         sketch_timeline.name = timeline_form.name.data
         sketch_timeline.description = timeline_form.description.data
         sketch_timeline.color = timeline_form.color.data

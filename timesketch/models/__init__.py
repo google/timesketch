@@ -23,6 +23,8 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column, Integer
 from sqlalchemy import DateTime
 from sqlalchemy import func
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 
 
 # The database session
@@ -72,16 +74,16 @@ class AclBaseQuery(BaseQuery):
         """
         result_obj = self.get(model_id)
         if not result_obj:
-            abort(404)
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
         try:
             if result_obj.get_status.status == 'deleted':
-                abort(404)
+                abort(HTTP_STATUS_CODE_NOT_FOUND)
         except AttributeError:
             pass
         if result_obj.is_public:
             return result_obj
         if not result_obj.has_permission(user=current_user, permission='read'):
-            abort(403)
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
         return result_obj
 
 

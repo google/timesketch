@@ -13,6 +13,7 @@
 # limitations under the License.
 """Tests for the user views."""
 
+from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.lib.testlib import BaseTest
 
 
@@ -29,4 +30,4 @@ class UserViewTest(BaseTest):
         """Test the logout view handler."""
         self.login()
         response = self.client.get('/logout/')
-        self.assertEquals(response.status_code, 302)
+        self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)

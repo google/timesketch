@@ -19,6 +19,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
 from flask import abort
 from timesketch.lib import datastore
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
 
 # Setup logging
@@ -131,7 +132,7 @@ class ElasticSearchDataStore(datastore.DataStore):
                 index=searchindex_id, id=event_id,
                 _source_exclude=['timesketch_label'])
         except NotFoundError:
-            abort(404)
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
 
     def set_label(
             self, searchindex_id, event_id, sketch_id, user_id, label,

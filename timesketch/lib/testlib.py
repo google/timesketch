@@ -16,6 +16,7 @@
 from flask_testing import TestCase
 from timesketch import create_app
 from timesketch.lib import datastore
+from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.models import init_db
 from timesketch.models import drop_all
 from timesketch.models import db_session
@@ -315,7 +316,7 @@ class BaseTest(TestCase):
         if response.status_code == 405:
             response = self.client.post(self.resource_url)
         self.assertIn('/login/', response.data)
-        self.assertEquals(response.status_code, 302)
+        self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
 
 class ModelBaseTest(BaseTest):
