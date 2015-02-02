@@ -17,6 +17,8 @@
 import mock
 import json
 
+from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
+from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
@@ -69,7 +71,7 @@ class ViewListResourceTest(BaseTest):
         response = self.client.post(
             self.resource_url, data=json.dumps(data),
             content_type='application/json')
-        self.assertEquals(response.status_code, 201)
+        self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
 
 
 class ViewResourceTest(BaseTest):
@@ -203,7 +205,7 @@ class EventAnnotationResourceTest(BaseTest):
                 self.resource_url, data=json.dumps(data),
                 content_type='application/json')
             self.assertIsInstance(response.json, dict)
-            self.assertEquals(response.status_code, 201)
+            self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
 
     def test_post_annotate_invalid_index_resource(self):
         """
@@ -216,4 +218,4 @@ class EventAnnotationResourceTest(BaseTest):
         response = self.client.post(
             self.resource_url, data=json.dumps(data),
             content_type='application/json')
-        self.assertEquals(response.status_code, 400)
+        self.assertEquals(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)

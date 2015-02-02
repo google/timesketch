@@ -39,6 +39,11 @@ from flask_restful import fields
 from flask_restful import marshal
 from flask_restful import reqparse
 from flask_restful import Resource
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
+from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
+from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.datastores.elastic import ElasticSearchDataStore
 from timesketch.lib.forms import build_form
 from timesketch.lib.forms import SaveViewForm
@@ -51,7 +56,7 @@ from timesketch.models.sketch import View
 
 
 class ResourceMixin(object):
-    """Mixin for api resources."""
+    """Mixin for API resources."""
     # Schemas for database model resources
     searchindex_fields = {
         'name': fields.String,
@@ -129,7 +134,8 @@ class ResourceMixin(object):
             port=current_app.config['ELASTIC_PORT'])
 
     def to_json(
-            self, model, model_fields=None, meta=None, status_code=200):
+            self, model, model_fields=None, meta=None,
+            status_code=HTTP_STATUS_CODE_OK):
         """Create json response from a database models.
 
         Args:
@@ -161,6 +167,7 @@ class ResourceMixin(object):
 class SketchListResource(ResourceMixin, Resource):
     """Resource for listing sketches."""
     def __init__(self):
+        super(SketchListResource, self).__init__()
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('name', type=str, required=True)
         self.parser.add_argument('description', type=str, required=False)
@@ -223,8 +230,8 @@ class ViewListResource(ResourceMixin, Resource):
                 query_filter=json.dumps(form.filter.data))
             db_session.add(view)
             db_session.commit()
-            return self.to_json(view, status_code=201)
-        return abort(400)
+            return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
 
 class ViewResource(ResourceMixin, Resource):
@@ -245,12 +252,12 @@ class ViewResource(ResourceMixin, Resource):
 
         # Check that this view belongs to the sketch
         if view.sketch_id != sketch.id:
-            abort(404)
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
 
         # If this is a user state view, check that it
         # belongs to the current_user
         if view.name == "" and view.user != current_user:
-            abort(403)
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
         return self.to_json(view)
 
 
@@ -263,6 +270,7 @@ class ExploreResource(ResourceMixin, Resource):
     """
 
     def __init__(self):
+        super(ExploreResource, self).__init__()
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('q', type=str, required=False)
         self.parser.add_argument('filter', type=str, required=False)
@@ -286,15 +294,14 @@ class ExploreResource(ResourceMixin, Resource):
 
         # Make sure that the indices in the filter is part of the sketch
         if set(indices) - set(sketch_indices):
-            abort(400)
+            abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
         # Make sure we have a query string or star filter
         if not args['q'] and not query_filter['star']:
-            abort(400)
+            abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
         result = self.datastore.search(
-            sketch_id=sketch_id, query=args['q'], query_filter=query_filter,
-            indices=indices)
+            sketch_id, args['q'], query_filter, indices)
 
         # Get labels for each event that matches the sketch.
         # Remove all other labels.
@@ -347,6 +354,7 @@ class EventResource(ResourceMixin, Resource):
         event_id: The datastore event id as string
     """
     def __init__(self):
+        super(EventResource, self).__init__()
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('searchindex_id', type=str, required=True)
         self.parser.add_argument('event_id', type=str, required=True)
@@ -371,7 +379,7 @@ class EventResource(ResourceMixin, Resource):
 
         # Check if the requested searchindex is part of the sketch
         if searchindex_id not in indices:
-            abort(400)
+            abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
         result = self.datastore.get_event(searchindex_id, event_id)
 
@@ -423,7 +431,7 @@ class EventAnnotationResource(ResourceMixin, Resource):
             event_id = form.event_id.data
 
             if searchindex_id not in indices:
-                abort(400)
+                abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
             def _set_label(label, toggle=False):
                 """Set label on the event in the datastore."""
@@ -453,11 +461,12 @@ class EventAnnotationResource(ResourceMixin, Resource):
                     toggle = True
                 _set_label(form.annotation.data, toggle)
             else:
-                abort(400)
+                abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
             # Save the event to the database
             db_session.add(event)
             db_session.commit()
 
-            return self.to_json(annotation, status_code=201)
-        return abort(400)
+            return self.to_json(
+                annotation, status_code=HTTP_STATUS_CODE_CREATED)
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST)

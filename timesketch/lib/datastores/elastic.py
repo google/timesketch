@@ -21,6 +21,7 @@ from flask import abort
 
 from timesketch.lib import datastore
 
+
 # Setup logging
 es_logger = logging.getLogger('elasticsearch')
 es_logger.addHandler(logging.NullHandler())
@@ -42,11 +43,14 @@ class ElasticSearchDataStore(datastore.DataStore):
         Args:
             sketch_id: Integer of sketch primary key
             query: Query string
-            filters: Dictionary containing filters to apply
+            query_filter: Dictionary containing filters to apply
+            indices = List of indices to query
 
         Returns:
             Set of event documents in JSON format
         """
+        if not query:
+            query = ""
 
         query_dict = {
             "query": {
@@ -63,7 +67,7 @@ class ElasticSearchDataStore(datastore.DataStore):
             }
         }
 
-        if query_filter.get("star", None):
+        if query_filter.get('star', None):
             del query_dict['query']['filtered']['query']
             query_dict['query']['filtered']['filter'] = {
                 "nested": {
@@ -100,6 +104,8 @@ class ElasticSearchDataStore(datastore.DataStore):
         if not indices:
             return {u'hits':  {u'hits': [], u'total': 0}, u'took': 0}
 
+        # Suppress the lint error because elasticsearch-py adds parameters
+        # to the function with a decorator and this makes pylint sad.
         # pylint: disable=unexpected-keyword-arg
         return self.client.search(
             body=query_dict, index=indices, size=500,
@@ -108,7 +114,6 @@ class ElasticSearchDataStore(datastore.DataStore):
                 'timesketch_label'
             ])
 
-    # pylint: disable=unexpected-keyword-arg
     def get_event(self, searchindex_id, event_id):
         """Get one event from the datastore.
 
@@ -119,8 +124,10 @@ class ElasticSearchDataStore(datastore.DataStore):
         Returns:
             Event document in JSON format
         """
-
         try:
+            # Suppress the lint error because elasticsearch-py adds parameters
+            # to the function with a decorator and this makes pylint sad.
+            # pylint: disable=unexpected-keyword-arg
             return self.client.get(
                 index=searchindex_id, id=event_id,
                 _source_exclude=['timesketch_label'])
@@ -138,7 +145,8 @@ class ElasticSearchDataStore(datastore.DataStore):
             sketch_id: Integer of sketch primary key
             user_id: Integer of user primary key
             label: String with the name of the label
-            toggle: Boolean value if the label should be toggled (add/remove)
+            toggle: Optional boolean value if the label should be toggled
+            (add/remove). The default is False.
         """
         doc = self.client.get(index=searchindex_id, id=event_id)
         try:
@@ -150,14 +158,16 @@ class ElasticSearchDataStore(datastore.DataStore):
                 body=doc)
 
         if toggle:
-            script_string = 'if(ctx._source.timesketch_label.contains'\
-                            '(timesketch_label)) {ctx._source.timesketch_label'\
-                            '.remove(timesketch_label)} else {ctx._source.'\
-                            'timesketch_label += timesketch_label}'
+            script_string = (
+                'if(ctx._source.timesketch_label.contains'
+                '(timesketch_label)) {ctx._source.timesketch_label'
+                '.remove(timesketch_label)} else {ctx._source.'
+                'timesketch_label += timesketch_label}')
         else:
-            script_string = 'if( ! ctx._source.timesketch_label.contains'\
-                            '(timesketch_label)) {ctx._source.timesketch_label'\
-                            '+= timesketch_label}'
+            script_string = (
+                'if( ! ctx._source.timesketch_label.contains'
+                '(timesketch_label)) {ctx._source.timesketch_label'
+                '+= timesketch_label}')
         script = {
             'script': script_string,
             'params': {
