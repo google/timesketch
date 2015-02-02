@@ -1,4 +1,4 @@
-# Copyright 2015 Google Inc. All rights reserved.
+# Copyright 2014 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,13 +36,22 @@ from timesketch.ui.views.user import user_views
 
 
 def create_app(config=None):
-    """Create the Flask app instance that is used throughout the application."""
+    """Create the Flask app instance that is used throughout the application.
+
+    Args:
+        config: Path to configuration file as a string or an object with config
+        directives.
+
+    Returns:
+        Application object (instance of flask.Flask).
+    """
     # Setup the Flask app and load the config.
     app = Flask(
         __name__, template_folder='ui/templates', static_folder='ui/static')
-    if not config or isinstance(config, str):
-        if not config:
-            config = '/etc/timesketch.conf'
+
+    if not config:
+        config = '/etc/timesketch.conf'
+    if isinstance(config, basestring):
         os.environ['TIMESKETCH_SETTINGS'] = config
         app.config.from_envvar('TIMESKETCH_SETTINGS')
     else:
@@ -74,20 +83,21 @@ def create_app(config=None):
     # Setup the login manager.
     login_manager = LoginManager()
     login_manager.init_app(app)
-    login_manager.login_view = "user_views.login"
+    login_manager.login_view = 'user_views.login'
 
     # This is used by the flask_login extension.
     # pylint: disable=unused-variable
     @login_manager.user_loader
     def load_user(user_id):
-        """Return the current user.
+        """Based on a user_id (database primary key for a user) this function
+        loads a user from the database. It is used by the Flask-Login extension
+        to setup up the session for the user.
 
         Args:
             user_id: Integer primary key for the user.
 
         Returns:
-            Instance of timesketch.models.user.User
-
+            A user object (Instance of timesketch.models.user.User).
         """
         return User.query.get(user_id)
 

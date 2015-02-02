@@ -1,4 +1,4 @@
-# Copyright 2015 Google Inc. All rights reserved.
+# Copyright 2014 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,13 +23,35 @@ class DataStore(object):
 
     @abc.abstractmethod
     def search(self, sketch_id, query, query_filter, indices):
-        """Return search results"""
+        """Return search results.
+
+        Args:
+            sketch_id: Integer of sketch primary key
+            query: Query string
+            query_filter: Dictionary containing filters to apply
+            indices = List of indices to query
+        """
 
     @abc.abstractmethod
     def get_event(self, searchindex_id, event_id):
-        """Get single document from the datastore"""
+        """Get single event from the datastore.
+
+        Args:
+            searchindex_id: String of ElasticSearch index id
+            event_id: String of ElasticSearch event id
+        """
 
     @abc.abstractmethod
     def set_label(self, searchindex_id, event_id, sketch_id, user_id, label,
                   toggle=False):
-        """Add label to an event."""
+        """Add label to an event.
+
+        Args:
+            searchindex_id: String of ElasticSearch index id
+            event_id: String of ElasticSearch event id
+            sketch_id: Integer of sketch primary key
+            user_id: Integer of user primary key
+            label: String with the name of the label
+            toggle: Optional boolean value if the label should be toggled
+            (add/remove). The default is False.
+        """

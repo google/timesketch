@@ -99,14 +99,18 @@ class MockDataStore(datastore.DataStore):
     }
 
     def __init__(self, host, port):
-        """
-        Initialize the datastore. Does nothing but make sure that the
-        arguments are accepted.
+        """Initialize the datastore.
+
+        Args:
+            host: Hostname or IP address to the datastore
+            port: The port used by the datastore
         """
         self.host = host
         self.port = port
 
-    def search(self, sketch_id, query, query_filter, indices):
+    def search(
+            self, unused_sketch_id, unused_query, unused_query_filter,
+            unused_indices):
         """Mock a search query.
 
         Returns:
@@ -131,6 +135,9 @@ class MockDataStore(datastore.DataStore):
 
 class BaseTest(TestCase):
     """Base class for tests."""
+
+    COLOR_WHITE = 'FFFFFF'
+
     def create_app(self):
         """Setup the Flask application.
 
@@ -235,7 +242,7 @@ class BaseTest(TestCase):
         """
         timeline = Timeline(
             name=name, description=name, user=user, sketch=sketch,
-            searchindex=searchindex, color="FFFFFF")
+            searchindex=searchindex, color=self.COLOR_WHITE)
         self._commit_to_database(timeline)
         return timeline
 

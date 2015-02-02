@@ -29,16 +29,24 @@ from wtforms.validators import Length
 
 
 def build_form(request, form):
-    """WTForms need this in order to initialize the form."""
-    # TODO: Add link to why this is needed.
+    """Build a MultiDict from form data and add CSRF token.
+
+    Args:
+        request: Flask request object as a werkzeug request proxy.
+        form: Form as a wtforms.form.FormMeta class.
+
+    Returns:
+        A filled out WTForm form. Class from timesketch.lib.forms.
+    """
     form_dict = MultiDict(request.json)
     form_dict['csrf_token'] = request.headers.get('X-CSRFToken')
     return form(form_dict)
 
 
 class MultiDict(dict):
-    """WTForms need this."""
-    # TODO: Add link to why this is needed.
+    """Implements a MultiDict that can hold keys with the same name."""
+    # WTForms expects the form data to be a MultiDict, i.e. a dictionary that
+    # can hold multiple keys with the same name.
     def getlist(self, key):
         """Make sure value is a list.
 
