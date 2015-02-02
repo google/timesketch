@@ -13,6 +13,9 @@
 # limitations under the License.
 """This package handles setting up and providing the database connection."""
 
+from flask import abort
+from flask_login import current_user
+from flask_sqlalchemy import BaseQuery
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import as_declarative
@@ -20,9 +23,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy import Column, Integer
 from sqlalchemy import DateTime
 from sqlalchemy import func
-from flask import abort
-from flask_login import current_user
-from flask_sqlalchemy import BaseQuery
+
 
 # The database session
 engine = None
