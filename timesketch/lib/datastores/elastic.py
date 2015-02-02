@@ -18,7 +18,6 @@ import logging
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
 from flask import abort
-
 from timesketch.lib import datastore
 
 
