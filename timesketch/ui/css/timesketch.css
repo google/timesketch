@@ -1,0 +1,310 @@
+/*
+Copyright 2015 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+body {
+    background: #f9f9f9;
+}
+
+header {
+    width: 100%;
+    height: 65px;
+    background: #428bca;
+    position: fixed;
+    top:0;
+    z-index:9998;
+    padding:11px 21px 11px 11px;
+}
+
+table {
+    table-layout: fixed;
+    word-wrap: break-word;
+}
+
+#main {
+    margin:100px 35px 35px 235px;
+}
+
+#logo {
+    width:200px;
+    height:65px;
+    padding:20px;
+    background: #2c3e50;
+    position: fixed;
+    top:0;
+    z-index:9999;
+}
+
+#logo img {
+    margin-left:15px;
+    width:130px;
+    height:22px;
+}
+
+#navigation {
+  width: 200px;
+  overflow: hidden;
+  position: fixed;
+  left: 0;
+  height: 100%;
+  background: #f1f1f1;
+  top:65px;
+  z-index:9998;
+}
+
+#navigation .leftnav-title {
+    font-size: 0.9em;
+    border-bottom: 1px solid #d1d1d1;
+    text-transform: uppercase;
+    letter-spacing: 1.0px;
+    padding:20px;
+    margin:0;
+    text-align: center;
+    font-weight: 500;
+}
+
+.leftnav {
+    padding-left:0;
+    margin-top: 0;
+}
+
+.leftnav a {
+    padding: 20px 20px 20px 35px;
+    font-size: 0.9em;
+    list-style: none;
+    border-bottom: 1px solid #d1d1d1;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+}
+
+.leftnav i, img {
+    padding-left:0;
+    margin-right:10px;
+}
+
+.leftnav a {
+    color:#333;
+    display: block;
+}
+
+.leftnav a:hover {
+    text-decoration: none;
+    background: #e9e9e9;
+    cursor: pointer;
+}
+
+.leftnav .leftnav-active {
+    background: #444;
+    color: #fff;
+}
+
+.card {
+    margin-bottom: 20px;
+    background: #fff;
+    padding: 20px;
+    border:1px solid #f1f1f1;
+}
+
+.card h2 {
+    margin-top:0;
+}
+
+.card p {
+    letter-spacing: .01rem;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 16px;
+    line-height: 1.5;
+    max-width: 900px;
+    margin-left:3px;
+    margin-top:15px;
+}
+
+.search-input {
+    outline: none;
+    border:1px solid #e1e1e1;
+    box-shadow:none !important;
+    font-size: 1.3em;
+    border-radius: 0;
+    padding: 15px;
+    background:#fff;
+    width: 100%;
+}
+
+.table > tbody > tr:first-child > td {
+    border-top: none;
+}
+
+#search-result-table {
+    margin-bottom: 1px;
+}
+
+#search-result-table td {
+    vertical-align: top;
+    padding: 10px;
+}
+
+.event-message {
+    background: #f9f9f9;
+    padding: 10px 10px 10px 5px;
+    cursor: pointer;
+}
+
+.timerange-input {
+    width: 200px;
+    outline: none;
+    border:1px solid lightgrey !important;
+    box-shadow:none !important;
+    background: #fff;
+}
+
+.timeline-picker-card {
+    overflow: hidden;
+    position: relative;
+}
+
+.color-box {
+    width:30px;
+    height:30px;
+    margin-right: 10px;
+}
+
+.index-enabled {
+    color: #333;
+}
+
+.index-disabled {
+    color: #d2d2d2;
+    text-decoration: line-through;
+}
+
+.timeline-title {
+    margin-top:5px;
+}
+
+.timeline-checkbox {
+    margin-top:5px;
+    margin-left: 10px
+}
+
+.btn:focus {
+    outline: none;
+}
+
+.btn-default:focus {
+    background: #fff;
+}
+
+.select {
+    background: #fff;
+    height:34px;
+    border:1px solid #d1d1d1;
+    width:150px;
+}
+
+.select-view {
+    margin-left:5px;
+    outline: none;
+}
+
+#butterbar {
+    display:none;
+    width:150px;
+    background: #333;
+    opacity: 0.6;
+    color:#fff;
+    padding:10px;
+    position: absolute;
+    left:0;
+    right:0;
+    top:0;
+    margin-left:auto;
+    margin-right:auto;
+    text-align: center;
+    z-index:9998;
+}
+
+.modal {
+    padding-top:100px;
+}
+
+#timelines, ul {
+    list-style: none;
+    padding:0;
+}
+
+.event-detail-container {
+    margin-top:15px;
+    margin-bottom:35px;
+    padding: 0;
+    max-width: 100%;
+}
+
+.btn-warning {
+    background: #EB7F00;
+}
+
+.icon-yellow {
+    color: #ffe300;
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: silver;
+}
+
+.icon-grey {
+    color: #d2d2d2;
+}
+
+.btn-uppercase {
+    text-transform: uppercase;
+    font-size: 0.9em;
+}
+
+.comment-wrapper {
+    margin-top:20px;
+    margin-bottom:10px;
+}
+
+.comment-bubble {
+    position: relative;
+    min-height: 100px;
+    padding: 15px;
+    background: #f5f5f5;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    margin-bottom:10px;
+}
+
+.comment-avatar {
+    float: left;
+}
+
+.comment-name {
+    text-transform: capitalize;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+}
+
+.comment-body {
+    overflow: hidden;
+    margin-top:2px;
+}
+
+.comment-timestamp {
+    font-weight: normal;
+    font-size: 0.8em;
+    color:#666;
+    margin-top:5px;
+}
