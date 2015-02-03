@@ -13,3 +13,43 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
+
+<!DOCTYPE html>
+<html lang="en" ng-app="timesketch">
+
+<head>
+  <title>Timesketch</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <link rel="stylesheet" href="/static/third_party/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/static/third_party/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script type="text/javascript" language="javascript" src="/static/third_party/jquery/jquery.min.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/third_party/bootstrap/js/bootstrap.min.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/third_party/angular/angular.min.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/js/controllers.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/js/directives.js"></script>
+</head>
+
+<body>
+<a href="/">
+  <div id="logo">
+    <img src="/static/img/logo.png" />
+  </div>
+</a>
+
+<header>
+  <div butterbar id="butterbar">Loading..</div>
+  <div class="pull-right" style="margin-top:10px;margin-right:30px;">
+    <span style="color:#fff;margin-right:20px;">{{ current_user.username }}</span>
+    <a style="color:#fff;" href="/logout/">Logout</a>
+  </div>
+</header>
+
+{% block sidenav %}{% endblock %}
+
+<div id="main">
+  {% block main %}{% endblock %}
+</div>
+
+</body>
+</html>
