@@ -1,0 +1,86 @@
+<!--
+Copyright 2015 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+{% extends "sketch/base.html" %}
+
+{% block main %}
+
+<div class="container">
+
+  {% if sketch.has_permission(current_user, 'write') %}
+  <div class="row">
+    <div class="col-md-12">
+      <form method="get" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
+        <input type="text" name="q" class="search-input" placeholder="Search for timelines to add" />
+      </form>
+    </div>
+  </div>
+  <br>
+
+  {% if form.timelines.choices %}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <form method="post" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
+          {{ form.timelines }}
+          {{ form.csrf_token }}
+          {% if form.timelines.choices %}
+          <button class="btn btn-primary" type="submit">Add to sketch</button>
+          {% endif %}
+        </form>
+
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% endif %}
+
+  <div class="card">
+    {% if sketch.timelines %}
+    <table class="table table-hover">
+      <thead>
+      <tr>
+        <th width="73px">Timeline</th>
+        <th></th>
+        <th width="150px">Added</th>
+      </tr>
+
+      <tbody>
+      {% for timeline in sketch.timelines %}
+      <tr>
+        <td>
+          <div class="color-box" style="background:#{{ timeline.color }};"></div>
+        </td>
+        <td>
+          <div style="margin-top:5px;">
+            <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
+          </div>
+        </td>
+        <td>
+          <div style="margin-top:5px;">{{ timeline.created_at }}</div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>There is no timeline added to this sketch. Add one to get started.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
