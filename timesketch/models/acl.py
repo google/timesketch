@@ -141,8 +141,7 @@ class AccessControlMixin(object):
             not_(self.AccessControlEntry.user == None),
             self.AccessControlEntry.permission == 'read',
             self.AccessControlEntry.parent == self).all()
-        users = set(ace.user for ace in aces)
-        return users
+        return set(ace.user for ace in aces)
 
     def has_permission(self, user, permission):
         """Check if the user has a specific permission.

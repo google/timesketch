@@ -37,6 +37,7 @@ def configure_engine(url):
     """Configure and setup the database session."""
     # These needs to be global because of the way Flask works.
     # pylint: disable=global-variable-not-assigned
+    # TODO: Can we wrap this in a class?
     global engine, session_maker, db_session
     engine = create_engine(url)
     db_session.remove()
@@ -108,9 +109,7 @@ class BaseModel(object):
             A model instance.
         """
         instance = cls.query.filter_by(**kwargs).first()
-        if instance:
-            return instance
-        else:
+        if not instance:
             instance = cls(**kwargs)
             db_session.add(instance)
-            return instance
+        return instance

@@ -56,8 +56,8 @@ class Label(BaseAnnotation):
         """Initialize the model.
 
         Args:
-            user = A user (instance of timesketch.models.user.User)
-            name = Name of the label
+            user: A user (instance of timesketch.models.user.User)
+            name: Name of the label
         """
         self.user = user
         self.label = label
@@ -71,8 +71,8 @@ class Comment(BaseAnnotation):
         """Initialize the model.
 
         Args:
-            user = A user (instance of timesketch.models.user.User)
-            body = The body if the comment
+            user: A user (instance of timesketch.models.user.User)
+            body: The body if the comment
         """
         self.user = user
         self.comment = comment
@@ -86,8 +86,8 @@ class Status(BaseAnnotation):
         """Initialize the model.
 
         Args:
-            user = A user (instance of timesketch.models.user.User)
-            status = The type of status (string, e.g. open)
+            user: A user (instance of timesketch.models.user.User)
+            status: The type of status (string, e.g. open)
         """
         self.user = user
         self.status = status

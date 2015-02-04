@@ -39,6 +39,7 @@ from flask_restful import fields
 from flask_restful import marshal
 from flask_restful import reqparse
 from flask_restful import Resource
+
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -256,7 +257,7 @@ class ViewResource(ResourceMixin, Resource):
 
         # If this is a user state view, check that it
         # belongs to the current_user
-        if view.name == "" and view.user != current_user:
+        if view.name == '' and view.user != current_user:
             abort(HTTP_STATUS_CODE_FORBIDDEN)
         return self.to_json(view)
 
