@@ -54,6 +54,9 @@ class AddUser(Command):
         Option('--password', '-p', dest='password', required=False),
     )
 
+    def __init__(self):
+        super(AddUser, self).__init__()
+
     def get_password_from_prompt(self):
         """Get password from the command line prompt."""
         first_password = prompt_pass('Enter password')
@@ -87,6 +90,9 @@ class AddSearchIndex(Command):
         Option('--index', '-i', dest='index', required=True),
         Option('--user', '-u', dest='username', required=True),
     )
+
+    def __init__(self):
+        super(AddSearchIndex, self).__init__()
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, name, index, username):
