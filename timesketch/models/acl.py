@@ -17,7 +17,7 @@ The ACL systems is simple. It works by creating a many-to-many relationship
 to the model that needs ACL functionality. This is implemented as a MixIn to
 make it easy to annotate models to give them access to the ACL system.
 
-The model has the following permissionsL: "read", "write" and "delete".
+The model has the following permissions: "read", "write" and "delete".
 """
 
 from flask_login import current_user
@@ -113,7 +113,8 @@ class AccessControlMixin(object):
         """Get the specific access control entry for the user and permission.
 
         Returns:
-            An ACE (instance of timesketch.models.acl.AccessControlEntry)
+            An ACE (instance of timesketch.models.acl.AccessControlEntry) or
+            None if no ACE is found.
         """
         return self.AccessControlEntry.query.filter_by(
             user=user, permission=permission, parent=self).all()
@@ -123,11 +124,10 @@ class AccessControlMixin(object):
         """Determine if the ACL is open to everyone.
 
         Returns:
-            Boolean value to indicate if the object is readable by everyone.
+            An ACE (instance of timesketch.models.acl.AccessControlEntry) if the
+            object is readable by everyone or None if the object is private.
         """
-        if self._get_ace(user=None, permission='read'):
-            return True
-        return False
+        return self._get_ace(user=None, permission='read')
 
     @property
     def collaborators(self):
@@ -151,11 +151,11 @@ class AccessControlMixin(object):
             permission: Permission as string (read, write or delete)
 
         Returns:
-            Boolean value to indicate if the user has the permission.
+            An ACE (instance of timesketch.models.acl.AccessControlEntry) if the
+            user has the permission or None if the user do not have the
+            permission.
         """
-        if self._get_ace(user=user, permission=permission):
-            return True
-        return False
+        return self._get_ace(user=user, permission=permission)
 
     def grant_permission(self, user, permission):
         """Grant permission to a user with the specific permission.
