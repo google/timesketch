@@ -32,6 +32,7 @@ class ElasticSearchDataStore(datastore.DataStore):
     """Implements the datastore."""
     def __init__(self, host='127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
+        super(ElasticSearchDataStore, self).__init__()
         self.client = Elasticsearch([
             {'host': host, 'port': port}
         ])

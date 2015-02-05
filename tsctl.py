@@ -34,6 +34,9 @@ from timesketch.models.sketch import SearchIndex
 
 class DropDataBaseTables(Command):
     """Drop all database tables."""
+    def __init__(self):
+        super(DropDataBaseTables, self).__init__()
+
     # pylint: disable=method-hidden
     def run(self):
         """Drop all tables after user ha verified."""

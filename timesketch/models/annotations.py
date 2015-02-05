@@ -59,6 +59,7 @@ class Label(BaseAnnotation):
             user: A user (instance of timesketch.models.user.User)
             name: Name of the label
         """
+        super(Label, self).__init__()
         self.user = user
         self.label = label
 
@@ -74,6 +75,7 @@ class Comment(BaseAnnotation):
             user: A user (instance of timesketch.models.user.User)
             body: The body if the comment
         """
+        super(Comment, self).__init__()
         self.user = user
         self.comment = comment
 
@@ -89,6 +91,7 @@ class Status(BaseAnnotation):
             user: A user (instance of timesketch.models.user.User)
             status: The type of status (string, e.g. open)
         """
+        super(Status, self).__init__()
         self.user = user
         self.status = status
 
