@@ -56,9 +56,10 @@ class Label(BaseAnnotation):
         """Initialize the model.
 
         Args:
-            user = A user (instance of timesketch.models.user.User)
-            name = Name of the label
+            user: A user (instance of timesketch.models.user.User)
+            name: Name of the label
         """
+        super(Label, self).__init__()
         self.user = user
         self.label = label
 
@@ -71,9 +72,10 @@ class Comment(BaseAnnotation):
         """Initialize the model.
 
         Args:
-            user = A user (instance of timesketch.models.user.User)
-            body = The body if the comment
+            user: A user (instance of timesketch.models.user.User)
+            body: The body if the comment
         """
+        super(Comment, self).__init__()
         self.user = user
         self.comment = comment
 
@@ -86,9 +88,10 @@ class Status(BaseAnnotation):
         """Initialize the model.
 
         Args:
-            user = A user (instance of timesketch.models.user.User)
-            status = The type of status (string, e.g. open)
+            user: A user (instance of timesketch.models.user.User)
+            status: The type of status (string, e.g. open)
         """
+        super(Status, self).__init__()
         self.user = user
         self.status = status
 
@@ -109,13 +112,13 @@ class LabelMixin(object):
             A relationship to an label (timesketch.models.annotation.Label)
         """
         self.Label = type(
-            '%sLabel' % self.__name__,
+            '{0:s}Label'.format(self.__name__),
             (Label, BaseModel,),
             dict(
-                __tablename__='%s_label' % self.__tablename__,
+                __tablename__='{0:s}_label'.format(self.__tablename__),
                 parent_id=Column(
-                    Integer, ForeignKey('%s.id' % self.__tablename__)),
-                parent=relationship(self),
+                    Integer, ForeignKey('{0:s}.id'.format(self.__tablename__))),
+                parent=relationship(self)
             )
         )
         return relationship(self.Label)
@@ -137,12 +140,12 @@ class CommentMixin(object):
             A relationship to a comment (timesketch.models.annotation.Comment)
         """
         self.Comment = type(
-            '%sComment' % self.__name__,
+            '{0:s}Comment'.format(self.__name__),
             (Comment, BaseModel,),
             dict(
-                __tablename__='%s_comment' % self.__tablename__,
+                __tablename__='{0:s}_comment'.format(self.__tablename__),
                 parent_id=Column(
-                    Integer, ForeignKey('%s.id' % self.__tablename__)),
+                    Integer, ForeignKey('{0:s}.id'.format(self.__tablename__))),
                 parent=relationship(self),
             )
         )
@@ -165,12 +168,12 @@ class StatusMixin(object):
             A relationship to a status (timesketch.models.annotation.Status)
         """
         self.Status = type(
-            '%sStatus' % self.__name__,
+            '{0:s}Status'.format(self.__name__),
             (Status, BaseModel,),
             dict(
-                __tablename__='%s_status' % self.__tablename__,
+                __tablename__='{0:s}_status'.format(self.__tablename__),
                 parent_id=Column(
-                    Integer, ForeignKey('%s.id' % self.__tablename__)),
+                    Integer, ForeignKey('{0:s}.id'.format(self.__tablename__))),
                 parent=relationship(self),
             )
         )

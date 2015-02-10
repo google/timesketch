@@ -14,6 +14,7 @@
 """This module contains common test utilities for Timesketch."""
 
 from flask_testing import TestCase
+
 from timesketch import create_app
 from timesketch.lib import datastore
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
@@ -128,8 +129,8 @@ class MockDataStore(datastore.DataStore):
         return self.event_dict
 
     def set_label(
-            self, searchindex_id, event_id, sketch_id,
-            user_id, label, toggle=False):
+            self, searchindex_id, event_id, sketch_id, user_id, label,
+            toggle=False):
         """Mock adding a label to an event."""
         return
 

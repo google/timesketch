@@ -39,13 +39,13 @@ from flask_restful import fields
 from flask_restful import marshal
 from flask_restful import reqparse
 from flask_restful import Resource
+
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.datastores.elastic import ElasticSearchDataStore
-from timesketch.lib.forms import build_form
 from timesketch.lib.forms import SaveViewForm
 from timesketch.lib.forms import EventAnnotationForm
 from timesketch.models import db_session
@@ -129,6 +129,7 @@ class ResourceMixin(object):
         Returns:
             Instance of timesketch.lib.datastores.elastic.ElasticSearchDatastore
         """
+        print current_app.config['ELASTIC_HOST']
         return ElasticSearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
@@ -221,7 +222,7 @@ class ViewListResource(ResourceMixin, Resource):
         Returns:
             A view in JSON (instance of flask.wrappers.Response)
         """
-        form = build_form(request, SaveViewForm)
+        form = SaveViewForm.build(request)
         if form.validate_on_submit():
             sketch = Sketch.query.get_with_acl(sketch_id)
             view = View(
@@ -256,7 +257,7 @@ class ViewResource(ResourceMixin, Resource):
 
         # If this is a user state view, check that it
         # belongs to the current_user
-        if view.name == "" and view.user != current_user:
+        if view.name == '' and view.user != current_user:
             abort(HTTP_STATUS_CODE_FORBIDDEN)
         return self.to_json(view)
 
@@ -421,7 +422,7 @@ class EventAnnotationResource(ResourceMixin, Resource):
         Returns:
             An annotation in JSON (instance of flask.wrappers.Response)
         """
-        form = build_form(request, EventAnnotationForm)
+        form = EventAnnotationForm.build(request)
         if form.validate_on_submit():
             sketch = Sketch.query.get_with_acl(sketch_id)
             indices = [t.searchindex.index_name for t in sketch.timelines]

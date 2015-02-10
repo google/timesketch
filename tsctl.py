@@ -34,6 +34,9 @@ from timesketch.models.sketch import SearchIndex
 
 class DropDataBaseTables(Command):
     """Drop all database tables."""
+    def __init__(self):
+        super(DropDataBaseTables, self).__init__()
+
     # pylint: disable=method-hidden
     def run(self):
         """Drop all tables after user ha verified."""
@@ -50,6 +53,9 @@ class AddUser(Command):
         Option('--username', '-u', dest='username', required=True),
         Option('--password', '-p', dest='password', required=False),
     )
+
+    def __init__(self):
+        super(AddUser, self).__init__()
 
     def get_password_from_prompt(self):
         """Get password from the command line prompt."""
@@ -84,6 +90,9 @@ class AddSearchIndex(Command):
         Option('--index', '-i', dest='index', required=True),
         Option('--user', '-u', dest='username', required=True),
     )
+
+    def __init__(self):
+        super(AddSearchIndex, self).__init__()
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, name, index, username):

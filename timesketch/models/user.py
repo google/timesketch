@@ -42,6 +42,7 @@ class User(UserMixin, BaseModel):
             username: Username for the user
             name: Name of the user
         """
+        super(User, self).__init__()
         self.username = username
         self.name = name
         if not name:

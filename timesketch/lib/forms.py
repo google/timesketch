@@ -28,21 +28,6 @@ from wtforms.validators import Regexp
 from wtforms.validators import Length
 
 
-def build_form(request, form):
-    """Build a MultiDict from form data and add CSRF token.
-
-    Args:
-        request: Flask request object as a werkzeug request proxy.
-        form: Form as a wtforms.form.FormMeta class.
-
-    Returns:
-        A filled out WTForm form. Class from timesketch.lib.forms.
-    """
-    form_dict = MultiDict(request.json)
-    form_dict['csrf_token'] = request.headers.get('X-CSRFToken')
-    return form(form_dict)
-
-
 class MultiDict(dict):
     """Implements a MultiDict that can hold keys with the same name."""
     # WTForms expects the form data to be a MultiDict, i.e. a dictionary that
@@ -73,31 +58,48 @@ class MultiDict(dict):
         return [self[key]]
 
 
+class BaseForm(Form):
+    """Base class for forms."""
+    @classmethod
+    def build(cls, request):
+        """Build a WTForm from request data and add CSRF token.
+
+        Args:
+            request: Flask request object as a werkzeug request proxy.
+
+        Returns:
+            A filled out WTForm form. Instance of timesketch.lib.forms.
+        """
+        form_dict = MultiDict(request.json)
+        form_dict['csrf_token'] = request.headers.get('X-CSRFToken')
+        return cls(form_dict)
+
+
 class MultiCheckboxField(SelectMultipleField):
     """Multiple checkbox form widget."""
     widget = widgets.ListWidget(prefix_label=False)
     option_widget = widgets.CheckboxInput()
 
 
-class AddTimelineForm(Form):
+class AddTimelineForm(BaseForm):
     """Form using multiple checkbox fields to add timelines to a sketch."""
     timelines = MultiCheckboxField('Timelines', coerce=int)
 
 
-class UsernamePasswordForm(Form):
+class UsernamePasswordForm(BaseForm):
     """Form with username and password fields. Use in the login form."""
     username = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
 
 
-class NameDescriptionForm(Form):
+class NameDescriptionForm(BaseForm):
     """Generic form for name and description forms. Used in multiple places."""
     name = StringField('Name', validators=[DataRequired()])
     description = StringField(
         'Description', validators=[DataRequired()], widget=widgets.TextArea())
 
 
-class HiddenNameDescriptionForm(Form):
+class HiddenNameDescriptionForm(BaseForm):
     """
     Form for name and description fields, but as hidden values. Used when
     creating a new sketch.
@@ -117,21 +119,21 @@ class TimelineForm(NameDescriptionForm):
             Length(6, 6)])
 
 
-class TogglePublic(Form):
+class TogglePublic(BaseForm):
     """Form to toggle the public ACL permission."""
     permission = RadioField(
         'Permission', choices=[('public', 'Public'), ('private', 'Private')],
         validators=[DataRequired()])
 
 
-class SaveViewForm(Form):
+class SaveViewForm(BaseForm):
     """Form used to save a view."""
     name = StringField('Name', validators=[DataRequired()])
     query = StringField('Query')
     filter = StringField('Filter', validators=[DataRequired()])
 
 
-class StatusForm(Form):
+class StatusForm(BaseForm):
     """Form to handle status annotation."""
     status = SelectField(
         'Status',
@@ -139,12 +141,12 @@ class StatusForm(Form):
         validators=[DataRequired()])
 
 
-class TrashForm(Form):
+class TrashForm(BaseForm):
     """Form to handle thrash confirmation."""
     confirm = BooleanField('Trash', validators=[DataRequired()])
 
 
-class EventAnnotationForm(Form):
+class EventAnnotationForm(BaseForm):
     """Generic form to handle event annotation. E.g. comment and labels."""
     annotation = StringField('Annotation', validators=[DataRequired()])
     annotation_type = StringField('Type', validators=[DataRequired()])

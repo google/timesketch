@@ -18,6 +18,7 @@ import logging
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
 from flask import abort
+
 from timesketch.lib import datastore
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
@@ -31,6 +32,7 @@ class ElasticSearchDataStore(datastore.DataStore):
     """Implements the datastore."""
     def __init__(self, host='127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
+        super(ElasticSearchDataStore, self).__init__()
         self.client = Elasticsearch([
             {'host': host, 'port': port}
         ])
@@ -108,11 +110,9 @@ class ElasticSearchDataStore(datastore.DataStore):
         # to the function with a decorator and this makes pylint sad.
         # pylint: disable=unexpected-keyword-arg
         return self.client.search(
-            body=query_dict, index=indices, size=500,
-            _source_include=[
+            body=query_dict, index=indices, size=500, _source_include=[
                 'datetime', 'timestamp', 'message', 'timestamp_desc',
-                'timesketch_label'
-            ])
+                'timesketch_label'])
 
     def get_event(self, searchindex_id, event_id):
         """Get one event from the datastore.

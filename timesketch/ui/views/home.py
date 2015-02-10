@@ -35,7 +35,7 @@ home_views = Blueprint('home_views', __name__)
 @home_views.route('/sketch/', methods=['GET', 'POST'])
 @login_required
 def home():
-    """Handler for the home page view.
+    """Generates the home page view template.
 
     Returns:
         Template with context.

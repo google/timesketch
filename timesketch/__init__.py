@@ -19,6 +19,7 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_restful import Api
 from flask_wtf import CsrfProtect
+
 from timesketch.api.v1.resources import ExploreResource
 from timesketch.api.v1.resources import EventResource
 from timesketch.api.v1.resources import EventAnnotationResource

@@ -46,7 +46,7 @@ sketch_views = Blueprint('sketch_views', __name__)
 @sketch_views.route('/sketch/<int:sketch_id>/', methods=['GET', 'POST'])
 @login_required
 def overview(sketch_id):
-    """Handler for the sketch overview page view.
+    """Generates the sketch overview template.
 
     Returns:
         Template with context.
@@ -106,7 +106,7 @@ def overview(sketch_id):
                     methods=['GET', 'POST'])
 @login_required
 def explore(sketch_id, view_id=None):
-    """Handler for the sketch explore page view.
+    """Generates the sketch explore view template.
 
     Returns:
         Template with context.
@@ -139,7 +139,7 @@ def explore(sketch_id, view_id=None):
     '/sketch/<int:sketch_id>/timelines/', methods=['GET', 'POST'])
 @login_required
 def timelines(sketch_id):
-    """Handler for the sketch timelines page view.
+    """Generates the sketch explore view template.
 
     Returns:
         Template with context.
@@ -185,7 +185,7 @@ def timelines(sketch_id):
     methods=['GET', 'POST'])
 @login_required
 def timeline(sketch_id, timeline_id):
-    """Handler for the sketch timeline page view.
+    """Generates the sketch timeline view template.
 
     Returns:
         Template with context.
@@ -217,7 +217,7 @@ def timeline(sketch_id, timeline_id):
 @sketch_views.route('/sketch/<int:sketch_id>/views/')
 @login_required
 def views(sketch_id):
-    """Handler for the sketch views page view.
+    """Generates the sketch views template.
 
     Returns:
         Template with context.
@@ -231,7 +231,7 @@ def views(sketch_id):
     '/sketch/<int:sketch_id>/explore/view/<int:unused_view_id>/event/')
 @login_required
 def event(sketch_id, unused_view_id=None):
-    """Handler for the event page view.
+    """Generates the event template.
 
     Returns:
         Template with context.

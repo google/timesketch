@@ -49,6 +49,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, BaseModel):
             description: Description of the sketch
             user: A user (instance of timesketch.models.user.User)
         """
+        super(Sketch, self).__init__()
         self.name = name
         self.description = description
         self.user = user
@@ -85,12 +86,14 @@ class Timeline(StatusMixin, BaseModel):
             color: Color for the timeline in HEX as string (e.g. F1F1F1F1)
             description: The description for the timeline
         """
+        super(Timeline, self).__init__()
         self.name = name
         self.description = description
+
         if not color:
             self.color = random_color()
-        else:
-            self.color = color
+
+        self.color = color
         self.user = user
         self.sketch = sketch
         self.searchindex = searchindex
@@ -116,6 +119,7 @@ class SearchIndex(AccessControlMixin, LabelMixin, BaseModel):
             index_name: The name of the searchindex
             user: A user (instance of timesketch.models.user.User)
         """
+        super(SearchIndex, self).__init__()
         self.name = name
         self.description = description
         self.index_name = index_name
@@ -140,6 +144,7 @@ class View(AccessControlMixin, LabelMixin, BaseModel):
             sketch: A sketch (instance of timesketch.models.sketch.Sketch)
             user: A user (instance of timesketch.models.user.User)
         """
+        super(View, self).__init__()
         self.name = name
         self.query_string = query_string
         self.query_filter = query_filter
@@ -162,6 +167,7 @@ class Event(LabelMixin, CommentMixin, BaseModel):
                 (instance of timesketch.models.sketch.SearchIndex)
             document_id = String with the datastore document ID
         """
+        super(Event, self).__init__()
         self.sketch = sketch
         self.searchindex = searchindex
         self.document_id = document_id
