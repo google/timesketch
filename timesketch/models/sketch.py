@@ -91,7 +91,7 @@ class Timeline(StatusMixin, BaseModel):
         self.description = description
 
         if not color:
-            self.color = random_color()
+            color = random_color()
 
         self.color = color
         self.user = user
