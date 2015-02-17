@@ -17,7 +17,7 @@ limitations under the License.
 {% extends "sketch/base.html" %}
 
 {% block main_no_sidenav %}
-<div id="main" ng-cloak ng-controller="ExploreCtrl" ng-init="init('{{ sketch.id }}', '{{ view.id }}', '{{ timelines }}')">
+<div id="main" ng-cloak ng-controller="TsExploreCtrl" ng-init="init('{{ sketch.id }}', '{{ view.id }}', '{{ timelines }}')">
 
   <!-- Save view modal -->
   <div class="modal" id="save-view-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -94,13 +94,13 @@ limitations under the License.
       <div class="col-md-12">
         <div class="card timeline-picker-card">
           <div class="btn-group">
-            <button class="btn btn-default" filter="filter" search="search" meta="meta" index-enabler><i class="fa fa-check"></i> Enable all</button>
-            <button class="btn btn-default" filter="filter" search="search" meta="meta" index-disabler><i class="fa fa-ban"></i> Disable all</button>
+            <button class="btn btn-default" filter="filter" search="search" meta="meta" ts-index-enabler><i class="fa fa-check"></i> Enable all</button>
+            <button class="btn btn-default" filter="filter" search="search" meta="meta" ts-index-disabler><i class="fa fa-ban"></i> Disable all</button>
           </div>
           <br>
           <br>
           {% for timeline in sketch.timelines %}
-          <div filter="filter" search="search" search_starred="search_starred" meta="meta" index-chooser index="{{ timeline.searchindex.index_name }}" style="background:#f7f7f7;padding: 10px;margin-right: 10px;cursor: pointer;margin-bottom: 5px;" class="pull-left timelinebox">
+          <div filter="filter" search="search" search_starred="search_starred" meta="meta" ts-index-chooser index="{{ timeline.searchindex.index_name }}" style="background:#f7f7f7;padding: 10px;margin-right: 10px;cursor: pointer;margin-bottom: 5px;" class="pull-left timelinebox">
             <div class="color-box pull-left" style="background:#{{ timeline.color }};"></div>
             <div class="timeline-title pull-left">
               {{ timeline.name }}
@@ -120,10 +120,11 @@ limitations under the License.
           <div ng-show="meta" style="padding:10px;">
             {{ meta.es_total_count }} events ({{ meta.es_time/1000 }}s)
           </div>
-          <div ng-repeat="event in events" ng-controller="EventCtrl">
+          <div ng-repeat="event in events" ng-controller="TsEventCtrl">
+            <ts-foo-bar event="event"></ts-foo-bar>
             <table id="search-result-table" width="100%">
               <tr>
-                <td timeline-color width="210px;">
+                <td ts-timeline-color width="210px;">
                   {{ ::event._source.datetime }}
                 </td>
                 <td width="35px;" >
@@ -136,7 +137,7 @@ limitations under the License.
                   [{{ ::event._source.timestamp_desc }}] {{ ::event._source.message|limitTo:500 }}
                 </td>
                 <td width="150px" style="text-align: right;background: #f1f1f1;">
-                  <div timeline-name></div>
+                  <div ts-timeline-name></div>
                 </td>
               </tr>
             </table>

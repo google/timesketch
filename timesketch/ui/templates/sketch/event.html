@@ -16,7 +16,7 @@ limitations under the License.
 
 {% raw %}
 <div class="event-detail-container">
-  <div ng-controller="EventDetailCtrl" ng-init="getDetail()">
+  <div ng-controller="TsEventDetailCtrl" ng-init="getDetail()">
     <ul class="nav nav-tabs">
       <li ng-class="{active: comments.length > 0}"><a href="#comments-{{ event._id }}" data-toggle="tab"> {{ comments.length }} comments</a></li>
       <li ng-class="{active: comments.length == 0}"><a href="#details-{{ event._id }}" data-toggle="tab">Details</a></li>

@@ -18,6 +18,8 @@ limitations under the License.
 
 var timesketch = angular.module('timesketch', ['timesketch.directives']);
 
+// TODO: Refactor the controllers to directives and add tests.
+
 // config
 timesketch.config(function($httpProvider) {
     $httpProvider.interceptors.push(function($q, $rootScope) {
@@ -36,7 +38,8 @@ timesketch.config(function($httpProvider) {
     $httpProvider.defaults.headers.common['X-CSRFToken'] = csrftoken;
 });
 
-timesketch.controller('ExploreCtrl', function($scope, $http) {
+// TODO: Move these controllers to directives instead.
+timesketch.controller('TsExploreCtrl', function($scope, $http) {
         $scope.init = function(sketch_id, view_id, timelines) {
             $scope.sketch_id = sketch_id;
             $scope.view_id = view_id;
@@ -44,6 +47,7 @@ timesketch.controller('ExploreCtrl', function($scope, $http) {
             $scope.star = false;
             $scope.filter = {};
             $scope.filter.indices = $scope.timelines.split(",");
+            // TODO: Refactor out to a service.
             $http.get("/api/v1/sketches/" + $scope.sketch_id + "/views/" + $scope.view_id + "/").success(function(data) {
                 $scope.query = data.objects[0].query_string;
                 $scope.filter = angular.fromJson(data.objects[0].query_filter);
@@ -75,6 +79,7 @@ timesketch.controller('ExploreCtrl', function($scope, $http) {
                     filter: $scope.filter
                 }
             };
+            // TODO: Refactor out to a service.
             $http.get("/api/v1/sketches/" + $scope.sketch_id + "/explore/", params).success(function(data) {
                 $scope.events = data.objects;
                 $scope.meta = data.meta;
@@ -104,6 +109,7 @@ timesketch.controller('ExploreCtrl', function($scope, $http) {
                 query: $scope.query,
                 filter: $scope.filter
             };
+            // TODO: Refactor out to a service.
             $http.post('/api/v1/sketches/' + $scope.sketch_id + '/views/', params).success(function(data) {
                 var id = data.objects[0].id;
                 var view_url = '/sketch/' + $scope.sketch_id + '/explore/view/' + id + '/';
@@ -112,7 +118,7 @@ timesketch.controller('ExploreCtrl', function($scope, $http) {
         }
 });
 
-timesketch.controller('EventCtrl', function($scope, $http) {
+timesketch.controller('TsEventCtrl', function($scope, $http) {
     $scope.star = false;
 
     if ($scope.event._source.label.indexOf('__ts_star') > -1) {
@@ -125,6 +131,7 @@ timesketch.controller('EventCtrl', function($scope, $http) {
         $scope.event._source.label.splice($scope.event._source.label.indexOf('__ts_comment'), 1)
     }
 
+    // TODO: Refactor out to a service.
     $scope.toggleStar = function() {
         var params = {
             annotation: '__ts_star',
@@ -136,7 +143,7 @@ timesketch.controller('EventCtrl', function($scope, $http) {
     }
 });
 
-timesketch.controller('EventDetailCtrl', function($scope, $http) {
+timesketch.controller('TsEventDetailCtrl', function($scope, $http) {
     $scope.formData = {};
 
     $scope.getDetail = function() {
@@ -147,6 +154,7 @@ timesketch.controller('EventDetailCtrl', function($scope, $http) {
                 event_id: $scope.event._id
             }
         };
+        // TODO: Refactor out to a service.
         $http.get('/api/v1/sketches/' + $scope.sketch_id + '/event/', params).success(function(data) {
             for (var k in data.objects) {
                 if (k == '_id' || k == '_index') {
@@ -167,6 +175,7 @@ timesketch.controller('EventDetailCtrl', function($scope, $http) {
             searchindex_id: $scope.event._index,
             event_id: $scope.event._id
         };
+        // TODO: Refactor out to a service.
         $http.post('/api/v1/sketches/' + $scope.sketch_id + '/event/annotate/', params).success(function(data) {
             $scope.formData.comment = '';
             $scope.commentForm.$setPristine();

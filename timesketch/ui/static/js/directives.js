@@ -18,7 +18,7 @@ limitations under the License.
 
 var directives = angular.module('timesketch.directives', []);
 
-directives.directive("butterbar", function() {
+directives.directive("tsButterbar", function() {
     return {
         restrict : "A",
         link : function(scope, element, attrs) {
@@ -33,9 +33,10 @@ directives.directive("butterbar", function() {
     };
 });
 
-directives.directive('timelineColor', function () {
+directives.directive('tsTimelineColor', function () {
     return {
       restrict: 'A',
+      // TODO: Use template.
       link: function (scope, elem, attrs) {
           var timeline_colors = scope.meta.timeline_colors;
           elem.css("background", "#" + timeline_colors[scope.event._index])
@@ -43,9 +44,10 @@ directives.directive('timelineColor', function () {
     }
 });
 
-directives.directive('timelineName', function () {
+directives.directive('tsTimelineName', function () {
     return {
       restrict: 'A',
+      // TODO: Use template.
       link: function (scope, elem, attrs) {
           var timeline_names = scope.meta.timeline_names;
           elem.addClass("label");
@@ -55,7 +57,7 @@ directives.directive('timelineName', function () {
     }
 });
 
-directives.directive('indexChooser', function() {
+directives.directive('tsIndexChooser', function() {
     return {
       restrict: 'A',
       scope: {
@@ -63,6 +65,7 @@ directives.directive('indexChooser', function() {
         search: '=',
         meta: '='
       },
+      // TODO: Use template.
       link: function (scope, elem, attrs) {
         scope.$watch("filter", function(value) {
             var i = scope.filter.indices.indexOf(attrs.index);
@@ -76,7 +79,7 @@ directives.directive('indexChooser', function() {
                 elem.find(".t").css('text-decoration', 'none');
                 elem.find("input").prop("checked", true);
             }
-        })
+        });
         elem.bind('click', function() {
             var i = scope.filter.indices.indexOf(attrs.index);
             if (i > -1) {
@@ -99,7 +102,7 @@ directives.directive('indexChooser', function() {
     }
 });
 
-directives.directive('indexDisabler', function() {
+directives.directive('tsIndexDisabler', function() {
     return {
       restrict: 'A',
       scope: {
@@ -107,6 +110,7 @@ directives.directive('indexDisabler', function() {
         search: '=',
         meta: '='
       },
+      // TODO: Use template.
       link: function (scope, elem, attrs) {
         elem.bind('click', function() {
             var b = document.getElementsByClassName("timelinebox");
@@ -124,7 +128,7 @@ directives.directive('indexDisabler', function() {
     }
 });
 
-directives.directive('indexEnabler', function() {
+directives.directive('tsIndexEnabler', function() {
     return {
       restrict: 'A',
       scope: {
@@ -132,8 +136,8 @@ directives.directive('indexEnabler', function() {
         search: '=',
         meta: '='
       },
+      // TODO: Use template.
       link: function (scope, elem, attrs) {
-
         elem.bind('click', function() {
             var name_to_index = {};
             for (var index in scope.meta.timeline_names) {
