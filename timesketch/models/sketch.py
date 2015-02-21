@@ -28,7 +28,8 @@ from timesketch.models.annotations import StatusMixin
 from timesketch.lib.utils import random_color
 
 
-class Sketch(AccessControlMixin, LabelMixin, StatusMixin, BaseModel):
+class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
+             BaseModel):
     """Implements the Sketch model.
 
     A Sketch is the collaborative entity in Timesketch. It contains one or more
@@ -63,7 +64,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, BaseModel):
         return View.query.filter(View.sketch == self, View.name != '')
 
 
-class Timeline(StatusMixin, BaseModel):
+class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the Timeline model."""
     name = Column(String(255))
     description = Column(Text())
@@ -99,7 +100,8 @@ class Timeline(StatusMixin, BaseModel):
         self.searchindex = searchindex
 
 
-class SearchIndex(AccessControlMixin, LabelMixin, BaseModel):
+class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
+                  BaseModel):
     """Implements the SearchIndex model."""
     name = Column(String(255))
     description = Column(Text())
@@ -126,7 +128,8 @@ class SearchIndex(AccessControlMixin, LabelMixin, BaseModel):
         self.user = user
 
 
-class View(AccessControlMixin, LabelMixin, BaseModel):
+class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
+           BaseModel):
     """Implements the View model."""
     name = Column(String(255))
     query_string = Column(String(255))
@@ -152,7 +155,7 @@ class View(AccessControlMixin, LabelMixin, BaseModel):
         self.user = user
 
 
-class Event(LabelMixin, CommentMixin, BaseModel):
+class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the Event model."""
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     searchindex_id = Column(Integer, ForeignKey('searchindex.id'))

@@ -16,6 +16,7 @@
 from flask_bcrypt import generate_password_hash
 from flask_bcrypt import check_password_hash
 from flask_login import UserMixin
+from sqlalchemy.types import Boolean
 from sqlalchemy import Column
 from sqlalchemy import String
 from sqlalchemy.orm import relationship
@@ -30,6 +31,7 @@ class User(UserMixin, BaseModel):
     password = Column(String(128))
     name = Column(String(255))
     email = Column(String(255))
+    active = Column(Boolean(), default=True)
     sketches = relationship('Sketch', backref='user', lazy='dynamic')
     searchindices = relationship('SearchIndex', backref='user', lazy='dynamic')
     timelines = relationship('Timeline', backref='user', lazy='dynamic')
