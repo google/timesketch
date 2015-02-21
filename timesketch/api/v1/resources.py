@@ -129,7 +129,6 @@ class ResourceMixin(object):
         Returns:
             Instance of timesketch.lib.datastores.elastic.ElasticSearchDatastore
         """
-        print current_app.config['ELASTIC_HOST']
         return ElasticSearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
