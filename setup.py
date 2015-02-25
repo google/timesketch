@@ -20,15 +20,14 @@ from setuptools import setup
 
 setup(
     name='Timesketch',
-    version='0.1',
+    version='15.02-dev',
     long_description=__doc__,
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    scripts=['tsctl.py'],
+    scripts=['tsctl'],
     install_requires=frozenset([
         'Flask',
-        'SQLAlchemy',
         'Flask-Login',
         'Flask-script',
         'Flask-SQLAlchemy',
@@ -36,6 +35,12 @@ setup(
         'Flask-RESTful',
         'Flask-WTF',
         'Flask-Testing',
+        'SQLAlchemy',
+        'blinker',
         'elasticsearch',
+        'nose',
+        'mock',
+        'pylint',
+        'coverage',
     ])
 )

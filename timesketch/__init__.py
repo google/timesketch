@@ -14,6 +14,7 @@
 """Entry point for the application."""
 
 import os
+import sys
 
 from flask import Flask
 from flask_login import LoginManager
@@ -52,11 +53,24 @@ def create_app(config=None):
 
     if not config:
         config = '/etc/timesketch.conf'
+
     if isinstance(config, basestring):
         os.environ['TIMESKETCH_SETTINGS'] = config
-        app.config.from_envvar('TIMESKETCH_SETTINGS')
+        try:
+            app.config.from_envvar('TIMESKETCH_SETTINGS')
+        except IOError:
+            sys.stderr.write('Config file {0} does not exist.\n'.format(config))
+            sys.exit()
     else:
         app.config.from_object(config)
+
+    # Make sure that SECRET_KEY is configured.
+    if not app.config['SECRET_KEY']:
+        sys.stderr.write('ERROR: Secret key not present. '
+                         'Please update your configuration.\n'
+                         'To generate a key you can use openssl:\n\n'
+                         '$ openssl rand -base64 32\n\n')
+        sys.exit()
 
     # Setup the database.
     configure_engine(app.config['SQLALCHEMY_DATABASE_URI'])
