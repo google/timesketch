@@ -1,5 +1,0 @@
-# Install with: `pip install -U -r requirements.txt`
-django
-django-tastypie
-pyelasticsearch
-pillow
