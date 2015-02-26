@@ -16,6 +16,7 @@
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
+from flask import request
 from flask import url_for
 from flask_login import login_user
 from flask_login import logout_user
@@ -43,7 +44,7 @@ def login():
         if user:
             if user.check_password(plaintext=form.password.data):
                 login_user(user)
-                return redirect(url_for('home_views.home'))
+                return redirect(request.args.get("next") or '/')
         else:
             return redirect(url_for('user_views.login'))
     return render_template('user/login.html', form=form)
