@@ -35,7 +35,7 @@ setup(
         'Flask-RESTful',
         'Flask-WTF',
         'Flask-Testing',
-        'SQLAlchemy',
+        'SQLAlchemy ==0.9.8',
         'blinker',
         'elasticsearch',
         'nose',
