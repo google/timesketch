@@ -20,6 +20,8 @@ from flask import request
 from flask import url_for
 from flask_login import login_user
 from flask_login import logout_user
+from flask_login import current_user
+from flask_login import current_app
 
 from timesketch.lib.forms import UsernamePasswordForm
 from timesketch.models.user import User
@@ -33,10 +35,27 @@ user_views = Blueprint('user_views', __name__)
 def login():
     """Handler for the login page view.
 
+    There are two ways of authentication.
+    1) If Single Sign On (SSO) is enabled in configuration and the environment
+       variable is present, e.g. REMOTE_USER then the system will get or create
+       the user object and setup a session for the user.
+    2) Local authentication is used if SSO login is not enabled. This will
+       authenticate the user against the local user database.
+
     Returns:
-        Template with context.
+        Redirect if authentication is successful or template with context
+        otherwise.
     """
     form = UsernamePasswordForm()
+
+    # SSO login based on environment variable, e.g. REMOTE_USER.
+    if current_app.config.get('SSO_ENABLED', False):
+        remote_user_env = current_app.config.get(
+            'SSO_USER_ENV_VARIABLE', 'REMOTE_USER')
+        remote_user = request.environ.get(remote_user_env, None)
+        if remote_user:
+            user = User.get_or_create(username=remote_user, name=remote_user)
+            login_user(user)
 
     # Login form POST
     if form.validate_on_submit():
@@ -44,9 +63,10 @@ def login():
         if user:
             if user.check_password(plaintext=form.password.data):
                 login_user(user)
-                return redirect(request.args.get("next") or '/')
-        else:
-            return redirect(url_for('user_views.login'))
+
+    if current_user.is_authenticated():
+        return redirect(request.args.get('next') or '/')
+
     return render_template('user/login.html', form=form)
 
 

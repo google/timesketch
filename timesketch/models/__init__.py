@@ -113,4 +113,5 @@ class BaseModel(object):
         if not instance:
             instance = cls(**kwargs)
             db_session.add(instance)
+            db_session.commit()
         return instance

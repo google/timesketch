@@ -16,15 +16,29 @@
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.lib.testlib import BaseTest
 
+from flask_login import current_app
+
 
 class UserViewTest(BaseTest):
     """Test the user view."""
-    def test_login_view(self):
-        """Test the login view handler."""
-        self.login()
+    def test_login_view_unauthenticated(self):
+        """Test the login view handler with an unauthenticated session."""
         response = self.client.get('/login/')
         self.assert200(response)
         self.assert_template_used('user/login.html')
+
+    def test_login_view_form_authenticated(self):
+        """Test the login view handler with an authenticated session."""
+        self.login()
+        response = self.client.get('/login/')
+        self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+
+    def test_login_view_sso_authenticated(self):
+        """Test the login view handler with an SSO authenticated session."""
+        current_app.config['SSO_ENABLED'] = True
+        response = self.client.get(
+            '/login/', environ_base={'REMOTE_USER': 'test1'})
+        self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
     def test_logout_view(self):
         """Test the logout view handler."""
