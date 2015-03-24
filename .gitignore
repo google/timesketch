@@ -1,5 +1,18 @@
+# Ignore back-up files.
+*~
+
+# Ignore compiled Python files.
 *.pyc
-database.db
-settings.py
-.idea/
-media/
+*.pyo
+
+# Don't include build related files.
+/dependencies/
+/dist/
+/build/
+
+# And don't care about the 'egg'.
+/Timesketch.egg-info
+
+# Test files
+.coverage
+tests-coverage.txt
