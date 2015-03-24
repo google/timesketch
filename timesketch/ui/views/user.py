@@ -18,10 +18,10 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
+from flask_login import current_app
+from flask_login import current_user
 from flask_login import login_user
 from flask_login import logout_user
-from flask_login import current_user
-from flask_login import current_app
 
 from timesketch.lib.forms import UsernamePasswordForm
 from timesketch.models.user import User

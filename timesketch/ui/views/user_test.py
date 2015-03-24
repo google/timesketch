@@ -13,10 +13,10 @@
 # limitations under the License.
 """Tests for the user views."""
 
+from flask_login import current_app
+
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.lib.testlib import BaseTest
-
-from flask_login import current_app
 
 
 class UserViewTest(BaseTest):
