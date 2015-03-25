@@ -14,6 +14,7 @@
 """Tests for the user views."""
 
 from flask_login import current_app
+from flask_login import current_user
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.lib.testlib import BaseTest
@@ -36,9 +37,11 @@ class UserViewTest(BaseTest):
     def test_login_view_sso_authenticated(self):
         """Test the login view handler with an SSO authenticated session."""
         current_app.config['SSO_ENABLED'] = True
-        response = self.client.get(
-            '/login/', environ_base={'REMOTE_USER': 'test1'})
-        self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        with self.client:
+            response = self.client.get(
+                '/login/', environ_base={'REMOTE_USER': 'test1'})
+            self.assertEqual(current_user.username, 'test1')
+            self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
     def test_logout_view(self):
         """Test the logout view handler."""
