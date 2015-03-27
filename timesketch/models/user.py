@@ -18,7 +18,7 @@ from flask_bcrypt import check_password_hash
 from flask_login import UserMixin
 from sqlalchemy.types import Boolean
 from sqlalchemy import Column
-from sqlalchemy import String
+from sqlalchemy import Unicode
 from sqlalchemy.orm import relationship
 
 from timesketch.models import BaseModel
@@ -27,15 +27,16 @@ from timesketch.models import BaseModel
 class User(UserMixin, BaseModel):
     """Implements the User model."""
 
-    username = Column(String(255), unique=True)
-    password = Column(String(128))
-    name = Column(String(255))
-    email = Column(String(255))
+    username = Column(Unicode(255), unique=True)
+    password = Column(Unicode(128))
+    name = Column(Unicode(255))
+    email = Column(Unicode(255))
     active = Column(Boolean(), default=True)
-    sketches = relationship('Sketch', backref='user', lazy='dynamic')
-    searchindices = relationship('SearchIndex', backref='user', lazy='dynamic')
-    timelines = relationship('Timeline', backref='user', lazy='dynamic')
-    views = relationship('View', backref='user', lazy='dynamic')
+    sketches = relationship(u'Sketch', backref=u'user', lazy=u'dynamic')
+    searchindices = relationship(u'SearchIndex', backref=u'user',
+                                 lazy=u'dynamic')
+    timelines = relationship(u'Timeline', backref=u'user', lazy=u'dynamic')
+    views = relationship(u'View', backref=u'user', lazy=u'dynamic')
 
     def __init__(self, username, name=None):
         """Initialize the User object.
@@ -58,7 +59,8 @@ class User(UserMixin, BaseModel):
             plaintext: The plaintext password to hash
             rounds: Number of rounds to use for the bcrypt hashing
         """
-        self.password = generate_password_hash(plaintext, rounds)
+        password_hash = generate_password_hash(plaintext, rounds)
+        self.password = unicode(password_hash)
 
     def check_password(self, plaintext):
         """Check a plaintext password against a stored password hash.

@@ -24,4 +24,4 @@ class TestUtils(BaseTest):
     def test_random_color(self):
         """Test to generate a random color."""
         color = random_color()
-        self.assertTrue(re.match('^[0-9a-fA-F]{6}$', color))
+        self.assertTrue(re.match(u'^[0-9a-fA-F]{6}$', color))

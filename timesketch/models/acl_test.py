@@ -20,7 +20,7 @@ class AclModelTest(BaseTest):
     """Test the ACL model."""
     def test_change_permission(self):
         """Test changing permissions on a sketch with ACL."""
-        for permission in ('read', 'write', 'delete'):
+        for permission in (u'read', u'write', u'delete'):
             self.sketch1.grant_permission(
                 user=self.user1, permission=permission)
             self.assertTrue(
@@ -34,7 +34,7 @@ class AclModelTest(BaseTest):
 
     def test_change_public(self):
         """Test toggle the public permission on a sketch."""
-        self.sketch1.grant_permission(user=None, permission='read')
+        self.sketch1.grant_permission(user=None, permission=u'read')
         self.assertTrue(self.sketch1.is_public)
-        self.sketch1.revoke_permission(user=None, permission='read')
+        self.sketch1.revoke_permission(user=None, permission=u'read')
         self.assertFalse(self.sketch1.is_public)

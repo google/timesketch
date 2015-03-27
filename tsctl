@@ -41,17 +41,17 @@ class DropDataBaseTables(Command):
     def run(self):
         """Drop all tables after user ha verified."""
         verified = prompt_bool(
-            'Do you really want to drop all the database tables?')
+            u'Do you really want to drop all the database tables?')
         if verified:
-            sys.stdout.write('All tables dropped. Database is now empty.\n')
+            sys.stdout.write(u'All tables dropped. Database is now empty.\n')
             drop_all()
 
 
 class AddUser(Command):
     """Create a new Timesketch user."""
     option_list = (
-        Option('--username', '-u', dest='username', required=True),
-        Option('--password', '-p', dest='password', required=False),
+        Option(u'--username', u'-u', dest=u'username', required=True),
+        Option(u'--password', u'-p', dest=u'password', required=False),
     )
 
     def __init__(self):
@@ -59,10 +59,10 @@ class AddUser(Command):
 
     def get_password_from_prompt(self):
         """Get password from the command line prompt."""
-        first_password = prompt_pass('Enter password')
-        second_password = prompt_pass('Enter password again')
+        first_password = prompt_pass(u'Enter password')
+        second_password = prompt_pass(u'Enter password again')
         if first_password != second_password:
-            sys.stderr.write('Passwords don\'t match, try again.\n')
+            sys.stderr.write(u'Passwords don\'t match, try again.\n')
             self.get_password_from_prompt()
         return first_password
 
@@ -71,24 +71,26 @@ class AddUser(Command):
         """Creates the user."""
         if not password:
             password = self.get_password_from_prompt()
+        password = unicode(password.decode(encoding=u'utf-8'))
+        username = unicode(username.decode(encoding=u'utf-8'))
         user = User(username=username, name=username)
         user.set_password(plaintext=password)
         try:
             db_session.add(user)
             db_session.commit()
-            sys.stdout.write('User {0:s} created\n'.format(username))
+            sys.stdout.write(u'User {0:s} created\n'.format(username))
         except IntegrityError:
             sys.stderr.write(
-                'The username ({0:s}) is already taken, '
-                'try another one.\n'.format(username))
+                u'The username ({0:s}) is already taken, '
+                u'try another one.\n'.format(username))
 
 
 class AddSearchIndex(Command):
     """Create a new Timesketch searchindex."""
     option_list = (
-        Option('--name', '-n', dest='name', required=True),
-        Option('--index', '-i', dest='index', required=True),
-        Option('--user', '-u', dest='username', required=True),
+        Option(u'--name', u'-n', dest=u'name', required=True),
+        Option(u'--index', u'-i', dest=u'index', required=True),
+        Option(u'--user', u'-u', dest=u'username', required=True),
     )
 
     def __init__(self):
@@ -98,34 +100,34 @@ class AddSearchIndex(Command):
     def run(self, name, index, username):
         """Create the SearchIndex."""
         es = ElasticSearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+            host=current_app.config[u'ELASTIC_HOST'],
+            port=current_app.config[u'ELASTIC_PORT'])
         user = User.query.filter_by(username=username).first()
         if not user:
-            sys.stderr.write('User does not exist\n')
+            sys.stderr.write(u'User does not exist\n')
             sys.exit(1)
         if not es.client.indices.exists(index=index):
-            sys.stderr.write('Index does not exist in the datastore\n')
+            sys.stderr.write(u'Index does not exist in the datastore\n')
             sys.exit(1)
         if SearchIndex.query.filter_by(name=name, index_name=index).first():
             sys.stderr.write(
-                'Index with this name already exist in Timesketch\n')
+                u'Index with this name already exist in Timesketch\n')
             sys.exit(1)
         searchindex = SearchIndex(
             name=name, description=name, user=user, index_name=index)
-        searchindex.grant_permission(None, 'read')
+        searchindex.grant_permission(None, u'read')
         db_session.add(searchindex)
         db_session.commit()
-        sys.stdout.write('Search index {0:s} created\n'.format(name))
+        sys.stdout.write(u'Search index {0:s} created\n'.format(name))
 
 
 if __name__ == '__main__':
     # Setup Flask-script command manager and register commands.
     shell_manager = Manager(create_app)
-    shell_manager.add_command('add_user', AddUser())
-    shell_manager.add_command('add_index', AddSearchIndex())
-    shell_manager.add_command('drop_db', DropDataBaseTables())
+    shell_manager.add_command(u'add_user', AddUser())
+    shell_manager.add_command(u'add_index', AddSearchIndex())
+    shell_manager.add_command(u'drop_db', DropDataBaseTables())
     shell_manager.add_option(
-        '-c', '--config', dest='config', default='/etc/timesketch.conf',
+        u'-c', u'--config', dest=u'config', default=u'/etc/timesketch.conf',
         required=False)
     shell_manager.run()

@@ -32,8 +32,8 @@ from timesketch.models.sketch import Event
 class TestConfig(object):
     """Config for the test environment."""
     DEBUG = True
-    SECRET_KEY = 'testing'
-    SQLALCHEMY_DATABASE_URI = "sqlite://"
+    SECRET_KEY = u'testing'
+    SQLALCHEMY_DATABASE_URI = u'sqlite://'
     WTF_CSRF_ENABLED = False
     ELASTIC_HOST = None
     ELASTIC_PORT = None
@@ -42,62 +42,62 @@ class TestConfig(object):
 class MockDataStore(datastore.DataStore):
     """A mock implementation of a Datastore."""
     event_dict = {
-        "_index": [],
-        "_id": "adc123",
-        "_type": "plaso_event",
-        "_source": {
-            "es_index": "",
-            "es_id": "",
-            "label": "",
-            "timestamp": 1410895419859714,
-            "timestamp_desc": "",
-            "datetime": "2014-09-16T19:23:40+00:00",
-            "source_short": "",
-            "source_long": "",
-            "message": "",
+        u'_index': [],
+        u'_id': u'adc123',
+        u'_type': u'plaso_event',
+        u'_source': {
+            u'es_index': u'',
+            u'es_id': u'',
+            u'label': u'',
+            u'timestamp': 1410895419859714,
+            u'timestamp_desc': u'',
+            u'datetime': u'2014-09-16T19:23:40+00:00',
+            u'source_short': u'',
+            u'source_long': u'',
+            u'message': u'',
             }
     }
     search_result_dict = {
-        "hits": {
-            "hits": [
+        u'hits': {
+            u'hits': [
                 {
-                    "sort": [
+                    u'sort': [
                         1410593223000
                     ],
-                    "_type": "plaso_event",
-                    "_source": {
-                        "timestamp": 1410593222543942,
-                        "message": "Test event",
-                        "timesketch_label": [
+                    u'_type': u'plaso_event',
+                    u'_source': {
+                        u'timestamp': 1410593222543942,
+                        u'message': u'Test event',
+                        u'timesketch_label': [
                             {
-                                "user_id": 1,
-                                "name": "__ts_star",
-                                "sketch_id": 1
+                                u'user_id': 1,
+                                u'name': u'__ts_star',
+                                u'sketch_id': 1
                             },
                             {
-                                "user_id": 2,
-                                "name": "__ts_star",
-                                "sketch_id": 99
+                                u'user_id': 2,
+                                u'name': u'__ts_star',
+                                u'sketch_id': 99
                             },
                         ],
-                        "timestamp_desc": "Content Modification Time",
-                        "datetime": "2014-09-13T07:27:03+00:00"
+                        u'timestamp_desc': u'Content Modification Time',
+                        u'datetime': u'2014-09-13T07:27:03+00:00'
                     },
-                    "_score": "null",
-                    "_index": "test",
-                    "_id": "test"
+                    u'_score': u'null',
+                    u'_index': u'test',
+                    u'_id': u'test'
                 }
             ],
-            "total": 1,
-            "max_score": "null"
+            u'total': 1,
+            u'max_score': u'null'
         },
-        "_shards": {
-            "successful": 10,
-            "failed": 0,
-            "total": 10
+        u'_shards': {
+            u'successful': 10,
+            u'failed': 0,
+            u'total': 10
         },
-        "took": 5,
-        "timed_out": False
+        u'took': 5,
+        u'timed_out': False
     }
 
     def __init__(self, host, port):
@@ -138,7 +138,7 @@ class MockDataStore(datastore.DataStore):
 class BaseTest(TestCase):
     """Base class for tests."""
 
-    COLOR_WHITE = 'FFFFFF'
+    COLOR_WHITE = u'FFFFFF'
 
     def create_app(self):
         """Setup the Flask application.
@@ -169,7 +169,7 @@ class BaseTest(TestCase):
         """
         user = User(username=username)
         if set_password:
-            user.set_password(plaintext='test', rounds=1)
+            user.set_password(plaintext=u'test', rounds=1)
         self._commit_to_database(user)
         return user
 
@@ -186,10 +186,10 @@ class BaseTest(TestCase):
         """
         sketch = Sketch(name=name, description=name, user=user)
         if acl:
-            for permission in ['read', 'write', 'delete']:
+            for permission in [u'read', u'write', u'delete']:
                 sketch.grant_permission(user=user, permission=permission)
-        label = sketch.Label(label='Test label', user=user)
-        status = sketch.Status(status='Test status', user=user)
+        label = sketch.Label(label=u'Test label', user=user)
+        status = sketch.Status(status=u'Test status', user=user)
         sketch.labels.append(label)
         sketch.status.append(status)
         self._commit_to_database(sketch)
@@ -223,8 +223,8 @@ class BaseTest(TestCase):
             An event (instance of timesketch.models.sketch.Event)
         """
         event = Event(
-            sketch=sketch, searchindex=searchindex, document_id='test')
-        comment = event.Comment(comment='test', user=user)
+            sketch=sketch, searchindex=searchindex, document_id=u'test')
+        comment = event.Comment(comment=u'test', user=user)
         event.comments.append(comment)
         self._commit_to_database(event)
         return event
@@ -260,7 +260,7 @@ class BaseTest(TestCase):
             A view (instance of timesketch.models.sketch.View)
         """
         view = View(
-            name=name, query_string=name, query_filter="", user=user,
+            name=name, query_string=name, query_filter=u'', user=user,
             sketch=sketch)
         self._commit_to_database(view)
         return view
@@ -269,27 +269,27 @@ class BaseTest(TestCase):
         """Setup the test database."""
         init_db()
 
-        self.user1 = self._create_user(username="test1", set_password=True)
-        self.user2 = self._create_user(username="test2", set_password=False)
+        self.user1 = self._create_user(username=u'test1', set_password=True)
+        self.user2 = self._create_user(username=u'test2', set_password=False)
 
         self.sketch1 = self._create_sketch(
-            name="Test 1", user=self.user1, acl=True)
+            name=u'Test 1', user=self.user1, acl=True)
         self.sketch2 = self._create_sketch(
-            name="Test 2", user=self.user1, acl=False)
+            name=u'Test 2', user=self.user1, acl=False)
 
         self.searchindex = self._create_searchindex(
-            name='test', user=self.user1)
+            name=u'test', user=self.user1)
 
         self.timeline = self._create_timeline(
-            name="Timeline 1", sketch=self.sketch1,
+            name=u'Timeline 1', sketch=self.sketch1,
             searchindex=self.searchindex, user=self.user1)
 
         self.view1 = self._create_view(
-            name='View 1', sketch=self.sketch1, user=self.user1)
+            name=u'View 1', sketch=self.sketch1, user=self.user1)
         self.view2 = self._create_view(
-            name='View 2', sketch=self.sketch2, user=self.user1)
+            name=u'View 2', sketch=self.sketch2, user=self.user1)
         self.view3 = self._create_view(
-            name='', sketch=self.sketch1, user=self.user2)
+            name=u'', sketch=self.sketch1, user=self.user2)
 
         self.event = self._create_event(
             sketch=self.sketch1, searchindex=self.searchindex, user=self.user1)
@@ -302,7 +302,7 @@ class BaseTest(TestCase):
     def login(self):
         """Authenticate the test user."""
         self.client.post(
-            '/login/', data=dict(username='test1', password='test'),
+            u'/login/', data=dict(username=u'test1', password=u'test'),
             follow_redirects=True)
 
     def test_unauthenticated(self):
@@ -310,13 +310,13 @@ class BaseTest(TestCase):
         Generic test for all resources. It tests that no
         unauthenticated request are accepted.
         """
-        if not getattr(self, 'resource_url', False):
+        if not getattr(self, u'resource_url', False):
             self.skipTest(self)
 
         response = self.client.get(self.resource_url)
         if response.status_code == 405:
             response = self.client.post(self.resource_url)
-        self.assertIn('/login/', response.data)
+        self.assertIn(u'/login/', response.data)
         self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
 

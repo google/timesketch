@@ -26,7 +26,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import or_
 from sqlalchemy import not_
-from sqlalchemy import String
+from sqlalchemy import Unicode
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
 
@@ -46,7 +46,7 @@ class AccessControlEntry(object):
         Returns:
             A column (instance of sqlalchemy.Column)
         """
-        return Column(Integer, ForeignKey('user.id'))
+        return Column(Integer, ForeignKey(u'user.id'))
 
     @declared_attr
     def user(self):
@@ -55,10 +55,10 @@ class AccessControlEntry(object):
         Returns:
             A relationship (instance of sqlalchemy.orm.relationship)
         """
-        return relationship('User')
+        return relationship(u'User')
 
     # Permission column (read, write or delete)
-    permission = Column(String(255))
+    permission = Column(Unicode(255))
 
 
 class AccessControlMixin(object):
@@ -106,7 +106,7 @@ class AccessControlMixin(object):
             or_(
                 cls.AccessControlEntry.user == user,
                 cls.AccessControlEntry.user == None),
-            cls.AccessControlEntry.permission == 'read',
+            cls.AccessControlEntry.permission == u'read',
             cls.AccessControlEntry.parent)
 
     def _get_ace(self, user, permission):
@@ -127,7 +127,7 @@ class AccessControlMixin(object):
             An ACE (instance of timesketch.models.acl.AccessControlEntry) if the
             object is readable by everyone or None if the object is private.
         """
-        return self._get_ace(user=None, permission='read')
+        return self._get_ace(user=None, permission=u'read')
 
     @property
     def collaborators(self):
@@ -139,7 +139,7 @@ class AccessControlMixin(object):
         aces = self.AccessControlEntry.query.filter(
             not_(self.AccessControlEntry.user == self.user),
             not_(self.AccessControlEntry.user == None),
-            self.AccessControlEntry.permission == 'read',
+            self.AccessControlEntry.permission == u'read',
             self.AccessControlEntry.parent == self).all()
         return set(ace.user for ace in aces)
 
@@ -155,7 +155,7 @@ class AccessControlMixin(object):
             user has the permission or None if the user do not have the
             permission.
         """
-        return self._get_ace(user=user, permission=permission)
+        return self._get_ace(user=user, permission=unicode(permission))
 
     def grant_permission(self, user, permission):
         """Grant permission to a user with the specific permission.
@@ -166,7 +166,8 @@ class AccessControlMixin(object):
         """
         if not self._get_ace(user, permission):
             self.acl.append(
-                self.AccessControlEntry(user=user, permission=permission))
+                self.AccessControlEntry(
+                    user=user, permission=permission))
             db_session.commit()
 
     def revoke_permission(self, user, permission):

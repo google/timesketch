@@ -71,7 +71,7 @@ class BaseForm(Form):
             A filled out WTForm form. Instance of timesketch.lib.forms.
         """
         form_dict = MultiDict(request.json)
-        form_dict['csrf_token'] = request.headers.get('X-CSRFToken')
+        form_dict[u'csrf_token'] = request.headers.get(u'X-CSRFToken')
         return cls(form_dict)
 
 
@@ -83,20 +83,20 @@ class MultiCheckboxField(SelectMultipleField):
 
 class AddTimelineForm(BaseForm):
     """Form using multiple checkbox fields to add timelines to a sketch."""
-    timelines = MultiCheckboxField('Timelines', coerce=int)
+    timelines = MultiCheckboxField(u'Timelines', coerce=int)
 
 
 class UsernamePasswordForm(BaseForm):
     """Form with username and password fields. Use in the login form."""
-    username = StringField('Email', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
+    username = StringField(u'Email', validators=[DataRequired()])
+    password = PasswordField(u'Password', validators=[DataRequired()])
 
 
 class NameDescriptionForm(BaseForm):
     """Generic form for name and description forms. Used in multiple places."""
-    name = StringField('Name', validators=[DataRequired()])
+    name = StringField(u'Name', validators=[DataRequired()])
     description = StringField(
-        'Description', validators=[DataRequired()], widget=widgets.TextArea())
+        u'Description', validators=[DataRequired()], widget=widgets.TextArea())
 
 
 class HiddenNameDescriptionForm(BaseForm):
@@ -105,50 +105,51 @@ class HiddenNameDescriptionForm(BaseForm):
     creating a new sketch.
     """
     name = HiddenField(
-        'Name', default='Untitled sketch', validators=[DataRequired()])
+        u'Name', default=u'Untitled sketch', validators=[DataRequired()])
     description = HiddenField(
-        'Description', default='No description', validators=[DataRequired()])
+        u'Description', default=u'No description', validators=[DataRequired()])
 
 
 class TimelineForm(NameDescriptionForm):
     """Form to edit a timeline."""
     color = StringField(
-        'Color', validators=[
+        u'Color', validators=[
             DataRequired(),
-            Regexp('^[0-9a-fA-F]{6}$'),
+            Regexp(u'^[0-9a-fA-F]{6}$'),
             Length(6, 6)])
 
 
 class TogglePublic(BaseForm):
     """Form to toggle the public ACL permission."""
     permission = RadioField(
-        'Permission', choices=[('public', 'Public'), ('private', 'Private')],
+        u'Permission',
+        choices=[(u'public', u'Public'), (u'private', u'Private')],
         validators=[DataRequired()])
 
 
 class SaveViewForm(BaseForm):
     """Form used to save a view."""
-    name = StringField('Name', validators=[DataRequired()])
-    query = StringField('Query')
-    filter = StringField('Filter', validators=[DataRequired()])
+    name = StringField(u'Name', validators=[DataRequired()])
+    query = StringField(u'Query')
+    filter = StringField(u'Filter', validators=[DataRequired()])
 
 
 class StatusForm(BaseForm):
     """Form to handle status annotation."""
     status = SelectField(
-        'Status',
-        choices=[('new', 'New'), ('open', 'Open'), ('closed', 'Closed')],
+        u'Status',
+        choices=[(u'new', u'New'), (u'open', u'Open'), (u'closed', u'Closed')],
         validators=[DataRequired()])
 
 
 class TrashForm(BaseForm):
     """Form to handle thrash confirmation."""
-    confirm = BooleanField('Trash', validators=[DataRequired()])
+    confirm = BooleanField(u'Trash', validators=[DataRequired()])
 
 
 class EventAnnotationForm(BaseForm):
     """Generic form to handle event annotation. E.g. comment and labels."""
-    annotation = StringField('Annotation', validators=[DataRequired()])
-    annotation_type = StringField('Type', validators=[DataRequired()])
-    searchindex_id = StringField('Searchindex', validators=[DataRequired()])
-    event_id = StringField('Event', validators=[DataRequired()])
+    annotation = StringField(u'Annotation', validators=[DataRequired()])
+    annotation_type = StringField(u'Type', validators=[DataRequired()])
+    searchindex_id = StringField(u'Searchindex', validators=[DataRequired()])
+    event_id = StringField(u'Event', validators=[DataRequired()])

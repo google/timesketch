@@ -18,8 +18,8 @@ This module implements annotations that can be use on other database models.
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import Text
+from sqlalchemy import Unicode
+from sqlalchemy import UnicodeText
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
 
@@ -36,7 +36,7 @@ class BaseAnnotation(object):
         Returns:
             A column (instance of sqlalchemy.Column)
         """
-        return Column(Integer, ForeignKey('user.id'))
+        return Column(Integer, ForeignKey(u'user.id'))
 
     @declared_attr
     def user(self):
@@ -45,12 +45,12 @@ class BaseAnnotation(object):
         Returns:
             A relationship (instance of sqlalchemy.orm.relationship)
         """
-        return relationship('User')
+        return relationship(u'User')
 
 
 class Label(BaseAnnotation):
     """A label annotation."""
-    label = Column(String(255))
+    label = Column(Unicode(255))
 
     def __init__(self, user, label):
         """Initialize the model.
@@ -66,7 +66,7 @@ class Label(BaseAnnotation):
 
 class Comment(BaseAnnotation):
     """A comment annotation."""
-    comment = Column(Text())
+    comment = Column(UnicodeText())
 
     def __init__(self, user, comment):
         """Initialize the model.
@@ -82,7 +82,7 @@ class Comment(BaseAnnotation):
 
 class Status(BaseAnnotation):
     """A status annotation."""
-    status = Column(String(255))
+    status = Column(Unicode(255))
 
     def __init__(self, user, status):
         """Initialize the model.
@@ -200,5 +200,5 @@ class StatusMixin(object):
             The status as a string
         """
         if not self.status:
-            self.status.append(self.Status(user=None, status='new'))
+            self.status.append(self.Status(user=None, status=u'new'))
         return self.status[0]

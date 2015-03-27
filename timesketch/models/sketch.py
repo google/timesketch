@@ -16,8 +16,8 @@
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import Text
+from sqlalchemy import Unicode
+from sqlalchemy import UnicodeText
 from sqlalchemy.orm import relationship
 
 from timesketch.models import BaseModel
@@ -35,12 +35,12 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     A Sketch is the collaborative entity in Timesketch. It contains one or more
     timelines that can be grouped and queried on.
     """
-    name = Column(String(255))
-    description = Column(Text())
-    user_id = Column(Integer, ForeignKey('user.id'))
-    timelines = relationship('Timeline', backref='sketch', lazy='select')
-    views = relationship('View', backref='sketch', lazy='select')
-    events = relationship('Event', backref='sketch', lazy='select')
+    name = Column(Unicode(255))
+    description = Column(UnicodeText())
+    user_id = Column(Integer, ForeignKey(u'user.id'))
+    timelines = relationship(u'Timeline', backref=u'sketch', lazy=u'select')
+    views = relationship(u'View', backref=u'sketch', lazy=u'select')
+    events = relationship(u'Event', backref=u'sketch', lazy=u'select')
 
     def __init__(self, name, description, user):
         """Initialize the Sketch object.
@@ -61,17 +61,17 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         Get named views, i.e. only views that has a name. Views without names
         are used as user state views and should not be visible in the UI.
         """
-        return View.query.filter(View.sketch == self, View.name != '')
+        return View.query.filter(View.sketch == self, View.name != u'')
 
 
 class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the Timeline model."""
-    name = Column(String(255))
-    description = Column(Text())
-    color = Column(String(6))
-    user_id = Column(Integer, ForeignKey('user.id'))
-    searchindex_id = Column(Integer, ForeignKey('searchindex.id'))
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    name = Column(Unicode(255))
+    description = Column(UnicodeText())
+    color = Column(Unicode(6))
+    user_id = Column(Integer, ForeignKey(u'user.id'))
+    searchindex_id = Column(Integer, ForeignKey(u'searchindex.id'))
+    sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
 
     def __init__(
             self, name, user, sketch, searchindex, color=None,
@@ -103,14 +103,14 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
 class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
                   BaseModel):
     """Implements the SearchIndex model."""
-    name = Column(String(255))
-    description = Column(Text())
-    index_name = Column(String(255))
-    user_id = Column(Integer, ForeignKey('user.id'))
+    name = Column(Unicode(255))
+    description = Column(UnicodeText())
+    index_name = Column(Unicode(255))
+    user_id = Column(Integer, ForeignKey(u'user.id'))
     timelines = relationship(
-        'Timeline', backref='searchindex', lazy='dynamic')
+        u'Timeline', backref=u'searchindex', lazy=u'dynamic')
     events = relationship(
-        'Event', backref='searchindex', lazy='dynamic')
+        u'Event', backref=u'searchindex', lazy=u'dynamic')
 
     def __init__(self, name, description, index_name, user):
         """Initialize the SearchIndex object.
@@ -131,11 +131,11 @@ class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
            BaseModel):
     """Implements the View model."""
-    name = Column(String(255))
-    query_string = Column(String(255))
-    query_filter = Column(Text())
-    user_id = Column(Integer, ForeignKey('user.id'))
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    name = Column(Unicode(255))
+    query_string = Column(Unicode(255))
+    query_filter = Column(UnicodeText())
+    user_id = Column(Integer, ForeignKey(u'user.id'))
+    sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
 
     def __init__(self, name, query_string, query_filter, sketch, user):
         """Initialize the View object.
@@ -157,9 +157,9 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 
 class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the Event model."""
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
-    searchindex_id = Column(Integer, ForeignKey('searchindex.id'))
-    document_id = Column(String(255))
+    sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
+    searchindex_id = Column(Integer, ForeignKey(u'searchindex.id'))
+    document_id = Column(Unicode(255))
 
     def __init__(self, sketch, searchindex, document_id):
         """Initialize the Event object.

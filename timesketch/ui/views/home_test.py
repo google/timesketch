@@ -18,11 +18,11 @@ from timesketch.lib.testlib import BaseTest
 
 class HomeViewTest(BaseTest):
     """Class for the view handler tests."""
-    resource_url = '/'
+    resource_url = u'/'
 
     def test_home_view(self):
         """Test the home view handler."""
         self.login()
         response = self.client.get(self.resource_url)
         self.assert200(response)
-        self.assert_template_used('home/home.html')
+        self.assert_template_used(u'home/home.html')

@@ -24,17 +24,17 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
 
 # Setup logging
-es_logger = logging.getLogger('elasticsearch')
+es_logger = logging.getLogger(u'elasticsearch')
 es_logger.addHandler(logging.NullHandler())
 
 
 class ElasticSearchDataStore(datastore.DataStore):
     """Implements the datastore."""
-    def __init__(self, host='127.0.0.1', port=9200):
+    def __init__(self, host=u'127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
         super(ElasticSearchDataStore, self).__init__()
         self.client = Elasticsearch([
-            {'host': host, 'port': port}
+            {u'host': host, u'port': port}
         ])
 
     def search(self, sketch_id, query, query_filter, indices):
@@ -52,39 +52,39 @@ class ElasticSearchDataStore(datastore.DataStore):
             Set of event documents in JSON format
         """
         if not query:
-            query = ""
+            query = u''
 
         query_dict = {
-            "query": {
-                "filtered": {
-                    "query": {
-                        "query_string": {
-                            "query": query
+            u'query': {
+                u'filtered': {
+                    u'query': {
+                        u'query_string': {
+                            u'query': query
                         }
                     }
                 }
             },
-            "sort": {
-                "datetime": "asc"
+            u'sort': {
+                u'datetime': u'asc'
             }
         }
 
-        if query_filter.get('star', None):
-            del query_dict['query']['filtered']['query']
-            query_dict['query']['filtered']['filter'] = {
-                "nested": {
-                    "path": "timesketch_label",
-                    "filter": {
-                        "bool": {
-                            "must": [
+        if query_filter.get(u'star', None):
+            del query_dict[u'query'][u'filtered'][u'query']
+            query_dict[u'query'][u'filtered'][u'filter'] = {
+                u'nested': {
+                    u'path': u'timesketch_label',
+                    u'filter': {
+                        u'bool': {
+                            u'must': [
                                 {
-                                    "term": {
-                                        "timesketch_label.name": "__ts_star"
+                                    u'term': {
+                                        u'timesketch_label.name': u'__ts_star'
                                     }
                                 },
                                 {
-                                    "term": {
-                                        "timesketch_label.sketch_id": sketch_id
+                                    u'term': {
+                                        u'timesketch_label.sketch_id': sketch_id
                                     }
                                 }
                             ]
@@ -93,12 +93,12 @@ class ElasticSearchDataStore(datastore.DataStore):
                 }
             }
 
-        if query_filter.get("time_start", None):
-            query_dict['query']['filtered']['filter'] = {
-                "range": {
-                    "datetime": {
-                        "gte": query_filter['time_start'],
-                        "lte": query_filter['time_end']
+        if query_filter.get(u'time_start', None):
+            query_dict[u'query'][u'filtered'][u'filter'] = {
+                u'range': {
+                    u'datetime': {
+                        u'gte': query_filter[u'time_start'],
+                        u'lte': query_filter[u'time_end']
                     }
                 }
             }
@@ -111,8 +111,8 @@ class ElasticSearchDataStore(datastore.DataStore):
         # pylint: disable=unexpected-keyword-arg
         return self.client.search(
             body=query_dict, index=indices, size=500, _source_include=[
-                'datetime', 'timestamp', 'message', 'timestamp_desc',
-                'timesketch_label'])
+                u'datetime', u'timestamp', u'message', u'timestamp_desc',
+                u'timesketch_label'])
 
     def get_event(self, searchindex_id, event_id):
         """Get one event from the datastore.
@@ -130,7 +130,7 @@ class ElasticSearchDataStore(datastore.DataStore):
             # pylint: disable=unexpected-keyword-arg
             return self.client.get(
                 index=searchindex_id, id=event_id,
-                _source_exclude=['timesketch_label'])
+                _source_exclude=[u'timesketch_label'])
         except NotFoundError:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
 
@@ -150,34 +150,34 @@ class ElasticSearchDataStore(datastore.DataStore):
         """
         doc = self.client.get(index=searchindex_id, id=event_id)
         try:
-            doc['_source']['timesketch_label']
+            doc[u'_source'][u'timesketch_label']
         except KeyError:
-            doc = {'doc': {'timesketch_label': []}}
+            doc = {u'doc': {u'timesketch_label': []}}
             self.client.update(
-                index=searchindex_id, doc_type='plaso_event', id=event_id,
+                index=searchindex_id, doc_type=u'plaso_event', id=event_id,
                 body=doc)
 
         if toggle:
             script_string = (
-                'if(ctx._source.timesketch_label.contains'
-                '(timesketch_label)) {ctx._source.timesketch_label'
-                '.remove(timesketch_label)} else {ctx._source.'
-                'timesketch_label += timesketch_label}')
+                u'if(ctx._source.timesketch_label.contains'
+                u'(timesketch_label)) {ctx._source.timesketch_label'
+                u'.remove(timesketch_label)} else {ctx._source.'
+                u'timesketch_label += timesketch_label}')
         else:
             script_string = (
-                'if( ! ctx._source.timesketch_label.contains'
-                '(timesketch_label)) {ctx._source.timesketch_label'
-                '+= timesketch_label}')
+                u'if( ! ctx._source.timesketch_label.contains'
+                u'(timesketch_label)) {ctx._source.timesketch_label'
+                u'+= timesketch_label}')
         script = {
-            'script': script_string,
-            'params': {
-                'timesketch_label': {
-                    'name': str(label),
-                    'user_id': user_id,
-                    'sketch_id': sketch_id
+            u'script': script_string,
+            u'params': {
+                u'timesketch_label': {
+                    u'name': str(label),
+                    u'user_id': user_id,
+                    u'sketch_id': sketch_id
                 }
             }
         }
         self.client.update(
-            index=searchindex_id, id=event_id, doc_type='plaso_event',
+            index=searchindex_id, id=event_id, doc_type=u'plaso_event',
             body=script)

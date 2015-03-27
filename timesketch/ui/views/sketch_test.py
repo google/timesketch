@@ -19,61 +19,61 @@ from timesketch.lib.testlib import BaseTest
 class SketchViewTest(BaseTest):
     """Test the sketch view."""
     # TODO: Test POST
-    resource_url = '/sketch/1/'
+    resource_url = u'/sketch/1/'
 
     def test_sketch_view(self):
         """Test the view handler."""
         self.login()
         response = self.client.get(self.resource_url)
         self.assert200(response)
-        self.assert_template_used('sketch/overview.html')
+        self.assert_template_used(u'sketch/overview.html')
 
 
 class TimelinesViewTest(BaseTest):
     """Test the timelines view."""
     # TODO: Test POST
-    resource_url = '/sketch/1/timelines/'
+    resource_url = u'/sketch/1/timelines/'
 
     def test_timelines_list_view(self):
         """Test the view handler."""
         self.login()
         response = self.client.get(self.resource_url)
         self.assert200(response)
-        self.assert_template_used('sketch/timelines.html')
+        self.assert_template_used(u'sketch/timelines.html')
 
 
 class TimelineViewTest(BaseTest):
     """Test the timeline view."""
-    resource_url = '/sketch/1/timelines/1/'
+    resource_url = u'/sketch/1/timelines/1/'
 
     def test_timeline_view(self):
         """Test the view handler."""
         self.login()
         response = self.client.get(self.resource_url)
         self.assert200(response)
-        self.assert_template_used('sketch/timeline.html')
+        self.assert_template_used(u'sketch/timeline.html')
 
 
 class ViewTest(BaseTest):
     """Test the view view."""
     # TODO: Test POST
-    resource_url = '/sketch/1/views/'
+    resource_url = u'/sketch/1/views/'
 
     def test_view_list_view(self):
         """Test the view handler."""
         self.login()
         response = self.client.get(self.resource_url)
         self.assert200(response)
-        self.assert_template_used('sketch/views.html')
+        self.assert_template_used(u'sketch/views.html')
 
 
 class EventTest(BaseTest):
     """Test the event view."""
-    resource_url = '/sketch/1/explore/event/'
+    resource_url = u'/sketch/1/explore/event/'
 
     def test_view_list_view(self):
         """Test the view handler."""
         self.login()
         response = self.client.get(self.resource_url)
         self.assert200(response)
-        self.assert_template_used('sketch/event.html')
+        self.assert_template_used(u'sketch/event.html')

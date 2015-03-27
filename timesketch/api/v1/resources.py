@@ -59,67 +59,67 @@ class ResourceMixin(object):
     """Mixin for API resources."""
     # Schemas for database model resources
     searchindex_fields = {
-        'name': fields.String,
-        'index_name': fields.String,
-        'deleted': fields.Boolean,
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        u'name': fields.String,
+        u'index_name': fields.String,
+        u'deleted': fields.Boolean,
+        u'created_at': fields.DateTime,
+        u'updated_at': fields.DateTime
     }
 
     timeline_fields = {
-        'name': fields.String,
-        'description': fields.String,
-        'color': fields.String,
-        'searchindex': fields.Nested(searchindex_fields),
-        'deleted': fields.Boolean,
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        u'name': fields.String,
+        u'description': fields.String,
+        u'color': fields.String,
+        u'searchindex': fields.Nested(searchindex_fields),
+        u'deleted': fields.Boolean,
+        u'created_at': fields.DateTime,
+        u'updated_at': fields.DateTime
     }
 
     view_fields = {
-        'id': fields.Integer,
-        'name': fields.String,
-        'query_string': fields.String,
-        'query_filter': fields.String,
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        u'id': fields.Integer,
+        u'name': fields.String,
+        u'query_string': fields.String,
+        u'query_filter': fields.String,
+        u'created_at': fields.DateTime,
+        u'updated_at': fields.DateTime
     }
 
     user_fields = {
-        'username': fields.String
+        u'username': fields.String
     }
 
     sketch_fields = {
-        'name': fields.String,
-        'description': fields.String,
-        'user': fields.Nested(user_fields),
-        'timelines': fields.Nested(timeline_fields),
-        'views': fields.Nested(view_fields),
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        u'name': fields.String,
+        u'description': fields.String,
+        u'user': fields.Nested(user_fields),
+        u'timelines': fields.Nested(timeline_fields),
+        u'views': fields.Nested(view_fields),
+        u'created_at': fields.DateTime,
+        u'updated_at': fields.DateTime
     }
 
     comment_fields = {
-        'comment': fields.String,
-        'user': fields.Nested(user_fields),
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        u'comment': fields.String,
+        u'user': fields.Nested(user_fields),
+        u'created_at': fields.DateTime,
+        u'updated_at': fields.DateTime
     }
 
     label_fields = {
-        'name': fields.String,
-        'user': fields.Nested(user_fields),
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        u'name': fields.String,
+        u'user': fields.Nested(user_fields),
+        u'created_at': fields.DateTime,
+        u'updated_at': fields.DateTime
     }
 
     fields_registry = {
-        'timeline': timeline_fields,
-        'view': view_fields,
-        'user': user_fields,
-        'sketch': sketch_fields,
-        'event_comment': comment_fields,
-        'event_label': label_fields
+        u'timeline': timeline_fields,
+        u'view': view_fields,
+        u'user': user_fields,
+        u'sketch': sketch_fields,
+        u'event_comment': comment_fields,
+        u'event_label': label_fields
     }
 
     @property
@@ -130,8 +130,8 @@ class ResourceMixin(object):
             Instance of timesketch.lib.datastores.elastic.ElasticSearchDatastore
         """
         return ElasticSearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+            host=current_app.config[u'ELASTIC_HOST'],
+            port=current_app.config[u'ELASTIC_PORT'])
 
     def to_json(
             self, model, model_fields=None, meta=None,
@@ -156,8 +156,8 @@ class ResourceMixin(object):
                 model_fields = self.fields_registry[model[0].__tablename__]
 
         schema = {
-            'meta': meta,
-            'objects': [marshal(model, model_fields)]
+            u'meta': meta,
+            u'objects': [marshal(model, model_fields)]
         }
         response = jsonify(schema)
         response.status_code = status_code
@@ -169,8 +169,8 @@ class SketchListResource(ResourceMixin, Resource):
     def __init__(self):
         super(SketchListResource, self).__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument('name', type=str, required=True)
-        self.parser.add_argument('description', type=str, required=False)
+        self.parser.add_argument(u'name', type=unicode, required=True)
+        self.parser.add_argument(u'description', type=unicode, required=False)
 
     @login_required
     def get(self):
@@ -183,15 +183,15 @@ class SketchListResource(ResourceMixin, Resource):
         sketches = Sketch.all_with_acl()
         paginated_result = sketches.paginate(1, 10, False)
         meta = {
-            'next': paginated_result.next_num,
-            'previous': paginated_result.prev_num,
-            'offset': paginated_result.page,
-            'limit': paginated_result.per_page
+            u'next': paginated_result.next_num,
+            u'previous': paginated_result.prev_num,
+            u'offset': paginated_result.page,
+            u'limit': paginated_result.per_page
         }
         if not paginated_result.has_prev:
-            meta['previous'] = None
+            meta[u'previous'] = None
         if not paginated_result.has_next:
-            meta['next'] = None
+            meta[u'next'] = None
         result = self.to_json(paginated_result.items, meta=meta)
         return result
 
@@ -227,7 +227,7 @@ class ViewListResource(ResourceMixin, Resource):
             view = View(
                 name=form.name.data, sketch=sketch, user=current_user,
                 query_string=form.query.data,
-                query_filter=json.dumps(form.filter.data))
+                query_filter=form.filter.data)
             db_session.add(view)
             db_session.commit()
             return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
@@ -256,7 +256,7 @@ class ViewResource(ResourceMixin, Resource):
 
         # If this is a user state view, check that it
         # belongs to the current_user
-        if view.name == '' and view.user != current_user:
+        if view.name == u'' and view.user != current_user:
             abort(HTTP_STATUS_CODE_FORBIDDEN)
         return self.to_json(view)
 
@@ -272,8 +272,8 @@ class ExploreResource(ResourceMixin, Resource):
     def __init__(self):
         super(ExploreResource, self).__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument('q', type=str, required=False)
-        self.parser.add_argument('filter', type=str, required=False)
+        self.parser.add_argument(u'q', type=unicode, required=False)
+        self.parser.add_argument(u'filter', type=unicode, required=False)
 
     @login_required
     def get(self, sketch_id):
@@ -288,41 +288,41 @@ class ExploreResource(ResourceMixin, Resource):
         """
         args = self.parser.parse_args()
         sketch = Sketch.query.get_with_acl(sketch_id)
-        query_filter = json.loads(args.get('filter'))
+        query_filter = json.loads(args.get(u'filter'))
         sketch_indices = [t.searchindex.index_name for t in sketch.timelines]
-        indices = query_filter.get('indices', sketch_indices)
+        indices = query_filter.get(u'indices', sketch_indices)
 
         # Make sure that the indices in the filter is part of the sketch
         if set(indices) - set(sketch_indices):
             abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
         # Make sure we have a query string or star filter
-        if not args['q'] and not query_filter['star']:
+        if not args.get(u'q') and not query_filter.get(u'star'):
             abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
         result = self.datastore.search(
-            sketch_id, args['q'], query_filter, indices)
+            sketch_id, args[u'q'], query_filter, indices)
 
         # Get labels for each event that matches the sketch.
         # Remove all other labels.
-        for event in result['hits']['hits']:
-            event['_source']['label'] = []
+        for event in result[u'hits'][u'hits']:
+            event[u'_source'][u'label'] = []
             try:
-                for label in event['_source']['timesketch_label']:
-                    if sketch.id != label['sketch_id']:
+                for label in event[u'_source'][u'timesketch_label']:
+                    if sketch.id != label[u'sketch_id']:
                         continue
-                    event['_source']['label'].append(label['name'])
-                del event['_source']['timesketch_label']
+                    event[u'_source'][u'label'].append(label[u'name'])
+                del event[u'_source'][u'timesketch_label']
             except KeyError:
                 pass
 
         # Update or create user state view. This is used in the UI to let the
         # user get back to the last state in the explore view.
         view = View.get_or_create(
-            user=current_user, sketch=sketch, name='', query_string='',
-            query_filter='')
-        view.query_string = args['q']
-        view.query_filter = json.dumps(query_filter)
+            user=current_user, sketch=sketch, name=u'', query_string=u'',
+            query_filter=u'')
+        view.query_string = args.get(u'q')
+        view.query_filter = args.get(u'filter')
         db_session.add(view)
         db_session.commit()
 
@@ -334,14 +334,14 @@ class ExploreResource(ResourceMixin, Resource):
             tl_colors[timeline.searchindex.index_name] = timeline.color
             tl_names[timeline.searchindex.index_name] = timeline.name
         meta = {
-            'es_time': result['took'],
-            'es_total_count': result['hits']['total'],
-            'timeline_colors': tl_colors,
-            'timeline_names': tl_names
+            u'es_time': result[u'took'],
+            u'es_total_count': result[u'hits'][u'total'],
+            u'timeline_colors': tl_colors,
+            u'timeline_names': tl_names
         }
         schema = {
-            'meta': meta,
-            'objects': result['hits']['hits']
+            u'meta': meta,
+            u'objects': result[u'hits'][u'hits']
         }
         return jsonify(schema)
 
@@ -356,8 +356,8 @@ class EventResource(ResourceMixin, Resource):
     def __init__(self):
         super(EventResource, self).__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument('searchindex_id', type=str, required=True)
-        self.parser.add_argument('event_id', type=str, required=True)
+        self.parser.add_argument(u'searchindex_id', type=unicode, required=True)
+        self.parser.add_argument(u'event_id', type=unicode, required=True)
 
     @login_required
     def get(self, sketch_id):
@@ -370,11 +370,12 @@ class EventResource(ResourceMixin, Resource):
         Returns:
             JSON of the datastore event
         """
+
         args = self.parser.parse_args()
         sketch = Sketch.query.get_with_acl(sketch_id)
-        searchindex_id = args.get('searchindex_id')
+        searchindex_id = args.get(u'searchindex_id')
         searchindex = SearchIndex.query.get(searchindex_id)
-        event_id = args.get('event_id')
+        event_id = args.get(u'event_id')
         indices = [t.searchindex.index_name for t in sketch.timelines]
 
         # Check if the requested searchindex is part of the sketch
@@ -392,19 +393,19 @@ class EventResource(ResourceMixin, Resource):
         if event:
             for comment in event.comments:
                 comment_dict = {
-                    'user': {
-                        'username': comment.user.username,
+                    u'user': {
+                        u'username': comment.user.username,
                     },
-                    'created_at': comment.created_at,
-                    'comment': comment.comment
+                    u'created_at': comment.created_at,
+                    u'comment': comment.comment
                 }
                 comments.append(comment_dict)
 
         schema = {
-            'meta': {
-                'comments': comments
+            u'meta': {
+                u'comments': comments
             },
-            'objects': result['_source']
+            u'objects': result[u'_source']
         }
         return jsonify(schema)
 
@@ -446,18 +447,18 @@ class EventAnnotationResource(ResourceMixin, Resource):
                 document_id=event_id)
 
             # Add the annotation to the event object.
-            if 'comment' in annotation_type:
+            if u'comment' in annotation_type:
                 annotation = Event.Comment(
                     comment=form.annotation.data, user=current_user)
                 event.comments.append(annotation)
-                _set_label('__ts_comment')
-            elif 'label' in annotation_type:
+                _set_label(u'__ts_comment')
+            elif u'label' in annotation_type:
                 annotation = Event.Label.get_or_create(
                     label=form.annotation.data, user=current_user)
                 if annotation not in event.labels:
                     event.labels.append(annotation)
                 toggle = False
-                if '__ts_star' in form.annotation.data:
+                if u'__ts_star' in form.annotation.data:
                     toggle = True
                 _set_label(form.annotation.data, toggle)
             else:

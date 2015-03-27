@@ -49,31 +49,32 @@ def create_app(config=None):
     """
     # Setup the Flask app and load the config.
     app = Flask(
-        __name__, template_folder='ui/templates', static_folder='ui/static')
+        __name__, template_folder=u'ui/templates', static_folder=u'ui/static')
 
     if not config:
-        config = '/etc/timesketch.conf'
+        config = u'/etc/timesketch.conf'
 
-    if isinstance(config, basestring):
-        os.environ['TIMESKETCH_SETTINGS'] = config
+    if isinstance(config, unicode):
+        os.environ[u'TIMESKETCH_SETTINGS'] = config
         try:
-            app.config.from_envvar('TIMESKETCH_SETTINGS')
+            app.config.from_envvar(u'TIMESKETCH_SETTINGS')
         except IOError:
-            sys.stderr.write('Config file {0} does not exist.\n'.format(config))
+            sys.stderr.write(
+                u'Config file {0} does not exist.\n'.format(config))
             sys.exit()
     else:
         app.config.from_object(config)
 
     # Make sure that SECRET_KEY is configured.
-    if not app.config['SECRET_KEY']:
-        sys.stderr.write('ERROR: Secret key not present. '
-                         'Please update your configuration.\n'
-                         'To generate a key you can use openssl:\n\n'
-                         '$ openssl rand -base64 32\n\n')
+    if not app.config[u'SECRET_KEY']:
+        sys.stderr.write(u'ERROR: Secret key not present. '
+                         u'Please update your configuration.\n'
+                         u'To generate a key you can use openssl:\n\n'
+                         u'$ openssl rand -base64 32\n\n')
         sys.exit()
 
     # Setup the database.
-    configure_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+    configure_engine(app.config[u'SQLALCHEMY_DATABASE_URI'])
     init_db()
 
     # Register blueprints. Blueprints are a way to organize your Flask
@@ -84,21 +85,21 @@ def create_app(config=None):
     app.register_blueprint(sketch_views)
 
     # Setup URL routes for the API.
-    api_v1 = Api(app, prefix='/api/v1')
-    api_v1.add_resource(SketchListResource, '/sketches/')
-    api_v1.add_resource(SketchResource, '/sketches/<int:sketch_id>/')
-    api_v1.add_resource(ExploreResource, '/sketches/<int:sketch_id>/explore/')
-    api_v1.add_resource(EventResource, '/sketches/<int:sketch_id>/event/')
+    api_v1 = Api(app, prefix=u'/api/v1')
+    api_v1.add_resource(SketchListResource, u'/sketches/')
+    api_v1.add_resource(SketchResource, u'/sketches/<int:sketch_id>/')
+    api_v1.add_resource(ExploreResource, u'/sketches/<int:sketch_id>/explore/')
+    api_v1.add_resource(EventResource, u'/sketches/<int:sketch_id>/event/')
     api_v1.add_resource(
-        EventAnnotationResource, '/sketches/<int:sketch_id>/event/annotate/')
-    api_v1.add_resource(ViewListResource, '/sketches/<int:sketch_id>/views/')
+        EventAnnotationResource, u'/sketches/<int:sketch_id>/event/annotate/')
+    api_v1.add_resource(ViewListResource, u'/sketches/<int:sketch_id>/views/')
     api_v1.add_resource(
-        ViewResource, '/sketches/<int:sketch_id>/views/<int:view_id>/')
+        ViewResource, u'/sketches/<int:sketch_id>/views/<int:view_id>/')
 
     # Setup the login manager.
     login_manager = LoginManager()
     login_manager.init_app(app)
-    login_manager.login_view = 'user_views.login'
+    login_manager.login_view = u'user_views.login'
 
     # This is used by the flask_login extension.
     # pylint: disable=unused-variable
