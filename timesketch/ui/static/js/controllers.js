@@ -16,7 +16,7 @@ limitations under the License.
 
 'use strict';
 
-var timesketch = angular.module('timesketch', ['timesketch.directives']);
+var timesketch = angular.module('timesketch', ['timesketch.services', 'timesketch.directives']);
 
 // TODO: Refactor the controllers to directives and add tests.
 
@@ -39,7 +39,7 @@ timesketch.config(function($httpProvider) {
 });
 
 // TODO: Move these controllers to directives instead.
-timesketch.controller('TsExploreCtrl', function($scope, $http) {
+timesketch.controller('TsExploreCtrl', function($scope, timesketchApi) {
         $scope.init = function(sketch_id, view_id, timelines) {
             $scope.sketch_id = sketch_id;
             $scope.view_id = view_id;
@@ -47,15 +47,15 @@ timesketch.controller('TsExploreCtrl', function($scope, $http) {
             $scope.star = false;
             $scope.filter = {};
             $scope.filter.indices = $scope.timelines.split(",");
-            // TODO: Refactor out to a service.
-            $http.get("/api/v1/sketches/" + $scope.sketch_id + "/views/" + $scope.view_id + "/").success(function(data) {
+
+            timesketchApi.getView(sketch_id, view_id).success(function(data) {
                 $scope.query = data.objects[0].query_string;
                 $scope.filter = angular.fromJson(data.objects[0].query_filter);
                 if (!$scope.filter.indices) {
                     $scope.filter.indices = timelines.split(",")
                 }
                 $scope.search();
-            });
+            })
         };
 
         $scope.search = function() {
@@ -73,20 +73,14 @@ timesketch.controller('TsExploreCtrl', function($scope, $http) {
                 $scope.showFilters = true;
             }
 
-            var params = {
-                params: {
-                    q: $scope.query,
-                    filter: $scope.filter
-                }
-            };
-            // TODO: Refactor out to a service.
-            $http.get("/api/v1/sketches/" + $scope.sketch_id + "/explore/", params).success(function(data) {
-                $scope.events = data.objects;
-                $scope.meta = data.meta;
-                if (data.meta.es_total_count > 500) {
-                    $scope.noisy = true
-                }
-            });
+            timesketchApi.search($scope.sketch_id, $scope.query, $scope.filter)
+                .success(function(data) {
+                    $scope.events = data.objects;
+                    $scope.meta = data.meta;
+                    if (data.meta.es_total_count > 500) {
+                        $scope.noisy = true
+                    }
+            })
         };
 
         $scope.search_starred = function() {
@@ -104,21 +98,18 @@ timesketch.controller('TsExploreCtrl', function($scope, $http) {
         };
 
         $scope.saveView = function() {
-            var params = {
-                name: $scope.view_name,
-                query: $scope.query,
-                filter: $scope.filter
-            };
-            // TODO: Refactor out to a service.
-            $http.post('/api/v1/sketches/' + $scope.sketch_id + '/views/', params).success(function(data) {
-                var id = data.objects[0].id;
-                var view_url = '/sketch/' + $scope.sketch_id + '/explore/view/' + id + '/';
-                window.location.href = view_url;
+            timesketchApi.saveView(
+                $scope.sketch_id, $scope.view_name, $scope.query, $scope.filter)
+                .success(function(data) {
+                    console.log(data.meta);
+                    var id = data.objects[0].id;
+                    var view_url = '/sketch/' + $scope.sketch_id + '/explore/view/' + id + '/';
+                    window.location.href = view_url;
             });
         }
 });
 
-timesketch.controller('TsEventCtrl', function($scope, $http) {
+timesketch.controller('TsEventCtrl', function($scope, timesketchApi) {
     $scope.star = false;
 
     if ($scope.event._source.label.indexOf('__ts_star') > -1) {
@@ -131,55 +122,38 @@ timesketch.controller('TsEventCtrl', function($scope, $http) {
         $scope.event._source.label.splice($scope.event._source.label.indexOf('__ts_comment'), 1)
     }
 
-    // TODO: Refactor out to a service.
     $scope.toggleStar = function() {
-        var params = {
-            annotation: '__ts_star',
-            annotation_type: 'label',
-            searchindex_id: $scope.event._index,
-            event_id: $scope.event._id
-        };
-        $http.post('/api/v1/sketches/' + $scope.sketch_id + '/event/annotate/', params).success(function(data) {console.log(data)});
+        timesketchApi.addEventLabel(
+            $scope.sketch_id,
+            'label',
+            '__ts_star',
+            $scope.event._index,
+            $scope.event._id).success(function(data) {})
     }
 });
 
-timesketch.controller('TsEventDetailCtrl', function($scope, $http) {
+timesketch.controller('TsEventDetailCtrl', function($scope, timesketchApi) {
     $scope.formData = {};
 
     $scope.getDetail = function() {
-        var details = {};
-        var params = {
-            params: {
-                searchindex_id: $scope.event._index,
-                event_id: $scope.event._id
-            }
-        };
-        // TODO: Refactor out to a service.
-        $http.get('/api/v1/sketches/' + $scope.sketch_id + '/event/', params).success(function(data) {
-            for (var k in data.objects) {
-                if (k == '_id' || k == '_index') {
-                    continue
-                }
-                details[k] = data.objects[k]
-            }
-            $scope.details = details;
-            $scope.comments = data.meta.comments
-        });
+        timesketchApi.getEvent(
+            $scope.sketch_id, $scope.event._index, $scope.event._id)
+            .success(function(data) {
+                $scope.details = data.objects;
+                $scope.comments = data.meta.comments
+            });
     };
 
-    // Handle comment form submit
     $scope.postComment = function() {
-        var params = {
-            annotation: $scope.formData.comment,
-            annotation_type: 'comment',
-            searchindex_id: $scope.event._index,
-            event_id: $scope.event._id
-        };
-        // TODO: Refactor out to a service.
-        $http.post('/api/v1/sketches/' + $scope.sketch_id + '/event/annotate/', params).success(function(data) {
-            $scope.formData.comment = '';
-            $scope.commentForm.$setPristine();
-            $scope.comments.push(data['objects'][0]);
-        });
+        timesketchApi.addEventAnnotation(
+            $scope.sketch_id,
+            'comment',
+            $scope.formData.comment,
+            $scope.event._index,
+            $scope.event._id).success(function(data) {
+                $scope.formData.comment = '';
+                $scope.commentForm.$setPristine();
+                $scope.comments.push(data['objects'][0]);
+            })
     };
 });
