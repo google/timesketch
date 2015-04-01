@@ -78,13 +78,13 @@ class AclBaseQuery(BaseQuery):
         if not result_obj:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
         try:
-            if result_obj.get_status.status == 'deleted':
+            if result_obj.get_status.status == u'deleted':
                 abort(HTTP_STATUS_CODE_NOT_FOUND)
         except AttributeError:
             pass
         if result_obj.is_public:
             return result_obj
-        if not result_obj.has_permission(user=current_user, permission='read'):
+        if not result_obj.has_permission(user=current_user, permission=u'read'):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
         return result_obj
 

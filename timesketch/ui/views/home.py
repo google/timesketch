@@ -28,11 +28,11 @@ from timesketch.models import db_session
 
 
 # Register flask blueprint
-home_views = Blueprint('home_views', __name__)
+home_views = Blueprint(u'home_views', __name__)
 
 
-@home_views.route('/', methods=['GET', 'POST'])
-@home_views.route('/sketch/', methods=['GET', 'POST'])
+@home_views.route(u'/', methods=[u'GET', u'POST'])
+@home_views.route(u'/sketch/', methods=[u'GET', u'POST'])
 @login_required
 def home():
     """Generates the home page view template.
@@ -42,21 +42,21 @@ def home():
     """
     form = HiddenNameDescriptionForm()
     sketches = Sketch.all_with_acl().filter(
-        not_(Sketch.Status.status == 'deleted'),
+        not_(Sketch.Status.status == u'deleted'),
         Sketch.Status.parent).order_by(Sketch.updated_at.desc())
-    query_filter = request.args.get('filter', '')
-    query = request.args.get('q', '')
+    query_filter = request.args.get(u'filter', u'')
+    query = request.args.get(u'q', u'')
 
     if query_filter:
-        if query_filter == 'user':
+        if query_filter == u'user':
             sketches = sketches.filter(Sketch.user == current_user)
-        elif query_filter == 'shared':
+        elif query_filter == u'shared':
             sketches = sketches.filter(not_(Sketch.user == current_user))
 
     # TODO: Figure out a better way to handle this.
     if query:
-        if query.startswith('*'):
-            query = ''
+        if query.startswith(u'*'):
+            query = u''
         else:
             sketches = sketches.filter(Sketch.name.contains(query)).limit(100)
 
@@ -65,14 +65,14 @@ def home():
         sketch = Sketch(
             name=form.name.data, description=form.description.data,
             user=current_user)
-        sketch.status.append(sketch.Status(user=None, status='new'))
+        sketch.status.append(sketch.Status(user=None, status=u'new'))
         # Give the requesting user permissions on the new sketch.
-        sketch.grant_permission(current_user, 'read')
-        sketch.grant_permission(current_user, 'write')
-        sketch.grant_permission(current_user, 'delete')
+        sketch.grant_permission(current_user, u'read')
+        sketch.grant_permission(current_user, u'write')
+        sketch.grant_permission(current_user, u'delete')
         db_session.add(sketch)
         db_session.commit()
-        return redirect(url_for('sketch_views.overview', sketch_id=sketch.id))
+        return redirect(url_for(u'sketch_views.overview', sketch_id=sketch.id))
 
     return render_template(
-        'home/home.html', sketches=sketches, form=form, query=query)
+        u'home/home.html', sketches=sketches, form=form, query=query)

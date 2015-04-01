@@ -25,20 +25,20 @@ class UserModelTest(ModelBaseTest):
         database.
         """
         expected_result = frozenset([
-            (u'name', 'test1'),
-            (u'username', 'test1')
+            (u'name', u'test1'),
+            (u'username', u'test1')
         ])
         self._test_db_object(
             expected_result=expected_result, model_cls=User)
 
     def test_set_password(self):
         """Test setting a password for the user."""
-        self.assertIsNone(self.user1.set_password('test', rounds=1))
+        self.assertIsNone(self.user1.set_password(u'test', rounds=1))
 
     def test_valid_password(self):
         """Test checking a valid password."""
-        self.assertTrue(self.user1.check_password('test'))
+        self.assertTrue(self.user1.check_password(u'test'))
 
     def test_invalid_password(self):
         """Test checking a invalid password."""
-        self.assertFalse(self.user1.check_password('invalid password'))
+        self.assertFalse(self.user1.check_password(u'invalid password'))

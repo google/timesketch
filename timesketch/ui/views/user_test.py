@@ -24,27 +24,27 @@ class UserViewTest(BaseTest):
     """Test the user view."""
     def test_login_view_unauthenticated(self):
         """Test the login view handler with an unauthenticated session."""
-        response = self.client.get('/login/')
+        response = self.client.get(u'/login/')
         self.assert200(response)
-        self.assert_template_used('user/login.html')
+        self.assert_template_used(u'user/login.html')
 
     def test_login_view_form_authenticated(self):
         """Test the login view handler with an authenticated session."""
         self.login()
-        response = self.client.get('/login/')
+        response = self.client.get(u'/login/')
         self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
     def test_login_view_sso_authenticated(self):
         """Test the login view handler with an SSO authenticated session."""
-        current_app.config['SSO_ENABLED'] = True
+        current_app.config[u'SSO_ENABLED'] = True
         with self.client:
             response = self.client.get(
-                '/login/', environ_base={'REMOTE_USER': 'test1'})
-            self.assertEqual(current_user.username, 'test1')
+                u'/login/', environ_base={u'REMOTE_USER': u'test1'})
+            self.assertEqual(current_user.username, u'test1')
             self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
     def test_logout_view(self):
         """Test the logout view handler."""
         self.login()
-        response = self.client.get('/logout/')
+        response = self.client.get(u'/logout/')
         self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)

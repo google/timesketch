@@ -29,8 +29,8 @@ class SketchModelTest(ModelBaseTest):
         database.
         """
         expected_result = frozenset([
-            (u'name', 'Test 1'),
-            (u'description', 'Test 1'),
+            (u'name', u'Test 1'),
+            (u'description', u'Test 1'),
             (u'user', self.user1)
         ])
         self._test_db_object(
@@ -42,9 +42,9 @@ class SketchModelTest(ModelBaseTest):
         database.
         """
         expected_result = frozenset([
-            (u'name', 'test'),
-            (u'description', 'test'),
-            (u'index_name', 'test'),
+            (u'name', u'test'),
+            (u'description', u'test'),
+            (u'index_name', u'test'),
             (u'user', self.user1)
         ])
         self._test_db_object(
@@ -56,8 +56,8 @@ class SketchModelTest(ModelBaseTest):
         database.
         """
         expected_result = frozenset([
-            (u'name', 'Timeline 1'),
-            (u'description', 'Timeline 1'),
+            (u'name', u'Timeline 1'),
+            (u'description', u'Timeline 1'),
             (u'user', self.user1),
             (u'sketch', self.sketch1),
             (u'searchindex', self.searchindex)
@@ -70,8 +70,8 @@ class SketchModelTest(ModelBaseTest):
         Test that the test view has the expected data stored in the database.
         """
         expected_result = frozenset([
-            (u'name', 'View 1'),
-            (u'query_string', 'View 1'),
+            (u'name', u'View 1'),
+            (u'query_string', u'View 1'),
             (u'user', self.user1),
             (u'sketch', self.sketch1)
         ])
@@ -85,7 +85,7 @@ class SketchModelTest(ModelBaseTest):
         expected_result = frozenset([
             (u'searchindex', self.searchindex),
             (u'sketch', self.sketch1),
-            (u'document_id', 'test')
+            (u'document_id', u'test')
         ])
         self._test_db_object(
             expected_result=expected_result, model_cls=Event)

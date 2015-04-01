@@ -28,10 +28,10 @@ from timesketch.models.user import User
 
 
 # Register flask blueprint
-user_views = Blueprint('user_views', __name__)
+user_views = Blueprint(u'user_views', __name__)
 
 
-@user_views.route('/login/', methods=['GET', 'POST'])
+@user_views.route(u'/login/', methods=[u'GET', u'POST'])
 def login():
     """Handler for the login page view.
 
@@ -49,9 +49,9 @@ def login():
     form = UsernamePasswordForm()
 
     # SSO login based on environment variable, e.g. REMOTE_USER.
-    if current_app.config.get('SSO_ENABLED', False):
+    if current_app.config.get(u'SSO_ENABLED', False):
         remote_user_env = current_app.config.get(
-            'SSO_USER_ENV_VARIABLE', 'REMOTE_USER')
+            u'SSO_USER_ENV_VARIABLE', u'REMOTE_USER')
         remote_user = request.environ.get(remote_user_env, None)
         if remote_user:
             user = User.get_or_create(username=remote_user, name=remote_user)
@@ -65,12 +65,12 @@ def login():
                 login_user(user)
 
     if current_user.is_authenticated():
-        return redirect(request.args.get('next') or '/')
+        return redirect(request.args.get(u'next') or u'/')
 
-    return render_template('user/login.html', form=form)
+    return render_template(u'user/login.html', form=form)
 
 
-@user_views.route('/logout/', methods=['GET'])
+@user_views.route(u'/logout/', methods=[u'GET'])
 def logout():
     """Handler for the logout page view.
 
@@ -78,4 +78,4 @@ def logout():
         Redirect response.
     """
     logout_user()
-    return redirect(url_for('user_views.login'))
+    return redirect(url_for(u'user_views.login'))

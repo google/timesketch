@@ -25,29 +25,29 @@ from timesketch.lib.testlib import MockDataStore
 
 class SketchListResourceTest(BaseTest):
     """Test SketchListResource."""
-    resource_url = '/api/v1/sketches/'
+    resource_url = u'/api/v1/sketches/'
 
     def test_sketch_list_resource(self):
         """Authenticated request to get list of sketches."""
         self.login()
         response = self.client.get(self.resource_url)
-        self.assertEqual(len(response.json['objects']), 1)
+        self.assertEqual(len(response.json[u'objects']), 1)
         self.assertEqual(
-            response.json['objects'][0][0]['name'], 'Test 1')
+            response.json[u'objects'][0][0][u'name'], u'Test 1')
         self.assert200(response)
 
 
 class SketchResourceTest(BaseTest):
     """Test SketchResource."""
-    resource_url = '/api/v1/sketches/1/'
+    resource_url = u'/api/v1/sketches/1/'
 
     def test_sketch_resource(self):
         """Authenticated request to get a sketch."""
         self.login()
         response = self.client.get(self.resource_url)
-        self.assertEqual(len(response.json['objects']), 1)
-        self.assertEqual(len(response.json['objects'][0]['timelines']), 1)
-        self.assertEqual(response.json['objects'][0]['name'], 'Test 1')
+        self.assertEqual(len(response.json[u'objects']), 1)
+        self.assertEqual(len(response.json[u'objects'][0][u'timelines']), 1)
+        self.assertEqual(response.json[u'objects'][0][u'name'], u'Test 1')
         self.assert200(response)
 
     def test_sketch_acl(self):
@@ -56,52 +56,52 @@ class SketchResourceTest(BaseTest):
         permission on.
         """
         self.login()
-        response = self.client.get('/api/v1/sketches/2/')
+        response = self.client.get(u'/api/v1/sketches/2/')
         self.assert403(response)
 
 
 class ViewListResourceTest(BaseTest):
     """Test ViewListResource."""
-    resource_url = '/api/v1/sketches/1/views/'
+    resource_url = u'/api/v1/sketches/1/views/'
 
     def test_post_view_resource(self):
         """Authenticated request to create a view."""
         self.login()
-        data = dict(name='test', query='test', filter='{}')
+        data = dict(name=u'test', query=u'test', filter=u'{}')
         response = self.client.post(
             self.resource_url, data=json.dumps(data),
-            content_type='application/json')
+            content_type=u'application/json')
         self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
 
 
 class ViewResourceTest(BaseTest):
     """Test ViewResource."""
-    resource_url = '/api/v1/sketches/1/views/1/'
+    resource_url = u'/api/v1/sketches/1/views/1/'
 
     def test_view_resource(self):
         """Authenticated request to get a view."""
         self.login()
         response = self.client.get(self.resource_url)
-        self.assertEqual(len(response.json['objects']), 1)
-        self.assertEqual(response.json['objects'][0]['name'], 'View 1')
+        self.assertEqual(len(response.json[u'objects']), 1)
+        self.assertEqual(response.json[u'objects'][0][u'name'], u'View 1')
         self.assert200(response)
 
     def test_invalid_user_in_view(self):
         """Authenticated request to get a view for another user."""
         self.login()
-        response = self.client.get('/api/v1/sketches/1/views/3/')
+        response = self.client.get(u'/api/v1/sketches/1/views/3/')
         self.assert403(response)
 
     def test_invalid_view(self):
         """Authenticated request to get a view for non existing view."""
         self.login()
-        response = self.client.get('/api/v1/sketches/1/views/2/')
+        response = self.client.get(u'/api/v1/sketches/1/views/2/')
         self.assert404(response)
 
 
 class ExploreResourceTest(BaseTest):
     """Test ExploreResource."""
-    resource_url = '/api/v1/sketches/1/explore/'
+    resource_url = u'/api/v1/sketches/1/explore/'
     expected_response = {
         u'meta': {
             u'timeline_names': {
@@ -136,18 +136,18 @@ class ExploreResourceTest(BaseTest):
     }
 
     @mock.patch(
-        'timesketch.api.v1.resources.ElasticSearchDataStore', MockDataStore)
+        u'timesketch.api.v1.resources.ElasticSearchDataStore', MockDataStore)
     def test_search(self):
         """Authenticated request to query the datastore."""
         self.login()
-        response = self.client.get(self.resource_url + '?q=test&filter={}')
+        response = self.client.get(self.resource_url + u'?q=test&filter={}')
         self.assertDictEqual(response.json, self.expected_response)
         self.assert200(response)
 
 
 class EventResourceTest(BaseTest):
     """Test EventResource."""
-    resource_url = '/api/v1/sketches/1/event/'
+    resource_url = u'/api/v1/sketches/1/event/'
     expected_response = {
         u'meta': {
             u'comments': []
@@ -166,17 +166,17 @@ class EventResourceTest(BaseTest):
     }
 
     @mock.patch(
-        'timesketch.api.v1.resources.ElasticSearchDataStore', MockDataStore)
+        u'timesketch.api.v1.resources.ElasticSearchDataStore', MockDataStore)
     def test_get_event(self):
         """Authenticated request to get an event from the datastore."""
         self.login()
         response = self.client.get(
-            self.resource_url + '?searchindex_id=test&event_id=test')
+            self.resource_url + u'?searchindex_id=test&event_id=test')
         self.assertDictEqual(response.json, self.expected_response)
         self.assert200(response)
 
     @mock.patch(
-        'timesketch.api.v1.resources.ElasticSearchDataStore', MockDataStore)
+        u'timesketch.api.v1.resources.ElasticSearchDataStore', MockDataStore)
     def test_invalid_index(self):
         """
         Authenticated request to get an event from the datastore, but in the
@@ -184,26 +184,26 @@ class EventResourceTest(BaseTest):
         """
         self.login()
         response_400 = self.client.get(
-            self.resource_url + '?searchindex_id=wrong_index&event_id=test')
+            self.resource_url + u'?searchindex_id=wrong_index&event_id=test')
         self.assert400(response_400)
 
 
 class EventAnnotationResourceTest(BaseTest):
     """Test EventAnnotationResource."""
-    resource_url = '/api/v1/sketches/1/event/annotate/'
+    resource_url = u'/api/v1/sketches/1/event/annotate/'
 
     @mock.patch(
-        'timesketch.api.v1.resources.ElasticSearchDataStore', MockDataStore)
+        u'timesketch.api.v1.resources.ElasticSearchDataStore', MockDataStore)
     def test_post_annotate_resource(self):
         """Authenticated request to create an annotation."""
         self.login()
-        for annotation_type in ['comment', 'label']:
+        for annotation_type in [u'comment', u'label']:
             data = dict(
-                annotation='test', annotation_type=annotation_type,
-                event_id='test', searchindex_id='test')
+                annotation=u'test', annotation_type=annotation_type,
+                event_id=u'test', searchindex_id=u'test')
             response = self.client.post(
                 self.resource_url, data=json.dumps(data),
-                content_type='application/json')
+                content_type=u'application/json')
             self.assertIsInstance(response.json, dict)
             self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
 
@@ -213,9 +213,9 @@ class EventAnnotationResourceTest(BaseTest):
         """
         self.login()
         data = dict(
-            annotation='test', annotation_type='comment',
-            event_id='test', searchindex_id='invalid_searchindex')
+            annotation=u'test', annotation_type=u'comment',
+            event_id=u'test', searchindex_id=u'invalid_searchindex')
         response = self.client.post(
             self.resource_url, data=json.dumps(data),
-            content_type='application/json')
+            content_type=u'application/json')
         self.assertEquals(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
