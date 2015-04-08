@@ -19,6 +19,7 @@ import sys
 from flask import current_app
 from flask_script import Command
 from flask_script import Manager
+from flask_script import Server
 from flask_script import Option
 from flask_script import prompt_bool
 from flask_script import prompt_pass
@@ -130,4 +131,5 @@ if __name__ == '__main__':
     shell_manager.add_option(
         u'-c', u'--config', dest=u'config', default=u'/etc/timesketch.conf',
         required=False)
+    shell_manager.add_command(u'runserver', Server(host="127.0.0.1", port=5000))
     shell_manager.run()
