@@ -128,8 +128,8 @@ if __name__ == '__main__':
     shell_manager.add_command(u'add_user', AddUser())
     shell_manager.add_command(u'add_index', AddSearchIndex())
     shell_manager.add_command(u'drop_db', DropDataBaseTables())
+    shell_manager.add_command(u'runserver', Server(host='127.0.0.1', port=5000))
     shell_manager.add_option(
         u'-c', u'--config', dest=u'config', default=u'/etc/timesketch.conf',
         required=False)
-    shell_manager.add_command(u'runserver', Server(host="127.0.0.1", port=5000))
-    shell_manager.run()
+        shell_manager.run()
