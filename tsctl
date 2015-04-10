@@ -132,4 +132,4 @@ if __name__ == '__main__':
     shell_manager.add_option(
         u'-c', u'--config', dest=u'config', default=u'/etc/timesketch.conf',
         required=False)
-        shell_manager.run()
+    shell_manager.run()
