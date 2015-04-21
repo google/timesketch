@@ -101,7 +101,6 @@ timesketch.controller('TsExploreCtrl', function($scope, timesketchApi) {
             timesketchApi.saveView(
                 $scope.sketch_id, $scope.view_name, $scope.query, $scope.filter)
                 .success(function(data) {
-                    console.log(data.meta);
                     var id = data.objects[0].id;
                     var view_url = '/sketch/' + $scope.sketch_id + '/explore/view/' + id + '/';
                     window.location.href = view_url;
@@ -123,7 +122,7 @@ timesketch.controller('TsEventCtrl', function($scope, timesketchApi) {
     }
 
     $scope.toggleStar = function() {
-        timesketchApi.addEventLabel(
+        timesketchApi.saveEventAnnotation(
             $scope.sketch_id,
             'label',
             '__ts_star',
@@ -145,7 +144,7 @@ timesketch.controller('TsEventDetailCtrl', function($scope, timesketchApi) {
     };
 
     $scope.postComment = function() {
-        timesketchApi.addEventAnnotation(
+        timesketchApi.saveEventAnnotation(
             $scope.sketch_id,
             'comment',
             $scope.formData.comment,
