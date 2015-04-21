@@ -21,6 +21,7 @@ from flask import request
 from flask import url_for
 from flask_login import current_user
 from flask_login import login_required
+from sqlalchemy import desc
 from sqlalchemy import not_
 
 from timesketch.models import db_session
@@ -146,10 +147,13 @@ def timelines(sketch_id):
     Returns:
         Template with context.
     """
+    TIMELINES_TO_SHOW = 20
+
     sketch = Sketch.query.get_with_acl(sketch_id)
     searchindices_in_sketch = [t.searchindex.id for t in sketch.timelines]
     query = request.args.get(u'q', None)
-    indices = SearchIndex.all_with_acl(current_user).filter(
+    indices = SearchIndex.all_with_acl(current_user).order_by(
+        desc(SearchIndex.created_at)).filter(
         not_(SearchIndex.id.in_(searchindices_in_sketch)))
     filtered = False
 
@@ -157,7 +161,7 @@ def timelines(sketch_id):
         indices = indices.filter(SearchIndex.name.contains(query)).limit(500)
         filtered = True
     if not filtered:
-        indices = indices.limit(10)
+        indices = indices.limit(TIMELINES_TO_SHOW)
 
     # Setup the form
     form = AddTimelineForm()

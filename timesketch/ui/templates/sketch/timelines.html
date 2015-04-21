@@ -20,40 +20,40 @@ limitations under the License.
 <div class="container">
 
   {% if sketch.has_permission(current_user, 'write') %}
-  <div class="row">
-    <div class="col-md-12">
-      <form method="get" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
-        <input type="text" name="q" class="search-input" placeholder="Search for timelines to add" />
-      </form>
-    </div>
-  </div>
-  <br>
-
-  {% if form.timelines.choices %}
-  <div class="row">
-    <div class="col-md-12">
-      <div class="card">
-        <form method="post" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
-          {{ form.timelines }}
-          {{ form.csrf_token }}
-          {% if form.timelines.choices %}
-          <button class="btn btn-primary" type="submit">Add to sketch</button>
-          {% endif %}
-        </form>
-
+      <div class="row">
+        <div class="col-md-12">
+          <form method="get" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
+            <input type="text" name="q" class="search-input" placeholder="Search for timelines to add" />
+          </form>
+        </div>
       </div>
-    </div>
-  </div>
+      <br>
+
+      {% if form.timelines.choices %}
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card">
+                <h4>Last {{ form.timelines.choices|length }} timelines added</h4>
+                <form method="post" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
+                  {{ form.timelines }}
+                  {{ form.csrf_token }}
+                  <button class="btn btn-primary" type="submit">Add to sketch</button>
+                </form>
+
+              </div>
+            </div>
+          </div>
+      {% endif %}
   {% endif %}
 
-  {% endif %}
 
   <div class="card">
+    <h4>Timelines in this sketch</h4>
     {% if sketch.timelines %}
     <table class="table table-hover">
       <thead>
       <tr>
-        <th width="73px">Timeline</th>
+        <th width="73px"></th>
         <th></th>
         <th width="150px">Added</th>
       </tr>
