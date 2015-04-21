@@ -33,13 +33,11 @@ limitations under the License.
           <div class="row">
             <div class="col-md-12">
               <div class="card">
-                <h4>Last 20 timelines added</h4>
+                <h4>Last {{ form.timelines.choices|length }} timelines added</h4>
                 <form method="post" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
                   {{ form.timelines }}
                   {{ form.csrf_token }}
-                  {% if form.timelines.choices %}
                   <button class="btn btn-primary" type="submit">Add to sketch</button>
-                  {% endif %}
                 </form>
 
               </div>

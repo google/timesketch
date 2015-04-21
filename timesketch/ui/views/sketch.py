@@ -147,6 +147,8 @@ def timelines(sketch_id):
     Returns:
         Template with context.
     """
+    TIMELINES_TO_SHOW = 20
+
     sketch = Sketch.query.get_with_acl(sketch_id)
     searchindices_in_sketch = [t.searchindex.id for t in sketch.timelines]
     query = request.args.get(u'q', None)
@@ -159,7 +161,7 @@ def timelines(sketch_id):
         indices = indices.filter(SearchIndex.name.contains(query)).limit(500)
         filtered = True
     if not filtered:
-        indices = indices.limit(20)
+        indices = indices.limit(TIMELINES_TO_SHOW)
 
     # Setup the form
     form = AddTimelineForm()
