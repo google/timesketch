@@ -227,7 +227,7 @@ class ViewListResource(ResourceMixin, Resource):
             view = View(
                 name=form.name.data, sketch=sketch, user=current_user,
                 query_string=form.query.data,
-                query_filter=form.filter.data)
+                query_filter=json.dumps(form.filter.data))
             db_session.add(view)
             db_session.commit()
             return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
