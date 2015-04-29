@@ -26,9 +26,29 @@ directives.directive("tsButterbar", function() {
                 element.css({"display": "block"});
             });
 
+            scope.$on("httpreq-error", function(e) {
+                element.css({"display": "none"});
+            });
+
             scope.$on("httpreq-complete", function(e) {
                 element.css({"display": "none"});
             });
+        }
+    };
+});
+
+directives.directive("tsError", function() {
+    return {
+        restrict : "A",
+        link : function(scope, element, attrs) {
+            scope.$on("httpreq-start", function(e) {
+                element.css({"display": "none"});
+            });
+
+            scope.$on("httpreq-error", function(e) {
+                element.css({"display": "block"});
+            });
+
         }
     };
 });

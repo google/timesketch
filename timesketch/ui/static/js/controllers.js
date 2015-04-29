@@ -31,6 +31,10 @@ timesketch.config(function($httpProvider) {
             'response': function(response) {
                 $rootScope.$broadcast('httpreq-complete');
                 return response || $q.when(response);
+            },
+            'responseError': function(response) {
+                $rootScope.$broadcast('httpreq-error');
+                return $q.reject(response);
             }
         };
     });
