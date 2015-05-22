@@ -1,0 +1,10 @@
+<!--
+<select class="select select-view" onchange="location = this.options[this.selectedIndex].value;">
+    <option disabled selected>Choose view</option>
+    <option ng-repeat="view in views" value="/sketch/{{ sketch_id }}/explore/view/{{ view.id }}/">{{ view.name }}</option>
+</select>
+-->
+
+<select class="select select-view" ng-model="selectedView" ng-options="view.name for view in views">
+    <option value="">Choose View</option>
+</select>

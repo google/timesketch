@@ -1,0 +1,28 @@
+<form ng-submit="search()">
+    <input ng-model="query" type="search" class="search-input" id="search-input" placeholder="Search" autofocus>
+</form>
+
+<br>
+
+<div class="btn-group">
+    <button class="btn btn-default" ng-click="showFilters = !showFilters"><i class="fa fa-filter"></i> Filters</button>
+    <button class="btn btn-default" ng-click="search_starred()"><i class="fa fa-star icon-yellow"></i> Starred</button>
+    <button class="btn btn-default" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
+</div>
+
+<br><br>
+
+<div class="row">
+    <div class="col-md-12">
+        <div ts-filter></div>
+    </div>
+</div>
+
+<div class="card">
+    <div ng-show="meta" style="padding:10px;">
+        {{ meta.es_total_count }} events ({{ meta.es_time/1000 }}s)
+    </div>
+    <div ng-repeat="event in events">
+        <div ts-event></div>
+    </div>
+</div>

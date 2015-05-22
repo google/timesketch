@@ -1,0 +1,10 @@
+<div class="card timeline-picker-card">
+    <div class="btn-group">
+        <button class="btn btn-default" ng-click="enableAll()"><i class="fa fa-check"></i> Enable all</button>
+        <button class="btn btn-default" ng-click="disableAll()"><i class="fa fa-ban"></i> Disable all</button>
+    </div>
+    <br><br>
+    <div ng-repeat="timeline in sketch.timelines" class="pull-left timeline-box" ng-click="toggleCheckbox()">
+        <div ts-timeline-picker-item></div>
+    </div>
+</div>

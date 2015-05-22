@@ -21,6 +21,7 @@ from flask import request
 from flask import url_for
 from flask_login import current_user
 from flask_login import login_required
+import json
 from sqlalchemy import desc
 from sqlalchemy import not_
 
@@ -115,6 +116,7 @@ def explore(sketch_id, view_id=None):
         Template with context.
     """
     sketch = Sketch.query.get_with_acl(sketch_id)
+    sketch_timelines = [t.searchindex.index_name for t in sketch.timelines]
     if view_id:
         view = View.query.get(view_id)
     else:
@@ -124,13 +126,12 @@ def explore(sketch_id, view_id=None):
             View.sketch_id == sketch_id).order_by(
                 View.created_at.desc()).first()
     if not view:
+        query_filter = dict(indices=sketch_timelines)
         view = View(
             user=current_user, name=u'', sketch=sketch, query_string=u'',
-            query_filter=u'{}')
+            query_filter=json.dumps(query_filter, ensure_ascii=False))
         db_session.add(view)
         db_session.commit()
-    sketch_timelines = u','.join(
-        [t.searchindex.index_name for t in sketch.timelines])
     view_form = SaveViewForm()
 
     return render_template(
@@ -154,7 +155,7 @@ def timelines(sketch_id):
     query = request.args.get(u'q', None)
     indices = SearchIndex.all_with_acl(current_user).order_by(
         desc(SearchIndex.created_at)).filter(
-        not_(SearchIndex.id.in_(searchindices_in_sketch)))
+            not_(SearchIndex.id.in_(searchindices_in_sketch)))
     filtered = False
 
     if query:

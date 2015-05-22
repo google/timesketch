@@ -26,10 +26,16 @@ limitations under the License.
   <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
   <script type="text/javascript" language="javascript" src="/static/third_party/jquery/jquery.min.js"></script>
   <script type="text/javascript" language="javascript" src="/static/third_party/bootstrap/js/bootstrap.min.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/third_party/angular/angular.min.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/js/controllers.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/js/directives.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/js/services.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/third_party/angular/angular.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/app.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/api/api.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/api/api-service.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/explore/explore.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/explore/explore-event-directive.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/explore/explore-search-directive.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/explore/explore-filter-directive.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/core/core.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/core/core-butterbar-directive.js"></script>
 </head>
 
 <body>
@@ -41,7 +47,6 @@ limitations under the License.
 
 <header>
   <div ts-butterbar id="butterbar">Loading..</div>
-  <div ts-error id="butterbar">Error</div>
 
   <div class="pull-right" style="margin-top:10px;margin-right:30px;">
     <span style="color:#fff;margin-right:20px;">{{ current_user.username }}</span>

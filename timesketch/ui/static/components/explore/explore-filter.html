@@ -1,0 +1,17 @@
+<div ng-show="showFilters" class="card filter-card">
+    <h5>Time range</h5>
+    <form class="form-inline" role="form">
+        <div class="form-group">
+            <input ng-model="filter.time_start" type="text" class="form-control timerange-input" placeholder="Start 2014-01-01T23:00:00">
+        </div>
+        <i style="margin-left:5px;margin-right:5px;" class="fa fa-arrow-right"></i>
+        <div class="form-group">
+            <input ng-model="filter.time_end" type="text" class="form-control timerange-input" placeholder="End 2014-01-01T23:00:00">
+        </div>
+        <br><br>
+        <input style="margin-right:5px;" type="submit" class="btn btn-primary" value="Apply filter" ng-click="search()">
+        <input type="reset" class="btn btn-default" value="Clear" ng-click="clearFilter()">
+    </form>
+</div>
+
+<div ts-timeline-picker-card></div>

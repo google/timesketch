@@ -16,139 +16,32 @@ limitations under the License.
 -->
 
 {% block main_no_sidenav %}
-<div id="main" ng-cloak ng-controller="TsExploreCtrl" ng-init="init('{{ sketch.id }}', '{{ view.id }}', '{{ timelines }}')">
+    <div id="main">
+        <div class="container">
 
-  <!-- Save view modal -->
-  <div class="modal" id="save-view-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title" id="myModalLabel">Save this view</h4>
-        </div>
-        <div class="modal-body">
-          <form>
-            <input type="text" ng-model="view_name" class="form-control" placeholder="Name this view" required>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <button type="submit" class="btn btn-primary" data-dismiss="modal" ng-click="saveView()">Save</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- End save view modal -->
-
-  <div class="container">
-
-    <!-- Search -->
-    <div class="row">
-      <div class="col-md-12">
-        <form ng-submit="search()">
-          <input ng-model="query" type="search" class="search-input" id="search-input" placeholder="Search" autofocus>
-        </form>
-        <br>
-        <div class="btn-group">
-          <button class="btn btn-default" ng-click="showFilters = !showFilters"><i class="fa fa-filter"></i> Filters</button>
-          <button class="btn btn-default" ng-click="search_starred()"><i class="fa fa-star icon-yellow"></i> Starred</button>
-          <button class="btn btn-default" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
-        </div>
-        {% if sketch.get_named_views.all() %}
-        <select class="select select-view" onchange="location = this.options[this.selectedIndex].value;">
-          <option disabled selected>Choose view</option>
-          {% for view in sketch.get_named_views %}
-          <option value="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}view/{{ view.id }}/">{{ view.name }}</option>
-          {% endfor %}
-        </select>
-        {% endif %}
-        <br>
-        <br>
-      </div>
-    </div>
-
-    <!-- Filter card -->
-    <div class="row">
-      <div class="col-md-12">
-        <div ng-show="showFilters" class="card filter-card">
-          <h5>Time range</h5>
-          <form class="form-inline" role="form">
-            <div class="form-group">
-              <input ng-model="filter.time_start" type="text" class="form-control timerange-input" placeholder="Start 2014-01-01T23:00:00">
+            <div class="row">
+                <div class="col-md-12">
+                    <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}"></ts-search>
+                </div>
             </div>
-            <i style="margin-left:5px;margin-right:5px;" class="fa fa-arrow-right"></i>
-            <div class="form-group">
-              <input ng-model="filter.time_end" type="text" class="form-control timerange-input" placeholder="End 2014-01-01T23:00:00">
-            </div>
-            <br><br>
-            <input style="margin-right:5px;" type="submit" class="btn btn-primary" value="Apply filter" ng-click="search()">
-            <input type="reset" class="btn btn-default" value="Clear" ng-click="clearFilter()">
-          </form>
-        </div>
-      </div>
-    </div>
 
-    <!-- Timeline picker card -->
-    <div class="row">
-      <div class="col-md-12">
-        <div class="card timeline-picker-card">
-          <div class="btn-group">
-            <button class="btn btn-default" filter="filter" search="search" meta="meta" ts-index-enabler><i class="fa fa-check"></i> Enable all</button>
-            <button class="btn btn-default" filter="filter" search="search" meta="meta" ts-index-disabler><i class="fa fa-ban"></i> Disable all</button>
-          </div>
-          <br>
-          <br>
-          {% for timeline in sketch.timelines %}
-          <div filter="filter" search="search" search_starred="search_starred" meta="meta" ts-index-chooser index="{{ timeline.searchindex.index_name }}" style="background:#f7f7f7;padding: 10px;margin-right: 10px;cursor: pointer;margin-bottom: 5px;" class="pull-left timelinebox">
-            <div class="color-box pull-left" style="background:#{{ timeline.color }};"></div>
-            <div class="timeline-title pull-left">
-              {{ timeline.name }}
-            </div>
-            <div class="timeline-checkbox pull-right"><input type="checkbox"></div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
+                                    <!--
 
-    <!-- Result card -->
-    <div class="row">
-      <div class="col-md-12">
-        <div class="card">
-          {% raw %}
-          <div ng-show="meta" style="padding:10px;">
-            {{ meta.es_total_count }} events ({{ meta.es_time/1000 }}s)
-          </div>
-          <div ng-repeat="event in events" ng-controller="TsEventCtrl">
-            <ts-foo-bar event="event"></ts-foo-bar>
-            <table id="search-result-table" width="100%">
-              <tr>
-                <td ts-timeline-color width="210px;">
-                  {{ ::event._source.datetime }}
-                </td>
-                <td width="35px;" >
-                  <i ng-click="star = !star;toggleStar()" ng-class="{true: 'fa fa-lg fa-star icon-yellow', false: 'fa fa-lg fa-star-o icon-grey'}[star]"></i>
-                </td>
-                <td class="event-message" ng-click="showDetails = !showDetails; url = 'event/'">
-                  <span ng-show="comment">
-                    <i class="fa fa-comments"></i>
-                  </span>
-                  [{{ ::event._source.timestamp_desc }}] {{ ::event._source.message|limitTo:500 }}
-                </td>
-                <td width="150px" style="text-align: right;background: #f1f1f1;">
-                  <div ts-timeline-name></div>
-                </td>
-              </tr>
-            </table>
-            <div ng-show="showDetails" class="event-detail">
-              <div ng-include="url"></div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div ts-filter></div>
+                </div>
             </div>
-          </div>
-          {% endraw %}
-        </div>
-      </div>
-    </div>
 
-  </div>
-</div>
+
+            <div class="row" ng-show="events">
+                <div class="col-md-12">
+                    <div ts-event-list></div>
+                </div>
+            </div>
+            -->
+
+
+        </div>
+    </div>
 {% endblock %}

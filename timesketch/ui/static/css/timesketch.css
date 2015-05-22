@@ -117,6 +117,11 @@ table {
     border:1px solid #f1f1f1;
 }
 
+.card-alert {
+    background: red;
+    color: #fff;
+}
+
 .card h2 {
     margin-top:0;
 }
@@ -173,6 +178,14 @@ table {
 .timeline-picker-card {
     overflow: hidden;
     position: relative;
+}
+
+.timeline-box {
+    background:#f7f7f7;
+    padding: 10px;
+    margin-right: 10px;
+    cursor: pointer;
+    margin-bottom: 5px;
 }
 
 .color-box {
@@ -307,4 +320,8 @@ table {
     font-size: 0.8em;
     color:#666;
     margin-top:5px;
+}
+
+.ts-name-label {
+    color:#999;
 }
