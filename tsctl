@@ -17,6 +17,7 @@
 from collections import Counter
 import json
 import sys
+from uuid import uuid4
 
 from flask import current_app
 from flask_script import Command
@@ -125,7 +126,42 @@ class AddSearchIndex(Command):
 
 
 class CreateTimelineFromJson(Command):
-    """Create a new Timesketch timeline from a JSON file.
+    """Create a new Timesketch timeline from a JSON file."""
+    DEFAULT_FLUSH_INTERVAL = 1000
+    DEFAULT_EVENT_TYPE = u'generic_event'
+    DEFAULT_INDEX_NAME = uuid4().hex
+    option_list = (
+        Option(u'--name', u'-n', dest=u'timeline_name', required=True,
+               help=u'Name of the timeline as it will appear in the '
+                    u'Timesketch UI.'),
+        Option(u'--file', u'-f', dest=u'filename', required=True,
+               help=u'Path to the JSON file to process'),
+        Option(
+            u'--index_name', dest=u'index_name', required=False,
+            default=DEFAULT_INDEX_NAME,
+            help=u'OPTIONAL: Name of the Elasticsearch index. Specify an '
+                 u'existing one to append to it. Default: unique UUID'),
+        Option(
+            u'--event_type', dest=u'event_type', required=False,
+            default=DEFAULT_EVENT_TYPE,
+            help=u'OPTIONAL: Type of event. This is what becomes the '
+                 u'document type in Elasticsearch. '
+                 u'Default: {0:s}.'.format(DEFAULT_EVENT_TYPE)),
+
+        Option(
+            u'--flush_interval', dest=u'flush_interval', required=False,
+            default=DEFAULT_FLUSH_INTERVAL,
+            help=u'OPTIONAL: How often to bulk insert events to Elasticsearch. '
+                 u'Default: Every {0:d} event.'.format(DEFAULT_FLUSH_INTERVAL))
+    )
+
+    def __init__(self):
+        super(CreateTimelineFromJson, self).__init__()
+
+    def run(
+            self, timeline_name, index_name, filename, event_type,
+            flush_interval):
+        """Create the timeline.
 
         NOTE: The way the built in json module works is by loading the whole
         document into memory. This is of course not optimal and expensive.
@@ -159,26 +195,12 @@ class CreateTimelineFromJson(Command):
               "timestamp_desc": "Some timestamp",
             }
         ]
-    """
-    DEFAULT_FLUSH_INTERVAL = 1000
-    option_list = (
-        Option(u'--name', u'-n', dest=u'timeline_name', required=True),
-        Option(u'--file', u'-f', dest=u'filename', required=True),
-        Option(
-            u'--flush_interval', dest=u'flush_interval', required=False,
-            default=DEFAULT_FLUSH_INTERVAL,
-            help=u'Default: {0:d}'.format(DEFAULT_FLUSH_INTERVAL))
-    )
-
-    def __init__(self):
-        super(CreateTimelineFromJson, self).__init__()
-
-    def run(self, timeline_name, filename, flush_interval):
-        """Create the timeline.
 
         Args:
             timeline_name: Name for the new timeline.
+            index_name: Name for the index in Elasticsearch.
             filename: Path to JSON file.
+            event_type: Type of event, i.e. doc_type in Elasticsearch.
             flush_interval: Number of events to queue up before bulk insert.
         """
         counter = Counter()
@@ -189,35 +211,43 @@ class CreateTimelineFromJson(Command):
         timeline_name = unicode(timeline_name.decode(encoding=u'utf-8'))
         flush_interval = int(flush_interval)
 
-        def _insert_events_to_elasticsearch(_events):
+        def _insert_events_to_elasticsearch(_events, _index, _event_type):
             """Bulk insert events into Elasticsearch.
 
             Args:
                 _events: List of events to insert.
+                _index: Elasticsearch index to add the events to.
+                _event_type: Document type for the events.
             """
             es.client.bulk(
-                index=index_name, doc_type=doc_type, body=_events)
+                index=_index, doc_type=_event_type, body=_events)
 
         try:
             with open(filename, u'rb') as fh:
                 # This is expensive, i.e. whole file is read into memory.
                 # TODO: Implement CSV importer that can be made more efficient.
                 # TODO: Check file size and bail out if big.
-                index_name, doc_type = es.create_index()
+                index_name, event_type = es.create_index(
+                    index_name=index_name, doc_type=event_type)
                 for event in json.load(fh):
                     # Header needed by Elasticsearch when bulk inserting.
-                    events.append(
-                        {u'index': {u'_index': index_name, u'_type': doc_type}})
+                    events.append({
+                        u'index': {
+                            u'_index': index_name, u'_type': event_type
+                        }
+                    })
                     events.append(event)
                     counter[u'events'] += 1
                     if counter[u'events'] % flush_interval == 0:
-                        _insert_events_to_elasticsearch(events)
+                        _insert_events_to_elasticsearch(
+                            events, index_name, event_type)
                         events = []
                 # Insert any remaining events.
                 if events:
-                    _insert_events_to_elasticsearch(events)
+                    _insert_events_to_elasticsearch(
+                        events, index_name, event_type)
 
-            # Created the searchindex in the Timesketch database.
+            # Create the searchindex in the Timesketch database.
             searchindex = SearchIndex(
                 name=timeline_name, description=timeline_name,
                 user=None, index_name=index_name)
