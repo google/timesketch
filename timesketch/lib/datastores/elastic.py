@@ -15,8 +15,11 @@
 
 import logging
 
+from uuid import uuid4
+
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
+from elasticsearch.exceptions import ConnectionError
 from flask import abort
 
 from timesketch.lib import datastore
@@ -104,7 +107,7 @@ class ElasticSearchDataStore(datastore.DataStore):
             }
 
         if not indices:
-            return {u'hits':  {u'hits': [], u'total': 0}, u'took': 0}
+            return {u'hits': {u'hits': [], u'total': 0}, u'took': 0}
 
         # Suppress the lint error because elasticsearch-py adds parameters
         # to the function with a decorator and this makes pylint sad.
@@ -135,13 +138,14 @@ class ElasticSearchDataStore(datastore.DataStore):
             abort(HTTP_STATUS_CODE_NOT_FOUND)
 
     def set_label(
-            self, searchindex_id, event_id, sketch_id, user_id, label,
-            toggle=False):
+            self, searchindex_id, event_id, event_type, sketch_id, user_id,
+            label, toggle=False):
         """Set label on event in the datastore.
 
         Args:
             searchindex_id: String of ElasticSearch index id
             event_id: String of ElasticSearch event id
+            event_type: String of ElasticSearch document type
             sketch_id: Integer of sketch primary key
             user_id: Integer of user primary key
             label: String with the name of the label
@@ -154,7 +158,7 @@ class ElasticSearchDataStore(datastore.DataStore):
         except KeyError:
             doc = {u'doc': {u'timesketch_label': []}}
             self.client.update(
-                index=searchindex_id, doc_type=u'plaso_event', id=event_id,
+                index=searchindex_id, doc_type=event_type, id=event_id,
                 body=doc)
 
         if toggle:
@@ -179,5 +183,39 @@ class ElasticSearchDataStore(datastore.DataStore):
             }
         }
         self.client.update(
-            index=searchindex_id, id=event_id, doc_type=u'plaso_event',
+            index=searchindex_id, id=event_id, doc_type=event_type,
             body=script)
+
+    def create_index(
+            self, index_name=uuid4().hex, doc_type=u'generic_event'):
+        """Create index with Timesketch settings.
+
+        Args:
+            index_name: Name of the index. Default is a generated UUID.
+            doc_type: Name of the document type. Default id generic_event.
+
+        Returns:
+            Index name in string format.
+            Document type in string format.
+        """
+        _document_mapping = {
+            doc_type: {
+                u'_timestamp': {
+                    u'enabled': True,
+                    u'path': u'datetime',
+                    u'format': u'date_time_no_millis'
+                },
+                u'properties': {u'timesketch_label': {u'type': u'nested'}}
+            }
+        }
+
+        if not self.client.indices.exists(index_name):
+            try:
+                self.client.indices.create(
+                    index=index_name, body={u'mappings': _document_mapping})
+            except ConnectionError:
+                raise RuntimeError(u'Unable to connect to Timesketch backend.')
+        # We want to return unicode here to keep SQLalchemy happy.
+        index_name = unicode(index_name.decode(encoding=u'utf-8'))
+        doc_type = unicode(doc_type.decode(encoding=u'utf-8'))
+        return index_name, doc_type

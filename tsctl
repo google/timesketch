@@ -14,6 +14,8 @@
 # limitations under the License.
 """This module is for management of the timesketch application."""
 
+from collections import Counter
+import json
 import sys
 
 from flask import current_app
@@ -122,13 +124,122 @@ class AddSearchIndex(Command):
         sys.stdout.write(u'Search index {0:s} created\n'.format(name))
 
 
+class CreateTimelineFromJson(Command):
+    """Create a new Timesketch timeline from a JSON file.
+
+        NOTE: The way the built in json module works is by loading the whole
+        document into memory. This is of course not optimal and expensive.
+        Don't try to ingest too big of a document. We will implement a CSV
+        importer in the future to address this.
+
+        Elasticsearch is very forgiving about how your JSON is structured, but
+        Timesketch has a minimum set of attributes that needs to be present to
+        render correctly in the UI. These are:
+
+        * message
+        * timestamp
+        * datetime
+        * timestamp_desc
+
+        You can of course have more attributes, and these will be indexed
+        automatically and shown in the detailed view of the event.
+
+        Example (minimal) JSON structure:
+        [
+            {
+              "message": "foo",
+              "timestamp": "1432293395",
+              "datetime": "2015-05-22T13:16:35+00:00",
+              "timestamp_desc": "Some timestamp",
+            },
+            {
+              "message": "bar",
+              "timestamp": "1432293443",
+              "datetime": "2015-05-22T13:17:23+00:00",
+              "timestamp_desc": "Some timestamp",
+            }
+        ]
+    """
+    DEFAULT_FLUSH_INTERVAL = 1000
+    option_list = (
+        Option(u'--name', u'-n', dest=u'timeline_name', required=True),
+        Option(u'--file', u'-f', dest=u'filename', required=True),
+        Option(
+            u'--flush_interval', dest=u'flush_interval', required=False,
+            default=DEFAULT_FLUSH_INTERVAL,
+            help=u'Default: {0:d}'.format(DEFAULT_FLUSH_INTERVAL))
+    )
+
+    def __init__(self):
+        super(CreateTimelineFromJson, self).__init__()
+
+    def run(self, timeline_name, filename, flush_interval):
+        """Create the timeline.
+
+        Args:
+            timeline_name: Name for the new timeline.
+            filename: Path to JSON file.
+            flush_interval: Number of events to queue up before bulk insert.
+        """
+        counter = Counter()
+        events = []
+        es = ElasticSearchDataStore(
+            host=current_app.config[u'ELASTIC_HOST'],
+            port=current_app.config[u'ELASTIC_PORT'])
+        timeline_name = unicode(timeline_name.decode(encoding=u'utf-8'))
+        flush_interval = int(flush_interval)
+
+        def _insert_events_to_elasticsearch(_events):
+            """Bulk insert events into Elasticsearch.
+
+            Args:
+                _events: List of events to insert.
+            """
+            es.client.bulk(
+                index=index_name, doc_type=doc_type, body=_events)
+
+        try:
+            with open(filename, u'rb') as fh:
+                # This is expensive, i.e. whole file is read into memory.
+                # TODO: Implement CSV importer that can be made more efficient.
+                # TODO: Check file size and bail out if big.
+                index_name, doc_type = es.create_index()
+                for event in json.load(fh):
+                    # Header needed by Elasticsearch when bulk inserting.
+                    events.append(
+                        {u'index': {u'_index': index_name, u'_type': doc_type}})
+                    events.append(event)
+                    counter[u'events'] += 1
+                    if counter[u'events'] % flush_interval == 0:
+                        _insert_events_to_elasticsearch(events)
+                        events = []
+                # Insert any remaining events.
+                if events:
+                    _insert_events_to_elasticsearch(events)
+
+            # Created the searchindex in the Timesketch database.
+            searchindex = SearchIndex(
+                name=timeline_name, description=timeline_name,
+                user=None, index_name=index_name)
+            searchindex.grant_permission(None, u'read')
+            db_session.add(searchindex)
+            db_session.commit()
+            sys.stdout.write(
+                u'Search index {0:s} created\n{1:d} events inserted\n'.format(
+                    timeline_name, counter[u'events']))
+        except IOError as exception:
+            sys.stderr.write(u'Error: {0:s}\n'.format(exception))
+
+
 if __name__ == '__main__':
     # Setup Flask-script command manager and register commands.
     shell_manager = Manager(create_app)
     shell_manager.add_command(u'add_user', AddUser())
     shell_manager.add_command(u'add_index', AddSearchIndex())
     shell_manager.add_command(u'drop_db', DropDataBaseTables())
-    shell_manager.add_command(u'runserver', Server(host='127.0.0.1', port=5000))
+    shell_manager.add_command(u'json2ts', CreateTimelineFromJson())
+    shell_manager.add_command(u'runserver', Server(
+        host=u'127.0.0.1', port=5000))
     shell_manager.add_option(
         u'-c', u'--config', dest=u'config', default=u'/etc/timesketch.conf',
         required=False)

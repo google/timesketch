@@ -131,7 +131,8 @@ timesketch.controller('TsEventCtrl', function($scope, timesketchApi) {
             'label',
             '__ts_star',
             $scope.event._index,
-            $scope.event._id).success(function(data) {})
+            $scope.event._id,
+            $scope.event._type).success(function(data) {})
     }
 });
 
@@ -153,7 +154,8 @@ timesketch.controller('TsEventDetailCtrl', function($scope, timesketchApi) {
             'comment',
             $scope.formData.comment,
             $scope.event._index,
-            $scope.event._id).success(function(data) {
+            $scope.event._id,
+            $scope.event._type).success(function(data) {
                 $scope.formData.comment = '';
                 $scope.commentForm.$setPristine();
                 $scope.comments.push(data['objects'][0]);

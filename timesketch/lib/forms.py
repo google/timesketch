@@ -153,3 +153,4 @@ class EventAnnotationForm(BaseForm):
     annotation_type = StringField(u'Type', validators=[DataRequired()])
     searchindex_id = StringField(u'Searchindex', validators=[DataRequired()])
     event_id = StringField(u'Event', validators=[DataRequired()])
+    event_type = StringField(u'Event type', validators=[DataRequired()])
