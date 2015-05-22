@@ -436,6 +436,7 @@ class EventAnnotationResource(ResourceMixin, Resource):
             searchindex_id = form.searchindex_id.data
             searchindex = SearchIndex.query.get(searchindex_id)
             event_id = form.event_id.data
+            event_type = form.event_type.data
 
             if searchindex_id not in indices:
                 abort(HTTP_STATUS_CODE_BAD_REQUEST)
@@ -443,8 +444,8 @@ class EventAnnotationResource(ResourceMixin, Resource):
             def _set_label(label, toggle=False):
                 """Set label on the event in the datastore."""
                 self.datastore.set_label(
-                    searchindex_id, event_id, sketch.id, current_user.id, label,
-                    toggle=toggle)
+                    searchindex_id, event_id, event_type, sketch.id,
+                    current_user.id, label, toggle=toggle)
 
             # Get or create an event in the SQL database to have something to
             # attach the annotation to.

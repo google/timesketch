@@ -23,7 +23,8 @@
                         'label',
                         '__ts_star',
                         $scope.event._index,
-                        $scope.event._id).success(function(data) {})
+                        $scope.event._id,
+                        $scope.event._type).success(function(data) {})
                 };
                 $scope.getDetail = function() {
                     if ($scope.eventdetail) {return}
@@ -41,7 +42,8 @@
                         'comment',
                         $scope.formData.comment,
                         $scope.event._index,
-                        $scope.event._id).success(function(data) {
+                        $scope.event._id,
+                        $scope.event._type).success(function(data) {
                             $scope.formData.comment = '';
                             $scope.commentForm.$setPristine();
                             $scope.comments.push(data['objects'][0]);

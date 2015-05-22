@@ -42,8 +42,9 @@ class DataStore(object):
         """
 
     @abc.abstractmethod
-    def set_label(self, searchindex_id, event_id, sketch_id, user_id, label,
-                  toggle=False):
+    def set_label(
+            self, searchindex_id, event_id, event_type, sketch_id, user_id,
+            label, toggle=False):
         """Add label to an event.
 
         Args:

@@ -153,9 +153,10 @@ def timelines(sketch_id):
     sketch = Sketch.query.get_with_acl(sketch_id)
     searchindices_in_sketch = [t.searchindex.id for t in sketch.timelines]
     query = request.args.get(u'q', None)
-    indices = SearchIndex.all_with_acl(current_user).order_by(
-        desc(SearchIndex.created_at)).filter(
-            not_(SearchIndex.id.in_(searchindices_in_sketch)))
+    indices = SearchIndex.all_with_acl(
+        current_user).order_by(
+            desc(SearchIndex.created_at)).filter(
+                not_(SearchIndex.id.in_(searchindices_in_sketch)))
     filtered = False
 
     if query:

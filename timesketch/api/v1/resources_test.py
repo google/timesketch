@@ -69,7 +69,7 @@ class ViewListResourceTest(BaseTest):
         self.login()
         data = dict(name=u'test', query=u'test', filter=u'{}')
         response = self.client.post(
-            self.resource_url, data=json.dumps(data),
+            self.resource_url, data=json.dumps(data, ensure_ascii=False),
             content_type=u'application/json')
         self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
 
@@ -200,7 +200,8 @@ class EventAnnotationResourceTest(BaseTest):
         for annotation_type in [u'comment', u'label']:
             data = dict(
                 annotation=u'test', annotation_type=annotation_type,
-                event_id=u'test', searchindex_id=u'test')
+                event_id=u'test', searchindex_id=u'test',
+                event_type=u'test_event')
             response = self.client.post(
                 self.resource_url, data=json.dumps(data),
                 content_type=u'application/json')

@@ -62,7 +62,7 @@
             return $http.get(resource_url, params)
         };
 
-        this.saveEventAnnotation = function(sketch_id, type, annotation, searchindex_id, event_id) {
+        this.saveEventAnnotation = function(sketch_id, annotation_type, annotation, searchindex_id, event_id, event_type) {
             /**
              * Save a Timesketch event annotation.
              * @param sketch_id - The id for the sketch.
@@ -70,14 +70,16 @@
              * @param annotation - The content for the annotation.
              * @param searchindex_id - The id for the search index.
              * @param event_id - The id for the event.
+             * @param event_type - The document type for the event.
              * @returns A $http promise with two methods, success and error.
              */
             var resource_url = BASE_URL + sketch_id + '/event/annotate/';
             var params = {
                 annotation: annotation,
-                annotation_type: type,
+                annotation_type: annotation_type,
                 searchindex_id: searchindex_id,
-                event_id: event_id
+                event_id: event_id,
+                event_type: event_type
             };
             return $http.post(resource_url, params);
         };
