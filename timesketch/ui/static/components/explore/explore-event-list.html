@@ -1,4 +1,4 @@
-<div class="row" ng-show="noisy">
+<div class="row" ng-show="meta.noisy">
     <div class="col-md-12">
         <div class="card card-alert">
             <h4>I will only show you the first 500 events</h4>
@@ -7,11 +7,11 @@
     </div>
 </div>
 
-<div class="card">
+<div class="card" ng-show="events">
     <div ng-show="meta" style="padding:10px;">
         {{ meta.es_total_count }} events ({{ meta.es_time/1000 }}s)
     </div>
     <div ng-repeat="event in events">
-        <div ts-event></div>
+        <ts-event event="event" meta="meta" sketch-id="sketchId"></ts-event>
     </div>
 </div>

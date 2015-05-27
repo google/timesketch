@@ -1,6 +1,6 @@
 <table id="search-result-table" width="100%">
     <tr>
-        <td ts-timeline-color width="210px">
+        <td ts-timeline-color timeline-colors="meta.timeline_colors" index-id="event._index" width="210px">
             {{::event._source.datetime}}
         </td>
 
@@ -16,7 +16,7 @@
         </td>
 
         <td width="150px" style="text-align: right;background: #f1f1f1;">
-            <div ts-timeline-name></div>
+            <ts-timeline-name class="label ts-name-label" timeline-names="meta.timeline_names" index-id="event._index"></ts-timeline-name>
         </td>
 
     </tr>

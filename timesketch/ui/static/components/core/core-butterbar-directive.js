@@ -4,6 +4,7 @@
     module.directive("tsButterbar", function() {
         return {
             restrict : "A",
+            scope: {},
             link : function(scope, element, attrs) {
                 scope.$on("httpreq-start", function(e) {
                     element.text("Loading..");

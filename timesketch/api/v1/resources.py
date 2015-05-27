@@ -95,7 +95,6 @@ class ResourceMixin(object):
         u'description': fields.String,
         u'user': fields.Nested(user_fields),
         u'timelines': fields.Nested(timeline_fields),
-        u'views': fields.Nested(view_fields),
         u'created_at': fields.DateTime,
         u'updated_at': fields.DateTime
     }

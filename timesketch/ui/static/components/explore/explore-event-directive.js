@@ -1,10 +1,27 @@
 (function() {
     var module = angular.module('timesketch.explore.event.directive', []);
 
+    module.directive('tsEventList', function () {
+        return {
+            restrict: 'E',
+            templateUrl: '/static/components/explore/explore-event-list.html',
+            scope: {
+                sketchId: '=',
+                meta: '=',
+                events: '='
+            }
+        }
+    });
+
     module.directive('tsEvent', function () {
         return {
-            restrict: 'A',
+            restrict: 'E',
             templateUrl: '/static/components/explore/explore-event.html',
+            scope: {
+                sketchId: '=',
+                meta: '=',
+                event: '='
+            },
             controller: function ($scope, timesketchApi) {
                 $scope.star = false;
                 if ($scope.event._source.label.indexOf('__ts_star') > -1) {
@@ -19,7 +36,7 @@
 
                 $scope.toggleStar = function() {
                     timesketchApi.saveEventAnnotation(
-                        $scope.$parent.sketch.id,
+                        $scope.sketchId,
                         'label',
                         '__ts_star',
                         $scope.event._index,
@@ -29,7 +46,7 @@
                 $scope.getDetail = function() {
                     if ($scope.eventdetail) {return}
                     timesketchApi.getEvent(
-                        $scope.$parent.sketch.id,
+                        $scope.sketchId,
                         $scope.event._index,
                         $scope.event._id).success(function(data) {
                             $scope.eventdetail = data.objects;
@@ -38,7 +55,7 @@
                 };
                 $scope.postComment = function() {
                     timesketchApi.saveEventAnnotation(
-                        $scope.$parent.sketch.id,
+                        $scope.sketchId,
                         'comment',
                         $scope.formData.comment,
                         $scope.event._index,
@@ -57,17 +74,26 @@
     module.directive('tsTimelineColor', function () {
         return {
             restrict: 'A',
+            scope: {
+                timelineColors: '=',
+                indexId: '='
+            },
             link: function (scope, elem, attrs) {
-                var timeline_colors = scope.meta.timeline_colors;
-                elem.css("background", "#" + timeline_colors[scope.event._index])
+                elem.css("background", "#" + scope.timelineColors[scope.indexId])
             }
         }
     });
 
     module.directive('tsTimelineName', function () {
         return {
-            restrict: 'A',
-            template: '<div class="label ts-name-label">{{meta.timeline_names[event._index]}}</div>'
+            restrict: 'E',
+            scope: {
+                timelineNames: '=',
+                indexId: '='
+            },
+            link: function (scope, elem, attrs) {
+                elem.text(scope.timelineNames[scope.indexId])
+            }
         }
     });
 })();

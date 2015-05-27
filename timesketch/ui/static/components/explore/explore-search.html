@@ -1,3 +1,25 @@
+<!-- Save view modal -->
+<div class="modal" id="save-view-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Save this view</h4>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <input type="text" ng-model="view_name" class="form-control" placeholder="Name this view" required>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary" data-dismiss="modal" ng-click="saveView()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End save view modal -->
+
 <form ng-submit="search()">
     <input ng-model="query" type="search" class="search-input" id="search-input" placeholder="Search" autofocus>
 </form>
@@ -9,20 +31,25 @@
     <button class="btn btn-default" ng-click="search_starred()"><i class="fa fa-star icon-yellow"></i> Starred</button>
     <button class="btn btn-default" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
 </div>
+<ts-search-saved-view-picker redirect="true"></ts-search-saved-view-picker>
 
 <br><br>
 
 <div class="row">
     <div class="col-md-12">
-        <div ts-filter></div>
+        <ts-filter
+                filter="filter"
+                sketch="sketch"
+                search="search()"
+                events="events"
+                meta="meta"
+                show-filters="showFilters">
+        </ts-filter>
     </div>
 </div>
 
-<div class="card">
-    <div ng-show="meta" style="padding:10px;">
-        {{ meta.es_total_count }} events ({{ meta.es_time/1000 }}s)
-    </div>
-    <div ng-repeat="event in events">
-        <div ts-event></div>
+<div class="row">
+    <div class="col-md-12">
+        <ts-event-list events="events" meta="meta" sketch-id="sketchId"></ts-event-list>
     </div>
 </div>
