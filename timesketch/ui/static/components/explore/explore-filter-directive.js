@@ -18,6 +18,16 @@ limitations under the License.
     var module = angular.module('timesketch.explore.filter.directive', []);
 
     module.directive('tsFilter', function () {
+        /**
+         * Manage query filters.
+         * @param sketch - Sketch object.
+         * @param filter - Filter object.
+         * @param show-filters - Boolean value. If set to true the filter card will be shown.
+         * @param events - Array of events objects.
+         * @param meta - Events metadata object.
+         * @param search - Function to perform search.
+         * TODO: Refactor to require tsSearch controller (to access search()).
+         */
         return {
             restrict: 'E',
             templateUrl: '/static/components/explore/explore-filter.html',
@@ -57,6 +67,10 @@ limitations under the License.
     });
 
     module.directive('tsTimelinePickerItem', function() {
+        /**
+         * Manage the timeline items to filter on.
+         TODO: Explore setting isolate scope here.
+         */
         return {
             restrict: 'E',
             templateUrl: '/static/components/explore/explore-timeline-picker-item.html',

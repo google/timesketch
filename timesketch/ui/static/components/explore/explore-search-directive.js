@@ -18,6 +18,11 @@ limitations under the License.
     var module = angular.module('timesketch.explore.search.directive', []);
 
     module.directive('tsSearch', ['$location', 'timesketchApi', function($location, timesketchApi) {
+        /**
+         * Search the datastore.
+         * @param sketch-id - Sketch ID string.
+         * @param view-id - Saved view ID string.
+         */
         return {
             restrict: 'E',
             templateUrl: '/static/components/explore/explore-search.html',
@@ -92,6 +97,9 @@ limitations under the License.
     }]);
 
     module.directive('tsSearchSavedViewPicker', ['timesketchApi', function(timesketchApi) {
+        /**
+         * Render the list of saved views.
+         */
         return {
             restrict: 'E',
             templateUrl: '/static/components/explore/explore-search-saved-view-picker.html',

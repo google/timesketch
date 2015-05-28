@@ -18,6 +18,9 @@ limitations under the License.
     var module = angular.module('timesketch.core.butterbar.directive', []);
 
     module.directive("tsButterbar", function() {
+        /**
+         * Render (show/hide) the butterbar when AJAX calls are being made.
+         */
         return {
             restrict : "A",
             scope: {},

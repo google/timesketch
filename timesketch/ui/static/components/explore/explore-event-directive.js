@@ -18,6 +18,12 @@ limitations under the License.
     var module = angular.module('timesketch.explore.event.directive', []);
 
     module.directive('tsEventList', function () {
+        /**
+         * Render list of events (search result from the datastore).
+         * @param sketch-id - The id for the sketch.
+         * @param meta - Metadata object returned from the datastore search.
+         * @param events - Array of events (search results).
+         */
         return {
             restrict: 'E',
             templateUrl: '/static/components/explore/explore-event-list.html',
@@ -30,6 +36,12 @@ limitations under the License.
     });
 
     module.directive('tsEvent', function () {
+        /**
+         * Render event details.
+         * @param sketch-id - The id for the sketch.
+         * @param meta - Metadata object returned from the datastore search.
+         * @param event - Event object.
+         */
         return {
             restrict: 'E',
             templateUrl: '/static/components/explore/explore-event.html',
@@ -88,6 +100,11 @@ limitations under the License.
     });
 
     module.directive('tsTimelineColor', function () {
+        /**
+         * Render color background for timeline.
+         * @param timeline-colors - Object mapping index name to HEX color.
+         * @param index-id - Index name for the timeline.
+         */
         return {
             restrict: 'A',
             scope: {
@@ -101,6 +118,11 @@ limitations under the License.
     });
 
     module.directive('tsTimelineName', function () {
+        /**
+         * Render name for timeline.
+         * @param timeline-names - Object mapping index name to timeline name.
+         * @param index-id - Index id (in the datastore) for the timeline.
+         */
         return {
             restrict: 'E',
             scope: {
