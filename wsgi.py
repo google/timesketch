@@ -33,5 +33,11 @@ Example configuration for Apache with mod_wsgi (a2enmod mod_wsgi):
 #execfile(activate_virtualenv, dict(__file__=activate_virtualenv))
 
 from timesketch import create_app
+from timesketch.models import db_session
 
 application = create_app()
+
+# Remove the session after every request or app shutdown.
+@application.teardown_appcontext
+def shutdown_session(exception=None):
+    db_session.remove()

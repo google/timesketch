@@ -374,7 +374,8 @@ class EventResource(ResourceMixin, Resource):
         args = self.parser.parse_args()
         sketch = Sketch.query.get_with_acl(sketch_id)
         searchindex_id = args.get(u'searchindex_id')
-        searchindex = SearchIndex.query.get(searchindex_id)
+        searchindex = SearchIndex.query.filter_by(
+            index_name=searchindex_id).first()
         event_id = args.get(u'event_id')
         indices = [t.searchindex.index_name for t in sketch.timelines]
 
@@ -428,7 +429,8 @@ class EventAnnotationResource(ResourceMixin, Resource):
             indices = [t.searchindex.index_name for t in sketch.timelines]
             annotation_type = form.annotation_type.data
             searchindex_id = form.searchindex_id.data
-            searchindex = SearchIndex.query.get(searchindex_id)
+            searchindex = SearchIndex.query.filter_by(
+                index_name=searchindex_id).first()
             event_id = form.event_id.data
             event_type = form.event_type.data
 
