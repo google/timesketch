@@ -149,9 +149,6 @@ class EventResourceTest(BaseTest):
     """Test EventResource."""
     resource_url = u'/api/v1/sketches/1/event/'
     expected_response = {
-        u'meta': {
-            u'comments': []
-        },
         u'objects': {
             u'timestamp_desc': u'',
             u'timestamp': 1410895419859714,
@@ -172,7 +169,7 @@ class EventResourceTest(BaseTest):
         self.login()
         response = self.client.get(
             self.resource_url + u'?searchindex_id=test&event_id=test')
-        self.assertDictEqual(response.json, self.expected_response)
+        self.assertDictContainsSubset(self.expected_response, response.json)
         self.assert200(response)
 
     @mock.patch(
