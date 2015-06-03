@@ -248,15 +248,16 @@ class CreateTimelineFromJson(Command):
                         events, index_name, event_type)
 
             # Create the searchindex in the Timesketch database.
-            searchindex = SearchIndex(
+            searchindex = SearchIndex.get_or_create(
                 name=timeline_name, description=timeline_name,
                 user=None, index_name=index_name)
             searchindex.grant_permission(None, u'read')
             db_session.add(searchindex)
             db_session.commit()
             sys.stdout.write(
-                u'Search index {0:s} created\n{1:d} events inserted\n'.format(
-                    timeline_name, counter[u'events']))
+                u'Timeline name: {0:s}\nElasticsearch index: {1:s}\n'
+                u'Events inserted: {2:d}\n'.format(
+                    timeline_name, index_name, counter[u'events']))
         except IOError as exception:
             sys.stderr.write(u'Error: {0:s}\n'.format(exception))
 
