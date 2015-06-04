@@ -37,7 +37,8 @@ from timesketch.models import db_session
 
 application = create_app()
 
-# Remove the session after every request or app shutdown.
+# pylint: disable=unused-argument
 @application.teardown_appcontext
 def shutdown_session(exception=None):
+    """Remove the database session after every request or app shutdown."""
     db_session.remove()
