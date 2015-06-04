@@ -69,9 +69,9 @@ limitations under the License.
     module.directive('tsTimelinePickerItem', function() {
         /**
          * Manage the timeline items to filter on.
-         TODO: Explore setting isolate scope here.
          */
         return {
+            // TODO: Explore setting isolate scope here.
             restrict: 'E',
             templateUrl: '/static/components/explore/explore-timeline-picker-item.html',
             scope: false,
