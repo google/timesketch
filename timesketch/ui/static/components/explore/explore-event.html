@@ -16,7 +16,7 @@ limitations under the License.
 
 <table id="search-result-table" width="100%">
     <tr>
-        <td ts-timeline-color timeline-colors="meta.timeline_colors" index-id="event._index" width="210px">
+        <td style="background: #{{ ::meta.timeline_colors[event._index] }}" width="210px">
             {{::event._source.datetime}}
         </td>
 
@@ -32,7 +32,7 @@ limitations under the License.
         </td>
 
         <td width="150px" style="text-align: right;background: #f1f1f1;">
-            <ts-timeline-name class="label ts-name-label" timeline-names="meta.timeline_names" index-id="event._index"></ts-timeline-name>
+            <span class="label ts-name-label">{{ ::meta.timeline_names[event._index] }}</span>
         </td>
 
     </tr>
@@ -42,23 +42,23 @@ limitations under the License.
     <div class="event-detail-container">
         <ul class="nav nav-tabs">
           <li ng-class="{active: comments.length > 0}">
-              <a href="#comments-{{ event._id }}" data-toggle="tab">
+              <a href="#comments-{{ ::event._id }}" data-toggle="tab">
                   <span ng-if="comments.length == 0"> Add a comment</span>
-                  <span ng-if="comments.length > 0"> {{ comments.length }} comments</span>
+                  <span ng-if="comments.length > 0"> {{ ::comments.length }} comments</span>
               </a>
           </li>
-          <li ng-class="{active: comments.length == 0}"><a href="#details-{{ event._id }}" data-toggle="tab">Details</a></li>
+          <li ng-class="{active: comments.length == 0}"><a href="#details-{{ ::event._id }}" data-toggle="tab">Details</a></li>
         </ul>
         <div class="tab-content">
 
-          <div class="tab-pane" ng-class="{active: comments.length > 0}" id="comments-{{ event._id }}">
+          <div class="tab-pane" ng-class="{active: comments.length > 0}" id="comments-{{ ::event._id }}">
             <div class="comment-wrapper col-md-7">
 
               <div ng-repeat="comment in comments">
                 <div class="comment-bubble">
-                  <div class="comment-name">{{ comment.user.username }}</div>
-                  <div class="comment-body">{{ comment.comment }}</div>
-                  <div class="comment-timestamp"><i class="fa fa-clock-o"></i> {{ comment.created_at }}</div>
+                  <div class="comment-name">{{ ::comment.user.username }}</div>
+                  <div class="comment-body">{{ ::comment.comment }}</div>
+                  <div class="comment-timestamp"><i class="fa fa-clock-o"></i> {{ ::comment.created_at }}</div>
                 </div>
               </div>
 
@@ -76,12 +76,12 @@ limitations under the License.
             </div>
           </div>
 
-          <div class="tab-pane" ng-class="{active: comments.length == 0}" id="details-{{ event._id }}">
+          <div class="tab-pane" ng-class="{active: comments.length == 0}" id="details-{{ ::event._id }}">
             <br>
             <table class="table table-bordered table-hover">
               <tr ng-repeat="(key, value) in eventdetail">
-                <td width="150px">{{ key }}</td>
-                <td>{{ value }}</td>
+                <td width="150px">{{ ::key }}</td>
+                <td>{{ ::value }}</td>
               </tr>
             </table>
           </div>

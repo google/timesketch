@@ -98,41 +98,5 @@ limitations under the License.
             }
         }
     });
-
-    module.directive('tsTimelineColor', function () {
-        /**
-         * Render color background for timeline.
-         * @param timeline-colors - Object mapping index name to HEX color.
-         * @param index-id - Index name for the timeline.
-         */
-        return {
-            restrict: 'A',
-            scope: {
-                timelineColors: '=',
-                indexId: '='
-            },
-            link: function (scope, elem, attrs) {
-                elem.css("background", "#" + scope.timelineColors[scope.indexId])
-            }
-        }
-    });
-
-    module.directive('tsTimelineName', function () {
-        /**
-         * Render name for timeline.
-         * @param timeline-names - Object mapping index name to timeline name.
-         * @param index-id - Index id (in the datastore) for the timeline.
-         */
-        return {
-            restrict: 'E',
-            scope: {
-                timelineNames: '=',
-                indexId: '='
-            },
-            link: function (scope, elem, attrs) {
-                elem.text(scope.timelineNames[scope.indexId])
-            }
-        }
-    });
 })();
 
