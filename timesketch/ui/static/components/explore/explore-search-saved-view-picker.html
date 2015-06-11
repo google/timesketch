@@ -1,4 +1,3 @@
-{% extends "sketch/base.html" %}
 <!--
 Copyright 2015 Google Inc. All rights reserved.
 
@@ -15,16 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-{% block main_no_sidenav %}
-    <div id="main">
-        <div class="container">
-
-            <div class="row">
-                <div class="col-md-12">
-                    <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}" autoload="true" redirect="true"></ts-search>
-                </div>
-            </div>
-
-        </div>
-    </div>
-{% endblock %}
+<select class="select select-view" ng-model="selectedView.view" ng-options="view.name for view in sketch.views">
+    <option value="">Choose View</option>
+</select>

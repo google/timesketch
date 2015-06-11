@@ -90,11 +90,11 @@ class ResourceMixin(object):
     }
 
     sketch_fields = {
+        u'id': fields.Integer,
         u'name': fields.String,
         u'description': fields.String,
         u'user': fields.Nested(user_fields),
         u'timelines': fields.Nested(timeline_fields),
-        u'views': fields.Nested(view_fields),
         u'created_at': fields.DateTime,
         u'updated_at': fields.DateTime
     }
@@ -206,7 +206,14 @@ class SketchResource(ResourceMixin, Resource):
             A sketch in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-        return self.to_json(sketch)
+        meta = dict(
+            views=[
+                {
+                    u'name': view.name,
+                    u'id': view.id
+                } for view in sketch.get_named_views.all()
+            ])
+        return self.to_json(sketch, meta=meta)
 
 
 class ViewListResource(ResourceMixin, Resource):
@@ -318,9 +325,7 @@ class ExploreResource(ResourceMixin, Resource):
 
         # Update or create user state view. This is used in the UI to let the
         # user get back to the last state in the explore view.
-        view = View.get_or_create(
-            user=current_user, sketch=sketch, name=u'', query_string=u'',
-            query_filter=u'')
+        view = View.get_or_create(user=current_user, sketch=sketch, name=u'')
         view.query_string = args.get(u'q')
         view.query_filter = args.get(u'filter')
         db_session.add(view)

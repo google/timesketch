@@ -1,4 +1,3 @@
-{% extends "sketch/base.html" %}
 <!--
 Copyright 2015 Google Inc. All rights reserved.
 
@@ -15,16 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
-{% block main_no_sidenav %}
-    <div id="main">
-        <div class="container">
-
-            <div class="row">
-                <div class="col-md-12">
-                    <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}" autoload="true" redirect="true"></ts-search>
-                </div>
-            </div>
-
+<div class="row" ng-show="meta.noisy">
+    <div class="col-md-12">
+        <div class="card card-alert">
+            <h4>I will only show you the first 500 events</h4>
+            <p>May I suggest you narrow down the results with a filter?</p>
         </div>
     </div>
-{% endblock %}
+</div>
+
+<div class="card" ng-show="events">
+    <div ng-show="meta" style="padding:10px;">
+        {{ meta.es_total_count }} events ({{ meta.es_time/1000 }}s)
+    </div>
+    <div ng-repeat="event in events">
+        <ts-event event="event" meta="meta" sketch-id="sketchId"></ts-event>
+    </div>
+</div>

@@ -65,15 +65,3 @@ class ViewTest(BaseTest):
         response = self.client.get(self.resource_url)
         self.assert200(response)
         self.assert_template_used(u'sketch/views.html')
-
-
-class EventTest(BaseTest):
-    """Test the event view."""
-    resource_url = u'/sketch/1/explore/event/'
-
-    def test_view_list_view(self):
-        """Test the view handler."""
-        self.login()
-        response = self.client.get(self.resource_url)
-        self.assert200(response)
-        self.assert_template_used(u'sketch/event.html')

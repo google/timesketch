@@ -1,5 +1,4 @@
-{% extends "sketch/base.html" %}
-<!--
+/*
 Copyright 2015 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +12,10 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
--->
+*/
 
-{% block main_no_sidenav %}
-    <div id="main">
-        <div class="container">
-
-            <div class="row">
-                <div class="col-md-12">
-                    <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}" autoload="true" redirect="true"></ts-search>
-                </div>
-            </div>
-
-        </div>
-    </div>
-{% endblock %}
+(function() {
+    var module = angular.module('timesketch.core', [
+        'timesketch.core.butterbar.directive'
+    ]);
+})();

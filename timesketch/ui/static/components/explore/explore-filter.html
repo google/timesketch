@@ -1,0 +1,42 @@
+<!--
+Copyright 2015 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<div ng-show="showFilters" class="card filter-card">
+    <h5>Time range</h5>
+    <form class="form-inline" role="form">
+        <div class="form-group">
+            <input ng-model="filter.time_start" type="text" class="form-control timerange-input" placeholder="Start 2014-01-01T23:00:00">
+        </div>
+        <i style="margin-left:5px;margin-right:5px;" class="fa fa-arrow-right"></i>
+        <div class="form-group">
+            <input ng-model="filter.time_end" type="text" class="form-control timerange-input" placeholder="End 2014-01-01T23:00:00">
+        </div>
+        <br><br>
+        <input style="margin-right:5px;" type="submit" class="btn btn-primary" value="Apply filter" ng-click="search()">
+        <input type="reset" class="btn btn-default" value="Clear" ng-click="clearFilter()">
+    </form>
+</div>
+
+<div class="card timeline-picker-card">
+    <div class="btn-group">
+        <button class="btn btn-default" ng-click="enableAllTimelines()"><i class="fa fa-check"></i> Enable all</button>
+        <button class="btn btn-default" ng-click="disableAllTimelines()"><i class="fa fa-ban"></i> Disable all</button>
+    </div>
+    <br><br>
+    <div ng-repeat="timeline in sketch.timelines" class="pull-left timeline-box" ng-click="toggleCheckbox()">
+        <ts-timeline-picker-item></ts-timeline-picker-item>
+    </div>
+</div>
