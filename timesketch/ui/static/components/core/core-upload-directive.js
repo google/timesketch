@@ -14,8 +14,7 @@
                 $scope.clearForm = function() {
                     $scope.uploadForm = {}
                 };
-                $scope.upload = function() {
-                    console.log($scope.uploadForm)
+                $scope.uploadFile = function() {
                     if ($scope.uploadForm.name) {
                         timesketchApi.uploadFile($scope.uploadForm.file, $scope.uploadForm.name).success(function () {
                             $scope.uploadForm = {}
@@ -28,7 +27,7 @@
 
     module.directive('tsCoreFileModel', ['$parse', function ($parse) {
         /**
-         * Make file input possible to bind to ng-model.
+         * Bind the uploaded file (file object) to the scope.
          */
         return {
             restrict: 'A',
