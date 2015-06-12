@@ -325,3 +325,33 @@ table {
 .ts-name-label {
     color:#999;
 }
+
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
+}
+
+.form-control:focus {
+    border-color: #d1d1d1;
+    box-shadow:none !important;
+}
+
+.btn-darkblue {
+    background-color: #337ab7;
+    border-color: #2e6da4;
+}
