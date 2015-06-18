@@ -30,6 +30,7 @@ from timesketch.api.v1.resources import SketchListResource
 from timesketch.api.v1.resources import ViewResource
 from timesketch.api.v1.resources import ViewListResource
 from timesketch.api.v1.resources import UploadFileResource
+from timesketch.api.v1.resources import TaskResource
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.models import configure_engine
 from timesketch.models import init_db
@@ -99,6 +100,7 @@ def create_app(config=None):
     api_v1.add_resource(
         ViewResource, u'/sketches/<int:sketch_id>/views/<int:view_id>/')
     api_v1.add_resource(UploadFileResource, u'/upload/')
+    api_v1.add_resource(TaskResource, u'/tasks/')
 
     # Register error handlers
     # pylint: disable=unused-variable

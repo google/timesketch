@@ -530,3 +530,32 @@ class UploadFileResource(ResourceMixin, Resource):
             raise ApiHTTPError(
                 message=form.errors[u'file'][0],
                 status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class TaskResource(ResourceMixin, Resource):
+    """Resource to get information on celery task."""
+    def __init__(self):
+        super(TaskResource, self).__init__()
+        from timesketch import create_celery_app
+        self.celery = create_celery_app()
+
+    @login_required
+    def get(self):
+        """Handles GET request to the resource.
+
+        Returns:
+            A view in JSON (instance of flask.wrappers.Response)
+        """
+        indices = SearchIndex.query.filter(SearchIndex.status.any(
+            status=u'processing')).all()
+        schema = {u'objects': [], u'meta': {}}
+        for search_index in indices:
+            celery_task = self.celery.AsyncResult(search_index.index_name)
+            task = dict(
+                task_id=celery_task.task_id, state=celery_task.state,
+                successful=celery_task.successful(), name=search_index.name,
+                created=search_index.created_at, result=False)
+            if celery_task.state == u'SUCCESS':
+                task[u'result'] = celery_task.result
+            schema[u'objects'].append(task)
+        return jsonify(schema)

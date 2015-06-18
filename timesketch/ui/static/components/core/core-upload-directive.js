@@ -46,4 +46,28 @@
         };
     }]);
 
+    module.directive('tsCoreUploadQueue', ['$interval', 'timesketchApi', function($interval, timesketchApi) {
+        /**
+         * Poll the API for active Celery tasks and render list.
+         */
+        // How often to poll the task API endpoint in milliseconds.
+        var pollIntervall = 10000;
+        return {
+            restrict: 'E',
+            templateUrl: '/static/components/core/core-upload-queue.html',
+            scope: {},
+            controller: function($scope) {
+                var update_tasks = function() {
+                    timesketchApi.getTasks().success(function (data) {
+                        $scope.tasks = data['objects'];
+                    });
+                };
+                update_tasks();
+                $interval(function() {
+                    update_tasks()
+                }, pollIntervall);
+            }
+        };
+    }]);
+
 })();

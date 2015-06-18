@@ -142,6 +142,15 @@ limitations under the License.
             return $http.post(resource_url, formData, config)
         };
 
+        this.getTasks = function() {
+            /**
+             * Get Celery tasks status.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = '/api/v1/tasks/';
+            return $http.get(resource_url)
+        };
+
     };
 
     module.service('timesketchApi', timesketchApiImplementation);
