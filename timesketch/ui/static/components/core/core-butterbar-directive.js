@@ -17,7 +17,7 @@ limitations under the License.
 (function() {
     var module = angular.module('timesketch.core.butterbar.directive', []);
 
-    module.directive("tsButterbar", function() {
+    module.directive('tsButterbar', ['$rootScope', function($rootScope) {
         /**
          * Render (show/hide) the butterbar when AJAX calls are being made.
          */
@@ -32,7 +32,7 @@ limitations under the License.
 
                 scope.$on("httpreq-error", function(e) {
                     element.css({"display": "block"});
-                    element.text("Error")
+                    element.text($rootScope.XHRError.message || "Error")
                 });
 
                 scope.$on("httpreq-complete", function(e) {
@@ -40,6 +40,6 @@ limitations under the License.
                 });
             }
         };
-    });
+    }]);
 })();
 

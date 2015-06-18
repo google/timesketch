@@ -1,7 +1,7 @@
 (function() {
     var module = angular.module('timesketch.core.upload.directive', []);
 
-    module.directive('tsCoreUpload', ['timesketchApi', function (timesketchApi) {
+    module.directive('tsCoreUpload', ['timesketchApi', '$rootScope', function (timesketchApi, $rootScope) {
         /**
          * Upload directive that handles the form and API call.
          */
@@ -20,7 +20,7 @@
                             $scope.uploadForm = {}
                         });
                     }
-                }
+                };
             }
         };
     }]);
@@ -41,6 +41,7 @@
                         modelSetter(scope, element[0].files[0]);
                     });
                 });
+
             }
         };
     }]);

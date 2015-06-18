@@ -16,6 +16,7 @@
 import os
 import sys
 
+from celery import Celery
 from flask import Flask
 from flask_login import LoginManager
 from flask_restful import Api
@@ -28,6 +29,8 @@ from timesketch.api.v1.resources import SketchResource
 from timesketch.api.v1.resources import SketchListResource
 from timesketch.api.v1.resources import ViewResource
 from timesketch.api.v1.resources import ViewListResource
+from timesketch.api.v1.resources import UploadFileResource
+from timesketch.lib.errors import ApiHTTPError
 from timesketch.models import configure_engine
 from timesketch.models import init_db
 from timesketch.models.sketch import Sketch
@@ -95,6 +98,18 @@ def create_app(config=None):
     api_v1.add_resource(ViewListResource, u'/sketches/<int:sketch_id>/views/')
     api_v1.add_resource(
         ViewResource, u'/sketches/<int:sketch_id>/views/<int:view_id>/')
+    api_v1.add_resource(UploadFileResource, u'/upload/')
+
+    # Register error handlers
+    # pylint: disable=unused-variable
+    @app.errorhandler(ApiHTTPError)
+    def handle_api_http_error(error):
+        """Error handler for API HTTP errors.
+
+        Returns:
+            HTTP response object (instance of flask.wrappers.Response)
+        """
+        return error.build_response()
 
     # Setup the login manager.
     login_manager = LoginManager()
@@ -121,3 +136,21 @@ def create_app(config=None):
     CsrfProtect(app)
 
     return app
+
+
+def create_celery_app():
+    app = create_app()
+    celery = Celery(app.import_name, broker=app.config[u'CELERY_BROKER_URL'])
+    celery.conf.update(app.config)
+    TaskBase = celery.Task
+
+    class ContextTask(TaskBase):
+        abstract = True
+
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return TaskBase.__call__(self, *args, **kwargs)
+
+    celery.Task = ContextTask
+    celery.app = app
+    return celery

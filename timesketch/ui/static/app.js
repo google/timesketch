@@ -30,10 +30,12 @@ limitations under the License.
                     return config || $q.when(config);
                 },
                 'response': function(response) {
+                    $rootScope.XHRError = false;
                     $rootScope.$broadcast('httpreq-complete');
                     return response || $q.when(response);
                 },
                 'responseError': function(response) {
+                    $rootScope.XHRError = response.data;
                     $rootScope.$broadcast('httpreq-error');
                     return $q.reject(response);
                 }
