@@ -550,11 +550,12 @@ class TaskResource(ResourceMixin, Resource):
             status=u'processing')).all()
         schema = {u'objects': [], u'meta': {}}
         for search_index in indices:
+            # pylint: disable=too-many-function-args
             celery_task = self.celery.AsyncResult(search_index.index_name)
             task = dict(
                 task_id=celery_task.task_id, state=celery_task.state,
                 successful=celery_task.successful(), name=search_index.name,
-                created=search_index.created_at, result=False)
+                result=False)
             if celery_task.state == u'SUCCESS':
                 task[u'result'] = celery_task.result
             schema[u'objects'].append(task)

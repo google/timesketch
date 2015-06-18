@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Celery task for processing Plaso storage files."""
 
 from plaso.frontend import psort
 from plaso.output import manager as output_manager
@@ -20,7 +21,7 @@ from timesketch import create_celery_app
 celery = create_celery_app()
 
 
-class PlasoOptions():
+class PlasoOptions(object):
     """Plaso options"""
 
 

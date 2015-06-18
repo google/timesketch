@@ -141,15 +141,23 @@ def create_app(config=None):
 
 
 def create_celery_app():
+    """Create a Celery app instance."""
     app = create_app()
     celery = Celery(app.import_name, broker=app.config[u'CELERY_BROKER_URL'])
     celery.conf.update(app.config)
     TaskBase = celery.Task
 
+    # pylint: disable=no-init
     class ContextTask(TaskBase):
+        """Add Flask context to the Celery tasks created."""
         abstract = True
 
         def __call__(self, *args, **kwargs):
+            """Return Task withing a Flask app context.
+
+            Returns:
+                A Task (instance of Celery.celery.Task)
+            """
             with app.app_context():
                 return TaskBase.__call__(self, *args, **kwargs)
 
