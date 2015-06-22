@@ -14,61 +14,10 @@
 """Celery task for processing Plaso storage files."""
 
 from plaso.frontend import psort
-from plaso.output import manager as output_manager
 
 from timesketch import create_celery_app
 
 celery = create_celery_app()
-
-
-class PlasoOptions(object):
-    """Plaso options"""
-
-
-class PsortCeleryFrontend(psort.PsortFrontend):
-    """Post process class for plaso storage files."""
-    def ParseOptions(self, options):
-        """Setup the necessary options for psort."""
-        output_format = getattr(options, u'output_format', None)
-        self._output_format = output_format
-        self._storage_file_path = getattr(options, u'storage_file', None)
-        self._data_location = getattr(options, u'data_location', None)
-        self._output_module_class = output_manager.OutputManager.GetOutputClass(
-            output_format)
-
-
-class PlasoCeleryTask(object):
-    """Celery task for Plaso"""
-    def process_file(self, source_file_path, timeline_name, index_name):
-        """Process plaso storage file.
-
-        Args:
-            source_file_path: Path to plaso storage file.
-            timeline_name: Name of the Timesketch timeline.
-            index_name: Name of the datastore index.
-
-        Returns:
-            Count of processed events (Instance of collections.Counter).
-        """
-        options = PlasoOptions()
-        options.analysis_plugins = u''
-        options.dedup = True
-        options.output_format = u'timesketch'
-        options.quiet = False
-        options.slice = u''
-        options.zone = u'UTC'
-        options.debug = True
-
-        options.flush_interval = 1000
-        options.index = index_name
-        options.name = timeline_name
-        options.owner = None
-        options.storage_file = source_file_path
-
-        psort_frontend = PsortCeleryFrontend()
-        psort_frontend.ParseOptions(options)
-        counter = psort_frontend.ProcessStorage(options, None)
-        return counter
 
 
 @celery.task(track_started=True)
@@ -83,6 +32,24 @@ def run_plaso(source_file_path, timeline_name, index_name):
     Returns:
         Dictionary with count of processed events.
     """
-    l2c = PlasoCeleryTask()
-    counter = l2c.process_file(source_file_path, timeline_name, index_name)
+    analysis_plugins = None
+    flush_interval_ms = 1000
+
+    # Use the Psort frontend for processing.
+    frontend = psort.PsortFrontend()
+    storage_file = frontend.OpenStorage(
+        source_file_path, read_only=True)
+
+    # Setup the Timesketch output module.
+    frontend.SetOutputFormat(u'timesketch')
+    output_module = frontend.GetOutputModule(storage_file)
+    output_module.SetFlushInterval(flush_interval_ms)
+    output_module.SetIndex(index_name)
+    output_module.SetName(timeline_name)
+
+    plugins, queue_producers = frontend.GetAnalysisPluginsAndEventQueues(
+        analysis_plugins)
+    counter = frontend.ProcessStorage(
+        output_module, storage_file, plugins, queue_producers)
+
     return dict(counter)

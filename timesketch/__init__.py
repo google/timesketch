@@ -153,7 +153,7 @@ def create_celery_app():
         abstract = True
 
         def __call__(self, *args, **kwargs):
-            """Return Task withing a Flask app context.
+            """Return Task within a Flask app context.
 
             Returns:
                 A Task (instance of Celery.celery.Task)

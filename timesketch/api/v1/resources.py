@@ -487,7 +487,7 @@ class EventAnnotationResource(ResourceMixin, Resource):
 
 
 class UploadFileResource(ResourceMixin, Resource):
-    """Resource thar processes uploaded files."""
+    """Resource that processes uploaded files."""
     @login_required
     def post(self):
         """Handles POST request to the resource.
