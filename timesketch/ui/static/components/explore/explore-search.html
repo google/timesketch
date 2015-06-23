@@ -29,43 +29,34 @@ limitations under the License.
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                <button type="submit" class="btn btn-primary" data-dismiss="modal" ng-click="saveView()">Save</button>
+                <button type="submit" class="btn btn-primary" data-dismiss="modal" ng-click="ctrl.saveView()">Save</button>
             </div>
         </div>
     </div>
 </div>
 <!-- End save view modal -->
 
-<form ng-submit="search()">
-    <input ng-model="query" type="search" class="search-input" id="search-input" placeholder="Search" autofocus>
-</form>
+<div class="card" style="padding-bottom:0;">
+    <form ng-submit="ctrl.search(query, filter)">
+        <input ng-model="query" type="search" class="search-input" id="search-input" placeholder="Search" autofocus>
+    </form>
 
-<br>
+    <br>
 
-<div class="btn-group">
-    <button class="btn btn-default" ng-click="showFilters = !showFilters"><i class="fa fa-filter"></i> Filters</button>
-    <button class="btn btn-default" ng-click="search_starred()"><i class="fa fa-star icon-yellow"></i> Starred</button>
-    <button class="btn btn-default" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
-</div>
-<ts-search-saved-view-picker redirect="true"></ts-search-saved-view-picker>
-
-<br><br>
-
-<div class="row">
-    <div class="col-md-12">
-        <ts-filter
-                filter="filter"
-                sketch="sketch"
-                search="search()"
-                events="events"
-                meta="meta"
-                show-filters="showFilters">
-        </ts-filter>
+    <div class="btn-group">
+        <button class="btn btn-default" ng-click="showFilters = !showFilters"><i class="fa fa-filter"></i> Filters</button>
+        <button class="btn btn-default" ng-click="ctrl.search_starred(query, filter)"><i class="fa fa-star icon-yellow"></i> Starred</button>
+        <button class="btn btn-default" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
     </div>
+    <ts-search-saved-view-picker sketch="sketch" redirect-view="redirectView"></ts-search-saved-view-picker>
+    <ts-filter
+            filter="filter"
+            query="query"
+            sketch="sketch"
+            events="events"
+            meta="meta"
+            show-filters="showFilters">
+    </ts-filter>
 </div>
 
-<div class="row">
-    <div class="col-md-12">
-        <ts-event-list events="events" meta="meta" sketch-id="sketchId"></ts-event-list>
-    </div>
-</div>
+<ts-event-list events="events" meta="meta" sketch-id="sketchId"></ts-event-list>

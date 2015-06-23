@@ -114,7 +114,7 @@ table {
     margin-bottom: 20px;
     background: #fff;
     padding: 20px;
-    border:1px solid #f1f1f1;
+    box-shadow: -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
 }
 
 .card-alert {
@@ -139,12 +139,12 @@ table {
 
 .search-input {
     outline: none;
-    border:1px solid #e1e1e1;
+    border:none;
     box-shadow:none !important;
     font-size: 1.3em;
     border-radius: 0;
     padding: 15px;
-    background:#fff;
+    background:#f5f5f5;
     width: 100%;
 }
 
@@ -168,7 +168,7 @@ table {
 }
 
 .timerange-input {
-    width: 200px;
+    width: 210px;
     outline: none;
     border:1px solid lightgrey !important;
     box-shadow:none !important;
@@ -181,8 +181,9 @@ table {
 }
 
 .timeline-box {
-    background:#f7f7f7;
+    background:#fff;
     padding: 10px;
+    border:1px solid #d9d9d9;
     margin-right: 10px;
     cursor: pointer;
     margin-bottom: 5px;
