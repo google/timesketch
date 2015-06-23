@@ -106,12 +106,10 @@ limitations under the License.
              */
             var resource_url = BASE_URL + sketch_id + '/explore/';
             var params = {
-                params: {
-                    q: query,
-                    filter: filter
-                }
+                query: query,
+                filter: filter
             };
-            return $http.get(resource_url, params)
+            return $http.post(resource_url, params)
         };
 
         this.uploadFile = function(file, name) {

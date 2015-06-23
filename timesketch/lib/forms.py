@@ -137,6 +137,12 @@ class SaveViewForm(BaseForm):
     filter = StringField(u'Filter', validators=[DataRequired()])
 
 
+class ExploreForm(BaseForm):
+    """Form used to search the datastore."""
+    query = StringField(u'Query')
+    filter = StringField(u'Filter', validators=[DataRequired()])
+
+
 class StatusForm(BaseForm):
     """Form to handle status annotation."""
     status = SelectField(
