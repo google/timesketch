@@ -28,6 +28,8 @@ POST /sketches/:sketch_id/views/
 """
 
 import json
+import os
+import uuid
 
 from flask import abort
 from flask import jsonify
@@ -46,8 +48,10 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.datastores.elastic import ElasticSearchDataStore
+from timesketch.lib.errors import ApiHTTPError
 from timesketch.lib.forms import SaveViewForm
 from timesketch.lib.forms import EventAnnotationForm
+from timesketch.lib.forms import UploadFileForm
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchIndex
@@ -114,6 +118,7 @@ class ResourceMixin(object):
     }
 
     fields_registry = {
+        u'searchindex': searchindex_fields,
         u'timeline': timeline_fields,
         u'view': view_fields,
         u'user': user_fields,
@@ -479,3 +484,79 @@ class EventAnnotationResource(ResourceMixin, Resource):
             return self.to_json(
                 annotation, status_code=HTTP_STATUS_CODE_CREATED)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class UploadFileResource(ResourceMixin, Resource):
+    """Resource that processes uploaded files."""
+    @login_required
+    def post(self):
+        """Handles POST request to the resource.
+
+        Returns:
+            A view in JSON (instance of flask.wrappers.Response)
+
+        Raises:
+            ApiHTTPError
+        """
+        UPLOAD_FOLDER = current_app.config[u'UPLOAD_FOLDER']
+
+        form = UploadFileForm()
+        if form.validate_on_submit() and UPLOAD_FOLDER:
+            from timesketch.lib.tasks import run_plaso
+            file_storage = form.file.data
+            timeline_name = form.name.data
+            # We do not need a human readable filename or
+            # datastore index name, so we use UUIDs here.
+            filename = unicode(uuid.uuid4().hex)
+            index_name = unicode(uuid.uuid4().hex)
+
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            file_storage.save(file_path)
+
+            search_index = SearchIndex.get_or_create(
+                name=timeline_name, description=timeline_name, user=None,
+                index_name=index_name)
+            search_index.grant_permission(None, u'read')
+            search_index.set_status(u'processing')
+            db_session.add(search_index)
+            db_session.commit()
+
+            run_plaso.apply_async(
+                (file_path, timeline_name, index_name), task_id=index_name)
+
+            return self.to_json(
+                search_index, status_code=HTTP_STATUS_CODE_CREATED)
+        else:
+            raise ApiHTTPError(
+                message=form.errors[u'file'][0],
+                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class TaskResource(ResourceMixin, Resource):
+    """Resource to get information on celery task."""
+    def __init__(self):
+        super(TaskResource, self).__init__()
+        from timesketch import create_celery_app
+        self.celery = create_celery_app()
+
+    @login_required
+    def get(self):
+        """Handles GET request to the resource.
+
+        Returns:
+            A view in JSON (instance of flask.wrappers.Response)
+        """
+        indices = SearchIndex.query.filter(SearchIndex.status.any(
+            status=u'processing')).all()
+        schema = {u'objects': [], u'meta': {}}
+        for search_index in indices:
+            # pylint: disable=too-many-function-args
+            celery_task = self.celery.AsyncResult(search_index.index_name)
+            task = dict(
+                task_id=celery_task.task_id, state=celery_task.state,
+                successful=celery_task.successful(), name=search_index.name,
+                result=False)
+            if celery_task.state == u'SUCCESS':
+                task[u'result'] = celery_task.result
+            schema[u'objects'].append(task)
+        return jsonify(schema)

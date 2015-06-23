@@ -117,6 +117,40 @@ limitations under the License.
             };
             return $http.get(resource_url, params)
         };
+
+        this.uploadFile = function(file, name) {
+            /**
+             * Handles the upload form and send a POST request to the server.
+             * @param file - File object.
+             * @param name - Name if the timeline to be created.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = '/api/v1/upload/';
+            // Default Content-Type in angular for GET/POST is application/json
+            // so we nee to change this. By setting this to undefined we let the
+            // browser set the Content-Type to multipart/form-data and also set
+            // the correct boundary parameters.
+            var config = {
+                transformRequest: angular.identity,
+                headers: {
+                    'Content-Type': undefined
+                }
+            };
+            var formData = new FormData();
+            formData.append('file', file);
+            formData.append('name', name);
+            return $http.post(resource_url, formData, config)
+        };
+
+        this.getTasks = function() {
+            /**
+             * Get Celery tasks status.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = '/api/v1/tasks/';
+            return $http.get(resource_url)
+        };
+
     };
 
     module.service('timesketchApi', timesketchApiImplementation);

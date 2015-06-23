@@ -1,0 +1,15 @@
+<form name="uploadform" class="form-inline" ng-submit="uploadFile()">
+    <span class="form-group">
+        <span class="btn btn-primary btn-darkblue btn-file">
+            <i class="fa fa-cloud-upload" style="margin-right: 5px;"></i>
+            <span ng-hide="uploadForm.file">Upload Plaso file</span>
+            <span ng-show="uploadForm.file">{{ uploadForm.file.name }}</span>
+            <input type="file" class="form-control" ts-core-file-model="uploadForm.file" />
+        </span>
+    </span>
+    <span ng-show="uploadForm.file" class="form-group">
+        <input class="form-control" placeholder="New timeline name" ng-model="uploadForm.name" required autofocus/>
+    </span>
+    <input type="submit" ng-show="uploadForm.file" class="btn btn-default" value="Upload"/>
+    <input type="reset" ng-show="uploadForm.file" class="btn btn-default" value="Cancel" ng-click="clearForm()"/>
+</form>

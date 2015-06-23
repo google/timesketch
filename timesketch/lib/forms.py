@@ -15,6 +15,9 @@
 
 
 from flask_wtf import Form
+from flask_wtf.file import FileField
+from flask_wtf.file import FileRequired
+from flask_wtf.file import FileAllowed
 from wtforms import widgets
 from wtforms.fields import StringField
 from wtforms.fields import PasswordField
@@ -154,3 +157,13 @@ class EventAnnotationForm(BaseForm):
     searchindex_id = StringField(u'Searchindex', validators=[DataRequired()])
     event_id = StringField(u'Event', validators=[DataRequired()])
     event_type = StringField(u'Event type', validators=[DataRequired()])
+
+class UploadFileForm(BaseForm):
+    """Form to handle file uploads."""
+    file = FileField(
+        u'file', validators=[
+            FileRequired(),
+            FileAllowed(
+                [u'plaso'],
+                u'Unknown file extension. Allowed file extensions: .plaso')])
+    name = StringField(u'Timeline name', validators=[DataRequired()])

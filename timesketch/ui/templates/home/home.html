@@ -15,6 +15,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 
+{% block header_left %}
+  <ts-core-upload class="pull-left" style="margin-right:20px;margin-top: -6px;"></ts-core-upload>
+{% endblock %}
+
 {% block sidenav %}
 <div id="navigation">
   <div class="leftnav-title">
@@ -37,6 +41,7 @@ limitations under the License.
 <div class="container">
   <div class="row" style="margin-top:0px;margin-bottom: 20px;">
     <div class="col-md-12">
+      <ts-core-upload-queue></ts-core-upload-queue>
       <form class="form form-inline" method="get" action="{{ url_for('home_views.home') }}">
         <input type="search" id="q" name="q" class="search-input" placeholder="Search sketches" autofocus="true" value="{{ query }}">
       </form>

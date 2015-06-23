@@ -21,19 +21,26 @@ limitations under the License.
         'timesketch.explore'
     ]);
 
+    // List of URLs to exclude from the butterbar.
+    var excludeFromButterbar = ['/api/v1/tasks/'];
+
     // Angular config
     module.config(function($httpProvider) {
         $httpProvider.interceptors.push(function($q, $rootScope) {
             return {
                 'request': function(config) {
-                    $rootScope.$broadcast('httpreq-start');
+                    if (excludeFromButterbar.indexOf(config.url) == -1) {
+                        $rootScope.$broadcast('httpreq-start');
+                    }
                     return config || $q.when(config);
                 },
                 'response': function(response) {
+                    $rootScope.XHRError = false;
                     $rootScope.$broadcast('httpreq-complete');
                     return response || $q.when(response);
                 },
                 'responseError': function(response) {
+                    $rootScope.XHRError = response.data;
                     $rootScope.$broadcast('httpreq-error');
                     return $q.reject(response);
                 }
@@ -43,4 +50,3 @@ limitations under the License.
         $httpProvider.defaults.headers.common['X-CSRFToken'] = csrftoken;
     });
 })();
-
