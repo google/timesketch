@@ -435,54 +435,58 @@ class EventAnnotationResource(ResourceMixin, Resource):
         """
         form = EventAnnotationForm.build(request)
         if form.validate_on_submit():
+            annotations = []
             sketch = Sketch.query.get_with_acl(sketch_id)
             indices = [t.searchindex.index_name for t in sketch.timelines]
             annotation_type = form.annotation_type.data
-            searchindex_id = form.searchindex_id.data
-            searchindex = SearchIndex.query.filter_by(
-                index_name=searchindex_id).first()
-            event_id = form.event_id.data
-            event_type = form.event_type.data
+            events = form.events.raw_data
 
-            if searchindex_id not in indices:
-                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            for _event in events:
+                def _set_label(label, toggle=False):
+                    """Set label on the event in the datastore."""
+                    self.datastore.set_label(
+                        searchindex_id, event_id, event_type, sketch.id,
+                        current_user.id, label, toggle=toggle)
 
-            def _set_label(label, toggle=False):
-                """Set label on the event in the datastore."""
-                self.datastore.set_label(
-                    searchindex_id, event_id, event_type, sketch.id,
-                    current_user.id, label, toggle=toggle)
+                searchindex_id = _event[u'_index']
+                searchindex = SearchIndex.query.filter_by(
+                    index_name=searchindex_id).first()
+                event_id = _event[u'_id']
+                event_type = _event[u'_type']
 
-            # Get or create an event in the SQL database to have something to
-            # attach the annotation to.
-            event = Event.get_or_create(
-                sketch=sketch, searchindex=searchindex,
-                document_id=event_id)
+                if searchindex_id not in indices:
+                    abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
-            # Add the annotation to the event object.
-            if u'comment' in annotation_type:
-                annotation = Event.Comment(
-                    comment=form.annotation.data, user=current_user)
-                event.comments.append(annotation)
-                _set_label(u'__ts_comment')
-            elif u'label' in annotation_type:
-                annotation = Event.Label.get_or_create(
-                    label=form.annotation.data, user=current_user)
-                if annotation not in event.labels:
-                    event.labels.append(annotation)
-                toggle = False
-                if u'__ts_star' in form.annotation.data:
-                    toggle = True
-                _set_label(form.annotation.data, toggle)
-            else:
-                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+                # Get or create an event in the SQL database to have something
+                # to attach the annotation to.
+                event = Event.get_or_create(
+                    sketch=sketch, searchindex=searchindex,
+                    document_id=event_id)
 
-            # Save the event to the database
-            db_session.add(event)
-            db_session.commit()
+                # Add the annotation to the event object.
+                if u'comment' in annotation_type:
+                    annotation = Event.Comment(
+                        comment=form.annotation.data, user=current_user)
+                    event.comments.append(annotation)
+                    _set_label(u'__ts_comment')
+                elif u'label' in annotation_type:
+                    annotation = Event.Label.get_or_create(
+                        label=form.annotation.data, user=current_user)
+                    if annotation not in event.labels:
+                        event.labels.append(annotation)
+                    toggle = False
+                    if u'__ts_star' in form.annotation.data:
+                        toggle = True
+                    _set_label(form.annotation.data, toggle)
+                else:
+                    abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
+                annotations.append(annotation)
+                # Save the event to the database
+                db_session.add(event)
+                db_session.commit()
             return self.to_json(
-                annotation, status_code=HTTP_STATUS_CODE_CREATED)
+                annotations, status_code=HTTP_STATUS_CODE_CREATED)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
 

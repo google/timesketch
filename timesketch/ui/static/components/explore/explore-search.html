@@ -57,6 +57,9 @@ limitations under the License.
             meta="meta"
             show-filters="showFilters">
     </ts-filter>
+
+    <ts-search-context-card ng-if="filter.context" ng-show="filter.context" context="filter.context"></ts-search-context-card>
+
 </div>
 
 <ts-event-list events="events" meta="meta" sketch-id="sketchId"></ts-event-list>

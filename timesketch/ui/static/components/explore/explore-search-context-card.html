@@ -1,0 +1,14 @@
+<div style="padding-bottom:20px;">
+    <h4>Context query</h4>
+    <i>This query searches for events {{ context.seconds }} seconds before and after the selected event.</i>
+    <br><br>
+    <ts-event event="context.event" sketch-id="context.sketchId" meta="context.meta" is-context-event="true"></ts-event>
+    <br>
+    <button class="btn btn-default pull-left" ng-click="closeContext(context)"><i class="fa fa-long-arrow-left"></i> Go back to original query</button>
+
+    <form class="form-inline" ng-submit="setInterval()">
+        <label style="margin-left:30px;">Seconds to filter context on: </label>
+        <input class="form-control" style="width:70px;" type="number" ng-model="context.seconds" />
+        <input class="btn btn-primary" type="submit" value="Run context query" />
+    </form>
+</div>

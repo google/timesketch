@@ -78,31 +78,27 @@ limitations under the License.
             return $http.get(resource_url, params)
         };
 
-        this.saveEventAnnotation = function(sketch_id, annotation_type, annotation, searchindex_id, event_id, event_type) {
+        this.saveEventAnnotation = function(sketch_id, annotation_type, annotation, events) {
             /**
              * Save a Timesketch event annotation.
              * @param sketch_id - The id for the sketch.
              * @param type - The type of the annotation, e.g. comment or tag.
              * @param annotation - The content for the annotation.
-             * @param searchindex_id - The id for the search index.
-             * @param event_id - The id for the event.
-             * @param event_type - The document type for the event.
+             * @param events - List of events.
              * @returns A $http promise with two methods, success and error.
              */
             var resource_url = BASE_URL + sketch_id + '/event/annotate/';
             var params = {
                 annotation: annotation,
                 annotation_type: annotation_type,
-                searchindex_id: searchindex_id,
-                event_id: event_id,
-                event_type: event_type
+                events: events
             };
             return $http.post(resource_url, params);
         };
 
         this.search = function(sketch_id, query, filter) {
             /**
-             * Save a Timesketch view.
+             * Execute query and filter on the datastore.
              * @param sketch_id - The id for the sketch.
              * @param query - A query string.
              * @param filter - A JSON string with filters and a list of indices.

@@ -138,6 +138,29 @@ limitations under the License.
         }
     }]);
 
+    module.directive('tsSearchContextCard', function() {
+        /**
+         * Render the context card.
+         */
+        return {
+            restrict: 'E',
+            templateUrl: '/static/components/explore/explore-search-context-card.html',
+            scope: {
+                context: '='
+            },
+            require: '^tsSearch',
+            controllerAs: 'ctrl',
+            link: function (scope, elem, attrs, ctrl) {
+                scope.closeContext = function(context) {
+                    ctrl.closeContext(context)
+                };
+                scope.setInterval = function() {
+                    ctrl.getContext(scope.context.event)
+                };
+            }
+        }
+    });
+
     module.directive('tsSearchSavedViewPicker', ['timesketchApi', function(timesketchApi) {
         /**
          * Render the list of saved views.

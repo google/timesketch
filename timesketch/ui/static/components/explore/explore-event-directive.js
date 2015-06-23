@@ -48,29 +48,21 @@ limitations under the License.
             scope: {
                 sketchId: '=',
                 meta: '=',
-                event: '='
+                event: '=',
+                isContextEvent: '='
             },
+            require: '^tsSearch',
             controller: function ($scope, timesketchApi) {
-                $scope.star = false;
-                if ($scope.event._source.label.indexOf('__ts_star') > -1) {
-                    $scope.star = true;
-                    $scope.event._source.label.splice($scope.event._source.label.indexOf('__ts_star'), 1)
-                }
-
-                if ($scope.event._source.label.indexOf('__ts_comment') > -1) {
-                    $scope.comment = true;
-                    $scope.event._source.label.splice($scope.event._source.label.indexOf('__ts_comment'), 1)
-                }
+                $scope.showDetails = false;
 
                 $scope.toggleStar = function() {
                     timesketchApi.saveEventAnnotation(
                         $scope.sketchId,
                         'label',
                         '__ts_star',
-                        $scope.event._index,
-                        $scope.event._id,
-                        $scope.event._type).success(function(data) {})
+                        $scope.event).success(function(data) {})
                 };
+
                 $scope.getDetail = function() {
                     if ($scope.eventdetail) {return}
                     timesketchApi.getEvent(
@@ -86,17 +78,36 @@ limitations under the License.
                         $scope.sketchId,
                         'comment',
                         $scope.formData.comment,
-                        $scope.event._index,
-                        $scope.event._id,
-                        $scope.event._type).success(function(data) {
+                        $scope.event).success(function(data) {
                             $scope.formData.comment = '';
                             $scope.commentForm.$setPristine();
-                            $scope.comments.push(data['objects'][0]);
+                            $scope.comments.push(data['objects'][0][0]);
                             $scope.comment = true;
                         })
                 };
+                $scope.$watch('event', function(value) {
+                    $scope.star = false;
+                    $scope.comment = false;
+                    if ($scope.event._source.label.indexOf('__ts_star') > -1) {
+                        $scope.event.star = true;
+                    } else {
+                        $scope.event.star = false;
+                    }
+
+                    if ($scope.event._source.label.indexOf('__ts_comment') > -1) {
+                        $scope.comment = true;
+                    }
+
+                });
+
+            },
+            link: function(scope, elem, attrs, ctrl) {
+                scope.getContext = function(event) {
+                    ctrl.getContext(event);
+                }
             }
         }
     });
+
 })();
 

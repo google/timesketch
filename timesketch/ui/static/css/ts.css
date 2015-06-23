@@ -356,3 +356,39 @@ table {
     background-color: #337ab7;
     border-color: #2e6da4;
 }
+
+div.tooltips {
+  position: relative;
+  display: inline;
+}
+div.tooltips span {
+  position: absolute;
+  width:140px;
+  color: #FFFFFF;
+  background: #000000;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  visibility: hidden;
+  border-radius: 6px;
+}
+div.tooltips span:after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  margin-top: -8px;
+  width: 0; height: 0;
+  border-left: 8px solid #000000;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+}
+div:hover.tooltips span {
+  visibility: visible;
+  opacity: 0.8;
+  right: 100%;
+  top: 50%;
+  margin-top: -15px;
+  margin-right: 15px;
+  z-index: 999;
+}

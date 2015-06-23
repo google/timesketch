@@ -158,7 +158,7 @@ limitations under the License.
       <div class="card">
         <div class="row">
           <div class="col-md-12">
-            <div class="pull-right" style="margin-right:15px;">
+            <div class="pull-right">
               <div class="btn-group">
                 <button class="btn btn-default" data-toggle="modal" data-target="#status-modal">Status: {{ sketch.get_status.status|title }}</button>
                 {% if sketch.has_permission(user=current_user, permission='delete') %}
