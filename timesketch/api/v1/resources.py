@@ -288,7 +288,6 @@ class ExploreResource(ResourceMixin, Resource):
             JSON with list of matched events
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-
         form = ExploreForm.build(request)
 
         if form.validate_on_submit():
@@ -328,8 +327,8 @@ class ExploreResource(ResourceMixin, Resource):
                 user=current_user, sketch=sketch, name=u'')
             view.query_string = form.query.data
             view.query_filter = json.dumps(query_filter)
-            db_session.add(view)
-            db_session.commit()
+            #db_session.add(view)
+            #db_session.commit()
 
             # Add metadata for the query result. This is used by the UI to
             # render the event correctly and to display timing and hit count
@@ -437,14 +436,9 @@ class EventAnnotationResource(ResourceMixin, Resource):
             indices = [t.searchindex.index_name for t in sketch.timelines]
             annotation_type = form.annotation_type.data
             events = form.events.raw_data
+            print form.events.raw_data
 
             for _event in events:
-                def _set_label(label, toggle=False):
-                    """Set label on the event in the datastore."""
-                    self.datastore.set_label(
-                        searchindex_id, event_id, event_type, sketch.id,
-                        current_user.id, label, toggle=toggle)
-
                 searchindex_id = _event[u'_index']
                 searchindex = SearchIndex.query.filter_by(
                     index_name=searchindex_id).first()
@@ -465,7 +459,10 @@ class EventAnnotationResource(ResourceMixin, Resource):
                     annotation = Event.Comment(
                         comment=form.annotation.data, user=current_user)
                     event.comments.append(annotation)
-                    _set_label(u'__ts_comment')
+                    self.datastore.set_label(
+                        searchindex_id, event_id, event_type, sketch.id,
+                        current_user.id, u'__ts_comment', toggle=False)
+
                 elif u'label' in annotation_type:
                     annotation = Event.Label.get_or_create(
                         label=form.annotation.data, user=current_user)
@@ -474,7 +471,9 @@ class EventAnnotationResource(ResourceMixin, Resource):
                     toggle = False
                     if u'__ts_star' in form.annotation.data:
                         toggle = True
-                    _set_label(form.annotation.data, toggle)
+                    self.datastore.set_label(
+                        searchindex_id, event_id, event_type, sketch.id,
+                        current_user.id, form.annotation.data, toggle=toggle)
                 else:
                     abort(HTTP_STATUS_CODE_BAD_REQUEST)
 

@@ -129,6 +129,7 @@ class ExploreResourceTest(BaseTest):
                     u'datetime': u'2014-09-13T07:27:03+00:00'
                 },
                 u'_score': u'null',
+                u'selected': False,
                 u'_index': u'test',
                 u'_id': u'test'
             }
@@ -140,7 +141,10 @@ class ExploreResourceTest(BaseTest):
     def test_search(self):
         """Authenticated request to query the datastore."""
         self.login()
-        response = self.client.get(self.resource_url + u'?q=test&filter={}')
+        data = dict(query=u'test', filter={})
+        response = self.client.post(
+            self.resource_url, data=json.dumps(data, ensure_ascii=False),
+            content_type=u'application/json')
         self.assertDictEqual(response.json, self.expected_response)
         self.assert200(response)
 
@@ -195,10 +199,13 @@ class EventAnnotationResourceTest(BaseTest):
         """Authenticated request to create an annotation."""
         self.login()
         for annotation_type in [u'comment', u'label']:
+            event = {
+                u'_type': u'test_event',
+                u'_index': u'test',
+                u'_id': u'test'}
             data = dict(
                 annotation=u'test', annotation_type=annotation_type,
-                event_id=u'test', searchindex_id=u'test',
-                event_type=u'test_event')
+                events=[event])
             response = self.client.post(
                 self.resource_url, data=json.dumps(data),
                 content_type=u'application/json')
