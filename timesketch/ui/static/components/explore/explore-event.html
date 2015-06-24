@@ -20,6 +20,10 @@ limitations under the License.
             {{ event._source.datetime }}
         </td>
 
+        <td width="20px;" ng-hide="isContextEvent">
+            <input type="checkbox" ng-click="toggleSelected()" ng-checked="event.selected">
+        </td>
+
         <td width="35px;" ng-hide="isContextEvent">
             <i ng-click="event.star = !event.star;toggleStar()" ng-class="{true: 'fa fa-lg fa-star icon-yellow', false: 'fa fa-lg fa-star-o icon-grey'}[event.star]"></i>
         </td>
@@ -42,6 +46,7 @@ limitations under the License.
 </table>
 
 <div ng-show="showDetails" class="event-detail">
+    <br>
     <div class="event-detail-container">
         <div class="container">
             <div class="row">

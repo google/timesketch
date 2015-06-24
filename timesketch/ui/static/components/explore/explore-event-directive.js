@@ -17,7 +17,7 @@ limitations under the License.
 (function() {
     var module = angular.module('timesketch.explore.event.directive', []);
 
-    module.directive('tsEventList', function () {
+    module.directive('tsEventList', ['timesketchApi', function(timesketchApi) {
         /**
          * Render list of events (search result from the datastore).
          * @param sketch-id - The id for the sketch.
@@ -31,9 +31,63 @@ limitations under the License.
                 sketchId: '=',
                 meta: '=',
                 events: '='
+            },
+            controller: function($scope) {
+
+                var toggleStar = function(event_list) {
+                    if (!event_list.length) {return}
+                    timesketchApi.saveEventAnnotation(
+                        $scope.sketchId,
+                        'label',
+                        '__ts_star',
+                        event_list).success(function (data) {})
+                };
+
+                $scope.toggleAll = function() {
+                    $scope.isAllSelected = $scope.events.every(function(event) {
+                        return event.selected;
+                    });
+                    angular.forEach($scope.events, function(event) {
+                        if (!$scope.isAllSelected) {
+                            event.selected = true
+                        } else {
+                            event.selected = false
+                        }
+                    })
+                };
+
+                $scope.addStar = function() {
+                    event_list = [];
+                    angular.forEach($scope.events, function(event) {
+                        if (event.selected && !event.star) {
+                            event.star = true;
+                            event_list.push(event);
+                        }
+                    });
+                    toggleStar(event_list)
+                };
+
+                $scope.removeStar = function() {
+                    event_list = [];
+                    angular.forEach($scope.events, function(event) {
+                        if (event.selected && event.star) {
+                            event.star = false;
+                            event_list.push(event);
+                        }
+                    });
+                    toggleStar(event_list)
+                };
+
+                $scope.$watch('events', function(value) {
+                    if (angular.isDefined(value)) {
+                        $scope.anySelected = value.some(function(event) {
+                            return event.selected;
+                        });
+                    }
+                }, true)
             }
         }
-    });
+    }]);
 
     module.directive('tsEvent', function () {
         /**
@@ -54,6 +108,10 @@ limitations under the License.
             require: '^tsSearch',
             controller: function ($scope, timesketchApi) {
                 $scope.showDetails = false;
+
+                $scope.toggleSelected = function() {
+                    $scope.event.selected = !$scope.event.selected
+                };
 
                 $scope.toggleStar = function() {
                     timesketchApi.saveEventAnnotation(

@@ -167,6 +167,10 @@ table {
     cursor: pointer;
 }
 
+.event-message-selected {
+    background: #fafad2;
+}
+
 .timerange-input {
     width: 210px;
     outline: none;

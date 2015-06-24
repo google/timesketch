@@ -327,8 +327,8 @@ class ExploreResource(ResourceMixin, Resource):
                 user=current_user, sketch=sketch, name=u'')
             view.query_string = form.query.data
             view.query_filter = json.dumps(query_filter)
-            #db_session.add(view)
-            #db_session.commit()
+            db_session.add(view)
+            db_session.commit()
 
             # Add metadata for the query result. This is used by the UI to
             # render the event correctly and to display timing and hit count
@@ -436,7 +436,6 @@ class EventAnnotationResource(ResourceMixin, Resource):
             indices = [t.searchindex.index_name for t in sketch.timelines]
             annotation_type = form.annotation_type.data
             events = form.events.raw_data
-            print form.events.raw_data
 
             for _event in events:
                 searchindex_id = _event[u'_index']
