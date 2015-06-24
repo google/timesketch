@@ -18,6 +18,7 @@ from flask import render_template
 from flask import redirect
 from flask import request
 from flask import url_for
+from flask_login import current_app
 from flask_login import current_user
 from flask_login import login_required
 from sqlalchemy import not_
@@ -46,6 +47,8 @@ def home():
         Sketch.Status.parent).order_by(Sketch.updated_at.desc())
     query_filter = request.args.get(u'filter', u'')
     query = request.args.get(u'q', u'')
+    # Only render upload button if it is configures.
+    upload_enabled = u'UPLOAD_FOLDER' in current_app.config
 
     if query_filter:
         if query_filter == u'user':
@@ -75,4 +78,5 @@ def home():
         return redirect(url_for(u'sketch_views.overview', sketch_id=sketch.id))
 
     return render_template(
-        u'home/home.html', sketches=sketches, form=form, query=query)
+        u'home/home.html', sketches=sketches, form=form, query=query,
+        upload_enabled=upload_enabled)
