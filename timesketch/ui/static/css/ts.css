@@ -114,7 +114,7 @@ table {
     margin-bottom: 20px;
     background: #fff;
     padding: 20px;
-    border:1px solid #f1f1f1;
+    box-shadow: -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
 }
 
 .card-alert {
@@ -139,12 +139,12 @@ table {
 
 .search-input {
     outline: none;
-    border:1px solid #e1e1e1;
+    border:none;
     box-shadow:none !important;
     font-size: 1.3em;
     border-radius: 0;
     padding: 15px;
-    background:#fff;
+    background:#f5f5f5;
     width: 100%;
 }
 
@@ -167,8 +167,12 @@ table {
     cursor: pointer;
 }
 
+.event-message-selected {
+    background: #fafad2;
+}
+
 .timerange-input {
-    width: 200px;
+    width: 210px;
     outline: none;
     border:1px solid lightgrey !important;
     box-shadow:none !important;
@@ -181,8 +185,9 @@ table {
 }
 
 .timeline-box {
-    background:#f7f7f7;
+    background:#fff;
     padding: 10px;
+    border:1px solid #d9d9d9;
     margin-right: 10px;
     cursor: pointer;
     margin-bottom: 5px;
@@ -354,4 +359,40 @@ table {
 .btn-darkblue {
     background-color: #337ab7;
     border-color: #2e6da4;
+}
+
+div.tooltips {
+  position: relative;
+  display: inline;
+}
+div.tooltips span {
+  position: absolute;
+  width:140px;
+  color: #FFFFFF;
+  background: #000000;
+  height: 30px;
+  line-height: 30px;
+  text-align: center;
+  visibility: hidden;
+  border-radius: 6px;
+}
+div.tooltips span:after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  margin-top: -8px;
+  width: 0; height: 0;
+  border-left: 8px solid #000000;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+}
+div:hover.tooltips span {
+  visibility: visible;
+  opacity: 0.8;
+  right: 100%;
+  top: 50%;
+  margin-top: -15px;
+  margin-right: 15px;
+  z-index: 999;
 }

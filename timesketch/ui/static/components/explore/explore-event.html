@@ -17,75 +17,66 @@ limitations under the License.
 <table id="search-result-table" width="100%">
     <tr>
         <td style="background: #{{ ::meta.timeline_colors[event._index] }}" width="210px">
-            {{::event._source.datetime}}
+            {{ event._source.datetime }}
         </td>
 
-        <td width="35px;" >
-            <i ng-click="star = !star;toggleStar()" ng-class="{true: 'fa fa-lg fa-star icon-yellow', false: 'fa fa-lg fa-star-o icon-grey'}[star]"></i>
+        <td width="20px;" ng-hide="isContextEvent">
+            <input type="checkbox" ng-click="toggleSelected()" ng-checked="event.selected">
         </td>
 
-        <td class="event-message" ng-click="getDetail();showDetails = !showDetails">
+        <td width="35px;" ng-hide="isContextEvent">
+            <i ng-click="event.star = !event.star;toggleStar()" ng-class="{true: 'fa fa-lg fa-star icon-yellow', false: 'fa fa-lg fa-star-o icon-grey'}[event.star]"></i>
+        </td>
+
+        <td class="event-message" ng-class="{true:'event-message-selected'}[event.selected]" ng-click="getDetail();showDetails = !showDetails">
             <span ng-show="comment">
                 <i class="fa fa-comments"></i>
             </span>
-            [{{::event._source.timestamp_desc}}] {{::event._source.message|limitTo:500}}
+            [{{ event._source.timestamp_desc }}] {{ event._source.message|limitTo:500 }}
+            <div style="width:20px;height:20px;cursor: pointer;" class="pull-right tooltips"><span>Details</span><i ng-class="{true: 'fa fa-minus-square-o', false: 'fa fa-plus-square-o'}[showDetails]" style="color:#999;"></i></div>
+
         </td>
 
         <td width="150px" style="text-align: right;background: #f1f1f1;">
             <span class="label ts-name-label">{{ ::meta.timeline_names[event._index] }}</span>
+            <div ng-hide="isContextEvent" style="width:20px;height:20px;cursor: pointer;" class="pull-right tooltips" ng-click="getContext(event)"><span>Context query</span><i class="fa fa-search-plus" style="color:#777;"></i></div>
         </td>
 
     </tr>
 </table>
 
 <div ng-show="showDetails" class="event-detail">
+    <br>
     <div class="event-detail-container">
-        <ul class="nav nav-tabs">
-          <li ng-class="{active: comments.length > 0}">
-              <a href="#comments-{{ ::event._id }}" data-toggle="tab">
-                  <span ng-if="comments.length == 0"> Add a comment</span>
-                  <span ng-if="comments.length > 0"> {{ ::comments.length }} comments</span>
-              </a>
-          </li>
-          <li ng-class="{active: comments.length == 0}"><a href="#details-{{ ::event._id }}" data-toggle="tab">Details</a></li>
-        </ul>
-        <div class="tab-content">
-
-          <div class="tab-pane" ng-class="{active: comments.length > 0}" id="comments-{{ ::event._id }}">
-            <div class="comment-wrapper col-md-7">
-
-              <div ng-repeat="comment in comments">
-                <div class="comment-bubble">
-                  <div class="comment-name">{{ ::comment.user.username }}</div>
-                  <div class="comment-body">{{ ::comment.comment }}</div>
-                  <div class="comment-timestamp"><i class="fa fa-clock-o"></i> {{ ::comment.created_at }}</div>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <table class="table table-bordered table-hover">
+                        <tr ng-repeat="(key, value) in eventdetail">
+                            <td width="150px">{{ key }}</td>
+                            <td>{{ value }}</td>
+                        </tr>
+                    </table>
                 </div>
-              </div>
-
-              <br>
-
-              <form name="commentForm" ng-submit="postComment()">
-                <div class="form-group">
-                  <textarea ng-model="formData.comment" class="form-control" rows="3" placeholder="What's on your mind?" required></textarea>
+                <div class="col-md-4">
+                    <div ng-repeat="comment in comments">
+                        <div class="comment-bubble">
+                            <div class="comment-name">{{ comment.user.username }}</div>
+                            <div class="comment-body">{{ comment.comment }}</div>
+                            <div class="comment-timestamp"><i class="fa fa-clock-o"></i> {{ comment.created_at }}</div>
+                        </div>
+                    </div>
+                    <form name="commentForm" ng-submit="postComment()">
+                        <div class="form-group">
+                            <textarea ng-model="formData.comment" class="form-control" rows="3" placeholder="What's on your mind?" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" class="btn btn-primary" value="Post comment" />
+                            <input type="reset" class="btn btn-default" value="Cancel" />
+                        </div>
+                    </form>
                 </div>
-                <div class="form-group">
-                  <input type="submit" class="btn btn-primary" value="Post comment" />
-                  <input type="reset" class="btn btn-default" value="Cancel" />
-                </div>
-              </form>
             </div>
-          </div>
-
-          <div class="tab-pane" ng-class="{active: comments.length == 0}" id="details-{{ ::event._id }}">
-            <br>
-            <table class="table table-bordered table-hover">
-              <tr ng-repeat="(key, value) in eventdetail">
-                <td width="150px">{{ ::key }}</td>
-                <td>{{ ::value }}</td>
-              </tr>
-            </table>
-          </div>
-
         </div>
     </div>
 </div>

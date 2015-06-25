@@ -22,11 +22,10 @@ limitations under the License.
          * Manage query filters.
          * @param sketch - Sketch object.
          * @param filter - Filter object.
+         * @param query - Query string.
          * @param show-filters - Boolean value. If set to true the filter card will be shown.
          * @param events - Array of events objects.
          * @param meta - Events metadata object.
-         * @param search - Function to perform search.
-         * TODO: Refactor to require tsSearch controller (to access search()).
          */
         return {
             restrict: 'E',
@@ -34,32 +33,37 @@ limitations under the License.
             scope: {
                 sketch: '=',
                 filter: '=',
+                query: '=',
                 showFilters: '=',
                 events: '=',
-                meta: '=',
-                search: '&'
+                meta: '='
             },
-            controller: function ($scope) {
-                $scope.clearFilter = function() {
-                    delete $scope.filter.time_start;
-                    delete $scope.filter.time_end;
-                    $scope.showFilters = false;
-                    $scope.search()
+            require: '^tsSearch',
+            link: function(scope, elem, attrs, ctrl) {
+                scope.applyFilter = function() {
+                    ctrl.search(scope.query, scope.filter)
                 };
 
-                $scope.enableAllTimelines = function() {
-                    $scope.filter.indices = [];
-                    for (var i = 0; i < $scope.sketch.timelines.length; i++) {
-                        $scope.filter.indices.push($scope.sketch.timelines[i].searchindex.index_name)
-                    }
-                    $scope.search()
+                scope.clearFilter = function() {
+                    delete scope.filter.time_start;
+                    delete scope.filter.time_end;
+                    scope.showFilters = false;
+                    ctrl.search(scope.query, scope.filter)
                 };
-                $scope.disableAllTimelines = function() {
-                    $scope.filter.indices = [];
-                    $scope.events = [];
-                    $scope.meta.es_total_count = 0;
-                    $scope.meta.es_time = 0;
-                    $scope.meta.noisy = false;
+
+                scope.enableAllTimelines = function() {
+                    scope.filter.indices = [];
+                    for (var i = 0; i < scope.sketch.timelines.length; i++) {
+                        scope.filter.indices.push(scope.sketch.timelines[i].searchindex.index_name)
+                    }
+                    ctrl.search(scope.query, scope.filter)
+                };
+                scope.disableAllTimelines = function() {
+                    scope.filter.indices = [];
+                    scope.events = [];
+                    scope.meta.es_total_count = 0;
+                    scope.meta.es_time = 0;
+                    scope.meta.noisy = false;
                 }
 
             }
@@ -71,36 +75,40 @@ limitations under the License.
          * Manage the timeline items to filter on.
          */
         return {
-            // TODO: Explore setting isolate scope here.
             restrict: 'E',
             templateUrl: '/static/components/explore/explore-timeline-picker-item.html',
-            scope: false,
-            controller: function($scope) {
-                $scope.checkboxModel = {};
-                var index_name = $scope.timeline.searchindex.index_name;
-                $scope.toggleCheckbox = function () {
-                    var index = $scope.filter.indices.indexOf(index_name);
-                    $scope.checkboxModel.active = !$scope.checkboxModel.active;
-                    if (! $scope.checkboxModel.active) {
+            scope: {
+                timeline: '=',
+                query: '=',
+                filter: '='
+            },
+            require: '^tsSearch',
+            link: function(scope, elem, attrs, ctrl) {
+                scope.checkboxModel = {};
+                var index_name = scope.timeline.searchindex.index_name;
+                scope.toggleCheckbox = function () {
+                    var index = scope.filter.indices.indexOf(index_name);
+                    scope.checkboxModel.active = !scope.checkboxModel.active;
+                    if (!scope.checkboxModel.active) {
                         if (index > -1) {
-                            $scope.filter.indices.splice(index, 1);
+                            scope.filter.indices.splice(index, 1);
                         }
                     } else {
                         if (index == -1) {
-                            $scope.filter.indices.push(index_name);
+                            scope.filter.indices.push(index_name);
                         }
                     }
-                    $scope.search();
+                    ctrl.search(scope.query, scope.filter);
                 };
-                $scope.$watch("filter.indices", function(value) {
-                    if ($scope.filter.indices.indexOf(index_name) == -1) {
-                        $scope.colorbox = {'background-color': '#E9E9E9'};
-                        $scope.timeline_picker_title = {'color': '#D1D1D1', 'text-decoration': 'line-through'};
-                        $scope.checkboxModel.active = false;
+                scope.$watch("filter.indices", function(value) {
+                    if (scope.filter.indices.indexOf(index_name) == -1) {
+                        scope.colorbox = {'background-color': '#E9E9E9'};
+                        scope.timeline_picker_title = {'color': '#D1D1D1', 'text-decoration': 'line-through'};
+                        scope.checkboxModel.active = false;
                     } else {
-                        $scope.colorbox = {'background-color': "#" + $scope.timeline.color};
-                        $scope.timeline_picker_title = {'color': '#333', 'text-decoration': 'none'};
-                        $scope.checkboxModel.active = true;
+                        scope.colorbox = {'background-color': "#" + scope.timeline.color};
+                        scope.timeline_picker_title = {'color': '#333', 'text-decoration': 'none'};
+                        scope.checkboxModel.active = true;
                     }
                 }, true);
             }

@@ -16,7 +16,9 @@ limitations under the License.
 -->
 
 {% block header_left %}
-  <ts-core-upload class="pull-left" style="margin-right:20px;margin-top: -6px;"></ts-core-upload>
+  {% if upload_enabled %}
+    <ts-core-upload class="pull-left" style="margin-right:20px;margin-top: -6px;"></ts-core-upload>
+  {% endif %}
 {% endblock %}
 
 {% block sidenav %}
@@ -39,18 +41,15 @@ limitations under the License.
 
 {% block main %}
 <div class="container">
-  <div class="row" style="margin-top:0px;margin-bottom: 20px;">
-    <div class="col-md-12">
-      <ts-core-upload-queue></ts-core-upload-queue>
-      <form class="form form-inline" method="get" action="{{ url_for('home_views.home') }}">
-        <input type="search" id="q" name="q" class="search-input" placeholder="Search sketches" autofocus="true" value="{{ query }}">
-      </form>
-    </div>
-  </div>
-
+  {% if upload_enabled %}
+    <ts-core-upload-queue></ts-core-upload-queue>
+  {%  endif %}
   <div class="row">
     <div class="col-md-12">
       <div class="card">
+      <form class="form form-inline" method="get" action="{{ url_for('home_views.home') }}">
+        <input type="search" id="q" name="q" class="search-input" placeholder="Search sketches" autofocus="true" value="{{ query }}">
+      </form>
 
         {% if not sketches.all() %}
         No result

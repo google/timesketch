@@ -137,6 +137,12 @@ class SaveViewForm(BaseForm):
     filter = StringField(u'Filter', validators=[DataRequired()])
 
 
+class ExploreForm(BaseForm):
+    """Form used to search the datastore."""
+    query = StringField(u'Query')
+    filter = StringField(u'Filter')
+
+
 class StatusForm(BaseForm):
     """Form to handle status annotation."""
     status = SelectField(
@@ -154,9 +160,8 @@ class EventAnnotationForm(BaseForm):
     """Generic form to handle event annotation. E.g. comment and labels."""
     annotation = StringField(u'Annotation', validators=[DataRequired()])
     annotation_type = StringField(u'Type', validators=[DataRequired()])
-    searchindex_id = StringField(u'Searchindex', validators=[DataRequired()])
-    event_id = StringField(u'Event', validators=[DataRequired()])
-    event_type = StringField(u'Event type', validators=[DataRequired()])
+    events = StringField(u'Events', validators=[DataRequired()])
+
 
 class UploadFileForm(BaseForm):
     """Form to handle file uploads."""

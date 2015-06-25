@@ -23,10 +23,19 @@ limitations under the License.
     </div>
 </div>
 
-<div class="card" ng-show="events">
-    <div ng-show="meta" style="padding:10px;">
+<div class="card" style="min-height:100px;">
+    <div class="pull-left" ng-show="meta" style="padding:10px;margin-bottom: 10px;">
         {{ meta.es_total_count }} events ({{ meta.es_time/1000 }}s)
     </div>
+
+    <div class="pull-right" ng-show="events.length">
+        <div class="btn-group" style="margin-left:10px;">
+            <button class="btn btn-default" ng-click="toggleAll()"><i class="fa fa-check"></i> Toggle all</button>
+            <button class="btn btn-default" ng-click="addStar()" ng-disabled="!anySelected"><i class="fa fa-star icon-yellow"></i> Add star</button>
+            <button class="btn btn-default" ng-click="removeStar()" ng-disabled="!anySelected"><i class="fa fa-star icon-grey"></i> Remove star</button>
+        </div>
+    </div>
+
     <div ng-repeat="event in events">
         <ts-event event="event" meta="meta" sketch-id="sketchId"></ts-event>
     </div>

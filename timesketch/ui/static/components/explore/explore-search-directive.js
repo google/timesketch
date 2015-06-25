@@ -30,12 +30,13 @@ limitations under the License.
                 sketchId: '=',
                 viewId: '='
             },
-            link: function(scope, elem, attrs) {
+            controllerAs: 'ctrl',
+            link: function(scope, elem, attrs, ctrl) {
                 if (attrs.autoload == 'true') {
                     timesketchApi.getView(attrs.sketchId, attrs.viewId).success(function(data) {
-                        scope.query = data.objects[0].query_string;
-                        scope.filter = angular.fromJson(data.objects[0].query_filter);
-                        scope.search();
+                        var query = data.objects[0].query_string;
+                        var filter = angular.fromJson(data.objects[0].query_filter);
+                        ctrl.search(query, filter);
                     });
                 }
                 if (attrs.redirect == 'true') {
@@ -54,18 +55,25 @@ limitations under the License.
                         }
                 });
 
-                $scope.search = function() {
-                    $scope.events = [];
-                    if ($scope.filter.star && $scope.query) {
-                        $scope.filter.star = false;
+                this.search = function(query, filter) {
+                    if (filter.star && query) {
+                        filter.star = false;
                     }
-                    if (!$scope.filter.star && !$scope.query) {
+                    if (!filter.star && !query) {
                         return
                     }
-                    if ($scope.filter.time_start) {
+                    if (filter.time_start) {
                         $scope.showFilters = true;
                     }
-                    timesketchApi.search($scope.sketchId, $scope.query, $scope.filter)
+
+                    if (filter.context && query != "*") {
+                        delete filter.context;
+                    }
+
+                    $scope.events = [];
+                    $scope.query = query;
+                    $scope.filter = filter;
+                    timesketchApi.search($scope.sketchId, query, filter)
                         .success(function(data) {
                             $scope.events = data.objects;
                             $scope.meta = data.meta;
@@ -75,15 +83,15 @@ limitations under the License.
                     })
                 };
 
-                $scope.search_starred = function() {
-                    $scope.filter.star = true;
-                    $scope.query = "";
-                    $scope.filter.time_start = "";
-                    $scope.filter.time_end = "";
-                    $scope.search()
+                this.search_starred = function(query, filter) {
+                    filter.star = true;
+                    query = "";
+                    filter.time_start = "";
+                    filter.time_end = "";
+                    this.search(query, filter)
                 };
 
-                $scope.saveView = function() {
+                this.saveView = function() {
                     timesketchApi.saveView(
                         $scope.sketchId, $scope.view_name, $scope.query, $scope.filter)
                         .success(function(data) {
@@ -91,10 +99,67 @@ limitations under the License.
                             var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
                             window.location.href = view_url;
                     });
-                }
+                };
+
+                this.getContext = function(event) {
+                    var new_filter = {};
+                    var current_filter = $scope.filter;
+                    var current_query = $scope.query;
+                    angular.copy(current_filter, new_filter);
+
+                    var context_query = "*";
+
+                    if (!angular.isDefined(new_filter.context)) {
+                        new_filter.context = {};
+                        new_filter.context.query = current_query;
+                        new_filter.context.sketchId = $scope.sketchId;
+                        new_filter.context.filter = current_filter;
+                        new_filter.context.seconds = 300;
+                        new_filter.context.event = {};
+                        new_filter.context.meta = {};
+                        angular.copy(event, new_filter.context.event);
+                        angular.copy($scope.meta, new_filter.context.meta);
+                    }
+
+                    angular.copy(event, new_filter.context.event);
+                    new_filter.indices = [event._index];
+                    new_filter.time_start = moment(event._source.timestamp / 1000).utc().subtract(new_filter.context.seconds, "seconds").format();
+                    new_filter.time_end = moment(event._source.timestamp / 1000).utc().add(new_filter.context.seconds, "seconds").format();
+
+                    this.search(context_query, new_filter);
+                };
+
+                this.closeContext = function(context) {
+                    delete context.filter.context;
+                    $scope.showFilters = false;
+                    this.search(context.query, context.filter)
+                };
             }
         }
     }]);
+
+    module.directive('tsSearchContextCard', function() {
+        /**
+         * Render the context card.
+         */
+        return {
+            restrict: 'E',
+            templateUrl: '/static/components/explore/explore-search-context-card.html',
+            scope: {
+                context: '='
+            },
+            require: '^tsSearch',
+            controllerAs: 'ctrl',
+            link: function (scope, elem, attrs, ctrl) {
+                scope.closeContext = function(context) {
+                    ctrl.closeContext(context)
+                };
+                scope.setInterval = function() {
+                    ctrl.getContext(scope.context.event)
+                };
+            }
+        }
+    });
 
     module.directive('tsSearchSavedViewPicker', ['timesketchApi', function(timesketchApi) {
         /**

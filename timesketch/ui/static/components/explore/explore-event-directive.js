@@ -17,7 +17,7 @@ limitations under the License.
 (function() {
     var module = angular.module('timesketch.explore.event.directive', []);
 
-    module.directive('tsEventList', function () {
+    module.directive('tsEventList', ['timesketchApi', function(timesketchApi) {
         /**
          * Render list of events (search result from the datastore).
          * @param sketch-id - The id for the sketch.
@@ -31,9 +31,63 @@ limitations under the License.
                 sketchId: '=',
                 meta: '=',
                 events: '='
+            },
+            controller: function($scope) {
+
+                var toggleStar = function(event_list) {
+                    if (!event_list.length) {return}
+                    timesketchApi.saveEventAnnotation(
+                        $scope.sketchId,
+                        'label',
+                        '__ts_star',
+                        event_list).success(function (data) {})
+                };
+
+                $scope.toggleAll = function() {
+                    $scope.isAllSelected = $scope.events.every(function(event) {
+                        return event.selected;
+                    });
+                    angular.forEach($scope.events, function(event) {
+                        if (!$scope.isAllSelected) {
+                            event.selected = true
+                        } else {
+                            event.selected = false
+                        }
+                    })
+                };
+
+                $scope.addStar = function() {
+                    event_list = [];
+                    angular.forEach($scope.events, function(event) {
+                        if (event.selected && !event.star) {
+                            event.star = true;
+                            event_list.push(event);
+                        }
+                    });
+                    toggleStar(event_list)
+                };
+
+                $scope.removeStar = function() {
+                    event_list = [];
+                    angular.forEach($scope.events, function(event) {
+                        if (event.selected && event.star) {
+                            event.star = false;
+                            event_list.push(event);
+                        }
+                    });
+                    toggleStar(event_list)
+                };
+
+                $scope.$watch('events', function(value) {
+                    if (angular.isDefined(value)) {
+                        $scope.anySelected = value.some(function(event) {
+                            return event.selected;
+                        });
+                    }
+                }, true)
             }
         }
-    });
+    }]);
 
     module.directive('tsEvent', function () {
         /**
@@ -48,29 +102,25 @@ limitations under the License.
             scope: {
                 sketchId: '=',
                 meta: '=',
-                event: '='
+                event: '=',
+                isContextEvent: '='
             },
+            require: '^tsSearch',
             controller: function ($scope, timesketchApi) {
-                $scope.star = false;
-                if ($scope.event._source.label.indexOf('__ts_star') > -1) {
-                    $scope.star = true;
-                    $scope.event._source.label.splice($scope.event._source.label.indexOf('__ts_star'), 1)
-                }
+                $scope.showDetails = false;
 
-                if ($scope.event._source.label.indexOf('__ts_comment') > -1) {
-                    $scope.comment = true;
-                    $scope.event._source.label.splice($scope.event._source.label.indexOf('__ts_comment'), 1)
-                }
+                $scope.toggleSelected = function() {
+                    $scope.event.selected = !$scope.event.selected
+                };
 
                 $scope.toggleStar = function() {
                     timesketchApi.saveEventAnnotation(
                         $scope.sketchId,
                         'label',
                         '__ts_star',
-                        $scope.event._index,
-                        $scope.event._id,
-                        $scope.event._type).success(function(data) {})
+                        $scope.event).success(function(data) {})
                 };
+
                 $scope.getDetail = function() {
                     if ($scope.eventdetail) {return}
                     timesketchApi.getEvent(
@@ -86,17 +136,36 @@ limitations under the License.
                         $scope.sketchId,
                         'comment',
                         $scope.formData.comment,
-                        $scope.event._index,
-                        $scope.event._id,
-                        $scope.event._type).success(function(data) {
+                        $scope.event).success(function(data) {
                             $scope.formData.comment = '';
                             $scope.commentForm.$setPristine();
-                            $scope.comments.push(data['objects'][0]);
+                            $scope.comments.push(data['objects'][0][0]);
                             $scope.comment = true;
                         })
                 };
+                $scope.$watch('event', function(value) {
+                    $scope.star = false;
+                    $scope.comment = false;
+                    if ($scope.event._source.label.indexOf('__ts_star') > -1) {
+                        $scope.event.star = true;
+                    } else {
+                        $scope.event.star = false;
+                    }
+
+                    if ($scope.event._source.label.indexOf('__ts_comment') > -1) {
+                        $scope.comment = true;
+                    }
+
+                });
+
+            },
+            link: function(scope, elem, attrs, ctrl) {
+                scope.getContext = function(event) {
+                    ctrl.getContext(event);
+                }
             }
         }
     });
+
 })();
 
