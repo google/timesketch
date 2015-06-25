@@ -47,7 +47,7 @@ def home():
         Sketch.Status.parent).order_by(Sketch.updated_at.desc())
     query_filter = request.args.get(u'filter', u'')
     query = request.args.get(u'q', u'')
-    # Only render upload button if it is configures.
+    # Only render upload button if it is configured.
     upload_enabled = u'UPLOAD_FOLDER' in current_app.config
 
     if query_filter:
