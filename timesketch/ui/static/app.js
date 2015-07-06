@@ -46,7 +46,7 @@ limitations under the License.
                 }
             };
         });
-        var csrftoken = document.getElementsByTagName('meta')['csrf-token'].getAttribute('content');
+        var csrftoken = document.getElementsByTagName('meta')[0]['content'];
         $httpProvider.defaults.headers.common['X-CSRFToken'] = csrftoken;
     });
 })();
