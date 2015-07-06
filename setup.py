@@ -12,16 +12,39 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Setup setuptools."""
+"""This is the setup file for the project. The standard setup rules apply:
+
+   python setup.py build
+   sudo python setup.py install
+"""
 
 from setuptools import find_packages
 from setuptools import setup
 
+timesketch_description = (
+    u'Timesketch is a web based tool for collaborative forensic timeline '
+    u'analysis. Using sketches you and your collaborators can easily organize '
+    u'timelines and analyze them all at the same time.  Add meaning to '
+    u'your raw data with rich annotations, comments, tags and stars.')
 
 setup(
-    name=u'Timesketch',
-    version=u'15.02-dev',
-    long_description=__doc__,
+    name=u'timesketch',
+    version=u'2015.7',
+    description=u'Collaborative forensic timeline analysis',
+    long_description=timesketch_description,
+    license=u'Apache License, Version 2.0',
+    url=u'http://www.timesketch.org/',
+    maintainer=u'Timesketch development team',
+    maintainer_email=u'timesketch-dev@googlegroups.com',
+    classifiers=[
+        u'Development Status :: 4 - Beta',
+        u'Environment :: Web Environment',
+        u'Operating System :: OS Independent',
+        u'Programming Language :: Python',
+    ],
+    data_files=[
+        (u'share/timesketch', [u'timesketch.conf'])
+    ],
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
