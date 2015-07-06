@@ -26,6 +26,7 @@ header {
     top:0;
     z-index:9998;
     padding:11px 21px 11px 11px;
+    box-shadow: 0 -3px 30px rgba(0, 0, 0, 0.3)
 }
 
 table {
@@ -41,10 +42,11 @@ table {
     width:200px;
     height:65px;
     padding:20px;
-    background: #2c3e50;
+    background: #428bca;
     position: fixed;
     top:0;
     z-index:9999;
+    box-shadow: 0 -3px 30px rgba(0, 0, 0, 0.3)
 }
 
 #logo img {
@@ -62,6 +64,7 @@ table {
   background: #f1f1f1;
   top:65px;
   z-index:9998;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3)
 }
 
 #navigation .leftnav-title {
@@ -114,7 +117,7 @@ table {
     margin-bottom: 20px;
     background: #fff;
     padding: 20px;
-    box-shadow: -1px 0 #e5e5e5,0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.24);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15)
 }
 
 .card-alert {
