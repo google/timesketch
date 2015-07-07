@@ -59,14 +59,13 @@ limitations under the License.
 <div class="card">
   <div class="row">
     <div class="col-md-6">
-      {% if sketch.has_permission(user=current_user, permission='write') %}
-      <div data-toggle="modal" data-target="#edit-timeline-modal" class="title-description">
-        {% else %}
-        <div>
-          {% endif %}
           <div class="pull-left" style="width:50px;height:50px;background:#{{ timeline.color }};"></div>
           <div style="margin-left:80px;">
-            <h2>{{ timeline.name }}</h2>
+            <h2>{{ timeline.name }}
+              {% if sketch.has_permission(user=current_user, permission='write') %}
+                  <button class="btn btn-default" data-toggle="modal" data-target="#edit-timeline-modal" style="margin-left:10px;width:50px;"><i class="fa fa-pencil"></i></button>
+              {% endif %}
+            </h2>
             <p style="white-space: pre-wrap;word-wrap: break-word;">{{ timeline.description }}</p>
           </div>
         </div>
