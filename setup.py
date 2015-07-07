@@ -57,15 +57,10 @@ setup(
         u'Flask-Bcrypt',
         u'Flask-RESTful',
         u'Flask-WTF',
-        u'Flask-Testing',
         u'SQLAlchemy ==0.9.8',
         u'celery',
         u'redis',
         u'blinker',
         u'elasticsearch',
-        u'nose',
-        u'mock',
-        u'pylint',
-        u'coverage',
     ])
 )
