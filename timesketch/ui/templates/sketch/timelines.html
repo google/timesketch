@@ -22,12 +22,13 @@ limitations under the License.
   {% if sketch.has_permission(current_user, 'write') %}
       <div class="row">
         <div class="col-md-12">
+        <div class="card">
           <form method="get" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
             <input type="text" name="q" class="search-input" placeholder="Search for timelines to add" />
           </form>
         </div>
       </div>
-      <br>
+      </div>
 
       {% if form.timelines.choices %}
           <div class="row">
@@ -77,7 +78,7 @@ limitations under the License.
       </tbody>
     </table>
     {% else %}
-    <p>There is no timeline added to this sketch. Add one to get started.</p>
+    <p>There is no timeline added to this sketch.</p>
     {% endif %}
   </div>
 

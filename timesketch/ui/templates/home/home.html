@@ -27,7 +27,7 @@ limitations under the License.
             <form action="{{ url_for('home_views.home') }}" method="post">
                 {{ form.name }}
                 {{ form.description }}
-                <button type="submit" class="btn btn-default btn-block"><i class="fa fa-plus"></i> Sketch</button>
+                <button type="submit" class="btn btn-primary btn-block btn-uppercase"><i class="fa fa-plus"></i> Sketch</button>
                 {{ form.csrf_token }}
             </form>
         </div>
@@ -44,18 +44,17 @@ limitations under the License.
         <div class="row">
             <div class="col-md-12">
 
-                <form class="form form-inline" method="get" action="{{ url_for('home_views.home') }}">
-                    <input type="search" id="q" name="q" class="search-input" placeholder="Search sketches" autofocus="true" value="{{ query }}">
-                </form>
-                <br>
-
                 {% if upload_enabled %}
                     <ts-core-upload-queue></ts-core-upload-queue>
                 {%  endif %}
 
+                <div class="card">
+                    <form class="form form-inline" method="get" action="{{ url_for('home_views.home') }}">
+                        <input type="search" id="q" name="q" class="search-input" placeholder="Search sketches" autofocus="true" value="{{ query }}">
+                    </form>
+                </div>
 
                 <div class="card">
-
                     {% if not sketches.all() %}
                         <form action="{{ url_for('home_views.home') }}" method="post">
                             {{ form.name }}
