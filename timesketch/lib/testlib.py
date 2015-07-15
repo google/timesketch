@@ -37,6 +37,7 @@ class TestConfig(object):
     WTF_CSRF_ENABLED = False
     ELASTIC_HOST = None
     ELASTIC_PORT = None
+    UPLOAD_ENABLED = False
 
 
 class MockDataStore(datastore.DataStore):
