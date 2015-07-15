@@ -16,61 +16,74 @@ limitations under the License.
 -->
 
 {% block header_left %}
-  {% if upload_enabled %}
-    <ts-core-upload class="pull-left" style="margin-right:20px;margin-top: -6px;"></ts-core-upload>
-  {% endif %}
+    {% if upload_enabled %}
+        <ts-core-upload class="pull-left" style="margin-right:20px;margin-top: -6px;"></ts-core-upload>
+    {% endif %}
 {% endblock %}
 
 {% block sidenav %}
-<div id="navigation">
-  <div class="leftnav-title">
-    <form action="{{ url_for('home_views.home') }}" method="post">
-      {{ form.name }}
-      {{ form.description }}
-      <button type="submit" class="btn btn-default btn-block"><i class="fa fa-plus"></i> Sketch</button>
-      {{ form.csrf_token }}
-    </form>
-  </div>
-  <ul class="leftnav">
-    <li><a href="{{ url_for('home_views.home') }}"><i class="fa fa-inbox"></i> All</a></li>
-    <li><a href="{{ url_for('home_views.home', filter='user') }}"><i class="fa fa-user"></i> My sketches</a></li>
-    <li><a href="{{ url_for('home_views.home', filter='shared') }}"><i class="fa fa-share"></i> Shared</a></li>
-  </ul>
-</div>
+    <div id="navigation">
+        <div class="leftnav-title">
+            <form action="{{ url_for('home_views.home') }}" method="post">
+                {{ form.name }}
+                {{ form.description }}
+                <button type="submit" class="btn btn-default btn-block"><i class="fa fa-plus"></i> Sketch</button>
+                {{ form.csrf_token }}
+            </form>
+        </div>
+        <ul class="leftnav">
+            <li><a href="{{ url_for('home_views.home') }}"><i class="fa fa-inbox"></i> All</a></li>
+            <li><a href="{{ url_for('home_views.home', filter='user') }}"><i class="fa fa-user"></i> My sketches</a></li>
+            <li><a href="{{ url_for('home_views.home', filter='shared') }}"><i class="fa fa-share"></i> Shared with me</a></li>
+        </ul>
+    </div>
 {% endblock %}
 
 {% block main %}
-<div class="container">
-  {% if upload_enabled %}
-    <ts-core-upload-queue></ts-core-upload-queue>
-  {%  endif %}
-  <div class="row">
-    <div class="col-md-12">
-      <div class="card">
-      <form class="form form-inline" method="get" action="{{ url_for('home_views.home') }}">
-        <input type="search" id="q" name="q" class="search-input" placeholder="Search sketches" autofocus="true" value="{{ query }}">
-      </form>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
 
-        {% if not sketches.all() %}
-        No result
-        {% else %}
+                <form class="form form-inline" method="get" action="{{ url_for('home_views.home') }}">
+                    <input type="search" id="q" name="q" class="search-input" placeholder="Search sketches" autofocus="true" value="{{ query }}">
+                </form>
+                <br>
 
-        <table class="table">
-          <tbody>
-          {% for sketch in sketches.all() %}
-          <tr>
-            <td style="padding: 30px;padding-left:0;">
-              <a style="font-size: 1.3em;" href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}">{{ sketch.name }}</a>
-              <br>
-              <span style="color:#777;">{{ sketch.description }}</span>
-            </td>
-          </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-        {% endif %}
-      </div>
+                {% if upload_enabled %}
+                    <ts-core-upload-queue></ts-core-upload-queue>
+                {%  endif %}
+
+
+                <div class="card">
+
+                    {% if not sketches.all() %}
+                        <form action="{{ url_for('home_views.home') }}" method="post">
+                            {{ form.name }}
+                            {{ form.description }}
+                            <h4>No sketches found</h4>
+                            <button type="submit" class="btn btn-link" style="padding:0;">Create a new sketch to get started!</button>
+                            {{ form.csrf_token }}
+                        </form>
+
+                    {% else %}
+
+
+                        <table class="table">
+                            <tbody>
+                            {% for sketch in sketches.all() %}
+                                <tr>
+                                    <td style="padding: 30px;padding-left:0;">
+                                        <a style="font-size: 1.3em;" href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}">{{ sketch.name }}</a>
+                                        <br>
+                                        <span style="color:#777;">{{ sketch.description }}</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 {% endblock %}
