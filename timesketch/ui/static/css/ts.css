@@ -20,13 +20,13 @@ body {
 
 header {
     width: 100%;
-    height: 65px;
+    height: 55px;
     background: #428bca;
     position: fixed;
     top:0;
     z-index:9998;
     padding:11px 21px 11px 11px;
-    box-shadow: 0 -3px 30px rgba(0, 0, 0, 0.3)
+    box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.3)
 }
 
 table {
@@ -35,18 +35,19 @@ table {
 }
 
 #main {
-    margin:100px 35px 35px 235px;
+    margin:90px 35px 35px 245px;
 }
 
 #logo {
-    width:200px;
-    height:65px;
+    width:210px;
+    height:55px;
     padding:20px;
+    padding-top:15px;
     background: #428bca;
     position: fixed;
     top:0;
     z-index:9999;
-    box-shadow: 0 -3px 30px rgba(0, 0, 0, 0.3)
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3)
 }
 
 #logo img {
@@ -56,13 +57,13 @@ table {
 }
 
 #navigation {
-  width: 200px;
+  width: 210px;
   overflow: hidden;
   position: fixed;
   left: 0;
   height: 100%;
   background: #f1f1f1;
-  top:65px;
+  top:55px;
   z-index:9998;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.3)
 }
@@ -290,6 +291,7 @@ table {
 .btn-uppercase {
     text-transform: uppercase;
     font-size: 0.9em;
+    letter-spacing: 1.0px;
 }
 
 .comment-wrapper {

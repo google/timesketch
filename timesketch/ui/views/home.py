@@ -48,7 +48,7 @@ def home():
     query_filter = request.args.get(u'filter', u'')
     query = request.args.get(u'q', u'')
     # Only render upload button if it is configured.
-    upload_enabled = u'UPLOAD_FOLDER' in current_app.config
+    upload_enabled = current_app.config[u'UPLOAD_ENABLED']
 
     if query_filter:
         if query_filter == u'user':

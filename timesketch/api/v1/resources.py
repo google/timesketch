@@ -497,10 +497,11 @@ class UploadFileResource(ResourceMixin, Resource):
         Raises:
             ApiHTTPError
         """
+        UPLOAD_ENABLED = current_app.config[u'UPLOAD_ENABLED']
         UPLOAD_FOLDER = current_app.config[u'UPLOAD_FOLDER']
 
         form = UploadFileForm()
-        if form.validate_on_submit() and UPLOAD_FOLDER:
+        if form.validate_on_submit() and UPLOAD_ENABLED:
             from timesketch.lib.tasks import run_plaso
             file_storage = form.file.data
             timeline_name = form.name.data
