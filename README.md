@@ -4,7 +4,7 @@
 
 Timesketch is an experimental, proof of concept open source tool for collaborative forensic timeline analysis. Using sketches you and your collaborators can easily organize your timelines and analyze them all at the same time.  Add meaning to your raw data with rich annotations, comments, tags and stars.
 
-![alt text](https://sites.google.com/site/timesketchforensics/_/rsrc/1424907659096/screenshots/explorer%202%20multiple.png "Timesketch")
+![alt text](https://sites.google.com/site/timesketchforensics/_/rsrc/1424907083092/about/Screen%20Shot%202015-02-26%20at%2000.30.44.png "Timesketch")
 
 --
 
