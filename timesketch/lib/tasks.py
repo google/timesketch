@@ -13,11 +13,34 @@
 # limitations under the License.
 """Celery task for processing Plaso storage files."""
 
+import os
+import sys
+
 from plaso.frontend import psort
 
 from timesketch import create_celery_app
+from flask import current_app
 
 celery = create_celery_app()
+
+
+def get_data_location(data_location=None):
+    """Get the location (path) to the winevt-rc.db file.
+
+    Args:
+        data_location: Path to the directory where the database file is located.
+                       If this is None we will use sys.prefix + share/plaso as
+                       default.
+
+    Returns:
+        The path to where the database file is located or None if not existing.
+    """
+
+    if not data_location:
+        data_location = os.path.join(sys.prefix, u'share', u'plaso')
+    if not os.path.exists(data_location):
+        data_location = None
+    return data_location
 
 
 @celery.task(track_started=True)
@@ -32,11 +55,15 @@ def run_plaso(source_file_path, timeline_name, index_name):
     Returns:
         Dictionary with count of processed events.
     """
+    # Try to read the winevt-rc database path from the config file.
+    data_location = get_data_location(
+        data_location=current_app.config.get(u'WINEVT_DB', None))
     analysis_plugins = None
     flush_interval_ms = 1000
 
     # Use the Psort frontend for processing.
     frontend = psort.PsortFrontend()
+    frontend.SetDataLocation(data_location)
     storage_file = frontend.OpenStorage(
         source_file_path, read_only=True)
 
