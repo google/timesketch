@@ -2,7 +2,7 @@ language: python
 python:
   - "2.7"
 before_install:
-  - if test `uname -s` = 'Linux'; then sudo add-apt-repository ppa:gift/stable -y && sudo apt-get update -q && sudo apt-get install python-plaso; fi
+  - if test `uname -s` = 'Linux'; then sudo add-apt-repository ppa:gift/stable -y && sudo add-apt-repository universe -y && sudo apt-get update -q && sudo apt-get install python-plaso; fi
 # command to install dependencies
 install:
   - "pip install ."
