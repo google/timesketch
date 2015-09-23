@@ -16,10 +16,10 @@
 import os
 import sys
 
+from flask import current_app
 from plaso.frontend import psort
 
 from timesketch import create_celery_app
-from flask import current_app
 
 celery = create_celery_app()
 
