@@ -5,5 +5,9 @@ python:
 install:
   - "pip install ."
   - "pip install Flask-Testing nose mock pylint coverage"
+  - "sudo add-apt-repository universe"
+  - "sudo add-apt-repository ppa:gift/stable"
+  - "sudo apt-get update"
+  - "sudo apt-get install python-plaso"
 # command to run tests
 script: nosetests
