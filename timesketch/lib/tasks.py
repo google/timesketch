@@ -17,7 +17,13 @@ import os
 import sys
 
 from flask import current_app
-from plaso.frontend import psort
+# We currently don't have plaso in our Travis setup. This is a workaround
+# for that until we fix the Travis environment.
+# TODO: Add Plaso to our Travis environment we are running our tests in.
+try:
+    from plaso.frontend import psort
+except ImportError:
+    pass
 
 from timesketch import create_celery_app
 
