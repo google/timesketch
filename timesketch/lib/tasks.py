@@ -13,11 +13,35 @@
 # limitations under the License.
 """Celery task for processing Plaso storage files."""
 
-from plaso.frontend import psort
+import os
+import sys
+
+from flask import current_app
+# We currently don't have plaso in our Travis setup. This is a workaround
+# for that until we fix the Travis environment.
+# TODO: Add Plaso to our Travis environment we are running our tests in.
+try:
+    from plaso.frontend import psort
+except ImportError:
+    pass
 
 from timesketch import create_celery_app
 
 celery = create_celery_app()
+
+
+def get_data_location():
+    """Path to the plaso data directory.
+
+    Returns:
+        The path to where the plaso data directory is or None if not existing.
+    """
+    data_location = current_app.config.get(u'PLASO_DATA_LOCATION', None)
+    if not data_location:
+        data_location = os.path.join(sys.prefix, u'share', u'plaso')
+    if not os.path.exists(data_location):
+        data_location = None
+    return data_location
 
 
 @celery.task(track_started=True)
@@ -32,11 +56,13 @@ def run_plaso(source_file_path, timeline_name, index_name):
     Returns:
         Dictionary with count of processed events.
     """
+    plaso_data_location = get_data_location()
     analysis_plugins = None
     flush_interval_ms = 1000
 
     # Use the Psort frontend for processing.
     frontend = psort.PsortFrontend()
+    frontend.SetDataLocation(plaso_data_location)
     storage_file = frontend.OpenStorage(
         source_file_path, read_only=True)
 
