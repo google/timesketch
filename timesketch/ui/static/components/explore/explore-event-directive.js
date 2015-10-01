@@ -23,6 +23,8 @@ limitations under the License.
          * @param sketch-id - The id for the sketch.
          * @param meta - Metadata object returned from the datastore search.
          * @param events - Array of events (search results).
+         * @param query - Query string for the search results.
+         * @param filter - Filter for the search results.
          */
         return {
             restrict: 'E',
@@ -30,10 +32,12 @@ limitations under the License.
             scope: {
                 sketchId: '=',
                 meta: '=',
-                events: '='
+                events: '=',
+                query: '=',
+                filter: '='
             },
+            require: '^tsSearch',
             controller: function($scope) {
-
                 var toggleStar = function(event_list) {
                     if (!event_list.length) {return}
                     timesketchApi.saveEventAnnotation(
@@ -85,6 +89,11 @@ limitations under the License.
                         });
                     }
                 }, true)
+            },
+            link: function(scope, elem, attrs, ctrl) {
+                scope.applyOrder = function() {
+                    ctrl.search(scope.query, scope.filter);
+                }
             }
         }
     }]);

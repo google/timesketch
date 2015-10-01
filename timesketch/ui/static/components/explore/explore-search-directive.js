@@ -56,6 +56,9 @@ limitations under the License.
                 });
 
                 this.search = function(query, filter) {
+                    if (!filter.order) {
+                        filter.order = 'asc';
+                    }
                     if (filter.star && query) {
                         filter.star = false;
                     }

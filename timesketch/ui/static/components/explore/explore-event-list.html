@@ -30,6 +30,7 @@ limitations under the License.
 
     <div class="pull-right" ng-show="events.length">
         <div class="btn-group" style="margin-left:10px;">
+            <button class="btn btn-default" ng-click="filter.order = { 'asc': 'desc', 'desc': 'asc'}[filter.order];applyOrder()"><i ng-class="{'asc': 'fa fa-sort-asc', 'desc': 'fa fa-sort-desc'}[filter.order]"></i> Sort</button>
             <button class="btn btn-default" ng-click="toggleAll()"><i class="fa fa-check"></i> Toggle all</button>
             <button class="btn btn-default" ng-click="addStar()" ng-disabled="!anySelected"><i class="fa fa-star icon-yellow"></i> Add star</button>
             <button class="btn btn-default" ng-click="removeStar()" ng-disabled="!anySelected"><i class="fa fa-star icon-grey"></i> Remove star</button>

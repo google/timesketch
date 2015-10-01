@@ -68,7 +68,8 @@ class ElasticSearchDataStore(datastore.DataStore):
                 }
             },
             u'sort': {
-                u'datetime': u'asc'
+                u'datetime': query_filter.get(u'order', u'asc')
+
             }
         }
 
