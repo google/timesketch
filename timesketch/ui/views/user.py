@@ -64,7 +64,7 @@ def login():
             if user.check_password(plaintext=form.password.data):
                 login_user(user)
 
-    if current_user.is_authenticated:
+    if current_user.is_authenticated():
         return redirect(request.args.get(u'next') or u'/')
 
     return render_template(u'user/login.html', form=form)
