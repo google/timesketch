@@ -21,7 +21,7 @@ limitations under the License.
 
         {% if sketch.has_permission(current_user, 'write') %}
                 <div class="card">
-            {% if form.timelines.choices %}
+                    {% if timelines %}
                     <form method="get" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
                         <input type="text" name="q" class="search-input" placeholder="Search for timelines to add" autofocus/>
                     </form>
@@ -36,6 +36,7 @@ limitations under the License.
                                 <th width="150px">Created</th>
                             </thead>
                             {% for timeline in timelines %}
+                                {% if timeline.get_status.status == 'new' %}
                                 <tr>
                                     <td><input name="timelines" type="checkbox" value={{ timeline.id }}></td>
                                     <td>{{ timeline.name }}</td>
@@ -46,6 +47,7 @@ limitations under the License.
                                     {% endif %}
                                     <td>{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                                 </tr>
+                                {% endif %}
                             {% endfor %}
                         </table>
                         {{ form.csrf_token }}
@@ -91,7 +93,7 @@ limitations under the License.
                     {% endfor %}
                     </tbody>
                 </table>
-            <hr>
+            <br>
             <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
         </div>
 

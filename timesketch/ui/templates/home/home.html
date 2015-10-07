@@ -71,6 +71,7 @@ limitations under the License.
                 <thead>
                 <th>Sketch</th>
                 <th>Created by</th>
+                <th>Status</th>
                 <th style="text-align: center;">Timelines</th>
                 <th style="text-align: center;">Saved views</th>
                 <th width="130px">Created</th>
@@ -80,6 +81,7 @@ limitations under the License.
                     <tr>
                         <td><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}">{{ sketch.name }}</a></td>
                         <td>{{ sketch.user.name }}</td>
+                        <td>{{ sketch.get_status.status }}</td>
                         <td style="text-align: center;"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">{{ sketch.timelines|count }}</a></td>
                         <td style="text-align: center;"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}">{{ sketch.get_named_views.all()|count }}</a></td>
                         <td>{{ sketch.created_at.strftime('%Y-%m-%d %H:%M') }}</td>

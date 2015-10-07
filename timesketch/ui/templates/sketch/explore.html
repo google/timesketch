@@ -16,11 +16,11 @@ limitations under the License.
 -->
 
 {% block main %}
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}" autoload="true" redirect="true"></ts-search>
-            </div>
+    {% if sketch.timelines %}
+        <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}" autoload="true" redirect="true"></ts-search>
+    {% else %}
+        <div class="card">
+            <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started!</a>
         </div>
-    </div>
+    {% endif %}
 {% endblock %}

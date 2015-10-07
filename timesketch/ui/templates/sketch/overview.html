@@ -182,7 +182,7 @@ limitations under the License.
             <p style="white-space: pre-wrap;word-wrap: break-word;">{{ sketch.description }}</p>
 
               {% if sketch.has_permission(current_user, 'write') and sketch.timelines %}
-            <hr>
+            <br>
                   {% if sketch.timelines %}
                       <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
                   {% endif %}
@@ -253,11 +253,9 @@ limitations under the License.
       {% endfor %}
       </tbody>
     </table>
-                  <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add another timeline</a>
-
+        <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add another timeline</a>
     {% else %}
         <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started!</a>
-
     {% endif %}
   </div>
 

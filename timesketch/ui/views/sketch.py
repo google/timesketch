@@ -157,8 +157,6 @@ def timelines(sketch_id):
         current_user).order_by(
             desc(SearchIndex.created_at)).filter(
                 not_(SearchIndex.id.in_(searchindices_in_sketch)))
-    indices = indices.filter(
-        SearchIndex.Status.status == u'new', SearchIndex.Status.parent)
     filtered = False
 
     if query:
@@ -169,7 +167,7 @@ def timelines(sketch_id):
 
     # Setup the form
     form = AddTimelineForm()
-    form.timelines.choices = set((i.id, i.name, ) for i in indices.all())
+    form.timelines.choices = set((i.id, i.name) for i in indices.all())
 
     # Create new timeline form POST
     if form.validate_on_submit():
@@ -187,8 +185,8 @@ def timelines(sketch_id):
         return redirect(url_for(u'sketch_views.timelines', sketch_id=sketch.id))
 
     return render_template(
-        u'sketch/timelines.html', sketch=sketch, timelines=indices, form=form,
-        filtered=filtered)
+        u'sketch/timelines.html', sketch=sketch, timelines=indices.all(),
+        form=form, filtered=filtered)
 
 
 @sketch_views.route(
