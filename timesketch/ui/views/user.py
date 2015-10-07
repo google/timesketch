@@ -58,13 +58,13 @@ def login():
             login_user(user)
 
     # Login form POST
-    if form.validate_on_submit():
+    if form.validate_on_submit:
         user = User.query.filter_by(username=form.username.data).first()
         if user:
             if user.check_password(plaintext=form.password.data):
                 login_user(user)
 
-    if current_user.is_authenticated:
+    if current_user.is_authenticated():
         return redirect(request.args.get(u'next') or u'/')
 
     return render_template(u'user/login.html', form=form)

@@ -17,70 +17,91 @@ limitations under the License.
 
 {% block main %}
 
-<div class="container">
+    <div class="container">
 
-  {% if sketch.has_permission(current_user, 'write') %}
-      <div class="row">
-        <div class="col-md-12">
+        {% if sketch.has_permission(current_user, 'write') %}
+                <div class="card">
+            {% if form.timelines.choices %}
+                    <form method="get" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
+                        <input type="text" name="q" class="search-input" placeholder="Search for timelines to add" autofocus/>
+                    </form>
+
+                    <br>
+                    <form method="post" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
+                        <table class="table table-hover">
+                            <thead>
+                                <th width="30px"></th>
+                                <th>Timeline</th>
+                                <th width="150px">Created by</th>
+                                <th width="150px">Created</th>
+                            </thead>
+                            {% for timeline in timelines %}
+                                <tr>
+                                    <td><input name="timelines" type="checkbox" value={{ timeline.id }}></td>
+                                    <td>{{ timeline.name }}</td>
+                                    {% if not timeline.user %}
+                                        <td>System</td>
+                                    {% else %}
+                                        <td>{{ timeline.user }}</td>
+                                    {% endif %}
+                                    <td>{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                </tr>
+                            {% endfor %}
+                        </table>
+                        {{ form.csrf_token }}
+                        <button class="btn btn-success" type="submit"><i class="fa fa-plus"></i> Add to sketch</button>
+                    </form>
+
+            {% else %}
+                <h4>You have added all available timelines in the system.. good job!</h4>
+            {% endif %}
+                </div>
+
+        {% endif %}
+
+
+        {% if sketch.timelines %}
         <div class="card">
-          <form method="get" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
-            <input type="text" name="q" class="search-input" placeholder="Search for timelines to add" />
-          </form>
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th width="73px">Timeline</th>
+                        <th></th>
+                        <th>Added by</th>
+                        <th width="130px">Added</th>
+                    </tr>
+
+                    <tbody>
+                    {% for timeline in sketch.timelines %}
+                        <tr>
+                            <td>
+                                <div class="color-box" style="background:#{{ timeline.color }};"></div>
+                            </td>
+                            <td>
+                                <div style="margin-top:5px;">
+                                    <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
+                                </div>
+                            </td>
+                            <td>{{ timeline.user.name }}</td>
+                            <td>
+                                <div style="margin-top:5px;">{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            <hr>
+            <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
         </div>
-      </div>
-      </div>
 
-      {% if form.timelines.choices %}
-          <div class="row">
-            <div class="col-md-12">
-              <div class="card">
-                <h4>Last {{ form.timelines.choices|length }} timelines added</h4>
-                <form method="post" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
-                  {{ form.timelines }}
-                  {{ form.csrf_token }}
-                  <button class="btn btn-primary" type="submit">Add to sketch</button>
-                </form>
-
-              </div>
-            </div>
-          </div>
-      {% endif %}
-  {% endif %}
+            {% endif %}
 
 
-  <div class="card">
-    <h4>Timelines in this sketch</h4>
-    {% if sketch.timelines %}
-    <table class="table table-hover">
-      <thead>
-      <tr>
-        <th width="73px"></th>
-        <th></th>
-        <th width="150px">Added</th>
-      </tr>
 
-      <tbody>
-      {% for timeline in sketch.timelines %}
-      <tr>
-        <td>
-          <div class="color-box" style="background:#{{ timeline.color }};"></div>
-        </td>
-        <td>
-          <div style="margin-top:5px;">
-            <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
-          </div>
-        </td>
-        <td>
-          <div style="margin-top:5px;">{{ timeline.created_at }}</div>
-        </td>
-      </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <p>There is no timeline added to this sketch.</p>
-    {% endif %}
-  </div>
 
-</div>
+
+
+
+
+    </div>
 {% endblock %}

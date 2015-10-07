@@ -23,7 +23,8 @@ limitations under the License.
     <thead>
     <tr>
       <th>View</th>
-      <th width="150px">Created</th>
+      <th>Created by</th>
+      <th width="130px">Created</th>
     </tr>
     <tbody>
     {% for view in sketch.get_named_views %}
@@ -34,7 +35,8 @@ limitations under the License.
         </div>
         <span style="color:#777;">{{ view.query_string }}</span>
       </td>
-      <td><div style="margin-top:15px;">{{ view.updated_at}}</div></td>
+        <td>{{ view.user.name }}</td>
+      <td><div style="margin-top:15px;">{{ view.updated_at.strftime('%Y-%m-%d %H:%M')}}</div></td>
     </tr>
     {% endfor %}
     </tbody>

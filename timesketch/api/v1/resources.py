@@ -27,6 +27,7 @@ POST /sketches/:sketch_id/event/annotate/
 POST /sketches/:sketch_id/views/
 """
 
+import datetime
 import json
 import os
 import uuid
@@ -546,6 +547,8 @@ class TaskResource(ResourceMixin, Resource):
         Returns:
             A view in JSON (instance of flask.wrappers.Response)
         """
+        TIMEOUT_THRESHOLD_SECONDS = current_app.config.get(
+            u'CELERY_TASK_TIMEOUT', 7200)
         indices = SearchIndex.query.filter(SearchIndex.status.any(
             status=u'processing')).all()
         schema = {u'objects': [], u'meta': {}}
@@ -558,5 +561,10 @@ class TaskResource(ResourceMixin, Resource):
                 result=False)
             if celery_task.state == u'SUCCESS':
                 task[u'result'] = celery_task.result
+            elif celery_task.state == u'PENDING':
+                time_pending = (
+                    search_index.updated_at - datetime.datetime.now())
+                if time_pending.seconds > TIMEOUT_THRESHOLD_SECONDS:
+                    search_index.set_status(u'timeout')
             schema[u'objects'].append(task)
         return jsonify(schema)

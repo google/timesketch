@@ -160,10 +160,16 @@ limitations under the License.
           <div class="col-md-12">
             <div class="pull-right">
               <div class="btn-group">
-                <button class="btn btn-default" data-toggle="modal" data-target="#status-modal">Status: {{ sketch.get_status.status|title }}</button>
-                {% if sketch.has_permission(user=current_user, permission='delete') %}
-                <button class="btn btn-default" data-toggle="modal" data-target="#trash-modal"><i class="fa fa-trash"></i></button>
+                {% if sketch.has_permission(user=current_user, permission='write') %}
+                  <button class="btn btn-default" data-toggle="modal" data-target="#edit-sketch-modal" style="margin-left:10px;width:50px;"><i class="fa fa-pencil"></i></button>
                 {% endif %}
+
+                <button class="btn btn-default" data-toggle="modal" data-target="#status-modal">Status: {{ sketch.get_status.status|title }}</button>
+
+                {% if sketch.has_permission(user=current_user, permission='delete') %}
+                    <button class="btn btn-default" data-toggle="modal" data-target="#trash-modal"><i class="fa fa-trash"></i></button>
+                {% endif %}
+
                 <button data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
                   {% if sketch.is_public %}
                   <i class="fa fa-globe"></i> Public</button>
@@ -172,17 +178,50 @@ limitations under the License.
                 {% endif %}
               </div>
             </div>
-            <h2>{{ sketch.name }}
-                {% if sketch.has_permission(user=current_user, permission='write') %}
-              <button class="btn btn-default" data-toggle="modal" data-target="#edit-sketch-modal" style="margin-left:10px;width:50px;"><i class="fa fa-pencil"></i></button>
-                {% endif %}
-            </h2>
+            <h2>{{ sketch.name }}</h2>
             <p style="white-space: pre-wrap;word-wrap: break-word;">{{ sketch.description }}</p>
+
+              {% if sketch.has_permission(current_user, 'write') and sketch.timelines %}
+            <hr>
+                  {% if sketch.timelines %}
+                      <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
+                  {% endif %}
+              {% else %}
+                  {% if sketch.timelines %}
+                      <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
+                  {% endif %}
+              {% endif %}
+
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  {% if sketch.get_named_views.all() %}
+  <div class="card">
+    <table class="table table-hover">
+      <thead>
+      <tr>
+        <th>View</th>
+        <th>Created by</th>
+        <th width="130px">Created</th>
+      </tr>
+      <tbody>
+      {% for view in sketch.get_named_views %}
+      <tr>
+        <td>
+          <div style="margin-top:5px;font-size: 1.1em;font-weight: bold"><a href="explore/view/{{ view.id }}/">{{ view.name }}</a></div>
+          <span style="color:#777;">{{ view.query_string }}</span>
+        </td>
+          <td>{{ view.user.name }}</td>
+        <td>{{ view.updated_at.strftime('%Y-%m-%d %H:%M')}}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
 
   <div class="card">
     {% if sketch.timelines %}
@@ -191,7 +230,8 @@ limitations under the License.
       <tr>
         <th width="73px">Timeline</th>
         <th></th>
-        <th width="150px">Added</th>
+        <th>Added by</th>
+        <th width="130px">Added</th>
       </tr>
 
       <tbody>
@@ -205,53 +245,23 @@ limitations under the License.
             <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
           </div>
         </td>
+        <td>{{ timeline.user.name }}</td>
         <td>
-          <div style="margin-top:5px;">{{ timeline.created_at }}</div>
+          <div style="margin-top:5px;">{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
         </td>
       </tr>
       {% endfor %}
       </tbody>
     </table>
+                  <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add another timeline</a>
+
     {% else %}
-    <p>There is no timeline added to this sketch.</p>
-    {% endif %}
-    {% if sketch.has_permission(current_user, 'write') %}
-    <div class="btn-group">
-      <a class="btn btn-primary" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add timeline</a>
-      {% if sketch.timelines %}
-      <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
-      {% endif %}
-    </div>
-    {% else %}
-    {% if sketch.timelines %}
-    <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
-    {% endif %}
+        <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started!</a>
+
     {% endif %}
   </div>
 
 
-  {% if sketch.get_named_views.all() %}
-  <div class="card">
-    <table class="table table-hover">
-      <thead>
-      <tr>
-        <th>View</th>
-        <th width="150px">Created</th>
-      </tr>
-      <tbody>
-      {% for view in sketch.get_named_views %}
-      <tr>
-        <td>
-          <div style="margin-top:5px;font-size: 1.1em;font-weight: bold"><a href="explore/view/{{ view.id }}/">{{ view.name }}</a></div>
-          <span style="color:#777;">{{ view.query_string }}</span>
-        </td>
-        <td><div style="margin-top:15px;">{{ view.updated_at}}</div></td>
-      </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% endif %}
 </div>
 
 {% endblock %}

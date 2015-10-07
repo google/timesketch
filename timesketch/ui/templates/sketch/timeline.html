@@ -66,8 +66,10 @@ limitations under the License.
                   <button class="btn btn-default" data-toggle="modal" data-target="#edit-timeline-modal" style="margin-left:10px;width:50px;"><i class="fa fa-pencil"></i></button>
               {% endif %}
             </h2>
-            <p style="white-space: pre-wrap;word-wrap: break-word;">{{ timeline.description }}</p>
           </div>
+            <br>
+            <p style="white-space: pre-wrap;word-wrap: break-word;">{{ timeline.description }}</p>
+        {{ timeline.searchindex.index_name }}
         </div>
       </div>
     </div>
