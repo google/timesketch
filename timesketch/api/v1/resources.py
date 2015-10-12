@@ -304,8 +304,16 @@ class ExploreResource(ResourceMixin, Resource):
             if not form.query.data and not query_filter.get(u'star'):
                 abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
+            aggregations = {
+                u'data_type': {
+                    u'terms': {
+                        u'field': u'data_type',
+                        u'size': 0}
+                }
+            }
             result = self.datastore.search(
-                sketch_id, form.query.data, query_filter, indices)
+                sketch_id, form.query.data, query_filter, indices,
+                aggregations=aggregations, return_results=True)
 
             # Get labels for each event that matches the sketch.
             # Remove all other labels.
@@ -342,7 +350,57 @@ class ExploreResource(ResourceMixin, Resource):
                 u'es_time': result[u'took'],
                 u'es_total_count': result[u'hits'][u'total'],
                 u'timeline_colors': tl_colors,
-                u'timeline_names': tl_names
+                u'timeline_names': tl_names,
+                u'histogram': result[u'aggregations'][u'data_type'][u'buckets']
+            }
+            schema = {
+                u'meta': meta,
+                u'objects': result[u'hits'][u'hits']
+            }
+            return jsonify(schema)
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class AggregationResource(ResourceMixin, Resource):
+    """Resource to search the datastore based on a query and a filter."""
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+        Handler for /api/v1/sketches/:sketch_id/explore/
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            JSON with list of matched events
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        form = ExploreForm.build(request)
+
+        if form.validate_on_submit():
+            query_filter = form.filter.data
+            sketch_indices = [
+                t.searchindex.index_name for t in sketch.timelines]
+            indices = query_filter.get(u'indices', sketch_indices)
+
+            # Make sure that the indices in the filter are part of the sketch
+            if set(indices) - set(sketch_indices):
+                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+            # Make sure we have a query string or star filter
+            if not form.query.data and not query_filter.get(u'star'):
+                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+            result = self.datastore.search(
+                sketch_id, form.query.data, query_filter, indices,
+                aggregations=aggregations, return_results=False)
+
+            meta = {
+                u'es_time': result[u'took'],
+                u'es_total_count': result[u'hits'][u'total'],
+                u'timeline_colors': tl_colors,
+                u'timeline_names': tl_names,
+                u'histogram': result[u'aggregations'][u'data_type'][u'buckets']
             }
             schema = {
                 u'meta': meta,

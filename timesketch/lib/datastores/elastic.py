@@ -40,7 +40,9 @@ class ElasticSearchDataStore(datastore.DataStore):
             {u'host': host, u'port': port}
         ])
 
-    def search(self, sketch_id, query, query_filter, indices):
+    def search(
+            self, sketch_id, query, query_filter, indices, aggregations=None,
+            return_results=True):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -54,6 +56,8 @@ class ElasticSearchDataStore(datastore.DataStore):
         Returns:
             Set of event documents in JSON format
         """
+        LIMIT_RESULTS = 500
+
         if not query:
             query = u''
 
@@ -110,11 +114,22 @@ class ElasticSearchDataStore(datastore.DataStore):
         if not indices:
             return {u'hits': {u'hits': [], u'total': 0}, u'took': 0}
 
+        if aggregations:
+            if isinstance(aggregations, dict):
+                query_dict[u'aggregations'] = aggregations
+
+        # Default search type for elasticsearch is query_then_fetch.
+        if return_results:
+            search_type = u'query_then_fetch'
+        else:
+            search_type = u'count'
+
         # Suppress the lint error because elasticsearch-py adds parameters
         # to the function with a decorator and this makes pylint sad.
         # pylint: disable=unexpected-keyword-arg
         return self.client.search(
-            body=query_dict, index=indices, size=500, _source_include=[
+            body=query_dict, index=indices, size=LIMIT_RESULTS,
+            search_type=search_type, _source_include=[
                 u'datetime', u'timestamp', u'message', u'timestamp_desc',
                 u'timesketch_label'])
 
