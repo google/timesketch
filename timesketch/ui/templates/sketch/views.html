@@ -1,4 +1,4 @@
-{% extends "sketch/base.html" %}
+{% extends "base.html" %}
 <!--
 Copyright 2015 Google Inc. All rights reserved.
 
@@ -17,35 +17,50 @@ limitations under the License.
 
 {% block main %}
 
-{% if sketch.get_named_views.all() %}
-<div class="card">
-  <table class="table table-hover">
-    <thead>
-    <tr>
-      <th>View</th>
-      <th>Created by</th>
-      <th width="130px">Created</th>
-    </tr>
-    <tbody>
-    {% for view in sketch.get_named_views %}
-    <tr>
-      <td>
-        <div style="margin-top:5px;font-size: 1.1em;font-weight: bold">
-          <a href="/sketch/{{ sketch.id }}/explore/view/{{ view.id }}/">{{ view.name }}</a>
+    <ul class="nav nav-tabs">
+        <li role="presentation"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
+        <li role="presentation"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
+        <li role="presentation" class="active"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
+        <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
+    </ul>
+
+    <div class="container">
+    <div class="row">
+        <div class="col-md-12">
+
+            {% if sketch.get_named_views.all() %}
+                <div class="card">
+                    <h3>Saved views in this sketch</h3>
+                    <br>
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>View</th>
+                            <th>Created by</th>
+                            <th width="130px">Created</th>
+                        </tr>
+                        <tbody>
+                        {% for view in sketch.get_named_views %}
+                            <tr>
+                                <td>
+                                    <div style="margin-top:5px;font-size: 1.1em;font-weight: bold">
+                                        <a href="/sketch/{{ sketch.id }}/explore/view/{{ view.id }}/">{{ view.name }}</a>
+                                    </div>
+                                    <span style="color:#777;">{{ view.query_string }}</span>
+                                </td>
+                                <td>{{ view.user.name }}</td>
+                                <td><div style="margin-top:15px;">{{ view.updated_at.strftime('%Y-%m-%d %H:%M')}}</div></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="card">
+                    <h4>No saved views for this sketch.</h4>
+                </div>
+            {% endif %}
         </div>
-        <span style="color:#777;">{{ view.query_string }}</span>
-      </td>
-        <td>{{ view.user.name }}</td>
-      <td><div style="margin-top:15px;">{{ view.updated_at.strftime('%Y-%m-%d %H:%M')}}</div></td>
-    </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</div>
-{% else %}
-<div class="card">
-  No saved views
-</div>
-{% endif %}
+    </div>
 
 {% endblock %}

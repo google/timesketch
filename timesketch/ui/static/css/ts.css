@@ -39,7 +39,7 @@ table {
 }
 
 #main {
-    margin:90px 35px 35px 245px;
+    margin:90px 35px 35px 35px;
 }
 
 #logo {
@@ -81,6 +81,11 @@ table {
     margin:0;
     text-align: center;
     font-weight: 500;
+}
+
+#sketch-name {
+    color: #fff;
+    font-size: 16px;
 }
 
 .leftnav {
@@ -143,6 +148,10 @@ table {
     max-width: 900px;
     margin-left:3px;
     margin-top:15px;
+}
+
+.card-top {
+    padding-top:30px;
 }
 
 .search-input {
@@ -404,4 +413,30 @@ div:hover.tooltips span {
   margin-top: -15px;
   margin-right: 15px;
   z-index: 999;
+}
+
+.nav-tabs>li>a, .nav-tabs>li>a:hover {
+    color:#555;
+    margin-bottom: -2px;
+    padding: 15px;
+    border-bottom: none;
+    font-weight: bold;
+    background-color: #e9e9e9;
+    margin-left:2px;
+}
+
+.nav-tabs>li>a:hover {
+    background: #e3e3e3;
+}
+
+.nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
+    color:#333;
+    border:none;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+    margin-bottom: -2px;
+    cursor: pointer;
+}
+
+.nav-tabs {
+    border: none;
 }

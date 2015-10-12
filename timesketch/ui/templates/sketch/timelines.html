@@ -1,4 +1,4 @@
-{% extends "sketch/base.html" %}
+{% extends "base.html" %}
 <!--
 Copyright 2015 Google Inc. All rights reserved.
 
@@ -17,94 +17,111 @@ limitations under the License.
 
 {% block main %}
 
+    <ul class="nav nav-tabs">
+        <li role="presentation"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
+        <li role="presentation"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
+        <li role="presentation"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
+        <li role="presentation" class="active"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
+    </ul>
+
     <div class="container">
+        <div class="row">
+            <div class="col-md-12">
 
-        {% if sketch.has_permission(current_user, 'write') %}
-                <div class="card">
-                    {% if timelines %}
-                    <form method="get" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
-                        <input type="text" name="q" class="search-input" placeholder="Search for timelines to add" autofocus/>
-                    </form>
-
-                    <br>
-                    <form method="post" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
+                {% if sketch.timelines %}
+                    <div class="card">
+                        <h3>Timelines in this sketch</h3>
+                        <br>
                         <table class="table table-hover">
                             <thead>
-                                <th width="30px"></th>
-                                <th>Timeline</th>
-                                <th width="150px">Created by</th>
-                                <th width="150px">Created</th>
-                            </thead>
-                            {% for timeline in timelines %}
-                                {% if timeline.get_status.status == 'new' %}
+                            <tr>
+                                <th width="80px">Timelines</th>
+                                <th></th>
+                                <th>Added by</th>
+                                <th width="130px">Added</th>
+                            </tr>
+
+                            <tbody>
+                            {% for timeline in sketch.timelines %}
                                 <tr>
-                                    <td><input name="timelines" type="checkbox" value={{ timeline.id }}></td>
-                                    <td>{{ timeline.name }}</td>
-                                    {% if not timeline.user %}
-                                        <td>System</td>
-                                    {% else %}
-                                        <td>{{ timeline.user }}</td>
-                                    {% endif %}
-                                    <td>{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <div class="color-box" style="background:#{{ timeline.color }};"></div>
+                                    </td>
+                                    <td>
+                                        <div style="margin-top:5px;">
+                                            <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
+                                        </div>
+                                    </td>
+                                    <td>{{ timeline.user.name }}</td>
+                                    <td>
+                                        <div style="margin-top:5px;">{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                                    </td>
                                 </tr>
-                                {% endif %}
                             {% endfor %}
+                            </tbody>
                         </table>
-                        {{ form.csrf_token }}
-                        <button class="btn btn-success" type="submit"><i class="fa fa-plus"></i> Add to sketch</button>
-                    </form>
+                        <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
+                    </div>
+                {% else %}
+                    <div class="card">
+                        <h4>No timelines added to this sketch.</h4>
+                    </div>
+                {% endif %}
 
-            {% else %}
-                    <h2>There are no available timelines to add</h2>
-                    <p>See the <a href="https://github.com/google/timesketch/wiki/UserGuideAddTimelines" target="_blank">documentation</a> on how to add timeline to the system.</p>
-            {% endif %}
-                </div>
+                {% if sketch.has_permission(current_user, 'write') %}
+                    <div class="card">
+                        {% if timelines %}
+                            <form method="get" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
+                                <input type="text" name="q" class="search-input" placeholder="Search for timelines to add" autofocus/>
+                            </form>
 
-        {% endif %}
+                            <br>
+                            <form method="post" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
+                                <table class="table table-hover">
+                                    <thead>
+                                    <th width="30px"></th>
+                                    <th>Timeline</th>
+                                    <th width="150px">Created by</th>
+                                    <th width="150px">Created</th>
+                                    </thead>
+                                    {% for timeline in timelines %}
+                                        {% if timeline.get_status.status == 'new' %}
+                                            <tr>
+                                                <td><input name="timelines" type="checkbox" value={{ timeline.id }}></td>
+                                                <td>{{ timeline.name }}</td>
+                                                {% if not timeline.user %}
+                                                    <td>System</td>
+                                                {% else %}
+                                                    <td>{{ timeline.user }}</td>
+                                                {% endif %}
+                                                <td>{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </table>
+                                {{ form.csrf_token }}
+                                <button class="btn btn-success" type="submit"><i class="fa fa-plus"></i> Add to sketch</button>
+                            </form>
+
+                        {% else %}
+                            <h4>There are no more available timelines to add</h4>
+                            <p>See the <a href="https://github.com/google/timesketch/wiki/UserGuideAddTimelines" target="_blank">documentation</a> on how to add more timelines to the system.</p>
+                        {% endif %}
+                    </div>
+
+                {% endif %}
 
 
-        {% if sketch.timelines %}
-        <div class="card">
-                <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th width="73px">Timeline</th>
-                        <th></th>
-                        <th>Added by</th>
-                        <th width="130px">Added</th>
-                    </tr>
 
-                    <tbody>
-                    {% for timeline in sketch.timelines %}
-                        <tr>
-                            <td>
-                                <div class="color-box" style="background:#{{ timeline.color }};"></div>
-                            </td>
-                            <td>
-                                <div style="margin-top:5px;">
-                                    <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
-                                </div>
-                            </td>
-                            <td>{{ timeline.user.name }}</td>
-                            <td>
-                                <div style="margin-top:5px;">{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            <br>
-            <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
+
+
+
+
+
+
+
+
+            </div>
         </div>
-
-            {% endif %}
-
-
-
-
-
-
-
-
     </div>
 {% endblock %}
