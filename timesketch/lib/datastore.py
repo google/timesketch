@@ -22,14 +22,18 @@ class DataStore(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def search(self, sketch_id, query, query_filter, indices):
+    def search(
+            self, sketch_id, query, query_filter, indices, aggregations,
+            return_results):
         """Return search results.
 
         Args:
             sketch_id: Integer of sketch primary key
             query: Query string
             query_filter: Dictionary containing filters to apply
-            indices = List of indices to query
+            indices: List of indices to query
+            aggregations: Dict of Elasticsearch aggregations
+            return_results: Boolean indicating if results should be returned
         """
 
     @abc.abstractmethod

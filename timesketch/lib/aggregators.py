@@ -15,6 +15,18 @@
 
 
 def heatmap(es_client, sketch_id, query, query_filter, indices):
+    """Aggregate query results into number of events per hour/day.
+
+    Args:
+        es_client: Elasticsearch client (instance of ElasticSearchDatastore)
+        sketch_id: Integer of sketch primary key
+        query: Query string
+        query_filter: Dictionary containing filters to apply
+        indices: List of indices to query
+
+    returns:
+        List of events per hour/day
+    """
     aggregations = {
         u'time_histogram': {
             u'date_histogram': {

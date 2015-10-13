@@ -111,6 +111,8 @@ class ExploreResourceTest(BaseTest):
                 u'test': u'FFFFFF'
             },
             u'es_total_count': 1,
+            u'es_total_count_unfiltered': 0,
+            u'histogram': None,
             u'es_time': 5
         },
         u'objects': [
@@ -145,6 +147,7 @@ class ExploreResourceTest(BaseTest):
         response = self.client.post(
             self.resource_url, data=json.dumps(data, ensure_ascii=False),
             content_type=u'application/json')
+        print response.json
         self.assertDictEqual(response.json, self.expected_response)
         self.assert200(response)
 

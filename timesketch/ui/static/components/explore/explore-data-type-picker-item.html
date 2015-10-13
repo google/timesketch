@@ -1,0 +1,38 @@
+<!--
+Copyright 2015 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<table class="table ts-table-condensed">
+    <tbody>
+    <tr>
+        <td width="250px">
+            <label><input type="checkbox" ng-checked="checkboxModel.active" ng-click="toggleCheckbox()">
+            <span ng-style="datatype_picker_title" style="margin-left:20px;font-weight: normal;">{{ datatype.key }}</span></label>
+        </td>
+        <td>
+            <div class="progress ts-progress-bar">
+                <div class="progress-bar" ng-style="datatype_picker_color" role="progressbar" aria-valuenow="{{ datatype.doc_count/meta.es_total_count_unfiltered*100 }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ datatype.doc_count/meta.es_total_count_unfiltered*100 }}%;">
+                </div>
+            </div>
+        </td>
+        <td width="70px" style="padding-left:10px;">
+            <span style="font-weight: bold;color: #999;">{{ datatype.doc_count/meta.es_total_count_unfiltered*100|number:1 }}%</span>
+        </td>
+        <td width="90px" align="right">
+            <span ng-style="datatype_picker_title" style="font-weight: bold;">{{ datatype.doc_count }}</span>
+        </td>
+    </tr>
+    </tbody>
+</table>

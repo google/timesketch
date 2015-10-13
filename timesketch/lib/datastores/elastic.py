@@ -51,12 +51,17 @@ class ElasticSearchDataStore(datastore.DataStore):
             sketch_id: Integer of sketch primary key
             query: Query string
             query_filter: Dictionary containing filters to apply
-            indices = List of indices to query
+            indices: List of indices to query
+            aggregations: Dict of Elasticsearch aggregations
+            return_results: Boolean indicating if results should be returned
 
         Returns:
             Set of event documents in JSON format
         """
         LIMIT_RESULTS = 500
+
+        if not indices:
+            return {u'hits': {u'hits': [], u'total': 0}, u'took': 0}
 
         if not query:
             query = u''
@@ -111,8 +116,14 @@ class ElasticSearchDataStore(datastore.DataStore):
                 }
             }
 
-        if not indices:
-            return {u'hits': {u'hits': [], u'total': 0}, u'took': 0}
+        if query_filter.get(u'exclude', None):
+            query_dict[u'filter'] = {
+                u'not': {
+                    u'terms': {
+                        u'data_type': query_filter[u'exclude']
+                    }
+                }
+            }
 
         if aggregations:
             if isinstance(aggregations, dict):

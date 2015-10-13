@@ -401,3 +401,26 @@ div:hover.tooltips span {
   margin-right: 15px;
   z-index: 999;
 }
+
+.ts-progress-bar {
+    height: 10px;
+    margin-bottom: 0;
+    margin-top:5px;
+}
+
+.ts-table-noborder tbody>tr>td {
+    border-top:0;
+    padding:5px;
+}
+
+.ts-table-condensed {
+    margin-bottom: 0;
+}
+
+.ts-table-condensed tbody>tr>td {
+    padding: 5px;
+}
+
+.filter-card {
+    padding-bottom: 10px;
+}
