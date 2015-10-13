@@ -108,8 +108,9 @@ def overview(sketch_id):
 @sketch_views.route(
     u'/sketch/<int:sketch_id>/explore/view/<int:view_id>/',
     methods=[u'GET', u'POST'])
+@sketch_views.route(u'/sketch/<int:sketch_id>/explore/<query>', methods=[u'GET',u'POST'])
 @login_required
-def explore(sketch_id, view_id=None):
+def explore(sketch_id, view_id=None, query=None):
     """Generates the sketch explore view template.
 
     Returns:
@@ -117,6 +118,17 @@ def explore(sketch_id, view_id=None):
     """
     sketch = Sketch.query.get_with_acl(sketch_id)
     sketch_timelines = [t.searchindex.index_name for t in sketch.timelines]
+    if query:
+        query_filter = dict(indices=sketch_timelines)
+        view = View(
+            user=current_user, name=u'', sketch=sketch, query_string=unicode(query),
+            query_filter=json.dumps(query_filter, ensure_ascii=False))
+        db_session.add(view)
+        db_session.commit()
+        view_form = SaveViewForm()
+        return render_template(
+            u'sketch/explore.html', sketch=sketch, view=view,
+            timelines=sketch_timelines, view_form=view_form)
     if view_id:
         view = View.query.get(view_id)
     else:
