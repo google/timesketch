@@ -14,6 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+i {
+    margin-right: 5px;
+}
+
 body {
     background: #f9f9f9;
 }
@@ -35,7 +39,7 @@ table {
 }
 
 #main {
-    margin:90px 35px 35px 245px;
+    margin:90px 35px 35px 35px;
 }
 
 #logo {
@@ -77,6 +81,11 @@ table {
     margin:0;
     text-align: center;
     font-weight: 500;
+}
+
+#sketch-name {
+    color: #fff;
+    font-size: 16px;
 }
 
 .leftnav {
@@ -139,6 +148,10 @@ table {
     max-width: 900px;
     margin-left:3px;
     margin-top:15px;
+}
+
+.card-top {
+    padding-top:30px;
 }
 
 .search-input {
@@ -427,5 +440,31 @@ div:hover.tooltips span {
 
 rect.bordered {
     stroke: #d1d1d1;
-    stroke-width:1px;
+    stroke-width: 1px;
+}
+
+.nav-tabs>li>a, .nav-tabs>li>a:hover {
+    color:#555;
+    margin-bottom: -2px;
+    padding: 15px;
+    border-bottom: none;
+    font-weight: normal;
+    background-color: #f1f1f1;
+    margin-right:7px;
+}
+
+.nav-tabs>li>a:hover {
+    background: #e3e3e3;
+}
+
+.nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
+    color:#333;
+    border:none;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+    margin-bottom: -2px;
+    cursor: pointer;
+}
+
+.nav-tabs {
+    border: none;
 }

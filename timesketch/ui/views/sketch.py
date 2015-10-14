@@ -182,10 +182,11 @@ def timelines(sketch_id):
                 db_session.add(_timeline)
                 sketch.timelines.append(_timeline)
         db_session.commit()
-        return redirect(url_for(u'sketch_views.overview', sketch_id=sketch.id))
+        return redirect(url_for(u'sketch_views.timelines', sketch_id=sketch.id))
 
     return render_template(
-        u'sketch/timelines.html', sketch=sketch, form=form, filtered=filtered)
+        u'sketch/timelines.html', sketch=sketch, timelines=indices.all(),
+        form=form, filtered=filtered)
 
 
 @sketch_views.route(

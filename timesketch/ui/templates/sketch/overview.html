@@ -1,4 +1,4 @@
-{% extends "sketch/base.html" %}
+{% extends "base.html" %}
 <!--
 Copyright 2015 Google Inc. All rights reserved.
 
@@ -17,241 +17,255 @@ limitations under the License.
 
 {% block main %}
 
-<!-- Edit sketch modal -->
-<div class="modal" id="edit-sketch-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title" id="myModalLabel">Edit sketch</h4>
-      </div>
-      <div class="modal-body">
-        <form class="form-horizontal" role="form" action="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}" method="post">
-          <div class="form-group">
-            <div class="col-sm-12">
-              <strong>Title</strong>
-              <input class="form-control" id="name" name="name" type="text" value="{{ sketch.name }}" autofocus="true">
+    <ul class="nav nav-tabs">
+        <li role="presentation" class="active"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
+        <li role="presentation"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
+        <li role="presentation"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
+        <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
+    </ul>
+
+    <!-- Edit sketch modal -->
+    <div class="modal" id="edit-sketch-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">Edit sketch</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" role="form" action="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}" method="post">
+                        <div class="form-group">
+                            <div class="col-sm-12">
+                                <strong>Title</strong>
+                                <input class="form-control" id="name" name="name" type="text" value="{{ sketch.name }}" autofocus="true">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-12">
+                                <strong>Description</strong>
+                                <textarea rows="10" class="form-control" id="description" name="description">{{ sketch.description }}</textarea>
+                            </div>
+                        </div>
+                        <input type="submit" class="btn btn-primary" value="Save"/>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        {{ sketch_form.csrf_token }}
+                    </form>
+                </div>
             </div>
-          </div>
-          <div class="form-group">
-            <div class="col-sm-12">
-              <strong>Description</strong>
-              <textarea rows="10" class="form-control" id="description" name="description">{{ sketch.description }}</textarea>
-            </div>
-          </div>
-          <input type="submit" class="btn btn-primary" value="Save"/>
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          {{ sketch_form.csrf_token }}
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ACL modal -->
-<div class="modal" id="share-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title" id="myModalLabel">Who has access</h4>
-      </div>
-      <div class="modal-body">
-        {% if sketch.has_permission(user=current_user, permission='write') %}
-        <form action="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}" method="post">
-
-          <div class="radio">
-            <label>
-              <input type="radio" name="permission" value="public" {% if sketch.is_public %}checked="true"{% endif %}>
-              <i class="fa fa-globe" style="margin-left: 10px;margin-right: 5px;"></i>
-              Public -  All users of the system can access this sketch
-            </label>
-          </div>
-          <div class="radio">
-            <label>
-              <input type="radio" name="permission" value="private" {% if not sketch.is_public %}checked="true"{% endif %}>
-              <i class="fa fa-lock" style="margin-left: 10px;margin-right: 5px;"></i>
-              Private - Only you can access this sketch
-            </label>
-          </div>
-          <br><hr>
-          <button style="margin-right:7px;" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <input type="submit" class="btn btn-primary" value="Save changes">
-          {{ permission_form.csrf_token }}
-        </form>
-        {% else %}
-        {% if sketch.is_public %}
-        <i class="fa fa-globe"></i> Public -  All users of the system can access this sketch
-        {% else %}
-        <i class="fa fa-lock"></i> Private - Only you can access this sketch
-        {% endif %}
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Change status modal -->
-<div class="modal" id="status-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title" id="myModalLabel">Current status: {{ sketch.get_status.status|title }}</h4>
-      </div>
-      <div class="modal-body">
-        {% if sketch.has_permission(user=current_user, permission='write') %}
-        <strong>Change status:</strong>
-        <br><br>
-        <form action="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}" method="post">
-          <select id="status" name="status" class="form-control">
-            <option disabled selected>Set status</option>
-            {% for option in status_form.status %}
-            {{ option }}
-            {% endfor %}
-          </select>
-          <br><hr>
-          <button style="margin-right:7px;" class="btn btn-default" data-dismiss="modal">Close</button>
-          <input type="submit" class="btn btn-primary" value="Save changes">
-          {{ status_form.csrf_token }}
-        </form>
-        {% else %}
-        You don't have permission to change status.
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Delete sketch modal -->
-<div class="modal" id="trash-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title" id="myModalLabel">Delete sketch</h4>
-      </div>
-      <div class="modal-body">
-        {% if sketch.has_permission(user=current_user, permission='delete') %}
-        <strong>Are you sure you want to delete this sketch?</strong>
-        <br><br>
-        <form action="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}" method="post">
-          <label>
-            {{ trash_form.confirm }} Yes I'm sure
-          </label>
-          <br><hr>
-          <button style="margin-right:7px;" class="btn btn-default" data-dismiss="modal">No, cancel and take me back!</button>
-          <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i> Delete this sketch</button>
-          {{ status_form.csrf_token }}
-        </form>
-        {% else %}
-        You don't have permission to delete this sketch.
-        {% endif %}
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="container">
-  <div class="row">
-    <div class="col-md-12">
-      <div class="card">
-        <div class="row">
-          <div class="col-md-12">
-            <div class="pull-right">
-              <div class="btn-group">
-                <button class="btn btn-default" data-toggle="modal" data-target="#status-modal">Status: {{ sketch.get_status.status|title }}</button>
-                {% if sketch.has_permission(user=current_user, permission='delete') %}
-                <button class="btn btn-default" data-toggle="modal" data-target="#trash-modal"><i class="fa fa-trash"></i></button>
-                {% endif %}
-                <button data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
-                  {% if sketch.is_public %}
-                  <i class="fa fa-globe"></i> Public</button>
-                {% else %}
-                <i class="fa fa-lock"></i> Private</button>
-                {% endif %}
-              </div>
-            </div>
-            <h2>{{ sketch.name }}
-                {% if sketch.has_permission(user=current_user, permission='write') %}
-              <button class="btn btn-default" data-toggle="modal" data-target="#edit-sketch-modal" style="margin-left:10px;width:50px;"><i class="fa fa-pencil"></i></button>
-                {% endif %}
-            </h2>
-            <p style="white-space: pre-wrap;word-wrap: break-word;">{{ sketch.description }}</p>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
 
-  <div class="card">
-    {% if sketch.timelines %}
-    <table class="table table-hover">
-      <thead>
-      <tr>
-        <th width="73px">Timeline</th>
-        <th></th>
-        <th width="150px">Added</th>
-      </tr>
+    <!-- ACL modal -->
+    <div class="modal" id="share-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">Who has access</h4>
+                </div>
+                <div class="modal-body">
+                    {% if sketch.has_permission(user=current_user, permission='write') %}
+                        <form action="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}" method="post">
 
-      <tbody>
-      {% for timeline in sketch.timelines %}
-      <tr>
-        <td>
-          <div class="color-box" style="background:#{{ timeline.color }};"></div>
-        </td>
-        <td>
-          <div style="margin-top:5px;">
-            <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
-          </div>
-        </td>
-        <td>
-          <div style="margin-top:5px;">{{ timeline.created_at }}</div>
-        </td>
-      </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <p>There is no timeline added to this sketch.</p>
-    {% endif %}
-    {% if sketch.has_permission(current_user, 'write') %}
-    <div class="btn-group">
-      <a class="btn btn-primary" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add timeline</a>
-      {% if sketch.timelines %}
-      <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
-      {% endif %}
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="permission" value="public" {% if sketch.is_public %}checked="true"{% endif %}>
+                                    <i class="fa fa-globe" style="margin-left: 10px;margin-right: 5px;"></i>
+                                    Public -  All users of the system can access this sketch
+                                </label>
+                            </div>
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" name="permission" value="private" {% if not sketch.is_public %}checked="true"{% endif %}>
+                                    <i class="fa fa-lock" style="margin-left: 10px;margin-right: 5px;"></i>
+                                    Private - Only you can access this sketch
+                                </label>
+                            </div>
+                            <br><hr>
+                            <button style="margin-right:7px;" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            <input type="submit" class="btn btn-primary" value="Save changes">
+                            {{ permission_form.csrf_token }}
+                        </form>
+                    {% else %}
+                        {% if sketch.is_public %}
+                            <i class="fa fa-globe"></i> Public -  All users of the system can access this sketch
+                        {% else %}
+                            <i class="fa fa-lock"></i> Private - Only you can access this sketch
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
-    {% else %}
-    {% if sketch.timelines %}
-    <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
-    {% endif %}
-    {% endif %}
-  </div>
+
+    <!-- Change status modal -->
+    <div class="modal" id="status-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">Current status: {{ sketch.get_status.status|title }}</h4>
+                </div>
+                <div class="modal-body">
+                    {% if sketch.has_permission(user=current_user, permission='write') %}
+                        <strong>Change status:</strong>
+                        <br><br>
+                        <form action="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}" method="post">
+                            <select id="status" name="status" class="form-control">
+                                <option disabled selected>Set status</option>
+                                {% for option in status_form.status %}
+                                    {{ option }}
+                                {% endfor %}
+                            </select>
+                            <br><hr>
+                            <button style="margin-right:7px;" class="btn btn-default" data-dismiss="modal">Close</button>
+                            <input type="submit" class="btn btn-primary" value="Save changes">
+                            {{ status_form.csrf_token }}
+                        </form>
+                    {% else %}
+                        You don't have permission to change status.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete sketch modal -->
+    <div class="modal" id="trash-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="myModalLabel">Delete sketch</h4>
+                </div>
+                <div class="modal-body">
+                    {% if sketch.has_permission(user=current_user, permission='delete') %}
+                        <strong>Are you sure you want to delete this sketch?</strong>
+                        <br><br>
+                        <form action="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}" method="post">
+                            <label>
+                                {{ trash_form.confirm }} Yes I'm sure
+                            </label>
+                            <br><hr>
+                            <button style="margin-right:7px;" class="btn btn-default" data-dismiss="modal">No, cancel and take me back!</button>
+                            <button type="submit" class="btn btn-danger"><i class="fa fa-trash"></i> Delete this sketch</button>
+                            {{ status_form.csrf_token }}
+                        </form>
+                    {% else %}
+                        You don't have permission to delete this sketch.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-top">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="pull-right">
+                                <div class="btn-group">
+                                    {% if sketch.has_permission(user=current_user, permission='write') %}
+                                        <button class="btn btn-default" data-toggle="modal" data-target="#edit-sketch-modal"><i class="fa fa-pencil"></i></button>
+                                        <button class="btn btn-default" data-toggle="modal" data-target="#status-modal">Status: {{ sketch.get_status.status|title }}</button>
+                                    {% endif %}
+
+                                    {% if sketch.has_permission(user=current_user, permission='delete') %}
+                                        <button class="btn btn-default" data-toggle="modal" data-target="#trash-modal"><i class="fa fa-trash"></i></button>
+                                    {% endif %}
+
+                                    <button data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
+                                        {% if sketch.is_public %}
+                                            <i class="fa fa-globe"></i> Public</button>
+                                        {% else %}
+                                            <i class="fa fa-lock"></i> Private</button>
+                                        {% endif %}
+                                </div>
+                            </div>
+                            <h2>{{ sketch.name }}</h2>
+                            <p style="white-space: pre-wrap;word-wrap: break-word;">{{ sketch.description }}</p>
+
+                            {% if sketch.has_permission(current_user, 'write') and sketch.timelines %}
+                                <br>
+                                {% if sketch.timelines %}
+                                    <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
+                                {% endif %}
+                            {% else %}
+                                {% if sketch.timelines %}
+                                    <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
+                                {% endif %}
+                            {% endif %}
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if sketch.get_named_views.all() %}
+            <div class="card">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>View</th>
+                        <th>Created by</th>
+                        <th width="130px">Created</th>
+                    </tr>
+                    <tbody>
+                    {% for view in sketch.get_named_views %}
+                        <tr>
+                            <td>
+                                <div style="margin-top:5px;font-size: 1.1em;font-weight: bold"><a href="explore/view/{{ view.id }}/">{{ view.name }}</a></div>
+                                <span style="color:#777;">{{ view.query_string }}</span>
+                            </td>
+                            <td>{{ view.user.name }}</td>
+                            <td>{{ view.updated_at.strftime('%Y-%m-%d %H:%M')}}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        <div class="card">
+            {% if sketch.timelines %}
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th width=80px">Timelines</th>
+                        <th></th>
+                        <th>Added by</th>
+                        <th width="130px">Added</th>
+                    </tr>
+
+                    <tbody>
+                    {% for timeline in sketch.timelines %}
+                        <tr>
+                            <td>
+                                <div class="color-box" style="background:#{{ timeline.color }};"></div>
+                            </td>
+                            <td>
+                                <div style="margin-top:5px;">
+                                    <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
+                                </div>
+                            </td>
+                            <td>{{ timeline.user.name }}</td>
+                            <td>
+                                <div style="margin-top:5px;">{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <a class="btn btn-link" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add more timelines</a>
+            {% else %}
+                <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started!</a>
+            {% endif %}
+        </div>
 
 
-  {% if sketch.get_named_views.all() %}
-  <div class="card">
-    <table class="table table-hover">
-      <thead>
-      <tr>
-        <th>View</th>
-        <th width="150px">Created</th>
-      </tr>
-      <tbody>
-      {% for view in sketch.get_named_views %}
-      <tr>
-        <td>
-          <div style="margin-top:5px;font-size: 1.1em;font-weight: bold"><a href="explore/view/{{ view.id }}/">{{ view.name }}</a></div>
-          <span style="color:#777;">{{ view.query_string }}</span>
-        </td>
-        <td><div style="margin-top:15px;">{{ view.updated_at}}</div></td>
-      </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% endif %}
-</div>
+    </div>
 
 {% endblock %}

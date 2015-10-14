@@ -36,45 +36,48 @@ limitations under the License.
 </div>
 <!-- End save view modal -->
 
-<div class="card" style="padding-bottom:0;">
-    <form ng-submit="ctrl.search(query, filter)">
-        <input ng-model="query" type="search" class="search-input" id="search-input" placeholder="Search" autofocus>
-    </form>
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
 
-    <br>
+            <div class="card card-top" style="padding-bottom:0;">
+                <form ng-submit="ctrl.search(query, filter)">
+                    <input ng-model="query" type="search" class="search-input" id="search-input" placeholder="Search" autofocus>
+                </form>
 
-    <div class="btn-group">
-        <button class="btn btn-default" ng-click="ctrl.search_starred(query, filter)"><i class="fa fa-star icon-yellow"></i> Starred</button>
-        <button class="btn btn-default" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
+                <div class="btn-group">
+                    <button class="btn btn-default" ng-click="ctrl.search_starred(query, filter)"><i class="fa fa-star icon-yellow"></i> Starred</button>
+                    <button class="btn btn-default" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
+                </div>
+                <ts-search-saved-view-picker sketch="sketch" redirect-view="redirectView"></ts-search-saved-view-picker>
+                <br><br>
+            </div>
+
+            <div class="card">
+                <ts-filter
+                        filter="filter"
+                        query="query"
+                        sketch="sketch"
+                        events="events"
+                        meta="meta"
+                        show-filters="showFilters">
+                </ts-filter>
+            </div>
+
+            <div class="card" ng-show="filter.context">
+                <ts-search-context-card ng-if="filter.context" context="filter.context"></ts-search-context-card>
+            </div>
+
+            <div class="card">
+                <ts-heatmap
+                        query="query"
+                        filter="filter"
+                        meta="meta"
+                        sketch-id="sketchId">
+                </ts-heatmap>
+            </div>
+
+            <ts-event-list events="events" meta="meta" sketch-id="sketchId" filter="filter" query="query"></ts-event-list>
+        </div>
     </div>
-    <ts-search-saved-view-picker sketch="sketch" redirect-view="redirectView"></ts-search-saved-view-picker>
-    <br><br>
 </div>
-
-    <div class="card">
-    <ts-filter
-            filter="filter"
-            query="query"
-            sketch="sketch"
-            events="events"
-            meta="meta"
-            show-filters="showFilters">
-    </ts-filter>
-</div>
-
-<div class="card" ng-show="filter.context">
-    <ts-search-context-card ng-if="filter.context" context="filter.context"></ts-search-context-card>
-</div>
-
-<div class="card">
-    <ts-heatmap
-            query="query"
-            filter="filter"
-            meta="meta"
-            sketch-id="sketchId">
-    </ts-heatmap>
-</div>
-
-<ts-event-list events="events" meta="meta" sketch-id="sketchId" filter="filter" query="query"></ts-event-list>
-
-

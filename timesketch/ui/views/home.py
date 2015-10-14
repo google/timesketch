@@ -24,6 +24,7 @@ from flask_login import login_required
 from sqlalchemy import not_
 
 from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import View
 from timesketch.lib.forms import HiddenNameDescriptionForm
 from timesketch.models import db_session
 
@@ -49,6 +50,9 @@ def home():
     query = request.args.get(u'q', u'')
     # Only render upload button if it is configured.
     upload_enabled = current_app.config[u'UPLOAD_ENABLED']
+    last_sketch = View.query.filter_by(
+        user=current_user, name=u'').order_by(
+            View.updated_at.desc()).first()
 
     if query_filter:
         if query_filter == u'user':
@@ -79,4 +83,4 @@ def home():
 
     return render_template(
         u'home/home.html', sketches=sketches, form=form, query=query,
-        upload_enabled=upload_enabled)
+        upload_enabled=upload_enabled, last_sketch=last_sketch)

@@ -1,4 +1,4 @@
-{% extends "sketch/base.html" %}
+{% extends "base.html" %}
 <!--
 Copyright 2015 Google Inc. All rights reserved.
 
@@ -16,11 +16,23 @@ limitations under the License.
 -->
 
 {% block main %}
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}" autoload="true" redirect="true"></ts-search>
+    <ul class="nav nav-tabs">
+        <li role="presentation"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
+        <li role="presentation" class="active"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
+        <li role="presentation"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
+        <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
+    </ul>
+    {% if sketch.timelines %}
+        <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}" autoload="true" redirect="true"></ts-search>
+    {% else %}
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-top">
+                        <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started!</a>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    {% endif %}
 {% endblock %}
