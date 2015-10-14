@@ -424,3 +424,8 @@ div:hover.tooltips span {
 .filter-card {
     padding-bottom: 10px;
 }
+
+rect.bordered {
+    stroke: #d1d1d1;
+    stroke-width:1px;
+}

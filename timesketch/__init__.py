@@ -22,6 +22,7 @@ from flask_login import LoginManager
 from flask_restful import Api
 from flask_wtf import CsrfProtect
 
+from timesketch.api.v1.resources import AggregationResource
 from timesketch.api.v1.resources import ExploreResource
 from timesketch.api.v1.resources import EventResource
 from timesketch.api.v1.resources import EventAnnotationResource
@@ -92,6 +93,8 @@ def create_app(config=None):
     api_v1 = Api(app, prefix=u'/api/v1')
     api_v1.add_resource(SketchListResource, u'/sketches/')
     api_v1.add_resource(SketchResource, u'/sketches/<int:sketch_id>/')
+    api_v1.add_resource(
+        AggregationResource, u'/sketches/<int:sketch_id>/aggregation/')
     api_v1.add_resource(ExploreResource, u'/sketches/<int:sketch_id>/explore/')
     api_v1.add_resource(EventResource, u'/sketches/<int:sketch_id>/event/')
     api_v1.add_resource(

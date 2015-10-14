@@ -125,9 +125,34 @@ class ElasticSearchDataStore(datastore.DataStore):
                 }
             }
 
+        data_type_aggregation = {
+            u'data_type': {
+                u'terms': {
+                    u'field': u'data_type',
+                    u'size': 0}
+            }
+        }
+
         if aggregations:
             if isinstance(aggregations, dict):
+                if query_filter.get(u'exclude', None):
+                    aggregations = {
+                        u'exclude': {
+                            u'filter': {
+                                u'not': {
+                                    u'terms': {
+                                        u'data_type': query_filter[u'exclude']
+                                    }
+                                }
+                            },
+                            u'aggregations': aggregations
+                        },
+                        u'data_type': data_type_aggregation[u'data_type']
+                    }
                 query_dict[u'aggregations'] = aggregations
+        else:
+            query_dict[u'aggregations'] = data_type_aggregation
+
 
         # Default search type for elasticsearch is query_then_fetch.
         if return_results:

@@ -147,8 +147,24 @@ class ExploreResourceTest(BaseTest):
         response = self.client.post(
             self.resource_url, data=json.dumps(data, ensure_ascii=False),
             content_type=u'application/json')
-        print response.json
         self.assertDictEqual(response.json, self.expected_response)
+        self.assert200(response)
+
+
+class AggregationResourceTest(BaseTest):
+    """Test ExploreResource."""
+    resource_url = u'/api/v1/sketches/1/aggregation/'
+
+    @mock.patch(
+        u'timesketch.api.v1.resources.ElasticSearchDataStore', MockDataStore)
+    def test_heatmap_aggregation(self):
+        """Authenticated request to get heatmap aggregation."""
+        self.login()
+        data = dict(query=u'test', filter={}, aggtype=u'heatmap')
+        response = self.client.post(
+            self.resource_url, data=json.dumps(data, ensure_ascii=False),
+            content_type=u'application/json')
+        self.assertEqual(len(response.json[u'objects']), 168)
         self.assert200(response)
 
 

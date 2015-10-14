@@ -27,8 +27,8 @@ def heatmap(es_client, sketch_id, query, query_filter, indices):
     returns:
         List of events per hour/day
     """
-    aggregations = {
-        u'time_histogram': {
+    aggregation = {
+        u'heatmap': {
             u'date_histogram': {
                 u'field': u'datetime',
                 u'interval': u'hour',
@@ -36,20 +36,28 @@ def heatmap(es_client, sketch_id, query, query_filter, indices):
             }
         }
     }
+
     search_result = es_client.search(
-        sketch_id, query, query_filter, indices, aggregations=aggregations,
+        sketch_id, query, query_filter, indices, aggregations=aggregation,
         return_results=False)
+
+    try:
+        aggregation_result = search_result[u'aggregations']
+        if aggregation_result.get(u'exclude', None):
+            buckets = aggregation_result[u'exclude'][u'heatmap'][u'buckets']
+        else:
+            buckets = aggregation_result[u'heatmap'][u'buckets']
+    except KeyError:
+        buckets = []
 
     per_hour = {}
     for day in range(1, 8):
         for hour in range(0, 24):
             per_hour[(day, hour)] = 0
 
-    for n in search_result[u'aggregations'][u'time_histogram'][u'buckets']:
-        day_hour = tuple(int(dh) for dh in n[u'key_as_string'].split(u','))
-        count = n[u'doc_count']
+    for bucket in buckets:
+        day_hour = tuple(int(dh) for dh in bucket[u'key_as_string'].split(u','))
+        count = bucket[u'doc_count']
         per_hour[day_hour] = count
 
     return [dict(day=k[0], hour=k[1], count=v) for k, v in per_hour.items()]
-
-

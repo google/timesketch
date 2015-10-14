@@ -86,6 +86,13 @@ limitations under the License.
                     })
                 };
 
+                this.aggregation = function(query, filter, aggtype) {
+                    timesketchApi.aggregation($scope.sketchId, query, filter, aggtype)
+                        .success(function(data) {
+                            return data;
+                    })
+                };
+
                 this.search_starred = function(query, filter) {
                     filter.star = true;
                     query = "";

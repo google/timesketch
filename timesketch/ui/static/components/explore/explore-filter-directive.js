@@ -161,7 +161,7 @@ limitations under the License.
                     }
                     ctrl.search(scope.query, scope.filter);
                 };
-                scope.$watch("filter.query", function(value) {
+                scope.$watch("filter", function(value) {
                     if (scope.filter.exclude.indexOf(scope.datatype.key) == -1) {
                         scope.datatype_picker_title = {'color': '#333', 'text-decoration': 'none'};
                         scope.datatype_picker_color = {'color': '#333', 'background': '#428bca'};

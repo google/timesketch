@@ -42,6 +42,7 @@ from flask_restful import marshal
 from flask_restful import reqparse
 from flask_restful import Resource
 
+from timesketch.lib.aggregators import heatmap
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -49,6 +50,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.datastores.elastic import ElasticSearchDataStore
 from timesketch.lib.errors import ApiHTTPError
+from timesketch.lib.forms import AggregationForm
 from timesketch.lib.forms import SaveViewForm
 from timesketch.lib.forms import EventAnnotationForm
 from timesketch.lib.forms import ExploreForm
@@ -304,16 +306,9 @@ class ExploreResource(ResourceMixin, Resource):
             if not form.query.data and not query_filter.get(u'star'):
                 abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
-            aggregations = {
-                u'data_type': {
-                    u'terms': {
-                        u'field': u'data_type',
-                        u'size': 0}
-                }
-            }
             result = self.datastore.search(
                 sketch_id, form.query.data, query_filter, indices,
-                aggregations=aggregations, return_results=True)
+                aggregations=None, return_results=True)
 
             # Get labels for each event that matches the sketch.
             # Remove all other labels.
@@ -369,6 +364,52 @@ class ExploreResource(ResourceMixin, Resource):
             schema = {
                 u'meta': meta,
                 u'objects': result[u'hits'][u'hits']
+            }
+            return jsonify(schema)
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class AggregationResource(ResourceMixin, Resource):
+    """Resource to query for aggregated results."""
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+        Handler for /api/v1/sketches/:sketch_id/aggregation/
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            JSON with aggregation results
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        form = AggregationForm.build(request)
+
+        if form.validate_on_submit():
+            query_filter = form.filter.data
+            sketch_indices = [
+                t.searchindex.index_name for t in sketch.timelines]
+            indices = query_filter.get(u'indices', sketch_indices)
+
+            # Make sure that the indices in the filter are part of the sketch
+            if set(indices) - set(sketch_indices):
+                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+            # Make sure we have a query string or star filter
+            if not form.query.data and not query_filter.get(u'star'):
+                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+            result = []
+            if form.aggtype.data == u'heatmap':
+                result = heatmap(
+                    es_client=self.datastore, sketch_id=sketch_id,
+                    query=form.query.data, query_filter=query_filter,
+                    indices=indices)
+            else:
+                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+            schema = {
+                u'objects': result
             }
             return jsonify(schema)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)

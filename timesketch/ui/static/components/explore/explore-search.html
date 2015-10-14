@@ -66,4 +66,15 @@ limitations under the License.
     <ts-search-context-card ng-if="filter.context" context="filter.context"></ts-search-context-card>
 </div>
 
+<div class="card">
+    <ts-heatmap
+            query="query"
+            filter="filter"
+            meta="meta"
+            sketch-id="sketchId">
+    </ts-heatmap>
+</div>
+
 <ts-event-list events="events" meta="meta" sketch-id="sketchId" filter="filter" query="query"></ts-event-list>
+
+
