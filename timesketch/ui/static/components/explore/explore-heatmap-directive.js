@@ -31,13 +31,14 @@
                 sketchId: '=',
                 filter: '=',
                 query: '=',
-                meta: '='
+                meta: '=',
+                showCharts: '='
             },
             require: '^tsSearch',
             link: function(scope, element, attrs, ctrl) {
                 var AGGREGATION_TYPE = 'heatmap';
 
-                scope.$watch('meta', function (newval, oldval) {
+                scope.$watchGroup(['meta', 'showCharts'], function (newval, oldval) {
                     if(scope.meta) {
                         timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, AGGREGATION_TYPE)
                             .success(function(data) {
