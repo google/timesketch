@@ -343,15 +343,15 @@ class ExploreResource(ResourceMixin, Resource):
                 tl_colors[timeline.searchindex.index_name] = timeline.color
                 tl_names[timeline.searchindex.index_name] = timeline.name
 
-            histogram = None
-            es_total_count_unfiltered = 0
             try:
                 buckets = result[u'aggregations'][u'data_type'][u'buckets']
-                histogram = buckets
+            except KeyError:
+                buckets = None
+
+            es_total_count_unfiltered = 0
+            if buckets:
                 for bucket in buckets:
                     es_total_count_unfiltered += bucket[u'doc_count']
-            except KeyError:
-                pass
 
             meta = {
                 u'es_time': result[u'took'],
@@ -359,8 +359,7 @@ class ExploreResource(ResourceMixin, Resource):
                 u'es_total_count_unfiltered': es_total_count_unfiltered,
                 u'timeline_colors': tl_colors,
                 u'timeline_names': tl_names,
-                u'histogram': histogram
-
+                u'histogram': buckets
             }
             schema = {
                 u'meta': meta,

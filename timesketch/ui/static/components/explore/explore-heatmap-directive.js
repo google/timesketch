@@ -36,11 +36,9 @@
             },
             require: '^tsSearch',
             link: function(scope, element, attrs, ctrl) {
-                var AGGREGATION_TYPE = 'heatmap';
-
                 scope.$watchGroup(['meta', 'showCharts'], function (newval, oldval) {
-                    if(scope.meta) {
-                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, AGGREGATION_TYPE)
+                    if(scope.showCharts) {
+                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, 'heatmap')
                             .success(function(data) {
                                 scope.render_heatmap(data['objects'])
                             });
@@ -84,7 +82,7 @@
                     var max_value = max_value_initial;
 
                     if (max_value_initial > 100000) {
-                        max_value = max_value_initial / 10;
+                        max_value = max_value_initial / 100;
                     } else if (max_value_initial == 0) {
                         max_value = 1
                     }
@@ -93,6 +91,16 @@
                     var genColor = d3.scale.linear()
                         .domain([0, max_value / 2, max_value])
                         .range(["white", "#3498db", "red"]);
+
+                    var colors = [];
+                    for (var i = 0; i < max_value; i++) {
+                        colors.push(genColor(i));
+                    }
+                    var num_buckets = colors.length;
+
+                    var colorScale = d3.scale.quantile()
+                        .domain([0, num_buckets - 1, max_value_initial])
+                        .range(colors);
 
                     svg.selectAll(".dayLabel")
                         .data(days)
@@ -138,7 +146,7 @@
                     // Fade in the chart and fill each box with color
                     heatMap.transition().duration(500)
                         .style("fill", function (d) {
-                            return genColor(d.count);
+                            return colorScale(d.count);
                         });
 
                     // Display event count on hover

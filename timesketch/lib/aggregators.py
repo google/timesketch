@@ -58,6 +58,6 @@ def heatmap(es_client, sketch_id, query, query_filter, indices):
     for bucket in buckets:
         day_hour = tuple(int(dh) for dh in bucket[u'key_as_string'].split(u','))
         count = bucket[u'doc_count']
-        per_hour[day_hour] = count
+        per_hour[day_hour] += count
 
     return [dict(day=k[0], hour=k[1], count=v) for k, v in per_hour.items()]
