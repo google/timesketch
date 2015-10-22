@@ -113,7 +113,7 @@ class MockDataStore(datastore.DataStore):
 
     def search(
             self, unused_sketch_id, unused_query, unused_query_filter,
-            unused_indices):
+            unused_indices, aggregations, return_results):
         """Mock a search query.
 
         Returns:

@@ -28,11 +28,16 @@
                 </form>
                 <br>
                 <div class="btn-group">
-                    <button class="btn btn-default" ng-click="showFilters = !showFilters"><i class="fa fa-filter"></i> Filters</button>
+                    <button class="btn btn-default" ng-click="showFilters = !showFilters" ng-style="{true: {'background-color':'#f5f5f5'}}[showFilters]"><i class="fa fa-filter"></i> Filters</button>
+                    <button class="btn btn-default" ng-click="showCharts = !showCharts" ng-style="{true: {'background-color':'#f5f5f5'}}[showCharts]"><i class="fa fa-bar-chart"></i> Charts</button>
                     <button class="btn btn-default" ng-click="ctrl.search_starred(query, filter)"><i class="fa fa-star icon-yellow"></i> Starred</button>
                     <button class="btn btn-default" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
                 </div>
-                <ts-search-saved-view-picker sketch="sketch" redirect-view="redirectView"></ts-search-saved-view-picker>
+                <ts-search-saved-view-picker ng-show="sketch.views.length" sketch="sketch" redirect-view="redirectView"></ts-search-saved-view-picker>
+                <br><br>
+            </div>
+
+            <div class="card" ng-show="showFilters">
                 <ts-filter
                         filter="filter"
                         query="query"
@@ -41,10 +46,23 @@
                         meta="meta"
                         show-filters="showFilters">
                 </ts-filter>
-                <ts-search-context-card ng-if="filter.context" ng-show="filter.context" context="filter.context"></ts-search-context-card>
             </div>
+
+            <div class="card" ng-show="showCharts">
+                <ts-heatmap
+                        query="query"
+                        filter="filter"
+                        meta="meta"
+                        sketch-id="sketchId"
+                        show-charts="showCharts">
+                </ts-heatmap>
+            </div>
+
+            <div class="card" ng-show="filter.context">
+                <ts-search-context-card ng-if="filter.context" context="filter.context"></ts-search-context-card>
+            </div>
+
+            <ts-event-list events="events" meta="meta" sketch-id="sketchId" filter="filter" query="query"></ts-event-list>
         </div>
     </div>
 </div>
-
-<ts-event-list events="events" meta="meta" sketch-id="sketchId" filter="filter" query="query"></ts-event-list>

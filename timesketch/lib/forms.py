@@ -143,6 +143,11 @@ class ExploreForm(BaseForm):
     filter = StringField(u'Filter')
 
 
+class AggregationForm(ExploreForm):
+    """Form used to search the datastore."""
+    aggtype = StringField(u'Aggregation type')
+
+
 class StatusForm(BaseForm):
     """Form to handle status annotation."""
     status = SelectField(

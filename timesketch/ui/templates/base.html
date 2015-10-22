@@ -18,26 +18,28 @@ limitations under the License.
 <html lang="en" ng-app="timesketch">
 
 <head>
-    <title>Timesketch</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="stylesheet" href="/static/third_party/font-awesome/css/font-awesome.min.css">
-    <link rel="stylesheet" href="/static/third_party/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/static/css/ts.css">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
-    <script type="text/javascript" language="javascript" src="/static/third_party/jquery/jquery.min.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/third_party/bootstrap/js/bootstrap.min.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/third_party/moment/moment.min.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/third_party/angular/angular.min.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/app.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/components/api/api.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/components/api/api-service.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/components/explore/explore.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/components/explore/explore-event-directive.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/components/explore/explore-filter-directive.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/components/explore/explore-search-directive.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/components/core/core.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/components/core/core-butterbar-directive.js"></script>
-    <script type="text/javascript" language="javascript" src="/static/components/core/core-upload-directive.js"></script>
+  <title>Timesketch</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <link rel="stylesheet" href="/static/third_party/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="/static/third_party/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/ts.css">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+  <script type="text/javascript" language="javascript" src="/static/third_party/jquery/jquery.min.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/third_party/bootstrap/js/bootstrap.min.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/third_party/moment/moment.min.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/third_party/angular/angular.min.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/third_party/d3/d3.min.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/app.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/api/api.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/api/api-service.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/explore/explore.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/explore/explore-event-directive.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/explore/explore-filter-directive.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/explore/explore-search-directive.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/explore/explore-heatmap-directive.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/core/core.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/core/core-butterbar-directive.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/components/core/core-upload-directive.js"></script>
 </head>
 
 <body>

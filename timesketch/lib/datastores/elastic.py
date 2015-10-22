@@ -40,7 +40,9 @@ class ElasticSearchDataStore(datastore.DataStore):
             {u'host': host, u'port': port}
         ])
 
-    def search(self, sketch_id, query, query_filter, indices):
+    def search(
+            self, sketch_id, query, query_filter, indices, aggregations=None,
+            return_results=True):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -49,11 +51,18 @@ class ElasticSearchDataStore(datastore.DataStore):
             sketch_id: Integer of sketch primary key
             query: Query string
             query_filter: Dictionary containing filters to apply
-            indices = List of indices to query
+            indices: List of indices to query
+            aggregations: Dict of Elasticsearch aggregations
+            return_results: Boolean indicating if results should be returned
 
         Returns:
             Set of event documents in JSON format
         """
+        LIMIT_RESULTS = 500
+
+        if not indices:
+            return {u'hits': {u'hits': [], u'total': 0}, u'took': 0}
+
         if not query:
             query = u''
 
@@ -107,14 +116,56 @@ class ElasticSearchDataStore(datastore.DataStore):
                 }
             }
 
-        if not indices:
-            return {u'hits': {u'hits': [], u'total': 0}, u'took': 0}
+        if query_filter.get(u'exclude', None):
+            query_dict[u'filter'] = {
+                u'not': {
+                    u'terms': {
+                        u'data_type': query_filter[u'exclude']
+                    }
+                }
+            }
+
+        data_type_aggregation = {
+            u'data_type': {
+                u'terms': {
+                    u'field': u'data_type',
+                    u'size': 0}
+            }
+        }
+
+        if aggregations:
+            if isinstance(aggregations, dict):
+                if query_filter.get(u'exclude', None):
+                    aggregations = {
+                        u'exclude': {
+                            u'filter': {
+                                u'not': {
+                                    u'terms': {
+                                        u'data_type': query_filter[u'exclude']
+                                    }
+                                }
+                            },
+                            u'aggregations': aggregations
+                        },
+                        u'data_type': data_type_aggregation[u'data_type']
+                    }
+                query_dict[u'aggregations'] = aggregations
+        else:
+            query_dict[u'aggregations'] = data_type_aggregation
+
+
+        # Default search type for elasticsearch is query_then_fetch.
+        if return_results:
+            search_type = u'query_then_fetch'
+        else:
+            search_type = u'count'
 
         # Suppress the lint error because elasticsearch-py adds parameters
         # to the function with a decorator and this makes pylint sad.
         # pylint: disable=unexpected-keyword-arg
         return self.client.search(
-            body=query_dict, index=indices, size=500, _source_include=[
+            body=query_dict, index=indices, size=LIMIT_RESULTS,
+            search_type=search_type, _source_include=[
                 u'datetime', u'timestamp', u'message', u'timestamp_desc',
                 u'timesketch_label'])
 
