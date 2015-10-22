@@ -27,7 +27,7 @@ limitations under the License.
   <script type="text/javascript" language="javascript" src="/static/third_party/jquery/jquery.min.js"></script>
   <script type="text/javascript" language="javascript" src="/static/third_party/bootstrap/js/bootstrap.min.js"></script>
   <script type="text/javascript" language="javascript" src="/static/third_party/moment/moment.min.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/third_party/angular/angular.js"></script>
+  <script type="text/javascript" language="javascript" src="/static/third_party/angular/angular.min.js"></script>
   <script type="text/javascript" language="javascript" src="/static/third_party/d3/d3.min.js"></script>
   <script type="text/javascript" language="javascript" src="/static/app.js"></script>
   <script type="text/javascript" language="javascript" src="/static/components/api/api.js"></script>
@@ -43,32 +43,24 @@ limitations under the License.
 </head>
 
 <body>
-<a href="/">
-    <div id="logo">
-        <img src="/static/img/logo.png" />
+    <a href="/">
+        <div id="logo">
+            <img src="/static/img/logo.png" />
+        </div>
+    </a>
+    <header>
+        <div ts-butterbar id="butterbar">Loading..</div>
+        {% if sketch %}
+            <div style="margin-left: 245px; margin-top:5px;" class="pull-left" id="sketch-name">{{ sketch.name }}</div>
+        {% endif %}
+        <div class="pull-right" style="margin-top:5px;margin-right:30px;">
+            {% block header_left %}{% endblock %}
+            <span style="color:#fff;margin-right:20px;margin-left: 20px;">{{ current_user.username }}</span>
+            <a style="color:#fff;" href="/logout/">Logout</a>
+        </div>
+    </header>
+    <div id="main">
+        {% block main %}{% endblock %}
     </div>
-</a>
-
-<header>
-    <div ts-butterbar id="butterbar">Loading..</div>
-
-    {% if sketch %}
-        <div style="margin-left: 245px; margin-top:5px;" class="pull-left" id="sketch-name">{{ sketch.name }}</div>
-    {% endif %}
-
-    <div class="pull-right" style="margin-top:5px;margin-right:30px;">
-        {% block header_left %}{% endblock %}
-        <span style="color:#fff;margin-right:20px;margin-left: 20px;">{{ current_user.username }}</span>
-        <a style="color:#fff;" href="/logout/">Logout</a>
-    </div>
-</header>
-
-{% block sidenav %}{% endblock %}
-{% block main_no_sidenav %}{% endblock %}
-
-<div id="main">
-    {% block main %}{% endblock %}
-</div>
-
 </body>
 </html>

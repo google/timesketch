@@ -1,22 +1,5 @@
 {% extends "base.html" %}
-<!--
-Copyright 2015 Google Inc. All rights reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
--->
-
 {% block main %}
-
     <ul class="nav nav-tabs">
         <li role="presentation"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
@@ -24,7 +7,6 @@ limitations under the License.
         <li role="presentation" class="active"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
     </ul>
 
-    <!-- Edit timeline modal -->
     <div class="modal" id="edit-timeline-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -66,7 +48,6 @@ limitations under the License.
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-
                 <div class="card card-top">
                     <div class="pull-left" style="width:50px;height:50px;background:#{{ timeline.color }};cursor: pointer" data-toggle="modal" data-target="#edit-timeline-modal"></div>
                     {% if sketch.has_permission(user=current_user, permission='write') %}
@@ -92,11 +73,8 @@ limitations under the License.
                             <td>{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                         </tr>
                     </table>
-
                 </div>
             </div>
         </div>
-
     </div>
-
 {% endblock %}
