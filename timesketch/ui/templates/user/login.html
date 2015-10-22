@@ -18,55 +18,55 @@ limitations under the License.
 <html lang="en">
 
 <head>
-  <title>Timesketch</title>
-  <link rel="stylesheet" href="/static/third_party/bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="/static/css/timesketch.css">
-  <style>
-    body {
-        background: #428bca;
-    }
-    #center-logo img {
-        width:200px;
-        height:36px;
-        margin-bottom: 10px;
-    }
-  </style>
+    <title>Timesketch</title>
+    <link rel="stylesheet" href="/static/third_party/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/timesketch.css">
+    <style>
+        body {
+            background: #428bca;
+        }
+        #center-logo img {
+            width:200px;
+            height:36px;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 
 <body>
 
 <div id="main">
-  <div class="container">
-    <div class="row" style="height:100px;"></div>
-    <div class="row" style="height:100px;"></div>
-    <div class="row">
-      <div class="col-md-6 col-md-offset-4">
-        <div id="center-logo">
-          <img src="/static/img/logo.png" />
+    <div class="container">
+        <div class="row" style="height:100px;"></div>
+        <div class="row" style="height:100px;"></div>
+        <div class="row">
+            <div class="col-md-6 col-md-offset-4">
+                <div id="center-logo">
+                    <img src="/static/img/logo.png" />
+                </div>
+                <p style="color:#fff;">Collaborative forensic timeline analysis</p>
+                <br>
+                <form class="form-horizontal" method="post">
+                    <div class="form-group">
+                        <div class="col-sm-5">
+                            <input type="text" class="form-control" name="username" placeholder="Username">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-5">
+                            <input type="password" class="form-control" name="password" placeholder="Password">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-5">
+                            <button type="submit" class="btn btn-default">Sign in</button>
+                        </div>
+                    </div>
+                    {{ form.csrf_token }}
+                </form>
+            </div>
         </div>
-        <p style="color:#fff;">Collaborative forensic timeline analysis</p>
-        <br>
-        <form class="form-horizontal" method="post">
-          <div class="form-group">
-            <div class="col-sm-5">
-              <input type="text" class="form-control" name="username" placeholder="Username">
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-sm-5">
-              <input type="password" class="form-control" name="password" placeholder="Password">
-            </div>
-          </div>
-          <div class="form-group">
-            <div class="col-sm-5">
-              <button type="submit" class="btn btn-default">Sign in</button>
-            </div>
-          </div>
-          {{ form.csrf_token }}
-        </form>
-      </div>
     </div>
-  </div>
 </div>
 
 </body>

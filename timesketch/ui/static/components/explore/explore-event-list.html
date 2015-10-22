@@ -1,34 +1,16 @@
-<!--
-Copyright 2015 Google Inc. All rights reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
--->
-
-<div class="row" ng-show="meta.noisy">
-    <div class="col-md-12">
-        <div class="card card-alert">
-            <h4>I will only show you the first 500 events</h4>
-            <p>May I suggest you narrow down the results with a filter?</p>
-        </div>
-    </div>
-</div>
-
 <div class="card" style="min-height:100px;">
-    <div class="pull-left" ng-show="meta" style="padding:10px;margin-bottom: 10px;">
-        {{ meta.es_total_count }} events ({{ meta.es_time/1000 }}s)
+    <div class="pull-left" ng-show="meta" style="padding:10px;">
+        <span ng-show="!events.length && meta.es_total_count > 0">
+            <i class="fa fa-circle-o-notch fa-spin"></i> Searching..
+        </span>
+        <span ng-show="events.length || meta.es_total_count == 0">
+            {{ meta.es_total_count }} events ({{ meta.es_time/1000 }}s)
+            <span ng-show="meta.noisy" style="margin-left:10px;color:red;font-weight:bold;">
+                <i class="fa fa-warning"></i> Wow, that is a lot of events! I will only show you 500 of them.
+            </span>
+        </span>
     </div>
-
-    <div class="pull-right" ng-show="events.length">
+    <div class="pull-right">
         <div class="btn-group" style="margin-left:10px;">
             <button class="btn btn-default" ng-click="filter.order = { 'asc': 'desc', 'desc': 'asc'}[filter.order];applyOrder()"><i ng-class="{'asc': 'fa fa-sort-asc', 'desc': 'fa fa-sort-desc'}[filter.order]"></i> Sort</button>
             <button class="btn btn-default" ng-click="toggleAll()"><i class="fa fa-check"></i> Toggle all</button>
@@ -36,9 +18,7 @@ limitations under the License.
             <button class="btn btn-default" ng-click="removeStar()" ng-disabled="!anySelected"><i class="fa fa-star icon-grey"></i> Remove star</button>
         </div>
     </div>
-
     <br><br><br>
-
     <div ng-repeat="event in events">
         <ts-event event="event" meta="meta" sketch-id="sketchId"></ts-event>
     </div>
