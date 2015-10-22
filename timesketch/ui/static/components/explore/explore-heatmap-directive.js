@@ -24,6 +24,7 @@
          * @param filter - Filter object.
          * @param query - Query string.
          * @param meta - Events metadata object.
+         * @param showCharts - Boolean indicating if chars should be visible.
          */
         return {
             restrict: 'E',
