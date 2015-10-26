@@ -13,15 +13,19 @@
 # limitations under the License.
 """This module implements HTTP request handlers for the sketch views."""
 
+import csv
+import json
+from StringIO import StringIO
+
 from flask import abort
 from flask import Blueprint
+from flask import current_app
 from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
 from flask_login import current_user
 from flask_login import login_required
-import json
 from sqlalchemy import desc
 from sqlalchemy import not_
 
@@ -37,6 +41,7 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
+from timesketch.lib.datastores.elastic import ElasticSearchDataStore
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
@@ -120,11 +125,7 @@ def explore(sketch_id, view_id=None):
     if view_id:
         view = View.query.get(view_id)
     else:
-        view = View.query.filter(
-            View.user == current_user,
-            View.name == u'',
-            View.sketch_id == sketch_id).order_by(
-                View.created_at.desc()).first()
+        view = sketch.get_user_view(current_user)
     if not view:
         query_filter = dict(indices=sketch_timelines)
         view = View(
@@ -137,6 +138,43 @@ def explore(sketch_id, view_id=None):
     return render_template(
         u'sketch/explore.html', sketch=sketch, view=view,
         timelines=sketch_timelines, view_form=view_form)
+
+
+@sketch_views.route(
+    u'/sketch/<int:sketch_id>/explore/export/', methods=[u'GET'])
+@login_required
+def export(sketch_id):
+    """Generates CSV from search result.
+
+    Args:
+        sketch_id: Primary key for a sketch.
+    Returns:
+        CSV string with header.
+    """
+    sketch = Sketch.query.get_with_acl(sketch_id)
+    view = sketch.get_user_view(current_user)
+    query_filter = json.loads(view.query_filter)
+    indices = query_filter.get(u'indices', [])
+
+    datastore = ElasticSearchDataStore(
+        host=current_app.config[u'ELASTIC_HOST'],
+        port=current_app.config[u'ELASTIC_PORT'])
+
+    result = datastore.search(
+        sketch_id, view.query_string, query_filter, indices,
+        aggregations=None, return_results=True)
+
+    csv_out = StringIO()
+    csv_writer = csv.DictWriter(
+        csv_out, fieldnames=[
+            u'timestamp', u'message', u'timestamp_desc', u'datetime'])
+    csv_writer.writeheader()
+    for _event in result[u'hits'][u'hits']:
+        csv_writer.writerow(
+            dict((k, v.encode(u'utf-8') if type(v) is unicode else v)
+                 for k, v in _event[u'_source'].iteritems()))
+
+    return csv_out.getvalue()
 
 
 @sketch_views.route(
