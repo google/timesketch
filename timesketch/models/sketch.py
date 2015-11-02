@@ -63,6 +63,22 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         """
         return View.query.filter(View.sketch == self, View.name != u'')
 
+    def get_user_view(self, user):
+        """Get view for user, i.e. view with the state for the user/sketch.
+
+        Args:
+            user: User (instance of timesketch.models.user.User)
+
+        Returns:
+            view: Instance of timesketch.models.sketch.View
+        """
+        view = View.query.filter(
+            View.user == user,
+            View.name == u'',
+            View.sketch_id == self.id).order_by(
+                View.created_at.desc()).first()
+        return view
+
 
 class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the Timeline model."""

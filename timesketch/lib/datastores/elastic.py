@@ -167,7 +167,7 @@ class ElasticSearchDataStore(datastore.DataStore):
             body=query_dict, index=indices, size=LIMIT_RESULTS,
             search_type=search_type, _source_include=[
                 u'datetime', u'timestamp', u'message', u'timestamp_desc',
-                u'timesketch_label'])
+                u'timesketch_label', u'tag'])
 
     def get_event(self, searchindex_id, event_id):
         """Get one event from the datastore.
