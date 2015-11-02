@@ -13,6 +13,7 @@
             <span ng-show="comment">
                 <i class="fa fa-comments"></i>
             </span>
+            <i ng-if="::event._source.tag" ng-repeat="tag in ::event._source.tag" class="label label-primary">{{::tag}}</i>
             [{{ event._source.timestamp_desc }}] {{ event._source.message|limitTo:500 }}
             <div style="width:20px;height:20px;cursor: pointer;" class="pull-right tooltips"><span>Details</span><i ng-class="{true: 'fa fa-minus-square-o', false: 'fa fa-plus-square-o'}[showDetails]" style="color:#999;"></i></div>
 
