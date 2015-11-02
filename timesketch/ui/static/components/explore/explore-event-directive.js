@@ -112,10 +112,37 @@ limitations under the License.
                 sketchId: '=',
                 meta: '=',
                 event: '=',
-                isContextEvent: '='
+                prevTimestamp: '=',
+                nextTimestamp: '=',
+                index: '=',
+                isContextEvent: '=',
+                order: '='
             },
             require: '^tsSearch',
             controller: function ($scope, timesketchApi) {
+
+                // Calculate the time delta in days between two events.
+                var calcDays = function(t1, t2) {
+                    var t1_sec = parseInt(t1/1000000);
+                    var t2_sec = parseInt(t2/1000000);
+                    var delta = parseInt(t1_sec - t2_sec);
+                    var delta_days = delta/60/60/24;
+                    return parseInt(delta_days)
+                };
+                if ($scope.index > 0) {
+                    var event_timestamp = $scope.event['_source'].timestamp;
+                    if ($scope.order == 'asc') {
+                        $scope.days = calcDays(event_timestamp, $scope.prevTimestamp)
+                    } else {
+                        $scope.days = calcDays(event_timestamp, $scope.nextTimestamp)
+                    }
+                }
+
+                // Get the color and name for the event here to prevent ugly template code.
+                $scope.timeline_color = $scope.meta.timeline_colors[$scope.event._index];
+                $scope.timeline_name = $scope.meta.timeline_names[$scope.event._index];
+
+                // Defaults to not showing details for the event.
                 $scope.showDetails = false;
 
                 $scope.toggleSelected = function() {

@@ -1,14 +1,25 @@
+<div class="timeline-bubble" ng-if="::days > 0 && order == 'asc'">
+    <div style="margin-top:20px;position:absolute; margin-left:-30px;background: #f5f5f5; width:60px;height:60px;padding:5px; text-align: center;border-radius: 100%;color:#666;">
+        <div style="font-size:1.1em;margin-top:5px;font-weight:bold;">
+            {{::days}}
+        </div>days
+    </div>
+</div>
+
 <table id="search-result-table" width="100%">
     <tr>
-        <td style="background: #{{ ::meta.timeline_colors[event._index] }}" width="210px">
-            {{ event._source.datetime }}
+        <td style="background: #{{::timeline_color}}" width="210px">
+            {{::event._source.datetime}}
         </td>
-        <td width="20px;" ng-hide="isContextEvent">
+
+        <td width="20px;">
             <input type="checkbox" ng-click="toggleSelected()" ng-checked="event.selected">
         </td>
-        <td width="35px;" ng-hide="isContextEvent">
+
+        <td width="35px;">
             <i ng-click="event.star = !event.star;toggleStar()" ng-class="{true: 'fa fa-lg fa-star icon-yellow', false: 'fa fa-lg fa-star-o icon-grey'}[event.star]"></i>
         </td>
+
         <td class="event-message" ng-class="{true:'event-message-selected'}[event.selected]" ng-click="getDetail();showDetails = !showDetails">
             <span ng-show="comment">
                 <i class="fa fa-comments"></i>
@@ -16,17 +27,19 @@
             <i ng-if="::event._source.tag" ng-repeat="tag in ::event._source.tag" class="label label-primary">{{::tag}}</i>
             [{{ event._source.timestamp_desc }}] {{ event._source.message|limitTo:500 }}
             <div style="width:20px;height:20px;cursor: pointer;" class="pull-right tooltips"><span>Details</span><i ng-class="{true: 'fa fa-minus-square-o', false: 'fa fa-plus-square-o'}[showDetails]" style="color:#999;"></i></div>
+        </td>
 
-        </td>
         <td width="150px" style="text-align: right;background: #f1f1f1;">
-            <span class="label ts-name-label">{{ ::meta.timeline_names[event._index] }}</span>
-            <div ng-hide="isContextEvent" style="width:20px;height:20px;cursor: pointer;" class="pull-right tooltips" ng-click="getContext(event)"><span>Context query</span><i class="fa fa-search-plus" style="color:#777;"></i></div>
+            <span class="label ts-name-label">{{::timeline_name}}</span>
+            <div style="width:20px;height:20px;cursor: pointer;" class="tooltips" ng-click="getContext(event)">
+                <span>Context query</span><button class="btn btn-default" style="padding-right:7px;"><i class="fa fa-search-plus" style="color:#777;"></i></button>
+            </div>
         </td>
+
     </tr>
 </table>
 
 <div ng-show="showDetails" class="event-detail">
-    <br>
     <div class="event-detail-container">
         <div class="container">
             <div class="row">
@@ -34,16 +47,16 @@
                     <table class="table table-bordered table-hover">
                         <tr ng-repeat="(key, value) in eventdetail">
                             <td width="150px">{{ key }}</td>
-                            <td>{{ value }}</td>
+                            <td>{{::value}}</td>
                         </tr>
                     </table>
                 </div>
                 <div class="col-md-4">
                     <div ng-repeat="comment in comments">
                         <div class="comment-bubble">
-                            <div class="comment-name">{{ comment.user.username }}</div>
-                            <div class="comment-body">{{ comment.comment }}</div>
-                            <div class="comment-timestamp"><i class="fa fa-clock-o"></i> {{ comment.created_at }}</div>
+                            <div class="comment-name">{{::comment.user.username}}</div>
+                            <div class="comment-body">{{::comment.comment}}</div>
+                            <div class="comment-timestamp"><i class="fa fa-clock-o"></i> {{::comment.created_at}}</div>
                         </div>
                     </div>
                     <form name="commentForm" ng-submit="postComment()">
@@ -59,4 +72,8 @@
             </div>
         </div>
     </div>
+</div>
+
+<div class="timeline-bubble" ng-if="::days > 0 && order == 'desc'">
+    <div style="margin-top:20px;position:absolute; margin-left:-30px;background: #f5f5f5; width:60px;height:60px;padding:5px; text-align: center;border-radius: 100%;color:#666;"><b><div style="font-size:1.1em;margin-top:5px;">{{ ::days }}</div></b>days</div>
 </div>

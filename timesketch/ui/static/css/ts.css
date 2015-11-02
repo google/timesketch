@@ -438,6 +438,10 @@ div:hover.tooltips span {
     padding-bottom: 10px;
 }
 
+.filter-card, h5 {
+    padding-bottom: 7px;
+}
+
 rect.bordered {
     stroke: #d1d1d1;
     stroke-width: 1px;
@@ -467,4 +471,10 @@ rect.bordered {
 
 .nav-tabs {
     border: none;
+}
+
+.timeline-bubble {
+    margin-left:100px;
+    height:100px;
+    border-left:2px solid #f5f5f5;
 }
