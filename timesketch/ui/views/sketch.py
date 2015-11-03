@@ -167,11 +167,12 @@ def export(sketch_id):
     csv_out = StringIO()
     csv_writer = csv.DictWriter(
         csv_out, fieldnames=[
-            u'timestamp', u'message', u'timestamp_desc', u'datetime'])
+            u'timestamp', u'message', u'timestamp_desc', u'datetime',
+            u'timesketch_label', u'tag'])
     csv_writer.writeheader()
     for _event in result[u'hits'][u'hits']:
         csv_writer.writerow(
-            dict((k, v.encode(u'utf-8') if type(v) is unicode else v)
+            dict((k, v.encode(u'utf-8') if isinstance(v, basestring) else v)
                  for k, v in _event[u'_source'].iteritems()))
 
     return csv_out.getvalue()
