@@ -58,6 +58,17 @@
                 </ts-heatmap>
             </div>
 
+            <div class="card">
+                <ts-histogram
+                        query="query"
+                        filter="filter"
+                        meta="meta"
+                        sketch-id="sketchId"
+                        show-charts="showCharts">
+                </ts-histogram>
+            </div>
+
+
             <div class="card" ng-show="filter.context">
                 <ts-search-context-card ng-if="filter.context" context="filter.context"></ts-search-context-card>
             </div>

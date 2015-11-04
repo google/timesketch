@@ -61,3 +61,36 @@ def heatmap(es_client, sketch_id, query, query_filter, indices):
         per_hour[day_hour] += count
 
     return [dict(day=k[0], hour=k[1], count=v) for k, v in per_hour.items()]
+
+
+def histogram(es_client, sketch_id, query, query_filter, indices):
+    """Aggregate query results into number of events per hour/day.
+
+    Args:
+        es_client: Elasticsearch client (instance of ElasticSearchDatastore)
+        sketch_id: Integer of sketch primary key
+        query: Query string
+        query_filter: Dictionary containing filters to apply
+        indices: List of indices to query
+
+    returns:
+        List of events per hour/day
+    """
+    aggregation = {
+        u'histogram': {
+            u'date_histogram': {
+                u'min_doc_count': 0,
+                u'field': u'datetime',
+                u'interval': u'day',
+                u'format': u'yyyy-MM-dd'
+            }
+        }
+    }
+
+    search_result = es_client.search(
+        sketch_id, query, query_filter, indices, aggregations=aggregation,
+        return_results=False)
+
+    buckets = search_result[u'aggregations'][u'histogram'][u'buckets']
+
+    return buckets
