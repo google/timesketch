@@ -15,6 +15,7 @@
 """This module is for management of the timesketch application."""
 
 from collections import Counter
+import csv
 import json
 import sys
 from uuid import uuid4
@@ -125,8 +126,8 @@ class AddSearchIndex(Command):
         sys.stdout.write(u'Search index {0:s} created\n'.format(name))
 
 
-class CreateTimelineFromJson(Command):
-    """Create a new Timesketch timeline from a JSON file."""
+class CreateTimelineBase(Command):
+    """Base class for file based ingestion of events."""
     DEFAULT_FLUSH_INTERVAL = 1000
     DEFAULT_EVENT_TYPE = u'generic_event'
     DEFAULT_INDEX_NAME = uuid4().hex
@@ -134,7 +135,7 @@ class CreateTimelineFromJson(Command):
         Option(u'--name', u'-n', dest=u'timeline_name', required=True,
                help=u'Name of the timeline as it will appear in the '
                     u'Timesketch UI.'),
-        Option(u'--file', u'-f', dest=u'filename', required=True,
+        Option(u'--file', u'-f', dest=u'file_path', required=True,
                help=u'Path to the JSON file to process'),
         Option(
             u'--index_name', dest=u'index_name', required=False,
@@ -147,7 +148,6 @@ class CreateTimelineFromJson(Command):
             help=u'OPTIONAL: Type of event. This is what becomes the '
                  u'document type in Elasticsearch. '
                  u'Default: {0:s}.'.format(DEFAULT_EVENT_TYPE)),
-
         Option(
             u'--flush_interval', dest=u'flush_interval', required=False,
             default=DEFAULT_FLUSH_INTERVAL,
@@ -156,12 +156,95 @@ class CreateTimelineFromJson(Command):
     )
 
     def __init__(self):
+        super(CreateTimelineBase, self).__init__()
+        self.counter = Counter()
+        self.events = []
+
+    @staticmethod
+    def create_search_index(index_name, timeline_name):
+            """Create searchindex in the Timesketch database.
+
+            Args:
+                index_name: Then name of the index in Elasticsearch
+                timeline_name: The name of the timeline in Timesketch
+            """
+            searchindex = SearchIndex.get_or_create(
+                name=timeline_name, description=timeline_name,
+                user=None, index_name=index_name)
+            searchindex.grant_permission(None, u'read')
+            db_session.add(searchindex)
+            db_session.commit()
+
+    def add_event(self, es, flush_interval, index_name, event_type, event):
+        """Add event to Elasticsearch.
+
+        Args:
+            es = Elasticsearch client (instance of
+            timesketch.lib.datastores.elastic.ElasticSearchDatastore)
+            flush_interval: Number of events to queue up before indexing
+            index_name: Name of the index in Elasticsearch
+            event_type: Type of event (e.g. plaso_event)
+            event: Event dictionary
+        """
+        # Header needed by Elasticsearch when bulk inserting.
+        self.events.append({
+            u'index': {
+                u'_index': index_name, u'_type': event_type
+            }
+        })
+        self.events.append(event)
+        self.counter[u'events'] += 1
+        if self.counter[u'events'] % int(flush_interval) == 0:
+            sys.stdout.write(
+                u'Events inserted: {0:d}\n'.format(self.counter[u'events']))
+            es.client.bulk(
+                index=index_name, doc_type=event_type,
+                body=self.events)
+            self.events = []
+
+    def finish(self, es, timeline_name, index_name, event_type):
+        """Send any last events for indexing and create the timeline.
+
+        Args:
+            es = Elasticsearch client (instance of
+            timesketch.lib.datastores.elastic.ElasticSearchDatastore)
+            timeline_name: The name of the timeline in Timesketch
+            index_name: Name of the index in Elasticsearch
+            event_type: Type of event (e.g. plaso_event)
+        """
+        if self.events:
+            es.client.bulk(
+                index=index_name, doc_type=event_type, body=self.events)
+
+        self.create_search_index(index_name, timeline_name)
+        sys.stdout.write(
+            u'Timeline name: {0:s}\nElasticsearch index: {1:s}\n'
+            u'Events inserted: {2:d}\n'.format(
+                timeline_name, index_name, self.counter[u'events']))
+
+    def run(self, timeline_name, index_name, file_path, event_type,
+            flush_interval):
+        """Flask-script entrypoint for running the command.
+
+        Args:
+            timeline_name: The name of the timeline in Timesketch
+            index_name: Name of the index in Elasticsearch
+            file_path: Path to the file to process
+            event_type: Type of event (e.g. plaso_event)
+            flush_interval: Number of events to queue up before bulk insert
+        """
+        return NotImplementedError
+
+
+class CreateTimelineFromJson(CreateTimelineBase):
+    """Create a new Timesketch timeline from a JSON file."""
+
+    def __init__(self):
         super(CreateTimelineFromJson, self).__init__()
 
-    def run(
-            self, timeline_name, index_name, filename, event_type,
+    def run(self, timeline_name, index_name, file_path, event_type,
             flush_interval):
-        """Create the timeline.
+        """Create timeline from a JSON file.
 
         NOTE: The way the built in json module works is by loading the whole
         document into memory. This is of course not optimal and expensive.
@@ -186,80 +269,79 @@ class CreateTimelineFromJson(Command):
               "message": "foo",
               "timestamp": "1432293395",
               "datetime": "2015-05-22T13:16:35+00:00",
-              "timestamp_desc": "Some timestamp",
+              "timestamp_desc": "Some timestamp"
             },
             {
               "message": "bar",
               "timestamp": "1432293443",
               "datetime": "2015-05-22T13:17:23+00:00",
-              "timestamp_desc": "Some timestamp",
+              "timestamp_desc": "Some timestamp"
             }
         ]
 
         Args:
-            timeline_name: Name for the new timeline.
-            index_name: Name for the index in Elasticsearch.
-            filename: Path to JSON file.
-            event_type: Type of event, i.e. doc_type in Elasticsearch.
-            flush_interval: Number of events to queue up before bulk insert.
+            timeline_name: The name of the timeline in Timesketch
+            index_name: Name of the index in Elasticsearch
+            file_path: Path to the file to process
+            event_type: Type of event (e.g. plaso_event)
+            flush_interval: Number of events to queue up before bulk insert
         """
-        counter = Counter()
-        events = []
+        timeline_name = unicode(timeline_name.decode(encoding=u'utf-8'))
+        index_name = unicode(index_name.decode(encoding=u'utf-8'))
         es = ElasticSearchDataStore(
             host=current_app.config[u'ELASTIC_HOST'],
             port=current_app.config[u'ELASTIC_PORT'])
-        timeline_name = unicode(timeline_name.decode(encoding=u'utf-8'))
-        flush_interval = int(flush_interval)
 
-        def _insert_events_to_elasticsearch(_events, _index, _event_type):
-            """Bulk insert events into Elasticsearch.
+        with open(file_path, u'rb') as fh:
+            # This is expensive, i.e. whole file is read into memory.
+            # TODO: Check file size and bail out if big.
+            es.create_index(index_name=index_name, doc_type=event_type)
+            for event in json.load(fh):
+                self.add_event(
+                    es, flush_interval, index_name, event_type, event)
+        # Insert any remaining events.
+        self.finish(es, timeline_name, index_name, event_type)
+
+
+class CreateTimelineFromCsv(CreateTimelineBase):
+    """Create a new Timesketch timeline from a CSV file."""
+
+    def __init__(self):
+        super(CreateTimelineFromCsv, self).__init__()
+
+    def run(self, timeline_name, index_name, file_path, event_type,
+            flush_interval):
+        """Create the timeline from a CSV file.
+
+        Args:
+            timeline_name: The name of the timeline in Timesketch
+            index_name: Name of the index in Elasticsearch
+            file_path: Path to the file to process
+            event_type: Type of event (e.g. plaso_event)
+            flush_interval: Number of events to queue up before bulk insert
+
+        """
+        timeline_name = unicode(timeline_name.decode(encoding=u'utf-8'))
+        index_name = unicode(index_name.decode(encoding=u'utf-8'))
+        es = ElasticSearchDataStore(
+            host=current_app.config[u'ELASTIC_HOST'],
+            port=current_app.config[u'ELASTIC_PORT'])
+
+        def read_csv(path):
+            """Generator for reading a CSV file.
 
             Args:
-                _events: List of events to insert.
-                _index: Elasticsearch index to add the events to.
-                _event_type: Document type for the events.
+                path: Path to the CSV file
             """
-            es.client.bulk(
-                index=_index, doc_type=_event_type, body=_events)
+            with open(path, u'rb') as fh:
+                reader = csv.DictReader(fh)
+                for row in reader:
+                    yield row
 
-        try:
-            with open(filename, u'rb') as fh:
-                # This is expensive, i.e. whole file is read into memory.
-                # TODO: Implement CSV importer that can be made more efficient.
-                # TODO: Check file size and bail out if big.
-                index_name, event_type = es.create_index(
-                    index_name=index_name, doc_type=event_type)
-                for event in json.load(fh):
-                    # Header needed by Elasticsearch when bulk inserting.
-                    events.append({
-                        u'index': {
-                            u'_index': index_name, u'_type': event_type
-                        }
-                    })
-                    events.append(event)
-                    counter[u'events'] += 1
-                    if counter[u'events'] % flush_interval == 0:
-                        _insert_events_to_elasticsearch(
-                            events, index_name, event_type)
-                        events = []
-                # Insert any remaining events.
-                if events:
-                    _insert_events_to_elasticsearch(
-                        events, index_name, event_type)
-
-            # Create the searchindex in the Timesketch database.
-            searchindex = SearchIndex.get_or_create(
-                name=timeline_name, description=timeline_name,
-                user=None, index_name=index_name)
-            searchindex.grant_permission(None, u'read')
-            db_session.add(searchindex)
-            db_session.commit()
-            sys.stdout.write(
-                u'Timeline name: {0:s}\nElasticsearch index: {1:s}\n'
-                u'Events inserted: {2:d}\n'.format(
-                    timeline_name, index_name, counter[u'events']))
-        except IOError as exception:
-            sys.stderr.write(u'Error: {0:s}\n'.format(exception))
+        es.create_index(index_name=index_name, doc_type=event_type)
+        for event in read_csv(file_path):
+            self.add_event(es, flush_interval, index_name, event_type, event)
+        self.finish(es, timeline_name, index_name, event_type)
 
 
 if __name__ == '__main__':
@@ -269,6 +351,7 @@ if __name__ == '__main__':
     shell_manager.add_command(u'add_index', AddSearchIndex())
     shell_manager.add_command(u'drop_db', DropDataBaseTables())
     shell_manager.add_command(u'json2ts', CreateTimelineFromJson())
+    shell_manager.add_command(u'csv2ts', CreateTimelineFromCsv())
     shell_manager.add_command(u'runserver', Server(
         host=u'127.0.0.1', port=5000))
     shell_manager.add_option(
