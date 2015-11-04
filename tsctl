@@ -166,7 +166,7 @@ class CreateTimelineBase(Command):
 
             Args:
                 index_name: Then name of the index in Elasticsearch
-                timeline_name: The name if the timeline in Timesketch
+                timeline_name: The name of the timeline in Timesketch
             """
             searchindex = SearchIndex.get_or_create(
                 name=timeline_name, description=timeline_name,
@@ -208,7 +208,7 @@ class CreateTimelineBase(Command):
         Args:
             es = Elasticsearch client (instance of
             timesketch.lib.datastores.elastic.ElasticSearchDatastore)
-            timeline_name: The name if the timeline in Timesketch
+            timeline_name: The name of the timeline in Timesketch
             index_name: Name of the index in Elasticsearch
             event_type: Type of event (e.g. plaso_event)
         """
@@ -227,9 +227,9 @@ class CreateTimelineBase(Command):
         """Flask-script entrypoint for running the command.
 
         Args:
-            timeline_name: The name if the timeline in Timesketch
+            timeline_name: The name of the timeline in Timesketch
             index_name: Name of the index in Elasticsearch
-            file_path: PAth to the file to process
+            file_path: Path to the file to process
             event_type: Type of event (e.g. plaso_event)
             flush_interval: Number of events to queue up before bulk insert
         """
@@ -280,9 +280,9 @@ class CreateTimelineFromJson(CreateTimelineBase):
         ]
 
         Args:
-            timeline_name: The name if the timeline in Timesketch
+            timeline_name: The name of the timeline in Timesketch
             index_name: Name of the index in Elasticsearch
-            file_path: PAth to the file to process
+            file_path: Path to the file to process
             event_type: Type of event (e.g. plaso_event)
             flush_interval: Number of events to queue up before bulk insert
         """
@@ -314,9 +314,9 @@ class CreateTimelineFromCsv(CreateTimelineBase):
         """Create the timeline from a CSV file.
 
         Args:
-            timeline_name: The name if the timeline in Timesketch
+            timeline_name: The name of the timeline in Timesketch
             index_name: Name of the index in Elasticsearch
-            file_path: PAth to the file to process
+            file_path: Path to the file to process
             event_type: Type of event (e.g. plaso_event)
             flush_interval: Number of events to queue up before bulk insert
 
