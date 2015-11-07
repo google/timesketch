@@ -48,26 +48,39 @@
                 </ts-filter>
             </div>
 
-            <div class="card" ng-show="showCharts">
-                <ts-heatmap
-                        query="query"
-                        filter="filter"
-                        meta="meta"
-                        sketch-id="sketchId"
-                        show-charts="showCharts">
-                </ts-heatmap>
-            </div>
+            <div ng-show="showCharts">
 
-            <div class="card">
-                <ts-histogram
-                        query="query"
-                        filter="filter"
-                        meta="meta"
-                        sketch-id="sketchId"
-                        show-charts="showCharts">
-                </ts-histogram>
+                <ul class="nav nav-tabs" role="tablist">
+                    <li role="presentation" class="active"><a href="#heatmap" aria-controls="heatmap" role="tab" data-toggle="tab"><i class="fa fa-th"></i> Heatmap</a></li>
+                    <li role="presentation"><a href="#histogram" aria-controls="histogram" role="tab" data-toggle="tab"><i class="fa fa-bar-chart"></i> Histogram</a></li>
+                </ul>
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="tab-content card">
+                                <div role="tabpanel" class="tab-pane active" id="heatmap">
+                                    <ts-heatmap
+                                            query="query"
+                                            filter="filter"
+                                            meta="meta"
+                                            sketch-id="sketchId"
+                                            show-charts="showCharts">
+                                    </ts-heatmap>
+                                </div>
+                                <div role="tabpanel" class="tab-pane" id="histogram">
+                                    <ts-histogram
+                                            query="query"
+                                            filter="filter"
+                                            meta="meta"
+                                            sketch-id="sketchId"
+                                            show-charts="showCharts">
+                                    </ts-histogram>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-
 
             <div class="card" ng-show="filter.context">
                 <ts-search-context-card ng-if="filter.context" context="filter.context"></ts-search-context-card>

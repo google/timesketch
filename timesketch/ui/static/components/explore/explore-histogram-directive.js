@@ -38,7 +38,7 @@
             require: '^tsSearch',
             link: function(scope, element, attrs, ctrl) {
                 scope.$watchGroup(['meta', 'showCharts'], function (newval, oldval) {
-                    if(scope.meta) {
+                    if(scope.showCharts) {
                         timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, 'histogram')
                             .success(function(data) {
                                 scope.render_histogram(data['objects'])
@@ -63,13 +63,14 @@
 
                 // Render the chart svg with D3.js
                 scope.render_histogram = function(data) {
-                    d3.select('svg').remove();
-                    var margin = { top: 50, right: 75, bottom: 0, left: 40 },
-                        svgWidth = d3.select(d3.select(element[0])[0][0].offsetParent.offsetWidth) - margin.left - margin.right,
-                        rectSize = Math.floor(svgWidth / 24),
-                        svgHeight = parseInt(rectSize * 9) - margin.top - margin.bottom;
+                    d3.select('.histogram').remove();
+
+                    var margin = { top: 50, right: 75, bottom: 100, left: 40 },
+                        svgWidth = d3.select(d3.select(element[0].parentElement.parentElement.parentElement.offsetParent.offsetWidth)) - margin.left - margin.right,
+                        svgHeight = 500 - margin.top - margin.bottom;
 
                     var	parseDate = d3.time.format("%Y-%m-%d").parse;
+
                     var x = d3.scale.ordinal().rangeRoundBands([0, svgWidth], .05);
                     var y = d3.scale.linear().range([svgHeight, 0]);
 
@@ -78,57 +79,39 @@
                         .orient("bottom")
                         .tickFormat(d3.time.format("%Y-%m-%d"));
 
-                    var yAxis = d3.svg.axis()
-                        .scale(y)
-                        .orient("left")
-                        .ticks(10);
-
                     var svg = d3.select(element[0]).append("svg")
                         .attr("width", svgWidth + margin.left + margin.right)
                         .attr("height", svgHeight + margin.top + margin.bottom)
+                        .classed("histogram", true)
                         .append("g")
                         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
                     data.forEach(function(d) {
-                        d.date = parseDate(d.key_as_string);
-                        d.value = +d.doc_count;
-                        console.log(d.date)
+                        d.key_as_string = parseDate(d.key_as_string);
+                        d.doc_count = +d.doc_count;
+                    });
 
-                    x.domain(data.map(function(d) { return d.date; }));
-                    y.domain([0, d3.max(data, function(d) { return d.value; })]);
+                    x.domain(data.map(function(d) { return d.key_as_string; }));
+                    y.domain([0, d3.max(data, function(d) { return d.doc_count; })]);
 
                     svg.append("g")
                         .attr("class", "x axis")
                         .attr("transform", "translate(0," + svgHeight + ")")
                         .call(xAxis)
-                      .selectAll("text")
+                        .selectAll("text")
                         .style("text-anchor", "end")
                         .attr("dx", "-.8em")
                         .attr("dy", "-.55em")
                         .attr("transform", "rotate(-90)" );
 
-                    svg.append("g")
-                        .attr("class", "y axis")
-                        .call(yAxis)
-                      .append("text")
-                        .attr("transform", "rotate(-90)")
-                        .attr("y", 6)
-                        .attr("dy", ".71em")
-                        .style("text-anchor", "end")
-                        .text("Events");
-
                     svg.selectAll("bar")
                         .data(data)
-                      .enter().append("rect")
+                        .enter().append("rect")
                         .style("fill", "steelblue")
-                        .attr("x", function(d) { return x(d.date); })
+                        .attr("x", function(d) { return x(d.key_as_string); })
                         .attr("width", x.rangeBand())
-                        .attr("y", function(d) { return y(d.value); })
-                        .attr("height", function(d) { return svgHeight - y(d.value); });
-
-                    });
-
-
+                        .attr("y", function(d) { return y(d.doc_count); })
+                        .attr("height", function(d) { return svgHeight - y(d.doc_count); });
                 };
             }
         }

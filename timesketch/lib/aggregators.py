@@ -79,7 +79,6 @@ def histogram(es_client, sketch_id, query, query_filter, indices):
     aggregation = {
         u'histogram': {
             u'date_histogram': {
-                u'min_doc_count': 0,
                 u'field': u'datetime',
                 u'interval': u'day',
                 u'format': u'yyyy-MM-dd'
@@ -92,5 +91,4 @@ def histogram(es_client, sketch_id, query, query_filter, indices):
         return_results=False)
 
     buckets = search_result[u'aggregations'][u'histogram'][u'buckets']
-
     return buckets

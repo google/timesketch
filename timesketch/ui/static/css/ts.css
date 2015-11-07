@@ -478,3 +478,13 @@ rect.bordered {
     height:100px;
     border-left:2px solid #f5f5f5;
 }
+
+.axis {
+    font: 14px sans-serif;
+}
+
+.axis path, .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
