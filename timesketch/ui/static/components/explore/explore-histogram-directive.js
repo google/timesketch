@@ -106,12 +106,30 @@
 
                     svg.selectAll("bar")
                         .data(data)
-                        .enter().append("rect")
-                        .style("fill", "steelblue")
+                        .enter()
+                        .append("rect")
+                        .style("fill", "#428bca")
                         .attr("x", function(d) { return x(d.key_as_string); })
                         .attr("width", x.rangeBand())
                         .attr("y", function(d) { return y(d.doc_count); })
                         .attr("height", function(d) { return svgHeight - y(d.doc_count); });
+
+                    svg.selectAll("bar")
+                        .data(data)
+                        .enter()
+                        .append("text")
+                        .text(function(d) {
+                            return d.doc_count;
+                        })
+                        .attr("text-anchor", "middle")
+                        .attr("x", function(d) {
+                            return x(d.key_as_string) + (x.rangeBand() / 2);
+                        })
+                        .attr("y", function(d) { return y(d.doc_count) - 10; })
+                        .attr("font-family", "sans-serif")
+                        .attr("font-size", "14px")
+                        .attr("fill", "black");
+
                 };
             }
         }
