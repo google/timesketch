@@ -64,7 +64,7 @@ def heatmap(es_client, sketch_id, query, query_filter, indices):
 
 
 def histogram(es_client, sketch_id, query, query_filter, indices):
-    """Aggregate query results into number of events per hour/day.
+    """Aggregate query results into number of events per time interval.
 
     Args:
         es_client: Elasticsearch client (instance of ElasticSearchDatastore)
@@ -90,5 +90,13 @@ def histogram(es_client, sketch_id, query, query_filter, indices):
         sketch_id, query, query_filter, indices, aggregations=aggregation,
         return_results=False)
 
-    buckets = search_result[u'aggregations'][u'histogram'][u'buckets']
+    try:
+        aggregation_result = search_result[u'aggregations']
+        if aggregation_result.get(u'exclude', None):
+            buckets = aggregation_result[u'exclude'][u'histogram'][u'buckets']
+        else:
+            buckets = aggregation_result[u'histogram'][u'buckets']
+    except KeyError:
+        buckets = []
+
     return buckets
