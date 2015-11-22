@@ -44,6 +44,7 @@ from flask_restful import reqparse
 from flask_restful import Resource
 
 from timesketch.lib.aggregators import heatmap
+from timesketch.lib.aggregators import histogram
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -405,6 +406,12 @@ class AggregationResource(ResourceMixin, Resource):
                     es_client=self.datastore, sketch_id=sketch_id,
                     query=form.query.data, query_filter=query_filter,
                     indices=indices)
+            elif form.aggtype.data == u'histogram':
+                result = histogram(
+                    es_client=self.datastore, sketch_id=sketch_id,
+                    query=form.query.data, query_filter=query_filter,
+                    indices=indices)
+
             else:
                 abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
