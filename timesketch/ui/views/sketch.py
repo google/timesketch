@@ -132,6 +132,14 @@ def explore(sketch_id, view_id=None):
 
     if view_id:
         view = View.query.get(view_id)
+
+        # Check that this view belongs to the sketch
+        if view.sketch_id != sketch.id:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+
+        # Return 404 if view is deleted
+        if view.get_status.status == u'deleted':
+            return abort(HTTP_STATUS_CODE_NOT_FOUND)
     else:
         view = sketch.get_user_view(current_user)
         if url_query:
@@ -276,24 +284,27 @@ def timeline(sketch_id, timeline_id):
         timeline_form=timeline_form)
 
 
-@sketch_views.route(u'/sketch/<int:sketch_id>/views/')
 @sketch_views.route(
-    u'/sketch/<int:sketch_id>/views/<int:view_id>/', methods=[u'GET', u'POST'])
+    u'/sketch/<int:sketch_id>/views/', methods=[u'GET', u'POST'])
 @login_required
-def views(sketch_id, view_id=None):
+def views(sketch_id):
     """Generates the sketch views template.
 
     Returns:
         Template with context.
     """
     sketch = Sketch.query.get_with_acl(sketch_id)
-    trash_form = TrashForm()
+    trash_form = TrashViewForm()
 
     # Trash form POST
     if trash_form.validate_on_submit():
-        if not sketch.has_permission(current_user, u'delete'):
+        if not sketch.has_permission(current_user, u'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
+        view_id = trash_form.view_id.data
         view = View.query.get(view_id)
+        # Check that this view belongs to the sketch
+        if view.sketch_id != sketch.id:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
         view.set_status(status=u'deleted')
         return redirect(u'/sketch/{0:d}/views/'.format(sketch.id))
 

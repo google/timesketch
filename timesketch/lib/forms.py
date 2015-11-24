@@ -164,8 +164,7 @@ class TrashForm(BaseForm):
 
 class TrashViewForm(BaseForm):
     """Form to handle thrash view confirmation."""
-    confirm = BooleanField(u'Trash', validators=[DataRequired()])
-    view_id = IntegerField(u'Trash', validators=[DataRequired()])
+    view_id = IntegerField(u'View ID', validators=[DataRequired()])
 
 
 class EventAnnotationForm(BaseForm):
