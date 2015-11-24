@@ -123,10 +123,24 @@ def explore(sketch_id, view_id=None):
     """
     sketch = Sketch.query.get_with_acl(sketch_id)
     sketch_timelines = [t.searchindex.index_name for t in sketch.timelines]
+    view_form = SaveViewForm()
+
+    # Get parameters from the GET query
+    url_query = request.args.get(u'q', u'')
+    url_time_start = request.args.get(u'time_start', None)
+    url_time_end = request.args.get(u'time_end', None)
+
     if view_id:
         view = View.query.get(view_id)
     else:
         view = sketch.get_user_view(current_user)
+        if url_query:
+            view.query_string = url_query
+            query_filter = json.loads(view.query_filter)
+            query_filter[u'time_start'] = url_time_start
+            query_filter[u'time_end'] = url_time_end
+            view.query_filter = json.dumps(query_filter, ensure_ascii=False)
+
     if not view:
         query_filter = dict(indices=sketch_timelines)
         view = View(
@@ -134,7 +148,6 @@ def explore(sketch_id, view_id=None):
             query_filter=json.dumps(query_filter, ensure_ascii=False))
         db_session.add(view)
         db_session.commit()
-    view_form = SaveViewForm()
 
     return render_template(
         u'sketch/explore.html', sketch=sketch, view=view,
