@@ -36,6 +36,7 @@ from timesketch.lib.forms import TimelineForm
 from timesketch.lib.forms import TogglePublic
 from timesketch.lib.forms import StatusForm
 from timesketch.lib.forms import TrashForm
+from timesketch.lib.forms import TrashViewForm
 from timesketch.lib.forms import SaveViewForm
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchIndex
@@ -263,15 +264,28 @@ def timeline(sketch_id, timeline_id):
 
 
 @sketch_views.route(u'/sketch/<int:sketch_id>/views/')
+@sketch_views.route(
+    u'/sketch/<int:sketch_id>/views/<int:view_id>/', methods=[u'GET', u'POST'])
 @login_required
-def views(sketch_id):
+def views(sketch_id, view_id=None):
     """Generates the sketch views template.
 
     Returns:
         Template with context.
     """
     sketch = Sketch.query.get_with_acl(sketch_id)
-    return render_template(u'sketch/views.html', sketch=sketch)
+    trash_form = TrashForm()
+
+    # Trash form POST
+    if trash_form.validate_on_submit():
+        if not sketch.has_permission(current_user, u'delete'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
+        view = View.query.get(view_id)
+        view.set_status(status=u'deleted')
+        return redirect(u'/sketch/{0:d}/views/'.format(sketch.id))
+
+    return render_template(
+        u'sketch/views.html', sketch=sketch, trash_form=trash_form)
 
 
 @sketch_views.route(u'/sketch/<int:sketch_id>/explore/event/')

@@ -26,6 +26,7 @@ from wtforms.fields import RadioField
 from wtforms.fields import HiddenField
 from wtforms.fields import SelectField
 from wtforms.fields import BooleanField
+from wtforms.fields import IntegerField
 from wtforms.validators import DataRequired
 from wtforms.validators import Regexp
 from wtforms.validators import Length
@@ -159,6 +160,12 @@ class StatusForm(BaseForm):
 class TrashForm(BaseForm):
     """Form to handle thrash confirmation."""
     confirm = BooleanField(u'Trash', validators=[DataRequired()])
+
+
+class TrashViewForm(BaseForm):
+    """Form to handle thrash view confirmation."""
+    confirm = BooleanField(u'Trash', validators=[DataRequired()])
+    view_id = IntegerField(u'Trash', validators=[DataRequired()])
 
 
 class EventAnnotationForm(BaseForm):

@@ -6,6 +6,7 @@
         <li role="presentation" class="active"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
     </ul>
+
     <div class="container">
         <div class="row">
             <div class="col-md-12">
@@ -19,6 +20,7 @@
                                 <th>View</th>
                                 <th>Created by</th>
                                 <th width="130px">Created</th>
+                                <th width="30px"></th>
                             </tr>
                             <tbody>
                             {% for view in sketch.get_named_views %}
@@ -31,6 +33,14 @@
                                     </td>
                                     <td>{{ view.user.name }}</td>
                                     <td><div style="margin-top:15px;">{{ view.updated_at.strftime('%Y-%m-%d %H:%M')}}</div></td>
+                                    <!-- <td><i class="fa fa-trash" style="margin-top:18px;" data-toggle="modal" data-target="#trash-modal"></i></td> -->
+                                    <td>
+                                        <form action="{{ url_for('sketch_views.views', sketch_id=sketch.id, view_id=view.id) }}" method="post">
+                                            <input type="submit" value="Delete">
+                                            {{ trash_form.csrf_token }}
+                                        </form>
+
+                                    </td>
                                 </tr>
                             {% endfor %}
                             </tbody>
