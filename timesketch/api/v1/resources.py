@@ -221,7 +221,7 @@ class SketchResource(ResourceMixin, Resource):
                 {
                     u'name': view.name,
                     u'id': view.id
-                } for view in sketch.get_named_views.all()
+                } for view in sketch.get_named_views
             ])
         return self.to_json(sketch, meta=meta)
 

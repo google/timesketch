@@ -36,6 +36,7 @@ from timesketch.lib.forms import TimelineForm
 from timesketch.lib.forms import TogglePublic
 from timesketch.lib.forms import StatusForm
 from timesketch.lib.forms import TrashForm
+from timesketch.lib.forms import TrashViewForm
 from timesketch.lib.forms import SaveViewForm
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchIndex
@@ -131,6 +132,14 @@ def explore(sketch_id, view_id=None):
 
     if view_id:
         view = View.query.get(view_id)
+
+        # Check that this view belongs to the sketch
+        if view.sketch_id != sketch.id:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+
+        # Return 404 if view is deleted
+        if view.get_status.status == u'deleted':
+            return abort(HTTP_STATUS_CODE_NOT_FOUND)
     else:
         view = sketch.get_user_view(current_user)
         if url_query:
@@ -275,7 +284,8 @@ def timeline(sketch_id, timeline_id):
         timeline_form=timeline_form)
 
 
-@sketch_views.route(u'/sketch/<int:sketch_id>/views/')
+@sketch_views.route(
+    u'/sketch/<int:sketch_id>/views/', methods=[u'GET', u'POST'])
 @login_required
 def views(sketch_id):
     """Generates the sketch views template.
@@ -284,7 +294,22 @@ def views(sketch_id):
         Template with context.
     """
     sketch = Sketch.query.get_with_acl(sketch_id)
-    return render_template(u'sketch/views.html', sketch=sketch)
+    trash_form = TrashViewForm()
+
+    # Trash form POST
+    if trash_form.validate_on_submit():
+        if not sketch.has_permission(current_user, u'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
+        view_id = trash_form.view_id.data
+        view = View.query.get(view_id)
+        # Check that this view belongs to the sketch
+        if view.sketch_id != sketch.id:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+        view.set_status(status=u'deleted')
+        return redirect(u'/sketch/{0:d}/views/'.format(sketch.id))
+
+    return render_template(
+        u'sketch/views.html', sketch=sketch, trash_form=trash_form)
 
 
 @sketch_views.route(u'/sketch/<int:sketch_id>/explore/event/')
