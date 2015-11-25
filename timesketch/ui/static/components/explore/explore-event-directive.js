@@ -157,6 +157,20 @@ limitations under the License.
                         $scope.event).success(function(data) {})
                 };
 
+                $scope.toggleHidden = function() {
+                    timesketchApi.saveEventAnnotation(
+                        $scope.sketchId,
+                        'label',
+                        '__ts_hidden',
+                        $scope.event).success(function(data) {
+                        if ($scope.event.hidden) {
+                            $scope.meta.numHiddenEvents++
+                        } else {
+                            $scope.meta.numHiddenEvents--
+                        }
+                    })
+                };
+
                 $scope.getDetail = function() {
                     if ($scope.eventdetail) {return}
                     timesketchApi.getEvent(
@@ -182,6 +196,7 @@ limitations under the License.
                 $scope.$watch('event', function(value) {
                     $scope.star = false;
                     $scope.comment = false;
+
                     if ($scope.event._source.label.indexOf('__ts_star') > -1) {
                         $scope.event.star = true;
                     } else {
@@ -190,6 +205,13 @@ limitations under the License.
 
                     if ($scope.event._source.label.indexOf('__ts_comment') > -1) {
                         $scope.comment = true;
+                    }
+
+                    if ($scope.event._source.label.indexOf('__ts_hidden') > -1) {
+                        $scope.event.hidden = true;
+                        $scope.meta.numHiddenEvents++;
+                    } else {
+                        $scope.event.hidden = false;
                     }
 
                 });

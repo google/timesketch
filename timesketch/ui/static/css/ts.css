@@ -488,3 +488,8 @@ rect.bordered {
     stroke: #000;
     shape-rendering: crispEdges;
 }
+
+.message-hidden {
+    color:#666;
+    font-style: italic;
+}
