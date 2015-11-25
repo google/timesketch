@@ -6,10 +6,11 @@
         <li role="presentation" class="active"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
     </ul>
+
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                {% if sketch.get_named_views.all() %}
+                {% if sketch.get_named_views %}
                     <div class="card">
                         <h3>Saved views in this sketch</h3>
                         <br>
@@ -17,8 +18,11 @@
                             <thead>
                             <tr>
                                 <th>View</th>
-                                <th>Created by</th>
+                                <th width="110px">Created by</th>
                                 <th width="130px">Created</th>
+                                {% if sketch.has_permission(current_user, 'write') %}
+                                <th width="40px"></th>
+                                {% endif %}
                             </tr>
                             <tbody>
                             {% for view in sketch.get_named_views %}
@@ -30,7 +34,16 @@
                                         <span style="color:#777;">{{ view.query_string }}</span>
                                     </td>
                                     <td>{{ view.user.name }}</td>
-                                    <td><div style="margin-top:15px;">{{ view.updated_at.strftime('%Y-%m-%d %H:%M')}}</div></td>
+                                    <td>{{ view.updated_at.strftime('%Y-%m-%d %H:%M')}}</td>
+                                    {% if sketch.has_permission(current_user, 'write') %}
+                                    <td>
+                                        <form action="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}" method="post">
+                                            <input type="hidden" name="view_id" value="{{ view.id }}">
+                                            <button class="btn btn-link" style="padding:0;color:#555;" type="submit"><i class="fa fa-trash"></i></button>
+                                            {{ trash_form.csrf_token }}
+                                        </form>
+                                    </td>
+                                    {% endif %}
                                 </tr>
                             {% endfor %}
                             </tbody>

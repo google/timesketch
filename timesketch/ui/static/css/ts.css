@@ -455,6 +455,7 @@ rect.bordered {
     font-weight: normal;
     background-color: #f1f1f1;
     margin-right:7px;
+    border-radius: 0;
 }
 
 .nav-tabs>li>a:hover {
