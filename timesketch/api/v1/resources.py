@@ -538,7 +538,7 @@ class EventAnnotationResource(ResourceMixin, Resource):
                     if annotation not in event.labels:
                         event.labels.append(annotation)
                     toggle = False
-                    if u'__ts_star' in form.annotation.data:
+                    if u'__ts_star' or u'__ts_hidden' in form.annotation.data:
                         toggle = True
                     self.datastore.set_label(
                         searchindex_id, event_id, event_type, sketch.id,
