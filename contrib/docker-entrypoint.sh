@@ -10,13 +10,14 @@ if [ "$1" = 'timesketch' ]; then
     #sed -i -e '/^SECRET_KEY = u''/s/^/#/' /etc/timesketch.conf
     echo "SECRET_KEY = u'$NEWKEY'" >> /etc/timesketch.conf
   fi
-  su -c 'celery -A timesketch.lib.tasks worker -D --workdir=/usr/local/share/timesketch' timesketch &
+  su -c 'celery -A timesketch.lib.tasks worker -D --workdir=/tmp --logfile=/usr/local/share/timesketch/celeryd.log' timesketch &
+  #su -c 'celery -A timesketch.lib.tasks worker -D --workdir=/tmp --pidfile=/run/celeryd.pid --logfile=/usr/local/share/timesketch/celeryd.log' timesketch &
   if [ $USER_NAME ] && [ $USER_PASSWORD ]; then
     su -c 'tsctl add_user -u "$USER_NAME" -p "$USER_PASSWORD"' timesketch
   else
     su -c 'tsctl add_user -u demo -p demo' timesketch
   fi
-  exec `su -c 'tsctl runserver' timesketch`
+  exec `su -c 'tsctl runserver -h 0.0.0.0' timesketch`
 else
   exec "$@"
 fi

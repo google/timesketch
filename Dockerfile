@@ -4,16 +4,16 @@ MAINTAINER timesketch-dev@googlegroups.com
 
 ENV DOCKER=true
 
-RUN mkdir -p /usr/local/share/timesketch/scripts
-COPY scripts/install_script_ubuntu.sh /usr/local/share/timesketch/scripts
-RUN bash /usr/local/share/timesketch/scripts/install_script_ubuntu.sh
+RUN mkdir -p /usr/local/share/timesketch/contrib
+COPY contrib/install_script_ubuntu.sh /usr/local/share/timesketch/contrib
+RUN bash /usr/local/share/timesketch/contrib/install_script_ubuntu.sh
 
-COPY scripts/install_script_timesketch.sh /usr/local/share/timesketch/scripts
-RUN bash /usr/local/share/timesketch/scripts/install_script_timesketch.sh
+COPY contrib/install_script_timesketch.sh /usr/local/share/timesketch/contrib
+RUN bash /usr/local/share/timesketch/contrib/install_script_timesketch.sh
 
-COPY docker/ts_config/timesketch.conf /etc
+COPY contrib/ts_config/timesketch.conf /etc
 
-COPY scripts/docker-entrypoint.sh /
+COPY contrib/docker-entrypoint.sh /
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
