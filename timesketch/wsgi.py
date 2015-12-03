@@ -15,7 +15,7 @@
 """This module is for creating the app for a WSGI server.
 
 Example with Gunicorn:
-$ gunicorn -b 127.0.0.1:4000 --log-file --timeout 120 - wsgi:application
+gunicorn -b 127.0.0.1:80 --log-file - --timeout 120 timesketch.wsgi:application
 
 Example configuration for Apache with mod_wsgi (a2enmod mod_wsgi):
 <VirtualHost *:443>
