@@ -78,16 +78,11 @@ class AddUser(Command):
             password = self.get_password_from_prompt()
         password = unicode(password.decode(encoding=u'utf-8'))
         username = unicode(username.decode(encoding=u'utf-8'))
-        user = User(username=username, name=username)
+        user = User.get_or_create(username=username)
         user.set_password(plaintext=password)
-        try:
-            db_session.add(user)
-            db_session.commit()
-            sys.stdout.write(u'User {0:s} created\n'.format(username))
-        except IntegrityError:
-            sys.stderr.write(
-                u'The username ({0:s}) is already taken, '
-                u'try another one.\n'.format(username))
+        db_session.add(user)
+        db_session.commit()
+        sys.stdout.write(u'User {0:s} created/updated\n'.format(username))
 
 
 class AddSearchIndex(Command):
