@@ -83,7 +83,6 @@ limitations under the License.
                             if (data.meta.es_total_count > 500) {
                                 $scope.meta.noisy = true
                             }
-                            $scope.meta.numHiddenEvents = 0;
                     })
                 };
 

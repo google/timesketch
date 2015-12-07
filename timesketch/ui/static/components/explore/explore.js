@@ -19,7 +19,6 @@ limitations under the License.
         'timesketch.explore.event.directive',
         'timesketch.explore.filter.directive',
         'timesketch.explore.search.directive',
-        'timesketch.explore.heatmap.directive',
-        'timesketch.explore.histogram.directive'
+        'timesketch.explore.heatmap.directive'
     ]);
 })();

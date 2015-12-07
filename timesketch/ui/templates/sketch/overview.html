@@ -123,7 +123,7 @@
                         <br><br>
                         <form action="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}" method="post">
                             <label>
-                                {{ trash_form.confirm }} <span style="margin-left:7px;">Yes I'm sure</span>
+                                {{ trash_form.confirm }} Yes I'm sure
                             </label>
                             <br><hr>
                             <button style="margin-right:7px;" class="btn btn-default" data-dismiss="modal">No, cancel and take me back!</button>
@@ -144,7 +144,7 @@
                 <div class="card card-top">
                     <div class="row">
                         <div class="col-md-12">
-                            <div class="pull-right" style="margin-right:10px;">
+                            <div class="pull-right">
                                 <div class="btn-group">
                                     {% if sketch.has_permission(user=current_user, permission='write') %}
                                         <button class="btn btn-default" data-toggle="modal" data-target="#edit-sketch-modal"><i class="fa fa-pencil"></i></button>
@@ -183,13 +183,13 @@
             </div>
         </div>
 
-        {% if sketch.get_named_views %}
+        {% if sketch.get_named_views.all() %}
             <div class="card">
                 <table class="table table-hover">
                     <thead>
                     <tr>
                         <th>View</th>
-                        <th width="110px">Created by</th>
+                        <th>Created by</th>
                         <th width="130px">Created</th>
                     </tr>
                     <tbody>
@@ -213,9 +213,9 @@
                 <table class="table table-hover">
                     <thead>
                     <tr>
-                        <th width="50px"></th>
-                        <th>Timeline</th>
-                        <th width="110px">Added by</th>
+                        <th width=80px">Timelines</th>
+                        <th></th>
+                        <th>Added by</th>
                         <th width="130px">Added</th>
                     </tr>
 

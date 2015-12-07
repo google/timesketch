@@ -42,15 +42,15 @@
                     No sketches found
                 </form>
             {% else %}
-                <table class="table table-hover table-striped">
+                <table class="table table-hover">
                     <thead>
                     <tr>
                         <th>Sketch</th>
-                        <th width="110">Created by</th>
-                        <th width="60">Status</th>
-                        <th width="80">Timelines</th>
-                        <th width="100">Saved views</th>
-                        <th width="130px">Last activity</th>
+                        <th>Created by</th>
+                        <th>Status</th>
+                        <th style="text-align: center;">Timelines</th>
+                        <th style="text-align: center;">Saved views</th>
+                        <th width="130px">Created</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -60,8 +60,8 @@
                             <td>{{ sketch.user.name }}</td>
                             <td>{{ sketch.get_status.status }}</td>
                             <td style="text-align: center;"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">{{ sketch.timelines|count }}</a></td>
-                            <td style="text-align: center;"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}">{{ sketch.get_named_views|count }}</a></td>
-                            <td>{{ sketch.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td style="text-align: center;"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}">{{ sketch.get_named_views.all()|count }}</a></td>
+                            <td>{{ sketch.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                         </tr>
                     {% endfor %}
                     </tbody>
