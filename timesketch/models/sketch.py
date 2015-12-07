@@ -61,7 +61,10 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         Get named views, i.e. only views that has a name. Views without names
         are used as user state views and should not be visible in the UI.
         """
-        return View.query.filter(View.sketch == self, View.name != u'')
+        views = [
+            view for view in self.views
+            if view.get_status.status != u'deleted' and view.name != u'']
+        return views
 
     def get_user_view(self, user):
         """Get view for user, i.e. view with the state for the user/sketch.

@@ -54,7 +54,7 @@
                     return angular.element($window)[0].innerWidth;
                 }, function() {
                     if(scope.meta) {
-                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, AGGREGATION_TYPE)
+                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, 'heatmap')
                             .success(function(data) {
                                 scope.render_heatmap(data['objects'])
                             });
@@ -65,7 +65,7 @@
                 scope.render_heatmap = function(data) {
                     d3.select('svg').remove();
                     var margin = { top: 50, right: 75, bottom: 0, left: 40 },
-                        svgWidth = d3.select(d3.select(element[0])[0][0].offsetParent.offsetWidth) - margin.left - margin.right,
+                        svgWidth = d3.select(d3.select(element[0].parentElement.parentElement.parentElement.offsetParent.offsetWidth)) - margin.left - margin.right,
                         rectSize = Math.floor(svgWidth / 24),
                         svgHeight = parseInt(rectSize * 9) - margin.top - margin.bottom,
                         days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],

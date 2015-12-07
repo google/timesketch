@@ -36,6 +36,7 @@ from timesketch.lib.forms import TimelineForm
 from timesketch.lib.forms import TogglePublic
 from timesketch.lib.forms import StatusForm
 from timesketch.lib.forms import TrashForm
+from timesketch.lib.forms import TrashViewForm
 from timesketch.lib.forms import SaveViewForm
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchIndex
@@ -122,10 +123,32 @@ def explore(sketch_id, view_id=None):
     """
     sketch = Sketch.query.get_with_acl(sketch_id)
     sketch_timelines = [t.searchindex.index_name for t in sketch.timelines]
+    view_form = SaveViewForm()
+
+    # Get parameters from the GET query
+    url_query = request.args.get(u'q', u'')
+    url_time_start = request.args.get(u'time_start', None)
+    url_time_end = request.args.get(u'time_end', None)
+
     if view_id:
         view = View.query.get(view_id)
+
+        # Check that this view belongs to the sketch
+        if view.sketch_id != sketch.id:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+
+        # Return 404 if view is deleted
+        if view.get_status.status == u'deleted':
+            return abort(HTTP_STATUS_CODE_NOT_FOUND)
     else:
         view = sketch.get_user_view(current_user)
+        if url_query:
+            view.query_string = url_query
+            query_filter = json.loads(view.query_filter)
+            query_filter[u'time_start'] = url_time_start
+            query_filter[u'time_end'] = url_time_end
+            view.query_filter = json.dumps(query_filter, ensure_ascii=False)
+
     if not view:
         query_filter = dict(indices=sketch_timelines)
         view = View(
@@ -133,7 +156,6 @@ def explore(sketch_id, view_id=None):
             query_filter=json.dumps(query_filter, ensure_ascii=False))
         db_session.add(view)
         db_session.commit()
-    view_form = SaveViewForm()
 
     return render_template(
         u'sketch/explore.html', sketch=sketch, view=view,
@@ -262,7 +284,8 @@ def timeline(sketch_id, timeline_id):
         timeline_form=timeline_form)
 
 
-@sketch_views.route(u'/sketch/<int:sketch_id>/views/')
+@sketch_views.route(
+    u'/sketch/<int:sketch_id>/views/', methods=[u'GET', u'POST'])
 @login_required
 def views(sketch_id):
     """Generates the sketch views template.
@@ -271,7 +294,22 @@ def views(sketch_id):
         Template with context.
     """
     sketch = Sketch.query.get_with_acl(sketch_id)
-    return render_template(u'sketch/views.html', sketch=sketch)
+    trash_form = TrashViewForm()
+
+    # Trash form POST
+    if trash_form.validate_on_submit():
+        if not sketch.has_permission(current_user, u'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
+        view_id = trash_form.view_id.data
+        view = View.query.get(view_id)
+        # Check that this view belongs to the sketch
+        if view.sketch_id != sketch.id:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+        view.set_status(status=u'deleted')
+        return redirect(u'/sketch/{0:d}/views/'.format(sketch.id))
+
+    return render_template(
+        u'sketch/views.html', sketch=sketch, trash_form=trash_form)
 
 
 @sketch_views.route(u'/sketch/<int:sketch_id>/explore/event/')
