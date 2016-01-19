@@ -18,7 +18,8 @@ limitations under the License.
     var module = angular.module('timesketch', [
         'timesketch.api',
         'timesketch.core',
-        'timesketch.explore'
+        'timesketch.explore',
+        'angular-medium-editor'
     ]);
 
     // List of URLs to exclude from the butterbar.

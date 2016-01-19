@@ -3,6 +3,7 @@
     <ul class="nav nav-tabs">
         <li role="presentation" class="active"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
+        <li role="presentation"><a href="{{ url_for('sketch_views.story', sketch_id=sketch.id) }}"><i class="fa fa-book"></i> Story</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
     </ul>
@@ -164,7 +165,7 @@
                                 </div>
                             </div>
                             <h2>{{ sketch.name }}</h2>
-                            <p style="white-space: pre-wrap;word-wrap: break-word;">{{ sketch.description }}</p>
+                            <p style="white-space: pre-wrap;word-wrap: break-word;" class="card-paragraph">{{ sketch.description }}</p>
 
                             {% if sketch.has_permission(current_user, 'write') and sketch.timelines %}
                                 <br>

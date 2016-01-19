@@ -557,7 +557,7 @@ class EventAnnotationResource(ResourceMixin, Resource):
 
 class UploadFileResource(ResourceMixin, Resource):
     """Resource that processes uploaded files."""
-    @login_required
+    #@login_required
     def post(self):
         """Handles POST request to the resource.
 
@@ -570,11 +570,18 @@ class UploadFileResource(ResourceMixin, Resource):
         UPLOAD_ENABLED = current_app.config[u'UPLOAD_ENABLED']
         UPLOAD_FOLDER = current_app.config[u'UPLOAD_FOLDER']
 
-        form = UploadFileForm()
-        if form.validate_on_submit() and UPLOAD_ENABLED:
+        f = request.files['file']
+        print str(request.files)
+        #help(request.files)
+
+        #form = UploadFileForm()
+        #if form.validate_on_submit() and UPLOAD_ENABLED:
+        if f:
             from timesketch.lib.tasks import run_plaso
-            file_storage = form.file.data
-            timeline_name = form.name.data
+            #file_storage = form.file.data
+            file_storage = f
+            #timeline_name = form.name.data
+            timeline_name = "foobar"
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
             filename = unicode(uuid.uuid4().hex)

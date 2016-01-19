@@ -139,7 +139,7 @@ table {
     margin-top:0;
 }
 
-.card p {
+.card-paragraph {
     letter-spacing: .01rem;
     font-weight: 400;
     font-style: normal;
@@ -493,4 +493,32 @@ rect.bordered {
 .message-hidden {
     color:#666;
     font-style: italic;
+}
+
+.medium-editor-placeholder {
+  position: relative; }
+  .medium-editor-placeholder:after {
+    content: attr(data-placeholder) !important;
+    font-style: normal;
+
+      left: 0;
+    position: absolute;
+    top: 0;
+    white-space: pre;
+    padding: inherit;
+    margin: inherit; }
+
+p {
+    margin-bottom:30px;
+
+    font-weight: 400;
+    font-style: normal;
+    font-size: 16px;
+    line-height: 1.58;
+    letter-spacing: .01rem;
+
+}
+
+h3 {
+    margin-bottom: 30px;
 }
