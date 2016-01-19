@@ -26,11 +26,19 @@
                             {% for timeline in sketch.timelines %}
                                 <tr>
                                     <td>
-                                        <div class="color-box" style="background:#{{ timeline.color }};"></div>
+                                        {% if timeline.searchindex.get_status.status == 'processing' %}
+                                            <i class="fa fa-spinner fa-spin"></i>
+                                        {% else %}
+                                            <div class="color-box" style="background:#{{ timeline.color }};"></div>
+                                        {% endif %}
                                     </td>
                                     <td>
                                         <div style="margin-top:5px;">
-                                            <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
+                                            {% if timeline.searchindex.get_status.status == 'processing' %}
+                                                {{ timeline.name }}
+                                            {% else %}
+                                                <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
+                                            {% endif %}
                                         </div>
                                     </td>
                                     <td>{{ timeline.user.name }}</td>
