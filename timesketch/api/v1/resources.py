@@ -42,6 +42,8 @@ from flask_restful import fields
 from flask_restful import marshal
 from flask_restful import reqparse
 from flask_restful import Resource
+from sqlalchemy import desc
+from sqlalchemy import not_
 
 from timesketch.lib.aggregators import heatmap
 from timesketch.lib.aggregators import histogram
@@ -52,8 +54,10 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.datastores.elastic import ElasticSearchDataStore
 from timesketch.lib.errors import ApiHTTPError
+from timesketch.lib.forms import AddTimelineForm
 from timesketch.lib.forms import AggregationForm
 from timesketch.lib.forms import SaveViewForm
+from timesketch.lib.forms import NameDescriptionForm
 from timesketch.lib.forms import EventAnnotationForm
 from timesketch.lib.forms import ExploreForm
 from timesketch.lib.forms import UploadFileForm
@@ -61,21 +65,33 @@ from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
 
 
 class ResourceMixin(object):
     """Mixin for API resources."""
     # Schemas for database model resources
+
+    searchindex_status_fields = {
+        u'id': fields.Integer,
+        u'status': fields.String,
+        u'created_at': fields.DateTime,
+        u'updated_at': fields.DateTime
+    }
+
     searchindex_fields = {
+        u'id': fields.Integer,
         u'name': fields.String,
         u'index_name': fields.String,
+        u'status': fields.Nested(searchindex_status_fields),
         u'deleted': fields.Boolean,
         u'created_at': fields.DateTime,
         u'updated_at': fields.DateTime
     }
 
     timeline_fields = {
+        u'id': fields.Integer,
         u'name': fields.String,
         u'description': fields.String,
         u'color': fields.String,
@@ -205,6 +221,28 @@ class SketchListResource(ResourceMixin, Resource):
         result = self.to_json(paginated_result.items, meta=meta)
         return result
 
+    @login_required
+    def post(self):
+        """Handles POST request to the resource.
+
+        Returns:
+            A sketch in JSON (instance of flask.wrappers.Response)
+        """
+        form = NameDescriptionForm.build(request)
+        if form.validate_on_submit():
+            sketch = Sketch(
+                name=form.name.data, description=form.description.data,
+                user=current_user)
+            sketch.status.append(sketch.Status(user=None, status=u'new'))
+            # Give the requesting user permissions on the new sketch.
+            sketch.grant_permission(current_user, u'read')
+            sketch.grant_permission(current_user, u'write')
+            sketch.grant_permission(current_user, u'delete')
+            db_session.add(sketch)
+            db_session.commit()
+            return self.to_json(sketch, status_code=HTTP_STATUS_CODE_CREATED)
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
 
 class SketchResource(ResourceMixin, Resource):
     """Resource to get a sketch."""
@@ -224,6 +262,48 @@ class SketchResource(ResourceMixin, Resource):
                 } for view in sketch.get_named_views
             ])
         return self.to_json(sketch, meta=meta)
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+
+        Returns:
+            A sketch in JSON (instance of flask.wrappers.Response)
+
+        Raises:
+            ApiHTTPError
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        searchindices_in_sketch = [t.searchindex.id for t in sketch.timelines]
+        indices = SearchIndex.all_with_acl(
+            current_user).order_by(
+                desc(SearchIndex.created_at)).filter(
+                    not_(SearchIndex.id.in_(searchindices_in_sketch)))
+
+        add_timeline_form = AddTimelineForm.build(request)
+        add_timeline_form.timelines.choices = set(
+            (i.id, i.name) for i in indices.all())
+
+        if add_timeline_form.validate_on_submit():
+            if not sketch.has_permission(current_user, u'write'):
+                abort(HTTP_STATUS_CODE_FORBIDDEN)
+            for searchindex_id in add_timeline_form.timelines.data:
+                searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+                if searchindex not in [t.searchindex for t in sketch.timelines]:
+                    _timeline = Timeline(
+                        name=searchindex.name,
+                        description=searchindex.description,
+                        sketch=sketch,
+                        user=current_user,
+                        searchindex=searchindex)
+                    db_session.add(_timeline)
+                    sketch.timelines.append(_timeline)
+            db_session.commit()
+            return self.to_json(sketch, status_code=HTTP_STATUS_CODE_CREATED)
+        else:
+            raise ApiHTTPError(
+                message=add_timeline_form.errors,
+                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
 
 
 class ViewListResource(ResourceMixin, Resource):
