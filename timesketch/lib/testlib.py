@@ -170,7 +170,7 @@ class BaseTest(TestCase):
         """
         user = User(username=username)
         if set_password:
-            user.set_password(plaintext=u'test', rounds=1)
+            user.set_password(plaintext=u'test', rounds=4)
         self._commit_to_database(user)
         return user
 

@@ -102,6 +102,7 @@ class AccessControlMixin(object):
         if not user:
             user = current_user
 
+        # pylint: disable=singleton-comparison
         return cls.query.filter(
             or_(
                 cls.AccessControlEntry.user == user,
@@ -136,6 +137,7 @@ class AccessControlMixin(object):
         Returns:
             List of users (instances of timesketch.models.user.User)
         """
+        # pylint: disable=singleton-comparison
         aces = self.AccessControlEntry.query.filter(
             not_(self.AccessControlEntry.user == self.user),
             not_(self.AccessControlEntry.user == None),
