@@ -14,8 +14,8 @@
 """Tests for v1 of the Timesketch API."""
 
 
-import mock
 import json
+import mock
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
