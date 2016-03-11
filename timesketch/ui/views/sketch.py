@@ -42,6 +42,7 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
+from timesketch.models.user import User
 from timesketch.lib.datastores.elastic import ElasticSearchDataStore
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
@@ -79,6 +80,17 @@ def overview(sketch_id):
     if permission_form.validate_on_submit():
         if not sketch.has_permission(current_user, u'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
+
+        # Add collaborators to the sketch
+        # TODO(jbn): Make write permission oss by default
+        # and selectable in the UI
+        if permission_form.username.data:
+            user = User.query.filter_by(
+                username=permission_form.username.data).first()
+            if user:
+                sketch.grant_permission(user=user, permission=u'read')
+                sketch.grant_permission(user=user, permission=u'write')
+
         if permission_form.permission.data == u'public':
             sketch.grant_permission(user=None, permission=u'read')
         else:

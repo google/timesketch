@@ -129,6 +129,7 @@ class TogglePublic(BaseForm):
         u'Permission',
         choices=[(u'public', u'Public'), (u'private', u'Private')],
         validators=[DataRequired()])
+    username = StringField(u'User')
 
 
 class SaveViewForm(BaseForm):

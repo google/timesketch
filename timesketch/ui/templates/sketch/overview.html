@@ -62,6 +62,16 @@
                                     Private - Only you can access this sketch
                                 </label>
                             </div>
+
+                            <div class="input">
+                              <label>
+                                  <i class="fa fa-users" style="margin-right:5px;"></i>
+                                  Share with
+                                  <input type="text" name="username">
+                              </label>
+
+
+                            </div>
                             <br><hr>
                             <button style="margin-right:7px;" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                             <input type="submit" class="btn btn-success" value="Save changes">
@@ -165,16 +175,18 @@
                             </div>
                             <h2>{{ sketch.name }}</h2>
                             <p style="white-space: pre-wrap;word-wrap: break-word;">{{ sketch.description }}</p>
+                            <br>
 
-                            {% if sketch.has_permission(current_user, 'write') and sketch.timelines %}
-                                <br>
-                                {% if sketch.timelines %}
-                                    <a class="btn btn-primary" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
-                                {% endif %}
-                            {% else %}
-                                {% if sketch.timelines %}
-                                    <a class="btn btn-primary" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
-                                {% endif %}
+                            {% if sketch.timelines %}
+                              <a class="btn btn-primary" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
+                            {% endif %}
+
+                            {% if sketch.collaborators %}
+                              <br><br>
+                              <b>This sketch is shared with:</b>
+                              {% for collaborator in sketch.collaborators %}
+                                {{ collaborator.username }}
+                              {% endfor %}
                             {% endif %}
 
                         </div>
@@ -246,9 +258,13 @@
                     {% endfor %}
                     </tbody>
                 </table>
-                <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add more timelines</a>
+                {% if sketch.has_permission(current_user, 'write') %}
+                  <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add more timelines</a>
+                {% endif %}
             {% else %}
+              {% if sketch.has_permission(current_user, 'write') %}
                 <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started!</a>
+              {% endif %}
             {% endif %}
         </div>
     </div>
