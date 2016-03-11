@@ -25,12 +25,11 @@ body {
 header {
     width: 100%;
     height: 55px;
-    background: #428bca;
+    background: #34495e;
     position: fixed;
     top:0;
     z-index:9998;
     padding:11px 21px 11px 11px;
-    box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.3)
 }
 
 table {
@@ -47,17 +46,16 @@ table {
     height:55px;
     padding:20px;
     padding-top:15px;
-    background: #428bca;
+    background: #34495e;
     position: fixed;
     top:0;
     z-index:9999;
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3)
 }
 
 #logo img {
     margin-left:15px;
-    width:130px;
-    height:22px;
+    width:100px;
+    height:17px;
 }
 
 #navigation {
@@ -493,4 +491,8 @@ rect.bordered {
 .message-hidden {
     color:#666;
     font-style: italic;
+}
+
+.btn {
+    border-radius: 0;
 }

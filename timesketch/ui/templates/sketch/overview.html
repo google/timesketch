@@ -64,7 +64,7 @@
                             </div>
                             <br><hr>
                             <button style="margin-right:7px;" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                            <input type="submit" class="btn btn-primary" value="Save changes">
+                            <input type="submit" class="btn btn-success" value="Save changes">
                             {{ permission_form.csrf_token }}
                         </form>
                     {% else %}
@@ -155,7 +155,7 @@
                                         <button class="btn btn-default" data-toggle="modal" data-target="#trash-modal"><i class="fa fa-trash"></i></button>
                                     {% endif %}
 
-                                    <button data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
+                                    <button data-toggle="modal" data-target="#share-modal" class="btn btn-default">
                                         {% if sketch.is_public %}
                                             <i class="fa fa-globe"></i> Public</button>
                                         {% else %}
@@ -169,11 +169,11 @@
                             {% if sketch.has_permission(current_user, 'write') and sketch.timelines %}
                                 <br>
                                 {% if sketch.timelines %}
-                                    <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
+                                    <a class="btn btn-primary" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
                                 {% endif %}
                             {% else %}
                                 {% if sketch.timelines %}
-                                    <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
+                                    <a class="btn btn-primary" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
                                 {% endif %}
                             {% endif %}
 
@@ -246,7 +246,7 @@
                     {% endfor %}
                     </tbody>
                 </table>
-                <a class="btn btn-link" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add more timelines</a>
+                <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add more timelines</a>
             {% else %}
                 <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started!</a>
             {% endif %}
