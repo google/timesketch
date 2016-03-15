@@ -19,6 +19,7 @@ import sys
 from celery import Celery
 from flask import Flask
 from flask_login import LoginManager
+from flask_migrate import Migrate
 from flask_restful import Api
 from flask_wtf import CsrfProtect
 
@@ -40,8 +41,6 @@ from timesketch.models.user import User
 from timesketch.ui.views.home import home_views
 from timesketch.ui.views.sketch import sketch_views
 from timesketch.ui.views.user import user_views
-
-from flask_migrate import Migrate
 
 
 def create_app(config=None):

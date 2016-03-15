@@ -18,6 +18,8 @@ from flask_bcrypt import check_password_hash
 from flask_login import UserMixin
 from sqlalchemy.types import Boolean
 from sqlalchemy import Column
+from sqlalchemy import ForeignKey
+from sqlalchemy import Integer
 from sqlalchemy import Table
 from sqlalchemy import Unicode
 from sqlalchemy.orm import backref
@@ -25,12 +27,10 @@ from sqlalchemy.orm import relationship
 
 from timesketch.models import BaseModel
 
-from sqlalchemy import ForeignKey
-from sqlalchemy import Integer
 
 # Helper table for Groups many-to-many relationship.
-groups = Table('groups',
-    BaseModel.metadata,
+groups = Table(
+    'groups', BaseModel.metadata,
     Column('group_id', Integer(), ForeignKey('group.id')),
     Column('user_id', Integer(), ForeignKey('user.id'))
 )
