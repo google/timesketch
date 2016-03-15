@@ -18,10 +18,22 @@ from flask_bcrypt import check_password_hash
 from flask_login import UserMixin
 from sqlalchemy.types import Boolean
 from sqlalchemy import Column
+from sqlalchemy import Table
 from sqlalchemy import Unicode
+from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
 from timesketch.models import BaseModel
+
+from sqlalchemy import ForeignKey
+from sqlalchemy import Integer
+
+# Helper table for Groups many-to-many relationship.
+groups = Table('groups',
+    BaseModel.metadata,
+    Column('group_id', Integer(), ForeignKey('group.id')),
+    Column('user_id', Integer(), ForeignKey('user.id'))
+)
 
 
 class User(UserMixin, BaseModel):
@@ -37,6 +49,8 @@ class User(UserMixin, BaseModel):
                                  lazy=u'dynamic')
     timelines = relationship(u'Timeline', backref=u'user', lazy=u'dynamic')
     views = relationship(u'View', backref=u'user', lazy=u'dynamic')
+    groups = relationship(
+        'Group', secondary=groups, backref=backref('users', lazy='dynamic'))
 
     def __init__(self, username, name=None):
         """Initialize the User object.
@@ -73,3 +87,18 @@ class User(UserMixin, BaseModel):
             stored password hash.
         """
         return check_password_hash(self.password, plaintext)
+
+
+class Group(BaseModel):
+    """Implements the Group model."""
+
+    name = Column(Unicode(255), unique=True)
+
+    def __init__(self, name):
+        """Initialize the Group object.
+
+        Args:
+            name: Name of the group
+        """
+        super(Group, self).__init__()
+        self.name = name

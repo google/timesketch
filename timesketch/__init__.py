@@ -41,6 +41,8 @@ from timesketch.ui.views.home import home_views
 from timesketch.ui.views.sketch import sketch_views
 from timesketch.ui.views.user import user_views
 
+from flask_migrate import Migrate
+
 
 def create_app(config=None):
     """Create the Flask app instance that is used throughout the application.
@@ -80,7 +82,12 @@ def create_app(config=None):
 
     # Setup the database.
     configure_engine(app.config[u'SQLALCHEMY_DATABASE_URI'])
-    init_db()
+    db = init_db()
+
+    # Alembic migration support:
+    # https://alembic.readthedocs.org/en/latest/
+    migrate = Migrate()
+    migrate.init_app(app, db)
 
     # Register blueprints. Blueprints are a way to organize your Flask
     # Flask application. See this for more information:

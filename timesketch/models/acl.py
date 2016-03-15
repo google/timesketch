@@ -57,6 +57,24 @@ class AccessControlEntry(object):
         """
         return relationship(u'User')
 
+    @declared_attr
+    def group_id(self):
+        """Foreign key to a group model.
+
+        Returns:
+            A column (instance of sqlalchemy.Column)
+        """
+        return Column(Integer, ForeignKey(u'group.id'))
+
+    @declared_attr
+    def group(self):
+        """A relationship to a group object.
+
+        Returns:
+            A relationship (instance of sqlalchemy.orm.relationship)
+        """
+        return relationship(u'Group')
+
     # Permission column (read, write or delete)
     permission = Column(Unicode(255))
 
@@ -110,15 +128,28 @@ class AccessControlMixin(object):
             cls.AccessControlEntry.permission == u'read',
             cls.AccessControlEntry.parent)
 
-    def _get_ace(self, user, permission):
+    def _get_ace(self, user, permission, group=None):
         """Get the specific access control entry for the user and permission.
 
         Returns:
             An ACE (instance of timesketch.models.acl.AccessControlEntry) or
             None if no ACE is found.
         """
-        return self.AccessControlEntry.query.filter_by(
+        # Only check if a group ACE exist.
+        if group:
+            return self.AccessControlEntry.query.filter_by(
+                group=group, permission=permission, parent=self).all()
+
+        # Check access for user, including group memberships.
+        ace = self.AccessControlEntry.query.filter_by(
             user=user, permission=permission, parent=self).all()
+        if user and not ace:
+            for group in user.groups:
+                ace = self.AccessControlEntry.query.filter_by(
+                    group=group, permission=permission, parent=self).all()
+                if ace:
+                    return ace
+        return ace
 
     @property
     def is_public(self):
@@ -159,26 +190,41 @@ class AccessControlMixin(object):
         """
         return self._get_ace(user=user, permission=unicode(permission))
 
-    def grant_permission(self, user, permission):
-        """Grant permission to a user with the specific permission.
+    def grant_permission(self, user, permission, group=None):
+        """Grant permission to a user or group  with the specific permission.
 
         Args:
             user: A user (Instance of timesketch.models.user.User)
             permission: Permission as string (read, write or delete)
+            group: A group (Instance of timesketch.models.user.Group)
         """
+        # Grant permission to a group.
+        if group and not self._get_ace(user, permission, group=group):
+            self.acl.append(
+                self.AccessControlEntry(group=group, permission=permission))
+            db_session.commit()
+            return
+
+        # Grant permission to a user.
         if not self._get_ace(user, permission):
             self.acl.append(
-                self.AccessControlEntry(
-                    user=user, permission=permission))
+                self.AccessControlEntry(user=user, permission=permission))
             db_session.commit()
 
-    def revoke_permission(self, user, permission):
+    def revoke_permission(self, user, permission, group=None):
         """Revoke permission to a user with the specific permission.
 
         Args:
             user: A user (Instance of timesketch.models.user.User)
             permission: Permission as string (read, write or delete)
+            group: A group (Instance of timesketch.models.user.Group)
         """
+        # Revoke permission for a group.
+        if group and self._get_ace(user, permission, group=group):
+            for ace in self._get_ace(user, permission, group=group):
+                self.acl.remove(ace)
+
+        # Revoke permission for a user.
         for ace in self._get_ace(user, permission):
             self.acl.remove(ace)
         db_session.commit()
