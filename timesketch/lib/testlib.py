@@ -188,7 +188,7 @@ class BaseTest(TestCase):
         sketch = Sketch(name=name, description=name, user=user)
         if acl:
             for permission in [u'read', u'write', u'delete']:
-                sketch.grant_permission(user=user, permission=permission)
+                sketch.grant_permission(permission=permission, user=user)
         label = sketch.Label(label=u'Test label', user=user)
         status = sketch.Status(status=u'Test status', user=user)
         sketch.labels.append(label)
@@ -211,7 +211,7 @@ class BaseTest(TestCase):
             name=name, description=name, index_name=name, user=user)
         if acl:
             for permission in [u'read', u'write', u'delete']:
-                searchindex.grant_permission(user=user, permission=permission)
+                searchindex.grant_permission(permission=permission, user=user)
         self._commit_to_database(searchindex)
         return searchindex
 

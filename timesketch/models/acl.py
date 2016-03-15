@@ -190,12 +190,12 @@ class AccessControlMixin(object):
         """
         return self._get_ace(user=user, permission=unicode(permission))
 
-    def grant_permission(self, user, permission, group=None):
+    def grant_permission(self, permission, user=None, group=None):
         """Grant permission to a user or group  with the specific permission.
 
         Args:
-            user: A user (Instance of timesketch.models.user.User)
             permission: Permission as string (read, write or delete)
+            user: A user (Instance of timesketch.models.user.User)
             group: A group (Instance of timesketch.models.user.Group)
         """
         # Grant permission to a group.
@@ -211,12 +211,12 @@ class AccessControlMixin(object):
                 self.AccessControlEntry(user=user, permission=permission))
             db_session.commit()
 
-    def revoke_permission(self, user, permission, group=None):
+    def revoke_permission(self, permission, user=None, group=None):
         """Revoke permission to a user with the specific permission.
 
         Args:
-            user: A user (Instance of timesketch.models.user.User)
             permission: Permission as string (read, write or delete)
+            user: A user (Instance of timesketch.models.user.User)
             group: A group (Instance of timesketch.models.user.Group)
         """
         # Revoke permission for a group.

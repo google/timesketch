@@ -82,19 +82,19 @@ def overview(sketch_id):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
 
         # Add collaborators to the sketch
-        # TODO(jbn): Make write permission oss by default
+        # TODO(jbn): Make write permission off by default
         # and selectable in the UI
         if permission_form.username.data:
             user = User.query.filter_by(
                 username=permission_form.username.data).first()
             if user:
-                sketch.grant_permission(user=user, permission=u'read')
-                sketch.grant_permission(user=user, permission=u'write')
+                sketch.grant_permission(permission=u'read', user=user)
+                sketch.grant_permission(permission=u'write', user=user)
 
         if permission_form.permission.data == u'public':
-            sketch.grant_permission(user=None, permission=u'read')
+            sketch.grant_permission(permission=u'read')
         else:
-            sketch.revoke_permission(user=None, permission=u'read')
+            sketch.revoke_permission(permission=u'read')
         db_session.commit()
         return redirect(
             url_for(u'sketch_views.overview', sketch_id=sketch.id))
