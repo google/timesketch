@@ -21,6 +21,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.models import init_db
 from timesketch.models import drop_all
 from timesketch.models import db_session
+from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
@@ -174,6 +175,20 @@ class BaseTest(TestCase):
         self._commit_to_database(user)
         return user
 
+    def _create_group(self, name, user):
+        """Create a user in the database.
+
+        Args:
+            name: Group name
+            user: A user (instance of timesketch.models.user.User)
+        Returns:
+            A group (instance of timesketch.models.user.Group)
+        """
+        group = Group(name=name)
+        user.groups.append(group)
+        self._commit_to_database(group)
+        return group
+
     def _create_sketch(self, name, user, acl=False):
         """Create a sketch in the database.
 
@@ -276,6 +291,8 @@ class BaseTest(TestCase):
 
         self.user1 = self._create_user(username=u'test1', set_password=True)
         self.user2 = self._create_user(username=u'test2', set_password=False)
+
+        self.group = self._create_group(name=u'test_group', user=self.user1)
 
         self.sketch1 = self._create_sketch(
             name=u'Test 1', user=self.user1, acl=True)

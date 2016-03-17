@@ -23,10 +23,13 @@ from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import Table
 from sqlalchemy import Unicode
+from sqlalchemy import UnicodeText
 from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
 from timesketch.models import BaseModel
+from timesketch.models.annotations import LabelMixin
+from timesketch.models.annotations import StatusMixin
 
 
 # Helper table for Groups many-to-many relationship.
@@ -91,16 +94,25 @@ class User(UserMixin, BaseModel):
         return check_password_hash(self.password, plaintext)
 
 
-class Group(BaseModel):
+class Group(LabelMixin, StatusMixin, BaseModel):
     """Implements the Group model."""
 
     name = Column(Unicode(255), unique=True)
+    display_name = Column(Unicode(255))
+    description = Column(UnicodeText())
+    user_id = Column(Integer, ForeignKey(u'user.id'))
 
-    def __init__(self, name):
+    def __init__(self, name, display_name=None, description=None, user=None):
         """Initialize the Group object.
 
         Args:
             name: Name of the group
+            display_name: User friendly name of the group
+            description: Description of the group
+            user: Creator (instance of timesketch.models.user.User)
         """
         super(Group, self).__init__()
         self.name = name
+        self.display_name = display_name or name
+        self.description = description or name
+        self.user = user
