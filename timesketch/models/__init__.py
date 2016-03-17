@@ -53,6 +53,7 @@ def init_db():
     """
     BaseModel.metadata.create_all(bind=engine)
     BaseModel.query = db_session.query_property()
+    return BaseModel
 
 
 def drop_all():
