@@ -32,6 +32,18 @@ class AclModelTest(BaseTest):
                 self.sketch1.has_permission(
                     permission=permission, user=self.user1))
 
+            # Test group permissions
+            self.sketch1.grant_permission(
+                permission=permission, group=self.group)
+            self.assertTrue(
+                self.sketch1.has_permission(
+                    permission=permission, user=self.user1))
+            self.sketch1.revoke_permission(
+                permission=permission, group=self.group)
+            self.assertFalse(
+                self.sketch1.has_permission(
+                    permission=permission, user=self.user1))
+
     def test_change_public(self):
         """Test toggle the public permission on a sketch."""
         self.sketch1.grant_permission(permission=u'read')

@@ -146,6 +146,8 @@ class AccessControlMixin(object):
         ace = self.AccessControlEntry.query.filter_by(
             user=user, group=None, permission=permission, parent=self).all()
 
+        # TODO(jbn) Make this more efficient. For now we don't expect too many
+        # groups per user so this should be OK for now.
         if user and not ace:
             for group in user.groups:
                 ace = self.AccessControlEntry.query.filter_by(
@@ -206,7 +208,6 @@ class AccessControlMixin(object):
         """
         # Grant permission to a group.
         if group and not self._get_ace(permission=permission, group=group):
-            print "grant group {0}".format(group.name)
             self.acl.append(
                 self.AccessControlEntry(permission=permission, group=group))
             db_session.commit()
@@ -214,7 +215,6 @@ class AccessControlMixin(object):
 
         # Grant permission to a user.
         if not self._get_ace(permission=permission, user=user):
-            print "grant user {0}".format(user)
             self.acl.append(
                 self.AccessControlEntry(permission=permission, user=user))
             db_session.commit()
@@ -231,7 +231,6 @@ class AccessControlMixin(object):
         if group:
             group_ace = self._get_ace(permission=permission, group=group)
             if group_ace:
-                print "revoke group {0}".format(group.name)
                 for ace in group_ace:
                     self.acl.remove(ace)
                 db_session.commit()
@@ -240,7 +239,6 @@ class AccessControlMixin(object):
         # Revoke permission for a user.
         user_ace = self._get_ace(permission=permission, user=user)
         if user_ace:
-            print "revoke user {0}".format(user)
             for ace in user_ace:
                 self.acl.remove(ace)
             db_session.commit()
