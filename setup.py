@@ -57,6 +57,7 @@ setup(
         u'Flask-Bcrypt',
         u'Flask-RESTful',
         u'Flask-WTF',
+        u'Flask-Migrate',
         u'SQLAlchemy',
         u'celery',
         u'redis',
