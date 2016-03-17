@@ -65,11 +65,23 @@
 
                             <div class="input">
                               <label>
-                                  <i class="fa fa-users" style="margin-right:5px;"></i>
-                                  Share with
+                                  <i class="fa fa-user" style="margin-right:5px;"></i>
+                                  Share with user
                                   <input type="text" name="username">
                               </label>
 
+                            <div class="input">
+                              <label>
+                                  <i class="fa fa-users" style="margin-right:5px;"></i>
+                                  Share with group
+                                  <select class="select select-view">
+                                    <option value="" disabled selected>Select group</option>
+                                    {% for group in current_user.groups %}
+                                      <option>{{ group.name }}</option>
+                                    {% endfor %}
+                                  </select>
+                              </label>
+                            </div>
 
                             </div>
                             <br><hr>

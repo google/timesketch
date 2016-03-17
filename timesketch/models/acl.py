@@ -124,11 +124,13 @@ class AccessControlMixin(object):
         return cls.query.filter(
             or_(
                 cls.AccessControlEntry.user == user,
-                cls.AccessControlEntry.user == None),
+                cls.AccessControlEntry.user == None,
+                cls.AccessControlEntry.group_id.in_(
+                    [group.id for group in user.groups])),
             cls.AccessControlEntry.permission == u'read',
             cls.AccessControlEntry.parent)
 
-    def _get_ace(self, user, permission, group=None):
+    def _get_ace(self, permission, user=None, group=None):
         """Get the specific access control entry for the user and permission.
 
         Returns:
@@ -142,7 +144,8 @@ class AccessControlMixin(object):
 
         # Check access for user, including group memberships.
         ace = self.AccessControlEntry.query.filter_by(
-            user=user, permission=permission, parent=self).all()
+            user=user, group=None, permission=permission, parent=self).all()
+
         if user and not ace:
             for group in user.groups:
                 ace = self.AccessControlEntry.query.filter_by(
@@ -159,7 +162,7 @@ class AccessControlMixin(object):
             An ACE (instance of timesketch.models.acl.AccessControlEntry) if the
             object is readable by everyone or None if the object is private.
         """
-        return self._get_ace(user=None, permission=u'read')
+        return self._get_ace(permission=u'read', user=None, group=None)
 
     @property
     def collaborators(self):
@@ -188,7 +191,10 @@ class AccessControlMixin(object):
             user has the permission or None if the user do not have the
             permission.
         """
-        return self._get_ace(user=user, permission=unicode(permission))
+        public_ace = self.is_public
+        if public_ace:
+            return public_ace
+        return self._get_ace(permission=unicode(permission), user=user)
 
     def grant_permission(self, permission, user=None, group=None):
         """Grant permission to a user or group  with the specific permission.
@@ -199,16 +205,18 @@ class AccessControlMixin(object):
             group: A group (Instance of timesketch.models.user.Group)
         """
         # Grant permission to a group.
-        if group and not self._get_ace(user, permission, group=group):
+        if group and not self._get_ace(permission=permission, group=group):
+            print "grant group {0}".format(group.name)
             self.acl.append(
-                self.AccessControlEntry(group=group, permission=permission))
+                self.AccessControlEntry(permission=permission, group=group))
             db_session.commit()
             return
 
         # Grant permission to a user.
-        if not self._get_ace(user, permission):
+        if not self._get_ace(permission=permission, user=user):
+            print "grant user {0}".format(user)
             self.acl.append(
-                self.AccessControlEntry(user=user, permission=permission))
+                self.AccessControlEntry(permission=permission, user=user))
             db_session.commit()
 
     def revoke_permission(self, permission, user=None, group=None):
@@ -220,11 +228,19 @@ class AccessControlMixin(object):
             group: A group (Instance of timesketch.models.user.Group)
         """
         # Revoke permission for a group.
-        if group and self._get_ace(user, permission, group=group):
-            for ace in self._get_ace(user, permission, group=group):
-                self.acl.remove(ace)
+        if group:
+            group_ace = self._get_ace(permission=permission, group=group)
+            if group_ace:
+                print "revoke group {0}".format(group.name)
+                for ace in group_ace:
+                    self.acl.remove(ace)
+                db_session.commit()
+            return
 
         # Revoke permission for a user.
-        for ace in self._get_ace(user, permission):
-            self.acl.remove(ace)
-        db_session.commit()
+        user_ace = self._get_ace(permission=permission, user=user)
+        if user_ace:
+            print "revoke user {0}".format(user)
+            for ace in user_ace:
+                self.acl.remove(ace)
+            db_session.commit()

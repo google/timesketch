@@ -18,6 +18,7 @@ from flask_bcrypt import check_password_hash
 from flask_login import UserMixin
 from sqlalchemy.types import Boolean
 from sqlalchemy import Column
+from sqlalchemy import PrimaryKeyConstraint
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import Table
@@ -29,10 +30,11 @@ from timesketch.models import BaseModel
 
 
 # Helper table for Groups many-to-many relationship.
-groups = Table(
-    'groups', BaseModel.metadata,
+user_group = Table(
+    'user_group', BaseModel.metadata,
+    Column('user_id', Integer(), ForeignKey('user.id')),
     Column('group_id', Integer(), ForeignKey('group.id')),
-    Column('user_id', Integer(), ForeignKey('user.id'))
+    PrimaryKeyConstraint('user_id', 'group_id')
 )
 
 
@@ -45,12 +47,12 @@ class User(UserMixin, BaseModel):
     email = Column(Unicode(255))
     active = Column(Boolean(), default=True)
     sketches = relationship(u'Sketch', backref=u'user', lazy=u'dynamic')
-    searchindices = relationship(u'SearchIndex', backref=u'user',
-                                 lazy=u'dynamic')
+    searchindices = relationship(
+        u'SearchIndex', backref=u'user', lazy=u'dynamic')
     timelines = relationship(u'Timeline', backref=u'user', lazy=u'dynamic')
     views = relationship(u'View', backref=u'user', lazy=u'dynamic')
     groups = relationship(
-        'Group', secondary=groups, backref=backref('users', lazy='dynamic'))
+        'Group', secondary=user_group, backref=backref('users', lazy='dynamic'))
 
     def __init__(self, username, name=None):
         """Initialize the User object.
