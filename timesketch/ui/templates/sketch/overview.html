@@ -63,6 +63,8 @@
                                 </label>
                             </div>
 
+                            <br>
+
                             <div class="input">
                               <label>
                                   <i class="fa fa-user" style="margin-right:5px;"></i>
@@ -74,16 +76,39 @@
                               <label>
                                   <i class="fa fa-users" style="margin-right:5px;"></i>
                                   Share with group
-                                  <select class="select select-view">
+                                  <select id="groups" name="groups">
                                     <option value="" disabled selected>Select group</option>
-                                    {% for group in current_user.groups %}
-                                      <option>{{ group.name }}</option>
+                                    {% for option in permission_form.groups %}
+                                      {{ option }}
                                     {% endfor %}
                                   </select>
                               </label>
                             </div>
 
                             </div>
+
+                          {% if sketch.collaborators or sketch.groups %}
+                            <br>
+                            <table class="table table-hover">
+                              <th>Who has access</th>
+                              <th style="text-align: right; padding-right: 3px;"><i class="fa fa-trash"></i></th>
+                                {% for group in sketch.groups %}
+                                <tr>
+                                  <td><i class="fa fa-group"></i>{{ group.name }}</td>
+                                  <td align="right"><input name="remove_groups" type="checkbox" value={{ group.id }}></td>
+                                </tr>
+                              {% endfor %}
+                              {% for collaborator in sketch.collaborators %}
+                                <tr>
+                                  <td><i class="fa fa-user"></i>{{ collaborator.username }}</td>
+                                  <td align="right"><input name="remove_users" type="checkbox" value={{ collaborator.id }}></td>
+                                </tr>
+                              {% endfor %}
+                            </table>
+
+                          {% endif %}
+
+
                             <br><hr>
                             <button style="margin-right:7px;" type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                             <input type="submit" class="btn btn-success" value="Save changes">
@@ -177,11 +202,11 @@
                                         <button class="btn btn-default" data-toggle="modal" data-target="#trash-modal"><i class="fa fa-trash"></i></button>
                                     {% endif %}
 
-                                    <button data-toggle="modal" data-target="#share-modal" class="btn btn-default">
+                                    <button data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
                                         {% if sketch.is_public %}
-                                            <i class="fa fa-globe"></i> Public</button>
+                                            <i class="fa fa-globe"></i> Share</button>
                                         {% else %}
-                                            <i class="fa fa-lock"></i> Private</button>
+                                            <i class="fa fa-lock"></i> Share</button>
                                         {% endif %}
                                 </div>
                             </div>
@@ -191,14 +216,17 @@
 
                             {% if sketch.timelines %}
                               <a class="btn btn-primary" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
+                              <br>
                             {% endif %}
 
-                            {% if sketch.collaborators %}
-                              <br><br>
-                              <b>This sketch is shared with:</b>
-                              {% for collaborator in sketch.collaborators %}
-                                {{ collaborator.username }}
-                              {% endfor %}
+                            {% if sketch.collaborators or sketch.groups %}
+                                <br>
+                                {% for group in sketch.groups %}
+                                  <span class="label label-default" style="font-size: 0.9em;"><i class="fa fa-group"></i>{{ group.name }}</span>
+                                {% endfor %}
+                                {% for collaborator in sketch.collaborators %}
+                                  <span class="label label-default" style="font-size: 0.9em;"><i class="fa fa-user"></i>{{ collaborator.username }}</span>
+                                {% endfor %}
                             {% endif %}
 
                         </div>

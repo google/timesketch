@@ -80,7 +80,7 @@
                                                 {% if not timeline.user %}
                                                     <td>System</td>
                                                 {% else %}
-                                                    <td>{{ timeline.user }}</td>
+                                                    <td>{{ timeline.user.username }}</td>
                                                 {% endif %}
                                                 <td>{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                                             </tr>

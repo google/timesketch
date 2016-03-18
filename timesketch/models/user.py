@@ -54,8 +54,10 @@ class User(UserMixin, BaseModel):
         u'SearchIndex', backref=u'user', lazy=u'dynamic')
     timelines = relationship(u'Timeline', backref=u'user', lazy=u'dynamic')
     views = relationship(u'View', backref=u'user', lazy=u'dynamic')
+    my_groups = relationship(u'Group', backref=u'user', lazy=u'dynamic')
     groups = relationship(
-        'Group', secondary=user_group, backref=backref('users', lazy='dynamic'))
+        u'Group', secondary=user_group, backref=backref(
+            u'users', lazy=u'dynamic'))
 
     def __init__(self, username, name=None):
         """Initialize the User object.

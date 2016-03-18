@@ -28,6 +28,7 @@ from wtforms.fields import SelectField
 from wtforms.fields import BooleanField
 from wtforms.fields import IntegerField
 from wtforms.validators import DataRequired
+from wtforms.validators import Optional
 from wtforms.validators import Regexp
 from wtforms.validators import Length
 
@@ -130,6 +131,12 @@ class TogglePublic(BaseForm):
         choices=[(u'public', u'Public'), (u'private', u'Private')],
         validators=[DataRequired()])
     username = StringField(u'User')
+    groups = SelectField(
+        u'Groups', choices=[], coerce=int, validators=[Optional()])
+    remove_groups = MultiCheckboxField(
+        u'Remove groups', coerce=int, validators=[Optional()])
+    remove_users = MultiCheckboxField(
+        u'Remove users', coerce=int, validators=[Optional()])
 
 
 class SaveViewForm(BaseForm):

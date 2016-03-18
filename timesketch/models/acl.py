@@ -24,6 +24,7 @@ from flask_login import current_user
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
+from sqlalchemy import and_
 from sqlalchemy import or_
 from sqlalchemy import not_
 from sqlalchemy import Unicode
@@ -124,37 +125,53 @@ class AccessControlMixin(object):
         return cls.query.filter(
             or_(
                 cls.AccessControlEntry.user == user,
-                cls.AccessControlEntry.user == None,
+                and_(
+                    cls.AccessControlEntry.user == None,
+                    cls.AccessControlEntry.group == None),
                 cls.AccessControlEntry.group_id.in_(
                     [group.id for group in user.groups])),
             cls.AccessControlEntry.permission == u'read',
             cls.AccessControlEntry.parent)
 
-    def _get_ace(self, permission, user=None, group=None):
+    def _get_ace(self, permission, user=None, group=None, check_group=True):
         """Get the specific access control entry for the user and permission.
 
         Returns:
             An ACE (instance of timesketch.models.acl.AccessControlEntry) or
             None if no ACE is found.
         """
-        # Only check if a group ACE exist.
+        # If group is specified check if an ACE exist for it and return early.
         if group:
             return self.AccessControlEntry.query.filter_by(
                 group=group, permission=permission, parent=self).all()
 
-        # Check access for user, including group memberships.
+        # Check access for user.
         ace = self.AccessControlEntry.query.filter_by(
             user=user, group=None, permission=permission, parent=self).all()
 
-        # TODO(jbn) Make this more efficient. For now we don't expect too many
-        # groups per user so this should be OK for now.
-        if user and not ace:
-            for group in user.groups:
+        # If user doesn't have a direct ACE, check group permission.
+        if (user and check_group) and not ace:
+            group_intersection = set(user.groups) & set(self.groups)
+            for group in group_intersection:
+                # Get group ACE with the requested permission.
                 ace = self.AccessControlEntry.query.filter_by(
                     group=group, permission=permission, parent=self).all()
                 if ace:
                     return ace
         return ace
+
+    @property
+    def groups(self):
+        """List what groups have acess to this sketch.
+
+        Returns:
+            Set of groups (instance of timesketch.models.user.Group)
+        """
+        # pylint: disable=singleton-comparison
+        group_aces = self.AccessControlEntry.query.filter(
+            not_(self.AccessControlEntry.group == None),
+            self.AccessControlEntry.parent == self).all()
+        return set(ace.group for ace in group_aces)
 
     @property
     def is_public(self):
@@ -207,14 +224,14 @@ class AccessControlMixin(object):
             group: A group (Instance of timesketch.models.user.Group)
         """
         # Grant permission to a group.
-        if group and not self._get_ace(permission=permission, group=group):
+        if group and not self._get_ace(permission, group=group):
             self.acl.append(
                 self.AccessControlEntry(permission=permission, group=group))
             db_session.commit()
             return
 
         # Grant permission to a user.
-        if not self._get_ace(permission=permission, user=user):
+        if not self._get_ace(permission, user=user, check_group=False):
             self.acl.append(
                 self.AccessControlEntry(permission=permission, user=user))
             db_session.commit()
