@@ -292,7 +292,8 @@ class BaseTest(TestCase):
         self.user1 = self._create_user(username=u'test1', set_password=True)
         self.user2 = self._create_user(username=u'test2', set_password=False)
 
-        self.group = self._create_group(name=u'test_group', user=self.user1)
+        self.group1 = self._create_group(name=u'test_group1', user=self.user1)
+        self.group2 = self._create_group(name=u'test_group2', user=self.user1)
 
         self.sketch1 = self._create_sketch(
             name=u'Test 1', user=self.user1, acl=True)

@@ -53,13 +53,13 @@ class GroupModelTest(ModelBaseTest):
         database.
         """
         expected_result = frozenset([
-            (u'name', u'test_group'),
-            (u'display_name', u'test_group'),
-            (u'description', u'test_group')
+            (u'name', u'test_group1'),
+            (u'display_name', u'test_group1'),
+            (u'description', u'test_group1')
         ])
         self._test_db_object(
             expected_result=expected_result, model_cls=Group)
 
     def test_group_membership(self):
         """Test that user1 is member of the group."""
-        self.assertTrue(self.user1 in self.group.users)
+        self.assertTrue(self.user1 in self.group1.users)

@@ -37,10 +37,17 @@ class UserViewTest(BaseTest):
     def test_login_view_sso_authenticated(self):
         """Test the login view handler with an SSO authenticated session."""
         current_app.config[u'SSO_ENABLED'] = True
+        current_app.config[u'SSO_GROUP_ENV_VARIABLE'] = u'SSO_GROUP'
+        current_app.config[u'SSO_GROUP_SEPARATOR'] = u';'
+        current_app.config[u'SSO_GROUP_NOT_MEMBER_SIGN'] = u'-'
         with self.client:
             response = self.client.get(
-                u'/login/', environ_base={u'REMOTE_USER': u'test1'})
+                u'/login/', environ_base={
+                    u'REMOTE_USER': u'test1',
+                    u'SSO_GROUP': u'test_group1;-test_group2'})
             self.assertEqual(current_user.username, u'test1')
+            self.assertIn(self.group1, current_user.groups)
+            self.assertNotIn(self.group2, current_user.groups)
             self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
     def test_logout_view(self):
