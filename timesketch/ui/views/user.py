@@ -65,29 +65,28 @@ def login():
         # If we get groups from the SSO system create the group(s) in
         # Timesketch and add/remove the user from it.
         if sso_group_env:
-            groups_string = request.environ.get(sso_group_env, None)
+            groups_string = request.environ.get(sso_group_env, u'')
             separator = current_app.config.get(
                 u'SSO_GROUP_SEPARATOR', u';')
             not_member_sign = current_app.config.get(
                 u'SSO_GROUP_NOT_MEMBER_SIGN', None)
-            if groups_string:
-                for group_name in groups_string.split(separator):
-                    remove_group = False
-                    if not_member_sign:
-                        remove_group = group_name.startswith(not_member_sign)
-                        group_name = group_name.lstrip(not_member_sign)
+            for group_name in groups_string.split(separator):
+                remove_group = False
+                if not_member_sign:
+                    remove_group = group_name.startswith(not_member_sign)
+                    group_name = group_name.lstrip(not_member_sign)
 
-                    # Get or create the group in the Timesketch database.
-                    group = Group.get_or_create(name=group_name)
+                # Get or create the group in the Timesketch database.
+                group = Group.get_or_create(name=group_name)
 
-                    if remove_group:
-                        if group in user.groups:
-                            user.groups.remove(group)
-                    else:
-                        if group not in user.groups:
-                            user.groups.append(group)
-                # Commit the changes to the database.
-                db_session.commit()
+                if remove_group:
+                    if group in user.groups:
+                        user.groups.remove(group)
+                else:
+                    if group not in user.groups:
+                        user.groups.append(group)
+            # Commit the changes to the database.
+            db_session.commit()
 
     # Login form POST
     if form.validate_on_submit:
