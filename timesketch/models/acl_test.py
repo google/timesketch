@@ -34,12 +34,12 @@ class AclModelTest(BaseTest):
 
             # Test group permissions
             self.sketch1.grant_permission(
-                permission=permission, group=self.group)
+                permission=permission, group=self.group1)
             self.assertTrue(
                 self.sketch1.has_permission(
                     permission=permission, user=self.user1))
             self.sketch1.revoke_permission(
-                permission=permission, group=self.group)
+                permission=permission, group=self.group1)
             self.assertFalse(
                 self.sketch1.has_permission(
                     permission=permission, user=self.user1))
