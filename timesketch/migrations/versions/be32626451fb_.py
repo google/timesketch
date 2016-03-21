@@ -6,6 +6,8 @@ Create Date: 2016-03-21 11:59:44.094720
 
 Auto generated code by flask-migrate and Alembic.
 """
+# This code is auto generated. Ignore linter errors.
+# pylint: skip-file
 
 # revision identifiers, used by Alembic.
 revision = 'be32626451fb'
