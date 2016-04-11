@@ -170,7 +170,7 @@ class BaseTest(TestCase):
         """
         user = User(username=username)
         if set_password:
-            user.set_password(plaintext=u'test', rounds=1)
+            user.set_password(plaintext=u'test', rounds=4)
         self._commit_to_database(user)
         return user
 
@@ -196,18 +196,22 @@ class BaseTest(TestCase):
         self._commit_to_database(sketch)
         return sketch
 
-    def _create_searchindex(self, name, user):
+    def _create_searchindex(self, name, user, acl=False):
         """Create a searchindex in the database.
 
         Args:
             name: Name of the searchindex (string)
             user: A user (instance of timesketch.models.user.User)
+            acl: Boolean value to decide if ACL permissions should be set
 
         Returns:
             A searchindex (instance of timesketch.models.sketch.SearchIndex)
         """
         searchindex = SearchIndex(
             name=name, description=name, index_name=name, user=user)
+        if acl:
+            for permission in [u'read', u'write', u'delete']:
+                searchindex.grant_permission(user=user, permission=permission)
         self._commit_to_database(searchindex)
         return searchindex
 
@@ -277,9 +281,11 @@ class BaseTest(TestCase):
             name=u'Test 1', user=self.user1, acl=True)
         self.sketch2 = self._create_sketch(
             name=u'Test 2', user=self.user1, acl=False)
+        self.sketch3 = self._create_sketch(
+            name=u'Test 3', user=self.user1, acl=True)
 
         self.searchindex = self._create_searchindex(
-            name=u'test', user=self.user1)
+            name=u'test', user=self.user1, acl=True)
 
         self.timeline = self._create_timeline(
             name=u'Timeline 1', sketch=self.sketch1,

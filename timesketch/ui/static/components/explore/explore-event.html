@@ -16,8 +16,12 @@
             <input type="checkbox" ng-click="toggleSelected()" ng-checked="event.selected">
         </td>
 
-        <td width="35px;">
+        <td width="25px;">
             <i ng-click="event.star = !event.star;toggleStar()" ng-class="{true: 'fa fa-lg fa-star icon-yellow', false: 'fa fa-lg fa-star-o icon-grey'}[event.star]"></i>
+        </td>
+
+        <td width="35px;">
+            <i ng-click="event.hidden = !event.hidden;toggleHidden()" ng-class="{true: 'fa fa-lg fa-eye-slash', false: 'fa fa-lg fa-eye-slash icon-grey'}[event.hidden]"></i>
         </td>
 
         <td class="event-message" ng-class="{true:'event-message-selected'}[event.selected]" ng-click="getDetail();showDetails = !showDetails">
@@ -25,14 +29,17 @@
                 <i class="fa fa-comments"></i>
             </span>
             <i ng-if="::event._source.tag" ng-repeat="tag in ::event._source.tag" class="label label-primary">{{::tag}}</i>
-            [{{ event._source.timestamp_desc }}] {{ event._source.message|limitTo:500 }}
+
+            <span ng-class="{true: 'message-hidden'}[event.hidden]">[{{ event._source.timestamp_desc }}] <span style=white-space:pre-wrap;">{{ event._source.message|limitTo:500 }}</span></span>
+
             <div style="width:20px;height:20px;cursor: pointer;" class="pull-right tooltips"><span>Details</span><i ng-class="{true: 'fa fa-minus-square-o', false: 'fa fa-plus-square-o'}[showDetails]" style="color:#999;"></i></div>
+
         </td>
 
         <td width="150px" style="text-align: right;background: #f1f1f1;">
             <span class="label ts-name-label">{{::timeline_name}}</span>
             <div style="width:20px;height:20px;cursor: pointer;" class="tooltips" ng-click="getContext(event)">
-                <span>Context query</span><button class="btn btn-default" style="padding-right:7px;"><i class="fa fa-search-plus" style="color:#777;"></i></button>
+                <span>Context query</span><i class="fa fa-search-plus" style="color:#777;"></i>
             </div>
         </td>
 
@@ -47,7 +54,7 @@
                     <table class="table table-bordered table-hover">
                         <tr ng-repeat="(key, value) in eventdetail">
                             <td width="150px">{{ key }}</td>
-                            <td>{{::value}}</td>
+                            <td><span style=white-space:pre-wrap;">{{::value}}</span></td>
                         </tr>
                     </table>
                 </div>
@@ -55,7 +62,7 @@
                     <div ng-repeat="comment in comments">
                         <div class="comment-bubble">
                             <div class="comment-name">{{::comment.user.username}}</div>
-                            <div class="comment-body">{{::comment.comment}}</div>
+                            <div class="comment-body"><span style=white-space:pre-wrap;">{{::comment.comment}}</span></div>
                             <div class="comment-timestamp"><i class="fa fa-clock-o"></i> {{::comment.created_at}}</div>
                         </div>
                     </div>

@@ -32,20 +32,24 @@ limitations under the License.
             },
             controllerAs: 'ctrl',
             link: function(scope, elem, attrs, ctrl) {
-                if (attrs.autoload == 'true') {
-                    timesketchApi.getView(attrs.sketchId, attrs.viewId).success(function(data) {
-                        var query = data.objects[0].query_string;
-                        var filter = angular.fromJson(data.objects[0].query_filter);
-                        ctrl.search(query, filter);
-                    });
-                }
-                if (attrs.redirect == 'true') {
-                    scope.redirectView = true;
-                }
+                scope.$watch("sketch.views", function(value) {
+                    if (!scope.filter.indices.length) {
+                        return
+                    }
+                    if (attrs.autoload == 'true') {
+                        timesketchApi.getView(attrs.sketchId, attrs.viewId).success(function(data) {
+                            var query = data.objects[0].query_string;
+                            var filter = angular.fromJson(data.objects[0].query_filter);
+                            ctrl.search(query, filter);
+                        });
+                    }
+                    if (attrs.redirect == 'true') {
+                        scope.redirectView = true;
+                    }
+                }, true);
             },
             controller: function($scope) {
                 $scope.filter = {"indices": []};
-
                 timesketchApi.getSketch($scope.sketchId).success(function(data) {
                     $scope.sketch = data.objects[0];
                     $scope.sketch.views = data.meta.views;
@@ -83,6 +87,7 @@ limitations under the License.
                             if (data.meta.es_total_count > 500) {
                                 $scope.meta.noisy = true
                             }
+                            $scope.meta.numHiddenEvents = 0;
                     })
                 };
 

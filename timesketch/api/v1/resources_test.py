@@ -14,8 +14,8 @@
 """Tests for v1 of the Timesketch API."""
 
 
-import mock
 import json
+import mock
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -35,6 +35,15 @@ class SketchListResourceTest(BaseTest):
         self.assertEqual(
             response.json[u'objects'][0][0][u'name'], u'Test 1')
         self.assert200(response)
+
+    def test_sketch_post_resource(self):
+        """Authenticated request to create a sketch."""
+        self.login()
+        data = dict(name=u'test', description=u'test')
+        response = self.client.post(
+            self.resource_url, data=json.dumps(data, ensure_ascii=False),
+            content_type=u'application/json')
+        self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
 
 
 class SketchResourceTest(BaseTest):
@@ -58,6 +67,15 @@ class SketchResourceTest(BaseTest):
         self.login()
         response = self.client.get(u'/api/v1/sketches/2/')
         self.assert403(response)
+
+    def test_add_timeline_resource(self):
+        """Authenticated request to add a timeline to a sketch."""
+        self.login()
+        data = dict(timelines=[1])
+        response = self.client.post(
+            u'/api/v1/sketches/3/', data=json.dumps(data, ensure_ascii=False),
+            content_type=u'application/json')
+        self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
 
 
 class ViewListResourceTest(BaseTest):

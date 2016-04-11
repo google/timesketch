@@ -33,7 +33,7 @@ class UserModelTest(ModelBaseTest):
 
     def test_set_password(self):
         """Test setting a password for the user."""
-        self.assertIsNone(self.user1.set_password(u'test', rounds=1))
+        self.assertIsNone(self.user1.set_password(u'test', rounds=4))
 
     def test_valid_password(self):
         """Test checking a valid password."""

@@ -76,6 +76,6 @@ def run_plaso(source_file_path, timeline_name, index_name):
     plugins, queue_producers = frontend.GetAnalysisPluginsAndEventQueues(
         analysis_plugins)
     counter = frontend.ProcessStorage(
-        output_module, storage_file, plugins, queue_producers)
+        output_module, storage_file, source_file_path, plugins, queue_producers)
 
     return dict(counter)

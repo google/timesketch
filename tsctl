@@ -21,6 +21,7 @@ import sys
 from uuid import uuid4
 
 from flask import current_app
+from flask_migrate import MigrateCommand
 from flask_script import Command
 from flask_script import Manager
 from flask_script import Server
@@ -78,16 +79,11 @@ class AddUser(Command):
             password = self.get_password_from_prompt()
         password = unicode(password.decode(encoding=u'utf-8'))
         username = unicode(username.decode(encoding=u'utf-8'))
-        user = User(username=username, name=username)
+        user = User.get_or_create(username=username)
         user.set_password(plaintext=password)
-        try:
-            db_session.add(user)
-            db_session.commit()
-            sys.stdout.write(u'User {0:s} created\n'.format(username))
-        except IntegrityError:
-            sys.stderr.write(
-                u'The username ({0:s}) is already taken, '
-                u'try another one.\n'.format(username))
+        db_session.add(user)
+        db_session.commit()
+        sys.stdout.write(u'User {0:s} created/updated\n'.format(username))
 
 
 class AddSearchIndex(Command):
@@ -349,9 +345,10 @@ if __name__ == '__main__':
     shell_manager = Manager(create_app)
     shell_manager.add_command(u'add_user', AddUser())
     shell_manager.add_command(u'add_index', AddSearchIndex())
+    shell_manager.add_command(u'csv2ts', CreateTimelineFromCsv())
+    shell_manager.add_command(u'db', MigrateCommand)
     shell_manager.add_command(u'drop_db', DropDataBaseTables())
     shell_manager.add_command(u'json2ts', CreateTimelineFromJson())
-    shell_manager.add_command(u'csv2ts', CreateTimelineFromCsv())
     shell_manager.add_command(u'runserver', Server(
         host=u'127.0.0.1', port=5000))
     shell_manager.add_option(

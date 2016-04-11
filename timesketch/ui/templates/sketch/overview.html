@@ -123,7 +123,7 @@
                         <br><br>
                         <form action="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}" method="post">
                             <label>
-                                {{ trash_form.confirm }} Yes I'm sure
+                                {{ trash_form.confirm }} <span style="margin-left:7px;">Yes I'm sure</span>
                             </label>
                             <br><hr>
                             <button style="margin-right:7px;" class="btn btn-default" data-dismiss="modal">No, cancel and take me back!</button>
@@ -144,7 +144,7 @@
                 <div class="card card-top">
                     <div class="row">
                         <div class="col-md-12">
-                            <div class="pull-right">
+                            <div class="pull-right" style="margin-right:10px;">
                                 <div class="btn-group">
                                     {% if sketch.has_permission(user=current_user, permission='write') %}
                                         <button class="btn btn-default" data-toggle="modal" data-target="#edit-sketch-modal"><i class="fa fa-pencil"></i></button>
@@ -183,13 +183,13 @@
             </div>
         </div>
 
-        {% if sketch.get_named_views.all() %}
+        {% if sketch.get_named_views %}
             <div class="card">
                 <table class="table table-hover">
                     <thead>
                     <tr>
                         <th>View</th>
-                        <th>Created by</th>
+                        <th width="110px">Created by</th>
                         <th width="130px">Created</th>
                     </tr>
                     <tbody>
@@ -213,9 +213,9 @@
                 <table class="table table-hover">
                     <thead>
                     <tr>
-                        <th width=80px">Timelines</th>
-                        <th></th>
-                        <th>Added by</th>
+                        <th width="50px"></th>
+                        <th>Timeline</th>
+                        <th width="110px">Added by</th>
                         <th width="130px">Added</th>
                     </tr>
 
@@ -223,11 +223,19 @@
                     {% for timeline in sketch.timelines %}
                         <tr>
                             <td>
-                                <div class="color-box" style="background:#{{ timeline.color }};"></div>
+                                {% if timeline.searchindex.get_status.status == 'processing' %}
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                {% else %}
+                                    <div class="color-box" style="background:#{{ timeline.color }};"></div>
+                                {% endif %}
                             </td>
                             <td>
                                 <div style="margin-top:5px;">
-                                    <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
+                                    {% if timeline.searchindex.get_status.status == 'processing' %}
+                                        {{ timeline.name }}
+                                    {% else %}
+                                        <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
+                                    {% endif %}
                                 </div>
                             </td>
                             <td>{{ timeline.user.name }}</td>
