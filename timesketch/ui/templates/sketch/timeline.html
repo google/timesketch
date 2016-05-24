@@ -53,7 +53,7 @@
                     {% if sketch.has_permission(user=current_user, permission='write') %}
                         <button class="btn btn-default pull-right " data-toggle="modal" data-target="#edit-timeline-modal" style="margin-left:10px;width:50px;"><i class="fa fa-pencil"></i></button>
                     {% endif %}
-                    <h2 style="margin-left:80px;padding-top: 6px;">{{ timeline.name }}</h2>
+                    <h3 style="margin-left:80px;padding-top: 6px;">{{ timeline.name }}</h3>
                     <br>
                     {% if timeline.description != timeline.name %}
                         <p style="white-space: pre-wrap;word-wrap: break-word;">{{ timeline.description }}</p>

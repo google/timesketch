@@ -28,12 +28,14 @@ from flask_script import Server
 from flask_script import Option
 from flask_script import prompt_bool
 from flask_script import prompt_pass
+
 from sqlalchemy.exc import IntegrityError
 
 from timesketch import create_app
 from timesketch.lib.datastores.elastic import ElasticSearchDataStore
 from timesketch.models import db_session
 from timesketch.models import drop_all
+from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import SearchIndex
 
@@ -86,6 +88,74 @@ class AddUser(Command):
         sys.stdout.write(u'User {0:s} created/updated\n'.format(username))
 
 
+class AddGroup(Command):
+    """Create a new Timesketch group."""
+    option_list = (
+        Option(u'--name', u'-n', dest=u'name', required=True),
+    )
+
+    def __init__(self):
+        super(AddGroup, self).__init__()
+
+    # pylint: disable=arguments-differ, method-hidden
+    def run(self, name):
+        """Creates the group."""
+        name = unicode(name.decode(encoding=u'utf-8'))
+        group = Group.get_or_create(name=name)
+        db_session.add(group)
+        db_session.commit()
+        sys.stdout.write(u'Group {0:s} created\n'.format(name))
+
+
+class GroupManager(Command):
+    """Manage group memberships."""
+    option_list = (
+        Option(
+            u'--add', u'-a', dest=u'add', action=u'store_true', required=False,
+            default=False),
+        Option(
+            u'--remove', u'-r', dest=u'remove', action=u'store_true',
+            required=False, default=False),
+        Option(u'--group', u'-g', dest=u'group_name', required=True),
+        Option(u'--user', u'-u', dest=u'user_name', required=True),
+    )
+
+    def __init__(self):
+        super(GroupManager, self).__init__()
+
+    # pylint: disable=arguments-differ, method-hidden
+    def run(self, add, remove, group_name, user_name):
+        """Add the user to the group."""
+        group_name = unicode(group_name.decode(encoding=u'utf-8'))
+        user_name = unicode(user_name.decode(encoding=u'utf-8'))
+        group = Group.query.filter_by(name=group_name).first()
+        user = User.query.filter_by(username=user_name).first()
+
+        # Add or remove user from group
+        if remove:
+            try:
+                user.groups.remove(group)
+                sys.stdout.write(
+                    u'{0:s} removed from group {1:s}\n'.format(
+                        user_name, group_name))
+                db_session.commit()
+            except ValueError:
+                sys.stdout.write(
+                    u'{0:s} is not a member of group {1:s}\n'.format(
+                        user_name, group_name))
+        else:
+            user.groups.append(group)
+            try:
+                db_session.commit()
+                sys.stdout.write(
+                    u'{0:s} added to group {1:s}\n'.format(
+                        user_name, group_name))
+            except IntegrityError:
+                sys.stdout.write(
+                    u'{0:s} is already a member of group {1:s}\n'.format(
+                        user_name, group_name))
+
+
 class AddSearchIndex(Command):
     """Create a new Timesketch searchindex."""
     option_list = (
@@ -116,7 +186,7 @@ class AddSearchIndex(Command):
             sys.exit(1)
         searchindex = SearchIndex(
             name=name, description=name, user=user, index_name=index)
-        searchindex.grant_permission(None, u'read')
+        searchindex.grant_permission(u'read')
         db_session.add(searchindex)
         db_session.commit()
         sys.stdout.write(u'Search index {0:s} created\n'.format(name))
@@ -167,7 +237,7 @@ class CreateTimelineBase(Command):
             searchindex = SearchIndex.get_or_create(
                 name=timeline_name, description=timeline_name,
                 user=None, index_name=index_name)
-            searchindex.grant_permission(None, u'read')
+            searchindex.grant_permission(u'read')
             db_session.add(searchindex)
             db_session.commit()
 
@@ -344,6 +414,8 @@ if __name__ == '__main__':
     # Setup Flask-script command manager and register commands.
     shell_manager = Manager(create_app)
     shell_manager.add_command(u'add_user', AddUser())
+    shell_manager.add_command(u'add_group', AddGroup())
+    shell_manager.add_command(u'manage_group', GroupManager())
     shell_manager.add_command(u'add_index', AddSearchIndex())
     shell_manager.add_command(u'csv2ts', CreateTimelineFromCsv())
     shell_manager.add_command(u'db', MigrateCommand)
@@ -355,3 +427,4 @@ if __name__ == '__main__':
         u'-c', u'--config', dest=u'config', default=u'/etc/timesketch.conf',
         required=False)
     shell_manager.run()
+
