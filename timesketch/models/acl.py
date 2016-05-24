@@ -114,6 +114,9 @@ class AccessControlMixin(object):
         permission on. I.e enforce ACL permission check when fetching from
         the database.
 
+        Args:
+            user: A user (Instance of timesketch.models.user.User)
+
         Returns:
             An ACL base query (instance of timesketch.models.AclBaseQuery)
         """
@@ -135,6 +138,12 @@ class AccessControlMixin(object):
 
     def _get_ace(self, permission, user=None, group=None, check_group=True):
         """Get the specific access control entry for the user and permission.
+
+        Args:
+            permission: Permission as string (read, write or delete)
+            user: A user (Instance of timesketch.models.user.User)
+            group: A group (Instance of timesketch.models.user.Group)
+            check_group: Check group permission, default is True.
 
         Returns:
             An ACE (instance of timesketch.models.acl.AccessControlEntry) or
@@ -237,7 +246,7 @@ class AccessControlMixin(object):
             db_session.commit()
 
     def revoke_permission(self, permission, user=None, group=None):
-        """Revoke permission to a user with the specific permission.
+        """Revoke permission for user/group on the object.
 
         Args:
             permission: Permission as string (read, write or delete)
