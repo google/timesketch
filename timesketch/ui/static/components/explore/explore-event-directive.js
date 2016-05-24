@@ -118,7 +118,7 @@ limitations under the License.
                 isContextEvent: '=',
                 order: '='
             },
-            require: '^tsSearch',
+            //require: '^tsSearch',
             controller: function ($scope, timesketchApi) {
 
                 // Calculate the time delta in days between two events.
@@ -217,11 +217,11 @@ limitations under the License.
                 });
 
             },
-            link: function(scope, elem, attrs, ctrl) {
-                scope.getContext = function(event) {
-                    ctrl.getContext(event);
-                }
-            }
+            //link: function(scope, elem, attrs, ctrl) {
+            //    scope.getContext = function(event) {
+            //        ctrl.getContext(event);
+            //    }
+            //}
         }
     });
 

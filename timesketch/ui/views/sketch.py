@@ -329,8 +329,8 @@ def event(sketch_id, unused_view_id=None):
 
 @sketch_views.route(u'/sketch/<int:sketch_id>/story/')
 @login_required
-def story(sketch_id):
-    """Generates the event template.
+def story(sketch_id, view_id=None):
+    """Generates the story template.
 
     Returns:
         Template with context.

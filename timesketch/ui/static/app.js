@@ -19,7 +19,7 @@ limitations under the License.
         'timesketch.api',
         'timesketch.core',
         'timesketch.explore',
-        'angular-medium-editor'
+        'timesketch.story'
     ]);
 
     // List of URLs to exclude from the butterbar.

@@ -138,7 +138,7 @@ def create_app(config=None):
         return User.query.get(user_id)
 
     # Setup CSRF protection for the whole application
-    #CsrfProtect(app)
+    CsrfProtect(app)
 
     return app
 
