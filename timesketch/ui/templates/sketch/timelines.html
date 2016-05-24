@@ -27,11 +27,19 @@
                             {% for timeline in sketch.timelines %}
                                 <tr>
                                     <td>
-                                        <div class="color-box" style="background:#{{ timeline.color }};"></div>
+                                        {% if timeline.searchindex.get_status.status == 'processing' %}
+                                            <i class="fa fa-spinner fa-spin"></i>
+                                        {% else %}
+                                            <div class="color-box" style="background:#{{ timeline.color }};"></div>
+                                        {% endif %}
                                     </td>
                                     <td>
                                         <div style="margin-top:5px;">
-                                            <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
+                                            {% if timeline.searchindex.get_status.status == 'processing' %}
+                                                {{ timeline.name }}
+                                            {% else %}
+                                                <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
+                                            {% endif %}
                                         </div>
                                     </td>
                                     <td>{{ timeline.user.name }}</td>
@@ -42,7 +50,6 @@
                             {% endfor %}
                             </tbody>
                         </table>
-                        <a class="btn btn-default" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
                     </div>
                 {% else %}
                     <div class="card">
@@ -74,7 +81,7 @@
                                                 {% if not timeline.user %}
                                                     <td>System</td>
                                                 {% else %}
-                                                    <td>{{ timeline.user }}</td>
+                                                    <td>{{ timeline.user.username }}</td>
                                                 {% endif %}
                                                 <td>{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                                             </tr>

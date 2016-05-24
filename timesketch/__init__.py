@@ -19,6 +19,7 @@ import sys
 from celery import Celery
 from flask import Flask
 from flask_login import LoginManager
+from flask_migrate import Migrate
 from flask_restful import Api
 from flask_wtf import CsrfProtect
 
@@ -80,7 +81,12 @@ def create_app(config=None):
 
     # Setup the database.
     configure_engine(app.config[u'SQLALCHEMY_DATABASE_URI'])
-    init_db()
+    db = init_db()
+
+    # Alembic migration support:
+    # https://alembic.readthedocs.org/en/latest/
+    migrate = Migrate()
+    migrate.init_app(app, db)
 
     # Register blueprints. Blueprints are a way to organize your Flask
     # Flask application. See this for more information:

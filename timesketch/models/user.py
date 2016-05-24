@@ -18,10 +18,27 @@ from flask_bcrypt import check_password_hash
 from flask_login import UserMixin
 from sqlalchemy.types import Boolean
 from sqlalchemy import Column
+from sqlalchemy import PrimaryKeyConstraint
+from sqlalchemy import ForeignKey
+from sqlalchemy import Integer
+from sqlalchemy import Table
 from sqlalchemy import Unicode
+from sqlalchemy import UnicodeText
+from sqlalchemy.orm import backref
 from sqlalchemy.orm import relationship
 
 from timesketch.models import BaseModel
+from timesketch.models.annotations import LabelMixin
+from timesketch.models.annotations import StatusMixin
+
+
+# Helper table for Groups many-to-many relationship.
+user_group = Table(
+    'user_group', BaseModel.metadata,
+    Column('user_id', Integer(), ForeignKey('user.id')),
+    Column('group_id', Integer(), ForeignKey('group.id')),
+    PrimaryKeyConstraint('user_id', 'group_id')
+)
 
 
 class User(UserMixin, BaseModel):
@@ -33,10 +50,14 @@ class User(UserMixin, BaseModel):
     email = Column(Unicode(255))
     active = Column(Boolean(), default=True)
     sketches = relationship(u'Sketch', backref=u'user', lazy=u'dynamic')
-    searchindices = relationship(u'SearchIndex', backref=u'user',
-                                 lazy=u'dynamic')
+    searchindices = relationship(
+        u'SearchIndex', backref=u'user', lazy=u'dynamic')
     timelines = relationship(u'Timeline', backref=u'user', lazy=u'dynamic')
     views = relationship(u'View', backref=u'user', lazy=u'dynamic')
+    my_groups = relationship(u'Group', backref=u'user', lazy=u'dynamic')
+    groups = relationship(
+        u'Group', secondary=user_group, backref=backref(
+            u'users', lazy=u'dynamic'))
 
     def __init__(self, username, name=None):
         """Initialize the User object.
@@ -73,3 +94,27 @@ class User(UserMixin, BaseModel):
             stored password hash.
         """
         return check_password_hash(self.password, plaintext)
+
+
+class Group(LabelMixin, StatusMixin, BaseModel):
+    """Implements the Group model."""
+
+    name = Column(Unicode(255), unique=True)
+    display_name = Column(Unicode(255))
+    description = Column(UnicodeText())
+    user_id = Column(Integer, ForeignKey(u'user.id'))
+
+    def __init__(self, name, display_name=None, description=None, user=None):
+        """Initialize the Group object.
+
+        Args:
+            name: Name of the group
+            display_name: User friendly name of the group
+            description: Description of the group
+            user: Creator (instance of timesketch.models.user.User)
+        """
+        super(Group, self).__init__()
+        self.name = name
+        self.display_name = display_name or name
+        self.description = description or name
+        self.user = user

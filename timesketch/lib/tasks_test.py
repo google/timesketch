@@ -23,8 +23,6 @@ class TestTasks(BaseTest):
     """Tests for the functionality on the tasks module."""
     def test_get_data_location(self):
         """Test to get data_location path."""
-        data_location_none = get_data_location()
         current_app.config[u'PLASO_DATA_LOCATION'] = u'/tmp'
         data_location_exists = get_data_location()
-        self.assertFalse(data_location_none)
         self.assertEqual(u'/tmp', data_location_exists)

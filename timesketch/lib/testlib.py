@@ -21,6 +21,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.models import init_db
 from timesketch.models import drop_all
 from timesketch.models import db_session
+from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
@@ -170,9 +171,23 @@ class BaseTest(TestCase):
         """
         user = User(username=username)
         if set_password:
-            user.set_password(plaintext=u'test', rounds=1)
+            user.set_password(plaintext=u'test', rounds=4)
         self._commit_to_database(user)
         return user
+
+    def _create_group(self, name, user):
+        """Create a user in the database.
+
+        Args:
+            name: Group name
+            user: A user (instance of timesketch.models.user.User)
+        Returns:
+            A group (instance of timesketch.models.user.Group)
+        """
+        group = Group(name=name)
+        user.groups.append(group)
+        self._commit_to_database(group)
+        return group
 
     def _create_sketch(self, name, user, acl=False):
         """Create a sketch in the database.
@@ -188,7 +203,7 @@ class BaseTest(TestCase):
         sketch = Sketch(name=name, description=name, user=user)
         if acl:
             for permission in [u'read', u'write', u'delete']:
-                sketch.grant_permission(user=user, permission=permission)
+                sketch.grant_permission(permission=permission, user=user)
         label = sketch.Label(label=u'Test label', user=user)
         status = sketch.Status(status=u'Test status', user=user)
         sketch.labels.append(label)
@@ -196,18 +211,22 @@ class BaseTest(TestCase):
         self._commit_to_database(sketch)
         return sketch
 
-    def _create_searchindex(self, name, user):
+    def _create_searchindex(self, name, user, acl=False):
         """Create a searchindex in the database.
 
         Args:
             name: Name of the searchindex (string)
             user: A user (instance of timesketch.models.user.User)
+            acl: Boolean value to decide if ACL permissions should be set
 
         Returns:
             A searchindex (instance of timesketch.models.sketch.SearchIndex)
         """
         searchindex = SearchIndex(
             name=name, description=name, index_name=name, user=user)
+        if acl:
+            for permission in [u'read', u'write', u'delete']:
+                searchindex.grant_permission(permission=permission, user=user)
         self._commit_to_database(searchindex)
         return searchindex
 
@@ -273,13 +292,18 @@ class BaseTest(TestCase):
         self.user1 = self._create_user(username=u'test1', set_password=True)
         self.user2 = self._create_user(username=u'test2', set_password=False)
 
+        self.group1 = self._create_group(name=u'test_group1', user=self.user1)
+        self.group2 = self._create_group(name=u'test_group2', user=self.user1)
+
         self.sketch1 = self._create_sketch(
             name=u'Test 1', user=self.user1, acl=True)
         self.sketch2 = self._create_sketch(
             name=u'Test 2', user=self.user1, acl=False)
+        self.sketch3 = self._create_sketch(
+            name=u'Test 3', user=self.user1, acl=True)
 
         self.searchindex = self._create_searchindex(
-            name=u'test', user=self.user1)
+            name=u'test', user=self.user1, acl=True)
 
         self.timeline = self._create_timeline(
             name=u'Timeline 1', sketch=self.sketch1,

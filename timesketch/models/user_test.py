@@ -14,6 +14,7 @@
 """Tests for the user model."""
 
 from timesketch.lib.testlib import ModelBaseTest
+from timesketch.models.user import Group
 from timesketch.models.user import User
 
 
@@ -33,7 +34,7 @@ class UserModelTest(ModelBaseTest):
 
     def test_set_password(self):
         """Test setting a password for the user."""
-        self.assertIsNone(self.user1.set_password(u'test', rounds=1))
+        self.assertIsNone(self.user1.set_password(u'test', rounds=4))
 
     def test_valid_password(self):
         """Test checking a valid password."""
@@ -42,3 +43,23 @@ class UserModelTest(ModelBaseTest):
     def test_invalid_password(self):
         """Test checking a invalid password."""
         self.assertFalse(self.user1.check_password(u'invalid password'))
+
+
+class GroupModelTest(ModelBaseTest):
+    """Tests the user model."""
+    def test_group_model(self):
+        """
+        Test that the test group has the expected data stored in the
+        database.
+        """
+        expected_result = frozenset([
+            (u'name', u'test_group1'),
+            (u'display_name', u'test_group1'),
+            (u'description', u'test_group1')
+        ])
+        self._test_db_object(
+            expected_result=expected_result, model_cls=Group)
+
+    def test_group_membership(self):
+        """Test that user1 is member of the group."""
+        self.assertTrue(self.user1 in self.group1.users)
