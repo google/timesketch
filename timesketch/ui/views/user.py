@@ -24,6 +24,8 @@ from flask_login import login_user
 from flask_login import logout_user
 
 from timesketch.lib.forms import UsernamePasswordForm
+from timesketch.models import db_session
+from timesketch.models.user import Group
 from timesketch.models.user import User
 
 
@@ -52,10 +54,39 @@ def login():
     if current_app.config.get(u'SSO_ENABLED', False):
         remote_user_env = current_app.config.get(
             u'SSO_USER_ENV_VARIABLE', u'REMOTE_USER')
+        sso_group_env = current_app.config.get(
+            u'SSO_GROUP_ENV_VARIABLE', None)
+
         remote_user = request.environ.get(remote_user_env, None)
         if remote_user:
             user = User.get_or_create(username=remote_user, name=remote_user)
             login_user(user)
+
+        # If we get groups from the SSO system create the group(s) in
+        # Timesketch and add/remove the user from it.
+        if sso_group_env:
+            groups_string = request.environ.get(sso_group_env, u'')
+            separator = current_app.config.get(
+                u'SSO_GROUP_SEPARATOR', u';')
+            not_member_sign = current_app.config.get(
+                u'SSO_GROUP_NOT_MEMBER_SIGN', None)
+            for group_name in groups_string.split(separator):
+                remove_group = False
+                if not_member_sign:
+                    remove_group = group_name.startswith(not_member_sign)
+                    group_name = group_name.lstrip(not_member_sign)
+
+                # Get or create the group in the Timesketch database.
+                group = Group.get_or_create(name=group_name)
+
+                if remove_group:
+                    if group in user.groups:
+                        user.groups.remove(group)
+                else:
+                    if group not in user.groups:
+                        user.groups.append(group)
+            # Commit the changes to the database.
+            db_session.commit()
 
     # Login form POST
     if form.validate_on_submit:

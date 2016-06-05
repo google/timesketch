@@ -235,9 +235,9 @@ class SketchListResource(ResourceMixin, Resource):
                 user=current_user)
             sketch.status.append(sketch.Status(user=None, status=u'new'))
             # Give the requesting user permissions on the new sketch.
-            sketch.grant_permission(current_user, u'read')
-            sketch.grant_permission(current_user, u'write')
-            sketch.grant_permission(current_user, u'delete')
+            sketch.grant_permission(permission=u'read', user=current_user)
+            sketch.grant_permission(permission=u'write', user=current_user)
+            sketch.grant_permission(permission=u'delete', user=current_user)
             db_session.add(sketch)
             db_session.commit()
             return self.to_json(sketch, status_code=HTTP_STATUS_CODE_CREATED)
@@ -666,7 +666,7 @@ class UploadFileResource(ResourceMixin, Resource):
             search_index = SearchIndex.get_or_create(
                 name=timeline_name, description=timeline_name, user=None,
                 index_name=index_name)
-            search_index.grant_permission(None, u'read')
+            search_index.grant_permission(permission=u'read')
             search_index.set_status(u'processing')
             db_session.add(search_index)
             db_session.commit()

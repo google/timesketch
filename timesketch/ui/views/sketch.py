@@ -27,6 +27,7 @@ from flask import url_for
 from flask_login import current_user
 from flask_login import login_required
 from sqlalchemy import desc
+from sqlalchemy import or_
 from sqlalchemy import not_
 
 from timesketch.models import db_session
@@ -42,6 +43,8 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
+from timesketch.models.user import Group
+from timesketch.models.user import User
 from timesketch.lib.datastores.elastic import ElasticSearchDataStore
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
@@ -65,6 +68,18 @@ def overview(sketch_id):
     status_form = StatusForm()
     trash_form = TrashForm()
 
+    # Dynamically set the forms select options.
+    # pylint: disable=singleton-comparison
+    permission_form.groups.choices = set(
+        (g.id, g.name) for g in Group.query.filter(
+            or_(Group.user == current_user, Group.user == None)))
+
+    permission_form.remove_groups.choices = set(
+        (g.id, g.name) for g in sketch.groups)
+
+    permission_form.remove_users.choices = set(
+        (u.id, u.username) for u in sketch.collaborators)
+
     # Edit sketch form POST
     if sketch_form.validate_on_submit():
         if not sketch.has_permission(current_user, u'write'):
@@ -79,13 +94,48 @@ def overview(sketch_id):
     if permission_form.validate_on_submit():
         if not sketch.has_permission(current_user, u'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
+
+        # Add collaborators to the sketch
+        # TODO(jbn): Make write permission off by default
+        # and selectable in the UI
+        if permission_form.username.data:
+            user = User.query.filter_by(
+                username=permission_form.username.data).first()
+            if user:
+                sketch.grant_permission(permission=u'read', user=user)
+                sketch.grant_permission(permission=u'write', user=user)
+
+        # Add a group to the sketch
+        if permission_form.groups.data:
+            group_id = permission_form.groups.data
+            group = Group.query.get(group_id)
+            # Only add groups publicly visible or owned by the current user
+            if not group.user or group.user == current_user:
+                sketch.grant_permission(permission=u'read', group=group)
+                sketch.grant_permission(permission=u'write', group=group)
+
+        # Remove groups from sketch
+        if permission_form.remove_groups.data:
+            for group_id in permission_form.remove_groups.data:
+                group = Group.query.get(group_id)
+                sketch.revoke_permission(permission=u'read', group=group)
+                sketch.revoke_permission(permission=u'write', group=group)
+
+        # Remove users from sketch
+        if permission_form.remove_users.data:
+            for user_id in permission_form.remove_users.data:
+                user = User.query.get(user_id)
+                sketch.revoke_permission(permission=u'read', user=user)
+                sketch.revoke_permission(permission=u'write', user=user)
+
         if permission_form.permission.data == u'public':
-            sketch.grant_permission(user=None, permission=u'read')
+            sketch.grant_permission(permission=u'read')
         else:
-            sketch.revoke_permission(user=None, permission=u'read')
+            sketch.revoke_permission(permission=u'read')
         db_session.commit()
         return redirect(
             url_for(u'sketch_views.overview', sketch_id=sketch.id))
+
 
     # Change status form POST
     if status_form.validate_on_submit():

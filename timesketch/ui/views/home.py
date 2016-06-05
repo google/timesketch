@@ -74,9 +74,9 @@ def home():
             user=current_user)
         sketch.status.append(sketch.Status(user=None, status=u'new'))
         # Give the requesting user permissions on the new sketch.
-        sketch.grant_permission(current_user, u'read')
-        sketch.grant_permission(current_user, u'write')
-        sketch.grant_permission(current_user, u'delete')
+        sketch.grant_permission(permission=u'read', user=current_user)
+        sketch.grant_permission(permission=u'write', user=current_user)
+        sketch.grant_permission(permission=u'delete', user=current_user)
         db_session.add(sketch)
         db_session.commit()
         return redirect(url_for(u'sketch_views.overview', sketch_id=sketch.id))
