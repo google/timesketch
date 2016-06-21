@@ -41,6 +41,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     timelines = relationship(u'Timeline', backref=u'sketch', lazy=u'select')
     views = relationship(u'View', backref=u'sketch', lazy=u'select')
     events = relationship(u'Event', backref=u'sketch', lazy=u'select')
+    stories = relationship(u'Story', backref=u'sketch', lazy=u'select')
 
     def __init__(self, name, description, user):
         """Initialize the Sketch object.

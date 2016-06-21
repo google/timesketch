@@ -60,6 +60,63 @@ limitations under the License.
             return $http.post(resource_url, params)
         };
 
+        this.createStory = function(sketch_id) {
+            /**
+             * Creates a new story.
+             * @param sketch_id - The id for the sketch.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = BASE_URL + sketch_id + '/stories/';
+            var params = {
+                sketch_id: sketch_id
+            };
+            return $http.post(resource_url, params)
+        };
+
+        this.updateStory = function(sketch_id, story_id, title, content) {
+            /**
+             * Updates a story.
+             * @param sketch_id - The id for the sketch.
+             * @param story_id - The id for the story.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = BASE_URL + sketch_id + '/stories/' + story_id + '/';
+            var params = {
+                sketch_id: sketch_id,
+                story_id: story_id,
+                title: title,
+                content: content
+            };
+            return $http.post(resource_url, params)
+        };
+
+        this.getStories = function(sketch_id) {
+            /**
+             * Get stories for sketch.
+             * @param sketch_id - The id for the sketch.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = BASE_URL + sketch_id + '/stories/';
+            var params = {
+                sketch_id: sketch_id
+            };
+            return $http.get(resource_url, params)
+        };
+
+        this.getStory = function(sketch_id, story_id) {
+            /**
+             * Get stories for sketch.
+             * @param sketch_id - The id for the sketch.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = BASE_URL + sketch_id + '/stories/' + story_id + '/';
+            var params = {
+                sketch_id: sketch_id,
+                story_id: story_id
+            };
+            return $http.get(resource_url, params)
+        };
+
         this.getEvent = function(sketch_id, searchindex_id, event_id) {
             /**
              * Get a Timesketch event.

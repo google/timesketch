@@ -23,14 +23,21 @@ limitations under the License.
     ]);
 
     // List of URLs to exclude from the butterbar.
-    var excludeFromButterbar = ['/api/v1/tasks/'];
+    function excludeFromButterbar(url) {
+        var excludeURLs = [
+            "/api/v1/tasks/",
+            "/api/v1/sketches/[0-9]+/stories/[0-9]+/"
+        ];
+        var re = new RegExp(excludeURLs.join("|"), "i");
+        return(url.match(re) != null);
+    }
 
     // Angular config
     module.config(function($httpProvider) {
         $httpProvider.interceptors.push(function($q, $rootScope) {
             return {
                 'request': function(config) {
-                    if (excludeFromButterbar.indexOf(config.url) == -1) {
+                    if (!excludeFromButterbar(config.url)) {
                         $rootScope.$broadcast('httpreq-start');
                     }
                     return config || $q.when(config);

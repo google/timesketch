@@ -376,15 +376,3 @@ def event(sketch_id, unused_view_id=None):
     return render_template(
         u'sketch/event.html', sketch=sketch)
 
-
-@sketch_views.route(u'/sketch/<int:sketch_id>/story/')
-@login_required
-def story(sketch_id, view_id=None):
-    """Generates the story template.
-
-    Returns:
-        Template with context.
-    """
-    sketch = Sketch.query.get_with_acl(sketch_id)
-    return render_template(
-        u'sketch/story.html', sketch=sketch)

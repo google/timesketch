@@ -191,3 +191,10 @@ class UploadFileForm(BaseForm):
                 [u'plaso'],
                 u'Unknown file extension. Allowed file extensions: .plaso')])
     name = StringField(u'Timeline name', validators=[DataRequired()])
+
+
+class StoryForm(BaseForm):
+    """Form to handle stories."""
+    title = StringField(u'Title', validators=[])
+    content = StringField(
+        u'Content', validators=[], widget=widgets.TextArea())

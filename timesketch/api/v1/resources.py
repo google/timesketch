@@ -61,12 +61,14 @@ from timesketch.lib.forms import NameDescriptionForm
 from timesketch.lib.forms import EventAnnotationForm
 from timesketch.lib.forms import ExploreForm
 from timesketch.lib.forms import UploadFileForm
+from timesketch.lib.forms import StoryForm
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
+from timesketch.models.story import Story
 
 
 class ResourceMixin(object):
@@ -124,6 +126,16 @@ class ResourceMixin(object):
         u'updated_at': fields.DateTime
     }
 
+    story_fields = {
+        u'id': fields.Integer,
+        u'title': fields.String,
+        u'content': fields.String,
+        u'user': fields.Nested(user_fields),
+        u'sketch': fields.Nested(sketch_fields),
+        u'created_at': fields.DateTime,
+        u'updated_at': fields.DateTime
+    }
+
     comment_fields = {
         u'comment': fields.String,
         u'user': fields.Nested(user_fields),
@@ -144,6 +156,7 @@ class ResourceMixin(object):
         u'view': view_fields,
         u'user': user_fields,
         u'sketch': sketch_fields,
+        u'story': story_fields,
         u'event_comment': comment_fields,
         u'event_label': label_fields
     }
@@ -175,16 +188,20 @@ class ResourceMixin(object):
         """
         if not meta:
             meta = dict()
-        if not model_fields:
-            try:
-                model_fields = self.fields_registry[model.__tablename__]
-            except AttributeError:
-                model_fields = self.fields_registry[model[0].__tablename__]
 
         schema = {
             u'meta': meta,
-            u'objects': [marshal(model, model_fields)]
+            u'objects': []
         }
+
+        if model:
+            if not model_fields:
+                try:
+                    model_fields = self.fields_registry[model.__tablename__]
+                except AttributeError:
+                    model_fields = self.fields_registry[model[0].__tablename__]
+            schema[u'objects'] = [marshal(model, model_fields)]
+
         response = jsonify(schema)
         response.status_code = status_code
         return response
@@ -637,7 +654,7 @@ class EventAnnotationResource(ResourceMixin, Resource):
 
 class UploadFileResource(ResourceMixin, Resource):
     """Resource that processes uploaded files."""
-    #@login_required
+    @login_required
     def post(self):
         """Handles POST request to the resource.
 
@@ -650,18 +667,11 @@ class UploadFileResource(ResourceMixin, Resource):
         UPLOAD_ENABLED = current_app.config[u'UPLOAD_ENABLED']
         UPLOAD_FOLDER = current_app.config[u'UPLOAD_FOLDER']
 
-        f = request.files['file']
-        print str(request.files)
-        #help(request.files)
-
-        #form = UploadFileForm()
-        #if form.validate_on_submit() and UPLOAD_ENABLED:
-        if f:
+        form = UploadFileForm()
+        if form.validate_on_submit() and UPLOAD_ENABLED:
             from timesketch.lib.tasks import run_plaso
-            #file_storage = form.file.data
-            file_storage = f
-            #timeline_name = form.name.data
-            timeline_name = "foobar"
+            file_storage = form.file.data
+            timeline_name = form.name.data
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
             filename = unicode(uuid.uuid4().hex)
@@ -724,3 +734,92 @@ class TaskResource(ResourceMixin, Resource):
                     search_index.set_status(u'timeout')
             schema[u'objects'].append(task)
         return jsonify(schema)
+
+
+class StoryListResource(ResourceMixin, Resource):
+    """Resource to get all stories for a sketch or to create a new story."""
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            Stories in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        stories = []
+        for story in Story.query.filter_by(
+                sketch=sketch).order_by(desc(Story.created_at)):
+            stories.append(story)
+        return self.to_json(stories)
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            A view in JSON (instance of flask.wrappers.Response)
+        """
+        form = StoryForm.build(request)
+        if form.validate_on_submit():
+            sketch = Sketch.query.get_with_acl(sketch_id)
+            story = Story(
+                title=u'', content=u'', sketch=sketch, user=current_user)
+            db_session.add(story)
+            db_session.commit()
+            return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class StoryResource(ResourceMixin, Resource):
+    """Resource to get a story."""
+    @login_required
+    def get(self, sketch_id, story_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            story_id: Integer primary key for a story database model
+
+        Returns:
+            A story in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        story = Story.query.get(story_id)
+
+        # Check that this story belongs to the sketch
+        if story.sketch_id != sketch.id:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+
+        return self.to_json(story)
+
+    @login_required
+    def post(self, sketch_id, story_id):
+        """Handles POST request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            story_id: Integer primary key for a story database model
+
+        Returns:
+            A view in JSON (instance of flask.wrappers.Response)
+        """
+        form = StoryForm.build(request)
+        if form.validate_on_submit():
+            sketch = Sketch.query.get_with_acl(sketch_id)
+            story = Story.query.get(story_id)
+
+            if story.sketch_id != sketch.id:
+                abort(HTTP_STATUS_CODE_NOT_FOUND)
+
+            story.title = form.title.data
+            story.content = form.content.data
+            db_session.add(story)
+            db_session.commit()
+            return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST)

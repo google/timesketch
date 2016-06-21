@@ -101,7 +101,7 @@ table {
     font-size: 1.3em;
     border-radius: 0;
     padding: 15px;
-    background:#f5f5f5;
+    background:#f9f9f9;
     width: 100%;
 }
 
@@ -450,12 +450,20 @@ rect.bordered {
 .medium-editor-placeholder:after {
     content: attr(data-placeholder) !important;
     font-style: normal;
+    top: 0;
     left: 0;
     position: absolute;
-    top: 0;
     white-space: pre;
     padding: inherit;
     margin: inherit;
+}
+
+.medium-editor-placeholder.editable:after {
+    font-weight: 400;
+    font-style: normal;
+    font-size: 18px;
+    line-height: 1.68;
+    letter-spacing: -.003rem;
 }
 
 p {

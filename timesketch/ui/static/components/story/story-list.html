@@ -1,0 +1,27 @@
+<div ng-if="stories.length < 1" style="text-align: center">
+    <br><br>
+    <h3>There are no stories for this sketch.</h3>
+    <button class="btn btn-success" ng-click="createStory()">Create new story</button>
+</div>
+
+<div ng-if="stories.length > 0">
+    <button class="btn btn-success" ng-click="createStory()">Create new story</button>
+    <br>
+    <br>
+    <table ng-if="stories.length > 0" class="table table-hover">
+        <thead>
+        <tr>
+            <th>Title</th>
+            <th width="110px">Author</th>
+            <th width="130px">Added</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        <tr ng-repeat="story in stories">
+            <td><a href="/sketch/{{ sketchId }}/stories/{{ story.id }}/"><b>{{ story.title||'Untitled story' }}</b></a></td>
+            <td>{{ story.user.username }}</td>
+            <td>{{ story.created_at }}</td>
+        </tr>
+    </table>
+</div>
