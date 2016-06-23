@@ -224,10 +224,10 @@
                             {% if sketch.collaborators or sketch.groups %}
                                 <br>
                                 {% for group in sketch.groups %}
-                                  <span class="label label-default" style="font-size: 0.9em;"><i class="fa fa-group"></i>{{ group.name }}</span>
+                                  <span class="label label-default" style="font-size: 0.9em;" title="Shared with {{ group.name }}"><i class="fa fa-group"></i>{{ group.name }}</span>
                                 {% endfor %}
                                 {% for collaborator in sketch.collaborators %}
-                                  <span class="label label-default" style="font-size: 0.9em;"><i class="fa fa-user"></i>{{ collaborator.username }}</span>
+                                  <span class="label label-default" style="font-size: 0.9em;" title="Shared with {{ collaborator.username }}"><i class="fa fa-user"></i>{{ collaborator.username }}</span>
                                 {% endfor %}
                             {% endif %}
 
