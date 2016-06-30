@@ -681,9 +681,13 @@ class UploadFileResource(ResourceMixin, Resource):
             file_storage.save(file_path)
 
             search_index = SearchIndex.get_or_create(
-                name=timeline_name, description=timeline_name, user=None,
-                index_name=index_name)
-            search_index.grant_permission(permission=u'read')
+                name=timeline_name, description=timeline_name,
+                user=current_user, index_name=index_name)
+            search_index.grant_permission(permission=u'read', user=current_user)
+            search_index.grant_permission(
+                permission=u'write', user=current_user)
+            search_index.grant_permission(
+                permission=u'delete', user=current_user)
             search_index.set_status(u'processing')
             db_session.add(search_index)
             db_session.commit()
@@ -716,7 +720,7 @@ class TaskResource(ResourceMixin, Resource):
         TIMEOUT_THRESHOLD_SECONDS = current_app.config.get(
             u'CELERY_TASK_TIMEOUT', 7200)
         indices = SearchIndex.query.filter(SearchIndex.status.any(
-            status=u'processing')).all()
+            status=u'processing')).filter_by(user=current_user).all()
         schema = {u'objects': [], u'meta': {}}
         for search_index in indices:
             # pylint: disable=too-many-function-args

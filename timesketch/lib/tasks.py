@@ -45,22 +45,23 @@ def get_data_location():
 
 
 @celery.task(track_started=True)
-def run_plaso(source_file_path, timeline_name, index_name):
+def run_plaso(source_file_path, timeline_name, index_name, username=None):
     """Create a Celery task for processing Plaso storage file.
 
     Args:
         source_file_path: Path to plaso storage file.
         timeline_name: Name of the Timesketch timeline.
         index_name: Name of the datastore index.
+        username: Username of the user who will own the timeline.
 
     Returns:
         Dictionary with count of processed events.
     """
     plaso_data_location = get_data_location()
     analysis_plugins = None
-    flush_interval_ms = 1000
+    flush_interval = 1000  # events to queue before bulk index
 
-    # Use the Psort frontend for processing.
+    # Use Plaso psort frontend tool.
     frontend = psort.PsortFrontend()
     frontend.SetDataLocation(plaso_data_location)
     storage_file = frontend.OpenStorage(
@@ -69,10 +70,13 @@ def run_plaso(source_file_path, timeline_name, index_name):
     # Setup the Timesketch output module.
     frontend.SetOutputFormat(u'timesketch')
     output_module = frontend.GetOutputModule(storage_file)
-    output_module.SetFlushInterval(flush_interval_ms)
-    output_module.SetIndex(index_name)
-    output_module.SetName(timeline_name)
+    output_module.SetIndexName(index_name)
+    output_module.SetTimelineName(timeline_name)
+    output_module.SetFlushInterval(flush_interval)
+    if username:
+        output_module.SetUserName(username)
 
+    # Start process the Plaso storage file.
     plugins, queue_producers = frontend.GetAnalysisPluginsAndEventQueues(
         analysis_plugins)
     counter = frontend.ProcessStorage(
