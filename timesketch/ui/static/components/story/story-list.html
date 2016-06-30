@@ -5,13 +5,14 @@
 </div>
 
 <div ng-if="stories.length > 0">
-    <button class="btn btn-success" ng-click="createStory()"><i class="fa fa-plus"></i> Create new story</button>
-    <br>
-    <br>
+    <div class="card-header">
+        <h4 class="pull-left">Stories</h4>
+        <button class="btn btn-link pull-right" ng-click="createStory()"><i class="fa fa-plus"></i> Create new story</button>
+    </div>
     <table ng-if="stories.length > 0" class="table table-hover">
         <thead>
         <tr>
-            <th>Title</th>
+            <th></th>
             <th width="110px">Author</th>
             <th width="130px">Added</th>
         </tr>

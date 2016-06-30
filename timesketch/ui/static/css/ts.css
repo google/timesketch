@@ -70,6 +70,13 @@ table {
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15)
 }
 
+.card-header {
+    background: #fff;
+    padding:10px 10px 10px 20px;
+    margin:-20px -20px 0 -20px;
+    min-height: 60px;
+}
+
 .card-alert {
     background: red;
     color: #fff;
