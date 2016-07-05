@@ -54,6 +54,7 @@ class User(UserMixin, BaseModel):
         u'SearchIndex', backref=u'user', lazy=u'dynamic')
     timelines = relationship(u'Timeline', backref=u'user', lazy=u'dynamic')
     views = relationship(u'View', backref=u'user', lazy=u'dynamic')
+    stories = relationship(u'Story', backref=u'user', lazy=u'dynamic')
     my_groups = relationship(u'Group', backref=u'user', lazy=u'dynamic')
     groups = relationship(
         u'Group', secondary=user_group, backref=backref(

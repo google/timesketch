@@ -33,6 +33,8 @@ from timesketch.api.v1.resources import ViewResource
 from timesketch.api.v1.resources import ViewListResource
 from timesketch.api.v1.resources import UploadFileResource
 from timesketch.api.v1.resources import TaskResource
+from timesketch.api.v1.resources import StoryListResource
+from timesketch.api.v1.resources import StoryResource
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.models import configure_engine
 from timesketch.models import init_db
@@ -40,6 +42,7 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.user import User
 from timesketch.ui.views.home import home_views
 from timesketch.ui.views.sketch import sketch_views
+from timesketch.ui.views.story import story_views
 from timesketch.ui.views.user import user_views
 
 
@@ -94,6 +97,7 @@ def create_app(config=None):
     app.register_blueprint(user_views)
     app.register_blueprint(home_views)
     app.register_blueprint(sketch_views)
+    app.register_blueprint(story_views)
 
     # Setup URL routes for the API.
     api_v1 = Api(app, prefix=u'/api/v1')
@@ -110,6 +114,10 @@ def create_app(config=None):
         ViewResource, u'/sketches/<int:sketch_id>/views/<int:view_id>/')
     api_v1.add_resource(UploadFileResource, u'/upload/')
     api_v1.add_resource(TaskResource, u'/tasks/')
+    api_v1.add_resource(
+        StoryListResource, u'/sketches/<int:sketch_id>/stories/')
+    api_v1.add_resource(
+        StoryResource, u'/sketches/<int:sketch_id>/stories/<int:story_id>/')
 
     # Register error handlers
     # pylint: disable=unused-variable

@@ -28,6 +28,7 @@ from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Event
+from timesketch.models.story import Story
 
 
 class TestConfig(object):
@@ -249,6 +250,20 @@ class BaseTest(TestCase):
         self._commit_to_database(event)
         return event
 
+    def _create_story(self, sketch, user):
+        """Create a story in the database.
+
+        Args:
+            sketch: A sketch (instance of timesketch.models.sketch.Sketch)
+            user: A user (instance of timesketch.models.user.User)
+
+        Returns:
+            A story (instance of timesketch.models.story.Story)
+        """
+        story = Story(title=u'Test', content=u'Test', sketch=sketch, user=user)
+        self._commit_to_database(story)
+        return story
+
     def _create_timeline(self, name, sketch, searchindex, user):
         """Create a timeline in the database.
 
@@ -318,6 +333,8 @@ class BaseTest(TestCase):
 
         self.event = self._create_event(
             sketch=self.sketch1, searchindex=self.searchindex, user=self.user1)
+
+        self.story = self._create_story(sketch=self.sketch1, user=self.user1)
 
     def tearDown(self):
         """Tear down the test database."""

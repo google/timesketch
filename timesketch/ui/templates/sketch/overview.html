@@ -3,6 +3,7 @@
     <ul class="nav nav-tabs">
         <li role="presentation" class="active"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
+        <li role="presentation"><a href="{{ url_for('story_views.story', sketch_id=sketch.id) }}"><i class="fa fa-book"></i> Stories</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
     </ul>
@@ -66,47 +67,47 @@
                             <br>
 
                             <div class="input">
-                              <label>
-                                  <i class="fa fa-user" style="margin-right:5px;"></i>
-                                  Share with user
-                                  <input type="text" name="username">
-                              </label>
+                                <label>
+                                    <i class="fa fa-user" style="margin-right:5px;"></i>
+                                    Share with user
+                                    <input type="text" name="username">
+                                </label>
 
-                            <div class="input">
-                              <label>
-                                  <i class="fa fa-users" style="margin-right:5px;"></i>
-                                  Share with group
-                                  <select id="groups" name="groups">
-                                    <option value="" disabled selected>Select group</option>
-                                    {% for option in permission_form.groups %}
-                                      {{ option }}
+                                <div class="input">
+                                    <label>
+                                        <i class="fa fa-users" style="margin-right:5px;"></i>
+                                        Share with group
+                                        <select id="groups" name="groups">
+                                            <option value="" disabled selected>Select group</option>
+                                            {% for option in permission_form.groups %}
+                                                {{ option }}
+                                            {% endfor %}
+                                        </select>
+                                    </label>
+                                </div>
+
+                            </div>
+
+                            {% if sketch.collaborators or sketch.groups %}
+                                <br>
+                                <table class="table table-hover">
+                                    <th>Who has access</th>
+                                    <th style="text-align: right; padding-right: 3px;"><i class="fa fa-trash"></i></th>
+                                    {% for group in sketch.groups %}
+                                        <tr>
+                                            <td><i class="fa fa-group"></i>{{ group.name }}</td>
+                                            <td align="right"><input name="remove_groups" type="checkbox" value={{ group.id }}></td>
+                                        </tr>
                                     {% endfor %}
-                                  </select>
-                              </label>
-                            </div>
+                                    {% for collaborator in sketch.collaborators %}
+                                        <tr>
+                                            <td><i class="fa fa-user"></i>{{ collaborator.username }}</td>
+                                            <td align="right"><input name="remove_users" type="checkbox" value={{ collaborator.id }}></td>
+                                        </tr>
+                                    {% endfor %}
+                                </table>
 
-                            </div>
-
-                          {% if sketch.collaborators or sketch.groups %}
-                            <br>
-                            <table class="table table-hover">
-                              <th>Who has access</th>
-                              <th style="text-align: right; padding-right: 3px;"><i class="fa fa-trash"></i></th>
-                                {% for group in sketch.groups %}
-                                <tr>
-                                  <td><i class="fa fa-group"></i>{{ group.name }}</td>
-                                  <td align="right"><input name="remove_groups" type="checkbox" value={{ group.id }}></td>
-                                </tr>
-                              {% endfor %}
-                              {% for collaborator in sketch.collaborators %}
-                                <tr>
-                                  <td><i class="fa fa-user"></i>{{ collaborator.username }}</td>
-                                  <td align="right"><input name="remove_users" type="checkbox" value={{ collaborator.id }}></td>
-                                </tr>
-                              {% endfor %}
-                            </table>
-
-                          {% endif %}
+                            {% endif %}
 
 
                             <br><hr>
@@ -210,23 +211,22 @@
                                         {% endif %}
                                 </div>
                             </div>
+
                             <h3>{{ sketch.name }}</h3>
                             <p style="white-space: pre-wrap;word-wrap: break-word;">{{ sketch.description }}</p>
-                            <br>
-
-                            {% if sketch.timelines %}
-                              <a class="btn btn-primary" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
-                              <br>
-                            {% endif %}
 
                             {% if sketch.collaborators or sketch.groups %}
-                                <br>
+                                <hr>
+                                <span style="margin-right:10px;">Shared with</span>
                                 {% for group in sketch.groups %}
-                                  <span class="label label-default" style="font-size: 0.9em;"><i class="fa fa-group"></i>{{ group.name }}</span>
+                                    <span class="label label-default" style="font-size: 0.9em;" title="Shared with group {{ group.name }}"><i class="fa fa-group"></i>{{ group.name }}</span>
                                 {% endfor %}
                                 {% for collaborator in sketch.collaborators %}
-                                  <span class="label label-default" style="font-size: 0.9em;"><i class="fa fa-user"></i>{{ collaborator.username }}</span>
+                                    <span class="label label-default" style="font-size: 0.9em;" title="Shared with user {{ collaborator.username }}"><i class="fa fa-user"></i>{{ collaborator.username }}</span>
                                 {% endfor %}
+                            {% endif %}
+                            {% if sketch.timelines %}
+                                <a class="btn btn-success pull-right" style="min-width: 150px" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
                             {% endif %}
 
                         </div>
@@ -237,10 +237,13 @@
 
         {% if sketch.get_named_views %}
             <div class="card">
+                <div class="card-header">
+                    <h4>Views</h4>
+                </div>
                 <table class="table table-hover">
                     <thead>
                     <tr>
-                        <th>View</th>
+                        <th></th>
                         <th width="110px">Created by</th>
                         <th width="130px">Created</th>
                     </tr>
@@ -260,52 +263,63 @@
             </div>
         {% endif %}
 
-        <div class="card">
-            {% if sketch.timelines %}
-                <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th width="50px"></th>
-                        <th>Timeline</th>
-                        <th width="110px">Added by</th>
-                        <th width="130px">Added</th>
-                    </tr>
+        {% if sketch.stories %}
+            <div class="card">
+                <ts-story-list sketch-id="{{ sketch.id }}"></ts-story-list>
+            </div>
+        {% endif %}
 
-                    <tbody>
-                    {% for timeline in sketch.timelines %}
-                        <tr>
-                            <td>
-                                {% if timeline.searchindex.get_status.status == 'processing' %}
-                                    <i class="fa fa-spinner fa-spin"></i>
-                                {% else %}
-                                    <div class="color-box" style="background:#{{ timeline.color }};"></div>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div style="margin-top:5px;">
-                                    {% if timeline.searchindex.get_status.status == 'processing' %}
-                                        {{ timeline.name }}
-                                    {% else %}
-                                        <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
-                                    {% endif %}
-                                </div>
-                            </td>
-                            <td>{{ timeline.user.name }}</td>
-                            <td>
-                                <div style="margin-top:5px;">{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+        {% if sketch.timelines %}
+        <div class="card">
+            <div class="card-header">
+                <h4 class="pull-left">Timelines</h4>
                 {% if sketch.has_permission(current_user, 'write') %}
-                  <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add more timelines</a>
+                    <a class="btn btn-link pull-right" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add another timeline</a>
                 {% endif %}
-            {% else %}
-              {% if sketch.has_permission(current_user, 'write') %}
-                <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started!</a>
-              {% endif %}
-            {% endif %}
+            </div>
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th width="50px"></th>
+                    <th></th>
+                    <th width="110px">Added by</th>
+                    <th width="130px">Added</th>
+                </tr>
+                <tbody>
+                {% for timeline in sketch.timelines %}
+                    <tr>
+                        <td>
+                            {% if timeline.searchindex.get_status.status == 'processing' %}
+                                <i class="fa fa-spinner fa-spin"></i>
+                            {% else %}
+                                <div class="color-box" style="background:#{{ timeline.color }};"></div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="margin-top:5px;">
+                                {% if timeline.searchindex.get_status.status == 'processing' %}
+                                    {{ timeline.name }}
+                                {% else %}
+                                    <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>{{ timeline.user.name }}</td>
+                        <td>
+                            <div style="margin-top:5px;">{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
         </div>
+        {% else %}
+            <div class="card">
+                {% if sketch.has_permission(current_user, 'write') %}
+                    <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started!</a>
+                {% endif %}
+            </div>
+        {% endif %}
     </div>
 {% endblock %}

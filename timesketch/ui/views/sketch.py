@@ -375,3 +375,4 @@ def event(sketch_id, unused_view_id=None):
     sketch = Sketch.query.get_with_acl(sketch_id)
     return render_template(
         u'sketch/event.html', sketch=sketch)
+
