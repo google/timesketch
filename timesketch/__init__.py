@@ -87,7 +87,7 @@ def create_app(config=None):
     db = init_db()
 
     # Alembic migration support:
-    # https://alembic.readthedocs.org/en/latest/
+    # http://alembic.zzzcomputing.com/en/latest/
     migrate = Migrate()
     migrate.init_app(app, db)
 
