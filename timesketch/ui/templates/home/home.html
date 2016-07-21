@@ -1,70 +1,84 @@
 {% extends "base.html" %}
 {% block main %}
 
-  <div class="container">
-
-    <div class="row">
-      <div class="col-md-1"></div>
-      <div class="col-md-10">
-
-        <div class="pull-right">
-          <div class="btn-group">
-            <div class="pull-left" style="margin-right:0px;margin-top: -6px;">
-              <form action="{{ url_for('home_views.home') }}" method="post">
+    {% if not sketches.all() %}
+        <div style="text-align: center">
+            <br><br>
+            <h3>Welcome to Timesketch!</h3>
+            <form action="{{ url_for('home_views.home') }}" method="post">
                 {{ form.name }}
                 {{ form.description }}
-                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> Create new sketch</button>
+                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> Create new sketch to get started</button>
                 {{ form.csrf_token }}
-              </form>
+            </form>
+        </div>
+    {% else %}
+
+        <div class="container">
+
+        <div class="row">
+            <div class="col-md-1"></div>
+            <div class="col-md-10">
+
+                <div class="pull-right">
+                    <div class="btn-group">
+                        <div class="pull-left" style="margin-right:0px;margin-top: -6px;">
+                            <form action="{{ url_for('home_views.home') }}" method="post">
+                                {{ form.name }}
+                                {{ form.description }}
+                                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> Create new sketch</button>
+                                {{ form.csrf_token }}
+                            </form>
+                        </div>
+                        {% if upload_enabled %}
+                            <ts-core-upload class="pull-left" style="margin-left:5px;margin-top: -6px;"></ts-core-upload>
+                        {% endif %}
+                    </div>
+                </div>
+                <br><br>
+
+                <div class="card" style="margin-top:7px;">
+                    <form class="form form-inline" method="get" action="{{ url_for('home_views.home') }}">
+                        <input type="search" id="q" name="q" class="search-input" placeholder="Search sketches" value="{{ query }}" autofocus>
+                    </form>
+                </div>
+
+                {% if upload_enabled %}
+                    <ts-core-upload-queue></ts-core-upload-queue>
+                {%  endif %}
+
+                {% if sketches.all() %}
+
+                    <div class="card">
+                        <table class="table table-hover table-striped">
+                            <thead>
+                            <tr>
+                                <th></th>
+                                <th width="110">Created by</th>
+                                <th width="60">Status</th>
+                                <th width="80">Timelines</th>
+                                <th width="100">Saved views</th>
+                                <th width="130px">Last activity</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for sketch in sketches.all() %}
+                                <tr>
+                                    <td><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}">{{ sketch.name }}</a></td>
+                                    <td>{{ sketch.user.name }}</td>
+                                    <td>{{ sketch.get_status.status }}</td>
+                                    <td style="text-align: center;"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">{{ sketch.timelines|count }}</a></td>
+                                    <td style="text-align: center;"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}">{{ sketch.get_named_views|count }}</a></td>
+                                    <td>{{ sketch.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+                <div class="col-md-1"></div>
             </div>
-            {% if upload_enabled %}
-              <ts-core-upload class="pull-left" style="margin-left:5px;margin-top: -6px;"></ts-core-upload>
-            {% endif %}
-          </div>
+
         </div>
-        <br><br>
-
-        <div class="card" style="margin-top:7px;">
-          <form class="form form-inline" method="get" action="{{ url_for('home_views.home') }}">
-            <input type="search" id="q" name="q" class="search-input" placeholder="Search sketches" value="{{ query }}" autofocus>
-          </form>
-        </div>
-
-        {% if upload_enabled %}
-          <ts-core-upload-queue></ts-core-upload-queue>
-        {%  endif %}
-
-        {% if sketches.all() %}
-
-        <div class="card">
-          <table class="table table-hover table-striped">
-            <thead>
-            <tr>
-              <th></th>
-              <th width="110">Created by</th>
-              <th width="60">Status</th>
-              <th width="80">Timelines</th>
-              <th width="100">Saved views</th>
-              <th width="130px">Last activity</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for sketch in sketches.all() %}
-              <tr>
-                <td><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}">{{ sketch.name }}</a></td>
-                <td>{{ sketch.user.name }}</td>
-                <td>{{ sketch.get_status.status }}</td>
-                <td style="text-align: center;"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">{{ sketch.timelines|count }}</a></td>
-                <td style="text-align: center;"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}">{{ sketch.get_named_views|count }}</a></td>
-                <td>{{ sketch.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% endif %}
-        <div class="col-md-1"></div>
-      </div>
-
-    </div>
+    {% endif %}
 {% endblock %}
