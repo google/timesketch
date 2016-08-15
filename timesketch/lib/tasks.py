@@ -58,18 +58,15 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
         Dictionary with count of processed events.
     """
     plaso_data_location = get_data_location()
-    analysis_plugins = None
     flush_interval = 1000  # events to queue before bulk index
 
     # Use Plaso psort frontend tool.
     frontend = psort.PsortFrontend()
     frontend.SetDataLocation(plaso_data_location)
-    storage_file = frontend.OpenStorage(
-        source_file_path, read_only=True)
+    storage_reader = frontend.CreateStorageReader(source_file_path)
 
     # Setup the Timesketch output module.
-    frontend.SetOutputFormat(u'timesketch')
-    output_module = frontend.GetOutputModule(storage_file)
+    output_module = frontend.CreateOutputModule(u'timesketch')
     output_module.SetIndexName(index_name)
     output_module.SetTimelineName(timeline_name)
     output_module.SetFlushInterval(flush_interval)
@@ -77,9 +74,7 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
         output_module.SetUserName(username)
 
     # Start process the Plaso storage file.
-    plugins, queue_producers = frontend.GetAnalysisPluginsAndEventQueues(
-        analysis_plugins)
-    counter = frontend.ProcessStorage(
-        output_module, storage_file, source_file_path, plugins, queue_producers)
+
+    counter = frontend.ExportEvents(storage_reader, output_module)
 
     return dict(counter)
