@@ -59,6 +59,7 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
     """
     plaso_data_location = get_data_location()
     flush_interval = 1000  # events to queue before bulk index
+    doc_type = u'plaso_event'  # Document type for Elasticsearch
 
     # Use Plaso psort frontend tool.
     frontend = psort.PsortFrontend()
@@ -70,7 +71,7 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
     output_module.SetIndexName(index_name)
     output_module.SetTimelineName(timeline_name)
     output_module.SetFlushInterval(flush_interval)
-    output_module.SetDocType(u'plaso_event')
+    output_module.SetDocType(doc_type)
     if username:
         output_module.SetUserName(username)
 
