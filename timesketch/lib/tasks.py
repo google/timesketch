@@ -70,6 +70,7 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
     output_module.SetIndexName(index_name)
     output_module.SetTimelineName(timeline_name)
     output_module.SetFlushInterval(flush_interval)
+    output_module.SetDocType(u'plaso_event')
     if username:
         output_module.SetUserName(username)
 
