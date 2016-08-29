@@ -63,10 +63,23 @@ limitations under the License.
                     if (!filter.order) {
                         filter.order = 'asc';
                     }
+
                     if (filter.star && query) {
                         filter.star = false;
                     }
-                    if (!filter.star && !query) {
+
+                    if (filter.events && query || filter.star) {
+                        // If the user wants to show the starred events of the
+                        // sketch, we need to enable all indices other wise the
+                        // user will only see starred events for the indices
+                        // selected for the events view. This would be confusing.
+                        for (var i = 0; i < $scope.sketch.timelines.length; i++) {
+                            filter.indices.push($scope.sketch.timelines[i].searchindex.index_name)
+                        }
+                        delete filter.events;
+                    }
+
+                    if (!filter.star && !filter.events && !query) {
                         return
                     }
                     if (filter.time_start) {
@@ -184,6 +197,7 @@ limitations under the License.
             restrict: 'E',
             templateUrl: '/static/components/explore/explore-search-saved-view-picker.html',
             scope: false,
+            require: '^tsSearch',
             link: function (scope, elem, attrs, ctrl) {
                 scope.selectedView = {};
                 scope.$watch('selectedView.view', function(value) {
@@ -195,7 +209,7 @@ limitations under the License.
                             timesketchApi.getView(scope.sketchId, scope.selectedView.view.id).success(function(data) {
                                 scope.query = data.objects[0].query_string;
                                 scope.filter = angular.fromJson(data.objects[0].query_filter);
-                                scope.search()
+                                ctrl.search(scope.query, scope.filter)
                             });
                         }
                     }

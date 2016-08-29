@@ -60,6 +60,30 @@ limitations under the License.
                     })
                 };
 
+                $scope.saveEventsView = function() {
+                    var event_list = [];
+                    var indices_list = [];
+                    angular.forEach($scope.events, function(event) {
+                        if (event.selected) {
+                            indices_list.push(event['_index']);
+                            event_list.push(
+                                {
+                                    "doc_type": event["_type"],
+                                    "event_id": event["_id"],
+                                    "index": event["_index"]});
+                        }
+                    });
+                    var filter = {"indices": indices_list, "events": event_list};
+                    timesketchApi.saveView(
+                        $scope.sketchId, "test view foo5", "", filter)
+                        .success(function(data) {
+                            var view_id = data.objects[0].id;
+                            var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
+                            window.location.href = view_url;
+                        }
+                    );
+                };
+
                 $scope.addStar = function() {
                     event_list = [];
                     angular.forEach($scope.events, function(event) {

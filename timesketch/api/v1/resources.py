@@ -402,7 +402,9 @@ class ExploreResource(ResourceMixin, Resource):
                 abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
             # Make sure we have a query string or star filter
-            if not form.query.data and not query_filter.get(u'star'):
+            if not (form.query.data,
+                    query_filter.get(u'star'),
+                    query_filter.get(u'events')):
                 abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
             result = self.datastore.search(
@@ -494,7 +496,9 @@ class AggregationResource(ResourceMixin, Resource):
                 abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
             # Make sure we have a query string or star filter
-            if not form.query.data and not query_filter.get(u'star'):
+            if not (form.query.data,
+                    query_filter.get(u'star'),
+                    query_filter.get(u'events')):
                 abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
             result = []
