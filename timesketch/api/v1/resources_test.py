@@ -82,7 +82,7 @@ class ViewListResourceTest(BaseTest):
     """Test ViewListResource."""
     resource_url = u'/api/v1/sketches/1/views/'
 
-    def test_post_view_resource(self):
+    def test_post_view_list_resource(self):
         """Authenticated request to create a view."""
         self.login()
         data = dict(name=u'test', query=u'test', filter=u'{}')
@@ -103,6 +103,15 @@ class ViewResourceTest(BaseTest):
         self.assertEqual(len(response.json[u'objects']), 1)
         self.assertEqual(response.json[u'objects'][0][u'name'], u'View 1')
         self.assert200(response)
+
+    def test_post_view_resource(self):
+        """Authenticated request to update a view."""
+        self.login()
+        data = dict(name=u'test', query=u'test', filter=u'{}')
+        response = self.client.post(
+            self.resource_url, data=json.dumps(data, ensure_ascii=False),
+            content_type=u'application/json')
+        self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
 
     def test_invalid_user_in_view(self):
         """Authenticated request to get a view for another user."""
