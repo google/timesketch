@@ -374,6 +374,29 @@ class ViewResource(ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
         return self.to_json(view)
 
+    @login_required
+    def post(self, sketch_id, view_id):
+        """Handles POST request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            view_id: Integer primary key for a view database model
+
+        Returns:
+            A view in JSON (instance of flask.wrappers.Response)
+        """
+        form = SaveViewForm.build(request)
+        if form.validate_on_submit():
+            sketch = Sketch.query.get_with_acl(sketch_id)
+            view = View.query.get(view_id)
+            view.query_string = form.query.data
+            view.query_filter = json.dumps(form.filter.data, ensure_ascii=False)
+            view.user = current_user
+            db_session.add(view)
+            db_session.commit()
+            return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
 
 class ExploreResource(ResourceMixin, Resource):
     """Resource to search the datastore based on a query and a filter."""

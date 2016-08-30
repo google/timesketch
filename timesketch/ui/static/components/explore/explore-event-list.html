@@ -1,3 +1,12 @@
+<div class="card" ng-if="view">
+    <h4>{{ view.name }}</h4>
+    You are exploring in the context of a saved view. Click <a href="/sketch/{{ sketchId }}/explore">here</a> to go back to explore view.
+    <br>
+    You can update the view by pressing the button below. This will replace the current query and filter in the view.
+    <br><br>
+    <button class="btn btn-success" ng-click="updateView()"><i class="fa fa-refresh"></i> Update view</button>
+</div>
+
 <div class="modal" id="save-event-view-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">

@@ -22,13 +22,15 @@ limitations under the License.
          * Search the datastore.
          * @param sketch-id - Sketch ID string.
          * @param view-id - Saved view ID string.
+         * @param named-view - Boolean indicating if we are in view mode.
          */
         return {
             restrict: 'E',
             templateUrl: '/static/components/explore/explore-search.html',
             scope: {
                 sketchId: '=',
-                viewId: '='
+                viewId: '=',
+                namedView: '='
             },
             controllerAs: 'ctrl',
             link: function(scope, elem, attrs, ctrl) {

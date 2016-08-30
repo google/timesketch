@@ -208,7 +208,7 @@ def explore(sketch_id, view_id=None):
         db_session.commit()
 
     return render_template(
-        u'sketch/explore.html', sketch=sketch, view=view,
+        u'sketch/explore.html', sketch=sketch, view=view, named_view=view_id,
         timelines=sketch_timelines, view_form=view_form)
 
 
