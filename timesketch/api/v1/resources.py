@@ -392,6 +392,7 @@ class ViewResource(ResourceMixin, Resource):
             view.query_string = form.query.data
             view.query_filter = json.dumps(form.filter.data, ensure_ascii=False)
             view.user = current_user
+            view.sketch = sketch
             db_session.add(view)
             db_session.commit()
             return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
