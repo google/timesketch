@@ -74,8 +74,9 @@ limitations under the License.
                         }
                     });
                     var filter = {"indices": indices_list, "events": event_list};
+                    console.log(filter)
                     timesketchApi.saveView(
-                        $scope.sketchId, "test view foo5", "", filter)
+                        $scope.sketchId, $scope.view_name, "", filter)
                         .success(function(data) {
                             var view_id = data.objects[0].id;
                             var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';

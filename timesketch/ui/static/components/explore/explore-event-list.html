@@ -1,3 +1,23 @@
+<div class="modal" id="save-event-view-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Save the selected events as a new view</h4>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <input type="text" ng-model="view_name" class="form-control" placeholder="Name this view" required>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary" data-dismiss="modal" ng-click="saveEventsView()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="card" style="min-height:100px;">
     <div class="pull-left" ng-show="meta" style="padding:10px;">
         <span ng-show="!events.length && meta.es_total_count > 0">
@@ -22,7 +42,7 @@
             <button class="btn btn-default" ng-click="filter.order = { 'asc': 'desc', 'desc': 'asc'}[filter.order];applyOrder()"><i ng-class="{'asc': 'fa fa-sort-asc', 'desc': 'fa fa-sort-desc'}[filter.order]"></i> Sort</button>
             <a class="btn btn-default" href="/sketch/{{ sketchId }}/explore/export/" download="export.csv"><i class="fa fa-cloud-download"></i> Export</a>
             <button class="btn btn-default" ng-click="toggleAll()"><i class="fa fa-check"></i> Toggle all</button>
-            <button class="btn btn-default" ng-click="saveEventsView()" ng-disabled="!anySelected"><i class="fa fa-save"></i> Save view of selected events</button>
+            <button class="btn btn-default" data-toggle="modal" data-target="#save-event-view-modal" ng-disabled="!anySelected"><i class="fa fa-save"></i> Save selected events as view</button>
             <button class="btn btn-default" ng-click="addStar()" ng-disabled="!anySelected"><i class="fa fa-star icon-yellow"></i> Add star</button>
             <button class="btn btn-default" ng-click="removeStar()" ng-disabled="!anySelected"><i class="fa fa-star icon-grey"></i> Remove star</button>
         </div>

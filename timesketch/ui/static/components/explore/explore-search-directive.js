@@ -69,13 +69,6 @@ limitations under the License.
                     }
 
                     if (filter.events && query || filter.star) {
-                        // If the user wants to show the starred events of the
-                        // sketch, we need to enable all indices other wise the
-                        // user will only see starred events for the indices
-                        // selected for the events view. This would be confusing.
-                        for (var i = 0; i < $scope.sketch.timelines.length; i++) {
-                            filter.indices.push($scope.sketch.timelines[i].searchindex.index_name)
-                        }
                         delete filter.events;
                     }
 
