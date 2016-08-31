@@ -63,14 +63,17 @@
                             </thead>
                             <tbody>
                             {% for sketch in sketches.all() %}
-                                <tr>
-                                    <td><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}">{{ sketch.name }}</a></td>
-                                    <td>{{ sketch.user.name }}</td>
-                                    <td>{{ sketch.get_status.status }}</td>
-                                    <td style="text-align: center;"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">{{ sketch.timelines|count }}</a></td>
-                                    <td style="text-align: center;"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}">{{ sketch.get_named_views|count }}</a></td>
-                                    <td>{{ sketch.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                                </tr>
+                                {% if sketch.get_status.status == 'closed' and not query %}
+                                {% else %}
+                                    <tr>
+                                        <td><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}">{{ sketch.name }}</a></td>
+                                        <td>{{ sketch.user.name }}</td>
+                                        <td>{{ sketch.get_status.status }}</td>
+                                        <td style="text-align: center;"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">{{ sketch.timelines|count }}</a></td>
+                                        <td style="text-align: center;"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}">{{ sketch.get_named_views|count }}</a></td>
+                                        <td>{{ sketch.updated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    </tr>
+                                {% endif %}
                             {% endfor %}
                             </tbody>
                         </table>
