@@ -24,10 +24,10 @@
          * @param filter - Filter object.
          * @param query - Query string.
          * @param meta - Events metadata object.
-         * @param showCharts - Boolean indicating if chars should be visible.
          */
         return {
             restrict: 'E',
+            templateUrl: '/static/components/explore/explore-histogram.html',
             scope: {
                 sketchId: '=',
                 filter: '=',
@@ -37,6 +37,7 @@
             },
             require: '^tsSearch',
             link: function(scope, element, attrs, ctrl) {
+
                 scope.$watchGroup(['meta', 'showCharts'], function (newval, oldval) {
                     if(scope.showCharts) {
                         timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, 'histogram')
@@ -46,90 +47,54 @@
                     }
                 }, true);
 
-                // Handle window resize, and redraw the chart automatically.
-                $window.onresize = function() {
-                    scope.$apply();
-                };
-                scope.$watch(function() {
-                    return angular.element($window)[0].innerWidth;
-                }, function() {
-                    if(scope.meta) {
-                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, 'histogram')
-                            .success(function(data) {
-                                scope.render_histogram(data['objects'])
-                            });
-                    }
-                });
-
-                // Render the chart svg with D3.js
                 scope.render_histogram = function(data) {
-                    d3.select('.histogram').remove();
+                    if (scope.histogram) {
+                        scope.histogram.destroy();
+                    }
+                    var label_array = [];
+                    var data_array = [];
 
-                    var margin = { top: 50, right: 75, bottom: 100, left: 40 },
-                        svgWidth = d3.select(d3.select(element[0].parentElement.parentElement.parentElement.offsetParent.offsetWidth)) - margin.left - margin.right,
-                        svgHeight = 500 - margin.top - margin.bottom;
-
-                    var	parseDate = d3.time.format("%Y-%m-%d").parse;
-
-                    var x = d3.scale.ordinal().rangeRoundBands([0, svgWidth], .05);
-                    var y = d3.scale.linear().range([svgHeight, 0]);
-
-                    var xAxis = d3.svg.axis()
-                        .scale(x)
-                        .orient("bottom")
-                        .tickFormat(d3.time.format("%Y-%m-%d"));
-
-                    var svg = d3.select(element[0]).append("svg")
-                        .attr("width", svgWidth + margin.left + margin.right)
-                        .attr("height", svgHeight + margin.top + margin.bottom)
-                        .classed("histogram", true)
-                        .append("g")
-                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-                    data.forEach(function(d) {
-                        d.key_as_string = parseDate(d.key_as_string);
-                        d.doc_count = +d.doc_count;
+                    data.forEach(function (d) {
+                        label_array.push(d.key_as_string);
+                        data_array.push(d.doc_count);
                     });
+                    
+                    var ctx = document.getElementById("histogram");
+                    scope.histogram = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: label_array,
+                            datasets: [{
+                                label: 'events',
+                                data: data_array,
+                                backgroundColor: '#428bca',
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            legend: {
+                                display: false
+                            },
+                            scales: {
+                                yAxes: [{
+                                    gridLines: {
+                                        display: false
+                                    },
+                                    type: 'logarithmic',
+                                    ticks: {
+                                        beginAtZero:true
+                                    }
+                                }],
+                                xAxes: [{
+                                    type: 'time',
+                                    gridLines: {
+                                        display: false
+                                    }
+                                }]
 
-                    x.domain(data.map(function(d) { return d.key_as_string; }));
-                    y.domain([0, d3.max(data, function(d) { return d.doc_count; })]);
-
-                    svg.append("g")
-                        .attr("class", "x axis")
-                        .attr("transform", "translate(0," + svgHeight + ")")
-                        .call(xAxis)
-                        .selectAll("text")
-                        .style("text-anchor", "end")
-                        .attr("dx", "-.8em")
-                        .attr("dy", "-.55em")
-                        .attr("transform", "rotate(-90)" );
-
-                    svg.selectAll("bar")
-                        .data(data)
-                        .enter()
-                        .append("rect")
-                        .style("fill", "#428bca")
-                        .attr("x", function(d) { return x(d.key_as_string); })
-                        .attr("width", x.rangeBand())
-                        .attr("y", function(d) { return y(d.doc_count); })
-                        .attr("height", function(d) { return svgHeight - y(d.doc_count); });
-
-                    svg.selectAll("bar")
-                        .data(data)
-                        .enter()
-                        .append("text")
-                        .text(function(d) {
-                            return d.doc_count;
-                        })
-                        .attr("text-anchor", "middle")
-                        .attr("x", function(d) {
-                            return x(d.key_as_string) + (x.rangeBand() / 2);
-                        })
-                        .attr("y", function(d) { return y(d.doc_count) - 10; })
-                        .attr("font-family", "sans-serif")
-                        .attr("font-size", "14px")
-                        .attr("fill", "black");
-
+                            }
+                        }
+                    });
                 };
             }
         }
