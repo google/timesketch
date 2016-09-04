@@ -38,35 +38,51 @@
             require: '^tsSearch',
             link: function(scope, element, attrs, ctrl) {
 
-                scope.$watchGroup(['meta', 'showCharts'], function (newval, oldval) {
+                // Default chart type
+                scope.chartType = "bar";
+
+                scope.$watchGroup(['meta', 'showCharts', 'chartType'], function (newval, oldval) {
                     if(scope.showCharts) {
                         timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, 'histogram')
                             .success(function(data) {
-                                scope.render_histogram(data['objects'])
+                                render_histogram(data['objects'])
                             });
                     }
                 }, true);
 
-                scope.render_histogram = function(data) {
+                scope.toggleChartType = function () {
+                  if (scope.chartType == 'bar') {
+                      scope.chartType = 'line';
+                  } else {
+                      scope.chartType = 'bar';
+                  }
+                };
+
+                function render_histogram(aggregation) {
+                    // Remove the current histogram canvas to avoid old data
+                    // to be rendered.
                     if (scope.histogram) {
                         scope.histogram.destroy();
                     }
-                    var label_array = [];
-                    var data_array = [];
 
-                    data.forEach(function (d) {
-                        label_array.push(d.key_as_string);
-                        data_array.push(d.doc_count);
+                    // Arrays to hold out chart data.
+                    var chart_labels = [];
+                    var chart_values = [];
+
+                    aggregation.forEach(function (d) {
+                        chart_labels.push(d.key_as_string);
+                        chart_values.push(d.doc_count);
                     });
-                    
+
+                    // Get our canvas and initiate the chart.
                     var ctx = document.getElementById("histogram");
                     scope.histogram = new Chart(ctx, {
-                        type: 'bar',
+                        type: scope.chartType,
                         data: {
-                            labels: label_array,
+                            labels: chart_labels,
                             datasets: [{
                                 label: 'events',
-                                data: data_array,
+                                data: chart_values,
                                 backgroundColor: '#428bca',
                                 borderWidth: 0
                             }]
