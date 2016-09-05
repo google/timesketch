@@ -25,6 +25,8 @@ limitations under the License.
          * @param events - Array of events (search results).
          * @param query - Query string for the search results.
          * @param filter - Filter for the search results.
+         * @param view-id - ID for the view.
+         * @param named-view - Boolean indicating if the view is named.
          */
         return {
             restrict: 'E',
@@ -34,10 +36,18 @@ limitations under the License.
                 meta: '=',
                 events: '=',
                 query: '=',
-                filter: '='
+                filter: '=',
+                viewId: '=',
+                namedView: '='
             },
             require: '^tsSearch',
             controller: function($scope) {
+                if ($scope.namedView) {
+                    timesketchApi.getView($scope.sketchId, $scope.viewId).success(function(data) {
+                        $scope.view = data.objects[0]
+                    });
+                }
+
                 var toggleStar = function(event_list) {
                     if (!event_list.length) {return}
                     timesketchApi.saveEventAnnotation(
@@ -45,6 +55,22 @@ limitations under the License.
                         'label',
                         '__ts_star',
                         event_list).success(function (data) {})
+                };
+
+                var getSelectedEventsFilter = function() {
+                    var event_list = [];
+                    var indices_list = [];
+                    angular.forEach($scope.events, function(event) {
+                        if (event.selected) {
+                            indices_list.push(event['_index']);
+                            event_list.push(
+                                {
+                                    "doc_type": event["_type"],
+                                    "event_id": event["_id"],
+                                    "index": event["_index"]});
+                        }
+                    });
+                    return {"indices": indices_list, "events": event_list};
                 };
 
                 $scope.toggleAll = function() {
@@ -58,6 +84,39 @@ limitations under the License.
                             event.selected = false
                         }
                     })
+                };
+
+                $scope.saveEventsView = function() {
+                    var filter = getSelectedEventsFilter();
+                    timesketchApi.saveView(
+                        $scope.sketchId, $scope.view_name, "", filter)
+                        .success(function(data) {
+                            var view_id = data.objects[0].id;
+                            var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
+                            window.location.href = view_url;
+                        }
+                    );
+                };
+
+                $scope.updateView = function() {
+                    var reload = false;
+                    var query = "";
+                    var filter = getSelectedEventsFilter();
+                    if (filter['events'].length < 1) {
+                        query = $scope.query;
+                        filter = $scope.filter;
+                    } else {
+                        reload = true;
+                    }
+                    timesketchApi.updateView(
+                        $scope.sketchId, $scope.viewId, $scope.view.name, query, filter)
+                        .success(function(data) {
+                            if (reload) {
+                                var view_id = data.objects[0].id;
+                                var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
+                                window.location.href = view_url;
+                            }
+                        });
                 };
 
                 $scope.addStar = function() {

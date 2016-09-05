@@ -60,6 +60,25 @@ limitations under the License.
             return $http.post(resource_url, params)
         };
 
+        this.updateView = function(sketch_id, view_id, name, query, filter) {
+            /**
+             * Save a Timesketch view.
+             * @param sketch_id - The id for the sketch.
+             * @param view_id - A name for the view.
+             * @param name - A name for the view.
+             * @param query - A query string.
+             * @param filter - A JSON string with filters and a list of indices.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = BASE_URL + sketch_id + '/views/' + view_id + '/';
+            var params = {
+                name: name,
+                query: query,
+                filter: filter
+            };
+            return $http.post(resource_url, params)
+        };
+
         this.createStory = function(sketch_id) {
             /**
              * Creates a new story.

@@ -108,6 +108,17 @@ class ElasticSearchDataStore(datastore.DataStore):
                 }
             }
 
+        if query_filter.get(u'events', None):
+            events = query_filter[u'events']
+            indices = {event[u'index'] for event in events}
+            events_list = [event[u'event_id'] for event in events]
+            del query_dict[u'query']
+            query_dict[u'query'] = {
+                u'ids': {
+                    u'values': events_list
+                }
+            }
+
         if query_filter.get(u'time_start', None):
             query_dict[u'query'][u'filtered'][u'filter'] = {
                 u'range': {
@@ -165,7 +176,7 @@ class ElasticSearchDataStore(datastore.DataStore):
         # to the function with a decorator and this makes pylint sad.
         # pylint: disable=unexpected-keyword-arg
         return self.client.search(
-            body=query_dict, index=indices, size=LIMIT_RESULTS,
+            body=query_dict, index=list(indices), size=LIMIT_RESULTS,
             search_type=search_type, _source_include=[
                 u'datetime', u'timestamp', u'message', u'timestamp_desc',
                 u'timesketch_label', u'tag'])
