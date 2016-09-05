@@ -74,7 +74,7 @@ table {
     background: #fff;
     padding:10px 10px 10px 20px;
     margin:-20px -20px 0 -20px;
-    min-height: 60px;
+    min-height: 40px;
 }
 
 .card-alert {
@@ -133,6 +133,10 @@ table {
 
 .event-message-selected {
     background: #fafad2;
+}
+
+.event-message-starred {
+    background: #fff4b3;
 }
 
 .timerange-input {

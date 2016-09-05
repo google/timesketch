@@ -58,7 +58,10 @@ class ElasticSearchDataStore(datastore.DataStore):
         Returns:
             Set of event documents in JSON format
         """
-        LIMIT_RESULTS = 500
+
+        # Limit the number of returned documents.
+        DEFAULT_LIMIT = 500  # Maximum events to return
+        LIMIT_RESULTS = query_filter.get(u'limit', DEFAULT_LIMIT)
 
         if not indices:
             return {u'hits': {u'hits': [], u'total': 0}, u'took': 0}
@@ -78,7 +81,6 @@ class ElasticSearchDataStore(datastore.DataStore):
             },
             u'sort': {
                 u'datetime': query_filter.get(u'order', u'asc')
-
             }
         }
 

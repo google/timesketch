@@ -53,7 +53,7 @@
                 scope.$watch(function() {
                     return angular.element($window)[0].innerWidth;
                 }, function() {
-                    if(scope.meta) {
+                    if(scope.meta && scope.showCharts) {
                         timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, 'heatmap')
                             .success(function(data) {
                                 scope.render_heatmap(data['objects'])

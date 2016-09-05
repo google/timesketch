@@ -153,6 +153,9 @@ limitations under the License.
                 scope.applyOrder = function() {
                     ctrl.search(scope.query, scope.filter);
                 };
+                scope.$watch('filter.limit', function(value) {
+                    ctrl.search(scope.query, scope.filter);
+                });
             }
         }
     }]);

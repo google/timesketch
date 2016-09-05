@@ -80,7 +80,6 @@ limitations under the License.
                     if (filter.time_start) {
                         $scope.showFilters = true;
                     }
-
                     if (filter.context && query != "*") {
                         delete filter.context;
                     }
@@ -92,7 +91,7 @@ limitations under the License.
                         .success(function(data) {
                             $scope.events = data.objects;
                             $scope.meta = data.meta;
-                            if (data.meta.es_total_count > 500) {
+                            if (data.meta.es_total_count > filter['limit']) {
                                 $scope.meta.noisy = true
                             }
                             $scope.meta.numHiddenEvents = 0;
