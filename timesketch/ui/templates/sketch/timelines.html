@@ -22,6 +22,7 @@
                                 <th>Timeline</th>
                                 <th width="110px">Added by</th>
                                 <th width="130px">Added</th>
+                                <th width="130px">Edit</th>
                             </tr>
                             <tbody>
                             {% for timeline in sketch.timelines %}
@@ -38,7 +39,7 @@
                                             {% if timeline.searchindex.get_status.status == 'processing' %}
                                                 {{ timeline.name }}
                                             {% else %}
-                                                <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
+                                                <a href="/sketch/{{ sketch.id }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
                                             {% endif %}
                                         </div>
                                     </td>
@@ -46,6 +47,11 @@
                                     <td>
                                         <div style="margin-top:5px;">{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
                                     </td>
+                                <td>
+                                    {% if sketch.has_permission(user=current_user, permission='write') %}
+                                        <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}" class="btn btn-default pull-right " style="margin-left:10px;width:50px;"><i class="fa fa-pencil"></i></a>
+                                    {% endif %}
+                                </td>
                                 </tr>
                             {% endfor %}
                             </tbody>
