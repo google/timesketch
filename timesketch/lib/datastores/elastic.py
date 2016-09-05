@@ -161,10 +161,6 @@ class ElasticSearchDataStore(datastore.DataStore):
         else:
             search_type = u'count'
 
-
-        import json
-        print json.dumps(query_dict, indent=2)
-
         # Suppress the lint error because elasticsearch-py adds parameters
         # to the function with a decorator and this makes pylint sad.
         # pylint: disable=unexpected-keyword-arg

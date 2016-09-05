@@ -24,7 +24,7 @@
             <i ng-click="event.hidden = !event.hidden;toggleHidden()" ng-class="{true: 'fa fa-lg fa-eye-slash', false: 'fa fa-lg fa-eye-slash icon-grey'}[event.hidden]"></i>
         </td>
 
-        <td class="event-message" ng-class="{true:'event-message-selected'}[event.selected]" ng-click="getDetail();showDetails = !showDetails">
+        <td class="event-message" ng-class="{'event-message-selected': event.selected, 'event-message-starred': event.star}" ng-click="getDetail();showDetails = !showDetails">
             <span ng-show="comment">
                 <i class="fa fa-comments"></i>
             </span>

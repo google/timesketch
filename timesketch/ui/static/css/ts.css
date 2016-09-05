@@ -135,6 +135,10 @@ table {
     background: #fafad2;
 }
 
+.event-message-starred {
+    background: #fff4b3;
+}
+
 .timerange-input {
     width: 210px;
     outline: none;
