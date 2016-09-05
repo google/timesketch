@@ -225,9 +225,6 @@
                                     <span class="label label-default" style="font-size: 0.9em;" title="Shared with user {{ collaborator.username }}"><i class="fa fa-user"></i>{{ collaborator.username }}</span>
                                 {% endfor %}
                             {% endif %}
-                            {% if sketch.timelines %}
-                                <a class="btn btn-success pull-right" style="min-width: 150px" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
-                            {% endif %}
 
                         </div>
                     </div>
@@ -235,53 +232,12 @@
             </div>
         </div>
 
-        {% if sketch.get_named_views %}
-            <div class="card">
-                <div class="card-header">
-                    <h4>Views</h4>
-                </div>
-                <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th></th>
-                        <th width="110px">Created by</th>
-                        <th width="130px">Created</th>
-                    </tr>
-                    <tbody>
-                    {% for view in sketch.get_named_views %}
-                        <tr>
-                            <td>
-                                <div style="margin-top:5px;font-size: 1.1em;font-weight: bold"><a href="explore/view/{{ view.id }}/">{{ view.name }}</a></div>
-                                <span style="color:#777;">{{ view.query_string }}</span>
-                            </td>
-                            <td>{{ view.user.name }}</td>
-                            <td>{{ view.updated_at.strftime('%Y-%m-%d %H:%M')}}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% endif %}
-
-        {% if sketch.stories %}
-            <div class="card">
-                <ts-story-list sketch-id="{{ sketch.id }}"></ts-story-list>
-            </div>
-        {% endif %}
-
         {% if sketch.timelines %}
         <div class="card">
-            <div class="card-header">
-                <h4 class="pull-left">Timelines</h4>
-                {% if sketch.has_permission(current_user, 'write') %}
-                    <a class="btn btn-link pull-right" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add another timeline</a>
-                {% endif %}
-            </div>
             <table class="table table-hover">
                 <thead>
                 <tr>
-                    <th width="50px"></th>
-                    <th></th>
+                    <th>Timeline</th>
                     <th width="110px">Added by</th>
                     <th width="130px">Added</th>
                 </tr>
@@ -289,20 +245,22 @@
                 {% for timeline in sketch.timelines %}
                     <tr>
                         <td>
-                            {% if timeline.searchindex.get_status.status == 'processing' %}
-                                <i class="fa fa-spinner fa-spin"></i>
-                            {% else %}
-                                <div class="color-box" style="background:#{{ timeline.color }};"></div>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div style="margin-top:5px;">
+                            <div>
+                                {% if timeline.searchindex.get_status.status == 'processing' %}
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                {% else %}
+                                    <div class="color-box" style="background:#{{ timeline.color }};"></div>
+                                {% endif %}
+                            </div>
+                            <div style="margin-top:-25px;margin-left:45px">
                                 {% if timeline.searchindex.get_status.status == 'processing' %}
                                     {{ timeline.name }}
                                 {% else %}
-                                    <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
+                                    <a href="/sketch/{{ sketch.id }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
                                 {% endif %}
                             </div>
+                            <div style="height:5px;"></div>
+
                         </td>
                         <td>{{ timeline.user.name }}</td>
                         <td>
@@ -312,6 +270,9 @@
                 {% endfor %}
                 </tbody>
             </table>
+            {% if sketch.has_permission(current_user, 'write') %}
+                <a class="btn btn-default" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add another timeline</a>
+            {% endif %}
 
         </div>
         {% else %}
@@ -321,5 +282,49 @@
                 {% endif %}
             </div>
         {% endif %}
+
+
+        <div class="container">
+            <div class="row">
+                {% if sketch.get_named_views %}
+                    <div class="col-md-6">
+                        <div class="card" style="min-height: 200px;">
+                            <table class="table table-hover">
+                                <thead>
+                                <tr>
+                                    <th>View</th>
+                                    <th width="110px">Created by</th>
+                                    <th width="130px">Created</th>
+                                </tr>
+                                <tbody>
+                                {% for view in sketch.get_named_views %}
+                                    <tr>
+                                        <td>
+                                            <div style="margin-top:5px;font-weight: bold"><a href="explore/view/{{ view.id }}/">{{ view.name }}</a></div>
+                                            <span style="color:#777;">{{ view.query_string }}</span>
+                                        </td>
+                                        <td>{{ view.user.name }}</td>
+                                        <td>{{ view.updated_at.strftime('%Y-%m-%d %H:%M')}}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endif %}
+                {% if sketch.stories %}
+                    <div class="col-md-6">
+                        <div class="card" style="min-height: 200px;">
+                            <ts-story-list sketch-id="{{ sketch.id }}"></ts-story-list>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+
+    </div>
+
+
     </div>
 {% endblock %}

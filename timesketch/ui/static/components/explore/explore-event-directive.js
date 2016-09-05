@@ -93,7 +93,10 @@ limitations under the License.
             link: function(scope, elem, attrs, ctrl) {
                 scope.applyOrder = function() {
                     ctrl.search(scope.query, scope.filter);
-                }
+                };
+                scope.$watch('filter.limit', function(value) {
+                    ctrl.search(scope.query, scope.filter);
+                });
             }
         }
     }]);

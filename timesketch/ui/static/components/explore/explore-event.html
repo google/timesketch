@@ -28,7 +28,7 @@
             <span ng-show="comment">
                 <i class="fa fa-comments"></i>
             </span>
-            <i ng-if="::event._source.tag" ng-repeat="tag in ::event._source.tag" class="label label-primary">{{::tag}}</i>
+            <span ng-if="::event._source.tag" ng-repeat="tag in ::event._source.tag" class="label label-default">{{::tag}}</span>
 
             <span ng-class="{true: 'message-hidden'}[event.hidden]">[{{ event._source.timestamp_desc }}] <span style=white-space:pre-wrap;">{{ event._source.message|limitTo:500 }}</span></span>
 

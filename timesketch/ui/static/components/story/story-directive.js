@@ -25,7 +25,8 @@
             restrict: 'E',
             templateUrl: '/static/components/story/story-list.html',
             scope: {
-                sketchId: '='
+                sketchId: '=',
+                showCreateButton: '='
             },
             controller: function($scope) {
                 timesketchApi.getStories($scope.sketchId).success(function(data) {

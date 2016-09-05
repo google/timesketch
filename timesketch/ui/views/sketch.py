@@ -179,6 +179,8 @@ def explore(sketch_id, view_id=None):
     url_query = request.args.get(u'q', u'')
     url_time_start = request.args.get(u'time_start', None)
     url_time_end = request.args.get(u'time_end', None)
+    url_index = request.args.get(u'index', None)
+    url_limit = request.args.get(u'limit', None)
 
     if view_id:
         view = View.query.get(view_id)
@@ -197,6 +199,10 @@ def explore(sketch_id, view_id=None):
             query_filter = json.loads(view.query_filter)
             query_filter[u'time_start'] = url_time_start
             query_filter[u'time_end'] = url_time_end
+            if url_index in sketch_timelines:
+                query_filter[u'indices'] = [url_index]
+            if url_limit:
+                query_filter[u'limit'] = url_limit
             view.query_filter = json.dumps(query_filter, ensure_ascii=False)
 
     if not view:
