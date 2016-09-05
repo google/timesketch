@@ -171,6 +171,8 @@ def explore(sketch_id, view_id=None):
     Returns:
         Template with context.
     """
+    DEFAULT_LIMIT = 100  # Number of events to return.
+    save_view = False  # If the view should be saved to the database.
     sketch = Sketch.query.get_with_acl(sketch_id)
     sketch_timelines = [t.searchindex.index_name for t in sketch.timelines]
     view_form = SaveViewForm()
@@ -196,12 +198,11 @@ def explore(sketch_id, view_id=None):
         view = sketch.get_user_view(current_user)
 
     if not view:
-        query_filter = dict(indices=sketch_timelines)
+        query_filter = dict(indices=sketch_timelines, limit=DEFAULT_LIMIT)
         view = View(
-            user=current_user, name=u'', sketch=sketch, query_string=u'',
+            user=current_user, name=u'', sketch=sketch, query_string=u'*',
             query_filter=json.dumps(query_filter, ensure_ascii=False))
-        db_session.add(view)
-        db_session.commit()
+        save_view = True
 
     if url_query:
         view.query_string = url_query
@@ -213,6 +214,17 @@ def explore(sketch_id, view_id=None):
         if url_limit:
             query_filter[u'limit'] = url_limit
         view.query_filter = json.dumps(query_filter, ensure_ascii=False)
+        save_view = True
+
+    query_filter = json.loads(view.query_filter)
+    if not query_filter.get(u'limit', None):
+        query_filter[u'limit'] = DEFAULT_LIMIT
+        view.query_filter = json.dumps(query_filter, ensure_ascii=False)
+        save_view = True
+
+    if save_view:
+        db_session.add(view)
+        db_session.commit()
 
     return render_template(
         u'sketch/explore.html', sketch=sketch, view=view, named_view=view_id,
