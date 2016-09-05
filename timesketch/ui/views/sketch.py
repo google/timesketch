@@ -194,16 +194,6 @@ def explore(sketch_id, view_id=None):
             return abort(HTTP_STATUS_CODE_NOT_FOUND)
     else:
         view = sketch.get_user_view(current_user)
-        if url_query:
-            view.query_string = url_query
-            query_filter = json.loads(view.query_filter)
-            query_filter[u'time_start'] = url_time_start
-            query_filter[u'time_end'] = url_time_end
-            if url_index in sketch_timelines:
-                query_filter[u'indices'] = [url_index]
-            if url_limit:
-                query_filter[u'limit'] = url_limit
-            view.query_filter = json.dumps(query_filter, ensure_ascii=False)
 
     if not view:
         query_filter = dict(indices=sketch_timelines)
@@ -212,6 +202,17 @@ def explore(sketch_id, view_id=None):
             query_filter=json.dumps(query_filter, ensure_ascii=False))
         db_session.add(view)
         db_session.commit()
+
+    if url_query:
+        view.query_string = url_query
+        query_filter = json.loads(view.query_filter)
+        query_filter[u'time_start'] = url_time_start
+        query_filter[u'time_end'] = url_time_end
+        if url_index in sketch_timelines:
+            query_filter[u'indices'] = [url_index]
+        if url_limit:
+            query_filter[u'limit'] = url_limit
+        view.query_filter = json.dumps(query_filter, ensure_ascii=False)
 
     return render_template(
         u'sketch/explore.html', sketch=sketch, view=view,
