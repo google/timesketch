@@ -13,6 +13,8 @@
 # limitations under the License.
 """This module contains common test utilities for Timesketch."""
 
+import json
+
 from flask_testing import TestCase
 
 from timesketch import create_app
@@ -295,8 +297,8 @@ class BaseTest(TestCase):
             A view (instance of timesketch.models.sketch.View)
         """
         view = View(
-            name=name, query_string=name, query_filter=u'', user=user,
-            sketch=sketch)
+            name=name, query_string=name, query_filter=json.dumps(dict()),
+            user=user, sketch=sketch)
         self._commit_to_database(view)
         return view
 

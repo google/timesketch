@@ -13,6 +13,8 @@
 # limitations under the License.
 """Tests for the sketch models."""
 
+import json
+
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchIndex
@@ -89,3 +91,23 @@ class SketchModelTest(ModelBaseTest):
         ])
         self._test_db_object(
             expected_result=expected_result, model_cls=Event)
+
+    def test_validate_filter(self):
+        """
+         Test the query filter validation.
+         """
+        DEFAULT_LIMIT = 40
+        default_values = {
+            u'time_start': None,
+            u'time_end': None,
+            u'limit': DEFAULT_LIMIT,
+            u'indices': [],
+            u'exclude': [],
+            u'order': u'asc'
+        }
+        test_filter = dict(indices=[])
+        test_filter_json = json.dumps(test_filter)
+        validated_filter_dict = self.view1.validate_filter(test_filter)
+        validated_filter_json = self.view1.validate_filter(test_filter_json)
+        self.assertDictEqual(json.loads(validated_filter_dict), default_values)
+        self.assertDictEqual(json.loads(validated_filter_json), default_values)
