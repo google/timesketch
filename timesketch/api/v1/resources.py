@@ -372,6 +372,12 @@ class ViewResource(ResourceMixin, Resource):
         # belongs to the current_user
         if view.name == u'' and view.user != current_user:
             abort(HTTP_STATUS_CODE_FORBIDDEN)
+
+        # Make sure we have all expected attributes in the query filter.
+        view.query_filter = view.validate_filter()
+        db_session.add(view)
+        db_session.commit()
+
         return self.to_json(view)
 
     @login_required

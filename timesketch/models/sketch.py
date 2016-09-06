@@ -13,6 +13,8 @@
 # limitations under the License.
 """This module implements the models for the Timesketch core system."""
 
+import json
+
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
@@ -174,6 +176,48 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.user = user
         self.query_string = query_string
         self.query_filter = query_filter
+
+    def validate_filter(self, query_filter=None):
+        """Validate the Query Filter.
+
+        Make sure that we have all expected attributes in the query filter
+        json string. The filter dictionary evolves over time and this function
+        is used to update all filters.
+
+        Args:
+            query_filter: The query filter (JSON format or dictionary)
+
+        Returns:
+            query_filter: Query filter dictionary serialized to JSON
+
+        """
+        DEFAULT_LIMIT = 40  # Number of resulting documents to return
+        DEFAULT_VALUES = {
+            u'time_start': None,
+            u'time_end': None,
+            u'limit': DEFAULT_LIMIT,
+            u'indices': [],
+            u'exclude': [],
+            u'order': u'asc'
+        }
+        # If not provided, get the saved filter from the view
+        if not query_filter:
+            query_filter = self.query_filter
+
+        # Make sure we have the filter as a dictionary
+        if not isinstance(query_filter, dict):
+            filter_dict = json.loads(query_filter)
+        else:
+            filter_dict = query_filter
+
+        # Get all missing attributes and set them to their default value
+        missing_attributes = list(
+            set(DEFAULT_VALUES.keys()) - set(filter_dict.keys())
+        )
+        for key in missing_attributes:
+            filter_dict[key] = DEFAULT_VALUES[key]
+
+        return json.dumps(filter_dict, ensure_ascii=False)
 
 
 class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):
