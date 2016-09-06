@@ -61,7 +61,7 @@ limitations under the License.
                         }
                 });
 
-                this.search = function(query, filter) {
+                this.search = function(query, filter, queryDsl) {
                     if (!filter.order) {
                         filter.order = 'asc';
                     }
@@ -87,7 +87,9 @@ limitations under the License.
                     $scope.events = [];
                     $scope.query = query;
                     $scope.filter = filter;
-                    timesketchApi.search($scope.sketchId, query, filter)
+                    $scope.queryDsl = queryDsl;
+
+                    timesketchApi.search($scope.sketchId, query, filter, queryDsl)
                         .success(function(data) {
                             $scope.events = data.objects;
                             $scope.meta = data.meta;

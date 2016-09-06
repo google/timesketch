@@ -13,6 +13,7 @@
 # limitations under the License.
 """ElasticSearch datastore."""
 
+import json
 import logging
 
 from uuid import uuid4
@@ -41,7 +42,7 @@ class ElasticSearchDataStore(datastore.DataStore):
         ])
 
     def search(
-            self, sketch_id, query, query_filter, indices, aggregations=None,
+            self, sketch_id, query, query_filter, query_dsl, indices, aggregations=None,
             return_results=True):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
@@ -62,6 +63,13 @@ class ElasticSearchDataStore(datastore.DataStore):
         # Limit the number of returned documents.
         DEFAULT_LIMIT = 500  # Maximum events to return
         LIMIT_RESULTS = query_filter.get(u'limit', DEFAULT_LIMIT)
+
+        if query_dsl:
+            return self.client.search(
+                body=json.loads(query_dsl), index=list(indices),
+                size=LIMIT_RESULTS, _source_include=[
+                    u'datetime', u'timestamp', u'message', u'timestamp_desc',
+                    u'timesketch_label', u'tag'])
 
         if not indices:
             return {u'hits': {u'hits': [], u'total': 0}, u'took': 0}
@@ -172,6 +180,8 @@ class ElasticSearchDataStore(datastore.DataStore):
         else:
             search_type = u'count'
 
+
+        print query_dict
         # Suppress the lint error because elasticsearch-py adds parameters
         # to the function with a decorator and this makes pylint sad.
         # pylint: disable=unexpected-keyword-arg

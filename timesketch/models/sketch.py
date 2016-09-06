@@ -156,11 +156,13 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     name = Column(Unicode(255))
     query_string = Column(Unicode(255))
     query_filter = Column(UnicodeText())
+    query_dsl = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey(u'user.id'))
     sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
 
     def __init__(
-            self, name, sketch, user, query_string=None, query_filter=None):
+            self, name, sketch, user, query_string=None, query_filter=None,
+            query_dsl=None):
         """Initialize the View object.
 
         Args:
@@ -169,6 +171,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             user: A user (instance of timesketch.models.user.User)
             query_string: The query string
             query_filter: The filter to apply (JSON format as string)
+            query_dsl: A query DSL document (JSON format as string)
         """
         super(View, self).__init__()
         self.name = name
@@ -176,6 +179,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.user = user
         self.query_string = query_string
         self.query_filter = query_filter
+        self.query_dsl = query_dsl
 
     def validate_filter(self, query_filter=None):
         """Validate the Query Filter.

@@ -172,7 +172,7 @@ limitations under the License.
             return $http.post(resource_url, params);
         };
 
-        this.search = function(sketch_id, query, filter) {
+        this.search = function(sketch_id, query, filter, queryDsl) {
             /**
              * Execute query and filter on the datastore.
              * @param sketch_id - The id for the sketch.
@@ -183,7 +183,8 @@ limitations under the License.
             var resource_url = BASE_URL + sketch_id + '/explore/';
             var params = {
                 query: query,
-                filter: filter
+                filter: filter,
+                dsl: queryDsl
             };
             return $http.post(resource_url, params)
         };

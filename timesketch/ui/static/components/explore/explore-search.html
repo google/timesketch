@@ -23,10 +23,14 @@
         <div class="col-md-12">
 
             <div class="card card-top" style="padding-bottom:0;">
-                <form ng-submit="ctrl.search(query, filter)">
-                    <input ng-model="query" type="search" class="search-input" id="search-input" placeholder="Search" autofocus>
+                <form ng-submit="ctrl.search(query, filter, queryDsl)">
+                    <input ng-disabled="queryDsl" ng-model="query" type="search" class="search-input" id="search-input" placeholder="Search" autofocus>
                 </form>
                 <br>
+                <textarea class="form-control" rows="10" ng-model="queryDsl"></textarea>
+                <br>
+                <button class="btn btn-primary" ng-click="ctrl.search(query, filter, queryDsl)">Search</button>
+                <br><br>
                 <div class="btn-group">
                     <button class="btn btn-default" ng-click="showFilters = !showFilters" ng-style="{true: {'background-color':'#f5f5f5'}}[showFilters]"><i class="fa fa-filter"></i> Filters</button>
                     <button class="btn btn-default" ng-click="showCharts = !showCharts" ng-style="{true: {'background-color':'#f5f5f5'}}[showCharts]"><i class="fa fa-bar-chart"></i> Charts</button>

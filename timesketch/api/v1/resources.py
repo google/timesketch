@@ -422,6 +422,7 @@ class ExploreResource(ResourceMixin, Resource):
         form = ExploreForm.build(request)
 
         if form.validate_on_submit():
+            query_dsl = form.dsl.data
             query_filter = form.filter.data
             sketch_indices = [
                 t.searchindex.index_name for t in sketch.timelines]
@@ -434,11 +435,12 @@ class ExploreResource(ResourceMixin, Resource):
             # Make sure we have a query string or star filter
             if not (form.query.data,
                     query_filter.get(u'star'),
-                    query_filter.get(u'events')):
+                    query_filter.get(u'events'),
+                    form.dsl.data):
                 abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
             result = self.datastore.search(
-                sketch_id, form.query.data, query_filter, indices,
+                sketch_id, form.query.data, query_filter, query_dsl, indices,
                 aggregations=None, return_results=True)
 
             # Get labels for each event that matches the sketch.
