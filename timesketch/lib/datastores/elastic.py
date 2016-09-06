@@ -42,8 +42,8 @@ class ElasticSearchDataStore(datastore.DataStore):
         ])
 
     def search(
-            self, sketch_id, query, query_filter, query_dsl, indices, aggregations=None,
-            return_results=True):
+            self, sketch_id, query, query_filter, query_dsl, indices,
+            aggregations=None, return_results=True):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -180,8 +180,6 @@ class ElasticSearchDataStore(datastore.DataStore):
         else:
             search_type = u'count'
 
-
-        print query_dict
         # Suppress the lint error because elasticsearch-py adds parameters
         # to the function with a decorator and this makes pylint sad.
         # pylint: disable=unexpected-keyword-arg

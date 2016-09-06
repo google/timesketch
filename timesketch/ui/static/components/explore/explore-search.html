@@ -23,14 +23,27 @@
         <div class="col-md-12">
 
             <div class="card card-top" style="padding-bottom:0;">
-                <form ng-submit="ctrl.search(query, filter, queryDsl)">
-                    <input ng-disabled="queryDsl" ng-model="query" type="search" class="search-input" id="search-input" placeholder="Search" autofocus>
+
+                <form class="form-inline" ng-submit="ctrl.search(query, filter)">
+                    <div class="input-group">
+                        <input ng-disabled="showAdvanced" ng-model="query" type="search" class="search-input" id="search-input" placeholder="Search" autofocus>
+                   <span class="input-group-btn">
+                        <button class="btn search-input"><i style="color:#999;" class="fa fa-search"></i></button>
+
+                   </span>
+                    </div>
                 </form>
+                <button ng-show="!showAdvanced" class="btn btn-link pull-right" ng-click="showAdvanced = !showAdvanced">Advanced</button>
+                <button ng-show="showAdvanced" class="btn btn-link pull-right" ng-click="showAdvanced = !showAdvanced"><i class="fa fa-close"></i> Close</button>
+
                 <br>
-                <textarea class="form-control" rows="10" ng-model="queryDsl"></textarea>
-                <br>
-                <button class="btn btn-primary" ng-click="ctrl.search(query, filter, queryDsl)">Search</button>
-                <br><br>
+                <div ng-if="showAdvanced">
+                    <b>JSON search query</b>
+                    <br><br>
+                    <ts-json-editor query="query" filter="filter"></ts-json-editor>
+                    <br>
+                </div>
+
                 <div class="btn-group">
                     <button class="btn btn-default" ng-click="showFilters = !showFilters" ng-style="{true: {'background-color':'#f5f5f5'}}[showFilters]"><i class="fa fa-filter"></i> Filters</button>
                     <button class="btn btn-default" ng-click="showCharts = !showCharts" ng-style="{true: {'background-color':'#f5f5f5'}}[showCharts]"><i class="fa fa-bar-chart"></i> Charts</button>
