@@ -41,8 +41,51 @@ class ElasticSearchDataStore(datastore.DataStore):
             {u'host': host, u'port': port}
         ])
 
+    @staticmethod
+    def build_query(sketch_id, query_string, query_filter, query_dsl,
+            aggregations=None):
+        """Build Elasticsearch DSL query.
+
+        Args:
+            sketch_id: Integer of sketch primary key
+            query_string: Query string
+            query_filter: Dictionary containing filters to apply
+            query_dsl: Dictionary containing Elasticsearch DSL query
+            aggregations: Dict of Elasticsearch aggregations
+
+        Returns:
+            Elasticsearch DSL query as a dictionary
+        """
+
+        # If we don't have a Query DSL from the user construct a query_string
+        # query DSL.
+        if not query_dsl:
+            query_dsl = {
+                u'query': {
+                    u'filtered': {
+                        u'query': {
+                            u'query_string': {
+                                u'query': query_string
+                            }
+                        }
+                    }
+                }
+            }
+
+        # Make sure we are sorting.
+        if not query_dsl.get(u'sort', None):
+            query_dsl[u'sort'] = {
+                u'datetime': query_filter.get(u'order', u'asc')
+            }
+
+        # Remove any aggregation coming from user supplied Query DSL. We have
+        # no way to display this data in a good way today.
+        # TODO: Revisit this and figure out if we can display the data.
+        if query_dsl.get(u'aggregations', None):
+            del query_dsl[u'aggregations']
+
     def search(
-            self, sketch_id, query, query_filter, query_dsl, indices,
+            self, sketch_id, query_string, query_filter, query_dsl, indices,
             aggregations=None, return_results=True):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
@@ -50,8 +93,9 @@ class ElasticSearchDataStore(datastore.DataStore):
 
         Args:
             sketch_id: Integer of sketch primary key
-            query: Query string
+            query_string: Query string
             query_filter: Dictionary containing filters to apply
+            query_dsl: Dictionary containing Elasticsearch DSL query
             indices: List of indices to query
             aggregations: Dict of Elasticsearch aggregations
             return_results: Boolean indicating if results should be returned
@@ -74,15 +118,15 @@ class ElasticSearchDataStore(datastore.DataStore):
         if not indices:
             return {u'hits': {u'hits': [], u'total': 0}, u'took': 0}
 
-        if not query:
-            query = u''
+        if not query_string:
+            query_string = u''
 
         query_dict = {
             u'query': {
                 u'filtered': {
                     u'query': {
                         u'query_string': {
-                            u'query': query
+                            u'query': query_string
                         }
                     }
                 }
