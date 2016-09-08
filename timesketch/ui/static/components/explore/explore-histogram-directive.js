@@ -32,6 +32,7 @@
                 sketchId: '=',
                 filter: '=',
                 query: '=',
+                queryDsl: '=',
                 meta: '=',
                 showCharts: '='
             },
@@ -43,7 +44,7 @@
 
                 scope.$watchGroup(['meta', 'showCharts', 'chartType'], function (newval, oldval) {
                     if(scope.showCharts) {
-                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, 'histogram')
+                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, scope.queryDsl, 'histogram')
                             .success(function(data) {
                                 render_histogram(data['objects'])
                             });

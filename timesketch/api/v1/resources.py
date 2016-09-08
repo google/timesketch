@@ -519,6 +519,7 @@ class AggregationResource(ResourceMixin, Resource):
 
         if form.validate_on_submit():
             query_filter = form.filter.data
+            query_dsl = form.dsl.data
             sketch_indices = [
                 t.searchindex.index_name for t in sketch.timelines]
             indices = query_filter.get(u'indices', sketch_indices)
@@ -537,13 +538,13 @@ class AggregationResource(ResourceMixin, Resource):
             if form.aggtype.data == u'heatmap':
                 result = heatmap(
                     es_client=self.datastore, sketch_id=sketch_id,
-                    query=form.query.data, query_filter=query_filter,
-                    indices=indices)
+                    query_string=form.query.data, query_filter=query_filter,
+                    query_dsl=query_dsl, indices=indices)
             elif form.aggtype.data == u'histogram':
                 result = histogram(
                     es_client=self.datastore, sketch_id=sketch_id,
-                    query=form.query.data, query_filter=query_filter,
-                    indices=indices)
+                    query_string=form.query.data, query_filter=query_filter,
+                    query_dsl=query_dsl, indices=indices)
 
             else:
                 abort(HTTP_STATUS_CODE_BAD_REQUEST)

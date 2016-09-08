@@ -45,7 +45,7 @@
                 </div>
 
                 <div class="btn-group">
-                    <button class="btn btn-default" ng-click="showFilters = !showFilters" ng-style="{true: {'background-color':'#f5f5f5'}}[showFilters]"><i class="fa fa-filter"></i> Filters</button>
+                    <button class="btn btn-default" ng-click="showFilters = !showFilters" ng-disabled="showAdvanced" ng-style="{true: {'background-color':'#f5f5f5'}}[showFilters]"><i class="fa fa-filter"></i> Filters</button>
                     <button class="btn btn-default" ng-click="showCharts = !showCharts" ng-style="{true: {'background-color':'#f5f5f5'}}[showCharts]"><i class="fa fa-bar-chart"></i> Charts</button>
                     <button class="btn btn-default" ng-click="ctrl.search_starred(query, filter)"><i class="fa fa-star icon-yellow"></i> Starred</button>
                     <button class="btn btn-default" data-toggle="modal" data-target="#save-view-modal"><i class="fa fa-save"></i> Save view</button>
@@ -54,7 +54,7 @@
                 <br><br>
             </div>
 
-            <div class="card" ng-show="showFilters">
+            <div class="card" ng-show="showFilters && !showAdvanced">
                 <ts-filter
                         filter="filter"
                         query="query"
@@ -79,6 +79,7 @@
                                     <ts-heatmap
                                             query="query"
                                             filter="filter"
+                                            query-dsl="queryDsl"
                                             meta="meta"
                                             sketch-id="sketchId"
                                             show-charts="showCharts">
@@ -88,6 +89,7 @@
                                     <ts-histogram
                                             query="query"
                                             filter="filter"
+                                            query-dsl="queryDsl"
                                             meta="meta"
                                             sketch-id="sketchId"
                                             show-charts="showCharts">

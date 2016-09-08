@@ -32,6 +32,7 @@
                 sketchId: '=',
                 filter: '=',
                 query: '=',
+                queryDsl: '=',
                 meta: '=',
                 showCharts: '='
             },
@@ -39,7 +40,7 @@
             link: function(scope, element, attrs, ctrl) {
                 scope.$watchGroup(['meta', 'showCharts'], function (newval, oldval) {
                     if(scope.showCharts) {
-                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, 'heatmap')
+                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, scope.queryDsl, 'heatmap')
                             .success(function(data) {
                                 scope.render_heatmap(data['objects'])
                             });
@@ -54,7 +55,7 @@
                     return angular.element($window)[0].innerWidth;
                 }, function() {
                     if(scope.meta && scope.showCharts) {
-                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, 'heatmap')
+                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, scope.queryDsl, 'heatmap')
                             .success(function(data) {
                                 scope.render_heatmap(data['objects'])
                             });

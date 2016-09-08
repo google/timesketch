@@ -178,6 +178,7 @@ limitations under the License.
              * @param sketch_id - The id for the sketch.
              * @param query - A query string.
              * @param filter - A JSON string with filters and a list of indices.
+             * @param queryDsl - A JSON string with Elasticsearch DLS.
              * @returns A $http promise with two methods, success and error.
              */
             var resource_url = BASE_URL + sketch_id + '/explore/';
@@ -189,12 +190,13 @@ limitations under the License.
             return $http.post(resource_url, params)
         };
 
-        this.aggregation = function(sketch_id, query, filter, aggtype) {
+        this.aggregation = function(sketch_id, query, filter, queryDsl, aggtype) {
             /**
              * Execute query and filter on the datastore.
              * @param sketch_id - The id for the sketch.
              * @param query - A query string.
              * @param filter - A JSON string with filters and a list of indices.
+             * @param queryDsl - A JSON string with Elasticsearch DLS.
              * @param aggtype - Type of aggregation.
              * @returns A $http promise with two methods, success and error.
              */
@@ -202,6 +204,7 @@ limitations under the License.
             var params = {
                 query: query,
                 filter: filter,
+                dsl: queryDsl,
                 aggtype: aggtype
             };
             return $http.post(resource_url, params)

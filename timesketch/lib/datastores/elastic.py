@@ -42,7 +42,60 @@ class ElasticSearchDataStore(datastore.DataStore):
         ])
 
     @staticmethod
-    def build_query(sketch_id, query_string, query_filter, query_dsl,
+    def _build_label_query(sketch_id, label_name):
+        query_dict = {
+            u'query': {
+                u'filtered': {
+                    u'filter': {
+                        u'nested': {
+                            u'filter': {
+                                u'bool': {
+                                    u'must': [
+                                        {
+                                            u'term': {
+                                                u'timesketch_label.name': label_name
+                                            }
+                                        },
+                                        {
+                                            u'term': {
+                                                u'timesketch_label.sketch_id': sketch_id
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            u'path': u'timesketch_label'
+                        }
+                    }
+                }
+            }
+        }
+        return query_dict
+
+    @staticmethod
+    def _build_events_query(events):
+        events_list = [event[u'event_id'] for event in events]
+        query_dict = {
+            u'query': {
+                u'ids': {
+                    u'values': events_list
+                }
+            }
+        }
+        return query_dict
+
+    @staticmethod
+    def _build_field_aggregator(field_name):
+        field_aggregation = {
+            u'field_aggregation': {
+                u'terms': {
+                    u'field': field_name,
+                    u'size': 0}
+            }
+        }
+        return field_aggregation
+
+    def build_query(self, sketch_id, query_string, query_filter, query_dsl,
             aggregations=None):
         """Build Elasticsearch DSL query.
 
@@ -56,21 +109,47 @@ class ElasticSearchDataStore(datastore.DataStore):
         Returns:
             Elasticsearch DSL query as a dictionary
         """
-
-        # If we don't have a Query DSL from the user construct a query_string
-        # query DSL.
+        indices = None
         if not query_dsl:
-            query_dsl = {
-                u'query': {
-                    u'filtered': {
-                        u'query': {
-                            u'query_string': {
-                                u'query': query_string
+            if query_filter.get(u'star', None):
+                query_dsl = self._build_label_query(sketch_id, u'__ts_star')
+
+            if query_filter.get(u'events', None):
+                events = query_filter[u'events']
+                query_dsl = self._build_events_query(events)
+                indices = {event[u'index'] for event in events}
+
+            if not query_dsl:
+                query_dsl = {
+                    u'query': {
+                        u'filtered': {
+                            u'query': {
+                                u'query_string': {
+                                    u'query': query_string
+                                }
                             }
                         }
                     }
                 }
-            }
+            if query_filter.get(u'time_start', None):
+                query_dsl[u'query'][u'filtered'][u'filter'] = {
+                    u'range': {
+                        u'datetime': {
+                            u'gte': query_filter[u'time_start'],
+                            u'lte': query_filter[u'time_end']
+                        }
+                    }
+                }
+            if query_filter.get(u'exclude', None):
+                query_dsl[u'filter'] = {
+                    u'not': {
+                        u'terms': {
+                            u'data_type': query_filter[u'exclude']
+                        }
+                    }
+                }
+        else:
+            query_dsl = json.loads(query_dsl)
 
         # Make sure we are sorting.
         if not query_dsl.get(u'sort', None):
@@ -83,6 +162,31 @@ class ElasticSearchDataStore(datastore.DataStore):
         # TODO: Revisit this and figure out if we can display the data.
         if query_dsl.get(u'aggregations', None):
             del query_dsl[u'aggregations']
+
+        # Add any pre defined aggregations
+        data_type_aggregation = self._build_field_aggregator(u'data_type')
+        if aggregations:
+            if isinstance(aggregations, dict):
+                if query_filter.get(u'exclude', None):
+                    aggregations = {
+                        u'exclude': {
+                            u'filter': {
+                                u'not': {
+                                    u'terms': {
+                                        u'field_aggregation': query_filter[u'exclude']
+                                    }
+                                }
+                            },
+                            u'aggregations': aggregations
+                        },
+                        u'data_type': data_type_aggregation[u'field_aggregation']
+                    }
+                query_dsl[u'aggregations'] = aggregations
+        else:
+            query_dsl[u'aggregations'] = data_type_aggregation
+
+        print json.dumps(query_dsl, indent=2)
+        return query_dsl
 
     def search(
             self, sketch_id, query_string, query_filter, query_dsl, indices,
@@ -103,132 +207,27 @@ class ElasticSearchDataStore(datastore.DataStore):
         Returns:
             Set of event documents in JSON format
         """
-
         # Limit the number of returned documents.
         DEFAULT_LIMIT = 500  # Maximum events to return
         LIMIT_RESULTS = query_filter.get(u'limit', DEFAULT_LIMIT)
 
-        if query_dsl:
-            return self.client.search(
-                body=json.loads(query_dsl), index=list(indices),
-                size=LIMIT_RESULTS, _source_include=[
-                    u'datetime', u'timestamp', u'message', u'timestamp_desc',
-                    u'timesketch_label', u'tag'])
-
+        # Exit early if we have no indices to query
         if not indices:
             return {u'hits': {u'hits': [], u'total': 0}, u'took': 0}
 
-        if not query_string:
-            query_string = u''
-
-        query_dict = {
-            u'query': {
-                u'filtered': {
-                    u'query': {
-                        u'query_string': {
-                            u'query': query_string
-                        }
-                    }
-                }
-            },
-            u'sort': {
-                u'datetime': query_filter.get(u'order', u'asc')
-            }
-        }
-
-        if query_filter.get(u'star', None):
-            del query_dict[u'query'][u'filtered'][u'query']
-            query_dict[u'query'][u'filtered'][u'filter'] = {
-                u'nested': {
-                    u'path': u'timesketch_label',
-                    u'filter': {
-                        u'bool': {
-                            u'must': [
-                                {
-                                    u'term': {
-                                        u'timesketch_label.name': u'__ts_star'
-                                    }
-                                },
-                                {
-                                    u'term': {
-                                        u'timesketch_label.sketch_id': sketch_id
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-
-        if query_filter.get(u'events', None):
-            events = query_filter[u'events']
-            indices = {event[u'index'] for event in events}
-            events_list = [event[u'event_id'] for event in events]
-            del query_dict[u'query']
-            query_dict[u'query'] = {
-                u'ids': {
-                    u'values': events_list
-                }
-            }
-
-        if query_filter.get(u'time_start', None):
-            query_dict[u'query'][u'filtered'][u'filter'] = {
-                u'range': {
-                    u'datetime': {
-                        u'gte': query_filter[u'time_start'],
-                        u'lte': query_filter[u'time_end']
-                    }
-                }
-            }
-
-        if query_filter.get(u'exclude', None):
-            query_dict[u'filter'] = {
-                u'not': {
-                    u'terms': {
-                        u'data_type': query_filter[u'exclude']
-                    }
-                }
-            }
-
-        data_type_aggregation = {
-            u'data_type': {
-                u'terms': {
-                    u'field': u'data_type',
-                    u'size': 0}
-            }
-        }
-
-        if aggregations:
-            if isinstance(aggregations, dict):
-                if query_filter.get(u'exclude', None):
-                    aggregations = {
-                        u'exclude': {
-                            u'filter': {
-                                u'not': {
-                                    u'terms': {
-                                        u'data_type': query_filter[u'exclude']
-                                    }
-                                }
-                            },
-                            u'aggregations': aggregations
-                        },
-                        u'data_type': data_type_aggregation[u'data_type']
-                    }
-                query_dict[u'aggregations'] = aggregations
-        else:
-            query_dict[u'aggregations'] = data_type_aggregation
+        query_dsl = self.build_query(
+            sketch_id, query_string, query_filter, query_dsl, aggregations)
 
         # Default search type for elasticsearch is query_then_fetch.
-        if return_results:
-            search_type = u'query_then_fetch'
-        else:
+        search_type = u'query_then_fetch'
+        if not return_results:
             search_type = u'count'
 
         # Suppress the lint error because elasticsearch-py adds parameters
         # to the function with a decorator and this makes pylint sad.
         # pylint: disable=unexpected-keyword-arg
         return self.client.search(
-            body=query_dict, index=list(indices), size=LIMIT_RESULTS,
+            body=query_dsl, index=list(indices), size=LIMIT_RESULTS,
             search_type=search_type, _source_include=[
                 u'datetime', u'timestamp', u'message', u'timestamp_desc',
                 u'timesketch_label', u'tag'])
