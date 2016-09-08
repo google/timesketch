@@ -108,6 +108,7 @@ class ResourceMixin(object):
         u'name': fields.String,
         u'query_string': fields.String,
         u'query_filter': fields.String,
+        u'query_dsl': fields.String,
         u'created_at': fields.DateTime,
         u'updated_at': fields.DateTime
     }
@@ -341,7 +342,8 @@ class ViewListResource(ResourceMixin, Resource):
             view = View(
                 name=form.name.data, sketch=sketch, user=current_user,
                 query_string=form.query.data,
-                query_filter=json.dumps(form.filter.data, ensure_ascii=False))
+                query_filter=json.dumps(form.filter.data, ensure_ascii=False),
+                query_dsl=json.dumps(form.dsl.data, ensure_ascii=False))
             db_session.add(view)
             db_session.commit()
             return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
@@ -397,6 +399,7 @@ class ViewResource(ResourceMixin, Resource):
             view = View.query.get(view_id)
             view.query_string = form.query.data
             view.query_filter = json.dumps(form.filter.data, ensure_ascii=False)
+            view.query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
             view.user = current_user
             view.sketch = sketch
             db_session.add(view)
@@ -436,7 +439,7 @@ class ExploreResource(ResourceMixin, Resource):
             if not (form.query.data,
                     query_filter.get(u'star'),
                     query_filter.get(u'events'),
-                    form.dsl.data):
+                    query_dsl):
                 abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
             result = self.datastore.search(
@@ -462,7 +465,8 @@ class ExploreResource(ResourceMixin, Resource):
             view = View.get_or_create(
                 user=current_user, sketch=sketch, name=u'')
             view.query_string = form.query.data
-            view.query_filter = json.dumps(query_filter)
+            view.query_filter = json.dumps(query_filter, ensure_ascii=False)
+            view.query_dsl = json.dumps(query_dsl, ensure_ascii=False)
             db_session.add(view)
             db_session.commit()
 

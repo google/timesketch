@@ -29,17 +29,22 @@
             templateUrl: '/static/components/explore/explore-json-editor.html',
             scope: {
                 query: '=',
-                filter: '='
+                filter: '=',
+                queryDsl: '='
             },
             require: '^tsSearch',
             link: function(scope, element, attrs, ctrl) {
-
-                var template_query = {"query": {"filtered": {"query": {"query_string": {"query": scope.query}}}},"sort": {"datetime": "asc"}};
                 var editor = ace.edit("json-editor");
                 editor.getSession().setMode("ace/mode/json");
                 editor.setTheme("ace/theme/dawn");
                 editor.setShowPrintMargin(false);
-                editor.setValue(JSON.stringify(template_query, null, '\t'), -1);
+
+                if (!scope.queryDsl) {
+                    var template_query = {"query": {"filtered": {"query": {"query_string": {"query": scope.query}}}},"sort": {"datetime": "asc"}};
+                    editor.setValue(JSON.stringify(template_query, null, '\t'), -1);
+                } else {
+                    editor.setValue(scope.queryDsl, -1);
+                }
                 editor.focus();
 
                 scope.execute_query = function () {

@@ -150,7 +150,7 @@ class ExploreForm(BaseForm):
     """Form used to search the datastore."""
     query = StringField(u'Query')
     filter = StringField(u'Filter')
-    dsl = StringField(u'Query DSL')
+    dsl = StringField(u'DSL')
 
 
 class AggregationForm(ExploreForm):

@@ -42,7 +42,7 @@ limitations under the License.
             return $http.get(resource_url)
         };
 
-        this.saveView = function(sketch_id, name, query, filter) {
+        this.saveView = function(sketch_id, name, query, filter, queryDsl) {
             /**
              * Save a Timesketch view.
              * @param sketch_id - The id for the sketch.
@@ -55,12 +55,13 @@ limitations under the License.
             var params = {
                 name: name,
                 query: query,
-                filter: filter
+                filter: filter,
+                dsl: queryDsl
             };
             return $http.post(resource_url, params)
         };
 
-        this.updateView = function(sketch_id, view_id, name, query, filter) {
+        this.updateView = function(sketch_id, view_id, name, query, filter, queryDsl) {
             /**
              * Save a Timesketch view.
              * @param sketch_id - The id for the sketch.
@@ -74,7 +75,8 @@ limitations under the License.
             var params = {
                 name: name,
                 query: query,
-                filter: filter
+                filter: filter,
+                dsl: queryDsl
             };
             return $http.post(resource_url, params)
         };
@@ -181,6 +183,7 @@ limitations under the License.
              * @param queryDsl - A JSON string with Elasticsearch DLS.
              * @returns A $http promise with two methods, success and error.
              */
+            console.log("search api")
             var resource_url = BASE_URL + sketch_id + '/explore/';
             var params = {
                 query: query,

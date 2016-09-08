@@ -37,6 +37,7 @@ limitations under the License.
                 events: '=',
                 query: '=',
                 filter: '=',
+                queryDsl: '=',
                 viewId: '=',
                 namedView: '='
             },
@@ -153,8 +154,9 @@ limitations under the License.
                 scope.applyOrder = function() {
                     ctrl.search(scope.query, scope.filter);
                 };
-                scope.$watch('filter.limit', function(value) {
-                    ctrl.search(scope.query, scope.filter);
+                scope.$watch('userLimit', function(value) {
+                    scope.filter['limit'] = scope.userLimit;
+                    ctrl.search(scope.query, scope.filter, scope.queryDsl);
                 });
             }
         }

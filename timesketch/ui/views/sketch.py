@@ -196,10 +196,10 @@ def explore(sketch_id, view_id=None):
     else:
         view = sketch.get_user_view(current_user)
         if not view:
-            query_filter = view.validate_filter(dict(indices=sketch_timelines))
             view = View(
-                user=current_user, name=u'', sketch=sketch, query_string=u'*',
-                query_filter=query_filter)
+                user=current_user, name=u'', sketch=sketch, query_string=u'*')
+            view.query_filter = view.validate_filter(
+                dict(indices=sketch_timelines))
             save_view = True
 
     if url_query:
@@ -212,6 +212,7 @@ def explore(sketch_id, view_id=None):
         if url_limit:
             query_filter[u'limit'] = url_limit
         view.query_filter = view.validate_filter(query_filter)
+        view.query_dsl = None
         save_view = True
 
     if save_view:

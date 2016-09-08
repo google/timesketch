@@ -185,7 +185,6 @@ class ElasticSearchDataStore(datastore.DataStore):
         else:
             query_dsl[u'aggregations'] = data_type_aggregation
 
-        print json.dumps(query_dsl, indent=2)
         return query_dsl
 
     def search(

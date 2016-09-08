@@ -36,7 +36,7 @@
             {{ meta.es_total_count }} events <span ng-show="meta.numHiddenEvents > 0 && !meta.showHiddenEvents" style="color:red;">({{ meta.numHiddenEvents }} hidden)</span> ({{ meta.es_time/1000 }}s)
             <span ng-show="meta.noisy" style="margin-left:10px;color:red;font-weight:bold;">
                 <i class="fa fa-warning"></i> Only showing
-                <select style="background: #fff;border: 1px solid #f5f5f5;color:red;font-weight: bold" ng-model="filter.limit">
+                <select style="background: #fff;border: 1px solid #f5f5f5;color:red;font-weight: bold" ng-model="userLimit">
                     <option value="{{ filter.limit }}" ng-selected="filter.limit">{{ filter.limit }}</option>
                     <option value="10">10</option>
                     <option value="20">20</option>

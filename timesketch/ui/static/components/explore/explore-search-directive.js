@@ -42,7 +42,9 @@ limitations under the License.
                         timesketchApi.getView(attrs.sketchId, attrs.viewId).success(function(data) {
                             var query = data.objects[0].query_string;
                             var filter = angular.fromJson(data.objects[0].query_filter);
-                            ctrl.search(query, filter);
+                            var queryDsl = angular.fromJson(data.objects[0].query_dsl);
+                            scope.queryDsl = queryDsl;
+                            ctrl.search(query, filter, queryDsl);
                         });
                     }
                     if (attrs.redirect == 'true') {
@@ -117,7 +119,7 @@ limitations under the License.
 
                 this.saveView = function() {
                     timesketchApi.saveView(
-                        $scope.sketchId, $scope.view_name, $scope.query, $scope.filter)
+                        $scope.sketchId, $scope.view_name, $scope.query, $scope.filter, $scope.queryDsl)
                         .success(function(data) {
                             var view_id = data.objects[0].id;
                             var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';

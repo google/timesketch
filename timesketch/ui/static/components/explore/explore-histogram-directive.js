@@ -23,6 +23,7 @@
          * @param sketchId - Sketch ID.
          * @param filter - Filter object.
          * @param query - Query string.
+         * @param queryDsl - Query DSL JSON string.
          * @param meta - Events metadata object.
          */
         return {
