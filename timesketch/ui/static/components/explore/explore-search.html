@@ -29,19 +29,17 @@
                         <input ng-disabled="showAdvanced" ng-model="query" type="search" class="search-input" id="search-input" placeholder="Search" autofocus>
                    <span class="input-group-btn">
                         <button class="btn search-input"><i style="color:#999;" class="fa fa-search"></i></button>
-
                    </span>
                     </div>
                 </form>
+
                 <button ng-show="!showAdvanced" class="btn btn-link pull-right" ng-click="showAdvanced = !showAdvanced">Advanced</button>
                 <button ng-show="showAdvanced" class="btn btn-link pull-right" ng-click="ctrl.closeJSONEditor()"><i class="fa fa-close"></i> Close</button>
-
-
                 <br>
                 <div ng-if="showAdvanced">
                     <b>JSON search query</b>
                     <br><br>
-                    <ts-json-editor query="query" filter="filter" query-dsl="queryDsl"></ts-json-editor>
+                    <ts-json-editor sketch-id="sketchId" query="query" filter="filter" query-dsl="queryDsl"></ts-json-editor>
                     <br>
                 </div>
 
@@ -55,7 +53,7 @@
                 <br><br>
             </div>
 
-            <div class="card" ng-show="showFilters">
+            <div class="card" ng-show="showFilters && !showAdvanced">
                 <ts-filter
                         filter="filter"
                         query="query"

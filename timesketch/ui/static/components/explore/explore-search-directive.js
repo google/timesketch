@@ -47,6 +47,9 @@ limitations under the License.
                                 scope.queryDsl = queryDsl;
                                 scope.showAdvanced = true
                             }
+                            console.log("view search")
+                            console.log(query)
+                            console.log(filter)
                             ctrl.search(query, filter, queryDsl);
                         });
                     }
@@ -79,7 +82,7 @@ limitations under the License.
                         delete filter.events;
                     }
 
-                    if (!filter.star && !filter.events && !query) {
+                    if (!filter.star && !filter.events && !query && !queryDsl) {
                         return
                     }
 
@@ -167,9 +170,14 @@ limitations under the License.
                 };
 
                 this.closeJSONEditor = function () {
+                    // Set the query string input to reflect the current DSL.
+                    try {
+                        var currentQueryDsl = JSON.parse($scope.queryDsl);
+                        $scope.query = currentQueryDsl['query']['filtered']['query']['query_string']['query'];
+                    } catch(err) {}
                     $scope.queryDsl = "";
                     $scope.showAdvanced = false;
-                }
+                };
             }
         }
     }]);

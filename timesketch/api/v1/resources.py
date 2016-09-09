@@ -873,3 +873,30 @@ class StoryResource(ResourceMixin, Resource):
             db_session.commit()
             return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class QueryResource(ResourceMixin, Resource):
+    """Resource to get a query."""
+    @login_required
+    def post(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            story_id: Integer primary key for a story database model
+
+        Returns:
+            A story in JSON (instance of flask.wrappers.Response)
+        """
+        form = ExploreForm.build(request)
+        if form.validate_on_submit():
+            sketch = Sketch.query.get_with_acl(sketch_id)
+            schema = {u'objects': [], u'meta': {}}
+            query_string = form.query.data
+            query_filter = form.filter.data
+            query_dsl = form.dsl.data
+            query = self.datastore.build_query(
+                sketch.id, query_string, query_filter, query_dsl)
+            schema[u'objects'].append(query)
+            return jsonify(schema)
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST)

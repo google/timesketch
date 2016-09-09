@@ -126,8 +126,9 @@ limitations under the License.
 
         this.getStory = function(sketch_id, story_id) {
             /**
-             * Get stories for sketch.
+             * Get story for sketch.
              * @param sketch_id - The id for the sketch.
+             * @param story_id - The id for the story.
              * @returns A $http promise with two methods, success and error.
              */
             var resource_url = BASE_URL + sketch_id + '/stories/' + story_id + '/';
@@ -174,6 +175,24 @@ limitations under the License.
             return $http.post(resource_url, params);
         };
 
+        this.getCurrentQuery = function(sketch_id, query, filter, queryDsl) {
+            /**
+             * Execute query and filter on the datastore.
+             * @param sketch_id - The id for the sketch.
+             * @param query - A query string.
+             * @param filter - A JSON string with filters and a list of indices.
+             * @param queryDsl - A JSON string with Elasticsearch DLS.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = BASE_URL + sketch_id + '/explore/query/';
+            var params = {
+                query: query,
+                filter: filter,
+                dsl: queryDsl
+            };
+            return $http.post(resource_url, params)
+        };
+
         this.search = function(sketch_id, query, filter, queryDsl) {
             /**
              * Execute query and filter on the datastore.
@@ -183,6 +202,7 @@ limitations under the License.
              * @param queryDsl - A JSON string with Elasticsearch DLS.
              * @returns A $http promise with two methods, success and error.
              */
+            console.log("search")
             var resource_url = BASE_URL + sketch_id + '/explore/';
             var params = {
                 query: query,
