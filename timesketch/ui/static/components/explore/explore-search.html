@@ -34,11 +34,11 @@
                     </div>
                 </form>
                 <button ng-show="!showAdvanced" class="btn btn-link pull-right" ng-click="showAdvanced = !showAdvanced">Advanced</button>
-                <button ng-show="showAdvanced" class="btn btn-link pull-right" ng-click="showAdvanced = !showAdvanced"><i class="fa fa-close"></i> Close</button>
+                <button ng-show="showAdvanced" class="btn btn-link pull-right" ng-click="ctrl.closeJSONEditor()"><i class="fa fa-close"></i> Close</button>
 
 
                 <br>
-                <div ng-if="showAdvanced || queryDsl">
+                <div ng-if="showAdvanced">
                     <b>JSON search query</b>
                     <br><br>
                     <ts-json-editor query="query" filter="filter" query-dsl="queryDsl"></ts-json-editor>
@@ -55,10 +55,11 @@
                 <br><br>
             </div>
 
-            <div class="card" ng-show="showFilters && !showAdvanced">
+            <div class="card" ng-show="showFilters">
                 <ts-filter
                         filter="filter"
                         query="query"
+                        query-dsl="queryDsl"
                         sketch="sketch"
                         events="events"
                         meta="meta"

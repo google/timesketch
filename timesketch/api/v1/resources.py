@@ -402,6 +402,11 @@ class ViewResource(ResourceMixin, Resource):
             view.query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
             view.user = current_user
             view.sketch = sketch
+
+            if form.dsl.data:
+                print "Has DSL"
+                view.query_string = u''
+
             db_session.add(view)
             db_session.commit()
             return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
@@ -480,7 +485,7 @@ class ExploreResource(ResourceMixin, Resource):
                 tl_names[timeline.searchindex.index_name] = timeline.name
 
             try:
-                buckets = result[u'aggregations'][u'data_type'][u'buckets']
+                buckets = result[u'aggregations'][u'field_aggregation'][u'buckets']
             except KeyError:
                 buckets = None
 

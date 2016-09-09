@@ -103,14 +103,16 @@ limitations under the License.
                     var reload = false;
                     var query = "";
                     var filter = getSelectedEventsFilter();
+                    var query_dsl = {};
                     if (filter['events'].length < 1) {
                         query = $scope.query;
                         filter = $scope.filter;
+                        query_dsl = $scope.queryDsl
                     } else {
                         reload = true;
                     }
                     timesketchApi.updateView(
-                        $scope.sketchId, $scope.viewId, $scope.view.name, query, filter)
+                        $scope.sketchId, $scope.viewId, $scope.view.name, query, filter, query_dsl)
                         .success(function(data) {
                             if (reload) {
                                 var view_id = data.objects[0].id;

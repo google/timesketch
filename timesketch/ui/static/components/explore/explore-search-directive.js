@@ -43,7 +43,10 @@ limitations under the License.
                             var query = data.objects[0].query_string;
                             var filter = angular.fromJson(data.objects[0].query_filter);
                             var queryDsl = angular.fromJson(data.objects[0].query_dsl);
-                            scope.queryDsl = queryDsl;
+                            if (queryDsl) {
+                                scope.queryDsl = queryDsl;
+                                scope.showAdvanced = true
+                            }
                             ctrl.search(query, filter, queryDsl);
                         });
                     }
@@ -79,9 +82,11 @@ limitations under the License.
                     if (!filter.star && !filter.events && !query) {
                         return
                     }
+
                     if (filter.time_start) {
                         $scope.showFilters = true;
                     }
+
                     if (filter.context && query != "*") {
                         delete filter.context;
                     }
@@ -160,6 +165,11 @@ limitations under the License.
                     $scope.showFilters = false;
                     this.search(context.query, context.filter)
                 };
+
+                this.closeJSONEditor = function () {
+                    $scope.queryDsl = "";
+                    $scope.showAdvanced = false;
+                }
             }
         }
     }]);
@@ -207,7 +217,8 @@ limitations under the License.
                             timesketchApi.getView(scope.sketchId, scope.selectedView.view.id).success(function(data) {
                                 scope.query = data.objects[0].query_string;
                                 scope.filter = angular.fromJson(data.objects[0].query_filter);
-                                ctrl.search(scope.query, scope.filter)
+                                scope.queryDsl = angular.fromJson(data.objects[0].query_dsl);
+                                ctrl.search(scope.query, scope.filter, scope.queryDsl)
                             });
                         }
                     }

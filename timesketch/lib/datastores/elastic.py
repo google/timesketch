@@ -95,7 +95,8 @@ class ElasticSearchDataStore(datastore.DataStore):
         }
         return field_aggregation
 
-    def build_query(self, sketch_id, query_string, query_filter, query_dsl,
+    def build_query(
+            self, sketch_id, query_string, query_filter, query_dsl,
             aggregations=None):
         """Build Elasticsearch DSL query.
 
@@ -109,7 +110,6 @@ class ElasticSearchDataStore(datastore.DataStore):
         Returns:
             Elasticsearch DSL query as a dictionary
         """
-        indices = None
         if not query_dsl:
             if query_filter.get(u'star', None):
                 query_dsl = self._build_label_query(sketch_id, u'__ts_star')
@@ -117,7 +117,6 @@ class ElasticSearchDataStore(datastore.DataStore):
             if query_filter.get(u'events', None):
                 events = query_filter[u'events']
                 query_dsl = self._build_events_query(events)
-                indices = {event[u'index'] for event in events}
 
             if not query_dsl:
                 query_dsl = {
@@ -217,11 +216,16 @@ class ElasticSearchDataStore(datastore.DataStore):
         query_dsl = self.build_query(
             sketch_id, query_string, query_filter, query_dsl, aggregations)
 
+        # Check if we have specific events to fetch and get indices.
+        if query_filter.get(u'events', None):
+            indices = {event[u'index'] for event in query_filter[u'events']}
+
         # Default search type for elasticsearch is query_then_fetch.
         search_type = u'query_then_fetch'
         if not return_results:
             search_type = u'count'
 
+        print json.dumps(query_dsl, indent=1)
         # Suppress the lint error because elasticsearch-py adds parameters
         # to the function with a decorator and this makes pylint sad.
         # pylint: disable=unexpected-keyword-arg

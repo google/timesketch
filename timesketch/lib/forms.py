@@ -144,6 +144,7 @@ class SaveViewForm(BaseForm):
     name = StringField(u'Name', validators=[DataRequired()])
     query = StringField(u'Query')
     filter = StringField(u'Filter', validators=[DataRequired()])
+    dsl = StringField(u'DSL')
 
 
 class ExploreForm(BaseForm):

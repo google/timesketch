@@ -183,7 +183,6 @@ limitations under the License.
              * @param queryDsl - A JSON string with Elasticsearch DLS.
              * @returns A $http promise with two methods, success and error.
              */
-            console.log("search api")
             var resource_url = BASE_URL + sketch_id + '/explore/';
             var params = {
                 query: query,
