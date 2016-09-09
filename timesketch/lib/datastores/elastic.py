@@ -279,24 +279,19 @@ class ElasticSearchDataStore(datastore.DataStore):
                 index=searchindex_id, doc_type=event_type, id=event_id,
                 body=doc)
 
+        # Choose the correct script.
+        script_name = u'add_label'
         if toggle:
-            script_string = (
-                u'if(ctx._source.timesketch_label.contains'
-                u'(timesketch_label)) {ctx._source.timesketch_label'
-                u'.remove(timesketch_label)} else {ctx._source.'
-                u'timesketch_label += timesketch_label}')
-        else:
-            script_string = (
-                u'if( ! ctx._source.timesketch_label.contains'
-                u'(timesketch_label)) {ctx._source.timesketch_label'
-                u'+= timesketch_label}')
+            script_name = u'toggle_label'
         script = {
-            u'script': script_string,
-            u'params': {
-                u'timesketch_label': {
-                    u'name': str(label),
-                    u'user_id': user_id,
-                    u'sketch_id': sketch_id
+            u'script': {
+                u'file': script_name,
+                u'params': {
+                    u'timesketch_label': {
+                        u'name': str(label),
+                        u'user_id': user_id,
+                        u'sketch_id': sketch_id
+                    }
                 }
             }
         }
