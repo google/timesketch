@@ -42,11 +42,12 @@ limitations under the License.
             return $http.get(resource_url)
         };
 
-        this.saveView = function(sketch_id, name, query, filter, queryDsl) {
+        this.saveView = function(sketch_id, name, create_new_canned_view, query, filter, queryDsl) {
             /**
              * Save a Timesketch view.
              * @param sketch_id - The id for the sketch.
              * @param name - A name for the view.
+             * @param name - Boolean indicating if a canned view should be created.
              * @param query - A query string.
              * @param filter - A JSON string with filters and a list of indices.
              * @returns A $http promise with two methods, success and error.
@@ -54,6 +55,7 @@ limitations under the License.
             var resource_url = BASE_URL + sketch_id + '/views/';
             var params = {
                 name: name,
+                create_new_canned_view: create_new_canned_view,
                 query: query,
                 filter: filter,
                 dsl: queryDsl

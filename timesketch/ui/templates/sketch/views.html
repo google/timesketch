@@ -22,7 +22,7 @@
                                 <th width="110px">Created by</th>
                                 <th width="130px">Created</th>
                                 {% if sketch.has_permission(current_user, 'write') %}
-                                <th width="40px"></th>
+                                    <th width="40px"></th>
                                 {% endif %}
                             </tr>
                             <tbody>
@@ -37,13 +37,13 @@
                                     <td>{{ view.user.name }}</td>
                                     <td>{{ view.updated_at.strftime('%Y-%m-%d %H:%M')}}</td>
                                     {% if sketch.has_permission(current_user, 'write') %}
-                                    <td>
-                                        <form action="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}" method="post">
-                                            <input type="hidden" name="view_id" value="{{ view.id }}">
-                                            <button class="btn btn-link" style="padding:0;color:#555;" type="submit"><i class="fa fa-trash"></i></button>
-                                            {{ trash_form.csrf_token }}
-                                        </form>
-                                    </td>
+                                        <td>
+                                            <form action="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}" method="post">
+                                                <input type="hidden" name="view_id" value="{{ view.id }}">
+                                                <button class="btn btn-link" style="padding:0;color:#555;" type="submit"><i class="fa fa-trash"></i></button>
+                                                {{ trash_form.csrf_token }}
+                                            </form>
+                                        </td>
                                     {% endif %}
                                 </tr>
                             {% endfor %}
@@ -57,5 +57,40 @@
                 {% endif %}
             </div>
         </div>
+
+        <div class="row">
+            <div class="col-md-12">
+
+                {% if sketch.get_canned_views %}
+                    <div class="card">
+                        <h3>Available canned views</h3>
+                        <br>
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>View</th>
+                                <th width="130px">Created</th>
+                            </tr>
+                            <tbody>
+                            {% for view in sketch.get_canned_views %}
+                                <tr>
+                                    <td>
+                                        <div style="margin-top:5px;font-size: 1.1em;font-weight: bold">
+                                            <b>{{ view.name }}</b>
+                                        </div>
+                                        <span style="color:#777;">{{ view.query_string }}</span>
+                                    </td>
+                                    <td>{{ view.updated_at.strftime('%Y-%m-%d %H:%M')}}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+
+
+            </div>
+        </div>
+
     </div>
 {% endblock %}

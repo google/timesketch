@@ -69,6 +69,11 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             if view.get_status.status != u'deleted' and view.name != u'']
         return views
 
+    @property
+    def get_canned_views(self):
+        """Get canned views."""
+        return CannedView.query.all()
+
     def get_user_view(self, user):
         """Get view for user, i.e. view with the state for the user/sketch.
 
@@ -229,12 +234,12 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 class CannedView(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
                  BaseModel):
     """Implements the Canned view model."""
-
     name = Column(Unicode(255))
     query_string = Column(Unicode(255))
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey(u'user.id'))
+    views = relationship(u'View', backref=u'cannedview', lazy=u'select')
 
     def __init__(
             self, name, user, query_string=None, query_filter=None,

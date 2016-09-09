@@ -141,10 +141,12 @@ class TogglePublic(BaseForm):
 
 class SaveViewForm(BaseForm):
     """Form used to save a view."""
-    name = StringField(u'Name', validators=[DataRequired()])
+    name = StringField(u'Name')
     query = StringField(u'Query')
-    filter = StringField(u'Filter', validators=[DataRequired()])
+    filter = StringField(u'Filter')
     dsl = StringField(u'DSL')
+    create_new_canned_view = BooleanField(u'Create canned view', default=False)
+    create_from_canned_view = IntegerField(u'Create from canned view')
 
 
 class ExploreForm(BaseForm):

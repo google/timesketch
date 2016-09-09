@@ -68,6 +68,7 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
+from timesketch.models.sketch import CannedView
 from timesketch.models.story import Story
 
 
@@ -103,12 +104,23 @@ class ResourceMixin(object):
         u'updated_at': fields.DateTime
     }
 
+    canned_view_fields = {
+        u'id': fields.Integer,
+        u'name': fields.String,
+        u'query_string': fields.String,
+        u'query_filter': fields.String,
+        u'query_dsl': fields.String,
+        u'created_at': fields.DateTime,
+        u'updated_at': fields.DateTime
+    }
+
     view_fields = {
         u'id': fields.Integer,
         u'name': fields.String,
         u'query_string': fields.String,
         u'query_filter': fields.String,
         u'query_dsl': fields.String,
+        u'cannedview': fields.Nested(canned_view_fields),
         u'created_at': fields.DateTime,
         u'updated_at': fields.DateTime
     }
@@ -154,6 +166,7 @@ class ResourceMixin(object):
     fields_registry = {
         u'searchindex': searchindex_fields,
         u'timeline': timeline_fields,
+        u'cannedview': canned_view_fields,
         u'view': view_fields,
         u'user': user_fields,
         u'sketch': sketch_fields,
@@ -339,13 +352,47 @@ class ViewListResource(ResourceMixin, Resource):
         form = SaveViewForm.build(request)
         if form.validate_on_submit():
             sketch = Sketch.query.get_with_acl(sketch_id)
+            create_new_canned_view = form.create_new_canned_view.data
+            create_from_canned_view = form.create_from_canned_view.data
+            canned_view = None
+
+            # Default to user supplied data
+            view_name = form.name.data
+            query_string = form.query.data
+            query_filter = json.dumps(
+                form.filter.data, ensure_ascii=False),
+            query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
+
+            if create_new_canned_view:
+                canned_view = CannedView(
+                    name=view_name,
+                    user=current_user,
+                    query_string=query_string,
+                    query_filter=query_filter,
+                    query_dsl=query_dsl
+                )
+                db_session.add(canned_view)
+                db_session.commit()
+
+            if create_from_canned_view:
+                canned_view = CannedView.query.get(create_from_canned_view)
+                view_name = canned_view.name
+                query_string = canned_view.query_string
+                query_filter = canned_view.query_filter,
+                query_dsl = canned_view.query_dsl
+
             view = View(
-                name=form.name.data, sketch=sketch, user=current_user,
-                query_string=form.query.data,
-                query_filter=json.dumps(form.filter.data, ensure_ascii=False),
-                query_dsl=json.dumps(form.dsl.data, ensure_ascii=False))
+                name=view_name,
+                sketch=sketch,
+                user=current_user,
+                query_string=query_string,
+                query_filter=query_filter,
+                query_dsl=query_dsl,
+                canned_view=canned_view
+            )
             db_session.add(view)
             db_session.commit()
+
             return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
