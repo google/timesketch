@@ -159,10 +159,11 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     query_dsl = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey(u'user.id'))
     sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
+    cannedview_id = Column(Integer, ForeignKey(u'cannedview.id'))
 
     def __init__(
-            self, name, sketch, user, query_string=None, query_filter=None,
-            query_dsl=None):
+            self, name, sketch, user, canned_view=None, query_string=None,
+            query_filter=None, query_dsl=None):
         """Initialize the View object.
 
         Args:
@@ -177,6 +178,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.name = name
         self.sketch = sketch
         self.user = user
+        self.cannedview = canned_view
         self.query_string = query_string
         self.query_filter = query_filter
         self.query_dsl = query_dsl
@@ -222,6 +224,36 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             filter_dict[key] = DEFAULT_VALUES[key]
 
         return json.dumps(filter_dict, ensure_ascii=False)
+
+
+class CannedView(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
+                 BaseModel):
+    """Implements the Canned view model."""
+
+    name = Column(Unicode(255))
+    query_string = Column(Unicode(255))
+    query_filter = Column(UnicodeText())
+    query_dsl = Column(UnicodeText())
+    user_id = Column(Integer, ForeignKey(u'user.id'))
+
+    def __init__(
+            self, name, user, query_string=None, query_filter=None,
+            query_dsl=None):
+        """Initialize the View object.
+
+        Args:
+            name: The name of the timeline
+            user: A user (instance of timesketch.models.user.User)
+            query_string: The query string
+            query_filter: The filter to apply (JSON format as string)
+            query_dsl: A query DSL document (JSON format as string)
+        """
+        super(CannedView, self).__init__()
+        self.name = name
+        self.user = user
+        self.query_string = query_string
+        self.query_filter = query_filter
+        self.query_dsl = query_dsl
 
 
 class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):
