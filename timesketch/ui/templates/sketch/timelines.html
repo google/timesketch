@@ -9,12 +9,10 @@
     </ul>
     <div class="container">
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-8">
 
                 {% if sketch.timelines %}
                     <div class="card">
-                        <h3>Timelines in this sketch</h3>
-                        <br>
                         <table class="table table-hover">
                             <thead>
                             <tr>
@@ -63,6 +61,10 @@
                     </div>
                 {% endif %}
 
+                </div>
+            <div class="col-md-4">
+
+
                 {% if sketch.has_permission(current_user, 'write') %}
                     <div class="card">
                         {% if timelines %}
@@ -76,20 +78,14 @@
                                     <thead>
                                     <th width="30px"></th>
                                     <th>Timeline</th>
-                                    <th width="150px">Created by</th>
-                                    <th width="150px">Created</th>
+                                    <th width="100px">Created</th>
                                     </thead>
                                     {% for timeline in timelines %}
                                         {% if timeline.get_status.status == 'new' %}
                                             <tr>
                                                 <td><input name="timelines" type="checkbox" value={{ timeline.id }}></td>
                                                 <td>{{ timeline.name }}</td>
-                                                {% if not timeline.user %}
-                                                    <td>System</td>
-                                                {% else %}
-                                                    <td>{{ timeline.user.username }}</td>
-                                                {% endif %}
-                                                <td>{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                                <td>{{ timeline.created_at.strftime('%Y-%m-%d') }}</td>
                                             </tr>
                                         {% endif %}
                                     {% endfor %}
@@ -104,6 +100,7 @@
                         {% endif %}
                     </div>
                 {% endif %}
+            </div>
             </div>
         </div>
     </div>

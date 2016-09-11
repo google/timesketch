@@ -47,7 +47,14 @@ limitations under the License.
                                 scope.queryDsl = queryDsl;
                                 scope.showAdvanced = true
                             }
-                            console.log(data)
+
+                            // Special case where all indices should be queried.
+                            if (filter.indices == "_all") {
+                                filter.indices = [];
+                                for (var i = 0; i < scope.sketch.timelines.length; i++) {
+                                    filter.indices.push(scope.sketch.timelines[i].searchindex.index_name)
+                                }
+                            }
                             ctrl.search(query, filter, queryDsl);
                         });
                     }

@@ -19,6 +19,7 @@ limitations under the License.
         'timesketch.api',
         'timesketch.core',
         'timesketch.explore',
+        'timesketch.sketch',
         'timesketch.story'
     ]);
 

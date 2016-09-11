@@ -25,7 +25,7 @@ from flask import abort
 
 from timesketch.lib import datastore
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-
+from timesketch.models.sketch import Sketch
 
 # Setup logging
 es_logger = logging.getLogger(u'elasticsearch')
@@ -213,12 +213,13 @@ class ElasticSearchDataStore(datastore.DataStore):
         if not indices:
             return {u'hits': {u'hits': [], u'total': 0}, u'took': 0}
 
-        query_dsl = self.build_query(
-            sketch_id, query_string, query_filter, query_dsl, aggregations)
-
         # Check if we have specific events to fetch and get indices.
         if query_filter.get(u'events', None):
             indices = {event[u'index'] for event in query_filter[u'events']}
+
+        query_dsl = self.build_query(
+            sketch_id, query_string, query_filter, query_dsl, aggregations)
+
 
         # Default search type for elasticsearch is query_then_fetch.
         search_type = u'query_then_fetch'

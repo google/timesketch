@@ -31,6 +31,26 @@ limitations under the License.
             return $http.get(resource_url)
         };
 
+        this.getViews = function(sketch_id) {
+            /**
+             * Get all saved views for sketch.
+             * @param sketch_id - The id for the sketch.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = BASE_URL + sketch_id + '/views/';
+            return $http.get(resource_url)
+        };
+
+        this.getCannedViews = function(sketch_id) {
+            /**
+             * Get all canned views.
+             * @param sketch_id - The id for the sketch.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = BASE_URL + sketch_id + '/views/canned/';
+            return $http.get(resource_url)
+        };
+
         this.getView = function(sketch_id, view_id) {
             /**
              * Get a Timesketch view.
@@ -40,6 +60,17 @@ limitations under the License.
              */
             var resource_url = BASE_URL + sketch_id + '/views/' + view_id + '/';
             return $http.get(resource_url)
+        };
+
+        this.deleteView = function(sketch_id, view_id) {
+            /**
+             * Delete a Timesketch view.
+             * @param sketch_id - The id for the sketch.
+             * @param view_id - The id for the view.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = BASE_URL + sketch_id + '/views/' + view_id + '/';
+            return $http.delete(resource_url)
         };
 
         this.saveView = function(sketch_id, name, create_new_canned_view, query, filter, queryDsl) {
@@ -59,6 +90,20 @@ limitations under the License.
                 query: query,
                 filter: filter,
                 dsl: queryDsl
+            };
+            return $http.post(resource_url, params)
+        };
+
+        this.saveViewFromCanned = function(sketch_id, canned_view_id) {
+            /**
+             * Save a Timesketch view.
+             * @param sketch_id - The id for the sketch.
+             * @param canned_view_id - The id for the canned view to create from.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = BASE_URL + sketch_id + '/views/';
+            var params = {
+                create_from_canned_view: canned_view_id
             };
             return $http.post(resource_url, params)
         };
@@ -204,7 +249,6 @@ limitations under the License.
              * @param queryDsl - A JSON string with Elasticsearch DLS.
              * @returns A $http promise with two methods, success and error.
              */
-            console.log("search")
             var resource_url = BASE_URL + sketch_id + '/explore/';
             var params = {
                 query: query,

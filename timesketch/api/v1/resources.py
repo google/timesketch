@@ -104,9 +104,14 @@ class ResourceMixin(object):
         u'updated_at': fields.DateTime
     }
 
+    user_fields = {
+        u'username': fields.String
+    }
+
     canned_view_fields = {
         u'id': fields.Integer,
         u'name': fields.String,
+        u'user': fields.Nested(user_fields),
         u'query_string': fields.String,
         u'query_filter': fields.String,
         u'query_dsl': fields.String,
@@ -117,16 +122,13 @@ class ResourceMixin(object):
     view_fields = {
         u'id': fields.Integer,
         u'name': fields.String,
+        u'user': fields.Nested(user_fields),
         u'query_string': fields.String,
         u'query_filter': fields.String,
         u'query_dsl': fields.String,
         u'cannedview': fields.Nested(canned_view_fields),
         u'created_at': fields.DateTime,
         u'updated_at': fields.DateTime
-    }
-
-    user_fields = {
-        u'username': fields.String
     }
 
     sketch_fields = {
@@ -340,6 +342,19 @@ class SketchResource(ResourceMixin, Resource):
 class ViewListResource(ResourceMixin, Resource):
     """Resource to create a View."""
     @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            Views in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        return self.to_json(sketch.get_named_views)
+
+    @login_required
     def post(self, sketch_id):
         """Handles POST request to the resource.
 
@@ -359,11 +374,16 @@ class ViewListResource(ResourceMixin, Resource):
             # Default to user supplied data
             view_name = form.name.data
             query_string = form.query.data
-            query_filter = json.dumps(
-                form.filter.data, ensure_ascii=False),
+            query_filter = json.dumps(form.filter.data, ensure_ascii=False),
             query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
 
             if create_new_canned_view:
+                query_filter_dict = json.loads(query_filter[0])
+                if query_filter_dict.get(u'indices', None):
+                    query_filter_dict[u'indices'] = u'_all'
+                    query_filter = json.dumps(
+                        query_filter_dict, ensure_ascii=False)
+
                 canned_view = CannedView(
                     name=view_name,
                     user=current_user,
@@ -427,7 +447,34 @@ class ViewResource(ResourceMixin, Resource):
         db_session.add(view)
         db_session.commit()
 
+        #query_filter = json.loads(view.query_filter)
+        #indices = query_filter.get(u'indices', None)
+        #if u'_all' in indices:
+        #    query_filter[u'indices'] = [timeline.searchindex.index_name for timeline in sketch.timelines]
+        #    view.query_filter = json.dumps(query_filter, ensure_ascii=False)
+
         return self.to_json(view)
+
+    @login_required
+    def delete(self, sketch_id, view_id):
+        """Handles DELETE request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            view_id: Integer primary key for a view database model
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        view = View.query.get(view_id)
+
+        # Check that this view belongs to the sketch
+        if view.sketch_id != sketch.id:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+
+        if not sketch.has_permission(user=current_user, permission=u'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
+
+        view.set_status(status=u'deleted')
+        return HTTP_STATUS_CODE_OK
 
     @login_required
     def post(self, sketch_id, view_id):
@@ -451,13 +498,24 @@ class ViewResource(ResourceMixin, Resource):
             view.sketch = sketch
 
             if form.dsl.data:
-                print "Has DSL"
                 view.query_string = u''
 
             db_session.add(view)
             db_session.commit()
             return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class CannedViewListResource(ResourceMixin, Resource):
+    """Resource to create a canned view."""
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            View in JSON (instance of flask.wrappers.Response)
+        """
+        return self.to_json(CannedView.query.all())
 
 
 class ExploreResource(ResourceMixin, Resource):
@@ -479,8 +537,8 @@ class ExploreResource(ResourceMixin, Resource):
         if form.validate_on_submit():
             query_dsl = form.dsl.data
             query_filter = form.filter.data
-            sketch_indices = [
-                t.searchindex.index_name for t in sketch.timelines]
+            sketch_indices = {
+                t.searchindex.index_name for t in sketch.timelines}
             indices = query_filter.get(u'indices', sketch_indices)
 
             # Make sure that the indices in the filter are part of the sketch
