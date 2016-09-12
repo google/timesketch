@@ -71,8 +71,6 @@
                         days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
                         hours = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"];
 
-
-
                     var svg = d3.select(element[0]).append("svg")
                         .attr("width", svgWidth + margin.left + margin.right)
                         .attr("height", svgHeight + margin.top + margin.bottom)
@@ -100,7 +98,6 @@
                         colors.push(genColor(i));
                     }
                     var num_buckets = colors.length;
-                    console.log(colors);
                     var colorScale = d3.scaleQuantile()
                         .domain([0, num_buckets - 1, max_value_initial])
                         .range(colors);
