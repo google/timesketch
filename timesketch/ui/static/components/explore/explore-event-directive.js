@@ -122,6 +122,14 @@ limitations under the License.
                         });
                 };
 
+                $scope.deleteView = function() {
+                    timesketchApi.deleteView($scope.sketchId, $scope.viewId)
+                        .success(function(data) {
+                            var sketchUrl = '/sketch/' + $scope.sketchId + '/explore/';
+                            window.location.href = sketchUrl;
+                        });
+                };
+
                 $scope.addStar = function() {
                     event_list = [];
                     angular.forEach($scope.events, function(event) {

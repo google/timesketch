@@ -143,7 +143,9 @@ class SaveViewForm(BaseForm):
     query = StringField(u'Query')
     filter = StringField(u'Filter')
     dsl = StringField(u'DSL')
-    new_searchtemplate = BooleanField(u'Create search template', default=False)
+    new_searchtemplate = BooleanField(
+        u'Create search template', false_values={False, u'false', u''},
+        default=False)
     from_searchtemplate_id = IntegerField(u'Create from search template')
 
 

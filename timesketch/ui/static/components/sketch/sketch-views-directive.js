@@ -68,7 +68,7 @@
             },
             require: "^tsSavedViewList",
             controller: function ($scope) {
-                timesketchApi.getSearchTemplates($scope.sketchId).success(function (data) {
+                timesketchApi.getSearchTemplates().success(function (data) {
                     $scope.searchTemplates = [];
                     var views = data.objects[0];
                     if (views) {
@@ -82,10 +82,13 @@
 
             },
             link: function(scope, elem, attrs, ctrl) {
-                scope.addSearchTemplate = function(view) {
+                scope.addSearchTemplate = function(view, redirect=false) {
                     timesketchApi.saveViewFromSearchTemplate(scope.sketchId, view.id).success(function(data) {
                         var view = data.objects[0];
                         view.updated_at = moment.utc(view.updated_at).format("YYYY-MM-DD");
+                        if (redirect) {
+                            window.location.href = ''
+                        }
                         ctrl.updateSavedViews(view);
                     });
                 };

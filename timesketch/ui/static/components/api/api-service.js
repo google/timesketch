@@ -42,7 +42,7 @@ limitations under the License.
             return $http.get(resource_url)
         };
 
-        this.getSearchTemplates = function(sketch_id) {
+        this.getSearchTemplates = function() {
             /**
              * Get all search templates.
              * @param sketch_id - The id for the sketch.
