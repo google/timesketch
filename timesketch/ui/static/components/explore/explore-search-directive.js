@@ -65,7 +65,7 @@ limitations under the License.
             },
             controller: function($scope) {
                 $scope.filter = {"indices": []};
-                $scope.create_canned_view = false;
+                $scope.new_searchtemplate = false;
                 timesketchApi.getSketch($scope.sketchId).success(function(data) {
                     $scope.sketch = data.objects[0];
                     $scope.sketch.views = data.meta.views;
@@ -133,10 +133,9 @@ limitations under the License.
 
                 this.saveView = function() {
                     timesketchApi.saveView(
-                        $scope.sketchId, $scope.view_name, $scope.create_new_canned_view, $scope.query, $scope.filter, $scope.queryDsl)
+                        $scope.sketchId, $scope.view_name, $scope.new_searchtemplate, $scope.query, $scope.filter, $scope.queryDsl)
                         .success(function(data) {
-                            // Reset create canned view to default false
-                            $scope.create_new_canned_view = false;
+                            $scope.new_searchtemplate = false;
                             var view_id = data.objects[0].id;
                             var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
                             window.location.href = view_url;

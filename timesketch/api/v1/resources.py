@@ -68,7 +68,7 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
-from timesketch.models.sketch import CannedView
+from timesketch.models.sketch import SearchTemplate
 from timesketch.models.story import Story
 
 
@@ -108,7 +108,7 @@ class ResourceMixin(object):
         u'username': fields.String
     }
 
-    canned_view_fields = {
+    searchtemplate_fields = {
         u'id': fields.Integer,
         u'name': fields.String,
         u'user': fields.Nested(user_fields),
@@ -126,7 +126,7 @@ class ResourceMixin(object):
         u'query_string': fields.String,
         u'query_filter': fields.String,
         u'query_dsl': fields.String,
-        u'cannedview': fields.Nested(canned_view_fields),
+        u'searchtemplate': fields.Nested(searchtemplate_fields),
         u'created_at': fields.DateTime,
         u'updated_at': fields.DateTime
     }
@@ -168,7 +168,7 @@ class ResourceMixin(object):
     fields_registry = {
         u'searchindex': searchindex_fields,
         u'timeline': timeline_fields,
-        u'cannedview': canned_view_fields,
+        u'searchtemplate': searchtemplate_fields,
         u'view': view_fields,
         u'user': user_fields,
         u'sketch': sketch_fields,
@@ -293,6 +293,12 @@ class SketchResource(ResourceMixin, Resource):
                     u'name': view.name,
                     u'id': view.id
                 } for view in sketch.get_named_views
+            ],
+            searchtemplates=[
+                {
+                    u'name': searchtemplate.name,
+                    u'id': searchtemplate.id
+                } for searchtemplate in SearchTemplate.query.all()
             ])
         return self.to_json(sketch, meta=meta)
 
@@ -367,48 +373,51 @@ class ViewListResource(ResourceMixin, Resource):
         form = SaveViewForm.build(request)
         if form.validate_on_submit():
             sketch = Sketch.query.get_with_acl(sketch_id)
-            create_new_canned_view = form.create_new_canned_view.data
-            create_from_canned_view = form.create_from_canned_view.data
-            canned_view = None
+            new_searchtemplate = form.new_searchtemplate.data
+            from_searchtemplate_id = form.from_searchtemplate_id.data
+            searchtemplate = None
 
             # Default to user supplied data
-            view_name = form.name.data
+            template_name = form.name.data
             query_string = form.query.data
             query_filter = json.dumps(form.filter.data, ensure_ascii=False),
             query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
 
-            if create_new_canned_view:
+            if new_searchtemplate:
                 query_filter_dict = json.loads(query_filter[0])
                 if query_filter_dict.get(u'indices', None):
                     query_filter_dict[u'indices'] = u'_all'
-                    query_filter = json.dumps(
-                        query_filter_dict, ensure_ascii=False)
 
-                canned_view = CannedView(
-                    name=view_name,
+                # pylint: disable=redefined-variable-type
+                query_filter = json.dumps(
+                    query_filter_dict, ensure_ascii=False)
+
+                searchtemplate = SearchTemplate(
+                    name=template_name,
                     user=current_user,
                     query_string=query_string,
                     query_filter=query_filter,
                     query_dsl=query_dsl
                 )
-                db_session.add(canned_view)
+                db_session.add(searchtemplate)
                 db_session.commit()
 
-            if create_from_canned_view:
-                canned_view = CannedView.query.get(create_from_canned_view)
-                view_name = canned_view.name
-                query_string = canned_view.query_string
-                query_filter = canned_view.query_filter,
-                query_dsl = canned_view.query_dsl
+            if from_searchtemplate_id:
+                searchtemplate = SearchTemplate.query.get(
+                    from_searchtemplate_id)
+                template_name = searchtemplate.name
+                query_string = searchtemplate.query_string
+                query_filter = searchtemplate.query_filter,
+                query_dsl = searchtemplate.query_dsl
 
             view = View(
-                name=view_name,
+                name=template_name,
                 sketch=sketch,
                 user=current_user,
                 query_string=query_string,
                 query_filter=query_filter,
                 query_dsl=query_dsl,
-                canned_view=canned_view
+                searchtemplate=searchtemplate
             )
             db_session.add(view)
             db_session.commit()
@@ -446,12 +455,6 @@ class ViewResource(ResourceMixin, Resource):
         view.query_filter = view.validate_filter()
         db_session.add(view)
         db_session.commit()
-
-        #query_filter = json.loads(view.query_filter)
-        #indices = query_filter.get(u'indices', None)
-        #if u'_all' in indices:
-        #    query_filter[u'indices'] = [timeline.searchindex.index_name for timeline in sketch.timelines]
-        #    view.query_filter = json.dumps(query_filter, ensure_ascii=False)
 
         return self.to_json(view)
 
@@ -506,16 +509,16 @@ class ViewResource(ResourceMixin, Resource):
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
 
-class CannedViewListResource(ResourceMixin, Resource):
-    """Resource to create a canned view."""
+class SearchTemplateListResource(ResourceMixin, Resource):
+    """Resource to create a search template."""
     @login_required
-    def get(self, sketch_id):
+    def get(self):
         """Handles GET request to the resource.
 
         Returns:
             View in JSON (instance of flask.wrappers.Response)
         """
-        return self.to_json(CannedView.query.all())
+        return self.to_json(SearchTemplate.query.all())
 
 
 class ExploreResource(ResourceMixin, Resource):
@@ -590,7 +593,10 @@ class ExploreResource(ResourceMixin, Resource):
                 tl_names[timeline.searchindex.index_name] = timeline.name
 
             try:
-                buckets = result[u'aggregations'][u'field_aggregation'][u'buckets']
+                buckets = result[
+                    u'aggregations'][
+                        u'field_aggregation'][
+                            u'buckets']
             except KeyError:
                 buckets = None
 

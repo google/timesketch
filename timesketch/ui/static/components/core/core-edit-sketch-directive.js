@@ -15,9 +15,20 @@ limitations under the License.
 */
 
 (function() {
-    var module = angular.module('timesketch.core', [
-        'timesketch.core.butterbar.directive',
-        'timesketch.core.upload.directive',
-        'timesketch.core.edit.sketch.directive'
-    ]);
+    var module = angular.module('timesketch.core.edit.sketch.directive', []);
+
+    module.directive('tsEditSketch', function() {
+        /**
+         * Render Edit sketch modal.
+         */
+        return {
+            restrict : "E",
+            scope: {},
+            link : function(scope, element, attrs) {
+                var modal_element = angular.element(document.getElementById("new-sketch-modal"));
+                modal_element.modal('show');
+            }
+        };
+    });
 })();
+

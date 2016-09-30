@@ -14,7 +14,8 @@
 """Elasticsearch aggregations."""
 
 
-def heatmap(es_client, sketch_id, query_string, query_filter, query_dsl, indices):
+def heatmap(
+        es_client, sketch_id, query_string, query_filter, query_dsl, indices):
     """Aggregate query results into number of events per hour/day.
 
     Args:

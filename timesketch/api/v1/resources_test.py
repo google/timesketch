@@ -85,7 +85,9 @@ class ViewListResourceTest(BaseTest):
     def test_post_view_list_resource(self):
         """Authenticated request to create a view."""
         self.login()
-        data = dict(name=u'test', query=u'test', filter=u'{}')
+        data = dict(
+            name=u'test', new_searchtemplate=False, query=u'test',
+            filter={}, dsl={})
         response = self.client.post(
             self.resource_url, data=json.dumps(data, ensure_ascii=False),
             content_type=u'application/json')

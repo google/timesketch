@@ -238,6 +238,7 @@ def export(sketch_id):
     sketch = Sketch.query.get_with_acl(sketch_id)
     view = sketch.get_user_view(current_user)
     query_filter = json.loads(view.query_filter)
+    query_dsl = json.loads(view.query_dsl)
     indices = query_filter.get(u'indices', [])
 
     datastore = ElasticSearchDataStore(
@@ -245,7 +246,7 @@ def export(sketch_id):
         port=current_app.config[u'ELASTIC_PORT'])
 
     result = datastore.search(
-        sketch_id, view.query_string, query_filter, indices,
+        sketch_id, view.query_string, query_filter, query_dsl, indices,
         aggregations=None, return_results=True)
 
     csv_out = StringIO()

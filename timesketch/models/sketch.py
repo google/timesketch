@@ -70,9 +70,9 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         return views
 
     @property
-    def get_canned_views(self):
-        """Get canned views."""
-        return CannedView.query.all()
+    def get_search_templates(self):
+        """Get search templates."""
+        return SearchTemplate.query.all()
 
     def get_user_view(self, user):
         """Get view for user, i.e. view with the state for the user/sketch.
@@ -164,10 +164,10 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     query_dsl = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey(u'user.id'))
     sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
-    cannedview_id = Column(Integer, ForeignKey(u'cannedview.id'))
+    searchtemplate_id = Column(Integer, ForeignKey(u'searchtemplate.id'))
 
     def __init__(
-            self, name, sketch, user, canned_view=None, query_string=None,
+            self, name, sketch, user, searchtemplate=None, query_string=None,
             query_filter=None, query_dsl=None):
         """Initialize the View object.
 
@@ -175,6 +175,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             name: The name of the timeline
             sketch: A sketch (instance of timesketch.models.sketch.Sketch)
             user: A user (instance of timesketch.models.user.User)
+            searchtemplate: Instance of timesketch.models.sketch.SearchTemplate
             query_string: The query string
             query_filter: The filter to apply (JSON format as string)
             query_dsl: A query DSL document (JSON format as string)
@@ -183,7 +184,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.name = name
         self.sketch = sketch
         self.user = user
-        self.cannedview = canned_view
+        self.searchtemplate = searchtemplate
         self.query_string = query_string
         self.query_filter = query_filter
         self.query_dsl = query_dsl
@@ -231,20 +232,20 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         return json.dumps(filter_dict, ensure_ascii=False)
 
 
-class CannedView(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
-                 BaseModel):
-    """Implements the Canned view model."""
+class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
+                     BaseModel):
+    """Implements the Search Template model."""
     name = Column(Unicode(255))
     query_string = Column(Unicode(255))
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey(u'user.id'))
-    views = relationship(u'View', backref=u'cannedview', lazy=u'select')
+    views = relationship(u'View', backref=u'searchtemplate', lazy=u'select')
 
     def __init__(
             self, name, user, query_string=None, query_filter=None,
             query_dsl=None):
-        """Initialize the View object.
+        """Initialize the Search Template object.
 
         Args:
             name: The name of the timeline
@@ -253,7 +254,7 @@ class CannedView(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             query_filter: The filter to apply (JSON format as string)
             query_dsl: A query DSL document (JSON format as string)
         """
-        super(CannedView, self).__init__()
+        super(SearchTemplate, self).__init__()
         self.name = name
         self.user = user
         self.query_string = query_string

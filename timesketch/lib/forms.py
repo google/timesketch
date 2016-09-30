@@ -100,8 +100,7 @@ class UsernamePasswordForm(BaseForm):
 class NameDescriptionForm(BaseForm):
     """Generic form for name and description forms. Used in multiple places."""
     name = StringField(u'Name', validators=[DataRequired()])
-    description = StringField(
-        u'Description', validators=[DataRequired()], widget=widgets.TextArea())
+    description = StringField(u'Description', widget=widgets.TextArea())
 
 
 class HiddenNameDescriptionForm(BaseForm):
@@ -111,8 +110,7 @@ class HiddenNameDescriptionForm(BaseForm):
     """
     name = HiddenField(
         u'Name', default=u'Untitled sketch', validators=[DataRequired()])
-    description = HiddenField(
-        u'Description', default=u'No description', validators=[DataRequired()])
+    description = HiddenField(u'Description')
 
 
 class TimelineForm(NameDescriptionForm):
@@ -145,8 +143,8 @@ class SaveViewForm(BaseForm):
     query = StringField(u'Query')
     filter = StringField(u'Filter')
     dsl = StringField(u'DSL')
-    create_new_canned_view = BooleanField(u'Create canned view', default=False)
-    create_from_canned_view = IntegerField(u'Create from canned view')
+    new_searchtemplate = BooleanField(u'Create search template', default=False)
+    from_searchtemplate_id = IntegerField(u'Create from search template')
 
 
 class ExploreForm(BaseForm):

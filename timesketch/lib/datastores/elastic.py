@@ -25,7 +25,6 @@ from flask import abort
 
 from timesketch.lib import datastore
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.models.sketch import Sketch
 
 # Setup logging
 es_logger = logging.getLogger(u'elasticsearch')
@@ -43,6 +42,15 @@ class ElasticSearchDataStore(datastore.DataStore):
 
     @staticmethod
     def _build_label_query(sketch_id, label_name):
+        """Build Elasticsearch query for Timesketch labels.
+
+        Args:
+            sketch_id: Integer of sketch primary key.
+            label_name: Name of the label to search for.
+
+        Returns:
+            Elasticsearch query as a dictionary.
+        """
         query_dict = {
             u'query': {
                 u'filtered': {
@@ -53,12 +61,14 @@ class ElasticSearchDataStore(datastore.DataStore):
                                     u'must': [
                                         {
                                             u'term': {
-                                                u'timesketch_label.name': label_name
+                                                u'timesketch_label.name':
+                                                    label_name
                                             }
                                         },
                                         {
                                             u'term': {
-                                                u'timesketch_label.sketch_id': sketch_id
+                                                u'timesketch_label.sketch_id':
+                                                    sketch_id
                                             }
                                         }
                                     ]
@@ -74,6 +84,14 @@ class ElasticSearchDataStore(datastore.DataStore):
 
     @staticmethod
     def _build_events_query(events):
+        """Build Elasticsearch query for one or more document ids.
+
+        Args:
+            events: List of Elasticsearch document IDs.
+
+        Returns:
+            Elasticsearch query as a dictionary.
+        """
         events_list = [event[u'event_id'] for event in events]
         query_dict = {
             u'query': {
@@ -86,6 +104,14 @@ class ElasticSearchDataStore(datastore.DataStore):
 
     @staticmethod
     def _build_field_aggregator(field_name):
+        """Build Elasticsearch query for aggregation based on field.
+
+        Args:
+            field_name: Field to aggregate.
+
+        Returns:
+            Elasticsearch aggregation as a dictionary.
+        """
         field_aggregation = {
             u'field_aggregation': {
                 u'terms': {
@@ -172,13 +198,15 @@ class ElasticSearchDataStore(datastore.DataStore):
                             u'filter': {
                                 u'not': {
                                     u'terms': {
-                                        u'field_aggregation': query_filter[u'exclude']
+                                        u'field_aggregation':
+                                            query_filter[u'exclude']
                                     }
                                 }
                             },
                             u'aggregations': aggregations
                         },
-                        u'data_type': data_type_aggregation[u'field_aggregation']
+                        u'data_type':
+                            data_type_aggregation[u'field_aggregation']
                     }
                 query_dsl[u'aggregations'] = aggregations
         else:

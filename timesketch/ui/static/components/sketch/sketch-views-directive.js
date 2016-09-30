@@ -49,49 +49,49 @@
                 };
 
                 this.updateSavedViews = function(view) {
-                    $scope.savedViews.push(view)
+                    $scope.savedViews.unshift(view)
+
                 }
             }
         }
     }]);
 
-    module.directive('tsCannedViewList', ['timesketchApi', function (timesketchApi) {
+    module.directive('tsSearchTemplateList', ['timesketchApi', function (timesketchApi) {
         /**
-         * Render the list of canned views.
+         * Render the list of search templates.
          */
         return {
             restrict: 'E',
-            templateUrl: '/static/components/sketch/sketch-canned-views-list.html',
+            templateUrl: '/static/components/sketch/sketch-search-template-list.html',
             scope: {
                 sketchId: '='
             },
             require: "^tsSavedViewList",
             controller: function ($scope) {
-                timesketchApi.getCannedViews($scope.sketchId).success(function (data) {
-                    $scope.cannedViews = [];
+                timesketchApi.getSearchTemplates($scope.sketchId).success(function (data) {
+                    $scope.searchTemplates = [];
                     var views = data.objects[0];
                     if (views) {
                         for (var i = 0; i < views.length; i++) {
                             var view = views[i];
                             view.updated_at = moment.utc(view.updated_at).format("YYYY-MM-DD");
-                            $scope.cannedViews.push(view)
+                            $scope.searchTemplates.push(view)
                         }
                     }
                 });
 
             },
             link: function(scope, elem, attrs, ctrl) {
-                scope.addCannedView = function(view) {
-                    timesketchApi.saveViewFromCanned(scope.sketchId, view.id).success(function(data) {
+                scope.addSearchTemplate = function(view) {
+                    timesketchApi.saveViewFromSearchTemplate(scope.sketchId, view.id).success(function(data) {
                         var view = data.objects[0];
                         view.updated_at = moment.utc(view.updated_at).format("YYYY-MM-DD");
-                        ctrl.updateSavedViews(view)
+                        ctrl.updateSavedViews(view);
                     });
                 };
 
             }
         }
     }]);
-
 
 })();

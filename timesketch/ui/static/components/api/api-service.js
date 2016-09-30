@@ -41,13 +41,13 @@ limitations under the License.
             return $http.get(resource_url)
         };
 
-        this.getCannedViews = function(sketch_id) {
+        this.getSearchTemplates = function(sketch_id) {
             /**
-             * Get all canned views.
+             * Get all search templates.
              * @param sketch_id - The id for the sketch.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/views/canned/';
+            var resource_url = BASE_URL + '/searchtemplate/';
             return $http.get(resource_url)
         };
 
@@ -73,12 +73,12 @@ limitations under the License.
             return $http.delete(resource_url)
         };
 
-        this.saveView = function(sketch_id, name, create_new_canned_view, query, filter, queryDsl) {
+        this.saveView = function(sketch_id, name, new_searchtemplate, query, filter, queryDsl) {
             /**
              * Save a Timesketch view.
              * @param sketch_id - The id for the sketch.
              * @param name - A name for the view.
-             * @param name - Boolean indicating if a canned view should be created.
+             * @param new_searchtemplate - Boolean indicating if a search template should be created.
              * @param query - A query string.
              * @param filter - A JSON string with filters and a list of indices.
              * @returns A $http promise with two methods, success and error.
@@ -86,7 +86,7 @@ limitations under the License.
             var resource_url = BASE_URL + sketch_id + '/views/';
             var params = {
                 name: name,
-                create_new_canned_view: create_new_canned_view,
+                new_searchtemplate: new_searchtemplate,
                 query: query,
                 filter: filter,
                 dsl: queryDsl
@@ -94,16 +94,16 @@ limitations under the License.
             return $http.post(resource_url, params)
         };
 
-        this.saveViewFromCanned = function(sketch_id, canned_view_id) {
+        this.saveViewFromSearchTemplate = function(sketch_id, searchtemplate_id) {
             /**
              * Save a Timesketch view.
              * @param sketch_id - The id for the sketch.
-             * @param canned_view_id - The id for the canned view to create from.
+             * @param searchtemplate_id - The id for the search template to create from.
              * @returns A $http promise with two methods, success and error.
              */
             var resource_url = BASE_URL + sketch_id + '/views/';
             var params = {
-                create_from_canned_view: canned_view_id
+                from_searchtemplate_id: searchtemplate_id
             };
             return $http.post(resource_url, params)
         };

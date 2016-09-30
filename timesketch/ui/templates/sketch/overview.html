@@ -1,12 +1,29 @@
 {% extends "base.html" %}
 {% block main %}
-    <ul class="nav nav-tabs">
-        <li role="presentation" class="active"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
-        <li role="presentation"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
-        <li role="presentation"><a href="{{ url_for('story_views.story', sketch_id=sketch.id) }}"><i class="fa fa-book"></i> Stories</a></li>
-        <li role="presentation"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
-        <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
-    </ul>
+
+    <div class="modal" id="new-sketch-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <span class="modal-title" id="myModalLabel">Choose a name for your new sketch</span>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" role="form" action="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}" method="post">
+                        <div class="form-group">
+                            <div class="col-sm-12">
+                                <input class="form-control search-input" style="background: transparent;padding: 0" id="name" name="name" type="text" value="{{ sketch.name }}" autofocus="true">
+                            </div>
+                        </div>
+                        <br>
+                        <input type="submit" class="btn btn-primary" value="Save"/>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        {{ sketch_form.csrf_token }}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal" id="edit-sketch-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -186,6 +203,16 @@
         </div>
     </div>
 
+    {% if sketch.timelines %}
+
+    <ul class="nav nav-tabs">
+        <li role="presentation" class="active"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
+        <li role="presentation"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
+        <li role="presentation"><a href="{{ url_for('story_views.story', sketch_id=sketch.id) }}"><i class="fa fa-book"></i> Stories</a></li>
+        <li role="presentation"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
+        <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
+    </ul>
+
     <div class="container">
         <div class="row">
             <div class="col-md-12">
@@ -283,7 +310,6 @@
             </div>
         {% endif %}
 
-
         <div class="container">
             <div class="row">
                 {% if sketch.get_named_views %}
@@ -321,10 +347,32 @@
                 {% endif %}
             </div>
         </div>
-
-
+    </div>
     </div>
 
+    {% else %}
+        {% if sketch.name == "Untitled sketch" %}
+    <ts-edit-sketch></ts-edit-sketch>
+            {% endif %}
 
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+
+                    <div class="text-center" style="min-height: 300px; margin-top:100px">
+                        <h1 data-toggle="modal" data-target="#edit-sketch-modal" style="cursor:pointer">{{ sketch.name }}</h1>
+                        <br>
+                        {% if sketch.has_permission(current_user, 'write') %}
+                            <a class="btn btn-lg btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started!</a>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
     </div>
+
+    {% endif %}
+
 {% endblock %}

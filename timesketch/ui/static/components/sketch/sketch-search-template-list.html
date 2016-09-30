@@ -1,0 +1,18 @@
+<table class="table table-hover" ng-hide="!searchTemplates.length">
+    <thead>
+    <tr>
+        <th>Search Templates</th>
+        <th width="90px"></th>
+    </tr>
+    <tbody>
+    <tr ng-repeat="view in searchTemplates">
+        <td>
+            <div style="margin-top:5px;font-weight: bold">
+                <b>{{ view.name }}</b>
+            </div>
+            <span style="color:#777;">{{ view.query_string }}</span>
+        </td>
+        <td><button class="btn btn-default" style="margin-top:5px;" ng-click="addSearchTemplate(view)"> <i class="fa fa-plus"></i> Add</button></td>
+    </tr>
+    </tbody>
+</table>
