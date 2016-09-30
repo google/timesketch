@@ -18,7 +18,8 @@ limitations under the License.
     var module = angular.module('timesketch.api.service', []);
 
     var timesketchApiImplementation = function($http) {
-        var BASE_URL = '/api/v1/sketches/';
+        var API_BASE_URL = '/api/v1';
+        var SKETCH_BASE_URL = API_BASE_URL + '/sketches/';
 
         this.getSketch = function(sketch_id) {
             /**
@@ -27,7 +28,7 @@ limitations under the License.
              * @param view_id - The id for the view.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/';
             return $http.get(resource_url)
         };
 
@@ -37,7 +38,7 @@ limitations under the License.
              * @param sketch_id - The id for the sketch.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/views/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/views/';
             return $http.get(resource_url)
         };
 
@@ -47,7 +48,7 @@ limitations under the License.
              * @param sketch_id - The id for the sketch.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + '/searchtemplate/';
+            var resource_url = API_BASE_URL + '/searchtemplate/';
             return $http.get(resource_url)
         };
 
@@ -58,7 +59,7 @@ limitations under the License.
              * @param view_id - The id for the view.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/views/' + view_id + '/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/views/' + view_id + '/';
             return $http.get(resource_url)
         };
 
@@ -69,7 +70,7 @@ limitations under the License.
              * @param view_id - The id for the view.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/views/' + view_id + '/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/views/' + view_id + '/';
             return $http.delete(resource_url)
         };
 
@@ -83,7 +84,7 @@ limitations under the License.
              * @param filter - A JSON string with filters and a list of indices.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/views/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/views/';
             var params = {
                 name: name,
                 new_searchtemplate: new_searchtemplate,
@@ -101,7 +102,7 @@ limitations under the License.
              * @param searchtemplate_id - The id for the search template to create from.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/views/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/views/';
             var params = {
                 from_searchtemplate_id: searchtemplate_id
             };
@@ -118,7 +119,7 @@ limitations under the License.
              * @param filter - A JSON string with filters and a list of indices.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/views/' + view_id + '/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/views/' + view_id + '/';
             var params = {
                 name: name,
                 query: query,
@@ -134,7 +135,7 @@ limitations under the License.
              * @param sketch_id - The id for the sketch.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/stories/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/stories/';
             var params = {
                 sketch_id: sketch_id
             };
@@ -148,7 +149,7 @@ limitations under the License.
              * @param story_id - The id for the story.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/stories/' + story_id + '/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/stories/' + story_id + '/';
             var params = {
                 sketch_id: sketch_id,
                 story_id: story_id,
@@ -164,7 +165,7 @@ limitations under the License.
              * @param sketch_id - The id for the sketch.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/stories/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/stories/';
             var params = {
                 sketch_id: sketch_id
             };
@@ -178,7 +179,7 @@ limitations under the License.
              * @param story_id - The id for the story.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/stories/' + story_id + '/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/stories/' + story_id + '/';
             var params = {
                 sketch_id: sketch_id,
                 story_id: story_id
@@ -194,7 +195,7 @@ limitations under the License.
              * @param event_id - The id for the event.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/event/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/event/';
             var params = {
                 params: {
                     searchindex_id: searchindex_id,
@@ -213,7 +214,7 @@ limitations under the License.
              * @param events - List of events.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/event/annotate/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/event/annotate/';
             var params = {
                 annotation: annotation,
                 annotation_type: annotation_type,
@@ -231,7 +232,7 @@ limitations under the License.
              * @param queryDsl - A JSON string with Elasticsearch DLS.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/explore/query/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/explore/query/';
             var params = {
                 query: query,
                 filter: filter,
@@ -249,7 +250,7 @@ limitations under the License.
              * @param queryDsl - A JSON string with Elasticsearch DLS.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/explore/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/explore/';
             var params = {
                 query: query,
                 filter: filter,
@@ -268,7 +269,7 @@ limitations under the License.
              * @param aggtype - Type of aggregation.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/aggregation/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/aggregation/';
             var params = {
                 query: query,
                 filter: filter,
