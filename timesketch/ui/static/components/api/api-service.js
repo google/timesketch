@@ -44,11 +44,20 @@ limitations under the License.
 
         this.getSearchTemplates = function() {
             /**
-             * Get all search templates.
-             * @param sketch_id - The id for the sketch.
+             * Get list of all search templates.
              * @returns A $http promise with two methods, success and error.
              */
             var resource_url = API_BASE_URL + '/searchtemplate/';
+            return $http.get(resource_url)
+        };
+
+        this.getSearchTemplate = function(searchtemplate_id) {
+            /**
+             * Get a specific search templates.
+             * @param searchtemplate_id - The id for the searchtemplate.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = API_BASE_URL + '/searchtemplate/' + searchtemplate_id + '/';
             return $http.get(resource_url)
         };
 

@@ -8,7 +8,7 @@
         <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
     </ul>
     {% if sketch.timelines %}
-        <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}" named-view="{{ named_view }}" autoload="true" redirect="true"></ts-search>
+        <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}" named-view="{{ named_view }}" searchtemplate-id="{{ searchtemplate_id }}" autoload="true" redirect="true"></ts-search>
     {% else %}
         <div class="container">
             <div class="row">

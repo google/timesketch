@@ -509,6 +509,22 @@ class ViewResource(ResourceMixin, Resource):
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
 
+class SearchTemplateResource(ResourceMixin, Resource):
+    """Resource to get a search template."""
+    @login_required
+    def get(self, searchtemplate_id):
+        """Handles GET request to the resource.
+
+        Args:
+            searchtemplate_id: Primary key for a search template database model
+
+        Returns:
+            Search template in JSON (instance of flask.wrappers.Response)
+        """
+        searchtemplate = SearchTemplate.query.get(searchtemplate_id)
+        return self.to_json(searchtemplate)
+
+
 class SearchTemplateListResource(ResourceMixin, Resource):
     """Resource to create a search template."""
     @login_required

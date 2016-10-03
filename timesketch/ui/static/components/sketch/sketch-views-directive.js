@@ -82,13 +82,10 @@
 
             },
             link: function(scope, elem, attrs, ctrl) {
-                scope.addSearchTemplate = function(view, redirect=false) {
+                scope.addSearchTemplate = function(view) {
                     timesketchApi.saveViewFromSearchTemplate(scope.sketchId, view.id).success(function(data) {
                         var view = data.objects[0];
                         view.updated_at = moment.utc(view.updated_at).format("YYYY-MM-DD");
-                        if (redirect) {
-                            window.location.href = ''
-                        }
                         ctrl.updateSavedViews(view);
                     });
                 };

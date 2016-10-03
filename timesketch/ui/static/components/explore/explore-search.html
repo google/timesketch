@@ -105,8 +105,17 @@
                 </div>
             </div>
 
-            <div class="card" ng-show="filter.context">
+            <div class="card" ng-if="filter.context">
                 <ts-search-context-card ng-if="filter.context" context="filter.context"></ts-search-context-card>
+            </div>
+
+            <div class="card" ng-show="searchTemplate">
+                <h4>Search template: {{ searchTemplate.name }}</h4>
+                You are exploring in the context of a search template.
+                <br>
+                Click <a href="/sketch/{{ sketchId }}/explore">here</a> to go back to explore view.
+                <br><br>
+                <button class="btn btn-success" ng-click="ctrl.saveViewFromSearchTemplate(searchTemplate.id)"><i class="fa fa-plus"></i> Create new view from this template</button>
             </div>
 
             <ts-event-list events="events" meta="meta" sketch-id="sketchId" filter="filter" query="query" query-dsl="queryDsl" view-id="viewId" named-view="namedView"></ts-event-list>

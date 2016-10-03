@@ -31,6 +31,7 @@ from timesketch.api.v1.resources import SketchResource
 from timesketch.api.v1.resources import SketchListResource
 from timesketch.api.v1.resources import ViewResource
 from timesketch.api.v1.resources import ViewListResource
+from timesketch.api.v1.resources import SearchTemplateResource
 from timesketch.api.v1.resources import SearchTemplateListResource
 from timesketch.api.v1.resources import UploadFileResource
 from timesketch.api.v1.resources import TaskResource
@@ -115,6 +116,8 @@ def create_app(config=None):
     api_v1.add_resource(
         ViewResource, u'/sketches/<int:sketch_id>/views/<int:view_id>/')
     api_v1.add_resource(SearchTemplateListResource, u'/searchtemplate/')
+    api_v1.add_resource(
+        SearchTemplateResource, u'/searchtemplate/<int:searchtemplate_id>/')
     api_v1.add_resource(UploadFileResource, u'/upload/')
     api_v1.add_resource(TaskResource, u'/tasks/')
     api_v1.add_resource(

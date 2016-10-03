@@ -236,7 +236,7 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     return render_template(
         u'sketch/explore.html', sketch=sketch, view=view, named_view=view_id,
         timelines=sketch_timelines, view_form=view_form,
-        searchtemplate=searchtemplate)
+        searchtemplate_id=searchtemplate_id)
 
 
 @sketch_views.route(

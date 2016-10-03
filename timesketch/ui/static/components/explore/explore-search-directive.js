@@ -30,7 +30,8 @@ limitations under the License.
             scope: {
                 sketchId: '=',
                 viewId: '=',
-                namedView: '='
+                namedView: '=',
+                searchtemplateId: '='
             },
             controllerAs: 'ctrl',
             link: function(scope, elem, attrs, ctrl) {
@@ -74,6 +75,13 @@ limitations under the License.
                             $scope.filter.indices.push($scope.sketch.timelines[i].searchindex.index_name)
                         }
                 });
+
+                if ($scope.searchtemplateId) {
+                    timesketchApi.getSearchTemplate($scope.searchtemplateId).success(function(data) {
+                        $scope.searchTemplate = data.objects[0];
+                        console.log($scope.searchTemplate)
+                    });
+                }
 
                 this.search = function(query, filter, queryDsl) {
                     if (!filter.order) {
@@ -139,6 +147,15 @@ limitations under the License.
                             var view_id = data.objects[0].id;
                             var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
                             window.location.href = view_url;
+                    });
+                };
+
+                this.saveViewFromSearchTemplate = function(searchtemplateId) {
+                    console.log("create new view")
+                    timesketchApi.saveViewFromSearchTemplate($scope.sketchId, searchtemplateId).success(function(data) {
+                        var view_id = data.objects[0].id;
+                        var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
+                        window.location.href = view_url;
                     });
                 };
 
