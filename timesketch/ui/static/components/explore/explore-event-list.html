@@ -8,17 +8,6 @@
     <button class="btn btn-default" data-toggle="modal" data-target="#trash-view-modal"><i class="fa fa-trash"></i> Delete view</button>
 </div>
 
-<div class="card" ng-if="searchtemplate">
-    <h4>{{ view.name }}</h4>
-    You are exploring in the context of a saved view.
-    <br>
-    Click <a href="/sketch/{{ sketchId }}/explore">here</a> to go back to explore view.
-    <br><br>
-    <button class="btn btn-success" ng-click="updateView()"><i class="fa fa-refresh"></i> Update view</button>
-    <button class="btn btn-default" data-toggle="modal" data-target="#trash-view-modal"><i class="fa fa-trash"></i> Delete view</button>
-</div>
-
-
 <div class="modal" id="trash-view-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">

@@ -313,8 +313,8 @@
         <div class="container">
             <div class="row">
                 {% if sketch.get_named_views %}
-                    <div class="col-md-6">
-                        <div class="card" style="min-height: 200px;">
+                    <div class="col-md-12">
+                        <div class="card">
                             <table class="table table-hover">
                                 <thead>
                                 <tr>
@@ -339,8 +339,8 @@
                     </div>
                 {% endif %}
                 {% if sketch.stories %}
-                    <div class="col-md-6">
-                        <div class="card" style="min-height: 200px;">
+                    <div class="col-md-12">
+                        <div class="card">
                             <ts-story-list sketch-id="{{ sketch.id }}"></ts-story-list>
                         </div>
                     </div>
@@ -352,8 +352,8 @@
 
     {% else %}
         {% if sketch.name == "Untitled sketch" %}
-    <ts-edit-sketch></ts-edit-sketch>
-            {% endif %}
+            <ts-edit-sketch></ts-edit-sketch>
+        {% endif %}
 
     <div class="container">
         <div class="row">
