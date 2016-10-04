@@ -383,8 +383,13 @@ class ViewListResource(ResourceMixin, Resource):
             query_filter = json.dumps(form.filter.data, ensure_ascii=False),
             query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
 
+            # WTF forms turns the filter into a tuple for some reason.
+            # pylint: disable=redefined-variable-type
+            if isinstance(query_filter, tuple):
+                query_filter = query_filter[0]
+
             if new_searchtemplate:
-                query_filter_dict = json.loads(query_filter[0])
+                query_filter_dict = json.loads(query_filter)
                 if query_filter_dict.get(u'indices', None):
                     query_filter_dict[u'indices'] = u'_all'
 
@@ -405,11 +410,17 @@ class ViewListResource(ResourceMixin, Resource):
             if from_searchtemplate_id:
                 searchtemplate = SearchTemplate.query.get(
                     from_searchtemplate_id)
+                # Set values for the new view from the template
                 template_name = searchtemplate.name
                 query_string = searchtemplate.query_string
                 query_filter = searchtemplate.query_filter,
                 query_dsl = searchtemplate.query_dsl
+                # WTF form returns a tuple for the filter. This is not
+                # compatible with SQLAlchemy.
+                if isinstance(query_filter, tuple):
+                    query_filter = query_filter[0]
 
+            # Create the view in the database
             view = View(
                 name=template_name,
                 sketch=sketch,
@@ -522,6 +533,8 @@ class SearchTemplateResource(ResourceMixin, Resource):
             Search template in JSON (instance of flask.wrappers.Response)
         """
         searchtemplate = SearchTemplate.query.get(searchtemplate_id)
+        if not searchtemplate:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
         return self.to_json(searchtemplate)
 
 

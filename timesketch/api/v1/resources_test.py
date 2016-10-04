@@ -91,7 +91,13 @@ class ViewListResourceTest(BaseTest):
         response = self.client.post(
             self.resource_url, data=json.dumps(data, ensure_ascii=False),
             content_type=u'application/json')
+        data[u'from_searchtemplate_id'] = 1
+        response_with_searchtemplate = self.client.post(
+            self.resource_url, data=json.dumps(data, ensure_ascii=False),
+            content_type=u'application/json')
         self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEquals(
+            response_with_searchtemplate.status_code, HTTP_STATUS_CODE_CREATED)
 
 
 class ViewResourceTest(BaseTest):
@@ -125,6 +131,25 @@ class ViewResourceTest(BaseTest):
         """Authenticated request to get a view for non existing view."""
         self.login()
         response = self.client.get(u'/api/v1/sketches/1/views/2/')
+        self.assert404(response)
+
+
+class SearchTemplateResourceTest(BaseTest):
+    """Test Search template resource."""
+    resource_url = u'/api/v1/searchtemplate/1/'
+
+    def test_searchtemplate_resource(self):
+        """Authenticated request to get a search template."""
+        self.login()
+        response = self.client.get(self.resource_url)
+        self.assertEqual(len(response.json[u'objects']), 1)
+        self.assertEqual(response.json[u'objects'][0][u'name'], u'template')
+        self.assert200(response)
+
+    def test_invalid_searchtemplate(self):
+        """Authenticated request to get a non existing search template."""
+        self.login()
+        response = self.client.get(u'/api/v1/searchtemplate/2/')
         self.assert404(response)
 
 

@@ -18,6 +18,7 @@ import json
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchIndex
+from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Event
 from timesketch.lib.testlib import ModelBaseTest
@@ -79,6 +80,18 @@ class SketchModelTest(ModelBaseTest):
         ])
         self._test_db_object(
             expected_result=expected_result, model_cls=View)
+
+    def test_searchtemplate_model(self):
+        """
+        Test that the test search template has the expected data stored in the
+        database.
+        """
+        expected_result = frozenset([
+            (u'name', u'template'),
+            (u'user', self.user1),
+        ])
+        self._test_db_object(
+            expected_result=expected_result, model_cls=SearchTemplate)
 
     def test_event_model(self):
         """
