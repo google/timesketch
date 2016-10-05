@@ -90,7 +90,7 @@ limitations under the License.
                 $scope.saveEventsView = function() {
                     var filter = getSelectedEventsFilter();
                     timesketchApi.saveView(
-                        $scope.sketchId, $scope.view_name, "", filter)
+                        $scope.sketchId, $scope.view_name, false, "", filter, null)
                         .success(function(data) {
                             var view_id = data.objects[0].id;
                             var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';

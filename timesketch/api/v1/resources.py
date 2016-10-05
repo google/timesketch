@@ -462,6 +462,12 @@ class ViewResource(ResourceMixin, Resource):
         if view.name == u'' and view.user != current_user:
             abort(HTTP_STATUS_CODE_FORBIDDEN)
 
+        # Check if view has been deleted
+        if view.get_status.status == u'deleted':
+            meta = dict(deleted=True, name=view.name)
+            schema = dict(meta=meta, objects=[])
+            return jsonify(schema)
+
         # Make sure we have all expected attributes in the query filter.
         view.query_filter = view.validate_filter()
         db_session.add(view)

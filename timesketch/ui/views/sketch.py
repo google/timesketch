@@ -176,7 +176,6 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
         Template with context.
     """
     save_view = False  # If the view should be saved to the database.
-    searchtemplate = None
     sketch = Sketch.query.get_with_acl(sketch_id)
     sketch_timelines = [t.searchindex.index_name for t in sketch.timelines]
     view_form = SaveViewForm()
