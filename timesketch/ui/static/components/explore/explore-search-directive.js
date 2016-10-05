@@ -70,6 +70,7 @@ limitations under the License.
                 timesketchApi.getSketch($scope.sketchId).success(function(data) {
                     $scope.sketch = data.objects[0];
                     $scope.sketch.views = data.meta.views;
+                    $scope.sketch.searchtemplates = data.meta.searchtemplates;
                     $scope.filter.indices = [];
                         for (var i = 0; i < $scope.sketch.timelines.length; i++) {
                             $scope.filter.indices.push($scope.sketch.timelines[i].searchindex.index_name)
@@ -253,6 +254,27 @@ limitations under the License.
                                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
                             });
                         }
+                    }
+                })
+            }
+        }
+    }]);
+
+    module.directive('tsSearchTemplatePicker', ['timesketchApi', function() {
+        /**
+         * Render the list of search templates.
+         */
+        return {
+            restrict: 'E',
+            templateUrl: '/static/components/explore/explore-search-template-picker.html',
+            scope: false,
+            require: '^tsSearch',
+            link: function (scope, elem, attrs, ctrl) {
+                scope.selectedTemplate = {};
+                scope.$watch('selectedTemplate.template', function(value) {
+                    if (angular.isDefined(scope.selectedTemplate.template)) {
+                        var template_url = '/sketch/' + scope.sketchId + '/explore/searchtemplate/' + scope.selectedTemplate.template.id + '/';
+                        window.location.href = template_url;
                     }
                 })
             }
