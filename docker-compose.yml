@@ -1,22 +1,19 @@
 timesketch:
-	build: .
-	ports:
-		- "5000"
-	volumes:
-		- ./contrib/ts_config/timesketch.conf:/etc/timesketch.conf
-		- ./contrib/ts_data:/usr/local/share/timesketch
-	links:
-		- elasticsearch
-		- redis
-	elasticsearch:
-		image: elasticsearch
-		volumes:
-			- ./contrib/es_config:/usr/share/elasticsearch/config
-			  #   - ./contrib/es_data:/usr/share/elasticsearch/data
-		ports:
-			- "9200"
-			- "9300"
-		redis:
-			image: redis
-			ports:
-				- "6379"
+    build: .
+    ports:
+        - "5000"
+    links:
+        - elasticsearch
+        - postgres
+    restart: always
+elasticsearch:
+    image: elasticsearch
+    ports:
+        - "9200"
+        - "9300"
+    restart: always
+postgres:
+    image: postgres
+    ports:
+        - "5432"
+    restart: always
