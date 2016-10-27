@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block main %}
 
-    {% if not sketches.all() %}
+    {% if not sketches.all() and not query %}
         <div style="text-align: center">
             <br><br>
             <h3>Welcome to Timesketch!</h3>
@@ -47,7 +47,7 @@
                     <ts-core-upload-queue></ts-core-upload-queue>
                 {%  endif %}
 
-                {% if sketches.all() %}
+                {% if sketches.all() or query %}
 
                     <div class="card">
                         <table class="table table-hover table-striped">
@@ -62,6 +62,11 @@
                             </tr>
                             </thead>
                             <tbody>
+
+                            {% if not sketches.all() and query %}
+                                <tr><td colspan="6" style="text-align: center;">No results</td></tr>
+                            {% endif %}
+
                             {% for sketch in sketches.all() %}
                                 {% if sketch.get_status.status == 'closed' and not query %}
                                 {% else %}
