@@ -14,11 +14,11 @@
 """This module implements HTTP request handlers for the user views."""
 
 from flask import Blueprint
+from flask import current_app
 from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
-from flask_login import current_app
 from flask_login import current_user
 from flask_login import login_user
 from flask_login import logout_user
