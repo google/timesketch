@@ -7,13 +7,18 @@ timesketch:
         - postgres
     restart: always
 elasticsearch:
-    image: elasticsearch
+    image: elasticsearch:2.4.1
+    command: elasticsearch -Des.node.name="TimesketchNode"
+    volumes:
+        - ./cache:/tmp/cache
     ports:
         - "9200"
         - "9300"
     restart: always
 postgres:
-    image: postgres
+    image: postgres:9.3.14
     ports:
         - "5432"
+    environment:
+        - POSTGRES_USER="timesketch"
     restart: always
