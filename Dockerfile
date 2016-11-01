@@ -7,7 +7,7 @@ RUN apt-get -y upgrade
 RUN apt-get -y dist-upgrade
 
 # Install Timesketch dependencies
-RUN apt-get -y install python-pip python-dev libffi-dev
+RUN apt-get -y install python-pip python-dev libffi-dev python-psycopg2
 
 # Use pip to install Timesketch
 # RUN pip install timesketch

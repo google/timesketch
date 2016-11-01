@@ -18,4 +18,5 @@ postgres:
     ports:
         - "5432"
     environment:
-        - POSTGRES_USER="timesketch"
+        - POSTGRES_USER=timesketch
+        - POSTGRES_PASSWORD=timesketch
