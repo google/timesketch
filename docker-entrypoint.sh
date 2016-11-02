@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Run the container in default way
+# Run the container the default way
 if [ "$1" = 'timesketch' ]; then
 	# Set SECRET_KEY in /etc/timesketch.conf if it isn't already set
 	if grep -q "SECRET_KEY = u''" /etc/timesketch.conf; then
