@@ -12,7 +12,7 @@
                     <form class="form-horizontal" role="form" action="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}" method="post">
                         <div class="form-group">
                             <div class="col-sm-12">
-                                <input class="form-control search-input" style="background: transparent;padding: 0" id="name" name="name" type="text" value="{{ sketch.name }}" autofocus="true">
+                                <input class="form-control search-input" style="background: transparent;padding: 0" id="name" name="name" type="text" placeholder="Untitled sketch" autofocus="true">
                             </div>
                         </div>
                         <br>
