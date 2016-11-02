@@ -9,13 +9,30 @@ if [ "$1" = 'timesketch' ]; then
 		sed -i 's#SECRET_KEY = u\x27\x27#SECRET_KEY = u\x27'$OPENSSL_RAND'\x27#' /etc/timesketch.conf
 	fi
 
+	# Set up the Postgres connection
 	if [ $POSTGRES_USER ] && [ $POSTGRES_PASSWORD ] && [ $POSTGRES_ADDRESS ] && [ $POSTGRES_PORT ]; then
 		sed -i 's#postgresql://<USERNAME>:<PASSWORD>#postgresql://'$POSTGRES_USER':'$POSTGRES_PASSWORD'@'$POSTGRES_ADDRESS':'$POSTGRES_PORT'#' /etc/timesketch.conf
-		tsctl add_user -u "$POSTGRES_USER"
 	else
 		# Log an error since we need the above-listed environment variables
 		echo "Please pass values for the POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_ADDRESS, and POSTGRES_PORT environment variables"
 		exit 1
+	fi
+
+	# Set up the Elastic connection
+	if [ $ELASTIC_ADDRESS ] && [ $ELASTIC_PORT ]; then
+		sed -i 's#ELASTIC_HOST = u\x27127.0.0.1\x27#ELASTIC_HOST = u\x27'$ELASTIC_ADDRESS'\x27#' /etc/timesketch.conf
+		sed -i 's#ELASTIC_PORT = 9200#ELASTIC_PORT = '$ELASTIC_PORT'#' /etc/timesketch.conf
+	else
+		# Log an error since we need the above-listed environment variables
+		echo "Please pass values for the ELASTIC_ADDRESS and ELASTIC_PORT environment variables"
+	fi
+
+	# Set up the first Timesketch user
+	if [ $TIMESKETCH_USER ] && [ $TIMESKETCH_PASSWORD ]; then
+		tsctl add_user -u "$TIMESKETCH_USER" -p "$TIMESKETCH_PASSWORD"
+	else
+		# Log an error since we need the above-listed environment variables
+		echo "Please pass values for the TIMESKETCH_USER and TIMESKETCH_PASSWORD environment variables"
 	fi
 
 	# Run the Timesketch server (without SSL)
