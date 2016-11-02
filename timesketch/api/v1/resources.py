@@ -347,6 +347,86 @@ class SketchResource(ResourceMixin, Resource):
 
 class ViewListResource(ResourceMixin, Resource):
     """Resource to create a View."""
+
+    @staticmethod
+    def create_view_from_form(sketch, form):
+        """Creates a view from form data.
+
+        Args:
+            sketch: Instance of timesketch.models.sketch.Sketch
+            form: Instance of timesketch.lib.forms.SaveViewForm
+
+        Returns:
+            A view (Instance of timesketch.models.sketch.View)
+        """
+        # Default to user supplied data
+        view_name = form.name.data
+        query_string = form.query.data
+        query_filter = json.dumps(form.filter.data, ensure_ascii=False),
+        query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
+
+        # WTF forms turns the filter into a tuple for some reason.
+        # pylint: disable=redefined-variable-type
+        if isinstance(query_filter, tuple):
+            query_filter = query_filter[0]
+
+        # No search template by default (before we know if the user want to
+        # create a template or use an existing template when creating the view)
+        searchtemplate = None
+
+        # Create view from a search template
+        if form.from_searchtemplate_id.data:
+            # Get the template from the datastore
+            template_id = form.from_searchtemplate_id.data
+            searchtemplate = SearchTemplate.query.get(template_id)
+
+            # Copy values from the template
+            view_name = searchtemplate.name
+            query_string = searchtemplate.query_string
+            query_filter = searchtemplate.query_filter,
+            query_dsl = searchtemplate.query_dsl
+            # WTF form returns a tuple for the filter. This is not
+            # compatible with SQLAlchemy.
+            if isinstance(query_filter, tuple):
+                query_filter = query_filter[0]
+
+        # Create a new search template based on this view (only if requested by
+        # the user).
+        if form.new_searchtemplate.data:
+            query_filter_dict = json.loads(query_filter)
+            if query_filter_dict.get(u'indices', None):
+                query_filter_dict[u'indices'] = u'_all'
+
+            # pylint: disable=redefined-variable-type
+            query_filter = json.dumps(
+                query_filter_dict, ensure_ascii=False)
+
+            searchtemplate = SearchTemplate(
+                name=view_name,
+                user=current_user,
+                query_string=query_string,
+                query_filter=query_filter,
+                query_dsl=query_dsl
+            )
+            db_session.add(searchtemplate)
+            db_session.commit()
+
+        # Create the view in the database
+        view = View(
+            name=view_name,
+            sketch=sketch,
+            user=current_user,
+            query_string=query_string,
+            query_filter=query_filter,
+            query_dsl=query_dsl,
+            searchtemplate=searchtemplate
+        )
+        db_session.add(view)
+        db_session.commit()
+
+        return view
+
+
     @login_required
     def get(self, sketch_id):
         """Handles GET request to the resource.
@@ -373,66 +453,7 @@ class ViewListResource(ResourceMixin, Resource):
         form = SaveViewForm.build(request)
         if form.validate_on_submit():
             sketch = Sketch.query.get_with_acl(sketch_id)
-            new_searchtemplate = form.new_searchtemplate.data
-            from_searchtemplate_id = form.from_searchtemplate_id.data
-            searchtemplate = None
-
-            # Default to user supplied data
-            template_name = form.name.data
-            query_string = form.query.data
-            query_filter = json.dumps(form.filter.data, ensure_ascii=False),
-            query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
-
-            # WTF forms turns the filter into a tuple for some reason.
-            # pylint: disable=redefined-variable-type
-            if isinstance(query_filter, tuple):
-                query_filter = query_filter[0]
-
-            if new_searchtemplate:
-                query_filter_dict = json.loads(query_filter)
-                if query_filter_dict.get(u'indices', None):
-                    query_filter_dict[u'indices'] = u'_all'
-
-                # pylint: disable=redefined-variable-type
-                query_filter = json.dumps(
-                    query_filter_dict, ensure_ascii=False)
-
-                searchtemplate = SearchTemplate(
-                    name=template_name,
-                    user=current_user,
-                    query_string=query_string,
-                    query_filter=query_filter,
-                    query_dsl=query_dsl
-                )
-                db_session.add(searchtemplate)
-                db_session.commit()
-
-            if from_searchtemplate_id:
-                searchtemplate = SearchTemplate.query.get(
-                    from_searchtemplate_id)
-                # Set values for the new view from the template
-                template_name = searchtemplate.name
-                query_string = searchtemplate.query_string
-                query_filter = searchtemplate.query_filter,
-                query_dsl = searchtemplate.query_dsl
-                # WTF form returns a tuple for the filter. This is not
-                # compatible with SQLAlchemy.
-                if isinstance(query_filter, tuple):
-                    query_filter = query_filter[0]
-
-            # Create the view in the database
-            view = View(
-                name=template_name,
-                sketch=sketch,
-                user=current_user,
-                query_string=query_string,
-                query_filter=query_filter,
-                query_dsl=query_dsl,
-                searchtemplate=searchtemplate
-            )
-            db_session.add(view)
-            db_session.commit()
-
+            view = self.create_view_from_form(sketch, form)
             return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
