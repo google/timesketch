@@ -17,7 +17,7 @@ timesketch:
     restart: always
 elasticsearch:
     image: elasticsearch:2.4.1
-    command: elasticsearch -Des.node.name="TimesketchNode"
+    command: elasticsearch -Des.node.name="TimesketchNode" -Des.script.groovy.sandbox.enabled=true
     ports:
         - "9200:9200"
         - "9300:9300"
