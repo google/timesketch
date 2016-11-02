@@ -2,12 +2,25 @@ sudo: required
 
 services:
     - docker
+
 language: python
+
 python:
     - "2.7"
+
+before_install:
+    - docker build -t jessemillar/timesketch .
+
 # command to install dependencies
 install:
     - "pip install ."
     - "pip install Flask-Testing nose mock pylint coverage"
+
 # command to run tests
 script: nosetests
+
+after_success:
+    - if [ "$TRAVIS_BRANCH" == "master" ]; then
+      docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+      docker push jessemillar/timesketch;
+      fi
