@@ -33,10 +33,10 @@ import os
 import uuid
 
 from flask import abort
+from flask import current_app
 from flask import jsonify
 from flask import request
 from flask_login import current_user
-from flask_login import current_app
 from flask_login import login_required
 from flask_restful import fields
 from flask_restful import marshal

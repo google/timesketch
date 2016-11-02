@@ -67,7 +67,7 @@
                 scope.render_heatmap = function(data) {
                     d3.select('svg').remove();
                     var margin = { top: 50, right: 75, bottom: 0, left: 40 },
-                        svgWidth = d3.select(d3.select(element[0].parentElement.parentElement.parentElement.offsetParent.offsetWidth)) - margin.left - margin.right,
+                        svgWidth = element[0].parentElement.parentElement.parentElement.offsetParent.offsetWidth - margin.left - margin.right,
                         rectSize = Math.floor(svgWidth / 24),
                         svgHeight = parseInt(rectSize * 9) - margin.top - margin.bottom,
                         days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
@@ -91,7 +91,7 @@
                     }
 
                     // Generate color from color scale
-                    var genColor = d3.scale.linear()
+                    var genColor = d3.scaleLinear()
                         .domain([0, max_value / 2, max_value])
                         .range(["white", "#3498db", "red"]);
 
@@ -100,8 +100,7 @@
                         colors.push(genColor(i));
                     }
                     var num_buckets = colors.length;
-
-                    var colorScale = d3.scale.quantile()
+                    var colorScale = d3.scaleQuantile()
                         .domain([0, num_buckets - 1, max_value_initial])
                         .range(colors);
 

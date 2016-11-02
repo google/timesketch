@@ -14,7 +14,7 @@
 """Form definitions and validators for the forms used in the application."""
 
 
-from flask_wtf import Form
+from flask_wtf import FlaskForm
 from flask_wtf.file import FileField
 from flask_wtf.file import FileRequired
 from flask_wtf.file import FileAllowed
@@ -63,7 +63,7 @@ class MultiDict(dict):
         return [self[key]]
 
 
-class BaseForm(Form):
+class BaseForm(FlaskForm):
     """Base class for forms."""
     @classmethod
     def build(cls, request):
