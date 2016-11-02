@@ -1,10 +1,16 @@
 timesketch:
     build: .
     ports:
-        - "5000"
+        - "5000:5000"
     links:
-        - elasticsearch
-        - postgres
+        - elasticsearch:elasticsearch
+        - postgres:postgres
+    environment:
+        - POSTGRES_USER=timesketch
+        - POSTGRES_PASSWORD=timesketch
+        - POSTGRES_ADDRESS=postgres
+        - POSTGRES_PORT=5432
+    restart: always
 elasticsearch:
     image: elasticsearch:2.4.1
     command: elasticsearch -Des.node.name="TimesketchNode"
@@ -13,10 +19,12 @@ elasticsearch:
     ports:
         - "9200"
         - "9300"
+    restart: always
 postgres:
     image: postgres:9.3.14
     ports:
-        - "5432"
+        - "5432:5432"
     environment:
         - POSTGRES_USER=timesketch
         - POSTGRES_PASSWORD=timesketch
+    restart: always
