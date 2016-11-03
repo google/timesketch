@@ -7,15 +7,16 @@ timesketch:
         - postgres
         - redis
     environment:
+        - TIMESKETCH_USER=admin
+        - TIMESKETCH_PASSWORD=password
         - POSTGRES_USER=timesketch
-        - POSTGRES_PASSWORD=timesketch
+        - POSTGRES_PASSWORD=password
         - POSTGRES_ADDRESS=postgres # Use hostname linking
         - POSTGRES_PORT=5432
         - ELASTIC_ADDRESS=elastic # Use hostname linking
         - ELASTIC_PORT=9200
-        - TIMESKETCH_USER=admin
-        - TIMESKETCH_PASSWORD=password
-        - CELERY_BROKER=redis # Use hostname linking
+        - CELERY_BROKER_ADDRESS=redis # Use hostname linking
+        - CELERY_BROKER_PORT=6379
     restart: always
 elasticsearch:
     image: elasticsearch:2.4.1
@@ -30,7 +31,7 @@ postgres:
         - "5432:5432"
     environment:
         - POSTGRES_USER=timesketch
-        - POSTGRES_PASSWORD=timesketch
+        - POSTGRES_PASSWORD=password
     restart: always
 redis:
     image: redis
