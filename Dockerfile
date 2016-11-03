@@ -1,11 +1,10 @@
 # Pull and use the official Docker Hub Ubuntu 14.04 base image
 FROM ubuntu:14.04
 
-# Update the base image and add Plaso repositories
+# Update the base image
 RUN apt-get update
 RUN apt-get -y upgrade
 RUN apt-get -y dist-upgrade
-RUN apt-get update
 
 # Install Timesketch dependencies
 RUN apt-get -y install python-pip python-dev libffi-dev python-psycopg2

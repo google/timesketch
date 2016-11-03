@@ -6,10 +6,10 @@ timesketch:
         - elasticsearch
         - postgres
     environment:
+        - POSTGRES_USER=timesketch
+        - POSTGRES_PASSWORD=password
         - TIMESKETCH_USER=admin
         - TIMESKETCH_PASSWORD=password
-        - POSTGRES_USER=timesketch
-        - POSTGRES_PASSWORD=timesketch
         - POSTGRES_ADDRESS=postgres # Use hostname linking
         - POSTGRES_PORT=5432
         - ELASTIC_ADDRESS=elastic # Use hostname linking
@@ -18,15 +18,15 @@ timesketch:
 elasticsearch:
     image: elasticsearch:2.4.1
     command: elasticsearch -Des.node.name="TimesketchNode" -Des.script.groovy.sandbox.enabled=true
-    ports: # Expose ports for debugging and manual database management
+    ports:
         - "9200:9200"
         - "9300:9300"
     restart: always
 postgres:
     image: postgres:9.3.14
-    ports: # Expose ports for debugging and manual database management
+    ports:
         - "5432:5432"
     environment:
         - POSTGRES_USER=timesketch
-        - POSTGRES_PASSWORD=timesketch
+        - POSTGRES_PASSWORD=password
     restart: always
