@@ -9,7 +9,7 @@ timesketch:
         - TIMESKETCH_USER=admin
         - TIMESKETCH_PASSWORD=password
         - POSTGRES_USER=timesketch
-        - POSTGRES_PASSWORD=password
+        - POSTGRES_PASSWORD=timesketch
         - POSTGRES_ADDRESS=postgres # Use hostname linking
         - POSTGRES_PORT=5432
         - ELASTIC_ADDRESS=elastic # Use hostname linking
@@ -28,5 +28,5 @@ postgres:
         - "5432:5432"
     environment:
         - POSTGRES_USER=timesketch
-        - POSTGRES_PASSWORD=password
+        - POSTGRES_PASSWORD=timesketch
     restart: always

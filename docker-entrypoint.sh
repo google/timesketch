@@ -18,8 +18,6 @@ if [ "$1" = 'timesketch' ]; then
 		exit 1
 	fi
 
-	echo $(grep "postgresql://" /etc/timesketch.conf)
-
 	# Set up the Elastic connection
 	if [ $ELASTIC_ADDRESS ] && [ $ELASTIC_PORT ]; then
 		sed -i 's#ELASTIC_HOST = u\x27127.0.0.1\x27#ELASTIC_HOST = u\x27'$ELASTIC_ADDRESS'\x27#' /etc/timesketch.conf
