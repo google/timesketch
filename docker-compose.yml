@@ -5,7 +5,6 @@ timesketch:
     links:
         - elasticsearch
         - postgres
-        - redis
     environment:
         - TIMESKETCH_USER=admin
         - TIMESKETCH_PASSWORD=password
@@ -15,8 +14,6 @@ timesketch:
         - POSTGRES_PORT=5432
         - ELASTIC_ADDRESS=elastic # Use hostname linking
         - ELASTIC_PORT=9200
-        - CELERY_BROKER_ADDRESS=redis # Use hostname linking
-        - CELERY_BROKER_PORT=6379
     restart: always
 elasticsearch:
     image: elasticsearch:2.4.1
@@ -33,9 +30,3 @@ postgres:
         - POSTGRES_USER=timesketch
         - POSTGRES_PASSWORD=password
     restart: always
-redis:
-    image: redis
-    ports:
-        - "6379:6379"
-    restart: always
-

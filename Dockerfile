@@ -5,16 +5,10 @@ FROM ubuntu:14.04
 RUN apt-get update
 RUN apt-get -y upgrade
 RUN apt-get -y dist-upgrade
-RUN apt-get install -y --no-install-recommends software-properties-common
-RUN add-apt-repository universe
-RUN add-apt-repository ppa:gift/dev
 RUN apt-get update
 
 # Install Timesketch dependencies
 RUN apt-get -y install python-pip python-dev libffi-dev python-psycopg2
-
-# Install Plaso
-RUN apt-get -y install python-plaso
 
 # Use pip to install Timesketch
 # RUN pip install timesketch

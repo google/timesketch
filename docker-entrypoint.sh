@@ -30,22 +30,6 @@ if [ "$1" = 'timesketch' ]; then
 		exit 1
 	fi
 
-	# Enable Plaso uploads
-	# sed -i 's#UPLOAD_ENABLED = False#UPLOAD_ENABLED = True#' /etc/timesketch.conf
-
-	# Set up Celery
-	# if [ $CELERY_BROKER_ADDRESS ] && [ $CELERY_BROKER_PORT ]; then
-	# 	sed -i 's#CELERY_BROKER_URL=\x27redis://127.0.0.1:6379\x27#CELERY_BROKER_URL=\x27redis://'$CELERY_BROKER_ADDRESS':'$CELERY_BROKER_PORT'\x27#' /etc/timesketch.conf
-	# 	sed -i 's#CELERY_RESULT_BACKEND=\x27redis://127.0.0.1:6379\x27#CELERY_RESULT_BACKEND=\x27redis://'$CELERY_BROKER_ADDRESS':'$CELERY_BROKER_PORT'\x27#' /etc/timesketch.conf
-	# else
-	# 	# Log an error since we need the above environment variables
-	# 	echo "Please pass values for the CELERY_BROKER_ADDRESS and CELERY_BROKER_PORT environment variables"
-	# 	exit 1
-	# fi
-
-	# Start the Celery worker process
-	# celery -A timesketch.lib.tasks worker --loglevel=info &
-
 	# Set up the first Timesketch user
 	if [ $TIMESKETCH_USER ] && [ $TIMESKETCH_PASSWORD ]; then
 		tsctl add_user -u "$TIMESKETCH_USER" -p "$TIMESKETCH_PASSWORD"
