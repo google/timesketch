@@ -178,9 +178,10 @@ limitations under the License.
                 nextTimestamp: '=',
                 index: '=',
                 isContextEvent: '=',
+                enableContextQuery: '=',
                 order: '='
             },
-            //require: '^tsSearch',
+            require: '?^tsSearch',
             controller: function ($scope, timesketchApi) {
 
                 // Calculate the time delta in days between two events.
@@ -243,6 +244,7 @@ limitations under the License.
                             $scope.comments = data.meta.comments;
                         })
                 };
+
                 $scope.postComment = function() {
                     timesketchApi.saveEventAnnotation(
                         $scope.sketchId,
@@ -255,6 +257,7 @@ limitations under the License.
                             $scope.comment = true;
                         })
                 };
+
                 $scope.$watch('event', function(value) {
                     $scope.star = false;
                     $scope.comment = false;
@@ -279,11 +282,11 @@ limitations under the License.
                 });
 
             },
-            //link: function(scope, elem, attrs, ctrl) {
-            //    scope.getContext = function(event) {
-            //        ctrl.getContext(event);
-            //    }
-            //}
+            link: function(scope, elem, attrs, ctrl) {
+                scope.getContext = function(event) {
+                    ctrl.getContext(event);
+                }
+            }
         }
     });
 

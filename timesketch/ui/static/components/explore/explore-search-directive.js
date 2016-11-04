@@ -127,6 +127,7 @@ limitations under the License.
                     var new_filter = {};
                     var current_filter = $scope.filter;
                     var current_query = $scope.query;
+                    var current_queryDsl = $scope.queryDsl;
                     angular.copy(current_filter, new_filter);
 
                     var context_query = "*";
@@ -134,6 +135,7 @@ limitations under the License.
                     if (!angular.isDefined(new_filter.context)) {
                         new_filter.context = {};
                         new_filter.context.query = current_query;
+                        new_filter.context.queryDsl = current_queryDsl;
                         new_filter.context.sketchId = $scope.sketchId;
                         new_filter.context.filter = current_filter;
                         new_filter.context.seconds = 300;
@@ -154,7 +156,7 @@ limitations under the License.
                 this.closeContext = function(context) {
                     delete context.filter.context;
                     $scope.showFilters = false;
-                    this.search(context.query, context.filter)
+                    this.search(context.query, context.filter, context.queryDsl)
                 };
             }
         }
