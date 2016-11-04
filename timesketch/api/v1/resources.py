@@ -68,6 +68,7 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
+from timesketch.models.sketch import SearchTemplate
 from timesketch.models.story import Story
 
 
@@ -103,17 +104,31 @@ class ResourceMixin(object):
         u'updated_at': fields.DateTime
     }
 
-    view_fields = {
+    user_fields = {
+        u'username': fields.String
+    }
+
+    searchtemplate_fields = {
         u'id': fields.Integer,
         u'name': fields.String,
+        u'user': fields.Nested(user_fields),
         u'query_string': fields.String,
         u'query_filter': fields.String,
+        u'query_dsl': fields.String,
         u'created_at': fields.DateTime,
         u'updated_at': fields.DateTime
     }
 
-    user_fields = {
-        u'username': fields.String
+    view_fields = {
+        u'id': fields.Integer,
+        u'name': fields.String,
+        u'user': fields.Nested(user_fields),
+        u'query_string': fields.String,
+        u'query_filter': fields.String,
+        u'query_dsl': fields.String,
+        u'searchtemplate': fields.Nested(searchtemplate_fields),
+        u'created_at': fields.DateTime,
+        u'updated_at': fields.DateTime
     }
 
     sketch_fields = {
@@ -153,6 +168,7 @@ class ResourceMixin(object):
     fields_registry = {
         u'searchindex': searchindex_fields,
         u'timeline': timeline_fields,
+        u'searchtemplate': searchtemplate_fields,
         u'view': view_fields,
         u'user': user_fields,
         u'sketch': sketch_fields,
@@ -277,6 +293,12 @@ class SketchResource(ResourceMixin, Resource):
                     u'name': view.name,
                     u'id': view.id
                 } for view in sketch.get_named_views
+            ],
+            searchtemplates=[
+                {
+                    u'name': searchtemplate.name,
+                    u'id': searchtemplate.id
+                } for searchtemplate in SearchTemplate.query.all()
             ])
         return self.to_json(sketch, meta=meta)
 
@@ -325,6 +347,99 @@ class SketchResource(ResourceMixin, Resource):
 
 class ViewListResource(ResourceMixin, Resource):
     """Resource to create a View."""
+
+    @staticmethod
+    def create_view_from_form(sketch, form):
+        """Creates a view from form data.
+
+        Args:
+            sketch: Instance of timesketch.models.sketch.Sketch
+            form: Instance of timesketch.lib.forms.SaveViewForm
+
+        Returns:
+            A view (Instance of timesketch.models.sketch.View)
+        """
+        # Default to user supplied data
+        view_name = form.name.data
+        query_string = form.query.data
+        query_filter = json.dumps(form.filter.data, ensure_ascii=False),
+        query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
+
+        # WTF forms turns the filter into a tuple for some reason.
+        # pylint: disable=redefined-variable-type
+        if isinstance(query_filter, tuple):
+            query_filter = query_filter[0]
+
+        # No search template by default (before we know if the user want to
+        # create a template or use an existing template when creating the view)
+        searchtemplate = None
+
+        # Create view from a search template
+        if form.from_searchtemplate_id.data:
+            # Get the template from the datastore
+            template_id = form.from_searchtemplate_id.data
+            searchtemplate = SearchTemplate.query.get(template_id)
+
+            # Copy values from the template
+            view_name = searchtemplate.name
+            query_string = searchtemplate.query_string
+            query_filter = searchtemplate.query_filter,
+            query_dsl = searchtemplate.query_dsl
+            # WTF form returns a tuple for the filter. This is not
+            # compatible with SQLAlchemy.
+            if isinstance(query_filter, tuple):
+                query_filter = query_filter[0]
+
+        # Create a new search template based on this view (only if requested by
+        # the user).
+        if form.new_searchtemplate.data:
+            query_filter_dict = json.loads(query_filter)
+            if query_filter_dict.get(u'indices', None):
+                query_filter_dict[u'indices'] = u'_all'
+
+            # pylint: disable=redefined-variable-type
+            query_filter = json.dumps(
+                query_filter_dict, ensure_ascii=False)
+
+            searchtemplate = SearchTemplate(
+                name=view_name,
+                user=current_user,
+                query_string=query_string,
+                query_filter=query_filter,
+                query_dsl=query_dsl
+            )
+            db_session.add(searchtemplate)
+            db_session.commit()
+
+        # Create the view in the database
+        view = View(
+            name=view_name,
+            sketch=sketch,
+            user=current_user,
+            query_string=query_string,
+            query_filter=query_filter,
+            query_dsl=query_dsl,
+            searchtemplate=searchtemplate
+        )
+        db_session.add(view)
+        db_session.commit()
+
+        return view
+
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            Views in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        return self.to_json(sketch.get_named_views)
+
     @login_required
     def post(self, sketch_id):
         """Handles POST request to the resource.
@@ -338,12 +453,7 @@ class ViewListResource(ResourceMixin, Resource):
         form = SaveViewForm.build(request)
         if form.validate_on_submit():
             sketch = Sketch.query.get_with_acl(sketch_id)
-            view = View(
-                name=form.name.data, sketch=sketch, user=current_user,
-                query_string=form.query.data,
-                query_filter=json.dumps(form.filter.data, ensure_ascii=False))
-            db_session.add(view)
-            db_session.commit()
+            view = self.create_view_from_form(sketch, form)
             return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
@@ -373,12 +483,39 @@ class ViewResource(ResourceMixin, Resource):
         if view.name == u'' and view.user != current_user:
             abort(HTTP_STATUS_CODE_FORBIDDEN)
 
+        # Check if view has been deleted
+        if view.get_status.status == u'deleted':
+            meta = dict(deleted=True, name=view.name)
+            schema = dict(meta=meta, objects=[])
+            return jsonify(schema)
+
         # Make sure we have all expected attributes in the query filter.
         view.query_filter = view.validate_filter()
         db_session.add(view)
         db_session.commit()
 
         return self.to_json(view)
+
+    @login_required
+    def delete(self, sketch_id, view_id):
+        """Handles DELETE request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            view_id: Integer primary key for a view database model
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        view = View.query.get(view_id)
+
+        # Check that this view belongs to the sketch
+        if view.sketch_id != sketch.id:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+
+        if not sketch.has_permission(user=current_user, permission=u'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
+
+        view.set_status(status=u'deleted')
+        return HTTP_STATUS_CODE_OK
 
     @login_required
     def post(self, sketch_id, view_id):
@@ -397,12 +534,47 @@ class ViewResource(ResourceMixin, Resource):
             view = View.query.get(view_id)
             view.query_string = form.query.data
             view.query_filter = json.dumps(form.filter.data, ensure_ascii=False)
+            view.query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
             view.user = current_user
             view.sketch = sketch
+
+            if form.dsl.data:
+                view.query_string = u''
+
             db_session.add(view)
             db_session.commit()
             return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class SearchTemplateResource(ResourceMixin, Resource):
+    """Resource to get a search template."""
+    @login_required
+    def get(self, searchtemplate_id):
+        """Handles GET request to the resource.
+
+        Args:
+            searchtemplate_id: Primary key for a search template database model
+
+        Returns:
+            Search template in JSON (instance of flask.wrappers.Response)
+        """
+        searchtemplate = SearchTemplate.query.get(searchtemplate_id)
+        if not searchtemplate:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+        return self.to_json(searchtemplate)
+
+
+class SearchTemplateListResource(ResourceMixin, Resource):
+    """Resource to create a search template."""
+    @login_required
+    def get(self):
+        """Handles GET request to the resource.
+
+        Returns:
+            View in JSON (instance of flask.wrappers.Response)
+        """
+        return self.to_json(SearchTemplate.query.all())
 
 
 class ExploreResource(ResourceMixin, Resource):
@@ -422,10 +594,15 @@ class ExploreResource(ResourceMixin, Resource):
         form = ExploreForm.build(request)
 
         if form.validate_on_submit():
+            query_dsl = form.dsl.data
             query_filter = form.filter.data
-            sketch_indices = [
-                t.searchindex.index_name for t in sketch.timelines]
+            sketch_indices = {
+                t.searchindex.index_name for t in sketch.timelines}
             indices = query_filter.get(u'indices', sketch_indices)
+
+            # If _all in indices then execute the query on all indices
+            if u'_all' in indices:
+                indices = sketch_indices
 
             # Make sure that the indices in the filter are part of the sketch
             if set(indices) - set(sketch_indices):
@@ -434,11 +611,12 @@ class ExploreResource(ResourceMixin, Resource):
             # Make sure we have a query string or star filter
             if not (form.query.data,
                     query_filter.get(u'star'),
-                    query_filter.get(u'events')):
+                    query_filter.get(u'events'),
+                    query_dsl):
                 abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
             result = self.datastore.search(
-                sketch_id, form.query.data, query_filter, indices,
+                sketch_id, form.query.data, query_filter, query_dsl, indices,
                 aggregations=None, return_results=True)
 
             # Get labels for each event that matches the sketch.
@@ -460,7 +638,8 @@ class ExploreResource(ResourceMixin, Resource):
             view = View.get_or_create(
                 user=current_user, sketch=sketch, name=u'')
             view.query_string = form.query.data
-            view.query_filter = json.dumps(query_filter)
+            view.query_filter = json.dumps(query_filter, ensure_ascii=False)
+            view.query_dsl = json.dumps(query_dsl, ensure_ascii=False)
             db_session.add(view)
             db_session.commit()
 
@@ -474,7 +653,10 @@ class ExploreResource(ResourceMixin, Resource):
                 tl_names[timeline.searchindex.index_name] = timeline.name
 
             try:
-                buckets = result[u'aggregations'][u'data_type'][u'buckets']
+                buckets = result[
+                    u'aggregations'][
+                        u'field_aggregation'][
+                            u'buckets']
             except KeyError:
                 buckets = None
 
@@ -517,6 +699,7 @@ class AggregationResource(ResourceMixin, Resource):
 
         if form.validate_on_submit():
             query_filter = form.filter.data
+            query_dsl = form.dsl.data
             sketch_indices = [
                 t.searchindex.index_name for t in sketch.timelines]
             indices = query_filter.get(u'indices', sketch_indices)
@@ -535,13 +718,13 @@ class AggregationResource(ResourceMixin, Resource):
             if form.aggtype.data == u'heatmap':
                 result = heatmap(
                     es_client=self.datastore, sketch_id=sketch_id,
-                    query=form.query.data, query_filter=query_filter,
-                    indices=indices)
+                    query_string=form.query.data, query_filter=query_filter,
+                    query_dsl=query_dsl, indices=indices)
             elif form.aggtype.data == u'histogram':
                 result = histogram(
                     es_client=self.datastore, sketch_id=sketch_id,
-                    query=form.query.data, query_filter=query_filter,
-                    indices=indices)
+                    query_string=form.query.data, query_filter=query_filter,
+                    query_dsl=query_dsl, indices=indices)
 
             else:
                 abort(HTTP_STATUS_CODE_BAD_REQUEST)
@@ -860,4 +1043,31 @@ class StoryResource(ResourceMixin, Resource):
             db_session.add(story)
             db_session.commit()
             return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class QueryResource(ResourceMixin, Resource):
+    """Resource to get a query."""
+    @login_required
+    def post(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            story_id: Integer primary key for a story database model
+
+        Returns:
+            A story in JSON (instance of flask.wrappers.Response)
+        """
+        form = ExploreForm.build(request)
+        if form.validate_on_submit():
+            sketch = Sketch.query.get_with_acl(sketch_id)
+            schema = {u'objects': [], u'meta': {}}
+            query_string = form.query.data
+            query_filter = form.filter.data
+            query_dsl = form.dsl.data
+            query = self.datastore.build_query(
+                sketch.id, query_string, query_filter, query_dsl)
+            schema[u'objects'].append(query)
+            return jsonify(schema)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)

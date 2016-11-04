@@ -18,7 +18,8 @@ limitations under the License.
     var module = angular.module('timesketch.api.service', []);
 
     var timesketchApiImplementation = function($http) {
-        var BASE_URL = '/api/v1/sketches/';
+        var API_BASE_URL = '/api/v1';
+        var SKETCH_BASE_URL = API_BASE_URL + '/sketches/';
 
         this.getSketch = function(sketch_id) {
             /**
@@ -27,7 +28,36 @@ limitations under the License.
              * @param view_id - The id for the view.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/';
+            return $http.get(resource_url)
+        };
+
+        this.getViews = function(sketch_id) {
+            /**
+             * Get all saved views for sketch.
+             * @param sketch_id - The id for the sketch.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/views/';
+            return $http.get(resource_url)
+        };
+
+        this.getSearchTemplates = function() {
+            /**
+             * Get list of all search templates.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = API_BASE_URL + '/searchtemplate/';
+            return $http.get(resource_url)
+        };
+
+        this.getSearchTemplate = function(searchtemplate_id) {
+            /**
+             * Get a specific search templates.
+             * @param searchtemplate_id - The id for the searchtemplate.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = API_BASE_URL + '/searchtemplate/' + searchtemplate_id + '/';
             return $http.get(resource_url)
         };
 
@@ -38,29 +68,57 @@ limitations under the License.
              * @param view_id - The id for the view.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/views/' + view_id + '/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/views/' + view_id + '/';
             return $http.get(resource_url)
         };
 
-        this.saveView = function(sketch_id, name, query, filter) {
+        this.deleteView = function(sketch_id, view_id) {
+            /**
+             * Delete a Timesketch view.
+             * @param sketch_id - The id for the sketch.
+             * @param view_id - The id for the view.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/views/' + view_id + '/';
+            return $http.delete(resource_url)
+        };
+
+        this.saveView = function(sketch_id, name, new_searchtemplate, query, filter, queryDsl) {
             /**
              * Save a Timesketch view.
              * @param sketch_id - The id for the sketch.
              * @param name - A name for the view.
+             * @param new_searchtemplate - Boolean indicating if a search template should be created.
              * @param query - A query string.
              * @param filter - A JSON string with filters and a list of indices.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/views/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/views/';
             var params = {
                 name: name,
+                new_searchtemplate: new_searchtemplate,
                 query: query,
-                filter: filter
+                filter: filter,
+                dsl: queryDsl
             };
             return $http.post(resource_url, params)
         };
 
-        this.updateView = function(sketch_id, view_id, name, query, filter) {
+        this.saveViewFromSearchTemplate = function(sketch_id, searchtemplate_id) {
+            /**
+             * Save a Timesketch view.
+             * @param sketch_id - The id for the sketch.
+             * @param searchtemplate_id - The id for the search template to create from.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/views/';
+            var params = {
+                from_searchtemplate_id: searchtemplate_id
+            };
+            return $http.post(resource_url, params)
+        };
+
+        this.updateView = function(sketch_id, view_id, name, query, filter, queryDsl) {
             /**
              * Save a Timesketch view.
              * @param sketch_id - The id for the sketch.
@@ -70,11 +128,12 @@ limitations under the License.
              * @param filter - A JSON string with filters and a list of indices.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/views/' + view_id + '/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/views/' + view_id + '/';
             var params = {
                 name: name,
                 query: query,
-                filter: filter
+                filter: filter,
+                dsl: queryDsl
             };
             return $http.post(resource_url, params)
         };
@@ -85,7 +144,7 @@ limitations under the License.
              * @param sketch_id - The id for the sketch.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/stories/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/stories/';
             var params = {
                 sketch_id: sketch_id
             };
@@ -99,7 +158,7 @@ limitations under the License.
              * @param story_id - The id for the story.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/stories/' + story_id + '/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/stories/' + story_id + '/';
             var params = {
                 sketch_id: sketch_id,
                 story_id: story_id,
@@ -115,7 +174,7 @@ limitations under the License.
              * @param sketch_id - The id for the sketch.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/stories/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/stories/';
             var params = {
                 sketch_id: sketch_id
             };
@@ -124,11 +183,12 @@ limitations under the License.
 
         this.getStory = function(sketch_id, story_id) {
             /**
-             * Get stories for sketch.
+             * Get story for sketch.
              * @param sketch_id - The id for the sketch.
+             * @param story_id - The id for the story.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/stories/' + story_id + '/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/stories/' + story_id + '/';
             var params = {
                 sketch_id: sketch_id,
                 story_id: story_id
@@ -144,7 +204,7 @@ limitations under the License.
              * @param event_id - The id for the event.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/event/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/event/';
             var params = {
                 params: {
                     searchindex_id: searchindex_id,
@@ -163,7 +223,7 @@ limitations under the License.
              * @param events - List of events.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/event/annotate/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/event/annotate/';
             var params = {
                 annotation: annotation,
                 annotation_type: annotation_type,
@@ -172,35 +232,57 @@ limitations under the License.
             return $http.post(resource_url, params);
         };
 
-        this.search = function(sketch_id, query, filter) {
+        this.getCurrentQuery = function(sketch_id, query, filter, queryDsl) {
             /**
              * Execute query and filter on the datastore.
              * @param sketch_id - The id for the sketch.
              * @param query - A query string.
              * @param filter - A JSON string with filters and a list of indices.
+             * @param queryDsl - A JSON string with Elasticsearch DLS.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/explore/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/explore/query/';
             var params = {
                 query: query,
-                filter: filter
+                filter: filter,
+                dsl: queryDsl
             };
             return $http.post(resource_url, params)
         };
 
-        this.aggregation = function(sketch_id, query, filter, aggtype) {
+        this.search = function(sketch_id, query, filter, queryDsl) {
             /**
              * Execute query and filter on the datastore.
              * @param sketch_id - The id for the sketch.
              * @param query - A query string.
              * @param filter - A JSON string with filters and a list of indices.
-             * @param aggtype - Type of aggregation.
+             * @param queryDsl - A JSON string with Elasticsearch DLS.
              * @returns A $http promise with two methods, success and error.
              */
-            var resource_url = BASE_URL + sketch_id + '/aggregation/';
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/explore/';
             var params = {
                 query: query,
                 filter: filter,
+                dsl: queryDsl
+            };
+            return $http.post(resource_url, params)
+        };
+
+        this.aggregation = function(sketch_id, query, filter, queryDsl, aggtype) {
+            /**
+             * Execute query and filter on the datastore.
+             * @param sketch_id - The id for the sketch.
+             * @param query - A query string.
+             * @param filter - A JSON string with filters and a list of indices.
+             * @param queryDsl - A JSON string with Elasticsearch DLS.
+             * @param aggtype - Type of aggregation.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/aggregation/';
+            var params = {
+                query: query,
+                filter: filter,
+                dsl: queryDsl,
                 aggtype: aggtype
             };
             return $http.post(resource_url, params)

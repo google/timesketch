@@ -30,7 +30,8 @@ limitations under the License.
             scope: {
                 sketchId: '=',
                 viewId: '=',
-                namedView: '='
+                namedView: '=',
+                searchtemplateId: '='
             },
             controllerAs: 'ctrl',
             link: function(scope, elem, attrs, ctrl) {
@@ -42,7 +43,20 @@ limitations under the License.
                         timesketchApi.getView(attrs.sketchId, attrs.viewId).success(function(data) {
                             var query = data.objects[0].query_string;
                             var filter = angular.fromJson(data.objects[0].query_filter);
-                            ctrl.search(query, filter);
+                            var queryDsl = angular.fromJson(data.objects[0].query_dsl);
+                            if (queryDsl) {
+                                scope.queryDsl = queryDsl;
+                                scope.showAdvanced = true
+                            }
+
+                            // Special case where all indices should be queried.
+                            if (filter.indices == "_all") {
+                                filter.indices = [];
+                                for (var i = 0; i < scope.sketch.timelines.length; i++) {
+                                    filter.indices.push(scope.sketch.timelines[i].searchindex.index_name)
+                                }
+                            }
+                            ctrl.search(query, filter, queryDsl);
                         });
                     }
                     if (attrs.redirect == 'true') {
@@ -52,16 +66,25 @@ limitations under the License.
             },
             controller: function($scope) {
                 $scope.filter = {"indices": []};
+                $scope.new_searchtemplate = false;
                 timesketchApi.getSketch($scope.sketchId).success(function(data) {
                     $scope.sketch = data.objects[0];
                     $scope.sketch.views = data.meta.views;
+                    $scope.sketch.searchtemplates = data.meta.searchtemplates;
                     $scope.filter.indices = [];
                         for (var i = 0; i < $scope.sketch.timelines.length; i++) {
                             $scope.filter.indices.push($scope.sketch.timelines[i].searchindex.index_name)
                         }
                 });
 
-                this.search = function(query, filter) {
+                if ($scope.searchtemplateId) {
+                    timesketchApi.getSearchTemplate($scope.searchtemplateId).success(function(data) {
+                        $scope.searchTemplate = data.objects[0];
+                        console.log($scope.searchTemplate)
+                    });
+                }
+
+                this.search = function(query, filter, queryDsl) {
                     if (!filter.order) {
                         filter.order = 'asc';
                     }
@@ -74,12 +97,14 @@ limitations under the License.
                         delete filter.events;
                     }
 
-                    if (!filter.star && !filter.events && !query) {
+                    if (!filter.star && !filter.events && !query && !queryDsl) {
                         return
                     }
+
                     if (filter.time_start) {
                         $scope.showFilters = true;
                     }
+
                     if (filter.context && query != "*") {
                         delete filter.context;
                     }
@@ -87,7 +112,9 @@ limitations under the License.
                     $scope.events = [];
                     $scope.query = query;
                     $scope.filter = filter;
-                    timesketchApi.search($scope.sketchId, query, filter)
+                    $scope.queryDsl = queryDsl;
+
+                    timesketchApi.search($scope.sketchId, query, filter, queryDsl)
                         .success(function(data) {
                             $scope.events = data.objects;
                             $scope.meta = data.meta;
@@ -115,11 +142,21 @@ limitations under the License.
 
                 this.saveView = function() {
                     timesketchApi.saveView(
-                        $scope.sketchId, $scope.view_name, $scope.query, $scope.filter)
+                        $scope.sketchId, $scope.view_name, $scope.new_searchtemplate, $scope.query, $scope.filter, $scope.queryDsl)
                         .success(function(data) {
+                            $scope.new_searchtemplate = false;
                             var view_id = data.objects[0].id;
                             var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
                             window.location.href = view_url;
+                    });
+                };
+
+                this.saveViewFromSearchTemplate = function(searchtemplateId) {
+                    console.log("create new view")
+                    timesketchApi.saveViewFromSearchTemplate($scope.sketchId, searchtemplateId).success(function(data) {
+                        var view_id = data.objects[0].id;
+                        var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
+                        window.location.href = view_url;
                     });
                 };
 
@@ -127,6 +164,7 @@ limitations under the License.
                     var new_filter = {};
                     var current_filter = $scope.filter;
                     var current_query = $scope.query;
+                    var current_queryDsl = $scope.queryDsl;
                     angular.copy(current_filter, new_filter);
 
                     var context_query = "*";
@@ -134,6 +172,7 @@ limitations under the License.
                     if (!angular.isDefined(new_filter.context)) {
                         new_filter.context = {};
                         new_filter.context.query = current_query;
+                        new_filter.context.queryDsl = current_queryDsl;
                         new_filter.context.sketchId = $scope.sketchId;
                         new_filter.context.filter = current_filter;
                         new_filter.context.seconds = 300;
@@ -154,7 +193,17 @@ limitations under the License.
                 this.closeContext = function(context) {
                     delete context.filter.context;
                     $scope.showFilters = false;
-                    this.search(context.query, context.filter)
+                    this.search(context.query, context.filter, context.queryDsl)
+                };
+
+                this.closeJSONEditor = function () {
+                    // Set the query string input to reflect the current DSL.
+                    try {
+                        var currentQueryDsl = JSON.parse($scope.queryDsl);
+                        $scope.query = currentQueryDsl['query']['filtered']['query']['query_string']['query'];
+                    } catch(err) {}
+                    $scope.queryDsl = "";
+                    $scope.showAdvanced = false;
                 };
             }
         }
@@ -203,9 +252,31 @@ limitations under the License.
                             timesketchApi.getView(scope.sketchId, scope.selectedView.view.id).success(function(data) {
                                 scope.query = data.objects[0].query_string;
                                 scope.filter = angular.fromJson(data.objects[0].query_filter);
-                                ctrl.search(scope.query, scope.filter)
+                                scope.queryDsl = angular.fromJson(data.objects[0].query_dsl);
+                                ctrl.search(scope.query, scope.filter, scope.queryDsl)
                             });
                         }
+                    }
+                })
+            }
+        }
+    }]);
+
+    module.directive('tsSearchTemplatePicker', ['timesketchApi', function() {
+        /**
+         * Render the list of search templates.
+         */
+        return {
+            restrict: 'E',
+            templateUrl: '/static/components/explore/explore-search-template-picker.html',
+            scope: false,
+            require: '^tsSearch',
+            link: function (scope, elem, attrs, ctrl) {
+                scope.selectedTemplate = {};
+                scope.$watch('selectedTemplate.template', function(value) {
+                    if (angular.isDefined(scope.selectedTemplate.template)) {
+                        var template_url = '/sketch/' + scope.sketchId + '/explore/searchtemplate/' + scope.selectedTemplate.template.id + '/';
+                        window.location.href = template_url;
                     }
                 })
             }

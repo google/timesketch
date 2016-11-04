@@ -28,6 +28,7 @@ from timesketch.models.user import User
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchIndex
+from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Event
 from timesketch.models.story import Story
@@ -117,7 +118,7 @@ class MockDataStore(datastore.DataStore):
 
     def search(
             self, unused_sketch_id, unused_query, unused_query_filter,
-            unused_indices, aggregations, return_results):
+            unused_query_dsl, unused_indices, aggregations, return_results):
         """Mock a search query.
 
         Returns:
@@ -302,6 +303,22 @@ class BaseTest(TestCase):
         self._commit_to_database(view)
         return view
 
+    def _create_searchtemplate(self, name, user):
+        """Create a search template in the database.
+
+        Args:
+            name: Name of the view (string)
+            user: A user (instance of timesketch.models.user.User)
+
+        Returns:
+            A search template (timesketch.models.sketch.SearchTemplate)
+        """
+        searchtemplate = SearchTemplate(
+            name=name, query_string=name, query_filter=json.dumps(dict()),
+            user=user)
+        self._commit_to_database(searchtemplate)
+        return searchtemplate
+
     def setUp(self):
         """Setup the test database."""
         init_db()
@@ -332,6 +349,9 @@ class BaseTest(TestCase):
             name=u'View 2', sketch=self.sketch2, user=self.user1)
         self.view3 = self._create_view(
             name=u'', sketch=self.sketch1, user=self.user2)
+
+        self.searchtemplate = self._create_searchtemplate(
+            name=u'template', user=self.user1)
 
         self.event = self._create_event(
             sketch=self.sketch1, searchindex=self.searchindex, user=self.user1)

@@ -69,6 +69,11 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             if view.get_status.status != u'deleted' and view.name != u'']
         return views
 
+    @property
+    def get_search_templates(self):
+        """Get search templates."""
+        return SearchTemplate.query.all()
+
     def get_user_view(self, user):
         """Get view for user, i.e. view with the state for the user/sketch.
 
@@ -156,26 +161,33 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     name = Column(Unicode(255))
     query_string = Column(Unicode(255))
     query_filter = Column(UnicodeText())
+    query_dsl = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey(u'user.id'))
     sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
+    searchtemplate_id = Column(Integer, ForeignKey(u'searchtemplate.id'))
 
     def __init__(
-            self, name, sketch, user, query_string=None, query_filter=None):
+            self, name, sketch, user, searchtemplate=None, query_string=None,
+            query_filter=None, query_dsl=None):
         """Initialize the View object.
 
         Args:
             name: The name of the timeline
             sketch: A sketch (instance of timesketch.models.sketch.Sketch)
             user: A user (instance of timesketch.models.user.User)
+            searchtemplate: Instance of timesketch.models.sketch.SearchTemplate
             query_string: The query string
             query_filter: The filter to apply (JSON format as string)
+            query_dsl: A query DSL document (JSON format as string)
         """
         super(View, self).__init__()
         self.name = name
         self.sketch = sketch
         self.user = user
+        self.searchtemplate = searchtemplate
         self.query_string = query_string
         self.query_filter = query_filter
+        self.query_dsl = query_dsl
 
     def validate_filter(self, query_filter=None):
         """Validate the Query Filter.
@@ -218,6 +230,36 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             filter_dict[key] = DEFAULT_VALUES[key]
 
         return json.dumps(filter_dict, ensure_ascii=False)
+
+
+class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
+                     BaseModel):
+    """Implements the Search Template model."""
+    name = Column(Unicode(255))
+    query_string = Column(Unicode(255))
+    query_filter = Column(UnicodeText())
+    query_dsl = Column(UnicodeText())
+    user_id = Column(Integer, ForeignKey(u'user.id'))
+    views = relationship(u'View', backref=u'searchtemplate', lazy=u'select')
+
+    def __init__(
+            self, name, user, query_string=None, query_filter=None,
+            query_dsl=None):
+        """Initialize the Search Template object.
+
+        Args:
+            name: The name of the timeline
+            user: A user (instance of timesketch.models.user.User)
+            query_string: The query string
+            query_filter: The filter to apply (JSON format as string)
+            query_dsl: A query DSL document (JSON format as string)
+        """
+        super(SearchTemplate, self).__init__()
+        self.name = name
+        self.user = user
+        self.query_string = query_string
+        self.query_filter = query_filter
+        self.query_dsl = query_dsl
 
 
 class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):

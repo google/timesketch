@@ -41,6 +41,7 @@ from timesketch.lib.forms import TrashViewForm
 from timesketch.lib.forms import SaveViewForm
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchIndex
+from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
 from timesketch.models.user import Group
@@ -164,8 +165,11 @@ def overview(sketch_id):
 @sketch_views.route(
     u'/sketch/<int:sketch_id>/explore/view/<int:view_id>/',
     methods=[u'GET', u'POST'])
+@sketch_views.route(
+    u'/sketch/<int:sketch_id>/explore/searchtemplate/<int:searchtemplate_id>/',
+    methods=[u'GET', u'POST'])
 @login_required
-def explore(sketch_id, view_id=None):
+def explore(sketch_id, view_id=None, searchtemplate_id=None):
     """Generates the sketch explore view template.
 
     Returns:
@@ -183,7 +187,16 @@ def explore(sketch_id, view_id=None):
     url_index = request.args.get(u'index', None)
     url_limit = request.args.get(u'limit', None)
 
-    if view_id:
+    if searchtemplate_id:
+        searchtemplate = SearchTemplate.query.get(searchtemplate_id)
+        view = sketch.get_user_view(current_user)
+        if not view:
+            view = View(user=current_user, name=u'', sketch=sketch)
+        view.query_string = searchtemplate.query_string
+        view.query_filter = searchtemplate.query_filter
+        view.query_dsl = searchtemplate.query_dsl
+        save_view = True
+    elif view_id:
         view = View.query.get(view_id)
 
         # Check that this view belongs to the sketch
@@ -196,10 +209,10 @@ def explore(sketch_id, view_id=None):
     else:
         view = sketch.get_user_view(current_user)
         if not view:
-            query_filter = view.validate_filter(dict(indices=sketch_timelines))
             view = View(
-                user=current_user, name=u'', sketch=sketch, query_string=u'*',
-                query_filter=query_filter)
+                user=current_user, name=u'', sketch=sketch, query_string=u'*')
+            view.query_filter = view.validate_filter(
+                dict(indices=sketch_timelines))
             save_view = True
 
     if url_query:
@@ -212,6 +225,7 @@ def explore(sketch_id, view_id=None):
         if url_limit:
             query_filter[u'limit'] = url_limit
         view.query_filter = view.validate_filter(query_filter)
+        view.query_dsl = None
         save_view = True
 
     if save_view:
@@ -220,7 +234,8 @@ def explore(sketch_id, view_id=None):
 
     return render_template(
         u'sketch/explore.html', sketch=sketch, view=view, named_view=view_id,
-        timelines=sketch_timelines, view_form=view_form)
+        timelines=sketch_timelines, view_form=view_form,
+        searchtemplate_id=searchtemplate_id)
 
 
 @sketch_views.route(
@@ -237,6 +252,7 @@ def export(sketch_id):
     sketch = Sketch.query.get_with_acl(sketch_id)
     view = sketch.get_user_view(current_user)
     query_filter = json.loads(view.query_filter)
+    query_dsl = json.loads(view.query_dsl)
     indices = query_filter.get(u'indices', [])
 
     datastore = ElasticSearchDataStore(
@@ -244,7 +260,7 @@ def export(sketch_id):
         port=current_app.config[u'ELASTIC_PORT'])
 
     result = datastore.search(
-        sketch_id, view.query_string, query_filter, indices,
+        sketch_id, view.query_string, query_filter, query_dsl, indices,
         aggregations=None, return_results=True)
 
     csv_out = StringIO()

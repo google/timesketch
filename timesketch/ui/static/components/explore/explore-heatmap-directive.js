@@ -23,6 +23,7 @@
          * @param sketchId - Sketch ID.
          * @param filter - Filter object.
          * @param query - Query string.
+         * @param queryDsl - Query DSL JSON string.
          * @param meta - Events metadata object.
          * @param showCharts - Boolean indicating if chars should be visible.
          */
@@ -32,6 +33,7 @@
                 sketchId: '=',
                 filter: '=',
                 query: '=',
+                queryDsl: '=',
                 meta: '=',
                 showCharts: '='
             },
@@ -39,7 +41,7 @@
             link: function(scope, element, attrs, ctrl) {
                 scope.$watchGroup(['meta', 'showCharts'], function (newval, oldval) {
                     if(scope.showCharts) {
-                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, 'heatmap')
+                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, scope.queryDsl, 'heatmap')
                             .success(function(data) {
                                 scope.render_heatmap(data['objects'])
                             });
@@ -54,7 +56,7 @@
                     return angular.element($window)[0].innerWidth;
                 }, function() {
                     if(scope.meta && scope.showCharts) {
-                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, 'heatmap')
+                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, scope.queryDsl, 'heatmap')
                             .success(function(data) {
                                 scope.render_heatmap(data['objects'])
                             });

@@ -212,14 +212,21 @@
             },
             controller: function($scope) {
                 timesketchApi.getView($scope.sketchId, $scope.viewId).success(function(data) {
-                    var query = data.objects[0].query_string;
-                    var filter = angular.fromJson(data.objects[0].query_filter);
-                    $scope.viewName = data.objects[0].name;
-                    timesketchApi.search($scope.sketchId, query, filter).success(function(data) {
-                        $scope.events = data.objects;
-                        $scope.meta = data.meta;
-                        $scope.filter = filter;
-                    });
+                    if (data.meta.deleted) {
+                        $scope.deleted = true;
+                        $scope.viewName = data.meta.name
+                    }
+                    if (data.objects.length) {
+                        var query = data.objects[0].query_string;
+                        var filter = angular.fromJson(data.objects[0].query_filter);
+                        var queryDsl = angular.fromJson(data.objects[0].query_dsl);
+                        $scope.viewName = data.objects[0].name;
+                        timesketchApi.search($scope.sketchId, query, filter, queryDsl).success(function(data) {
+                            $scope.events = data.objects;
+                            $scope.meta = data.meta;
+                            $scope.filter = filter;
+                        });
+                    }
                 })
             }
         }

@@ -17,6 +17,7 @@ limitations under the License.
 (function() {
     var module = angular.module('timesketch.core', [
         'timesketch.core.butterbar.directive',
-        'timesketch.core.upload.directive'
+        'timesketch.core.upload.directive',
+        'timesketch.core.edit.sketch.directive'
     ]);
 })();
