@@ -23,8 +23,8 @@ class DataStore(object):
 
     @abc.abstractmethod
     def search(
-            self, sketch_id, query, query_filter, indices, aggregations,
-            return_results):
+            self, sketch_id, query, query_filter, query_dsl, indices,
+            aggregations, return_results):
         """Return search results.
 
         Args:

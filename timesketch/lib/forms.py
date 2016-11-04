@@ -100,8 +100,7 @@ class UsernamePasswordForm(BaseForm):
 class NameDescriptionForm(BaseForm):
     """Generic form for name and description forms. Used in multiple places."""
     name = StringField(u'Name', validators=[DataRequired()])
-    description = StringField(
-        u'Description', validators=[DataRequired()], widget=widgets.TextArea())
+    description = StringField(u'Description', widget=widgets.TextArea())
 
 
 class HiddenNameDescriptionForm(BaseForm):
@@ -111,8 +110,7 @@ class HiddenNameDescriptionForm(BaseForm):
     """
     name = HiddenField(
         u'Name', default=u'Untitled sketch', validators=[DataRequired()])
-    description = HiddenField(
-        u'Description', default=u'No description', validators=[DataRequired()])
+    description = HiddenField(u'Description')
 
 
 class TimelineForm(NameDescriptionForm):
@@ -141,15 +139,21 @@ class TogglePublic(BaseForm):
 
 class SaveViewForm(BaseForm):
     """Form used to save a view."""
-    name = StringField(u'Name', validators=[DataRequired()])
+    name = StringField(u'Name')
     query = StringField(u'Query')
-    filter = StringField(u'Filter', validators=[DataRequired()])
+    filter = StringField(u'Filter')
+    dsl = StringField(u'DSL')
+    new_searchtemplate = BooleanField(
+        u'Create search template', false_values={False, u'false', u''},
+        default=False)
+    from_searchtemplate_id = IntegerField(u'Create from search template')
 
 
 class ExploreForm(BaseForm):
     """Form used to search the datastore."""
     query = StringField(u'Query')
     filter = StringField(u'Filter')
+    dsl = StringField(u'DSL')
 
 
 class AggregationForm(ExploreForm):

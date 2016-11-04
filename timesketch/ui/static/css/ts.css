@@ -520,3 +520,12 @@ h3.editable {
 .editable-title:focus {
     outline:0 solid transparent;
 }
+
+#json-editor {
+    position: relative;
+    height: 300px;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}

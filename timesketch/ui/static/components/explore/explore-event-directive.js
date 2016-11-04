@@ -37,6 +37,7 @@ limitations under the License.
                 events: '=',
                 query: '=',
                 filter: '=',
+                queryDsl: '=',
                 viewId: '=',
                 namedView: '='
             },
@@ -89,7 +90,7 @@ limitations under the License.
                 $scope.saveEventsView = function() {
                     var filter = getSelectedEventsFilter();
                     timesketchApi.saveView(
-                        $scope.sketchId, $scope.view_name, "", filter)
+                        $scope.sketchId, $scope.view_name, false, "", filter, null)
                         .success(function(data) {
                             var view_id = data.objects[0].id;
                             var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
@@ -102,20 +103,30 @@ limitations under the License.
                     var reload = false;
                     var query = "";
                     var filter = getSelectedEventsFilter();
+                    var query_dsl = {};
                     if (filter['events'].length < 1) {
                         query = $scope.query;
                         filter = $scope.filter;
+                        query_dsl = $scope.queryDsl
                     } else {
                         reload = true;
                     }
                     timesketchApi.updateView(
-                        $scope.sketchId, $scope.viewId, $scope.view.name, query, filter)
+                        $scope.sketchId, $scope.viewId, $scope.view.name, query, filter, query_dsl)
                         .success(function(data) {
                             if (reload) {
                                 var view_id = data.objects[0].id;
                                 var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
                                 window.location.href = view_url;
                             }
+                        });
+                };
+
+                $scope.deleteView = function() {
+                    timesketchApi.deleteView($scope.sketchId, $scope.viewId)
+                        .success(function(data) {
+                            var sketchUrl = '/sketch/' + $scope.sketchId + '/explore/';
+                            window.location.href = sketchUrl;
                         });
                 };
 
@@ -153,8 +164,9 @@ limitations under the License.
                 scope.applyOrder = function() {
                     ctrl.search(scope.query, scope.filter);
                 };
-                scope.$watch('filter.limit', function(value) {
-                    ctrl.search(scope.query, scope.filter);
+                scope.$watch('userLimit', function(value) {
+                    scope.filter['limit'] = scope.userLimit;
+                    ctrl.search(scope.query, scope.filter, scope.queryDsl);
                 });
             }
         }

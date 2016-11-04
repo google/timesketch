@@ -20,6 +20,7 @@ limitations under the License.
         'timesketch.explore.filter.directive',
         'timesketch.explore.search.directive',
         'timesketch.explore.heatmap.directive',
-        'timesketch.explore.histogram.directive'
+        'timesketch.explore.histogram.directive',
+        'timesketch.explore.json.editor.directive'
     ]);
 })();

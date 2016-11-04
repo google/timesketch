@@ -23,6 +23,7 @@
          * @param sketchId - Sketch ID.
          * @param filter - Filter object.
          * @param query - Query string.
+         * @param queryDsl - Query DSL JSON string.
          * @param meta - Events metadata object.
          */
         return {
@@ -32,6 +33,7 @@
                 sketchId: '=',
                 filter: '=',
                 query: '=',
+                queryDsl: '=',
                 meta: '=',
                 showCharts: '='
             },
@@ -43,7 +45,7 @@
 
                 scope.$watchGroup(['meta', 'showCharts', 'chartType'], function (newval, oldval) {
                     if(scope.showCharts) {
-                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, 'histogram')
+                        timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, scope.queryDsl, 'histogram')
                             .success(function(data) {
                                 render_histogram(data['objects'])
                             });

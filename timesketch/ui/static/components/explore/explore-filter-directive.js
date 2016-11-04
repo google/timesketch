@@ -23,6 +23,7 @@ limitations under the License.
          * @param sketch - Sketch object.
          * @param filter - Filter object.
          * @param query - Query string.
+         * @param queryDsl - Query DSL JSON string.
          * @param show-filters - Boolean value. If set to true the filter card will be shown.
          * @param events - Array of events objects.
          * @param meta - Events metadata object.
@@ -34,6 +35,7 @@ limitations under the License.
                 sketch: '=',
                 filter: '=',
                 query: '=',
+                queryDsl: '=',
                 showFilters: '=',
                 events: '=',
                 meta: '='
@@ -41,14 +43,14 @@ limitations under the License.
             require: '^tsSearch',
             link: function(scope, elem, attrs, ctrl) {
                 scope.applyFilter = function() {
-                    ctrl.search(scope.query, scope.filter)
+                    ctrl.search(scope.query, scope.filter, scope.queryDsl)
                 };
 
                 scope.clearFilter = function() {
                     delete scope.filter.time_start;
                     delete scope.filter.time_end;
                     scope.showFilters = false;
-                    ctrl.search(scope.query, scope.filter)
+                    ctrl.search(scope.query, scope.filter, scope.queryDsl)
                 };
 
                 scope.enableAllTimelines = function() {
@@ -56,7 +58,7 @@ limitations under the License.
                     for (var i = 0; i < scope.sketch.timelines.length; i++) {
                         scope.filter.indices.push(scope.sketch.timelines[i].searchindex.index_name)
                     }
-                    ctrl.search(scope.query, scope.filter)
+                    ctrl.search(scope.query, scope.filter, scope.queryDsl)
                 };
                 scope.disableAllTimelines = function() {
                     scope.filter.indices = [];
@@ -80,6 +82,7 @@ limitations under the License.
             scope: {
                 timeline: '=',
                 query: '=',
+                queryDsl: '=',
                 filter: '='
             },
             require: '^tsSearch',
@@ -98,7 +101,7 @@ limitations under the License.
                             scope.filter.indices.push(index_name);
                         }
                     }
-                    ctrl.search(scope.query, scope.filter);
+                    ctrl.search(scope.query, scope.filter, scope.queryDsl);
                 };
                 scope.$watch("filter.indices", function(value) {
                     if (scope.filter.indices.indexOf(index_name) == -1) {
@@ -125,6 +128,7 @@ limitations under the License.
             scope: {
                 datatype: '=',
                 query: '=',
+                queryDsl: '=',
                 meta: '=',
                 filter: '='
             },
@@ -159,7 +163,7 @@ limitations under the License.
                             scope.datatype_picker_color = {'color': '#D1D1D1', 'background': '#D1D1D1'};
                         }
                     }
-                    ctrl.search(scope.query, scope.filter);
+                    ctrl.search(scope.query, scope.filter, scope.queryDsl);
                 };
                 scope.$watch("filter", function(value) {
                     if (scope.filter.exclude.indexOf(scope.datatype.key) == -1) {
