@@ -9,6 +9,12 @@ RUN apt-get -y dist-upgrade
 # Install Timesketch dependencies
 RUN apt-get -y install python-pip python-dev libffi-dev python-psycopg2
 
+# Install Plaso
+RUN apt-get -y install software-properties-common 
+RUN add-apt-repository ppa:gift/stable
+RUN apt-get update
+RUN apt-get -y install python-plaso
+
 # Use pip to install Timesketch
 # RUN pip install timesketch
 # Install from source (master branch of repository) because flask_login is currently broken (https://github.com/google/timesketch/pull/244)
