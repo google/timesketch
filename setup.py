@@ -29,7 +29,7 @@ timesketch_description = (
 
 setup(
     name=u'timesketch',
-    version=u'2016.7',
+    version=u'2016.11',
     description=u'Digital forensic timeline analysis',
     long_description=timesketch_description,
     license=u'Apache License, Version 2.0',
