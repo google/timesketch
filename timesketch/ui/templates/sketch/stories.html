@@ -12,13 +12,11 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <div class="card" style="padding:50px;min-height: 500px;">
-                    {% if story %}
-                        <ts-story sketch-id="{{ sketch.id }}" story-id="{{ story.id }}"></ts-story>
-                    {% else %}
-                        <ts-story-list sketch-id="{{ sketch.id }}" show-create-button="true"></ts-story-list>
-                    {% endif %}
-                </div>
+                {% if story %}
+                    <ts-story sketch-id="{{ sketch.id }}" story-id="{{ story.id }}"></ts-story>
+                {% else %}
+                    <ts-story-list sketch-id="{{ sketch.id }}" show-create-button="true"></ts-story-list>
+                {% endif %}
             </div>
         </div>
     </div>

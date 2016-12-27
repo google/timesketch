@@ -11,21 +11,9 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <div class="card">
-                    <h4>Saved views</h4>
-                    <ts-saved-view-list sketch-id="{{ sketch.id }}"></ts-saved-view-list>
-                </div>
+                <ts-saved-view-list sketch-id="{{ sketch.id }}" show-templates="true"></ts-saved-view-list>
             </div>
         </div>
-
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <ts-search-template-list sketch-id="{{ sketch.id }}"></ts-search-template-list>
-                </div>
-            </div>
-        </div>
-
     </div>
 
 {% endblock %}

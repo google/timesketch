@@ -1,32 +1,35 @@
-<span ng-hide="savedViews.length">No saved views</span>
-<table class="table table-hover" ng-hide="!savedViews.length">
-    <thead>
-    <tr>
-        <th></th>
-        <th width="110px">Created by</th>
-        <th width="130px">Created</th>
-        <th width="110px"></th>
-    </tr>
-    <tbody>
-    <tr ng-repeat="view in savedViews">
-        <td>
-            <div style="margin-top:5px;font-weight: bold">
-                <a href="/sketch/{{ sketchId }}/explore/view/{{ view.id }}/">{{ view.name }}</a>
-            </div>
-        </td>
-        <td>{{ view.user.username }}</td>
-        <td>{{ view.updated_at}}</td>
-        <td>
-            <i ng-click="confirmDelete =! confirmDelete" ng-hide="confirmDelete" class="fa fa-trash pull-right" style="cursor: pointer"></i>
-            <div class="btn-group" ng-show="confirmDelete">
-                <button class="btn btn-danger btn-sm" ng-click="deleteView(view)">Delete</button>
-                <button class="btn btn-link btn-sm" style="color:#000;" ng-click="confirmDelete =! confirmDelete"><i class="fa fa-close"></i></button>
-            </div>
+<div class="card" style="min-height: 200px;">
+    <h4>Saved views</h4>
+    <span ng-hide="savedViews.length">No saved views. You can create new views while <a href="/sketch/{{ sketchId }}/explore/">exploring your timelines</a>.</span>
+    <table class="table table-hover" ng-hide="!savedViews.length">
+        <thead>
+        <tr>
+            <th></th>
+            <th width="110px">Created by</th>
+            <th width="130px">Created</th>
+            <th width="110px"></th>
+        </tr>
+        <tbody>
+        <tr ng-repeat="view in savedViews">
+            <td>
+                <div style="margin-top:5px;font-weight: bold">
+                    <a href="/sketch/{{ sketchId }}/explore/view/{{ view.id }}/">{{ view.name }}</a>
+                </div>
+            </td>
+            <td>{{ view.user.username }}</td>
+            <td>{{ view.updated_at}}</td>
+            <td>
+                <i ng-click="confirmDelete =! confirmDelete" ng-hide="confirmDelete" class="fa fa-trash pull-right" style="cursor: pointer"></i>
+                <div class="btn-group" ng-show="confirmDelete">
+                    <button class="btn btn-danger btn-sm" ng-click="deleteView(view)">Delete</button>
+                    <button class="btn btn-link btn-sm" style="color:#000;" ng-click="confirmDelete =! confirmDelete"><i class="fa fa-close"></i></button>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 
-        </td>
-
-
-
-    </tr>
-    </tbody>
-</table>
+<div class="card" ng-show="showTemplates">
+    <ts-search-template-list sketch-id="sketchId"></ts-search-template-list>
+</div>

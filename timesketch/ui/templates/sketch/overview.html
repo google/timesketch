@@ -311,26 +311,18 @@
 
         <div class="container">
             <div class="row">
+
                     <div class="col-md-6">
-                        <div class="card" style="min-height: 300px">
-                            <h4>Saved views</h4>
-                            <ts-saved-view-list sketch-id="{{ sketch.id }}"></ts-saved-view-list>
-                        </div>
+                        <ts-saved-view-list sketch-id="{{ sketch.id }}"></ts-saved-view-list>
                     </div>
 
                     <div class="col-md-6">
-                        <div class="card" style="min-height: 300px">
-                            <h4>Stories</h4>
-                            {% if sketch.stories %}
-                                <ts-story-list sketch-id="{{ sketch.id }}"></ts-story-list>
-                            {% else %}
-                                No stories written yet
-                            {% endif %}
-                        </div>
+                        <ts-story-list sketch-id="{{ sketch.id }}"></ts-story-list>
                     </div>
+
             </div>
         </div>
-    </div>
+
     </div>
 
 
