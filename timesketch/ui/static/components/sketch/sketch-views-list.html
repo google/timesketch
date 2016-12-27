@@ -1,28 +1,32 @@
-<div class="col-md-12">
-    <div class="card">
-        <table class="table table-hover" ng-hide="!savedViews.length">
-            <thead>
-            <tr>
-                <th>Saved views</th>
-                <th width="110px">Created by</th>
-                <th width="130px">Created</th>
-                <th width="40px"></th>
-            </tr>
-            <tbody>
-            <tr ng-repeat="view in savedViews">
-                <td>
-                    <div style="margin-top:5px;font-weight: bold">
-                        <a href="/sketch/{{ sketchId }}/explore/view/{{ view.id }}/">{{ view.name }}</a>
-                    </div>
-                    <span style="color:#777;">{{ view.query_string }}</span>
-                </td>
-                <td>{{ view.user.username }}</td>
-                <td>{{ view.updated_at}}</td>
-                <td ng-click="deleteView(view)"><i class="fa fa-trash"></i></td>
-            </tr>
-            </tbody>
-        </table>
-        <h4 ng-hide="savedViews.length">No saved views</h4>
-    </div>
-</div>
-<ts-search-template-list sketch-id="sketchId"></ts-search-template-list>
+<span ng-hide="savedViews.length">No saved views</span>
+<table class="table table-hover" ng-hide="!savedViews.length">
+    <thead>
+    <tr>
+        <th></th>
+        <th width="110px">Created by</th>
+        <th width="130px">Created</th>
+        <th width="110px"></th>
+    </tr>
+    <tbody>
+    <tr ng-repeat="view in savedViews">
+        <td>
+            <div style="margin-top:5px;font-weight: bold">
+                <a href="/sketch/{{ sketchId }}/explore/view/{{ view.id }}/">{{ view.name }}</a>
+            </div>
+        </td>
+        <td>{{ view.user.username }}</td>
+        <td>{{ view.updated_at}}</td>
+        <td>
+            <i ng-click="confirmDelete =! confirmDelete" ng-hide="confirmDelete" class="fa fa-trash pull-right" style="cursor: pointer"></i>
+            <div class="btn-group" ng-show="confirmDelete">
+                <button class="btn btn-danger btn-sm" ng-click="deleteView(view)">Delete</button>
+                <button class="btn btn-link btn-sm" style="color:#000;" ng-click="confirmDelete =! confirmDelete"><i class="fa fa-close"></i></button>
+            </div>
+
+        </td>
+
+
+
+    </tr>
+    </tbody>
+</table>
