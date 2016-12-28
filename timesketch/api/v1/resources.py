@@ -1071,3 +1071,23 @@ class QueryResource(ResourceMixin, Resource):
             schema[u'objects'].append(query)
             return jsonify(schema)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class CountEventsResource(ResourceMixin, Resource):
+    """Resource to number of events for sketch timelines."""
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            Number of events in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        indices = [i.searchindex.index_name for i in sketch.timelines]
+        count = self.datastore.count(indices)
+        meta = dict(count=count)
+        schema = dict(meta=meta, objects=[])
+        return jsonify(schema)

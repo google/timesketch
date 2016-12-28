@@ -292,6 +292,8 @@ class ElasticSearchDataStore(datastore.DataStore):
         Returns:
             Number of documents.
         """
+        if not indices:
+            return 0
         result = self.client.count(index=indices)
         return result.get(u'count', 0)
 
