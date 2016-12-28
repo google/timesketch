@@ -1,18 +1,19 @@
-<div class="card" style="min-height: 200px;">
+<div class="card" style="min-height: 300px;">
     <h4>Saved views</h4>
-    <span ng-hide="savedViews.length">No saved views. You can create new views while <a href="/sketch/{{ sketchId }}/explore/">exploring your timelines</a>.</span>
+    <span ng-hide="savedViews.length">No saved views</span>
+    <br>
     <table class="table table-hover" ng-hide="!savedViews.length">
         <thead>
         <tr>
+            <th>Name</th>
+            <th>Created by</th>
+            <th>Created</th>
             <th></th>
-            <th width="110px">Created by</th>
-            <th width="130px">Created</th>
-            <th width="110px"></th>
         </tr>
         <tbody>
         <tr ng-repeat="view in savedViews">
             <td>
-                <div style="margin-top:5px;font-weight: bold">
+                <div style="font-weight: bold">
                     <a href="/sketch/{{ sketchId }}/explore/view/{{ view.id }}/">{{ view.name }}</a>
                 </div>
             </td>
@@ -20,9 +21,9 @@
             <td>{{ view.updated_at}}</td>
             <td>
                 <i ng-click="confirmDelete =! confirmDelete" ng-hide="confirmDelete" class="fa fa-trash pull-right" style="cursor: pointer"></i>
-                <div class="btn-group" ng-show="confirmDelete">
-                    <button class="btn btn-danger btn-sm" ng-click="deleteView(view)">Delete</button>
-                    <button class="btn btn-link btn-sm" style="color:#000;" ng-click="confirmDelete =! confirmDelete"><i class="fa fa-close"></i></button>
+                <div class="pull-right" ng-show="confirmDelete">
+                    <span style="color:red;cursor: pointer;margin-right:5px;" ng-click="deleteView(view)">Delete</span>
+                    <i class="fa fa-close" style="cursor:pointer;" ng-click="confirmDelete =! confirmDelete"></i>
                 </div>
             </td>
         </tr>
@@ -30,6 +31,6 @@
     </table>
 </div>
 
-<div class="card" ng-show="showTemplates">
+<div class="card" ng-if="showTemplates">
     <ts-search-template-list sketch-id="sketchId"></ts-search-template-list>
 </div>

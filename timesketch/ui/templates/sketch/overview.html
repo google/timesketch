@@ -238,7 +238,7 @@
                             </div>
 
                             <h3>{{ sketch.name }}</h3>
-                            <p style="white-space: pre-wrap;word-wrap: break-word;">{{ sketch.description }}</p>
+                            <p style="white-space: pre-wrap;word-wrap: break-word; max-width: 800px;">{{ sketch.description }}</p>
 
                             {% if sketch.collaborators or sketch.groups %}
                                 <hr>
@@ -257,68 +257,113 @@
             </div>
         </div>
 
-        <div class="card">
-            <h4>Timelines</h4>
-            {% if not sketch.timelines %}
-                <br>
-                {% if sketch.has_permission(current_user, 'write') %}
-                    <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started</a>
-                {% endif %}
-            {% else %}
+        <div class="row">
 
-                <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th></th>
-                        <th width="110px">Added by</th>
-                        <th width="130px">Added</th>
-                    </tr>
-                    <tbody>
-                    {% for timeline in sketch.timelines %}
-                        <tr>
-                            <td>
-                                <div>
-                                    {% if timeline.searchindex.get_status.status == 'processing' %}
-                                        <i class="fa fa-spinner fa-spin"></i>
-                                    {% else %}
-                                        <div class="color-box" style="background:#{{ timeline.color }};"></div>
-                                    {% endif %}
-                                </div>
-                                <div style="margin-top:-25px;margin-left:45px">
-                                    {% if timeline.searchindex.get_status.status == 'processing' %}
-                                        {{ timeline.name }}
-                                    {% else %}
-                                        <a href="/sketch/{{ sketch.id }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
-                                    {% endif %}
-                                </div>
-                                <div style="height:5px;"></div>
+            <div class="col-md-4">
+                <div class="card" style="border-top: 2px solid #428bca;">
+                    <div class="text-center">
+                        <h1>{{ sketch.timelines|length }}</h1>
+                        <i class="fa fa-clock-o"></i> timeline
+                    </div>
+                </div>
+            </div>
 
-                            </td>
-                            <td>{{ timeline.user.name }}</td>
-                            <td>
-                                <div style="margin-top:5px;">{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-                {% if sketch.has_permission(current_user, 'write') %}
-                    <a class="btn btn-default" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Timeline</a>
-                {% endif %}
+            <div class="col-md-4">
+                <div class="card" style="border-top: 2px solid #428bca;">
+                    <div class="text-center">
+                        <h1>345K</h1>
+                        events
+                    </div>
+                </div>
+            </div>
 
-        {% endif %}
+            <div class="col-md-4">
+                <div class="card" style="border-top: 2px solid #428bca;">
+                    <div class="text-center">
+                        <h1>0</h1>
+                        <i class="fa fa-warning"></i> alerts
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card" style="min-height: 300px;">
+
+                    <h4 class="pull-left">Timelines</h4>
+                    {% if sketch.has_permission(current_user, 'write') %}
+                        <a class="btn btn-success btn-sm pull-right" style="margin-top:-5px;" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Timeline</a>
+                    {% endif %}
+                    <br><br>
+                    {% if not sketch.timelines %}
+                        <br>
+                        {% if sketch.has_permission(current_user, 'write') %}
+                            <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started</a>
+                        {% endif %}
+                    {% else %}
+
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>Timeline</th>
+                                <th>Added by</th>
+                                <th>Added</th>
+                            </tr>
+                            <tbody>
+                            {% for timeline in sketch.timelines %}
+                                <tr>
+                                    <td>
+                                        <div>
+                                            {% if timeline.searchindex.get_status.status == 'processing' %}
+                                                <i class="fa fa-spinner fa-spin"></i>
+                                            {% else %}
+                                                <div class="color-box" style="background:#{{ timeline.color }};"></div>
+                                            {% endif %}
+                                        </div>
+                                        <div style="margin-top:-25px;margin-left:45px">
+                                            {% if timeline.searchindex.get_status.status == 'processing' %}
+                                                {{ timeline.name }}
+                                            {% else %}
+                                                <a href="/sketch/{{ sketch.id }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
+                                            {% endif %}
+                                        </div>
+                                        <div style="height:5px;"></div>
+
+                                    </td>
+                                    <td>{{ timeline.user.name }}</td>
+                                    <td>
+                                        <div style="margin-top:5px;">{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <ts-story-list sketch-id="{{ sketch.id }}"></ts-story-list>
+            </div>
+
         </div>
 
         <div class="container">
             <div class="row">
 
-                    <div class="col-md-6">
-                        <ts-saved-view-list sketch-id="{{ sketch.id }}"></ts-saved-view-list>
-                    </div>
+                <div class="col-md-6">
+                    <ts-saved-view-list sketch-id="{{ sketch.id }}"></ts-saved-view-list>
+                </div>
 
-                    <div class="col-md-6">
-                        <ts-story-list sketch-id="{{ sketch.id }}"></ts-story-list>
+                <div class="col-md-6">
+                    <div class="card" style="min-height: 300px;">
+                        <ts-search-template-list sketch-id="{{ sketch.id }}"></ts-search-template-list>
                     </div>
+                </div>
 
             </div>
         </div>
