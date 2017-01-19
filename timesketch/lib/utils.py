@@ -14,6 +14,7 @@
 """Common functions and utilities."""
 
 import colorsys
+import csv
 import random
 
 
@@ -30,3 +31,14 @@ def random_color():
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
     return u'{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
 
+
+def read_csv(path):
+    """Generator for reading a CSV file.
+
+    Args:
+        path: Path to the CSV file
+    """
+    with open(path, u'rb') as fh:
+        reader = csv.DictReader(fh)
+        for row in reader:
+            yield row

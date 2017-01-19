@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""ElasticSearch datastore."""
+"""Elasticsearch datastore."""
 
+from collections import Counter
 import json
 import logging
 
@@ -39,6 +40,8 @@ class ElasticSearchDataStore(datastore.DataStore):
         self.client = Elasticsearch([
             {u'host': host, u'port': port}
         ])
+        self.import_counter = Counter()
+        self.import_events = []
 
     @staticmethod
     def _build_label_query(sketch_id, label_name):
@@ -359,3 +362,33 @@ class ElasticSearchDataStore(datastore.DataStore):
         index_name = unicode(index_name.decode(encoding=u'utf-8'))
         doc_type = unicode(doc_type.decode(encoding=u'utf-8'))
         return index_name, doc_type
+
+    def import_event(self, flush_interval, index_name, event_type, event=None):
+        """Add event to Elasticsearch.
+
+        Args:
+            flush_interval: Number of events to queue up before indexing
+            index_name: Name of the index in Elasticsearch
+            event_type: Type of event (e.g. plaso_event)
+            event: Event dictionary
+        """
+        if not event:
+            if self.import_events:
+                self.client.bulk(
+                    index=index_name, doc_type=event_type,
+                    body=self.import_events)
+
+        # Header needed by Elasticsearch when bulk inserting.
+        self.import_events.append({
+            u'index': {
+                u'_index': index_name, u'_type': event_type
+            }
+        })
+        self.import_events.append(event)
+        self.import_counter[u'events'] += 1
+        print self.import_counter[u'events']
+        if self.import_counter[u'events'] % int(flush_interval) == 0:
+            self.client.bulk(
+                index=index_name, doc_type=event_type, body=self.import_events)
+            self.import_events = []
+        return self.import_counter[u'events']
