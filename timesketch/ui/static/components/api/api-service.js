@@ -250,6 +250,16 @@ limitations under the License.
             return $http.post(resource_url, params)
         };
 
+        this.countEvents = function(sketch_id) {
+            /**
+             * Count number of events in sketch.
+             * @param sketch_id - The id for the sketch.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/count/';
+            return $http.get(resource_url)
+        };
+
         this.search = function(sketch_id, query, filter, queryDsl) {
             /**
              * Execute query and filter on the datastore.

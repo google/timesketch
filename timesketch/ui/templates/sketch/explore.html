@@ -13,8 +13,11 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-12">
-                    <div class="card card-top">
-                        <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started!</a>
+                    <div class="card">
+                        <div class="text-center" style="padding:100px;">
+                            <h3 style="color:#777"><i class="fa fa-meh-o"></i> No data to analyze</h3>
+                            <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started</a>
+                        </div>
                     </div>
                 </div>
             </div>
