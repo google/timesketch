@@ -76,7 +76,7 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
         output_module.SetUserName(username)
 
     # Start process the Plaso storage file.
-
     counter = frontend.ExportEvents(storage_reader, output_module)
 
     return dict(counter)
+

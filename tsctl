@@ -226,21 +226,6 @@ class CreateTimelineBase(Command):
         self.counter = Counter()
         self.events = []
 
-    @staticmethod
-    def create_search_index(index_name, timeline_name):
-            """Create searchindex in the Timesketch database.
-
-            Args:
-                index_name: Then name of the index in Elasticsearch
-                timeline_name: The name of the timeline in Timesketch
-            """
-            searchindex = SearchIndex.get_or_create(
-                name=timeline_name, description=timeline_name,
-                user=None, index_name=index_name)
-            searchindex.grant_permission(u'read')
-            db_session.add(searchindex)
-            db_session.commit()
-
     def add_event(self, es, flush_interval, index_name, event_type, event):
         """Add event to Elasticsearch.
 
@@ -282,7 +267,14 @@ class CreateTimelineBase(Command):
             es.client.bulk(
                 index=index_name, doc_type=event_type, body=self.events)
 
-        self.create_search_index(index_name, timeline_name)
+        # Create a searchindex in the Timesketch database.
+        searchindex = SearchIndex.get_or_create(
+            name=timeline_name, description=timeline_name,
+            user=None, index_name=index_name)
+        searchindex.grant_permission(u'read')
+        db_session.add(searchindex)
+        db_session.commit()
+
         sys.stdout.write(
             u'Timeline name: {0:s}\nElasticsearch index: {1:s}\n'
             u'Events inserted: {2:d}\n'.format(
