@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""This module is for management of the timesketch application."""
+"""This module is for management of the Timesketch application."""
 
 import json
 import sys
@@ -38,8 +38,6 @@ from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import SearchIndex
 
-reload(sys)
-sys.setdefaultencoding(u'UTF8')
 
 class DropDataBaseTables(Command):
     """Drop all database tables."""
@@ -353,14 +351,16 @@ class CreateTimelineFromCsv(CreateTimelineBase):
 
         es.create_index(index_name=index_name, doc_type=event_type)
         for event in read_csv(file_path):
-            _counter = es.import_event(
+            event_counter = es.import_event(
                 flush_interval, index_name, event_type, event)
-            if _counter % int(flush_interval) == 0:
-                sys.stdout.write(
-                    u'Events inserted: {0:d}\n'.format(_counter))
+            if event_counter % int(flush_interval) == 0:
+                sys.stdout.write(u'Indexing progress: {0:d} events\r'.format(event_counter))
+                sys.stdout.flush()
 
         # Import the remaining events in the queue
-        es.import_event(flush_interval, index_name, event_type)
+        total_events = es.import_event(flush_interval, index_name, event_type)
+        sys.stdout.write(
+            u'\nTotal events: {0:d}\n'.format(total_events))
         self.create_searchindex(timeline_name, index_name)
 
 

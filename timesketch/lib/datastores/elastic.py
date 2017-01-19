@@ -372,23 +372,26 @@ class ElasticSearchDataStore(datastore.DataStore):
             event_type: Type of event (e.g. plaso_event)
             event: Event dictionary
         """
-        if not event:
+        if event:
+            # Make sure we have decoded strings in the event dict.
+            event = {k.decode('utf8'): v.decode('utf8') for k, v in event.items()}
+
+            # Header needed by Elasticsearch when bulk inserting.
+            self.import_events.append({
+                u'index': {
+                    u'_index': index_name, u'_type': event_type
+                }
+            })
+            self.import_events.append(event)
+            self.import_counter[u'events'] += 1
+            if self.import_counter[u'events'] % int(flush_interval) == 0:
+                self.client.bulk(
+                    index=index_name, doc_type=event_type, body=self.import_events)
+                self.import_events = []
+        else:
             if self.import_events:
                 self.client.bulk(
                     index=index_name, doc_type=event_type,
                     body=self.import_events)
 
-        # Header needed by Elasticsearch when bulk inserting.
-        self.import_events.append({
-            u'index': {
-                u'_index': index_name, u'_type': event_type
-            }
-        })
-        self.import_events.append(event)
-        self.import_counter[u'events'] += 1
-        print self.import_counter[u'events']
-        if self.import_counter[u'events'] % int(flush_interval) == 0:
-            self.client.bulk(
-                index=index_name, doc_type=event_type, body=self.import_events)
-            self.import_events = []
         return self.import_counter[u'events']
