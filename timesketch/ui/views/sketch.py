@@ -46,7 +46,7 @@ from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
 from timesketch.models.user import Group
 from timesketch.models.user import User
-from timesketch.lib.datastores.elastic import ElasticSearchDataStore
+from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
@@ -255,7 +255,7 @@ def export(sketch_id):
     query_dsl = json.loads(view.query_dsl)
     indices = query_filter.get(u'indices', [])
 
-    datastore = ElasticSearchDataStore(
+    datastore = ElasticsearchDataStore(
         host=current_app.config[u'ELASTIC_HOST'],
         port=current_app.config[u'ELASTIC_PORT'])
 

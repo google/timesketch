@@ -52,7 +52,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.datastores.elastic import ElasticSearchDataStore
+from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.lib.forms import AddTimelineForm
 from timesketch.lib.forms import AggregationForm
@@ -184,7 +184,7 @@ class ResourceMixin(object):
         Returns:
             Instance of timesketch.lib.datastores.elastic.ElasticSearchDatastore
         """
-        return ElasticSearchDataStore(
+        return ElasticsearchDataStore(
             host=current_app.config[u'ELASTIC_HOST'],
             port=current_app.config[u'ELASTIC_PORT'])
 

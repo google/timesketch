@@ -27,7 +27,7 @@ except ImportError:
     pass
 
 from timesketch import create_celery_app
-from timesketch.lib.datastores.elastic import ElasticSearchDataStore
+from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
@@ -87,7 +87,7 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
 
 
 @celery.task(track_started=True)
-def run_csv(source_file_path, timeline_name, index_name):
+def run_csv(source_file_path, timeline_name, index_name, username=None):
     """Create a Celery task for processing a CSV file.
 
     Args:
@@ -102,12 +102,13 @@ def run_csv(source_file_path, timeline_name, index_name):
     event_type = u'generic_event'  # Document type for Elasticsearch
 
     # Log information to Celery
-    logging.info(u'Index name: {0:s}'.format(index_name))
-    logging.info(u'Timeline name: {0:s}'.format(timeline_name))
-    logging.info(u'Flush interval: {0:d}'.format(flush_interval))
-    logging.info(u'Document type: {0:s}'.format(event_type))
+    logging.info(u'Index name: %s', index_name)
+    logging.info(u'Timeline name: %s', timeline_name)
+    logging.info(u'Flush interval: %d', flush_interval)
+    logging.info(u'Document type: %s', event_type)
+    logging.info(u'Owner: %s', username)
 
-    es = ElasticSearchDataStore(
+    es = ElasticsearchDataStore(
         host=current_app.config[u'ELASTIC_HOST'],
         port=current_app.config[u'ELASTIC_PORT'])
 

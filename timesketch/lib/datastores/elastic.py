@@ -32,11 +32,11 @@ es_logger = logging.getLogger(u'elasticsearch')
 es_logger.addHandler(logging.NullHandler())
 
 
-class ElasticSearchDataStore(datastore.DataStore):
+class ElasticsearchDataStore(datastore.DataStore):
     """Implements the datastore."""
     def __init__(self, host=u'127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
-        super(ElasticSearchDataStore, self).__init__()
+        super(ElasticsearchDataStore, self).__init__()
         self.client = Elasticsearch([
             {u'host': host, u'port': port}
         ])
@@ -305,6 +305,7 @@ class ElasticSearchDataStore(datastore.DataStore):
         try:
             doc[u'_source'][u'timesketch_label']
         except KeyError:
+            # pylint: disable=redefined-variable-type
             doc = {u'doc': {u'timesketch_label': []}}
             self.client.update(
                 index=searchindex_id, doc_type=event_type, id=event_id,
@@ -374,7 +375,9 @@ class ElasticSearchDataStore(datastore.DataStore):
         """
         if event:
             # Make sure we have decoded strings in the event dict.
-            event = {k.decode('utf8'): v.decode('utf8') for k, v in event.items()}
+            event = {
+                k.decode(u'utf8'): v.decode(u'utf8') for k, v in event.items()
+            }
 
             # Header needed by Elasticsearch when bulk inserting.
             self.import_events.append({
@@ -386,7 +389,8 @@ class ElasticSearchDataStore(datastore.DataStore):
             self.import_counter[u'events'] += 1
             if self.import_counter[u'events'] % int(flush_interval) == 0:
                 self.client.bulk(
-                    index=index_name, doc_type=event_type, body=self.import_events)
+                    index=index_name, doc_type=event_type,
+                    body=self.import_events)
                 self.import_events = []
         else:
             if self.import_events:

@@ -30,7 +30,7 @@ from flask_script import prompt_pass
 from sqlalchemy.exc import IntegrityError
 
 from timesketch import create_app
-from timesketch.lib.datastores.elastic import ElasticSearchDataStore
+from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.models import db_session
 from timesketch.models import drop_all
@@ -169,7 +169,7 @@ class AddSearchIndex(Command):
     # pylint: disable=arguments-differ, method-hidden
     def run(self, name, index, username):
         """Create the SearchIndex."""
-        es = ElasticSearchDataStore(
+        es = ElasticsearchDataStore(
             host=current_app.config[u'ELASTIC_HOST'],
             port=current_app.config[u'ELASTIC_PORT'])
         user = User.query.filter_by(username=username).first()
@@ -305,7 +305,7 @@ class CreateTimelineFromJson(CreateTimelineBase):
         """
         timeline_name = unicode(timeline_name.decode(encoding=u'utf-8'))
         index_name = unicode(index_name.decode(encoding=u'utf-8'))
-        es = ElasticSearchDataStore(
+        es = ElasticsearchDataStore(
             host=current_app.config[u'ELASTIC_HOST'],
             port=current_app.config[u'ELASTIC_PORT'])
 
@@ -345,7 +345,7 @@ class CreateTimelineFromCsv(CreateTimelineBase):
         """
         timeline_name = unicode(timeline_name.decode(encoding=u'utf-8'))
         index_name = unicode(index_name.decode(encoding=u'utf-8'))
-        es = ElasticSearchDataStore(
+        es = ElasticsearchDataStore(
             host=current_app.config[u'ELASTIC_HOST'],
             port=current_app.config[u'ELASTIC_PORT'])
 
