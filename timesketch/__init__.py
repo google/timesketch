@@ -21,7 +21,7 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_restful import Api
-from flask_wtf import CsrfProtect
+from flask_wtf import CSRFProtect
 
 from timesketch.api.v1.resources import AggregationResource
 from timesketch.api.v1.resources import ExploreResource
@@ -160,7 +160,7 @@ def create_app(config=None):
         return User.query.get(user_id)
 
     # Setup CSRF protection for the whole application
-    CsrfProtect(app)
+    CSRFProtect(app)
 
     return app
 

@@ -193,7 +193,7 @@ class ExploreResourceTest(BaseTest):
     }
 
     @mock.patch(
-        u'timesketch.api.v1.resources.ElasticSearchDataStore', MockDataStore)
+        u'timesketch.api.v1.resources.ElasticsearchDataStore', MockDataStore)
     def test_search(self):
         """Authenticated request to query the datastore."""
         self.login()
@@ -210,7 +210,7 @@ class AggregationResourceTest(BaseTest):
     resource_url = u'/api/v1/sketches/1/aggregation/'
 
     @mock.patch(
-        u'timesketch.api.v1.resources.ElasticSearchDataStore', MockDataStore)
+        u'timesketch.api.v1.resources.ElasticsearchDataStore', MockDataStore)
     def test_heatmap_aggregation(self):
         """Authenticated request to get heatmap aggregation."""
         self.login()
@@ -240,7 +240,7 @@ class EventResourceTest(BaseTest):
     }
 
     @mock.patch(
-        u'timesketch.api.v1.resources.ElasticSearchDataStore', MockDataStore)
+        u'timesketch.api.v1.resources.ElasticsearchDataStore', MockDataStore)
     def test_get_event(self):
         """Authenticated request to get an event from the datastore."""
         self.login()
@@ -250,7 +250,7 @@ class EventResourceTest(BaseTest):
         self.assert200(response)
 
     @mock.patch(
-        u'timesketch.api.v1.resources.ElasticSearchDataStore', MockDataStore)
+        u'timesketch.api.v1.resources.ElasticsearchDataStore', MockDataStore)
     def test_invalid_index(self):
         """
         Authenticated request to get an event from the datastore, but in the
@@ -267,7 +267,7 @@ class EventAnnotationResourceTest(BaseTest):
     resource_url = u'/api/v1/sketches/1/event/annotate/'
 
     @mock.patch(
-        u'timesketch.api.v1.resources.ElasticSearchDataStore', MockDataStore)
+        u'timesketch.api.v1.resources.ElasticsearchDataStore', MockDataStore)
     def test_post_annotate_resource(self):
         """Authenticated request to create an annotation."""
         self.login()

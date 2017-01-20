@@ -14,6 +14,7 @@
 """Celery task for processing Plaso storage files."""
 
 import os
+import logging
 import sys
 
 from flask import current_app
@@ -26,6 +27,10 @@ except ImportError:
     pass
 
 from timesketch import create_celery_app
+from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+from timesketch.lib.utils import read_and_validate_csv
+from timesketch.models import db_session
+from timesketch.models.sketch import SearchIndex
 
 celery = create_celery_app()
 
@@ -76,7 +81,49 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
         output_module.SetUserName(username)
 
     # Start process the Plaso storage file.
-
     counter = frontend.ExportEvents(storage_reader, output_module)
 
     return dict(counter)
+
+
+@celery.task(track_started=True)
+def run_csv(source_file_path, timeline_name, index_name, username=None):
+    """Create a Celery task for processing a CSV file.
+
+    Args:
+        source_file_path: Path to CSV file.
+        timeline_name: Name of the Timesketch timeline.
+        index_name: Name of the datastore index.
+
+    Returns:
+        Dictionary with count of processed events.
+    """
+    flush_interval = 1000  # events to queue before bulk index
+    event_type = u'generic_event'  # Document type for Elasticsearch
+
+    # Log information to Celery
+    logging.info(u'Index name: %s', index_name)
+    logging.info(u'Timeline name: %s', timeline_name)
+    logging.info(u'Flush interval: %d', flush_interval)
+    logging.info(u'Document type: %s', event_type)
+    logging.info(u'Owner: %s', username)
+
+    es = ElasticsearchDataStore(
+        host=current_app.config[u'ELASTIC_HOST'],
+        port=current_app.config[u'ELASTIC_PORT'])
+
+    es.create_index(index_name=index_name, doc_type=event_type)
+    for event in read_and_validate_csv(source_file_path):
+        es.import_event(
+            flush_interval, index_name, event_type, event)
+
+    # Import the remaining events
+    total_events = es.import_event(flush_interval, index_name, event_type)
+
+    # We are done so let's remove the processing status flag
+    search_index = SearchIndex.query.filter_by(index_name=index_name).first()
+    search_index.status.remove(search_index.status[0])
+    db_session.add(search_index)
+    db_session.commit()
+
+    return {u'Events processed': total_events}

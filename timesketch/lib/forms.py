@@ -192,8 +192,8 @@ class UploadFileForm(BaseForm):
         u'file', validators=[
             FileRequired(),
             FileAllowed(
-                [u'plaso'],
-                u'Unknown file extension. Allowed file extensions: .plaso')])
+                [u'plaso', u'csv'],
+                u'Allowed file extensions: .plaso or .csv')])
     name = StringField(u'Timeline name', validators=[DataRequired()])
 
 
