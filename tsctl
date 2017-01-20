@@ -31,7 +31,7 @@ from sqlalchemy.exc import IntegrityError
 
 from timesketch import create_app
 from timesketch.lib.datastores.elastic import ElasticSearchDataStore
-from timesketch.lib.utils import read_csv
+from timesketch.lib.utils import read_and_validate_csv
 from timesketch.models import db_session
 from timesketch.models import drop_all
 from timesketch.models.user import Group
@@ -350,7 +350,7 @@ class CreateTimelineFromCsv(CreateTimelineBase):
             port=current_app.config[u'ELASTIC_PORT'])
 
         es.create_index(index_name=index_name, doc_type=event_type)
-        for event in read_csv(file_path):
+        for event in read_and_validate_csv(file_path):
             event_counter = es.import_event(
                 flush_interval, index_name, event_type, event)
             if event_counter % int(flush_interval) == 0:

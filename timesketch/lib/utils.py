@@ -32,13 +32,27 @@ def random_color():
     return u'{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
 
 
-def read_csv(path):
+def read_and_validate_csv(path):
     """Generator for reading a CSV file.
 
     Args:
         path: Path to the CSV file
     """
+    # Columns that must be present in the CSV file
+    mandatory_fields = [
+        u'message', u'timestamp', u'datetime', u'timestamp_desc']
+
     with open(path, u'rb') as fh:
         reader = csv.DictReader(fh)
+        csv_header = reader.fieldnames
+        missing_fields = []
+        # Validate the CSV header
+        for field in mandatory_fields:
+            if field not in csv_header:
+                missing_fields.append(field)
+        if missing_fields:
+            raise RuntimeError(
+                u'Missing fields in CSV header: {0:s}'.format(missing_fields))
+
         for row in reader:
             yield row

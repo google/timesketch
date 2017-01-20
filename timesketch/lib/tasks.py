@@ -28,7 +28,7 @@ except ImportError:
 
 from timesketch import create_celery_app
 from timesketch.lib.datastores.elastic import ElasticSearchDataStore
-from timesketch.lib.utils import read_csv
+from timesketch.lib.utils import read_and_validate_csv
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 
@@ -112,7 +112,7 @@ def run_csv(source_file_path, timeline_name, index_name):
         port=current_app.config[u'ELASTIC_PORT'])
 
     es.create_index(index_name=index_name, doc_type=event_type)
-    for event in read_csv(source_file_path):
+    for event in read_and_validate_csv(source_file_path):
         es.import_event(
             flush_interval, index_name, event_type, event)
 
