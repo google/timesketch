@@ -4,11 +4,11 @@
     {% if not sketches.all() and not query %}
         <div style="text-align: center">
             <br><br>
-            <h3>Welcome to Timesketch!</h3>
+            <h3>Welcome to Timesketch</h3>
             <form action="{{ url_for('home_views.home') }}" method="post">
                 {{ form.name }}
                 {{ form.description }}
-                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> Create new sketch to get started</button>
+                <button type="submit" class="btn btn-success btn-lg"><i class="fa fa-plus"></i> Create new sketch</button>
                 {{ form.csrf_token }}
             </form>
         </div>
@@ -35,17 +35,7 @@
                         {% endif %}
                     </div>
                 </div>
-                <br><br>
-
-                <div class="card" style="margin-top:7px;">
-                    <form class="form form-inline" method="get" action="{{ url_for('home_views.home') }}">
-                        <input type="search" id="q" name="q" class="search-input" placeholder="Search sketches" value="{{ query }}" autofocus>
-                    </form>
-                </div>
-
-                {% if upload_enabled %}
-                    <ts-core-upload-queue></ts-core-upload-queue>
-                {%  endif %}
+                <br><br><br>
 
                 {% if sketches.all() or query %}
 

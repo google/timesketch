@@ -1,16 +1,17 @@
-<div ng-if="stories.length < 1" style="text-align: center">
-    <br><br>
-    <h3>There are no stories for this sketch.</h3>
-    <button class="btn btn-success btn-lg" ng-click="createStory()"><i class="fa fa-plus"></i> Create new story</button>
+<h4 class="pull-left">Stories</h4>
+<button class="btn btn-success btn-sm pull-right" style="margin-top:-5px;" ng-click="createStory()"><i class="fa fa-plus"></i> Story</button>
+<br><br>
+<div ng-if="stories.length < 1">
+    There are no stories written yet
 </div>
-
+<br>
 <div ng-if="stories.length > 0">
-    <table ng-if="stories.length > 0" class="table table-hover">
+    <table ng-if="stories.length > 0" class="table table-hover table-striped">
         <thead>
         <tr>
-            <th>Story</th>
-            <th width="110px">Author</th>
-            <th width="130px">Created</th>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Created</th>
         </tr>
         </thead>
         <tbody>
@@ -20,5 +21,4 @@
             <td>{{ story.created_at }}</td>
         </tr>
     </table>
-    <button ng-if="showCreateButton" class="btn btn-success" ng-click="createStory()"><i class="fa fa-plus"></i> New story</button>
 </div>

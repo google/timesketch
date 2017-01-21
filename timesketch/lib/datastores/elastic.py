@@ -286,6 +286,20 @@ class ElasticsearchDataStore(datastore.DataStore):
         except NotFoundError:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
 
+    def count(self, indices):
+        """Count number of documents.
+
+        Args:
+            indices: List of indices.
+
+        Returns:
+            Number of documents.
+        """
+        if not indices:
+            return 0
+        result = self.client.count(index=indices)
+        return result.get(u'count', 0)
+
     def set_label(
             self, searchindex_id, event_id, event_type, sketch_id, user_id,
             label, toggle=False):
