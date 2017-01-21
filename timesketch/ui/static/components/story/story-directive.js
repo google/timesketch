@@ -34,7 +34,7 @@
                     $scope.stories = [];
                     for (var i = 0; i < stories.length; i++) {
                         var story = stories[i];
-                        story.created_at = moment.utc(story.created_at).format("YYYY-MM-DD");
+                        story.created_at = moment.utc(story.created_at).format("YYYY-MM-DD HH:MM");
                         $scope.stories.push(story)
                     }
                 });
