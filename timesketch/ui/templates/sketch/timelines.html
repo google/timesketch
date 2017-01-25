@@ -19,9 +19,9 @@
                             <tr>
                                 <th width="50px"></th>
                                 <th></th>
-                                <th width="110px">Added by</th>
-                                <th width="130px">Added</th>
-                                <th width="130px">Edit</th>
+                                <th width=>Added by</th>
+                                <th width=>Added</th>
+                                <th width=>Edit</th>
                             </tr>
                             <tbody>
                             {% for timeline in sketch.timelines %}
@@ -68,8 +68,8 @@
                             <table class="table table-hover">
                                 <thead>
                                 <th width="30px"></th>
-                                <th></th>
-                                <th width="100px">Created</th>
+                                <th>Timeline</th>
+                                <th>Created</th>
                                 </thead>
                                 {% for timeline in timelines %}
                                     {% if timeline.get_status.status == 'new' %}
