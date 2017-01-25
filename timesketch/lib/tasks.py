@@ -26,6 +26,7 @@ try:
 except ImportError:
     pass
 
+from timesketch import create_app
 from timesketch import create_celery_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
@@ -101,6 +102,7 @@ def run_csv(source_file_path, timeline_name, index_name, username=None):
     """
     flush_interval = 1000  # events to queue before bulk index
     event_type = u'generic_event'  # Document type for Elasticsearch
+    app = create_app()
 
     # Log information to Celery
     logging.info(u'Index name: %s', index_name)
@@ -122,9 +124,11 @@ def run_csv(source_file_path, timeline_name, index_name, username=None):
     total_events = es.import_event(flush_interval, index_name, event_type)
 
     # We are done so let's remove the processing status flag
-    search_index = SearchIndex.query.filter_by(index_name=index_name).first()
-    search_index.status.remove(search_index.status[0])
-    db_session.add(search_index)
-    db_session.commit()
+    with app.app_context():
+        search_index = SearchIndex.query.filter_by(
+            index_name=index_name).first()
+        search_index.status.remove(search_index.status[0])
+        db_session.add(search_index)
+        db_session.commit()
 
     return {u'Events processed': total_events}
