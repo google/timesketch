@@ -94,6 +94,7 @@ def run_csv(source_file_path, timeline_name, index_name, username=None):
         source_file_path: Path to CSV file.
         timeline_name: Name of the Timesketch timeline.
         index_name: Name of the datastore index.
+        username: Username of the user who will own the timeline.
 
     Returns:
         Dictionary with count of processed events.
@@ -121,10 +122,9 @@ def run_csv(source_file_path, timeline_name, index_name, username=None):
     total_events = es.import_event(flush_interval, index_name, event_type)
 
     # We are done so let's remove the processing status flag
-    with celery.app.app_context():
-        search_index = SearchIndex.query.filter_by(index_name=index_name).first()
-        search_index.status.remove(search_index.status[0])
-        db_session.add(search_index)
-        db_session.commit()
+    search_index = SearchIndex.query.filter_by(index_name=index_name).first()
+    search_index.status.remove(search_index.status[0])
+    db_session.add(search_index)
+    db_session.commit()
 
     return {u'Events processed': total_events}
