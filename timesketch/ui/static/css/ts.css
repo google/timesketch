@@ -534,3 +534,16 @@ h3.editable {
     bottom: 0;
     left: 0;
 }
+
+ul.content-list {
+    list-style: none;
+}
+
+ul.content-list>li {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    display: block;
+    margin: 0;
+}
+
+ul.content-list>li:last-child { border-bottom: none; }
