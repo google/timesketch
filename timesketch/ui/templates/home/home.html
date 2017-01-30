@@ -17,9 +17,11 @@
         <div class="container">
 
         <div class="row">
-            <div class="col-md-1"></div>
-            <div class="col-md-10">
 
+          <div class="col-md-1"></div>
+            <div class="col-md-10" style="margin-top: 70px;">
+
+              <!--
                 <div class="pull-right">
                     <div class="btn-group">
                         <div class="pull-left" style="margin-right:0px;margin-top: -6px;">
@@ -36,21 +38,24 @@
                     </div>
                 </div>
                 <br><br><br>
+                -->
 
                 {% if sketches.all() %}
 
-                    <div class="card" style="padding: 40px;">
+                    <div>
                       <ul class="content-list">
                         {% for sketch in sketches.all() %}
                           <li class="content-item">
                             <div class="pull-right" style="margin-top:10px;">
+                              <span style="margin-right:20px;">{{ sketch.user.username }}</span>
                               <span style="margin-right:10px;"><i class="fa fa-clock-o"></i> {{ sketch.timelines|count }}</span>
                               <span><i class="fa fa-eye"></i> {{ sketch.get_named_views|count }}</span>
+
                             </div>
                             <div class="title">
-                              <a style="text-decoration: none; font-weight: 600;font-size: 1.1em;" href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}">{{ sketch.name }}</a>
+                              <a style="text-decoration: none; font-weight: 500;font-size: 1.2em;" href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}">{{ sketch.name }}</a>
                               <br>
-                              Created {{ sketch.created_at.strftime('%Y-%m-%d') }} by {{ sketch.user.username }}
+                              Last activity {{ sketch.updated_at.strftime('%Y-%m-%d') }}
                             </div>
                           </li>
                         {% endfor %}
@@ -93,8 +98,8 @@
                         -->
                     </div>
                 {% endif %}
-                <div class="col-md-1"></div>
             </div>
+          <div class="col-md-1"></div>
 
         </div>
     {% endif %}

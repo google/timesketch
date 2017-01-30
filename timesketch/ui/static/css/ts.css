@@ -20,16 +20,25 @@ i {
 
 body {
     background: #f9f9f9;
+    background: #fff;
 }
 
 header {
     width: 100%;
-    height: 55px;
+    height: 75px;
     background: #34495e;
     position: fixed;
     top:0;
     z-index:9998;
     padding:11px 21px 11px 11px;
+}
+
+#sub-header {
+    background: #3a5a78;
+    min-height:200px;
+    padding-top:85px;
+    color:#fff;
+
 }
 
 table {
@@ -45,7 +54,7 @@ table {
     width:210px;
     height:55px;
     padding:20px;
-    padding-top:15px;
+    padding-top:25px;
     background: #34495e;
     position: fixed;
     top:0;
@@ -67,7 +76,7 @@ table {
     margin-bottom: 20px;
     background: #fff;
     padding: 20px;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15)
+    #box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15)
 }
 
 .card-header {
@@ -540,10 +549,14 @@ ul.content-list {
 }
 
 ul.content-list>li {
-    padding: 10px 0;
+    padding: 15px;
     border-bottom: 1px solid #eee;
     display: block;
     margin: 0;
+}
+
+ul.content-list>li:hover {
+    background: #fcfcfc;
 }
 
 ul.content-list>li:last-child { border-bottom: none; }
