@@ -20,12 +20,12 @@ i {
 
 body {
     background: #f9f9f9;
-    background: #fff;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
 }
 
 header {
     width: 100%;
-    height: 75px;
+    height: 65px;
     background: #34495e;
     position: fixed;
     top:0;
@@ -33,12 +33,14 @@ header {
     padding:11px 21px 11px 11px;
 }
 
-#sub-header {
-    background: #3a5a78;
-    min-height:200px;
-    padding-top:85px;
-    color:#fff;
+#navigation {
+    margin-left:200px;
+}
 
+#subheader {
+    background: #fff;
+    height:85px;
+    padding-top:85px;
 }
 
 table {
@@ -47,14 +49,14 @@ table {
 }
 
 #main {
-    margin:90px 35px 35px 35px;
+    margin:95px 15px 15px 15px;
 }
 
 #logo {
     width:210px;
     height:55px;
     padding:20px;
-    padding-top:25px;
+    padding-top:20px;
     background: #34495e;
     position: fixed;
     top:0;
@@ -76,7 +78,7 @@ table {
     margin-bottom: 20px;
     background: #fff;
     padding: 20px;
-    #box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15)
+    box-shadow: 0 0 1px rgba(0,0,0,0.15);
 }
 
 .card-header {
@@ -412,9 +414,8 @@ rect.bordered {
 }
 
 .nav-tabs>li>a, .nav-tabs>li>a:hover {
-    color:#555;
-    margin-bottom: -2px;
-    padding: 15px 20px 20px 20px;
+    color:#d1d1d1;
+    padding: 15px 20px 16px 20px;
     border: none;
     font-weight: normal;
     background-color: transparent;
@@ -427,12 +428,11 @@ rect.bordered {
 }
 
 .nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
-    color:#333;
+    color:#fff;
+    font-weight: bold;
     border:none;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
-    margin-bottom: -2px;
     cursor: pointer;
-    border-top: 2px solid #428bca;
+    background: transparent;
 }
 
 .nav-tabs {
@@ -510,21 +510,25 @@ p {
 
 h3 {
     margin-bottom: 30px;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
 }
 
 h1.editable-title {
     padding:0;
     margin:0;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
 }
 
 h2.editable {
     padding:0;
     margin:0;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
 }
 
 h3.editable {
     padding:0;
     margin:0;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
 }
 
 .editable:focus {
@@ -560,3 +564,10 @@ ul.content-list>li:hover {
 }
 
 ul.content-list>li:last-child { border-bottom: none; }
+
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Roboto'), local('Roboto-Regular'), url('/static/fonts/Roboto/Roboto-Regular.ttf') format('truetype');
+}

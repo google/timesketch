@@ -1,21 +1,22 @@
 {% extends "base.html" %}
-{% block main %}
-    <ul class="nav nav-tabs">
-        <li role="presentation"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
-        <li role="presentation"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
-        <li role="presentation"><a href="{{ url_for('story_views.story', sketch_id=sketch.id) }}"><i class="fa fa-book"></i> Stories</a></li>
-        <li role="presentation" class="active"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
-        <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
-    </ul>
 
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <ts-saved-view-list sketch-id="{{ sketch.id }}" show-search-templates="true" show-delete="true"></ts-saved-view-list>
-                </div>
-            </div>
-        </div>
+{% block navigation %}
+  <ul class="nav nav-tabs">
+    <li role="presentation"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
+    <li role="presentation"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
+    <li role="presentation"><a href="{{ url_for('story_views.story', sketch_id=sketch.id) }}"><i class="fa fa-book"></i> Stories</a></li>
+    <li role="presentation" class="active"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
+    <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
+  </ul>
+{% endblock %}
+
+{% block main %}
+  <div class="container">
+    <div class="col-md-12">
+      <div class="card">
+        <ts-saved-view-list sketch-id="{{ sketch.id }}" show-search-templates="true" show-delete="true"></ts-saved-view-list>
+      </div>
     </div>
+  </div>
 
 {% endblock %}
