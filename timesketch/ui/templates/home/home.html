@@ -1,4 +1,17 @@
 {% extends "base.html" %}
+
+{% block header_left %}
+                        <div class="pull-left" style="margin-right:0px;margin-top: -6px;">
+                            <form action="{{ url_for('home_views.home') }}" method="post">
+                                {{ form.name }}
+                                {{ form.description }}
+                                <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> Create new sketch</button>
+                                {{ form.csrf_token }}
+                            </form>
+                        </div>
+
+{% endblock %}
+
 {% block main %}
 
     {% if not sketches.all() and not query %}
@@ -16,12 +29,12 @@
 
         <div class="container">
 
-        <div class="row">
-
           <div class="col-md-1"></div>
             <div class="col-md-10" style="margin-top: 70px;">
 
-              <!--
+            <div class="card">
+
+                    <!--
                 <div class="pull-right">
                     <div class="btn-group">
                         <div class="pull-left" style="margin-right:0px;margin-top: -6px;">
@@ -35,10 +48,11 @@
                         {% if upload_enabled %}
                             <ts-core-upload class="pull-left" style="margin-left:5px;margin-top: -6px;"></ts-core-upload>
                         {% endif %}
+
                     </div>
                 </div>
                 <br><br><br>
-                -->
+                    -->
 
                 {% if sketches.all() %}
 
@@ -99,6 +113,8 @@
                     </div>
                 {% endif %}
             </div>
+                        </div>
+
           <div class="col-md-1"></div>
 
         </div>
