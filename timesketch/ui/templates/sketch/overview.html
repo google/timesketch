@@ -230,68 +230,6 @@
     {% else %}
 
       <div class="col-md-12">
-        <div class="card">
-
-          <div class="pull-right" style="margin-right:10px;margin-top:10px;">
-            <div class="btn-group">
-              {% if sketch.has_permission(user=current_user, permission='write') %}
-                <button class="btn btn-default" data-toggle="modal" data-target="#edit-sketch-modal"><i class="fa fa-pencil"></i></button>
-                <button class="btn btn-default" data-toggle="modal" data-target="#status-modal">Status: {{ sketch.get_status.status|title }}</button>
-              {% endif %}
-
-              {% if sketch.has_permission(user=current_user, permission='delete') %}
-                <button class="btn btn-default" data-toggle="modal" data-target="#trash-modal"><i class="fa fa-trash"></i></button>
-              {% endif %}
-
-              <button data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
-                {% if sketch.is_public %}
-                  <i class="fa fa-globe"></i> Share</button>
-                {% else %}
-                  <i class="fa fa-lock"></i> Share</button>
-                {% endif %}
-            </div>
-          </div>
-
-          <br>
-          <h3>{{ sketch.name }}</h3>
-
-          <p style="white-space: pre-wrap;word-wrap: break-word; max-width: 800px;">{{ sketch.description }}</p>
-
-          {% if sketch.collaborators or sketch.groups %}
-            <br>
-            <span style="margin-right:10px;">Shared with</span>
-            {% for group in sketch.groups %}
-              <span class="label label-default" style="font-size: 0.9em;" title="Shared with group {{ group.name }}"><i class="fa fa-group"></i>{{ group.name }}</span>
-            {% endfor %}
-            {% for collaborator in sketch.collaborators %}
-              <span class="label label-default" style="font-size: 0.9em;" title="Shared with user {{ collaborator.username }}"><i class="fa fa-user"></i>{{ collaborator.username }}</span>
-            {% endfor %}
-          {% endif %}
-
-        </div>
-      </div>
-
-
-      <!-- Single metric info cards -->
-        <div class="col-md-6">
-          <div class="card" style="border-top: 2px solid #428bca;">
-            <div class="text-center">
-              <h1>{{ sketch.timelines|length }}</h1>
-              <i class="fa fa-clock-o"></i> Timelines
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6">
-          <div class="card" style="border-top: 2px solid #428bca;">
-            <div class="text-center">
-              <h1 ts-count-events sketch-id="{{ sketch.id }}"></h1>
-              Events
-            </div>
-          </div>
-        </div>
-
-      <div class="col-md-12">
         <div class="card" style="padding-left:30px; padding-bottom: 30px;">
 
           <div class="pull-right" style="margin-right:10px;margin-top:10px;">
@@ -332,26 +270,30 @@
       </div>
 
 
-    {% if not sketch.timelines %}
+      <!-- Single metric info cards -->
 
-      <div class="col-md-12">
-        <div class="card">
-          <div class="text-center" style="padding:100px;">
-            <h3 style="color:#777"><i class="fa fa-meh-o"></i> No data to analyze</h3>
-            <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started</a>
+
+        <div class="col-md-6">
+          <div class="card" style="border-top: 2px solid #428bca;">
+            <div class="text-center">
+              <h1>{{ sketch.timelines|length }}</h1>
+              <i class="fa fa-clock-o"></i> Timelines
+            </div>
           </div>
         </div>
-      </div>
 
-    {% else %}
+        <div class="col-md-6">
+          <div class="card" style="border-top: 2px solid #428bca;">
+            <div class="text-center">
+              <h1 ts-count-events sketch-id="{{ sketch.id }}"></h1>
+              Events
+            </div>
+          </div>
+        </div>
 
-      <div class="col-md-6">
-        <div class="card" style="min-height:300px;">
-=======
 
       <div class="col-md-6">
         <div class="card" style="min-height:300px;max-height:620px;overflow-y: auto">
->>>>>>> 0b8135c27db204b25f548f45db7baee4f24aa53b
 
           <h4 class="pull-left">Timelines</h4>
           {% if sketch.has_permission(current_user, 'write') %}
