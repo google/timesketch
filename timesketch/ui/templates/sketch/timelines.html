@@ -1,97 +1,93 @@
 {% extends "base.html" %}
 
 {% block navigation %}
-  <ul class="nav nav-tabs">
-    <li role="presentation"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
-    <li role="presentation"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
-    <li role="presentation"><a href="{{ url_for('story_views.story', sketch_id=sketch.id) }}"><i class="fa fa-book"></i> Stories</a></li>
-    <li role="presentation"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
-    <li role="presentation" class="active"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
-  </ul>
+    <ul class="nav nav-tabs">
+        <li role="presentation"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
+        <li role="presentation"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
+        <li role="presentation"><a href="{{ url_for('story_views.story', sketch_id=sketch.id) }}"><i class="fa fa-book"></i> Stories</a></li>
+        <li role="presentation"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
+        <li role="presentation" class="active"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
+    </ul>
 {% endblock %}
 
 {% block main %}
-  <div class="container">
-    <div class="col-md-12">
-
-      {% if sketch.timelines %}
-        <div class="card">
-          <h4>Timelines</h4>
-          <table class="table table-hover">
-            <thead>
-            <tr>
-              <th width="50px"></th>
-              <th></th>
-              <th width=>Added by</th>
-              <th width=>Added</th>
-              <th width=>Edit</th>
-            </tr>
-            <tbody>
-            {% for timeline in sketch.timelines %}
-              <tr>
-                <td>
-                  {% if timeline.searchindex.get_status.status == 'processing' %}
-                    <i class="fa fa-spinner fa-spin"></i>
-                  {% else %}
-                    <div class="color-box" style="background:#{{ timeline.color }};"></div>
-                  {% endif %}
-                </td>
-                <td>
-                  <div style="margin-top:5px;">
-                    {% if timeline.searchindex.get_status.status == 'processing' %}
-                      {{ timeline.name }}
-                    {% else %}
-                      <a href="/sketch/{{ sketch.id }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
-                    {% endif %}
-                  </div>
-                </td>
-                <td>{{ timeline.user.name }}</td>
-                <td>
-                  <div style="margin-top:5px;">{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
-                </td>
-                <td>
-                  {% if sketch.has_permission(user=current_user, permission='write') %}
-                    <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}" class="btn btn-default pull-right " style="margin-left:10px;width:50px;"><i class="fa fa-pencil"></i></a>
-                  {% endif %}
-                </td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
+    <div class="container">
+        <div class="col-md-12">
+            {% if sketch.timelines %}
+                <div class="card">
+                    <h4>Timelines</h4>
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th width="50px"></th>
+                            <th></th>
+                            <th width=>Added by</th>
+                            <th width=>Added</th>
+                            <th width=>Edit</th>
+                        </tr>
+                        <tbody>
+                        {% for timeline in sketch.timelines %}
+                            <tr>
+                                <td>
+                                    {% if timeline.searchindex.get_status.status == 'processing' %}
+                                        <i class="fa fa-spinner fa-spin"></i>
+                                    {% else %}
+                                        <div class="color-box" style="background:#{{ timeline.color }};"></div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div style="margin-top:5px;">
+                                        {% if timeline.searchindex.get_status.status == 'processing' %}
+                                            {{ timeline.name }}
+                                        {% else %}
+                                            <a href="/sketch/{{ sketch.id }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>{{ timeline.user.name }}</td>
+                                <td>
+                                    <div style="margin-top:5px;">{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                                </td>
+                                <td>
+                                    {% if sketch.has_permission(user=current_user, permission='write') %}
+                                        <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}" class="btn btn-default pull-right " style="margin-left:10px;width:50px;"><i class="fa fa-pencil"></i></a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
         </div>
-      {% endif %}
-
-    </div>
-    <div class="col-md-12">
-      {% if sketch.has_permission(current_user, 'write') %}
-        {% if timelines %}
-          <div class="card">
-          <h4>Add timeline</h4>
-          <form method="post" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
-            <table class="table table-hover">
-              <thead>
-              <th width="30px"></th>
-              <th>Timeline</th>
-              <th>Created</th>
-              </thead>
-              {% for timeline in timelines %}
-                {% if timeline.get_status.status == 'new' %}
-                  <tr>
-                    <td><input name="timelines" type="checkbox" value={{ timeline.id }}></td>
-                    <td>{{ timeline.name }}</td>
-                    <td>{{ timeline.created_at.strftime('%Y-%m-%d') }}</td>
-                  </tr>
+        <div class="col-md-12">
+            {% if sketch.has_permission(current_user, 'write') %}
+                {% if timelines %}
+                    <div class="card">
+                    <h4>Add timeline</h4>
+                    <form method="post" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
+                        <table class="table table-hover">
+                            <thead>
+                            <th width="30px"></th>
+                            <th>Timeline</th>
+                            <th>Created</th>
+                            </thead>
+                            {% for timeline in timelines %}
+                                {% if timeline.get_status.status == 'new' %}
+                                    <tr>
+                                        <td><input name="timelines" type="checkbox" value={{ timeline.id }}></td>
+                                        <td>{{ timeline.name }}</td>
+                                        <td>{{ timeline.created_at.strftime('%Y-%m-%d') }}</td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </table>
+                        {{ form.csrf_token }}
+                        <button class="btn btn-success" type="submit"><i class="fa fa-plus"></i> Add to sketch</button>
+                    </form>
                 {% endif %}
-              {% endfor %}
-            </table>
-            {{ form.csrf_token }}
-            <button class="btn btn-success" type="submit"><i class="fa fa-plus"></i> Add to sketch</button>
-          </form>
-
-        {% endif %}
-      </div>
-      {% endif %}
+            </div>
+            {% endif %}
+        </div>
     </div>
-  </div>
-  </div>
 {% endblock %}

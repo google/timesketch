@@ -37,12 +37,6 @@ header {
     margin-left:200px;
 }
 
-#subheader {
-    background: #fff;
-    height:85px;
-    padding-top:85px;
-}
-
 table {
     table-layout: fixed;
     word-wrap: break-word;
@@ -419,7 +413,7 @@ rect.bordered {
     margin-top:-12px;
     border: none;
     font-weight: normal;
-    background-color: transparent;
+    background: transparent;
     margin-right:7px;
     border-radius: 0;
 }
@@ -433,7 +427,7 @@ rect.bordered {
     font-weight: bold;
     border:none;
     cursor: pointer;
-    background: #2b3e51;
+    background: #3d5267;
 }
 
 .nav-tabs {
