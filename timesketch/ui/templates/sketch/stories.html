@@ -11,6 +11,11 @@
 {% endblock %}
 
 {% block main %}
+
+    <div class="col-md-1"></div>
+
+    <div class="col-md-10">
+
     {% if not sketch.timelines %}
         <div class="col-md-12">
             <div class="card">
@@ -33,4 +38,6 @@
             </div>
         </div>
     {% endif %}
+    <div class="col-md-10">
+
 {% endblock %}
