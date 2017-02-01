@@ -433,7 +433,7 @@ rect.bordered {
     font-weight: bold;
     border:none;
     cursor: pointer;
-    background: #2b3e51;
+    background: transparent;
 }
 
 .nav-tabs {
