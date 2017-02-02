@@ -215,7 +215,6 @@
     </div>
 
     <div class="col-md-1"></div>
-
     <div class="col-md-10">
 
         <div class="col-md-12">
@@ -287,11 +286,11 @@
             </div>
 
             <div class="col-md-6">
-                <div class="card" style="min-height:300px;max-height:620px;overflow-y: auto">
+                <div class="card" style="min-height:300px;">
 
-                    <h4 class="pull-left">Timelines</h4>
+                    <h3 class="pull-left">Timelines</h3>
                     {% if sketch.has_permission(current_user, 'write') %}
-                        <a class="btn btn-success btn-sm pull-right" style="margin-top:-5px;" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Timeline</a>
+                        <a class="btn btn-success pull-right" style="margin-top:-5px;" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Timeline</a>
                     {% endif %}
                     <br><br>
                     {% if not sketch.timelines %}
@@ -305,7 +304,6 @@
                             <thead>
                             <tr>
                                 <th>Timeline</th>
-                                <th>Added by</th>
                                 <th>Added</th>
                             </tr>
                             <tbody>
@@ -329,7 +327,6 @@
                                         <div style="height:5px;"></div>
 
                                     </td>
-                                    <td>{{ timeline.user.name }}</td>
                                     <td>
                                         <div style="margin-top:5px;">{{ timeline.created_at.strftime('%Y-%m-%d') }}</div>
                                     </td>
@@ -343,7 +340,7 @@
             </div>
 
             <div class="col-md-6">
-                <div class="card" style="min-height: 300px;max-height:300px;overflow-y: auto">
+                <div class="card" style="min-height: 300px;">
                     <ts-saved-view-list sketch-id="{{ sketch.id }}"></ts-saved-view-list>
                 </div>
             </div>

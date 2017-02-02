@@ -20,7 +20,6 @@ i {
 
 body {
     background: #f9f9f9;
-    font-family: "Roboto", Helvetica, Arial, sans-serif;
 }
 
 header {
@@ -407,6 +406,15 @@ rect.bordered {
     stroke-width: 1px;
 }
 
+.nav-tabs {
+    border: none;
+    letter-spacing: .06rem;
+}
+
+.nav-tabs>li>a:hover {
+    background: transparent;
+}
+
 .nav-tabs>li>a, .nav-tabs>li>a:hover {
     color:#d1d1d1;
     padding: 23px 15px 23px 15px;
@@ -418,8 +426,20 @@ rect.bordered {
     border-radius: 0;
 }
 
-.nav-tabs>li>a:hover {
-    background: transparent;
+.nav-tabs-light>li>a, .nav-tabs-light>li>a:hover {
+    color:#333;
+    padding: 15px 15px 15px 15px;
+    margin-top:-12px;
+}
+
+.nav-tabs-light>li.active .tab-filler {
+    width:100%;
+    height:3px;
+    background-color:#fff;
+    position:absolute;
+    bottom:0;
+    left:0;
+    z-index:10;
 }
 
 .nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
@@ -430,9 +450,12 @@ rect.bordered {
     background: #3d5267;
 }
 
-.nav-tabs {
-    border: none;
-    letter-spacing: .06rem;
+.nav-tabs-light>li.active>a, .nav-tabs-light>li.active>a:hover, .nav-tabs-light>li.active>a:focus {
+    color:#333;
+    font-weight: bold;
+    cursor: pointer;
+    background: #fff;
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0.15);
 }
 
 .timeline-bubble {

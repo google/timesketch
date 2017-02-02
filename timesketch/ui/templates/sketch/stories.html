@@ -13,31 +13,31 @@
 {% block main %}
 
     <div class="col-md-1"></div>
-
     <div class="col-md-10">
 
-    {% if not sketch.timelines %}
-        <div class="col-md-12">
-            <div class="card">
-                <div class="text-center" style="padding:100px;">
-                    <h3 style="color:#777"><i class="fa fa-meh-o"></i> No data to analyze</h3>
-                    <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started</a>
-                </div>
-            </div>
-        </div>
-    {% else %}
-        <div class="container">
+        {% if not sketch.timelines %}
             <div class="col-md-12">
                 <div class="card">
-                    {% if story %}
-                        <ts-story sketch-id="{{ sketch.id }}" story-id="{{ story.id }}"></ts-story>
-                    {% else %}
-                        <ts-story-list sketch-id="{{ sketch.id }}" show-create-button="true"></ts-story-list>
-                    {% endif %}
+                    <div class="text-center" style="padding:100px;">
+                        <h3 style="color:#777"><i class="fa fa-meh-o"></i> No data to analyze</h3>
+                        <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started</a>
+                    </div>
                 </div>
             </div>
-        </div>
-    {% endif %}
+        {% else %}
+            <div class="container">
+                <div class="col-md-12">
+                    <div class="card" style="padding:30px;">
+                        {% if story %}
+                            <ts-story sketch-id="{{ sketch.id }}" story-id="{{ story.id }}"></ts-story>
+                        {% else %}
+                            <ts-story-list sketch-id="{{ sketch.id }}" show-create-button="true"></ts-story-list>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
     <div class="col-md-10">
 
 {% endblock %}
