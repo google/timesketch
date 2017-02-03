@@ -68,7 +68,9 @@
             {% if sketch.has_permission(current_user, 'write') %}
                 {% if timelines %}
                     <div class="card">
-                    <h4>Add timeline</h4>
+                    <h4 class="pull-left">Add timeline</h4>
+                    <ts-core-upload class="pull-right" sketch-id="{{ sketch.id }}"></ts-core-upload>
+
                     <form method="post" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
                         <table class="table table-hover">
                             <thead>

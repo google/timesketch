@@ -1,7 +1,7 @@
 (function() {
     var module = angular.module('timesketch.core.upload.directive', []);
 
-    module.directive('tsCoreUpload', ['timesketchApi', '$rootScope', function (timesketchApi, $rootScope) {
+    module.directive('tsCoreUpload', ['timesketchApi', '$rootScope', '$window', function (timesketchApi, $rootScope, $window) {
         /**
          * Upload directive that handles the form and API call.
          */
@@ -16,13 +16,16 @@
                 $scope.clearForm = function() {
                     $scope.uploadForm = {}
                 };
+                // We need an integer here because Flask WTF form don't validate
+                // undefined values.
                 if (!$scope.sketchId) {
                     $scope.sketchId = 0;
                 }
                 $scope.uploadFile = function() {
                     if ($scope.uploadForm.name) {
                         timesketchApi.uploadFile($scope.uploadForm.file, $scope.uploadForm.name, $scope.sketchId).success(function () {
-                            $scope.uploadForm = {}
+                            $scope.uploadForm = {};
+                            $window.location.reload();
                         });
                     }
                 };

@@ -902,7 +902,7 @@ class UploadFileResource(ResourceMixin, Resource):
             file_extension = _extension.lstrip(u'.')
 
             sketch = None
-            if sketch_id > 0:
+            if sketch_id:
                 sketch = Sketch.query.get_with_acl(sketch_id)
 
             # Current user
@@ -1120,11 +1120,14 @@ class CountEventsResource(ResourceMixin, Resource):
             Number of events in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+
+        # Exclude any timeline that is processing, i.e. not ready yet.
         indices = []
         for timeline in sketch.timelines:
-            if not timeline.searchindex.get_status.status == u'processing':
-                indices.append(timeline.searchindex.index_name)
-        #indices = [i.searchindex.index_name for i in sketch.timelines]
+            if timeline.searchindex.get_status.status == u'processing':
+                continue
+            indices.append(timeline.searchindex.index_name)
+
         count = self.datastore.count(indices)
         meta = dict(count=count)
         schema = dict(meta=meta, objects=[])

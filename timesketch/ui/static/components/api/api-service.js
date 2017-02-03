@@ -298,12 +298,12 @@ limitations under the License.
             return $http.post(resource_url, params)
         };
 
-        this.uploadFile = function(file, name, sketch_id) {
+        this.uploadFile = function(file, name, sketchId) {
             /**
              * Handles the upload form and send a POST request to the server.
              * @param file - File object.
              * @param name - Name if the timeline to be created.
-             * @param sketch_id - (optional) Sketch id to add the timeline to.
+             * @param sketchId - (optional) Sketch id to add the timeline to.
              * @returns A $http promise with two methods, success and error.
              */
             var resource_url = '/api/v1/upload/';
@@ -320,7 +320,7 @@ limitations under the License.
             var formData = new FormData();
             formData.append('file', file);
             formData.append('name', name);
-            formData.append('sketch_id', sketch_id);
+            formData.append('sketch_id', sketchId);
             return $http.post(resource_url, formData, config)
         };
 
