@@ -8,15 +8,20 @@
         return {
             restrict: 'E',
             templateUrl: '/static/components/core/core-upload.html',
-            scope: {},
+            scope: {
+                sketchId: '=?'
+            },
             controller: function($scope) {
                 $scope.uploadForm = {};
                 $scope.clearForm = function() {
                     $scope.uploadForm = {}
                 };
+                if (!$scope.sketchId) {
+                    $scope.sketchId = 0;
+                }
                 $scope.uploadFile = function() {
                     if ($scope.uploadForm.name) {
-                        timesketchApi.uploadFile($scope.uploadForm.file, $scope.uploadForm.name).success(function () {
+                        timesketchApi.uploadFile($scope.uploadForm.file, $scope.uploadForm.name, $scope.sketchId).success(function () {
                             $scope.uploadForm = {}
                         });
                     }

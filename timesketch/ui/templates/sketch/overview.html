@@ -250,8 +250,13 @@
                         <span class="label label-default" style="font-size: 0.9em;" title="Shared with user {{ collaborator.username }}"><i class="fa fa-user"></i>{{ collaborator.username }}</span>
                     {% endfor %}
                 {% endif %}
+
+                <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
+
             </div>
         </div>
+
+
 
         {% if not sketch.timelines %}
 

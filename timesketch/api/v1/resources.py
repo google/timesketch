@@ -872,7 +872,7 @@ class EventAnnotationResource(ResourceMixin, Resource):
 class UploadFileResource(ResourceMixin, Resource):
     """Resource that processes uploaded files."""
     @login_required
-    def post(self, sketch_id=None):
+    def post(self):
         """Handles POST request to the resource.
 
         Returns:
@@ -883,10 +883,6 @@ class UploadFileResource(ResourceMixin, Resource):
         """
         UPLOAD_ENABLED = current_app.config[u'UPLOAD_ENABLED']
         UPLOAD_FOLDER = current_app.config[u'UPLOAD_FOLDER']
-
-        sketch = None
-        if sketch_id:
-            sketch = Sketch.query.get_with_acl(sketch_id)
 
         form = UploadFileForm()
         if form.validate_on_submit() and UPLOAD_ENABLED:
@@ -899,10 +895,15 @@ class UploadFileResource(ResourceMixin, Resource):
                 u'csv': run_csv
             }
 
+            sketch_id = form.sketch_id.data
             file_storage = form.file.data
             timeline_name = form.name.data
             _, _extension = os.path.splitext(file_storage.filename)
             file_extension = _extension.lstrip(u'.')
+
+            sketch = None
+            if sketch_id > 0:
+                sketch = Sketch.query.get_with_acl(sketch_id)
 
             # Current user
             username = current_user.username
@@ -1119,7 +1120,11 @@ class CountEventsResource(ResourceMixin, Resource):
             Number of events in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-        indices = [i.searchindex.index_name for i in sketch.timelines]
+        indices = []
+        for timeline in sketch.timelines:
+            if not timeline.searchindex.get_status.status == u'processing':
+                indices.append(timeline.searchindex.index_name)
+        #indices = [i.searchindex.index_name for i in sketch.timelines]
         count = self.datastore.count(indices)
         meta = dict(count=count)
         schema = dict(meta=meta, objects=[])
