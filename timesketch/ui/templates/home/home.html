@@ -1,4 +1,17 @@
 {% extends "base.html" %}
+
+{% block header_left %}
+    <div class="pull-left" style="margin-right:0px;margin-top: -6px;">
+        <form action="{{ url_for('home_views.home') }}" method="post">
+            {{ form.name }}
+            {{ form.description }}
+            <button type="submit" class="btn btn-success"><i class="fa fa-plus"></i> New sketch</button>
+            {{ form.csrf_token }}
+        </form>
+    </div>
+
+{% endblock %}
+
 {% block main %}
 
     {% if not sketches.all() and not query %}
@@ -16,10 +29,12 @@
 
         <div class="container">
 
-        <div class="row">
             <div class="col-md-1"></div>
             <div class="col-md-10">
 
+                <div class="card">
+
+                    <!--
                 <div class="pull-right">
                     <div class="btn-group">
                         <div class="pull-left" style="margin-right:0px;margin-top: -6px;">
@@ -33,13 +48,35 @@
                         {% if upload_enabled %}
                             <ts-core-upload class="pull-left" style="margin-left:5px;margin-top: -6px;"></ts-core-upload>
                         {% endif %}
+
                     </div>
                 </div>
                 <br><br><br>
+                    -->
 
-                {% if sketches.all() or query %}
+                    {% if sketches.all() %}
 
-                    <div class="card">
+                        <div>
+                            <ul class="content-list">
+                                {% for sketch in sketches.all() %}
+                                    <li class="content-item" style="padding:15px;">
+                                        <div class="pull-right" style="margin-top:10px;">
+                                            <span style="margin-right:20px;">{{ sketch.user.username }}</span>
+                                            <span style="margin-right:10px;"><i class="fa fa-clock-o"></i> {{ sketch.timelines|count }}</span>
+                                            <span><i class="fa fa-eye"></i> {{ sketch.get_named_views|count }}</span>
+
+                                        </div>
+                                        <div class="title">
+                                            <a style="text-decoration: none; font-weight: 500;font-size: 1.2em;" href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}">{{ sketch.name }}</a>
+                                            <br>
+                                            Last activity {{ sketch.updated_at.strftime('%Y-%m-%d') }}
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+
+
+                            <!--
                         <table class="table table-hover table-striped">
                             <thead>
                             <tr>
@@ -72,10 +109,13 @@
                             {% endfor %}
                             </tbody>
                         </table>
-                    </div>
-                {% endif %}
-                <div class="col-md-1"></div>
+                        -->
+                        </div>
+                    {% endif %}
+                </div>
             </div>
+
+            <div class="col-md-1"></div>
 
         </div>
     {% endif %}

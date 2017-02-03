@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block main %}
+
+{% block navigation %}
     <ul class="nav nav-tabs">
         <li role="presentation"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
@@ -7,15 +8,33 @@
         <li role="presentation" class="active"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
     </ul>
+{% endblock %}
 
-    <div class="container">
-        <div class="row">
+{% block main %}
+
+    <div class="col-md-1"></div>
+    <div class="col-md-10">
+
+        {% if not sketch.timelines %}
             <div class="col-md-12">
                 <div class="card">
-                    <ts-saved-view-list sketch-id="{{ sketch.id }}" show-search-templates="true" show-delete="true"></ts-saved-view-list>
+                    <div class="text-center" style="padding:100px;">
+                        <h3 style="color:#777"><i class="fa fa-meh-o"></i> No data to analyze</h3>
+                        <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started</a>
+                    </div>
                 </div>
             </div>
-        </div>
+        {% else %}
+            <div class="container">
+                <div class="col-md-12">
+                    <div class="card" style="padding:30px;">
+                        <ts-saved-view-list sketch-id="{{ sketch.id }}" show-search-templates="true" show-delete="true"></ts-saved-view-list>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
     </div>
+    <div class="col-md-10">
 
 {% endblock %}
