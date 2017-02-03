@@ -1,11 +1,10 @@
-<h3 style="margin-left:15px;" class="pull-left">Stories</h3>
+<h3 class="pull-left">Stories</h3>
 <button class="btn btn-success pull-right" style="margin-top:-5px;" ng-click="createStory()"><i class="fa fa-plus"></i> Write a story</button>
-<br><br>
+<br><br><br>
 
 <div ng-if="stories.length < 1">
     There are no stories written yet
 </div>
-<br>
 
 <div ng-if="stories.length > 0">
     <ul class="content-list">
@@ -14,7 +13,7 @@
                 <span>{{ story.created_at }}</span>
             </div>
             <div class="title">
-                <a href="/sketch/{{ sketchId }}/stories/{{ story.id }}/"><b>{{ story.title||'Untitled story' }}</b></a>
+                <a style="text-decoration: none; font-weight: 500;font-size: 1.2em;" href="/sketch/{{ sketchId }}/stories/{{ story.id }}/"><b>{{ story.title||'Untitled story' }}</b></a>
                 <br>
                 Created by {{ story.user.username }}
             </div>

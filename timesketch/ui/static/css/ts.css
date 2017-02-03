@@ -572,7 +572,8 @@ ul.content-list {
 }
 
 ul.content-list>li {
-    padding: 15px;
+    padding-top: 15px;
+    padding-bottom: 15px;
     border-bottom: 1px solid #eee;
     display: block;
     margin: 0;

@@ -59,7 +59,7 @@
                         <div>
                             <ul class="content-list">
                                 {% for sketch in sketches.all() %}
-                                    <li class="content-item">
+                                    <li class="content-item" style="padding:15px;">
                                         <div class="pull-right" style="margin-top:10px;">
                                             <span style="margin-right:20px;">{{ sketch.user.username }}</span>
                                             <span style="margin-right:10px;"><i class="fa fa-clock-o"></i> {{ sketch.timelines|count }}</span>
