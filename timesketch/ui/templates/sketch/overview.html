@@ -223,7 +223,6 @@
                     <div class="btn-group">
                         {% if sketch.has_permission(user=current_user, permission='write') %}
                             <button class="btn btn-default" data-toggle="modal" data-target="#edit-sketch-modal"><i class="fa fa-pencil"></i></button>
-                            <button class="btn btn-default" data-toggle="modal" data-target="#status-modal">Status: {{ sketch.get_status.status|title }}</button>
                         {% endif %}
 
                         {% if sketch.has_permission(user=current_user, permission='delete') %}
@@ -237,9 +236,11 @@
                                 <i class="fa fa-lock"></i> Share</button>
                             {% endif %}
                     </div>
+
                 </div>
                 <h3 style="margin-top:10px;">{{ sketch.name }}</h3>
                 <p style="white-space: pre-wrap;word-wrap: break-word; max-width: 800px;">{{ sketch.description }}</p>
+
                 {% if sketch.collaborators or sketch.groups %}
                     <br>
                     <span style="margin-right:10px;">Shared with</span>
@@ -253,13 +254,17 @@
             </div>
         </div>
 
+
+
         {% if not sketch.timelines %}
 
             <div class="col-md-12">
                 <div class="card">
                     <div class="text-center" style="padding:100px;">
                         <h3 style="color:#777"><i class="fa fa-meh-o"></i> No data to analyze</h3>
-                        <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started</a>
+                        <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
+                        <br>
+                        <a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">or add an existing timeline</a>
                     </div>
                 </div>
             </div>
@@ -290,7 +295,7 @@
 
                     <h3 class="pull-left">Timelines</h3>
                     {% if sketch.has_permission(current_user, 'write') %}
-                        <a class="btn btn-success pull-right" style="margin-top:-5px;" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Timeline</a>
+                        <ts-core-upload class="pull-right" style="margin-top:-5px;" sketch-id="{{ sketch.id }}"></ts-core-upload>
                     {% endif %}
                     <br><br>
                     {% if not sketch.timelines %}
@@ -307,19 +312,21 @@
                                 <th>Added</th>
                             </tr>
                             <tbody>
-                            {% for timeline in sketch.timelines %}
+                            {% for timeline in sketch.timelines|sort(attribute='created_at', reverse = True) %}
                                 <tr>
                                     <td>
                                         <div>
                                             {% if timeline.searchindex.get_status.status == 'processing' %}
-                                                <i class="fa fa-spinner fa-spin"></i>
+                                                <div style="margin-top:5px;">
+                                                    <i style="margin-left:8px;" class="fa fa-circle-o-notch fa-spin"></i>
+                                                </div>
                                             {% else %}
                                                 <div class="color-box" style="background:#{{ timeline.color }};"></div>
                                             {% endif %}
                                         </div>
                                         <div style="margin-top:-25px;margin-left:45px">
                                             {% if timeline.searchindex.get_status.status == 'processing' %}
-                                                {{ timeline.name }}
+                                                <div style="margin-top:5px;">{{ timeline.name }}</div>
                                             {% else %}
                                                 <a href="/sketch/{{ sketch.id }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
                                             {% endif %}
