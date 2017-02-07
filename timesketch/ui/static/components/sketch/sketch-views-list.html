@@ -1,36 +1,23 @@
-<h3 class="pull-left">Views</h3>
-<a ng-if="!showDelete" href="/sketch/{{ sketchId }}/views/" class="btn btn-default pull-right" style="margin-top:-5px;"><i class="fa fa-edit"></i> Manage views</a>
-<br><br><br>
+<h3>Views</h3>
 
-<span ng-hide="savedViews.length">No saved views</span>
-
-<table class="table table-hover" ng-hide="!savedViews.length">
-    <thead>
-    <tr>
-        <th>Name</th>
-        <th>Created by</th>
-        <th>Created</th>
-        <th ng-if="showDelete"></th>
-    </tr>
-    <tbody>
-    <tr ng-repeat="view in savedViews">
-        <td>
-            <div style="font-weight: bold">
-                <a href="/sketch/{{ sketchId }}/explore/view/{{ view.id }}/">{{ view.name }}</a>
-            </div>
-        </td>
-        <td>{{ view.user.username }}</td>
-        <td>{{ view.updated_at }}</td>
-        <td ng-if="showDelete">
-            <i ng-click="confirmDelete =! confirmDelete" ng-hide="confirmDelete" class="fa fa-trash pull-right" style="cursor: pointer"></i>
+<ul class="content-list" ng-hide="!savedViews.length">
+    <li class="content-item" ng-repeat="view in savedViews">
+        <div ng-if="showDelete">
+            <i ng-click="confirmDelete =! confirmDelete" ng-hide="confirmDelete" class="fa fa-trash pull-right" style="cursor: pointer; margin-top:1px;margin-left:10px;"></i>
             <div class="pull-right" ng-show="confirmDelete">
-                <span style="color:red;cursor: pointer;margin-right:5px;" ng-click="deleteView(view)">Delete</span>
+                <span class="btn btn-sm btn-danger" style="margin-top:-5px; margin-right:5px;margin-left:5px;" ng-click="deleteView(view)">Delete</span>
                 <i class="fa fa-close" style="cursor:pointer;" ng-click="confirmDelete =! confirmDelete"></i>
             </div>
-        </td>
-    </tr>
-    </tbody>
-</table>
+        </div>
+        <div class="pull-right">
+            <span>{{ view.updated_at }}</span>
+        </div>
+        <div class="title">
+            <a style="font-weight: bold;" href="/sketch/{{ sketchId }}/explore/view/{{ view.id }}/">{{ view.name }}</a>
+        </div>
+    </li>
+</ul>
+
 <div ng-if="showSearchTemplates">
     <br><br>
     <ts-search-template-list sketch-id="sketchId"></ts-search-template-list>

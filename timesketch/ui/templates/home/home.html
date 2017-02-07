@@ -9,7 +9,6 @@
             {{ form.csrf_token }}
         </form>
     </div>
-
 {% endblock %}
 
 {% block main %}
@@ -32,7 +31,7 @@
             <div class="col-md-1"></div>
             <div class="col-md-10">
 
-                <div class="card">
+                <div class="card" style="margin-top:50px;">
                     {% if sketches.all() %}
                         <div>
                             <ul class="content-list">
