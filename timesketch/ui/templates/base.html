@@ -56,28 +56,29 @@ limitations under the License.
 </head>
 
 <body>
-    <a href="/">
-        <div id="logo">
-            <img src="/static/img/logo.png" />
-        </div>
-    </a>
     <header>
-        <div id="navigation" class="pull-left">
-          {% block navigation %}{% endblock %}
-        </div>
+        <a href="/">
+            <div id="logo">
+                <img src="/static/img/logo.png">
+            </div>
+        </a>
         <div ts-butterbar id="butterbar">Loading..</div>
-
         <div class="pull-right" style="margin-top:10px;margin-right:30px;">
             {% block header_left %}{% endblock %}
             <span style="color:#fff;margin-right:20px;margin-left: 20px;">{{ current_user.username }}</span>
             <a style="color:#fff;" href="/logout/">Logout</a>
         </div>
-
     </header>
-    {% block subheader %}{% endblock %}
+
+    <div id="subheader">
+                <div id="navigation" class="pull-left">
+                    {% block navigation %}{% endblock %}
+                </div>
+    </div>
 
     <div id="main">
         {% block main %}{% endblock %}
     </div>
+
 </body>
 </html>

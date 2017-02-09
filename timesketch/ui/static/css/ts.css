@@ -33,7 +33,7 @@ header {
 }
 
 #navigation {
-    margin-left:200px;
+    margin-left:15px;
 }
 
 table {
@@ -43,6 +43,13 @@ table {
 
 #main {
     margin:95px 15px 15px 15px;
+}
+
+#subheader {
+    height: 50px;
+    background: #fff;
+    margin-top:65px;
+    border-bottom: 1px solid #f1f1f1;
 }
 
 #logo {
@@ -417,13 +424,23 @@ rect.bordered {
 
 .nav-tabs>li>a, .nav-tabs>li>a:hover {
     color:#d1d1d1;
-    padding: 23px 15px 23px 15px;
-    margin-top:-12px;
+    #padding: 23px 15px 23px 15px;
+    margin-top:5px;
     border: none;
     font-weight: normal;
-    background: transparent;
+    background: #fff;
     margin-right:7px;
     border-radius: 0;
+}
+
+.nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
+    color:#fff;
+    color:#333;
+    font-weight: bold;
+    border:none;
+    cursor: pointer;
+    background: #3d5267;
+    background: #f1f1f1;
 }
 
 .nav-tabs-light>li>a, .nav-tabs-light>li>a:hover {
@@ -440,14 +457,6 @@ rect.bordered {
     bottom:0;
     left:0;
     z-index:10;
-}
-
-.nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
-    color:#fff;
-    font-weight: bold;
-    border:none;
-    cursor: pointer;
-    background: #3d5267;
 }
 
 .nav-tabs-light>li.active>a, .nav-tabs-light>li.active>a:hover, .nav-tabs-light>li.active>a:focus {
