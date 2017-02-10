@@ -1,5 +1,3 @@
-<h3>Views</h3>
-
 <ul class="content-list" ng-hide="!savedViews.length">
     <li class="content-item" ng-repeat="view in savedViews">
         <div ng-if="showDelete">
@@ -17,6 +15,10 @@
         </div>
     </li>
 </ul>
+
+<div ng-if="!savedViews.length">
+    There are no views saved yet.
+</div>
 
 <div ng-if="showSearchTemplates">
     <br><br>

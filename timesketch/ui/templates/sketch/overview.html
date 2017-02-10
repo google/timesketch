@@ -1,14 +1,13 @@
-{% extends "base.html" %}
+{% extends "sketch/base.html" %}
 
-{% block header_left %}
+{% block header_right %}
     <div class="pull-left" style="margin-right:0px;margin-top: -6px;">
-                        <button data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
-                            {% if sketch.is_public %}
-                                <i class="fa fa-globe"></i> Share</button>
-                            {% else %}
-                                <i class="fa fa-lock"></i> Share</button>
-                            {% endif %}
-
+        <button data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
+            {% if sketch.is_public %}
+                <i class="fa fa-globe"></i> Share</button>
+            {% else %}
+                <i class="fa fa-lock"></i> Share</button>
+            {% endif %}
     </div>
 {% endblock %}
 
@@ -241,7 +240,7 @@
                             <button class="btn btn-default" data-toggle="modal" data-target="#trash-modal"><i class="fa fa-trash"></i></button>
                         {% endif %}
 
-                        {% if sketch.has_permission(current_user, 'write') %}
+                        {% if sketch.has_permission(current_user, 'write') and sketch.timelines %}
                             <ts-core-upload class="pull-right" sketch-id="{{ sketch.id }}"></ts-core-upload>
                         {% endif %}
 
@@ -302,7 +301,7 @@
 
             <div class="col-md-6">
                 <div class="card" style="min-height:300px;">
-                    <h3>Timelines</h3>
+                    <h4>Timelines</h4>
 
                     {% if not sketch.timelines %}
                         <br>
@@ -346,6 +345,7 @@
 
             <div class="col-md-6">
                 <div class="card" style="min-height: 300px;">
+                    <h4>Views</h4>
                     <ts-saved-view-list sketch-id="{{ sketch.id }}"></ts-saved-view-list>
                 </div>
             </div>

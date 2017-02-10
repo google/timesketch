@@ -22,9 +22,14 @@ body {
     background: #f9f9f9;
 }
 
+table {
+    table-layout: fixed;
+    word-wrap: break-word;
+}
+
 header {
     width: 100%;
-    height: 65px;
+    height: 50px;
     background: #34495e;
     position: fixed;
     top:0;
@@ -32,41 +37,32 @@ header {
     padding:11px 21px 11px 11px;
 }
 
+#logo {
+    height:50px;
+    padding-top:15px;
+    margin-left:30px;
+    position: fixed;
+    top:0;
+}
+
+#logo img {
+    width:100px;
+    height:17px;
+}
+
+#subheader {
+    height: 60px;
+    background: #fff;
+    margin-top:50px;
+    border-bottom: 1px solid #f1f1f1;
+}
+
 #navigation {
     margin-left:15px;
 }
 
-table {
-    table-layout: fixed;
-    word-wrap: break-word;
-}
-
 #main {
-    margin:95px 15px 15px 15px;
-}
-
-#subheader {
-    height: 50px;
-    background: #fff;
-    margin-top:65px;
-    border-bottom: 1px solid #f1f1f1;
-}
-
-#logo {
-    width:210px;
-    height:55px;
-    padding:20px;
-    padding-top:20px;
-    background: #34495e;
-    position: fixed;
-    top:0;
-    z-index:9999;
-}
-
-#logo img {
-    margin-left:15px;
-    width:100px;
-    height:17px;
+    margin:20px 15px 15px 15px;
 }
 
 #sketch-name {
@@ -414,6 +410,7 @@ rect.bordered {
 }
 
 .nav-tabs {
+    background: transparent;
     border: none;
     letter-spacing: .06rem;
 }
@@ -423,24 +420,22 @@ rect.bordered {
 }
 
 .nav-tabs>li>a, .nav-tabs>li>a:hover {
-    color:#d1d1d1;
-    #padding: 23px 15px 23px 15px;
-    margin-top:5px;
+    background: transparent;
+    color:#555;
+    padding-bottom: 17px;
+    margin-top:10px;
     border: none;
     font-weight: normal;
-    background: #fff;
     margin-right:7px;
     border-radius: 0;
 }
 
 .nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
-    color:#fff;
+    background: transparent;
     color:#333;
-    font-weight: bold;
-    border:none;
+    border: none;
+    border-bottom:2px solid #428bca;
     cursor: pointer;
-    background: #3d5267;
-    background: #f1f1f1;
 }
 
 .nav-tabs-light>li>a, .nav-tabs-light>li>a:hover {
@@ -465,6 +460,7 @@ rect.bordered {
     cursor: pointer;
     background: #fff;
     box-shadow: 0 0 1px rgba(0, 0, 0, 0.15);
+    border: none;
 }
 
 .timeline-bubble {
