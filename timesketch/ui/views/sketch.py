@@ -377,19 +377,3 @@ def views(sketch_id):
 
     return render_template(
         u'sketch/views.html', sketch=sketch, trash_form=trash_form)
-
-
-@sketch_views.route(u'/sketch/<int:sketch_id>/explore/event/')
-@sketch_views.route(
-    u'/sketch/<int:sketch_id>/explore/view/<int:unused_view_id>/event/')
-@login_required
-def event(sketch_id, unused_view_id=None):
-    """Generates the event template.
-
-    Returns:
-        Template with context.
-    """
-    sketch = Sketch.query.get_with_acl(sketch_id)
-    return render_template(
-        u'sketch/event.html', sketch=sketch)
-
