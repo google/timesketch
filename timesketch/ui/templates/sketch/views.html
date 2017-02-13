@@ -1,4 +1,4 @@
-{% extends "sketch/base.html" %}
+{% extends "base.html" %}
 
 {% block navigation %}
     <ul class="nav nav-tabs">
@@ -30,6 +30,7 @@
             <div class="container">
                 <div class="col-md-12">
                     <div class="card" style="padding:30px;">
+                        <h4>Views</h4>
                         <ts-saved-view-list sketch-id="{{ sketch.id }}" show-search-templates="true" show-delete="true"></ts-saved-view-list>
                     </div>
                 </div>

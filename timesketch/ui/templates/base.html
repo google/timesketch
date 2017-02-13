@@ -57,30 +57,30 @@ limitations under the License.
 
 <body>
 
-<header>
-    <a href="/">
-        <div id="logo">
-            <img src="/static/img/logo.png">
+{% block header %}
+    <header>
+        <div class="col-md-12">
+            <a href="/">
+                <div id="logo">
+                    <img src="/static/img/logo.png">
+                </div>
+            </a>
+            <div ts-butterbar id="butterbar">Loading..</div>
+            <div class="pull-right" style="margin-top:5px;">
+                {% block header_right %}{% endblock %}
+                <span style="color:#fff;margin-right:20px;margin-left: 20px;">{{ current_user.username }}</span>
+                <a style="color:#fff;" href="/logout/">Logout</a>
+            </div>
         </div>
-    </a>
-    <div ts-butterbar id="butterbar">Loading..</div>
-    <div class="pull-right" style="margin-top:3px;margin-right:30px;">
-        {% block header_right %}{% endblock %}
-        <span style="color:#fff;margin-right:20px;margin-left: 20px;">{{ current_user.username }}</span>
-        <a style="color:#fff;" href="/logout/">Logout</a>
-    </div>
-</header>
+    </header>
+{% endblock %}
 
 {% block subheader %}
     <div id="subheader">
         <div id="navigation">
-            <div class="col-md-1"></div>
-            <div class="col-md-10">
-                <div class="col-md-12">
-                    {% block navigation %}{% endblock %}
-                </div>
+            <div class="col-md-12">
+                {% block navigation %}{% endblock %}
             </div>
-            <div class="col-md-1"></div>
         </div>
     </div>
 {% endblock %}

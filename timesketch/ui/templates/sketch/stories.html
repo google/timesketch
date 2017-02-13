@@ -1,4 +1,4 @@
-{% extends "sketch/base.html" %}
+{% extends "base.html" %}
 
 {% block navigation %}
     <ul class="nav nav-tabs">
@@ -33,6 +33,7 @@
                         {% if story %}
                             <ts-story sketch-id="{{ sketch.id }}" story-id="{{ story.id }}"></ts-story>
                         {% else %}
+                            <h4 class="pull-left">Stories</h4>
                             <ts-story-list sketch-id="{{ sketch.id }}" show-create-button="true"></ts-story-list>
                         {% endif %}
                     </div>

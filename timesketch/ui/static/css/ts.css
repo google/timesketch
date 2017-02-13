@@ -20,6 +20,8 @@ i {
 
 body {
     background: #f9f9f9;
+    line-height: 1.5;
+    color: #333;
 }
 
 table {
@@ -29,31 +31,30 @@ table {
 
 header {
     width: 100%;
-    height: 50px;
+    height: 55px;
     background: #34495e;
     position: fixed;
     top:0;
     z-index:9998;
-    padding:11px 21px 11px 11px;
+    padding:11px 21px 11px 15px;
 }
 
 #logo {
     height:50px;
-    padding-top:15px;
-    margin-left:30px;
+    padding-top:16px;
     position: fixed;
     top:0;
 }
 
 #logo img {
-    width:100px;
-    height:17px;
+    width:110px;
+    height:19px;
 }
 
 #subheader {
-    height: 60px;
+    height: 50px;
     background: #fff;
-    margin-top:50px;
+    margin-top:55px;
     border-bottom: 1px solid #f1f1f1;
 }
 
@@ -415,19 +416,21 @@ rect.bordered {
     letter-spacing: .06rem;
 }
 
-.nav-tabs>li>a:hover {
-    background: transparent;
-}
-
 .nav-tabs>li>a, .nav-tabs>li>a:hover {
     background: transparent;
     color:#555;
-    padding-bottom: 17px;
-    margin-top:10px;
+    #padding-bottom: 10px;
+    padding: 11px 5px 10px 5px;
+    margin-top:7px;
     border: none;
     font-weight: normal;
-    margin-right:7px;
+    margin-right:20px;
     border-radius: 0;
+}
+
+.nav-tabs>li>a:hover {
+    background: transparent;
+    border-bottom:2px solid #f1f1f1;
 }
 
 .nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
