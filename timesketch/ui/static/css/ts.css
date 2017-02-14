@@ -63,7 +63,7 @@ header {
 }
 
 #main {
-    margin:20px 15px 15px 15px;
+    margin:20px 30px 15px 30px;
 }
 
 #sketch-name {
@@ -445,6 +445,11 @@ rect.bordered {
     color:#333;
     padding: 15px 15px 15px 15px;
     margin-top:-12px;
+}
+
+.nav-tabs-light>li>a:hover {
+    background: transparent;
+    border-bottom: none;
 }
 
 .nav-tabs-light>li.active .tab-filler {

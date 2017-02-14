@@ -50,11 +50,9 @@
         </div>
     </div>
 
-    <div class="col-md-1"></div>
-    <div class="col-md-10">
-
-        <div class="container">
-            <div class="col-md-12">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-10">
                 <div class="card card-top">
                     <div class="pull-left" style="width:50px;height:50px;background:#{{ timeline.color }};cursor: pointer" data-toggle="modal" data-target="#edit-timeline-modal"></div>
                     {% if sketch.has_permission(user=current_user, permission='write') %}
@@ -84,6 +82,5 @@
             </div>
         </div>
     </div>
-    <div class="col-md-1"></div>
 
 {% endblock %}
