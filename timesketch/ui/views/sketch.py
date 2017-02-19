@@ -255,6 +255,10 @@ def export(sketch_id):
     query_dsl = json.loads(view.query_dsl)
     indices = query_filter.get(u'indices', [])
 
+    # Export more than the 500 first results.
+    max_events_to_fetch = 10000
+    query_filter[u'limit'] = max_events_to_fetch
+
     datastore = ElasticsearchDataStore(
         host=current_app.config[u'ELASTIC_HOST'],
         port=current_app.config[u'ELASTIC_PORT'])
