@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""ElasticSearch datastore."""
+"""Elasticsearch datastore."""
 
+from collections import Counter
 import json
 import logging
 
@@ -31,14 +32,16 @@ es_logger = logging.getLogger(u'elasticsearch')
 es_logger.addHandler(logging.NullHandler())
 
 
-class ElasticSearchDataStore(datastore.DataStore):
+class ElasticsearchDataStore(datastore.DataStore):
     """Implements the datastore."""
     def __init__(self, host=u'127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
-        super(ElasticSearchDataStore, self).__init__()
+        super(ElasticsearchDataStore, self).__init__()
         self.client = Elasticsearch([
             {u'host': host, u'port': port}
         ])
+        self.import_counter = Counter()
+        self.import_events = []
 
     @staticmethod
     def _build_label_query(sketch_id, label_name):
@@ -276,6 +279,20 @@ class ElasticSearchDataStore(datastore.DataStore):
         except NotFoundError:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
 
+    def count(self, indices):
+        """Count number of documents.
+
+        Args:
+            indices: List of indices.
+
+        Returns:
+            Number of documents.
+        """
+        if not indices:
+            return 0
+        result = self.client.count(index=indices)
+        return result.get(u'count', 0)
+
     def set_label(
             self, searchindex_id, event_id, event_type, sketch_id, user_id,
             label, toggle=False):
@@ -295,6 +312,7 @@ class ElasticSearchDataStore(datastore.DataStore):
         try:
             doc[u'_source'][u'timesketch_label']
         except KeyError:
+            # pylint: disable=redefined-variable-type
             doc = {u'doc': {u'timesketch_label': []}}
             self.client.update(
                 index=searchindex_id, doc_type=event_type, id=event_id,
@@ -353,3 +371,39 @@ class ElasticSearchDataStore(datastore.DataStore):
         index_name = unicode(index_name.decode(encoding=u'utf-8'))
         doc_type = unicode(doc_type.decode(encoding=u'utf-8'))
         return index_name, doc_type
+
+    def import_event(self, flush_interval, index_name, event_type, event=None):
+        """Add event to Elasticsearch.
+
+        Args:
+            flush_interval: Number of events to queue up before indexing
+            index_name: Name of the index in Elasticsearch
+            event_type: Type of event (e.g. plaso_event)
+            event: Event dictionary
+        """
+        if event:
+            # Make sure we have decoded strings in the event dict.
+            event = {
+                k.decode(u'utf8'): v.decode(u'utf8') for k, v in event.items()
+            }
+
+            # Header needed by Elasticsearch when bulk inserting.
+            self.import_events.append({
+                u'index': {
+                    u'_index': index_name, u'_type': event_type
+                }
+            })
+            self.import_events.append(event)
+            self.import_counter[u'events'] += 1
+            if self.import_counter[u'events'] % int(flush_interval) == 0:
+                self.client.bulk(
+                    index=index_name, doc_type=event_type,
+                    body=self.import_events)
+                self.import_events = []
+        else:
+            if self.import_events:
+                self.client.bulk(
+                    index=index_name, doc_type=event_type,
+                    body=self.import_events)
+
+        return self.import_counter[u'events']

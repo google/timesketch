@@ -20,6 +20,13 @@ i {
 
 body {
     background: #f9f9f9;
+    line-height: 1.5;
+    color: #333;
+}
+
+table {
+    table-layout: fixed;
+    word-wrap: break-word;
 }
 
 header {
@@ -29,33 +36,34 @@ header {
     position: fixed;
     top:0;
     z-index:9998;
-    padding:11px 21px 11px 11px;
-}
-
-table {
-    table-layout: fixed;
-    word-wrap: break-word;
-}
-
-#main {
-    margin:90px 35px 35px 35px;
+    padding:11px 21px 11px 15px;
 }
 
 #logo {
-    width:210px;
-    height:55px;
-    padding:20px;
-    padding-top:15px;
-    background: #34495e;
+    height:50px;
+    padding-top:16px;
     position: fixed;
     top:0;
-    z-index:9999;
 }
 
 #logo img {
+    width:110px;
+    height:19px;
+}
+
+#subheader {
+    height: 50px;
+    background: #fff;
+    margin-top:55px;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+#navigation {
     margin-left:15px;
-    width:100px;
-    height:17px;
+}
+
+#main {
+    margin:20px 30px 15px 30px;
 }
 
 #sketch-name {
@@ -67,7 +75,7 @@ table {
     margin-bottom: 20px;
     background: #fff;
     padding: 20px;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15)
+    box-shadow: 0 0 1px rgba(0,0,0,0.15);
 }
 
 .card-header {
@@ -83,7 +91,11 @@ table {
 }
 
 .card h3 {
-    margin-top:0;
+    margin-top:0px;
+}
+
+.card h4 {
+    margin-top:0px;
 }
 
 .card-paragraph {
@@ -398,30 +410,64 @@ rect.bordered {
     stroke-width: 1px;
 }
 
+.nav-tabs {
+    background: transparent;
+    border: none;
+    letter-spacing: .06rem;
+}
+
 .nav-tabs>li>a, .nav-tabs>li>a:hover {
+    background: transparent;
     color:#555;
-    margin-bottom: -2px;
-    padding: 15px;
-    border-bottom: none;
+    #padding-bottom: 10px;
+    padding: 11px 5px 10px 5px;
+    margin-top:7px;
+    border: none;
     font-weight: normal;
-    background-color: #f1f1f1;
-    margin-right:7px;
+    margin-right:20px;
     border-radius: 0;
 }
 
 .nav-tabs>li>a:hover {
-    background: #e3e3e3;
+    background: transparent;
+    border-bottom:2px solid #f1f1f1;
 }
 
 .nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
+    background: transparent;
     color:#333;
-    border:none;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
-    margin-bottom: -2px;
+    border: none;
+    border-bottom:2px solid #428bca;
     cursor: pointer;
 }
 
-.nav-tabs {
+.nav-tabs-light>li>a, .nav-tabs-light>li>a:hover {
+    color:#333;
+    padding: 15px 15px 15px 15px;
+    margin-top:-12px;
+}
+
+.nav-tabs-light>li>a:hover {
+    background: transparent;
+    border-bottom: none;
+}
+
+.nav-tabs-light>li.active .tab-filler {
+    width:100%;
+    height:3px;
+    background-color:#fff;
+    position:absolute;
+    bottom:0;
+    left:0;
+    z-index:10;
+}
+
+.nav-tabs-light>li.active>a, .nav-tabs-light>li.active>a:hover, .nav-tabs-light>li.active>a:focus {
+    color:#333;
+    font-weight: bold;
+    cursor: pointer;
+    background: #fff;
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0.15);
     border: none;
 }
 
@@ -496,21 +542,25 @@ p {
 
 h3 {
     margin-bottom: 30px;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
 }
 
 h1.editable-title {
     padding:0;
     margin:0;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
 }
 
 h2.editable {
     padding:0;
     margin:0;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
 }
 
 h3.editable {
     padding:0;
     margin:0;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
 }
 
 .editable:focus {
@@ -528,4 +578,29 @@ h3.editable {
     right: 0;
     bottom: 0;
     left: 0;
+}
+
+ul.content-list {
+    list-style: none;
+}
+
+ul.content-list>li {
+    padding-top: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    display: block;
+    margin: 0;
+}
+
+ul.content-list>li:hover {
+    background: #fcfcfc;
+}
+
+ul.content-list>li:last-child { border-bottom: none; }
+
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Roboto'), local('Roboto-Regular'), url('/static/fonts/Roboto/Roboto-Regular.ttf') format('truetype');
 }

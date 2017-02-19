@@ -18,58 +18,76 @@ limitations under the License.
 <html lang="en" ng-app="timesketch">
 
 <head>
-  <title>Timesketch</title>
-  <meta name="csrf-token" content="{{ csrf_token() }}">
-  <link rel="stylesheet" href="/static/third_party/font-awesome/css/font-awesome.min.css">
-  <link rel="stylesheet" href="/static/third_party/bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="/static/third_party/medium-editor/medium-editor.css">
-  <link rel="stylesheet" href="/static/third_party/medium-editor/default.css">
-  <link rel="stylesheet" href="/static/css/ts.css">
-  <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
-  <script type="text/javascript" language="javascript" src="/static/third_party/jquery/jquery.min.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/third_party/bootstrap/js/bootstrap.min.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/third_party/moment/moment.min.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/third_party/angular/angular.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/third_party/d3/d3.min.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/third_party/medium-editor/medium-editor.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/third_party/chartjs/Chart.min.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/third_party/ace/ace-builds/src-min/ace.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/app.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/api/api.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/api/api-service.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/explore/explore.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/explore/explore-event-directive.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/explore/explore-filter-directive.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/explore/explore-search-directive.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/explore/explore-heatmap-directive.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/explore/explore-histogram-directive.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/explore/explore-json-editor-directive.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/core/core.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/core/core-butterbar-directive.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/core/core-upload-directive.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/core/core-edit-sketch-directive.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/sketch/sketch.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/sketch/sketch-views-directive.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/story/story.js"></script>
-  <script type="text/javascript" language="javascript" src="/static/components/story/story-directive.js"></script>
+    <title>Timesketch</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="stylesheet" href="/static/third_party/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/static/third_party/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/third_party/medium-editor/medium-editor.css">
+    <link rel="stylesheet" href="/static/third_party/medium-editor/default.css">
+    <link rel="stylesheet" href="/static/css/ts.css">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+    <script type="text/javascript" language="javascript" src="/static/third_party/jquery/jquery.min.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/third_party/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/third_party/moment/moment.min.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/third_party/angular/angular.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/third_party/d3/d3.min.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/third_party/medium-editor/medium-editor.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/third_party/chartjs/Chart.min.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/third_party/ace/ace-builds/src-min/ace.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/app.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/api/api.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/api/api-service.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/explore/explore.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/explore/explore-event-directive.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/explore/explore-filter-directive.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/explore/explore-search-directive.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/explore/explore-heatmap-directive.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/explore/explore-histogram-directive.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/explore/explore-json-editor-directive.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/core/core.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/core/core-butterbar-directive.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/core/core-upload-directive.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/core/core-edit-sketch-directive.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/sketch/sketch.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/sketch/sketch-views-directive.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/sketch/sketch-count-events-directive.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/story/story.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/story/story-directive.js"></script>
 </head>
 
 <body>
-    <a href="/">
-        <div id="logo">
-            <img src="/static/img/logo.png" />
-        </div>
-    </a>
+
+{% block header %}
     <header>
-        <div ts-butterbar id="butterbar">Loading..</div>
-        <div class="pull-right" style="margin-top:5px;margin-right:30px;">
-            {% block header_left %}{% endblock %}
-            <span style="color:#fff;margin-right:20px;margin-left: 20px;">{{ current_user.username }}</span>
-            <a style="color:#fff;" href="/logout/">Logout</a>
+        <div class="col-md-12">
+            <a href="/">
+                <div id="logo">
+                    <img src="/static/img/logo.png">
+                </div>
+            </a>
+            <div ts-butterbar id="butterbar">Loading..</div>
+            <div class="pull-right" style="margin-top:5px;">
+                {% block header_right %}{% endblock %}
+                <span style="color:#fff;margin-right:20px;margin-left: 20px;">{{ current_user.username }}</span>
+                <a style="color:#fff;" href="/logout/">Logout</a>
+            </div>
         </div>
     </header>
-    <div id="main">
-        {% block main %}{% endblock %}
+{% endblock %}
+
+{% block subheader %}
+    <div id="subheader">
+        <div id="navigation">
+            <div class="col-md-12">
+                {% block navigation %}{% endblock %}
+            </div>
+        </div>
     </div>
+{% endblock %}
+
+<div id="main">
+    {% block main %}{% endblock %}
+</div>
+
 </body>
 </html>

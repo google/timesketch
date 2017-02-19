@@ -52,7 +52,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.datastores.elastic import ElasticSearchDataStore
+from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.lib.forms import AddTimelineForm
 from timesketch.lib.forms import AggregationForm
@@ -184,7 +184,7 @@ class ResourceMixin(object):
         Returns:
             Instance of timesketch.lib.datastores.elastic.ElasticSearchDatastore
         """
-        return ElasticSearchDataStore(
+        return ElasticsearchDataStore(
             host=current_app.config[u'ELASTIC_HOST'],
             port=current_app.config[u'ELASTIC_PORT'])
 
@@ -887,8 +887,27 @@ class UploadFileResource(ResourceMixin, Resource):
         form = UploadFileForm()
         if form.validate_on_submit() and UPLOAD_ENABLED:
             from timesketch.lib.tasks import run_plaso
+            from timesketch.lib.tasks import run_csv
+
+            # Map the right task based on the file type
+            task_directory = {
+                u'plaso': run_plaso,
+                u'csv': run_csv
+            }
+
+            sketch_id = form.sketch_id.data
             file_storage = form.file.data
             timeline_name = form.name.data
+            _, _extension = os.path.splitext(file_storage.filename)
+            file_extension = _extension.lstrip(u'.')
+
+            sketch = None
+            if sketch_id:
+                sketch = Sketch.query.get_with_acl(sketch_id)
+
+            # Current user
+            username = current_user.username
+
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
             filename = unicode(uuid.uuid4().hex)
@@ -897,23 +916,38 @@ class UploadFileResource(ResourceMixin, Resource):
             file_path = os.path.join(UPLOAD_FOLDER, filename)
             file_storage.save(file_path)
 
-            search_index = SearchIndex.get_or_create(
+            # Create the search index in the Timesketch database
+            searchindex = SearchIndex.get_or_create(
                 name=timeline_name, description=timeline_name,
                 user=current_user, index_name=index_name)
-            search_index.grant_permission(permission=u'read', user=current_user)
-            search_index.grant_permission(
+            searchindex.grant_permission(permission=u'read', user=current_user)
+            searchindex.grant_permission(
                 permission=u'write', user=current_user)
-            search_index.grant_permission(
+            searchindex.grant_permission(
                 permission=u'delete', user=current_user)
-            search_index.set_status(u'processing')
-            db_session.add(search_index)
+            searchindex.set_status(u'processing')
+            db_session.add(searchindex)
             db_session.commit()
 
-            run_plaso.apply_async(
-                (file_path, timeline_name, index_name), task_id=index_name)
+            if sketch and sketch.has_permission(current_user, u'write'):
+                timeline = Timeline(
+                    name=searchindex.name,
+                    description=searchindex.description,
+                    sketch=sketch,
+                    user=current_user,
+                    searchindex=searchindex)
+                db_session.add(timeline)
+                sketch.timelines.append(timeline)
+                db_session.commit()
+
+            # Run the task in the background
+            task = task_directory.get(file_extension)
+            task.apply_async(
+                (file_path, timeline_name, index_name, username),
+                task_id=index_name)
 
             return self.to_json(
-                search_index, status_code=HTTP_STATUS_CODE_CREATED)
+                searchindex, status_code=HTTP_STATUS_CODE_CREATED)
         else:
             raise ApiHTTPError(
                 message=form.errors[u'file'][0],
@@ -1071,3 +1105,30 @@ class QueryResource(ResourceMixin, Resource):
             schema[u'objects'].append(query)
             return jsonify(schema)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class CountEventsResource(ResourceMixin, Resource):
+    """Resource to number of events for sketch timelines."""
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            Number of events in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+
+        # Exclude any timeline that is processing, i.e. not ready yet.
+        indices = []
+        for timeline in sketch.timelines:
+            if timeline.searchindex.get_status.status == u'processing':
+                continue
+            indices.append(timeline.searchindex.index_name)
+
+        count = self.datastore.count(indices)
+        meta = dict(count=count)
+        schema = dict(meta=meta, objects=[])
+        return jsonify(schema)

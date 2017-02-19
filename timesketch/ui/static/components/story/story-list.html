@@ -1,24 +1,21 @@
-<div ng-if="stories.length < 1" style="text-align: center">
-    <br><br>
-    <h3>There are no stories for this sketch.</h3>
-    <button class="btn btn-success btn-lg" ng-click="createStory()"><i class="fa fa-plus"></i> Create new story</button>
+<button class="btn btn-success pull-right" style="margin-top:-5px;" ng-click="createStory()"><i class="fa fa-plus"></i> Write a story</button>
+<br><br>
+
+<div ng-if="stories.length < 1">
+    There are no stories written yet.
 </div>
 
 <div ng-if="stories.length > 0">
-    <table ng-if="stories.length > 0" class="table table-hover">
-        <thead>
-        <tr>
-            <th>Story</th>
-            <th width="110px">Author</th>
-            <th width="130px">Created</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr ng-repeat="story in stories">
-            <td><a href="/sketch/{{ sketchId }}/stories/{{ story.id }}/"><b>{{ story.title||'Untitled story' }}</b></a></td>
-            <td>{{ story.user.username }}</td>
-            <td>{{ story.created_at }}</td>
-        </tr>
-    </table>
-    <button ng-if="showCreateButton" class="btn btn-success" ng-click="createStory()"><i class="fa fa-plus"></i> New story</button>
+    <ul class="content-list">
+        <li class="content-item" ng-repeat="story in stories">
+            <div class="pull-right" style="margin-top:10px;">
+                <span>{{ story.created_at }}</span>
+            </div>
+            <div class="title">
+                <a style="text-decoration: none; font-weight: 500;font-size: 1.2em;" href="/sketch/{{ sketchId }}/stories/{{ story.id }}/"><b>{{ story.title||'Untitled story' }}</b></a>
+                <br>
+                Created by {{ story.user.username }}
+            </div>
+        </li>
+    </ul>
 </div>

@@ -25,7 +25,9 @@
             restrict: 'E',
             templateUrl: '/static/components/sketch/sketch-views-list.html',
             scope: {
-                sketchId: '='
+                sketchId: '=',
+                showSearchTemplates: '=',
+                showDelete: '='
             },
             controller: function ($scope) {
                 timesketchApi.getViews($scope.sketchId).success(function (data) {

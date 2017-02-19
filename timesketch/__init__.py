@@ -21,7 +21,7 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_restful import Api
-from flask_wtf import CsrfProtect
+from flask_wtf import CSRFProtect
 
 from timesketch.api.v1.resources import AggregationResource
 from timesketch.api.v1.resources import ExploreResource
@@ -38,6 +38,7 @@ from timesketch.api.v1.resources import TaskResource
 from timesketch.api.v1.resources import StoryListResource
 from timesketch.api.v1.resources import StoryResource
 from timesketch.api.v1.resources import QueryResource
+from timesketch.api.v1.resources import CountEventsResource
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.models import configure_engine
 from timesketch.models import init_db
@@ -126,6 +127,8 @@ def create_app(config=None):
         StoryResource, u'/sketches/<int:sketch_id>/stories/<int:story_id>/')
     api_v1.add_resource(
         QueryResource, u'/sketches/<int:sketch_id>/explore/query/')
+    api_v1.add_resource(
+        CountEventsResource, u'/sketches/<int:sketch_id>/count/')
 
     # Register error handlers
     # pylint: disable=unused-variable
@@ -160,7 +163,7 @@ def create_app(config=None):
         return User.query.get(user_id)
 
     # Setup CSRF protection for the whole application
-    CsrfProtect(app)
+    CSRFProtect(app)
 
     return app
 
@@ -187,5 +190,4 @@ def create_celery_app():
                 return TaskBase.__call__(self, *args, **kwargs)
 
     celery.Task = ContextTask
-    celery.app = app
     return celery

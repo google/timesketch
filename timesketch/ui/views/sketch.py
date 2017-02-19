@@ -46,7 +46,7 @@ from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
 from timesketch.models.user import Group
 from timesketch.models.user import User
-from timesketch.lib.datastores.elastic import ElasticSearchDataStore
+from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
@@ -255,7 +255,7 @@ def export(sketch_id):
     query_dsl = json.loads(view.query_dsl)
     indices = query_filter.get(u'indices', [])
 
-    datastore = ElasticSearchDataStore(
+    datastore = ElasticsearchDataStore(
         host=current_app.config[u'ELASTIC_HOST'],
         port=current_app.config[u'ELASTIC_PORT'])
 
@@ -286,22 +286,12 @@ def timelines(sketch_id):
     Returns:
         Template with context.
     """
-    TIMELINES_TO_SHOW = 20
-
     sketch = Sketch.query.get_with_acl(sketch_id)
     searchindices_in_sketch = [t.searchindex.id for t in sketch.timelines]
-    query = request.args.get(u'q', None)
     indices = SearchIndex.all_with_acl(
         current_user).order_by(
             desc(SearchIndex.created_at)).filter(
                 not_(SearchIndex.id.in_(searchindices_in_sketch)))
-    filtered = False
-
-    if query:
-        indices = indices.filter(SearchIndex.name.contains(query)).limit(500)
-        filtered = True
-    if not filtered:
-        indices = indices.limit(TIMELINES_TO_SHOW)
 
     # Setup the form
     form = AddTimelineForm()
@@ -324,7 +314,7 @@ def timelines(sketch_id):
 
     return render_template(
         u'sketch/timelines.html', sketch=sketch, timelines=indices.all(),
-        form=form, filtered=filtered)
+        form=form)
 
 
 @sketch_views.route(
@@ -387,19 +377,3 @@ def views(sketch_id):
 
     return render_template(
         u'sketch/views.html', sketch=sketch, trash_form=trash_form)
-
-
-@sketch_views.route(u'/sketch/<int:sketch_id>/explore/event/')
-@sketch_views.route(
-    u'/sketch/<int:sketch_id>/explore/view/<int:unused_view_id>/event/')
-@login_required
-def event(sketch_id, unused_view_id=None):
-    """Generates the event template.
-
-    Returns:
-        Template with context.
-    """
-    sketch = Sketch.query.get_with_acl(sketch_id)
-    return render_template(
-        u'sketch/event.html', sketch=sketch)
-

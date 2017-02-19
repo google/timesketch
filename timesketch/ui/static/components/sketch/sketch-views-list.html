@@ -1,28 +1,26 @@
-<div class="col-md-12">
-    <div class="card">
-        <table class="table table-hover" ng-hide="!savedViews.length">
-            <thead>
-            <tr>
-                <th>Saved views</th>
-                <th width="110px">Created by</th>
-                <th width="130px">Created</th>
-                <th width="40px"></th>
-            </tr>
-            <tbody>
-            <tr ng-repeat="view in savedViews">
-                <td>
-                    <div style="margin-top:5px;font-weight: bold">
-                        <a href="/sketch/{{ sketchId }}/explore/view/{{ view.id }}/">{{ view.name }}</a>
-                    </div>
-                    <span style="color:#777;">{{ view.query_string }}</span>
-                </td>
-                <td>{{ view.user.username }}</td>
-                <td>{{ view.updated_at}}</td>
-                <td ng-click="deleteView(view)"><i class="fa fa-trash"></i></td>
-            </tr>
-            </tbody>
-        </table>
-        <h4 ng-hide="savedViews.length">No saved views</h4>
-    </div>
+<ul class="content-list" ng-hide="!savedViews.length">
+    <li class="content-item" ng-repeat="view in savedViews">
+        <div ng-if="showDelete">
+            <i ng-click="confirmDelete =! confirmDelete" ng-hide="confirmDelete" class="fa fa-trash pull-right" style="cursor: pointer; margin-top:1px;margin-left:10px;"></i>
+            <div class="pull-right" ng-show="confirmDelete">
+                <span class="btn btn-sm btn-danger" style="margin-top:-5px; margin-right:5px;margin-left:5px;" ng-click="deleteView(view)">Delete</span>
+                <i class="fa fa-close" style="cursor:pointer;" ng-click="confirmDelete =! confirmDelete"></i>
+            </div>
+        </div>
+        <div class="pull-right">
+            <span>{{ view.updated_at }}</span>
+        </div>
+        <div class="title">
+            <a style="font-weight: bold;" href="/sketch/{{ sketchId }}/explore/view/{{ view.id }}/">{{ view.name }}</a>
+        </div>
+    </li>
+</ul>
+
+<div ng-if="!savedViews.length">
+    There are no views saved yet.
 </div>
-<ts-search-template-list sketch-id="sketchId"></ts-search-template-list>
+
+<div ng-if="showSearchTemplates">
+    <br><br>
+    <ts-search-template-list sketch-id="sketchId"></ts-search-template-list>
+</div>
