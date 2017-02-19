@@ -11,25 +11,26 @@
 {% endblock %}
 
 {% block main %}
-    {% if sketch.timelines %}
-        <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}" named-view="{{ named_view }}" searchtemplate-id="{{ searchtemplate_id }}" autoload="true" redirect="true"></ts-search>
-    {% else %}
-        <div class="col-md-1"></div>
-        <div class="col-md-10">
-
-            <div class="col-md-12">
-
-                <div class="card">
-                    <div class="text-center" style="padding:100px;">
-                        <h3 style="color:#777"><i class="fa fa-meh-o"></i> No data to analyze</h3>
-                        <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
-                        <br>
-                        <a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">or add an existing timeline</a>
+    <div class="container">
+        {% if sketch.timelines %}
+            <div class="row">
+                <div class="col-md-12">
+                    <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}" named-view="{{ named_view }}" searchtemplate-id="{{ searchtemplate_id }}" autoload="true" redirect="true"></ts-search>
+                </div>
+            </div>
+        {% else %}
+            <div class="row">
+                <div class="col-md-10">
+                    <div class="card">
+                        <div class="text-center" style="padding:100px;">
+                            <h3 style="color:#777"><i class="fa fa-meh-o"></i> No data to analyze</h3>
+                            <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
+                            <br>
+                            <a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">or add an existing timeline</a>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        </div>
-        <div class="col-md-1"></div>
-    {% endif %}
+        {% endif %}
+    </div>
 {% endblock %}

@@ -1,5 +1,16 @@
 {% extends "base.html" %}
 
+{% block header_right %}
+    <div class="pull-left" style="margin-right:0px;margin-top: -6px;">
+        <button data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
+            {% if sketch.is_public %}
+                <i class="fa fa-globe"></i> Share</button>
+            {% else %}
+                <i class="fa fa-lock"></i> Share</button>
+            {% endif %}
+    </div>
+{% endblock %}
+
 {% block navigation %}
     <ul class="nav nav-tabs">
         <li role="presentation" class="active"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
@@ -214,51 +225,47 @@
         </div>
     </div>
 
-    <div class="col-md-1"></div>
-    <div class="col-md-10">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-10">
+                <div class="card" style="padding-left:30px; padding-bottom: 30px;">
+            <div class="pull-right" style="margin-right:10px;margin-top:10px;">
+                <div class="btn-group">
+                    {% if sketch.has_permission(user=current_user, permission='write') %}
+                        <button class="btn btn-default" data-toggle="modal" data-target="#edit-sketch-modal"><i class="fa fa-pencil"></i></button>
+                    {% endif %}
 
-        <div class="col-md-12">
-            <div class="card" style="padding-left:30px; padding-bottom: 30px;">
-                <div class="pull-right" style="margin-right:10px;margin-top:10px;">
-                    <div class="btn-group">
-                        {% if sketch.has_permission(user=current_user, permission='write') %}
-                            <button class="btn btn-default" data-toggle="modal" data-target="#edit-sketch-modal"><i class="fa fa-pencil"></i></button>
-                        {% endif %}
+                    {% if sketch.has_permission(user=current_user, permission='delete') %}
+                        <button class="btn btn-default" data-toggle="modal" data-target="#trash-modal"><i class="fa fa-trash"></i></button>
+                    {% endif %}
 
-                        {% if sketch.has_permission(user=current_user, permission='delete') %}
-                            <button class="btn btn-default" data-toggle="modal" data-target="#trash-modal"><i class="fa fa-trash"></i></button>
-                        {% endif %}
-
-                        <button data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
-                            {% if sketch.is_public %}
-                                <i class="fa fa-globe"></i> Share</button>
-                            {% else %}
-                                <i class="fa fa-lock"></i> Share</button>
-                            {% endif %}
-                    </div>
+                    {% if sketch.has_permission(current_user, 'write') and sketch.timelines %}
+                        <ts-core-upload class="pull-right" sketch-id="{{ sketch.id }}"></ts-core-upload>
+                    {% endif %}
 
                 </div>
-                <h3 style="margin-top:10px;">{{ sketch.name }}</h3>
-                <p style="white-space: pre-wrap;word-wrap: break-word; max-width: 800px;">{{ sketch.description }}</p>
 
-                {% if sketch.collaborators or sketch.groups %}
-                    <br>
-                    <span style="margin-right:10px;">Shared with</span>
-                    {% for group in sketch.groups %}
-                        <span class="label label-default" style="font-size: 0.9em;" title="Shared with group {{ group.name }}"><i class="fa fa-group"></i>{{ group.name }}</span>
-                    {% endfor %}
-                    {% for collaborator in sketch.collaborators %}
-                        <span class="label label-default" style="font-size: 0.9em;" title="Shared with user {{ collaborator.username }}"><i class="fa fa-user"></i>{{ collaborator.username }}</span>
-                    {% endfor %}
-                {% endif %}
+            </div>
+            <h3 style="margin-top:10px;">{{ sketch.name }}</h3>
+            <p style="white-space: pre-wrap;word-wrap: break-word; max-width: 800px;">{{ sketch.description }}</p>
+
+            {% if sketch.collaborators or sketch.groups %}
+                <br>
+                <span style="margin-right:10px;">Shared with</span>
+                {% for group in sketch.groups %}
+                    <span class="label label-default" style="font-size: 0.9em;" title="Shared with group {{ group.name }}"><i class="fa fa-group"></i>{{ group.name }}</span>
+                {% endfor %}
+                {% for collaborator in sketch.collaborators %}
+                    <span class="label label-default" style="font-size: 0.9em;" title="Shared with user {{ collaborator.username }}"><i class="fa fa-user"></i>{{ collaborator.username }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
             </div>
         </div>
 
-
-
         {% if not sketch.timelines %}
-
-            <div class="col-md-12">
+        <div class="row">
+            <div class="col-md-10">
                 <div class="card">
                     <div class="text-center" style="padding:100px;">
                         <h3 style="color:#777"><i class="fa fa-meh-o"></i> No data to analyze</h3>
@@ -268,95 +275,82 @@
                     </div>
                 </div>
             </div>
-
-        {% else %}
-
-            <!-- Single metric info cards -->
-            <div class="col-md-6">
-                <div class="card" style="border-top: 2px solid #428bca;">
-                    <div class="text-center">
-                        <h1>{{ sketch.timelines|length }}</h1>
-                        <i class="fa fa-clock-o"></i> Timelines
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card" style="border-top: 2px solid #428bca;">
-                    <div class="text-center">
-                        <h1 ts-count-events sketch-id="{{ sketch.id }}"></h1>
-                        Events
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card" style="min-height:300px;">
-
-                    <h3 class="pull-left">Timelines</h3>
-                    {% if sketch.has_permission(current_user, 'write') %}
-                        <ts-core-upload class="pull-right" style="margin-top:-5px;" sketch-id="{{ sketch.id }}"></ts-core-upload>
-                    {% endif %}
-                    <br><br>
-                    {% if not sketch.timelines %}
-                        <br>
-                        {% if sketch.has_permission(current_user, 'write') %}
-                            <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started</a>
-                        {% endif %}
-                    {% else %}
-
-                        <table class="table table-hover">
-                            <thead>
-                            <tr>
-                                <th>Timeline</th>
-                                <th>Added</th>
-                            </tr>
-                            <tbody>
-                            {% for timeline in sketch.timelines|sort(attribute='created_at', reverse = True) %}
-                                <tr>
-                                    <td>
-                                        <div>
-                                            {% if timeline.searchindex.get_status.status == 'processing' %}
-                                                <div style="margin-top:5px;">
-                                                    <i style="margin-left:8px;" class="fa fa-circle-o-notch fa-spin"></i>
-                                                </div>
-                                            {% else %}
-                                                <div class="color-box" style="background:#{{ timeline.color }};"></div>
-                                            {% endif %}
-                                        </div>
-                                        <div style="margin-top:-25px;margin-left:45px">
-                                            {% if timeline.searchindex.get_status.status == 'processing' %}
-                                                <div style="margin-top:5px;">{{ timeline.name }}</div>
-                                            {% else %}
-                                                <a href="/sketch/{{ sketch.id }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
-                                            {% endif %}
-                                        </div>
-                                        <div style="height:5px;"></div>
-
-                                    </td>
-                                    <td>
-                                        <div style="margin-top:5px;">{{ timeline.created_at.strftime('%Y-%m-%d') }}</div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
-
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <div class="card" style="min-height: 300px;">
-                    <ts-saved-view-list sketch-id="{{ sketch.id }}"></ts-saved-view-list>
-                </div>
-            </div>
-
+        </div>
         {% endif %}
 
+        {% if sketch.timelines %}
+            <!-- Single metric info cards -->
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="card" style="border-top: 2px solid #428bca;">
+                        <div class="text-center">
+                            <h1>{{ sketch.timelines|length }}</h1>
+                            Timelines
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="card" style="border-top: 2px solid #428bca;">
+                        <div class="text-center">
+                            <h1 ts-count-events sketch-id="{{ sketch.id }}"></h1>
+                            Events
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="card" style="min-height:300px;">
+                        <h4>Timelines</h4>
+
+                        {% if not sketch.timelines %}
+                            <br>
+                            {% if sketch.has_permission(current_user, 'write') %}
+                                <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started</a>
+                            {% endif %}
+                        {% else %}
+
+                            <ul class="content-list">
+                                {% for timeline in sketch.timelines|sort(attribute='created_at', reverse = True) %}
+                                    <li class="content-item">
+                                        <div class="pull-right">
+                                            <span>{{ timeline.created_at.strftime('%Y-%m-%d') }}</span>
+                                        </div>
+                                        <div>
+                                            <div class="pull-left" style="margin-top:-5px">
+                                                {% if timeline.searchindex.get_status.status == 'processing' %}
+                                                    <div style="margin-top:5px;">
+                                                        <i style="margin-left:10px;margin-right: 15px;" class="fa fa-circle-o-notch fa-spin"></i>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="color-box" style="background:#{{ timeline.color }};"></div>
+                                                {% endif %}
+                                            </div>
+
+                                            <div class="title">
+                                                {% if timeline.searchindex.get_status.status == 'processing' %}
+                                                    <div>{{ timeline.name }}</div>
+                                                {% else %}
+                                                    <a style="font-weight: bold;" href="/sketch/{{ sketch.id }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="card" style="min-height: 300px;">
+                        <h4>Views</h4>
+                        <ts-saved-view-list sketch-id="{{ sketch.id }}"></ts-saved-view-list>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     </div>
-
-    <div class="col-md-1"></div>
-
 
 {% endblock %}

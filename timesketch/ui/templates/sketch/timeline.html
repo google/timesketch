@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block main %}
+
+{% block navigation %}
     <ul class="nav nav-tabs">
         <li role="presentation"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
@@ -7,6 +8,9 @@
         <li role="presentation"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
         <li role="presentation" class="active"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
     </ul>
+{% endblock %}
+
+{% block main %}
 
     <div class="modal" id="edit-timeline-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -48,13 +52,13 @@
 
     <div class="container">
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-10">
                 <div class="card card-top">
                     <div class="pull-left" style="width:50px;height:50px;background:#{{ timeline.color }};cursor: pointer" data-toggle="modal" data-target="#edit-timeline-modal"></div>
                     {% if sketch.has_permission(user=current_user, permission='write') %}
                         <button class="btn btn-default pull-right " data-toggle="modal" data-target="#edit-timeline-modal" style="margin-left:10px;width:50px;"><i class="fa fa-pencil"></i></button>
                     {% endif %}
-                    <h3 style="margin-left:80px;padding-top: 6px;">{{ timeline.name }}</h3>
+                    <h4 style="margin-left:80px;padding-top: 17px;">{{ timeline.name }}</h4>
                     <br>
                     {% if timeline.description != timeline.name %}
                         <p style="white-space: pre-wrap;word-wrap: break-word;">{{ timeline.description }}</p>
@@ -78,4 +82,5 @@
             </div>
         </div>
     </div>
+
 {% endblock %}
