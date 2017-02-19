@@ -227,7 +227,7 @@
 
     <div class="container">
         <div class="row">
-            <div class="col-md-10">
+            <div class="col-md-12">
                 <div class="card" style="padding-left:30px; padding-bottom: 30px;">
             <div class="pull-right" style="margin-right:10px;margin-top:10px;">
                 <div class="btn-group">
@@ -265,7 +265,7 @@
 
         {% if not sketch.timelines %}
         <div class="row">
-            <div class="col-md-10">
+            <div class="col-md-12">
                 <div class="card">
                     <div class="text-center" style="padding:100px;">
                         <h3 style="color:#777"><i class="fa fa-meh-o"></i> No data to analyze</h3>
@@ -281,7 +281,7 @@
         {% if sketch.timelines %}
             <!-- Single metric info cards -->
             <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-6">
                     <div class="card" style="border-top: 2px solid #428bca;">
                         <div class="text-center">
                             <h1>{{ sketch.timelines|length }}</h1>
@@ -289,7 +289,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-6">
                     <div class="card" style="border-top: 2px solid #428bca;">
                         <div class="text-center">
                             <h1 ts-count-events sketch-id="{{ sketch.id }}"></h1>
@@ -300,7 +300,7 @@
             </div>
 
             <div class="row">
-                <div class="col-md-5">
+                <div class="col-md-6">
                     <div class="card" style="min-height:300px;">
                         <h4>Timelines</h4>
 
@@ -343,7 +343,7 @@
                         {% endif %}
                     </div>
                 </div>
-                <div class="col-md-5">
+                <div class="col-md-6">
                     <div class="card" style="min-height: 300px;">
                         <h4>Views</h4>
                         <ts-saved-view-list sketch-id="{{ sketch.id }}"></ts-saved-view-list>

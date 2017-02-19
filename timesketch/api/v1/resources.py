@@ -1051,7 +1051,14 @@ class StoryResource(ResourceMixin, Resource):
         if story.sketch_id != sketch.id:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
 
-        return self.to_json(story)
+        # Only allow editing if the current user is the author.
+        # This is needed until we have proper collaborative editing and
+        # locking implemented.
+        meta = dict(is_editable=False)
+        if current_user == story.user:
+            meta[u'is_editable'] = True
+
+        return self.to_json(story, meta=meta)
 
     @login_required
     def post(self, sketch_id, story_id):

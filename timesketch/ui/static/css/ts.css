@@ -52,7 +52,7 @@ header {
 }
 
 #subheader {
-    height: 50px;
+    height: 55px;
     background: #fff;
     margin-top:55px;
     border-bottom: 1px solid #f1f1f1;
@@ -419,8 +419,7 @@ rect.bordered {
 .nav-tabs>li>a, .nav-tabs>li>a:hover {
     background: transparent;
     color:#555;
-    #padding-bottom: 10px;
-    padding: 11px 5px 10px 5px;
+    padding: 11px 5px 14px 5px;
     margin-top:7px;
     border: none;
     font-weight: normal;
@@ -430,7 +429,7 @@ rect.bordered {
 
 .nav-tabs>li>a:hover {
     background: transparent;
-    border-bottom:2px solid #f1f1f1;
+    border-bottom:2px solid #d1d1d1;
 }
 
 .nav-tabs>li.active>a, .nav-tabs>li.active>a:hover, .nav-tabs>li.active>a:focus {
