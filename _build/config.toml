@@ -1,0 +1,4 @@
+theme = "timesketch"
+languageCode = "en-us"
+title = "Timesketch"
+baseurl = "http://timesketch.org/"
