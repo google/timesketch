@@ -104,53 +104,59 @@
                     timesketchApi.updateStory(scope.sketchId, scope.storyId, current_title, current_content);
                 };
 
-                // Setup the medium editors
-                scope.titleEditor = new MediumEditor('.editable-title', {
-                    placeholder: {
-                        text: 'Title',
-                        hideOnClick: false
-                    },
-                    disableReturn: true,
-                    toolbar: false
-
-                });
-
-                scope.contentEditor = new MediumEditor('.editable', {
-                    placeholder: {
-                        text: 'Your story starts here...',
-                        hideOnClick: false
-                    }
-                });
-
                 // Get the story on first load
                 timesketchApi.getStory(scope.sketchId, scope.storyId).success(function (data) {
                     var story = data.objects[0];
-                    set_content(story.title, story.content);
-                });
+                    var meta = data.meta;
+                    story.updated_at = moment.utc(story.updated_at).format("YYYY-MM-DD HH:MM");
+                    scope.story = story;
+                    scope.isEditable = meta['is_editable'];
 
-                var editableEvents = ['editableKeyup', 'editableClick'];
-                for (var i = 0; i < editableEvents.length; i++) {
-                    scope.contentEditor.subscribe(editableEvents[i], function(event, editable) {
-                        var selection = window.getSelection();
-                            var range = selection.getRangeAt(0),
-                                current = $(range.commonAncestorContainer);
-
-                        // Remove button if the element is not the button itself
-                        if (! current.closest('ts-story-dropdown').length) {
-                            var buttons = $(".editable").find('ts-story-dropdown');
-                            for (var i = 0; i < buttons.length; i++) {
-                                var button = $(buttons[i]);
-                                button.remove()
-                            }
-                        }
-
-                        if (current.length && current.text().trim() === '' && current.is('p')) {
-                            button = $compile('<ts-story-dropdown sketch-id="sketchId"></ts-story-dropdown>')(scope);
-                            current.before(button);
-                            save_draft()
-                        }
+                    // Setup the medium editors
+                    scope.titleEditor = new MediumEditor('.editable-title', {
+                        placeholder: {
+                            text: 'Title',
+                            hideOnClick: false
+                        },
+                        disableReturn: true,
+                        toolbar: false,
+                        disableEditing: !scope.isEditable
                     });
-                }
+
+                    scope.contentEditor = new MediumEditor('.editable', {
+                        placeholder: {
+                            text: 'Your story starts here...',
+                            hideOnClick: false
+                        },
+                        toolbar: scope.isEditable,
+                        disableEditing: !scope.isEditable
+                    });
+                    set_content(story.title, story.content);
+
+                    var editableEvents = ['editableKeyup', 'editableClick'];
+                    for (var i = 0; i < editableEvents.length; i++) {
+                        scope.contentEditor.subscribe(editableEvents[i], function(event, editable) {
+                            var selection = window.getSelection();
+                                var range = selection.getRangeAt(0),
+                                    current = $(range.commonAncestorContainer);
+
+                            // Remove button if the element is not the button itself
+                            if (! current.closest('ts-story-dropdown').length) {
+                                var buttons = $(".editable").find('ts-story-dropdown');
+                                for (var i = 0; i < buttons.length; i++) {
+                                    var button = $(buttons[i]);
+                                    button.remove()
+                                }
+                            }
+
+                            if (current.length && current.text().trim() === '' && current.is('p')) {
+                                button = $compile('<ts-story-dropdown sketch-id="sketchId"></ts-story-dropdown>')(scope);
+                                current.before(button);
+                                save_draft()
+                            }
+                        });
+                    }
+                });
 
                 // Save document every 3 seconds if any change is detected
                 $interval(function() {
