@@ -56,3 +56,19 @@ def read_and_validate_csv(path):
 
         for row in reader:
             yield row
+
+
+def get_validated_indices(indices, sketch_indices):
+    """Exclude any deleted search index references.
+
+    Args:
+        indices: List of indices from the user
+        sketch_indices: List of indices in the sketch
+
+    Returns:
+        Set of indices with those removed that is not in the sketch
+    """
+    exclude = set(indices) - set(sketch_indices)
+    if exclude:
+        indices = [index for index in indices if index not in exclude]
+    return indices

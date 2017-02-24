@@ -246,11 +246,13 @@ class ElasticsearchDataStore(datastore.DataStore):
 
         # Check if we have specific events to fetch and get indices.
         if query_filter.get(u'events', None):
-            indices = {event[u'index'] for event in query_filter[u'events']}
+            indices = {
+                event[u'index'] for event in query_filter[u'events']
+                if event[u'index'] in indices
+            }
 
         query_dsl = self.build_query(
             sketch_id, query_string, query_filter, query_dsl, aggregations)
-
 
         # Default search type for elasticsearch is query_then_fetch.
         search_type = u'query_then_fetch'

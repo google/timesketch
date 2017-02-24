@@ -62,6 +62,7 @@ from timesketch.lib.forms import EventAnnotationForm
 from timesketch.lib.forms import ExploreForm
 from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
+from timesketch.lib.utils import get_validated_indices
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchIndex
@@ -604,9 +605,9 @@ class ExploreResource(ResourceMixin, Resource):
             if u'_all' in indices:
                 indices = sketch_indices
 
-            # Make sure that the indices in the filter are part of the sketch
-            if set(indices) - set(sketch_indices):
-                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            # Make sure that the indices in the filter are part of the sketch.
+            # This will also remove any deleted timeline from the search result.
+            indices = get_validated_indices(indices, sketch_indices)
 
             # Make sure we have a query string or star filter
             if not (form.query.data,
@@ -704,9 +705,13 @@ class AggregationResource(ResourceMixin, Resource):
                 t.searchindex.index_name for t in sketch.timelines]
             indices = query_filter.get(u'indices', sketch_indices)
 
-            # Make sure that the indices in the filter are part of the sketch
-            if set(indices) - set(sketch_indices):
-                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            # If _all in indices then execute the query on all indices
+            if u'_all' in indices:
+                indices = sketch_indices
+
+            # Make sure that the indices in the filter are part of the sketch.
+            # This will also remove any deleted timeline from the search result.
+            indices = get_validated_indices(indices, sketch_indices)
 
             # Make sure we have a query string or star filter
             if not (form.query.data,
