@@ -652,26 +652,11 @@ class ExploreResource(ResourceMixin, Resource):
                 tl_colors[timeline.searchindex.index_name] = timeline.color
                 tl_names[timeline.searchindex.index_name] = timeline.name
 
-            try:
-                buckets = result[
-                    u'aggregations'][
-                        u'field_aggregation'][
-                            u'buckets']
-            except KeyError:
-                buckets = None
-
-            es_total_count_unfiltered = 0
-            if buckets:
-                for bucket in buckets:
-                    es_total_count_unfiltered += bucket[u'doc_count']
-
             meta = {
                 u'es_time': result[u'took'],
                 u'es_total_count': result[u'hits'][u'total'],
-                u'es_total_count_unfiltered': es_total_count_unfiltered,
                 u'timeline_colors': tl_colors,
                 u'timeline_names': tl_names,
-                u'histogram': buckets
             }
             schema = {
                 u'meta': meta,
