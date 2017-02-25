@@ -897,9 +897,9 @@ class UploadFileResource(ResourceMixin, Resource):
 
             sketch_id = form.sketch_id.data
             file_storage = form.file.data
-            timeline_name = form.name.data
-            _, _extension = os.path.splitext(file_storage.filename)
+            _filename, _extension = os.path.splitext(file_storage.filename)
             file_extension = _extension.lstrip(u'.')
+            timeline_name = form.name.data or _filename.rstrip(u'.')
 
             sketch = None
             if sketch_id:
