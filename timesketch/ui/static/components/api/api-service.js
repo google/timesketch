@@ -32,6 +32,27 @@ limitations under the License.
             return $http.get(resource_url)
         };
 
+        this.getTimelines = function(sketch_id) {
+            /**
+             * Get all timelines for sketch.
+             * @param sketch_id - The id for the sketch.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/timelines/';
+            return $http.get(resource_url)
+        };
+
+        this.deleteTimeline = function(sketch_id, timeline_id) {
+            /**
+             * Delete a Timesketch view.
+             * @param sketch_id - The id for the sketch.
+             * @param timeline_id - The id of the timeline.
+             * @returns A $http promise with two methods, success and error.
+             */
+            var resource_url = SKETCH_BASE_URL + sketch_id + '/timelines/' + timeline_id + '/';
+            return $http.delete(resource_url)
+        };
+
         this.getViews = function(sketch_id) {
             /**
              * Get all saved views for sketch.

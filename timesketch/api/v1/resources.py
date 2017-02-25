@@ -1144,3 +1144,40 @@ class CountEventsResource(ResourceMixin, Resource):
         meta = dict(count=count)
         schema = dict(meta=meta, objects=[])
         return jsonify(schema)
+
+
+class TimelineListResource(ResourceMixin, Resource):
+    """Resource to get all timelines for sketch."""
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            View in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        return self.to_json(sketch.timelines)
+
+
+class TimelineResource(ResourceMixin, Resource):
+    @login_required
+    def delete(self, sketch_id, timeline_id):
+        """Handles DELETE request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            timeline_id: Integer primary key for a timeline database model
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        timeline = Timeline.query.get(timeline_id)
+
+        # Check that this timeline belongs to the sketch
+        if timeline.sketch_id != sketch.id:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+
+        if not sketch.has_permission(user=current_user, permission=u'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
+
+        sketch.timelines.remove(timeline)
+        db_session.commit()
+        return HTTP_STATUS_CODE_OK

@@ -303,44 +303,7 @@
                 <div class="col-md-6">
                     <div class="card" style="min-height:300px;">
                         <h4>Timelines</h4>
-
-                        {% if not sketch.timelines %}
-                            <br>
-                            {% if sketch.has_permission(current_user, 'write') %}
-                                <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started</a>
-                            {% endif %}
-                        {% else %}
-
-                            <ul class="content-list">
-                                {% for timeline in sketch.timelines|sort(attribute='created_at', reverse = True) %}
-                                    <li class="content-item">
-                                        <div class="pull-right">
-                                            <span>{{ timeline.created_at.strftime('%Y-%m-%d') }}</span>
-                                        </div>
-                                        <div>
-                                            <div class="pull-left" style="margin-top:-5px">
-                                                {% if timeline.searchindex.get_status.status == 'processing' %}
-                                                    <div style="margin-top:5px;">
-                                                        <i style="margin-left:10px;margin-right: 15px;" class="fa fa-circle-o-notch fa-spin"></i>
-                                                    </div>
-                                                {% else %}
-                                                    <div class="color-box" style="background:#{{ timeline.color }};"></div>
-                                                {% endif %}
-                                            </div>
-
-                                            <div class="title">
-                                                {% if timeline.searchindex.get_status.status == 'processing' %}
-                                                    <div>{{ timeline.name }}</div>
-                                                {% else %}
-                                                    <a style="font-weight: bold;" href="/sketch/{{ sketch.id }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-
-                        {% endif %}
+                        <ts-timelines-list sketch-id="{{ sketch.id }}" show-delete="false"></ts-timelines-list>
                     </div>
                 </div>
                 <div class="col-md-6">
