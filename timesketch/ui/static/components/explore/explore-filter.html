@@ -24,10 +24,3 @@
         <ts-timeline-picker-item timeline="timeline" query="query" filter="filter" query-dsl="queryDsl"></ts-timeline-picker-item>
     </div>
 </div>
-
-<div class="filter-card" ng-show="meta.histogram">
-    <h5>Choose which data types to query</h5>
-    <div ng-repeat="datatype in meta.histogram">
-        <ts-data-type-picker-item datatype="datatype" query="query" filter="filter" meta="meta" query-dsl="queryDsl"></ts-data-type-picker-item>
-    </div>
-</div>
