@@ -52,7 +52,6 @@
 
                 this.updateTimelines = function(timeline) {
                     $scope.timelines.unshift(timeline)
-
                 }
             }
         }
