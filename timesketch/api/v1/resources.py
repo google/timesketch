@@ -74,6 +74,7 @@ from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.story import Story
+from timesketch.models.user import User
 
 class ResourceMixin(object):
     """Mixin for API resources."""
@@ -1190,6 +1191,16 @@ class SearchIndexResource(ResourceMixin, Resource):
         # Check that the index exists
         if form.validate_on_submit() or \
                 (len(form.errors) == 1 and u'csrf_token' in form.errors):
+
+            # Check that the user exists
+            user = User.query.filter_by(username=form.username.data).first()
+            if not user:
+                raise ApiHTTPError(
+                    message=u'User {0} does not exist' \
+                        .format(form.username.data),
+                    status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+
+            # Check that the index exists
             es = self.datastore
             if not es.client.indices.exists(index=form.index.data):
                 raise ApiHTTPError(
@@ -1197,9 +1208,10 @@ class SearchIndexResource(ResourceMixin, Resource):
                         .format(form.index.data),
                     status_code=HTTP_STATUS_CODE_BAD_REQUEST)
 
+            # Add the search index
             searchindex = SearchIndex.get_or_create(
                 name=form.name.data, description=form.name.data,
-                user=current_user, index_name=form.index.data)
+                user=user, index_name=form.index.data)
             searchindex.grant_permission(u'read')
             db_session.add(searchindex)
             db_session.commit()
