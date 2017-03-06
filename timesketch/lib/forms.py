@@ -13,7 +13,6 @@
 # limitations under the License.
 """Form definitions and validators for the forms used in the application."""
 
-
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField
 from flask_wtf.file import FileRequired
@@ -209,3 +208,16 @@ class StoryForm(BaseForm):
     title = StringField(u'Title', validators=[])
     content = StringField(
         u'Content', validators=[], widget=widgets.TextArea())
+
+
+class SearchIndexForm(BaseForm):
+    """Form to handle API requests to add search indices."""
+    name = StringField(u'Name', validators=[DataRequired()])
+    index = StringField(u'Index', validators=[DataRequired()])
+    username = StringField(u'Username', validators=[DataRequired()])
+
+
+class IndexForm(BaseForm):
+    """Form to handle API requests to create an Elasticsearch index"""
+    index_name = StringField(u'Index Name')
+    doc_type = StringField(u'Document Type')
