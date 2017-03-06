@@ -175,7 +175,8 @@ def create_app(config=None):
 
     # Load the tsctl API endpoints only if the TSCTL API key is set
     if u'TSCTL_API_KEY' in app.config and app.config[u'TSCTL_API_KEY']:
-        tsctlapi_v1 = Api(app, prefix=u'/api/v1/tsctl', decorators=[csrf.exempt])
+        tsctlapi_v1 = Api(app, prefix=u'/api/v1/tsctl',
+                          decorators=[csrf.exempt])
         tsctlapi_v1.add_resource(SearchIndexResource, u'/searchindices/')
 
     return app
