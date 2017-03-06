@@ -25,6 +25,8 @@ GET /sketches/:sketch_id/views/:view_id/
 POST /sketches/:sketch_id/event/
 POST /sketches/:sketch_id/event/annotate/
 POST /sketches/:sketch_id/views/
+
+POST /tsctl/searchindices/
 """
 
 import datetime
@@ -62,6 +64,7 @@ from timesketch.lib.forms import EventAnnotationForm
 from timesketch.lib.forms import ExploreForm
 from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
+from timesketch.lib.forms import SearchIndexForm
 from timesketch.lib.utils import get_validated_indices
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
@@ -71,7 +74,6 @@ from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.story import Story
-
 
 class ResourceMixin(object):
     """Mixin for API resources."""
@@ -1166,3 +1168,44 @@ class TimelineResource(ResourceMixin, Resource):
         sketch.timelines.remove(timeline)
         db_session.commit()
         return HTTP_STATUS_CODE_OK
+
+class SearchIndexResource(ResourceMixin, Resource):
+    """Resource to add add a search index."""
+    def post(self):
+        """Handles POST request to the resource.
+
+        Returns:
+            A search index in JSON (instance of flask.wrappers.Response)
+
+        Raises:
+            ApiHTTPError
+        """
+        form = SearchIndexForm.build(request)
+        # Verify the API key is valid
+        if form.api_key.data != current_app.config[u'TSCTL_API_KEY']:
+            raise ApiHTTPError(
+                message=u'Invalid API key',
+                status_code=HTTP_STATUS_CODE_FORBIDDEN)
+
+        # Check that the index exists
+        if form.validate_on_submit() or \
+                (len(form.errors) == 1 and u'csrf_token' in form.errors):
+            es = self.datastore
+            if not es.client.indices.exists(index=form.index.data):
+                raise ApiHTTPError(
+                    message=u'Index {0} does not exist in the datastore' \
+                        .format(form.index.data),
+                    status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+
+            searchindex = SearchIndex.get_or_create(
+                name=form.name.data, description=form.name.data,
+                user=current_user, index_name=form.index.data)
+            searchindex.grant_permission(u'read')
+            db_session.add(searchindex)
+            db_session.commit()
+            return self.to_json(searchindex)
+
+        else:
+            raise ApiHTTPError(
+                message=form.errors,
+                status_code=HTTP_STATUS_CODE_BAD_REQUEST)

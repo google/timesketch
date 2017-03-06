@@ -203,3 +203,8 @@ class StoryForm(BaseForm):
     title = StringField(u'Title', validators=[])
     content = StringField(
         u'Content', validators=[], widget=widgets.TextArea())
+
+class SearchIndexForm(BaseForm):
+    name = StringField(u'Name', validators=[DataRequired()])
+    index = StringField(u'Index', validators=[DataRequired()])
+    api_key = StringField(u'Index', validators=[DataRequired()])

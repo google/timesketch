@@ -41,6 +41,7 @@ from timesketch.api.v1.resources import QueryResource
 from timesketch.api.v1.resources import CountEventsResource
 from timesketch.api.v1.resources import TimelineResource
 from timesketch.api.v1.resources import TimelineListResource
+from timesketch.api.v1.resources import SearchIndexResource
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.models import configure_engine
 from timesketch.models import init_db
@@ -170,7 +171,12 @@ def create_app(config=None):
         return User.query.get(user_id)
 
     # Setup CSRF protection for the whole application
-    CSRFProtect(app)
+    csrf = CSRFProtect(app)
+
+    # Load the tsctl API endpoints only if the TSCTL API key is set
+    if u'TSCTL_API_KEY' in app.config and app.config[u'TSCTL_API_KEY']:
+        tsctlapi_v1 = Api(app, prefix=u'/api/v1/tsctl', decorators=[csrf.exempt])
+        tsctlapi_v1.add_resource(SearchIndexResource, u'/searchindices/')
 
     return app
 
