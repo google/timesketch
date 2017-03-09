@@ -2,7 +2,7 @@
     <span class="form-group">
         <span class="btn btn-file" ng-class="{'btn-default': uploadForm.file, 'btn-success': !uploadForm.file}">
             <i class="fa fa-cloud-upload" style="margin-right: 5px;"></i>
-            <span ng-hide="uploadForm.file">Import timeline</span>
+            <span ng-hide="uploadForm.file">{{ btnText||'Import timeline' }}</span>
             <span ng-show="uploadForm.file">{{ uploadForm.file.name }}</span>
             <input type="file" class="form-control" ts-core-file-model="uploadForm.file" />
         </span>
