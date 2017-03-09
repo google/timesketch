@@ -22,8 +22,8 @@
          * Render event count.
          */
         return {
-            restrict: 'A',
-            template: '{{count}}',
+            restrict: 'E',
+            templateUrl: '/static/components/sketch/sketch-count-events.html',
             scope: {
                 sketchId: '='
             },
