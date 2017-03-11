@@ -41,7 +41,7 @@ def heatmap(
 
     search_result = es_client.search(
         sketch_id, query_string, query_filter, query_dsl, indices,
-        aggregations=aggregation, return_results=False)
+        aggregations=aggregation)
 
     try:
         aggregation_result = search_result[u'aggregations']
@@ -92,7 +92,7 @@ def histogram(
 
     search_result = es_client.search(
         sketch_id, query_string, query_filter, query_dsl, indices,
-        aggregations=aggregation, return_results=False)
+        aggregations=aggregation)
 
     try:
         aggregation_result = search_result[u'aggregations']

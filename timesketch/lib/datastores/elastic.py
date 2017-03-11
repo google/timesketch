@@ -150,8 +150,8 @@ class ElasticsearchDataStore(datastore.DataStore):
             if not query_dsl:
                 query_dsl = {
                     u'query': {
-                        u'filtered': {
-                            u'query': {
+                        u'bool': {
+                            u'must': {
                                 u'query_string': {
                                     u'query': query_string
                                 }
@@ -160,7 +160,7 @@ class ElasticsearchDataStore(datastore.DataStore):
                     }
                 }
             if query_filter.get(u'time_start', None):
-                query_dsl[u'query'][u'filtered'][u'filter'] = {
+                query_dsl[u'query'][u'bool'][u'filter'] = {
                     u'range': {
                         u'datetime': {
                             u'gte': query_filter[u'time_start'],
@@ -194,13 +194,13 @@ class ElasticsearchDataStore(datastore.DataStore):
         # Add any pre defined aggregations
         if aggregations:
             if isinstance(aggregations, dict):
-                query_dsl[u'aggregations'] = aggregations
+                query_dsl[u'aggs'] = aggregations
 
         return query_dsl
 
     def search(
             self, sketch_id, query_string, query_filter, query_dsl, indices,
-            aggregations=None, return_results=True):
+            aggregations=None):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -212,7 +212,6 @@ class ElasticsearchDataStore(datastore.DataStore):
             query_dsl: Dictionary containing Elasticsearch DSL query
             indices: List of indices to query
             aggregations: Dict of Elasticsearch aggregations
-            return_results: Boolean indicating if results should be returned
 
         Returns:
             Set of event documents in JSON format
@@ -237,8 +236,6 @@ class ElasticsearchDataStore(datastore.DataStore):
 
         # Default search type for elasticsearch is query_then_fetch.
         search_type = u'query_then_fetch'
-        if not return_results:
-            search_type = u'count'
 
         # Suppress the lint error because elasticsearch-py adds parameters
         # to the function with a decorator and this makes pylint sad.
