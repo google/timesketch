@@ -55,11 +55,9 @@ class ElasticsearchDataStore(datastore.DataStore):
             Elasticsearch query as a dictionary.
         """
         query_dict = {
-            u'query': {
-                u'filtered': {
-                    u'filter': {
+                    u'query': {
                         u'nested': {
-                            u'filter': {
+                            u'query': {
                                 u'bool': {
                                     u'must': [
                                         {
@@ -81,8 +79,6 @@ class ElasticsearchDataStore(datastore.DataStore):
                         }
                     }
                 }
-            }
-        }
         return query_dict
 
     @staticmethod

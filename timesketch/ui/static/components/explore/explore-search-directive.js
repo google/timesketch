@@ -200,7 +200,7 @@ limitations under the License.
                     // Set the query string input to reflect the current DSL.
                     try {
                         var currentQueryDsl = JSON.parse($scope.queryDsl);
-                        $scope.query = currentQueryDsl['query']['filtered']['query']['query_string']['query'];
+                        $scope.query = currentQueryDsl['query']['query_string']['query'];
                     } catch(err) {}
                     $scope.queryDsl = "";
                     $scope.showAdvanced = false;
@@ -284,4 +284,3 @@ limitations under the License.
     }]);
 
 })();
-
