@@ -1,4 +1,4 @@
-<div ng-show="showFilters" class="filter-card">
+<div ng-show="showFilters" class="card">
     <h5>Time range</h5>
     <form class="form-inline" role="form">
         <div class="form-group">
@@ -11,10 +11,9 @@
         <input style="margin-right:5px;margin-left: 5px;" type="submit" class="btn btn-primary" value="Filter" ng-click="applyFilter()">
         <input type="reset" class="btn btn-default" value="Clear" ng-click="clearFilter()">
     </form>
-</div>
 
-<div class="timeline-picker-card" style="background:#f9f9f9;border-top:1px solid #f5f5f5;border-bottom:1px solid #f5f5f5;margin-top:20px;margin-bottom:20px;margin-left:-20px;margin-right:-20px;padding-left: 20px;padding-bottom: 20px;padding-top:20px;">
-    <h5>Timelines to query</h5>
+    <br><br>
+    <h5>Timelines</h5>
     <div class="btn-group">
         <button class="btn btn-default" ng-click="enableAllTimelines()"><i class="fa fa-check"></i> Enable all</button>
         <button class="btn btn-default" ng-click="disableAllTimelines()"><i class="fa fa-ban"></i> Disable all</button>
@@ -23,4 +22,7 @@
     <div ng-repeat="timeline in sketch.timelines" class="pull-left timeline-box">
         <ts-timeline-picker-item timeline="timeline" query="query" filter="filter" query-dsl="queryDsl"></ts-timeline-picker-item>
     </div>
+
+    <br><br><br>
+
 </div>

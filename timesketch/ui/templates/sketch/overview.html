@@ -10,6 +10,22 @@
     </ul>
 {% endblock %}
 
+{% block right_nav %}
+    <div class="btn-group">
+        {% if sketch.has_permission(current_user, 'write') and sketch.timelines %}
+            <ts-core-upload class="pull-right" sketch-id="{{ sketch.id }}"></ts-core-upload>
+        {% endif %}
+    </div>
+
+    <button style="margin-left:10px;" data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
+        {% if sketch.is_public %}
+            <i class="fa fa-globe"></i> Share</button>
+        {% else %}
+            <i class="fa fa-lock"></i> Share</button>
+        {% endif %}
+    </div>
+{% endblock %}
+
 {% block main %}
 
     <div class="modal" id="new-sketch-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -227,22 +243,12 @@
                             {% if sketch.has_permission(user=current_user, permission='delete') %}
                                 <button class="btn btn-default" data-toggle="modal" data-target="#trash-modal"><i class="fa fa-trash"></i></button>
                             {% endif %}
-
-                            {% if sketch.has_permission(current_user, 'write') and sketch.timelines %}
-                                <ts-core-upload class="pull-right" sketch-id="{{ sketch.id }}"></ts-core-upload>
-                            {% endif %}
-
                         </div>
-
-                        <button style="margin-left:10px;" data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
-                            {% if sketch.is_public %}
-                                <i class="fa fa-globe"></i> Share</button>
-                            {% else %}
-                                <i class="fa fa-lock"></i> Share</button>
-                            {% endif %}
-
                     </div>
                     <h3 style="margin-top:10px;">{{ sketch.name }}</h3>
+                    {% if not sketch.description %}
+                        <a data-toggle="modal" data-target="#edit-sketch-modal">Add description</a>
+                    {% endif %}
                     <p style="white-space: pre-wrap;word-wrap: break-word; max-width: 800px;">{{ sketch.description }}</p>
 
                     {% if sketch.collaborators or sketch.groups %}

@@ -10,6 +10,10 @@
     </ul>
 {% endblock %}
 
+{% block right_nav %}
+    <ts-create-story sketch-id="{{ sketch.id }}"></ts-create-story>
+{% endblock %}
+
 {% block main %}
 
     <div class="container">
@@ -30,6 +34,7 @@
                             <ts-story sketch-id="{{ sketch.id }}" story-id="{{ story.id }}"></ts-story>
                         {% else %}
                             <h4 class="pull-left">Stories</h4>
+                            <br>
                             <ts-story-list sketch-id="{{ sketch.id }}" show-create-button="true"></ts-story-list>
                         {% endif %}
                     </div>

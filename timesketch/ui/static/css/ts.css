@@ -71,6 +71,11 @@ header {
     font-size: 16px;
 }
 
+.right-nav {
+    padding:10px;
+    margin-right:5px;
+}
+
 .card {
     margin-bottom: 20px;
     background: #fff;
