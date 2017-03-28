@@ -43,8 +43,47 @@ limitations under the License.
             require: '^tsSearch',
             link: function(scope, elem, attrs, ctrl) {
                 scope.applyFilter = function() {
+                    //TODO: Implement dynamic timefilter
+                    scope.parseDate(scope.filter.time_start)
                     ctrl.search(scope.query, scope.filter, scope.queryDsl)
                 };
+
+                scope.parseDate = function(datevalue){
+                    //Parse out 'T' date time seperator needed by ELK but not by moment.js
+                    datevalue=datevalue.replace(/T/g,' ');
+                    //console.log(datevalue);
+
+                    //Parse offset given by user. Eg. +-10m
+                    var offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s)/g;
+                    var match = offsetRegexp.exec(datevalue);
+
+                    //console.log("offset rexexp:")
+                    //console.log(match[0]);
+                    //console.log(match[1]);
+                    //console.log(match[2]);
+                    //console.log(match[3]);
+                    //console.log(match[4]);
+            
+                    if (match != null) {
+                        //calculate filter start and end datetimes
+                        if (match[2] == '+') {
+                            scope.filter.time_start = moment.utc(match[1]).format("YYYY-MM-DDThh:mm:ss");
+                            scope.filter.time_end = moment.utc(match[1]).add(match[3],match[4]).format("YYYY-MM-DDThh:mm:ss");
+                        }
+
+                        if (match[2] == '-') {
+                            scope.filter.time_start = moment.utc(match[1]).subtract(match[3],match[4]).format("YYYY-MM-DDThh:mm:ss");
+                            scope.filter.time_end = moment.utc(match[1]).format("YYYY-MM-DDThh:mm:ss");
+                        }
+                        if (match[2] == '-+' || match[2] == '+-') {
+                            scope.filter.time_start = moment.utc(match[1]).subtract(match[3],match[4]).format("YYYY-MM-DDThh:mm:ss");
+                            scope.filter.time_end = moment.utc(match[1]).add(match[3],match[4]).format("YYYY-MM-DDThh:mm:ss");
+                        }
+
+                        //console.log(scope.filter.time_start)
+                        //console.log(scope.filter.time_end)
+                    }
+                }
 
                 scope.clearFilter = function() {
                     delete scope.filter.time_start;
@@ -69,6 +108,7 @@ limitations under the License.
                 }
 
             }
+
         }
     });
 
