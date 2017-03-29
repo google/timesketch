@@ -1,7 +1,7 @@
 <ul class="content-list" ng-hide="!savedViews.length">
     <li class="content-item" ng-repeat="view in savedViews">
         <div ng-if="showDelete">
-            <i ng-click="confirmDelete =! confirmDelete" ng-hide="confirmDelete" class="fa fa-trash pull-right" style="cursor: pointer; margin-top:1px;margin-left:10px;"></i>
+            <i ng-click="confirmDelete =! confirmDelete" ng-hide="confirmDelete" class="fa fa-trash pull-right" style="cursor: pointer; margin-top:3px;margin-left:10px;"></i>
             <div class="pull-right" ng-show="confirmDelete">
                 <span class="btn btn-sm btn-danger" style="margin-top:-5px; margin-right:5px;margin-left:5px;" ng-click="deleteView(view)">Delete</span>
                 <i class="fa fa-close" style="cursor:pointer;" ng-click="confirmDelete =! confirmDelete"></i>
@@ -11,7 +11,7 @@
             <span>{{ view.updated_at }}</span>
         </div>
         <div class="title">
-            <a style="font-weight: bold;" href="/sketch/{{ sketchId }}/explore/view/{{ view.id }}/">{{ view.name }}</a>
+            <a style="text-decoration: none; font-weight: 500;font-size: 1.1em;" href="/sketch/{{ sketchId }}/explore/view/{{ view.id }}/">{{ view.name }}</a>
         </div>
     </li>
 </ul>

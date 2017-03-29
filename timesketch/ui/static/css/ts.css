@@ -497,7 +497,7 @@ rect.bordered {
 }
 
 .btn {
-    border-radius: 0;
+    border-radius: 4px;
 }
 
 .label {
