@@ -10,6 +10,12 @@
     </ul>
 {% endblock %}
 
+{% block right_nav %}
+    {% if sketch.has_permission(current_user, 'write') and sketch.timelines %}
+        <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
+    {% endif %}
+{% endblock %}
+
 {% block main %}
 
     <div class="container">

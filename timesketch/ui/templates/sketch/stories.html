@@ -11,7 +11,9 @@
 {% endblock %}
 
 {% block right_nav %}
-    <ts-create-story sketch-id="{{ sketch.id }}"></ts-create-story>
+    {% if sketch.timelines %}
+        <ts-create-story sketch-id="{{ sketch.id }}"></ts-create-story>
+    {% endif %}
 {% endblock %}
 
 {% block main %}
