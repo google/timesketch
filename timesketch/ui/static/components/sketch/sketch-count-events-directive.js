@@ -29,7 +29,7 @@
             },
             controller: function ($scope) {
                 timesketchApi.countEvents($scope.sketchId).success(function (data) {
-                    $scope.count = data.meta['count'];
+                    $scope.count = numeral(data.meta['count']).format('0.0a');
                 });
             }
         }
