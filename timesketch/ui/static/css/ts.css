@@ -71,6 +71,11 @@ header {
     font-size: 16px;
 }
 
+.right-nav {
+    padding:10px;
+    margin-right:5px;
+}
+
 .card {
     margin-bottom: 20px;
     background: #fff;
@@ -227,7 +232,7 @@ header {
     position: absolute;
     left:0;
     right:0;
-    top:0;
+    top:-11px;
     margin-left:auto;
     margin-right:auto;
     text-align: center;
@@ -492,7 +497,7 @@ rect.bordered {
 }
 
 .btn {
-    border-radius: 0;
+    border-radius: 4px;
 }
 
 .label {

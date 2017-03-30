@@ -10,17 +10,36 @@
     </ul>
 {% endblock %}
 
+{% block right_nav %}
+    {% if sketch.has_permission(current_user, 'write') and sketch.timelines and upload_enabled %}
+        <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
+    {% endif %}
+{% endblock %}
+
 {% block main %}
 
     <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card" style="padding:30px;">
-                    <h4>Timelines</h4>
-                    <ts-timelines-list sketch-id="{{ sketch.id }}" show-delete="true" show-edit="true"></ts-timelines-list>
+        {% if sketch.timelines %}
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card" style="padding:30px;">
+                        <h4>Timelines</h4>
+                        <ts-timelines-list sketch-id="{{ sketch.id }}" show-delete="true" show-edit="true"></ts-timelines-list>
+                    </div>
                 </div>
             </div>
-        </div>
+        {% endif %}
+        {% if not sketch.timelines and not timelines %}
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="text-center" style="padding:100px;">
+                        <h3 style="color:#777"><i class="fa fa-meh-o"></i> No timelines in the system yet</h3>
+                        <p>Get started by importing a Plaso storage file</p>
+                        <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     </div>
 
     <div class="container">
@@ -30,7 +49,6 @@
                     <div class="col-md-12">
                         <div class="card">
                             <h4 class="pull-left">Add timeline</h4>
-                            <ts-core-upload class="pull-right" sketch-id="{{ sketch.id }}"></ts-core-upload>
                             <form method="post" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
                                 <table class="table table-hover">
                                     <thead>

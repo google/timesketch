@@ -1,16 +1,5 @@
 {% extends "base.html" %}
 
-{% block header_right %}
-    <div class="pull-left" style="margin-right:0px;margin-top: -6px;">
-        <button data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
-            {% if sketch.is_public %}
-                <i class="fa fa-globe"></i> Share</button>
-            {% else %}
-                <i class="fa fa-lock"></i> Share</button>
-            {% endif %}
-    </div>
-{% endblock %}
-
 {% block navigation %}
     <ul class="nav nav-tabs">
         <li role="presentation" class="active"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
@@ -19,6 +8,22 @@
         <li role="presentation"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
     </ul>
+{% endblock %}
+
+{% block right_nav %}
+    <div class="btn-group">
+        {% if sketch.has_permission(current_user, 'write') and sketch.timelines  and upload_enabled %}
+            <ts-core-upload class="pull-right" sketch-id="{{ sketch.id }}"></ts-core-upload>
+        {% endif %}
+    </div>
+
+    <button style="margin-left:10px;" data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
+        {% if sketch.is_public %}
+            <i class="fa fa-globe"></i> Share</button>
+        {% else %}
+            <i class="fa fa-lock"></i> Share</button>
+        {% endif %}
+    </div>
 {% endblock %}
 
 {% block main %}
@@ -229,53 +234,47 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="card" style="padding-left:30px; padding-bottom: 30px;">
-            <div class="pull-right" style="margin-right:10px;margin-top:10px;">
-                <div class="btn-group">
-                    {% if sketch.has_permission(user=current_user, permission='write') %}
-                        <button class="btn btn-default" data-toggle="modal" data-target="#edit-sketch-modal"><i class="fa fa-pencil"></i></button>
-                    {% endif %}
+                    <div class="pull-right" style="margin-right:10px;margin-top:10px;">
+                        <div class="btn-group">
+                            {% if sketch.has_permission(user=current_user, permission='write') %}
+                                <button class="btn btn-default" data-toggle="modal" data-target="#edit-sketch-modal"><i class="fa fa-pencil"></i></button>
+                            {% endif %}
 
-                    {% if sketch.has_permission(user=current_user, permission='delete') %}
-                        <button class="btn btn-default" data-toggle="modal" data-target="#trash-modal"><i class="fa fa-trash"></i></button>
-                    {% endif %}
+                            {% if sketch.has_permission(user=current_user, permission='delete') %}
+                                <button class="btn btn-default" data-toggle="modal" data-target="#trash-modal"><i class="fa fa-trash"></i></button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <h3 style="margin-top:10px;">{{ sketch.name }}</h3>
+                    <p style="white-space: pre-wrap;word-wrap: break-word; max-width: 800px;">{{ sketch.description }}</p>
 
-                    {% if sketch.has_permission(current_user, 'write') and sketch.timelines %}
-                        <ts-core-upload class="pull-right" sketch-id="{{ sketch.id }}"></ts-core-upload>
+                    {% if sketch.collaborators or sketch.groups %}
+                        <br>
+                        <span style="margin-right:10px;">Shared with</span>
+                        {% for group in sketch.groups %}
+                            <span class="label label-default" style="font-size: 0.9em;" title="Shared with group {{ group.name }}"><i class="fa fa-group"></i>{{ group.name }}</span>
+                        {% endfor %}
+                        {% for collaborator in sketch.collaborators %}
+                            <span class="label label-default" style="font-size: 0.9em;" title="Shared with user {{ collaborator.username }}"><i class="fa fa-user"></i>{{ collaborator.username }}</span>
+                        {% endfor %}
                     {% endif %}
-
                 </div>
-
-            </div>
-            <h3 style="margin-top:10px;">{{ sketch.name }}</h3>
-            <p style="white-space: pre-wrap;word-wrap: break-word; max-width: 800px;">{{ sketch.description }}</p>
-
-            {% if sketch.collaborators or sketch.groups %}
-                <br>
-                <span style="margin-right:10px;">Shared with</span>
-                {% for group in sketch.groups %}
-                    <span class="label label-default" style="font-size: 0.9em;" title="Shared with group {{ group.name }}"><i class="fa fa-group"></i>{{ group.name }}</span>
-                {% endfor %}
-                {% for collaborator in sketch.collaborators %}
-                    <span class="label label-default" style="font-size: 0.9em;" title="Shared with user {{ collaborator.username }}"><i class="fa fa-user"></i>{{ collaborator.username }}</span>
-                {% endfor %}
-            {% endif %}
-        </div>
             </div>
         </div>
 
         {% if not sketch.timelines %}
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="text-center" style="padding:100px;">
-                        <h3 style="color:#777"><i class="fa fa-meh-o"></i> No data to analyze</h3>
-                        <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
-                        <br>
-                        <a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">or add an existing timeline</a>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="text-center" style="padding:100px;">
+                            <h3 style="color:#777"><i class="fa fa-meh-o"></i> No data to analyze</h3>
+                            <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
+                            <br>
+                            <a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">or add an existing timeline</a>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
         {% endif %}
 
         {% if sketch.timelines %}
@@ -290,10 +289,9 @@
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="card" style="border-top: 2px solid #428bca;">
+                    <div class="card" style="border-top: 2px solid #428bca; min-height: 132px">
                         <div class="text-center">
-                            <h1 ts-count-events sketch-id="{{ sketch.id }}"></h1>
-                            Events
+                            <ts-count-events sketch-id="{{ sketch.id }}"></ts-count-events>
                         </div>
                     </div>
                 </div>

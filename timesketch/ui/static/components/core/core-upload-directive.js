@@ -9,7 +9,8 @@
             restrict: 'E',
             templateUrl: '/static/components/core/core-upload.html',
             scope: {
-                sketchId: '=?'
+                sketchId: '=?',
+                btnText: '='
             },
             controller: function($scope) {
                 $scope.uploadForm = {};

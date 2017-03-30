@@ -106,7 +106,7 @@ limitations under the License.
                 scope.$watch("filter.indices", function(value) {
                     if (scope.filter.indices.indexOf(index_name) == -1) {
                         scope.colorbox = {'background-color': '#E9E9E9'};
-                        scope.timeline_picker_title = {'color': '#D1D1D1', 'text-decoration': 'line-through'};
+                        scope.timeline_picker_title = {'color': '#D1D1D1'};
                         scope.checkboxModel.active = false;
                     } else {
                         scope.colorbox = {'background-color': "#" + scope.timeline.color};

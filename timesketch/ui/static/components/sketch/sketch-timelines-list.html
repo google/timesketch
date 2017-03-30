@@ -20,11 +20,11 @@
             <div class="color-box" style="background:#{{ timeline.color }};"></div>
         </div>
         <div class="title">
-            <a style="font-weight: bold;" href="/sketch/{{ sketchId }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
+            <a style="text-decoration: none; font-weight: 500;font-size: 1.1em;" href="/sketch/{{ sketchId }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
         </div>
     </li>
 </ul>
 
 <div ng-if="!timelines.length">
-    There are no timelines added yet.
+    No timelines
 </div>

@@ -25,8 +25,7 @@
             restrict: 'E',
             templateUrl: '/static/components/story/story-list.html',
             scope: {
-                sketchId: '=',
-                showCreateButton: '='
+                sketchId: '='
             },
             controller: function($scope) {
                 timesketchApi.getStories($scope.sketchId).success(function(data) {
@@ -38,7 +37,21 @@
                         $scope.stories.push(story)
                     }
                 });
+            }
+        }
+    }]);
 
+    module.directive('tsCreateStory', ['timesketchApi', function(timesketchApi) {
+        /**
+         * Create story.
+         */
+        return {
+            restrict: 'E',
+            template: '<button class="btn btn-success" ng-click="createStory()"><i class="fa fa-plus"></i> Write a story</button>',
+            scope: {
+                sketchId: '='
+            },
+            controller: function($scope) {
                 $scope.createStory = function () {
                     timesketchApi.createStory($scope.sketchId).success(function(data) {
                         var storyId = data.objects[0].id;
