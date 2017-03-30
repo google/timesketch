@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block right_nav %}
-    {% if sketch.has_permission(current_user, 'write') and sketch.timelines %}
+    {% if sketch.has_permission(current_user, 'write') and sketch.timelines and upload_enabled %}
         <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
     {% endif %}
 {% endblock %}

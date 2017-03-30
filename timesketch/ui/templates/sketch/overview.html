@@ -12,7 +12,7 @@
 
 {% block right_nav %}
     <div class="btn-group">
-        {% if sketch.has_permission(current_user, 'write') and sketch.timelines %}
+        {% if sketch.has_permission(current_user, 'write') and sketch.timelines  and upload_enabled %}
             <ts-core-upload class="pull-right" sketch-id="{{ sketch.id }}"></ts-core-upload>
         {% endif %}
     </div>
