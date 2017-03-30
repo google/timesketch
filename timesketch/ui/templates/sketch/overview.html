@@ -246,9 +246,6 @@
                         </div>
                     </div>
                     <h3 style="margin-top:10px;">{{ sketch.name }}</h3>
-                    {% if not sketch.description %}
-                        <a data-toggle="modal" data-target="#edit-sketch-modal" style="cursor: pointer;">+ Add description</a>
-                    {% endif %}
                     <p style="white-space: pre-wrap;word-wrap: break-word; max-width: 800px;">{{ sketch.description }}</p>
 
                     {% if sketch.collaborators or sketch.groups %}
