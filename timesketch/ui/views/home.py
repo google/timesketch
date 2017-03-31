@@ -17,14 +17,12 @@ from flask import Blueprint
 from flask import current_app
 from flask import render_template
 from flask import redirect
-from flask import request
 from flask import url_for
 from flask_login import current_user
 from flask_login import login_required
 from sqlalchemy import not_
 
 from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import View
 from timesketch.lib.forms import HiddenNameDescriptionForm
 from timesketch.models import db_session
 

@@ -16,6 +16,7 @@ limitations under the License.
 
 (function() {
     var module = angular.module('timesketch.sketch', [
+        'timesketch.sketch.timelines.directive',
         'timesketch.sketch.views.directive',
         'timesketch.sketch.count.events.directive'
     ]);

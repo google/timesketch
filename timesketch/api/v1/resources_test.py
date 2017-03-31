@@ -165,8 +165,6 @@ class ExploreResourceTest(BaseTest):
                 u'test': u'FFFFFF'
             },
             u'es_total_count': 1,
-            u'es_total_count_unfiltered': 0,
-            u'histogram': None,
             u'es_time': 5
         },
         u'objects': [

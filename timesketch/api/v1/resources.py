@@ -62,6 +62,7 @@ from timesketch.lib.forms import EventAnnotationForm
 from timesketch.lib.forms import ExploreForm
 from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
+from timesketch.lib.utils import get_validated_indices
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchIndex
@@ -604,9 +605,9 @@ class ExploreResource(ResourceMixin, Resource):
             if u'_all' in indices:
                 indices = sketch_indices
 
-            # Make sure that the indices in the filter are part of the sketch
-            if set(indices) - set(sketch_indices):
-                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            # Make sure that the indices in the filter are part of the sketch.
+            # This will also remove any deleted timeline from the search result.
+            indices = get_validated_indices(indices, sketch_indices)
 
             # Make sure we have a query string or star filter
             if not (form.query.data,
@@ -652,26 +653,11 @@ class ExploreResource(ResourceMixin, Resource):
                 tl_colors[timeline.searchindex.index_name] = timeline.color
                 tl_names[timeline.searchindex.index_name] = timeline.name
 
-            try:
-                buckets = result[
-                    u'aggregations'][
-                        u'field_aggregation'][
-                            u'buckets']
-            except KeyError:
-                buckets = None
-
-            es_total_count_unfiltered = 0
-            if buckets:
-                for bucket in buckets:
-                    es_total_count_unfiltered += bucket[u'doc_count']
-
             meta = {
                 u'es_time': result[u'took'],
                 u'es_total_count': result[u'hits'][u'total'],
-                u'es_total_count_unfiltered': es_total_count_unfiltered,
                 u'timeline_colors': tl_colors,
                 u'timeline_names': tl_names,
-                u'histogram': buckets
             }
             schema = {
                 u'meta': meta,
@@ -704,9 +690,13 @@ class AggregationResource(ResourceMixin, Resource):
                 t.searchindex.index_name for t in sketch.timelines]
             indices = query_filter.get(u'indices', sketch_indices)
 
-            # Make sure that the indices in the filter are part of the sketch
-            if set(indices) - set(sketch_indices):
-                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            # If _all in indices then execute the query on all indices
+            if u'_all' in indices:
+                indices = sketch_indices
+
+            # Make sure that the indices in the filter are part of the sketch.
+            # This will also remove any deleted timeline from the search result.
+            indices = get_validated_indices(indices, sketch_indices)
 
             # Make sure we have a query string or star filter
             if not (form.query.data,
@@ -897,9 +887,9 @@ class UploadFileResource(ResourceMixin, Resource):
 
             sketch_id = form.sketch_id.data
             file_storage = form.file.data
-            timeline_name = form.name.data
-            _, _extension = os.path.splitext(file_storage.filename)
+            _filename, _extension = os.path.splitext(file_storage.filename)
             file_extension = _extension.lstrip(u'.')
+            timeline_name = form.name.data or _filename.rstrip(u'.')
 
             sketch = None
             if sketch_id:
@@ -1139,3 +1129,40 @@ class CountEventsResource(ResourceMixin, Resource):
         meta = dict(count=count)
         schema = dict(meta=meta, objects=[])
         return jsonify(schema)
+
+
+class TimelineListResource(ResourceMixin, Resource):
+    """Resource to get all timelines for sketch."""
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            View in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        return self.to_json(sketch.timelines)
+
+
+class TimelineResource(ResourceMixin, Resource):
+    @login_required
+    def delete(self, sketch_id, timeline_id):
+        """Handles DELETE request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            timeline_id: Integer primary key for a timeline database model
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        timeline = Timeline.query.get(timeline_id)
+
+        # Check that this timeline belongs to the sketch
+        if timeline.sketch_id != sketch.id:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+
+        if not sketch.has_permission(user=current_user, permission=u'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
+
+        sketch.timelines.remove(timeline)
+        db_session.commit()
+        return HTTP_STATUS_CODE_OK

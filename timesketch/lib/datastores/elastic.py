@@ -192,28 +192,9 @@ class ElasticsearchDataStore(datastore.DataStore):
             del query_dsl[u'aggregations']
 
         # Add any pre defined aggregations
-        data_type_aggregation = self._build_field_aggregator(u'data_type')
         if aggregations:
             if isinstance(aggregations, dict):
-                if query_filter.get(u'exclude', None):
-                    aggregations = {
-                        u'exclude': {
-                            u'filter': {
-                                u'not': {
-                                    u'terms': {
-                                        u'field_aggregation':
-                                            query_filter[u'exclude']
-                                    }
-                                }
-                            },
-                            u'aggregations': aggregations
-                        },
-                        u'data_type':
-                            data_type_aggregation[u'field_aggregation']
-                    }
                 query_dsl[u'aggregations'] = aggregations
-        else:
-            query_dsl[u'aggregations'] = data_type_aggregation
 
         return query_dsl
 
@@ -252,7 +233,10 @@ class ElasticsearchDataStore(datastore.DataStore):
 
         # Check if we have specific events to fetch and get indices.
         if query_filter.get(u'events', None):
-            indices = {event[u'index'] for event in query_filter[u'events']}
+            indices = {
+                event[u'index'] for event in query_filter[u'events']
+                if event[u'index'] in indices
+            }
 
         query_dsl = self.build_query(
             sketch_id, query_string, query_filter, query_dsl, aggregations)
