@@ -47,10 +47,8 @@
                         if (!currentQueryDsl) {
                             currentQueryDsl = {
                                 "query": {
-                                    "filtered": {
-                                        "query": {
-                                            "query_string": {
-                                                "query": scope.query}}}},
+                                    "query_string": {
+                                        "query": scope.query}},
                                 "sort": {
                                     "datetime": "asc"}
                             };

@@ -618,7 +618,7 @@ class ExploreResource(ResourceMixin, Resource):
 
             result = self.datastore.search(
                 sketch_id, form.query.data, query_filter, query_dsl, indices,
-                aggregations=None, return_results=True)
+                aggregations=None)
 
             # Get labels for each event that matches the sketch.
             # Remove all other labels.
@@ -939,9 +939,14 @@ class UploadFileResource(ResourceMixin, Resource):
             return self.to_json(
                 searchindex, status_code=HTTP_STATUS_CODE_CREATED)
         else:
-            raise ApiHTTPError(
-                message=form.errors[u'file'][0],
-                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+            if u'file' in form.errors:
+                raise ApiHTTPError(
+                    message=form.errors[u'file'][0],
+                    status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+            elif not UPLOAD_ENABLED:
+                raise ApiHTTPError(
+                   message="UPLOAD_ENABLED set to False. Check configuration.",
+                   status_code=HTTP_STATUS_CODE_BAD_REQUEST)
 
 
 class TaskResource(ResourceMixin, Resource):

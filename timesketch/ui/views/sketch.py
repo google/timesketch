@@ -266,7 +266,7 @@ def export(sketch_id):
 
     result = datastore.search(
         sketch_id, view.query_string, query_filter, query_dsl, indices,
-        aggregations=None, return_results=True)
+        aggregations=None)
 
     csv_out = StringIO()
     csv_writer = csv.DictWriter(
