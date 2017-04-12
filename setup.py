@@ -63,5 +63,6 @@ setup(
         u'redis',
         u'blinker',
         u'elasticsearch',
+        u'python-dateutil',
     ])
 )
