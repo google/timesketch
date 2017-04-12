@@ -201,7 +201,7 @@ class ElasticsearchDataStore(datastore.DataStore):
     def search(
             self, sketch_id, query_string, query_filter, query_dsl, indices,
             aggregations=None, return_results=True, return_fields=None,
-            scroll=None):
+            enable_scroll=False):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -215,7 +215,7 @@ class ElasticsearchDataStore(datastore.DataStore):
             aggregations: Dict of Elasticsearch aggregations
             return_results: Boolean indicating if results should be returned
             return_fields: List of fields to return
-            scroll: If Elasticsearch scroll API should be used
+            enable_scroll: If Elasticsearch scroll API should be used
 
         Returns:
             Set of event documents in JSON format
@@ -224,10 +224,9 @@ class ElasticsearchDataStore(datastore.DataStore):
         DEFAULT_LIMIT = 500  # Maximum events to return
         LIMIT_RESULTS = query_filter.get(u'limit', DEFAULT_LIMIT)
 
-        # Default timeout for the scroll API
-        default_scroll_timeout = u'1m'  # 1 minute
-        if scroll:
-            scroll = default_scroll_timeout
+        scroll_timeout = None
+        if enable_scroll:
+            scroll_timeout = u'1m'  # Default to 1 minute scroll timeout
 
         # Use default fields if none is provided
         default_fields = [
@@ -262,7 +261,7 @@ class ElasticsearchDataStore(datastore.DataStore):
         return self.client.search(
             body=query_dsl, index=list(indices), size=LIMIT_RESULTS,
             search_type=search_type, _source_include=return_fields,
-            scroll=scroll)
+            scroll=scroll_timeout)
 
     def get_event(self, searchindex_id, event_id):
         """Get one event from the datastore.
