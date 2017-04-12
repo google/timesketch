@@ -200,7 +200,8 @@ class ElasticsearchDataStore(datastore.DataStore):
 
     def search(
             self, sketch_id, query_string, query_filter, query_dsl, indices,
-            aggregations=None, return_results=True):
+            aggregations=None, return_results=True, return_fields=None,
+            enable_scroll=False):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -213,6 +214,8 @@ class ElasticsearchDataStore(datastore.DataStore):
             indices: List of indices to query
             aggregations: Dict of Elasticsearch aggregations
             return_results: Boolean indicating if results should be returned
+            return_fields: List of fields to return
+            enable_scroll: If Elasticsearch scroll API should be used
 
         Returns:
             Set of event documents in JSON format
@@ -220,6 +223,18 @@ class ElasticsearchDataStore(datastore.DataStore):
         # Limit the number of returned documents.
         DEFAULT_LIMIT = 500  # Maximum events to return
         LIMIT_RESULTS = query_filter.get(u'limit', DEFAULT_LIMIT)
+
+        scroll_timeout = None
+        if enable_scroll:
+            scroll_timeout = u'1m'  # Default to 1 minute scroll timeout
+
+        # Use default fields if none is provided
+        default_fields = [
+            u'datetime', u'timestamp', u'message', u'timestamp_desc',
+            u'timesketch_label', u'tag'
+        ]
+        if not return_fields:
+            return_fields = default_fields
 
         # Exit early if we have no indices to query
         if not indices:
@@ -245,9 +260,8 @@ class ElasticsearchDataStore(datastore.DataStore):
         # pylint: disable=unexpected-keyword-arg
         return self.client.search(
             body=query_dsl, index=list(indices), size=LIMIT_RESULTS,
-            search_type=search_type, _source_include=[
-                u'datetime', u'timestamp', u'message', u'timestamp_desc',
-                u'timesketch_label', u'tag'])
+            search_type=search_type, _source_include=return_fields,
+            scroll=scroll_timeout)
 
     def get_event(self, searchindex_id, event_id):
         """Get one event from the datastore.
