@@ -46,7 +46,7 @@ def read_and_validate_csv(path):
 
     with open(path, u'rb') as fh:
 
-        reader = csv.DictReader((x.replace('\x00', '') for x in fh))
+        reader = csv.DictReader(fh)
         csv_header = reader.fieldnames
         missing_fields = []
         # Validate the CSV header
@@ -59,8 +59,8 @@ def read_and_validate_csv(path):
         for row in reader:
             if u'timestamp' not in csv_header and u'datetime' in csv_header:
                 try:
-                    parsed = parser.parse(row[u'datetime'])
-                    row[u'timestamp'] = int(time.mktime(parsed.timetuple()))
+                    parsed_datetime = parser.parse(row[u'datetime'])
+                    row[u'timestamp'] = int(time.mktime(parsed_datetime.timetuple()))
                 except ValueError:
                     continue
 
