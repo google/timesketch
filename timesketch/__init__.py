@@ -27,6 +27,7 @@ from timesketch.api.v1.resources import AggregationResource
 from timesketch.api.v1.resources import ExploreResource
 from timesketch.api.v1.resources import EventResource
 from timesketch.api.v1.resources import EventAnnotationResource
+from timesketch.api.v1.resources import GraphResource
 from timesketch.api.v1.resources import SketchResource
 from timesketch.api.v1.resources import SketchListResource
 from timesketch.api.v1.resources import ViewResource
@@ -136,6 +137,9 @@ def create_app(config=None):
     api_v1.add_resource(
         TimelineResource,
         u'/sketches/<int:sketch_id>/timelines/<int:timeline_id>/')
+    api_v1.add_resource(
+        GraphResource,
+        u'/sketches/<int:sketch_id>/explore/graph/')
 
     # Register error handlers
     # pylint: disable=unused-variable
