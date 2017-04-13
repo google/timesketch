@@ -1,5 +1,5 @@
-<div ng-click="foobar = !foobar" contenteditable="false" style="cursor:pointer; position:absolute; margin-left:-60px;margin-top:-5px;background: #fff;border:1px solid #d1d1d1; width:40px;height:40px;text-align: center;border-radius: 100%;color:#666;"><span style="font-size:1.7em;">+</span></div>
-    <select ng-show="foobar" class="select select-view" ng-model="selectedView.view" ng-options="view.name for view in sketch.views">
+<div ng-click="showDropdown = !showDropdown" contenteditable="false" style="cursor:pointer; position:absolute; margin-left:-60px;margin-top:-5px; padding-left:2px; background: #fff;border:1px solid #d1d1d1; width:40px;height:40px;text-align: center;border-radius: 100%;color:#666;"><span style="font-size:1.7em;">+</span></div>
+    <select ng-show="showDropdown" class="select select-view" ng-model="selectedView.view" ng-options="view.name for view in sketch.views">
         <option value="">Choose View</option>
     </select>
 </div>

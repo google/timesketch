@@ -68,6 +68,7 @@ def overview(sketch_id):
     permission_form = TogglePublic()
     status_form = StatusForm()
     trash_form = TrashForm()
+    upload_enabled = current_app.config[u'UPLOAD_ENABLED']
 
     # Dynamically set the forms select options.
     # pylint: disable=singleton-comparison
@@ -157,7 +158,7 @@ def overview(sketch_id):
     return render_template(
         u'sketch/overview.html', sketch=sketch, sketch_form=sketch_form,
         permission_form=permission_form, status_form=status_form,
-        trash_form=trash_form)
+        trash_form=trash_form, upload_enabled=upload_enabled)
 
 
 @sketch_views.route(
@@ -255,6 +256,10 @@ def export(sketch_id):
     query_dsl = json.loads(view.query_dsl)
     indices = query_filter.get(u'indices', [])
 
+    # Export more than the 500 first results.
+    max_events_to_fetch = 10000
+    query_filter[u'limit'] = max_events_to_fetch
+
     datastore = ElasticsearchDataStore(
         host=current_app.config[u'ELASTIC_HOST'],
         port=current_app.config[u'ELASTIC_PORT'])
@@ -292,6 +297,7 @@ def timelines(sketch_id):
         current_user).order_by(
             desc(SearchIndex.created_at)).filter(
                 not_(SearchIndex.id.in_(searchindices_in_sketch)))
+    upload_enabled = current_app.config[u'UPLOAD_ENABLED']
 
     # Setup the form
     form = AddTimelineForm()
@@ -314,7 +320,7 @@ def timelines(sketch_id):
 
     return render_template(
         u'sketch/timelines.html', sketch=sketch, timelines=indices.all(),
-        form=form)
+        form=form, upload_enabled=upload_enabled)
 
 
 @sketch_views.route(

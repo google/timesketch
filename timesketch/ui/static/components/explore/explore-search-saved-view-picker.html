@@ -1,3 +1,3 @@
-<select class="select select-view" ng-model="selectedView.view" ng-options="view.name for view in sketch.views">
+<select class="select select-view" ng-model="selectedView.view" ng-options="view.name for view in sketch.views | orderBy:'name'">
     <option value="">Saved views</option>
 </select>

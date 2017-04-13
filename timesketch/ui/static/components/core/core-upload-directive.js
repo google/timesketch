@@ -9,7 +9,8 @@
             restrict: 'E',
             templateUrl: '/static/components/core/core-upload.html',
             scope: {
-                sketchId: '=?'
+                sketchId: '=?',
+                btnText: '='
             },
             controller: function($scope) {
                 $scope.uploadForm = {};
@@ -22,12 +23,13 @@
                     $scope.sketchId = 0;
                 }
                 $scope.uploadFile = function() {
-                    if ($scope.uploadForm.name) {
-                        timesketchApi.uploadFile($scope.uploadForm.file, $scope.uploadForm.name, $scope.sketchId).success(function () {
-                            $scope.uploadForm = {};
-                            $window.location.reload();
-                        });
+                    if (!$scope.uploadForm.name) {
+                        $scope.uploadForm.name = "";
                     }
+                    timesketchApi.uploadFile($scope.uploadForm.file, $scope.uploadForm.name, $scope.sketchId).success(function () {
+                        $scope.uploadForm = {};
+                        $window.location.reload();
+                    });
                 };
             }
         };

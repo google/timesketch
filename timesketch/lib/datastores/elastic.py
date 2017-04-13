@@ -144,22 +144,22 @@ class ElasticsearchDataStore(datastore.DataStore):
             if not query_dsl:
                 query_dsl = {
                     u'query': {
-			u'bool': {
-			    u'must': [{
+                        u'bool': {
+                            u'must': [{
                                 u'query_string': {
                                     u'query': query_string
                                 }
-			    }]
+                            }]
                         }
                     }
-		}
+                }
             if query_filter.get(u'time_start', None):
                 # TODO(jberggren): Add support for multiple time ranges.
                 query_dsl[u'query'][u'bool'][u'filter'] = {
                     u'bool': {
-		        u'should': [
+                        u'should': [
                             {
-		                u'range': {
+                                u'range': {
                                     u'datetime': {
                                         u'gte': query_filter[u'time_start'],
                                         u'lte': query_filter[u'time_end']
@@ -172,7 +172,7 @@ class ElasticsearchDataStore(datastore.DataStore):
             if query_filter.get(u'exclude', None):
                 query_dsl[u'post_filter'] = {
                     u'bool': {
-			u'must_not': {
+                        u'must_not': {
                             u'terms': {
                                 u'data_type': query_filter[u'exclude']
                             }
@@ -195,22 +195,19 @@ class ElasticsearchDataStore(datastore.DataStore):
             del query_dsl[u'aggregations']
 
         # Add any pre defined aggregations
-        data_type_aggregation = self._build_field_aggregator(u'data_type')
-
         if aggregations:
-	    # post_filter happens after aggregation so we need to move the
+            # post_filter happens after aggregation so we need to move the
             # filter to the query instead.
-	    if query_dsl.get(u'post_filter', None):
-	        query_dsl[u'query'][u'bool'][u'filter'] = query_dsl[u'post_filter']
-	        query_dsl.pop("post_filter", None)
+            if query_dsl.get(u'post_filter', None):
+                query_dsl[u'query'][u'bool'][u'filter'] = query_dsl[u'post_filter']
+                query_dsl.pop(u'post_filter', None)
             query_dsl[u'aggregations'] = aggregations
-        else:
-            query_dsl[u'aggregations'] = data_type_aggregation
         return query_dsl
 
     def search(
             self, sketch_id, query_string, query_filter, query_dsl, indices,
-            aggregations=None, return_results=True, return_attributes=None):
+            aggregations=None, return_results=True, return_fields=None,
+            enable_scroll=False):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -223,6 +220,8 @@ class ElasticsearchDataStore(datastore.DataStore):
             indices: List of indices to query
             aggregations: Dict of Elasticsearch aggregations
             return_results: Boolean indicating if results should be returned
+            return_fields: List of fields to return
+            enable_scroll: If Elasticsearch scroll API should be used
 
         Returns:
             Set of event documents in JSON format
@@ -231,33 +230,44 @@ class ElasticsearchDataStore(datastore.DataStore):
         DEFAULT_LIMIT = 500  # Maximum events to return
         LIMIT_RESULTS = query_filter.get(u'limit', DEFAULT_LIMIT)
 
+        scroll_timeout = None
+        if enable_scroll:
+            scroll_timeout = u'1m'  # Default to 1 minute scroll timeout
+
+        # Use default fields if none is provided
+        default_fields = [
+            u'datetime', u'timestamp', u'message', u'timestamp_desc',
+            u'timesketch_label', u'tag'
+        ]
+        if not return_fields:
+            return_fields = default_fields
+
         # Exit early if we have no indices to query
         if not indices:
             return {u'hits': {u'hits': [], u'total': 0}, u'took': 0}
 
         # Check if we have specific events to fetch and get indices.
         if query_filter.get(u'events', None):
-            indices = {event[u'index'] for event in query_filter[u'events']}
+            indices = {
+                event[u'index'] for event in query_filter[u'events']
+                if event[u'index'] in indices
+            }
 
         query_dsl = self.build_query(
             sketch_id, query_string, query_filter, query_dsl, aggregations)
 
-
         # Default search type for elasticsearch is query_then_fetch.
         search_type = u'query_then_fetch'
         if not return_results:
-	    LIMIT_RESULTS = 0
+            search_type = u'count'
 
         # Suppress the lint error because elasticsearch-py adds parameters
         # to the function with a decorator and this makes pylint sad.
         # pylint: disable=unexpected-keyword-arg
-	if not return_attributes:
-	    return_attributes = [
-                u'datetime', u'timestamp', u'message', u'timestamp_desc',
-                u'timesketch_label', u'tag']
         return self.client.search(
             body=query_dsl, index=list(indices), size=LIMIT_RESULTS,
-            search_type=search_type, _source_include=return_attributes)
+            search_type=search_type, _source_include=return_fields,
+            scroll=scroll_timeout)
 
     def get_event(self, searchindex_id, event_id):
         """Get one event from the datastore.
@@ -324,7 +334,7 @@ class ElasticsearchDataStore(datastore.DataStore):
             script_name = u'toggle_label'
         script = {
             u'script': {
-		u'lang': u'groovy',
+                u'lang': u'groovy',
                 u'file': script_name,
                 u'params': {
                     u'timesketch_label': {

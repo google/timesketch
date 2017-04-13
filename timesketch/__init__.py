@@ -39,6 +39,8 @@ from timesketch.api.v1.resources import StoryListResource
 from timesketch.api.v1.resources import StoryResource
 from timesketch.api.v1.resources import QueryResource
 from timesketch.api.v1.resources import CountEventsResource
+from timesketch.api.v1.resources import TimelineResource
+from timesketch.api.v1.resources import TimelineListResource
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.models import configure_engine
 from timesketch.models import init_db
@@ -129,6 +131,11 @@ def create_app(config=None):
         QueryResource, u'/sketches/<int:sketch_id>/explore/query/')
     api_v1.add_resource(
         CountEventsResource, u'/sketches/<int:sketch_id>/count/')
+    api_v1.add_resource(
+        TimelineListResource, u'/sketches/<int:sketch_id>/timelines/')
+    api_v1.add_resource(
+        TimelineResource,
+        u'/sketches/<int:sketch_id>/timelines/<int:timeline_id>/')
 
     # Register error handlers
     # pylint: disable=unused-variable

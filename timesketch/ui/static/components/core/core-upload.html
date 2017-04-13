@@ -1,15 +1,15 @@
 <form name="uploadform" class="form-inline" ng-submit="uploadFile()">
     <span class="form-group">
-        <span class="btn btn-success btn-file">
+        <span class="btn btn-file" ng-class="{'btn-default': uploadForm.file, 'btn-success': !uploadForm.file}">
             <i class="fa fa-cloud-upload" style="margin-right: 5px;"></i>
-            <span ng-hide="uploadForm.file">Import timeline</span>
+            <span ng-hide="uploadForm.file">{{ btnText||'Import timeline' }}</span>
             <span ng-show="uploadForm.file">{{ uploadForm.file.name }}</span>
             <input type="file" class="form-control" ts-core-file-model="uploadForm.file" />
         </span>
     </span>
     <span ng-show="uploadForm.file" class="form-group">
-        <input class="form-control" placeholder="New timeline name" ng-model="uploadForm.name" required autofocus/>
+        <input class="form-control" placeholder="(Optional) Timeline name" ng-model="uploadForm.name"/>
     </span>
-    <input type="submit" ng-show="uploadForm.file" class="btn btn-default" value="Upload"/>
-    <input type="reset" ng-show="uploadForm.file" class="btn btn-danger" value="Cancel" ng-click="clearForm()"/>
+    <input type="submit" ng-show="uploadForm.file" class="btn btn-success" value="Upload"/>
+    <input type="reset" ng-show="uploadForm.file" class="btn btn-default" value="Cancel" ng-click="clearForm()"/>
 </form>

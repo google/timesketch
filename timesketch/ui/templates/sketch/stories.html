@@ -10,12 +10,17 @@
     </ul>
 {% endblock %}
 
+{% block right_nav %}
+    {% if sketch.timelines %}
+        <ts-create-story sketch-id="{{ sketch.id }}"></ts-create-story>
+    {% endif %}
+{% endblock %}
+
 {% block main %}
 
     <div class="container">
         <div class="row">
-            <div class="col-md-10">
-
+            <div class="col-md-12">
                 {% if not sketch.timelines %}
                     <div class="card">
                         <div class="text-center" style="padding:100px;">
@@ -31,6 +36,7 @@
                             <ts-story sketch-id="{{ sketch.id }}" story-id="{{ story.id }}"></ts-story>
                         {% else %}
                             <h4 class="pull-left">Stories</h4>
+                            <br>
                             <ts-story-list sketch-id="{{ sketch.id }}" show-create-button="true"></ts-story-list>
                         {% endif %}
                     </div>

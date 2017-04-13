@@ -1,5 +1,5 @@
 <div class="card" ng-if="view">
-    <h4><span style="font-weight: normal">View:</span> {{ view.name }}</h4>
+    <h4>{{ view.name }}</h4>
     You are exploring in the context of a saved view.
     <br>
     Click <a href="/sketch/{{ sketchId }}/explore">here</a> to go back to explore view.
@@ -77,7 +77,7 @@
 
         <div class="btn-group" style="margin-left:10px;">
             <button class="btn btn-default" ng-click="filter.order = { 'asc': 'desc', 'desc': 'asc'}[filter.order];applyOrder()"><i ng-class="{'asc': 'fa fa-sort-asc', 'desc': 'fa fa-sort-desc'}[filter.order]"></i> Sort</button>
-            <a class="btn btn-default" href="/sketch/{{ sketchId }}/explore/export/" download="export.csv"><i class="fa fa-cloud-download"></i> Export</a>
+            <a class="btn btn-default" ng-disabled="meta.es_total_count > 10000" href="/sketch/{{ sketchId }}/explore/export/" download="export.csv"><i class="fa fa-cloud-download"></i> Export</a>
             <button class="btn btn-default" ng-click="toggleAll()"><i class="fa fa-check"></i> Toggle all</button>
             <button class="btn btn-default" data-toggle="modal" ng-hide="!anySelected" data-target="#save-event-view-modal"><i class="fa fa-save"></i> Save selection</button>
             <button class="btn btn-default" ng-click="addStar()" ng-hide="!anySelected"><i class="fa fa-star icon-yellow"></i> Add star</button>

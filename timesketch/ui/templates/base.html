@@ -34,6 +34,7 @@ limitations under the License.
     <script type="text/javascript" language="javascript" src="/static/third_party/medium-editor/medium-editor.js"></script>
     <script type="text/javascript" language="javascript" src="/static/third_party/chartjs/Chart.min.js"></script>
     <script type="text/javascript" language="javascript" src="/static/third_party/ace/ace-builds/src-min/ace.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/third_party/numeral-js/numeral.min.js"></script>
     <script type="text/javascript" language="javascript" src="/static/app.js"></script>
     <script type="text/javascript" language="javascript" src="/static/components/api/api.js"></script>
     <script type="text/javascript" language="javascript" src="/static/components/api/api-service.js"></script>
@@ -50,6 +51,7 @@ limitations under the License.
     <script type="text/javascript" language="javascript" src="/static/components/core/core-edit-sketch-directive.js"></script>
     <script type="text/javascript" language="javascript" src="/static/components/sketch/sketch.js"></script>
     <script type="text/javascript" language="javascript" src="/static/components/sketch/sketch-views-directive.js"></script>
+    <script type="text/javascript" language="javascript" src="/static/components/sketch/sketch-timelines-directive.js"></script>
     <script type="text/javascript" language="javascript" src="/static/components/sketch/sketch-count-events-directive.js"></script>
     <script type="text/javascript" language="javascript" src="/static/components/story/story.js"></script>
     <script type="text/javascript" language="javascript" src="/static/components/story/story-directive.js"></script>
@@ -79,7 +81,12 @@ limitations under the License.
     <div id="subheader">
         <div id="navigation">
             <div class="col-md-12">
-                {% block navigation %}{% endblock %}
+                <div class="pull-left">
+                    {% block navigation %}{% endblock %}
+                </div>
+                <div class="right-nav pull-right">
+                    {% block right_nav %}{% endblock %}
+                </div>
             </div>
         </div>
     </div>
