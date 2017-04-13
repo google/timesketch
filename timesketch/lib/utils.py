@@ -16,7 +16,9 @@
 import colorsys
 import csv
 import random
+import time
 
+from dateutil import parser
 
 def random_color():
     """Generates a random color.
@@ -40,9 +42,10 @@ def read_and_validate_csv(path):
     """
     # Columns that must be present in the CSV file
     mandatory_fields = [
-        u'message', u'timestamp', u'datetime', u'timestamp_desc']
+        u'message', u'datetime', u'timestamp_desc']
 
     with open(path, u'rb') as fh:
+
         reader = csv.DictReader(fh)
         csv_header = reader.fieldnames
         missing_fields = []
@@ -53,9 +56,16 @@ def read_and_validate_csv(path):
         if missing_fields:
             raise RuntimeError(
                 u'Missing fields in CSV header: {0:s}'.format(missing_fields))
-
         for row in reader:
+            if u'timestamp' not in csv_header and u'datetime' in csv_header:
+                try:
+                    parsed_datetime = parser.parse(row[u'datetime'])
+                    row[u'timestamp'] = int(time.mktime(parsed_datetime.timetuple()))
+                except ValueError:
+                    continue
+
             yield row
+
 
 
 def get_validated_indices(indices, sketch_indices):
