@@ -20,6 +20,7 @@ import time
 
 from dateutil import parser
 
+
 def random_color():
     """Generates a random color.
 
@@ -44,7 +45,7 @@ def read_and_validate_csv(path):
     mandatory_fields = [
         u'message', u'datetime', u'timestamp_desc']
 
-    with open(path, u'rb') as fh:
+    with open(path, 'rb') as fh:
 
         reader = csv.DictReader(fh)
         csv_header = reader.fieldnames
@@ -60,12 +61,12 @@ def read_and_validate_csv(path):
             if u'timestamp' not in csv_header and u'datetime' in csv_header:
                 try:
                     parsed_datetime = parser.parse(row[u'datetime'])
-                    row[u'timestamp'] = int(time.mktime(parsed_datetime.timetuple()))
+                    row[u'timestamp'] = int(
+                        time.mktime(parsed_datetime.timetuple()))
                 except ValueError:
                     continue
 
             yield row
-
 
 
 def get_validated_indices(indices, sketch_indices):

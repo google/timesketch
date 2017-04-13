@@ -24,16 +24,20 @@ class DataStore(object):
     @abc.abstractmethod
     def search(
             self, sketch_id, query, query_filter, query_dsl, indices,
-            aggregations, return_results):
+            aggregations, return_results, return_fields, enable_scroll):
         """Return search results.
 
         Args:
             sketch_id: Integer of sketch primary key
             query: Query string
             query_filter: Dictionary containing filters to apply
+            query_dsl: Dictionary containing Elasticsearch DSL query
             indices: List of indices to query
             aggregations: Dict of Elasticsearch aggregations
             return_results: Boolean indicating if results should be returned
+            return_fields: List of fields to be returned
+            enable_scroll: If Elasticsearch scroll API should be used
+
         """
 
     @abc.abstractmethod
