@@ -37,6 +37,7 @@ from timesketch.models import drop_all
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import SearchIndex
+from timesketch.models.sketch import Timeline
 
 
 class DropDataBaseTables(Command):
@@ -364,6 +365,49 @@ class CreateTimelineFromCsv(CreateTimelineBase):
         self.create_searchindex(timeline_name, index_name)
 
 
+class PurgeTimeline(Command):
+    """Delete timeline permanently from Timesketch and Elasticsearch."""
+    option_list = (
+        Option(u'--index', u'-i', dest=u'index_name', required=True),
+    )
+
+    def __init__(self):
+        super(PurgeTimeline, self).__init__()
+
+    def run(self, index_name):
+        """Delete timeline in both Timesketch snd Elasticsearch.
+
+        Args:
+            index_name: The name of the index in Elasticsearch
+        """
+        index_name = unicode(index_name.decode(encoding=u'utf-8'))
+        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+
+        es = ElasticsearchDataStore(
+            host=current_app.config[u'ELASTIC_HOST'],
+            port=current_app.config[u'ELASTIC_PORT'])
+
+        if not searchindex:
+            sys.stdout.write(u'No such index\n')
+            sys.exit()
+
+        timelines = [t for t in Timeline.query.filter_by(searchindex=searchindex).all()]
+        sketches = [t.sketch for t in timelines if t.sketch]
+        if sketches:
+            sys.stdout.write(u'WARNING: This timeline is in use by the following sketches:\n')
+            for sketch in sketches:
+                if not sketch.get_status.status == u'deleted':
+                    sys.stdout.write(u' * {0:s}\n'.format(sketch.name))
+                    sys.stdout.flush()
+        really_delete = prompt_bool(u'Are you sure you want to delete this timeline?')
+        if really_delete:
+            for timeline in timelines:
+                db_session.delete(timeline)
+            db_session.delete(searchindex)
+            db_session.commit()
+            es.client.indices.delete(index=index_name)
+
+
 if __name__ == '__main__':
     # Setup Flask-script command manager and register commands.
     shell_manager = Manager(create_app)
@@ -375,6 +419,7 @@ if __name__ == '__main__':
     shell_manager.add_command(u'db', MigrateCommand)
     shell_manager.add_command(u'drop_db', DropDataBaseTables())
     shell_manager.add_command(u'json2ts', CreateTimelineFromJson())
+    shell_manager.add_command(u'purge', PurgeTimeline())
     shell_manager.add_command(u'runserver', Server(
         host=u'127.0.0.1', port=5000))
     shell_manager.add_option(
