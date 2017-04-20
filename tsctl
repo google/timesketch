@@ -383,23 +383,25 @@ class PurgeTimeline(Command):
         index_name = unicode(index_name.decode(encoding=u'utf-8'))
         searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
-        es = ElasticsearchDataStore(
-            host=current_app.config[u'ELASTIC_HOST'],
-            port=current_app.config[u'ELASTIC_PORT'])
-
         if not searchindex:
             sys.stdout.write(u'No such index\n')
             sys.exit()
 
-        timelines = [t for t in Timeline.query.filter_by(searchindex=searchindex).all()]
-        sketches = [t.sketch for t in timelines if t.sketch]
+        es = ElasticsearchDataStore(
+            host=current_app.config[u'ELASTIC_HOST'],
+            port=current_app.config[u'ELASTIC_PORT'])
+
+        timelines = Timeline.query.filter_by(searchindex=searchindex).all()
+        sketches = [t.sketch for t in timelines if
+                    t.sketch and t.sketch.get_status.status != u'deleted']
         if sketches:
-            sys.stdout.write(u'WARNING: This timeline is in use by the following sketches:\n')
+            sys.stdout.write(u'WARNING: This timeline is in use by:\n')
             for sketch in sketches:
-                if not sketch.get_status.status == u'deleted':
-                    sys.stdout.write(u' * {0:s}\n'.format(sketch.name))
-                    sys.stdout.flush()
-        really_delete = prompt_bool(u'Are you sure you want to delete this timeline?')
+                sys.stdout.write(u' * {0:s}\n'.format(sketch.name))
+                sys.stdout.flush()
+        really_delete = prompt_bool(
+            u'Are you sure you want to delete this timeline?'
+        )
         if really_delete:
             for timeline in timelines:
                 db_session.delete(timeline)
