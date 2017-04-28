@@ -61,8 +61,8 @@ def read_and_validate_csv(path):
             if u'timestamp' not in csv_header and u'datetime' in csv_header:
                 try:
                     parsed_datetime = parser.parse(row[u'datetime'])
-                    row[u'timestamp'] = int(
-                        time.mktime(parsed_datetime.timetuple()))
+                    row[u'timestamp'] = str(int(
+                        time.mktime(parsed_datetime.timetuple())))
                 except ValueError:
                     continue
 
