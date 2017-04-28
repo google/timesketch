@@ -375,7 +375,7 @@ class PurgeTimeline(Command):
         super(PurgeTimeline, self).__init__()
 
     def run(self, index_name):
-        """Delete timeline in both Timesketch snd Elasticsearch.
+        """Delete timeline in both Timesketch and Elasticsearch.
 
         Args:
             index_name: The name of the index in Elasticsearch
