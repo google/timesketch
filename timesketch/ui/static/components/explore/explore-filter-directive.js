@@ -47,29 +47,29 @@ limitations under the License.
                     ctrl.search(scope.query, scope.filter, scope.queryDsl)
                 };
 
-
                 scope.clearFilter = function() {
-                  delete scope.filter.time_start;
-                  delete scope.filter.time_end;
-                  scope.showFilters = false;
-                  ctrl.search(scope.query, scope.filter, scope.queryDsl)
+                    delete scope.filter.time_start;
+                    delete scope.filter.time_end;
+                    scope.showFilters = false;
+                    ctrl.search(scope.query, scope.filter, scope.queryDsl)
                 };
 
-        scope.enableAllTimelines = function() {
-          scope.filter.indices = [];
-          for (var i = 0; i < scope.sketch.timelines.length; i++) {
-            scope.filter.indices.push(scope.sketch.timelines[i].searchindex.index_name)
-          }
-          ctrl.search(scope.query, scope.filter, scope.queryDsl)
-        };
-        
-        scope.disableAllTimelines = function() {
-            scope.filter.indices = [];
-            scope.events = [];
-            scope.meta.es_total_count = 0;
-            scope.meta.es_time = 0;
-            scope.meta.noisy = false;
-        }
+                scope.enableAllTimelines = function() {
+                    scope.filter.indices = [];
+                    for (var i = 0; i < scope.sketch.timelines.length; i++) {
+                        scope.filter.indices.push(scope.sketch.timelines[i].searchindex.index_name)
+                    }
+                    ctrl.search(scope.query, scope.filter, scope.queryDsl)
+                };
+                
+                scope.disableAllTimelines = function() {
+                    scope.filter.indices = [];
+                    scope.events = [];
+                    scope.meta.es_total_count = 0;
+                    scope.meta.es_time = 0;
+                    scope.meta.noisy = false;
+                }
+
                 scope.parseFilterDate = function(datevalue){  
                   if (datevalue != null) {
                     //Parse out 'T' date time seperator needed by ELK but not by moment.js
@@ -80,9 +80,6 @@ limitations under the License.
                     var offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s|M|Q|w)/g;
                     var match = offsetRegexp.exec(datevalue);
 
-                    console.log("offret rexexp:")
-                    console.log(match)
-                  
                     if (match != null) {
                       match[1] = moment(match[1],"YYYY-MM-DD HH:mm:ssZZ");
                       //calculate filter start and end datetimes
