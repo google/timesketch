@@ -100,55 +100,54 @@ limitations under the License.
                     }
                 }
 
-        }
-
+           }
       }
     });
 
-        module.directive('tsTimelinePickerItem', function() {
-          /**
-           * Manage the timeline items to filter on.
-           */
-          return {
-        restrict: 'E',
-        templateUrl: '/static/components/explore/explore-timeline-picker-item.html',
-        scope: {
-          timeline: '=',
-          query: '=',
-          queryDsl: '=',
-          filter: '='
-        },
-        require: '^tsSearch',
-        link: function(scope, elem, attrs, ctrl) {
-          scope.checkboxModel = {};
-          var index_name = scope.timeline.searchindex.index_name;
-          scope.toggleCheckbox = function () {
-            var index = scope.filter.indices.indexOf(index_name);
-            scope.checkboxModel.active = !scope.checkboxModel.active;
-            if (!scope.checkboxModel.active) {
-              if (index > -1) {
-            scope.filter.indices.splice(index, 1);
-              }
-            } else {
-              if (index == -1) {
-            scope.filter.indices.push(index_name);
-              }
+    module.directive('tsTimelinePickerItem', function() {
+        /**
+         * Manage the timeline items to filter on.
+         */
+        return {
+            restrict: 'E',
+            templateUrl: '/static/components/explore/explore-timeline-picker-item.html',
+            scope: {
+                timeline: '=',
+                query: '=',
+                queryDsl: '=',
+                filter: '='
+            },
+            require: '^tsSearch',
+            link: function(scope, elem, attrs, ctrl) {
+                scope.checkboxModel = {};
+                var index_name = scope.timeline.searchindex.index_name;
+                scope.toggleCheckbox = function () {
+                    var index = scope.filter.indices.indexOf(index_name);
+                    scope.checkboxModel.active = !scope.checkboxModel.active;
+                    if (!scope.checkboxModel.active) {
+                        if (index > -1) {
+                            scope.filter.indices.splice(index, 1);
+                       }
+                    } else {
+                        if (index == -1) {
+                            scope.filter.indices.push(index_name);
+                        }
+                    }
+                    ctrl.search(scope.query, scope.filter, scope.queryDsl);
+                };
+              
+                scope.$watch("filter.indices", function(value) {
+                    if (scope.filter.indices.indexOf(index_name) == -1) {
+                        scope.colorbox = {'background-color': '#E9E9E9'};
+                        scope.timeline_picker_title = {'color': '#D1D1D1', 'text-decoration': 'line-through'};
+                        scope.checkboxModel.active = false;
+                    } else {
+                        scope.colorbox = {'background-color': "#" + scope.timeline.color};
+                        scope.timeline_picker_title = {'color': '#333', 'text-decoration': 'none'};
+                        scope.checkboxModel.active = true;
+                    }
+                }, true);
             }
-            ctrl.search(scope.query, scope.filter, scope.queryDsl);
-          };
-          scope.$watch("filter.indices", function(value) {
-            if (scope.filter.indices.indexOf(index_name) == -1) {
-              scope.colorbox = {'background-color': '#E9E9E9'};
-              scope.timeline_picker_title = {'color': '#D1D1D1', 'text-decoration': 'line-through'};
-              scope.checkboxModel.active = false;
-            } else {
-              scope.colorbox = {'background-color': "#" + scope.timeline.color};
-              scope.timeline_picker_title = {'color': '#333', 'text-decoration': 'none'};
-              scope.checkboxModel.active = true;
-            }
-          }, true);
         }
-          }
-        });
-
+   });
 })();
