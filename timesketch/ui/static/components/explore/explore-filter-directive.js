@@ -42,14 +42,14 @@ limitations under the License.
             },
             require: '^tsSearch',
             link: function(scope, elem, attrs, ctrl) {
-                scope.applyFilter = function() {
-		    scope.parseFilterDate(scope.filter.time_start)
-                    ctrl.search(scope.query, scope.filter, scope.queryDsl)
-                };
+				scope.applyFilter = function() {
+				    scope.parseFilterDate(scope.filter.time_start)
+				    ctrl.search(scope.query, scope.filter, scope.queryDsl)
+				};
 
-                scope.parseFilterDate = function(datevalue){	
-			if (datevalue != null) {
-                    				//Parse out 'T' date time seperator needed by ELK but not by moment.js
+				scope.parseFilterDate = function(datevalue){	
+					if (datevalue != null) {
+						//Parse out 'T' date time seperator needed by ELK but not by moment.js
 						datevalue=datevalue.replace(/T/g,' ');
 						console.log(datevalue);
 
