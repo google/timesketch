@@ -50,7 +50,7 @@ limitations under the License.
                 }
 
                 var toggleStar = function(event_list) {
-                    if (!event_list.length) {return}
+		     if (!event_list.length) {return}
                     timesketchApi.saveEventAnnotation(
                         $scope.sketchId,
                         'label',
@@ -74,7 +74,7 @@ limitations under the License.
                     return {"indices": indices_list, "events": event_list};
                 };
 
-                $scope.toggleAll = function() {
+		$scope.toggleAll = function() {
                     $scope.isAllSelected = $scope.events.every(function(event) {
                         return event.selected;
                     });
@@ -245,6 +245,11 @@ limitations under the License.
                         }
                     })
                 };
+
+                $scope.addFilterStart= function() {
+			var tr_input = angular.element('[ng-model="filter.time_start"]');
+			tr_input[0].value=$scope.event._source.datetime;
+		};
 
                 $scope.getDetail = function() {
                     if ($scope.eventdetail) {return}
