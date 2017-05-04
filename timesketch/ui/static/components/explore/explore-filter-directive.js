@@ -61,11 +61,6 @@ limitations under the License.
 						console.log(match)
 					
 						if (match != null) {
-							console.log(match[0]);
-							console.log(match[1]);
-							console.log(match[2]);
-							console.log(match[3]);
-							console.log(match[4]);
 							match[1] = moment(match[1],"YYYY-MM-DD HH:mm:ssZZ");
 							//calculate filter start and end datetimes
 							if (match[2] == '+') {
@@ -81,9 +76,6 @@ limitations under the License.
 								scope.filter.time_start = moment.utc(match[1]).subtract(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
 								scope.filter.time_end = moment.utc(match[1]).add(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
 							}
-
-							console.log(scope.filter.time_start)
-							console.log(scope.filter.time_end)
 						} else {
 							scope.filter.time_end = scope.filter.time_start;
 						}
