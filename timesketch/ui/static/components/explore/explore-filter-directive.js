@@ -76,7 +76,7 @@ limitations under the License.
                         datevalue=datevalue.replace(/T/g,' ');
 
                         //Parse offset given by user. Eg. +-10m
-                        var offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s|M|Q|w)/g;
+                        var offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s|M|Q|w|ms)/g;
                         var match = offsetRegexp.exec(datevalue);
 
                         if (match != null) {
