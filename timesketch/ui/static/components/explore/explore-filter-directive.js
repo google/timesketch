@@ -71,35 +71,33 @@ limitations under the License.
                 }
 
                 scope.parseFilterDate = function(datevalue){  
-                  if (datevalue != null) {
-                    //Parse out 'T' date time seperator needed by ELK but not by moment.js
-                    datevalue=datevalue.replace(/T/g,' ');
-                    console.log(datevalue);
+                    if (datevalue != null) {
+                        //Parse out 'T' date time seperator needed by ELK but not by moment.js
+                        datevalue=datevalue.replace(/T/g,' ');
 
-                    //Parse offset given by user. Eg. +-10m
-                    var offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s|M|Q|w)/g;
-                    var match = offsetRegexp.exec(datevalue);
+                        //Parse offset given by user. Eg. +-10m
+                        var offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s|M|Q|w)/g;
+                        var match = offsetRegexp.exec(datevalue);
 
-                    if (match != null) {
-                      match[1] = moment(match[1],"YYYY-MM-DD HH:mm:ssZZ");
-                      //calculate filter start and end datetimes
-                      if (match[2] == '+') {
-                        scope.filter.time_start = moment.utc(match[1]).format("YYYY-MM-DDTHH:mm:ss");
-                        scope.filter.time_end = moment.utc(match[1]).add(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
-                      }
-
-                      if (match[2] == '-') {
-                        scope.filter.time_start = moment.utc(match[1]).subtract(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
-                        scope.filter.time_end = moment.utc(match[1]).format("YYYY-MM-DDTHH:mm:ss");
-                      }
-                      if (match[2] == '-+' || match[2] == '+-') {
-                        scope.filter.time_start = moment.utc(match[1]).subtract(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
-                        scope.filter.time_end = moment.utc(match[1]).add(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
-                      }
-                    } else {
-                      scope.filter.time_end = scope.filter.time_start;
+                        if (match != null) {
+                            match[1] = moment(match[1],"YYYY-MM-DD HH:mm:ssZZ");
+                            //calculate filter start and end datetimes
+                            if (match[2] == '+') {
+                                scope.filter.time_start = moment.utc(match[1]).format("YYYY-MM-DDTHH:mm:ss");
+                                scope.filter.time_end = moment.utc(match[1]).add(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
+                            }
+                            if (match[2] == '-') {
+                                scope.filter.time_start = moment.utc(match[1]).subtract(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
+                                scope.filter.time_end = moment.utc(match[1]).format("YYYY-MM-DDTHH:mm:ss");
+                            }
+                            if (match[2] == '-+' || match[2] == '+-') {
+                                scope.filter.time_start = moment.utc(match[1]).subtract(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
+                                scope.filter.time_end = moment.utc(match[1]).add(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
+                            }
+                        } else {
+                            scope.filter.time_end = scope.filter.time_start;
+                        }
                     }
-                  }
                 }
 
         }
