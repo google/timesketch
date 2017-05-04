@@ -42,7 +42,7 @@ limitations under the License.
             },
             require: '^tsSearch',
             link: function(scope, elem, attrs, ctrl) {
-        scope.applyFilter = function() {
+            scope.applyFilter = function() {
             scope.parseFilterDate(scope.filter.time_start)
             ctrl.search(scope.query, scope.filter, scope.queryDsl)
         };
@@ -110,11 +110,11 @@ limitations under the License.
       }
     });
 
-    module.directive('tsTimelinePickerItem', function() {
-      /**
-       * Manage the timeline items to filter on.
-       */
-      return {
+        module.directive('tsTimelinePickerItem', function() {
+          /**
+           * Manage the timeline items to filter on.
+           */
+          return {
         restrict: 'E',
         templateUrl: '/static/components/explore/explore-timeline-picker-item.html',
         scope: {
@@ -132,11 +132,11 @@ limitations under the License.
             scope.checkboxModel.active = !scope.checkboxModel.active;
             if (!scope.checkboxModel.active) {
               if (index > -1) {
-                scope.filter.indices.splice(index, 1);
+            scope.filter.indices.splice(index, 1);
               }
             } else {
               if (index == -1) {
-                scope.filter.indices.push(index_name);
+            scope.filter.indices.push(index_name);
               }
             }
             ctrl.search(scope.query, scope.filter, scope.queryDsl);
@@ -153,7 +153,7 @@ limitations under the License.
             }
           }, true);
         }
-      }
-    });
+          }
+        });
 
 })();
