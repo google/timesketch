@@ -42,126 +42,112 @@ limitations under the License.
             },
             require: '^tsSearch',
             link: function(scope, elem, attrs, ctrl) {
-				scope.applyFilter = function() {
-				    scope.parseFilterDate(scope.filter.time_start)
-				    ctrl.search(scope.query, scope.filter, scope.queryDsl)
-				};
+                scope.applyFilter = function() {
+                    scope.parseFilterDate(scope.filter.time_start)
+                    ctrl.search(scope.query, scope.filter, scope.queryDsl)
+                };
 
-				scope.parseFilterDate = function(datevalue){	
-					if (datevalue != null) {
-						//Parse out 'T' date time seperator needed by ELK but not by moment.js
-						datevalue=datevalue.replace(/T/g,' ');
-						console.log(datevalue);
+                scope.clearFilter = function() {
+                    delete scope.filter.time_start;
+                    delete scope.filter.time_end;
+                    scope.showFilters = false;
+                    ctrl.search(scope.query, scope.filter, scope.queryDsl)
+                };
 
-						//Parse offset given by user. Eg. +-10m
-						var offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s|M|Q|w)/g;
-						var match = offsetRegexp.exec(datevalue);
+                scope.enableAllTimelines = function() {
+                    scope.filter.indices = [];
+                    for (var i = 0; i < scope.sketch.timelines.length; i++) {
+                        scope.filter.indices.push(scope.sketch.timelines[i].searchindex.index_name)
+                    }
+                    ctrl.search(scope.query, scope.filter, scope.queryDsl)
+                };
+                
+                scope.disableAllTimelines = function() {
+                    scope.filter.indices = [];
+                    scope.events = [];
+                    scope.meta.es_total_count = 0;
+                    scope.meta.es_time = 0;
+                    scope.meta.noisy = false;
+                }
 
-						console.log("offret rexexp:")
-						console.log(match)
-					
-						if (match != null) {
-							console.log(match[0]);
-							console.log(match[1]);
-							console.log(match[2]);
-							console.log(match[3]);
-							console.log(match[4]);
-							match[1] = moment(match[1],"YYYY-MM-DD HH:mm:ssZZ");
-							//calculate filter start and end datetimes
-							if (match[2] == '+') {
-								scope.filter.time_start = moment.utc(match[1]).format("YYYY-MM-DDTHH:mm:ss");
-								scope.filter.time_end = moment.utc(match[1]).add(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
-							}
+                scope.parseFilterDate = function(datevalue){  
+                    if (datevalue != null) {
+                        //Parse out 'T' date time seperator needed by ELK but not by moment.js
+                        datevalue=datevalue.replace(/T/g,' ');
 
-							if (match[2] == '-') {
-								scope.filter.time_start = moment.utc(match[1]).subtract(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
-								scope.filter.time_end = moment.utc(match[1]).format("YYYY-MM-DDTHH:mm:ss");
-							}
-							if (match[2] == '-+' || match[2] == '+-') {
-								scope.filter.time_start = moment.utc(match[1]).subtract(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
-								scope.filter.time_end = moment.utc(match[1]).add(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
-							}
+                        //Parse offset given by user. Eg. +-10m
+                        var offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s|M|Q|w)/g;
+                        var match = offsetRegexp.exec(datevalue);
 
-							console.log(scope.filter.time_start)
-							console.log(scope.filter.time_end)
-						} else {
-							scope.filter.time_end = scope.filter.time_start;
-						}
-					}
-				}
+                        if (match != null) {
+                            match[1] = moment(match[1],"YYYY-MM-DD HH:mm:ssZZ");
+                            //calculate filter start and end datetimes
+                            if (match[2] == '+') {
+                                scope.filter.time_start = moment.utc(match[1]).format("YYYY-MM-DDTHH:mm:ss");
+                                scope.filter.time_end = moment.utc(match[1]).add(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
+                            }
+                            if (match[2] == '-') {
+                                scope.filter.time_start = moment.utc(match[1]).subtract(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
+                                scope.filter.time_end = moment.utc(match[1]).format("YYYY-MM-DDTHH:mm:ss");
+                            }
+                            if (match[2] == '-+' || match[2] == '+-') {
+                                scope.filter.time_start = moment.utc(match[1]).subtract(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
+                                scope.filter.time_end = moment.utc(match[1]).add(match[3],match[4]).format("YYYY-MM-DDTHH:mm:ss");
+                            }
+                        } else {
+                            scope.filter.time_end = scope.filter.time_start;
+                        }
+                    }
+                }
 
-				scope.clearFilter = function() {
-					delete scope.filter.time_start;
-					delete scope.filter.time_end;
-					scope.showFilters = false;
-					ctrl.search(scope.query, scope.filter, scope.queryDsl)
-				};
-
-				scope.enableAllTimelines = function() {
-					scope.filter.indices = [];
-					for (var i = 0; i < scope.sketch.timelines.length; i++) {
-						scope.filter.indices.push(scope.sketch.timelines[i].searchindex.index_name)
-					}
-					ctrl.search(scope.query, scope.filter, scope.queryDsl)
-				};
-				
-				scope.disableAllTimelines = function() {
-						scope.filter.indices = [];
-						scope.events = [];
-						scope.meta.es_total_count = 0;
-						scope.meta.es_time = 0;
-						scope.meta.noisy = false;
-				}
-
-				}
-
-			}
-		});
-
-		module.directive('tsTimelinePickerItem', function() {
-			/**
-			 * Manage the timeline items to filter on.
-			 */
-			return {
-				restrict: 'E',
-				templateUrl: '/static/components/explore/explore-timeline-picker-item.html',
-				scope: {
-					timeline: '=',
-					query: '=',
-					queryDsl: '=',
-					filter: '='
-				},
-				require: '^tsSearch',
-				link: function(scope, elem, attrs, ctrl) {
-					scope.checkboxModel = {};
-					var index_name = scope.timeline.searchindex.index_name;
-					scope.toggleCheckbox = function () {
-						var index = scope.filter.indices.indexOf(index_name);
-						scope.checkboxModel.active = !scope.checkboxModel.active;
-						if (!scope.checkboxModel.active) {
-							if (index > -1) {
-								scope.filter.indices.splice(index, 1);
-							}
-						} else {
-							if (index == -1) {
-								scope.filter.indices.push(index_name);
-							}
-						}
-						ctrl.search(scope.query, scope.filter, scope.queryDsl);
-					};
-					scope.$watch("filter.indices", function(value) {
-						if (scope.filter.indices.indexOf(index_name) == -1) {
-							scope.colorbox = {'background-color': '#E9E9E9'};
-							scope.timeline_picker_title = {'color': '#D1D1D1', 'text-decoration': 'line-through'};
-							scope.checkboxModel.active = false;
-						} else {
-							scope.colorbox = {'background-color': "#" + scope.timeline.color};
-							scope.timeline_picker_title = {'color': '#333', 'text-decoration': 'none'};
-							scope.checkboxModel.active = true;
-						}
-					}, true);
-				}
-			}
+           }
+      }
     });
 
+    module.directive('tsTimelinePickerItem', function() {
+        /**
+         * Manage the timeline items to filter on.
+         */
+        return {
+            restrict: 'E',
+            templateUrl: '/static/components/explore/explore-timeline-picker-item.html',
+            scope: {
+                timeline: '=',
+                query: '=',
+                queryDsl: '=',
+                filter: '='
+            },
+            require: '^tsSearch',
+            link: function(scope, elem, attrs, ctrl) {
+                scope.checkboxModel = {};
+                var index_name = scope.timeline.searchindex.index_name;
+                scope.toggleCheckbox = function () {
+                    var index = scope.filter.indices.indexOf(index_name);
+                    scope.checkboxModel.active = !scope.checkboxModel.active;
+                    if (!scope.checkboxModel.active) {
+                        if (index > -1) {
+                            scope.filter.indices.splice(index, 1);
+                       }
+                    } else {
+                        if (index == -1) {
+                            scope.filter.indices.push(index_name);
+                        }
+                    }
+                    ctrl.search(scope.query, scope.filter, scope.queryDsl);
+                };
+              
+                scope.$watch("filter.indices", function(value) {
+                    if (scope.filter.indices.indexOf(index_name) == -1) {
+                        scope.colorbox = {'background-color': '#E9E9E9'};
+                        scope.timeline_picker_title = {'color': '#D1D1D1', 'text-decoration': 'line-through'};
+                        scope.checkboxModel.active = false;
+                    } else {
+                        scope.colorbox = {'background-color': "#" + scope.timeline.color};
+                        scope.timeline_picker_title = {'color': '#333', 'text-decoration': 'none'};
+                        scope.checkboxModel.active = true;
+                    }
+                }, true);
+            }
+        }
+   });
 })();
