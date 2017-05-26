@@ -1,4 +1,5 @@
 /*
+
 Copyright 2015 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,24 +79,28 @@ limitations under the License.
                         //Parse offset given by user. Eg. +-10m
                         var offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s|M|Q|w|ms)/g;
                         var match = offsetRegexp.exec(datevalue);
+
                         if (match != null) {
-                            match[1] = moment(match[1],"YYYY-MM-DD HH:mm:ssZZ");
+                            var filterbase = match[1] 
+                            var filteroffset = match[2]
+                            var filteramount = match[3]
+                            var filtertype = match[4]
+
+                            filterbase = moment(filterbase,"YYYY-MM-DD HH:mm:ssZZ");
                             //calculate filter start and end datetimes
-                            if (match[2] == '+') {
-                                scope.filter.time_start = moment.utc(match[1]).format(datetimetemplate);
-                                scope.filter.time_end = moment.utc(match[1]).add(match[3],match[4]).format(datetimetemplate);
+                            if (filteroffset == '+') {
+                                scope.filter.time_start = moment.utc(filterbase).format(datetimetemplate);
+                                scope.filter.time_end = moment.utc(filterbase).add(filteramount,filtertype).format(datetimetemplate);
                             }
-                            if (match[2] == '-') {
-                                scope.filter.time_start = moment.utc(match[1]).subtract(match[3],match[4]).format(datetimetemplate);
-                                scope.filter.time_end = moment.utc(match[1]).format(datetimetemplate);
+                            if (filteroffset == '-') {
+                                scope.filter.time_start = moment.utc(filterbase).subtract(filteramount,filtertype).format(datetimetemplate);
+                                scope.filter.time_end = moment.utc(filterbase).format(datetimetemplate);
                             }
-                            if (match[2] == '-+' || match[2] == '+-') {
-                                scope.filter.time_start = moment.utc(match[1]).subtract(match[3],match[4]).format(datetimetemplate);
-                                scope.filter.time_end = moment.utc(match[1]).add(match[3],match[4]).format(datetimetemplate);
+                            if (filteroffset == '-+' || filteroffset == '+-') {
+                                scope.filter.time_start = moment.utc(filterbase).subtract(filteramount,filtertype).format(datetimetemplate);
+                                scope.filter.time_end = moment.utc(filterbase).add(filteramount,filtertype).format(datetimetemplate);
                             }
-                        } else {
-                            scope.filter.time_end = scope.filter.time_start;
-                        }
+                        } 
                     }
                 }
 
