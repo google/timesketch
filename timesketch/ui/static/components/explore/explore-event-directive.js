@@ -247,8 +247,7 @@ limitations under the License.
                 };
 
                 $scope.addFilterStart= function() {
-			var tr_input = angular.element('[ng-model="filter.time_start"]');
-			tr_input[0].value=$scope.event._source.datetime;
+                $scope.$emit('datetime-clicked', {datetimeclicked: $scope.event._source.datetime});
 		};
 
                 $scope.getDetail = function() {
