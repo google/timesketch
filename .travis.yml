@@ -1,9 +1,20 @@
+sudo: required
+
+services:
+    - docker
+
 language: python
+
 python:
-  - "2.7"
+    - "2.7"
+
+before_install:
+    - docker build -t timesketch .
+
 # command to install dependencies
 install:
-  - "pip install ."
-  - "pip install Flask-Testing nose mock pylint coverage"
+    - "pip install ."
+    - "pip install Flask-Testing nose mock pylint coverage"
+
 # command to run tests
 script: nosetests
