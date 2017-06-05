@@ -1,0 +1,29 @@
+timesketch:
+  build: .
+  ports:
+    - "5000:5000"
+  links:
+    - elasticsearch
+    - postgres
+  environment:
+    - POSTGRES_USER=timesketch
+    - POSTGRES_PASSWORD=password
+    - POSTGRES_ADDRESS=postgres
+    - POSTGRES_PORT=5432
+    - ELASTIC_ADDRESS=elastic
+    - ELASTIC_PORT=9200
+  restart: always
+elasticsearch:
+  image: elasticsearch:2.4
+  ports:
+    - "9200:9200"
+    - "9300:9300"
+  restart: always
+postgres:
+  image: postgres:9.6
+  ports:
+    - "5432:5432"
+  environment:
+    - POSTGRES_USER=timesketch
+    - POSTGRES_PASSWORD=password
+  restart: always
