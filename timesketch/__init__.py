@@ -51,6 +51,9 @@ from timesketch.ui.views.sketch import sketch_views
 from timesketch.ui.views.story import story_views
 from timesketch.ui.views.user import user_views
 
+# Timesketch version
+__version__ = u'20170606'
+
 
 def create_app(config=None):
     """Create the Flask app instance that is used throughout the application.
