@@ -77,6 +77,11 @@ limitations under the License.
                         }
                 });
 
+                $scope.$on('datetime-clicked', function (event, clickObj) {
+                    $scope.showFilters = true;
+                    $scope.filter.time_start= clickObj.datetimeclicked;
+                });
+
                 if ($scope.searchtemplateId) {
                     timesketchApi.getSearchTemplate($scope.searchtemplateId).success(function(data) {
                         $scope.searchTemplate = data.objects[0];
