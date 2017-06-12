@@ -11,12 +11,17 @@
 {% endblock %}
 
 {% block right_nav %}
-    {% if sketch.has_permission(current_user, 'write') and sketch.timelines and upload_enabled %}
-        <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
-    {% endif %}
 {% endblock %}
 
 {% block main %}
+
+    {% if sketch.has_permission(current_user, 'write') and upload_enabled %}
+        <div class="card">
+            <h4>Import timeline</h4>
+            <p>You can upload either a Plaso storage file or a timeline as a CSV file.</p>
+            <ts-core-upload sketch-id="{{ sketch.id }}" visible="true" btn-text="'Select file'"></ts-core-upload>
+        </div>
+    {% endif %}
 
     <div class="container">
         {% if sketch.timelines %}
@@ -48,7 +53,8 @@
                 <div class="row">
                     <div class="col-md-12">
                         <div class="card">
-                            <h4 class="pull-left">Add timeline</h4>
+                            <h4 class="pull-left">Available timelines</h4>
+                            <br><br>
                             <form method="post" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
                                 <table class="table table-hover">
                                     <thead>
