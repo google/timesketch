@@ -21,6 +21,9 @@
 from setuptools import find_packages
 from setuptools import setup
 
+
+timesketch_version = u'20170606'
+
 timesketch_description = (
     u'Timesketch is a web based tool for collaborative forensic timeline '
     u'analysis. Using sketches you and your collaborators can easily organize '
@@ -29,7 +32,7 @@ timesketch_description = (
 
 setup(
     name=u'timesketch',
-    version=u'2016.11',
+    version=timesketch_version,
     description=u'Digital forensic timeline analysis',
     long_description=timesketch_description,
     license=u'Apache License, Version 2.0',
