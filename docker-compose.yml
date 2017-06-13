@@ -17,14 +17,9 @@ services:
     restart: always
   elasticsearch:
     image: elasticsearch:2.4
-    ports:
-      - "9200:9200"
-      - "9300:9300"
     restart: always
   postgres:
     image: postgres:9.6
-    ports:
-      - "5432:5432"
     environment:
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password
