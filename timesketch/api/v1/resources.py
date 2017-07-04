@@ -77,7 +77,7 @@ class ResourceMixin(object):
     """Mixin for API resources."""
     # Schemas for database model resources
 
-    searchindex_status_fields = {
+    status_fields = {
         u'id': fields.Integer,
         u'status': fields.String,
         u'created_at': fields.DateTime,
@@ -88,7 +88,7 @@ class ResourceMixin(object):
         u'id': fields.Integer,
         u'name': fields.String,
         u'index_name': fields.String,
-        u'status': fields.Nested(searchindex_status_fields),
+        u'status': fields.Nested(status_fields),
         u'deleted': fields.Boolean,
         u'created_at': fields.DateTime,
         u'updated_at': fields.DateTime
@@ -138,6 +138,7 @@ class ResourceMixin(object):
         u'description': fields.String,
         u'user': fields.Nested(user_fields),
         u'timelines': fields.Nested(timeline_fields),
+        u'status': fields.Nested(status_fields),
         u'created_at': fields.DateTime,
         u'updated_at': fields.DateTime
     }
@@ -240,7 +241,9 @@ class SketchListResource(ResourceMixin, Resource):
             List of sketches (instance of flask.wrappers.Response)
         """
         # TODO: Handle offset parameter
-        sketches = Sketch.all_with_acl()
+        sketches = Sketch.all_with_acl().filter(
+            not_(Sketch.Status.status == u'deleted'),
+            Sketch.Status.parent).order_by(Sketch.updated_at.desc())
         paginated_result = sketches.paginate(1, 10, False)
         meta = {
             u'next': paginated_result.next_num,
