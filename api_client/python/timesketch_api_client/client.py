@@ -79,7 +79,6 @@ class BaseSketchResource(object):
 
     def lazyload_data(self):
         if not self.data:
-            print "lazyload base"
             self.data = self.sketch.api.fetch_resource_data(self.resource_url)
         return self.data
 
@@ -108,17 +107,28 @@ class View(BaseSketchResource):
 
 
 class Timeline(BaseSketchResource):
-    def __init__(self, timeline_id, timeline_name, timeline_index, sketch):
+    def __init__(self, timeline_id, sketch, timeline_name=None,
+                 timeline_index=None):
         self.id = timeline_id
-        self.name = timeline_name
-        self.index = timeline_index
-        resource_uri = u'views/{0:d}/'.format(self.id)
+        self.timeline_name = timeline_name
+        self.timeline_index = timeline_index
+        resource_uri = u'timelines/{0:d}/'.format(self.id)
         super(Timeline, self).__init__(sketch, resource_uri)
 
     @property
-    def query_string(self):
-        view = self.lazyload_data()
-        return view[u'objects'][0][u'query_string']
+    def name(self):
+        if not self.timeline_name:
+            timeline = self.lazyload_data()
+            self.timeline_name = timeline[u'objects'][0][u'name']
+        return self.timeline_name
+
+    @property
+    def index(self):
+        if not self.timeline_name:
+            timeline = self.lazyload_data()
+            index = timeline[u'objects'][0][u'searchindex'][u'index_name']
+            self.timeline_index = index
+        return self.timeline_index
 
 
 class Sketch(object):
@@ -161,6 +171,18 @@ class Sketch(object):
                 view_id=view[u'id'], view_name=view[u'name'], sketch=self)
             views.append(view_obj)
         return views
+
+    @property
+    def timelines(self):
+        sketch = self._lazyload_data()
+        timelines = []
+        for timeline in sketch[u'objects'][0][u'timelines']:
+            index = timeline[u'searchindex'][u'index_name']
+            timeline_obj = Timeline(
+                timeline_id=timeline[u'id'], timeline_name=timeline[u'name'],
+                timeline_index=index, sketch=self)
+            timelines.append(timeline_obj)
+        return timelines
 
     def upload(self, timeline_name, file_path):
         resource_url = u'{0:s}/upload/'.format(self.api.api_root)

@@ -1148,6 +1148,27 @@ class TimelineListResource(ResourceMixin, Resource):
 
 
 class TimelineResource(ResourceMixin, Resource):
+    """Resource to get timeline."""
+    @login_required
+    def get(self, sketch_id, timeline_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            timeline_id: Integer primary key for a timeline database model
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        timeline = Timeline.query.get(timeline_id)
+
+        # Check that this timeline belongs to the sketch
+        if timeline.sketch_id != sketch.id:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+
+        if not sketch.has_permission(user=current_user, permission=u'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
+
+        return self.to_json(timeline)
+
     @login_required
     def delete(self, sketch_id, timeline_id):
         """Handles DELETE request to the resource.
