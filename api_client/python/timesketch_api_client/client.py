@@ -130,67 +130,6 @@ class TimesketchApi(object):
         return sketches
 
 
-class BaseSketchResource(object):
-    def __init__(self, sketch, resource_uri):
-        self.sketch = sketch
-        self.data = None
-        self.resource_url = u'{0:s}/sketches/{1:d}/{2:s}'.format(
-            sketch.api.api_root, sketch.id, resource_uri)
-
-    def lazyload_data(self):
-        if not self.data:
-            self.data = self.sketch.api.fetch_resource_data(self.resource_url)
-        return self.data
-
-
-class View(BaseSketchResource):
-    def __init__(self, view_id, view_name, sketch):
-        self.id = view_id
-        self.name = view_name
-        resource_uri = u'views/{0:d}/'.format(self.id)
-        super(View, self).__init__(sketch, resource_uri)
-
-    @property
-    def query_string(self):
-        view = self.lazyload_data()
-        return view[u'objects'][0][u'query_string']
-
-    @property
-    def query_filter(self):
-        view = self.lazyload_data()
-        return view[u'objects'][0][u'query_filter']
-
-    @property
-    def query_dsl(self):
-        view = self.lazyload_data()
-        return view[u'objects'][0][u'query_dsl']
-
-
-class Timeline(BaseSketchResource):
-    def __init__(self, timeline_id, sketch, timeline_name=None,
-                 timeline_index=None):
-        self.id = timeline_id
-        self.timeline_name = timeline_name
-        self.timeline_index = timeline_index
-        resource_uri = u'timelines/{0:d}/'.format(self.id)
-        super(Timeline, self).__init__(sketch, resource_uri)
-
-    @property
-    def name(self):
-        if not self.timeline_name:
-            timeline = self.lazyload_data()
-            self.timeline_name = timeline[u'objects'][0][u'name']
-        return self.timeline_name
-
-    @property
-    def index(self):
-        if not self.timeline_name:
-            timeline = self.lazyload_data()
-            index = timeline[u'objects'][0][u'searchindex'][u'index_name']
-            self.timeline_index = index
-        return self.timeline_index
-
-
 class Sketch(object):
     def __init__(self, sketch_id, api, sketch_name=None):
         self.id = sketch_id
@@ -283,3 +222,64 @@ class Sketch(object):
         }
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
+
+
+class BaseSketchResource(object):
+    def __init__(self, sketch, resource_uri):
+        self.sketch = sketch
+        self.data = None
+        self.resource_url = u'{0:s}/sketches/{1:d}/{2:s}'.format(
+            sketch.api.api_root, sketch.id, resource_uri)
+
+    def lazyload_data(self):
+        if not self.data:
+            self.data = self.sketch.api.fetch_resource_data(self.resource_url)
+        return self.data
+
+
+class View(BaseSketchResource):
+    def __init__(self, view_id, view_name, sketch):
+        self.id = view_id
+        self.name = view_name
+        resource_uri = u'views/{0:d}/'.format(self.id)
+        super(View, self).__init__(sketch, resource_uri)
+
+    @property
+    def query_string(self):
+        view = self.lazyload_data()
+        return view[u'objects'][0][u'query_string']
+
+    @property
+    def query_filter(self):
+        view = self.lazyload_data()
+        return view[u'objects'][0][u'query_filter']
+
+    @property
+    def query_dsl(self):
+        view = self.lazyload_data()
+        return view[u'objects'][0][u'query_dsl']
+
+
+class Timeline(BaseSketchResource):
+    def __init__(self, timeline_id, sketch, timeline_name=None,
+                 timeline_index=None):
+        self.id = timeline_id
+        self.timeline_name = timeline_name
+        self.timeline_index = timeline_index
+        resource_uri = u'timelines/{0:d}/'.format(self.id)
+        super(Timeline, self).__init__(sketch, resource_uri)
+
+    @property
+    def name(self):
+        if not self.timeline_name:
+            timeline = self.lazyload_data()
+            self.timeline_name = timeline[u'objects'][0][u'name']
+        return self.timeline_name
+
+    @property
+    def index(self):
+        if not self.timeline_name:
+            timeline = self.lazyload_data()
+            index = timeline[u'objects'][0][u'searchindex'][u'index_name']
+            self.timeline_index = index
+        return self.timeline_index
