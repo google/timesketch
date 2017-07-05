@@ -159,7 +159,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
            BaseModel):
     """Implements the View model."""
     name = Column(Unicode(255))
-    query_string = Column(Unicode(255))
+    query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey(u'user.id'))
@@ -236,7 +236,7 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
                      BaseModel):
     """Implements the Search Template model."""
     name = Column(Unicode(255))
-    query_string = Column(Unicode(255))
+    query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey(u'user.id'))
