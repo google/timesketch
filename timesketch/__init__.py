@@ -89,6 +89,15 @@ def create_app(config=None):
                          u'$ openssl rand -base64 32\n\n')
         sys.exit()
 
+    # Plaso version that we support
+    if app.config[u'UPLOAD_ENABLED']:
+        try:
+            from plaso import __version__ as plaso_version
+        except ImportError:
+            sys.stderr.write(u'Upload is enabled, but Plaso is not installed.')
+            sys.exit()
+        app.config[u'PLASO_VERSION'] = plaso_version
+
     # Setup the database.
     configure_engine(app.config[u'SQLALCHEMY_DATABASE_URI'])
     db = init_db()

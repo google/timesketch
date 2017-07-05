@@ -10,6 +10,7 @@
             templateUrl: '/static/components/core/core-upload.html',
             scope: {
                 sketchId: '=?',
+                visible: '=?',
                 btnText: '='
             },
             controller: function($scope) {
