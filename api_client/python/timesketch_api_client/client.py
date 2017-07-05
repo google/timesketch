@@ -20,37 +20,81 @@ import json
 class TimesketchApi(object):
     """Timesketch API object.
     
+    Attributes:
+        api_root: The full URL to the server API endpoint.
+        session: Authenticated HTTP session. 
+    
+    Example use:
+    from timesketch_api_client.client import TimesketchApi
+    api_client = TimesketchApi('http://127.0.0.1:5000', 'spock', 'spock')
+    sketch = api_client.get_sketch(1)
+    sketch.explore(query_string="foobar")
     """
     def __init__(self, host_uri, username, password, verify=True):
-        self.host_uri = host_uri
+        """Initialize TimesketchApi object.
+        
+        Args:
+            host_uri: URI to the Timesketch server (https://<server>/).
+            username: User to authenticate as.
+            password: User password.
+            verify: Verify server SSL certificate.
+        """
+        self._host_uri = host_uri
         self.api_root = u'{0:s}/api/v1'.format(host_uri)
         self.session = self._create_session(username, password, verify=verify)
 
     def _create_session(self, username, password, verify):
+        """Create authenticated HTTP session for server communication.
+        
+        Args:
+            username: User to authenticate as.
+            password: User password.
+            verify: Verify server SSL certificate.
+
+        Returns:
+            Authenticated HTTP session.
+        """
         session = requests.Session()
         session.verify = verify  # Depending if SSL cert is verifiable
 
         # Get the CSRF token from the response
-        response = session.get(self.host_uri)
+        response = session.get(self._host_uri)
         soup = BeautifulSoup.BeautifulSoup(response.text)
         csrf_token = soup.find(id=u'csrf_token').get(u'value')
         session.headers.update(
-            {u'x-csrftoken': csrf_token, u'referer': self.host_uri})
+            {u'x-csrftoken': csrf_token, u'referer': self._host_uri})
 
         # Do a POST to the login handler to set up the session cookies
         data = {u'username': username, u'password': password}
-        session.post(u'{0:s}/login/'.format(self.host_uri), data=data)
+        session.post(u'{0:s}/login/'.format(self._host_uri), data=data)
         return session
 
     def fetch_resource_data(self, resource_uri):
+        """Make HTTP GET request for resource data.
+        
+        Args:
+            resource_uri: The URI to the resource to be fetched.
+    
+        Returns:
+            Dictionary with the resource data.
+        """
         resource_url = u'{0:s}/{1:s}'.format(self.api_root, resource_uri)
         response = self.session.get(resource_url)
         return response.json()
 
-    def get_sketch(self, sketch_id):
-        return Sketch(sketch_id, api=self)
+    def create_sketch(self, name, description=None):
+        """Create new sketch.
+        
+        Args:
+            name: Name of the sketch.
+            description: Description of the sketch.
+            
+        Returns:
+            Sketch object.
+        """
+        if not description:
+            description = name
 
-    def create_sketch(self, name, description):
         resource_url = u'{0:s}/sketches/'.format(self.api_root)
         form_data = {u'name': name, u'description': description}
         response = self.session.post(resource_url, json=form_data)
@@ -58,7 +102,23 @@ class TimesketchApi(object):
         sketch_id = response_dict[u'objects'][0][u'id']
         return self.get_sketch(sketch_id)
 
-    def list_sketches(self):
+    def get_sketch(self, sketch_id):
+        """Get sketch object.
+        
+        Args:
+            sketch_id: ID of the sketch.
+            
+        Returns:
+            Sketch object.
+        """
+        return Sketch(sketch_id, api=self)
+
+    def get_sketches(self):
+        """Get list of sketches.
+        
+        Returns:
+            List of sketch objects.
+        """
         sketches = []
         response = self.fetch_resource_data(u'sketches/')
         for sketch in response[u'objects'][0]:
@@ -162,8 +222,7 @@ class Sketch(object):
         sketch = self._lazyload_data()
         return sketch[u'objects'][0][u'status'][0][u'status']
 
-    @property
-    def views(self):
+    def get_views(self):
         sketch = self._lazyload_data()
         views = []
         for view in sketch[u'meta'][u'views']:
@@ -172,8 +231,7 @@ class Sketch(object):
             views.append(view_obj)
         return views
 
-    @property
-    def timelines(self):
+    def get_timelines(self):
         sketch = self._lazyload_data()
         timelines = []
         for timeline in sketch[u'objects'][0][u'timelines']:
