@@ -74,25 +74,48 @@ def mock_response(*args, **kwargs):
                 u'timelines': [
                     {
                         u'id': 1,
-                        u'name': u'test'
+                        u'name': u'test',
+                        u'searchindex': {
+                            u'index_name': u'test'
+                        }
                     },
                     {
                         u'id': 2,
-                        u'name': u'test'
+                        u'name': u'test',
+                        u'searchindex': {
+                            u'index_name': u'test'
+                        }
                     }
                 ]
             }
         ]}
 
-    url_router = {
-        u'http://127.0.0.1': MockResponse(text_data=auth_text_data),
-        u'http://127.0.0.1/api/v1/sketches/': MockResponse(json_data={}),
-        u'http://127.0.0.1/api/v1/sketches/1': MockResponse(
-            json_data=sketch_data),
-
+    sketch_list_data = {
+        u'objects': [sketch_data[u'objects']]
     }
 
-    print args[0]
+    timeline_data = {
+        u'objects': [
+            {
+                u'id': 1,
+                u'name': u'test',
+                u'searchindex': {
+                    u'index_name': u'test'
+                }
+            }
+        ]
+    }
+
+    url_router = {
+        u'http://127.0.0.1': MockResponse(text_data=auth_text_data),
+        u'http://127.0.0.1/api/v1/sketches/': MockResponse(
+            json_data=sketch_list_data),
+        u'http://127.0.0.1/api/v1/sketches/1': MockResponse(
+            json_data=sketch_data),
+        u'http://127.0.0.1/api/v1/sketches/1/timelines/1': MockResponse(
+            json_data=timeline_data),
+
+    }
 
     try:
         req_obj = url_router.get(args[0])
@@ -110,6 +133,8 @@ class TimesketchApiTest(unittest.TestCase):
         self.api_client = client.TimesketchApi(
             u'http://127.0.0.1', u'test', u'test')
 
+    # TODO: Add test for create_sketch()
+
     def test_fetch_resource_data(self):
         response = self.api_client.fetch_resource_data(u'sketches/')
         self.assertIsInstance(response, dict)
@@ -121,6 +146,12 @@ class TimesketchApiTest(unittest.TestCase):
         self.assertEqual(sketch.name, u'test')
         self.assertEqual(sketch.description, u'test')
 
+    def test_get_sketches(self):
+        sketches = self.api_client.list_sketches()
+        self.assertIsInstance(sketches, list)
+        self.assertEqual(len(sketches), 1)
+        self.assertIsInstance(sketches[0], client.Sketch)
+
 
 class SketchTest(unittest.TestCase):
 
@@ -130,9 +161,48 @@ class SketchTest(unittest.TestCase):
             u'http://127.0.0.1', u'test', u'test')
         self.sketch = self.api_client.get_sketch(1)
 
+    # TODO: Add test for upload()
+    # TODO: Add test for explore()
+
     def test_get_views(self):
-        views = self.sketch.get_views()
+        views = self.sketch.list_views()
         self.assertIsInstance(views, list)
         self.assertEqual(len(views), 2)
         self.assertIsInstance(views[0], client.View)
 
+    def test_get_timelines(self):
+        timelines = self.sketch.list_timelines()
+        self.assertIsInstance(timelines, list)
+        self.assertEqual(len(timelines), 2)
+        self.assertIsInstance(timelines[0], client.Timeline)
+
+
+class ViewTest(unittest.TestCase):
+
+    @mock.patch(u'requests.Session', mock_session)
+    def setUp(self):
+        self.api_client = client.TimesketchApi(
+            u'http://127.0.0.1', u'test', u'test')
+        self.sketch = self.api_client.get_sketch(1)
+
+    def test_view(self):
+        view = self.sketch.list_views()[0]
+        self.assertIsInstance(view, client.View)
+        self.assertEqual(view.id, 1)
+        self.assertEqual(view.name, u'test')
+
+
+class TimelineTest(unittest.TestCase):
+
+    @mock.patch(u'requests.Session', mock_session)
+    def setUp(self):
+        self.api_client = client.TimesketchApi(
+            u'http://127.0.0.1', u'test', u'test')
+        self.sketch = self.api_client.get_sketch(1)
+
+    def test_timeline(self):
+        timeline = self.sketch.list_timelines()[0]
+        self.assertIsInstance(timeline, client.Timeline)
+        self.assertEqual(timeline.id, 1)
+        self.assertEqual(timeline.name, u'test')
+        self.assertEqual(timeline.index, u'test')
