@@ -922,6 +922,7 @@ class UploadFileResource(ResourceMixin, Resource):
             db_session.add(searchindex)
             db_session.commit()
 
+            timeline = None
             if sketch and sketch.has_permission(current_user, u'write'):
                 timeline = Timeline(
                     name=searchindex.name,
@@ -939,8 +940,14 @@ class UploadFileResource(ResourceMixin, Resource):
                 (file_path, timeline_name, index_name, username),
                 task_id=index_name)
 
-            return self.to_json(
-                searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+            # Return Timeline if it was created.
+            if timeline:
+                return self.to_json(
+                    timeline, status_code=HTTP_STATUS_CODE_CREATED)
+            else:
+                return self.to_json(
+                    searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+
         else:
             raise ApiHTTPError(
                 message=form.errors[u'file'][0],
