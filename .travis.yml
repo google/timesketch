@@ -5,7 +5,7 @@ language: python
 python:
   - "2.7"
 before_install:
-    - docker build -t timesketch .
+    - docker build -t timesketch . -f docker/Dockerfile
 # command to install dependencies
 install:
   - "pip install ."
