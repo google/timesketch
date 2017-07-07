@@ -52,7 +52,7 @@ header {
 }
 
 #subheader {
-    height: 55px;
+    height: 60px;
     background: #fff;
     margin-top:55px;
     border-bottom: 1px solid #f1f1f1;
@@ -74,6 +74,7 @@ header {
 .right-nav {
     padding:10px;
     margin-right:5px;
+    margin-top:2px;
 }
 
 .card {
@@ -424,7 +425,7 @@ rect.bordered {
 .nav-tabs>li>a, .nav-tabs>li>a:hover {
     background: transparent;
     color:#555;
-    padding: 11px 5px 14px 5px;
+    padding: 16px 5px 14px 5px;
     margin-top:7px;
     border: none;
     font-weight: normal;

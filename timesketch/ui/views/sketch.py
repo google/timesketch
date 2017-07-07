@@ -299,6 +299,11 @@ def timelines(sketch_id):
                 not_(SearchIndex.id.in_(searchindices_in_sketch)))
     upload_enabled = current_app.config[u'UPLOAD_ENABLED']
 
+    try:
+        plaso_version = current_app.config[u'PLASO_VERSION']
+    except KeyError:
+        plaso_version = u'Unknown'
+
     # Setup the form
     form = AddTimelineForm()
     form.timelines.choices = set((i.id, i.name) for i in indices.all())
@@ -320,7 +325,7 @@ def timelines(sketch_id):
 
     return render_template(
         u'sketch/timelines.html', sketch=sketch, timelines=indices.all(),
-        form=form, upload_enabled=upload_enabled)
+        form=form, upload_enabled=upload_enabled, plaso_version=plaso_version)
 
 
 @sketch_views.route(

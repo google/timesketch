@@ -246,6 +246,10 @@ limitations under the License.
                     })
                 };
 
+                $scope.addFilterStart= function() {
+                $scope.$emit('datetime-clicked', {datetimeclicked: $scope.event._source.datetime});
+		};
+
                 $scope.getDetail = function() {
                     if ($scope.eventdetail) {return}
                     timesketchApi.getEvent(
