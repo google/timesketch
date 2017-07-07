@@ -13,43 +13,60 @@
 # limitations under the License.
 """Tests for the Timesketch API client"""
 
-import mock
 import unittest
+import mock
 
 from . import client
 
 
 def mock_session():
+    """Mock HTTP requests session."""
+    class MockHeaders(object):
+        """Mock requests HTTP headers."""
+        def __init__(self):
+            super(MockHeaders, self).__init__()
 
-    class MockHeaders:
-        def update(self, *args, **kwargs):
+        # pylint: disable=unused-argument
+        @staticmethod
+        def update(*args, **kwargs):
+            """Mock header update method."""
             return
 
-    class MockSession:
+    class MockSession(object):
+        """Mock HTTP requests session."""
         def __init__(self):
+            """Initializes the mock Session object."""
             self.verify = False
-            self.headers = self.mock_headers()
+            self.headers = MockHeaders()
 
-        def get(self, *args, **kwargs):
+        # pylint: disable=unused-argument
+        @staticmethod
+        def get(*args, **kwargs):
+            """Mock GET request handler."""
             return mock_response(*args, **kwargs)
 
-        def post(self, *args, **kwargs):
+        # pylint: disable=unused-argument
+        @staticmethod
+        def post(*args, **kwargs):
+            """Mock POST request handler."""
             return
-
-        def mock_headers(self):
-            return MockHeaders()
 
     return MockSession()
 
 
+# pylint: disable=unused-argument
 def mock_response(*args, **kwargs):
-    class MockResponse:
+    """Mocks HTTP response."""
+    class MockResponse(object):
+        """Mock HTTP response object."""
         def __init__(self, json_data=None, text_data=None, status_code=200):
+            """Initializes mock object."""
             self.json_data = json_data
             self.text = text_data
             self.status_code = status_code
 
         def json(self):
+            """Mock JSON response."""
             return self.json_data
 
     auth_text_data = u'<input id="csrf_token" name="csrf_token" value="test">'
@@ -106,6 +123,7 @@ def mock_response(*args, **kwargs):
         ]
     }
 
+    # Register API endpoints to the correct mock response data.
     url_router = {
         u'http://127.0.0.1': MockResponse(text_data=auth_text_data),
         u'http://127.0.0.1/api/v1/sketches/': MockResponse(
@@ -114,32 +132,27 @@ def mock_response(*args, **kwargs):
             json_data=sketch_data),
         u'http://127.0.0.1/api/v1/sketches/1/timelines/1': MockResponse(
             json_data=timeline_data),
-
     }
-
-    try:
-        req_obj = url_router.get(args[0])
-    except KeyError:
-        req_obj = MockResponse(None, 404)
-
-    return req_obj
+    return url_router.get(args[0], MockResponse(None, 404))
 
 
 class TimesketchApiTest(unittest.TestCase):
     """Test TimesketchApi"""
-
     @mock.patch(u'requests.Session', mock_session)
     def setUp(self):
+        """Setup test case."""
         self.api_client = client.TimesketchApi(
             u'http://127.0.0.1', u'test', u'test')
 
-    # TODO: Add test for create_sketch()
-
     def test_fetch_resource_data(self):
+        """Test fetch resource."""
         response = self.api_client.fetch_resource_data(u'sketches/')
         self.assertIsInstance(response, dict)
 
+    # TODO: Add test for create_sketch()
+
     def test_get_sketch(self):
+        """Test to get a sketch."""
         sketch = self.api_client.get_sketch(1)
         self.assertIsInstance(sketch, client.Sketch)
         self.assertEqual(sketch.id, 1)
@@ -147,6 +160,7 @@ class TimesketchApiTest(unittest.TestCase):
         self.assertEqual(sketch.description, u'test')
 
     def test_get_sketches(self):
+        """Test to get a list of sketches."""
         sketches = self.api_client.list_sketches()
         self.assertIsInstance(sketches, list)
         self.assertEqual(len(sketches), 1)
@@ -154,9 +168,10 @@ class TimesketchApiTest(unittest.TestCase):
 
 
 class SketchTest(unittest.TestCase):
-
+    """Test Sketch object."""
     @mock.patch(u'requests.Session', mock_session)
     def setUp(self):
+        """Setup test case."""
         self.api_client = client.TimesketchApi(
             u'http://127.0.0.1', u'test', u'test')
         self.sketch = self.api_client.get_sketch(1)
@@ -165,12 +180,14 @@ class SketchTest(unittest.TestCase):
     # TODO: Add test for explore()
 
     def test_get_views(self):
+        """Test to get a view."""
         views = self.sketch.list_views()
         self.assertIsInstance(views, list)
         self.assertEqual(len(views), 2)
         self.assertIsInstance(views[0], client.View)
 
     def test_get_timelines(self):
+        """Test to get a timeline."""
         timelines = self.sketch.list_timelines()
         self.assertIsInstance(timelines, list)
         self.assertEqual(len(timelines), 2)
@@ -178,14 +195,16 @@ class SketchTest(unittest.TestCase):
 
 
 class ViewTest(unittest.TestCase):
-
+    """Test View object."""
     @mock.patch(u'requests.Session', mock_session)
     def setUp(self):
+        """Setup test case."""
         self.api_client = client.TimesketchApi(
             u'http://127.0.0.1', u'test', u'test')
         self.sketch = self.api_client.get_sketch(1)
 
     def test_view(self):
+        """Test View object."""
         view = self.sketch.list_views()[0]
         self.assertIsInstance(view, client.View)
         self.assertEqual(view.id, 1)
@@ -193,14 +212,16 @@ class ViewTest(unittest.TestCase):
 
 
 class TimelineTest(unittest.TestCase):
-
+    """Test Timeline object."""
     @mock.patch(u'requests.Session', mock_session)
     def setUp(self):
+        """Setup test case."""
         self.api_client = client.TimesketchApi(
             u'http://127.0.0.1', u'test', u'test')
         self.sketch = self.api_client.get_sketch(1)
 
     def test_timeline(self):
+        """Test Timeline object."""
         timeline = self.sketch.list_timelines()[0]
         self.assertIsInstance(timeline, client.Timeline)
         self.assertEqual(timeline.id, 1)

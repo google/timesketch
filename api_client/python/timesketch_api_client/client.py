@@ -13,22 +13,22 @@
 # limitations under the License.
 """Timesketch API client."""
 
-import BeautifulSoup
 import json
+import BeautifulSoup
 import requests
 from requests.exceptions import ConnectionError
 
 
 class TimesketchApi(object):
-    """Timesketch API object.
-    
+    """Timesketch API object
+
     Attributes:
         api_root: The full URL to the server API endpoint.
-        session: Authenticated HTTP session. 
+        session: Authenticated HTTP session.
     """
     def __init__(self, host_uri, username, password, verify=True):
         """Initializes the TimesketchApi object.
-        
+
         Args:
             host_uri: URI to the Timesketch server (https://<server>/).
             username: User username.
@@ -38,13 +38,14 @@ class TimesketchApi(object):
         self._host_uri = host_uri
         self.api_root = u'{0:s}/api/v1'.format(host_uri)
         try:
-            self.session = self._create_session(username, password, verify=verify)
+            self.session = self._create_session(
+                username, password, verify=verify)
         except ConnectionError:
             raise ConnectionError(u'Timesketch server unreachable')
 
     def _authenticate_session(self, session, username, password):
         """Post username/password to authenticate the HTTP seesion.
-        
+
         Args:
             session: Instance of requests.Session.
             username: User username.
@@ -56,7 +57,7 @@ class TimesketchApi(object):
 
     def _set_csrf_token(self, session):
         """Retrieve CSRF token from the server and append to HTTP headers.
-                
+
         Args:
             session: Instance of requests.Session.
         """
@@ -70,7 +71,7 @@ class TimesketchApi(object):
 
     def _create_session(self, username, password, verify):
         """Create authenticated HTTP session for server communication.
-        
+
         Args:
             username: User to authenticate as.
             password: User password.
@@ -90,10 +91,10 @@ class TimesketchApi(object):
 
     def fetch_resource_data(self, resource_uri):
         """Make a HTTP GET request.
-        
+
         Args:
             resource_uri: The URI to the resource to be fetched.
-    
+
         Returns:
             Dictionary with the response data.
         """
@@ -103,11 +104,11 @@ class TimesketchApi(object):
 
     def create_sketch(self, name, description=None):
         """Create a new sketch.
-        
+
         Args:
             name: Name of the sketch.
             description: Description of the sketch.
-            
+
         Returns:
             Instance of a Sketch object.
         """
@@ -123,10 +124,10 @@ class TimesketchApi(object):
 
     def get_sketch(self, sketch_id):
         """Get a sketch.
-        
+
         Args:
             sketch_id: Primary key ID of the sketch.
-            
+
         Returns:
             Instance of a Sketch object.
         """
@@ -134,7 +135,7 @@ class TimesketchApi(object):
 
     def list_sketches(self):
         """Get list of all open sketches that the user has access to.
-        
+
         Returns:
             List of Sketch objects instances.
         """
@@ -151,7 +152,7 @@ class TimesketchApi(object):
 
 class Sketch(object):
     """Timesketch sketch object.
-    
+
     A sketch in Timesketch is a collection of one or more timelines. It has
     access control and its own namespace for things like labels and comments.
 
@@ -161,7 +162,7 @@ class Sketch(object):
     """
     def __init__(self, sketch_id, api, sketch_name=None):
         """Initializes the Sketch object.
-        
+
         Args:
             sketch_id: Primary key ID of the sketch.
             api: An instance of TimesketchApi object.
@@ -174,7 +175,7 @@ class Sketch(object):
 
     def _lazyload_data(self, refresh_cache=False):
         """Load resource data once and cache the result.
-        
+
         Args:
             refresh_cache: Boolean indicating if to update cache.
 
@@ -194,7 +195,7 @@ class Sketch(object):
     @property
     def name(self):
         """Property that returns sketch name.
-        
+
         Returns:
             Sketch name as string.
         """
@@ -225,7 +226,7 @@ class Sketch(object):
 
     def list_views(self):
         """List all saved views for this sketch.
-        
+
         Returns:
             List of views (instances of View objects)
         """
@@ -257,12 +258,11 @@ class Sketch(object):
 
     def upload(self, timeline_name, file_path):
         """Upload a CSV or Plaso file to the server for indexing.
-        
-        
+
         Args:
             timeline_name: Name of the resulting timeline.
             file_path: Path to the file to be uploaded.
-            
+
         Returns:
             Timeline object instance.
         """
@@ -283,17 +283,16 @@ class Sketch(object):
     def explore(self, query_string=None, query_dsl=None, query_filter=None,
                 view=None):
         """Explore the sketch.
-        
+
         Args:
             query_string: Elasticsearch query string.
             query_dsl: Elasticsearch query DSL as JSON string.
             query_filter: Filter for the query as JSON string.
             view: View object instance (optional).
-        
+
         Returns:
             Dictionary with query results.
         """
-
         default_filter = {
             u'time_start': None,
             u'time_end': None,
@@ -327,14 +326,14 @@ class Sketch(object):
 
 class BaseSketchResource(object):
     """Base class for resource objects related to a sketch.
-    
+
     Attributes:
         sketch: Sketch object instance.
         resource_url: URL to the sketch resource endpoint.
     """
     def __init__(self, sketch, resource_uri):
         """Initializes the base Sketch resource object.
-        
+
         Args:
             sketch: Sketch object instance.
             resource_uri: URI to the resource endpoint.
@@ -365,14 +364,14 @@ class BaseSketchResource(object):
 
 class View(BaseSketchResource):
     """Saved view object.
-    
+
     Attributes:
         id: Primary key of the view.
         name: Name of the view.
     """
     def __init__(self, view_id, view_name, sketch):
         """Initializes the View object.
-        
+
         Args:
             view_id: Primary key ID for the view.
             view_name: The name of the view.
@@ -422,7 +421,7 @@ class Timeline(BaseSketchResource):
     """
     def __init__(self, timeline_id, sketch, name=None, searchindex=None):
         """Initializes the Timeline object.
-        
+
         Args:
             timeline_id: The primary key ID of the timeline.
             sketch: Instance of a Sketch object.
