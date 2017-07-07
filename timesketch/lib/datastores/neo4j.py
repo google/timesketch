@@ -19,13 +19,13 @@ from neo4jrestclient.constants import DATA_GRAPH
 
 class Neo4jDataStore(object):
     """Implements the Neo4j datastore.
-    
+
     Attributes:
         client: Instance of Neo4j GraphDatabase
     """
     def __init__(self, username, password, host=u'127.0.0.1', port=7474):
         """Create a neo4j client.
-        
+
         Args:
             username: Neo4j username
             password: Neo4j password
@@ -40,10 +40,10 @@ class Neo4jDataStore(object):
     @staticmethod
     def _get_formatter(output_format):
         """Get format class instance from format name.
-        
+
         Args:
             output_format: Name as string of output format
-            
+
         Returns:
             Output formatter object
         """
@@ -59,12 +59,12 @@ class Neo4jDataStore(object):
 
     def search(self, query, output_format=None, return_rows=False):
         """Search the graph.
-        
+
         Args:
             query: A cypher query
             output_format: Name of the output format to use
             return_rows: Boolean indicating if rows should be returned
-            
+
         Returns:
             Dictionary with formatted query result
         """
@@ -79,7 +79,7 @@ class Neo4jDataStore(object):
 
 class OutputFormatterBaseClass(object):
     """Base class for output formatter.
-    
+
     Attributes:
         schema: Dictionary structure to return
     """
@@ -90,11 +90,11 @@ class OutputFormatterBaseClass(object):
 
     def format(self, data, return_rows):
         """Format Neo4j query result.
-        
+
         Args:
             data: Neo4j query result dictionary
             return_rows: Boolean indicating if rows should be returned
-            
+
         Returns:
             Dictionary with formatted result
         """
@@ -106,10 +106,10 @@ class OutputFormatterBaseClass(object):
 
     def format_graph(self, graph):
         """Format the Neo4j graph result.
-        
+
         Args:
             graph: Dictionary with Neo4j graph result
-            
+
         Returns:
             Dictionary with formatted graph
         """
@@ -132,7 +132,7 @@ class OutputFormatterBaseClass(object):
     # pylint: disable=unused-argument
     def format_node(self, node):
         """Format a graph node.
-        
+
         Args:
             node: A dictionary with one node
         """
@@ -150,7 +150,7 @@ class OutputFormatterBaseClass(object):
 
 class Neo4jOutputFormatter(OutputFormatterBaseClass):
     """Neo4j raw formatter.
-    
+
     This formatter will return the original Neo4j result
     without any formatting.
     """
@@ -185,7 +185,7 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
 
         Args:
             node: A dictionary with one node
-            
+
         Returns:
             Dictionary with a Cytoscape formatted node
         """
