@@ -23,7 +23,7 @@ if test $? -ne 0; then
 fi
 echo ""
 echo "* Run python unit tests"
-nosetests --with-coverage --cover-package=timesketch
+nosetests --exe --with-coverage --cover-package=timesketch
 rm .coverage
 if test $? -ne 0; then
     exit 1
