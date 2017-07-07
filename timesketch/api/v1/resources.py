@@ -621,7 +621,8 @@ class ExploreResource(ResourceMixin, Resource):
 
             result = self.datastore.search(
                 sketch_id, form.query.data, query_filter, query_dsl, indices,
-                aggregations=None, return_results=True)
+                aggregations=None, return_results=True, return_fields=None,
+                enable_scroll=False)
 
             # Get labels for each event that matches the sketch.
             # Remove all other labels.
