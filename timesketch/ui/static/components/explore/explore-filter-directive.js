@@ -44,7 +44,7 @@ limitations under the License.
             require: '^tsSearch',
             link: function(scope, elem, attrs, ctrl) {
                 scope.applyFilter = function() {
-                    scope.parseFilterDate(scope.filter.time_start)
+                    scope.parseFilterDate(scope.filter.time_start, scope.filter.time_end)
                     ctrl.search(scope.query, scope.filter, scope.queryDsl)
                 };
 
@@ -71,8 +71,8 @@ limitations under the License.
                     scope.meta.noisy = false;
                 }
 
-                scope.parseFilterDate = function(datevalue){  
-                    if (datevalue != null) {
+                scope.parseFilterDate = function(datevalue, datevalue_end){  
+                        if (datevalue != null) {
                         var datetimetemplate="YYYY-MM-DDTHH:mm:ss";
                         //Parse out 'T' date time seperator needed by ELK but not by moment.js
                         datevalue=datevalue.replace(/T/g,' ');
@@ -83,7 +83,7 @@ limitations under the License.
                         if (match != null) {
                             var filterbase = match[1] 
                             var filteroffset = match[2]
-                            var filteramount = match[3]
+                            var filteramount = match[z3]
                             var filtertype = match[4]
 
                             filterbase = moment(filterbase,"YYYY-MM-DD HH:mm:ssZZ");
@@ -100,7 +100,11 @@ limitations under the License.
                                 scope.filter.time_start = moment.utc(filterbase).subtract(filteramount,filtertype).format(datetimetemplate);
                                 scope.filter.time_end = moment.utc(filterbase).add(filteramount,filtertype).format(datetimetemplate);
                             }
-                        } 
+                        } else {
+                            if (datevalue_end == null || datevalue_end == '') {
+                                scope.filter.time_end = scope.filter.time_start;
+                            }
+                        }   
                     }
                 }
 
