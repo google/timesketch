@@ -55,27 +55,27 @@ class ElasticsearchDataStore(datastore.DataStore):
             Elasticsearch query as a dictionary.
         """
         query_dict = {
-            "query": {
-                "nested": {
-                    "query": {
-                        "bool": {
-                            "must": [
+            u'query': {
+                u'nested': {
+                    u'query': {
+                        u'bool': {
+                            u'must': [
                                 {
-                                    "term": {
-                                        "timesketch_label.name": label_name
+                                    u'term': {
+                                        u'timesketch_label.name': label_name
                                     }
                                 },
                                 {
-                                    "term": {
-                                        "timesketch_label.sketch_id": sketch_id
+                                    u'term': {
+                                        u'timesketch_label.sketch_id': sketch_id
                                     }
                                 }
                             ]
                         }
                     },
-                    "path": "timesketch_label"
-                 }
-             }
+                    u'path': u'timesketch_label'
+                }
+            }
         }
         return query_dict
 
@@ -199,7 +199,8 @@ class ElasticsearchDataStore(datastore.DataStore):
             # post_filter happens after aggregation so we need to move the
             # filter to the query instead.
             if query_dsl.get(u'post_filter', None):
-                query_dsl[u'query'][u'bool'][u'filter'] = query_dsl[u'post_filter']
+                query_dsl[
+                    u'query'][u'bool'][u'filter'] = query_dsl[u'post_filter']
                 query_dsl.pop(u'post_filter', None)
             query_dsl[u'aggregations'] = aggregations
         return query_dsl

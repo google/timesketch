@@ -1145,6 +1145,7 @@ class TimelineListResource(ResourceMixin, Resource):
 
 
 class TimelineResource(ResourceMixin, Resource):
+    """Resource to get a timeline."""
     @login_required
     def delete(self, sketch_id, timeline_id):
         """Handles DELETE request to the resource.
