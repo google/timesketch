@@ -83,10 +83,10 @@ limitations under the License.
                         if (match != null) {
                             var filterbase = match[1] 
                             var filteroffset = match[2]
-                            var filteramount = match[z3]
+                            var filteramount = match[3]
                             var filtertype = match[4]
 
-                            filterbase = moment(filterbase,"YYYY-MM-DD HH:mm:ssZZ");
+                            filterbase = moment.utc(filterbase,"YYYY-MM-DD HH:mm:ssZZ");
                             //calculate filter start and end datetimes
                             if (filteroffset == '+') {
                                 scope.filter.time_start = moment.utc(filterbase).format(datetimetemplate);
