@@ -24,7 +24,8 @@ RUN cp /usr/local/share/timesketch/timesketch.conf /etc
 RUN chmod 600 /etc/timesketch.conf
 
 # Copy the entrypoint script into the container
-COPY docker-entrypoint.sh /
+COPY docker/docker-entrypoint.sh /
+RUN chmod a+x /docker-entrypoint.sh
 
 # Expose the port used by Timesketch
 EXPOSE 5000
