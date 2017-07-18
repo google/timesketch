@@ -98,6 +98,7 @@ class TimesketchApi(object):
         Returns:
             Dictionary with the response data.
         """
+        # TODO: Catch HTTP errors and add descriptive message string.
         resource_url = u'{0:s}/{1:s}'.format(self.api_root, resource_uri)
         response = self.session.get(resource_url)
         return response.json()
