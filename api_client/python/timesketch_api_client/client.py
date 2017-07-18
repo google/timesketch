@@ -189,7 +189,11 @@ class Sketch(object):
 
     @property
     def data(self):
-        """Property to fetch sketch data."""
+        """Property to fetch sketch data.
+
+        Returns:
+            Dictionary with resource data.
+        """
         return self._lazyload_data()
 
     @property
