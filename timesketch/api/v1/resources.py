@@ -79,7 +79,7 @@ class ResourceMixin(object):
     """Mixin for API resources."""
     # Schemas for database model resources
 
-    searchindex_status_fields = {
+    status_fields = {
         u'id': fields.Integer,
         u'status': fields.String,
         u'created_at': fields.DateTime,
@@ -90,7 +90,7 @@ class ResourceMixin(object):
         u'id': fields.Integer,
         u'name': fields.String,
         u'index_name': fields.String,
-        u'status': fields.Nested(searchindex_status_fields),
+        u'status': fields.Nested(status_fields),
         u'deleted': fields.Boolean,
         u'created_at': fields.DateTime,
         u'updated_at': fields.DateTime
@@ -140,6 +140,7 @@ class ResourceMixin(object):
         u'description': fields.String,
         u'user': fields.Nested(user_fields),
         u'timelines': fields.Nested(timeline_fields),
+        u'status': fields.Nested(status_fields),
         u'created_at': fields.DateTime,
         u'updated_at': fields.DateTime
     }
@@ -256,7 +257,9 @@ class SketchListResource(ResourceMixin, Resource):
             List of sketches (instance of flask.wrappers.Response)
         """
         # TODO: Handle offset parameter
-        sketches = Sketch.all_with_acl()
+        sketches = Sketch.all_with_acl().filter(
+            not_(Sketch.Status.status == u'deleted'),
+            Sketch.Status.parent).order_by(Sketch.updated_at.desc())
         paginated_result = sketches.paginate(1, 10, False)
         meta = {
             u'next': paginated_result.next_num,
@@ -634,7 +637,8 @@ class ExploreResource(ResourceMixin, Resource):
 
             result = self.datastore.search(
                 sketch_id, form.query.data, query_filter, query_dsl, indices,
-                aggregations=None, return_results=True)
+                aggregations=None, return_results=True, return_fields=None,
+                enable_scroll=False)
 
             # Get labels for each event that matches the sketch.
             # Remove all other labels.
@@ -935,6 +939,7 @@ class UploadFileResource(ResourceMixin, Resource):
             db_session.add(searchindex)
             db_session.commit()
 
+            timeline = None
             if sketch and sketch.has_permission(current_user, u'write'):
                 timeline = Timeline(
                     name=searchindex.name,
@@ -952,8 +957,14 @@ class UploadFileResource(ResourceMixin, Resource):
                 (file_path, timeline_name, index_name, username),
                 task_id=index_name)
 
-            return self.to_json(
-                searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+            # Return Timeline if it was created.
+            if timeline:
+                return self.to_json(
+                    timeline, status_code=HTTP_STATUS_CODE_CREATED)
+            else:
+                return self.to_json(
+                    searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+
         else:
             raise ApiHTTPError(
                 message=form.errors[u'file'][0],
@@ -1161,7 +1172,27 @@ class TimelineListResource(ResourceMixin, Resource):
 
 
 class TimelineResource(ResourceMixin, Resource):
-    """Resource to get a timeline."""
+    """Resource to get timeline."""
+    @login_required
+    def get(self, sketch_id, timeline_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            timeline_id: Integer primary key for a timeline database model
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        timeline = Timeline.query.get(timeline_id)
+
+        # Check that this timeline belongs to the sketch
+        if timeline.sketch_id != sketch.id:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+
+        if not sketch.has_permission(user=current_user, permission=u'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
+
+        return self.to_json(timeline)
+
     @login_required
     def delete(self, sketch_id, timeline_id):
         """Handles DELETE request to the resource.

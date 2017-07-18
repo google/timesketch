@@ -41,7 +41,8 @@ def heatmap(
 
     search_result = es_client.search(
         sketch_id, query_string, query_filter, query_dsl, indices,
-        aggregations=aggregation, return_results=False)
+        aggregations=aggregation, return_results=False, return_fields=None,
+        enable_scroll=False)
 
     try:
         aggregation_result = search_result[u'aggregations']

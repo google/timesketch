@@ -35,9 +35,8 @@ class DataStore(object):
             indices: List of indices to query
             aggregations: Dict of Elasticsearch aggregations
             return_results: Boolean indicating if results should be returned
-            return_fields: List of fields to be returned
+            return_fields: List of fields to return
             enable_scroll: If Elasticsearch scroll API should be used
-
         """
 
     @abc.abstractmethod
