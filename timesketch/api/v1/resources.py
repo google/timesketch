@@ -53,6 +53,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+from timesketch.lib.datastores.neo4j import Neo4jDataStore
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.lib.forms import AddTimelineForm
 from timesketch.lib.forms import AggregationForm
@@ -62,6 +63,7 @@ from timesketch.lib.forms import EventAnnotationForm
 from timesketch.lib.forms import ExploreForm
 from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
+from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.utils import get_validated_indices
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
@@ -188,6 +190,20 @@ class ResourceMixin(object):
         return ElasticsearchDataStore(
             host=current_app.config[u'ELASTIC_HOST'],
             port=current_app.config[u'ELASTIC_PORT'])
+
+    @property
+    def graph_datastore(self):
+        """Property to get an instance of the graph database backend.
+
+        Returns:
+            Instance of timesketch.lib.datastores.neo4j.Neo4jDatabase
+        """
+        return Neo4jDataStore(
+            host=current_app.config[u'NEO4J_HOST'],
+            port=current_app.config[u'NEO4J_PORT'],
+            username=current_app.config[u'NEO4J_USERNAME'],
+            password=current_app.config[u'NEO4J_PASSWORD']
+        )
 
     def to_json(
             self, model, model_fields=None, meta=None,
@@ -1167,3 +1183,35 @@ class TimelineResource(ResourceMixin, Resource):
         sketch.timelines.remove(timeline)
         db_session.commit()
         return HTTP_STATUS_CODE_OK
+
+
+class GraphResource(ResourceMixin, Resource):
+    """Resource to get result from graph query."""
+    @login_required
+    def post(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            Graph in JSON (instance of flask.wrappers.Response)
+        """
+        # Check access to the sketch
+        Sketch.query.get_with_acl(sketch_id)
+
+        form = GraphExploreForm.build(request)
+        if form.validate_on_submit():
+            query = form.query.data
+            output_format = form.output_format.data
+            result = self.graph_datastore.search(
+                query, output_format=output_format)
+            schema = {
+                u'meta': {},
+                u'objects': [{
+                    u'graph': result[u'graph'],
+                    u'rows': result[u'rows'],
+                    u'stats': result[u'stats']
+                }]
+            }
+            return jsonify(schema)

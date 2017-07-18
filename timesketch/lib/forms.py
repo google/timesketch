@@ -156,6 +156,12 @@ class ExploreForm(BaseForm):
     dsl = StringField(u'DSL')
 
 
+class GraphExploreForm(BaseForm):
+    """Form used to search the graph datastore."""
+    query = StringField(u'Query')
+    output_format = StringField(u'Output format')
+
+
 class AggregationForm(ExploreForm):
     """Form used to search the datastore."""
     aggtype = StringField(u'Aggregation type')
