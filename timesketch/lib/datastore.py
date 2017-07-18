@@ -31,6 +31,7 @@ class DataStore(object):
             sketch_id: Integer of sketch primary key
             query: Query string
             query_filter: Dictionary containing filters to apply
+            query_dsl: Dictionary containing Elasticsearch DSL query
             indices: List of indices to query
             aggregations: Dict of Elasticsearch aggregations
             return_results: Boolean indicating if results should be returned

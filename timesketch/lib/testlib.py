@@ -119,7 +119,7 @@ class MockDataStore(datastore.DataStore):
     def search(
             self, unused_sketch_id, unused_query, unused_query_filter,
             unused_query_dsl, unused_indices, aggregations, return_results,
-            return_fields, enable_scroll):
+            return_fields=None, enable_scroll=False):
         """Mock a search query.
 
         Returns:
@@ -140,6 +140,76 @@ class MockDataStore(datastore.DataStore):
             label, toggle=False):
         """Mock adding a label to an event."""
         return
+
+
+class MockGraphDatabase(object):
+    """A mock implementation of a Datastore."""
+    def __init__(self, host, username, password):
+        """Initialize the datastore.
+
+        Args:
+            host: Neo4j host
+            username: Neo4j username
+            password: Neo4j password
+        """
+        self.host = host
+        self.username = username
+        self.password = password
+
+    class MockQuerySequence(object):
+        """A mock implementation of a QuerySequence."""
+        MOCK_GRAPH = [{
+            u'nodes': [
+                {
+                    u'id': u'1',
+                    u'labels': [
+                        u'Test'
+                    ],
+                    u'properties': {
+                        u'name': u'test',
+                        u'uid': u'123456'
+                    }
+                },
+                {
+                    u'id': u'2',
+                    u'labels': [
+                        u'Test'
+                    ],
+                    u'properties': {
+                        u'name': u'test'
+                    }
+                }
+            ],
+            u'relationships': [
+                {
+                    u'endNode': u'2',
+                    u'id': u'3',
+                    u'properties': {
+                        u'human_readable': u'test',
+                        u'type': u'test'
+                    },
+                    u'startNode': u'1',
+                    u'type': u'TEST'
+                }
+            ]
+        }]
+        MOCK_ROWS = {}
+        MOCK_STATS = {}
+
+        def __init__(self):
+            self.graph = self.MOCK_GRAPH
+            self.rows = self.MOCK_ROWS
+            self.stats = self.MOCK_ROWS
+
+    # pylint: disable=unused-argument
+    def query(self, *args, **kwargs):
+        """Mock a search query.
+
+        Returns:
+            A MockQuerySequence instance.
+        """
+
+        return self.MockQuerySequence()
 
 
 class BaseTest(TestCase):

@@ -27,6 +27,10 @@ if [ "$1" = 'timesketch' ]; then
 		echo "Please pass values for the ELASTIC_ADDRESS and ELASTIC_PORT environment variables"
 	fi
 
+	# Replace Redis Hostname
+	sed -i "s#^CELERY_BROKER_URL=.*#CELERY_BROKER_URL='redis://redis:6379'#" /etc/timesketch.conf
+	sed -i "s#^CELERY_RESULT_BACKEND=.*#CELERY_RESULT_BACKEND='redis://redis:6379'#" /etc/timesketch.conf
+	
 	# Set up web credentials
 	if [ -z ${TIMESKETCH_USER+x} ]; then
 		TIMESKETCH_USER="admin"

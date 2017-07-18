@@ -66,6 +66,7 @@ setup(
         u'redis',
         u'blinker',
         u'elasticsearch',
-        u'python-dateutil',
+        u'neo4jrestclient',
+        u'python-dateutil'
     ])
 )
