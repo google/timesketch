@@ -44,17 +44,12 @@ mv /etc/timesketch.conf.new /etc/timesketch.conf
 # Java is needed for Elasticsearch
 apt-get install -y openjdk-8-jre-headless
 
-# Install Elasticsearch 2.x
-wget https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.4.4/elasticsearch-2.4.4.deb
-echo "27074f49a251bc87795822e803de3ddecb275125 *elasticsearch-2.4.4.deb" | sha1sum -c -
-dpkg -i ./elasticsearch-2.4.4.deb
-
 # Install Elasticsearch 5.x
-#apt-get install apt-transport-https
-#wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-#echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-5.x.list
-#apt-get update
-#apt-get install elasticsearch
+apt-get install -y apt-transport-https
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
+echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | tee -a /etc/apt/sources.list.d/elastic-5.x.list
+apt-get update
+apt-get install -y elasticsearch
 
 # Copy groovy scripts
 cp /usr/local/src/timesketch/contrib/*.groovy /etc/elasticsearch/scripts/
