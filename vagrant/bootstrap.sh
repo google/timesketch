@@ -59,6 +59,15 @@ mkdir -p /var/lib/timesketch/
 chown ubuntu /var/lib/timesketch
 cp /vagrant/timesketch.conf /etc/
 
+# Enable Celery task manager (for uploads)
+mkdir -p /var/{lib,log,run}/celery
+chown ubuntu /var/{lib,log,run}/celery
+cp /vagrant/celery.service /etc/systemd/system/
+cp /vagrant/celery.conf /etc/
+/bin/systemctl daemon-reload
+/bin/systemctl enable celery.service
+/bin/systemctl start celery.service
+
 # Set session key for Timesketch
 sed s/"SECRET_KEY = u'this is just a dev environment'"/"SECRET_KEY = u'${SECRET_KEY}'"/ /etc/timesketch.conf > /etc/timesketch.conf.new
 mv /etc/timesketch.conf.new /etc/timesketch.conf
