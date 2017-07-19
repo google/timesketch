@@ -20,13 +20,26 @@ echo "create database timesketch owner timesketch;" | sudo -u postgres psql
 sudo -u postgres sh -c 'echo "local all timesketch md5" >> /etc/postgresql/9.5/main/pg_hba.conf'
 
 # Install Timesketch
-apt-get install -y python-pip python-dev libffi-dev
+apt-get install -y python-pip python-dev libffi-dev redis-server
 pip install --upgrade pip
 pip install -e /usr/local/src/timesketch/
 pip install gunicorn
 
 # Timesketch development dependencies
 pip install pylint nose flask-testing coverage
+
+# Initialize Timesketch
+mkdir -p /var/lib/timesketch/
+chown ubuntu /var/lib/timesketch
+cp /vagrant/timesketch.conf /etc/
+
+# Set session key for Timesketch
+sed s/"SECRET_KEY = u'this is just a dev environment'"/"SECRET_KEY = u'${SECRET_KEY}'"/ /etc/timesketch.conf > /etc/timesketch.conf.new
+mv /etc/timesketch.conf.new /etc/timesketch.conf
+
+# Configure the DB password
+sed s/"timesketch:foobar@localhost"/"timesketch:${PSQL_PW}@localhost"/ /etc/timesketch.conf > /etc/timesketch.conf.new
+mv /etc/timesketch.conf.new /etc/timesketch.conf
 
 # Java is needed for Elasticsearch
 apt-get install -y openjdk-8-jre-headless
@@ -54,18 +67,14 @@ cp /usr/local/src/timesketch/contrib/*.groovy /etc/elasticsearch/scripts/
 # Install Plaso
 apt-get install -y python-plaso
 
-# Initialize Timesketch
-mkdir -p /var/lib/timesketch/
-chown ubuntu /var/lib/timesketch
-cp /vagrant/timesketch.conf /etc/
-
-# Set session key for Timesketch
-sed s/"SECRET_KEY = u'this is just a dev environment'"/"SECRET_KEY = u'${SECRET_KEY}'"/ /etc/timesketch.conf > /etc/timesketch.conf.new
-mv /etc/timesketch.conf.new /etc/timesketch.conf
-
-# Configure the DB password
-sed s/"timesketch:foobar@localhost"/"timesketch:${PSQL_PW}@localhost"/ /etc/timesketch.conf > /etc/timesketch.conf.new
-mv /etc/timesketch.conf.new /etc/timesketch.conf
+# Enable Celery task manager (for uploads)
+mkdir -p /var/{lib,log,run}/celery
+chown ubuntu /var/{lib,log,run}/celery
+cp /vagrant/celery.service /etc/systemd/system/
+cp /vagrant/celery.conf /etc/
+/bin/systemctl daemon-reload
+/bin/systemctl enable celery.service
+/bin/systemctl start celery.service
 
 # Create test user
 sudo -u ubuntu tsctl add_user --username spock --password spock
