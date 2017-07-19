@@ -56,30 +56,24 @@ class ElasticsearchDataStore(datastore.DataStore):
         """
         query_dict = {
             u'query': {
-                u'filtered': {
-                    u'filter': {
-                        u'nested': {
-                            u'filter': {
-                                u'bool': {
-                                    u'must': [
-                                        {
-                                            u'term': {
-                                                u'timesketch_label.name':
-                                                    label_name
-                                            }
-                                        },
-                                        {
-                                            u'term': {
-                                                u'timesketch_label.sketch_id':
-                                                    sketch_id
-                                            }
-                                        }
-                                    ]
+                u'nested': {
+                    u'query': {
+                        u'bool': {
+                            u'must': [
+                                {
+                                    u'term': {
+                                        u'timesketch_label.name': label_name
+                                    }
+                                },
+                                {
+                                    u'term': {
+                                        u'timesketch_label.sketch_id': sketch_id
+                                    }
                                 }
-                            },
-                            u'path': u'timesketch_label'
+                            ]
                         }
-                    }
+                    },
+                    u'path': u'timesketch_label'
                 }
             }
         }
@@ -118,8 +112,8 @@ class ElasticsearchDataStore(datastore.DataStore):
         field_aggregation = {
             u'field_aggregation': {
                 u'terms': {
-                    u'field': field_name,
-                    u'size': 0}
+                    u'field': u'{0:s}.keyword'.format(field_name)
+                }
             }
         }
         return field_aggregation
@@ -150,29 +144,38 @@ class ElasticsearchDataStore(datastore.DataStore):
             if not query_dsl:
                 query_dsl = {
                     u'query': {
-                        u'filtered': {
-                            u'query': {
+                        u'bool': {
+                            u'must': [{
                                 u'query_string': {
                                     u'query': query_string
                                 }
-                            }
+                            }]
                         }
                     }
                 }
             if query_filter.get(u'time_start', None):
-                query_dsl[u'query'][u'filtered'][u'filter'] = {
-                    u'range': {
-                        u'datetime': {
-                            u'gte': query_filter[u'time_start'],
-                            u'lte': query_filter[u'time_end']
-                        }
+                # TODO(jberggren): Add support for multiple time ranges.
+                query_dsl[u'query'][u'bool'][u'filter'] = {
+                    u'bool': {
+                        u'should': [
+                            {
+                                u'range': {
+                                    u'datetime': {
+                                        u'gte': query_filter[u'time_start'],
+                                        u'lte': query_filter[u'time_end']
+                                    }
+                                }
+                            }
+                        ]
                     }
                 }
             if query_filter.get(u'exclude', None):
-                query_dsl[u'filter'] = {
-                    u'not': {
-                        u'terms': {
-                            u'data_type': query_filter[u'exclude']
+                query_dsl[u'post_filter'] = {
+                    u'bool': {
+                        u'must_not': {
+                            u'terms': {
+                                u'data_type': query_filter[u'exclude']
+                            }
                         }
                     }
                 }
@@ -193,9 +196,13 @@ class ElasticsearchDataStore(datastore.DataStore):
 
         # Add any pre defined aggregations
         if aggregations:
-            if isinstance(aggregations, dict):
-                query_dsl[u'aggregations'] = aggregations
-
+            # post_filter happens after aggregation so we need to move the
+            # filter to the query instead.
+            if query_dsl.get(u'post_filter', None):
+                query_dsl[
+                    u'query'][u'bool'][u'filter'] = query_dsl[u'post_filter']
+                query_dsl.pop(u'post_filter', None)
+            query_dsl[u'aggregations'] = aggregations
         return query_dsl
 
     def search(
@@ -328,6 +335,7 @@ class ElasticsearchDataStore(datastore.DataStore):
             script_name = u'toggle_label'
         script = {
             u'script': {
+                u'lang': u'groovy',
                 u'file': script_name,
                 u'params': {
                     u'timesketch_label': {
