@@ -20,7 +20,7 @@ echo "create database timesketch owner timesketch;" | sudo -u postgres psql
 sudo -u postgres sh -c 'echo "local all timesketch md5" >> /etc/postgresql/9.5/main/pg_hba.conf'
 
 # Install Timesketch
-apt-get install -y python-pip python-dev libffi-dev
+apt-get install -y python-pip python-dev libffi-dev, redis-server
 pip install --upgrade pip
 pip install -e /usr/local/src/timesketch/
 pip install gunicorn

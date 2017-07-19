@@ -19,7 +19,6 @@ Vagrant.configure(2) do |config|
 
   # VirtualBox configuration
   config.vm.provider "virtualbox" do |vb|
-    vb.name = "timesketch-dev"
     vb.cpus = 2
     vb.memory = 4096
   end
