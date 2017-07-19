@@ -71,6 +71,23 @@ cp /vagrant/celery.conf /etc/
 /bin/systemctl enable celery.service
 /bin/systemctl start celery.service
 
+# Install Neo4j graph database
+wget -O - https://debian.neo4j.org/neotechnology.gpg.key | apt-key add -
+echo "deb https://debian.neo4j.org/repo stable/" | tee /etc/apt/sources.list.d/neo4j.list
+apt-get update
+apt-get install -y neo4j
+
+# Enable cypher-shell
+echo "dbms.shell.enabled=true" >> /etc/neo4j/neo4j.conf
+
+# Expose Neo4j to the host, for development purposes
+echo "dbms.connectors.default_listen_address=0.0.0.0" >> /etc/neo4j/neo4j.conf
+
+# Start Neo4j automatically
+/bin/systemctl daemon-reload
+/bin/systemctl enable neo4j
+/bin/systemctl start neo4j
+
 # Create test user
 sudo -u ubuntu tsctl add_user --username spock --password spock
 
