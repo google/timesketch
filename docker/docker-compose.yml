@@ -4,33 +4,66 @@ services:
     build:
       context: ../
       dockerfile: ./docker/Dockerfile
+    depends_on:
+      - postgres
     ports:
       - "5000:5000"
-    links:
-      - elasticsearch
-      - postgres
-      - redis
     environment:
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password
       - POSTGRES_ADDRESS=postgres
       - POSTGRES_PORT=5432
-      - ELASTIC_ADDRESS=elastic
+      - ELASTIC_ADDRESS=elasticsearch
       - ELASTIC_PORT=9200
+      - REDIS_ADDRESS=redis
+      - REDIS_PORT=6379
+      - NEO4J_ADDRESS=neo4j
+      - NEO4J_PORT=7474
+    volumes:
+      - timelines:/timelines
     restart: always
+
+  worker:
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+    command: worker
+    environment:
+      - POSTGRES_USER=timesketch
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_ADDRESS=postgres
+      - POSTGRES_PORT=5432
+      - ELASTIC_ADDRESS=elasticsearch
+      - ELASTIC_PORT=9200
+      - REDIS_ADDRESS=redis
+      - REDIS_PORT=6379
+      - NEO4J_ADDRESS=neo4j
+      - NEO4J_PORT=7474
+    volumes:
+      - timelines:/timelines
+    restart: always
+
   elasticsearch:
-    image: elasticsearch:2.4
-    ports:
-      - "9200:9200"
-      - "9300:9300"
+    image: elasticsearch:5-alpine
+    volumes:
+      - ../contrib:/usr/share/elasticsearch/config/scripts
     restart: always
+
   postgres:
     image: postgres:9.6
-    ports:
-      - "5432:5432"
     environment:
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password
     restart: always
+
   redis:
     image: redis:3
+
+  neo4j:
+    image: neo4j
+    environment:
+      - NEO4J_AUTH=none
+    restart: always
+
+volumes:
+  timelines:
