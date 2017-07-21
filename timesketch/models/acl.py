@@ -220,7 +220,7 @@ class AccessControlMixin(object):
             permission.
         """
         public_ace = self.is_public
-        if public_ace:
+        if public_ace and permission == u'read':
             return public_ace
         return self._get_ace(permission=unicode(permission), user=user)
 
