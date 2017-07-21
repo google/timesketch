@@ -17,13 +17,15 @@
         {% endif %}
     </div>
 
-    <button style="margin-left:10px;" data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
-        {% if sketch.is_public %}
-            <i class="fa fa-globe"></i> Share</button>
-        {% else %}
-            <i class="fa fa-lock"></i> Share</button>
-        {% endif %}
-    </div>
+    {% if current_user == sketch.user %}
+        <button style="margin-left:10px;" data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
+            {% if sketch.is_public %}
+                <i class="fa fa-globe"></i> Share</button>
+            {% else %}
+                <i class="fa fa-lock"></i> Share</button>
+            {% endif %}
+        </div>
+    {% endif %}
 {% endblock %}
 
 {% block main %}
