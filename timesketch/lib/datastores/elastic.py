@@ -259,8 +259,10 @@ class ElasticsearchDataStore(datastore.DataStore):
 
         # Default search type for elasticsearch is query_then_fetch.
         search_type = u'query_then_fetch'
+
+        # Set limit to 0 to not return any results
         if not return_results:
-            search_type = u'count'
+            LIMIT_RESULTS = 0
 
         # Suppress the lint error because elasticsearch-py adds parameters
         # to the function with a decorator and this makes pylint sad.
