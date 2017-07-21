@@ -38,7 +38,8 @@
                 </div>
             </div>
         {% endif %}
-        {% if not sketch.timelines and not timelines %}
+
+        {% if sketch.has_permission(user=current_user, permission='write') and not sketch.timelines and not timelines%}
             <div class="row">
                 <div class="col-md-12">
                     <div class="text-center" style="padding:100px;">
