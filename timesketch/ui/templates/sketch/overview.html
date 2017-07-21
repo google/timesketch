@@ -264,7 +264,7 @@
             </div>
         </div>
 
-        {% if not sketch.timelines %}
+        {% if sketch.has_permission(user=current_user, permission='write') and not sketch.timelines %}
             <div class="row">
                 <div class="col-md-12">
                     <div class="card">

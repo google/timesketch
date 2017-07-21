@@ -12,13 +12,7 @@
 
 {% block main %}
     <div class="container">
-        {% if sketch.timelines %}
-            <div class="row">
-                <div class="col-md-12">
-                    <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}" named-view="{{ named_view }}" searchtemplate-id="{{ searchtemplate_id }}" autoload="true" redirect="true"></ts-search>
-                </div>
-            </div>
-        {% else %}
+        {% if sketch.has_permission(user=current_user, permission='write') and not sketch.timelines %}
             <div class="row">
                 <div class="col-md-12">
                     <div class="card">
@@ -29,6 +23,12 @@
                             <a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">or add an existing timeline</a>
                         </div>
                     </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="row">
+                <div class="col-md-12">
+                    <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}" named-view="{{ named_view }}" searchtemplate-id="{{ searchtemplate_id }}" autoload="true" redirect="true"></ts-search>
                 </div>
             </div>
         {% endif %}
