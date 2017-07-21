@@ -20,7 +20,7 @@ from setuptools import setup
 
 setup(
     name=u'timesketch-api-client',
-    version=u'20170606',
+    version=u'20170721',
     description=u'Timesketch',
     license=u'Apache License, Version 2.0',
     url=u'http://www.timesketch.org/',
@@ -28,7 +28,7 @@ setup(
     maintainer_email=u'timesketch-dev@googlegroups.com',
     classifiers=[
         u'Development Status :: 4 - Beta',
-        u'Environment :: Web Environment',
+        u'Environment :: Console',
         u'Operating System :: OS Independent',
         u'Programming Language :: Python',
     ],
