@@ -1277,8 +1277,6 @@ class SearchIndexListResource(ResourceMixin, Resource):
             searchindex = SearchIndex.query.filter_by(
                 index_name=index_name).first()
 
-            print searchindex
-
             if not searchindex:
                 searchindex = SearchIndex.get_or_create(
                     name=timeline_name, description=timeline_name,
