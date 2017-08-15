@@ -25,6 +25,9 @@ GET /sketches/:sketch_id/views/:view_id/
 POST /sketches/:sketch_id/event/
 POST /sketches/:sketch_id/event/annotate/
 POST /sketches/:sketch_id/views/
+
+POST /searchindices/
+POST /index/
 """
 
 import datetime
@@ -64,6 +67,8 @@ from timesketch.lib.forms import ExploreForm
 from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
+from timesketch.lib.forms import SearchIndexForm
+from timesketch.lib.forms import IndexForm
 from timesketch.lib.utils import get_validated_indices
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
@@ -73,7 +78,7 @@ from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.story import Story
-
+from timesketch.models.user import User
 
 class ResourceMixin(object):
     """Mixin for API resources."""
@@ -169,6 +174,11 @@ class ResourceMixin(object):
         u'updated_at': fields.DateTime
     }
 
+    index_fields = {
+        u'index_name': fields.String,
+        u'doc_type': fields.String
+    }
+
     fields_registry = {
         u'searchindex': searchindex_fields,
         u'timeline': timeline_fields,
@@ -178,8 +188,10 @@ class ResourceMixin(object):
         u'sketch': sketch_fields,
         u'story': story_fields,
         u'event_comment': comment_fields,
-        u'event_label': label_fields
+        u'event_label': label_fields,
+        u'index': index_fields
     }
+
 
     @property
     def datastore(self):
@@ -1215,7 +1227,6 @@ class TimelineResource(ResourceMixin, Resource):
         db_session.commit()
         return HTTP_STATUS_CODE_OK
 
-
 class GraphResource(ResourceMixin, Resource):
     """Resource to get result from graph query."""
     @login_required
@@ -1246,3 +1257,94 @@ class GraphResource(ResourceMixin, Resource):
                 }]
             }
             return jsonify(schema)
+
+class SearchIndexResource(ResourceMixin, Resource):
+    """Resource to add add a search index."""
+    @login_required
+    def post(self):
+        """Handles POST request to the resource.
+
+        Returns:
+            A search index in JSON (instance of flask.wrappers.Response)
+
+        Raises:
+            ApiHTTPError
+        """
+        form = SearchIndexForm()
+
+        if form.validate_on_submit():
+            # Check that the user exists
+            user = User.query.filter_by(username=form.username.data).first()
+            if not user:
+                raise ApiHTTPError(
+                    message=u'User {0} does not exist' \
+                        .format(form.username.data),
+                    status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+
+            # Check that the index exists
+            es = self.datastore
+            if not es.client.indices.exists(index=form.index.data):
+                raise ApiHTTPError(
+                    message=u'Index {0} does not exist' \
+                        .format(form.index.data),
+                    status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+
+            # Add the search index
+            searchindex = SearchIndex.get_or_create(
+                name=form.name.data, description=form.name.data,
+                user=user, index_name=form.index.data)
+            searchindex.grant_permission(u'read')
+            db_session.add(searchindex)
+            db_session.commit()
+            return self.to_json(searchindex)
+
+        else:
+            raise ApiHTTPError(
+                message=form.errors,
+                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class IndexResource(ResourceMixin, Resource):
+    """Resource to add an Elasticsearch index."""
+    @login_required
+    def post(self):
+        """Handles POST request to the resource.
+
+        Returns:
+            Information about the created index in JSON (instance of
+            flask.wrappers.Response)
+
+        Raises:
+            ApiHTTPError
+        """
+        form = IndexForm()
+
+        if form.validate_on_submit():
+
+            es = self.datastore
+            # Check that index doesn't already exist
+            if form.index_name.data:
+                if es.client.indices.exists(index=form.index_name.data):
+                    raise ApiHTTPError(
+                        message=u'Index {0} already exists' \
+                            .format(form.index_name.data),
+                        status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+
+            # mimic tsctl's behavior - set default values if not specified
+            if not form.index_name.data:
+                form.index_name.data = unicode(uuid.uuid4().hex)
+            if not form.doc_type.data:
+                form.doc_type.data = u'generic_event'
+
+            index = es.create_index(
+                index_name=form.index_name.data,
+                doc_type=form.doc_type.data)
+
+            return self.to_json(
+                model={'index_name':index[0], 'doc_type': index[1]},
+                model_fields=ResourceMixin.fields_registry['index'])
+
+        else:
+            raise ApiHTTPError(
+                message=form.errors,
+                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
