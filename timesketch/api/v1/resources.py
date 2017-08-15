@@ -1259,3 +1259,16 @@ class SearchIndexListResource(ResourceMixin, Resource):
         """
         indices = SearchIndex.all_with_acl(current_user).all()
         return self.to_json(indices)
+
+
+class SearchIndexResource(ResourceMixin, Resource):
+    """Resource to get search index."""
+    @login_required
+    def get(self, searchindex_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            Search index in JSON (instance of flask.wrappers.Response)
+        """
+        searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        return self.to_json(searchindex)
