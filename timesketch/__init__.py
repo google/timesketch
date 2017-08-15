@@ -42,6 +42,7 @@ from timesketch.api.v1.resources import QueryResource
 from timesketch.api.v1.resources import CountEventsResource
 from timesketch.api.v1.resources import TimelineResource
 from timesketch.api.v1.resources import TimelineListResource
+from timesketch.api.v1.resources import SearchIndexListResource
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.models import configure_engine
 from timesketch.models import init_db
@@ -146,6 +147,8 @@ def create_app(config=None):
     api_v1.add_resource(
         TimelineResource,
         u'/sketches/<int:sketch_id>/timelines/<int:timeline_id>/')
+    api_v1.add_resource(
+        SearchIndexListResource, u'/timelines/')
     api_v1.add_resource(
         GraphResource,
         u'/sketches/<int:sketch_id>/explore/graph/')

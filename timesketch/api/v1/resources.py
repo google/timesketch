@@ -1246,3 +1246,16 @@ class GraphResource(ResourceMixin, Resource):
                 }]
             }
             return jsonify(schema)
+
+
+class SearchIndexListResource(ResourceMixin, Resource):
+    """Resource to get all search indices."""
+    @login_required
+    def get(self):
+        """Handles GET request to the resource.
+
+        Returns:
+            List of search indices in JSON (instance of flask.wrappers.Response)
+        """
+        indices = SearchIndex.all_with_acl(current_user).all()
+        return self.to_json(indices)
