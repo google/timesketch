@@ -295,3 +295,20 @@ class EventAnnotationResourceTest(BaseTest):
             self.resource_url, data=json.dumps(data),
             content_type=u'application/json')
         self.assertEquals(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class SearchIndexResourceTest(BaseTest):
+    """Test SearchIndexResource."""
+    resource_url = u'/api/v1/timelines/'
+
+    @mock.patch(
+        u'timesketch.api.v1.resources.ElasticsearchDataStore', MockDataStore)
+    def test_post_create_searchindex(self):
+        """Authenticated request to create a searchindex."""
+        self.login()
+        data = dict(timeline_name=u'test2', index_name=u'test2', public=False)
+        response = self.client.post(
+            self.resource_url, data=json.dumps(data),
+            content_type=u'application/json')
+        self.assertIsInstance(response.json, dict)
+        self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)

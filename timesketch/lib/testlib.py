@@ -141,6 +141,11 @@ class MockDataStore(datastore.DataStore):
         """Mock adding a label to an event."""
         return
 
+    # pylint: disable=unused-argument
+    def create_index(self, *args, **kwargs):
+        """Mock creating an index."""
+        return
+
 
 class MockGraphDatabase(object):
     """A mock implementation of a Datastore."""
