@@ -21,8 +21,6 @@ import requests
 from requests.exceptions import ConnectionError
 
 from .definitions import HTTP_STATUS_CODE_CREATED
-from .definitions import HTTP_STATUS_CODE_CONFLICT
-from .errors import TimelineExist
 
 
 class TimesketchApi(object):
@@ -156,8 +154,8 @@ class TimesketchApi(object):
             sketches.append(sketch_obj)
         return sketches
 
-    def get_timeline(self, searchindex_id):
-        """Get a timeline (searchindex).
+    def get_searchindex(self, searchindex_id):
+        """Get a searchindex.
 
         Args:
             searchindex_id: Primary key ID of the searchindex.
@@ -167,8 +165,8 @@ class TimesketchApi(object):
         """
         return SearchIndex(searchindex_id, api=self)
 
-    def list_timelines(self):
-        """Get list of all timelines that the user has access to.
+    def list_searchindices(self):
+        """Get list of all searchindices that the user has access to.
 
         Returns:
             List of SearchIndex object instances.
@@ -183,36 +181,35 @@ class TimesketchApi(object):
             indices.append(index_obj)
         return indices
 
-    def create_timeline(self, timeline_name, index_name=None, public=False):
-        """Create a new timeline (searchindex).
+    def create_searchindex(
+            self, searchindex_name, es_index_name=None, public=False):
+        """Create a new searchindex.
 
         Args:
-            timeline_name: Name of the searchindex in Timesketch.
-            index_name: Name of the index in Elasticsearch.
+            searchindex_name: Name of the searchindex in Timesketch.
+            es_index_name: Name of the index in Elasticsearch.
             public: Boolean indicating if the searchindex should be public.
 
         Returns:
             Instance of a SearchIndex object.
         """
-        if not index_name:
-            index_name = uuid.uuid4().hex
+        if not es_index_name:
+            es_index_name = uuid.uuid4().hex
 
-        resource_url = u'{0:s}/timelines/'.format(self.api_root)
+        resource_url = u'{0:s}/searchindices/'.format(self.api_root)
         form_data = {
-            u'timeline_name': timeline_name,
-            u'index_name': index_name,
+            u'searchindex_name': searchindex_name,
+            u'es_index_name': es_index_name,
             u'public': public
         }
         response = self.session.post(resource_url, json=form_data)
 
         if response.status_code != HTTP_STATUS_CODE_CREATED:
-            if response.status_code == HTTP_STATUS_CODE_CONFLICT:
-                raise TimelineExist()
-            raise RuntimeError(u'Error creating timeline')
+            raise RuntimeError(u'Error creating searchindex')
 
         response_dict = response.json()
         searchindex_id = response_dict[u'objects'][0][u'id']
-        return self.get_timeline(searchindex_id)
+        return self.get_searchindex(searchindex_id)
 
 
 class BaseResource(object):

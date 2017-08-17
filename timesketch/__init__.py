@@ -149,9 +149,9 @@ def create_app(config=None):
         TimelineResource,
         u'/sketches/<int:sketch_id>/timelines/<int:timeline_id>/')
     api_v1.add_resource(
-        SearchIndexListResource, u'/timelines/')
+        SearchIndexListResource, u'/searchindices/')
     api_v1.add_resource(
-        SearchIndexResource, u'/timelines/<int:searchindex_id>/')
+        SearchIndexResource, u'/searchindices/<int:searchindex_id>/')
     api_v1.add_resource(
         GraphResource,
         u'/sketches/<int:sketch_id>/explore/graph/')

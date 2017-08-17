@@ -213,8 +213,8 @@ class StoryForm(BaseForm):
 
 class SearchIndexForm(BaseForm):
     """Form to create a searchindex."""
-    timeline_name = StringField(u'name', validators=[DataRequired()])
-    index_name = StringField(u'Index', validators=[DataRequired()])
+    searchindex_name = StringField(u'name', validators=[DataRequired()])
+    es_index_name = StringField(u'Index', validators=[DataRequired()])
     public = BooleanField(
         u'Public', false_values={False, u'false', u''},
         default=False)

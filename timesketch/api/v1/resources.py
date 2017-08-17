@@ -52,7 +52,6 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CONFLICT
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.datastores.neo4j import Neo4jDataStore
 from timesketch.lib.errors import ApiHTTPError
@@ -1270,20 +1269,21 @@ class SearchIndexListResource(ResourceMixin, Resource):
             A search index in JSON (instance of flask.wrappers.Response)
         """
         form = SearchIndexForm.build(request)
-        timeline_name = form.timeline_name.data
-        index_name = form.index_name.data
+        searchindex_name = form.searchindex_name.data
+        es_index_name = form.es_index_name.data
         public = form.public.data
 
         if form.validate_on_submit():
             searchindex = SearchIndex.query.filter_by(
-                index_name=index_name).first()
+                index_name=es_index_name).first()
+            metadata = {u'created': True}
 
             if searchindex:
-                status_code = HTTP_STATUS_CODE_CONFLICT
+                metadata[u'created'] = False
             else:
                 searchindex = SearchIndex.get_or_create(
-                    name=timeline_name, description=timeline_name,
-                    user=current_user, index_name=index_name)
+                    name=searchindex_name, description=searchindex_name,
+                    user=current_user, index_name=es_index_name)
                 searchindex.grant_permission(
                     permission=u'read', user=current_user)
 
@@ -1292,15 +1292,14 @@ class SearchIndexListResource(ResourceMixin, Resource):
 
                 # Create the index in Elasticsearch
                 self.datastore.create_index(
-                    index_name=index_name, doc_type=u'generic_event')
+                    index_name=es_index_name, doc_type=u'generic_event')
 
                 db_session.add(searchindex)
                 db_session.commit()
 
-                status_code = HTTP_STATUS_CODE_CREATED
-
             return self.to_json(
-                searchindex, status_code=status_code)
+                searchindex, meta=metadata,
+                status_code=HTTP_STATUS_CODE_CREATED)
 
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
