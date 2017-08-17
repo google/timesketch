@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
+set -e
+set -u
 
 # Generate random passwords for DB and session key
-PSQL_PW="$(openssl rand -hex 32)"
-SECRET_KEY="$(openssl rand -hex 32)"
+if [ ! -f psql_pw ]; then
+  openssl rand -hex 32 > psql_pw
+fi
+if [ ! -f secret_key ]; then
+  openssl rand -hex 32 > secret_key
+fi
+
+PSQL_PW="$(cat psql_pw)"
+SECRET_KEY="$(cat secret_key)"
 
 # Setup GIFT PPA apt repository
 add-apt-repository -y ppa:gift/stable
@@ -12,9 +21,9 @@ apt-get update
 apt-get install -y postgresql
 apt-get install -y python-psycopg2
 
-# Create DB user and database
-echo "create user timesketch with password '${PSQL_PW}';" | sudo -u postgres psql
-echo "create database timesketch owner timesketch;" | sudo -u postgres psql
+# Create DB user and database if they don't yet exist
+echo "create user timesketch with password '${PSQL_PW}';" | sudo -u postgres psql || true
+echo "create database timesketch owner timesketch;" | sudo -u postgres psql || true
 
 # Configure PostgreSQL
 sudo -u postgres sh -c 'echo "local all timesketch md5" >> /etc/postgresql/9.5/main/pg_hba.conf'
