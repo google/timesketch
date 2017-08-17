@@ -64,6 +64,7 @@ from timesketch.lib.forms import ExploreForm
 from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
+from timesketch.lib.forms import SearchIndexForm
 from timesketch.lib.utils import get_validated_indices
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
@@ -1246,3 +1247,67 @@ class GraphResource(ResourceMixin, Resource):
                 }]
             }
             return jsonify(schema)
+
+
+class SearchIndexListResource(ResourceMixin, Resource):
+    """Resource to get all search indices."""
+    @login_required
+    def get(self):
+        """Handles GET request to the resource.
+
+        Returns:
+            List of search indices in JSON (instance of flask.wrappers.Response)
+        """
+        indices = SearchIndex.all_with_acl(current_user).all()
+        return self.to_json(indices)
+
+    @login_required
+    def post(self):
+        """Handles POST request to the resource.
+
+        Returns:
+            A search index in JSON (instance of flask.wrappers.Response)
+        """
+        form = SearchIndexForm.build(request)
+        timeline_name = form.timeline_name.data
+        index_name = form.index_name.data
+        public = form.public.data
+
+        if form.validate_on_submit():
+            searchindex = SearchIndex.query.filter_by(
+                index_name=index_name).first()
+
+            if not searchindex:
+                searchindex = SearchIndex.get_or_create(
+                    name=timeline_name, description=timeline_name,
+                    user=current_user, index_name=index_name)
+                searchindex.grant_permission(
+                    permission=u'read', user=current_user)
+
+                if public:
+                    searchindex.grant_permission(permission=u'read', user=None)
+
+                # Create the index in Elasticsearch
+                self.datastore.create_index(
+                    index_name=index_name, doc_type=u'generic_event')
+
+                db_session.add(searchindex)
+                db_session.commit()
+
+            return self.to_json(
+                searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+
+class SearchIndexResource(ResourceMixin, Resource):
+    """Resource to get search index."""
+    @login_required
+    def get(self, searchindex_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            Search index in JSON (instance of flask.wrappers.Response)
+        """
+        searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        return self.to_json(searchindex)

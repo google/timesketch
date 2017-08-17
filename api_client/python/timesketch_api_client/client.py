@@ -17,6 +17,7 @@ import json
 import BeautifulSoup
 import requests
 from requests.exceptions import ConnectionError
+from uuid import uuid4
 
 
 class TimesketchApi(object):
@@ -150,8 +151,95 @@ class TimesketchApi(object):
             sketches.append(sketch_obj)
         return sketches
 
+    def get_timeline(self, searchindex_id):
+        """Get a timeline (searchindex).
 
-class Sketch(object):
+        Args:
+            searchindex_id: Primary key ID of the searchindex.
+
+        Returns:
+            Instance of a SearchIndex object.
+        """
+        return SearchIndex(searchindex_id, api=self)
+
+    def list_timelines(self):
+        """Get list of all timelines that the user has access to.
+
+        Returns:
+            List of SearchIndex object instances.
+        """
+        indices = []
+        response = self.fetch_resource_data(u'timelines/')
+        for index in response[u'objects'][0]:
+            index_id = index[u'id']
+            index_name = index[u'name']
+            index_obj = SearchIndex(
+                searchindex_id=index_id, api=self, searchindex_name=index_name)
+            indices.append(index_obj)
+        return indices
+
+    def create_timeline(self, timeline_name, index_name=None, public=False):
+        """Create a new timeline (searchindex).
+
+        Args:
+            timeline_name: Name of the searchindex in Timesketch.
+            index_name: Name of the index in Elasticsearch.
+            public: Boolean indicating if the searchindex should be public.
+
+        Returns:
+            Instance of a SearchIndex object.
+        """
+        if not index_name:
+            index_name = uuid4().hex
+
+        resource_url = u'{0:s}/timelines/'.format(self.api_root)
+        form_data = {
+            u'timeline_name': timeline_name,
+            u'index_name': index_name,
+            u'public': public
+        }
+        response = self.session.post(resource_url, json=form_data)
+        response_dict = response.json()
+        searchindex_id = response_dict[u'objects'][0][u'id']
+        return self.get_timeline(searchindex_id)
+
+
+class BaseResource(object):
+    """Base resource object."""
+    def __init__(self, api, resource_uri):
+        """Initialize object.
+
+        Args:
+            api: An instance of TimesketchApi object.
+        """
+        self.api = api
+        self.resource_uri = resource_uri
+        self.resource_data = None
+
+    def lazyload_data(self, refresh_cache=False):
+        """Load resource data once and cache the result.
+
+        Args:
+            refresh_cache: Boolean indicating if to update cache.
+
+        Returns:
+            Dictionary with resource data.
+        """
+        if not self.resource_data or refresh_cache:
+            self.resource_data = self.api.fetch_resource_data(self.resource_uri)
+        return self.resource_data
+
+    @property
+    def data(self):
+        """Property to fetch resource data.
+
+        Returns:
+            Dictionary with resource data.
+        """
+        return self.lazyload_data()
+
+
+class Sketch(BaseResource):
     """Timesketch sketch object.
 
     A sketch in Timesketch is a collection of one or more timelines. It has
@@ -172,30 +260,8 @@ class Sketch(object):
         self.id = sketch_id
         self.api = api
         self._sketch_name = sketch_name
-        self._data = None
-
-    def _lazyload_data(self, refresh_cache=False):
-        """Load resource data once and cache the result.
-
-        Args:
-            refresh_cache: Boolean indicating if to update cache.
-
-        Returns:
-            Dictionary with resource data.
-        """
-        if not self._data or refresh_cache:
-            resource_uri = u'sketches/{0:d}'.format(self.id)
-            self._data = self.api.fetch_resource_data(resource_uri)
-        return self._data
-
-    @property
-    def data(self):
-        """Property to fetch sketch data.
-
-        Returns:
-            Dictionary with resource data.
-        """
-        return self._lazyload_data()
+        self._resource_uri = u'sketches/{0:d}'.format(self.id)
+        super(Sketch, self).__init__(api=api, resource_uri=self._resource_uri)
 
     @property
     def name(self):
@@ -205,7 +271,7 @@ class Sketch(object):
             Sketch name as string.
         """
         if not self._sketch_name:
-            sketch = self._lazyload_data()
+            sketch = self.lazyload_data()
             self._sketch_name = sketch[u'objects'][0][u'name']
         return self._sketch_name
 
@@ -216,7 +282,7 @@ class Sketch(object):
         Returns:
             Sketch description as string.
         """
-        sketch = self._lazyload_data()
+        sketch = self.lazyload_data()
         return sketch[u'objects'][0][u'description']
 
     @property
@@ -226,7 +292,7 @@ class Sketch(object):
         Returns:
             Sketch status as string.
         """
-        sketch = self._lazyload_data()
+        sketch = self.lazyload_data()
         return sketch[u'objects'][0][u'status'][0][u'status']
 
     def list_views(self):
@@ -235,11 +301,14 @@ class Sketch(object):
         Returns:
             List of views (instances of View objects)
         """
-        sketch = self._lazyload_data()
+        sketch = self.lazyload_data()
         views = []
         for view in sketch[u'meta'][u'views']:
             view_obj = View(
-                view_id=view[u'id'], view_name=view[u'name'], sketch=self)
+                view_id=view[u'id'],
+                view_name=view[u'name'],
+                sketch_id=self.id,
+                api=self.api)
             views.append(view_obj)
         return views
 
@@ -249,14 +318,15 @@ class Sketch(object):
         Returns:
             List of timelines (instances of Timeline objects)
         """
-        sketch = self._lazyload_data()
+        sketch = self.lazyload_data()
         timelines = []
         for timeline in sketch[u'objects'][0][u'timelines']:
             timeline_obj = Timeline(
                 timeline_id=timeline[u'id'],
+                sketch_id=self.id,
+                api=self.api,
                 name=timeline[u'name'],
-                searchindex=timeline[u'searchindex'][u'index_name'],
-                sketch=self
+                searchindex=timeline[u'searchindex'][u'index_name']
             )
             timelines.append(timeline_obj)
         return timelines
@@ -279,9 +349,10 @@ class Sketch(object):
         timeline = response_dict[u'objects'][0]
         timeline_obj = Timeline(
             timeline_id=timeline[u'id'],
+            sketch_id=self.id,
+            api=self.api,
             name=timeline[u'name'],
-            searchindex=timeline[u'searchindex'][u'index_name'],
-            sketch=self
+            searchindex=timeline[u'searchindex'][u'index_name']
         )
         return timeline_obj
 
@@ -329,63 +400,70 @@ class Sketch(object):
         return response.json()
 
 
-class BaseSketchResource(object):
-    """Base class for resource objects related to a sketch.
+class SearchIndex(BaseResource):
+    """Timesketch searchindex object.
 
     Attributes:
-        sketch: Sketch object instance.
-        resource_url: URL to the sketch resource endpoint.
+        id: The ID of the search index.
+        api: An instance of TimesketchApi object.
     """
-    def __init__(self, sketch, resource_uri):
-        """Initializes the base Sketch resource object.
+    def __init__(self, searchindex_id, api, searchindex_name=None):
+        """Initializes the SearchIndex object.
 
         Args:
-            sketch: Sketch object instance.
-            resource_uri: URI to the resource endpoint.
+            searchindex_id: Primary key ID of the searchindex.
+            searchindex_name: Name of the searchindex (optional).
         """
-        self.sketch = sketch
-        self.resource_url = u'sketches/{0:d}/{1:s}'.format(
-            sketch.id, resource_uri)
-        self._data = None
-
-    def lazyload_data(self, refresh_cache=False):
-        """Load resource data once and cache the result.
-
-        Args:
-            refresh_cache: Boolean indicating if to update cache.
-
-        Returns:
-            Dictionary with resource data.
-        """
-        if not self._data or refresh_cache:
-            self._data = self.sketch.api.fetch_resource_data(self.resource_url)
-        return self._data
+        self.id = searchindex_id
+        self._searchindex_name = searchindex_name
+        self._resource_uri = u'timelines/{0:d}'.format(self.id)
+        super(
+            SearchIndex, self).__init__(
+            api=api, resource_uri=self._resource_uri)
 
     @property
-    def data(self):
-        """Property to fetch sketch data."""
-        return self.lazyload_data()
+    def name(self):
+        """Property that returns searchindex name.
+
+        Returns:
+            Searchindex name as string.
+        """
+        if not self._searchindex_name:
+            searchindex = self.lazyload_data()
+            self._searchindex_name = searchindex[u'objects'][0][u'name']
+        return self._searchindex_name
+
+    @property
+    def index_name(self):
+        """Property that returns Elasticsearch index name.
+
+        Returns:
+            Elasticsearch index name as string.
+        """
+        searchindex = self.lazyload_data()
+        return searchindex[u'objects'][0][u'index_name']
 
 
-class View(BaseSketchResource):
+class View(BaseResource):
     """Saved view object.
 
     Attributes:
         id: Primary key of the view.
         name: Name of the view.
     """
-    def __init__(self, view_id, view_name, sketch):
+    def __init__(self, view_id, view_name, sketch_id, api):
         """Initializes the View object.
 
         Args:
             view_id: Primary key ID for the view.
             view_name: The name of the view.
-            sketch: Instance of a Sketch object.
+            sketch_id: ID of a sketch.
+            api: Instance of a TimesketchApi object.
         """
         self.id = view_id
         self.name = view_name
-        resource_uri = u'views/{0:d}/'.format(self.id)
-        super(View, self).__init__(sketch, resource_uri)
+        resource_uri = u'sketches/{0:d}/views/{1:d}/'.format(sketch_id, self.id)
+        super(View, self).__init__(api, resource_uri)
 
     @property
     def query_string(self):
@@ -418,26 +496,29 @@ class View(BaseSketchResource):
         return view[u'objects'][0][u'query_dsl']
 
 
-class Timeline(BaseSketchResource):
+class Timeline(BaseResource):
     """Timeline object.
 
     Attributes:
         id: Primary key of the view.
     """
-    def __init__(self, timeline_id, sketch, name=None, searchindex=None):
+    def __init__(self, timeline_id, sketch_id, api, name=None,
+                 searchindex=None):
         """Initializes the Timeline object.
 
         Args:
             timeline_id: The primary key ID of the timeline.
-            sketch: Instance of a Sketch object.
+            sketch_id: ID of a sketch.
+            api: Instance of a TimesketchApi object.
             name: Name of the timeline (optional)
             searchindex: The Elasticsearch index name (optional)
         """
         self.id = timeline_id
         self._name = name
-        self._index = searchindex
-        resource_uri = u'timelines/{0:d}/'.format(self.id)
-        super(Timeline, self).__init__(sketch, resource_uri)
+        self._searchindex = searchindex
+        resource_uri = u'sketches/{0:d}/timelines/{1:d}/'.format(
+            sketch_id, self.id)
+        super(Timeline, self).__init__(api, resource_uri)
 
     @property
     def name(self):
@@ -458,8 +539,8 @@ class Timeline(BaseSketchResource):
         Returns:
             Elasticsearch index name as string.
         """
-        if not self._index:
+        if not self._searchindex:
             timeline = self.lazyload_data()
-            index = timeline[u'objects'][0][u'searchindex'][u'index_name']
-            self._index = index
-        return self._index
+            index_name = timeline[u'objects'][0][u'searchindex'][u'index_name']
+            self._searchindex = index_name
+        return self._searchindex

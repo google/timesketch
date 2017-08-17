@@ -209,3 +209,12 @@ class StoryForm(BaseForm):
     title = StringField(u'Title', validators=[])
     content = StringField(
         u'Content', validators=[], widget=widgets.TextArea())
+
+
+class SearchIndexForm(BaseForm):
+    """Form to create a searchindex."""
+    timeline_name = StringField(u'name', validators=[DataRequired()])
+    index_name = StringField(u'Index', validators=[DataRequired()])
+    public = BooleanField(
+        u'Public', false_values={False, u'false', u''},
+        default=False)
