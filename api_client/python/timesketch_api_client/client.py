@@ -14,10 +14,15 @@
 """Timesketch API client."""
 
 import json
+import uuid
 import BeautifulSoup
 import requests
+
 from requests.exceptions import ConnectionError
-from uuid import uuid4
+
+from .definitions import HTTP_STATUS_CODE_CREATED
+from .definitions import HTTP_STATUS_CODE_CONFLICT
+from .errors import TimelineExist
 
 
 class TimesketchApi(object):
@@ -190,7 +195,7 @@ class TimesketchApi(object):
             Instance of a SearchIndex object.
         """
         if not index_name:
-            index_name = uuid4().hex
+            index_name = uuid.uuid4().hex
 
         resource_url = u'{0:s}/timelines/'.format(self.api_root)
         form_data = {
@@ -199,6 +204,12 @@ class TimesketchApi(object):
             u'public': public
         }
         response = self.session.post(resource_url, json=form_data)
+
+        if response.status_code != HTTP_STATUS_CODE_CREATED:
+            if response.status_code == HTTP_STATUS_CODE_CONFLICT:
+                raise TimelineExist()
+            raise RuntimeError(u'Error creating timeline')
+
         response_dict = response.json()
         searchindex_id = response_dict[u'objects'][0][u'id']
         return self.get_timeline(searchindex_id)
@@ -417,8 +428,7 @@ class SearchIndex(BaseResource):
         self.id = searchindex_id
         self._searchindex_name = searchindex_name
         self._resource_uri = u'timelines/{0:d}'.format(self.id)
-        super(
-            SearchIndex, self).__init__(
+        super(SearchIndex, self).__init__(
             api=api, resource_uri=self._resource_uri)
 
     @property

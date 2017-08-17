@@ -1,4 +1,4 @@
-# Copyright 2014 Google Inc. All rights reserved.
+# Copyright 2017 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,14 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Definitions for Timesketch."""
+"""Timesketch API client errors."""
 
-# HTTP status codes
-HTTP_STATUS_CODE_OK = 200
-HTTP_STATUS_CODE_CREATED = 201
-HTTP_STATUS_CODE_REDIRECT = 302
-HTTP_STATUS_CODE_BAD_REQUEST = 400
-HTTP_STATUS_CODE_UNAUTHORIZED = 401
-HTTP_STATUS_CODE_FORBIDDEN = 403
-HTTP_STATUS_CODE_NOT_FOUND = 404
-HTTP_STATUS_CODE_CONFLICT = 409
+
+class TimelineExist(Exception):
+    """Raise exception if timeline already exists"""

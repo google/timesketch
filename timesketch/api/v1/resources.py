@@ -52,6 +52,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_CONFLICT
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.datastores.neo4j import Neo4jDataStore
 from timesketch.lib.errors import ApiHTTPError
@@ -1277,7 +1278,9 @@ class SearchIndexListResource(ResourceMixin, Resource):
             searchindex = SearchIndex.query.filter_by(
                 index_name=index_name).first()
 
-            if not searchindex:
+            if searchindex:
+                status_code = HTTP_STATUS_CODE_CONFLICT
+            else:
                 searchindex = SearchIndex.get_or_create(
                     name=timeline_name, description=timeline_name,
                     user=current_user, index_name=index_name)
@@ -1294,8 +1297,10 @@ class SearchIndexListResource(ResourceMixin, Resource):
                 db_session.add(searchindex)
                 db_session.commit()
 
+                status_code = HTTP_STATUS_CODE_CREATED
+
             return self.to_json(
-                searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+                searchindex, status_code=status_code)
 
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
