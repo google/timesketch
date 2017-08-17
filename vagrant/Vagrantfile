@@ -4,8 +4,13 @@
 # Set VirtualBox as default provider
 ENV['VAGRANT_DEFAULT_PROVIDER'] = 'virtualbox'
 
+unless Vagrant.has_plugin?("vagrant-disksize")
+  raise 'vagrant-disksize is not installed ("vagrant plugin install vagrant-disksize")'
+end
+
 Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu/xenial64"
+  config.disksize.size = "50GB"
   config.vm.box_check_update = true
 
   # Access to Timesketch from the host
@@ -21,7 +26,7 @@ Vagrant.configure(2) do |config|
   # VirtualBox configuration
   config.vm.provider "virtualbox" do |vb|
     vb.cpus = 2
-    vb.memory = 4096
+    vb.memory = 8192
   end
 
   # Setup the system with a shell script
