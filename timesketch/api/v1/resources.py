@@ -76,6 +76,20 @@ from timesketch.models.sketch import SearchTemplate
 from timesketch.models.story import Story
 
 
+def bad_request(message):
+    """Function to set custom error message for HTTP 400 requests.
+
+    Args:
+        message: Message as string to return to the client.
+
+    Returns: Response object (instance of flask.wrappers.Response)
+
+    """
+    response = jsonify({u'message': message})
+    response.status_code = HTTP_STATUS_CODE_BAD_REQUEST
+    return response
+
+
 class ResourceMixin(object):
     """Mixin for API resources."""
     # Schemas for database model resources
@@ -404,7 +418,6 @@ class ViewListResource(ResourceMixin, Resource):
         db_session.commit()
 
         return view
-
 
     @login_required
     def get(self, sketch_id):
