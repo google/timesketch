@@ -27,5 +27,7 @@ Timesketch is an open source tool for collaborative forensic timeline analysis. 
 ## Screenshot
 ![alt text](https://01dd8b4c-a-62cb3a1a-s-sites.googlegroups.com/site/timesketchforensics/about/timesketch-201708.png "Timesketch")
 
+---
+
 ##### Obligatory Fine Print
 This is not an official Google product (experimental or otherwise), it is just code that happens to be owned by Google.
