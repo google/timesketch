@@ -414,6 +414,8 @@ class BaseTest(TestCase):
 
         self.searchindex = self._create_searchindex(
             name=u'test', user=self.user1, acl=True)
+        self.searchindex2 = self._create_searchindex(
+            name=u'test2', user=self.user1, acl=True)
 
         self.timeline = self._create_timeline(
             name=u'Timeline 1', sketch=self.sketch1,

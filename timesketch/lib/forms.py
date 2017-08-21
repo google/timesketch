@@ -91,6 +91,11 @@ class AddTimelineForm(BaseForm):
     timelines = MultiCheckboxField(u'Timelines', coerce=int)
 
 
+class AddTimelineSimpleForm(BaseForm):
+    """Form to add timelines to a sketch."""
+    timeline = IntegerField(u'Timeline', validators=[DataRequired()])
+
+
 class UsernamePasswordForm(BaseForm):
     """Form with username and password fields. Use in the login form."""
     username = StringField(u'Email', validators=[DataRequired()])

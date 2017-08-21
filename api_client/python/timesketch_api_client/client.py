@@ -21,6 +21,7 @@ import requests
 from requests.exceptions import ConnectionError
 
 from .definitions import HTTP_STATUS_CODE_CREATED
+from .definitions import HTTP_STATUS_CODE_20X
 
 
 class TimesketchApi(object):
@@ -165,22 +166,6 @@ class TimesketchApi(object):
         """
         return SearchIndex(searchindex_id, api=self)
 
-    def list_searchindices(self):
-        """Get list of all searchindices that the user has access to.
-
-        Returns:
-            List of SearchIndex object instances.
-        """
-        indices = []
-        response = self.fetch_resource_data(u'timelines/')
-        for index in response[u'objects'][0]:
-            index_id = index[u'id']
-            index_name = index[u'name']
-            index_obj = SearchIndex(
-                searchindex_id=index_id, api=self, searchindex_name=index_name)
-            indices.append(index_obj)
-        return indices
-
     def create_searchindex(
             self, searchindex_name, es_index_name=None, public=False):
         """Create a new searchindex.
@@ -210,6 +195,22 @@ class TimesketchApi(object):
         response_dict = response.json()
         searchindex_id = response_dict[u'objects'][0][u'id']
         return self.get_searchindex(searchindex_id)
+
+    def list_searchindices(self):
+        """Get list of all searchindices that the user has access to.
+
+        Returns:
+            List of SearchIndex object instances.
+        """
+        indices = []
+        response = self.fetch_resource_data(u'searchindices/')
+        for index in response[u'objects'][0]:
+            index_id = index[u'id']
+            index_name = index[u'name']
+            index_obj = SearchIndex(
+                searchindex_id=index_id, api=self, searchindex_name=index_name)
+            indices.append(index_obj)
+        return indices
 
 
 class BaseResource(object):
@@ -364,6 +365,34 @@ class Sketch(BaseResource):
         )
         return timeline_obj
 
+    def add_timeline(self, searchindex):
+        """Add timeline to sketch.
+
+        Args:
+            searchindex: SearchIndex object instance.
+
+        Returns:
+            Timeline object instance.
+        """
+        resource_url = u'{0:s}/sketches/{1:d}/timelines/'.format(
+            self.api.api_root, self.id)
+        form_data = {u'timeline': searchindex.id}
+        response = self.api.session.post(resource_url, json=form_data)
+
+        if response.status_code not in HTTP_STATUS_CODE_20X:
+            raise RuntimeError(u'Failed adding timeline')
+
+        response_dict = response.json()
+        timeline = response_dict[u'objects'][0]
+        timeline_obj = Timeline(
+            timeline_id=timeline[u'id'],
+            sketch_id=self.id,
+            api=self.api,
+            name=timeline[u'name'],
+            searchindex=timeline[u'searchindex'][u'index_name']
+        )
+        return timeline_obj
+
     def explore(self, query_string=None, query_dsl=None, query_filter=None,
                 view=None):
         """Explore the sketch.
@@ -424,7 +453,7 @@ class SearchIndex(BaseResource):
         """
         self.id = searchindex_id
         self._searchindex_name = searchindex_name
-        self._resource_uri = u'timelines/{0:d}'.format(self.id)
+        self._resource_uri = u'searchindices/{0:d}'.format(self.id)
         super(SearchIndex, self).__init__(
             api=api, resource_uri=self._resource_uri)
 

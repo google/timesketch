@@ -18,6 +18,7 @@ import json
 import mock
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
@@ -67,15 +68,6 @@ class SketchResourceTest(BaseTest):
         self.login()
         response = self.client.get(u'/api/v1/sketches/2/')
         self.assert403(response)
-
-    def test_add_timeline_resource(self):
-        """Authenticated request to add a timeline to a sketch."""
-        self.login()
-        data = dict(timelines=[1])
-        response = self.client.post(
-            u'/api/v1/sketches/3/', data=json.dumps(data, ensure_ascii=False),
-            content_type=u'application/json')
-        self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
 
 
 class ViewListResourceTest(BaseTest):
@@ -299,16 +291,40 @@ class EventAnnotationResourceTest(BaseTest):
 
 class SearchIndexResourceTest(BaseTest):
     """Test SearchIndexResource."""
-    resource_url = u'/api/v1/timelines/'
+    resource_url = u'/api/v1/searchindices/'
 
     @mock.patch(
         u'timesketch.api.v1.resources.ElasticsearchDataStore', MockDataStore)
     def test_post_create_searchindex(self):
         """Authenticated request to create a searchindex."""
         self.login()
-        data = dict(timeline_name=u'test2', index_name=u'test2', public=False)
+        data = dict(
+            searchindex_name=u'test2', es_index_name=u'test2', public=False)
         response = self.client.post(
             self.resource_url, data=json.dumps(data),
             content_type=u'application/json')
         self.assertIsInstance(response.json, dict)
+        self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+
+class TimelineListResourceTest(BaseTest):
+    """Test TimelineList resource."""
+    resource_url = u'/api/v1/sketches/1/timelines/'
+
+    def test_add_existing_timeline_resource(self):
+        """Authenticated request to add a timeline to a sketch."""
+        self.login()
+        data = dict(timeline=1)
+        response = self.client.post(
+            self.resource_url, data=json.dumps(data, ensure_ascii=False),
+            content_type=u'application/json')
+        self.assertEquals(response.status_code, HTTP_STATUS_CODE_OK)
+
+    def test_add_new_timeline_resource(self):
+        """Authenticated request to add a timeline to a sketch."""
+        self.login()
+        data = dict(timeline=2)
+        response = self.client.post(
+            self.resource_url, data=json.dumps(data, ensure_ascii=False),
+            content_type=u'application/json')
         self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
