@@ -27,7 +27,7 @@ Timesketch is an open source tool for collaborative forensic timeline analysis. 
 * [Developers guide](docs/Developers-Guide.md)
 
 ## Example
-![alt text](https://01dd8b4c-a-62cb3a1a-s-sites.googlegroups.com/site/timesketchforensics/about/Screen%20Shot%202016-07-22%20at%2010.33.27.png "Timesketch")
+![alt text](https://01dd8b4c-a-62cb3a1a-s-sites.googlegroups.com/site/timesketchforensics/about/timesketch-201708.png "Timesketch")
 
 ---
 
