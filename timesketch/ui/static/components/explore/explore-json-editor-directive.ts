@@ -13,6 +13,8 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+import angular from 'angular'
+import * as ace from 'ace-builds/src/ace'
 
 (function() {
     var module = angular.module('timesketch.explore.json.editor.directive', []);

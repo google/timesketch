@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+import angular from 'angular'
 
 (function() {
     var module = angular.module('timesketch.explore.event.directive', []);
@@ -131,7 +132,7 @@ limitations under the License.
                 };
 
                 $scope.addStar = function() {
-                    event_list = [];
+                    var event_list = [];
                     angular.forEach($scope.events, function(event) {
                         if (event.selected && !event.star) {
                             event.star = true;
@@ -142,7 +143,7 @@ limitations under the License.
                 };
 
                 $scope.removeStar = function() {
-                    event_list = [];
+                    var event_list = [];
                     angular.forEach($scope.events, function(event) {
                         if (event.selected && event.star) {
                             event.star = false;
@@ -198,11 +199,11 @@ limitations under the License.
 
                 // Calculate the time delta in days between two events.
                 var calcDays = function(t1, t2) {
-                    var t1_sec = parseInt(t1/1000000);
-                    var t2_sec = parseInt(t2/1000000);
-                    var delta = parseInt(t1_sec - t2_sec);
+                    var t1_sec = Math.floor(t1/1000000);
+                    var t2_sec = Math.floor(t2/1000000);
+                    var delta = Math.floor(t1_sec - t2_sec);
                     var delta_days = delta/60/60/24;
-                    return parseInt(delta_days)
+                    return Math.floor(delta_days)
                 };
                 if ($scope.index > 0) {
                     var event_timestamp = $scope.event['_source'].timestamp;
@@ -307,4 +308,3 @@ limitations under the License.
     });
 
 })();
-

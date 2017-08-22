@@ -13,6 +13,8 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+import angular from 'angular'
+import * as d3 from "d3"
 
 (function() {
     var module = angular.module('timesketch.explore.heatmap.directive', []);
@@ -69,7 +71,7 @@
                     var margin = { top: 50, right: 75, bottom: 0, left: 40 },
                         svgWidth = element[0].parentElement.parentElement.parentElement.offsetParent.offsetWidth - margin.left - margin.right,
                         rectSize = Math.floor(svgWidth / 24),
-                        svgHeight = parseInt(rectSize * 9) - margin.top - margin.bottom,
+                        svgHeight = Math.floor(rectSize * 9) - margin.top - margin.bottom,
                         days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
                         hours = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"];
 

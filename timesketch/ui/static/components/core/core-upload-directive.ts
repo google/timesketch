@@ -1,3 +1,5 @@
+import angular from 'angular'
+
 (function() {
     var module = angular.module('timesketch.core.upload.directive', []);
 

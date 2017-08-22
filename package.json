@@ -1,0 +1,21 @@
+{
+  "name": "timesketch",
+  "version": "20170721",
+  "description": "Timesketch is an open source tool for collaborative forensic timeline analysis. Using sketches you and your collaborators can easily organize your timelines and analyze them all at the same time. Add meaning to your raw data with rich annotations, comments, tags and stars.",
+  "main": "index.js",
+  "repository": "git@github.com:google/timesketch.git",
+  "author": "Johan Berggren <jbn@google.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "ace-builds": "1.2.5",
+    "angular": "1.3.5",
+    "chart.js": "2.2.2",
+    "d3": "4.2.2",
+    "jquery": "2.1.0",
+    "medium-editor": "5.16.1",
+    "moment": "2.10.3",
+    "numeral": "2.0.6",
+    "typescript": "^2.4.2",
+    "webpack": "^3.5.5"
+  }
+}

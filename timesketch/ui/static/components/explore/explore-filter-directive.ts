@@ -14,6 +14,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+import angular from 'angular'
+import * as moment from 'moment'
 
 (function() {
     var module = angular.module('timesketch.explore.filter.directive', []);
@@ -62,7 +64,7 @@ limitations under the License.
                     }
                     ctrl.search(scope.query, scope.filter, scope.queryDsl)
                 };
-                
+
                 scope.disableAllTimelines = function() {
                     scope.filter.indices = [];
                     scope.events = [];
@@ -71,7 +73,7 @@ limitations under the License.
                     scope.meta.noisy = false;
                 }
 
-                scope.parseFilterDate = function(datevalue, datevalue_end){  
+                scope.parseFilterDate = function(datevalue, datevalue_end){
                         if (datevalue != null) {
                         var datetimetemplate="YYYY-MM-DDTHH:mm:ss";
                         //Parse out 'T' date time seperator needed by ELK but not by moment.js
@@ -81,7 +83,7 @@ limitations under the License.
                         var match = offsetRegexp.exec(datevalue);
 
                         if (match != null) {
-                            var filterbase = match[1] 
+                            var filterbase = match[1]
                             var filteroffset = match[2]
                             var filteramount = match[3]
                             var filtertype = match[4]
@@ -104,7 +106,7 @@ limitations under the License.
                             if (datevalue_end == null || datevalue_end == '') {
                                 scope.filter.time_end = scope.filter.time_start;
                             }
-                        }   
+                        }
                     }
                 }
 
@@ -143,7 +145,7 @@ limitations under the License.
                     }
                     ctrl.search(scope.query, scope.filter, scope.queryDsl);
                 };
-              
+
                 scope.$watch("filter.indices", function(value) {
                     if (scope.filter.indices.indexOf(index_name) == -1) {
                         scope.colorbox = {'background-color': '#E9E9E9'};

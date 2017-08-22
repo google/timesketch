@@ -13,6 +13,8 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+import angular from 'angular'
+import * as moment from 'moment'
 
 (function() {
     var module = angular.module('timesketch.sketch.views.directive', []);
@@ -41,7 +43,7 @@
                         }
                     }
                 });
-                
+
                 $scope.deleteView = function(view) {
                     timesketchApi.deleteView($scope.sketchId, view.id);
                     var index = $scope.savedViews.indexOf(view);

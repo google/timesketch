@@ -13,6 +13,10 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
+import angular from 'angular'
+import * as moment from 'moment'
+import $ from 'jquery'
+import MediumEditor from 'medium-editor'
 
 (function() {
     var module = angular.module('timesketch.story.directive', []);

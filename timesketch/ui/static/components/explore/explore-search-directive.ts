@@ -13,6 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+import angular from 'angular'
+import * as moment from 'moment'
 
 (function() {
     var module = angular.module('timesketch.explore.search.directive', []);
@@ -166,7 +168,7 @@ limitations under the License.
                 };
 
                 this.getContext = function(event) {
-                    var new_filter = {};
+                    var new_filter = {} as any;
                     var current_filter = $scope.filter;
                     var current_query = $scope.query;
                     var current_queryDsl = $scope.queryDsl;
@@ -289,4 +291,3 @@ limitations under the License.
     }]);
 
 })();
-
