@@ -13,7 +13,6 @@
 # limitations under the License.
 """Form definitions and validators for the forms used in the application."""
 
-
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField
 from flask_wtf.file import FileRequired
@@ -35,6 +34,7 @@ from wtforms.validators import Length
 
 class MultiDict(dict):
     """Implements a MultiDict that can hold keys with the same name."""
+
     # WTForms expects the form data to be a MultiDict, i.e. a dictionary that
     # can hold multiple keys with the same name.
     def getlist(self, key):
@@ -65,6 +65,7 @@ class MultiDict(dict):
 
 class BaseForm(FlaskForm):
     """Base class for forms."""
+
     @classmethod
     def build(cls, request):
         """Build a WTForm from request data and add CSRF token.
@@ -116,10 +117,10 @@ class HiddenNameDescriptionForm(BaseForm):
 class TimelineForm(NameDescriptionForm):
     """Form to edit a timeline."""
     color = StringField(
-        u'Color', validators=[
-            DataRequired(),
-            Regexp(u'^[0-9a-fA-F]{6}$'),
-            Length(6, 6)])
+        u'Color',
+        validators=[DataRequired(),
+                    Regexp(u'^[0-9a-fA-F]{6}$'),
+                    Length(6, 6)])
 
 
 class TogglePublic(BaseForm):
@@ -144,7 +145,8 @@ class SaveViewForm(BaseForm):
     filter = StringField(u'Filter')
     dsl = StringField(u'DSL')
     new_searchtemplate = BooleanField(
-        u'Create search template', false_values={False, u'false', u''},
+        u'Create search template',
+        false_values={False, u'false', u''},
         default=False)
     from_searchtemplate_id = IntegerField(u'Create from search template')
 
@@ -195,11 +197,12 @@ class EventAnnotationForm(BaseForm):
 class UploadFileForm(BaseForm):
     """Form to handle file uploads."""
     file = FileField(
-        u'file', validators=[
+        u'file',
+        validators=[
             FileRequired(),
-            FileAllowed(
-                [u'plaso', u'csv'],
-                u'Allowed file extensions: .plaso or .csv')])
+            FileAllowed([u'plaso', u'csv'],
+                        u'Allowed file extensions: .plaso or .csv')
+        ])
     name = StringField(u'Timeline name', validators=[Optional()])
     sketch_id = IntegerField(u'Sketch ID', validators=[Optional()])
 
@@ -207,8 +210,7 @@ class UploadFileForm(BaseForm):
 class StoryForm(BaseForm):
     """Form to handle stories."""
     title = StringField(u'Title', validators=[])
-    content = StringField(
-        u'Content', validators=[], widget=widgets.TextArea())
+    content = StringField(u'Content', validators=[], widget=widgets.TextArea())
 
 
 class SearchIndexForm(BaseForm):
@@ -216,5 +218,4 @@ class SearchIndexForm(BaseForm):
     timeline_name = StringField(u'name', validators=[DataRequired()])
     index_name = StringField(u'Index', validators=[DataRequired()])
     public = BooleanField(
-        u'Public', false_values={False, u'false', u''},
-        default=False)
+        u'Public', false_values={False, u'false', u''}, default=False)

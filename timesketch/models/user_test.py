@@ -20,17 +20,15 @@ from timesketch.models.user import User
 
 class UserModelTest(ModelBaseTest):
     """Tests the user model."""
+
     def test_user_model(self):
         """
         Test that the test user has the expected data stored in the
         database.
         """
-        expected_result = frozenset([
-            (u'name', u'test1'),
-            (u'username', u'test1')
-        ])
-        self._test_db_object(
-            expected_result=expected_result, model_cls=User)
+        expected_result = frozenset([(u'name', u'test1'), (u'username',
+                                                           u'test1')])
+        self._test_db_object(expected_result=expected_result, model_cls=User)
 
     def test_set_password(self):
         """Test setting a password for the user."""
@@ -47,18 +45,16 @@ class UserModelTest(ModelBaseTest):
 
 class GroupModelTest(ModelBaseTest):
     """Tests the user model."""
+
     def test_group_model(self):
         """
         Test that the test group has the expected data stored in the
         database.
         """
-        expected_result = frozenset([
-            (u'name', u'test_group1'),
-            (u'display_name', u'test_group1'),
-            (u'description', u'test_group1')
-        ])
-        self._test_db_object(
-            expected_result=expected_result, model_cls=Group)
+        expected_result = frozenset([(u'name', u'test_group1'),
+                                     (u'display_name', u'test_group1'),
+                                     (u'description', u'test_group1')])
+        self._test_db_object(expected_result=expected_result, model_cls=Group)
 
     def test_group_membership(self):
         """Test that user1 is member of the group."""

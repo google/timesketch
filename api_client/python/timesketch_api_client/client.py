@@ -27,6 +27,7 @@ class TimesketchApi(object):
         api_root: The full URL to the server API endpoint.
         session: Authenticated HTTP session.
     """
+
     def __init__(self, host_uri, username, password, verify=True):
         """Initializes the TimesketchApi object.
 
@@ -67,8 +68,10 @@ class TimesketchApi(object):
         soup = BeautifulSoup.BeautifulSoup(response.text)
         csrf_token = soup.find(id=u'csrf_token').get(u'value')
 
-        session.headers.update(
-            {u'x-csrftoken': csrf_token, u'referer': self._host_uri})
+        session.headers.update({
+            u'x-csrftoken': csrf_token,
+            u'referer': self._host_uri
+        })
 
     def _create_session(self, username, password, verify):
         """Create authenticated HTTP session for server communication.
@@ -206,6 +209,7 @@ class TimesketchApi(object):
 
 class BaseResource(object):
     """Base resource object."""
+
     def __init__(self, api, resource_uri):
         """Initialize object.
 
@@ -226,7 +230,8 @@ class BaseResource(object):
             Dictionary with resource data.
         """
         if not self.resource_data or refresh_cache:
-            self.resource_data = self.api.fetch_resource_data(self.resource_uri)
+            self.resource_data = self.api.fetch_resource_data(
+                self.resource_uri)
         return self.resource_data
 
     @property
@@ -249,6 +254,7 @@ class Sketch(BaseResource):
         id: The ID of the sketch.
         api: An instance of TimesketchApi object.
     """
+
     def __init__(self, sketch_id, api, sketch_name=None):
         """Initializes the Sketch object.
 
@@ -326,8 +332,7 @@ class Sketch(BaseResource):
                 sketch_id=self.id,
                 api=self.api,
                 name=timeline[u'name'],
-                searchindex=timeline[u'searchindex'][u'index_name']
-            )
+                searchindex=timeline[u'searchindex'][u'index_name'])
             timelines.append(timeline_obj)
         return timelines
 
@@ -352,11 +357,13 @@ class Sketch(BaseResource):
             sketch_id=self.id,
             api=self.api,
             name=timeline[u'name'],
-            searchindex=timeline[u'searchindex'][u'index_name']
-        )
+            searchindex=timeline[u'searchindex'][u'index_name'])
         return timeline_obj
 
-    def explore(self, query_string=None, query_dsl=None, query_filter=None,
+    def explore(self,
+                query_string=None,
+                query_dsl=None,
+                query_filter=None,
                 view=None):
         """Explore the sketch.
 
@@ -407,6 +414,7 @@ class SearchIndex(BaseResource):
         id: The ID of the search index.
         api: An instance of TimesketchApi object.
     """
+
     def __init__(self, searchindex_id, api, searchindex_name=None):
         """Initializes the SearchIndex object.
 
@@ -417,8 +425,7 @@ class SearchIndex(BaseResource):
         self.id = searchindex_id
         self._searchindex_name = searchindex_name
         self._resource_uri = u'timelines/{0:d}'.format(self.id)
-        super(
-            SearchIndex, self).__init__(
+        super(SearchIndex, self).__init__(
             api=api, resource_uri=self._resource_uri)
 
     @property
@@ -451,6 +458,7 @@ class View(BaseResource):
         id: Primary key of the view.
         name: Name of the view.
     """
+
     def __init__(self, view_id, view_name, sketch_id, api):
         """Initializes the View object.
 
@@ -462,7 +470,8 @@ class View(BaseResource):
         """
         self.id = view_id
         self.name = view_name
-        resource_uri = u'sketches/{0:d}/views/{1:d}/'.format(sketch_id, self.id)
+        resource_uri = u'sketches/{0:d}/views/{1:d}/'.format(
+            sketch_id, self.id)
         super(View, self).__init__(api, resource_uri)
 
     @property
@@ -502,7 +511,12 @@ class Timeline(BaseResource):
     Attributes:
         id: Primary key of the view.
     """
-    def __init__(self, timeline_id, sketch_id, api, name=None,
+
+    def __init__(self,
+                 timeline_id,
+                 sketch_id,
+                 api,
+                 name=None,
                  searchindex=None):
         """Initializes the Timeline object.
 

@@ -37,6 +37,7 @@ from timesketch.models import db_session
 
 application = create_app()
 
+
 # pylint: disable=unused-argument
 @application.teardown_appcontext
 def shutdown_session(exception=None):

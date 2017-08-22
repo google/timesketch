@@ -31,14 +31,11 @@ from timesketch.models import BaseModel
 from timesketch.models.annotations import LabelMixin
 from timesketch.models.annotations import StatusMixin
 
-
 # Helper table for Groups many-to-many relationship.
-user_group = Table(
-    'user_group', BaseModel.metadata,
-    Column('user_id', Integer(), ForeignKey('user.id')),
-    Column('group_id', Integer(), ForeignKey('group.id')),
-    PrimaryKeyConstraint('user_id', 'group_id')
-)
+user_group = Table('user_group', BaseModel.metadata,
+                   Column('user_id', Integer(), ForeignKey('user.id')),
+                   Column('group_id', Integer(), ForeignKey('group.id')),
+                   PrimaryKeyConstraint('user_id', 'group_id'))
 
 
 class User(UserMixin, BaseModel):
@@ -57,8 +54,9 @@ class User(UserMixin, BaseModel):
     stories = relationship(u'Story', backref=u'user', lazy=u'dynamic')
     my_groups = relationship(u'Group', backref=u'user', lazy=u'dynamic')
     groups = relationship(
-        u'Group', secondary=user_group, backref=backref(
-            u'users', lazy=u'dynamic'))
+        u'Group',
+        secondary=user_group,
+        backref=backref(u'users', lazy=u'dynamic'))
 
     def __init__(self, username, name=None):
         """Initialize the User object.

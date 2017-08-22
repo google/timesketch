@@ -20,7 +20,6 @@ from flask_login import login_required
 from timesketch.models.sketch import Sketch
 from timesketch.models.story import Story
 
-
 # Register flask blueprint
 story_views = Blueprint(u'story_views', __name__)
 

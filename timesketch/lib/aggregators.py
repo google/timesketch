@@ -14,8 +14,8 @@
 """Elasticsearch aggregations."""
 
 
-def heatmap(
-        es_client, sketch_id, query_string, query_filter, query_dsl, indices):
+def heatmap(es_client, sketch_id, query_string, query_filter, query_dsl,
+            indices):
     """Aggregate query results into number of events per hour/day.
 
     Args:
@@ -40,8 +40,14 @@ def heatmap(
     }
 
     search_result = es_client.search(
-        sketch_id, query_string, query_filter, query_dsl, indices,
-        aggregations=aggregation, return_results=False, return_fields=None,
+        sketch_id,
+        query_string,
+        query_filter,
+        query_dsl,
+        indices,
+        aggregations=aggregation,
+        return_results=False,
+        return_fields=None,
         enable_scroll=False)
 
     try:
@@ -59,15 +65,16 @@ def heatmap(
             per_hour[(day, hour)] = 0
 
     for bucket in buckets:
-        day_hour = tuple(int(dh) for dh in bucket[u'key_as_string'].split(u','))
+        day_hour = tuple(
+            int(dh) for dh in bucket[u'key_as_string'].split(u','))
         count = bucket[u'doc_count']
         per_hour[day_hour] += count
 
     return [dict(day=k[0], hour=k[1], count=v) for k, v in per_hour.items()]
 
 
-def histogram(
-        es_client, sketch_id, query_string, query_filter, query_dsl, indices):
+def histogram(es_client, sketch_id, query_string, query_filter, query_dsl,
+              indices):
     """Aggregate query results into number of events per time interval.
 
     Args:
@@ -92,8 +99,13 @@ def histogram(
     }
 
     search_result = es_client.search(
-        sketch_id, query_string, query_filter, query_dsl, indices,
-        aggregations=aggregation, return_results=False)
+        sketch_id,
+        query_string,
+        query_filter,
+        query_dsl,
+        indices,
+        aggregations=aggregation,
+        return_results=False)
 
     try:
         aggregation_result = search_result[u'aggregations']

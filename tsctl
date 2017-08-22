@@ -42,6 +42,7 @@ from timesketch.models.sketch import Timeline
 
 class DropDataBaseTables(Command):
     """Drop all database tables."""
+
     def __init__(self):
         super(DropDataBaseTables, self).__init__()
 
@@ -59,8 +60,7 @@ class AddUser(Command):
     """Create a new Timesketch user."""
     option_list = (
         Option(u'--username', u'-u', dest=u'username', required=True),
-        Option(u'--password', u'-p', dest=u'password', required=False),
-    )
+        Option(u'--password', u'-p', dest=u'password', required=False), )
 
     def __init__(self):
         super(AddUser, self).__init__()
@@ -90,9 +90,7 @@ class AddUser(Command):
 
 class AddGroup(Command):
     """Create a new Timesketch group."""
-    option_list = (
-        Option(u'--name', u'-n', dest=u'name', required=True),
-    )
+    option_list = (Option(u'--name', u'-n', dest=u'name', required=True), )
 
     def __init__(self):
         super(AddGroup, self).__init__()
@@ -111,14 +109,21 @@ class GroupManager(Command):
     """Manage group memberships."""
     option_list = (
         Option(
-            u'--add', u'-a', dest=u'add', action=u'store_true', required=False,
+            u'--add',
+            u'-a',
+            dest=u'add',
+            action=u'store_true',
+            required=False,
             default=False),
         Option(
-            u'--remove', u'-r', dest=u'remove', action=u'store_true',
-            required=False, default=False),
+            u'--remove',
+            u'-r',
+            dest=u'remove',
+            action=u'store_true',
+            required=False,
+            default=False),
         Option(u'--group', u'-g', dest=u'group_name', required=True),
-        Option(u'--user', u'-u', dest=u'user_name', required=True),
-    )
+        Option(u'--user', u'-u', dest=u'user_name', required=True), )
 
     def __init__(self):
         super(GroupManager, self).__init__()
@@ -135,25 +140,21 @@ class GroupManager(Command):
         if remove:
             try:
                 user.groups.remove(group)
-                sys.stdout.write(
-                    u'{0:s} removed from group {1:s}\n'.format(
-                        user_name, group_name))
+                sys.stdout.write(u'{0:s} removed from group {1:s}\n'.format(
+                    user_name, group_name))
                 db_session.commit()
             except ValueError:
-                sys.stdout.write(
-                    u'{0:s} is not a member of group {1:s}\n'.format(
-                        user_name, group_name))
+                sys.stdout.write(u'{0:s} is not a member of group {1:s}\n'.
+                                 format(user_name, group_name))
         else:
             user.groups.append(group)
             try:
                 db_session.commit()
-                sys.stdout.write(
-                    u'{0:s} added to group {1:s}\n'.format(
-                        user_name, group_name))
+                sys.stdout.write(u'{0:s} added to group {1:s}\n'.format(
+                    user_name, group_name))
             except IntegrityError:
-                sys.stdout.write(
-                    u'{0:s} is already a member of group {1:s}\n'.format(
-                        user_name, group_name))
+                sys.stdout.write(u'{0:s} is already a member of group {1:s}\n'.
+                                 format(user_name, group_name))
 
 
 class AddSearchIndex(Command):
@@ -161,8 +162,7 @@ class AddSearchIndex(Command):
     option_list = (
         Option(u'--name', u'-n', dest=u'name', required=True),
         Option(u'--index', u'-i', dest=u'index', required=True),
-        Option(u'--user', u'-u', dest=u'username', required=True),
-    )
+        Option(u'--user', u'-u', dest=u'username', required=True), )
 
     def __init__(self):
         super(AddSearchIndex, self).__init__()
@@ -198,28 +198,39 @@ class CreateTimelineBase(Command):
     DEFAULT_EVENT_TYPE = u'generic_event'
     DEFAULT_INDEX_NAME = uuid4().hex
     option_list = (
-        Option(u'--name', u'-n', dest=u'timeline_name', required=True,
-               help=u'Name of the timeline as it will appear in the '
-                    u'Timesketch UI.'),
-        Option(u'--file', u'-f', dest=u'file_path', required=True,
-               help=u'Path to the JSON file to process'),
         Option(
-            u'--index_name', dest=u'index_name', required=False,
+            u'--name',
+            u'-n',
+            dest=u'timeline_name',
+            required=True,
+            help=u'Name of the timeline as it will appear in the '
+            u'Timesketch UI.'), Option(
+                u'--file',
+                u'-f',
+                dest=u'file_path',
+                required=True,
+                help=u'Path to the JSON file to process'),
+        Option(
+            u'--index_name',
+            dest=u'index_name',
+            required=False,
             default=DEFAULT_INDEX_NAME,
             help=u'OPTIONAL: Name of the Elasticsearch index. Specify an '
-                 u'existing one to append to it. Default: unique UUID'),
+            u'existing one to append to it. Default: unique UUID'), Option(
+                u'--event_type',
+                dest=u'event_type',
+                required=False,
+                default=DEFAULT_EVENT_TYPE,
+                help=u'OPTIONAL: Type of event. This is what becomes the '
+                u'document type in Elasticsearch. '
+                u'Default: {0:s}.'.format(DEFAULT_EVENT_TYPE)),
         Option(
-            u'--event_type', dest=u'event_type', required=False,
-            default=DEFAULT_EVENT_TYPE,
-            help=u'OPTIONAL: Type of event. This is what becomes the '
-                 u'document type in Elasticsearch. '
-                 u'Default: {0:s}.'.format(DEFAULT_EVENT_TYPE)),
-        Option(
-            u'--flush_interval', dest=u'flush_interval', required=False,
+            u'--flush_interval',
+            dest=u'flush_interval',
+            required=False,
             default=DEFAULT_FLUSH_INTERVAL,
             help=u'OPTIONAL: How often to bulk insert events to Elasticsearch. '
-                 u'Default: Every {0:d} event.'.format(DEFAULT_FLUSH_INTERVAL))
-    )
+            u'Default: Every {0:d} event.'.format(DEFAULT_FLUSH_INTERVAL)))
 
     def __init__(self):
         super(CreateTimelineBase, self).__init__()
@@ -234,8 +245,10 @@ class CreateTimelineBase(Command):
         """
         # Create a searchindex in the Timesketch database.
         searchindex = SearchIndex.get_or_create(
-            name=timeline_name, description=timeline_name,
-            user=None, index_name=index_name)
+            name=timeline_name,
+            description=timeline_name,
+            user=None,
+            index_name=index_name)
         searchindex.grant_permission(u'read')
         db_session.add(searchindex)
         db_session.commit()
@@ -315,8 +328,8 @@ class CreateTimelineFromJson(CreateTimelineBase):
             # TODO: Check file size and bail out if big.
             es.create_index(index_name=index_name, doc_type=event_type)
             for event in json.load(fh):
-                _counter = es.import_event(
-                    flush_interval, index_name, event_type, event)
+                _counter = es.import_event(flush_interval, index_name,
+                                           event_type, event)
                 if _counter % int(flush_interval) == 0:
                     sys.stdout.write(
                         u'Events inserted: {0:d}\n'.format(_counter))
@@ -352,24 +365,23 @@ class CreateTimelineFromCsv(CreateTimelineBase):
 
         es.create_index(index_name=index_name, doc_type=event_type)
         for event in read_and_validate_csv(file_path):
-            event_counter = es.import_event(
-                flush_interval, index_name, event_type, event)
+            event_counter = es.import_event(flush_interval, index_name,
+                                            event_type, event)
             if event_counter % int(flush_interval) == 0:
-                sys.stdout.write(u'Indexing progress: {0:d} events\r'.format(event_counter))
+                sys.stdout.write(
+                    u'Indexing progress: {0:d} events\r'.format(event_counter))
                 sys.stdout.flush()
 
         # Import the remaining events in the queue
         total_events = es.import_event(flush_interval, index_name, event_type)
-        sys.stdout.write(
-            u'\nTotal events: {0:d}\n'.format(total_events))
+        sys.stdout.write(u'\nTotal events: {0:d}\n'.format(total_events))
         self.create_searchindex(timeline_name, index_name)
 
 
 class PurgeTimeline(Command):
     """Delete timeline permanently from Timesketch and Elasticsearch."""
-    option_list = (
-        Option(u'--index', u'-i', dest=u'index_name', required=True),
-    )
+    option_list = (Option(
+        u'--index', u'-i', dest=u'index_name', required=True), )
 
     def __init__(self):
         super(PurgeTimeline, self).__init__()
@@ -381,7 +393,8 @@ class PurgeTimeline(Command):
             index_name: The name of the index in Elasticsearch
         """
         index_name = unicode(index_name.decode(encoding=u'utf-8'))
-        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+        searchindex = SearchIndex.query.filter_by(
+            index_name=index_name).first()
 
         if not searchindex:
             sys.stdout.write(u'No such index\n')
@@ -392,16 +405,17 @@ class PurgeTimeline(Command):
             port=current_app.config[u'ELASTIC_PORT'])
 
         timelines = Timeline.query.filter_by(searchindex=searchindex).all()
-        sketches = [t.sketch for t in timelines if
-                    t.sketch and t.sketch.get_status.status != u'deleted']
+        sketches = [
+            t.sketch for t in timelines
+            if t.sketch and t.sketch.get_status.status != u'deleted'
+        ]
         if sketches:
             sys.stdout.write(u'WARNING: This timeline is in use by:\n')
             for sketch in sketches:
                 sys.stdout.write(u' * {0:s}\n'.format(sketch.name))
                 sys.stdout.flush()
         really_delete = prompt_bool(
-            u'Are you sure you want to delete this timeline?'
-        )
+            u'Are you sure you want to delete this timeline?')
         if really_delete:
             for timeline in timelines:
                 db_session.delete(timeline)
@@ -422,10 +436,12 @@ if __name__ == '__main__':
     shell_manager.add_command(u'drop_db', DropDataBaseTables())
     shell_manager.add_command(u'json2ts', CreateTimelineFromJson())
     shell_manager.add_command(u'purge', PurgeTimeline())
-    shell_manager.add_command(u'runserver', Server(
-        host=u'127.0.0.1', port=5000))
+    shell_manager.add_command(u'runserver',
+                              Server(host=u'127.0.0.1', port=5000))
     shell_manager.add_option(
-        u'-c', u'--config', dest=u'config', default=u'/etc/timesketch.conf',
+        u'-c',
+        u'--config',
+        dest=u'config',
+        default=u'/etc/timesketch.conf',
         required=False)
     shell_manager.run()
-

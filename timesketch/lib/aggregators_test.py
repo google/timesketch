@@ -13,7 +13,6 @@
 # limitations under the License.
 """Tests for aggregations."""
 
-
 from timesketch.lib.aggregators import heatmap
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
@@ -21,6 +20,7 @@ from timesketch.lib.testlib import MockDataStore
 
 class TestAggregators(BaseTest):
     """Tests for the functionality of the aggregation module."""
+
     def test_heatmap(self):
         """Test to get heatmap data."""
         es_client = MockDataStore(u'127.0.0,1', 4711)

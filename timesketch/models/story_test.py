@@ -19,16 +19,13 @@ from timesketch.models.story import Story
 
 class StoryModelTest(ModelBaseTest):
     """Tests the user model."""
+
     def test_story_model(self):
         """
         Test that the test story has the expected data stored in the
         database.
         """
-        expected_result = frozenset([
-            (u'title', u'Test'),
-            (u'content', u'Test'),
-            (u'user', self.user1),
-            (u'sketch', self.sketch1)
-        ])
-        self._test_db_object(
-            expected_result=expected_result, model_cls=Story)
+        expected_result = frozenset(
+            [(u'title', u'Test'), (u'content', u'Test'), (u'user', self.user1),
+             (u'sketch', self.sketch1)])
+        self._test_db_object(expected_result=expected_result, model_cls=Story)

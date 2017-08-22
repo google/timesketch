@@ -22,6 +22,7 @@ from timesketch.lib.utils import random_color
 
 class TestUtils(BaseTest):
     """Tests for the functionality on the utils module."""
+
     def test_random_color(self):
         """Test to generate a random color."""
         color = random_color()
@@ -33,8 +34,8 @@ class TestUtils(BaseTest):
         sketch_indices = [t.searchindex.index_name for t in sketch.timelines]
         valid_indices = [u'test']
         invalid_indices = [u'test', u'fail']
-        self.assertListEqual(
-            sketch_indices, get_validated_indices(
-                valid_indices, sketch_indices))
-        self.assertFalse(
-            u'fail' in get_validated_indices(invalid_indices, sketch_indices))
+        self.assertListEqual(sketch_indices,
+                             get_validated_indices(valid_indices,
+                                                   sketch_indices))
+        self.assertFalse(u'fail' in get_validated_indices(
+            invalid_indices, sketch_indices))

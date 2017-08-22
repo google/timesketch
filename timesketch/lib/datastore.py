@@ -22,9 +22,8 @@ class DataStore(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def search(
-            self, sketch_id, query, query_filter, query_dsl, indices,
-            aggregations, return_results, return_fields, enable_scroll):
+    def search(self, sketch_id, query, query_filter, query_dsl, indices,
+               aggregations, return_results, return_fields, enable_scroll):
         """Return search results.
 
         Args:
@@ -49,9 +48,14 @@ class DataStore(object):
         """
 
     @abc.abstractmethod
-    def set_label(
-            self, searchindex_id, event_id, event_type, sketch_id, user_id,
-            label, toggle=False):
+    def set_label(self,
+                  searchindex_id,
+                  event_id,
+                  event_type,
+                  sketch_id,
+                  user_id,
+                  label,
+                  toggle=False):
         """Add label to an event.
 
         Args:

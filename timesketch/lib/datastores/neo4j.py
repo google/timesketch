@@ -23,6 +23,7 @@ class Neo4jDataStore(object):
     Attributes:
         client: Instance of Neo4j GraphDatabase
     """
+
     def __init__(self, username, password, host=u'127.0.0.1', port=7474):
         """Create a neo4j client.
 
@@ -35,7 +36,8 @@ class Neo4jDataStore(object):
         super(Neo4jDataStore, self).__init__()
         self.client = GraphDatabase(
             u'http://{0:s}:{1:d}/db/data/'.format(host, port),
-            username=username, password=password)
+            username=username,
+            password=password)
 
     @staticmethod
     def _get_formatter(output_format):
@@ -83,6 +85,7 @@ class OutputFormatterBaseClass(object):
     Attributes:
         schema: Dictionary structure to return
     """
+
     def __init__(self):
         """Initialize the output formatter object."""
         super(OutputFormatterBaseClass, self).__init__()
@@ -154,6 +157,7 @@ class Neo4jOutputFormatter(OutputFormatterBaseClass):
     This formatter will return the original Neo4j result
     without any formatting.
     """
+
     def __init__(self):
         """Initialize the Neo4j output formatter object."""
         super(Neo4jOutputFormatter, self).__init__()
@@ -176,6 +180,7 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
     This formatter will return the graph compatible with the open source
     graph Javascript library Cytoscape (http://js.cytoscape.org/).
     """
+
     def __init__(self):
         """Initialize the Cytoscape output formatter object."""
         super(CytoscapeOutputFormatter, self).__init__()
