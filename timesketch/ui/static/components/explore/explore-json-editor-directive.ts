@@ -14,7 +14,9 @@
  limitations under the License.
  */
 import angular from 'angular'
-import * as ace from 'ace-builds/src/ace'
+import * as ace from 'brace'
+import 'brace/mode/json'
+import 'brace/theme/dawn'
 
 (function() {
     var module = angular.module('timesketch.explore.json.editor.directive', []);

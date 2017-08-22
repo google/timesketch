@@ -1,3 +1,10 @@
+# Ignore javascript build related files
+node_modules
+bundle.js
+
+# Ignore data files
+*.plaso
+
 # Ignore back-up files.
 *~
 
@@ -9,6 +16,7 @@
 /dependencies/
 /dist/
 /build/
+*.egg-info
 
 # And don't care about the 'egg'.
 /Timesketch.egg-info

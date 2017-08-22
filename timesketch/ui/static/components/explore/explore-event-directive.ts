@@ -60,8 +60,8 @@ import angular from 'angular'
                 };
 
                 var getSelectedEventsFilter = function() {
-                    var event_list = [];
-                    var indices_list = [];
+                    var event_list: any[] = [];
+                    var indices_list: any[] = [];
                     angular.forEach($scope.events, function(event) {
                         if (event.selected) {
                             indices_list.push(event['_index']);
@@ -132,7 +132,7 @@ import angular from 'angular'
                 };
 
                 $scope.addStar = function() {
-                    var event_list = [];
+                    var event_list: any[] = [];
                     angular.forEach($scope.events, function(event) {
                         if (event.selected && !event.star) {
                             event.star = true;
@@ -143,7 +143,7 @@ import angular from 'angular'
                 };
 
                 $scope.removeStar = function() {
-                    var event_list = [];
+                    var event_list: any[] = [];
                     angular.forEach($scope.events, function(event) {
                         if (event.selected && event.star) {
                             event.star = false;

@@ -97,7 +97,7 @@ import * as d3 from "d3"
                         .domain([0, max_value / 2, max_value])
                         .range(["white", "#3498db", "red"]);
 
-                    var colors = [];
+                    var colors: any[] = [];
                     for (var i = 0; i < max_value; i++) {
                         colors.push(genColor(i));
                     }

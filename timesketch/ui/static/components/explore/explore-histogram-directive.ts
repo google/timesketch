@@ -70,12 +70,12 @@ import Chart from 'chart.js'
                     }
 
                     // Arrays to hold out chart data.
-                    var chart_labels = [];
-                    var chart_values = [];
+                    var chart_labels: any[] = [];
+                    var chart_values: any[] = [];
 
                     aggregation.forEach(function (d) {
-                        chart_labels.push(d.key_as_string);
-                        chart_values.push(d.doc_count);
+                        chart_labels.push(d.key_as_string!);
+                        chart_values.push(d.doc_count!);
                     });
 
                     // Get our canvas and initiate the chart.
