@@ -71,7 +71,6 @@ class Neo4jDataStore(object):
             Dictionary with formatted query result
         """
         data_content = DATA_GRAPH
-        # pylint: disable=redefined-variable-type
         if return_rows:
             data_content = True
         query_result = self.client.query(query, data_contents=data_content)

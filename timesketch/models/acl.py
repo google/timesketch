@@ -160,10 +160,10 @@ class AccessControlMixin(object):
         # If user doesn't have a direct ACE, check group permission.
         if (user and check_group) and not ace:
             group_intersection = set(user.groups) & set(self.groups)
-            for group in group_intersection:
+            for _group in group_intersection:
                 # Get group ACE with the requested permission.
                 ace = self.AccessControlEntry.query.filter_by(
-                    group=group, permission=permission, parent=self).all()
+                    group=_group, permission=permission, parent=self).all()
                 if ace:
                     return ace
         return ace

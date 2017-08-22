@@ -118,16 +118,8 @@ class MockDataStore(datastore.DataStore):
         self.host = host
         self.port = port
 
-    def search(self,
-               unused_sketch_id,
-               unused_query,
-               unused_query_filter,
-               unused_query_dsl,
-               unused_indices,
-               aggregations,
-               return_results,
-               return_fields=None,
-               enable_scroll=False):
+    # pylint: disable=arguments-differ,unused-argument
+    def search(self, *args, **kwargs):
         """Mock a search query.
 
         Returns:
@@ -135,7 +127,8 @@ class MockDataStore(datastore.DataStore):
         """
         return self.search_result_dict
 
-    def get_event(self, unused_searchindex_id, unused_event_id):
+    # pylint: disable=arguments-differ,unused-argument
+    def get_event(self, *args, **kwargs):
         """Mock returning a single event from the datastore.
 
         Returns:

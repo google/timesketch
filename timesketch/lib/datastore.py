@@ -22,7 +22,7 @@ class DataStore(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def search(self, sketch_id, query, query_filter, query_dsl, indices,
+    def search(self, sketch_id, query_string, query_filter, query_dsl, indices,
                aggregations, return_results, return_fields, enable_scroll):
         """Return search results.
 

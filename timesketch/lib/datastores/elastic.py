@@ -332,7 +332,6 @@ class ElasticsearchDataStore(datastore.DataStore):
         try:
             doc[u'_source'][u'timesketch_label']
         except KeyError:
-            # pylint: disable=redefined-variable-type
             doc = {u'doc': {u'timesketch_label': []}}
             self.client.update(
                 index=searchindex_id,

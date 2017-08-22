@@ -35,7 +35,7 @@ pip install -e /usr/local/src/timesketch/
 pip install gunicorn
 
 # Timesketch development dependencies
-pip install pylint nose flask-testing coverage
+pip install pylint nose flask-testing coverage mock BeautifulSoup
 
 # Initialize Timesketch
 mkdir -p /var/lib/timesketch/

@@ -14,10 +14,10 @@
 """Timesketch API client."""
 
 import json
+from uuid import uuid4
 import BeautifulSoup
 import requests
 from requests.exceptions import ConnectionError
-from uuid import uuid4
 
 
 class TimesketchApi(object):

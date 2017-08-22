@@ -396,8 +396,6 @@ class ViewListResource(ResourceMixin, Resource):
         query_filter = json.dumps(form.filter.data, ensure_ascii=False),
         query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
 
-        # WTF forms turns the filter into a tuple for some reason.
-        # pylint: disable=redefined-variable-type
         if isinstance(query_filter, tuple):
             query_filter = query_filter[0]
 
@@ -428,7 +426,6 @@ class ViewListResource(ResourceMixin, Resource):
             if query_filter_dict.get(u'indices', None):
                 query_filter_dict[u'indices'] = u'_all'
 
-            # pylint: disable=redefined-variable-type
             query_filter = json.dumps(query_filter_dict, ensure_ascii=False)
 
             searchtemplate = SearchTemplate(
@@ -992,6 +989,7 @@ class UploadFileResource(ResourceMixin, Resource):
                 task_id=index_name)
 
             # Return Timeline if it was created.
+            # pylint: disable=no-else-return
             if timeline:
                 return self.to_json(
                     timeline, status_code=HTTP_STATUS_CODE_CREATED)
