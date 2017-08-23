@@ -1,6 +1,6 @@
-# Ignore javascript build related files
+# Ignore frontend build related files
 node_modules
-bundle.js
+timesketch/ui/static/dist
 
 # Ignore data files
 *.plaso
