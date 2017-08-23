@@ -13,10 +13,10 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-import angular from 'angular'
+import angular from 'angularjs-for-webpack'
 import * as moment from 'moment'
-import $ from 'jquery'
-import MediumEditor from 'medium-editor'
+import * as $ from 'jquery'
+import * as MediumEditor from 'medium-editor/dist/js/medium-editor.js'
 
 (function() {
     var module = angular.module('timesketch.story.directive', []);
@@ -33,7 +33,7 @@ import MediumEditor from 'medium-editor'
             },
             controller: function($scope) {
                 timesketchApi.getStories($scope.sketchId).success(function(data) {
-                    var stories = data.objects[0];
+                    var stories = data.objects[0] || [];
                     $scope.stories = [];
                     for (var i = 0; i < stories.length; i++) {
                         var story = stories[i];

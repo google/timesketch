@@ -1,3 +1,6 @@
+import * as $ from 'jquery'
+(window as any).jQuery = $
+import 'twitter-bootstrap-3.0.0/dist/js/bootstrap.min.js'
 import 'app'
 import 'components/api/api'
 import 'components/api/api-service'

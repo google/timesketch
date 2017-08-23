@@ -13,8 +13,8 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-import angular from 'angular'
-import numeral from 'numeral'
+import angular from 'angularjs-for-webpack'
+import * as numeral from 'numeral/numeral.js'
 
 (function() {
     var module = angular.module('timesketch.sketch.count.events.directive', []);

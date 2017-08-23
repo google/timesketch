@@ -13,7 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-import angular from 'angular'
+import angular from 'angularjs-for-webpack'
 import * as ace from 'brace'
 import 'brace/mode/json'
 import 'brace/theme/dawn'

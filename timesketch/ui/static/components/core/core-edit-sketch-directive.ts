@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import angular from 'angular'
+import angular from 'angularjs-for-webpack'
 
 (function() {
     var module = angular.module('timesketch.core.edit.sketch.directive', []);

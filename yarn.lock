@@ -2170,6 +2170,10 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
 
+twitter-bootstrap-3.0.0@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/twitter-bootstrap-3.0.0/-/twitter-bootstrap-3.0.0-3.0.0.tgz#30a24297b48373f93cd9abe10fd9924415c3d17a"
+
 typescript@^2.4.2:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.4.2.tgz#f8395f85d459276067c988aa41837a8f82870844"

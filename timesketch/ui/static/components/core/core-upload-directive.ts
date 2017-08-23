@@ -1,4 +1,4 @@
-import angular from 'angular'
+import angular from 'angularjs-for-webpack'
 
 (function() {
     var module = angular.module('timesketch.core.upload.directive', []);
