@@ -1324,8 +1324,10 @@ class SearchIndexListResource(ResourceMixin, Resource):
                 metadata[u'created'] = False
             else:
                 searchindex = SearchIndex.get_or_create(
-                    name=searchindex_name, description=searchindex_name,
-                    user=current_user, index_name=es_index_name)
+                    name=searchindex_name,
+                    description=searchindex_name,
+                    user=current_user,
+                    index_name=es_index_name)
                 searchindex.grant_permission(
                     permission=u'read', user=current_user)
 
@@ -1340,7 +1342,8 @@ class SearchIndexListResource(ResourceMixin, Resource):
                 db_session.commit()
 
             return self.to_json(
-                searchindex, meta=metadata,
+                searchindex,
+                meta=metadata,
                 status_code=HTTP_STATUS_CODE_CREATED)
 
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
