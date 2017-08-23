@@ -14,15 +14,29 @@ echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | tee -a /e
 wget -O - https://debian.neo4j.org/neotechnology.gpg.key | apt-key add -
 echo "deb https://debian.neo4j.org/repo stable/" | tee /etc/apt/sources.list.d/neo4j.list
 
+# Add Node.js 8.x repo
+curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+
+# Add Yarn repo
+curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+
 # Install apt dependencies
 apt-get update
 apt-get install -y neo4j openjdk-8-jre-headless elasticsearch postgresql \
   python-psycopg2 python-pip python-dev libffi-dev redis-server python-plaso
+sudo apt-get install -y nodejs
+sudo apt-get update && sudo apt-get install yarn
 
-# Install Timesketch + python dependencies
+# Install python dependencies
 pip install --upgrade pip
-pip install -e /usr/local/src/timesketch/
 pip install gunicorn pylint nose flask-testing coverage mock BeautifulSoup
+
+# Install nodejs dependencies
+HOME=/home/ubuntu sudo -u ubuntu bash -c 'cd /usr/local/src/timesketch && yarn install'
+
+# Install Timesketch
+pip install -e /usr/local/src/timesketch/
 
 # Generate random passwords for DB and session key
 if [ ! -f psql_pw ]; then
@@ -82,6 +96,9 @@ echo "dbms.connectors.default_listen_address=0.0.0.0" >> /etc/neo4j/neo4j.conf
 /bin/systemctl daemon-reload
 /bin/systemctl enable neo4j
 /bin/systemctl start neo4j
+
+# Build Timesketch frontend
+HOME=/home/ubuntu sudo -u ubuntu bash -c 'cd /usr/local/src/timesketch && yarn run build'
 
 # Create test user
 sudo -u ubuntu tsctl add_user --username spock --password spock
