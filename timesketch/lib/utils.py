@@ -28,7 +28,7 @@ def random_color():
         Color as string in HEX
     """
     hue = random.random()
-    golden_ratio_conjugate = (1 + 5 ** 0.5) / 2
+    golden_ratio_conjugate = (1 + 5**0.5) / 2
     hue += golden_ratio_conjugate
     hue %= 1
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
@@ -42,8 +42,7 @@ def read_and_validate_csv(path):
         path: Path to the CSV file
     """
     # Columns that must be present in the CSV file
-    mandatory_fields = [
-        u'message', u'datetime', u'timestamp_desc']
+    mandatory_fields = [u'message', u'datetime', u'timestamp_desc']
 
     with open(path, 'rb') as fh:
 
@@ -61,8 +60,8 @@ def read_and_validate_csv(path):
             if u'timestamp' not in csv_header and u'datetime' in csv_header:
                 try:
                     parsed_datetime = parser.parse(row[u'datetime'])
-                    row[u'timestamp'] = str(int(
-                        time.mktime(parsed_datetime.timetuple())))
+                    row[u'timestamp'] = str(
+                        int(time.mktime(parsed_datetime.timetuple())))
                 except ValueError:
                     continue
 

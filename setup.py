@@ -21,7 +21,6 @@
 from setuptools import find_packages
 from setuptools import setup
 
-
 timesketch_version = u'20170721'
 
 timesketch_description = (
@@ -45,28 +44,14 @@ setup(
         u'Operating System :: OS Independent',
         u'Programming Language :: Python',
     ],
-    data_files=[
-        (u'share/timesketch', [u'timesketch.conf'])
-    ],
+    data_files=[(u'share/timesketch', [u'timesketch.conf'])],
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
     scripts=[u'tsctl'],
     install_requires=frozenset([
-        u'Flask',
-        u'Flask-Login',
-        u'Flask-script',
-        u'Flask-SQLAlchemy',
-        u'Flask-Bcrypt',
-        u'Flask-RESTful',
-        u'Flask-WTF',
-        u'Flask-Migrate',
-        u'SQLAlchemy',
-        u'celery',
-        u'redis',
-        u'blinker',
-        u'elasticsearch',
-        u'neo4jrestclient',
-        u'python-dateutil'
-    ])
-)
+        u'Flask', u'Flask-Login', u'Flask-script', u'Flask-SQLAlchemy',
+        u'Flask-Bcrypt', u'Flask-RESTful', u'Flask-WTF', u'Flask-Migrate',
+        u'SQLAlchemy', u'celery', u'redis', u'blinker', u'elasticsearch',
+        u'neo4jrestclient', u'python-dateutil'
+    ]))

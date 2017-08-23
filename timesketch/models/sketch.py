@@ -66,7 +66,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         """
         views = [
             view for view in self.views
-            if view.get_status.status != u'deleted' and view.name != u'']
+            if view.get_status.status != u'deleted' and view.name != u''
+        ]
         return views
 
     @property
@@ -83,11 +84,9 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         Returns:
             view: Instance of timesketch.models.sketch.View
         """
-        view = View.query.filter(
-            View.user == user,
-            View.name == u'',
-            View.sketch_id == self.id).order_by(
-                View.created_at.desc()).first()
+        view = View.query.filter(View.user == user, View.name == u'',
+                                 View.sketch_id == self.id).order_by(
+                                     View.created_at.desc()).first()
         return view
 
 
@@ -100,9 +99,13 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     searchindex_id = Column(Integer, ForeignKey(u'searchindex.id'))
     sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
 
-    def __init__(
-            self, name, user, sketch, searchindex, color=None,
-            description=None):
+    def __init__(self,
+                 name,
+                 user,
+                 sketch,
+                 searchindex,
+                 color=None,
+                 description=None):
         """Initialize the Timeline object.
 
         Args:
@@ -136,8 +139,7 @@ class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     user_id = Column(Integer, ForeignKey(u'user.id'))
     timelines = relationship(
         u'Timeline', backref=u'searchindex', lazy=u'dynamic')
-    events = relationship(
-        u'Event', backref=u'searchindex', lazy=u'dynamic')
+    events = relationship(u'Event', backref=u'searchindex', lazy=u'dynamic')
 
     def __init__(self, name, description, index_name, user):
         """Initialize the SearchIndex object.
@@ -166,9 +168,14 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
     searchtemplate_id = Column(Integer, ForeignKey(u'searchtemplate.id'))
 
-    def __init__(
-            self, name, sketch, user, searchtemplate=None, query_string=None,
-            query_filter=None, query_dsl=None):
+    def __init__(self,
+                 name,
+                 sketch,
+                 user,
+                 searchtemplate=None,
+                 query_string=None,
+                 query_filter=None,
+                 query_dsl=None):
         """Initialize the View object.
 
         Args:
@@ -224,8 +231,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 
         # Get all missing attributes and set them to their default value
         missing_attributes = list(
-            set(DEFAULT_VALUES.keys()) - set(filter_dict.keys())
-        )
+            set(DEFAULT_VALUES.keys()) - set(filter_dict.keys()))
         for key in missing_attributes:
             filter_dict[key] = DEFAULT_VALUES[key]
 
@@ -242,9 +248,12 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     user_id = Column(Integer, ForeignKey(u'user.id'))
     views = relationship(u'View', backref=u'searchtemplate', lazy=u'select')
 
-    def __init__(
-            self, name, user, query_string=None, query_filter=None,
-            query_dsl=None):
+    def __init__(self,
+                 name,
+                 user,
+                 query_string=None,
+                 query_filter=None,
+                 query_dsl=None):
         """Initialize the Search Template object.
 
         Args:

@@ -121,40 +121,38 @@ def create_app(config=None):
     api_v1 = Api(app, prefix=u'/api/v1')
     api_v1.add_resource(SketchListResource, u'/sketches/')
     api_v1.add_resource(SketchResource, u'/sketches/<int:sketch_id>/')
-    api_v1.add_resource(
-        AggregationResource, u'/sketches/<int:sketch_id>/aggregation/')
+    api_v1.add_resource(AggregationResource,
+                        u'/sketches/<int:sketch_id>/aggregation/')
     api_v1.add_resource(ExploreResource, u'/sketches/<int:sketch_id>/explore/')
     api_v1.add_resource(EventResource, u'/sketches/<int:sketch_id>/event/')
-    api_v1.add_resource(
-        EventAnnotationResource, u'/sketches/<int:sketch_id>/event/annotate/')
+    api_v1.add_resource(EventAnnotationResource,
+                        u'/sketches/<int:sketch_id>/event/annotate/')
     api_v1.add_resource(ViewListResource, u'/sketches/<int:sketch_id>/views/')
-    api_v1.add_resource(
-        ViewResource, u'/sketches/<int:sketch_id>/views/<int:view_id>/')
+    api_v1.add_resource(ViewResource,
+                        u'/sketches/<int:sketch_id>/views/<int:view_id>/')
     api_v1.add_resource(SearchTemplateListResource, u'/searchtemplate/')
-    api_v1.add_resource(
-        SearchTemplateResource, u'/searchtemplate/<int:searchtemplate_id>/')
+    api_v1.add_resource(SearchTemplateResource,
+                        u'/searchtemplate/<int:searchtemplate_id>/')
     api_v1.add_resource(UploadFileResource, u'/upload/')
     api_v1.add_resource(TaskResource, u'/tasks/')
-    api_v1.add_resource(
-        StoryListResource, u'/sketches/<int:sketch_id>/stories/')
-    api_v1.add_resource(
-        StoryResource, u'/sketches/<int:sketch_id>/stories/<int:story_id>/')
-    api_v1.add_resource(
-        QueryResource, u'/sketches/<int:sketch_id>/explore/query/')
-    api_v1.add_resource(
-        CountEventsResource, u'/sketches/<int:sketch_id>/count/')
-    api_v1.add_resource(
-        TimelineListResource, u'/sketches/<int:sketch_id>/timelines/')
+    api_v1.add_resource(StoryListResource,
+                        u'/sketches/<int:sketch_id>/stories/')
+    api_v1.add_resource(StoryResource,
+                        u'/sketches/<int:sketch_id>/stories/<int:story_id>/')
+    api_v1.add_resource(QueryResource,
+                        u'/sketches/<int:sketch_id>/explore/query/')
+    api_v1.add_resource(CountEventsResource,
+                        u'/sketches/<int:sketch_id>/count/')
+    api_v1.add_resource(TimelineListResource,
+                        u'/sketches/<int:sketch_id>/timelines/')
     api_v1.add_resource(
         TimelineResource,
         u'/sketches/<int:sketch_id>/timelines/<int:timeline_id>/')
-    api_v1.add_resource(
-        SearchIndexListResource, u'/timelines/')
-    api_v1.add_resource(
-        SearchIndexResource, u'/timelines/<int:searchindex_id>/')
-    api_v1.add_resource(
-        GraphResource,
-        u'/sketches/<int:sketch_id>/explore/graph/')
+    api_v1.add_resource(SearchIndexListResource, u'/timelines/')
+    api_v1.add_resource(SearchIndexResource,
+                        u'/timelines/<int:searchindex_id>/')
+    api_v1.add_resource(GraphResource,
+                        u'/sketches/<int:sketch_id>/explore/graph/')
 
     # Register error handlers
     # pylint: disable=unused-variable

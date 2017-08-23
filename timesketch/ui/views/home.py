@@ -26,7 +26,6 @@ from timesketch.models.sketch import Sketch
 from timesketch.lib.forms import HiddenNameDescriptionForm
 from timesketch.models import db_session
 
-
 # Register flask blueprint
 home_views = Blueprint(u'home_views', __name__)
 
@@ -50,7 +49,8 @@ def home():
     # Handle form for creating a new sketch.
     if form.validate_on_submit():
         sketch = Sketch(
-            name=form.name.data, description=form.description.data,
+            name=form.name.data,
+            description=form.description.data,
             user=current_user)
         sketch.status.append(sketch.Status(user=None, status=u'new'))
         # Give the requesting user permissions on the new sketch.
@@ -62,5 +62,7 @@ def home():
         return redirect(url_for(u'sketch_views.overview', sketch_id=sketch.id))
 
     return render_template(
-        u'home/home.html', sketches=sketches, form=form,
+        u'home/home.html',
+        sketches=sketches,
+        form=form,
         upload_enabled=upload_enabled)
