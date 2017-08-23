@@ -23,10 +23,9 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/source
 
 # Install apt dependencies
 apt-get update
-apt-get install -y neo4j openjdk-8-jre-headless elasticsearch postgresql \
-  python-psycopg2 python-pip python-dev libffi-dev redis-server python-plaso
-sudo apt-get install -y nodejs
-sudo apt-get update && sudo apt-get install yarn
+apt-get install -y \
+  neo4j openjdk-8-jre-headless elasticsearch postgresql python-psycopg2 \
+  python-pip python-dev libffi-dev redis-server python-plaso nodejs yarn
 
 # Install python dependencies
 pip install --upgrade pip
