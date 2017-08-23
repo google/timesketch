@@ -28,7 +28,6 @@ from timesketch.models import db_session
 from timesketch.models.user import Group
 from timesketch.models.user import User
 
-
 # Register flask blueprint
 user_views = Blueprint(u'user_views', __name__)
 
@@ -52,10 +51,9 @@ def login():
 
     # SSO login based on environment variable, e.g. REMOTE_USER.
     if current_app.config.get(u'SSO_ENABLED', False):
-        remote_user_env = current_app.config.get(
-            u'SSO_USER_ENV_VARIABLE', u'REMOTE_USER')
-        sso_group_env = current_app.config.get(
-            u'SSO_GROUP_ENV_VARIABLE', None)
+        remote_user_env = current_app.config.get(u'SSO_USER_ENV_VARIABLE',
+                                                 u'REMOTE_USER')
+        sso_group_env = current_app.config.get(u'SSO_GROUP_ENV_VARIABLE', None)
 
         remote_user = request.environ.get(remote_user_env, None)
         if remote_user:
@@ -66,8 +64,7 @@ def login():
         # Timesketch and add/remove the user from it.
         if sso_group_env:
             groups_string = request.environ.get(sso_group_env, u'')
-            separator = current_app.config.get(
-                u'SSO_GROUP_SEPARATOR', u';')
+            separator = current_app.config.get(u'SSO_GROUP_SEPARATOR', u';')
             not_member_sign = current_app.config.get(
                 u'SSO_GROUP_NOT_MEMBER_SIGN', None)
             for group_name in groups_string.split(separator):

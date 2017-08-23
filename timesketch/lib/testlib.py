@@ -61,41 +61,43 @@ class MockDataStore(datastore.DataStore):
             u'source_short': u'',
             u'source_long': u'',
             u'message': u'',
-            }
+        }
     }
     search_result_dict = {
         u'hits': {
-            u'hits': [
-                {
-                    u'sort': [
-                        1410593223000
+            u'hits': [{
+                u'sort': [1410593223000],
+                u'_type': u'plaso_event',
+                u'_source': {
+                    u'timestamp':
+                    1410593222543942,
+                    u'message':
+                    u'Test event',
+                    u'timesketch_label': [
+                        {
+                            u'user_id': 1,
+                            u'name': u'__ts_star',
+                            u'sketch_id': 1
+                        },
+                        {
+                            u'user_id': 2,
+                            u'name': u'__ts_star',
+                            u'sketch_id': 99
+                        },
                     ],
-                    u'_type': u'plaso_event',
-                    u'_source': {
-                        u'timestamp': 1410593222543942,
-                        u'message': u'Test event',
-                        u'timesketch_label': [
-                            {
-                                u'user_id': 1,
-                                u'name': u'__ts_star',
-                                u'sketch_id': 1
-                            },
-                            {
-                                u'user_id': 2,
-                                u'name': u'__ts_star',
-                                u'sketch_id': 99
-                            },
-                        ],
-                        u'timestamp_desc': u'Content Modification Time',
-                        u'datetime': u'2014-09-13T07:27:03+00:00'
-                    },
-                    u'_score': u'null',
-                    u'_index': u'test',
-                    u'_id': u'test'
-                }
-            ],
-            u'total': 1,
-            u'max_score': u'null'
+                    u'timestamp_desc':
+                    u'Content Modification Time',
+                    u'datetime':
+                    u'2014-09-13T07:27:03+00:00'
+                },
+                u'_score': u'null',
+                u'_index': u'test',
+                u'_id': u'test'
+            }],
+            u'total':
+            1,
+            u'max_score':
+            u'null'
         },
         u'_shards': {
             u'successful': 10,
@@ -116,10 +118,8 @@ class MockDataStore(datastore.DataStore):
         self.host = host
         self.port = port
 
-    def search(
-            self, unused_sketch_id, unused_query, unused_query_filter,
-            unused_query_dsl, unused_indices, aggregations, return_results,
-            return_fields=None, enable_scroll=False):
+    # pylint: disable=arguments-differ,unused-argument
+    def search(self, *args, **kwargs):
         """Mock a search query.
 
         Returns:
@@ -127,7 +127,8 @@ class MockDataStore(datastore.DataStore):
         """
         return self.search_result_dict
 
-    def get_event(self, unused_searchindex_id, unused_event_id):
+    # pylint: disable=arguments-differ,unused-argument
+    def get_event(self, *args, **kwargs):
         """Mock returning a single event from the datastore.
 
         Returns:
@@ -135,9 +136,14 @@ class MockDataStore(datastore.DataStore):
         """
         return self.event_dict
 
-    def set_label(
-            self, searchindex_id, event_id, event_type, sketch_id, user_id,
-            label, toggle=False):
+    def set_label(self,
+                  searchindex_id,
+                  event_id,
+                  event_type,
+                  sketch_id,
+                  user_id,
+                  label,
+                  toggle=False):
         """Mock adding a label to an event."""
         return
 
@@ -149,6 +155,7 @@ class MockDataStore(datastore.DataStore):
 
 class MockGraphDatabase(object):
     """A mock implementation of a Datastore."""
+
     def __init__(self, host, username, password):
         """Initialize the datastore.
 
@@ -164,39 +171,30 @@ class MockGraphDatabase(object):
     class MockQuerySequence(object):
         """A mock implementation of a QuerySequence."""
         MOCK_GRAPH = [{
-            u'nodes': [
-                {
-                    u'id': u'1',
-                    u'labels': [
-                        u'Test'
-                    ],
-                    u'properties': {
-                        u'name': u'test',
-                        u'uid': u'123456'
-                    }
+            u'nodes': [{
+                u'id': u'1',
+                u'labels': [u'Test'],
+                u'properties': {
+                    u'name': u'test',
+                    u'uid': u'123456'
+                }
+            }, {
+                u'id': u'2',
+                u'labels': [u'Test'],
+                u'properties': {
+                    u'name': u'test'
+                }
+            }],
+            u'relationships': [{
+                u'endNode': u'2',
+                u'id': u'3',
+                u'properties': {
+                    u'human_readable': u'test',
+                    u'type': u'test'
                 },
-                {
-                    u'id': u'2',
-                    u'labels': [
-                        u'Test'
-                    ],
-                    u'properties': {
-                        u'name': u'test'
-                    }
-                }
-            ],
-            u'relationships': [
-                {
-                    u'endNode': u'2',
-                    u'id': u'3',
-                    u'properties': {
-                        u'human_readable': u'test',
-                        u'type': u'test'
-                    },
-                    u'startNode': u'1',
-                    u'type': u'TEST'
-                }
-            ]
+                u'startNode': u'1',
+                u'type': u'TEST'
+            }]
         }]
         MOCK_ROWS = {}
         MOCK_STATS = {}
@@ -357,8 +355,12 @@ class BaseTest(TestCase):
             A timeline (instance of timesketch.models.sketch.Timeline)
         """
         timeline = Timeline(
-            name=name, description=name, user=user, sketch=sketch,
-            searchindex=searchindex, color=self.COLOR_WHITE)
+            name=name,
+            description=name,
+            user=user,
+            sketch=sketch,
+            searchindex=searchindex,
+            color=self.COLOR_WHITE)
         self._commit_to_database(timeline)
         return timeline
 
@@ -374,8 +376,11 @@ class BaseTest(TestCase):
             A view (instance of timesketch.models.sketch.View)
         """
         view = View(
-            name=name, query_string=name, query_filter=json.dumps(dict()),
-            user=user, sketch=sketch)
+            name=name,
+            query_string=name,
+            query_filter=json.dumps(dict()),
+            user=user,
+            sketch=sketch)
         self._commit_to_database(view)
         return view
 
@@ -390,7 +395,9 @@ class BaseTest(TestCase):
             A search template (timesketch.models.sketch.SearchTemplate)
         """
         searchtemplate = SearchTemplate(
-            name=name, query_string=name, query_filter=json.dumps(dict()),
+            name=name,
+            query_string=name,
+            query_filter=json.dumps(dict()),
             user=user)
         self._commit_to_database(searchtemplate)
         return searchtemplate
@@ -418,8 +425,10 @@ class BaseTest(TestCase):
             name=u'test2', user=self.user1, acl=True)
 
         self.timeline = self._create_timeline(
-            name=u'Timeline 1', sketch=self.sketch1,
-            searchindex=self.searchindex, user=self.user1)
+            name=u'Timeline 1',
+            sketch=self.sketch1,
+            searchindex=self.searchindex,
+            user=self.user1)
 
         self.view1 = self._create_view(
             name=u'View 1', sketch=self.sketch1, user=self.user1)
@@ -444,7 +453,8 @@ class BaseTest(TestCase):
     def login(self):
         """Authenticate the test user."""
         self.client.post(
-            u'/login/', data=dict(username=u'test1', password=u'test'),
+            u'/login/',
+            data=dict(username=u'test1', password=u'test'),
             follow_redirects=True)
 
     def test_unauthenticated(self):
@@ -464,6 +474,7 @@ class BaseTest(TestCase):
 
 class ModelBaseTest(BaseTest):
     """Base class for database model tests."""
+
     def _test_db_object(self, expected_result=None, model_cls=None):
         """Generic test that checks if the stored data is correct."""
         db_obj = model_cls.query.get(1)

@@ -17,7 +17,6 @@
 from setuptools import find_packages
 from setuptools import setup
 
-
 setup(
     name=u'timesketch-api-client',
     version=u'20170815',
@@ -38,5 +37,4 @@ setup(
     install_requires=frozenset([
         u'requests',
         u'BeautifulSoup',
-    ])
-)
+    ]))

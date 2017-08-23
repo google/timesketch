@@ -18,6 +18,7 @@ from flask import jsonify
 
 class ApiHTTPError(Exception):
     """Error class for API HTTP errors."""
+
     def __init__(self, message, status_code):
         """Initialize the class with a custom error message.
 
@@ -35,7 +36,9 @@ class ApiHTTPError(Exception):
         Returns:
             Response object (instance of flask.wrappers.Response)
         """
-        response = jsonify(
-            {u'message': self.message, u'status': self.status_code})
+        response = jsonify({
+            u'message': self.message,
+            u'status': self.status_code
+        })
         response.status_code = self.status_code
         return response

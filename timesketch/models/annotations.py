@@ -29,6 +29,7 @@ from timesketch.models import db_session
 
 class BaseAnnotation(object):
     """Base class with common attributes."""
+
     @declared_attr
     def user_id(self):
         """Foreign key to a user model.
@@ -102,6 +103,7 @@ class LabelMixin(object):
     it accessible from the parent model object (the model object that uses this
     MixIn, i.e. the object that the label is added to).
     """
+
     @declared_attr
     def labels(self):
         """
@@ -112,15 +114,15 @@ class LabelMixin(object):
             A relationship to an label (timesketch.models.annotation.Label)
         """
         self.Label = type(
-            '{0:s}Label'.format(self.__name__),
-            (Label, BaseModel,),
+            '{0:s}Label'.format(self.__name__), (
+                Label,
+                BaseModel, ),
             dict(
                 __tablename__='{0:s}_label'.format(self.__tablename__),
                 parent_id=Column(
-                    Integer, ForeignKey('{0:s}.id'.format(self.__tablename__))),
-                parent=relationship(self)
-            )
-        )
+                    Integer,
+                    ForeignKey('{0:s}.id'.format(self.__tablename__))),
+                parent=relationship(self)))
         return relationship(self.Label)
 
 
@@ -130,6 +132,7 @@ class CommentMixin(object):
     it accessible from the parent model object (the model object that uses this
     MixIn, i.e. the object that the comment is added to).
     """
+
     @declared_attr
     def comments(self):
         """
@@ -140,15 +143,15 @@ class CommentMixin(object):
             A relationship to a comment (timesketch.models.annotation.Comment)
         """
         self.Comment = type(
-            '{0:s}Comment'.format(self.__name__),
-            (Comment, BaseModel,),
+            '{0:s}Comment'.format(self.__name__), (
+                Comment,
+                BaseModel, ),
             dict(
                 __tablename__='{0:s}_comment'.format(self.__tablename__),
                 parent_id=Column(
-                    Integer, ForeignKey('{0:s}.id'.format(self.__tablename__))),
-                parent=relationship(self),
-            )
-        )
+                    Integer,
+                    ForeignKey('{0:s}.id'.format(self.__tablename__))),
+                parent=relationship(self), ))
         return relationship(self.Comment)
 
 
@@ -158,6 +161,7 @@ class StatusMixin(object):
     it accessible from the parent model object (the model object that uses this
     MixIn, i.e. the object that the status is added to).
     """
+
     @declared_attr
     def status(self):
         """
@@ -168,15 +172,15 @@ class StatusMixin(object):
             A relationship to a status (timesketch.models.annotation.Status)
         """
         self.Status = type(
-            '{0:s}Status'.format(self.__name__),
-            (Status, BaseModel,),
+            '{0:s}Status'.format(self.__name__), (
+                Status,
+                BaseModel, ),
             dict(
                 __tablename__='{0:s}_status'.format(self.__tablename__),
                 parent_id=Column(
-                    Integer, ForeignKey('{0:s}.id'.format(self.__tablename__))),
-                parent=relationship(self),
-            )
-        )
+                    Integer,
+                    ForeignKey('{0:s}.id'.format(self.__tablename__))),
+                parent=relationship(self), ))
         return relationship(self.Status)
 
     def set_status(self, status):

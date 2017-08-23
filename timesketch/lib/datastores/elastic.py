@@ -34,12 +34,11 @@ es_logger.addHandler(logging.NullHandler())
 
 class ElasticsearchDataStore(datastore.DataStore):
     """Implements the datastore."""
+
     def __init__(self, host=u'127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
         super(ElasticsearchDataStore, self).__init__()
-        self.client = Elasticsearch([
-            {u'host': host, u'port': port}
-        ])
+        self.client = Elasticsearch([{u'host': host, u'port': port}])
         self.import_counter = Counter()
         self.import_events = []
 
@@ -59,18 +58,15 @@ class ElasticsearchDataStore(datastore.DataStore):
                 u'nested': {
                     u'query': {
                         u'bool': {
-                            u'must': [
-                                {
-                                    u'term': {
-                                        u'timesketch_label.name': label_name
-                                    }
-                                },
-                                {
-                                    u'term': {
-                                        u'timesketch_label.sketch_id': sketch_id
-                                    }
+                            u'must': [{
+                                u'term': {
+                                    u'timesketch_label.name': label_name
                                 }
-                            ]
+                            }, {
+                                u'term': {
+                                    u'timesketch_label.sketch_id': sketch_id
+                                }
+                            }]
                         }
                     },
                     u'path': u'timesketch_label'
@@ -90,13 +86,7 @@ class ElasticsearchDataStore(datastore.DataStore):
             Elasticsearch query as a dictionary.
         """
         events_list = [event[u'event_id'] for event in events]
-        query_dict = {
-            u'query': {
-                u'ids': {
-                    u'values': events_list
-                }
-            }
-        }
+        query_dict = {u'query': {u'ids': {u'values': events_list}}}
         return query_dict
 
     @staticmethod
@@ -118,9 +108,12 @@ class ElasticsearchDataStore(datastore.DataStore):
         }
         return field_aggregation
 
-    def build_query(
-            self, sketch_id, query_string, query_filter, query_dsl,
-            aggregations=None):
+    def build_query(self,
+                    sketch_id,
+                    query_string,
+                    query_filter,
+                    query_dsl,
+                    aggregations=None):
         """Build Elasticsearch DSL query.
 
         Args:
@@ -157,16 +150,14 @@ class ElasticsearchDataStore(datastore.DataStore):
                 # TODO(jberggren): Add support for multiple time ranges.
                 query_dsl[u'query'][u'bool'][u'filter'] = {
                     u'bool': {
-                        u'should': [
-                            {
-                                u'range': {
-                                    u'datetime': {
-                                        u'gte': query_filter[u'time_start'],
-                                        u'lte': query_filter[u'time_end']
-                                    }
+                        u'should': [{
+                            u'range': {
+                                u'datetime': {
+                                    u'gte': query_filter[u'time_start'],
+                                    u'lte': query_filter[u'time_end']
                                 }
                             }
-                        ]
+                        }]
                     }
                 }
             if query_filter.get(u'exclude', None):
@@ -199,16 +190,22 @@ class ElasticsearchDataStore(datastore.DataStore):
             # post_filter happens after aggregation so we need to move the
             # filter to the query instead.
             if query_dsl.get(u'post_filter', None):
-                query_dsl[
-                    u'query'][u'bool'][u'filter'] = query_dsl[u'post_filter']
+                query_dsl[u'query'][u'bool'][u'filter'] = query_dsl[
+                    u'post_filter']
                 query_dsl.pop(u'post_filter', None)
             query_dsl[u'aggregations'] = aggregations
         return query_dsl
 
-    def search(
-            self, sketch_id, query_string, query_filter, query_dsl, indices,
-            aggregations=None, return_results=True, return_fields=None,
-            enable_scroll=False):
+    def search(self,
+               sketch_id,
+               query_string,
+               query_filter,
+               query_dsl,
+               indices,
+               aggregations=None,
+               return_results=True,
+               return_fields=None,
+               enable_scroll=False):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -250,12 +247,13 @@ class ElasticsearchDataStore(datastore.DataStore):
         # Check if we have specific events to fetch and get indices.
         if query_filter.get(u'events', None):
             indices = {
-                event[u'index'] for event in query_filter[u'events']
+                event[u'index']
+                for event in query_filter[u'events']
                 if event[u'index'] in indices
             }
 
-        query_dsl = self.build_query(
-            sketch_id, query_string, query_filter, query_dsl, aggregations)
+        query_dsl = self.build_query(sketch_id, query_string, query_filter,
+                                     query_dsl, aggregations)
 
         # Default search type for elasticsearch is query_then_fetch.
         search_type = u'query_then_fetch'
@@ -268,8 +266,11 @@ class ElasticsearchDataStore(datastore.DataStore):
         # to the function with a decorator and this makes pylint sad.
         # pylint: disable=unexpected-keyword-arg
         return self.client.search(
-            body=query_dsl, index=list(indices), size=LIMIT_RESULTS,
-            search_type=search_type, _source_include=return_fields,
+            body=query_dsl,
+            index=list(indices),
+            size=LIMIT_RESULTS,
+            search_type=search_type,
+            _source_include=return_fields,
             scroll=scroll_timeout)
 
     def get_event(self, searchindex_id, event_id):
@@ -287,7 +288,8 @@ class ElasticsearchDataStore(datastore.DataStore):
             # to the function with a decorator and this makes pylint sad.
             # pylint: disable=unexpected-keyword-arg
             return self.client.get(
-                index=searchindex_id, id=event_id,
+                index=searchindex_id,
+                id=event_id,
                 _source_exclude=[u'timesketch_label'])
         except NotFoundError:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
@@ -306,9 +308,14 @@ class ElasticsearchDataStore(datastore.DataStore):
         result = self.client.count(index=indices)
         return result.get(u'count', 0)
 
-    def set_label(
-            self, searchindex_id, event_id, event_type, sketch_id, user_id,
-            label, toggle=False):
+    def set_label(self,
+                  searchindex_id,
+                  event_id,
+                  event_type,
+                  sketch_id,
+                  user_id,
+                  label,
+                  toggle=False):
         """Set label on event in the datastore.
 
         Args:
@@ -325,10 +332,11 @@ class ElasticsearchDataStore(datastore.DataStore):
         try:
             doc[u'_source'][u'timesketch_label']
         except KeyError:
-            # pylint: disable=redefined-variable-type
             doc = {u'doc': {u'timesketch_label': []}}
             self.client.update(
-                index=searchindex_id, doc_type=event_type, id=event_id,
+                index=searchindex_id,
+                doc_type=event_type,
+                id=event_id,
                 body=doc)
 
         # Choose the correct script.
@@ -349,11 +357,12 @@ class ElasticsearchDataStore(datastore.DataStore):
             }
         }
         self.client.update(
-            index=searchindex_id, id=event_id, doc_type=event_type,
+            index=searchindex_id,
+            id=event_id,
+            doc_type=event_type,
             body=script)
 
-    def create_index(
-            self, index_name=uuid4().hex, doc_type=u'generic_event'):
+    def create_index(self, index_name=uuid4().hex, doc_type=u'generic_event'):
         """Create index with Timesketch settings.
 
         Args:
@@ -397,26 +406,30 @@ class ElasticsearchDataStore(datastore.DataStore):
         if event:
             # Make sure we have decoded strings in the event dict.
             event = {
-                k.decode(u'utf8'): v.decode(u'utf8') for k, v in event.items()
+                k.decode(u'utf8'): v.decode(u'utf8')
+                for k, v in event.items()
             }
 
             # Header needed by Elasticsearch when bulk inserting.
             self.import_events.append({
                 u'index': {
-                    u'_index': index_name, u'_type': event_type
+                    u'_index': index_name,
+                    u'_type': event_type
                 }
             })
             self.import_events.append(event)
             self.import_counter[u'events'] += 1
             if self.import_counter[u'events'] % int(flush_interval) == 0:
                 self.client.bulk(
-                    index=index_name, doc_type=event_type,
+                    index=index_name,
+                    doc_type=event_type,
                     body=self.import_events)
                 self.import_events = []
         else:
             if self.import_events:
                 self.client.bulk(
-                    index=index_name, doc_type=event_type,
+                    index=index_name,
+                    doc_type=event_type,
                     body=self.import_events)
 
         return self.import_counter[u'events']

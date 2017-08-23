@@ -40,6 +40,7 @@ class AccessControlEntry(object):
     Access Control Entry database model. It has a user object (instance of
     timesketch.models.user.User) and a permission (read, write or delete).
     """
+
     @declared_attr
     def user_id(self):
         """Foreign key to a user model.
@@ -86,6 +87,7 @@ class AccessControlMixin(object):
     it accessible from the parent model object (the model object that uses this
     MixIn, i.e. the object that the ACL is added to).
     """
+
     @declared_attr
     def acl(self):
         """
@@ -96,15 +98,14 @@ class AccessControlMixin(object):
             A relationship to an ACE (timesketch.models.acl.AccessControlEntry)
         """
         self.AccessControlEntry = type(
-            '%sAccessControlEntry' % self.__name__,
-            (AccessControlEntry, BaseModel,),
+            '%sAccessControlEntry' % self.__name__, (
+                AccessControlEntry,
+                BaseModel, ),
             dict(
                 __tablename__='%s_accesscontrolentry' % self.__tablename__,
-                parent_id=Column(
-                    Integer, ForeignKey('%s.id' % self.__tablename__)),
-                parent=relationship(self),
-            )
-        )
+                parent_id=Column(Integer,
+                                 ForeignKey('%s.id' % self.__tablename__)),
+                parent=relationship(self), ))
         return relationship(self.AccessControlEntry)
 
     @classmethod
@@ -126,14 +127,12 @@ class AccessControlMixin(object):
 
         # pylint: disable=singleton-comparison
         return cls.query.filter(
-            or_(
-                cls.AccessControlEntry.user == user,
-                and_(
-                    cls.AccessControlEntry.user == None,
-                    cls.AccessControlEntry.group == None),
-                cls.AccessControlEntry.group_id.in_(
-                    [group.id for group in user.groups])),
-            cls.AccessControlEntry.permission == u'read',
+            or_(cls.AccessControlEntry.user == user,
+                and_(cls.AccessControlEntry.user == None,
+                     cls.AccessControlEntry.group == None),
+                cls.AccessControlEntry.group_id.in_([
+                    group.id for group in user.groups
+                ])), cls.AccessControlEntry.permission == u'read',
             cls.AccessControlEntry.parent)
 
     def _get_ace(self, permission, user=None, group=None, check_group=True):
@@ -161,10 +160,10 @@ class AccessControlMixin(object):
         # If user doesn't have a direct ACE, check group permission.
         if (user and check_group) and not ace:
             group_intersection = set(user.groups) & set(self.groups)
-            for group in group_intersection:
+            for _group in group_intersection:
                 # Get group ACE with the requested permission.
                 ace = self.AccessControlEntry.query.filter_by(
-                    group=group, permission=permission, parent=self).all()
+                    group=_group, permission=permission, parent=self).all()
                 if ace:
                     return ace
         return ace

@@ -117,8 +117,7 @@ def run_csv(source_file_path, timeline_name, index_name, username=None):
 
     es.create_index(index_name=index_name, doc_type=event_type)
     for event in read_and_validate_csv(source_file_path):
-        es.import_event(
-            flush_interval, index_name, event_type, event)
+        es.import_event(flush_interval, index_name, event_type, event)
 
     # Import the remaining events
     total_events = es.import_event(flush_interval, index_name, event_type)

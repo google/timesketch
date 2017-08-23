@@ -18,6 +18,7 @@ from timesketch.lib.testlib import BaseTest
 
 class AnnotationBaseTest(BaseTest):
     """Base class for common tests."""
+
     def _test_annotation(self, parent):
         """Test that the annotations has our test user as owner."""
         self.assertEquals(parent[0].user, self.user1)
@@ -26,6 +27,7 @@ class AnnotationBaseTest(BaseTest):
 
 class LabelModelTest(AnnotationBaseTest):
     """Test the label annotation."""
+
     def test_label_annotation(self):
         """Test that the label is associated with our test sketch."""
         self._test_annotation(self.sketch1.labels)
@@ -35,6 +37,7 @@ class LabelModelTest(AnnotationBaseTest):
 
 class StatusModelTest(AnnotationBaseTest):
     """Test the status annotation."""
+
     def test_status_annotation(self):
         """Test that the status is associated with our test sketch."""
         self._test_annotation(self.sketch1.status)
@@ -44,6 +47,7 @@ class StatusModelTest(AnnotationBaseTest):
 
 class CommentModelTest(AnnotationBaseTest):
     """Test the comment annotation."""
+
     def test_comment_annotation(self):
         """Test that the comment is associated with our test event."""
         self._test_annotation(self.event.comments)

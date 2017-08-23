@@ -21,8 +21,10 @@ from . import client
 
 def mock_session():
     """Mock HTTP requests session."""
+
     class MockHeaders(object):
         """Mock requests HTTP headers."""
+
         def __init__(self):
             super(MockHeaders, self).__init__()
 
@@ -34,6 +36,7 @@ def mock_session():
 
     class MockSession(object):
         """Mock HTTP requests session."""
+
         def __init__(self):
             """Initializes the mock Session object."""
             self.verify = False
@@ -57,8 +60,10 @@ def mock_session():
 # pylint: disable=unused-argument
 def mock_response(*args, **kwargs):
     """Mocks HTTP response."""
+
     class MockResponse(object):
         """Mock HTTP response object."""
+
         def __init__(self, json_data=None, text_data=None, status_code=200):
             """Initializes mock object."""
             self.json_data = json_data
@@ -72,77 +77,71 @@ def mock_response(*args, **kwargs):
     auth_text_data = u'<input id="csrf_token" name="csrf_token" value="test">'
     sketch_data = {
         u'meta': {
-            u'views': [
-                {
-                    u'id': 1,
-                    u'name': u'test'
-                },
-                {
-                    u'id': 2,
-                    u'name': u'test'
-                }
-            ]
-        },
-        u'objects': [
-            {
+            u'views': [{
                 u'id': 1,
-                u'name': u'test',
-                u'description': u'test',
-                u'timelines': [
-                    {
-                        u'id': 1,
-                        u'name': u'test',
-                        u'searchindex': {
-                            u'index_name': u'test'
-                        }
-                    },
-                    {
-                        u'id': 2,
-                        u'name': u'test',
-                        u'searchindex': {
-                            u'index_name': u'test'
-                        }
-                    }
-                ]
-            }
-        ]}
-
-    sketch_list_data = {
-        u'objects': [sketch_data[u'objects']]
-    }
-
-    timeline_data = {
-        u'objects': [
-            {
+                u'name': u'test'
+            }, {
+                u'id': 2,
+                u'name': u'test'
+            }]
+        },
+        u'objects': [{
+            u'id':
+            1,
+            u'name':
+            u'test',
+            u'description':
+            u'test',
+            u'timelines': [{
                 u'id': 1,
                 u'name': u'test',
                 u'searchindex': {
                     u'index_name': u'test'
                 }
+            }, {
+                u'id': 2,
+                u'name': u'test',
+                u'searchindex': {
+                    u'index_name': u'test'
+                }
+            }]
+        }]
+    }
+
+    sketch_list_data = {u'objects': [sketch_data[u'objects']]}
+
+    timeline_data = {
+        u'objects': [{
+            u'id': 1,
+            u'name': u'test',
+            u'searchindex': {
+                u'index_name': u'test'
             }
-        ]
+        }]
     }
 
     # Register API endpoints to the correct mock response data.
     url_router = {
-        u'http://127.0.0.1': MockResponse(text_data=auth_text_data),
-        u'http://127.0.0.1/api/v1/sketches/': MockResponse(
-            json_data=sketch_list_data),
-        u'http://127.0.0.1/api/v1/sketches/1': MockResponse(
-            json_data=sketch_data),
-        u'http://127.0.0.1/api/v1/sketches/1/timelines/1': MockResponse(
-            json_data=timeline_data),
+        u'http://127.0.0.1':
+        MockResponse(text_data=auth_text_data),
+        u'http://127.0.0.1/api/v1/sketches/':
+        MockResponse(json_data=sketch_list_data),
+        u'http://127.0.0.1/api/v1/sketches/1':
+        MockResponse(json_data=sketch_data),
+        u'http://127.0.0.1/api/v1/sketches/1/timelines/1':
+        MockResponse(json_data=timeline_data),
     }
     return url_router.get(args[0], MockResponse(None, 404))
 
 
 class TimesketchApiTest(unittest.TestCase):
     """Test TimesketchApi"""
+
     @mock.patch(u'requests.Session', mock_session)
     def setUp(self):
         """Setup test case."""
-        self.api_client = client.TimesketchApi(
-            u'http://127.0.0.1', u'test', u'test')
+        self.api_client = client.TimesketchApi(u'http://127.0.0.1', u'test',
+                                               u'test')
 
     def test_fetch_resource_data(self):
         """Test fetch resource."""
@@ -169,11 +168,12 @@ class TimesketchApiTest(unittest.TestCase):
 
 class SketchTest(unittest.TestCase):
     """Test Sketch object."""
+
     @mock.patch(u'requests.Session', mock_session)
     def setUp(self):
         """Setup test case."""
-        self.api_client = client.TimesketchApi(
-            u'http://127.0.0.1', u'test', u'test')
+        self.api_client = client.TimesketchApi(u'http://127.0.0.1', u'test',
+                                               u'test')
         self.sketch = self.api_client.get_sketch(1)
 
     # TODO: Add test for upload()
@@ -196,11 +196,12 @@ class SketchTest(unittest.TestCase):
 
 class ViewTest(unittest.TestCase):
     """Test View object."""
+
     @mock.patch(u'requests.Session', mock_session)
     def setUp(self):
         """Setup test case."""
-        self.api_client = client.TimesketchApi(
-            u'http://127.0.0.1', u'test', u'test')
+        self.api_client = client.TimesketchApi(u'http://127.0.0.1', u'test',
+                                               u'test')
         self.sketch = self.api_client.get_sketch(1)
 
     def test_view(self):
@@ -213,11 +214,12 @@ class ViewTest(unittest.TestCase):
 
 class TimelineTest(unittest.TestCase):
     """Test Timeline object."""
+
     @mock.patch(u'requests.Session', mock_session)
     def setUp(self):
         """Setup test case."""
-        self.api_client = client.TimesketchApi(
-            u'http://127.0.0.1', u'test', u'test')
+        self.api_client = client.TimesketchApi(u'http://127.0.0.1', u'test',
+                                               u'test')
         self.sketch = self.api_client.get_sketch(1)
 
     def test_timeline(self):

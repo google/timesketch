@@ -20,52 +20,42 @@ from timesketch.lib.testlib import MockGraphDatabase
 from timesketch.lib.testlib import BaseTest
 
 
-@mock.patch(
-    u'timesketch.lib.datastores.neo4j.GraphDatabase', MockGraphDatabase)
+@mock.patch(u'timesketch.lib.datastores.neo4j.GraphDatabase',
+            MockGraphDatabase)
 class Neo4jTest(BaseTest):
     """Test Neo4j datastore."""
+
     def test_neo4j_output(self):
         """Test Neo4j output format."""
         expected_output = {
-            u'graph': [
-                {
-                    u'relationships': [
-                        {
-                            u'endNode': u'2',
-                            u'startNode': u'1',
-                            u'type': u'TEST',
-                            u'id': u'3',
-                            u'properties': {
-                                u'human_readable': u'test',
-                                u'type': u'test'
-
-                            }
-                        }
-                    ],
-                    u'nodes': [
-                        {
-                            u'labels': [
-                                u'Test'
-                            ],
-                            u'id': u'1',
-                            u'properties': {
-                                u'name': u'test',
-                                u'uid': u'123456'
-                            }
-                        },
-                        {
-                            u'labels': [
-                                u'Test'
-                            ],
-                            u'id': u'2',
-                            u'properties': {
-                                u'name': u'test'
-                            }
-                        }
-                    ]
-                }
-            ],
-            u'rows': None,
+            u'graph': [{
+                u'relationships': [{
+                    u'endNode': u'2',
+                    u'startNode': u'1',
+                    u'type': u'TEST',
+                    u'id': u'3',
+                    u'properties': {
+                        u'human_readable': u'test',
+                        u'type': u'test'
+                    }
+                }],
+                u'nodes': [{
+                    u'labels': [u'Test'],
+                    u'id': u'1',
+                    u'properties': {
+                        u'name': u'test',
+                        u'uid': u'123456'
+                    }
+                }, {
+                    u'labels': [u'Test'],
+                    u'id': u'2',
+                    u'properties': {
+                        u'name': u'test'
+                    }
+                }]
+            }],
+            u'rows':
+            None,
             u'stats': {}
         }
         client = Neo4jDataStore(username=u'test', password=u'test')
@@ -77,32 +67,27 @@ class Neo4jTest(BaseTest):
         """Test Cytoscape output format."""
         expected_output = {
             u'graph': {
-                u'nodes': [
-                    {
-                        u'data': {
-                            u'type': u'Test',
-                            u'id': u'1',
-                            u'label': u'test'
-                        }
-                    },
-                    {
-                        u'data': {
-                            u'type': u'Test',
-                            u'id': u'2',
-                            u'label': u'test'
-                        }
+                u'nodes': [{
+                    u'data': {
+                        u'type': u'Test',
+                        u'id': u'1',
+                        u'label': u'test'
                     }
-                ],
-                u'edges': [
-                    {
-                        u'data': {
-                            u'source': u'1',
-                            u'label': u'test',
-                            u'id': u'3',
-                            u'target': u'2'
-                        }
+                }, {
+                    u'data': {
+                        u'type': u'Test',
+                        u'id': u'2',
+                        u'label': u'test'
                     }
-                ]
+                }],
+                u'edges': [{
+                    u'data': {
+                        u'source': u'1',
+                        u'label': u'test',
+                        u'id': u'3',
+                        u'target': u'2'
+                    }
+                }]
             },
             u'rows': None,
             u'stats': {}

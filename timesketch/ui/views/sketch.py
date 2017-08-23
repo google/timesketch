@@ -50,7 +50,6 @@ from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
-
 # Register flask blueprint
 sketch_views = Blueprint(u'sketch_views', __name__)
 
@@ -73,14 +72,15 @@ def overview(sketch_id):
     # Dynamically set the forms select options.
     # pylint: disable=singleton-comparison
     permission_form.groups.choices = set(
-        (g.id, g.name) for g in Group.query.filter(
+        (g.id, g.name)
+        for g in Group.query.filter(
             or_(Group.user == current_user, Group.user == None)))
 
-    permission_form.remove_groups.choices = set(
-        (g.id, g.name) for g in sketch.groups)
+    permission_form.remove_groups.choices = set((g.id, g.name)
+                                                for g in sketch.groups)
 
-    permission_form.remove_users.choices = set(
-        (u.id, u.username) for u in sketch.collaborators)
+    permission_form.remove_users.choices = set((u.id, u.username)
+                                               for u in sketch.collaborators)
 
     # Edit sketch form POST
     if sketch_form.validate_on_submit():
@@ -89,8 +89,7 @@ def overview(sketch_id):
         sketch.name = sketch_form.name.data
         sketch.description = sketch_form.description.data
         db_session.commit()
-        return redirect(
-            url_for(u'sketch_views.overview', sketch_id=sketch.id))
+        return redirect(url_for(u'sketch_views.overview', sketch_id=sketch.id))
 
     # Toggle public/private form POST
     if permission_form.validate_on_submit():
@@ -135,30 +134,30 @@ def overview(sketch_id):
         else:
             sketch.revoke_permission(permission=u'read')
         db_session.commit()
-        return redirect(
-            url_for(u'sketch_views.overview', sketch_id=sketch.id))
-
+        return redirect(url_for(u'sketch_views.overview', sketch_id=sketch.id))
 
     # Change status form POST
     if status_form.validate_on_submit():
         if not sketch.has_permission(current_user, u'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
         sketch.set_status(status=status_form.status.data)
-        return redirect(
-            url_for(u'sketch_views.overview', sketch_id=sketch.id))
+        return redirect(url_for(u'sketch_views.overview', sketch_id=sketch.id))
 
     # Trash form POST
     if trash_form.validate_on_submit():
         if not sketch.has_permission(current_user, u'delete'):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
         sketch.set_status(status=u'deleted')
-        return redirect(
-            url_for(u'home_views.home'))
+        return redirect(url_for(u'home_views.home'))
 
     return render_template(
-        u'sketch/overview.html', sketch=sketch, sketch_form=sketch_form,
-        permission_form=permission_form, status_form=status_form,
-        trash_form=trash_form, upload_enabled=upload_enabled)
+        u'sketch/overview.html',
+        sketch=sketch,
+        sketch_form=sketch_form,
+        permission_form=permission_form,
+        status_form=status_form,
+        trash_form=trash_form,
+        upload_enabled=upload_enabled)
 
 
 @sketch_views.route(
@@ -234,8 +233,12 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
         db_session.commit()
 
     return render_template(
-        u'sketch/explore.html', sketch=sketch, view=view, named_view=view_id,
-        timelines=sketch_timelines, view_form=view_form,
+        u'sketch/explore.html',
+        sketch=sketch,
+        view=view,
+        named_view=view_id,
+        timelines=sketch_timelines,
+        view_form=view_form,
         searchtemplate_id=searchtemplate_id)
 
 
@@ -265,14 +268,21 @@ def export(sketch_id):
         port=current_app.config[u'ELASTIC_PORT'])
 
     result = datastore.search(
-        sketch_id, view.query_string, query_filter, query_dsl, indices,
-        aggregations=None, return_results=True)
+        sketch_id,
+        view.query_string,
+        query_filter,
+        query_dsl,
+        indices,
+        aggregations=None,
+        return_results=True)
 
     csv_out = StringIO()
     csv_writer = csv.DictWriter(
-        csv_out, fieldnames=[
+        csv_out,
+        fieldnames=[
             u'timestamp', u'message', u'timestamp_desc', u'datetime',
-            u'timesketch_label', u'tag'])
+            u'timesketch_label', u'tag'
+        ])
     csv_writer.writeheader()
     for _event in result[u'hits'][u'hits']:
         csv_writer.writerow(
@@ -293,10 +303,9 @@ def timelines(sketch_id):
     """
     sketch = Sketch.query.get_with_acl(sketch_id)
     searchindices_in_sketch = [t.searchindex.id for t in sketch.timelines]
-    indices = SearchIndex.all_with_acl(
-        current_user).order_by(
-            desc(SearchIndex.created_at)).filter(
-                not_(SearchIndex.id.in_(searchindices_in_sketch)))
+    indices = SearchIndex.all_with_acl(current_user).order_by(
+        desc(SearchIndex.created_at)).filter(
+            not_(SearchIndex.id.in_(searchindices_in_sketch)))
     upload_enabled = current_app.config[u'UPLOAD_ENABLED']
 
     try:
@@ -316,16 +325,24 @@ def timelines(sketch_id):
             searchindex = SearchIndex.query.get_with_acl(searchindex_id)
             if searchindex not in [t.searchindex for t in sketch.timelines]:
                 _timeline = Timeline(
-                    name=searchindex.name, description=searchindex.description,
-                    sketch=sketch, user=current_user, searchindex=searchindex)
+                    name=searchindex.name,
+                    description=searchindex.description,
+                    sketch=sketch,
+                    user=current_user,
+                    searchindex=searchindex)
                 db_session.add(_timeline)
                 sketch.timelines.append(_timeline)
         db_session.commit()
-        return redirect(url_for(u'sketch_views.timelines', sketch_id=sketch.id))
+        return redirect(
+            url_for(u'sketch_views.timelines', sketch_id=sketch.id))
 
     return render_template(
-        u'sketch/timelines.html', sketch=sketch, timelines=indices.all(),
-        form=form, upload_enabled=upload_enabled, plaso_version=plaso_version)
+        u'sketch/timelines.html',
+        sketch=sketch,
+        timelines=indices.all(),
+        form=form,
+        upload_enabled=upload_enabled,
+        plaso_version=plaso_version)
 
 
 @sketch_views.route(
@@ -340,8 +357,8 @@ def timeline(sketch_id, timeline_id):
     """
     timeline_form = TimelineForm()
     sketch = Sketch.query.get_with_acl(sketch_id)
-    sketch_timeline = Timeline.query.filter(
-        Timeline.id == timeline_id, Timeline.sketch == sketch).first()
+    sketch_timeline = Timeline.query.filter(Timeline.id == timeline_id,
+                                            Timeline.sketch == sketch).first()
     if not sketch_timeline:
         abort(HTTP_STATUS_CODE_NOT_FOUND)
 
@@ -354,11 +371,15 @@ def timeline(sketch_id, timeline_id):
         db_session.add(sketch_timeline)
         db_session.commit()
         return redirect(
-            url_for(u'sketch_views.timeline', sketch_id=sketch.id,
-                    timeline_id=sketch_timeline.id))
+            url_for(
+                u'sketch_views.timeline',
+                sketch_id=sketch.id,
+                timeline_id=sketch_timeline.id))
 
     return render_template(
-        u'sketch/timeline.html', sketch=sketch, timeline=sketch_timeline,
+        u'sketch/timeline.html',
+        sketch=sketch,
+        timeline=sketch_timeline,
         timeline_form=timeline_form)
 
 
