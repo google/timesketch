@@ -20,7 +20,6 @@ import requests
 
 from requests.exceptions import ConnectionError
 
-from .definitions import HTTP_STATUS_CODE_CREATED
 from .definitions import HTTP_STATUS_CODE_20X
 
 
@@ -169,8 +168,10 @@ class TimesketchApi(object):
         """
         return SearchIndex(searchindex_id, api=self)
 
-    def create_searchindex(
-            self, searchindex_name, es_index_name=None, public=False):
+    def get_or_create_searchindex(self,
+                                  searchindex_name,
+                                  es_index_name=None,
+                                  public=False):
         """Create a new searchindex.
 
         Args:
@@ -179,7 +180,8 @@ class TimesketchApi(object):
             public: Boolean indicating if the searchindex should be public.
 
         Returns:
-            Instance of a SearchIndex object.
+            Instance of a SearchIndex object and a boolean indicating if the
+            object was created.
         """
         if not es_index_name:
             es_index_name = uuid.uuid4().hex
@@ -192,12 +194,14 @@ class TimesketchApi(object):
         }
         response = self.session.post(resource_url, json=form_data)
 
-        if response.status_code != HTTP_STATUS_CODE_CREATED:
+        if response.status_code != HTTP_STATUS_CODE_20X:
             raise RuntimeError(u'Error creating searchindex')
 
         response_dict = response.json()
+        metadata_dict = response_dict[u'meta']
+        created = metadata_dict.get(u'created', False)
         searchindex_id = response_dict[u'objects'][0][u'id']
-        return self.get_searchindex(searchindex_id)
+        return self.get_searchindex(searchindex_id), created
 
     def list_searchindices(self):
         """Get list of all searchindices that the user has access to.
@@ -393,8 +397,7 @@ class Sketch(BaseResource):
             sketch_id=self.id,
             api=self.api,
             name=timeline[u'name'],
-            searchindex=timeline[u'searchindex'][u'index_name']
-        )
+            searchindex=timeline[u'searchindex'][u'index_name'])
         return timeline_obj
 
     def explore(self,
