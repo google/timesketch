@@ -54,17 +54,6 @@ Then you need to restart PostgreSQL:
 
     $ sudo /etc/init.d/postgresql restart
 
-#### Install Node.js and Yarn
-
-Add Node.js 8.x repo
-
-    $ curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
-
-Add Yarn repo
-
-    $ curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-    $ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-
 #### Install Timesketch
 
 Now it is time to install Timesketch. First we need to install some dependencies:
@@ -74,20 +63,6 @@ Now it is time to install Timesketch. First we need to install some dependencies
 Then install Timesketch itself:
 
     $ sudo pip install timesketch
-
-**Build Timesketch frontend**
-
-Cd to timesketch installation directory:
-
-    $ cd `python -c 'import os, inspect, timesketch; print os.path.dirname(os.path.dirname(inspect.getfile(timesketch)))'`
-
-Install nodejs packages
-
-    $ yarn install
-
-Build frontend files
-
-    $ yarn run build
 
 **Configure Timesketch**
 
