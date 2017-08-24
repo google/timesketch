@@ -1322,6 +1322,7 @@ class SearchIndexListResource(ResourceMixin, Resource):
 
             if searchindex:
                 metadata[u'created'] = False
+                status_code = HTTP_STATUS_CODE_OK
             else:
                 searchindex = SearchIndex.get_or_create(
                     name=searchindex_name,
@@ -1340,11 +1341,10 @@ class SearchIndexListResource(ResourceMixin, Resource):
 
                 db_session.add(searchindex)
                 db_session.commit()
+                status_code = HTTP_STATUS_CODE_CREATED
 
             return self.to_json(
-                searchindex,
-                meta=metadata,
-                status_code=HTTP_STATUS_CODE_CREATED)
+                searchindex, meta=metadata, status_code=status_code)
 
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
