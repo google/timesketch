@@ -306,7 +306,7 @@ class SearchIndexResourceTest(BaseTest):
         """Authenticated request to create a searchindex."""
         self.login()
         data = dict(
-            searchindex_name=u'test2', es_index_name=u'test2', public=False)
+            searchindex_name=u'test3', es_index_name=u'test3', public=False)
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -324,7 +324,8 @@ class TimelineListResourceTest(BaseTest):
         self.login()
         data = dict(timeline=1)
         response = self.client.post(
-            self.resource_url, data=json.dumps(data, ensure_ascii=False),
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
             content_type=u'application/json')
         self.assertEquals(response.status_code, HTTP_STATUS_CODE_OK)
 
@@ -333,6 +334,7 @@ class TimelineListResourceTest(BaseTest):
         self.login()
         data = dict(timeline=2)
         response = self.client.post(
-            self.resource_url, data=json.dumps(data, ensure_ascii=False),
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
             content_type=u'application/json')
         self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
