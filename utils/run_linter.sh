@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-find . -name "*.py" | xargs pylint --rcfile utils/pylintrc;
+find . -name "*.py" | grep -v node_modules | xargs pylint --rcfile utils/pylintrc;
 
 if test $? -ne 0; then
     echo "[ERROR] Fix the issues reported by the linter";
