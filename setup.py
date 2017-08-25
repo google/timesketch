@@ -34,8 +34,12 @@ timesketch_description = (
     u'your raw data with rich annotations, comments, tags and stars.')
 
 def check_before_upload():
-    """Raise UserWarning if frontend build is not present or is not recent,
-    so that .js and .css bundles included in the PyPI package are up to date.
+    """Warn user if frontend build is not present or is not recent.
+
+    Make sure that .js and .css bundles included in the PyPI package are up to date.
+
+    Raises:
+    UserWarning
     """
     this_dir = os.path.dirname(__file__)
     frontend_dist_dir = os.path.join(
