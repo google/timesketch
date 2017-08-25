@@ -34,6 +34,9 @@ timesketch_description = (
     u'your raw data with rich annotations, comments, tags and stars.')
 
 def check_before_upload():
+    """Raise UserWarning if frontend build is not present or is not recent,
+    so that .js and .css bundles included in the PyPI package are up to date.
+    """
     this_dir = os.path.dirname(__file__)
     frontend_dist_dir = os.path.join(
         this_dir, 'timesketch', 'ui', 'static', 'dist',
@@ -41,13 +44,13 @@ def check_before_upload():
     js = os.path.join(frontend_dist_dir, 'bundle.js')
     css = os.path.join(frontend_dist_dir, 'bundle.css')
     if not (os.path.isfile(js) and os.path.isfile(css)):
-        raise AssertionError(
+        raise UserWarning(
             "Build the frontend before uploading to PyPI!"
             + " (see docs/Developers-Guide.md)"
         )
     mtime = min(os.path.getmtime(js), os.path.getmtime(css))
     if time.time() - mtime > 180:
-        raise AssertionError(
+        raise UserWarning(
             "Frontend build is older than 3 minutes, please rebuild!"
             + " (see docs/Developers-Guide.md)"
         )
