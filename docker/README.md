@@ -12,6 +12,9 @@ git clone https://github.com/google/timesketch.git
 cd timesketch
 ```
 
+### Build Timesketch frontend
+Follow steps "Installing Node.js and Yarn" and "Building Timesketch frontend" from [developers guide](../docs/Developers-Guide.md).
+
 ### Build and Start Containers
 
 ```shell
