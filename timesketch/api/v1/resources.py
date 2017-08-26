@@ -55,7 +55,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.datastores.neo4j import Neo4jDataStore
 from timesketch.lib.errors import ApiHTTPError
-from timesketch.lib.forms import AddTimelineForm
+from timesketch.lib.forms import AddTimelineSimpleForm
 from timesketch.lib.forms import AggregationForm
 from timesketch.lib.forms import SaveViewForm
 from timesketch.lib.forms import NameDescriptionForm
@@ -330,49 +330,6 @@ class SketchResource(ResourceMixin, Resource):
                 u'id': searchtemplate.id
             } for searchtemplate in SearchTemplate.query.all()])
         return self.to_json(sketch, meta=meta)
-
-    @login_required
-    def post(self, sketch_id):
-        """Handles POST request to the resource.
-
-        Returns:
-            A sketch in JSON (instance of flask.wrappers.Response)
-
-        Raises:
-            ApiHTTPError
-        """
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        searchindices_in_sketch = [t.searchindex.id for t in sketch.timelines]
-        indices = SearchIndex.all_with_acl(current_user).order_by(
-            desc(SearchIndex.created_at)).filter(
-                not_(SearchIndex.id.in_(searchindices_in_sketch)))
-
-        add_timeline_form = AddTimelineForm.build(request)
-        add_timeline_form.timelines.choices = set((i.id, i.name)
-                                                  for i in indices.all())
-
-        if add_timeline_form.validate_on_submit():
-            if not sketch.has_permission(current_user, u'write'):
-                abort(HTTP_STATUS_CODE_FORBIDDEN)
-            for searchindex_id in add_timeline_form.timelines.data:
-                searchindex = SearchIndex.query.get_with_acl(searchindex_id)
-                if searchindex not in [
-                        t.searchindex for t in sketch.timelines
-                ]:
-                    _timeline = Timeline(
-                        name=searchindex.name,
-                        description=searchindex.description,
-                        sketch=sketch,
-                        user=current_user,
-                        searchindex=searchindex)
-                    db_session.add(_timeline)
-                    sketch.timelines.append(_timeline)
-            db_session.commit()
-            return self.to_json(sketch, status_code=HTTP_STATUS_CODE_CREATED)
-        else:
-            raise ApiHTTPError(
-                message=add_timeline_form.errors,
-                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
 
 
 class ViewListResource(ResourceMixin, Resource):
@@ -1210,6 +1167,48 @@ class TimelineListResource(ResourceMixin, Resource):
         sketch = Sketch.query.get_with_acl(sketch_id)
         return self.to_json(sketch.timelines)
 
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+
+        Returns:
+            A sketch in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        form = AddTimelineSimpleForm.build(request)
+        metadata = {u'created': True}
+
+        searchindex_id = form.timeline.data
+        searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        timeline_id = [
+            t.searchindex.id for t in sketch.timelines
+            if t.searchindex.id == searchindex_id
+        ]
+
+        if form.validate_on_submit():
+            if not sketch.has_permission(current_user, u'write'):
+                abort(HTTP_STATUS_CODE_FORBIDDEN)
+
+            if not timeline_id:
+                return_code = HTTP_STATUS_CODE_CREATED
+                timeline = Timeline(
+                    name=searchindex.name,
+                    description=searchindex.description,
+                    sketch=sketch,
+                    user=current_user,
+                    searchindex=searchindex)
+                sketch.timelines.append(timeline)
+                db_session.add(timeline)
+                db_session.commit()
+            else:
+                metadata[u'created'] = False
+                return_code = HTTP_STATUS_CODE_OK
+                timeline = Timeline.query.get(timeline_id)
+
+            return self.to_json(
+                timeline, meta=metadata, status_code=return_code)
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
 
 class TimelineResource(ResourceMixin, Resource):
     """Resource to get timeline."""
@@ -1311,20 +1310,24 @@ class SearchIndexListResource(ResourceMixin, Resource):
             A search index in JSON (instance of flask.wrappers.Response)
         """
         form = SearchIndexForm.build(request)
-        timeline_name = form.timeline_name.data
-        index_name = form.index_name.data
+        searchindex_name = form.searchindex_name.data
+        es_index_name = form.es_index_name.data
         public = form.public.data
 
         if form.validate_on_submit():
             searchindex = SearchIndex.query.filter_by(
-                index_name=index_name).first()
+                index_name=es_index_name).first()
+            metadata = {u'created': True}
 
-            if not searchindex:
+            if searchindex:
+                metadata[u'created'] = False
+                status_code = HTTP_STATUS_CODE_OK
+            else:
                 searchindex = SearchIndex.get_or_create(
-                    name=timeline_name,
-                    description=timeline_name,
+                    name=searchindex_name,
+                    description=searchindex_name,
                     user=current_user,
-                    index_name=index_name)
+                    index_name=es_index_name)
                 searchindex.grant_permission(
                     permission=u'read', user=current_user)
 
@@ -1333,13 +1336,14 @@ class SearchIndexListResource(ResourceMixin, Resource):
 
                 # Create the index in Elasticsearch
                 self.datastore.create_index(
-                    index_name=index_name, doc_type=u'generic_event')
+                    index_name=es_index_name, doc_type=u'generic_event')
 
                 db_session.add(searchindex)
                 db_session.commit()
+                status_code = HTTP_STATUS_CODE_CREATED
 
             return self.to_json(
-                searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+                searchindex, meta=metadata, status_code=status_code)
 
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 

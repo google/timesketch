@@ -92,6 +92,11 @@ class AddTimelineForm(BaseForm):
     timelines = MultiCheckboxField(u'Timelines', coerce=int)
 
 
+class AddTimelineSimpleForm(BaseForm):
+    """Form to add timelines to a sketch."""
+    timeline = IntegerField(u'Timeline', validators=[DataRequired()])
+
+
 class UsernamePasswordForm(BaseForm):
     """Form with username and password fields. Use in the login form."""
     username = StringField(u'Email', validators=[DataRequired()])
@@ -215,7 +220,7 @@ class StoryForm(BaseForm):
 
 class SearchIndexForm(BaseForm):
     """Form to create a searchindex."""
-    timeline_name = StringField(u'name', validators=[DataRequired()])
-    index_name = StringField(u'Index', validators=[DataRequired()])
+    searchindex_name = StringField(u'name', validators=[DataRequired()])
+    es_index_name = StringField(u'Index', validators=[DataRequired()])
     public = BooleanField(
         u'Public', false_values={False, u'false', u''}, default=False)
