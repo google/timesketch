@@ -194,7 +194,7 @@ class TimesketchApi(object):
         }
         response = self.session.post(resource_url, json=form_data)
 
-        if response.status_code != HTTP_STATUS_CODE_20X:
+        if response.status_code not in HTTP_STATUS_CODE_20X:
             raise RuntimeError(u'Error creating searchindex')
 
         response_dict = response.json()
