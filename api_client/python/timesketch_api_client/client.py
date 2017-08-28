@@ -31,7 +31,12 @@ class TimesketchApi(object):
         session: Authenticated HTTP session.
     """
 
-    def __init__(self, host_uri, username, password, verify=True):
+    def __init__(self,
+                 host_uri,
+                 username,
+                 password,
+                 verify=True,
+                 auth_mode=u'timesketch'):
         """Initializes the TimesketchApi object.
 
         Args:
@@ -39,12 +44,15 @@ class TimesketchApi(object):
             username: User username.
             password: User password.
             verify: Verify server SSL certificate.
+            auth_mode: The authentication mode to use. Defaults to 'timesketch'
+                Supported values are 'timesketch' (Timesketch login form) and
+                'http-basic' (HTTP Basic authentication).
         """
         self._host_uri = host_uri
         self.api_root = u'{0:s}/api/v1'.format(host_uri)
         try:
             self.session = self._create_session(
-                username, password, verify=verify)
+                username, password, verify=verify, auth_mode=auth_mode)
         except ConnectionError:
             raise ConnectionError(u'Timesketch server unreachable')
 
@@ -76,23 +84,30 @@ class TimesketchApi(object):
             u'referer': self._host_uri
         })
 
-    def _create_session(self, username, password, verify):
+    def _create_session(self, username, password, verify, auth_mode):
         """Create authenticated HTTP session for server communication.
 
         Args:
             username: User to authenticate as.
             password: User password.
             verify: Verify server SSL certificate.
+            auth_mode: The authentication mode to use. Supported values are
+                'timesketch' (Timesketch login form) and 'http-basic'
+                (HTTP Basic authentication).
 
         Returns:
             Instance of requests.Session.
         """
         session = requests.Session()
         session.verify = verify  # Depending if SSL cert is verifiable
+        # If using HTTP Basic auth, add the user/pass to the session
+        if auth_mode == u'http-basic':
+            session.auth = (username, password)
 
-        # Get and set CSRF token and authenticate the session.
+        # Get and set CSRF token and authenticate the session if appropriate.
         self._set_csrf_token(session)
-        self._authenticate_session(session, username, password)
+        if auth_mode == u'timesketch':
+            self._authenticate_session(session, username, password)
 
         return session
 
