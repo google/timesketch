@@ -239,13 +239,12 @@ class ResourceMixin(object):
 
         schema = {u'meta': meta, u'objects': []}
 
-        if model:
-            if not model_fields:
-                try:
-                    model_fields = self.fields_registry[model.__tablename__]
-                except AttributeError:
-                    model_fields = self.fields_registry[model[0].__tablename__]
-            schema[u'objects'] = [marshal(model, model_fields)]
+        if not model_fields:
+            try:
+                model_fields = self.fields_registry[model.__tablename__]
+            except AttributeError:
+                model_fields = self.fields_registry[model[0].__tablename__]
+        schema[u'objects'] = [marshal(model, model_fields)]
 
         response = jsonify(schema)
         response.status_code = status_code
