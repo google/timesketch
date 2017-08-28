@@ -24,6 +24,8 @@ import time
 
 from setuptools import find_packages
 from setuptools import setup
+from pip.req import parse_requirements
+from pip.download import PipSession
 
 timesketch_version = u'20170721'
 
@@ -83,9 +85,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     scripts=[u'tsctl'],
-    install_requires=frozenset([
-        u'Flask', u'Flask-Login', u'Flask-script', u'Flask-SQLAlchemy',
-        u'Flask-Bcrypt', u'Flask-RESTful', u'Flask-WTF', u'Flask-Migrate',
-        u'SQLAlchemy', u'celery', u'redis', u'blinker', u'elasticsearch',
-        u'neo4jrestclient', u'python-dateutil'
-    ]))
+    install_requires=[str(req.req) for req in parse_requirements(
+        "requirements.txt", session=PipSession(),
+    )],
+)

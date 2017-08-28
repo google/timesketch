@@ -1,0 +1,25 @@
+# requirements:
+Flask
+Flask-Login
+Flask-script
+Flask-SQLAlchemy
+Flask-Bcrypt
+Flask-RESTful
+Flask-WTF
+Flask-Migrate
+SQLAlchemy
+celery
+redis
+blinker
+elasticsearch
+neo4jrestclient
+python-dateutil
+
+# dev-requirements:
+Flask-Testing
+nose
+mock
+pylint
+coverage
+requests
+BeautifulSoup
