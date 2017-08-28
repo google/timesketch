@@ -36,7 +36,8 @@ timesketch_description = (
 def check_before_upload():
     """Warn user if frontend build is not present or is not recent.
 
-    Make sure that .js and .css bundles included in the PyPI package are up to date.
+    Make sure that .js and .css bundles included in the PyPI package are up to
+    date.
 
     Raises:
     UserWarning
