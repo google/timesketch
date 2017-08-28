@@ -22,6 +22,19 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
+from timesketch.api.v1.resources import ResourceMixin
+
+
+class ResourceMixinTest(BaseTest):
+    """Test ResourceMixin."""
+    def test_to_json_empty_list(self):
+        """Behavior of to_json when given an empty list."""
+        response = ResourceMixin().to_json([])
+        self.assertEqual(response.json, {
+            'meta': {},
+            'objects': [],
+        })
+
 
 class SketchListResourceTest(BaseTest):
     """Test SketchListResource."""
