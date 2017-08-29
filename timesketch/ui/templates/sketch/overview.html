@@ -1,11 +1,58 @@
 {% extends "base.html" %}
-{% block main %}
+
+{% block navigation %}
     <ul class="nav nav-tabs">
         <li role="presentation" class="active"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
+        <li role="presentation"><a href="{{ url_for('story_views.story', sketch_id=sketch.id) }}"><i class="fa fa-book"></i> Stories</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
     </ul>
+{% endblock %}
+
+{% block right_nav %}
+    <div class="btn-group">
+        {% if sketch.has_permission(current_user, 'write') and sketch.timelines  and upload_enabled %}
+            <a href="timelines/" class="btn btn-success"><i class="fa fa-cloud-upload"></i>Import timeline</a>
+        {% endif %}
+    </div>
+
+    {% if current_user == sketch.user %}
+        <button style="margin-left:10px;" data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
+            {% if sketch.is_public %}
+                <i class="fa fa-globe"></i> Share</button>
+            {% else %}
+                <i class="fa fa-lock"></i> Share</button>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block main %}
+
+    <div class="modal" id="new-sketch-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <span class="modal-title" id="myModalLabel">Choose a name for your new sketch</span>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" role="form" action="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}" method="post">
+                        <div class="form-group">
+                            <div class="col-sm-12">
+                                <input class="form-control search-input" style="background: transparent;padding: 0" id="name" name="name" type="text" placeholder="Untitled sketch" autofocus="true">
+                            </div>
+                        </div>
+                        <br>
+                        <input type="submit" class="btn btn-primary" value="Save"/>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        {{ sketch_form.csrf_token }}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal" id="edit-sketch-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -66,47 +113,47 @@
                             <br>
 
                             <div class="input">
-                              <label>
-                                  <i class="fa fa-user" style="margin-right:5px;"></i>
-                                  Share with user
-                                  <input type="text" name="username">
-                              </label>
+                                <label>
+                                    <i class="fa fa-user" style="margin-right:5px;"></i>
+                                    Share with user
+                                    <input type="text" name="username">
+                                </label>
 
-                            <div class="input">
-                              <label>
-                                  <i class="fa fa-users" style="margin-right:5px;"></i>
-                                  Share with group
-                                  <select id="groups" name="groups">
-                                    <option value="" disabled selected>Select group</option>
-                                    {% for option in permission_form.groups %}
-                                      {{ option }}
+                                <div class="input">
+                                    <label>
+                                        <i class="fa fa-users" style="margin-right:5px;"></i>
+                                        Share with group
+                                        <select id="groups" name="groups">
+                                            <option value="" disabled selected>Select group</option>
+                                            {% for option in permission_form.groups %}
+                                                {{ option }}
+                                            {% endfor %}
+                                        </select>
+                                    </label>
+                                </div>
+
+                            </div>
+
+                            {% if sketch.collaborators or sketch.groups %}
+                                <br>
+                                <table class="table table-hover">
+                                    <th>Who has access</th>
+                                    <th style="text-align: right; padding-right: 3px;"><i class="fa fa-trash"></i></th>
+                                    {% for group in sketch.groups %}
+                                        <tr>
+                                            <td><i class="fa fa-group"></i>{{ group.name }}</td>
+                                            <td align="right"><input name="remove_groups" type="checkbox" value={{ group.id }}></td>
+                                        </tr>
                                     {% endfor %}
-                                  </select>
-                              </label>
-                            </div>
+                                    {% for collaborator in sketch.collaborators %}
+                                        <tr>
+                                            <td><i class="fa fa-user"></i>{{ collaborator.username }}</td>
+                                            <td align="right"><input name="remove_users" type="checkbox" value={{ collaborator.id }}></td>
+                                        </tr>
+                                    {% endfor %}
+                                </table>
 
-                            </div>
-
-                          {% if sketch.collaborators or sketch.groups %}
-                            <br>
-                            <table class="table table-hover">
-                              <th>Who has access</th>
-                              <th style="text-align: right; padding-right: 3px;"><i class="fa fa-trash"></i></th>
-                                {% for group in sketch.groups %}
-                                <tr>
-                                  <td><i class="fa fa-group"></i>{{ group.name }}</td>
-                                  <td align="right"><input name="remove_groups" type="checkbox" value={{ group.id }}></td>
-                                </tr>
-                              {% endfor %}
-                              {% for collaborator in sketch.collaborators %}
-                                <tr>
-                                  <td><i class="fa fa-user"></i>{{ collaborator.username }}</td>
-                                  <td align="right"><input name="remove_users" type="checkbox" value={{ collaborator.id }}></td>
-                                </tr>
-                              {% endfor %}
-                            </table>
-
-                          {% endif %}
+                            {% endif %}
 
 
                             <br><hr>
@@ -188,124 +235,85 @@
     <div class="container">
         <div class="row">
             <div class="col-md-12">
-                <div class="card card-top">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="pull-right" style="margin-right:10px;">
-                                <div class="btn-group">
-                                    {% if sketch.has_permission(user=current_user, permission='write') %}
-                                        <button class="btn btn-default" data-toggle="modal" data-target="#edit-sketch-modal"><i class="fa fa-pencil"></i></button>
-                                        <button class="btn btn-default" data-toggle="modal" data-target="#status-modal">Status: {{ sketch.get_status.status|title }}</button>
-                                    {% endif %}
-
-                                    {% if sketch.has_permission(user=current_user, permission='delete') %}
-                                        <button class="btn btn-default" data-toggle="modal" data-target="#trash-modal"><i class="fa fa-trash"></i></button>
-                                    {% endif %}
-
-                                    <button data-toggle="modal" data-target="#share-modal" class="btn btn-primary">
-                                        {% if sketch.is_public %}
-                                            <i class="fa fa-globe"></i> Share</button>
-                                        {% else %}
-                                            <i class="fa fa-lock"></i> Share</button>
-                                        {% endif %}
-                                </div>
-                            </div>
-                            <h3>{{ sketch.name }}</h3>
-                            <p style="white-space: pre-wrap;word-wrap: break-word;">{{ sketch.description }}</p>
-                            <br>
-
-                            {% if sketch.timelines %}
-                              <a class="btn btn-primary" href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Start exploring</a>
-                              <br>
+                <div class="card" style="padding-left:30px; padding-bottom: 30px;">
+                    <div class="pull-right" style="margin-right:10px;margin-top:10px;">
+                        <div class="btn-group">
+                            {% if sketch.has_permission(user=current_user, permission='write') %}
+                                <button class="btn btn-default" data-toggle="modal" data-target="#edit-sketch-modal"><i class="fa fa-pencil"></i></button>
                             {% endif %}
 
-                            {% if sketch.collaborators or sketch.groups %}
-                                <br>
-                                {% for group in sketch.groups %}
-                                  <span class="label label-default" style="font-size: 0.9em;"><i class="fa fa-group"></i>{{ group.name }}</span>
-                                {% endfor %}
-                                {% for collaborator in sketch.collaborators %}
-                                  <span class="label label-default" style="font-size: 0.9em;"><i class="fa fa-user"></i>{{ collaborator.username }}</span>
-                                {% endfor %}
+                            {% if sketch.has_permission(user=current_user, permission='delete') %}
+                                <button class="btn btn-default" data-toggle="modal" data-target="#trash-modal"><i class="fa fa-trash"></i></button>
                             {% endif %}
-
                         </div>
                     </div>
+                    <h3 style="margin-top:10px;">{{ sketch.name }}</h3>
+                    <p style="white-space: pre-wrap;word-wrap: break-word; max-width: 800px;">{{ sketch.description }}</p>
+
+                    {% if sketch.collaborators or sketch.groups %}
+                        <br>
+                        <span style="margin-right:10px;">Shared with</span>
+                        {% for group in sketch.groups %}
+                            <span class="label label-default" style="font-size: 0.9em;" title="Shared with group {{ group.name }}"><i class="fa fa-group"></i>{{ group.name }}</span>
+                        {% endfor %}
+                        {% for collaborator in sketch.collaborators %}
+                            <span class="label label-default" style="font-size: 0.9em;" title="Shared with user {{ collaborator.username }}"><i class="fa fa-user"></i>{{ collaborator.username }}</span>
+                        {% endfor %}
+                    {% endif %}
                 </div>
             </div>
         </div>
 
-        {% if sketch.get_named_views %}
-            <div class="card">
-                <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th>View</th>
-                        <th width="110px">Created by</th>
-                        <th width="130px">Created</th>
-                    </tr>
-                    <tbody>
-                    {% for view in sketch.get_named_views %}
-                        <tr>
-                            <td>
-                                <div style="margin-top:5px;font-size: 1.1em;font-weight: bold"><a href="explore/view/{{ view.id }}/">{{ view.name }}</a></div>
-                                <span style="color:#777;">{{ view.query_string }}</span>
-                            </td>
-                            <td>{{ view.user.name }}</td>
-                            <td>{{ view.updated_at.strftime('%Y-%m-%d %H:%M')}}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+        {% if sketch.has_permission(user=current_user, permission='write') and not sketch.timelines %}
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="text-center" style="padding:100px;">
+                            <h3 style="color:#777"><i class="fa fa-meh-o"></i> No data to analyze</h3>
+                            <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
+                            <br>
+                            <a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">or add an existing timeline</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         {% endif %}
 
-        <div class="card">
-            {% if sketch.timelines %}
-                <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th width="50px"></th>
-                        <th>Timeline</th>
-                        <th width="110px">Added by</th>
-                        <th width="130px">Added</th>
-                    </tr>
+        {% if sketch.timelines %}
+            <!-- Single metric info cards -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card" style="border-top: 2px solid #428bca;">
+                        <div class="text-center">
+                            <h1>{{ sketch.timelines|length }}</h1>
+                            Timelines
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card" style="border-top: 2px solid #428bca; min-height: 132px">
+                        <div class="text-center">
+                            <ts-count-events sketch-id="{{ sketch.id }}"></ts-count-events>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                    <tbody>
-                    {% for timeline in sketch.timelines %}
-                        <tr>
-                            <td>
-                                {% if timeline.searchindex.get_status.status == 'processing' %}
-                                    <i class="fa fa-spinner fa-spin"></i>
-                                {% else %}
-                                    <div class="color-box" style="background:#{{ timeline.color }};"></div>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div style="margin-top:5px;">
-                                    {% if timeline.searchindex.get_status.status == 'processing' %}
-                                        {{ timeline.name }}
-                                    {% else %}
-                                        <a href="{{ url_for('sketch_views.timeline', sketch_id=sketch.id, timeline_id=timeline.id) }}">{{ timeline.name }}</a>
-                                    {% endif %}
-                                </div>
-                            </td>
-                            <td>{{ timeline.user.name }}</td>
-                            <td>
-                                <div style="margin-top:5px;">{{ timeline.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-                {% if sketch.has_permission(current_user, 'write') %}
-                  <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add more timelines</a>
-                {% endif %}
-            {% else %}
-              {% if sketch.has_permission(current_user, 'write') %}
-                <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started!</a>
-              {% endif %}
-            {% endif %}
-        </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card" style="min-height:300px;">
+                        <h4>Timelines</h4>
+                        <ts-timelines-list sketch-id="{{ sketch.id }}" show-delete="false"></ts-timelines-list>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card" style="min-height: 300px;">
+                        <h4>Views</h4>
+                        <ts-saved-view-list sketch-id="{{ sketch.id }}"></ts-saved-view-list>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
     </div>
+
 {% endblock %}

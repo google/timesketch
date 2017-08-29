@@ -1,22 +1,36 @@
 {% extends "base.html" %}
-{% block main %}
+
+{% block navigation %}
     <ul class="nav nav-tabs">
         <li role="presentation"><a href="{{ url_for('sketch_views.overview', sketch_id=sketch.id) }}"><i class="fa fa-cube"></i> Overview</a></li>
         <li role="presentation" class="active"><a href="{{ url_for('sketch_views.explore', sketch_id=sketch.id) }}"><i class="fa fa-search"></i> Explore</a></li>
+        <li role="presentation"><a href="{{ url_for('story_views.story', sketch_id=sketch.id) }}"><i class="fa fa-book"></i> Stories</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.views', sketch_id=sketch.id) }}"><i class="fa fa-eye"></i> Views</a></li>
         <li role="presentation"><a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-clock-o"></i> Timelines</a></li>
     </ul>
-    {% if sketch.timelines %}
-        <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}" autoload="true" redirect="true"></ts-search>
-    {% else %}
-        <div class="container">
+{% endblock %}
+
+{% block main %}
+    <div class="container">
+        {% if sketch.has_permission(user=current_user, permission='write') and not sketch.timelines %}
             <div class="row">
                 <div class="col-md-12">
-                    <div class="card card-top">
-                        <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add a timeline to get started!</a>
+                    <div class="card">
+                        <div class="text-center" style="padding:100px;">
+                            <h3 style="color:#777"><i class="fa fa-meh-o"></i> No data to analyze</h3>
+                            <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
+                            <br>
+                            <a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">or add an existing timeline</a>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    {% endif %}
+        {% else %}
+            <div class="row">
+                <div class="col-md-12">
+                    <ts-search sketch-id="{{ sketch.id }}" view-id="{{ view.id }}" named-view="{{ named_view }}" searchtemplate-id="{{ searchtemplate_id }}" autoload="true" redirect="true"></ts-search>
+                </div>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}

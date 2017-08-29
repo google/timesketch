@@ -1,0 +1,36 @@
+version: '3'
+services:
+  timesketch:
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+    ports:
+      - "5000:5000"
+    links:
+      - elasticsearch
+      - postgres
+      - redis
+    environment:
+      - POSTGRES_USER=timesketch
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_ADDRESS=postgres
+      - POSTGRES_PORT=5432
+      - ELASTIC_ADDRESS=elastic
+      - ELASTIC_PORT=9200
+    restart: always
+  elasticsearch:
+    image: elasticsearch:2.4
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    restart: always
+  postgres:
+    image: postgres:9.6
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=timesketch
+      - POSTGRES_PASSWORD=password
+    restart: always
+  redis:
+    image: redis:3

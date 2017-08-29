@@ -18,8 +18,16 @@
    sudo python setup.py install
 """
 
+import os.path
+import sys
+import time
+
 from setuptools import find_packages
 from setuptools import setup
+from pip.req import parse_requirements
+from pip.download import PipSession
+
+timesketch_version = u'20170721'
 
 timesketch_description = (
     u'Timesketch is a web based tool for collaborative forensic timeline '
@@ -27,10 +35,40 @@ timesketch_description = (
     u'timelines and analyze them all at the same time.  Add meaning to '
     u'your raw data with rich annotations, comments, tags and stars.')
 
+def check_before_upload():
+    """Warn user if frontend build is not present or is not recent.
+
+    Make sure that .js and .css bundles included in the PyPI package are up to
+    date.
+
+    Raises:
+    UserWarning
+    """
+    this_dir = os.path.dirname(__file__)
+    frontend_dist_dir = os.path.join(
+        this_dir, 'timesketch', 'ui', 'static', 'dist',
+    )
+    js = os.path.join(frontend_dist_dir, 'bundle.js')
+    css = os.path.join(frontend_dist_dir, 'bundle.css')
+    if not (os.path.isfile(js) and os.path.isfile(css)):
+        raise UserWarning(
+            "Build the frontend before uploading to PyPI!"
+            + " (see docs/Developers-Guide.md)"
+        )
+    mtime = min(os.path.getmtime(js), os.path.getmtime(css))
+    if time.time() - mtime > 180:
+        raise UserWarning(
+            "Frontend build is older than 3 minutes, please rebuild!"
+            + " (see docs/Developers-Guide.md)"
+        )
+
+if 'upload' in sys.argv:
+    check_before_upload()
+
 setup(
     name=u'timesketch',
-    version=u'2015.12',
-    description=u'Collaborative forensic timeline analysis',
+    version=timesketch_version,
+    description=u'Digital forensic timeline analysis',
     long_description=timesketch_description,
     license=u'Apache License, Version 2.0',
     url=u'http://www.timesketch.org/',
@@ -42,26 +80,12 @@ setup(
         u'Operating System :: OS Independent',
         u'Programming Language :: Python',
     ],
-    data_files=[
-        (u'share/timesketch', [u'timesketch.conf'])
-    ],
+    data_files=[(u'share/timesketch', [u'timesketch.conf'])],
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
     scripts=[u'tsctl'],
-    install_requires=frozenset([
-        u'Flask',
-        u'Flask-Login',
-        u'Flask-script',
-        u'Flask-SQLAlchemy',
-        u'Flask-Bcrypt',
-        u'Flask-RESTful',
-        u'Flask-WTF',
-        u'Flask-Migrate',
-        u'SQLAlchemy',
-        u'celery',
-        u'redis',
-        u'blinker',
-        u'elasticsearch',
-    ])
+    install_requires=[str(req.req) for req in parse_requirements(
+        "requirements.txt", session=PipSession(),
+    )],
 )

@@ -28,7 +28,6 @@ from sqlalchemy import Integer
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 
-
 # The database session
 engine = None
 session_maker = sessionmaker()
@@ -67,6 +66,7 @@ class AclBaseQuery(BaseQuery):
     flask_sqlalchemy.BaseQuery and has the same methods as a SQLAlchemy Query
     as well.
     """
+
     def get_with_acl(self, model_id):
         """Get a database object with permission check enforced.
 
@@ -86,7 +86,8 @@ class AclBaseQuery(BaseQuery):
             pass
         if result_obj.is_public:
             return result_obj
-        if not result_obj.has_permission(user=current_user, permission=u'read'):
+        if not result_obj.has_permission(
+                user=current_user, permission=u'read'):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
         return result_obj
 
@@ -100,6 +101,7 @@ class BaseModel(object):
     @declared_attr
     def __tablename__(self):
         return self.__name__.lower()
+
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime(), default=func.now())
     updated_at = Column(DateTime(), default=func.now(), onupdate=func.now())

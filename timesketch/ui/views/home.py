@@ -14,20 +14,17 @@
 """This module implements HTTP request handler."""
 
 from flask import Blueprint
+from flask import current_app
 from flask import render_template
 from flask import redirect
-from flask import request
 from flask import url_for
-from flask_login import current_app
 from flask_login import current_user
 from flask_login import login_required
 from sqlalchemy import not_
 
 from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import View
 from timesketch.lib.forms import HiddenNameDescriptionForm
 from timesketch.models import db_session
-
 
 # Register flask blueprint
 home_views = Blueprint(u'home_views', __name__)
@@ -46,31 +43,14 @@ def home():
     sketches = Sketch.all_with_acl().filter(
         not_(Sketch.Status.status == u'deleted'),
         Sketch.Status.parent).order_by(Sketch.updated_at.desc())
-    query_filter = request.args.get(u'filter', u'')
-    query = request.args.get(u'q', u'')
     # Only render upload button if it is configured.
     upload_enabled = current_app.config[u'UPLOAD_ENABLED']
-    last_sketch = View.query.filter_by(
-        user=current_user, name=u'').order_by(
-            View.updated_at.desc()).first()
-
-    if query_filter:
-        if query_filter == u'user':
-            sketches = sketches.filter(Sketch.user == current_user)
-        elif query_filter == u'shared':
-            sketches = sketches.filter(not_(Sketch.user == current_user))
-
-    # TODO: Figure out a better way to handle this.
-    if query:
-        if query.startswith(u'*'):
-            query = u''
-        else:
-            sketches = sketches.filter(Sketch.name.contains(query)).limit(100)
 
     # Handle form for creating a new sketch.
     if form.validate_on_submit():
         sketch = Sketch(
-            name=form.name.data, description=form.description.data,
+            name=form.name.data,
+            description=form.description.data,
             user=current_user)
         sketch.status.append(sketch.Status(user=None, status=u'new'))
         # Give the requesting user permissions on the new sketch.
@@ -82,5 +62,7 @@ def home():
         return redirect(url_for(u'sketch_views.overview', sketch_id=sketch.id))
 
     return render_template(
-        u'home/home.html', sketches=sketches, form=form, query=query,
-        upload_enabled=upload_enabled, last_sketch=last_sketch)
+        u'home/home.html',
+        sketches=sketches,
+        form=form,
+        upload_enabled=upload_enabled)

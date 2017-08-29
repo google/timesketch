@@ -1,0 +1,30 @@
+<ul class="content-list" ng-hide="!timelines.length">
+    <li class="content-item" ng-repeat="timeline in timelines">
+
+        <div ng-if="showEdit" class="pull-right" style="margin-top:2px;">
+            <a style="cursor: pointer; margin-left:10px; color:#333;" ng-show="showEdit" href="/sketch/{{ sketchId }}/timelines/{{ timeline.id }}/"><i class="fa fa-edit"></i></a>
+        </div>
+
+        <div ng-if="showDelete">
+            <i ng-click="confirmDelete =! confirmDelete" ng-hide="confirmDelete" class="fa fa-trash pull-right" style="cursor: pointer; margin-top:3px;margin-left:10px;"></i>
+            <div class="pull-right" ng-show="confirmDelete">
+                <span class="btn btn-sm btn-danger" style="margin-top:-5px; margin-right:5px;margin-left:5px;" ng-click="deleteTimeline(timeline)">Delete</span>
+                <i class="fa fa-close" style="cursor:pointer;" ng-click="confirmDelete =! confirmDelete"></i>
+            </div>
+        </div>
+
+        <div class="pull-right">
+            <span>{{ timeline.updated_at }}</span>
+        </div>
+        <div class="pull-left" style="margin-top:-5px">
+            <div class="color-box" style="background:#{{ timeline.color }};"></div>
+        </div>
+        <div class="title">
+            <a style="text-decoration: none; font-weight: 500;font-size: 1.1em;" href="/sketch/{{ sketchId }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
+        </div>
+    </li>
+</ul>
+
+<div ng-if="!timelines.length">
+    No timelines
+</div>

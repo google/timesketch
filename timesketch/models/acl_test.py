@@ -18,6 +18,7 @@ from timesketch.lib.testlib import BaseTest
 
 class AclModelTest(BaseTest):
     """Test the ACL model."""
+
     def test_change_permission(self):
         """Test changing permissions on a sketch with ACL."""
         for permission in (u'read', u'write', u'delete'):

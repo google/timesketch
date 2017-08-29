@@ -1,3 +1,50 @@
+<div class="card" ng-if="view">
+    <h4>{{ view.name }}</h4>
+    You are exploring in the context of a saved view.
+    <br>
+    Click <a href="/sketch/{{ sketchId }}/explore">here</a> to go back to explore view.
+    <br><br>
+    <button class="btn btn-success" ng-click="updateView()"><i class="fa fa-refresh"></i> Update view</button>
+    <button class="btn btn-default" data-toggle="modal" data-target="#trash-view-modal"><i class="fa fa-trash"></i> Delete view</button>
+</div>
+
+<div class="modal" id="trash-view-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Delete view: {{ view.name }}</h4>
+            </div>
+            <div class="modal-body">
+                    <strong>Are you sure you want to delete this view?</strong>
+                    <br><br>
+                    <button style="margin-right:7px;" class="btn btn-success" data-dismiss="modal">No, keep it.</button>
+                    <button class="btn btn-danger" ng-click="deleteView()"><i class="fa fa-trash"></i> Yes I'm sure, delete it!</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="save-event-view-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">Save the selected events as a new view</h4>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <input type="text" ng-model="view_name" class="form-control" placeholder="Name this view" required>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary" data-dismiss="modal" ng-click="saveEventsView()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="card" style="min-height:100px;">
     <div class="pull-left" ng-show="meta" style="padding:10px;">
         <span ng-show="!events.length && meta.es_total_count > 0">
@@ -6,7 +53,17 @@
         <span ng-show="events.length || meta.es_total_count == 0">
             {{ meta.es_total_count }} events <span ng-show="meta.numHiddenEvents > 0 && !meta.showHiddenEvents" style="color:red;">({{ meta.numHiddenEvents }} hidden)</span> ({{ meta.es_time/1000 }}s)
             <span ng-show="meta.noisy" style="margin-left:10px;color:red;font-weight:bold;">
-                <i class="fa fa-warning"></i> Wow, that is a lot of events! I will only show you 500 of them.
+                <i class="fa fa-warning"></i> Showing
+                <select style="background: #fff;border: 1px solid #f5f5f5;color:red;font-weight: bold" ng-model="userLimit">
+                    <option value="{{ filter.limit }}" ng-selected="filter.limit">{{ filter.limit }}</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="40">40</option>
+                    <option value="80">80</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                    <option value="500">500</option>
+                </select> first events
             </span>
         </span>
     </div>
@@ -20,15 +77,16 @@
 
         <div class="btn-group" style="margin-left:10px;">
             <button class="btn btn-default" ng-click="filter.order = { 'asc': 'desc', 'desc': 'asc'}[filter.order];applyOrder()"><i ng-class="{'asc': 'fa fa-sort-asc', 'desc': 'fa fa-sort-desc'}[filter.order]"></i> Sort</button>
-            <a class="btn btn-default" href="/sketch/{{ sketchId }}/explore/export/" download="export.csv"><i class="fa fa-cloud-download"></i> Export</a>
+            <a class="btn btn-default" ng-disabled="meta.es_total_count > 10000" href="/sketch/{{ sketchId }}/explore/export/" download="export.csv"><i class="fa fa-cloud-download"></i> Export</a>
             <button class="btn btn-default" ng-click="toggleAll()"><i class="fa fa-check"></i> Toggle all</button>
-            <button class="btn btn-default" ng-click="addStar()" ng-disabled="!anySelected"><i class="fa fa-star icon-yellow"></i> Add star</button>
-            <button class="btn btn-default" ng-click="removeStar()" ng-disabled="!anySelected"><i class="fa fa-star icon-grey"></i> Remove star</button>
+            <button class="btn btn-default" data-toggle="modal" ng-hide="!anySelected" data-target="#save-event-view-modal"><i class="fa fa-save"></i> Save selection</button>
+            <button class="btn btn-default" ng-click="addStar()" ng-hide="!anySelected"><i class="fa fa-star icon-yellow"></i> Add star</button>
+            <button class="btn btn-default" ng-click="removeStar()" ng-hide="!anySelected"><i class="fa fa-star icon-grey"></i> Remove star</button>
         </div>
     </div>
     <br><br><br>
 
     <div ng-repeat="event in events">
-        <ts-event ng-hide="event.hidden && !meta.showHiddenEvents" event="::event" meta="::meta" sketch-id="::sketchId" prev-timestamp="::events[$index-1]['_source'].timestamp" next-timestamp="::events[$index+1]['_source'].timestamp" index="::$index" order="::filter.order"></ts-event>
+        <ts-event ng-hide="event.hidden && !meta.showHiddenEvents" enable-context-query="true" event="::event" meta="::meta" sketch-id="::sketchId" prev-timestamp="::events[$index-1]['_source'].timestamp" next-timestamp="::events[$index+1]['_source'].timestamp" index="::$index" order="::filter.order"></ts-event>
     </div>
 </div>

@@ -13,7 +13,7 @@
 # limitations under the License.
 """Tests for the user views."""
 
-from flask_login import current_app
+from flask import current_app
 from flask_login import current_user
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
@@ -22,6 +22,7 @@ from timesketch.lib.testlib import BaseTest
 
 class UserViewTest(BaseTest):
     """Test the user view."""
+
     def test_login_view_unauthenticated(self):
         """Test the login view handler with an unauthenticated session."""
         response = self.client.get(u'/login/')
@@ -42,9 +43,11 @@ class UserViewTest(BaseTest):
         current_app.config[u'SSO_GROUP_NOT_MEMBER_SIGN'] = u'-'
         with self.client:
             response = self.client.get(
-                u'/login/', environ_base={
+                u'/login/',
+                environ_base={
                     u'REMOTE_USER': u'test1',
-                    u'SSO_GROUP': u'test_group1;-test_group2'})
+                    u'SSO_GROUP': u'test_group1;-test_group2'
+                })
             self.assertEqual(current_user.username, u'test1')
             self.assertIn(self.group1, current_user.groups)
             self.assertNotIn(self.group2, current_user.groups)
