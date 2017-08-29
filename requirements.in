@@ -14,6 +14,7 @@ blinker
 elasticsearch
 neo4jrestclient
 python-dateutil
+gunicorn
 
 # dev-requirements:
 Flask-Testing
@@ -23,3 +24,15 @@ pylint
 coverage
 requests
 BeautifulSoup
+
+# Remove the following when pip-sync finally stops deleting pkg_resources.
+# This is a hack that forces reinstall of setuptools and thus brings
+# pkg_resources back after being deleted by pip-sync.
+# For more information, see:
+# - https://github.com/jazzband/pip-tools/issues/422
+# - https://github.com/jazzband/pip-tools/issues/389
+# - https://github.com/jazzband/pip-tools/pull/368
+# - https://github.com/jazzband/pip-tools/issues/531
+# Root cause of this bug:
+# - https://bugs.launchpad.net/ubuntu/+source/python-pip/+bug/1635463
+setuptools==36.2.7
