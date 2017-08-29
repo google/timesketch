@@ -10,7 +10,7 @@ Following the official Plaso documentation:
 https://github.com/log2timeline/plaso/wiki/Ubuntu-Packaged-Release
 
     $ sudo add-apt-repository universe
-    $ sudo add-apt-repository ppa:gift/dev
+    $ sudo add-apt-repository ppa:gift/stable
     $ sudo apt-get update
     $ sudo apt-get install python-plaso
 
