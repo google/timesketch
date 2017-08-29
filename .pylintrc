@@ -214,6 +214,9 @@ bad-names=foo,bar,baz,toto,tutu,tata
 # not require a docstring
 no-docstring-rgx=__.*__
 
+# Minimum line length for functions/classes that require docstrings, shorter
+# ones are exempt.
+docstring-min-length=25
 
 [DESIGN]
 
@@ -285,4 +288,3 @@ int-import-graph=
 # Exceptions that will emit a warning when being caught. Defaults to
 # "Exception"
 overgeneral-exceptions=Exception
-
