@@ -24,14 +24,15 @@ elasticsearch==5.4.0
 enum34==1.1.6             # via astroid
 flask-bcrypt==0.7.1
 flask-login==0.4.0
-flask-migrate==2.1.0
+flask-migrate==2.1.1
 flask-restful==0.3.6
 flask-script==2.0.5
-flask-sqlalchemy==2.2
+flask-sqlalchemy==2.2     # via flask-migrate
 flask-testing==0.6.2
 flask-wtf==0.14.2
-flask==0.12.2
+flask==0.12.2             # via flask-bcrypt, flask-login, flask-migrate, flask-restful, flask-script, flask-sqlalchemy, flask-testing, flask-wtf
 funcsigs==1.0.2           # via mock
+gunicorn==19.7.1
 idna==2.6                 # via requests
 isort==4.2.15             # via pylint
 itsdangerous==0.24        # via flask
@@ -54,9 +55,12 @@ redis==2.10.6
 requests==2.18.4
 singledispatch==3.4.0.3   # via astroid, pylint
 six==1.10.0               # via astroid, bcrypt, flask-restful, mock, pylint, python-dateutil, singledispatch
-sqlalchemy==1.1.13
+sqlalchemy==1.1.13        # via alembic, flask-sqlalchemy
 urllib3==1.22             # via elasticsearch, requests
 vine==1.1.4               # via amqp
 werkzeug==0.12.2          # via flask
 wrapt==1.10.11            # via astroid
 wtforms==2.1              # via flask-wtf
+
+# The following packages are considered to be unsafe in a requirements file:
+setuptools==36.2.7
