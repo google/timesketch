@@ -1,5 +1,13 @@
 ### Developers guide
 
+#### Python dependencies
+We use pip-tools and virtualenv for development. Pip-tools must be installed
+inside a virtualenv, installing it system-wide will cause issues.
+If you want to add a new python dependency, please add it to `requirements.in`
+and then run pip-compile to pin it's version in `requirements.txt`.
+Use `pip-sync` instead of `pip install -r requirements.txt` when possible.
+Use `pip-compile --upgrade` to keep dependencies up to date.
+
 #### Installing Node.js and Yarn
 Add Node.js 8.x repo
 
