@@ -15,9 +15,7 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-const module = angular.module('timesketch.api.service', []);
-
-const timesketchApiImplementation = function($http) {
+export const timesketchApiImplementation = function($http) {
     const API_BASE_URL = '/api/v1';
     const SKETCH_BASE_URL = API_BASE_URL + '/sketches/';
 
@@ -355,5 +353,3 @@ const timesketchApiImplementation = function($http) {
     };
 
 };
-
-module.service('timesketchApi', timesketchApiImplementation);

@@ -16,9 +16,7 @@
 import angular from 'angularjs-for-webpack'
 import * as numeral from 'numeral/numeral.js'
 
-const module = angular.module('timesketch.sketch.count.events.directive', []);
-
-module.directive('tsCountEvents', ['timesketchApi', function (timesketchApi) {
+export const tsCountEvents = ['timesketchApi', function (timesketchApi) {
     /**
      * Render event count.
      */
@@ -34,4 +32,4 @@ module.directive('tsCountEvents', ['timesketchApi', function (timesketchApi) {
             });
         }
     }
-}]);
+}]

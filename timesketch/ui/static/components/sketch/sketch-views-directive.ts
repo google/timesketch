@@ -16,9 +16,7 @@
 import angular from 'angularjs-for-webpack'
 import * as moment from 'moment'
 
-const module = angular.module('timesketch.sketch.views.directive', []);
-
-module.directive('tsSavedViewList', ['timesketchApi', function (timesketchApi) {
+export const tsSavedViewList = ['timesketchApi', function (timesketchApi) {
     /**
      * Render the list of saved views.
      */
@@ -57,9 +55,9 @@ module.directive('tsSavedViewList', ['timesketchApi', function (timesketchApi) {
             }
         }
     }
-}]);
+}]
 
-module.directive('tsSearchTemplateList', ['timesketchApi', function (timesketchApi) {
+export const tsSearchTemplateList = ['timesketchApi', function (timesketchApi) {
     /**
      * Render the list of search templates.
      */
@@ -95,4 +93,4 @@ module.directive('tsSearchTemplateList', ['timesketchApi', function (timesketchA
 
         }
     }
-}]);
+}]

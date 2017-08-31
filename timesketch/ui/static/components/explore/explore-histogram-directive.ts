@@ -16,9 +16,7 @@
 import angular from 'angularjs-for-webpack'
 import {Chart} from 'chart.js'
 
-const module = angular.module('timesketch.explore.histogram.directive', []);
-
-module.directive('tsHistogram', function ($window, timesketchApi) {
+export const tsHistogram = function ($window, timesketchApi) {
     /**
      * Histogram chart for number of events.
      * @param sketchId - Sketch ID.
@@ -117,4 +115,4 @@ module.directive('tsHistogram', function ($window, timesketchApi) {
             };
         }
     }
-});
+}

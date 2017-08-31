@@ -16,9 +16,7 @@ limitations under the License.
 import angular from 'angularjs-for-webpack'
 import * as moment from 'moment'
 
-const module = angular.module('timesketch.explore.search.directive', []);
-
-module.directive('tsSearch', ['$location', 'timesketchApi', function($location, timesketchApi) {
+export const tsSearch = ['$location', 'timesketchApi', function($location, timesketchApi) {
     /**
      * Search the datastore.
      * @param sketch-id - Sketch ID string.
@@ -213,9 +211,9 @@ module.directive('tsSearch', ['$location', 'timesketchApi', function($location, 
             };
         }
     }
-}]);
+}]
 
-module.directive('tsSearchContextCard', function() {
+export const tsSearchContextCard = function() {
     /**
      * Render the context card.
      */
@@ -236,9 +234,9 @@ module.directive('tsSearchContextCard', function() {
             };
         }
     }
-});
+}
 
-module.directive('tsSearchSavedViewPicker', ['timesketchApi', function(timesketchApi) {
+export const tsSearchSavedViewPicker = ['timesketchApi', function(timesketchApi) {
     /**
      * Render the list of saved views.
      */
@@ -266,9 +264,9 @@ module.directive('tsSearchSavedViewPicker', ['timesketchApi', function(timesketc
             })
         }
     }
-}]);
+}]
 
-module.directive('tsSearchTemplatePicker', ['timesketchApi', function() {
+export const tsSearchTemplatePicker = ['timesketchApi', function() {
     /**
      * Render the list of search templates.
      */
@@ -287,4 +285,4 @@ module.directive('tsSearchTemplatePicker', ['timesketchApi', function() {
             })
         }
     }
-}]);
+}]

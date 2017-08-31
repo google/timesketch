@@ -14,12 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
+import {tsEvent, tsEventList} from './explore-event-directive'
+import {tsFilter, tsTimelinePickerItem} from './explore-filter-directive'
+import {tsHeatmap} from './explore-heatmap-directive'
+import {tsHistogram} from './explore-histogram-directive'
+import {tsJsonEditor} from './explore-json-editor-directive'
+import {
+  tsSearch, tsSearchContextCard, tsSearchSavedViewPicker, tsSearchTemplatePicker
+} from './explore-search-directive'
 
-const module = angular.module('timesketch.explore', [
-    'timesketch.explore.event.directive',
-    'timesketch.explore.filter.directive',
-    'timesketch.explore.search.directive',
-    'timesketch.explore.heatmap.directive',
-    'timesketch.explore.histogram.directive',
-    'timesketch.explore.json.editor.directive'
-]);
+angular.module('timesketch.explore', [])
+  .directive('tsEvent', tsEvent)
+  .directive('tsEventList', tsEventList)
+  .directive('tsFilter', tsFilter)
+  .directive('tsTimelinePickerItem', tsTimelinePickerItem)
+  .directive('tsHeatmap', tsHeatmap)
+  .directive('tsHistogram', tsHistogram)
+  .directive('tsJsonEditor', tsJsonEditor)
+  .directive('tsSearch', tsSearch)
+  .directive('tsSearchContextCard', tsSearchContextCard)
+  .directive('tsSearchSavedViewPicker', tsSearchSavedViewPicker)
+  .directive('tsSearchTemplatePicker', tsSearchTemplatePicker)

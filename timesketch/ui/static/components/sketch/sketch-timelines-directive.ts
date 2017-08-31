@@ -16,9 +16,7 @@
 import angular from 'angularjs-for-webpack'
 import * as moment from 'moment'
 
-const module = angular.module('timesketch.sketch.timelines.directive', []);
-
-module.directive('tsTimelinesList', ['timesketchApi', function (timesketchApi) {
+export const tsTimelinesList = ['timesketchApi', function (timesketchApi) {
     /**
      * Render the list of timelines.
      */
@@ -56,4 +54,4 @@ module.directive('tsTimelinesList', ['timesketchApi', function (timesketchApi) {
             }
         }
     }
-}]);
+}]

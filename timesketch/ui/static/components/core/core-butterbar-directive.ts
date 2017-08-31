@@ -15,9 +15,7 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-const module = angular.module('timesketch.core.butterbar.directive', []);
-
-module.directive('tsButterbar', ['$rootScope', function($rootScope) {
+export const tsButterbar = ['$rootScope', function($rootScope) {
     /**
      * Render (show/hide) the butterbar when AJAX calls are being made.
      */
@@ -40,4 +38,4 @@ module.directive('tsButterbar', ['$rootScope', function($rootScope) {
             });
         }
     };
-}]);
+}]

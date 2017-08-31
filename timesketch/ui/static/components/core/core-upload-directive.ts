@@ -1,8 +1,6 @@
 import angular from 'angularjs-for-webpack'
 
-const module = angular.module('timesketch.core.upload.directive', []);
-
-module.directive('tsCoreUpload', ['timesketchApi', '$rootScope', '$window', function (timesketchApi, $rootScope, $window) {
+export const tsCoreUpload = ['timesketchApi', '$rootScope', '$window', function (timesketchApi, $rootScope, $window) {
     /**
      * Upload directive that handles the form and API call.
      */
@@ -35,9 +33,9 @@ module.directive('tsCoreUpload', ['timesketchApi', '$rootScope', '$window', func
             };
         }
     };
-}]);
+}]
 
-module.directive('tsCoreFileModel', ['$parse', function ($parse) {
+export const tsCoreFileModel = ['$parse', function ($parse) {
     /**
      * Bind the uploaded file (file object) to the scope.
      */
@@ -56,9 +54,9 @@ module.directive('tsCoreFileModel', ['$parse', function ($parse) {
 
         }
     };
-}]);
+}]
 
-module.directive('tsCoreUploadQueue', ['$interval', 'timesketchApi', function($interval, timesketchApi) {
+export const tsCoreUploadQueue = ['$interval', 'timesketchApi', function($interval, timesketchApi) {
     /**
      * Poll the API for active Celery tasks and render list.
      */
@@ -80,4 +78,4 @@ module.directive('tsCoreUploadQueue', ['$interval', 'timesketchApi', function($i
             }, pollIntervall);
         }
     };
-}]);
+}]

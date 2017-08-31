@@ -18,9 +18,7 @@ import * as moment from 'moment'
 import * as $ from 'jquery'
 import * as MediumEditor from 'medium-editor/dist/js/medium-editor.js'
 
-const module = angular.module('timesketch.story.directive', []);
-
-module.directive('tsStoryList', ['timesketchApi', function(timesketchApi) {
+export const tsStoryList = ['timesketchApi', function(timesketchApi) {
     /**
      * Render the list of stories.
      */
@@ -42,9 +40,9 @@ module.directive('tsStoryList', ['timesketchApi', function(timesketchApi) {
             });
         }
     }
-}]);
+}]
 
-module.directive('tsCreateStory', ['timesketchApi', function(timesketchApi) {
+export const tsCreateStory = ['timesketchApi', function(timesketchApi) {
     /**
      * Create story.
      */
@@ -63,9 +61,9 @@ module.directive('tsCreateStory', ['timesketchApi', function(timesketchApi) {
             }
         }
     }
-}]);
+}]
 
-module.directive('tsStory', function (timesketchApi, $compile, $interval) {
+export const tsStory = function (timesketchApi, $compile, $interval) {
     /**
      * Render a story.
      */
@@ -180,9 +178,9 @@ module.directive('tsStory', function (timesketchApi, $compile, $interval) {
             }, 3000);
         }
     }
-});
+}
 
-module.directive('tsStoryDropdown', ['timesketchApi', '$compile', function(timesketchApi, $compile) {
+export const tsStoryDropdown = ['timesketchApi', '$compile', function(timesketchApi, $compile) {
     /**
      * Render the list of saved views for story.
      */
@@ -219,9 +217,9 @@ module.directive('tsStoryDropdown', ['timesketchApi', '$compile', function(times
             })
         }
     }
-}]);
+}]
 
-module.directive('tsStoryEventList', ['timesketchApi', function(timesketchApi) {
+export const tsStoryEventList = ['timesketchApi', function(timesketchApi) {
     /**
      * Render the list of saved views for story.
      */
@@ -252,4 +250,4 @@ module.directive('tsStoryEventList', ['timesketchApi', function(timesketchApi) {
             })
         }
     }
-}]);
+}]

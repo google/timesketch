@@ -18,9 +18,7 @@ import * as ace from 'brace'
 import 'brace/mode/json'
 import 'brace/theme/dawn'
 
-const module = angular.module('timesketch.explore.json.editor.directive', []);
-
-module.directive('tsJsonEditor', ['timesketchApi', function(timesketchApi) {
+export const tsJsonEditor = ['timesketchApi', function(timesketchApi) {
     /**
      * Histogram chart for number of events.
      * @param query - Query string.
@@ -75,4 +73,4 @@ module.directive('tsJsonEditor', ['timesketchApi', function(timesketchApi) {
             }
         }
     }
-}]);
+}]

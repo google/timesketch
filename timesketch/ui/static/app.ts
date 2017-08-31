@@ -15,26 +15,24 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-const module = angular.module('timesketch', [
+// List of URLs to exclude from the butterbar.
+function excludeFromButterbar(url) {
+  const excludeURLs = [
+    "/api/v1/tasks/",
+    "/api/v1/sketches/[0-9]+/stories/[0-9]+/"
+  ];
+  const re = new RegExp(excludeURLs.join("|"), "i");
+  return(url.match(re) != null);
+}
+
+angular.module('timesketch', [
     'timesketch.api',
     'timesketch.core',
     'timesketch.explore',
     'timesketch.sketch',
     'timesketch.story'
-]);
-
-// List of URLs to exclude from the butterbar.
-function excludeFromButterbar(url) {
-    const excludeURLs = [
-        "/api/v1/tasks/",
-        "/api/v1/sketches/[0-9]+/stories/[0-9]+/"
-    ];
-    const re = new RegExp(excludeURLs.join("|"), "i");
-    return(url.match(re) != null);
-}
-
-// Angular config
-module.config(function($httpProvider) {
+])
+.config(function($httpProvider) {
     $httpProvider.interceptors.push(function($q, $rootScope) {
         return {
             'request': function(config) {
@@ -57,4 +55,4 @@ module.config(function($httpProvider) {
     });
     const csrftoken = document.getElementsByTagName('meta')[0]['content'];
     $httpProvider.defaults.headers.common['X-CSRFToken'] = csrftoken;
-});
+})

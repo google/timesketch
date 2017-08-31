@@ -14,9 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
+import {tsButterbar} from './core-butterbar-directive'
+import {tsEditSketch} from './core-edit-sketch-directive'
+import {tsCoreUpload, tsCoreFileModel, tsCoreUploadQueue} from './core-upload-directive'
 
-const module = angular.module('timesketch.core', [
-    'timesketch.core.butterbar.directive',
-    'timesketch.core.upload.directive',
-    'timesketch.core.edit.sketch.directive'
-]);
+angular.module('timesketch.core', [])
+  .directive('tsButterbar', tsButterbar)
+  .directive('tsEditSketch', tsEditSketch)
+  .directive('tsCoreUpload', tsCoreUpload)
+  .directive('tsCoreFileModel', tsCoreFileModel)
+  .directive('tsCoreUploadQueue', tsCoreUploadQueue)

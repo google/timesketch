@@ -16,9 +16,7 @@
 import angular from 'angularjs-for-webpack'
 import * as d3 from "d3"
 
-const module = angular.module('timesketch.explore.heatmap.directive', []);
-
-module.directive('tsHeatmap', function ($window, timesketchApi) {
+export const tsHeatmap = function ($window, timesketchApi) {
     /**
      * Heatmap chart for number of events per hour/weekday.
      * @param sketchId - Sketch ID.
@@ -159,4 +157,4 @@ module.directive('tsHeatmap', function ($window, timesketchApi) {
             };
         }
     }
-});
+}

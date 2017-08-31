@@ -15,9 +15,7 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-const module = angular.module('timesketch.explore.event.directive', []);
-
-module.directive('tsEventList', ['timesketchApi', function(timesketchApi) {
+export const tsEventList = ['timesketchApi', function(timesketchApi) {
     /**
      * Render list of events (search result from the datastore).
      * @param sketch-id - The id for the sketch.
@@ -170,9 +168,9 @@ module.directive('tsEventList', ['timesketchApi', function(timesketchApi) {
             });
         }
     }
-}]);
+}]
 
-module.directive('tsEvent', function () {
+export const tsEvent = function () {
     /**
      * Render event details.
      * @param sketch-id - The id for the sketch.
@@ -304,4 +302,4 @@ module.directive('tsEvent', function () {
             }
         }
     }
-});
+}

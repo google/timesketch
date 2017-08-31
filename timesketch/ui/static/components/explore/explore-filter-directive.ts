@@ -17,9 +17,7 @@ limitations under the License.
 import angular from 'angularjs-for-webpack'
 import * as moment from 'moment'
 
-const module = angular.module('timesketch.explore.filter.directive', []);
-
-module.directive('tsFilter', function () {
+export const tsFilter = function () {
     /**
      * Manage query filters.
      * @param sketch - Sketch object.
@@ -111,9 +109,9 @@ module.directive('tsFilter', function () {
 
        }
   }
-});
+}
 
-module.directive('tsTimelinePickerItem', function() {
+export const tsTimelinePickerItem = function() {
     /**
      * Manage the timeline items to filter on.
      */
@@ -158,4 +156,4 @@ module.directive('tsTimelinePickerItem', function() {
             }, true);
         }
     }
-});
+}
