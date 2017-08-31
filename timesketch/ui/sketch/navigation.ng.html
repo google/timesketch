@@ -1,0 +1,27 @@
+<ul class="nav nav-tabs">
+    <li role="presentation" [class.active]="active==='overview'">
+      <a href="/sketch/{{sketchId}}/">
+        <i class="fa fa-cube"></i> Overview
+      </a>
+    </li>
+    <li role="presentation" [class.active]="active==='explore'">
+      <a href="/sketch/{{sketchId}}/explore/">
+        <i class="fa fa-search"></i> Explore
+      </a>
+    </li>
+    <li role="presentation" [class.active]="active==='stories'">
+      <a href="/sketch/{{sketchId}}/stories/">
+        <i class="fa fa-book"></i> Stories
+      </a>
+    </li>
+    <li role="presentation" [class.active]="active==='views'">
+      <a href="/sketch/{{sketchId}}/views/">
+        <i class="fa fa-eye"></i> Views
+      </a>
+    </li>
+    <li role="presentation" [class.active]="active==='timelines'">
+      <a href="/sketch/{{sketchId}}/timelines/">
+        <i class="fa fa-clock-o"></i> Timelines
+      </a>
+    </li>
+</ul>
