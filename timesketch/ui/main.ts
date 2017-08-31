@@ -6,5 +6,11 @@ import 'twitter-bootstrap-3.0.0/dist/js/bootstrap.js'
 import 'medium-editor/dist/css/medium-editor.css'
 import 'medium-editor/dist/css/themes/default.css'
 
+import angular from 'angularjs-for-webpack'
+
 import 'css/ts.css'
-import 'app.module'
+import {tsAppModule} from 'app.module'
+
+angular.element(function() {
+  angular.bootstrap(document.body, [tsAppModule.name])
+})

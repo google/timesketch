@@ -7,7 +7,7 @@ const extractSass = new ExtractTextPlugin({
 })
 
 module.exports = {
-  entry: './timesketch/ui/index.ts',
+  entry: './timesketch/ui/main.ts',
   module: {
     rules: [
       {
