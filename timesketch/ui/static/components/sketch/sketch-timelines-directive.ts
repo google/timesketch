@@ -16,47 +16,44 @@
 import angular from 'angularjs-for-webpack'
 import * as moment from 'moment'
 
-(function() {
-    var module = angular.module('timesketch.sketch.timelines.directive', []);
+var module = angular.module('timesketch.sketch.timelines.directive', []);
 
-    module.directive('tsTimelinesList', ['timesketchApi', function (timesketchApi) {
-        /**
-         * Render the list of timelines.
-         */
-        return {
-            restrict: 'E',
-            templateUrl: '/static/components/sketch/sketch-timelines-list.html',
-            scope: {
-                sketchId: '=',
-                showEdit: '=',
-                showDelete: '='
-            },
-            controller: function ($scope) {
-                timesketchApi.getTimelines($scope.sketchId).success(function (data) {
-                    $scope.timelines = [];
-                    var timelines = data.objects[0];
-                    if (timelines) {
-                        for (var i = 0; i < timelines.length; i++) {
-                            var timeline = timelines[i];
-                            timeline.updated_at = moment.utc(timeline.updated_at).format("YYYY-MM-DD");
-                            $scope.timelines.push(timeline)
-                        }
+module.directive('tsTimelinesList', ['timesketchApi', function (timesketchApi) {
+    /**
+     * Render the list of timelines.
+     */
+    return {
+        restrict: 'E',
+        templateUrl: '/static/components/sketch/sketch-timelines-list.html',
+        scope: {
+            sketchId: '=',
+            showEdit: '=',
+            showDelete: '='
+        },
+        controller: function ($scope) {
+            timesketchApi.getTimelines($scope.sketchId).success(function (data) {
+                $scope.timelines = [];
+                var timelines = data.objects[0];
+                if (timelines) {
+                    for (var i = 0; i < timelines.length; i++) {
+                        var timeline = timelines[i];
+                        timeline.updated_at = moment.utc(timeline.updated_at).format("YYYY-MM-DD");
+                        $scope.timelines.push(timeline)
                     }
-                });
-
-                $scope.deleteTimeline = function(timeline) {
-                    timesketchApi.deleteTimeline($scope.sketchId, timeline.id);
-                    var index = $scope.timelines.indexOf(timeline);
-                    if (index > -1) {
-                        $scope.timelines.splice(index, 1);
-                    }
-                };
-
-                this.updateTimelines = function(timeline) {
-                    $scope.timelines.unshift(timeline)
                 }
+            });
+
+            $scope.deleteTimeline = function(timeline) {
+                timesketchApi.deleteTimeline($scope.sketchId, timeline.id);
+                var index = $scope.timelines.indexOf(timeline);
+                if (index > -1) {
+                    $scope.timelines.splice(index, 1);
+                }
+            };
+
+            this.updateTimelines = function(timeline) {
+                $scope.timelines.unshift(timeline)
             }
         }
-    }]);
-
-})();
+    }
+}]);

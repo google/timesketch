@@ -15,48 +15,46 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-(function() {
-    var module = angular.module('timesketch', [
-        'timesketch.api',
-        'timesketch.core',
-        'timesketch.explore',
-        'timesketch.sketch',
-        'timesketch.story'
-    ]);
+var module = angular.module('timesketch', [
+    'timesketch.api',
+    'timesketch.core',
+    'timesketch.explore',
+    'timesketch.sketch',
+    'timesketch.story'
+]);
 
-    // List of URLs to exclude from the butterbar.
-    function excludeFromButterbar(url) {
-        var excludeURLs = [
-            "/api/v1/tasks/",
-            "/api/v1/sketches/[0-9]+/stories/[0-9]+/"
-        ];
-        var re = new RegExp(excludeURLs.join("|"), "i");
-        return(url.match(re) != null);
-    }
+// List of URLs to exclude from the butterbar.
+function excludeFromButterbar(url) {
+    var excludeURLs = [
+        "/api/v1/tasks/",
+        "/api/v1/sketches/[0-9]+/stories/[0-9]+/"
+    ];
+    var re = new RegExp(excludeURLs.join("|"), "i");
+    return(url.match(re) != null);
+}
 
-    // Angular config
-    module.config(function($httpProvider) {
-        $httpProvider.interceptors.push(function($q, $rootScope) {
-            return {
-                'request': function(config) {
-                    if (!excludeFromButterbar(config.url)) {
-                        $rootScope.$broadcast('httpreq-start');
-                    }
-                    return config || $q.when(config);
-                },
-                'response': function(response) {
-                    $rootScope.XHRError = false;
-                    $rootScope.$broadcast('httpreq-complete');
-                    return response || $q.when(response);
-                },
-                'responseError': function(response) {
-                    $rootScope.XHRError = response.data;
-                    $rootScope.$broadcast('httpreq-error');
-                    return $q.reject(response);
+// Angular config
+module.config(function($httpProvider) {
+    $httpProvider.interceptors.push(function($q, $rootScope) {
+        return {
+            'request': function(config) {
+                if (!excludeFromButterbar(config.url)) {
+                    $rootScope.$broadcast('httpreq-start');
                 }
-            };
-        });
-        var csrftoken = document.getElementsByTagName('meta')[0]['content'];
-        $httpProvider.defaults.headers.common['X-CSRFToken'] = csrftoken;
+                return config || $q.when(config);
+            },
+            'response': function(response) {
+                $rootScope.XHRError = false;
+                $rootScope.$broadcast('httpreq-complete');
+                return response || $q.when(response);
+            },
+            'responseError': function(response) {
+                $rootScope.XHRError = response.data;
+                $rootScope.$broadcast('httpreq-error');
+                return $q.reject(response);
+            }
+        };
     });
-})();
+    var csrftoken = document.getElementsByTagName('meta')[0]['content'];
+    $httpProvider.defaults.headers.common['X-CSRFToken'] = csrftoken;
+});

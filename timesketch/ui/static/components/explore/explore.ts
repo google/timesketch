@@ -15,13 +15,11 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-(function() {
-    var module = angular.module('timesketch.explore', [
-        'timesketch.explore.event.directive',
-        'timesketch.explore.filter.directive',
-        'timesketch.explore.search.directive',
-        'timesketch.explore.heatmap.directive',
-        'timesketch.explore.histogram.directive',
-        'timesketch.explore.json.editor.directive'
-    ]);
-})();
+var module = angular.module('timesketch.explore', [
+    'timesketch.explore.event.directive',
+    'timesketch.explore.filter.directive',
+    'timesketch.explore.search.directive',
+    'timesketch.explore.heatmap.directive',
+    'timesketch.explore.histogram.directive',
+    'timesketch.explore.json.editor.directive'
+]);

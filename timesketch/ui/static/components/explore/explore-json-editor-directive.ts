@@ -18,63 +18,61 @@ import * as ace from 'brace'
 import 'brace/mode/json'
 import 'brace/theme/dawn'
 
-(function() {
-    var module = angular.module('timesketch.explore.json.editor.directive', []);
+var module = angular.module('timesketch.explore.json.editor.directive', []);
 
-    module.directive('tsJsonEditor', ['timesketchApi', function(timesketchApi) {
-        /**
-         * Histogram chart for number of events.
-         * @param query - Query string.
-         * @param filter - Filter object.
-         * @param queryDsl - Query DSL object.
-         */
-        return {
-            restrict: 'E',
-            templateUrl: '/static/components/explore/explore-json-editor.html',
-            scope: {
-                sketchId: '=',
-                query: '=',
-                filter: '=',
-                queryDsl: '='
-            },
-            require: '^tsSearch',
-            link: function(scope, element, attrs, ctrl) {
-                var editor = ace.edit("json-editor");
-                editor.getSession().setMode("ace/mode/json");
-                editor.setTheme("ace/theme/dawn");
-                editor.setShowPrintMargin(false);
+module.directive('tsJsonEditor', ['timesketchApi', function(timesketchApi) {
+    /**
+     * Histogram chart for number of events.
+     * @param query - Query string.
+     * @param filter - Filter object.
+     * @param queryDsl - Query DSL object.
+     */
+    return {
+        restrict: 'E',
+        templateUrl: '/static/components/explore/explore-json-editor.html',
+        scope: {
+            sketchId: '=',
+            query: '=',
+            filter: '=',
+            queryDsl: '='
+        },
+        require: '^tsSearch',
+        link: function(scope, element, attrs, ctrl) {
+            var editor = ace.edit("json-editor");
+            editor.getSession().setMode("ace/mode/json");
+            editor.setTheme("ace/theme/dawn");
+            editor.setShowPrintMargin(false);
 
-                timesketchApi.getCurrentQuery(scope.sketchId, scope.query, scope.filter, scope.queryDsl)
-                    .success(function(data) {
-                        var currentQueryDsl = data['objects'][0];
-                        // If there is no current query create a generic query.
-                        if (!currentQueryDsl) {
-                            currentQueryDsl = {
-                                "query": {
-                                    "filtered": {
-                                        "query": {
-                                            "query_string": {
-                                                "query": scope.query}}}},
-                                "sort": {
-                                    "datetime": "asc"}
-                            };
-                            console.log("use template")
-                        }
-                        scope.queryDsl = currentQueryDsl;
-                        editor.setValue(JSON.stringify(currentQueryDsl, null, '\t'), -1);
-                        editor.focus();
-                    });
+            timesketchApi.getCurrentQuery(scope.sketchId, scope.query, scope.filter, scope.queryDsl)
+                .success(function(data) {
+                    var currentQueryDsl = data['objects'][0];
+                    // If there is no current query create a generic query.
+                    if (!currentQueryDsl) {
+                        currentQueryDsl = {
+                            "query": {
+                                "filtered": {
+                                    "query": {
+                                        "query_string": {
+                                            "query": scope.query}}}},
+                            "sort": {
+                                "datetime": "asc"}
+                        };
+                        console.log("use template")
+                    }
+                    scope.queryDsl = currentQueryDsl;
+                    editor.setValue(JSON.stringify(currentQueryDsl, null, '\t'), -1);
+                    editor.focus();
+                });
 
-                scope.executeQuery = function () {
-                    scope.queryDsl = editor.getValue();
-                    ctrl.search(scope.query, scope.filter, scope.queryDsl)
-                };
+            scope.executeQuery = function () {
+                scope.queryDsl = editor.getValue();
+                ctrl.search(scope.query, scope.filter, scope.queryDsl)
+            };
 
-                scope.clearEditor = function () {
-                    scope.queryDsl = "";
-                    editor.setValue("");
-                }
+            scope.clearEditor = function () {
+                scope.queryDsl = "";
+                editor.setValue("");
             }
         }
-    }]);
-})();
+    }
+}]);

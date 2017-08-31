@@ -15,8 +15,6 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-(function() {
-    var module = angular.module('timesketch.story', [
-        'timesketch.story.directive'
-    ]);
-})();
+var module = angular.module('timesketch.story', [
+    'timesketch.story.directive'
+]);
