@@ -22,7 +22,7 @@ export const tsCountEvents = ['timesketchApi', function (timesketchApi) {
      */
     return {
         restrict: 'E',
-        templateUrl: '/static/components/sketch/sketch-count-events.html',
+        templateUrl: '/static/sketch/sketch-count-events.html',
         scope: {
             sketchId: '='
         },

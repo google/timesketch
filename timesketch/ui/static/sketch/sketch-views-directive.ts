@@ -22,7 +22,7 @@ export const tsSavedViewList = ['timesketchApi', function (timesketchApi) {
      */
     return {
         restrict: 'E',
-        templateUrl: '/static/components/sketch/sketch-views-list.html',
+        templateUrl: '/static/sketch/sketch-views-list.html',
         scope: {
             sketchId: '=',
             showSearchTemplates: '=',
@@ -63,7 +63,7 @@ export const tsSearchTemplateList = ['timesketchApi', function (timesketchApi) {
      */
     return {
         restrict: 'E',
-        templateUrl: '/static/components/sketch/sketch-search-template-list.html',
+        templateUrl: '/static/sketch/sketch-search-template-list.html',
         scope: {
             sketchId: '='
         },
