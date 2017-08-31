@@ -14,11 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
-import {tsApiModule} from './components/api/api'
-import {tsCoreModule} from './components/core/core'
-import {tsExploreModule} from './components/explore/explore'
-import {tsSketchModule} from './components/sketch/sketch'
-import {tsStoryModule} from './components/story/story'
+import {tsApiModule} from './components/api/api.module'
+import {tsCoreModule} from './components/core/core.module'
+import {tsExploreModule} from './components/explore/explore.module'
+import {tsSketchModule} from './components/sketch/sketch.module'
+import {tsStoryModule} from './components/story/story.module'
 
 export const tsAppModule = angular.module('timesketch', [
     tsApiModule.name,
