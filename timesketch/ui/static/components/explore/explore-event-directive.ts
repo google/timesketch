@@ -15,7 +15,7 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-var module = angular.module('timesketch.explore.event.directive', []);
+const module = angular.module('timesketch.explore.event.directive', []);
 
 module.directive('tsEventList', ['timesketchApi', function(timesketchApi) {
     /**
@@ -49,7 +49,7 @@ module.directive('tsEventList', ['timesketchApi', function(timesketchApi) {
                 });
             }
 
-            var toggleStar = function(event_list) {
+            const toggleStar = function(event_list) {
                 if (!event_list.length) {return}
                 timesketchApi.saveEventAnnotation(
                     $scope.sketchId,
@@ -58,9 +58,9 @@ module.directive('tsEventList', ['timesketchApi', function(timesketchApi) {
                     event_list).success(function (data) {})
             };
 
-            var getSelectedEventsFilter = function() {
-                var event_list: any[] = [];
-                var indices_list: any[] = [];
+            const getSelectedEventsFilter = function() {
+                const event_list: any[] = [];
+                const indices_list: any[] = [];
                 angular.forEach($scope.events, function(event) {
                     if (event.selected) {
                         indices_list.push(event['_index']);
@@ -88,22 +88,22 @@ module.directive('tsEventList', ['timesketchApi', function(timesketchApi) {
             };
 
             $scope.saveEventsView = function() {
-                var filter = getSelectedEventsFilter();
+                const filter = getSelectedEventsFilter();
                 timesketchApi.saveView(
                     $scope.sketchId, $scope.view_name, false, "", filter, null)
                     .success(function(data) {
-                        var view_id = data.objects[0].id;
-                        var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
+                        const view_id = data.objects[0].id;
+                        const view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
                         window.location.href = view_url;
                     }
                 );
             };
 
             $scope.updateView = function() {
-                var reload = false;
-                var query = "";
-                var filter = getSelectedEventsFilter();
-                var query_dsl = {};
+                let reload = false;
+                let query = "";
+                let filter = getSelectedEventsFilter();
+                let query_dsl = {};
                 if (filter['events'].length < 1) {
                     query = $scope.query;
                     filter = $scope.filter;
@@ -115,8 +115,8 @@ module.directive('tsEventList', ['timesketchApi', function(timesketchApi) {
                     $scope.sketchId, $scope.viewId, $scope.view.name, query, filter, query_dsl)
                     .success(function(data) {
                         if (reload) {
-                            var view_id = data.objects[0].id;
-                            var view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
+                            const view_id = data.objects[0].id;
+                            const view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
                             window.location.href = view_url;
                         }
                     });
@@ -125,13 +125,13 @@ module.directive('tsEventList', ['timesketchApi', function(timesketchApi) {
             $scope.deleteView = function() {
                 timesketchApi.deleteView($scope.sketchId, $scope.viewId)
                     .success(function(data) {
-                        var sketchUrl = '/sketch/' + $scope.sketchId + '/explore/';
+                        const sketchUrl = '/sketch/' + $scope.sketchId + '/explore/';
                         window.location.href = sketchUrl;
                     });
             };
 
             $scope.addStar = function() {
-                var event_list: any[] = [];
+                const event_list: any[] = [];
                 angular.forEach($scope.events, function(event) {
                     if (event.selected && !event.star) {
                         event.star = true;
@@ -142,7 +142,7 @@ module.directive('tsEventList', ['timesketchApi', function(timesketchApi) {
             };
 
             $scope.removeStar = function() {
-                var event_list: any[] = [];
+                const event_list: any[] = [];
                 angular.forEach($scope.events, function(event) {
                     if (event.selected && event.star) {
                         event.star = false;
@@ -197,15 +197,15 @@ module.directive('tsEvent', function () {
         controller: function ($scope, timesketchApi) {
 
             // Calculate the time delta in days between two events.
-            var calcDays = function(t1, t2) {
-                var t1_sec = Math.floor(t1/1000000);
-                var t2_sec = Math.floor(t2/1000000);
-                var delta = Math.floor(t1_sec - t2_sec);
-                var delta_days = delta/60/60/24;
+            const calcDays = function(t1, t2) {
+                const t1_sec = Math.floor(t1/1000000);
+                const t2_sec = Math.floor(t2/1000000);
+                const delta = Math.floor(t1_sec - t2_sec);
+                const delta_days = delta/60/60/24;
                 return Math.floor(delta_days)
             };
             if ($scope.index > 0) {
-                var event_timestamp = $scope.event['_source'].timestamp;
+                const event_timestamp = $scope.event['_source'].timestamp;
                 if ($scope.order == 'asc') {
                     $scope.days = calcDays(event_timestamp, $scope.prevTimestamp)
                 } else {

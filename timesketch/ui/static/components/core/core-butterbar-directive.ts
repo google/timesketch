@@ -15,7 +15,7 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-var module = angular.module('timesketch.core.butterbar.directive', []);
+const module = angular.module('timesketch.core.butterbar.directive', []);
 
 module.directive('tsButterbar', ['$rootScope', function($rootScope) {
     /**

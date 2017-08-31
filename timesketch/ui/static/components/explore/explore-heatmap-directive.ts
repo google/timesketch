@@ -16,7 +16,7 @@
 import angular from 'angularjs-for-webpack'
 import * as d3 from "d3"
 
-var module = angular.module('timesketch.explore.heatmap.directive', []);
+const module = angular.module('timesketch.explore.heatmap.directive', []);
 
 module.directive('tsHeatmap', function ($window, timesketchApi) {
     /**
@@ -67,23 +67,23 @@ module.directive('tsHeatmap', function ($window, timesketchApi) {
             // Render the chart svg with D3.js
             scope.render_heatmap = function(data) {
                 d3.select('svg').remove();
-                var margin = { top: 50, right: 75, bottom: 0, left: 40 },
+                const margin = { top: 50, right: 75, bottom: 0, left: 40 },
                     svgWidth = element[0].parentElement.parentElement.parentElement.offsetParent.offsetWidth - margin.left - margin.right,
                     rectSize = Math.floor(svgWidth / 24),
                     svgHeight = Math.floor(rectSize * 9) - margin.top - margin.bottom,
                     days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
                     hours = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"];
 
-                var svg = d3.select(element[0]).append("svg")
+                const svg = d3.select(element[0]).append("svg")
                     .attr("width", svgWidth + margin.left + margin.right)
                     .attr("height", svgHeight + margin.top + margin.bottom)
                     .append("g")
                     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-                var max_value_initial = d3.max(data, function (d) {
+                const max_value_initial = d3.max(data, function (d) {
                     return d.count;
                 });
-                var max_value = max_value_initial;
+                let max_value = max_value_initial;
 
                 if (max_value_initial > 100000) {
                     max_value = max_value_initial / 100;
@@ -92,16 +92,16 @@ module.directive('tsHeatmap', function ($window, timesketchApi) {
                 }
 
                 // Generate color from color scale
-                var genColor = d3.scaleLinear()
+                const genColor = d3.scaleLinear()
                     .domain([0, max_value / 2, max_value])
                     .range(["white", "#3498db", "red"]);
 
-                var colors: any[] = [];
-                for (var i = 0; i < max_value; i++) {
+                const colors: any[] = [];
+                for (let i = 0; i < max_value; i++) {
                     colors.push(genColor(i));
                 }
-                var num_buckets = colors.length;
-                var colorScale = d3.scaleQuantile()
+                const num_buckets = colors.length;
+                const colorScale = d3.scaleQuantile()
                     .domain([0, num_buckets - 1, max_value_initial])
                     .range(colors);
 
@@ -132,7 +132,7 @@ module.directive('tsHeatmap', function ($window, timesketchApi) {
                     .attr("transform", "translate(" + rectSize / 2 + ", -6)");
 
                 // Create the heatmap
-                var heatMap = svg.selectAll(".hour")
+                const heatMap = svg.selectAll(".hour")
                     .data(data)
                     .enter().append("rect")
                     .attr("x", function (d) {

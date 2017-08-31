@@ -18,7 +18,7 @@ import * as ace from 'brace'
 import 'brace/mode/json'
 import 'brace/theme/dawn'
 
-var module = angular.module('timesketch.explore.json.editor.directive', []);
+const module = angular.module('timesketch.explore.json.editor.directive', []);
 
 module.directive('tsJsonEditor', ['timesketchApi', function(timesketchApi) {
     /**
@@ -38,14 +38,14 @@ module.directive('tsJsonEditor', ['timesketchApi', function(timesketchApi) {
         },
         require: '^tsSearch',
         link: function(scope, element, attrs, ctrl) {
-            var editor = ace.edit("json-editor");
+            const editor = ace.edit("json-editor");
             editor.getSession().setMode("ace/mode/json");
             editor.setTheme("ace/theme/dawn");
             editor.setShowPrintMargin(false);
 
             timesketchApi.getCurrentQuery(scope.sketchId, scope.query, scope.filter, scope.queryDsl)
                 .success(function(data) {
-                    var currentQueryDsl = data['objects'][0];
+                    let currentQueryDsl = data['objects'][0];
                     // If there is no current query create a generic query.
                     if (!currentQueryDsl) {
                         currentQueryDsl = {

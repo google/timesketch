@@ -17,7 +17,7 @@ limitations under the License.
 import angular from 'angularjs-for-webpack'
 import * as moment from 'moment'
 
-var module = angular.module('timesketch.explore.filter.directive', []);
+const module = angular.module('timesketch.explore.filter.directive', []);
 
 module.directive('tsFilter', function () {
     /**
@@ -58,7 +58,7 @@ module.directive('tsFilter', function () {
 
             scope.enableAllTimelines = function() {
                 scope.filter.indices = [];
-                for (var i = 0; i < scope.sketch.timelines.length; i++) {
+                for (let i = 0; i < scope.sketch.timelines.length; i++) {
                     scope.filter.indices.push(scope.sketch.timelines[i].searchindex.index_name)
                 }
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
@@ -74,18 +74,18 @@ module.directive('tsFilter', function () {
 
             scope.parseFilterDate = function(datevalue, datevalue_end){
                     if (datevalue != null) {
-                    var datetimetemplate="YYYY-MM-DDTHH:mm:ss";
+                    const datetimetemplate="YYYY-MM-DDTHH:mm:ss";
                     //Parse out 'T' date time seperator needed by ELK but not by moment.js
                     datevalue=datevalue.replace(/T/g,' ');
                     //Parse offset given by user. Eg. +-10m
-                    var offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s|M|Q|w|ms)/g;
-                    var match = offsetRegexp.exec(datevalue);
+                    const offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s|M|Q|w|ms)/g;
+                    const match = offsetRegexp.exec(datevalue);
 
                     if (match != null) {
-                        var filterbase = match[1]
-                        var filteroffset = match[2]
-                        var filteramount = match[3]
-                        var filtertype = match[4]
+                        let filterbase = match[1]
+                        const filteroffset = match[2]
+                        const filteramount = match[3]
+                        const filtertype = match[4]
 
                         filterbase = moment.utc(filterbase,"YYYY-MM-DD HH:mm:ssZZ");
                         //calculate filter start and end datetimes
@@ -129,9 +129,9 @@ module.directive('tsTimelinePickerItem', function() {
         require: '^tsSearch',
         link: function(scope, elem, attrs, ctrl) {
             scope.checkboxModel = {};
-            var index_name = scope.timeline.searchindex.index_name;
+            const index_name = scope.timeline.searchindex.index_name;
             scope.toggleCheckbox = function () {
-                var index = scope.filter.indices.indexOf(index_name);
+                const index = scope.filter.indices.indexOf(index_name);
                 scope.checkboxModel.active = !scope.checkboxModel.active;
                 if (!scope.checkboxModel.active) {
                     if (index > -1) {

@@ -15,7 +15,7 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-var module = angular.module('timesketch.core', [
+const module = angular.module('timesketch.core', [
     'timesketch.core.butterbar.directive',
     'timesketch.core.upload.directive',
     'timesketch.core.edit.sketch.directive'

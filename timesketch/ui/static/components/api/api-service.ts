@@ -15,11 +15,11 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-var module = angular.module('timesketch.api.service', []);
+const module = angular.module('timesketch.api.service', []);
 
-var timesketchApiImplementation = function($http) {
-    var API_BASE_URL = '/api/v1';
-    var SKETCH_BASE_URL = API_BASE_URL + '/sketches/';
+const timesketchApiImplementation = function($http) {
+    const API_BASE_URL = '/api/v1';
+    const SKETCH_BASE_URL = API_BASE_URL + '/sketches/';
 
     this.getSketch = function(sketch_id) {
         /**
@@ -28,7 +28,7 @@ var timesketchApiImplementation = function($http) {
          * @param view_id - The id for the view.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/';
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/';
         return $http.get(resource_url)
     };
 
@@ -38,7 +38,7 @@ var timesketchApiImplementation = function($http) {
          * @param sketch_id - The id for the sketch.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/timelines/';
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/timelines/';
         return $http.get(resource_url)
     };
 
@@ -49,7 +49,7 @@ var timesketchApiImplementation = function($http) {
          * @param timeline_id - The id of the timeline.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/timelines/' + timeline_id + '/';
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/timelines/' + timeline_id + '/';
         return $http.delete(resource_url)
     };
 
@@ -59,7 +59,7 @@ var timesketchApiImplementation = function($http) {
          * @param sketch_id - The id for the sketch.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/views/';
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/views/';
         return $http.get(resource_url)
     };
 
@@ -68,7 +68,7 @@ var timesketchApiImplementation = function($http) {
          * Get list of all search templates.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = API_BASE_URL + '/searchtemplate/';
+        const resource_url = API_BASE_URL + '/searchtemplate/';
         return $http.get(resource_url)
     };
 
@@ -78,7 +78,7 @@ var timesketchApiImplementation = function($http) {
          * @param searchtemplate_id - The id for the searchtemplate.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = API_BASE_URL + '/searchtemplate/' + searchtemplate_id + '/';
+        const resource_url = API_BASE_URL + '/searchtemplate/' + searchtemplate_id + '/';
         return $http.get(resource_url)
     };
 
@@ -89,7 +89,7 @@ var timesketchApiImplementation = function($http) {
          * @param view_id - The id for the view.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/views/' + view_id + '/';
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/views/' + view_id + '/';
         return $http.get(resource_url)
     };
 
@@ -100,7 +100,7 @@ var timesketchApiImplementation = function($http) {
          * @param view_id - The id for the view.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/views/' + view_id + '/';
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/views/' + view_id + '/';
         return $http.delete(resource_url)
     };
 
@@ -114,8 +114,8 @@ var timesketchApiImplementation = function($http) {
          * @param filter - A JSON string with filters and a list of indices.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/views/';
-        var params = {
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/views/';
+        const params = {
             name: name,
             new_searchtemplate: new_searchtemplate,
             query: query,
@@ -132,8 +132,8 @@ var timesketchApiImplementation = function($http) {
          * @param searchtemplate_id - The id for the search template to create from.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/views/';
-        var params = {
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/views/';
+        const params = {
             from_searchtemplate_id: searchtemplate_id
         };
         return $http.post(resource_url, params)
@@ -149,8 +149,8 @@ var timesketchApiImplementation = function($http) {
          * @param filter - A JSON string with filters and a list of indices.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/views/' + view_id + '/';
-        var params = {
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/views/' + view_id + '/';
+        const params = {
             name: name,
             query: query,
             filter: filter,
@@ -165,8 +165,8 @@ var timesketchApiImplementation = function($http) {
          * @param sketch_id - The id for the sketch.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/stories/';
-        var params = {
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/stories/';
+        const params = {
             sketch_id: sketch_id
         };
         return $http.post(resource_url, params)
@@ -179,8 +179,8 @@ var timesketchApiImplementation = function($http) {
          * @param story_id - The id for the story.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/stories/' + story_id + '/';
-        var params = {
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/stories/' + story_id + '/';
+        const params = {
             sketch_id: sketch_id,
             story_id: story_id,
             title: title,
@@ -195,8 +195,8 @@ var timesketchApiImplementation = function($http) {
          * @param sketch_id - The id for the sketch.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/stories/';
-        var params = {
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/stories/';
+        const params = {
             sketch_id: sketch_id
         };
         return $http.get(resource_url, params)
@@ -209,8 +209,8 @@ var timesketchApiImplementation = function($http) {
          * @param story_id - The id for the story.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/stories/' + story_id + '/';
-        var params = {
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/stories/' + story_id + '/';
+        const params = {
             sketch_id: sketch_id,
             story_id: story_id
         };
@@ -225,8 +225,8 @@ var timesketchApiImplementation = function($http) {
          * @param event_id - The id for the event.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/event/';
-        var params = {
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/event/';
+        const params = {
             params: {
                 searchindex_id: searchindex_id,
                 event_id: event_id
@@ -244,8 +244,8 @@ var timesketchApiImplementation = function($http) {
          * @param events - List of events.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/event/annotate/';
-        var params = {
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/event/annotate/';
+        const params = {
             annotation: annotation,
             annotation_type: annotation_type,
             events: events
@@ -262,8 +262,8 @@ var timesketchApiImplementation = function($http) {
          * @param queryDsl - A JSON string with Elasticsearch DLS.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/explore/query/';
-        var params = {
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/explore/query/';
+        const params = {
             query: query,
             filter: filter,
             dsl: queryDsl
@@ -277,7 +277,7 @@ var timesketchApiImplementation = function($http) {
          * @param sketch_id - The id for the sketch.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/count/';
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/count/';
         return $http.get(resource_url)
     };
 
@@ -290,8 +290,8 @@ var timesketchApiImplementation = function($http) {
          * @param queryDsl - A JSON string with Elasticsearch DLS.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/explore/';
-        var params = {
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/explore/';
+        const params = {
             query: query,
             filter: filter,
             dsl: queryDsl
@@ -309,8 +309,8 @@ var timesketchApiImplementation = function($http) {
          * @param aggtype - Type of aggregation.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = SKETCH_BASE_URL + sketch_id + '/aggregation/';
-        var params = {
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/aggregation/';
+        const params = {
             query: query,
             filter: filter,
             dsl: queryDsl,
@@ -327,18 +327,18 @@ var timesketchApiImplementation = function($http) {
          * @param sketchId - (optional) Sketch id to add the timeline to.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = '/api/v1/upload/';
+        const resource_url = '/api/v1/upload/';
         // Default Content-Type in angular for GET/POST is application/json
         // so we nee to change this. By setting this to undefined we let the
         // browser set the Content-Type to multipart/form-data and also set
         // the correct boundary parameters.
-        var config = {
+        const config = {
             transformRequest: angular.identity,
             headers: {
                 'Content-Type': undefined
             }
         };
-        var formData = new FormData();
+        const formData = new FormData();
         formData.append('file', file);
         formData.append('name', name);
         formData.append('sketch_id', sketchId);
@@ -350,7 +350,7 @@ var timesketchApiImplementation = function($http) {
          * Get Celery tasks status.
          * @returns A $http promise with two methods, success and error.
          */
-        var resource_url = '/api/v1/tasks/';
+        const resource_url = '/api/v1/tasks/';
         return $http.get(resource_url)
     };
 

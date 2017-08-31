@@ -16,7 +16,7 @@
 import angular from 'angularjs-for-webpack'
 import {Chart} from 'chart.js'
 
-var module = angular.module('timesketch.explore.histogram.directive', []);
+const module = angular.module('timesketch.explore.histogram.directive', []);
 
 module.directive('tsHistogram', function ($window, timesketchApi) {
     /**
@@ -69,8 +69,8 @@ module.directive('tsHistogram', function ($window, timesketchApi) {
                 }
 
                 // Arrays to hold out chart data.
-                var chart_labels: any[] = [];
-                var chart_values: any[] = [];
+                const chart_labels: any[] = [];
+                const chart_values: any[] = [];
 
                 aggregation.forEach(function (d) {
                     chart_labels.push(d.key_as_string!);
@@ -78,7 +78,7 @@ module.directive('tsHistogram', function ($window, timesketchApi) {
                 });
 
                 // Get our canvas and initiate the chart.
-                var ctx = document.getElementById("histogram");
+                const ctx = document.getElementById("histogram");
                 scope.histogram = new Chart(ctx, {
                     type: scope.chartType,
                     data: {

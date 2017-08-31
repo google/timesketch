@@ -16,7 +16,7 @@
 import angular from 'angularjs-for-webpack'
 import * as moment from 'moment'
 
-var module = angular.module('timesketch.sketch.views.directive', []);
+const module = angular.module('timesketch.sketch.views.directive', []);
 
 module.directive('tsSavedViewList', ['timesketchApi', function (timesketchApi) {
     /**
@@ -33,10 +33,10 @@ module.directive('tsSavedViewList', ['timesketchApi', function (timesketchApi) {
         controller: function ($scope) {
             timesketchApi.getViews($scope.sketchId).success(function (data) {
                 $scope.savedViews = [];
-                var views = data.objects[0];
+                const views = data.objects[0];
                 if (views) {
-                    for (var i = 0; i < views.length; i++) {
-                        var view = views[i];
+                    for (let i = 0; i < views.length; i++) {
+                        const view = views[i];
                         view.updated_at = moment.utc(view.updated_at).format("YYYY-MM-DD");
                         $scope.savedViews.push(view)
                     }
@@ -45,7 +45,7 @@ module.directive('tsSavedViewList', ['timesketchApi', function (timesketchApi) {
 
             $scope.deleteView = function(view) {
                 timesketchApi.deleteView($scope.sketchId, view.id);
-                var index = $scope.savedViews.indexOf(view);
+                const index = $scope.savedViews.indexOf(view);
                 if (index > -1) {
                     $scope.savedViews.splice(index, 1);
                 }
@@ -73,10 +73,10 @@ module.directive('tsSearchTemplateList', ['timesketchApi', function (timesketchA
         controller: function ($scope) {
             timesketchApi.getSearchTemplates().success(function (data) {
                 $scope.searchTemplates = [];
-                var views = data.objects[0];
+                const views = data.objects[0];
                 if (views) {
-                    for (var i = 0; i < views.length; i++) {
-                        var view = views[i];
+                    for (let i = 0; i < views.length; i++) {
+                        const view = views[i];
                         view.updated_at = moment.utc(view.updated_at).format("YYYY-MM-DD");
                         $scope.searchTemplates.push(view)
                     }
@@ -87,7 +87,7 @@ module.directive('tsSearchTemplateList', ['timesketchApi', function (timesketchA
         link: function(scope, elem, attrs, ctrl) {
             scope.addSearchTemplate = function(view) {
                 timesketchApi.saveViewFromSearchTemplate(scope.sketchId, view.id).success(function(data) {
-                    var view = data.objects[0];
+                    const view = data.objects[0];
                     view.updated_at = moment.utc(view.updated_at).format("YYYY-MM-DD");
                     ctrl.updateSavedViews(view);
                 });

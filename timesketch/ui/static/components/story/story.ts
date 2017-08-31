@@ -15,6 +15,6 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-var module = angular.module('timesketch.story', [
+const module = angular.module('timesketch.story', [
     'timesketch.story.directive'
 ]);

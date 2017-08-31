@@ -1,6 +1,6 @@
 import angular from 'angularjs-for-webpack'
 
-var module = angular.module('timesketch.core.upload.directive', []);
+const module = angular.module('timesketch.core.upload.directive', []);
 
 module.directive('tsCoreUpload', ['timesketchApi', '$rootScope', '$window', function (timesketchApi, $rootScope, $window) {
     /**
@@ -45,8 +45,8 @@ module.directive('tsCoreFileModel', ['$parse', function ($parse) {
         restrict: 'A',
         scope: false,
         link: function(scope, element, attrs) {
-            var model = $parse(attrs.tsCoreFileModel);
-            var modelSetter = model.assign;
+            const model = $parse(attrs.tsCoreFileModel);
+            const modelSetter = model.assign;
 
             element.bind('change', function(){
                 scope.$apply(function(){
@@ -63,13 +63,13 @@ module.directive('tsCoreUploadQueue', ['$interval', 'timesketchApi', function($i
      * Poll the API for active Celery tasks and render list.
      */
     // How often to poll the task API endpoint in milliseconds.
-    var pollIntervall = 10000;
+    const pollIntervall = 10000;
     return {
         restrict: 'E',
         templateUrl: '/static/components/core/core-upload-queue.html',
         scope: {},
         controller: function($scope) {
-            var update_tasks = function() {
+            const update_tasks = function() {
                 timesketchApi.getTasks().success(function (data) {
                     $scope.tasks = data['objects'];
                 });

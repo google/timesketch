@@ -15,7 +15,7 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-var module = angular.module('timesketch.explore', [
+const module = angular.module('timesketch.explore', [
     'timesketch.explore.event.directive',
     'timesketch.explore.filter.directive',
     'timesketch.explore.search.directive',

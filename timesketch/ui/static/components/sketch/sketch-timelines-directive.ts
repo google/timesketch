@@ -16,7 +16,7 @@
 import angular from 'angularjs-for-webpack'
 import * as moment from 'moment'
 
-var module = angular.module('timesketch.sketch.timelines.directive', []);
+const module = angular.module('timesketch.sketch.timelines.directive', []);
 
 module.directive('tsTimelinesList', ['timesketchApi', function (timesketchApi) {
     /**
@@ -33,10 +33,10 @@ module.directive('tsTimelinesList', ['timesketchApi', function (timesketchApi) {
         controller: function ($scope) {
             timesketchApi.getTimelines($scope.sketchId).success(function (data) {
                 $scope.timelines = [];
-                var timelines = data.objects[0];
+                const timelines = data.objects[0];
                 if (timelines) {
-                    for (var i = 0; i < timelines.length; i++) {
-                        var timeline = timelines[i];
+                    for (let i = 0; i < timelines.length; i++) {
+                        const timeline = timelines[i];
                         timeline.updated_at = moment.utc(timeline.updated_at).format("YYYY-MM-DD");
                         $scope.timelines.push(timeline)
                     }
@@ -45,7 +45,7 @@ module.directive('tsTimelinesList', ['timesketchApi', function (timesketchApi) {
 
             $scope.deleteTimeline = function(timeline) {
                 timesketchApi.deleteTimeline($scope.sketchId, timeline.id);
-                var index = $scope.timelines.indexOf(timeline);
+                const index = $scope.timelines.indexOf(timeline);
                 if (index > -1) {
                     $scope.timelines.splice(index, 1);
                 }

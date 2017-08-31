@@ -15,6 +15,6 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-var module = angular.module('timesketch.api', [
+const module = angular.module('timesketch.api', [
     'timesketch.api.service'
 ]);

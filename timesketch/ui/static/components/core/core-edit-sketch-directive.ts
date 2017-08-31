@@ -15,7 +15,7 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-var module = angular.module('timesketch.core.edit.sketch.directive', []);
+const module = angular.module('timesketch.core.edit.sketch.directive', []);
 
 module.directive('tsEditSketch', function() {
     /**
@@ -25,7 +25,7 @@ module.directive('tsEditSketch', function() {
         restrict : "E",
         scope: {},
         link : function(scope, element, attrs) {
-            var modal_element = angular.element(document.getElementById("new-sketch-modal"));
+            const modal_element = angular.element(document.getElementById("new-sketch-modal"));
             modal_element.modal('show');
         }
     };
