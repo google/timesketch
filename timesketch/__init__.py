@@ -49,10 +49,10 @@ from timesketch.models import configure_engine
 from timesketch.models import init_db
 from timesketch.models.sketch import Sketch
 from timesketch.models.user import User
-from timesketch.ui.views.home import home_views
-from timesketch.ui.views.sketch import sketch_views
-from timesketch.ui.views.story import story_views
-from timesketch.ui.views.user import user_views
+from timesketch.views.home import home_views
+from timesketch.views.sketch import sketch_views
+from timesketch.views.story import story_views
+from timesketch.views.user import user_views
 
 
 def create_app(config=None):
