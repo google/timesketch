@@ -27,7 +27,7 @@ export const tsHistogram = function ($window, timesketchApi) {
      */
     return {
         restrict: 'E',
-        template: require('./explore-histogram.html'),
+        template: require('./histogram.html'),
         scope: {
             sketchId: '=',
             filter: '=',

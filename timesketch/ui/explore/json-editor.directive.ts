@@ -27,7 +27,7 @@ export const tsJsonEditor = ['timesketchApi', function(timesketchApi) {
      */
     return {
         restrict: 'E',
-        template: require('./explore-json-editor.html'),
+        template: require('./json-editor.html'),
         scope: {
             sketchId: '=',
             query: '=',

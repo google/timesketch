@@ -6,7 +6,7 @@ export const tsCoreUpload = ['timesketchApi', '$rootScope', '$window', function 
      */
     return {
         restrict: 'E',
-        template: require('./core-upload.html'),
+        template: require('./upload.html'),
         scope: {
             sketchId: '=?',
             visible: '=?',
@@ -64,7 +64,7 @@ export const tsCoreUploadQueue = ['$interval', 'timesketchApi', function($interv
     const pollIntervall = 10000;
     return {
         restrict: 'E',
-        template: require('./core-upload-queue.html'),
+        template: require('./upload-queue.html'),
         scope: {},
         controller: function($scope) {
             const update_tasks = function() {

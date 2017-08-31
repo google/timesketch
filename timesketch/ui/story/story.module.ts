@@ -16,7 +16,7 @@ limitations under the License.
 import angular from 'angularjs-for-webpack'
 import {
   tsStoryList, tsCreateStory, tsStory, tsStoryDropdown, tsStoryEventList
-} from './story-directive'
+} from './story.directive'
 
 export const tsStoryModule = angular.module('timesketch.story', [])
   .directive('tsStoryList', tsStoryList)

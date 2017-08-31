@@ -14,14 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
-import {tsEvent, tsEventList} from './explore-event-directive'
-import {tsFilter, tsTimelinePickerItem} from './explore-filter-directive'
-import {tsHeatmap} from './explore-heatmap-directive'
-import {tsHistogram} from './explore-histogram-directive'
-import {tsJsonEditor} from './explore-json-editor-directive'
+import {tsEvent, tsEventList} from './event.directive'
+import {tsFilter, tsTimelinePickerItem} from './filter.directive'
+import {tsHeatmap} from './heatmap.directive'
+import {tsHistogram} from './histogram.directive'
+import {tsJsonEditor} from './json-editor.directive'
 import {
   tsSearch, tsSearchContextCard, tsSearchSavedViewPicker, tsSearchTemplatePicker
-} from './explore-search-directive'
+} from './search.directive'
 
 export const tsExploreModule = angular.module('timesketch.explore', [])
   .directive('tsEvent', tsEvent)

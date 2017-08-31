@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
-import {tsCountEvents} from './sketch-count-events-directive'
-import {tsTimelinesList} from './sketch-timelines-directive'
-import {tsSavedViewList, tsSearchTemplateList} from './sketch-views-directive'
+import {tsCountEvents} from './count-events.directive'
+import {tsTimelinesList} from './timelines.directive'
+import {tsSavedViewList, tsSearchTemplateList} from './views.directive'
 
 export const tsSketchModule = angular.module('timesketch.sketch', [])
   .directive('tsCountEvents', tsCountEvents)

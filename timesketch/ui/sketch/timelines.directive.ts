@@ -22,7 +22,7 @@ export const tsTimelinesList = ['timesketchApi', function (timesketchApi) {
      */
     return {
         restrict: 'E',
-        template: require('./sketch-timelines-list.html'),
+        template: require('./timelines-list.html'),
         scope: {
             sketchId: '=',
             showEdit: '=',
