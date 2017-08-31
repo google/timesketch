@@ -67,7 +67,7 @@ def create_app(config=None):
     """
     # Setup the Flask app and load the config.
     app = Flask(
-        __name__, template_folder=u'ui/templates', static_folder=u'ui/static')
+        __name__, template_folder=u'templates', static_folder=u'ui/static')
 
     if not config:
         config = u'/etc/timesketch.conf'

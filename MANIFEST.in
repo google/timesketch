@@ -1,5 +1,5 @@
 recursive-include timesketch/ui/static *
-recursive-include timesketch/ui/templates *
+recursive-include timesketch/templates *
 include timesketch.conf
 include requirements.txt
 include requirements.in
