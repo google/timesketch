@@ -46,7 +46,7 @@ def check_before_upload():
     """
     this_dir = os.path.dirname(__file__)
     frontend_dist_dir = os.path.join(
-        this_dir, 'timesketch', 'ui', 'static', 'dist',
+        this_dir, 'timesketch', 'static', 'dist',
     )
     js = os.path.join(frontend_dist_dir, 'bundle.js')
     css = os.path.join(frontend_dist_dir, 'bundle.css')

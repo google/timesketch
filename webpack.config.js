@@ -7,7 +7,7 @@ const extractSass = new ExtractTextPlugin({
 })
 
 module.exports = {
-  entry: './timesketch/ui/static/index.ts',
+  entry: './timesketch/ui/index.ts',
   module: {
     rules: [
       {
@@ -41,11 +41,11 @@ module.exports = {
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
-    modules: [path.resolve(__dirname, 'timesketch/ui/static/'), 'node_modules'],
+    modules: [path.resolve(__dirname, 'timesketch/ui/'), 'node_modules'],
   },
   output: {
     filename: 'bundle.js',
-    path: path.resolve(__dirname, 'timesketch/ui/static/dist/'),
+    path: path.resolve(__dirname, 'timesketch/static/dist/'),
   },
   plugins: [
     extractSass
