@@ -23,7 +23,7 @@ import {
   tsSearch, tsSearchContextCard, tsSearchSavedViewPicker, tsSearchTemplatePicker
 } from './explore-search-directive'
 
-angular.module('timesketch.explore', [])
+export const tsExploreModule = angular.module('timesketch.explore', [])
   .directive('tsEvent', tsEvent)
   .directive('tsEventList', tsEventList)
   .directive('tsFilter', tsFilter)

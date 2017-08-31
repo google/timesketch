@@ -14,25 +14,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
+import {tsApiModule} from './components/api/api'
+import {tsCoreModule} from './components/core/core'
+import {tsExploreModule} from './components/explore/explore'
+import {tsSketchModule} from './components/sketch/sketch'
+import {tsStoryModule} from './components/story/story'
 
-// List of URLs to exclude from the butterbar.
-function excludeFromButterbar(url) {
-  const excludeURLs = [
-    "/api/v1/tasks/",
-    "/api/v1/sketches/[0-9]+/stories/[0-9]+/"
-  ];
-  const re = new RegExp(excludeURLs.join("|"), "i");
-  return(url.match(re) != null);
-}
-
-angular.module('timesketch', [
-    'timesketch.api',
-    'timesketch.core',
-    'timesketch.explore',
-    'timesketch.sketch',
-    'timesketch.story'
+export const tsAppModule = angular.module('timesketch', [
+    tsApiModule.name,
+    tsCoreModule.name,
+    tsExploreModule.name,
+    tsSketchModule.name,
+    tsStoryModule.name,
 ])
 .config(function($httpProvider) {
+    // List of URLs to exclude from the butterbar.
+    const excludeFromButterbar = (url) => {
+      const excludeURLs = [
+        "/api/v1/tasks/",
+        "/api/v1/sketches/[0-9]+/stories/[0-9]+/"
+      ]
+      const re = new RegExp(excludeURLs.join("|"), "i")
+      return url.match(re) != null
+    }
     $httpProvider.interceptors.push(function($q, $rootScope) {
         return {
             'request': function(config) {

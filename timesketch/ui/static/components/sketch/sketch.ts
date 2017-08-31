@@ -18,7 +18,7 @@ import {tsCountEvents} from './sketch-count-events-directive'
 import {tsTimelinesList} from './sketch-timelines-directive'
 import {tsSavedViewList, tsSearchTemplateList} from './sketch-views-directive'
 
-angular.module('timesketch.sketch', [])
+export const tsSketchModule = angular.module('timesketch.sketch', [])
   .directive('tsCountEvents', tsCountEvents)
   .directive('tsTimelinesList', tsTimelinesList)
   .directive('tsSavedViewList', tsSavedViewList)

@@ -18,7 +18,7 @@ import {tsButterbar} from './core-butterbar-directive'
 import {tsEditSketch} from './core-edit-sketch-directive'
 import {tsCoreUpload, tsCoreFileModel, tsCoreUploadQueue} from './core-upload-directive'
 
-angular.module('timesketch.core', [])
+export const tsCoreModule = angular.module('timesketch.core', [])
   .directive('tsButterbar', tsButterbar)
   .directive('tsEditSketch', tsEditSketch)
   .directive('tsCoreUpload', tsCoreUpload)

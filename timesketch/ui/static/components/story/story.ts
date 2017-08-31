@@ -18,7 +18,7 @@ import {
   tsStoryList, tsCreateStory, tsStory, tsStoryDropdown, tsStoryEventList
 } from './story-directive'
 
-angular.module('timesketch.story', [])
+export const tsStoryModule = angular.module('timesketch.story', [])
   .directive('tsStoryList', tsStoryList)
   .directive('tsCreateStory', tsCreateStory)
   .directive('tsStory', tsStory)

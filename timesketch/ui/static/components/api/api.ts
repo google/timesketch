@@ -16,5 +16,5 @@ limitations under the License.
 import angular from 'angularjs-for-webpack'
 import {timesketchApiImplementation} from './api-service'
 
-angular.module('timesketch.api', [])
+export const tsApiModule = angular.module('timesketch.api', [])
   .service('timesketchApi', timesketchApiImplementation)
