@@ -25,7 +25,7 @@ export const tsSearch = ['$location', 'timesketchApi', function($location, times
      */
     return {
         restrict: 'E',
-        templateUrl: '/static/explore/explore-search.html',
+        template: require('./explore-search.html'),
         scope: {
             sketchId: '=',
             viewId: '=',
@@ -219,7 +219,7 @@ export const tsSearchContextCard = function() {
      */
     return {
         restrict: 'E',
-        templateUrl: '/static/explore/explore-search-context-card.html',
+        template: require('./explore-search-context-card.html'),
         scope: {
             context: '='
         },
@@ -242,7 +242,7 @@ export const tsSearchSavedViewPicker = ['timesketchApi', function(timesketchApi)
      */
     return {
         restrict: 'E',
-        templateUrl: '/static/explore/explore-search-saved-view-picker.html',
+        template: require('./explore-search-saved-view-picker.html'),
         scope: false,
         require: '^tsSearch',
         link: function (scope, elem, attrs, ctrl) {
@@ -272,7 +272,7 @@ export const tsSearchTemplatePicker = ['timesketchApi', function() {
      */
     return {
         restrict: 'E',
-        templateUrl: '/static/explore/explore-search-template-picker.html',
+        template: require('./explore-search-template-picker.html'),
         scope: false,
         require: '^tsSearch',
         link: function (scope, elem, attrs, ctrl) {

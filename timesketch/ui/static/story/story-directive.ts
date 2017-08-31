@@ -24,7 +24,7 @@ export const tsStoryList = ['timesketchApi', function(timesketchApi) {
      */
     return {
         restrict: 'E',
-        templateUrl: '/static/story/story-list.html',
+        template: require('./story-list.html'),
         scope: {
             sketchId: '='
         },
@@ -69,7 +69,7 @@ export const tsStory = function (timesketchApi, $compile, $interval) {
      */
     return {
         restrict: 'E',
-        templateUrl: '/static/story/story.html',
+        template: require('./story.html'),
         scope: {
             sketchId: '=',
             storyId: '='
@@ -186,7 +186,7 @@ export const tsStoryDropdown = ['timesketchApi', '$compile', function(timesketch
      */
     return {
         restrict: 'E',
-        templateUrl: '/static/story/story-dropdown.html',
+        template: require('./story-dropdown.html'),
         scope: {
             sketchId: '='
         },
@@ -225,7 +225,7 @@ export const tsStoryEventList = ['timesketchApi', function(timesketchApi) {
      */
     return {
         restrict: 'E',
-        templateUrl: '/static/story/story-event-list.html',
+        template: require('./story-event-list.html'),
         scope: {
             sketchId: '=',
             viewId: '='

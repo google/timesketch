@@ -30,7 +30,7 @@ export const tsFilter = function () {
      */
     return {
         restrict: 'E',
-        templateUrl: '/static/explore/explore-filter.html',
+        template:  require('./explore-filter.html'),
         scope: {
             sketch: '=',
             filter: '=',
@@ -117,7 +117,7 @@ export const tsTimelinePickerItem = function() {
      */
     return {
         restrict: 'E',
-        templateUrl: '/static/explore/explore-timeline-picker-item.html',
+        template: require('./explore-timeline-picker-item.html'),
         scope: {
             timeline: '=',
             query: '=',

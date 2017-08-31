@@ -28,7 +28,7 @@ export const tsEventList = ['timesketchApi', function(timesketchApi) {
      */
     return {
         restrict: 'E',
-        templateUrl: '/static/explore/explore-event-list.html',
+        template: require('./explore-event-list.html'),
         scope: {
             sketchId: '=',
             meta: '=',
@@ -179,7 +179,7 @@ export const tsEvent = function () {
      */
     return {
         restrict: 'E',
-        templateUrl: '/static/explore/explore-event.html',
+        template: require('./explore-event.html'),
         scope: {
             sketchId: '=',
             meta: '=',

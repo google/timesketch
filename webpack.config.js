@@ -19,19 +19,23 @@ module.exports = {
         test: /\.s?css$/,
         use: extractSass.extract({
           use: [
-            {loader: "css-loader"},
-            {loader: "sass-loader"},
+            {loader: 'css-loader'},
+            {loader: 'sass-loader'},
           ],
-          fallback: "style-loader"
+          fallback: 'style-loader'
         }),
       },
       {
         test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-        loader: "url-loader?limit=10000&mimetype=application/font-woff",
+        loader: 'url-loader?limit=10000&mimetype=application/font-woff',
       },
       {
         test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-        loader: "file-loader",
+        loader: 'file-loader',
+      },
+      {
+        test: /\.html$/,
+        loader: 'raw-loader',
       },
     ],
   },
