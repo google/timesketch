@@ -33,8 +33,7 @@ export const tsTimelinesList = ['timesketchApi', function (timesketchApi) {
                 $scope.timelines = []
                 const timelines = data.objects[0]
                 if (timelines) {
-                    for (let i = 0; i < timelines.length; i++) {
-                        const timeline = timelines[i]
+                    for (const timeline of timelines) {
                         timeline.updated_at = moment.utc(timeline.updated_at).format('YYYY-MM-DD')
                         $scope.timelines.push(timeline)
                     }

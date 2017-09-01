@@ -56,8 +56,8 @@ export const tsFilter = function () {
 
             scope.enableAllTimelines = function () {
                 scope.filter.indices = []
-                for (let i = 0; i < scope.sketch.timelines.length; i++) {
-                    scope.filter.indices.push(scope.sketch.timelines[i].searchindex.index_name)
+                for (const timeline of scope.sketch.timelines) {
+                    scope.filter.indices.push(timeline.searchindex.index_name)
                 }
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
             }

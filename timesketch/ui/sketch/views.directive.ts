@@ -33,8 +33,7 @@ export const tsSavedViewList = ['timesketchApi', function (timesketchApi) {
                 $scope.savedViews = []
                 const views = data.objects[0]
                 if (views) {
-                    for (let i = 0; i < views.length; i++) {
-                        const view = views[i]
+                    for (const view of views) {
                         view.updated_at = moment.utc(view.updated_at).format('YYYY-MM-DD')
                         $scope.savedViews.push(view)
                     }
@@ -73,8 +72,7 @@ export const tsSearchTemplateList = ['timesketchApi', function (timesketchApi) {
                 $scope.searchTemplates = []
                 const views = data.objects[0]
                 if (views) {
-                    for (let i = 0; i < views.length; i++) {
-                        const view = views[i]
+                    for (const view of views) {
                         view.updated_at = moment.utc(view.updated_at).format('YYYY-MM-DD')
                         $scope.searchTemplates.push(view)
                     }

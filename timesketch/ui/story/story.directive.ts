@@ -32,8 +32,7 @@ export const tsStoryList = ['timesketchApi', function (timesketchApi) {
             timesketchApi.getStories($scope.sketchId).success(function (data) {
                 const stories = data.objects[0] || []
                 $scope.stories = []
-                for (let i = 0; i < stories.length; i++) {
-                    const story = stories[i]
+                for (const story of stories) {
                     story.created_at = moment.utc(story.created_at).format('YYYY-MM-DD HH:MM')
                     $scope.stories.push(story)
                 }
@@ -86,8 +85,8 @@ export const tsStory = function (timesketchApi, $compile, $interval) {
                 const new_editable = $('.editable')
                 const uncompiled_event_lists = new_editable.find('ts-story-event-list')
 
-                for (let i = 0; i < uncompiled_event_lists.length; i++) {
-                    $compile($(uncompiled_event_lists[i]))(scope)
+                for (const uncompiled_event_list of uncompiled_event_lists) {
+                    $compile($(uncompiled_event_list))(scope)
                 }
             }
 
@@ -148,8 +147,8 @@ export const tsStory = function (timesketchApi, $compile, $interval) {
                 set_content(story.title, story.content)
 
                 const editableEvents = ['editableKeyup', 'editableClick']
-                for (let i = 0; i < editableEvents.length; i++) {
-                    scope.contentEditor.subscribe(editableEvents[i], function (event, editable) {
+                for (const editableEvent of editableEvents) {
+                    scope.contentEditor.subscribe(editableEvent, function (event, editable) {
                         const selection = window.getSelection()
                         const range = selection.getRangeAt(0)
                         const current = $(range.commonAncestorContainer)
@@ -157,8 +156,8 @@ export const tsStory = function (timesketchApi, $compile, $interval) {
                         // Remove button if the element is not the button itself
                         if (! current.closest('ts-story-dropdown').length) {
                             const buttons = $('.editable').find('ts-story-dropdown')
-                            for (let i = 0; i < buttons.length; i++) {
-                                const button = $(buttons[i])
+                            for (const button_elem of buttons) {
+                                const button = $(button_elem)
                                 button.remove()
                             }
                         }

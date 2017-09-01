@@ -51,8 +51,8 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
                         // Special case where all indices should be queried.
                         if (filter.indices == '_all') {
                             filter.indices = []
-                            for (let i = 0; i < scope.sketch.timelines.length; i++) {
-                                filter.indices.push(scope.sketch.timelines[i].searchindex.index_name)
+                            for (const timeline of scope.sketch.timelines) {
+                                filter.indices.push(timeline.searchindex.index_name)
                             }
                         }
                         ctrl.search(query, filter, queryDsl)
@@ -71,8 +71,8 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
                 $scope.sketch.views = data.meta.views
                 $scope.sketch.searchtemplates = data.meta.searchtemplates
                 $scope.filter.indices = []
-                for (let i = 0; i < $scope.sketch.timelines.length; i++) {
-                    $scope.filter.indices.push($scope.sketch.timelines[i].searchindex.index_name)
+                for (const timeline of $scope.sketch.timelines) {
+                    $scope.filter.indices.push(timeline.searchindex.index_name)
                 }
             })
 

@@ -17,7 +17,7 @@
     "object-literal-sort-keys": false,
     "one-variable-per-declaration": true,
     "variable-name": [true, "ban-keywords", "check-format", "allow-snake-case"],
-    "prefer-for-of": false,
+    "prefer-for-of": true,
     "object-literal-key-quotes": false,
     "no-string-literal": false,
     "triple-equals": false,
