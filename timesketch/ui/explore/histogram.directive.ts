@@ -34,49 +34,49 @@ export const tsHistogram = function ($window, timesketchApi) {
             query: '=',
             queryDsl: '=',
             meta: '=',
-            showCharts: '='
+            showCharts: '=',
         },
         require: '^tsSearch',
-        link: function(scope, element, attrs, ctrl) {
+        link: function (scope, element, attrs, ctrl) {
 
             // Default chart type
-            scope.chartType = "bar";
+            scope.chartType = 'bar'
 
             scope.$watchGroup(['meta', 'showCharts', 'chartType'], function (newval, oldval) {
                 if(scope.showCharts) {
                     timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, scope.queryDsl, 'histogram')
-                        .success(function(data) {
+                        .success(function (data) {
                             render_histogram(data['objects'])
-                        });
+                        })
                 }
-            }, true);
+            }, true)
 
             scope.toggleChartType = function () {
               if (scope.chartType == 'bar') {
-                  scope.chartType = 'line';
+                  scope.chartType = 'line'
               } else {
-                  scope.chartType = 'bar';
+                  scope.chartType = 'bar'
               }
-            };
+            }
 
-            function render_histogram(aggregation) {
+            function render_histogram (aggregation) {
                 // Remove the current histogram canvas to avoid old data
                 // to be rendered.
                 if (scope.histogram) {
-                    scope.histogram.destroy();
+                    scope.histogram.destroy()
                 }
 
                 // Arrays to hold out chart data.
-                const chart_labels: any[] = [];
-                const chart_values: any[] = [];
+                const chart_labels: any[] = []
+                const chart_values: any[] = []
 
                 aggregation.forEach(function (d) {
-                    chart_labels.push(d.key_as_string!);
-                    chart_values.push(d.doc_count!);
-                });
+                    chart_labels.push(d.key_as_string!)
+                    chart_values.push(d.doc_count!)
+                })
 
                 // Get our canvas and initiate the chart.
-                const ctx = document.getElementById("histogram");
+                const ctx = document.getElementById('histogram')
                 scope.histogram = new Chart(ctx, {
                     type: scope.chartType,
                     data: {
@@ -85,34 +85,34 @@ export const tsHistogram = function ($window, timesketchApi) {
                             label: 'events',
                             data: chart_values,
                             backgroundColor: '#428bca',
-                            borderWidth: 0
-                        }]
+                            borderWidth: 0,
+                        }],
                     },
                     options: {
                         legend: {
-                            display: false
+                            display: false,
                         },
                         scales: {
                             yAxes: [{
                                 gridLines: {
-                                    display: false
+                                    display: false,
                                 },
                                 type: 'logarithmic',
                                 ticks: {
-                                    beginAtZero:true
-                                }
+                                    beginAtZero:true,
+                                },
                             }],
                             xAxes: [{
                                 type: 'time',
                                 gridLines: {
-                                    display: false
-                                }
-                            }]
+                                    display: false,
+                                },
+                            }],
 
-                        }
-                    }
-                });
-            };
-        }
+                        },
+                    },
+                })
+            }
+        },
     }
 }

@@ -15,7 +15,7 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-export const tsEventList = ['timesketchApi', function(timesketchApi) {
+export const tsEventList = ['timesketchApi', function (timesketchApi) {
     /**
      * Render list of events (search result from the datastore).
      * @param sketch-id - The id for the sketch.
@@ -37,136 +37,136 @@ export const tsEventList = ['timesketchApi', function(timesketchApi) {
             filter: '=',
             queryDsl: '=',
             viewId: '=',
-            namedView: '='
+            namedView: '=',
         },
         require: '^tsSearch',
-        controller: function($scope) {
+        controller: function ($scope) {
             if ($scope.namedView) {
-                timesketchApi.getView($scope.sketchId, $scope.viewId).success(function(data) {
+                timesketchApi.getView($scope.sketchId, $scope.viewId).success(function (data) {
                     $scope.view = data.objects[0]
-                });
+                })
             }
 
-            const toggleStar = function(event_list) {
+            const toggleStar = function (event_list) {
                 if (!event_list.length) {return}
                 timesketchApi.saveEventAnnotation(
                     $scope.sketchId,
                     'label',
                     '__ts_star',
                     event_list).success(function (data) {})
-            };
+            }
 
-            const getSelectedEventsFilter = function() {
-                const event_list: any[] = [];
-                const indices_list: any[] = [];
-                angular.forEach($scope.events, function(event) {
+            const getSelectedEventsFilter = function () {
+                const event_list: any[] = []
+                const indices_list: any[] = []
+                angular.forEach($scope.events, function (event) {
                     if (event.selected) {
-                        indices_list.push(event['_index']);
+                        indices_list.push(event['_index'])
                         event_list.push(
                             {
-                                "doc_type": event["_type"],
-                                "event_id": event["_id"],
-                                "index": event["_index"]});
+                                'doc_type': event['_type'],
+                                'event_id': event['_id'],
+                                'index': event['_index']})
                     }
-                });
-                return {"indices": indices_list, "events": event_list};
-            };
+                })
+                return {'indices': indices_list, 'events': event_list}
+            }
 
-            $scope.toggleAll = function() {
-                $scope.isAllSelected = $scope.events.every(function(event) {
-                    return event.selected;
-                });
-                angular.forEach($scope.events, function(event) {
+            $scope.toggleAll = function () {
+                $scope.isAllSelected = $scope.events.every(function (event) {
+                    return event.selected
+                })
+                angular.forEach($scope.events, function (event) {
                     if (!$scope.isAllSelected) {
                         event.selected = true
                     } else {
                         event.selected = false
                     }
                 })
-            };
+            }
 
-            $scope.saveEventsView = function() {
-                const filter = getSelectedEventsFilter();
+            $scope.saveEventsView = function () {
+                const filter = getSelectedEventsFilter()
                 timesketchApi.saveView(
-                    $scope.sketchId, $scope.view_name, false, "", filter, null)
-                    .success(function(data) {
-                        const view_id = data.objects[0].id;
-                        const view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
-                        window.location.href = view_url;
-                    }
-                );
-            };
+                    $scope.sketchId, $scope.view_name, false, '', filter, null)
+                    .success(function (data) {
+                        const view_id = data.objects[0].id
+                        const view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/'
+                        window.location.href = view_url
+                    },
+                )
+            }
 
-            $scope.updateView = function() {
-                let reload = false;
-                let query = "";
-                let filter = getSelectedEventsFilter();
-                let query_dsl = {};
+            $scope.updateView = function () {
+                let reload = false
+                let query = ''
+                let filter = getSelectedEventsFilter()
+                let query_dsl = {}
                 if (filter['events'].length < 1) {
-                    query = $scope.query;
-                    filter = $scope.filter;
+                    query = $scope.query
+                    filter = $scope.filter
                     query_dsl = $scope.queryDsl
                 } else {
-                    reload = true;
+                    reload = true
                 }
                 timesketchApi.updateView(
                     $scope.sketchId, $scope.viewId, $scope.view.name, query, filter, query_dsl)
-                    .success(function(data) {
+                    .success(function (data) {
                         if (reload) {
-                            const view_id = data.objects[0].id;
-                            const view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/';
-                            window.location.href = view_url;
+                            const view_id = data.objects[0].id
+                            const view_url = '/sketch/' + $scope.sketchId + '/explore/view/' + view_id + '/'
+                            window.location.href = view_url
                         }
-                    });
-            };
+                    })
+            }
 
-            $scope.deleteView = function() {
+            $scope.deleteView = function () {
                 timesketchApi.deleteView($scope.sketchId, $scope.viewId)
-                    .success(function(data) {
-                        const sketchUrl = '/sketch/' + $scope.sketchId + '/explore/';
-                        window.location.href = sketchUrl;
-                    });
-            };
+                    .success(function (data) {
+                        const sketchUrl = '/sketch/' + $scope.sketchId + '/explore/'
+                        window.location.href = sketchUrl
+                    })
+            }
 
-            $scope.addStar = function() {
-                const event_list: any[] = [];
-                angular.forEach($scope.events, function(event) {
+            $scope.addStar = function () {
+                const event_list: any[] = []
+                angular.forEach($scope.events, function (event) {
                     if (event.selected && !event.star) {
-                        event.star = true;
-                        event_list.push(event);
+                        event.star = true
+                        event_list.push(event)
                     }
-                });
+                })
                 toggleStar(event_list)
-            };
+            }
 
-            $scope.removeStar = function() {
-                const event_list: any[] = [];
-                angular.forEach($scope.events, function(event) {
+            $scope.removeStar = function () {
+                const event_list: any[] = []
+                angular.forEach($scope.events, function (event) {
                     if (event.selected && event.star) {
-                        event.star = false;
-                        event_list.push(event);
+                        event.star = false
+                        event_list.push(event)
                     }
-                });
+                })
                 toggleStar(event_list)
-            };
+            }
 
-            $scope.$watch('events', function(value) {
+            $scope.$watch('events', function (value) {
                 if (angular.isDefined(value)) {
-                    $scope.anySelected = value.some(function(event) {
-                        return event.selected;
-                    });
+                    $scope.anySelected = value.some(function (event) {
+                        return event.selected
+                    })
                 }
             }, true)
         },
-        link: function(scope, elem, attrs, ctrl) {
-            scope.applyOrder = function() {
-                ctrl.search(scope.query, scope.filter);
-            };
-            scope.$watch('userLimit', function(value) {
-                scope.filter['limit'] = scope.userLimit;
-                ctrl.search(scope.query, scope.filter, scope.queryDsl);
-            });
-        }
+        link: function (scope, elem, attrs, ctrl) {
+            scope.applyOrder = function () {
+                ctrl.search(scope.query, scope.filter)
+            }
+            scope.$watch('userLimit', function (value) {
+                scope.filter['limit'] = scope.userLimit
+                ctrl.search(scope.query, scope.filter, scope.queryDsl)
+            })
+        },
     }
 }]
 
@@ -189,21 +189,21 @@ export const tsEvent = function () {
             index: '=',
             isContextEvent: '=',
             enableContextQuery: '=',
-            order: '='
+            order: '=',
         },
         require: '?^tsSearch',
         controller: function ($scope, timesketchApi) {
 
             // Calculate the time delta in days between two events.
-            const calcDays = function(t1, t2) {
-                const t1_sec = Math.floor(t1/1000000);
-                const t2_sec = Math.floor(t2/1000000);
-                const delta = Math.floor(t1_sec - t2_sec);
-                const delta_days = delta/60/60/24;
+            const calcDays = function (t1, t2) {
+                const t1_sec = Math.floor(t1/1000000)
+                const t2_sec = Math.floor(t2/1000000)
+                const delta = Math.floor(t1_sec - t2_sec)
+                const delta_days = delta/60/60/24
                 return Math.floor(delta_days)
-            };
+            }
             if ($scope.index > 0) {
-                const event_timestamp = $scope.event['_source'].timestamp;
+                const event_timestamp = $scope.event['_source'].timestamp
                 if ($scope.order == 'asc') {
                     $scope.days = calcDays(event_timestamp, $scope.prevTimestamp)
                 } else {
@@ -212,94 +212,94 @@ export const tsEvent = function () {
             }
 
             // Get the color and name for the event here to prevent ugly template code.
-            $scope.timeline_color = $scope.meta.timeline_colors[$scope.event._index];
-            $scope.timeline_name = $scope.meta.timeline_names[$scope.event._index];
+            $scope.timeline_color = $scope.meta.timeline_colors[$scope.event._index]
+            $scope.timeline_name = $scope.meta.timeline_names[$scope.event._index]
 
             // Defaults to not showing details for the event.
-            $scope.showDetails = false;
+            $scope.showDetails = false
 
-            $scope.toggleSelected = function() {
+            $scope.toggleSelected = function () {
                 $scope.event.selected = !$scope.event.selected
-            };
+            }
 
-            $scope.toggleStar = function() {
+            $scope.toggleStar = function () {
                 timesketchApi.saveEventAnnotation(
                     $scope.sketchId,
                     'label',
                     '__ts_star',
-                    $scope.event).success(function(data) {})
-            };
+                    $scope.event).success(function (data) {})
+            }
 
-            $scope.toggleHidden = function() {
+            $scope.toggleHidden = function () {
                 timesketchApi.saveEventAnnotation(
                     $scope.sketchId,
                     'label',
                     '__ts_hidden',
-                    $scope.event).success(function(data) {
+                    $scope.event).success(function (data) {
                     if ($scope.event.hidden) {
                         $scope.meta.numHiddenEvents++
                     } else {
                         $scope.meta.numHiddenEvents--
                     }
                 })
-            };
+            }
 
-            $scope.addFilterStart= function() {
-            $scope.$emit('datetime-clicked', {datetimeclicked: $scope.event._source.datetime});
-};
+            $scope.addFilterStart= function () {
+            $scope.$emit('datetime-clicked', {datetimeclicked: $scope.event._source.datetime})
+}
 
-            $scope.getDetail = function() {
+            $scope.getDetail = function () {
                 if ($scope.eventdetail) {return}
                 timesketchApi.getEvent(
                     $scope.sketchId,
                     $scope.event._index,
-                    $scope.event._id).success(function(data) {
-                        $scope.eventdetail = data.objects;
-                        $scope.comments = data.meta.comments;
+                    $scope.event._id).success(function (data) {
+                        $scope.eventdetail = data.objects
+                        $scope.comments = data.meta.comments
                     })
-            };
+            }
 
-            $scope.postComment = function() {
+            $scope.postComment = function () {
                 timesketchApi.saveEventAnnotation(
                     $scope.sketchId,
                     'comment',
                     $scope.formData.comment,
-                    $scope.event).success(function(data) {
-                        $scope.formData.comment = '';
-                        $scope.commentForm.$setPristine();
-                        $scope.comments.push(data['objects'][0][0]);
-                        $scope.comment = true;
+                    $scope.event).success(function (data) {
+                        $scope.formData.comment = ''
+                        $scope.commentForm.$setPristine()
+                        $scope.comments.push(data['objects'][0][0])
+                        $scope.comment = true
                     })
-            };
+            }
 
-            $scope.$watch('event', function(value) {
-                $scope.star = false;
-                $scope.comment = false;
+            $scope.$watch('event', function (value) {
+                $scope.star = false
+                $scope.comment = false
 
                 if ($scope.event._source.label.indexOf('__ts_star') > -1) {
-                    $scope.event.star = true;
+                    $scope.event.star = true
                 } else {
-                    $scope.event.star = false;
+                    $scope.event.star = false
                 }
 
                 if ($scope.event._source.label.indexOf('__ts_comment') > -1) {
-                    $scope.comment = true;
+                    $scope.comment = true
                 }
 
                 if ($scope.event._source.label.indexOf('__ts_hidden') > -1) {
-                    $scope.event.hidden = true;
-                    $scope.meta.numHiddenEvents++;
+                    $scope.event.hidden = true
+                    $scope.meta.numHiddenEvents++
                 } else {
-                    $scope.event.hidden = false;
+                    $scope.event.hidden = false
                 }
 
-            });
+            })
 
         },
-        link: function(scope, elem, attrs, ctrl) {
-            scope.getContext = function(event) {
-                ctrl.getContext(event);
+        link: function (scope, elem, attrs, ctrl) {
+            scope.getContext = function (event) {
+                ctrl.getContext(event)
             }
-        }
+        },
     }
 }

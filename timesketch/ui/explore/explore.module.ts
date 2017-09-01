@@ -20,7 +20,7 @@ import {tsHeatmap} from './heatmap.directive'
 import {tsHistogram} from './histogram.directive'
 import {tsJsonEditor} from './json-editor.directive'
 import {
-  tsSearch, tsSearchContextCard, tsSearchSavedViewPicker, tsSearchTemplatePicker
+  tsSearch, tsSearchContextCard, tsSearchSavedViewPicker, tsSearchTemplatePicker,
 } from './search.directive'
 
 export const tsExploreModule = angular.module('timesketch.explore', [])

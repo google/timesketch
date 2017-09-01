@@ -41,6 +41,7 @@
     "sass-loader": "^6.0.6",
     "style-loader": "^0.18.2",
     "ts-loader": "^2.3.3",
+    "tslint": "^5.7.0",
     "twitter-bootstrap-3.0.0": "^3.0.0",
     "typescript": "^2.4.2",
     "url-loader": "^0.5.9",

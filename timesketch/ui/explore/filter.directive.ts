@@ -38,46 +38,46 @@ export const tsFilter = function () {
             queryDsl: '=',
             showFilters: '=',
             events: '=',
-            meta: '='
+            meta: '=',
         },
         require: '^tsSearch',
-        link: function(scope, elem, attrs, ctrl) {
-            scope.applyFilter = function() {
+        link: function (scope, elem, attrs, ctrl) {
+            scope.applyFilter = function () {
                 scope.parseFilterDate(scope.filter.time_start, scope.filter.time_end)
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
-            };
+            }
 
-            scope.clearFilter = function() {
-                delete scope.filter.time_start;
-                delete scope.filter.time_end;
-                scope.showFilters = false;
+            scope.clearFilter = function () {
+                delete scope.filter.time_start
+                delete scope.filter.time_end
+                scope.showFilters = false
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
-            };
+            }
 
-            scope.enableAllTimelines = function() {
-                scope.filter.indices = [];
+            scope.enableAllTimelines = function () {
+                scope.filter.indices = []
                 for (let i = 0; i < scope.sketch.timelines.length; i++) {
                     scope.filter.indices.push(scope.sketch.timelines[i].searchindex.index_name)
                 }
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
-            };
-
-            scope.disableAllTimelines = function() {
-                scope.filter.indices = [];
-                scope.events = [];
-                scope.meta.es_total_count = 0;
-                scope.meta.es_time = 0;
-                scope.meta.noisy = false;
             }
 
-            scope.parseFilterDate = function(datevalue, datevalue_end){
+            scope.disableAllTimelines = function () {
+                scope.filter.indices = []
+                scope.events = []
+                scope.meta.es_total_count = 0
+                scope.meta.es_time = 0
+                scope.meta.noisy = false
+            }
+
+            scope.parseFilterDate = function (datevalue, datevalue_end){
                     if (datevalue != null) {
-                    const datetimetemplate="YYYY-MM-DDTHH:mm:ss";
-                    //Parse out 'T' date time seperator needed by ELK but not by moment.js
-                    datevalue=datevalue.replace(/T/g,' ');
-                    //Parse offset given by user. Eg. +-10m
-                    const offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s|M|Q|w|ms)/g;
-                    const match = offsetRegexp.exec(datevalue);
+                    const datetimetemplate='YYYY-MM-DDTHH:mm:ss'
+                    // Parse out 'T' date time seperator needed by ELK but not by moment.js
+                    datevalue=datevalue.replace(/T/g,' ')
+                    // Parse offset given by user. Eg. +-10m
+                    const offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s|M|Q|w|ms)/g
+                    const match = offsetRegexp.exec(datevalue)
 
                     if (match != null) {
                         let filterbase = match[1]
@@ -85,33 +85,33 @@ export const tsFilter = function () {
                         const filteramount = match[3]
                         const filtertype = match[4]
 
-                        filterbase = moment.utc(filterbase,"YYYY-MM-DD HH:mm:ssZZ");
-                        //calculate filter start and end datetimes
+                        filterbase = moment.utc(filterbase,'YYYY-MM-DD HH:mm:ssZZ')
+                        // calculate filter start and end datetimes
                         if (filteroffset == '+') {
-                            scope.filter.time_start = moment.utc(filterbase).format(datetimetemplate);
-                            scope.filter.time_end = moment.utc(filterbase).add(filteramount,filtertype).format(datetimetemplate);
+                            scope.filter.time_start = moment.utc(filterbase).format(datetimetemplate)
+                            scope.filter.time_end = moment.utc(filterbase).add(filteramount,filtertype).format(datetimetemplate)
                         }
                         if (filteroffset == '-') {
-                            scope.filter.time_start = moment.utc(filterbase).subtract(filteramount,filtertype).format(datetimetemplate);
-                            scope.filter.time_end = moment.utc(filterbase).format(datetimetemplate);
+                            scope.filter.time_start = moment.utc(filterbase).subtract(filteramount,filtertype).format(datetimetemplate)
+                            scope.filter.time_end = moment.utc(filterbase).format(datetimetemplate)
                         }
                         if (filteroffset == '-+' || filteroffset == '+-') {
-                            scope.filter.time_start = moment.utc(filterbase).subtract(filteramount,filtertype).format(datetimetemplate);
-                            scope.filter.time_end = moment.utc(filterbase).add(filteramount,filtertype).format(datetimetemplate);
+                            scope.filter.time_start = moment.utc(filterbase).subtract(filteramount,filtertype).format(datetimetemplate)
+                            scope.filter.time_end = moment.utc(filterbase).add(filteramount,filtertype).format(datetimetemplate)
                         }
                     } else {
                         if (datevalue_end == null || datevalue_end == '') {
-                            scope.filter.time_end = scope.filter.time_start;
+                            scope.filter.time_end = scope.filter.time_start
                         }
                     }
                 }
             }
 
-       }
+       },
   }
 }
 
-export const tsTimelinePickerItem = function() {
+export const tsTimelinePickerItem = function () {
     /**
      * Manage the timeline items to filter on.
      */
@@ -122,38 +122,38 @@ export const tsTimelinePickerItem = function() {
             timeline: '=',
             query: '=',
             queryDsl: '=',
-            filter: '='
+            filter: '=',
         },
         require: '^tsSearch',
-        link: function(scope, elem, attrs, ctrl) {
-            scope.checkboxModel = {};
-            const index_name = scope.timeline.searchindex.index_name;
+        link: function (scope, elem, attrs, ctrl) {
+            scope.checkboxModel = {}
+            const index_name = scope.timeline.searchindex.index_name
             scope.toggleCheckbox = function () {
-                const index = scope.filter.indices.indexOf(index_name);
-                scope.checkboxModel.active = !scope.checkboxModel.active;
+                const index = scope.filter.indices.indexOf(index_name)
+                scope.checkboxModel.active = !scope.checkboxModel.active
                 if (!scope.checkboxModel.active) {
                     if (index > -1) {
-                        scope.filter.indices.splice(index, 1);
+                        scope.filter.indices.splice(index, 1)
                    }
                 } else {
                     if (index == -1) {
-                        scope.filter.indices.push(index_name);
+                        scope.filter.indices.push(index_name)
                     }
                 }
-                ctrl.search(scope.query, scope.filter, scope.queryDsl);
-            };
+                ctrl.search(scope.query, scope.filter, scope.queryDsl)
+            }
 
-            scope.$watch("filter.indices", function(value) {
+            scope.$watch('filter.indices', function (value) {
                 if (scope.filter.indices.indexOf(index_name) == -1) {
-                    scope.colorbox = {'background-color': '#E9E9E9'};
-                    scope.timeline_picker_title = {'color': '#D1D1D1'};
-                    scope.checkboxModel.active = false;
+                    scope.colorbox = {'background-color': '#E9E9E9'}
+                    scope.timeline_picker_title = {'color': '#D1D1D1'}
+                    scope.checkboxModel.active = false
                 } else {
-                    scope.colorbox = {'background-color': "#" + scope.timeline.color};
-                    scope.timeline_picker_title = {'color': '#333', 'text-decoration': 'none'};
-                    scope.checkboxModel.active = true;
+                    scope.colorbox = {'background-color': '#' + scope.timeline.color}
+                    scope.timeline_picker_title = {'color': '#333', 'text-decoration': 'none'}
+                    scope.checkboxModel.active = true
                 }
-            }, true);
-        }
+            }, true)
+        },
     }
 }

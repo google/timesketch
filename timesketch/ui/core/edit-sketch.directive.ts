@@ -15,16 +15,16 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-export const tsEditSketch = function() {
+export const tsEditSketch = function () {
     /**
      * Render Edit sketch modal.
      */
     return {
-        restrict : "E",
+        restrict : 'E',
         scope: {},
-        link : function(scope, element, attrs) {
-            const modal_element = angular.element(document.getElementById("new-sketch-modal"));
-            modal_element.modal('show');
-        }
-    };
+        link : function (scope, element, attrs) {
+            const modal_element = angular.element(document.getElementById('new-sketch-modal'))
+            modal_element.modal('show')
+        },
+    }
 }

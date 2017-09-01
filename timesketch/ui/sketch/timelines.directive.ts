@@ -26,32 +26,32 @@ export const tsTimelinesList = ['timesketchApi', function (timesketchApi) {
         scope: {
             sketchId: '=',
             showEdit: '=',
-            showDelete: '='
+            showDelete: '=',
         },
         controller: function ($scope) {
             timesketchApi.getTimelines($scope.sketchId).success(function (data) {
-                $scope.timelines = [];
-                const timelines = data.objects[0];
+                $scope.timelines = []
+                const timelines = data.objects[0]
                 if (timelines) {
                     for (let i = 0; i < timelines.length; i++) {
-                        const timeline = timelines[i];
-                        timeline.updated_at = moment.utc(timeline.updated_at).format("YYYY-MM-DD");
+                        const timeline = timelines[i]
+                        timeline.updated_at = moment.utc(timeline.updated_at).format('YYYY-MM-DD')
                         $scope.timelines.push(timeline)
                     }
                 }
-            });
+            })
 
-            $scope.deleteTimeline = function(timeline) {
-                timesketchApi.deleteTimeline($scope.sketchId, timeline.id);
-                const index = $scope.timelines.indexOf(timeline);
+            $scope.deleteTimeline = function (timeline) {
+                timesketchApi.deleteTimeline($scope.sketchId, timeline.id)
+                const index = $scope.timelines.indexOf(timeline)
                 if (index > -1) {
-                    $scope.timelines.splice(index, 1);
+                    $scope.timelines.splice(index, 1)
                 }
-            };
+            }
 
-            this.updateTimelines = function(timeline) {
+            this.updateTimelines = function (timeline) {
                 $scope.timelines.unshift(timeline)
             }
-        }
+        },
     }
 }]
