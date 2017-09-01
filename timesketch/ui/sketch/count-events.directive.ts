@@ -16,25 +16,20 @@
 import angular from 'angularjs-for-webpack'
 import * as numeral from 'numeral/numeral.js'
 
-(function() {
-    var module = angular.module('timesketch.sketch.count.events.directive', []);
-
-    module.directive('tsCountEvents', ['timesketchApi', function (timesketchApi) {
-        /**
-         * Render event count.
-         */
-        return {
-            restrict: 'E',
-            templateUrl: '/static/components/sketch/sketch-count-events.html',
-            scope: {
-                sketchId: '='
-            },
-            controller: function ($scope) {
-                timesketchApi.countEvents($scope.sketchId).success(function (data) {
-                    $scope.count = numeral(data.meta['count']).format('0.0a');
-                });
-            }
+export const tsCountEvents = ['timesketchApi', function (timesketchApi) {
+    /**
+     * Render event count.
+     */
+    return {
+        restrict: 'E',
+        template: require('./count-events.html'),
+        scope: {
+            sketchId: '='
+        },
+        controller: function ($scope) {
+            timesketchApi.countEvents($scope.sketchId).success(function (data) {
+                $scope.count = numeral(data.meta['count']).format('0.0a');
+            });
         }
-    }]);
-
-})();
+    }
+}]

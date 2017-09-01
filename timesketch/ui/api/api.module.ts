@@ -14,11 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
+import {timesketchApiImplementation} from './api.service'
 
-(function() {
-    var module = angular.module('timesketch.sketch', [
-        'timesketch.sketch.timelines.directive',
-        'timesketch.sketch.views.directive',
-        'timesketch.sketch.count.events.directive'
-    ]);
-})();
+export const tsApiModule = angular.module('timesketch.api', [])
+  .service('timesketchApi', timesketchApiImplementation)

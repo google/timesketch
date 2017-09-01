@@ -14,9 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
+import {
+  tsStoryList, tsCreateStory, tsStory, tsStoryDropdown, tsStoryEventList
+} from './story.directive'
 
-(function() {
-    var module = angular.module('timesketch.api', [
-        'timesketch.api.service'
-    ]);
-})();
+export const tsStoryModule = angular.module('timesketch.story', [])
+  .directive('tsStoryList', tsStoryList)
+  .directive('tsCreateStory', tsCreateStory)
+  .directive('tsStory', tsStory)
+  .directive('tsStoryDropdown', tsStoryDropdown)
+  .directive('tsStoryEventList', tsStoryEventList)

@@ -14,11 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
+import {tsCountEvents} from './count-events.directive'
+import {tsTimelinesList} from './timelines.directive'
+import {tsSavedViewList, tsSearchTemplateList} from './views.directive'
 
-(function() {
-    var module = angular.module('timesketch.core', [
-        'timesketch.core.butterbar.directive',
-        'timesketch.core.upload.directive',
-        'timesketch.core.edit.sketch.directive'
-    ]);
-})();
+export const tsSketchModule = angular.module('timesketch.sketch', [])
+  .directive('tsCountEvents', tsCountEvents)
+  .directive('tsTimelinesList', tsTimelinesList)
+  .directive('tsSavedViewList', tsSavedViewList)
+  .directive('tsSearchTemplateList', tsSearchTemplateList)

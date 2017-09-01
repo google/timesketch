@@ -15,13 +15,16 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-(function() {
-    var module = angular.module('timesketch.explore', [
-        'timesketch.explore.event.directive',
-        'timesketch.explore.filter.directive',
-        'timesketch.explore.search.directive',
-        'timesketch.explore.heatmap.directive',
-        'timesketch.explore.histogram.directive',
-        'timesketch.explore.json.editor.directive'
-    ]);
-})();
+export const tsEditSketch = function() {
+    /**
+     * Render Edit sketch modal.
+     */
+    return {
+        restrict : "E",
+        scope: {},
+        link : function(scope, element, attrs) {
+            const modal_element = angular.element(document.getElementById("new-sketch-modal"));
+            modal_element.modal('show');
+        }
+    };
+}
