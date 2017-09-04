@@ -15,6 +15,7 @@ import 'css/ts.css'
 import {tsAppModule, AppModule} from 'app.module'
 
 angular.element(function () {
+
   // @ngtools/webpack should automatically convert AppModule to
   // AppModuleNgFactory. We are casting it through any to make TypeScript happy
   // https://github.com/angular/angular-cli/blob/4586abd226090521f2470fa47a27553241415426/packages/%40ngtools/webpack/src/loader.ts#L267
