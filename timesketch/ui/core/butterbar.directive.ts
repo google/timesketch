@@ -15,27 +15,27 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-export const tsButterbar = ['$rootScope', function($rootScope) {
+export const tsButterbar = ['$rootScope', function ($rootScope) {
     /**
      * Render (show/hide) the butterbar when AJAX calls are being made.
      */
     return {
-        restrict : "A",
+        restrict : 'A',
         scope: {},
-        link : function(scope, element, attrs) {
-            scope.$on("httpreq-start", function(e) {
-                element.text("Loading..");
-                element.css({"display": "block"});
-            });
+        link : function (scope, element, attrs) {
+            scope.$on('httpreq-start', function (e) {
+                element.text('Loading..')
+                element.css({'display': 'block'})
+            })
 
-            scope.$on("httpreq-error", function(e) {
-                element.css({"display": "block"});
-                element.text($rootScope.XHRError.message || "Error")
-            });
+            scope.$on('httpreq-error', function (e) {
+                element.css({'display': 'block'})
+                element.text($rootScope.XHRError.message || 'Error')
+            })
 
-            scope.$on("httpreq-complete", function(e) {
-                element.css({"display": "none"});
-            });
-        }
-    };
+            scope.$on('httpreq-complete', function (e) {
+                element.css({'display': 'none'})
+            })
+        },
+    }
 }]

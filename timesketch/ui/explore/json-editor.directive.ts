@@ -18,7 +18,7 @@ import * as ace from 'brace'
 import 'brace/mode/json'
 import 'brace/theme/dawn'
 
-export const tsJsonEditor = ['timesketchApi', function(timesketchApi) {
+export const tsJsonEditor = ['timesketchApi', function (timesketchApi) {
     /**
      * Histogram chart for number of events.
      * @param query - Query string.
@@ -32,45 +32,44 @@ export const tsJsonEditor = ['timesketchApi', function(timesketchApi) {
             sketchId: '=',
             query: '=',
             filter: '=',
-            queryDsl: '='
+            queryDsl: '=',
         },
         require: '^tsSearch',
-        link: function(scope, element, attrs, ctrl) {
-            const editor = ace.edit("json-editor");
-            editor.getSession().setMode("ace/mode/json");
-            editor.setTheme("ace/theme/dawn");
-            editor.setShowPrintMargin(false);
+        link: function (scope, element, attrs, ctrl) {
+            const editor = ace.edit('json-editor')
+            editor.getSession().setMode('ace/mode/json')
+            editor.setTheme('ace/theme/dawn')
+            editor.setShowPrintMargin(false)
 
             timesketchApi.getCurrentQuery(scope.sketchId, scope.query, scope.filter, scope.queryDsl)
-                .success(function(data) {
-                    let currentQueryDsl = data['objects'][0];
+                .success(function (data) {
+                    let currentQueryDsl = data['objects'][0]
                     // If there is no current query create a generic query.
                     if (!currentQueryDsl) {
                         currentQueryDsl = {
-                            "query": {
-                                "filtered": {
-                                    "query": {
-                                        "query_string": {
-                                            "query": scope.query}}}},
-                            "sort": {
-                                "datetime": "asc"}
-                        };
-                        console.log("use template")
+                            'query': {
+                                'filtered': {
+                                    'query': {
+                                        'query_string': {
+                                            'query': scope.query}}}},
+                            'sort': {
+                                'datetime': 'asc'},
+                        }
                     }
-                    scope.queryDsl = currentQueryDsl;
-                    editor.setValue(JSON.stringify(currentQueryDsl, null, '\t'), -1);
-                    editor.focus();
-                });
+                    scope.queryDsl = currentQueryDsl
+                    editor.setValue(JSON.stringify(currentQueryDsl, null, '\t'), -1)
+                    editor.focus()
+                })
 
             scope.executeQuery = function () {
-                scope.queryDsl = editor.getValue();
+                scope.queryDsl = editor.getValue()
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
-            };
+            }
 
             scope.clearEditor = function () {
-                scope.queryDsl = "";
-                editor.setValue("");
+                scope.queryDsl = ''
+                editor.setValue('')
             }
-        }
+        },
     }
 }]

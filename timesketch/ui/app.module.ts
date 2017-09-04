@@ -29,43 +29,43 @@ export const tsAppModule = angular.module('timesketch', [
     tsSketchModule.name,
     tsStoryModule.name,
 ])
-.config(function($httpProvider) {
+.config(function ($httpProvider) {
     // List of URLs to exclude from the butterbar.
     const excludeFromButterbar = (url) => {
       const excludeURLs = [
-        "/api/v1/tasks/",
-        "/api/v1/sketches/[0-9]+/stories/[0-9]+/"
+        '/api/v1/tasks/',
+        '/api/v1/sketches/[0-9]+/stories/[0-9]+/',
       ]
-      const re = new RegExp(excludeURLs.join("|"), "i")
+      const re = new RegExp(excludeURLs.join('|'), 'i')
       return url.match(re) != null
     }
-    $httpProvider.interceptors.push(function($q, $rootScope) {
+    $httpProvider.interceptors.push(function ($q, $rootScope) {
         return {
-            'request': function(config) {
+            'request': function (config) {
                 if (!excludeFromButterbar(config.url)) {
-                    $rootScope.$broadcast('httpreq-start');
+                    $rootScope.$broadcast('httpreq-start')
                 }
-                return config || $q.when(config);
+                return config || $q.when(config)
             },
-            'response': function(response) {
-                $rootScope.XHRError = false;
-                $rootScope.$broadcast('httpreq-complete');
-                return response || $q.when(response);
+            'response': function (response) {
+                $rootScope.XHRError = false
+                $rootScope.$broadcast('httpreq-complete')
+                return response || $q.when(response)
             },
-            'responseError': function(response) {
-                $rootScope.XHRError = response.data;
-                $rootScope.$broadcast('httpreq-error');
-                return $q.reject(response);
-            }
-        };
-    });
-    const csrftoken = document.getElementsByTagName('meta')[0]['content'];
-    $httpProvider.defaults.headers.common['X-CSRFToken'] = csrftoken;
+            'responseError': function (response) {
+                $rootScope.XHRError = response.data
+                $rootScope.$broadcast('httpreq-error')
+                return $q.reject(response)
+            },
+        }
+    })
+    const csrftoken = document.getElementsByTagName('meta')[0]['content']
+    $httpProvider.defaults.headers.common['X-CSRFToken'] = csrftoken
 })
 
 @NgModule({
   imports: [SketchModule, BrowserModule],
 })
 export class AppModule {
-  ngDoBootstrap() {}
+  ngDoBootstrap () {}
 }

@@ -26,34 +26,33 @@ export const tsSavedViewList = ['timesketchApi', function (timesketchApi) {
         scope: {
             sketchId: '=',
             showSearchTemplates: '=',
-            showDelete: '='
+            showDelete: '=',
         },
         controller: function ($scope) {
             timesketchApi.getViews($scope.sketchId).success(function (data) {
-                $scope.savedViews = [];
-                const views = data.objects[0];
+                $scope.savedViews = []
+                const views = data.objects[0]
                 if (views) {
-                    for (let i = 0; i < views.length; i++) {
-                        const view = views[i];
-                        view.updated_at = moment.utc(view.updated_at).format("YYYY-MM-DD");
+                    for (const view of views) {
+                        view.updated_at = moment.utc(view.updated_at).format('YYYY-MM-DD')
                         $scope.savedViews.push(view)
                     }
                 }
-            });
+            })
 
-            $scope.deleteView = function(view) {
-                timesketchApi.deleteView($scope.sketchId, view.id);
-                const index = $scope.savedViews.indexOf(view);
+            $scope.deleteView = function (view) {
+                timesketchApi.deleteView($scope.sketchId, view.id)
+                const index = $scope.savedViews.indexOf(view)
                 if (index > -1) {
-                    $scope.savedViews.splice(index, 1);
+                    $scope.savedViews.splice(index, 1)
                 }
-            };
+            }
 
-            this.updateSavedViews = function(view) {
+            this.updateSavedViews = function (view) {
                 $scope.savedViews.unshift(view)
 
             }
-        }
+        },
     }
 }]
 
@@ -65,32 +64,31 @@ export const tsSearchTemplateList = ['timesketchApi', function (timesketchApi) {
         restrict: 'E',
         template: require('./search-template-list.html'),
         scope: {
-            sketchId: '='
+            sketchId: '=',
         },
-        require: "^tsSavedViewList",
+        require: '^tsSavedViewList',
         controller: function ($scope) {
             timesketchApi.getSearchTemplates().success(function (data) {
-                $scope.searchTemplates = [];
-                const views = data.objects[0];
+                $scope.searchTemplates = []
+                const views = data.objects[0]
                 if (views) {
-                    for (let i = 0; i < views.length; i++) {
-                        const view = views[i];
-                        view.updated_at = moment.utc(view.updated_at).format("YYYY-MM-DD");
+                    for (const view of views) {
+                        view.updated_at = moment.utc(view.updated_at).format('YYYY-MM-DD')
                         $scope.searchTemplates.push(view)
                     }
                 }
-            });
+            })
 
         },
-        link: function(scope, elem, attrs, ctrl) {
-            scope.addSearchTemplate = function(view) {
-                timesketchApi.saveViewFromSearchTemplate(scope.sketchId, view.id).success(function(data) {
-                    const view = data.objects[0];
-                    view.updated_at = moment.utc(view.updated_at).format("YYYY-MM-DD");
-                    ctrl.updateSavedViews(view);
-                });
-            };
+        link: function (scope, elem, attrs, ctrl) {
+            scope.addSearchTemplate = function (view) {
+                timesketchApi.saveViewFromSearchTemplate(scope.sketchId, view.id).success(function (data) {
+                    const view = data.objects[0]
+                    view.updated_at = moment.utc(view.updated_at).format('YYYY-MM-DD')
+                    ctrl.updateSavedViews(view)
+                })
+            }
 
-        }
+        },
     }
 }]

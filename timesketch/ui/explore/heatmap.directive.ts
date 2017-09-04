@@ -14,7 +14,7 @@
  limitations under the License.
  */
 import angular from 'angularjs-for-webpack'
-import * as d3 from "d3"
+import * as d3 from 'd3'
 
 export const tsHeatmap = function ($window, timesketchApi) {
     /**
@@ -34,57 +34,61 @@ export const tsHeatmap = function ($window, timesketchApi) {
             query: '=',
             queryDsl: '=',
             meta: '=',
-            showCharts: '='
+            showCharts: '=',
         },
         require: '^tsSearch',
-        link: function(scope, element, attrs, ctrl) {
+        link: function (scope, element, attrs, ctrl) {
             scope.$watchGroup(['meta', 'showCharts'], function (newval, oldval) {
                 if(scope.showCharts) {
                     timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, scope.queryDsl, 'heatmap')
-                        .success(function(data) {
+                        .success(function (data) {
                             scope.render_heatmap(data['objects'])
-                        });
+                        })
                 }
-            }, true);
+            }, true)
 
             // Handle window resize, and redraw the chart automatically.
-            $window.onresize = function() {
-                scope.$apply();
-            };
-            scope.$watch(function() {
-                return angular.element($window)[0].innerWidth;
-            }, function() {
+            $window.onresize = function () {
+                scope.$apply()
+            }
+            scope.$watch(function () {
+                return angular.element($window)[0].innerWidth
+            }, function () {
                 if(scope.meta && scope.showCharts) {
                     timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, scope.queryDsl, 'heatmap')
-                        .success(function(data) {
+                        .success(function (data) {
                             scope.render_heatmap(data['objects'])
-                        });
+                        })
                 }
-            });
+            })
 
             // Render the chart svg with D3.js
-            scope.render_heatmap = function(data) {
-                d3.select('svg').remove();
-                const margin = { top: 50, right: 75, bottom: 0, left: 40 },
-                    svgWidth = element[0].parentElement.parentElement.parentElement.offsetParent.offsetWidth - margin.left - margin.right,
-                    rectSize = Math.floor(svgWidth / 24),
-                    svgHeight = Math.floor(rectSize * 9) - margin.top - margin.bottom,
-                    days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
-                    hours = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23"];
+            scope.render_heatmap = function (data) {
+                d3.select('svg').remove()
+                const margin = { top: 50, right: 75, bottom: 0, left: 40 }
+                const svgWidth = element[0].parentElement.parentElement.parentElement.offsetParent.offsetWidth - margin.left - margin.right
+                const rectSize = Math.floor(svgWidth / 24)
+                const svgHeight = Math.floor(rectSize * 9) - margin.top - margin.bottom
+                const days = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+                const hours = [
+                  '00', '01', '02', '03', '04', '05', '06', '07', '08', '09',
+                  '10', '11', '12', '13', '14', '15', '16', '17', '18', '19',
+                  '20', '21', '22', '23',
+                ]
 
-                const svg = d3.select(element[0]).append("svg")
-                    .attr("width", svgWidth + margin.left + margin.right)
-                    .attr("height", svgHeight + margin.top + margin.bottom)
-                    .append("g")
-                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                const svg = d3.select(element[0]).append('svg')
+                    .attr('width', svgWidth + margin.left + margin.right)
+                    .attr('height', svgHeight + margin.top + margin.bottom)
+                    .append('g')
+                    .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
 
                 const max_value_initial = d3.max(data, function (d) {
-                    return d.count;
-                });
-                let max_value = max_value_initial;
+                    return d.count
+                })
+                let max_value = max_value_initial
 
                 if (max_value_initial > 100000) {
-                    max_value = max_value_initial / 100;
+                    max_value = max_value_initial / 100
                 } else if (max_value_initial == 0) {
                     max_value = 1
                 }
@@ -92,69 +96,69 @@ export const tsHeatmap = function ($window, timesketchApi) {
                 // Generate color from color scale
                 const genColor = d3.scaleLinear()
                     .domain([0, max_value / 2, max_value])
-                    .range(["white", "#3498db", "red"]);
+                    .range(['white', '#3498db', 'red'])
 
-                const colors: any[] = [];
+                const colors: any[] = []
                 for (let i = 0; i < max_value; i++) {
-                    colors.push(genColor(i));
+                    colors.push(genColor(i))
                 }
-                const num_buckets = colors.length;
+                const num_buckets = colors.length
                 const colorScale = d3.scaleQuantile()
                     .domain([0, num_buckets - 1, max_value_initial])
-                    .range(colors);
+                    .range(colors)
 
-                svg.selectAll(".dayLabel")
+                svg.selectAll('.dayLabel')
                     .data(days)
-                    .enter().append("text")
+                    .enter().append('text')
                     .text(function (d) {
-                        return d;
+                        return d
                     })
-                    .attr("x", -12)
-                    .attr("y", function (d, i) {
-                        return i * rectSize;
+                    .attr('x', -12)
+                    .attr('y', function (d, i) {
+                        return i * rectSize
                     })
-                    .style("text-anchor", "end")
-                    .attr("transform", "translate(-6," + rectSize / 1.5 + ")");
+                    .style('text-anchor', 'end')
+                    .attr('transform', 'translate(-6,' + rectSize / 1.5 + ')')
 
-                svg.selectAll(".hourLabel")
+                svg.selectAll('.hourLabel')
                     .data(hours)
-                    .enter().append("text")
+                    .enter().append('text')
                     .text(function (d) {
-                        return d;
+                        return d
                     })
-                    .attr("x", function (d, i) {
-                        return i * rectSize;
+                    .attr('x', function (d, i) {
+                        return i * rectSize
                     })
-                    .attr("y", -12)
-                    .style("text-anchor", "middle")
-                    .attr("transform", "translate(" + rectSize / 2 + ", -6)");
+                    .attr('y', -12)
+                    .style('text-anchor', 'middle')
+                    .attr('transform', 'translate(' + rectSize / 2 + ', -6)')
 
                 // Create the heatmap
-                const heatMap = svg.selectAll(".hour")
+                const heatMap = svg.selectAll('.hour')
                     .data(data)
-                    .enter().append("rect")
-                    .attr("x", function (d) {
-                        return (d.hour) * rectSize;
+                    .enter().append('rect')
+                    .attr('x', function (d) {
+                        return (d.hour) * rectSize
                     })
-                    .attr("y", function (d) {
-                        return (d.day - 1) * rectSize;
+                    .attr('y', function (d) {
+                        return (d.day - 1) * rectSize
                     })
-                    .attr("class", "bordered")
-                    .attr("width", rectSize)
-                    .attr("height", rectSize)
-                    .style("fill", "white");
+                    .attr('class', 'bordered')
+                    .attr('width', rectSize)
+                    .attr('height', rectSize)
+                    .style('fill', 'white')
 
                 // Fade in the chart and fill each box with color
                 heatMap.transition().duration(500)
-                    .style("fill", function (d) {
-                        return colorScale(d.count);
-                    });
+                    .style('fill', function (d) {
+                        return colorScale(d.count)
+                    })
 
                 // Display event count on hover
-                heatMap.append("title").text(function (d) {
-                    return d.count;
-                });
-            };
-        }
+                heatMap.append('title').text(function (d) {
+                    return d.count
+                })
+            }
+        },
     }
 }

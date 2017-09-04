@@ -41,7 +41,7 @@ def run_javascript_tests(coverage=False):
     return NotImplemented
 
 def run_javascript_linter():
-    return NotImplemented
+    subprocess.check_call(['yarn', 'run', 'lint'])
 
 def run_javascript(args):
     if not args.no_tests:

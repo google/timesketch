@@ -24,12 +24,12 @@ export const tsCountEvents = ['timesketchApi', function (timesketchApi) {
         restrict: 'E',
         template: require('./count-events.html'),
         scope: {
-            sketchId: '='
+            sketchId: '=',
         },
         controller: function ($scope) {
             timesketchApi.countEvents($scope.sketchId).success(function (data) {
-                $scope.count = numeral(data.meta['count']).format('0.0a');
-            });
-        }
+                $scope.count = numeral(data.meta['count']).format('0.0a')
+            })
+        },
     }
 }]
