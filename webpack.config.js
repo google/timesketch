@@ -1,9 +1,17 @@
-var path = require('path')
-var ExtractTextPlugin = require("extract-text-webpack-plugin")
+const path = require('path')
+const ExtractTextPlugin = require('extract-text-webpack-plugin')
+const AotPlugin = require('@ngtools/webpack').AotPlugin
 
 const extractSass = new ExtractTextPlugin({
-    filename: "bundle.css",
-    disable: false,
+  filename: 'bundle.css',
+  disable: false,
+})
+
+const aotPlugin = new AotPlugin({
+  tsConfigPath: 'tsconfig.json',
+  // entryModule path must be absolute, otherwise it generates really obscure
+  // error message: https://github.com/angular/angular-cli/issues/4913
+  entryModule: path.resolve(__dirname, 'timesketch/ui/app.module#AppModule'),
 })
 
 module.exports = {
@@ -12,7 +20,7 @@ module.exports = {
     rules: [
       {
         test: /\.tsx?$/,
-        use: 'ts-loader',
+        use: '@ngtools/webpack',
         exclude: /node_modules/,
       },
       {
@@ -47,7 +55,5 @@ module.exports = {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'timesketch/static/dist/'),
   },
-  plugins: [
-    extractSass
-  ],
+  plugins: [extractSass, aotPlugin],
 }

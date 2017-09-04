@@ -14,10 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
+import {NgModule} from '@angular/core'
+import {BrowserModule} from '@angular/platform-browser'
 import {tsApiModule} from './api/api.module'
 import {tsCoreModule} from './core/core.module'
 import {tsExploreModule} from './explore/explore.module'
-import {tsSketchModule} from './sketch/sketch.module'
+import {tsSketchModule, SketchModule} from './sketch/sketch.module'
 import {tsStoryModule} from './story/story.module'
 
 export const tsAppModule = angular.module('timesketch', [
@@ -60,3 +62,10 @@ export const tsAppModule = angular.module('timesketch', [
     const csrftoken = document.getElementsByTagName('meta')[0]['content'];
     $httpProvider.defaults.headers.common['X-CSRFToken'] = csrftoken;
 })
+
+@NgModule({
+  imports: [SketchModule, BrowserModule],
+})
+export class AppModule {
+  ngDoBootstrap() {}
+}

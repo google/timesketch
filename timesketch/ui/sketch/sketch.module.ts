@@ -14,12 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
+import {NgModule} from '@angular/core'
+import {CommonModule} from '@angular/common'
+import {downgradeComponent} from '@angular/upgrade/static'
 import {tsCountEvents} from './count-events.directive'
 import {tsTimelinesList} from './timelines.directive'
 import {tsSavedViewList, tsSearchTemplateList} from './views.directive'
+import {NavigationComponent} from './navigation.component'
 
 export const tsSketchModule = angular.module('timesketch.sketch', [])
   .directive('tsCountEvents', tsCountEvents)
   .directive('tsTimelinesList', tsTimelinesList)
   .directive('tsSavedViewList', tsSavedViewList)
   .directive('tsSearchTemplateList', tsSearchTemplateList)
+  .directive('tsNavigation', downgradeComponent({
+      component: NavigationComponent, propagateDigest: false,
+  }))
+
+@NgModule({
+  imports: [CommonModule],
+  declarations: [NavigationComponent],
+  entryComponents: [NavigationComponent],
+})
+export class SketchModule {}
