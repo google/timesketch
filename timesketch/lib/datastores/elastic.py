@@ -407,7 +407,7 @@ class ElasticsearchDataStore(datastore.DataStore):
             # Make sure we have decoded strings in the event dict.
             event = {
                 k.decode(u'utf8'): v.decode(u'utf8')
-                for k, v in event.items()
+                for k, v in event.items() if isinstance(v, basestring)
             }
 
             # Header needed by Elasticsearch when bulk inserting.
