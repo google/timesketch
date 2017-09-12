@@ -1,8 +1,8 @@
 import {Component, Input} from '@angular/core'
 
 @Component({
-  selector: 'ts-navigation',
-  templateUrl: './navigation.ng.html',
+  selector: 'ts-sketch-navigation',
+  templateUrl: './navigation.component.html',
 })
 export class NavigationComponent {
   @Input() sketchId: number
