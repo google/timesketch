@@ -37,8 +37,10 @@ def run_python(args):
         run_python_linter()
 
 def run_javascript_tests(coverage=False):
-    # pylint: disable=unused-argument
-    return NotImplemented
+    if coverage:
+        subprocess.check_call(['yarn', 'run', 'test:coverage'])
+    else:
+        subprocess.check_call(['yarn', 'run', 'test'])
 
 def run_javascript_linter():
     subprocess.check_call(['yarn', 'run', 'lint'])

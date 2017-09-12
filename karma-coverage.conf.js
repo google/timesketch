@@ -1,12 +1,25 @@
 const path = require('path')
+const webpack_config = require('./webpack.config.js')
 
 const webpack_test_config = {
   entry: './timesketch/ui/main.spec.ts',
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
-        use: ['ts-loader', 'angular2-template-loader'],
+        test: /\.ts$/,
+        use: [
+          'istanbul-instrumenter-loader',
+          'ts-loader',
+          'angular2-template-loader',
+        ],
+        exclude: /node_modules|\.spec\.ts/,
+      },
+      {
+        test: /\.spec\.ts/,
+        use: [
+          'ts-loader',
+          'angular2-template-loader',
+        ],
         exclude: /node_modules/,
       },
       {
@@ -27,7 +40,6 @@ const webpack_test_config = {
 
 module.exports = function(config) {
   config.set({
-
     files: [
       './node_modules/babel-polyfill/dist/polyfill.js',
       'timesketch/ui/main.spec.ts',
@@ -43,7 +55,13 @@ module.exports = function(config) {
       require('karma-webpack'),
       require('karma-jasmine'),
       require('karma-phantomjs-launcher'),
+      require('karma-coverage-istanbul-reporter'),
     ],
     browsers: ['PhantomJS'],
+    reporters: ['progress', 'coverage-istanbul'],
+    coverageIstanbulReporter: {
+      reports: ['text-summary'],
+      fixWebpackSourcePaths: false,
+    }
   })
 }

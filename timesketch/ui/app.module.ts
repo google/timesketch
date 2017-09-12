@@ -13,9 +13,21 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+import 'font-awesome/css/font-awesome.css'
+import * as $ from 'jquery'
+(window as any).jQuery = $
+import 'twitter-bootstrap-3.0.0/dist/css/bootstrap.css'
+import 'twitter-bootstrap-3.0.0/dist/js/bootstrap.js'
+import 'medium-editor/dist/css/medium-editor.css'
+import 'medium-editor/dist/css/themes/default.css'
+import 'zone.js'
+
 import angular from 'angularjs-for-webpack'
 import {NgModule} from '@angular/core'
 import {BrowserModule} from '@angular/platform-browser'
+
+import 'css/ts.css'
+
 import {tsApiModule} from './api/api.module'
 import {tsCoreModule} from './core/core.module'
 import {tsExploreModule} from './explore/explore.module'
