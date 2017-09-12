@@ -44,8 +44,9 @@ class SketchListResourceTest(BaseTest):
         """Authenticated request to get list of sketches."""
         self.login()
         response = self.client.get(self.resource_url)
-        self.assertEqual(len(response.json[u'objects']), 1)
-        self.assertEqual(response.json[u'objects'][0][0][u'name'], u'Test 1')
+        self.assertEqual(len(response.json[u'objects'][0]), 2)
+        result = sorted(i['name'] for i in response.json[u'objects'][0])
+        self.assertEqual(result, [u'Test 1', u'Test 3'])
         self.assert200(response)
 
     def test_sketch_post_resource(self):
