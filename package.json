@@ -32,6 +32,7 @@
     "chart.js": "2.2.2",
     "chokidar": "^1.7.0",
     "chokidar-cli": "^1.2.0",
+    "codelyzer": "^3.2.0",
     "css-loader": "^0.28.5",
     "d3": "4.2.2",
     "extract-text-webpack-plugin": "^3.0.0",
