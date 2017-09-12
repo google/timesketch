@@ -406,7 +406,8 @@ class ElasticsearchDataStore(datastore.DataStore):
         if event:
             # Make sure we have decoded strings in the event dict.
             event = {
-                k.decode(u'utf8'): (v.decode(u'utf8') if isinstance(v, basestring) else v)
+                k.decode(u'utf8'): (v.decode(u'utf8')
+                                    if isinstance(v, basestring) else v)
                 for k, v in event.items()
             }
 
