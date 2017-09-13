@@ -27,7 +27,7 @@ export const tsSketchModule = angular.module('timesketch.sketch', [])
   .directive('tsTimelinesList', tsTimelinesList)
   .directive('tsSavedViewList', tsSavedViewList)
   .directive('tsSearchTemplateList', tsSearchTemplateList)
-  .directive('tsNavigation', downgradeComponent({
+  .directive('tsSketchNavigation', downgradeComponent({
       component: NavigationComponent, propagateDigest: false,
   }))
 
