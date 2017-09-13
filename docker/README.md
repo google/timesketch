@@ -13,7 +13,7 @@ cd timesketch
 ```
 
 ### Build Timesketch frontend
-Follow steps "Installing Node.js and Yarn" and "Building Timesketch frontend" from [developers guide](../docs/Developers-Guide.md).
+Follow steps "Frontend dependencies" and "Building Timesketch frontend" from [developers guide](../docs/Developers-Guide.md).
 
 ### Build and Start Containers
 
