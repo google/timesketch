@@ -2,6 +2,23 @@
 set -e
 set -u
 
+VAGRANT=false
+RUN_AS_USER=$USER
+TIMESKETCH_PATH="./"
+VAGRANT_PATH="./vagrant/"
+PLASO_TEST_FILE="${VAGRANT_PATH}/test.plaso"
+
+if [ -z ${1:-} ] || [ $1 == "vagrant" ]; then
+  VAGRANT=true
+  RUN_AS_USER="ubuntu"
+  TIMESKETCH_PATH="/usr/local/src/timesketch/"
+  VAGRANT_PATH="/vagrant/"
+fi
+
+if [ ! -z ${2:-} ]; then
+  PLASO_TEST_FILE="${2}"
+fi
+
 # Setup GIFT PPA apt repository
 add-apt-repository -y ppa:gift/stable
 
@@ -14,28 +31,35 @@ echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | tee -a /e
 wget -O - https://debian.neo4j.org/neotechnology.gpg.key | apt-key add -
 echo "deb https://debian.neo4j.org/repo stable/" | tee /etc/apt/sources.list.d/neo4j.list
 
-# Add Node.js 8.x repo
-curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+if [ "$VAGRANT" = true ]; then
+  # Add Node.js  8.x repo
+  curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | sudo apt-key add -
+  echo "deb https://deb.nodesource.com/node_8.x $(lsb_release -s -c) main"  | sudo tee /etc/apt/sources.list.d/nodesource.list
 
-# Add Yarn repo
-curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+  # Add Yarn repo
+  curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+  echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+fi
 
 # Install apt dependencies
 apt-get update
 apt-get install -y \
   neo4j openjdk-8-jre-headless elasticsearch postgresql python-psycopg2 \
-  python-pip python-dev libffi-dev redis-server python-plaso nodejs yarn
+  python-pip python-dev libffi-dev redis-server python-plaso jq
 
 # Install python dependencies
 pip install --upgrade pip
 pip install gunicorn pylint nose flask-testing coverage mock BeautifulSoup
 
-# Install nodejs dependencies
-HOME=/home/ubuntu sudo -u ubuntu bash -c 'cd /usr/local/src/timesketch && yarn install'
+if [ "$VAGRANT" = true ]; then
+  # Install yarn and nodejs
+  apt-get install -y nodejs yarn
+  # Install nodejs dependencies
+  HOME=/home/ubuntu sudo -u ubuntu bash -c 'cd /usr/local/src/timesketch && yarn install'
+fi
 
 # Install Timesketch
-pip install -e /usr/local/src/timesketch/
+pip install -e "${TIMESKETCH_PATH}"
 
 # Generate random passwords for DB and session key
 if [ ! -f psql_pw ]; then
@@ -57,8 +81,8 @@ sudo -u postgres sh -c 'echo "local all timesketch md5" >> /etc/postgresql/9.5/m
 
 # Initialize Timesketch
 mkdir -p /var/lib/timesketch/
-chown ubuntu /var/lib/timesketch
-cp /vagrant/timesketch.conf /etc/
+chown "${RUN_AS_USER}" /var/lib/timesketch
+cp "${VAGRANT_PATH}"/timesketch.conf /etc/
 
 # Set session key for Timesketch
 sed s/"SECRET_KEY = u'this is just a dev environment'"/"SECRET_KEY = u'${SECRET_KEY}'"/ /etc/timesketch.conf > /etc/timesketch.conf.new
@@ -69,7 +93,7 @@ sed s/"timesketch:foobar@localhost"/"timesketch:${PSQL_PW}@localhost"/ /etc/time
 mv /etc/timesketch.conf.new /etc/timesketch.conf
 
 # Copy groovy scripts
-cp /usr/local/src/timesketch/contrib/*.groovy /etc/elasticsearch/scripts/
+cp "${TIMESKETCH_PATH}"/contrib/*.groovy /etc/elasticsearch/scripts/
 
 # Start Elasticsearch automatically
 /bin/systemctl daemon-reload
@@ -79,8 +103,8 @@ cp /usr/local/src/timesketch/contrib/*.groovy /etc/elasticsearch/scripts/
 # Enable Celery task manager (for uploads)
 mkdir -p /var/{lib,log,run}/celery
 chown ubuntu /var/{lib,log,run}/celery
-cp /vagrant/celery.service /etc/systemd/system/
-cp /vagrant/celery.conf /etc/
+cp "${VAGRANT_PATH}"/celery.service /etc/systemd/system/
+cp "${VAGRANT_PATH}"/celery.conf /etc/
 /bin/systemctl daemon-reload
 /bin/systemctl enable celery.service
 /bin/systemctl start celery.service
@@ -88,19 +112,38 @@ cp /vagrant/celery.conf /etc/
 # Enable cypher-shell
 echo "dbms.shell.enabled=true" >> /etc/neo4j/neo4j.conf
 
-# Expose Neo4j to the host, for development purposes
-echo "dbms.connectors.default_listen_address=0.0.0.0" >> /etc/neo4j/neo4j.conf
+if [ "$VAGRANT" = true ]; then
+  # Expose Neo4j to the host, for development purposes
+  echo "dbms.connectors.default_listen_address=0.0.0.0" >> /etc/neo4j/neo4j.conf
+fi
 
 # Start Neo4j automatically
 /bin/systemctl daemon-reload
 /bin/systemctl enable neo4j
 /bin/systemctl start neo4j
 
-# Build Timesketch frontend
-HOME=/home/ubuntu sudo -u ubuntu bash -c 'cd /usr/local/src/timesketch && yarn run build'
+if [ "$VAGRANT" = true ]; then
+  # Build Timesketch frontend
+  HOME=/home/ubuntu sudo -u ubuntu bash -c 'cd /usr/local/src/timesketch && yarn run build'
+fi
 
 # Create test user
-sudo -u ubuntu tsctl add_user --username spock --password spock
+sudo -u "${RUN_AS_USER}" tsctl add_user --username spock --password spock
+
+# Wait for Elasticsearch cluster to be ready
+CLUSTER_HEALTH=False
+RETRY_LIMIT=100
+RETRY_DELAY_SEC=3
+declare -i RETRIES=0
+until [ "${CLUSTER_HEALTH}" == "green" ] || [ "${CLUSTER_HEALTH}" == "yellow" ]; do
+  CLUSTER_HEALTH=$(/usr/bin/curl -s -XGET '127.0.0.1:9200/_cluster/health' | jq -r .status)
+  echo "Elasticsearch cluster state: ${CLUSTER_HEALTH} (retries: ${RETRIES})"
+  if [ $RETRIES -gt $RETRY_LIMIT ]; then
+    exit 1
+  fi
+  sleep "${RETRY_DELAY_SEC}"
+  RETRIES+=1
+done
 
 # Create a test timeline
-sudo -u ubuntu psort.py -o timesketch /vagrant/test.plaso --name test-timeline
+sudo -u "${RUN_AS_USER}" psort.py -o timesketch "${PLASO_TEST_FILE}" --name test-timeline
