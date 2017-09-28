@@ -153,12 +153,22 @@ header {
     cursor: pointer;
 }
 
+.event-message-wrap {
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+
 .event-message-selected {
     background: #fafad2;
 }
 
 .event-message-starred {
     background: #fff4b3;
+}
+
+.event-message-details {
+    background: #fafad2;
 }
 
 .timerange-input {
