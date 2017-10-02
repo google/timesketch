@@ -24,4 +24,9 @@
         <i class="fa fa-clock-o"></i> Timelines
       </a>
     </li>
+    <li role="presentation" *ngIf="graphsEnabled" [class.active]="active==='graphs'">
+      <a href="/sketch/{{sketchId}}/graphs/">
+        <i class="fa fa-share-alt"></i> Graphs
+      </a>
+    </li>
 </ul>

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block navigation %}
+    <ts-sketch-navigation sketch-id="{{ sketch.id }}" active="graphs" graphs-enabled="{{ graphs_enabled }}"></ts-sketch-navigation>
+{% endblock %}
+
+{% block main %}
+    <div class="container">
+        <center><i class="fa fa-share-alt fa-6" aria-hidden="true"></i></center>
+    </div>
+{% endblock %}

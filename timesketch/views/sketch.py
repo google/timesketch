@@ -68,6 +68,7 @@ def overview(sketch_id):
     status_form = StatusForm()
     trash_form = TrashForm()
     upload_enabled = current_app.config[u'UPLOAD_ENABLED']
+    graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
 
     # Dynamically set the forms select options.
     # pylint: disable=singleton-comparison
@@ -157,7 +158,8 @@ def overview(sketch_id):
         permission_form=permission_form,
         status_form=status_form,
         trash_form=trash_form,
-        upload_enabled=upload_enabled)
+        upload_enabled=upload_enabled,
+        graphs_enabled=graphs_enabled)
 
 
 @sketch_views.route(
@@ -179,6 +181,7 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     sketch = Sketch.query.get_with_acl(sketch_id)
     sketch_timelines = [t.searchindex.index_name for t in sketch.timelines]
     view_form = SaveViewForm()
+    graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
 
     # Get parameters from the GET query
     url_query = request.args.get(u'q', u'')
@@ -239,7 +242,8 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
         named_view=view_id,
         timelines=sketch_timelines,
         view_form=view_form,
-        searchtemplate_id=searchtemplate_id)
+        searchtemplate_id=searchtemplate_id,
+        graphs_enabled=graphs_enabled)
 
 
 @sketch_views.route(
@@ -307,6 +311,7 @@ def timelines(sketch_id):
         desc(SearchIndex.created_at)).filter(
             not_(SearchIndex.id.in_(searchindices_in_sketch)))
     upload_enabled = current_app.config[u'UPLOAD_ENABLED']
+    graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
 
     try:
         plaso_version = current_app.config[u'PLASO_VERSION']
@@ -342,7 +347,8 @@ def timelines(sketch_id):
         timelines=indices.all(),
         form=form,
         upload_enabled=upload_enabled,
-        plaso_version=plaso_version)
+        plaso_version=plaso_version,
+        graphs_enabled=graphs_enabled)
 
 
 @sketch_views.route(
@@ -359,6 +365,8 @@ def timeline(sketch_id, timeline_id):
     sketch = Sketch.query.get_with_acl(sketch_id)
     sketch_timeline = Timeline.query.filter(Timeline.id == timeline_id,
                                             Timeline.sketch == sketch).first()
+    graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
+
     if not sketch_timeline:
         abort(HTTP_STATUS_CODE_NOT_FOUND)
 
@@ -380,7 +388,8 @@ def timeline(sketch_id, timeline_id):
         u'sketch/timeline.html',
         sketch=sketch,
         timeline=sketch_timeline,
-        timeline_form=timeline_form)
+        timeline_form=timeline_form,
+        graphs_enabled=graphs_enabled)
 
 
 @sketch_views.route(
@@ -394,6 +403,7 @@ def views(sketch_id):
     """
     sketch = Sketch.query.get_with_acl(sketch_id)
     trash_form = TrashViewForm()
+    graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
 
     # Trash form POST
     if trash_form.validate_on_submit():
@@ -408,4 +418,25 @@ def views(sketch_id):
         return redirect(u'/sketch/{0:d}/views/'.format(sketch.id))
 
     return render_template(
-        u'sketch/views.html', sketch=sketch, trash_form=trash_form)
+        u'sketch/views.html',
+        sketch=sketch,
+        trash_form=trash_form,
+        graphs_enabled=graphs_enabled)
+
+
+@sketch_views.route(
+    u'/sketch/<int:sketch_id>/graphs/', methods=[u'GET', u'POST'])
+@login_required
+def graphs(sketch_id):
+    """Generates the sketch views template.
+
+    Returns:
+        Template with context.
+    """
+    sketch = Sketch.query.get_with_acl(sketch_id)
+    graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
+
+    return render_template(
+        u'sketch/graphs.html',
+        sketch=sketch,
+        graphs_enabled=graphs_enabled)
