@@ -1,7 +1,7 @@
-// App tests
-import {async, inject, TestBed, ComponentFixture} from '@angular/core/testing'
+import {async, TestBed, ComponentFixture} from '@angular/core/testing'
 import {BrowserDynamicTestingModule, platformBrowserDynamicTesting} from '@angular/platform-browser-dynamic/testing'
 import {BrowserModule} from '@angular/platform-browser'
+
 import {NavigationComponent} from './navigation.component'
 
 TestBed.initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting())

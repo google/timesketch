@@ -43,6 +43,7 @@ class TestConfig(object):
     ELASTIC_HOST = None
     ELASTIC_PORT = None
     UPLOAD_ENABLED = False
+    GRAPH_BACKEND_ENABLED = False
 
 
 class MockDataStore(datastore.DataStore):

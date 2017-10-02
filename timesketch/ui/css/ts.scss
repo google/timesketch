@@ -623,3 +623,76 @@ ul.content-list>li:last-child { border-bottom: none; }
   font-weight: 400;
   src: local('Roboto'), local('Roboto-Regular'), url('/static/fonts/Roboto/Roboto-Regular.ttf') format('truetype');
 }
+
+@mixin ts-graphs-fill-space {
+  position: absolute;
+  top: 0px;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  width: 100%;
+  height: 100%;
+}
+
+ts-graphs-cytoscape {
+  div {
+    @include ts-graphs-fill-space;
+  }
+  @include ts-graphs-fill-space;
+}
+
+ts-graphs-cypher-query {
+  button[type="submit"] i {
+    color: #999;
+  }
+}
+
+ts-graphs-cytoscape-settings {
+  position: absolute;
+  left: 0px;
+  top: 30px;
+  z-index: 1;
+  min-width: 250px;
+  background-color: white;
+  box-shadow: 0 0 1px rgba(0,0,0,0.3);
+  padding: 5px;
+  input[type="number"] {
+    width: 70px;
+  }
+  input[type="checkbox"] {
+    vertical-align: middle;
+    margin: 0px;
+  }
+  input[type="radio"] {
+    vertical-align: middle;
+    margin: 0px;
+  }
+}
+
+ts-graphs-graph-view {
+  @include ts-graphs-fill-space;
+  .graph-view__dropdown {
+    display: inline-block;
+    position: relative;
+    box-shadow: 0 0 1px rgba(0,0,0,0.3) !important;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  > div {
+    @include ts-graphs-fill-space;
+  }
+  h2 {
+    text-align: center;
+    margin-top: 3em;
+  }
+}
+
+ts-graphs-main {
+  height: calc(100vh - 150px);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  div.card {
+    flex-grow: 1; flex-shrink: 1; position: relative;
+  }
+}

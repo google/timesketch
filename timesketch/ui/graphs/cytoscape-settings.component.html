@@ -1,0 +1,28 @@
+<ul>
+  <!-- interaction options -->
+  <li><label>minZoom <input [(ngModel)]="settings.minZoom" type="number" /></label></li>
+  <li><label>maxZoom <input [(ngModel)]="settings.maxZoom" type="number" /></label></li>
+  <li><label><input [(ngModel)]="settings.zoomingEnabled" type="checkbox" /> zoomingEnabled</label></li>
+  <li><label><input [(ngModel)]="settings.userZoomingEnabled" type="checkbox" /> userZoomingEnabled</label></li>
+  <li><label><input [(ngModel)]="settings.panningEnabled" type="checkbox" /> panningEnabled</label></li>
+  <li><label><input [(ngModel)]="settings.userPanningEnabled" type="checkbox" /> userPanningEnabled</label></li>
+  <li><label><input [(ngModel)]="settings.boxSelectionEnabled" type="checkbox" /> boxSelectionEnabled</label></li>
+  <li><label><input type="radio" [(ngModel)]="settings.selectionType" value="additive" name="selectionType" /> selectionType="additive"</label></li>
+  <li><label><input type="radio" [(ngModel)]="settings.selectionType" value="single" name="selectionType" /> selectionType="single"</label></li>
+  <li><label>touchTapThreshold <input [(ngModel)]="settings.touchTapThreshold" type="number" /></label></li>
+  <li><label>desktopTapThreshold <input [(ngModel)]="settings.desktopTapThreshold" type="number" /></label></li>
+  <li><label><input [(ngModel)]="settings.autolock" type="checkbox" /> autolock</label></li>
+  <li><label><input [(ngModel)]="settings.autoungrabify" type="checkbox" /> autoungrabify</label></li>
+  <li><label><input [(ngModel)]="settings.autounselectify" type="checkbox" /> autounselectify</label></li>
+
+  <!-- rendering options -->
+  <li><label><input [(ngModel)]="settings.headless" type="checkbox" /> headless</label></li>
+  <li><label><input [(ngModel)]="settings.styleEnabled" type="checkbox" /> styleEnabled</label></li>
+  <li><label><input [(ngModel)]="settings.hideEdgesOnViewport" type="checkbox" /> hideEdgesOnViewport</label></li>
+  <li><label><input [(ngModel)]="settings.hideLabelsOnViewport" type="checkbox" /> hideLabelsOnViewport</label></li>
+  <li><label><input [(ngModel)]="settings.textureOnViewport" type="checkbox" /> textureOnViewport</label></li>
+  <li><label><input [(ngModel)]="settings.motionBlur" type="checkbox" /> motionBlur</label></li>
+  <li><label>motionBlurOpacity <input [(ngModel)]="settings.motionBlurOpacity" type="number" /></label></li>
+  <li><label>wheelSensitivity <input [(ngModel)]="settings.wheelSensitivity" type="number" /></label></li>
+  <li><label>pixelRatio <input [(ngModel)]="settings.pixelRatio" type="number" /></label></li>
+</ul>

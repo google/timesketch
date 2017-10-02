@@ -17,6 +17,7 @@ import angular from 'angularjs-for-webpack'
 import {NgModule} from '@angular/core'
 import {CommonModule} from '@angular/common'
 import {downgradeComponent} from '@angular/upgrade/static'
+
 import {tsCountEvents} from './count-events.directive'
 import {tsTimelinesList} from './timelines.directive'
 import {tsSavedViewList, tsSearchTemplateList} from './views.directive'
