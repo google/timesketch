@@ -13,10 +13,8 @@
 # limitations under the License.
 """Celery task for processing Plaso storage files."""
 
-import os
 import logging
 import subprocess
-import sys
 
 from flask import current_app
 
