@@ -35,6 +35,7 @@ export const tsHeatmap = function ($window, timesketchApi) {
             queryDsl: '=',
             meta: '=',
             showCharts: '=',
+            disableChart: '=',
         },
         require: '^tsSearch',
         link: function (scope, element, attrs, ctrl) {
@@ -64,6 +65,14 @@ export const tsHeatmap = function ($window, timesketchApi) {
 
             // Render the chart svg with D3.js
             scope.render_heatmap = function (data) {
+                // Don't render chart if there is no data
+                scope.disableChart = false
+                if (data.length < 1) {
+                  scope.disableChart = true
+                  d3.select('svg').remove()
+                  return
+                }
+
                 d3.select('svg').remove()
                 const margin = { top: 50, right: 75, bottom: 0, left: 40 }
                 const svgWidth = element[0].parentElement.parentElement.parentElement.offsetParent.offsetWidth - margin.left - margin.right

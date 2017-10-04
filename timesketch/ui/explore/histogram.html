@@ -1,4 +1,5 @@
 <div>
-    <button class="btn btn-link pull-right" ng-click="toggleChartType()">Switch to {{chartType === "bar" ? "line" : "bar"}} chart</button>
-    <canvas id="histogram" width="400" height="100"></canvas>
+    <button ng-show="!disableChart" class="btn btn-link pull-right" ng-click="toggleChartType()">Switch to {{chartType === "bar" ? "line" : "bar"}} chart</button>
+    <canvas ng-show="!disableChart" id="histogram" width="400" height="100"></canvas>
 </div>
+<span ng-show="disableChart">Chart disabled because there were too many or too few search results.<br>Try to use a filter or change your query.</span>

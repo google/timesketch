@@ -60,6 +60,13 @@ export const tsHistogram = function ($window, timesketchApi) {
             }
 
             function render_histogram (aggregation) {
+                // Don't render chart if there is no data
+                scope.disableChart = false
+                if (aggregation.length < 1) {
+                  scope.disableChart = true
+                  return
+                }
+
                 // Remove the current histogram canvas to avoid old data
                 // to be rendered.
                 if (scope.histogram) {

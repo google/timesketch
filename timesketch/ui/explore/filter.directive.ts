@@ -68,6 +68,7 @@ export const tsFilter = function () {
                 scope.meta.es_total_count = 0
                 scope.meta.es_time = 0
                 scope.meta.noisy = false
+                ctrl.search(scope.query, scope.filter, scope.queryDsl)
             }
 
             scope.parseFilterDate = function (datevalue, datevalue_end){
