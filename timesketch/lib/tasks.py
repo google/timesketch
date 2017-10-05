@@ -41,13 +41,12 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
     Returns:
         String with summary of processed events.
     """
-    # TODO: Do this in code instead of with subprocess.
     cmd = [
-        'psort.py', '-o', 'timesketch', source_file_path, '--name',
-        timeline_name, '--status_view', 'none', '--index', index_name
+        u'psort.py', u'-o', u'timesketch', source_file_path, u'--name',
+        timeline_name, u'--status_view', u'none', u'--index', index_name
     ]
     if username:
-        cmd.append('--username')
+        cmd.append(u'--username')
         cmd.append(username)
 
     # Run psort.py
