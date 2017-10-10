@@ -258,8 +258,7 @@ class BaseResource(object):
             Dictionary with resource data.
         """
         if not self.resource_data or refresh_cache:
-            self.resource_data = self.api.fetch_resource_data(
-                self.resource_uri)
+            self.resource_data = self.api.fetch_resource_data(self.resource_uri)
         return self.resource_data
 
     @property
@@ -461,6 +460,14 @@ class Sketch(BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
 
+    def graph(self, query):
+        resource_url = u'{0:s}/sketches/{1:d}/explore/graph/'.format(
+            self.api.api_root, self.id)
+        form_data = {u'query': query, u'output_format': u'cytoscape'}
+
+        response = self.api.session.post(resource_url, json=form_data)
+        return response.json()
+
 
 class SearchIndex(BaseResource):
     """Timesketch searchindex object.
@@ -525,8 +532,7 @@ class View(BaseResource):
         """
         self.id = view_id
         self.name = view_name
-        resource_uri = u'sketches/{0:d}/views/{1:d}/'.format(
-            sketch_id, self.id)
+        resource_uri = u'sketches/{0:d}/views/{1:d}/'.format(sketch_id, self.id)
         super(View, self).__init__(api, resource_uri)
 
     @property
@@ -567,11 +573,7 @@ class Timeline(BaseResource):
         id: Primary key of the view.
     """
 
-    def __init__(self,
-                 timeline_id,
-                 sketch_id,
-                 api,
-                 name=None,
+    def __init__(self, timeline_id, sketch_id, api, name=None,
                  searchindex=None):
         """Initializes the Timeline object.
 

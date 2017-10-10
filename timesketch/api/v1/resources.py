@@ -515,8 +515,7 @@ class ViewResource(ResourceMixin, Resource):
             sketch = Sketch.query.get_with_acl(sketch_id)
             view = View.query.get(view_id)
             view.query_string = form.query.data
-            view.query_filter = json.dumps(
-                form.filter.data, ensure_ascii=False)
+            view.query_filter = json.dumps(form.filter.data, ensure_ascii=False)
             view.query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
             view.user = current_user
             view.sketch = sketch
@@ -731,8 +730,7 @@ class EventResource(ResourceMixin, Resource):
     def __init__(self):
         super(EventResource, self).__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument(
-            u'searchindex_id', type=unicode, required=True)
+        self.parser.add_argument(u'searchindex_id', type=unicode, required=True)
         self.parser.add_argument(u'event_id', type=unicode, required=True)
 
     @login_required
@@ -919,8 +917,7 @@ class UploadFileResource(ResourceMixin, Resource):
                 user=current_user,
                 index_name=index_name)
             searchindex.grant_permission(permission=u'read', user=current_user)
-            searchindex.grant_permission(
-                permission=u'write', user=current_user)
+            searchindex.grant_permission(permission=u'write', user=current_user)
             searchindex.grant_permission(
                 permission=u'delete', user=current_user)
             searchindex.set_status(u'processing')

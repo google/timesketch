@@ -17,6 +17,125 @@ from neo4jrestclient.client import GraphDatabase
 from neo4jrestclient.constants import DATA_GRAPH
 
 
+def get_node_object(entity):
+    node_registry = {
+        u'Machine': MachineNode,
+        u'User': UserNode,
+        u'Service': ServiceNode,
+        u'ServiceImagePath': ServiceImagePathNode
+    }
+
+    edge_registry = {
+        u'ACCESS': AccessEdge,
+        u'START': StartEdge,
+        u'HAS': HasEdge
+    }
+
+    try:
+        _type = entity[u'labels'][0]
+        registry = node_registry
+    except KeyError:
+        _type = entity[u'type']
+        registry = edge_registry
+
+    return registry.get(_type)(entity)
+
+
+class BaseEdgeNode(object):
+
+    def __init__(self, node):
+        self.id = node[u'id']
+        try:
+            self.type = node[u'labels'][0]
+        except KeyError:
+            self.type = node[u'type']
+            self.startNode = node[u'startNode']
+            self.endNode = node[u'endNode']
+
+        properties = node[u'properties']
+        for key in properties:
+            setattr(self, key, properties[key])
+
+    @property
+    def human_readable(self):
+        return NotImplemented
+
+    def to_dict(self):
+        attributes = self.__dict__
+        attributes[u'human_readable'] = self.human_readable
+        return attributes
+
+
+class MachineNode(BaseEdgeNode):
+
+    def __init__(self, node):
+        super(MachineNode, self).__init__(node)
+
+    @property
+    def human_readable(self):
+        return self.hostname
+
+
+class UserNode(BaseEdgeNode):
+
+    def __init__(self, node):
+        super(UserNode, self).__init__(node)
+
+    @property
+    def human_readable(self):
+        return self.username
+
+
+class ServiceNode(BaseEdgeNode):
+
+    def __init__(self, node):
+        super(ServiceNode, self).__init__(node)
+
+    @property
+    def human_readable(self):
+        return self.service_name
+
+
+class ServiceImagePathNode(BaseEdgeNode):
+
+    def __init__(self, node):
+        super(ServiceImagePathNode, self).__init__(node)
+
+    @property
+    def human_readable(self):
+        return self.image_path
+
+
+class AccessEdge(BaseEdgeNode):
+
+    def __init__(self, edge):
+        super(AccessEdge, self).__init__(edge)
+
+    @property
+    def human_readable(self):
+        return self.method
+
+
+class StartEdge(BaseEdgeNode):
+
+    def __init__(self, edge):
+        super(StartEdge, self).__init__(edge)
+
+    @property
+    def human_readable(self):
+        return self.start_type
+
+
+class HasEdge(BaseEdgeNode):
+
+    def __init__(self, edge):
+        super(HasEdge, self).__init__(edge)
+
+    @property
+    def human_readable(self):
+        return self.type
+
+
 class Neo4jDataStore(object):
     """Implements the Neo4j datastore.
 
@@ -184,6 +303,16 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         """Initialize the Cytoscape output formatter object."""
         super(CytoscapeOutputFormatter, self).__init__()
 
+    def _human_readable_helper(self, data):
+        """Helper function to format human readable string
+
+        Args:
+            data: Dictionary for a Node or Edge
+
+        Returns:
+            Human readable string
+        """
+
     def format_node(self, node):
         """Format a Cytoscape graph node.
 
@@ -193,13 +322,8 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         Returns:
             Dictionary with a Cytoscape formatted node
         """
-        cytoscape_node = {
-            u'data': {
-                u'id': node[u'id'],
-                u'label': node[u'properties'][u'name'],
-                u'type': node[u'labels'][0]
-            }
-        }
+        node_dict = get_node_object(node).to_dict()
+        cytoscape_node = {u'data': node_dict}
         return cytoscape_node
 
     def format_edge(self, edge):
@@ -211,16 +335,8 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         Returns:
             Dictionary with a Cytoscape formatted edge
         """
-        try:
-            label = edge[u'properties'][u'human_readable']
-        except KeyError:
-            label = edge[u'type']
-        cytoscape_edge = {
-            u'data': {
-                u'id': edge[u'id'],
-                u'source': edge[u'startNode'],
-                u'target': edge[u'endNode'],
-                u'label': label
-            }
-        }
+        edge_dict = get_node_object(edge).to_dict()
+        edge_dict[u'source'] = edge_dict.pop(u'startNode')
+        edge_dict[u'target'] = edge_dict.pop(u'endNode')
+        cytoscape_edge = {u'data': edge_dict}
         return cytoscape_edge
