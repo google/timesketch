@@ -95,7 +95,5 @@ class Neo4jTest(BaseTest):
         client = Neo4jDataStore(username=u'test', password=u'test')
         formatted_response = client.search(
             query=u'', output_format=u'cytoscape')
-        import json
-        print json.dumps(formatted_response, indent=2)
         self.assertIsInstance(formatted_response, dict)
         self.assertDictEqual(formatted_response, expected_output)

@@ -214,6 +214,14 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         super(CytoscapeOutputFormatter, self).__init__()
 
     def _format_entity(self, entity):
+        """Flatten properties and add type attribute to both nodes and edges.
+
+        Args:
+            entity: Dictionary with Neo4j node or edge.
+
+        Returns:
+            Dictionary with Cytoscape compatible node or edge.
+        """
         new_entity = dict(id=entity[u'id'])
 
         # Depending on if this is a Node or Edge
