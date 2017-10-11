@@ -20,8 +20,7 @@ from timesketch.lib.testlib import MockGraphDatabase
 from timesketch.lib.testlib import BaseTest
 
 
-@mock.patch(u'timesketch.lib.datastores.neo4j.GraphDatabase',
-            MockGraphDatabase)
+@mock.patch(u'timesketch.lib.datastores.neo4j.GraphDatabase', MockGraphDatabase)
 class Neo4jTest(BaseTest):
     """Test Neo4j datastore."""
 
@@ -29,29 +28,28 @@ class Neo4jTest(BaseTest):
         """Test Neo4j output format."""
         expected_output = {
             u'graph': [{
-                u'relationships': [{
-                    u'endNode': u'2',
-                    u'startNode': u'1',
-                    u'type': u'TEST',
-                    u'id': u'3',
-                    u'properties': {
-                        u'human_readable': u'test',
-                        u'type': u'test'
-                    }
-                }],
                 u'nodes': [{
-                    u'labels': [u'Test'],
                     u'id': u'1',
+                    u'labels': [u'User'],
                     u'properties': {
-                        u'name': u'test',
+                        u'username': u'test',
                         u'uid': u'123456'
                     }
                 }, {
-                    u'labels': [u'Test'],
                     u'id': u'2',
+                    u'labels': [u'Machine'],
                     u'properties': {
-                        u'name': u'test'
+                        u'hostname': u'test'
                     }
+                }],
+                u'relationships': [{
+                    u'endNode': u'2',
+                    u'id': u'3',
+                    u'startNode': u'1',
+                    u'properties': {
+                        u'method': u'Network'
+                    },
+                    u'type': u'ACCESS'
                 }]
             }],
             u'rows':
@@ -69,23 +67,28 @@ class Neo4jTest(BaseTest):
             u'graph': {
                 u'nodes': [{
                     u'data': {
-                        u'type': u'Test',
+                        u'username': u'test',
+                        u'human_readable': u'test',
+                        u'type': u'User',
                         u'id': u'1',
-                        u'label': u'test'
+                        u'uid': u'123456'
                     }
                 }, {
                     u'data': {
-                        u'type': u'Test',
-                        u'id': u'2',
-                        u'label': u'test'
+                        u'human_readable': u'test',
+                        u'hostname': u'test',
+                        u'type': u'Machine',
+                        u'id': u'2'
                     }
                 }],
                 u'edges': [{
                     u'data': {
+                        u'human_readable': u'Network',
+                        u'target': u'2',
+                        u'method': u'Network',
                         u'source': u'1',
-                        u'label': u'test',
-                        u'id': u'3',
-                        u'target': u'2'
+                        u'type': u'ACCESS',
+                        u'id': u'3'
                     }
                 }]
             },
@@ -95,5 +98,7 @@ class Neo4jTest(BaseTest):
         client = Neo4jDataStore(username=u'test', password=u'test')
         formatted_response = client.search(
             query=u'', output_format=u'cytoscape')
+        import json
+        print json.dumps(formatted_response, indent=2)
         self.assertIsInstance(formatted_response, dict)
         self.assertDictEqual(formatted_response, expected_output)

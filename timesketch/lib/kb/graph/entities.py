@@ -19,6 +19,8 @@
 class BaseEntity(object):
     """Base class for graph entities."""
 
+    NEO4J_TYPE = None
+
     def __init__(self, entity):
         """Initialize. Attributes will be filled out from the node or edge
         edge dictionaty.
@@ -64,6 +66,8 @@ class BaseEntity(object):
 
 class GenericEntity(BaseEntity):
     """Generic entity."""
+
+    NEO4J_TYPE = None
 
     def __init__(self, entity):
         super(GenericEntity, self).__init__(entity)
