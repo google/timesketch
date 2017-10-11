@@ -16,6 +16,35 @@
 from neo4jrestclient.client import GraphDatabase
 from neo4jrestclient.constants import DATA_GRAPH
 
+# Schema for Neo4j nodes and edges
+SCHEMA = {
+    u'nodes': {
+        u'Machine': {
+            u'label_template': u'{hostname}'
+        },
+        u'User': {
+            u'label_template': u'{username}'
+        },
+        u'WindowsService': {
+            u'label_template': u'{service_name}'
+        },
+        u'WindowsServiceImagePath': {
+            u'label_template': u'{image_path}'
+        }
+    },
+    u'edges': {
+        u'ACCESS': {
+            u'label_template': u'{method}'
+        },
+        u'START': {
+            u'label_template': u'{start_type}'
+        },
+        u'HAS': {
+            u'label_template': u'{label}'
+        }
+    }
+}
+
 
 class Neo4jDataStore(object):
     """Implements the Neo4j datastore.
@@ -184,6 +213,33 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         """Initialize the Cytoscape output formatter object."""
         super(CytoscapeOutputFormatter, self).__init__()
 
+    def _format_entity(self, entity):
+        """Flatten properties and add type attribute to both nodes and edges.
+
+        Args:
+            entity: Dictionary with Neo4j node or edge.
+
+        Returns:
+            Dictionary with Cytoscape compatible node or edge.
+        """
+        new_entity = dict(id=entity[u'id'])
+
+        # Depending on if this is a Node or Edge
+        try:
+            new_entity[u'type'] = entity[u'labels'][0]
+        except KeyError:
+            new_entity[u'type'] = entity[u'type']
+            new_entity[u'source'] = entity[u'startNode']
+            new_entity[u'target'] = entity[u'endNode']
+
+        # Copy over items form Neo4j properties
+        properties = entity.get(u'properties')
+        if properties:
+            properties_copy = properties.copy()
+            new_entity.update(properties_copy)
+
+        return new_entity
+
     def format_node(self, node):
         """Format a Cytoscape graph node.
 
@@ -193,13 +249,8 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         Returns:
             Dictionary with a Cytoscape formatted node
         """
-        cytoscape_node = {
-            u'data': {
-                u'id': node[u'id'],
-                u'label': node[u'properties'][u'name'],
-                u'type': node[u'labels'][0]
-            }
-        }
+        node_dict = self._format_entity(node)
+        cytoscape_node = {u'data': node_dict}
         return cytoscape_node
 
     def format_edge(self, edge):
@@ -211,16 +262,6 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         Returns:
             Dictionary with a Cytoscape formatted edge
         """
-        try:
-            label = edge[u'properties'][u'human_readable']
-        except KeyError:
-            label = edge[u'type']
-        cytoscape_edge = {
-            u'data': {
-                u'id': edge[u'id'],
-                u'source': edge[u'startNode'],
-                u'target': edge[u'endNode'],
-                u'label': label
-            }
-        }
+        edge_dict = self._format_entity(edge)
+        cytoscape_edge = {u'data': edge_dict}
         return cytoscape_edge
