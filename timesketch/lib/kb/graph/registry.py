@@ -13,6 +13,8 @@
 # limitations under the License.
 """Graph entity registry."""
 
+# TODO: Add tests.
+
 import inspect
 from timesketch.lib.kb.graph import entities
 
