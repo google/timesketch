@@ -16,7 +16,34 @@
 from neo4jrestclient.client import GraphDatabase
 from neo4jrestclient.constants import DATA_GRAPH
 
-from timesketch.lib.kb.graph.registry import GraphEntityRegistry
+# Schema for Neo4j nodes and edges
+SCHEMA = {
+    u'nodes': {
+        u'Machine': {
+            u'label_template': u'{hostname}'
+        },
+        u'User': {
+            u'label_template': u'{username}'
+        },
+        u'WindowsService': {
+            u'label_template': u'{service_name}'
+        },
+        u'WindowsServiceImagePath': {
+            u'label_template': u'{image_path}'
+        }
+    },
+    u'edges': {
+        u'ACCESS': {
+            u'label_template': u'{method}'
+        },
+        u'START': {
+            u'label_template': u'{start_type}'
+        },
+        u'HAS': {
+            u'label_template': u'{label}'
+        }
+    }
+}
 
 
 class Neo4jDataStore(object):
@@ -91,7 +118,6 @@ class OutputFormatterBaseClass(object):
         """Initialize the output formatter object."""
         super(OutputFormatterBaseClass, self).__init__()
         self.schema = dict(stats=None, rows=None, graph=None)
-        self.registry = GraphEntityRegistry()
 
     def format(self, data, return_rows):
         """Format Neo4j query result.
@@ -187,6 +213,25 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         """Initialize the Cytoscape output formatter object."""
         super(CytoscapeOutputFormatter, self).__init__()
 
+    def _format_entity(self, entity):
+        new_entity = dict(id=entity[u'id'])
+
+        # Depending on if this is a Node or Edge
+        try:
+            new_entity[u'type'] = entity[u'labels'][0]
+        except KeyError:
+            new_entity[u'type'] = entity[u'type']
+            new_entity[u'source'] = entity[u'startNode']
+            new_entity[u'target'] = entity[u'endNode']
+
+        # Copy over items form Neo4j properties
+        properties = entity.get(u'properties')
+        if properties:
+            properties_copy = properties.copy()
+            new_entity.update(properties_copy)
+
+        return new_entity
+
     def format_node(self, node):
         """Format a Cytoscape graph node.
 
@@ -196,8 +241,7 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         Returns:
             Dictionary with a Cytoscape formatted node
         """
-        entity = self.registry.get_entity(node)
-        node_dict = entity.to_dict()
+        node_dict = self._format_entity(node)
         cytoscape_node = {u'data': node_dict}
         return cytoscape_node
 
@@ -210,9 +254,6 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         Returns:
             Dictionary with a Cytoscape formatted edge
         """
-        entity = self.registry.get_entity(edge)
-        edge_dict = entity.to_dict()
-        edge_dict[u'source'] = edge_dict.pop(u'startNode')
-        edge_dict[u'target'] = edge_dict.pop(u'endNode')
+        edge_dict = self._format_entity(edge)
         cytoscape_edge = {u'data': edge_dict}
         return cytoscape_edge

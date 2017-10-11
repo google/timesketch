@@ -68,14 +68,12 @@ class Neo4jTest(BaseTest):
                 u'nodes': [{
                     u'data': {
                         u'username': u'test',
-                        u'human_readable': u'test',
                         u'type': u'User',
                         u'id': u'1',
                         u'uid': u'123456'
                     }
                 }, {
                     u'data': {
-                        u'human_readable': u'test',
                         u'hostname': u'test',
                         u'type': u'Machine',
                         u'id': u'2'
@@ -83,7 +81,6 @@ class Neo4jTest(BaseTest):
                 }],
                 u'edges': [{
                     u'data': {
-                        u'human_readable': u'Network',
                         u'target': u'2',
                         u'method': u'Network',
                         u'source': u'1',
