@@ -460,14 +460,6 @@ class Sketch(BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
 
-    def graph(self, query):
-        resource_url = u'{0:s}/sketches/{1:d}/explore/graph/'.format(
-            self.api.api_root, self.id)
-        form_data = {u'query': query, u'output_format': u'cytoscape'}
-
-        response = self.api.session.post(resource_url, json=form_data)
-        return response.json()
-
 
 class SearchIndex(BaseResource):
     """Timesketch searchindex object.
