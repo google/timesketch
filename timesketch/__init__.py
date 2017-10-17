@@ -44,6 +44,10 @@ from timesketch.api.v1.resources import TimelineResource
 from timesketch.api.v1.resources import TimelineListResource
 from timesketch.api.v1.resources import SearchIndexListResource
 from timesketch.api.v1.resources import SearchIndexResource
+from timesketch.api.experimental.resources import WinLoginsResource
+from timesketch.api.experimental.resources import WinServicesResource
+from timesketch.api.experimental.resources import CreateGraphResource
+from timesketch.api.experimental.resources import DeleteGraphResource
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.models import configure_engine
 from timesketch.models import init_db
@@ -153,6 +157,16 @@ def create_app(config=None):
                         u'/searchindices/<int:searchindex_id>/')
     api_v1.add_resource(GraphResource,
                         u'/sketches/<int:sketch_id>/explore/graph/')
+
+    api_experimental = Api(app, prefix=u'/api/experimental')
+    api_experimental.add_resource(
+        WinLoginsResource, u'/sketches/<int:sketch_id>/win_logins')
+    api_experimental.add_resource(
+        WinServicesResource, u'/sketches/<int:sketch_id>/win_services')
+    api_experimental.add_resource(
+        CreateGraphResource, u'/sketches/<int:sketch_id>/create_graph')
+    api_experimental.add_resource(
+        DeleteGraphResource, u'/sketches/<int:sketch_id>/delete_graph')
 
     # Register error handlers
     # pylint: disable=unused-variable

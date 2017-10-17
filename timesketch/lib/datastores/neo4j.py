@@ -88,11 +88,12 @@ class Neo4jDataStore(object):
             formatter = formatter_registry.get(default_output_format)
         return formatter()
 
-    def search(self, query, output_format=None, return_rows=False):
+    def query(self, query, params=None, output_format=None, return_rows=False):
         """Search the graph.
 
         Args:
             query: A cypher query
+            params: A dictionary with query parameters
             output_format: Name of the output format to use
             return_rows: Boolean indicating if rows should be returned
 
@@ -102,7 +103,8 @@ class Neo4jDataStore(object):
         data_content = DATA_GRAPH
         if return_rows:
             data_content = True
-        query_result = self.client.query(query, data_contents=data_content)
+        query_result = self.client.query(
+            query, params=params, data_contents=data_content)
         formatter = self._get_formatter(output_format)
         return formatter.format(query_result, return_rows)
 
