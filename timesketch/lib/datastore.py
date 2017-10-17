@@ -23,7 +23,8 @@ class DataStore(object):
 
     @abc.abstractmethod
     def search(self, sketch_id, query_string, query_filter, query_dsl, indices,
-               aggregations, return_results, return_fields, enable_scroll):
+               count, aggregations, return_results, return_fields,
+               enable_scroll):
         """Return search results.
 
         Args:
@@ -32,6 +33,7 @@ class DataStore(object):
             query_filter: Dictionary containing filters to apply
             query_dsl: Dictionary containing Elasticsearch DSL query
             indices: List of indices to query
+            count: Boolean indicating if we should only return result count
             aggregations: Dict of Elasticsearch aggregations
             return_results: Boolean indicating if results should be returned
             return_fields: List of fields to return

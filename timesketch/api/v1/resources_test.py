@@ -27,6 +27,7 @@ from timesketch.api.v1.resources import ResourceMixin
 
 class ResourceMixinTest(BaseTest):
     """Test ResourceMixin."""
+
     def test_to_json_empty_list(self):
         """Behavior of to_json when given an empty list."""
         response = ResourceMixin().to_json([])
@@ -223,7 +224,6 @@ class AggregationResourceTest(BaseTest):
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
             content_type=u'application/json')
-        self.assertEqual(len(response.json[u'objects']), 168)
         self.assert200(response)
 
 

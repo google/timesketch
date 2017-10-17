@@ -80,8 +80,10 @@
                                 query-dsl="queryDsl"
                                 meta="meta"
                                 sketch-id="sketchId"
-                                show-charts="showCharts">
+                                show-charts="showCharts"
+                                disable-chart="disableChart">
                         </ts-heatmap>
+                        <span ng-show="disableChart">Chart disabled because there were too many or too few search results.<br>Try to use a filter or change your query.</span>
                     </div>
                     <div role="tabpanel" class="tab-pane" id="histogram-tab">
                         <ts-histogram
@@ -90,7 +92,8 @@
                                 query-dsl="queryDsl"
                                 meta="meta"
                                 sketch-id="sketchId"
-                                show-charts="showCharts">
+                                show-charts="showCharts"
+                                disable-chart="disableChart">
                         </ts-histogram>
                     </div>
 
