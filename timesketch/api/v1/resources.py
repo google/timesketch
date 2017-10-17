@@ -54,6 +54,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.datastores.neo4j import Neo4jDataStore
+from timesketch.lib.datastores.neo4j import SCHEMA as neo4j_schema
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.lib.forms import AddTimelineSimpleForm
 from timesketch.lib.forms import AggregationForm
@@ -515,8 +516,7 @@ class ViewResource(ResourceMixin, Resource):
             sketch = Sketch.query.get_with_acl(sketch_id)
             view = View.query.get(view_id)
             view.query_string = form.query.data
-            view.query_filter = json.dumps(
-                form.filter.data, ensure_ascii=False)
+            view.query_filter = json.dumps(form.filter.data, ensure_ascii=False)
             view.query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
             view.user = current_user
             view.sketch = sketch
@@ -731,8 +731,7 @@ class EventResource(ResourceMixin, Resource):
     def __init__(self):
         super(EventResource, self).__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument(
-            u'searchindex_id', type=unicode, required=True)
+        self.parser.add_argument(u'searchindex_id', type=unicode, required=True)
         self.parser.add_argument(u'event_id', type=unicode, required=True)
 
     @login_required
@@ -919,8 +918,7 @@ class UploadFileResource(ResourceMixin, Resource):
                 user=current_user,
                 index_name=index_name)
             searchindex.grant_permission(permission=u'read', user=current_user)
-            searchindex.grant_permission(
-                permission=u'write', user=current_user)
+            searchindex.grant_permission(permission=u'write', user=current_user)
             searchindex.grant_permission(
                 permission=u'delete', user=current_user)
             searchindex.set_status(u'processing')
@@ -1280,7 +1278,9 @@ class GraphResource(ResourceMixin, Resource):
             result = self.graph_datastore.search(
                 query, output_format=output_format)
             schema = {
-                u'meta': {},
+                u'meta': {
+                    u'schema': neo4j_schema
+                },
                 u'objects': [{
                     u'graph': result[u'graph'],
                     u'rows': result[u'rows'],

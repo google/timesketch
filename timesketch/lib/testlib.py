@@ -173,27 +173,26 @@ class MockGraphDatabase(object):
         MOCK_GRAPH = [{
             u'nodes': [{
                 u'id': u'1',
-                u'labels': [u'Test'],
+                u'labels': [u'User'],
                 u'properties': {
-                    u'name': u'test',
+                    u'username': u'test',
                     u'uid': u'123456'
                 }
             }, {
                 u'id': u'2',
-                u'labels': [u'Test'],
+                u'labels': [u'Machine'],
                 u'properties': {
-                    u'name': u'test'
+                    u'hostname': u'test'
                 }
             }],
             u'relationships': [{
                 u'endNode': u'2',
                 u'id': u'3',
-                u'properties': {
-                    u'human_readable': u'test',
-                    u'type': u'test'
-                },
                 u'startNode': u'1',
-                u'type': u'TEST'
+                u'properties': {
+                    u'method': u'Network'
+                },
+                u'type': u'ACCESS'
             }]
         }]
         MOCK_ROWS = {}
