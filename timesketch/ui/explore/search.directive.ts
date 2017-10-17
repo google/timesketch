@@ -78,7 +78,7 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
 
             $scope.$on('datetime-clicked', function (event, clickObj) {
                 $scope.showFilters = true
-                $scope.filter.time_start= clickObj.datetimeclicked
+                $scope.filter.time_start = clickObj.datetimeclicked
             })
 
             if ($scope.searchtemplateId) {
@@ -203,7 +203,7 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
                 try {
                     const currentQueryDsl = JSON.parse($scope.queryDsl)
                     $scope.query = currentQueryDsl['query']['filtered']['query']['query_string']['query']
-                } catch(err) {}
+                } catch (err) {}
                 $scope.queryDsl = ''
                 $scope.showAdvanced = false
             }

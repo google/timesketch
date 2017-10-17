@@ -1,7 +1,8 @@
 {
   "extends": ["tslint:recommended", "codelyzer"],
   "rulesDirectory": [
-    "node_modules/codelyzer"
+    "node_modules/codelyzer",
+    "node_modules/tslint-origin-ordered-imports-rule/dist"
   ],
   "rules": {
     "max-line-length": {
@@ -9,26 +10,48 @@
     },
     "indent": [true, "spaces", 4],
     "semicolon": [true, "never"],
-    "quotemark": [true, "single"],
+    "quotemark": [true, "single", "avoid-escape"],
     "only-arrow-functions": false,
     "ordered-imports": false,
     "trailing-comma": [true,
-      {"multiline": "always", "singleline": "never"}
+      {"multiline": {
+        "typeLiterals": "ignore",
+        "objects": "always",
+        "arrays": "always",
+        "functions": "ignore",
+        "exports": "always"
+      }, "singleline": "never"}
     ],
     "prefer-const": true,
     "object-literal-shorthand": false,
     "object-literal-sort-keys": false,
     "one-variable-per-declaration": true,
-    "variable-name": [true, "ban-keywords", "check-format", "allow-snake-case"],
+    "variable-name": [
+      true, "ban-keywords", "check-format", "allow-snake-case",
+      "allow-leading-underscore"
+    ],
     "prefer-for-of": true,
     "object-literal-key-quotes": false,
     "no-string-literal": false,
     "triple-equals": false,
-    "space-before-function-paren": [true, "always"],
-    "whitespace": true,
+    "space-before-function-paren": [true, {
+      "anonymous": "always", "named": "never", "asyncArrow": "always",
+      "method": "never", "constructor": "never"
+    }],
+    "whitespace": [
+      true,
+      "check-branch", "check-decl", "check-operator",
+      "check-separator", "check-rest-spread", "check-type", "check-typecast",
+      "check-type-operator", "check-preblock"
+    ],
     "no-empty": false,
     "no-shadowed-variable": false,
     "member-access": false,
+    "curly": [true, "ignore-same-line"],
+    "interface-name": [true, "never-prefix"],
+    "no-unused-variable": [true, {"ignore-pattern": "angular"}],
+    "member-ordering": false,
+    "interface-over-type-literal": false,
 
     "angular-whitespace": [true, "check-interpolation", "check-pipe", "check-semicolon"],
     "banana-in-box": true,
@@ -57,7 +80,9 @@
     "templates-use-public": true,
     "no-access-missing-member": true,
     "invoke-injectable": true,
-    "template-to-ng-template": true
+    "template-to-ng-template": true,
+
+    "origin-ordered-imports": true
   },
   "jsRules": {
     "max-line-length": {

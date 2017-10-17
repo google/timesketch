@@ -7,7 +7,7 @@ import 'zone.js/dist/sync-test'
 import 'zone.js/dist/proxy'
 import 'zone.js/dist/jasmine-patch'
 
-import 'app.module'
+import './app.module'
 
 // require all modules ending in ".spec.ts" from the current directory and
 // all subdirectories

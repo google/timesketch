@@ -2,7 +2,7 @@ import * as $ from 'jquery'
 import angular from 'angularjs-for-webpack'
 import {downgradeModule} from '@angular/upgrade/static'
 
-import {tsAppModule, AppModule} from 'app.module'
+import {tsAppModule, AppModule} from './app.module'
 
 $(function () {
 
