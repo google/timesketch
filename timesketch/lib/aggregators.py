@@ -14,6 +14,7 @@
 """Elasticsearch aggregations."""
 
 # Max number of search hits to chart
+# TDOD: Move to config
 MAX_RESULT_LIMIT = 300000
 
 
