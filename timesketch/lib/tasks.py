@@ -13,18 +13,10 @@
 # limitations under the License.
 """Celery task for processing Plaso storage files."""
 
-import os
 import logging
-import sys
+import subprocess
 
 from flask import current_app
-# We currently don't have plaso in our Travis setup. This is a workaround
-# for that until we fix the Travis environment.
-# TODO: Add Plaso to our Travis environment we are running our tests in.
-try:
-    from plaso.frontend import psort
-except ImportError:
-    pass
 
 from timesketch import create_app
 from timesketch import create_celery_app
@@ -34,20 +26,6 @@ from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 
 celery = create_celery_app()
-
-
-def get_data_location():
-    """Path to the plaso data directory.
-
-    Returns:
-        The path to where the plaso data directory is or None if not existing.
-    """
-    data_location = current_app.config.get(u'PLASO_DATA_LOCATION', None)
-    if not data_location:
-        data_location = os.path.join(sys.prefix, u'share', u'plaso')
-    if not os.path.exists(data_location):
-        data_location = None
-    return data_location
 
 
 @celery.task(track_started=True)
@@ -61,30 +39,19 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
         username: Username of the user who will own the timeline.
 
     Returns:
-        Dictionary with count of processed events.
+        String with summary of processed events.
     """
-    plaso_data_location = get_data_location()
-    flush_interval = 1000  # events to queue before bulk index
-    doc_type = u'plaso_event'  # Document type for Elasticsearch
-
-    # Use Plaso psort frontend tool.
-    frontend = psort.PsortFrontend()
-    frontend.SetDataLocation(plaso_data_location)
-    storage_reader = frontend.CreateStorageReader(source_file_path)
-
-    # Setup the Timesketch output module.
-    output_module = frontend.CreateOutputModule(u'timesketch')
-    output_module.SetIndexName(index_name)
-    output_module.SetTimelineName(timeline_name)
-    output_module.SetFlushInterval(flush_interval)
-    output_module.SetDocType(doc_type)
+    cmd = [
+        u'psort.py', u'-o', u'timesketch', source_file_path, u'--name',
+        timeline_name, u'--status_view', u'none', u'--index', index_name
+    ]
     if username:
-        output_module.SetUserName(username)
+        cmd.append(u'--username')
+        cmd.append(username)
 
-    # Start process the Plaso storage file.
-    counter = frontend.ExportEvents(storage_reader, output_module)
-
-    return dict(counter)
+    # Run psort.py
+    cmd_output = subprocess.check_output(cmd)
+    return cmd_output
 
 
 @celery.task(track_started=True)
