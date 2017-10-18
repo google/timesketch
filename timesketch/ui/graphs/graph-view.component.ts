@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core'
+import {Component, Input, Output, EventEmitter} from '@angular/core'
 
 import {Graph} from '../api/graph.service'
 import {CytoscapeSettings} from './cytoscape-settings.component'
@@ -27,6 +27,7 @@ function format(formatString: string, params: {[k: string]: string}): string {
 export class GraphViewComponent {
   // tslint:disable-next-line:no-unused-variable
   @Input() state: GraphViewState
+  @Output() invalidate = new EventEmitter<{}>()
   settings: CytoscapeSettings = {
     // interaction options:
     minZoom: 0.1,

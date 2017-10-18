@@ -149,6 +149,8 @@ class OutputFormatterBaseClass(object):
         Returns:
             Dictionary with formatted graph
         """
+        if graph is None:
+            return {u'nodes': [], u'edges': []}
         node_list = []
         edge_list = []
         for subgraph in graph:

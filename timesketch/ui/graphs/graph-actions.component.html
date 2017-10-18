@@ -1,0 +1,34 @@
+<button class="btn btn-default" [disabled]="regenerationInProgress" (click)="regenerateGraph()">
+  <i *ngIf="regenerationInProgress" class="fa fa-circle-o-notch fa-spin"></i>
+  <i *ngIf="!regenerationInProgress" class="fa fa-refresh"></i>
+  (re) Generate
+</button>
+
+<button class="btn btn-default" [disabled]="deletionInProgress" (click)="showDeletionModal = true">
+  <i *ngIf="deletionInProgress" class="fa fa-circle-o-notch fa-spin"></i>
+  <i *ngIf="!deletionInProgress" class="fa fa-trash"></i>
+  Delete
+</button>
+
+<div *ngIf="showRegenerationDoneModal" class="ts-graphs-graph-actions__modal-background" (click)="showRegenerationDoneModal = false">
+  <div class="ts-graphs-graph-actions__modal" (click)="$event.stopPropagation()">
+    <h3>Graph was successfully regenerated!</h3>
+    <button class="btn btn-default" (click)="showRegenerationDoneModal = false">
+      Close
+    </button>
+  </div>
+</div>
+
+<div *ngIf="showDeletionModal" class="ts-graphs-graph-actions__modal-background" (click)="showDeletionModal = false">
+  <div class="ts-graphs-graph-actions__modal" (click)="$event.stopPropagation()">
+    <h3>Are you sure you want to delete the graph?</h3>
+    <button class="btn btn-default" [disabled]="deletionInProgress" (click)="showDeletionModal = false">
+      No, thanks.
+    </button>
+    <button class="btn btn-default" [disabled]="deletionInProgress" (click)="deleteGraph()">
+      <i *ngIf="deletionInProgress" class="fa fa-circle-o-notch fa-spin"></i>
+      <i *ngIf="!deletionInProgress" class="fa fa-trash"></i>
+      Yes, Delete all nodes and edges
+    </button>
+  </div>
+</div>
