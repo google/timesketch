@@ -19,28 +19,31 @@ from neo4jrestclient.constants import DATA_GRAPH
 # Schema for Neo4j nodes and edges
 SCHEMA = {
     u'nodes': {
-        u'Machine': {
-            u'label_template': u'{hostname}'
+        u'WindowsMachine': {
+            u'label_template': u'{hostname}',
         },
-        u'User': {
-            u'label_template': u'{username}'
+        u'WindowsADUser': {
+            u'label_template': u'{username}',
+        },
+        u'WindowsLocalUser': {
+            u'label_template': u'{username}',
         },
         u'WindowsService': {
-            u'label_template': u'{service_name}'
+            u'label_template': u'{service_name}',
         },
         u'WindowsServiceImagePath': {
-            u'label_template': u'{image_path}'
+            u'label_template': u'{image_path}',
         }
     },
     u'edges': {
         u'ACCESS': {
-            u'label_template': u'{method}'
+            u'label_template': u'{method} | {username}',
         },
         u'START': {
-            u'label_template': u'{start_type}'
+            u'label_template': u'{start_type}',
         },
         u'HAS': {
-            u'label_template': u'{label}'
+            u'label_template': u'HAS',
         }
     }
 }
