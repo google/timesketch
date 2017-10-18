@@ -76,7 +76,7 @@ export class GraphViewComponent {
         'width': 'label',
         'height': 'label',
         'padding': 10,
-        'label': 'data(label)',
+        'label': (node) => JSON.stringify(node.data()),
         'text-halign': 'center',
         'text-valign': 'center',
         'color': '#FFFFFF',
@@ -89,28 +89,28 @@ export class GraphViewComponent {
       },
     },
     {
-      selector: "node[type = 'User']",
+      selector: "node[type = 'WindowsADUser']",
       style: {
         'background-color': '#FF756E',
         'border-color': '#E06760',
       },
     },
     {
-      selector: "node[type = 'Machine']",
+      selector: "node[type = 'WindowsMachine']",
       style: {
         'background-color': '#68BDF6',
         'border-color': '#5CA8DB',
       },
     },
     {
-      selector: "node[type = 'Service']",
+      selector: "node[type = 'WindowsService']",
       style: {
         'background-color': '#6DCE9E',
         'border-color': '#60B58B',
       },
     },
     {
-      selector: "node[type = 'ServiceImagePath']",
+      selector: "node[type = 'WindowsServiceImagePath']",
       style: {
         'background-color': '#DE9BF9',
         'border-color': '#BF85D6',
@@ -122,7 +122,7 @@ export class GraphViewComponent {
         'width': 1,
         'curve-style': 'bezier',
         'target-arrow-shape': 'triangle',
-        'label': 'data(label)',
+        'label': (edge) => JSON.stringify(edge.data()),
         'font-size': 10,
         'text-rotation': 'autorotate',
       },
