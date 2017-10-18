@@ -13,7 +13,6 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-import angular from 'angularjs-for-webpack'
 import {Chart} from 'chart.js'
 
 export const tsHistogram = function ($window, timesketchApi) {
@@ -43,7 +42,7 @@ export const tsHistogram = function ($window, timesketchApi) {
             scope.chartType = 'bar'
 
             scope.$watchGroup(['meta', 'showCharts', 'chartType'], function (newval, oldval) {
-                if(scope.showCharts) {
+                if (scope.showCharts) {
                     timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, scope.queryDsl, 'histogram')
                         .success(function (data) {
                             render_histogram(data['objects'])
@@ -59,7 +58,14 @@ export const tsHistogram = function ($window, timesketchApi) {
               }
             }
 
-            function render_histogram (aggregation) {
+            function render_histogram(aggregation) {
+                // Don't render chart if there is no data
+                scope.disableChart = false
+                if (aggregation.length < 1) {
+                  scope.disableChart = true
+                  return
+                }
+
                 // Remove the current histogram canvas to avoid old data
                 // to be rendered.
                 if (scope.histogram) {
@@ -99,7 +105,7 @@ export const tsHistogram = function ($window, timesketchApi) {
                                 },
                                 type: 'logarithmic',
                                 ticks: {
-                                    beginAtZero:true,
+                                    beginAtZero: true,
                                 },
                             }],
                             xAxes: [{

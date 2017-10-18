@@ -1,0 +1,21 @@
+<div class="card card-top">
+
+  <form class="form-inline" (ngSubmit)="onSubmit()">
+    <div class="input-group">
+      <input
+        [(ngModel)]="query"
+        type="search"
+        class="search-input"
+        placeholder="Search"
+        [ngModelOptions]="{standalone: true}"
+        autofocus
+      >
+      <span class="input-group-btn">
+        <button type="submit" class="btn search-input">
+          <i class="fa fa-search"></i>
+        </button>
+      </span>
+    </div>
+  </form>
+
+</div>

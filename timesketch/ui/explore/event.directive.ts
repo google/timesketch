@@ -196,10 +196,10 @@ export const tsEvent = function () {
 
             // Calculate the time delta in days between two events.
             const calcDays = function (t1, t2) {
-                const t1_sec = Math.floor(t1/1000000)
-                const t2_sec = Math.floor(t2/1000000)
+                const t1_sec = Math.floor(t1 / 1000000)
+                const t2_sec = Math.floor(t2 / 1000000)
                 const delta = Math.floor(t1_sec - t2_sec)
-                const delta_days = delta/60/60/24
+                const delta_days = delta / 60 / 60 / 24
                 return Math.floor(delta_days)
             }
             if ($scope.index > 0) {
@@ -244,7 +244,7 @@ export const tsEvent = function () {
                 })
             }
 
-            $scope.addFilterStart= function () {
+            $scope.addFilterStart = function () {
             $scope.$emit('datetime-clicked', {datetimeclicked: $scope.event._source.datetime})
 }
 

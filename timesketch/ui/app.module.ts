@@ -25,14 +25,24 @@ import 'zone.js'
 import angular from 'angularjs-for-webpack'
 import {NgModule} from '@angular/core'
 import {BrowserModule} from '@angular/platform-browser'
+import {FormsModule} from '@angular/forms'
+import {HttpClientModule, HTTP_INTERCEPTORS} from '@angular/common/http'
 
-import 'css/ts.css'
+// add all operators from rxjs, don't care about overhead
+import 'rxjs/Rx'
+
+// cytoscape needs that to bind all events
+import 'hammerjs'
+
+import './css/ts.scss'
 
 import {tsApiModule} from './api/api.module'
+import {AttachCsrfTokenInterceptor} from './api/attach-csrf-token.interceptor'
 import {tsCoreModule} from './core/core.module'
 import {tsExploreModule} from './explore/explore.module'
 import {tsSketchModule, SketchModule} from './sketch/sketch.module'
 import {tsStoryModule} from './story/story.module'
+import {tsGraphsModule, GraphsModule} from './graphs/graphs.module'
 
 export const tsAppModule = angular.module('timesketch', [
     tsApiModule.name,
@@ -40,6 +50,7 @@ export const tsAppModule = angular.module('timesketch', [
     tsExploreModule.name,
     tsSketchModule.name,
     tsStoryModule.name,
+    tsGraphsModule.name,
 ])
 .config(function ($httpProvider) {
     // List of URLs to exclude from the butterbar.
@@ -76,8 +87,16 @@ export const tsAppModule = angular.module('timesketch', [
 })
 
 @NgModule({
-  imports: [SketchModule, BrowserModule],
+  imports: [
+    BrowserModule, FormsModule, HttpClientModule,
+    SketchModule, GraphsModule,
+  ],
+  providers: [{
+    provide: HTTP_INTERCEPTORS,
+    useClass: AttachCsrfTokenInterceptor,
+    multi: true,
+  }],
 })
 export class AppModule {
-  ngDoBootstrap () {}
+  ngDoBootstrap() {}
 }
