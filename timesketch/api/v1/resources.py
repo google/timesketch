@@ -1275,7 +1275,7 @@ class GraphResource(ResourceMixin, Resource):
         if form.validate_on_submit():
             query = form.query.data
             output_format = form.output_format.data
-            result = self.graph_datastore.search(
+            result = self.graph_datastore.query(
                 query, output_format=output_format)
             schema = {
                 u'meta': {

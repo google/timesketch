@@ -56,8 +56,8 @@ class Neo4jTest(BaseTest):
             None,
             u'stats': {}
         }
-        client = Neo4jDataStore(username=u'test', password=u'test')
-        formatted_response = client.search(query=u'')
+        datastore = Neo4jDataStore(username=u'test', password=u'test')
+        formatted_response = datastore.query(query=u'')
         self.assertIsInstance(formatted_response, dict)
         self.assertDictEqual(formatted_response, expected_output)
 
@@ -92,8 +92,8 @@ class Neo4jTest(BaseTest):
             u'rows': None,
             u'stats': {}
         }
-        client = Neo4jDataStore(username=u'test', password=u'test')
-        formatted_response = client.search(
+        datastore = Neo4jDataStore(username=u'test', password=u'test')
+        formatted_response = datastore.query(
             query=u'', output_format=u'cytoscape')
         self.assertIsInstance(formatted_response, dict)
         self.assertDictEqual(formatted_response, expected_output)
