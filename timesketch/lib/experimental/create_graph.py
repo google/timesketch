@@ -14,7 +14,6 @@
 """Cypher statement to import graph from win_logins and win_services."""
 import os.path
 
-
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(THIS_DIR, 'create_graph.cql')) as f:
     create_graph = f.read()

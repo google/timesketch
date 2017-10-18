@@ -13,7 +13,6 @@
 # limitations under the License.
 """Experimental parts of the Timesketch API."""
 
-
 from flask import jsonify
 from flask_restful import Resource
 from flask_login import login_required
@@ -26,6 +25,7 @@ from timesketch.lib.experimental.delete_graph import delete_graph
 
 
 class WinLoginsResource(Resource):
+
     @login_required
     def get(self, sketch_id):
         """Only for debugging."""
@@ -33,6 +33,7 @@ class WinLoginsResource(Resource):
 
 
 class WinServicesResource(Resource):
+
     @login_required
     def get(self, sketch_id):
         """Only for debugging."""
@@ -40,6 +41,7 @@ class WinServicesResource(Resource):
 
 
 class CreateGraphResource(ResourceMixin, Resource):
+
     @login_required
     def post(self, sketch_id):
         """For given sketch, create a lateral movement graph from Elasticsearch
@@ -55,16 +57,17 @@ class CreateGraphResource(ResourceMixin, Resource):
             statement = statement.strip()
             if not statement or statement.startswith('//'):
                 continue
-            result.append(self.graph_datastore.query(
-                statement, params=params))
+            result.append(self.graph_datastore.query(statement, params=params))
         return jsonify(result)
 
 
 class DeleteGraphResource(ResourceMixin, Resource):
+
     @login_required
     def post(self, sketch_id):
         """Delete all nodes and edges corresponding to given sketch."""
-        result = self.graph_datastore.query(delete_graph, params={
-            u'sketch_id': sketch_id,
-        })
+        result = self.graph_datastore.query(
+            delete_graph, params={
+                u'sketch_id': sketch_id,
+            })
         return jsonify(result)

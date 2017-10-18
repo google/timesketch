@@ -32,6 +32,8 @@ WHERE line.src <> line.dst
   MERGE (src)-[r:ACCESS]->(dst)
   SET r.method = line.method,
       r.username = line.user,
+      r.es_index = line.es_index,
+      r.es_query = line.es_query,
       r.sketch_id = {sketch_id}
 ;
 
@@ -45,6 +47,8 @@ WHERE line.src = line.dst
   MERGE (user)-[r:ACCESS]->(dst)
   SET r.method = line.method,
       r.username = line.user,
+      r.es_index = line.es_index,
+      r.es_query = line.es_query,
       r.sketch_id = {sketch_id}
 ;
 
@@ -57,8 +61,12 @@ WITH line
 
   MERGE (service)-[r:START]->(src)
   SET r.start_type = line.start_type,
-      r.sketch_id = {sketch_id}
+      r.sketch_id = {sketch_id},
+      r.es_index = line.es_index,
+      r.es_query = line.es_query
 
   MERGE (service)-[h:HAS]->(image_path)
-  SET h.sketch_id = {sketch_id}
+  SET h.sketch_id = {sketch_id},
+      h.es_index = line.es_index,
+      h.es_query = line.es_query
 ;

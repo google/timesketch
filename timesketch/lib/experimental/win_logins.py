@@ -24,6 +24,7 @@ from timesketch.lib.experimental.utils import parse_xml_event
 
 
 class KnowledgeBase(object):
+
     def __init__(self):
         self.ip2host = {}
 
@@ -93,7 +94,7 @@ class ParseEvents(object):
             event_container[u'src_hostname'],
             event_container[u'dst_hostname'],
             event_container[u'username'],
-            event_container[u'logon_type'], )
+            event_container[u'logon_type'],)
         return event_tuple
 
     def parse(self, sketch_id):
@@ -110,6 +111,8 @@ class ParseEvents(object):
             dst_hostname = event[2]
             username = event[3]
             logon_type = event[4]
+            es_index = timesketch_event.get(u'_index')
+            es_id = timesketch_event.get(u'_id')
 
             if src_ip in self.LOCALHOST:
                 src_ip = None
@@ -120,7 +123,8 @@ class ParseEvents(object):
                 else:
                     src_hostname = self.kb.get(src_ip)
 
-            yield (src_hostname, username, dst_hostname, logon_type)
+            yield (src_hostname, username, dst_hostname, logon_type, es_index,
+                   es_id)
 
 
 def main():
@@ -151,7 +155,7 @@ def win_logins(sketch_id):
     result = []
 
     for event in parser.parse(sketch_id=sketch_id):
-        src_ws, user, dst_ws, method = event
+        src_ws, user, dst_ws, method, es_index, es_id = event
         uid = user2id.get(user, None)
         if not uid:
             user2id[user] = u'a' + uuid.uuid4().hex
@@ -162,6 +166,8 @@ def win_logins(sketch_id):
             u'src': src_ws,
             u'dst': dst_ws,
             u'method': method,
+            u'es_index': es_index,
+            u'es_query': u'_index:{} AND _id:{}'.format(es_index, es_id)
         })
     return result
 
