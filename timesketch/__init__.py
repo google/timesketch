@@ -70,8 +70,7 @@ def create_app(config=None):
         Application object (instance of flask.Flask).
     """
     # Setup the Flask app and load the config.
-    app = Flask(
-        __name__, template_folder=u'templates', static_folder=u'static')
+    app = Flask(__name__, template_folder=u'templates', static_folder=u'static')
 
     if not config:
         config = u'/etc/timesketch.conf'
@@ -158,15 +157,16 @@ def create_app(config=None):
     api_v1.add_resource(GraphResource,
                         u'/sketches/<int:sketch_id>/explore/graph/')
 
+    # Experimental API resources
     api_experimental = Api(app, prefix=u'/api/experimental')
-    api_experimental.add_resource(
-        WinLoginsResource, u'/sketches/<int:sketch_id>/win_logins')
-    api_experimental.add_resource(
-        WinServicesResource, u'/sketches/<int:sketch_id>/win_services')
-    api_experimental.add_resource(
-        CreateGraphResource, u'/sketches/<int:sketch_id>/create_graph')
-    api_experimental.add_resource(
-        DeleteGraphResource, u'/sketches/<int:sketch_id>/delete_graph')
+    api_experimental.add_resource(WinLoginsResource,
+                                  u'/sketches/<int:sketch_id>/win_logins')
+    api_experimental.add_resource(WinServicesResource,
+                                  u'/sketches/<int:sketch_id>/win_services')
+    api_experimental.add_resource(CreateGraphResource,
+                                  u'/sketches/<int:sketch_id>/create_graph')
+    api_experimental.add_resource(DeleteGraphResource,
+                                  u'/sketches/<int:sketch_id>/delete_graph')
 
     # Register error handlers
     # pylint: disable=unused-variable
