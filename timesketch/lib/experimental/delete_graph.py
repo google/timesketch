@@ -13,5 +13,4 @@
 # limitations under the License.
 """Cypher statement to delete graph corresponding to particular sketch."""
 
-
 delete_graph = 'MATCH (n {sketch_id: {sketch_id}}) DETACH DELETE n'
