@@ -5,6 +5,18 @@ import {HttpClient} from '@angular/common/http'
 import {SKETCH_BASE_URL} from './api.service'
 import {SketchService} from './sketch.service'
 
+export type Graph = {
+  elements: Cy.ElementsDefinition
+  schema: {
+    nodes: {[type: string]: {
+      label_template: string
+    }}
+    edges: {[type: string]: {
+      label_template: string
+    }}
+  }
+}
+
 /**
  * Service for fetching graph-related API resources.
  * Relevant backend code:
@@ -18,11 +30,13 @@ export class GraphService {
     private readonly http: HttpClient,
   ) {}
 
-  search(query: string): Observable<Cy.ElementsDefinition> {
+  search(query: string): Observable<Graph> {
     return this.http
       .post(`${SKETCH_BASE_URL}${this.sketchService.sketchId}/explore/graph/`, {
         query, output_format: 'cytoscape',
       })
-      .map((result) => result['objects'][0]['graph'])
+      .map((result) => ({
+        elements: result['objects'][0]['graph'], schema: result['meta']['schema']
+      }))
   }
 }
