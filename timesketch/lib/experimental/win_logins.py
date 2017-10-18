@@ -150,19 +150,12 @@ def main():
 
 def win_logins(sketch_id):
     parser = ParseEvents()
-    user2id = {}
-
     result = []
 
     for event in parser.parse(sketch_id=sketch_id):
         src_ws, user, dst_ws, method, es_index, es_id = event
-        uid = user2id.get(user, None)
-        if not uid:
-            user2id[user] = u'a' + uuid.uuid4().hex
-            uid = user2id[user]
         result.append({
             u'user': user,
-            u'uid': uid,
             u'src': src_ws,
             u'dst': dst_ws,
             u'method': method,
