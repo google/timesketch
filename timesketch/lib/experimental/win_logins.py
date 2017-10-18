@@ -111,7 +111,7 @@ class ParseEvents(object):
             dst_hostname = event[2]
             username = event[3]
             logon_type = event[4]
-            es_index = timesketch_event.get(u'_index')
+            es_index_name = timesketch_event.get(u'_index')
             es_id = timesketch_event.get(u'_id')
 
             if src_ip in self.LOCALHOST:
@@ -123,7 +123,7 @@ class ParseEvents(object):
                 else:
                     src_hostname = self.kb.get(src_ip)
 
-            yield (src_hostname, username, dst_hostname, logon_type, es_index,
+            yield (src_hostname, username, dst_hostname, logon_type, es_index_name,
                    es_id)
 
 
@@ -153,14 +153,14 @@ def win_logins(sketch_id):
     result = []
 
     for event in parser.parse(sketch_id=sketch_id):
-        src_ws, user, dst_ws, method, es_index, es_id = event
+        src_ws, user, dst_ws, method, es_index_name, es_id = event
         result.append({
             u'user': user,
             u'src': src_ws,
             u'dst': dst_ws,
             u'method': method,
-            u'es_index': es_index,
-            u'es_query': u'_index:{} AND _id:{}'.format(es_index, es_id)
+            u'es_index_name': es_index_name,
+            u'es_query': u'_index:{} AND _id:{}'.format(es_index_name, es_id)
         })
     return result
 

@@ -29,7 +29,7 @@ WHERE line.src <> line.dst
   MERGE (src:WindowsMachine { hostname: line.src, sketch_id: {sketch_id} })
   MERGE (dst:WindowsMachine { hostname: line.dst, sketch_id: {sketch_id} })
   SET src.es_index_name = coalesce(src.es_index_name, line.es_index_name),
-      dst.es_index_name = line.es_index_name,
+      dst.es_index_name = line.es_index_name
 
   MERGE (src)-[r:ACCESS]->(dst)
   SET r.method = line.method,
