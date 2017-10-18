@@ -34,12 +34,12 @@ describe('GraphService', () => {
       expect(request.request.body).toEqual({
         query: 'FAKE_QUERY', output_format: 'cytoscape',
       })
-      // type is incorrect (typeof 'FAKE_GRAPH' != Cy.ElementsDefinition)
+      // types are incorrect (for example, typeof 'FAKE_ELEMENTS' != Cy.ElementsDefinition)
       // but we are only checking that data is just passed as-is from http response
-      request.flush({objects: [{graph: 'FAKE_GRAPH'}]})
+      request.flush({meta: {schema: 'FAKE_SCHEMA'}, objects: [{graph: 'FAKE_ELEMENTS'}]})
 
       const graph = await graphPromise
-      expect(graph).toEqual('FAKE_GRAPH')
+      expect(graph).toEqual({elements: 'FAKE_ELEMENTS', schema: 'FAKE_SCHEMA'})
       http.verify()
     })
   })
