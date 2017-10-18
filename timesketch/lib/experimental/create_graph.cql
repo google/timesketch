@@ -45,8 +45,7 @@ WHERE line.src = line.dst
 
   MERGE (user:WindowsADUser { username: line.user, sketch_id: {sketch_id} })
   MERGE (dst:WindowsMachine { hostname: line.dst, sketch_id: {sketch_id} })
-  SET user.es_index_name = line.es_index_name,
-      dst.es_index_name = line.es_index_name
+  SET dst.es_index_name = line.es_index_name
 
   MERGE (user)-[r:ACCESS]->(dst)
   SET r.method = line.method,
@@ -62,9 +61,7 @@ WITH line
   MERGE (src:WindowsMachine { hostname: line.src, sketch_id: {sketch_id} })
   MERGE (service:WindowsService { service_name: line.svc_name, sketch_id: {sketch_id} })
   MERGE (image_path:WindowsServiceImagePath { image_path: line.image_path, sketch_id: {sketch_id} })
-  SET src.es_index_name = coalesce(src.es_index_name, line.es_index_name),
-      service.es_index_name = line.es_index_name,
-      image_path.es_index_name = line.es_index_name
+  SET src.es_index_name = coalesce(src.es_index_name, line.es_index_name)
 
   MERGE (service)-[r:START]->(src)
   SET r.start_type = line.start_type,
