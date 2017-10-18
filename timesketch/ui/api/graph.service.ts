@@ -36,7 +36,8 @@ export class GraphService {
         query, output_format: 'cytoscape',
       })
       .map((result) => ({
-        elements: result['objects'][0]['graph'], schema: result['meta']['schema']
+        elements: result['objects'][0]['graph'],
+        schema: result['meta']['schema'],
       }))
   }
 }
