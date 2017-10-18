@@ -19,28 +19,31 @@ from neo4jrestclient.constants import DATA_GRAPH
 # Schema for Neo4j nodes and edges
 SCHEMA = {
     u'nodes': {
-        u'Machine': {
-            u'label_template': u'{hostname}'
+        u'WindowsMachine': {
+            u'label_template': u'{hostname}',
         },
-        u'User': {
-            u'label_template': u'{username}'
+        u'WindowsADUser': {
+            u'label_template': u'{username}',
+        },
+        u'WindowsLocalUser': {
+            u'label_template': u'{username}',
         },
         u'WindowsService': {
-            u'label_template': u'{service_name}'
+            u'label_template': u'{service_name}',
         },
         u'WindowsServiceImagePath': {
-            u'label_template': u'{image_path}'
+            u'label_template': u'{image_path}',
         }
     },
     u'edges': {
         u'ACCESS': {
-            u'label_template': u'{method}'
+            u'label_template': u'{method} | {username}',
         },
         u'START': {
-            u'label_template': u'{start_type}'
+            u'label_template': u'{start_type}',
         },
         u'HAS': {
-            u'label_template': u'{label}'
+            u'label_template': u'HAS',
         }
     }
 }
@@ -215,33 +218,6 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         """Initialize the Cytoscape output formatter object."""
         super(CytoscapeOutputFormatter, self).__init__()
 
-    def _format_entity(self, entity):
-        """Flatten properties and add type attribute to both nodes and edges.
-
-        Args:
-            entity: Dictionary with Neo4j node or edge.
-
-        Returns:
-            Dictionary with Cytoscape compatible node or edge.
-        """
-        new_entity = dict(id=entity[u'id'])
-
-        # Depending on if this is a Node or Edge
-        try:
-            new_entity[u'type'] = entity[u'labels'][0]
-        except KeyError:
-            new_entity[u'type'] = entity[u'type']
-            new_entity[u'source'] = entity[u'startNode']
-            new_entity[u'target'] = entity[u'endNode']
-
-        # Copy over items form Neo4j properties
-        properties = entity.get(u'properties')
-        if properties:
-            properties_copy = properties.copy()
-            new_entity.update(properties_copy)
-
-        return new_entity
-
     def format_node(self, node):
         """Format a Cytoscape graph node.
 
@@ -251,9 +227,10 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         Returns:
             Dictionary with a Cytoscape formatted node
         """
-        node_dict = self._format_entity(node)
-        cytoscape_node = {u'data': node_dict}
-        return cytoscape_node
+        node_data = dict(id='node' + node[u'id'], type=node[u'labels'][0])
+        if node.get('properties'):
+            node_data.update(node['properties'])
+        return {u'data': node_data}
 
     def format_edge(self, edge):
         """Format a Cytoscape graph egde.
@@ -264,6 +241,11 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         Returns:
             Dictionary with a Cytoscape formatted edge
         """
-        edge_dict = self._format_entity(edge)
-        cytoscape_edge = {u'data': edge_dict}
-        return cytoscape_edge
+        edge_data = dict(
+            id='edge' + edge[u'id'], type=edge[u'type'],
+            source='node' + edge[u'startNode'],
+            target='node' + edge[u'endNode'],
+        )
+        if edge.get('properties'):
+            edge_data.update(edge['properties'])
+        return {u'data': edge_data}

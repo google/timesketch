@@ -677,6 +677,7 @@ ts-graphs-graph-view {
     box-shadow: 0 0 1px rgba(0,0,0,0.3) !important;
     padding-left: 15px;
     padding-right: 15px;
+    z-index: 1;
   }
   > div {
     @include ts-graphs-fill-space;

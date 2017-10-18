@@ -202,7 +202,7 @@ export class CytoscapeComponent implements OnChanges, AfterViewInit {
     const all_options = [].concat(immutable_options, mutable_options)
     const options: Opt = {}
     if (this.cytoscapeHostRef) {
-      options['container'] = this.cytoscapeHostRef.nativeElement.childNodes[0]
+      options['container'] = this.cytoscapeHostRef.nativeElement
     }
     for (const k of all_options) {
       options[k] = this[k]

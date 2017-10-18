@@ -69,23 +69,23 @@ class Neo4jTest(BaseTest):
                     u'data': {
                         u'username': u'test',
                         u'type': u'User',
-                        u'id': u'1',
+                        u'id': u'node1',
                         u'uid': u'123456'
                     }
                 }, {
                     u'data': {
                         u'hostname': u'test',
                         u'type': u'Machine',
-                        u'id': u'2'
+                        u'id': u'node2'
                     }
                 }],
                 u'edges': [{
                     u'data': {
-                        u'target': u'2',
+                        u'target': u'node2',
                         u'method': u'Network',
-                        u'source': u'1',
+                        u'source': u'node1',
                         u'type': u'ACCESS',
-                        u'id': u'3'
+                        u'id': u'edge3'
                     }
                 }]
             },
