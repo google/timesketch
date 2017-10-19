@@ -44,13 +44,7 @@ WHERE line.src <> line.dst
       ELSE
         r.timestamps
     END,
-    r.timestamps_incomplete =
-    CASE
-      WHEN size(r.timestamps) < {max_timestamps} THEN
-        False
-      ELSE
-        True
-    END
+    r.timestamps_incomplete = size(r.timestamps) >= {max_timestamps}
 ;
 
 UNWIND {win_logins} AS line
@@ -74,13 +68,7 @@ WHERE line.src = line.dst
       ELSE
         r.timestamps
     END,
-    r.timestamps_incomplete =
-    CASE
-      WHEN size(r.timestamps) < {max_timestamps} THEN
-        False
-      ELSE
-        True
-    END
+    r.timestamps_incomplete = size(r.timestamps) >= {max_timestamps}
 ;
 
 UNWIND {win_services} AS line
@@ -104,13 +92,7 @@ WITH line
       ELSE
         r.timestamps
     END,
-    r.timestamps_incomplete =
-    CASE
-      WHEN size(r.timestamps) < {max_timestamps} THEN
-        False
-      ELSE
-        True
-    END
+    r.timestamps_incomplete = size(r.timestamps) >= {max_timestamps}
 
   MERGE (service)-[h:HAS]->(image_path)
   SET h.es_index_name = line.es_index_name,
