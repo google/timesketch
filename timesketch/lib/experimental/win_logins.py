@@ -89,20 +89,24 @@ class ParseEvents(object):
         if src_ip and src_hostname:
             self.kb.add(src_ip, src_hostname)
 
-        event_tuple = (
+        event_list = [
             event_container[u'src_ip'],
             event_container[u'src_hostname'],
             event_container[u'dst_hostname'],
             event_container[u'username'],
-            event_container[u'logon_type'],)
-        return event_tuple
+            event_container[u'logon_type']]
+
+        return event_list
 
     def parse(self, sketch_id):
         events = set()
         for timesketch_event in event_stream(
                 sketch_id=sketch_id, query=u'event_identifier:4624'):
             xml_data = timesketch_event[u'_source'].get(u'xml_string')
-            events.add(self.parse_xml(xml_data))
+            timestamp = timesketch_event[u'_source'].get(u'timestamp')
+            event_data = self.parse_xml(xml_data)
+            event_data.append(timestamp)
+            events.add(tuple(event_data))
 
         # Figure out hostname
         for event in events:
@@ -111,6 +115,7 @@ class ParseEvents(object):
             dst_hostname = event[2]
             username = event[3]
             logon_type = event[4]
+            timestamp = event[5]
             es_index_name = timesketch_event.get(u'_index')
             es_id = timesketch_event.get(u'_id')
 
@@ -123,8 +128,8 @@ class ParseEvents(object):
                 else:
                     src_hostname = self.kb.get(src_ip)
 
-            yield (src_hostname, username, dst_hostname, logon_type, es_index_name,
-                   es_id)
+            yield (src_hostname, username, dst_hostname, logon_type, timestamp,
+                   es_index_name, es_id)
 
 
 def main():
@@ -153,12 +158,13 @@ def win_logins(sketch_id):
     result = []
 
     for event in parser.parse(sketch_id=sketch_id):
-        src_ws, user, dst_ws, method, es_index_name, es_id = event
+        src_ws, user, dst_ws, method, timestamp, es_index_name, es_id = event
         result.append({
             u'user': user,
             u'src': src_ws,
             u'dst': dst_ws,
             u'method': method,
+            u'timestamp': timestamp,
             u'es_index_name': es_index_name,
             u'es_query': u'_index:{} AND _id:{}'.format(es_index_name, es_id)
         })

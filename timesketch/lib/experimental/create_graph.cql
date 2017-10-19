@@ -31,12 +31,20 @@ WHERE line.src <> line.dst
   SET src.es_index_name = coalesce(src.es_index_name, line.es_index_name),
       dst.es_index_name = line.es_index_name
 
-  MERGE (src)-[r:ACCESS]->(dst)
-  SET r.method = line.method,
-      r.username = line.user,
-      r.es_index_name = line.es_index_name,
-      r.es_query = line.es_query,
-      r.sketch_id = {sketch_id}
+  MERGE (src)-[r:ACCESS { method: line.method, username: line.user }]->(dst)
+  ON CREATE SET r.es_index_name = line.es_index_name,
+                r.es_query = line.es_query,
+                r.sketch_id = {sketch_id},
+                r.timestamps = [line.timestamp],
+                r.timestamps_incomplete = False
+  ON MATCH SET r.timestamps =
+    CASE
+      WHEN size(r.timestamps) < {max_timestamps} AND NOT line.timestamp IN (r.timestamps) THEN
+        r.timestamps + [line.timestamp]
+      ELSE
+        r.timestamps
+    END,
+    r.timestamps_incomplete = size(r.timestamps) >= {max_timestamps}
 ;
 
 UNWIND {win_logins} AS line
@@ -47,12 +55,20 @@ WHERE line.src = line.dst
   MERGE (dst:WindowsMachine { hostname: line.dst, sketch_id: {sketch_id} })
   SET dst.es_index_name = line.es_index_name
 
-  MERGE (user)-[r:ACCESS]->(dst)
-  SET r.method = line.method,
-      r.username = line.user,
-      r.es_index_name = line.es_index_name,
-      r.es_query = line.es_query,
-      r.sketch_id = {sketch_id}
+  MERGE (user)-[r:ACCESS {method: line.method, username: line.user}]->(dst)
+  ON CREATE SET r.es_index_name = line.es_index_name,
+                r.es_query = line.es_query,
+                r.sketch_id = {sketch_id},
+                r.timestamps = [line.timestamp],
+                r.timestamps_incomplete = False
+  ON MATCH SET r.timestamps =
+    CASE
+      WHEN size(r.timestamps) < {max_timestamps} AND NOT line.timestamp IN (r.timestamps) THEN
+        r.timestamps + [line.timestamp]
+      ELSE
+        r.timestamps
+    END,
+    r.timestamps_incomplete = size(r.timestamps) >= {max_timestamps}
 ;
 
 UNWIND {win_services} AS line
@@ -63,14 +79,23 @@ WITH line
   MERGE (image_path:WindowsServiceImagePath { image_path: line.image_path, sketch_id: {sketch_id} })
   SET src.es_index_name = coalesce(src.es_index_name, line.es_index_name)
 
-  MERGE (service)-[r:START]->(src)
-  SET r.start_type = line.start_type,
+  MERGE (service)-[r:START {start_type: line.start_type}]->(src)
+  ON CREATE SET r.es_index_name = line.es_index_name,
+      r.es_query = line.es_query,
       r.sketch_id = {sketch_id},
-      r.es_index_name = line.es_index_name,
-      r.es_query = line.es_query
+      r.timestamps = [line.timestamp],
+      r.timestamps_incomplete = False
+  ON MATCH SET r.timestamps =
+    CASE
+      WHEN size(r.timestamps) < {max_timestamps} AND NOT line.timestamp IN (r.timestamps) THEN
+        r.timestamps + [line.timestamp]
+      ELSE
+        r.timestamps
+    END,
+    r.timestamps_incomplete = size(r.timestamps) >= {max_timestamps}
 
   MERGE (service)-[h:HAS]->(image_path)
-  SET h.sketch_id = {sketch_id},
-      h.es_index_name = line.es_index_name,
-      h.es_query = line.es_query
+  SET h.es_index_name = line.es_index_name,
+      h.es_query = line.es_query,
+      h.sketch_id = {sketch_id}
 ;

@@ -34,7 +34,7 @@ def event_stream(sketch_id, query):
         query_filter={u'limit': 10000},
         query_dsl={},
         indices=[u'_all'],
-        return_fields=[u'xml_string'],
+        return_fields=[u'xml_string', u'timestamp'],
         enable_scroll=True)
 
     scroll_id = result[u'_scroll_id']
