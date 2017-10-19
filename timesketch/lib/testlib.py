@@ -204,6 +204,12 @@ class MockGraphDatabase(object):
             self.rows = self.MOCK_ROWS
             self.stats = self.MOCK_ROWS
 
+    class MockEmptyQuerySequence(object):
+        def __init__(self):
+            self.graph = None
+            self.rows = {}
+            self.stats = {}
+
     # pylint: disable=unused-argument
     def query(self, *args, **kwargs):
         """Mock a search query.
@@ -211,7 +217,9 @@ class MockGraphDatabase(object):
         Returns:
             A MockQuerySequence instance.
         """
-
+        query = args[0]
+        if query == 'empty':
+            return self.MockEmptyQuerySequence()
         return self.MockQuerySequence()
 
 

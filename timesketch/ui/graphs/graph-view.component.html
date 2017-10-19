@@ -1,57 +1,68 @@
-<div *ngIf="state.type === 'empty'">
-    <h2>Please type a query.</h2>
+<div class="ts-graphs-graph-view__dropdown">
+  <label for="ts-graphs-graph-view__toggle-cytoscape-settings">
+    Cytoscape settings
+  </label>
+  <input
+    type="checkbox" id="ts-graphs-graph-view__toggle-cytoscape-settings"
+    class="ts-graphs-graph-view__dropdown-trigger"
+  >
+  <ts-graphs-cytoscape-settings
+    [settings]="settings"
+    class="ts-graphs-graph-view__dropdown-content"
+  ></ts-graphs-cytoscape-settings>
 </div>
 
-<div *ngIf="state.type === 'loading'">
-    <h2>
-      <i class="fa fa-circle-o-notch fa-spin"></i>
-      Loading...
-    </h2>
+<div class="ts-graphs-graph-view__dropdown">
+  <label for="ts-graphs-graph-view__toggle-graph-actions">
+    Graph actions
+  </label>
+  <input
+    type="checkbox" id="ts-graphs-graph-view__toggle-graph-actions"
+    class="ts-graphs-graph-view__dropdown-trigger"
+  >
+  <ts-graphs-graph-actions
+    class="ts-graphs-graph-view__dropdown-content"
+    (actionComplete)="invalidate.emit()"
+  ></ts-graphs-graph-actions>
 </div>
 
-<div *ngIf="state.type === 'ready'">
-  <div class="graph-view__dropdown">
-    <style type="text/css">
-      input ~ ts-graphs-cytoscape-settings {
-        display: none;
-      }
-      input:checked ~ ts-graphs-cytoscape-settings {
-        display: block;
-      }
-    </style>
-    <input type="checkbox" id="toggleCytoscapeSettings" style="display: none">
-    <label for="toggleCytoscapeSettings"> Cytoscape settings </label>
-    <ts-graphs-cytoscape-settings [settings]="settings">
-    </ts-graphs-cytoscape-settings>
-  </div>
+<h2 *ngIf="state.type === 'empty'">
+  Please type a query.
+</h2>
 
-  <ts-graphs-cytoscape
-    [elements]="state.graph.elements"
-    [style]="style"
-    [layout]="layout"
+<h2 *ngIf="state.type === 'loading'">
+  <i class="fa fa-circle-o-notch fa-spin"></i>
+  Loading...
+</h2>
 
-    [minZoom]="settings.minZoom"
-    [maxZoom]="settings.maxZoom"
-    [zoomingEnabled]="settings.zoomingEnabled"
-    [userZoomingEnabled]="settings.userZoomingEnabled"
-    [panningEnabled]="settings.panningEnabled"
-    [userPanningEnabled]="settings.userPanningEnabled"
-    [boxSelectionEnabled]="settings.boxSelectionEnabled"
-    [selectionType]="settings.selectionType"
-    [touchTapThreshold]="settings.touchTapThreshold"
-    [desktopTapThreshold]="settings.desktopTapThreshold"
-    [autolock]="settings.autolock"
-    [autoungrabify]="settings.autoungrabify"
-    [autounselectify]="settings.autounselectify"
+<ts-graphs-cytoscape
+  *ngIf="state.type === 'ready'"
 
-    [headless]="settings.headless"
-    [styleEnabled]="settings.styleEnabled"
-    [hideEdgesOnViewport]="settings.hideEdgesOnViewport"
-    [hideLabelsOnViewport]="settings.hideLabelsOnViewport"
-    [textureOnViewport]="settings.textureOnViewport"
-    [motionBlur]="settings.motionBlur"
-    [motionBlurOpacity]="settings.motionBlurOpacity"
-    [wheelSensitivity]="settings.wheelSensitivity"
-    [pixelRatio]="settings.pixelRatio"
-  ></ts-graphs-cytoscape>
-</div>
+  [elements]="state.graph.elements"
+  [style]="style"
+  [layout]="layout"
+
+  [minZoom]="settings.minZoom"
+  [maxZoom]="settings.maxZoom"
+  [zoomingEnabled]="settings.zoomingEnabled"
+  [userZoomingEnabled]="settings.userZoomingEnabled"
+  [panningEnabled]="settings.panningEnabled"
+  [userPanningEnabled]="settings.userPanningEnabled"
+  [boxSelectionEnabled]="settings.boxSelectionEnabled"
+  [selectionType]="settings.selectionType"
+  [touchTapThreshold]="settings.touchTapThreshold"
+  [desktopTapThreshold]="settings.desktopTapThreshold"
+  [autolock]="settings.autolock"
+  [autoungrabify]="settings.autoungrabify"
+  [autounselectify]="settings.autounselectify"
+
+  [headless]="settings.headless"
+  [styleEnabled]="settings.styleEnabled"
+  [hideEdgesOnViewport]="settings.hideEdgesOnViewport"
+  [hideLabelsOnViewport]="settings.hideLabelsOnViewport"
+  [textureOnViewport]="settings.textureOnViewport"
+  [motionBlur]="settings.motionBlur"
+  [motionBlurOpacity]="settings.motionBlurOpacity"
+  [wheelSensitivity]="settings.wheelSensitivity"
+  [pixelRatio]="settings.pixelRatio"
+></ts-graphs-cytoscape>

@@ -40,4 +40,14 @@ export class GraphService {
         schema: result['meta']['schema'],
       }))
   }
+  regenerate(): Observable<{}> {
+    return this.http
+      .post(`/api/experimental/sketches/${this.sketchService.sketchId}/create_graph/`, {})
+      .map(() => ({}))
+  }
+  delete(): Observable<{}> {
+    return this.http
+      .post(`/api/experimental/sketches/${this.sketchService.sketchId}/delete_graph/`, {})
+      .map(() => ({}))
+  }
 }

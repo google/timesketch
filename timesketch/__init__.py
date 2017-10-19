@@ -160,13 +160,13 @@ def create_app(config=None):
     # Experimental API resources
     api_experimental = Api(app, prefix=u'/api/experimental')
     api_experimental.add_resource(WinLoginsResource,
-                                  u'/sketches/<int:sketch_id>/win_logins')
+                                  u'/sketches/<int:sketch_id>/win_logins/')
     api_experimental.add_resource(WinServicesResource,
-                                  u'/sketches/<int:sketch_id>/win_services')
+                                  u'/sketches/<int:sketch_id>/win_services/')
     api_experimental.add_resource(CreateGraphResource,
-                                  u'/sketches/<int:sketch_id>/create_graph')
+                                  u'/sketches/<int:sketch_id>/create_graph/')
     api_experimental.add_resource(DeleteGraphResource,
-                                  u'/sketches/<int:sketch_id>/delete_graph')
+                                  u'/sketches/<int:sketch_id>/delete_graph/')
 
     # Register error handlers
     # pylint: disable=unused-variable
