@@ -69,20 +69,34 @@ def win_services(sketch_id):
             sketch_id=sketch_id, query=u'event_identifier:7045'):
         data = event[u'_source'][u'xml_string']
         res = parse_xml(data)
-        res.extend((event.get(u'_index'), event.get(u'_id')))
+        res.extend(
+            (
+                event[u'_source'].get(u'timestamp'),
+                event.get(u'_index'),
+                event.get(u'_id')
+            )
+        )
         res = tuple(res)
         if res:
             events.add(res)
 
     result = []
     for event in events:
-        src_ws, svc_name, start_type, image_path, es_index_name, es_id = event
+        src_ws = event[0]
+        svc_name = event[1]
+        start_type = event[2]
+        image_path = event[3]
+        timestamp = event[4]
+        es_index_name = event[5]
+        es_id = event[6]
+
         src_ws = src_ws.split('.')[0].upper()
         result.append({
             u'src': src_ws,
             u'svc_name': svc_name,
             u'start_type': start_type,
             u'image_path': image_path,
+            u'timestamp': timestamp,
             u'es_index_name': es_index_name,
             u'es_query': u'_index:{} AND _id:{}'.format(es_index_name, es_id)
         })

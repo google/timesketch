@@ -47,9 +47,13 @@ class CreateGraphResource(ResourceMixin, Resource):
         """For given sketch, create a lateral movement graph from Elasticsearch
         events and save it to Neo4j. Nodes and edges have sketch_id property.
         """
+        # Maximun number of timestamps to add to edges.
+        max_timestamps = 1000
+
         result = []
         params = {
             u'sketch_id': sketch_id,
+            u'max_timestamps': max_timestamps,
             u'win_logins': win_logins(sketch_id),
             u'win_services': win_services(sketch_id),
         }
