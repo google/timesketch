@@ -70,13 +70,13 @@ class Neo4jTest(BaseTest):
                         u'username': u'test',
                         u'type': u'User',
                         u'id': u'node1',
-                        u'uid': u'123456'
+                        u'uid': u'123456',
                     }
                 }, {
                     u'data': {
                         u'hostname': u'test',
                         u'type': u'Machine',
-                        u'id': u'node2'
+                        u'id': u'node2',
                     }
                 }],
                 u'edges': [{
@@ -85,15 +85,31 @@ class Neo4jTest(BaseTest):
                         u'method': u'Network',
                         u'source': u'node1',
                         u'type': u'ACCESS',
-                        u'id': u'edge3'
+                        u'id': u'edge3',
                     }
-                }]
+                }],
             },
             u'rows': None,
-            u'stats': {}
+            u'stats': {},
         }
         datastore = Neo4jDataStore(username=u'test', password=u'test')
         formatted_response = datastore.query(
             query=u'', output_format=u'cytoscape')
+        self.assertIsInstance(formatted_response, dict)
+        self.assertDictEqual(formatted_response, expected_output)
+
+    def test_cytoscape_output_empty_graph(self):
+        """Test Cytoscape output format for and empty graph."""
+        expected_output = {
+            u'graph': {
+                u'nodes': [],
+                u'edges': [],
+            },
+            u'rows': None,
+            u'stats': {},
+        }
+        datastore = Neo4jDataStore(username=u'test', password=u'test')
+        formatted_response = datastore.query(
+            query=u'empty', output_format=u'cytoscape')
         self.assertIsInstance(formatted_response, dict)
         self.assertDictEqual(formatted_response, expected_output)

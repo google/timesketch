@@ -648,14 +648,7 @@ ts-graphs-cypher-query {
 }
 
 ts-graphs-cytoscape-settings {
-  position: absolute;
-  left: 0px;
-  top: 30px;
-  z-index: 1;
   min-width: 250px;
-  background-color: white;
-  box-shadow: 0 0 1px rgba(0,0,0,0.3);
-  padding: 5px;
   input[type="number"] {
     width: 70px;
   }
@@ -669,18 +662,61 @@ ts-graphs-cytoscape-settings {
   }
 }
 
+ts-graphs-graph-actions {
+  button {
+    margin: 5px !important;
+    text-align: left !important;
+    box-sizing: border-box;
+    display: block;
+    width: calc(100% - 10px);
+  }
+  .#{&}__modal-background {
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    z-index: 1040;
+    padding-top: 200px;
+    background-color: rgba(0,0,0,0.5);
+    text-align: center;
+  }
+  .#{&}__modal {
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0 0 6px 2px rgba(0,0,0,0.4);
+    display: inline-block;
+  }
+}
+
 ts-graphs-graph-view {
   @include ts-graphs-fill-space;
-  .graph-view__dropdown {
+  .#{&}__dropdown {
     display: inline-block;
+    vertical-align: top;
     position: relative;
-    box-shadow: 0 0 1px rgba(0,0,0,0.3) !important;
+    box-shadow: 0 0 1px rgba(0,0,0,0.3);
     padding-left: 15px;
     padding-right: 15px;
     z-index: 1;
   }
-  > div {
-    @include ts-graphs-fill-space;
+  .#{&}__dropdown-trigger {
+    display: none;
+  }
+  .#{&}__dropdown-content {
+    position: absolute;
+    left: 0px;
+    top: 30px;
+    z-index: 1;
+    background-color: white;
+    box-shadow: 0 0 1px rgba(0,0,0,0.3);
+    padding: 5px;
+  }
+  .#{&}__dropdown-trigger + .#{&}__dropdown-content {
+    display: none;
+  }
+  .#{&}__dropdown-trigger:checked + .#{&}__dropdown-content {
+    display: block;
   }
   h2 {
     text-align: center;

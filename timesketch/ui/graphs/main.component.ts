@@ -14,7 +14,10 @@ export class MainComponent implements OnChanges {
 
   graphViewState: GraphViewState = {type: 'empty'}
 
-  constructor(private sketchService: SketchService, private graphService: GraphService) {}
+  constructor(
+    private readonly sketchService: SketchService,
+    private readonly graphService: GraphService,
+  ) {}
 
   ngOnChanges(changes: SimpleChanges) {
     this.sketchService.sketchId = Number(this.sketchId)
@@ -25,5 +28,9 @@ export class MainComponent implements OnChanges {
     this.graphService.search(query).subscribe((graph) => {
       this.graphViewState = {type: 'ready', graph}
     })
+  }
+
+  onInvalidate() {
+    this.graphViewState = {type: 'empty'}
   }
 }
