@@ -29,8 +29,8 @@ export class GraphViewComponent {
   @Input() state: GraphViewState
   settings: CytoscapeSettings = {
     // interaction options:
-    minZoom: 1e-50,
-    maxZoom: 1e50,
+    minZoom: 0.1,
+    maxZoom: 1.5,
     zoomingEnabled: true,
     userZoomingEnabled: true,
     panningEnabled: true,
