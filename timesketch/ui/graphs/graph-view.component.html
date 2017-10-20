@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <div class="pull-right">
   <div class="ts-graphs-graph-view__dropdown">
     <label for="ts-graphs-graph-view__toggle-graph-actions">
@@ -27,6 +28,36 @@
   </div>
 </div>
 
+=======
+<div class="ts-graphs-graph-view__dropdown">
+  <label for="ts-graphs-graph-view__toggle-cytoscape-settings">
+    <i class="fa fa-cog"></i>
+  </label>
+  <input
+    type="checkbox" id="ts-graphs-graph-view__toggle-cytoscape-settings"
+    class="ts-graphs-graph-view__dropdown-trigger"
+  >
+  <ts-graphs-cytoscape-settings
+    [settings]="settings"
+    class="ts-graphs-graph-view__dropdown-content"
+  ></ts-graphs-cytoscape-settings>
+</div>
+
+<div class="ts-graphs-graph-view__dropdown">
+  <label for="ts-graphs-graph-view__toggle-graph-actions">
+    Graph actions
+  </label>
+  <input
+    type="checkbox" id="ts-graphs-graph-view__toggle-graph-actions"
+    class="ts-graphs-graph-view__dropdown-trigger"
+  >
+  <ts-graphs-graph-actions
+    class="ts-graphs-graph-view__dropdown-content"
+    (actionComplete)="invalidate.emit()"
+  ></ts-graphs-graph-actions>
+</div>
+
+>>>>>>> Small UI changes
 <h3 *ngIf="state.type === 'empty'">
   Type a query
 </h3>
