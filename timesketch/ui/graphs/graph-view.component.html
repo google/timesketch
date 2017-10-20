@@ -1,6 +1,6 @@
 <div class="ts-graphs-graph-view__dropdown">
   <label for="ts-graphs-graph-view__toggle-cytoscape-settings">
-    Cytoscape settings
+    <i class="fa fa-cog"></i>
   </label>
   <input
     type="checkbox" id="ts-graphs-graph-view__toggle-cytoscape-settings"
@@ -26,14 +26,13 @@
   ></ts-graphs-graph-actions>
 </div>
 
-<h2 *ngIf="state.type === 'empty'">
-  Please type a query.
-</h2>
+<h3 *ngIf="state.type === 'empty'">
+  Type a query
+</h3>
 
-<h2 *ngIf="state.type === 'loading'">
+<h3 *ngIf="state.type === 'loading'">
   <i class="fa fa-circle-o-notch fa-spin"></i>
-  Loading...
-</h2>
+</h3>
 
 <ts-graphs-cytoscape
   *ngIf="state.type === 'ready'"
