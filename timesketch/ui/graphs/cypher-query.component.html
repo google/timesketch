@@ -2,7 +2,7 @@
 
   <form class="form-inline" (ngSubmit)="onSubmit()">
 
-    <select class="select select-graph-view pull-left" (change)="onQuerySelect($event.target.value)">
+    <select class="select ts-graphs-cypher-query__predefined-queries pull-left" (change)="onQuerySelect($event.target.value)">
       <option disabled>Predefined queries</option>
       <option *ngFor="let item of predefinedQueries" [value]="item.query">
         {{item.name}}

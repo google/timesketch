@@ -237,14 +237,6 @@ header {
     margin-left:5px;
 }
 
-.select-graph-view {
-  height:57px;
-  background-color:#f9f9f9;
-  -webkit-border-radius: 0px;
-  border:0px;
-  margin-right: 10px;
-}
-
 #butterbar {
     display:none;
     width:150px;
@@ -652,6 +644,13 @@ ts-graphs-cytoscape {
 ts-graphs-cypher-query {
   button[type="submit"] i {
     color: #999;
+  }
+  .#{&}__predefined-queries {
+    height:57px;
+    background-color:#f9f9f9;
+    margin-right: 10px;
+    border:0px;
+    -webkit-border-radius: 0px;
   }
 }
 
