@@ -53,7 +53,7 @@ export const testCytoscapeEvents = [
   'tapdrag', 'vmousemove', 'tapdragover', 'tapdragout', 'tapend',
   'vmouseup', 'tap', 'vclick', 'taphold', 'cxttapstart', 'cxttapend',
   'cxttap', 'cxtdrag', 'cxtdragover', 'cxtdragout', 'boxstart', 'boxend',
-  'boxselect', 'box', 'layoutstart', 'layoutready', 'layoutstop', 'ready',
+  'boxselect', 'box', 'layoutstart', 'layoutready', 'layoutstop',
   'destroy', 'render', 'resize',
 ]
 

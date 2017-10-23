@@ -1,3 +1,30 @@
+<div class="ts-graphs-graph-view__dropdown" style="display: inline-block">
+  <label for="ts-graphs-graph-view__toggle-sidebar">
+    <i class="fa fa-bars"></i>
+  </label>
+</div>
+<input
+  type="checkbox" id="ts-graphs-graph-view__toggle-sidebar"
+  class="ts-graphs-graph-view__dropdown-trigger"
+>
+<input type="radio" name="width" id="ts-graphs-graph-view__sidebar-width15" class="ts-graphs-graph-view__sidebar-width">
+<label for="ts-graphs-graph-view__sidebar-width15" class="btn btn-default ts-graphs-graph-view__sidebar-width-label">
+  <i class="fa fa-battery-1"></i>
+</label>
+<input type="radio" name="width" id="ts-graphs-graph-view__sidebar-width30" class="ts-graphs-graph-view__sidebar-width" checked>
+<label for="ts-graphs-graph-view__sidebar-width30" class="btn btn-default ts-graphs-graph-view__sidebar-width-label">
+  <i class="fa fa-battery-2"></i>
+</label>
+<input type="radio" name="width" id="ts-graphs-graph-view__sidebar-width60" class="ts-graphs-graph-view__sidebar-width">
+<label for="ts-graphs-graph-view__sidebar-width60" class="btn btn-default ts-graphs-graph-view__sidebar-width-label">
+  <i class="fa fa-battery-3"></i>
+</label>
+<div class="ts-graphs-graph-view__dropdown-content ts-graphs-graph-view__sidebar">
+  <p>
+    Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur
+  </p>
+</div>
+
 <div class="pull-right">
   <div class="ts-graphs-graph-view__dropdown">
     <label for="ts-graphs-graph-view__toggle-graph-actions">
@@ -65,4 +92,6 @@
   [motionBlurOpacity]="settings.motionBlurOpacity"
   [wheelSensitivity]="settings.wheelSensitivity"
   [pixelRatio]="settings.pixelRatio"
+
+  (ready)="initEvents($event.cy)"
 ></ts-graphs-cytoscape>

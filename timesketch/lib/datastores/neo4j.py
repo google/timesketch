@@ -20,20 +20,20 @@ from neo4jrestclient.constants import DATA_GRAPH
 SCHEMA = {
     u'nodes': {
         u'WindowsMachine': {
-            u'label_template': u'{hostname}',
+            u'label_template': u'\uf009  {hostname}',
         },
         u'WindowsADUser': {
-            u'label_template': u'{username}',
+            u'label_template': u'\uf2be  {username}',
         },
         u'WindowsLocalUser': {
-            u'label_template': u'{username}',
+            u'label_template': u'\uf007  {username}',
         },
         u'WindowsService': {
-            u'label_template': u'{service_name}',
+            u'label_template': u'\uf021  {service_name}',
         },
         u'WindowsServiceImagePath': {
-            u'label_template': u'{image_path}',
-        }
+            u'label_template': u'\uf15b  {image_path_short}',
+        },
     },
     u'edges': {
         u'ACCESS': {

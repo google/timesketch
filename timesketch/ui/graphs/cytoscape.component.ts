@@ -254,8 +254,11 @@ export class CytoscapeComponent implements OnChanges, AfterViewInit, OnDestroy {
       this.zoom = this.cy.zoom()
       this.zoomChange.emit(this.zoom)
     })
+    // in some cases the 'ready' cytoscape event is emitted before this line of code is executed,
+    // so we use cy.ready(...) to ensure that angular event CytoscapeComponent.ready is always emitted
+    this.cy.ready((e) => this.ready.emit(e))
     for (const [k, v] of Object.entries(this)) {
-      if (v instanceof EventEmitter && !k.endsWith('Change')) {
+      if (v instanceof EventEmitter && !k.endsWith('Change') && k !== 'ready') {
         this.cy.on(k, (e) => v.emit(e))
       }
     }

@@ -1,6 +1,6 @@
 import {Component, Input, Output, EventEmitter} from '@angular/core'
 
-import {GraphState, CytoscapeLayout} from './models'
+import {GraphState, CytoscapeLayout, SelectedElement} from './models'
 
 import * as data from './graph-view.data'
 
@@ -20,6 +20,8 @@ export class GraphViewComponent {
   // tslint:disable-next-line:no-unused-variable
   @Input() state: GraphState
   @Output() invalidate = new EventEmitter<{}>()
+
+  selectedElement: SelectedElement = {type: 'empty'}
 
   settings = data.settings
 
@@ -53,4 +55,12 @@ export class GraphViewComponent {
     nodeLabel: this.nodeLabel,
     edgeLabel: this.edgeLabel,
   })
+
+  initEvents(cy: Cy.Core) {
+    cy.on('click', (event) => {
+      if (event.target === cy) this.selectedElement = {type: 'empty'}
+      else if (event.target.isEdge()) this.selectedElement = {type: 'edge', element: event.target}
+      else if (event.target.isNode()) this.selectedElement = {type: 'node', element: event.target}
+    })
+  }
 }
