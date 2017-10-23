@@ -5,17 +5,7 @@ import {HttpClient} from '@angular/common/http'
 import {SKETCH_BASE_URL} from './api.service'
 import {SketchService} from './sketch.service'
 
-export type Graph = {
-  elements: Cy.ElementsDefinition
-  schema: {
-    nodes: {[type: string]: {
-      label_template: string
-    }}
-    edges: {[type: string]: {
-      label_template: string
-    }}
-  }
-}
+import {Graph} from '../graphs/models'
 
 /**
  * Service for fetching graph-related API resources.

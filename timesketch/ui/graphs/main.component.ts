@@ -2,7 +2,7 @@ import {Component, Input, OnChanges, SimpleChanges} from '@angular/core'
 
 import {SketchService} from '../api/sketch.service'
 import {GraphService} from '../api/graph.service'
-import {GraphViewState} from './graph-view.component'
+import {GraphState} from './models'
 
 @Component({
   selector: 'ts-graphs-main',
@@ -12,7 +12,7 @@ import {GraphViewState} from './graph-view.component'
 export class MainComponent implements OnChanges {
   @Input() sketchId: string
 
-  graphViewState: GraphViewState = {type: 'empty'}
+  graphState: GraphState = {type: 'empty'}
 
   constructor(
     private readonly sketchService: SketchService,
@@ -24,13 +24,13 @@ export class MainComponent implements OnChanges {
   }
 
   onCypherSearch(query: string) {
-    this.graphViewState = {type: 'loading'}
+    this.graphState = {type: 'loading'}
     this.graphService.search(query).subscribe((graph) => {
-      this.graphViewState = {type: 'ready', graph}
+      this.graphState = {type: 'ready', graph}
     })
   }
 
   onInvalidate() {
-    this.graphViewState = {type: 'empty'}
+    this.graphState = {type: 'empty'}
   }
 }
