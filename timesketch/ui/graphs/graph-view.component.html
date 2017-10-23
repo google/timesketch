@@ -36,9 +36,9 @@
 </h2>
 
 <ts-graphs-cytoscape
-  *ngIf="state.type === 'ready'"
+  [style.visibility]="state.type === 'ready' ? 'visible' : 'hidden'"
 
-  [elements]="state.graph.elements"
+  [elements]="state.type === 'ready' ? state.graph.elements : null"
   [style]="style"
   [layout]="layout"
 
