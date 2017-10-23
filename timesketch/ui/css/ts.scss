@@ -230,11 +230,11 @@ header {
     height:34px;
     border:1px solid #d1d1d1;
     width:150px;
+    outline: none;
 }
 
 .select-view {
     margin-left:5px;
-    outline: none;
 }
 
 #butterbar {
@@ -644,6 +644,13 @@ ts-graphs-cytoscape {
 ts-graphs-cypher-query {
   button[type="submit"] i {
     color: #999;
+  }
+  .#{&}__predefined-queries {
+    height:57px;
+    background-color:#f9f9f9;
+    margin-right: 10px;
+    border:0px;
+    -webkit-border-radius: 0px;
   }
 }
 
