@@ -230,11 +230,19 @@ header {
     height:34px;
     border:1px solid #d1d1d1;
     width:150px;
+    outline: none;
 }
 
 .select-view {
     margin-left:5px;
-    outline: none;
+}
+
+.select-graph-view {
+  height:57px;
+  background-color:#f9f9f9;
+  -webkit-border-radius: 0px;
+  border:0px;
+  margin-right: 10px;
 }
 
 #butterbar {
