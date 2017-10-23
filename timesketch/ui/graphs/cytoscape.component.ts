@@ -1,6 +1,6 @@
 import {
   Component, ViewChild, ElementRef, Input, Output, OnChanges, SimpleChanges, EventEmitter,
-  AfterViewInit,
+  AfterViewInit, OnDestroy, NgZone,
 } from '@angular/core'
 import * as cytoscape from 'cytoscape'
 
@@ -100,7 +100,7 @@ const mutable_options = [
   selector: 'ts-graphs-cytoscape',
   template: '<div #cytoscapeHostElement></div>',
 })
-export class CytoscapeComponent implements OnChanges, AfterViewInit {
+export class CytoscapeComponent implements OnChanges, AfterViewInit, OnDestroy {
   @ViewChild('cytoscapeHostElement')
   private cytoscapeHostRef: ElementRef
   private _cy: Cy.Core
@@ -113,6 +113,8 @@ export class CytoscapeComponent implements OnChanges, AfterViewInit {
   get cy(): Cy.Core {
     return this._cy
   }
+
+  constructor(private zone: NgZone) {}
 
   // tslint:disable:no-unused-variable
 
@@ -207,14 +209,14 @@ export class CytoscapeComponent implements OnChanges, AfterViewInit {
     for (const k of all_options) {
       options[k] = this[k]
     }
-    this._cy = cytoscape(options)
+    this._cy = this.zone.runOutsideAngular(() => cytoscape(options))
     this.initEvents()
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (!this.cy) return
     const changed = (k) =>
-      changes[k].previousValue !== changes[k].currentValue
+      k in changes && changes[k].previousValue !== changes[k].currentValue
     const options: Opt = {}
     let needs_rebuild = false
     for (const k of Object.keys(changes)) {
@@ -232,6 +234,10 @@ export class CytoscapeComponent implements OnChanges, AfterViewInit {
       this.initCytoscape()
     } else {
       (this.cy.json as any)(options)
+      if (changed('layout')) {
+        const layout: any = this.cy.layout(this.layout as Cy.LayoutOptions)
+        layout.run()
+      }
     }
   }
 
@@ -255,4 +261,7 @@ export class CytoscapeComponent implements OnChanges, AfterViewInit {
     }
   }
 
+  ngOnDestroy() {
+    this.cy.destroy()
+  }
 }
