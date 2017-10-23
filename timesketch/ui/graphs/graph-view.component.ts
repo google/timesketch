@@ -1,20 +1,8 @@
 import {Component, Input, Output, EventEmitter} from '@angular/core'
 
-import {Graph} from '../api/graph.service'
-import {CytoscapeSettings} from './cytoscape-settings.component'
+import {GraphState, CytoscapeLayout} from './models'
 
-export type Empty = {type: 'empty'}
-export type Loading = {type: 'loading'}
-export type Ready = {
-  type: 'ready'
-  graph: Graph
-}
-
-export type GraphViewState = Empty | Loading | Ready
-
-export type Layout = Cy.LayoutOptions & {animationThreshold?: number}
-
-export type Style = Array<Cy.Stylesheet & {padding?: number}>
+import * as data from './graph-view.data'
 
 function format(formatString: string, params: {[k: string]: string}): string {
   let result = formatString
@@ -30,67 +18,22 @@ function format(formatString: string, params: {[k: string]: string}): string {
 })
 export class GraphViewComponent {
   // tslint:disable-next-line:no-unused-variable
-  @Input() state: GraphViewState
+  @Input() state: GraphState
   @Output() invalidate = new EventEmitter<{}>()
-  settings: CytoscapeSettings = {
-    // interaction options:
-    minZoom: 0.1,
-    maxZoom: 1.5,
-    zoomingEnabled: true,
-    userZoomingEnabled: true,
-    panningEnabled: true,
-    userPanningEnabled: true,
-    boxSelectionEnabled: true,
-    selectionType: 'single',
-    touchTapThreshold: 8,
-    desktopTapThreshold: 4,
-    autolock: false,
-    autoungrabify: false,
-    autounselectify: false,
-    // rendering options:
-    headless: false,
-    styleEnabled: true,
-    hideEdgesOnViewport: false,
-    hideLabelsOnViewport: false,
-    textureOnViewport: false,
-    motionBlur: false,
-    motionBlurOpacity: 0.2,
-    wheelSensitivity: 1,
-    pixelRatio: ('auto' as any),
-  }
-  private _layout: Layout = {
-    name: 'cose',
-    animate: true,
-    animationThreshold: 250,
-    animationDuration: 1000,
-    refresh: 20,
-    fit: true,
-    padding: 30,
-    boundingBox: undefined,
-    randomize: true,
-    componentSpacing: 200,
-    nodeRepulsion: () => 400000,
-    nodeOverlap: 10,
-    idealEdgeLength: () => 10,
-    edgeElasticity: () => 100,
-    nestingFactor: 5,
-    gravity: 50,
-    numIter: 1000,
-    initialTemp: 200,
-    coolingFactor: 0.95,
-    minTemp: 1.0,
-    weaver: false,
-    nodeDimensionsIncludeLabels: false,
-  }
-  private _null_layout: Layout = {name: 'null'}
-  get layout(): Layout {
+
+  settings = data.settings
+
+  private _layout = data.layout
+  private _null_layout = {name: 'null'}
+  get layout(): CytoscapeLayout {
     if (this.state.type === 'ready') {
       return this._layout
     } else {
-      return this._null_layout
+      return this._null_layout as CytoscapeLayout
     }
   }
-  nodeLabel(node_data) {
+
+  nodeLabel = (node_data) => {
     if (this.state.type === 'ready') {
       const {label_template} = this.state.graph.schema.nodes[node_data.type]
       return format(label_template, node_data)
@@ -98,7 +41,7 @@ export class GraphViewComponent {
       return ''
     }
   }
-  edgeLabel(edge_data) {
+  edgeLabel = (edge_data) => {
     if (this.state.type === 'ready') {
       const {label_template} = this.state.graph.schema.edges[edge_data.type]
       return format(label_template, edge_data)
@@ -106,64 +49,8 @@ export class GraphViewComponent {
       return ''
     }
   }
-  style: Style = [
-    {
-      selector: 'node',
-      style: {
-        'shape': 'roundrectangle',
-        'width': 'label',
-        'height': 'label',
-        'padding': 10,
-        'label': (node) => this.nodeLabel(node.data()),
-        'text-halign': 'center',
-        'text-valign': 'center',
-        'color': '#FFFFFF',
-        'font-size': '10',
-        'background-color': '#68BDF6',
-        'border-color': '#5CA8DB',
-        'border-width': '1',
-        'text-wrap': 'wrap',
-        'text-max-width': '20',
-      },
-    },
-    {
-      selector: "node[type = 'WindowsADUser']",
-      style: {
-        'background-color': '#FF756E',
-        'border-color': '#E06760',
-      },
-    },
-    {
-      selector: "node[type = 'WindowsMachine']",
-      style: {
-        'background-color': '#68BDF6',
-        'border-color': '#5CA8DB',
-      },
-    },
-    {
-      selector: "node[type = 'WindowsService']",
-      style: {
-        'background-color': '#6DCE9E',
-        'border-color': '#60B58B',
-      },
-    },
-    {
-      selector: "node[type = 'WindowsServiceImagePath']",
-      style: {
-        'background-color': '#DE9BF9',
-        'border-color': '#BF85D6',
-      },
-    },
-    {
-      selector: 'edge',
-      style: {
-        'width': 1,
-        'curve-style': 'bezier',
-        'target-arrow-shape': 'triangle',
-        'label': (edge) => this.edgeLabel(edge.data()),
-        'font-size': 10,
-        'text-rotation': 'autorotate',
-      },
-    },
-  ]
+  style = data.style({
+    nodeLabel: this.nodeLabel,
+    edgeLabel: this.edgeLabel,
+  })
 }
