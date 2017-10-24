@@ -25,8 +25,8 @@ export class MainComponent implements OnChanges {
 
   onCypherSearch(query: string) {
     this.graphState = {type: 'loading'}
-    this.graphService.search(query).subscribe((graph) => {
-      this.graphState = {type: 'ready', graph}
+    this.graphService.search(query).subscribe((elements) => {
+      this.graphState = {type: 'ready', elements}
     })
   }
 

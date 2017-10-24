@@ -16,34 +16,46 @@
 from neo4jrestclient.client import GraphDatabase
 from neo4jrestclient.constants import DATA_GRAPH
 
+HIDDEN_FIELDS = [
+    'type', 'id', 'sketch_id', 'source', 'target', 'es_index_name', 'es_query',
+]
+
 # Schema for Neo4j nodes and edges
 SCHEMA = {
     u'nodes': {
         u'WindowsMachine': {
-            u'label_template': u'\uf009  {hostname}',
+            u'label': u'\uf009\u00A0\u00A0{hostname}',
+            u'hidden_fields': HIDDEN_FIELDS,
         },
         u'WindowsADUser': {
-            u'label_template': u'\uf2be  {username}',
+            u'label': u'\uf2be\u00A0\u00A0{username}',
+            u'hidden_fields': HIDDEN_FIELDS,
         },
         u'WindowsLocalUser': {
-            u'label_template': u'\uf007  {username}',
+            u'label': u'\uf007\u00A0\u00A0{username}',
+            u'hidden_fields': HIDDEN_FIELDS,
         },
         u'WindowsService': {
-            u'label_template': u'\uf021  {service_name}',
+            u'label': u'\uf021\u00A0\u00A0{service_name}',
+            u'hidden_fields': HIDDEN_FIELDS,
         },
         u'WindowsServiceImagePath': {
-            u'label_template': u'\uf15b  {image_path_short}',
+            u'label': u'\uf15b\u00A0\u00A0{image_path_short}',
+            u'hidden_fields': HIDDEN_FIELDS,
         },
     },
     u'edges': {
         u'ACCESS': {
-            u'label_template': u'{method} | {username}',
+            u'label': u'\uf090\u00A0\u00A0{method} | {username}',
+            u'hidden_fields': HIDDEN_FIELDS,
         },
         u'START': {
-            u'label_template': u'{start_type}',
+            u'label': u'\uf135\u00A0\u00A0{start_type}',
+            u'hidden_fields': HIDDEN_FIELDS,
         },
         u'HAS': {
-            u'label_template': u'HAS',
+            u'label': u'\uf1e6\u00A0\u00A0HAS',
+            u'hidden_fields': HIDDEN_FIELDS,
         }
     }
 }

@@ -24,8 +24,7 @@ import {CypherQueryComponent} from './cypher-query.component'
 import {GraphViewComponent} from './graph-view.component'
 import {CytoscapeSettingsComponent} from './cytoscape-settings.component'
 import {GraphActionsComponent} from './graph-actions.component'
-import {EdgeDetailComponent} from './edge-detail.component'
-import {NodeDetailComponent} from './node-detail.component'
+import {SidebarComponent} from './sidebar.component'
 import {MainComponent} from './main.component'
 import {ApiModule} from '../api/api.module'
 
@@ -38,8 +37,8 @@ export const tsGraphsModule = angular.module('timesketch.graphs', [])
   imports: [CommonModule, FormsModule, ApiModule],
   declarations: [
     CytoscapeComponent, CypherQueryComponent, GraphViewComponent,
-    CytoscapeSettingsComponent, GraphActionsComponent, EdgeDetailComponent,
-    NodeDetailComponent, MainComponent,
+    CytoscapeSettingsComponent, GraphActionsComponent, SidebarComponent,
+    MainComponent,
   ],
   entryComponents: [MainComponent],
 })

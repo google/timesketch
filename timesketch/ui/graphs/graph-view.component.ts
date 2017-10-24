@@ -1,16 +1,7 @@
-import {Component, Input, Output, EventEmitter} from '@angular/core'
-
+import {Component, Input, Output, EventEmitter, ChangeDetectorRef} from '@angular/core'
 import {GraphState, CytoscapeLayout, SelectedElement} from './models'
 
 import * as data from './graph-view.data'
-
-function format(formatString: string, params: {[k: string]: string}): string {
-  let result = formatString
-  for (const [k, v] of Object.entries(params)) {
-    result = result.replace('{' + k + '}', v)
-  }
-  return result
-}
 
 @Component({
   selector: 'ts-graphs-graph-view',
@@ -23,6 +14,7 @@ export class GraphViewComponent {
 
   selectedElement: SelectedElement = {type: 'empty'}
 
+  style = data.style
   settings = data.settings
 
   private _layout = data.layout
@@ -35,32 +27,14 @@ export class GraphViewComponent {
     }
   }
 
-  nodeLabel = (node_data) => {
-    if (this.state.type === 'ready') {
-      const {label_template} = this.state.graph.schema.nodes[node_data.type]
-      return format(label_template, node_data)
-    } else {
-      return ''
-    }
-  }
-  edgeLabel = (edge_data) => {
-    if (this.state.type === 'ready') {
-      const {label_template} = this.state.graph.schema.edges[edge_data.type]
-      return format(label_template, edge_data)
-    } else {
-      return ''
-    }
-  }
-  style = data.style({
-    nodeLabel: this.nodeLabel,
-    edgeLabel: this.edgeLabel,
-  })
+  constructor(private readonly changeDetectorRef: ChangeDetectorRef) {}
 
   initEvents(cy: Cy.Core) {
     cy.on('click', (event) => {
-      if (event.target === cy) this.selectedElement = {type: 'empty'}
+      if (event.target === event.cy) this.selectedElement = {type: 'empty'}
       else if (event.target.isEdge()) this.selectedElement = {type: 'edge', element: event.target}
       else if (event.target.isNode()) this.selectedElement = {type: 'node', element: event.target}
+      this.changeDetectorRef.detectChanges()
     })
   }
 }

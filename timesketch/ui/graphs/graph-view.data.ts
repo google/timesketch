@@ -52,7 +52,13 @@ export const layout: CytoscapeLayout = {
   nodeDimensionsIncludeLabels: false,
 }
 
-export const style = ({nodeLabel, edgeLabel}): CytoscapeStyle => [
+export const style: CytoscapeStyle = [
+  {
+    selector: '*',
+    style: {
+      'font-family': 'FontAwesome, sans-serif',
+    } as Cy.Css.Node,
+  },
   {
     selector: 'node',
     style: {
@@ -60,19 +66,18 @@ export const style = ({nodeLabel, edgeLabel}): CytoscapeStyle => [
       'width': 'label',
       'height': 'label',
       'compound-sizing-wrt-labels': 'include',
-      'label': (node) => nodeLabel(node.data()),
+      'label': (node) => node.scratch().label,
       'text-halign': 'center',
       'text-valign': 'center',
       'color': '#FFFFFF',
       'font-size': '10',
       'font-weight': 'bold',
-      'text-outline-width': '3px',
-      'padding': '3px',
+      'text-outline-width': '1px',
+      'padding': '4px',
       'background-color': 'gray',
       'text-outline-color': 'gray',
       'text-wrap': 'wrap',
       'text-max-width': '12em',
-      'font-family': 'FontAwesome, sans-serif',
     },
   },
   {
@@ -81,7 +86,7 @@ export const style = ({nodeLabel, edgeLabel}): CytoscapeStyle => [
       'overlay-color': 'black',
       'overlay-opacity': '0.2',
       'overlay-padding': '7px',
-    } as any,
+    } as Cy.Css.Node,
   },
   {
     selector: "node[type = 'WindowsADUser']",
@@ -117,7 +122,7 @@ export const style = ({nodeLabel, edgeLabel}): CytoscapeStyle => [
       'width': 1,
       'curve-style': 'bezier',
       'target-arrow-shape': 'triangle',
-      'label': (edge) => edgeLabel(edge.data()),
+      'label': (edge) => edge.scratch().label,
       'font-size': 10,
       'text-rotation': 'autorotate',
     },

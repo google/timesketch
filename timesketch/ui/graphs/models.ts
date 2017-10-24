@@ -3,24 +3,34 @@ type Empty = {type: 'empty'}
 type Loading = {type: 'loading'}
 
 /**
- * Graph - received from GraphService
+ * GraphDef - received from GraphService
  *
  * GraphState - input of GraphViewComponent, stored in MainComponent
  */
-export type Graph = {
-  elements: Cy.ElementsDefinition
-  schema: {
-    nodes: {[type: string]: {
-      label_template: string
-    }}
-    edges: {[type: string]: {
-      label_template: string
-    }}
-  }
+export type ElementData = {
+  [field_name: string]: string | string[]
+} & {
+  type: string
+}
+export type ElementScratch = {
+  label: string
+  hidden_fields: string[]
+}
+export type GraphSchema = {
+  nodes: {[type: string]: ElementScratch}
+  edges: {[type: string]: ElementScratch}
+}
+export type ElementDef = {
+  data: ElementData
+  scratch: ElementScratch
+}
+export type GraphDef = {
+  nodes: ElementDef[]
+  edges: ElementDef[]
 }
 type GraphReady = {
   type: 'ready'
-  graph: Graph
+  elements: GraphDef
 }
 export type GraphState = Empty | Loading | GraphReady
 
