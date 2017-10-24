@@ -41,7 +41,7 @@
     "d3": "4.2.2",
     "extract-text-webpack-plugin": "^3.0.0",
     "file-loader": "^0.11.2",
-    "font-awesome": "4.3.0",
+    "font-awesome": "4.7.0",
     "hammerjs": "^2.0.8",
     "istanbul-instrumenter-loader": "^3.0.0",
     "jasmine": "^2.8.0",

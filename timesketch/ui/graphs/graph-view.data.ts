@@ -52,52 +52,68 @@ export const layout: CytoscapeLayout = {
   nodeDimensionsIncludeLabels: false,
 }
 
-export const style = ({nodeLabel, edgeLabel}): CytoscapeStyle => [
+export const style: CytoscapeStyle = [
+  {
+    selector: '*',
+    style: {
+      'font-family': 'FontAwesome, sans-serif',
+    } as Cy.Css.Node,
+  },
   {
     selector: 'node',
     style: {
       'shape': 'roundrectangle',
       'width': 'label',
       'height': 'label',
-      'padding': 10,
-      'label': (node) => nodeLabel(node.data()),
+      'compound-sizing-wrt-labels': 'include',
+      'label': (node) => node.scratch().label,
       'text-halign': 'center',
       'text-valign': 'center',
       'color': '#FFFFFF',
       'font-size': '10',
-      'background-color': '#68BDF6',
-      'border-color': '#5CA8DB',
-      'border-width': '1',
+      'font-weight': 'bold',
+      'text-outline-width': '1px',
+      'padding': '4px',
+      'background-color': 'gray',
+      'text-outline-color': 'gray',
       'text-wrap': 'wrap',
-      'text-max-width': '20',
+      'text-max-width': '12em',
     },
+  },
+  {
+    selector: 'node:selected',
+    style: {
+      'overlay-color': 'black',
+      'overlay-opacity': '0.2',
+      'overlay-padding': '7px',
+    } as Cy.Css.Node,
   },
   {
     selector: "node[type = 'WindowsADUser']",
     style: {
       'background-color': '#FF756E',
-      'border-color': '#E06760',
+      'text-outline-color': '#FF756E',
     },
   },
   {
     selector: "node[type = 'WindowsMachine']",
     style: {
       'background-color': '#68BDF6',
-      'border-color': '#5CA8DB',
+      'text-outline-color': '#68BDF6',
     },
   },
   {
     selector: "node[type = 'WindowsService']",
     style: {
       'background-color': '#6DCE9E',
-      'border-color': '#60B58B',
+      'text-outline-color': '#6DCE9E',
     },
   },
   {
     selector: "node[type = 'WindowsServiceImagePath']",
     style: {
       'background-color': '#DE9BF9',
-      'border-color': '#BF85D6',
+      'text-outline-color': '#DE9BF9',
     },
   },
   {
@@ -106,7 +122,7 @@ export const style = ({nodeLabel, edgeLabel}): CytoscapeStyle => [
       'width': 1,
       'curve-style': 'bezier',
       'target-arrow-shape': 'triangle',
-      'label': (edge) => edgeLabel(edge.data()),
+      'label': (edge) => edge.scratch().label,
       'font-size': 10,
       'text-rotation': 'autorotate',
     },

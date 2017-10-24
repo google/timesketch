@@ -28,4 +28,5 @@ export class SketchService {
       .get(`${SKETCH_BASE_URL}${this.sketchId}/`)
       .map((response) => response['objects'][0])
   }
+
 }

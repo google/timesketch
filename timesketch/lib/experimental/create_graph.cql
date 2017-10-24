@@ -77,7 +77,8 @@ WITH line
   MERGE (src:WindowsMachine { hostname: line.src, sketch_id: {sketch_id} })
   MERGE (service:WindowsService { service_name: line.svc_name, sketch_id: {sketch_id} })
   MERGE (image_path:WindowsServiceImagePath { image_path: line.image_path, sketch_id: {sketch_id} })
-  SET src.es_index_name = coalesce(src.es_index_name, line.es_index_name)
+  SET src.es_index_name = coalesce(src.es_index_name, line.es_index_name),
+      image_path.image_path_short = line.image_path_short
 
   MERGE (service)-[r:START {start_type: line.start_type}]->(src)
   ON CREATE SET r.es_index_name = line.es_index_name,

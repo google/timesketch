@@ -36,10 +36,10 @@ describe('GraphService', () => {
       })
       // types are incorrect (for example, typeof 'FAKE_ELEMENTS' != Cy.ElementsDefinition)
       // but we are only checking that data is just passed as-is from http response
-      request.flush({meta: {schema: 'FAKE_SCHEMA'}, objects: [{graph: 'FAKE_ELEMENTS'}]})
+      request.flush({meta: {schema: {nodes: {}, edges: {}}}, objects: [{graph: {nodes: [], edges: []}}]})
 
       const graph = await graphPromise
-      expect(graph).toEqual({elements: 'FAKE_ELEMENTS', schema: 'FAKE_SCHEMA'})
+      expect(graph).toEqual({nodes: [], edges: []})
       http.verify()
     })
   })

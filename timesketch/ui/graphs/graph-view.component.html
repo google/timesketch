@@ -1,3 +1,32 @@
+<div class="ts-graphs-graph-view__dropdown" style="display: inline-block">
+  <label for="ts-graphs-graph-view__toggle-sidebar">
+    <i class="fa fa-bars"></i>
+  </label>
+</div>
+<input
+  type="checkbox" id="ts-graphs-graph-view__toggle-sidebar"
+  class="ts-graphs-graph-view__dropdown-trigger"
+>
+<input type="radio" name="width" id="ts-graphs-graph-view__sidebar-width15" class="ts-graphs-graph-view__sidebar-width">
+<label for="ts-graphs-graph-view__sidebar-width15" class="btn btn-default ts-graphs-graph-view__sidebar-width-label">
+  <i class="fa fa-battery-1"></i>
+</label>
+<input type="radio" name="width" id="ts-graphs-graph-view__sidebar-width30" class="ts-graphs-graph-view__sidebar-width" checked>
+<label for="ts-graphs-graph-view__sidebar-width30" class="btn btn-default ts-graphs-graph-view__sidebar-width-label">
+  <i class="fa fa-battery-2"></i>
+</label>
+<input type="radio" name="width" id="ts-graphs-graph-view__sidebar-width60" class="ts-graphs-graph-view__sidebar-width">
+<label for="ts-graphs-graph-view__sidebar-width60" class="btn btn-default ts-graphs-graph-view__sidebar-width-label">
+  <i class="fa fa-battery-3"></i>
+</label>
+<div class="ts-graphs-graph-view__dropdown-content ts-graphs-graph-view__sidebar">
+  <h3 *ngIf="selectedElement.type === 'empty'">
+    Click on nodes/edges to see details. Click on an edge to see relevant events.
+  </h3>
+  <ts-graphs-sidebar *ngIf="selectedElement.type !== 'empty'" [element]="selectedElement.element">
+  </ts-graphs-sidebar>
+</div>
+
 <div class="pull-right">
   <div class="ts-graphs-graph-view__dropdown">
     <label for="ts-graphs-graph-view__toggle-graph-actions">
@@ -38,7 +67,7 @@
 <ts-graphs-cytoscape
   [style.visibility]="state.type === 'ready' ? 'visible' : 'hidden'"
 
-  [elements]="state.type === 'ready' ? state.graph.elements : null"
+  [elements]="state.type === 'ready' ? state.elements : null"
   [style]="style"
   [layout]="layout"
 
@@ -65,4 +94,6 @@
   [motionBlurOpacity]="settings.motionBlurOpacity"
   [wheelSensitivity]="settings.wheelSensitivity"
   [pixelRatio]="settings.pixelRatio"
+
+  (ready)="initEvents($event.cy)"
 ></ts-graphs-cytoscape>

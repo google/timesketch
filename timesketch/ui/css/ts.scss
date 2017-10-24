@@ -33,7 +33,7 @@ table {
     word-wrap: break-word;
 }
 
-header {
+body > header {
     width: 100%;
     height: 55px;
     background: #34495e;
@@ -699,35 +699,113 @@ ts-graphs-graph-actions {
 ts-graphs-graph-view {
   @include ts-graphs-fill-space;
   .#{&}__dropdown {
+    background-color: white;
     display: inline-block;
     vertical-align: top;
     position: relative;
     box-shadow: 0 0 1px rgba(0,0,0,0.3);
-    padding-left: 15px;
-    padding-right: 15px;
-    z-index: 1;
+    z-index: 10;
+    label {
+      display: inline-block;
+      padding-left: 15px;
+      padding-right: 15px;
+      margin: 0px;
+    }
   }
   .#{&}__dropdown-trigger {
     display: none;
   }
   .#{&}__dropdown-content {
     position: absolute;
-    right: 0px;
+    left: 0px;
     top: 30px;
-    z-index: 1;
+    z-index: 10;
     background-color: white;
     box-shadow: 0 0 1px rgba(0,0,0,0.3);
     padding: 5px;
   }
-  .#{&}__dropdown-trigger + .#{&}__dropdown-content {
+  .pull-right .#{&}__dropdown-content {
+    right: 0px;
+    left: auto;
+  }
+  .#{&}__dropdown-trigger ~ .#{&}__dropdown-content {
     display: none;
   }
-  .#{&}__dropdown-trigger:checked + .#{&}__dropdown-content {
+  .#{&}__dropdown-trigger:checked ~ .#{&}__dropdown-content {
     display: block;
+  }
+  .#{&}__sidebar {
+    bottom: 0px;
+    padding: 10px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .#{&}__sidebar-width {
+    display: none;
+  }
+  .#{&}__sidebar-width-label {
+    display: none;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    margin: 0px;
+  }
+  .#{&}__sidebar-width-label {
+    color: rgb(180, 180, 180);
+    i {
+      color: rgb(180, 180, 180);
+    }
+    i::before {
+      display: inline-block;
+      box-shadow: 0px 0px 0px 3px rgb(180, 180, 180) inset;
+    }
+  }
+  .#{&}__dropdown-trigger:checked ~ .#{&}__sidebar-width-label {
+    display: inline-block;
+    z-index: 10;
+    position: relative;
+  }
+
+  .#{&}__sidebar-width:checked + label {
+    background-color: rgb(240, 240, 240);
+    color: black;
+  }
+
+  ##{&}__sidebar-width15:checked ~ .#{&}__sidebar {
+    width: 15vw;
+  }
+  ##{&}__sidebar-width30:checked ~ .#{&}__sidebar {
+    width: 30vw;
+  }
+  ##{&}__sidebar-width60:checked ~ .#{&}__sidebar {
+    width: 60vw;
   }
   h3 {
     text-align: center;
     margin-top: 3em;
+  }
+}
+
+ts-graphs-sidebar {
+  header {
+    display: block;
+    margin: 0px;
+    padding: 10px;
+    padding-left: calc(10px + 3.4em);
+  }
+  h3 {
+    font-family: FontAwesome, sans-serif;
+    text-align: left;
+    display: inline-block;
+    margin: 0px;
+    margin-right: 0.5em;
+    margin-left: -2em;
+  }
+  mark {
+    color: gray;
+    background-color: white;
+    display: inline-block;
   }
 }
 

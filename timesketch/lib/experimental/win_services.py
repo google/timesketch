@@ -86,16 +86,19 @@ def win_services(sketch_id):
         svc_name = event[1]
         start_type = event[2]
         image_path = event[3]
+        image_path_short = image_path.strip().strip('\\').split('\\')[-1]
         timestamp = event[4]
         es_index_name = event[5]
         es_id = event[6]
 
         src_ws = src_ws.split('.')[0].upper()
+
         result.append({
             u'src': src_ws,
             u'svc_name': svc_name,
             u'start_type': start_type,
             u'image_path': image_path,
+            u'image_path_short': image_path_short,
             u'timestamp': timestamp,
             u'es_index_name': es_index_name,
             u'es_query': u'_index:{} AND _id:{}'.format(es_index_name, es_id)
