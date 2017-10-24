@@ -740,6 +740,10 @@ ts-graphs-graph-view {
     overflow-x: hidden;
     overflow-y: auto;
   }
+  .#{&}__sidebar-hint {
+    padding: 20px;
+    text-align: center;
+  }
   .#{&}__sidebar-width {
     display: none;
   }

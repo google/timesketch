@@ -1,9 +1,10 @@
 import {Observable} from 'rxjs'
 import {Injectable} from '@angular/core'
-import {HttpClient} from '@angular/common/http'
+import {HttpClient, HttpParams} from '@angular/common/http'
 
 import {SKETCH_BASE_URL} from './api.service'
-import {Sketch} from './models'
+import {Sketch, Timeline} from './models'
+import {Event, EventDetail} from '../graphs/models'
 
 /**
  * A service that is intended to gather most of the resources defined in
@@ -19,14 +20,51 @@ import {Sketch} from './models'
  */
 @Injectable()
 export class SketchService {
-  sketchId: number
+  private _sketchId: number
+  public sketch: Sketch
+
+  get sketchId(): number {
+    return this._sketchId
+  }
+
+  set sketchId(id: number) {
+    this._sketchId = id
+    this.getSketch().subscribe((sketch) => {
+      this.sketch = sketch
+    })
+  }
 
   constructor(private http: HttpClient) {}
 
-  getSketch(): Observable<Sketch> {
+  private getSketch(): Observable<Sketch> {
     return this.http
       .get(`${SKETCH_BASE_URL}${this.sketchId}/`)
       .map((response) => response['objects'][0])
   }
 
+  search(query: string): Observable<Event[]> {
+    return this.http
+      .post(`${SKETCH_BASE_URL}${this.sketchId}/explore/`, {
+        query, filter: {limit: 100}, dsl: {},
+      })
+      .map((result) => result['objects'])
+  }
+
+  getEvent(searchindex_id: string, event_id: string): Observable<EventDetail> {
+    const params = new HttpParams()
+      .append('searchindex_id', searchindex_id)
+      .append('event_id', event_id)
+      .toString()
+    return this.http
+      .get(`${SKETCH_BASE_URL}${this.sketchId}/event/?${params}`)
+      .map((result) => result['objects'][0])
+  }
+
+  getTimelineFromIndexName(index_name: string): Timeline {
+    if (!this.sketch) return null
+    for (const timeline of this.sketch.timelines) {
+      if (timeline.searchindex.index_name === index_name) return timeline
+    }
+    return null
+  }
 }

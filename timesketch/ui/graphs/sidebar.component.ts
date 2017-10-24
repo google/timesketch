@@ -17,6 +17,10 @@ export class SidebarComponent {
     return this.element.data().type
   }
 
+  get es_query(): string {
+    return this.element.scratch().es_query
+  }
+
   get data_rows(): Array<{key: string, value: string}> {
     return Object
       .entries(this.element.data())
