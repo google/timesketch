@@ -739,6 +739,9 @@ ts-graphs-graph-view {
     padding: 10px;
     overflow-x: hidden;
     overflow-y: auto;
+    background-color: #f9f9f9;
+    opacity: 0.9;
+    box-shadow: none;
   }
   .#{&}__sidebar-width {
     display: none;
@@ -791,20 +794,18 @@ ts-graphs-sidebar {
   header {
     display: block;
     margin: 0px;
-    padding: 10px;
-    padding-left: calc(10px + 3.4em);
+    padding: 10px 10px 10px 2px;
   }
-  h3 {
+  h4 {
     font-family: FontAwesome, sans-serif;
     text-align: left;
     display: inline-block;
     margin: 0px;
     margin-right: 0.5em;
-    margin-left: -2em;
   }
   mark {
     color: gray;
-    background-color: white;
+    background-color: transparent;
     display: inline-block;
   }
 }

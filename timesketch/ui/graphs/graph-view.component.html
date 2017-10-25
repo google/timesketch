@@ -20,9 +20,9 @@
   <i class="fa fa-battery-3"></i>
 </label>
 <div class="ts-graphs-graph-view__dropdown-content ts-graphs-graph-view__sidebar">
-  <h3 *ngIf="selectedElement.type === 'empty'">
-    Click on nodes/edges to see details. Click on an edge to see relevant events.
-  </h3>
+  <h4 *ngIf="selectedElement.type === 'empty'">
+    Click on nodes/edges to see details.
+  </h4>
   <ts-graphs-sidebar *ngIf="selectedElement.type !== 'empty'" [element]="selectedElement.element">
   </ts-graphs-sidebar>
 </div>

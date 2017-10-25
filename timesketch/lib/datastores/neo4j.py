@@ -28,7 +28,7 @@ SCHEMA = {
             u'hidden_fields': HIDDEN_FIELDS,
         },
         u'WindowsADUser': {
-            u'label': u'\uf2be\u00A0\u00A0{username}',
+            u'label': u'\uf2c0\u00A0\u00A0{username}',
             u'hidden_fields': HIDDEN_FIELDS,
         },
         u'WindowsLocalUser': {
@@ -36,7 +36,7 @@ SCHEMA = {
             u'hidden_fields': HIDDEN_FIELDS,
         },
         u'WindowsService': {
-            u'label': u'\uf021\u00A0\u00A0{service_name}',
+            u'label': u'{service_name}',
             u'hidden_fields': HIDDEN_FIELDS,
         },
         u'WindowsServiceImagePath': {
@@ -46,15 +46,15 @@ SCHEMA = {
     },
     u'edges': {
         u'ACCESS': {
-            u'label': u'\uf090\u00A0\u00A0{method} | {username}',
+            u'label': u'{username} ({method})',
             u'hidden_fields': HIDDEN_FIELDS,
         },
         u'START': {
-            u'label': u'\uf135\u00A0\u00A0{start_type}',
+            u'label': u'{start_type}',
             u'hidden_fields': HIDDEN_FIELDS,
         },
         u'HAS': {
-            u'label': u'\uf1e6\u00A0\u00A0HAS',
+            u'label': u'HAS',
             u'hidden_fields': HIDDEN_FIELDS,
         }
     }
