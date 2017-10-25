@@ -17,7 +17,7 @@ from neo4jrestclient.client import GraphDatabase
 from neo4jrestclient.constants import DATA_GRAPH
 
 HIDDEN_FIELDS = [
-    'type', 'id', 'sketch_id', 'source', 'target', 'es_index_name', 'es_query',
+    'type', 'id', 'sketch_id', 'source', 'target',
 ]
 
 # Schema for Neo4j nodes and edges
@@ -48,14 +48,17 @@ SCHEMA = {
         u'ACCESS': {
             u'label': u'{username} ({method})',
             u'hidden_fields': HIDDEN_FIELDS,
+            u'es_query': u'event_identifier:4624 AND xml_string:"{username}" AND xml_string:"{target.hostname}*"',  # pylint: disable=line-too-long
         },
         u'START': {
             u'label': u'{start_type}',
             u'hidden_fields': HIDDEN_FIELDS,
+            u'es_query': u'event_identifier:7045 AND xml_string:"{start_type}" AND xml_string:"{source.service_name}" AND xml_string:"{target.hostname}*"',  # pylint: disable=line-too-long
         },
         u'HAS': {
             u'label': u'HAS',
             u'hidden_fields': HIDDEN_FIELDS,
+            u'es_query': u'event_identifier:7045 AND xml_string:"{target.image_path}" AND xml_string:"{source.service_name}"',  # pylint: disable=line-too-long
         }
     }
 }

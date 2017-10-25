@@ -2,6 +2,13 @@
 type Empty = {type: 'empty'}
 type Loading = {type: 'loading'}
 
+export type Event = {
+  _index: string
+} & {
+  [k: string]: any
+}
+export type EventDetail = {}
+
 /**
  * GraphDef - received from GraphService
  *

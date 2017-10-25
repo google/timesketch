@@ -6,6 +6,7 @@
 <input
   type="checkbox" id="ts-graphs-graph-view__toggle-sidebar"
   class="ts-graphs-graph-view__dropdown-trigger"
+  [(ngModel)]="showSidebar"
 >
 <input type="radio" name="width" id="ts-graphs-graph-view__sidebar-width15" class="ts-graphs-graph-view__sidebar-width">
 <label for="ts-graphs-graph-view__sidebar-width15" class="btn btn-default ts-graphs-graph-view__sidebar-width-label">
@@ -19,10 +20,18 @@
 <label for="ts-graphs-graph-view__sidebar-width60" class="btn btn-default ts-graphs-graph-view__sidebar-width-label">
   <i class="fa fa-battery-3"></i>
 </label>
+<<<<<<< HEAD
 <div class="ts-graphs-graph-view__dropdown-content ts-graphs-graph-view__sidebar">
   <h4 *ngIf="selectedElement.type === 'empty'">
     Click on nodes/edges to see details.
   </h4>
+=======
+<div *ngIf="showSidebar" class="ts-graphs-graph-view__dropdown-content ts-graphs-graph-view__sidebar">
+  <div *ngIf="selectedElement.type === 'empty'" class="ts-graphs-graph-view__sidebar-hint">
+    <h3>Click on nodes/edges to see details.</h3>
+    <h3>Click on an edge to see relevant events.</h3>
+  </div>
+>>>>>>> master
   <ts-graphs-sidebar *ngIf="selectedElement.type !== 'empty'" [element]="selectedElement.element">
   </ts-graphs-sidebar>
 </div>

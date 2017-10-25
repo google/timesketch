@@ -1,0 +1,32 @@
+<form class="form-inline" (ngSubmit)="onSubmit()">
+  <div class="input-group">
+    <input
+      [(ngModel)]="local_query"
+      type="search"
+      class="search-input"
+      placeholder="Search"
+      [ngModelOptions]="{standalone: true}"
+      autofocus
+    >
+    <span class="input-group-btn">
+      <button type="submit" class="btn search-input">
+        <i class="fa fa-search"></i>
+      </button>
+    </span>
+  </div>
+</form>
+
+<h3 *ngIf="!events">
+  <i class="fa fa-circle-o-notch fa-spin"></i>
+  Loading...
+</h3>
+
+<ul *ngIf="events">
+  <h4 style="padding: 20px" *ngIf="events.length === 0">
+    No events.
+  </h4>
+  <li *ngFor="let event of events">
+    <ts-graphs-event [event]="event">
+    </ts-graphs-event>
+  </li>
+</ul>

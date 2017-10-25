@@ -743,6 +743,10 @@ ts-graphs-graph-view {
     opacity: 0.9;
     box-shadow: none;
   }
+  .#{&}__sidebar-hint {
+    padding: 20px;
+    text-align: center;
+  }
   .#{&}__sidebar-width {
     display: none;
   }
