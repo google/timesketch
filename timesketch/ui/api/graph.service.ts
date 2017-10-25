@@ -21,6 +21,13 @@ export class GraphService {
   ) {}
 
   search(query: string): Observable<GraphDef> {
+    type Dict<T> = {[k: string]: T}
+    function object_map<V, W>(obj: Dict<V>, func: (k: string, v: V) => [string, W]): Dict<W> {
+      const parts = Object.entries(obj)
+        .map(([k, v]) => func(k, v))
+        .map(([k, v]) => ({[k]: v}))
+      return Object.assign({}, ...parts)
+    }
     function format(formatString: string, params: ElementData): string {
       let result = formatString
       for (const [k, v] of Object.entries(params)) {
@@ -32,22 +39,23 @@ export class GraphService {
       }
       return result
     }
-    function element_scratch(element_schema: ElementScratch, element_data: ElementData): ElementScratch {
-      function transform([k, v]: [keyof ElementScratch, ElementScratch[keyof ElementScratch]]) {
-        if (typeof v === 'string') {
-          return {[k]: format(v, element_data)}
-        } else {
-          return {[k]: v}
-        }
-      }
-      return Object.assign({}, ...Object.entries(element_schema).map(transform))
-    }
+    const element_scratch = (element_schema: ElementScratch, element_data: ElementData): ElementScratch =>
+      object_map(element_schema, (k, v): any =>
+        typeof v === 'string' ? [k, format(v, element_data)] : [k, v]
+      ) as any
     function format_graph({schema, elements}) {
+      const nodes_by_id = {}
       for (const node of elements.nodes) {
         node.scratch = element_scratch(schema.nodes[node.data.type], node.data)
+        nodes_by_id[node.data.id] = node
       }
       for (const edge of elements.edges) {
-        edge.scratch = element_scratch(schema.edges[edge.data.type], edge.data)
+        const edge_data = {
+          ...object_map(nodes_by_id[edge.data.source].data, (k, v) => ['source.' + k, v]),
+          ...object_map(nodes_by_id[edge.data.target].data, (k, v) => ['target.' + k,  v]),
+          ...edge.data,
+        }
+        edge.scratch = element_scratch(schema.edges[edge.data.type], edge_data)
       }
       return elements
     }

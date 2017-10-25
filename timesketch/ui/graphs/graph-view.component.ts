@@ -12,6 +12,8 @@ export class GraphViewComponent {
   @Input() state: GraphState
   @Output() invalidate = new EventEmitter<{}>()
 
+  showSidebar = false
+
   selectedElement: SelectedElement = {type: 'empty'}
 
   style = data.style
