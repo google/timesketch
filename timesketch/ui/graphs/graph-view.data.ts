@@ -121,10 +121,22 @@ export const style: CytoscapeStyle = [
     style: {
       'width': 1,
       'curve-style': 'bezier',
+      'control-point-step-size': 70,
       'target-arrow-shape': 'triangle',
       'label': (edge) => edge.scratch().label,
       'font-size': 10,
       'text-rotation': 'autorotate',
+      'text-outline-width': 4,
+      'text-outline-color': '#FFFFFF',
     },
+  },
+  {
+    selector: 'edge:selected',
+    style: {
+      'width': 2,
+      'line-color': '#333333',
+      'source-arrow-color': '#333333',
+      'target-arrow-color': '#333333',
+    }
   },
 ]
