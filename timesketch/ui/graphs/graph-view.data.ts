@@ -137,6 +137,6 @@ export const style: CytoscapeStyle = [
       'line-color': '#333333',
       'source-arrow-color': '#333333',
       'target-arrow-color': '#333333',
-    }
+    },
   },
 ]
