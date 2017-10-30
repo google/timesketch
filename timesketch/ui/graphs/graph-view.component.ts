@@ -52,6 +52,11 @@ export class GraphViewComponent {
     neighborhoodCollection.removeClass('faded');
   }
 
+  unSelectAllElements(event) {
+    event.cy.elements().unselect()
+    this.selectedElement = {type: 'empty'}
+  }
+
   initEvents(cy: Cy.Core) {
     cy.on('tap', (event) => {
       if (event.target === event.cy) this.selectedElement = {type: 'empty'}
@@ -61,24 +66,20 @@ export class GraphViewComponent {
     })
 
     // Fade all elements except selected elements and their immidiate neighbors.
-    cy.on('select', (event) => {
+    cy.on('select unselect', (event) => {
       this.showNeighborhood(event)
     })
-    cy.on('unselect', (event) => {
-      this.showNeighborhood(event)
-    })
-    // Reset if user click on canvas.
+    // Unselect all elements if user click on canvas.
     cy.on('tap', (event) => {
       if (event.target === event.cy) {
-        cy.elements().removeClass('faded')
+        this.unSelectAllElements(event)
       }
     })
     // Unselect all elements when layout is starting otherwise there can be
     // selected elements left between Cypher queries.
     cy.on('layoutstart', (event) => {
-      cy.elements().unselect()
+      this.unSelectAllElements(event)
     })
-
 
   }
 
