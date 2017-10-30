@@ -31,12 +31,52 @@ export class GraphViewComponent {
 
   constructor(private readonly changeDetectorRef: ChangeDetectorRef) {}
 
+  showNeighborhood(event) {
+    let neighborhood = event.cy.collection()
+    const selected = event.cy.filter(':selected')
+
+    if (selected.length === 0) {
+      event.cy.elements().removeClass('faded')
+      return
+    }
+
+    neighborhood = neighborhood.add(selected.filter('node').neighborhood())
+    neighborhood = neighborhood.add(selected.filter('edge').connectedNodes())
+    neighborhood = neighborhood.add(selected)
+
+    event.cy.elements().addClass('faded')
+    neighborhood.removeClass('faded')
+  }
+
+  unSelectAllElements(event) {
+    event.cy.elements().unselect()
+    this.selectedElement = {type: 'empty'}
+  }
+
   initEvents(cy: Cy.Core) {
-    cy.on('click', (event) => {
+    cy.on('tap', (event) => {
       if (event.target === event.cy) this.selectedElement = {type: 'empty'}
       else if (event.target.isEdge()) this.selectedElement = {type: 'edge', element: event.target}
       else if (event.target.isNode()) this.selectedElement = {type: 'node', element: event.target}
       this.changeDetectorRef.detectChanges()
     })
+
+    // Fade all elements except selected elements and their immidiate neighbors.
+    cy.on('select unselect', (event) => {
+      this.showNeighborhood(event)
+    })
+    // Unselect all elements if user click on canvas.
+    cy.on('tap', (event) => {
+      if (event.target === event.cy) {
+        this.unSelectAllElements(event)
+      }
+    })
+    // Unselect all elements when layout is starting otherwise there can be
+    // selected elements left between Cypher queries.
+    cy.on('layoutstart', (event) => {
+      this.unSelectAllElements(event)
+    })
+
   }
+
 }

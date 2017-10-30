@@ -139,4 +139,11 @@ export const style: CytoscapeStyle = [
       'target-arrow-color': '#333333',
     },
   },
+  {
+    selector: '.faded',
+    style: {
+        'opacity': 0.35,
+        'color': '#333333',
+      },
+  },
 ]
