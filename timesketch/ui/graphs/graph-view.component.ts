@@ -32,24 +32,20 @@ export class GraphViewComponent {
   constructor(private readonly changeDetectorRef: ChangeDetectorRef) {}
 
   showNeighborhood(event) {
-    let neighborhoodCollection = event.cy.collection()
-    const selectedElements = event.cy.filter(':selected')
+    let neighborhood = event.cy.collection()
+    const selected = event.cy.filter(':selected')
 
-    if (!selectedElements.length) {
+    if (selected.length === 0) {
       event.cy.elements().removeClass('faded')
       return
     }
 
-    selectedElements.forEach(function (element) {
-      if (element.isNode()) {
-        neighborhoodCollection = neighborhoodCollection.add(element.neighborhood().add(element))
-      } else if (element.isEdge()) {
-        neighborhoodCollection = neighborhoodCollection.add(element.connectedNodes().add(element))
-      }
-    })
+    neighborhood = neighborhood.add(selected.filter('node').neighborhood())
+    neighborhood = neighborhood.add(selected.filter('edge').connectedNodes())
+    neighborhood = neighborhood.add(selected)
 
     event.cy.elements().addClass('faded')
-    neighborhoodCollection.removeClass('faded')
+    neighborhood.removeClass('faded')
   }
 
   unSelectAllElements(event) {
