@@ -72,8 +72,8 @@ export const style: CytoscapeStyle = [
       'color': '#FFFFFF',
       'font-size': '10',
       'font-weight': 'bold',
-      'text-outline-width': '1px',
-      'padding': '4px',
+      'text-outline-width': '0px',
+      'padding': '7px',
       'background-color': 'gray',
       'text-outline-color': 'gray',
       'text-wrap': 'wrap',
@@ -84,7 +84,7 @@ export const style: CytoscapeStyle = [
     selector: 'node:selected',
     style: {
       'overlay-color': 'black',
-      'overlay-opacity': '0.2',
+      'overlay-opacity': '0.3',
       'overlay-padding': '7px',
     } as Cy.Css.Node,
   },
@@ -121,10 +121,22 @@ export const style: CytoscapeStyle = [
     style: {
       'width': 1,
       'curve-style': 'bezier',
+      'control-point-step-size': 70,
       'target-arrow-shape': 'triangle',
       'label': (edge) => edge.scratch().label,
       'font-size': 10,
       'text-rotation': 'autorotate',
+      'text-outline-width': 4,
+      'text-outline-color': '#FFFFFF',
+    },
+  },
+  {
+    selector: 'edge:selected',
+    style: {
+      'width': 2,
+      'line-color': '#333333',
+      'source-arrow-color': '#333333',
+      'target-arrow-color': '#333333',
     },
   },
 ]

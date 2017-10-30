@@ -22,8 +22,7 @@
 </label>
 <div *ngIf="showSidebar" class="ts-graphs-graph-view__dropdown-content ts-graphs-graph-view__sidebar">
   <div *ngIf="selectedElement.type === 'empty'" class="ts-graphs-graph-view__sidebar-hint">
-    <h3>Click on nodes/edges to see details.</h3>
-    <h3>Click on an edge to see relevant events.</h3>
+    <h4>Click on nodes/edges to see details.</h4>
   </div>
   <ts-graphs-sidebar *ngIf="selectedElement.type !== 'empty'" [element]="selectedElement.element">
   </ts-graphs-sidebar>
