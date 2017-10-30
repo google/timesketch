@@ -33,23 +33,23 @@ export class GraphViewComponent {
 
   showNeighborhood(event) {
     let neighborhoodCollection = event.cy.collection()
-    let selectedElements = event.cy.filter(':selected')
+    const selectedElements = event.cy.filter(':selected')
 
     if (!selectedElements.length) {
-      event.cy.elements().removeClass('faded');
+      event.cy.elements().removeClass('faded')
       return
     }
 
-    selectedElements.forEach(function(element){
+    selectedElements.forEach(function (element) {
       if (element.isNode()) {
         neighborhoodCollection = neighborhoodCollection.add(element.neighborhood().add(element))
       } else if (element.isEdge()) {
         neighborhoodCollection = neighborhoodCollection.add(element.connectedNodes().add(element))
       }
-    });
+    })
 
-    event.cy.elements().addClass('faded');
-    neighborhoodCollection.removeClass('faded');
+    event.cy.elements().addClass('faded')
+    neighborhoodCollection.removeClass('faded')
   }
 
   unSelectAllElements(event) {

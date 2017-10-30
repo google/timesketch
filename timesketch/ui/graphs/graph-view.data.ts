@@ -143,7 +143,7 @@ export const style: CytoscapeStyle = [
     selector: '.faded',
     style: {
         'opacity': 0.35,
-        'color': '#333333'
+        'color': '#333333',
       },
   },
 ]
