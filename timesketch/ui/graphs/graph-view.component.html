@@ -68,7 +68,7 @@
 <ts-graphs-cytoscape
   [style.visibility]="state.type === 'ready' ? 'visible' : 'hidden'"
 
-  [elements]="state.type === 'ready' ? state.elements : null"
+  [elements]="state.type === 'ready' ? state.elements : []"
   [style]="style"
   [layout]="layout"
 
