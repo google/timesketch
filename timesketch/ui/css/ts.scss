@@ -739,7 +739,8 @@ ts-graphs-graph-view {
     padding: 10px;
     overflow-x: hidden;
     overflow-y: auto;
-    background-color: #f9f9f9;
+    background-color: white;
+    border-right: solid 1px #eeeeee;
     opacity: 0.9;
     box-shadow: none;
   }
