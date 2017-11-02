@@ -44,6 +44,7 @@ from flask_restful import reqparse
 from flask_restful import Resource
 from sqlalchemy import desc
 from sqlalchemy import not_
+import pycypher
 
 from timesketch.lib.aggregators import heatmap
 from timesketch.lib.aggregators import histogram
@@ -67,6 +68,7 @@ from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
 from timesketch.lib.utils import get_validated_indices
+from timesketch.lib.cypher_transpilation import transpile_query, InvalidQuery
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchIndex
@@ -1275,16 +1277,63 @@ class GraphResource(ResourceMixin, Resource):
         if form.validate_on_submit():
             query = form.query.data
             output_format = form.output_format.data
-            result = self.graph_datastore.query(
-                query, output_format=output_format)
+
+            try:
+                transpiled = transpile_query(query, sketch_id)
+            except (pycypher.CypherParseError, InvalidQuery) as e:
+                return bad_request(e.message)
+
+            intermediate_result = self.graph_datastore.query(
+                transpiled, output_format='neo4j', return_rows=True)
+            nodes = []
+            edges = []
+            timestamps_by_edge_id = {}
+            if intermediate_result['rows'] is None:
+                intermediate_result['rows'] = []
+            for node_ids, edge_ids, timestamps_s in intermediate_result['rows']:
+                nodes.extend(node_ids)
+                for edge_id, timestamps in zip(edge_ids, timestamps_s):
+                    if edge_id not in timestamps_by_edge_id:
+                        timestamps_by_edge_id[edge_id] = []
+                    if timestamps is None:
+                        timestamps = []
+                    timestamps_by_edge_id[edge_id].extend(timestamps)
+            nodes = list(set(nodes))
+            edges = list(timestamps_by_edge_id.keys())
+            for edge_id in timestamps_by_edge_id:
+                timestamps_by_edge_id[edge_id] = list(set(
+                    timestamps_by_edge_id[edge_id]
+                ))
+            final_query = '''
+                UNWIND {edge_ids} AS edge_id MATCH ()-[e]->()
+                WHERE id(e) = edge_id AND e.sketch_id = {sketch_id}
+                RETURN e, null AS n
+                UNION ALL
+                UNWIND {node_ids} AS node_id MATCH (n)
+                WHERE id(n) = node_id AND n.sketch_id = {sketch_id}
+                RETURN null AS e, n
+            '''
+
+            result = self.graph_datastore.query(final_query, params={
+                'sketch_id': sketch_id, 'edge_ids': edges, 'node_ids': nodes,
+            }, output_format=output_format)
+            for edge in result['graph']['edges']:
+                edge_data = edge['data']
+                edge_data['timestamps'] = timestamps_by_edge_id[
+                    int(edge_data['id'].replace('edge', ''))
+                ]
+                edge_data['count'] = str(len(edge_data['timestamps']))
+                if edge_data.get('timestamps_incomplete'):
+                    edge_data['count'] += '+'
+                if edge_data['count'] == '0+':
+                    edge_data['count'] = '???'
+
             schema = {
                 u'meta': {
                     u'schema': neo4j_schema
                 },
                 u'objects': [{
                     u'graph': result[u'graph'],
-                    u'rows': result[u'rows'],
-                    u'stats': result[u'stats']
                 }]
             }
             return jsonify(schema)

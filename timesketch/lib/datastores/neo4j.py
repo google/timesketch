@@ -46,12 +46,12 @@ SCHEMA = {
     },
     u'edges': {
         u'ACCESS': {
-            u'label': u'{username} ({method})',
+            u'label': u'{username} [{method}] ({count})',
             u'hidden_fields': HIDDEN_FIELDS,
             u'es_query': u'event_identifier:4624 AND xml_string:"{username}" AND xml_string:"{target.hostname}*"',  # pylint: disable=line-too-long
         },
         u'START': {
-            u'label': u'{start_type}',
+            u'label': u'{start_type} ({count})',
             u'hidden_fields': HIDDEN_FIELDS,
             u'es_query': u'event_identifier:7045 AND xml_string:"{start_type}" AND xml_string:"{source.service_name}" AND xml_string:"{target.hostname}*"',  # pylint: disable=line-too-long
         },
