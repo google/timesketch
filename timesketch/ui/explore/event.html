@@ -7,7 +7,7 @@
 </div>
 
 <table id="search-result-table" width="100%">
-    <tr>
+    <tr ng-style="{'opacity': similarityLayer ? opacity : 1}">
         <td ng-click="addFilterStart()" style="cursor: copy; background: #{{::timeline_color}}" width="210px">
             {{::event._source.datetime}}
         </td>
@@ -44,7 +44,7 @@
             <span title="{{::timeline_name}}" class="label ts-name-label">{{::timeline_name}}</span>
         </td>
 
-    </tr>
+    </tr >
 </table>
 
 <div ng-show="showDetails" class="event-detail">

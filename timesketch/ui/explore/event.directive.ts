@@ -190,6 +190,7 @@ export const tsEvent = function () {
             isContextEvent: '=',
             enableContextQuery: '=',
             order: '=',
+            similarityLayer: '=',
         },
         require: '?^tsSearch',
         controller: function ($scope, timesketchApi) {
@@ -217,6 +218,12 @@ export const tsEvent = function () {
 
             // Defaults to not showing details for the event.
             $scope.showDetails = false
+
+            if ("similarity_score" in $scope.event._source) {
+                $scope.opacity = 1.0 - $scope.event._source.similarity_score
+            } else {
+                $scope.opacity = 1.0
+            }
 
             $scope.toggleSelected = function () {
                 $scope.event.selected = !$scope.event.selected
