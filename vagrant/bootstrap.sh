@@ -45,7 +45,7 @@ fi
 apt-get update
 apt-get install -y \
   neo4j openjdk-8-jre-headless elasticsearch postgresql python-psycopg2 \
-  python-pip python-dev libffi-dev redis-server python-plaso jq
+  python-pip python-dev libffi-dev redis-server python-plaso plaso-tools jq
 
 # Install python dependencies
 pip install --upgrade pip
@@ -59,7 +59,11 @@ if [ "$VAGRANT" = true ]; then
 fi
 
 # Install Timesketch
-pip install -e "${TIMESKETCH_PATH}"
+if [ "$VAGRANT" = true ]; then
+  pip install -e "${TIMESKETCH_PATH}"
+else
+  pip install "${TIMESKETCH_PATH}"
+fi
 
 # Generate random passwords for DB and session key
 if [ ! -f psql_pw ]; then
