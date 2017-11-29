@@ -52,7 +52,7 @@
     "karma-phantomjs-launcher": "^1.0.4",
     "karma-webpack": "^2.0.4",
     "medium-editor": "5.16.1",
-    "moment": "2.10.3",
+    "moment": "2.11.2",
     "node-sass": "^4.5.3",
     "null-loader": "^0.1.1",
     "numeral": "2.0.6",
