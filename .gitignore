@@ -24,4 +24,4 @@ tests-coverage.txt
 
 # Exclude Vagrant runtime files
 vagrant/.vagrant/
-agrant/*.log
+vagrant/*.log
