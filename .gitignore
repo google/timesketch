@@ -2,9 +2,6 @@
 node_modules
 timesketch/static/dist
 
-# Ignore data files
-*.plaso
-
 # Ignore back-up files.
 *~
 
@@ -27,4 +24,4 @@ tests-coverage.txt
 
 # Exclude Vagrant runtime files
 vagrant/.vagrant/
-vagrant/*.log
+agrant/*.log
