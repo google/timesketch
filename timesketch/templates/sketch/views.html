@@ -1,15 +1,12 @@
 {% extends "base.html" %}
 
 {% block navigation %}
-    <ts-sketch-navigation sketch-id="{{ sketch.id }}" active="views"></ts-sketch-navigation>
+    <ts-sketch-navigation sketch-id="{{ sketch.id }}" active="views" graphs-enabled="{{ graphs_enabled }}"></ts-sketch-navigation>
 {% endblock %}
 
 {% block main %}
-
-    <div class="container">
         <div class="row">
             <div class="col-md-12">
-
                 {% if sketch.has_permission(user=current_user, permission='write') and not sketch.timelines %}
                     <div class="card">
                         <div class="text-center" style="padding:100px;">
@@ -27,6 +24,4 @@
                 {% endif %}
             </div>
         </div>
-    </div>
-
 {% endblock %}

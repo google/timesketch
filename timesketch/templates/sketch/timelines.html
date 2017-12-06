@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block navigation %}
-    <ts-sketch-navigation sketch-id="{{ sketch.id }}" active="timelines"></ts-sketch-navigation>
+    <ts-sketch-navigation sketch-id="{{ sketch.id }}" active="timelines" graphs-enabled="{{ graphs_enabled }}"></ts-sketch-navigation>
 {% endblock %}
 
 {% block right_nav %}
@@ -21,64 +21,60 @@
         </div>
     {% endif %}
 
-    <div class="container">
-        {% if sketch.timelines %}
+    {% if sketch.timelines %}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card" style="padding:30px;">
+                    <h4>Timelines</h4>
+                    <ts-timelines-list sketch-id="{{ sketch.id }}" show-delete="true" show-edit="true"></ts-timelines-list>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if sketch.has_permission(user=current_user, permission='write') and not sketch.timelines and not timelines%}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="text-center" style="padding:100px;">
+                    <h3 style="color:#777"><i class="fa fa-meh-o"></i> No timelines in the system yet</h3>
+                    <p>Get started by importing a Plaso storage file</p>
+                    <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if sketch.has_permission(current_user, 'write') %}
+        {% if timelines %}
             <div class="row">
                 <div class="col-md-12">
-                    <div class="card" style="padding:30px;">
-                        <h4>Timelines</h4>
-                        <ts-timelines-list sketch-id="{{ sketch.id }}" show-delete="true" show-edit="true"></ts-timelines-list>
+                    <div class="card">
+                        <h4 class="pull-left">Available timelines</h4>
+                        <br><br>
+                        <form method="post" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
+                            <table class="table table-hover">
+                                <thead>
+                                <th width="30px"></th>
+                                <th>Timeline</th>
+                                <th>Created</th>
+                                </thead>
+                                {% for timeline in timelines %}
+                                    {% if timeline.get_status.status == 'new' %}
+                                        <tr>
+                                            <td><input name="timelines" type="checkbox" value={{ timeline.id }}></td>
+                                            <td>{{ timeline.name }}</td>
+                                            <td>{{ timeline.created_at.strftime('%Y-%m-%d') }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </table>
+                            {{ form.csrf_token }}
+                            <button class="btn btn-success" type="submit"><i class="fa fa-plus"></i> Add to sketch</button>
+                        </form>
                     </div>
                 </div>
             </div>
         {% endif %}
-
-        {% if sketch.has_permission(user=current_user, permission='write') and not sketch.timelines and not timelines%}
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="text-center" style="padding:100px;">
-                        <h3 style="color:#777"><i class="fa fa-meh-o"></i> No timelines in the system yet</h3>
-                        <p>Get started by importing a Plaso storage file</p>
-                        <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
-                    </div>
-                </div>
-            </div>
-        {% endif %}
-    </div>
-
-    <div class="container">
-        {% if sketch.has_permission(current_user, 'write') %}
-            {% if timelines %}
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="card">
-                            <h4 class="pull-left">Available timelines</h4>
-                            <br><br>
-                            <form method="post" action="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">
-                                <table class="table table-hover">
-                                    <thead>
-                                    <th width="30px"></th>
-                                    <th>Timeline</th>
-                                    <th>Created</th>
-                                    </thead>
-                                    {% for timeline in timelines %}
-                                        {% if timeline.get_status.status == 'new' %}
-                                            <tr>
-                                                <td><input name="timelines" type="checkbox" value={{ timeline.id }}></td>
-                                                <td>{{ timeline.name }}</td>
-                                                <td>{{ timeline.created_at.strftime('%Y-%m-%d') }}</td>
-                                            </tr>
-                                        {% endif %}
-                                    {% endfor %}
-                                </table>
-                                {{ form.csrf_token }}
-                                <button class="btn btn-success" type="submit"><i class="fa fa-plus"></i> Add to sketch</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
-        {% endif %}
-    </div>
+    {% endif %}
 
 {% endblock %}

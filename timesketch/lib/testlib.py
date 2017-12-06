@@ -43,6 +43,7 @@ class TestConfig(object):
     ELASTIC_HOST = None
     ELASTIC_PORT = None
     UPLOAD_ENABLED = False
+    GRAPH_BACKEND_ENABLED = False
 
 
 class MockDataStore(datastore.DataStore):
@@ -173,27 +174,26 @@ class MockGraphDatabase(object):
         MOCK_GRAPH = [{
             u'nodes': [{
                 u'id': u'1',
-                u'labels': [u'Test'],
+                u'labels': [u'User'],
                 u'properties': {
-                    u'name': u'test',
+                    u'username': u'test',
                     u'uid': u'123456'
                 }
             }, {
                 u'id': u'2',
-                u'labels': [u'Test'],
+                u'labels': [u'Machine'],
                 u'properties': {
-                    u'name': u'test'
+                    u'hostname': u'test'
                 }
             }],
             u'relationships': [{
                 u'endNode': u'2',
                 u'id': u'3',
-                u'properties': {
-                    u'human_readable': u'test',
-                    u'type': u'test'
-                },
                 u'startNode': u'1',
-                u'type': u'TEST'
+                u'properties': {
+                    u'method': u'Network'
+                },
+                u'type': u'ACCESS'
             }]
         }]
         MOCK_ROWS = {}
@@ -204,6 +204,12 @@ class MockGraphDatabase(object):
             self.rows = self.MOCK_ROWS
             self.stats = self.MOCK_ROWS
 
+    class MockEmptyQuerySequence(object):
+        def __init__(self):
+            self.graph = None
+            self.rows = {}
+            self.stats = {}
+
     # pylint: disable=unused-argument
     def query(self, *args, **kwargs):
         """Mock a search query.
@@ -211,7 +217,9 @@ class MockGraphDatabase(object):
         Returns:
             A MockQuerySequence instance.
         """
-
+        query = args[0]
+        if query == 'empty':
+            return self.MockEmptyQuerySequence()
         return self.MockQuerySequence()
 
 

@@ -15,10 +15,10 @@ limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
 
-export const timesketchApiImplementation = function ($http) {
-    const API_BASE_URL = '/api/v1'
-    const SKETCH_BASE_URL = API_BASE_URL + '/sketches/'
+export const API_BASE_URL = '/api/v1'
+export const SKETCH_BASE_URL = API_BASE_URL + '/sketches/'
 
+export const timesketchApiImplementation = function ($http) {
     this.getSketch = function (sketch_id) {
         /**
          * Get a Timesketch view.

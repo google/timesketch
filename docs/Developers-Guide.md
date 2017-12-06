@@ -11,7 +11,8 @@ Use `pip-compile --upgrade` to keep dependencies up to date.
 #### Frontend dependencies
 Add Node.js 8.x repo
 
-    $ curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+    $ curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | sudo apt-key add -
+    $ echo "deb https://deb.nodesource.com/node_8.x $(lsb_release -s -c) main"  | sudo tee /etc/apt/sources.list.d/nodesource.list
 
 Add Yarn repo
 

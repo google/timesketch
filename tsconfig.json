@@ -8,8 +8,9 @@
     "module": "commonjs",
     "target": "es5",
     "experimentalDecorators": true,
-    "lib": ["es6", "dom"],
+    "lib": ["es6", "dom", "es2017.object"],
     "types": ["jasmine"],
     "downlevelIteration": true,
+    "emitDecoratorMetadata": true
   }
 }

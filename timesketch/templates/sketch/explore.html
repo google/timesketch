@@ -1,11 +1,10 @@
 {% extends "base.html" %}
 
 {% block navigation %}
-    <ts-sketch-navigation sketch-id="{{ sketch.id }}" active="explore"></ts-sketch-navigation>
+    <ts-sketch-navigation sketch-id="{{ sketch.id }}" active="explore" graphs-enabled="{{ graphs_enabled }}"></ts-sketch-navigation>
 {% endblock %}
 
 {% block main %}
-    <div class="container">
         {% if sketch.has_permission(user=current_user, permission='write') and not sketch.timelines %}
             <div class="row">
                 <div class="col-md-12">
@@ -26,5 +25,4 @@
                 </div>
             </div>
         {% endif %}
-    </div>
 {% endblock %}

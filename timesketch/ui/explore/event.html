@@ -12,37 +12,36 @@
             {{::event._source.datetime}}
         </td>
 
-        <td width="20px;">
+        <td width="20px">
             <input type="checkbox" ng-click="toggleSelected()" ng-checked="event.selected">
         </td>
 
-        <td width="25px;">
+        <td width="25px">
             <i ng-click="event.star = !event.star;toggleStar()" ng-class="{true: 'fa fa-lg fa-star icon-yellow', false: 'fa fa-lg fa-star-o icon-grey'}[event.star]"></i>
         </td>
 
-        <td width="35px;">
+        <td width="30px">
             <i ng-click="event.hidden = !event.hidden;toggleHidden()" ng-class="{true: 'fa fa-lg fa-eye-slash', false: 'fa fa-lg fa-eye-slash icon-grey'}[event.hidden]"></i>
         </td>
 
-        <td class="event-message" ng-class="{'event-message-selected': event.selected, 'event-message-starred': event.star}" ng-click="getDetail();showDetails = !showDetails">
-            <span ng-show="comment">
-                <i class="fa fa-comments"></i>
-            </span>
-            <span ng-if="::event._source.tag" ng-repeat="tag in ::event._source.tag" class="label label-default">{{::tag}}</span>
-
-            <span ng-class="{true: 'message-hidden'}[event.hidden]">[{{ event._source.timestamp_desc }}] <span style=white-space:pre-wrap;">{{ event._source.message|limitTo:500 }}</span></span>
-
-            <div style="width:20px;height:20px;cursor: pointer;" class="pull-right tooltips"><span>Details</span><i ng-class="{true: 'fa fa-minus-square-o', false: 'fa fa-plus-square-o'}[showDetails]" style="color:#999;"></i></div>
-
+        <td width="35px">
+          <div ng-if="enableContextQuery" style="width:20px;height:20px;cursor: pointer;" class="tooltips" ng-click="getContext(event)">
+              <span>Context query</span><i class="fa fa-search-plus" style="color:#999;"></i>
+          </div>
         </td>
 
-        <td width="150px" style="text-align: right;background: #f1f1f1;">
-            <span class="label ts-name-label">{{::timeline_name}}</span>
+        <td class="event-message" ng-class="{'event-message-selected': event.selected, 'event-message-starred': event.star, 'event-message-wrap': !showDetails, 'event-message-details': showDetails}" ng-click="getDetail();showDetails = !showDetails">
+            <span ng-show="comment"><i class="fa fa-comments"></i></span>
+            <span ng-if="::event._source.tag" ng-repeat="tag in ::event._source.tag" class="label label-default">{{::tag}}</span>
+            <span ng-class="{true: 'message-hidden'}[event.hidden]">[{{ event._source.timestamp_desc }}] <span title="{{ event._source.message }}">{{ event._source.message|limitTo:1000 }}</span></span>
+        </td>
 
-            <div ng-if="enableContextQuery" style="width:20px;height:20px;cursor: pointer;" class="tooltips" ng-click="getContext(event)">
-                <span>Context query</span><i class="fa fa-search-plus" style="color:#777;"></i>
-            </div>
+        <td width="25px" class="event-message" ng-class="{'event-message-selected': event.selected, 'event-message-starred': event.star, 'event-message-details': showDetails}">
+            <div style="width:20px;height:20px;cursor: pointer;" class="pull-right tooltips"><span>Details</span><i ng-class="{true: 'fa fa-minus-square-o', false: 'fa fa-plus-square-o'}[showDetails]" ng-click="getDetail();showDetails = !showDetails" style="color:#999;"></i></div>
+        </td>
 
+        <td width="150px" style="text-align: right;background: #f1f1f1; white-space:nowrap; overflow:hidden; text-overflow: ellipsis;">
+            <span title="{{::timeline_name}}" class="label ts-name-label">{{::timeline_name}}</span>
         </td>
 
     </tr>

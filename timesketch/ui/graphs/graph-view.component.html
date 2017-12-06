@@ -1,0 +1,100 @@
+<div class="ts-graphs-graph-view__dropdown" style="display: inline-block">
+  <label for="ts-graphs-graph-view__toggle-sidebar">
+    <i class="fa fa-bars"></i>
+  </label>
+</div>
+<input
+  type="checkbox" id="ts-graphs-graph-view__toggle-sidebar"
+  class="ts-graphs-graph-view__dropdown-trigger"
+  [(ngModel)]="showSidebar"
+>
+<input type="radio" name="width" id="ts-graphs-graph-view__sidebar-width15" class="ts-graphs-graph-view__sidebar-width">
+<label for="ts-graphs-graph-view__sidebar-width15" class="btn btn-default ts-graphs-graph-view__sidebar-width-label">
+  <i class="fa fa-battery-1"></i>
+</label>
+<input type="radio" name="width" id="ts-graphs-graph-view__sidebar-width30" class="ts-graphs-graph-view__sidebar-width" checked>
+<label for="ts-graphs-graph-view__sidebar-width30" class="btn btn-default ts-graphs-graph-view__sidebar-width-label">
+  <i class="fa fa-battery-2"></i>
+</label>
+<input type="radio" name="width" id="ts-graphs-graph-view__sidebar-width60" class="ts-graphs-graph-view__sidebar-width">
+<label for="ts-graphs-graph-view__sidebar-width60" class="btn btn-default ts-graphs-graph-view__sidebar-width-label">
+  <i class="fa fa-battery-3"></i>
+</label>
+<div *ngIf="showSidebar" class="ts-graphs-graph-view__dropdown-content ts-graphs-graph-view__sidebar">
+  <div *ngIf="selectedElement.type === 'empty'" class="ts-graphs-graph-view__sidebar-hint">
+    <h4>Click on nodes/edges to see details.</h4>
+  </div>
+  <ts-graphs-sidebar *ngIf="selectedElement.type !== 'empty'" [element]="selectedElement.element">
+  </ts-graphs-sidebar>
+</div>
+
+<div class="pull-right">
+  <div class="ts-graphs-graph-view__dropdown">
+    <label for="ts-graphs-graph-view__toggle-graph-actions">
+      Graph actions
+    </label>
+    <input
+      type="checkbox" id="ts-graphs-graph-view__toggle-graph-actions"
+      class="ts-graphs-graph-view__dropdown-trigger"
+    >
+    <ts-graphs-graph-actions
+      class="ts-graphs-graph-view__dropdown-content"
+      (actionComplete)="invalidate.emit()"
+    ></ts-graphs-graph-actions>
+  </div>
+  <div class="ts-graphs-graph-view__dropdown">
+    <label for="ts-graphs-graph-view__toggle-cytoscape-settings">
+      <i class="fa fa-cog"></i>
+    </label>
+    <input
+      type="checkbox" id="ts-graphs-graph-view__toggle-cytoscape-settings"
+      class="ts-graphs-graph-view__dropdown-trigger"
+    >
+    <ts-graphs-cytoscape-settings
+      [settings]="settings"
+      class="ts-graphs-graph-view__dropdown-content"
+    ></ts-graphs-cytoscape-settings>
+  </div>
+</div>
+
+<h3 *ngIf="state.type === 'empty'">
+  Type a query
+</h3>
+
+<h3 *ngIf="state.type === 'loading'">
+  <i class="fa fa-circle-o-notch fa-spin"></i>
+</h3>
+
+<ts-graphs-cytoscape
+  [style.visibility]="state.type === 'ready' ? 'visible' : 'hidden'"
+
+  [elements]="state.type === 'ready' ? state.elements : []"
+  [style]="style"
+  [layout]="layout"
+
+  [minZoom]="settings.minZoom"
+  [maxZoom]="settings.maxZoom"
+  [zoomingEnabled]="settings.zoomingEnabled"
+  [userZoomingEnabled]="settings.userZoomingEnabled"
+  [panningEnabled]="settings.panningEnabled"
+  [userPanningEnabled]="settings.userPanningEnabled"
+  [boxSelectionEnabled]="settings.boxSelectionEnabled"
+  [selectionType]="settings.selectionType"
+  [touchTapThreshold]="settings.touchTapThreshold"
+  [desktopTapThreshold]="settings.desktopTapThreshold"
+  [autolock]="settings.autolock"
+  [autoungrabify]="settings.autoungrabify"
+  [autounselectify]="settings.autounselectify"
+
+  [headless]="settings.headless"
+  [styleEnabled]="settings.styleEnabled"
+  [hideEdgesOnViewport]="settings.hideEdgesOnViewport"
+  [hideLabelsOnViewport]="settings.hideLabelsOnViewport"
+  [textureOnViewport]="settings.textureOnViewport"
+  [motionBlur]="settings.motionBlur"
+  [motionBlurOpacity]="settings.motionBlurOpacity"
+  [wheelSensitivity]="settings.wheelSensitivity"
+  [pixelRatio]="settings.pixelRatio"
+
+  (ready)="initEvents($event.cy)"
+></ts-graphs-cytoscape>

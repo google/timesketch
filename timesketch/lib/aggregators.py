@@ -13,6 +13,10 @@
 # limitations under the License.
 """Elasticsearch aggregations."""
 
+# Max number of search hits to chart
+# TDOD: Move to config
+MAX_RESULT_LIMIT = 300000
+
 
 def heatmap(es_client, sketch_id, query_string, query_filter, query_dsl,
             indices):
@@ -29,12 +33,52 @@ def heatmap(es_client, sketch_id, query_string, query_filter, query_dsl,
     returns:
         List of events per hour/day
     """
+    RESULT_COUNT = search_result = es_client.search(
+        sketch_id, query_string, query_filter, query_dsl, indices, count=True)
+
+    # Exit early if we have too many search hits.
+    if RESULT_COUNT > MAX_RESULT_LIMIT or RESULT_COUNT == 0:
+        return []
+
+    DAYS = {
+        u'Mon': 1,
+        u'Tue': 2,
+        u'Wed': 3,
+        u'Thu': 4,
+        u'Fri': 5,
+        u'Sat': 6,
+        u'Sun': 7,
+    }
+
     aggregation = {
-        u'heatmap': {
-            u'date_histogram': {
-                u'field': u'datetime',
-                u'interval': u'hour',
-                u'format': u'e,H'
+        u'byDay': {
+            u'terms': {
+                u'script': {
+                    u'file': 'dateaggregation',
+                    u'lang': 'groovy',
+                    u'params': {
+                        u'date_field': 'datetime',
+                        u'format': 'EE'
+                    }
+                }
+            },
+            u'aggs': {
+                u'byHour': {
+                    u'terms': {
+                        u'order': {
+                            u'_term': 'asc'
+                        },
+                        u'script': {
+                            u'file': 'dateaggregation',
+                            u'lang': 'groovy',
+                            u'params': {
+                                u'date_field': 'datetime',
+                                u'format': 'HH'
+                            }
+                        },
+                        u'size': 24
+                    }
+                }
             }
         }
     }
@@ -52,23 +96,23 @@ def heatmap(es_client, sketch_id, query_string, query_filter, query_dsl,
 
     try:
         aggregation_result = search_result[u'aggregations']
-        if aggregation_result.get(u'exclude', None):
-            buckets = aggregation_result[u'exclude'][u'heatmap'][u'buckets']
-        else:
-            buckets = aggregation_result[u'heatmap'][u'buckets']
+        day_buckets = aggregation_result[u'byDay'][u'buckets']
     except KeyError:
-        buckets = []
+        day_buckets = []
 
     per_hour = {}
     for day in range(1, 8):
         for hour in range(0, 24):
             per_hour[(day, hour)] = 0
 
-    for bucket in buckets:
-        day_hour = tuple(
-            int(dh) for dh in bucket[u'key_as_string'].split(u','))
-        count = bucket[u'doc_count']
-        per_hour[day_hour] += count
+    for day_bucket in day_buckets:
+        day = DAYS[day_bucket.get(u'key')]
+        day_hours = day_bucket[u'byHour'][u'buckets']
+
+        for day_hour in day_hours:
+            hour = int(day_hour[u'key'])
+            count = day_hour[u'doc_count']
+            per_hour[(day, int(hour))] = count
 
     return [dict(day=k[0], hour=k[1], count=v) for k, v in per_hour.items()]
 
@@ -88,24 +132,46 @@ def histogram(es_client, sketch_id, query_string, query_filter, query_dsl,
     returns:
         List of events per hour/day
     """
+    RESULT_COUNT = search_result = es_client.search(
+        sketch_id, query_string, query_filter, query_dsl, indices, count=True)
+
+    # Exit early if we have too many search hits.
+    if RESULT_COUNT > MAX_RESULT_LIMIT or RESULT_COUNT == 0:
+        return []
+
+    # Default aggregation config
+    interval = u'day'
+    min_doc_count = 10
+
+    if not query_filter.get(u'time_start') and RESULT_COUNT > 1000:
+        interval = u'year'
+        min_doc_count = 100
+
+    if RESULT_COUNT < 10:
+        min_doc_count = 1
+
     aggregation = {
         u'histogram': {
             u'date_histogram': {
+                u'min_doc_count': min_doc_count,
                 u'field': u'datetime',
-                u'interval': u'day',
+                u'interval': interval,
                 u'format': u'yyyy-MM-dd'
             }
         }
     }
 
-    search_result = es_client.search(
-        sketch_id,
-        query_string,
-        query_filter,
-        query_dsl,
-        indices,
-        aggregations=aggregation,
-        return_results=False)
+    if RESULT_COUNT < MAX_RESULT_LIMIT:
+        search_result = es_client.search(
+            sketch_id,
+            query_string,
+            query_filter,
+            query_dsl,
+            indices,
+            aggregations=aggregation,
+            return_results=False)
+    else:
+        search_result = {}
 
     try:
         aggregation_result = search_result[u'aggregations']

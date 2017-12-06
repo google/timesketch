@@ -44,6 +44,7 @@ from flask_restful import reqparse
 from flask_restful import Resource
 from sqlalchemy import desc
 from sqlalchemy import not_
+import pycypher
 
 from timesketch.lib.aggregators import heatmap
 from timesketch.lib.aggregators import histogram
@@ -54,6 +55,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.datastores.neo4j import Neo4jDataStore
+from timesketch.lib.datastores.neo4j import SCHEMA as neo4j_schema
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.lib.forms import AddTimelineSimpleForm
 from timesketch.lib.forms import AggregationForm
@@ -66,6 +68,7 @@ from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
 from timesketch.lib.utils import get_validated_indices
+from timesketch.lib.cypher_transpilation import transpile_query, InvalidQuery
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchIndex
@@ -152,7 +155,7 @@ class ResourceMixin(object):
         u'name': fields.String,
         u'description': fields.String,
         u'user': fields.Nested(user_fields),
-        u'timelines': fields.Nested(timeline_fields),
+        u'timelines': fields.List(fields.Nested(timeline_fields)),
         u'status': fields.Nested(status_fields),
         u'created_at': fields.DateTime,
         u'updated_at': fields.DateTime
@@ -515,8 +518,7 @@ class ViewResource(ResourceMixin, Resource):
             sketch = Sketch.query.get_with_acl(sketch_id)
             view = View.query.get(view_id)
             view.query_string = form.query.data
-            view.query_filter = json.dumps(
-                form.filter.data, ensure_ascii=False)
+            view.query_filter = json.dumps(form.filter.data, ensure_ascii=False)
             view.query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
             view.user = current_user
             view.sketch = sketch
@@ -731,8 +733,7 @@ class EventResource(ResourceMixin, Resource):
     def __init__(self):
         super(EventResource, self).__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument(
-            u'searchindex_id', type=unicode, required=True)
+        self.parser.add_argument(u'searchindex_id', type=unicode, required=True)
         self.parser.add_argument(u'event_id', type=unicode, required=True)
 
     @login_required
@@ -919,8 +920,7 @@ class UploadFileResource(ResourceMixin, Resource):
                 user=current_user,
                 index_name=index_name)
             searchindex.grant_permission(permission=u'read', user=current_user)
-            searchindex.grant_permission(
-                permission=u'write', user=current_user)
+            searchindex.grant_permission(permission=u'write', user=current_user)
             searchindex.grant_permission(
                 permission=u'delete', user=current_user)
             searchindex.set_status(u'processing')
@@ -1277,14 +1277,63 @@ class GraphResource(ResourceMixin, Resource):
         if form.validate_on_submit():
             query = form.query.data
             output_format = form.output_format.data
-            result = self.graph_datastore.search(
-                query, output_format=output_format)
+
+            try:
+                transpiled = transpile_query(query, sketch_id)
+            except (pycypher.CypherParseError, InvalidQuery) as e:
+                return bad_request(e.message)
+
+            intermediate_result = self.graph_datastore.query(
+                transpiled, output_format='neo4j', return_rows=True)
+            nodes = []
+            edges = []
+            timestamps_by_edge_id = {}
+            if intermediate_result['rows'] is None:
+                intermediate_result['rows'] = []
+            for node_ids, edge_ids, timestamps_s in intermediate_result['rows']:
+                nodes.extend(node_ids)
+                for edge_id, timestamps in zip(edge_ids, timestamps_s):
+                    if edge_id not in timestamps_by_edge_id:
+                        timestamps_by_edge_id[edge_id] = []
+                    if timestamps is None:
+                        timestamps = []
+                    timestamps_by_edge_id[edge_id].extend(timestamps)
+            nodes = list(set(nodes))
+            edges = list(timestamps_by_edge_id.keys())
+            for edge_id in timestamps_by_edge_id:
+                timestamps_by_edge_id[edge_id] = list(set(
+                    timestamps_by_edge_id[edge_id]
+                ))
+            final_query = '''
+                UNWIND {edge_ids} AS edge_id MATCH ()-[e]->()
+                WHERE id(e) = edge_id AND e.sketch_id = {sketch_id}
+                RETURN e, null AS n
+                UNION ALL
+                UNWIND {node_ids} AS node_id MATCH (n)
+                WHERE id(n) = node_id AND n.sketch_id = {sketch_id}
+                RETURN null AS e, n
+            '''
+
+            result = self.graph_datastore.query(final_query, params={
+                'sketch_id': sketch_id, 'edge_ids': edges, 'node_ids': nodes,
+            }, output_format=output_format)
+            for edge in result['graph']['edges']:
+                edge_data = edge['data']
+                edge_data['timestamps'] = timestamps_by_edge_id[
+                    int(edge_data['id'].replace('edge', ''))
+                ]
+                edge_data['count'] = str(len(edge_data['timestamps']))
+                if edge_data.get('timestamps_incomplete'):
+                    edge_data['count'] += '+'
+                if edge_data['count'] == '0+':
+                    edge_data['count'] = '???'
+
             schema = {
-                u'meta': {},
+                u'meta': {
+                    u'schema': neo4j_schema
+                },
                 u'objects': [{
                     u'graph': result[u'graph'],
-                    u'rows': result[u'rows'],
-                    u'stats': result[u'stats']
                 }]
             }
             return jsonify(schema)

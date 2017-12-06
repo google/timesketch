@@ -202,6 +202,7 @@ class ElasticsearchDataStore(datastore.DataStore):
                query_filter,
                query_dsl,
                indices,
+               count=False,
                aggregations=None,
                return_results=True,
                return_fields=None,
@@ -216,6 +217,7 @@ class ElasticsearchDataStore(datastore.DataStore):
             query_filter: Dictionary containing filters to apply
             query_dsl: Dictionary containing Elasticsearch DSL query
             indices: List of indices to query
+            count: Boolean indicating if we should only return result count
             aggregations: Dict of Elasticsearch aggregations
             return_results: Boolean indicating if results should be returned
             return_fields: List of fields to return
@@ -261,6 +263,13 @@ class ElasticsearchDataStore(datastore.DataStore):
         # Set limit to 0 to not return any results
         if not return_results:
             LIMIT_RESULTS = 0
+
+        # Only return how many documents matches the query.
+        if count:
+            del query_dsl[u'sort']
+            count_result = self.client.count(
+                body=query_dsl, index=list(indices))
+            return count_result.get(u'count', 0)
 
         # Suppress the lint error because elasticsearch-py adds parameters
         # to the function with a decorator and this makes pylint sad.

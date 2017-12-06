@@ -20,8 +20,7 @@ from timesketch.lib.testlib import MockGraphDatabase
 from timesketch.lib.testlib import BaseTest
 
 
-@mock.patch(u'timesketch.lib.datastores.neo4j.GraphDatabase',
-            MockGraphDatabase)
+@mock.patch(u'timesketch.lib.datastores.neo4j.GraphDatabase', MockGraphDatabase)
 class Neo4jTest(BaseTest):
     """Test Neo4j datastore."""
 
@@ -29,37 +28,36 @@ class Neo4jTest(BaseTest):
         """Test Neo4j output format."""
         expected_output = {
             u'graph': [{
-                u'relationships': [{
-                    u'endNode': u'2',
-                    u'startNode': u'1',
-                    u'type': u'TEST',
-                    u'id': u'3',
-                    u'properties': {
-                        u'human_readable': u'test',
-                        u'type': u'test'
-                    }
-                }],
                 u'nodes': [{
-                    u'labels': [u'Test'],
                     u'id': u'1',
+                    u'labels': [u'User'],
                     u'properties': {
-                        u'name': u'test',
+                        u'username': u'test',
                         u'uid': u'123456'
                     }
                 }, {
-                    u'labels': [u'Test'],
                     u'id': u'2',
+                    u'labels': [u'Machine'],
                     u'properties': {
-                        u'name': u'test'
+                        u'hostname': u'test'
                     }
+                }],
+                u'relationships': [{
+                    u'endNode': u'2',
+                    u'id': u'3',
+                    u'startNode': u'1',
+                    u'properties': {
+                        u'method': u'Network'
+                    },
+                    u'type': u'ACCESS'
                 }]
             }],
             u'rows':
             None,
             u'stats': {}
         }
-        client = Neo4jDataStore(username=u'test', password=u'test')
-        formatted_response = client.search(query=u'')
+        datastore = Neo4jDataStore(username=u'test', password=u'test')
+        formatted_response = datastore.query(query=u'')
         self.assertIsInstance(formatted_response, dict)
         self.assertDictEqual(formatted_response, expected_output)
 
@@ -69,31 +67,49 @@ class Neo4jTest(BaseTest):
             u'graph': {
                 u'nodes': [{
                     u'data': {
-                        u'type': u'Test',
-                        u'id': u'1',
-                        u'label': u'test'
+                        u'username': u'test',
+                        u'type': u'User',
+                        u'id': u'node1',
+                        u'uid': u'123456',
                     }
                 }, {
                     u'data': {
-                        u'type': u'Test',
-                        u'id': u'2',
-                        u'label': u'test'
+                        u'hostname': u'test',
+                        u'type': u'Machine',
+                        u'id': u'node2',
                     }
                 }],
                 u'edges': [{
                     u'data': {
-                        u'source': u'1',
-                        u'label': u'test',
-                        u'id': u'3',
-                        u'target': u'2'
+                        u'target': u'node2',
+                        u'method': u'Network',
+                        u'source': u'node1',
+                        u'type': u'ACCESS',
+                        u'id': u'edge3',
                     }
-                }]
+                }],
             },
             u'rows': None,
-            u'stats': {}
+            u'stats': {},
         }
-        client = Neo4jDataStore(username=u'test', password=u'test')
-        formatted_response = client.search(
+        datastore = Neo4jDataStore(username=u'test', password=u'test')
+        formatted_response = datastore.query(
             query=u'', output_format=u'cytoscape')
+        self.assertIsInstance(formatted_response, dict)
+        self.assertDictEqual(formatted_response, expected_output)
+
+    def test_cytoscape_output_empty_graph(self):
+        """Test Cytoscape output format for and empty graph."""
+        expected_output = {
+            u'graph': {
+                u'nodes': [],
+                u'edges': [],
+            },
+            u'rows': None,
+            u'stats': {},
+        }
+        datastore = Neo4jDataStore(username=u'test', password=u'test')
+        formatted_response = datastore.query(
+            query=u'empty', output_format=u'cytoscape')
         self.assertIsInstance(formatted_response, dict)
         self.assertDictEqual(formatted_response, expected_output)

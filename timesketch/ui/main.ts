@@ -1,9 +1,10 @@
+import * as $ from 'jquery'
 import angular from 'angularjs-for-webpack'
 import {downgradeModule} from '@angular/upgrade/static'
 
-import {tsAppModule, AppModule} from 'app.module'
+import {tsAppModule, AppModule} from './app.module'
 
-angular.element(function () {
+$(function () {
 
   // @ngtools/webpack should automatically convert AppModule to
   // AppModuleNgFactory. We are casting it through any to make TypeScript happy

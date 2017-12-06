@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block navigation %}
+    <ts-sketch-navigation sketch-id="{{ sketch.id }}" active="graphs" graphs-enabled="{{ graphs_enabled }}"></ts-sketch-navigation>
+{% endblock %}
+
+{% block main %}
+    <ts-graphs-main sketch-id="{{ sketch.id }}"></ts-graphs-main>
+{% endblock %}

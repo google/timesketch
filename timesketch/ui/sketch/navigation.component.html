@@ -9,6 +9,11 @@
         <i class="fa fa-search"></i> Explore
       </a>
     </li>
+    <li role="presentation" *ngIf="graphsEnabled" [class.active]="active==='graphs'">
+      <a href="/sketch/{{sketchId}}/graphs/">
+        <i class="fa fa-share-alt"></i> Graphs
+      </a>
+    </li>
     <li role="presentation" [class.active]="active==='stories'">
       <a href="/sketch/{{sketchId}}/stories/">
         <i class="fa fa-book"></i> Stories

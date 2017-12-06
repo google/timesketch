@@ -82,6 +82,7 @@ setup(
     ],
     data_files=[(u'share/timesketch', [u'timesketch.conf'])],
     packages=find_packages(),
+    package_data={'timesketch.lib.experimental': ['*.cql'],},
     include_package_data=True,
     zip_safe=False,
     scripts=[u'tsctl'],

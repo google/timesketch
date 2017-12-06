@@ -14,7 +14,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import angular from 'angularjs-for-webpack'
 import * as moment from 'moment'
 
 export const tsFilter = function () {
@@ -68,13 +67,14 @@ export const tsFilter = function () {
                 scope.meta.es_total_count = 0
                 scope.meta.es_time = 0
                 scope.meta.noisy = false
+                ctrl.search(scope.query, scope.filter, scope.queryDsl)
             }
 
-            scope.parseFilterDate = function (datevalue, datevalue_end){
+            scope.parseFilterDate = function (datevalue, datevalue_end) {
                     if (datevalue != null) {
-                    const datetimetemplate='YYYY-MM-DDTHH:mm:ss'
+                    const datetimetemplate = 'YYYY-MM-DDTHH:mm:ss'
                     // Parse out 'T' date time seperator needed by ELK but not by moment.js
-                    datevalue=datevalue.replace(/T/g,' ')
+                    datevalue = datevalue.replace(/T/g, ' ')
                     // Parse offset given by user. Eg. +-10m
                     const offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s|M|Q|w|ms)/g
                     const match = offsetRegexp.exec(datevalue)
@@ -85,19 +85,19 @@ export const tsFilter = function () {
                         const filteramount = match[3]
                         const filtertype = match[4]
 
-                        filterbase = moment.utc(filterbase,'YYYY-MM-DD HH:mm:ssZZ')
+                        filterbase = moment.utc(filterbase, 'YYYY-MM-DD HH:mm:ssZZ')
                         // calculate filter start and end datetimes
                         if (filteroffset == '+') {
                             scope.filter.time_start = moment.utc(filterbase).format(datetimetemplate)
-                            scope.filter.time_end = moment.utc(filterbase).add(filteramount,filtertype).format(datetimetemplate)
+                            scope.filter.time_end = moment.utc(filterbase).add(filteramount, filtertype).format(datetimetemplate)
                         }
                         if (filteroffset == '-') {
-                            scope.filter.time_start = moment.utc(filterbase).subtract(filteramount,filtertype).format(datetimetemplate)
+                            scope.filter.time_start = moment.utc(filterbase).subtract(filteramount, filtertype).format(datetimetemplate)
                             scope.filter.time_end = moment.utc(filterbase).format(datetimetemplate)
                         }
                         if (filteroffset == '-+' || filteroffset == '+-') {
-                            scope.filter.time_start = moment.utc(filterbase).subtract(filteramount,filtertype).format(datetimetemplate)
-                            scope.filter.time_end = moment.utc(filterbase).add(filteramount,filtertype).format(datetimetemplate)
+                            scope.filter.time_start = moment.utc(filterbase).subtract(filteramount, filtertype).format(datetimetemplate)
+                            scope.filter.time_end = moment.utc(filterbase).add(filteramount, filtertype).format(datetimetemplate)
                         }
                     } else {
                         if (datevalue_end == null || datevalue_end == '') {

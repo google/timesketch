@@ -16,6 +16,53 @@
 from neo4jrestclient.client import GraphDatabase
 from neo4jrestclient.constants import DATA_GRAPH
 
+HIDDEN_FIELDS = [
+    'type', 'id', 'sketch_id', 'source', 'target',
+]
+
+# Schema for Neo4j nodes and edges
+SCHEMA = {
+    u'nodes': {
+        u'WindowsMachine': {
+            u'label': u'\uf009\u00A0\u00A0{hostname}',
+            u'hidden_fields': HIDDEN_FIELDS,
+        },
+        u'WindowsADUser': {
+            u'label': u'\uf2c0\u00A0\u00A0{username}',
+            u'hidden_fields': HIDDEN_FIELDS,
+        },
+        u'WindowsLocalUser': {
+            u'label': u'\uf007\u00A0\u00A0{username}',
+            u'hidden_fields': HIDDEN_FIELDS,
+        },
+        u'WindowsService': {
+            u'label': u'{service_name}',
+            u'hidden_fields': HIDDEN_FIELDS,
+        },
+        u'WindowsServiceImagePath': {
+            u'label': u'\uf15b\u00A0\u00A0{image_path_short}',
+            u'hidden_fields': HIDDEN_FIELDS,
+        },
+    },
+    u'edges': {
+        u'ACCESS': {
+            u'label': u'{username} [{method}] ({count})',
+            u'hidden_fields': HIDDEN_FIELDS,
+            u'es_query': u'event_identifier:4624 AND xml_string:"{username}" AND xml_string:"{target.hostname}*"',  # pylint: disable=line-too-long
+        },
+        u'START': {
+            u'label': u'{start_type} ({count})',
+            u'hidden_fields': HIDDEN_FIELDS,
+            u'es_query': u'event_identifier:7045 AND xml_string:"{start_type}" AND xml_string:"{source.service_name}" AND xml_string:"{target.hostname}*"',  # pylint: disable=line-too-long
+        },
+        u'HAS': {
+            u'label': u'HAS',
+            u'hidden_fields': HIDDEN_FIELDS,
+            u'es_query': u'event_identifier:7045 AND xml_string:"{target.image_path}" AND xml_string:"{source.service_name}"',  # pylint: disable=line-too-long
+        }
+    }
+}
+
 
 class Neo4jDataStore(object):
     """Implements the Neo4j datastore.
@@ -59,11 +106,12 @@ class Neo4jDataStore(object):
             formatter = formatter_registry.get(default_output_format)
         return formatter()
 
-    def search(self, query, output_format=None, return_rows=False):
+    def query(self, query, params=None, output_format=None, return_rows=False):
         """Search the graph.
 
         Args:
             query: A cypher query
+            params: A dictionary with query parameters
             output_format: Name of the output format to use
             return_rows: Boolean indicating if rows should be returned
 
@@ -73,7 +121,8 @@ class Neo4jDataStore(object):
         data_content = DATA_GRAPH
         if return_rows:
             data_content = True
-        query_result = self.client.query(query, data_contents=data_content)
+        query_result = self.client.query(
+            query, params=params, data_contents=data_content)
         formatter = self._get_formatter(output_format)
         return formatter.format(query_result, return_rows)
 
@@ -115,6 +164,8 @@ class OutputFormatterBaseClass(object):
         Returns:
             Dictionary with formatted graph
         """
+        if graph is None:
+            return {u'nodes': [], u'edges': []}
         node_list = []
         edge_list = []
         for subgraph in graph:
@@ -193,14 +244,10 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         Returns:
             Dictionary with a Cytoscape formatted node
         """
-        cytoscape_node = {
-            u'data': {
-                u'id': node[u'id'],
-                u'label': node[u'properties'][u'name'],
-                u'type': node[u'labels'][0]
-            }
-        }
-        return cytoscape_node
+        node_data = dict(id='node' + node[u'id'], type=node[u'labels'][0])
+        if node.get('properties'):
+            node_data.update(node['properties'])
+        return {u'data': node_data}
 
     def format_edge(self, edge):
         """Format a Cytoscape graph egde.
@@ -211,16 +258,11 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         Returns:
             Dictionary with a Cytoscape formatted edge
         """
-        try:
-            label = edge[u'properties'][u'human_readable']
-        except KeyError:
-            label = edge[u'type']
-        cytoscape_edge = {
-            u'data': {
-                u'id': edge[u'id'],
-                u'source': edge[u'startNode'],
-                u'target': edge[u'endNode'],
-                u'label': label
-            }
-        }
-        return cytoscape_edge
+        edge_data = dict(
+            id='edge' + edge[u'id'], type=edge[u'type'],
+            source='node' + edge[u'startNode'],
+            target='node' + edge[u'endNode'],
+        )
+        if edge.get('properties'):
+            edge_data.update(edge['properties'])
+        return {u'data': edge_data}

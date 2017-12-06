@@ -1,3 +1,4 @@
+const webpack = require('webpack');
 const path = require('path')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const AotPlugin = require('@ngtools/webpack').AotPlugin
@@ -12,6 +13,13 @@ const aotPlugin = new AotPlugin({
   // entryModule path must be absolute, otherwise it generates really obscure
   // error message: https://github.com/angular/angular-cli/issues/4913
   entryModule: path.resolve(__dirname, 'timesketch/ui/app.module#AppModule'),
+})
+
+// Make sure JQuery is loaded before Angular
+const jqueryLoader = new webpack.ProvidePlugin({
+  $: "jquery",
+  jQuery: "jquery",
+  "window.jQuery": "jquery"
 })
 
 module.exports = {
@@ -55,5 +63,5 @@ module.exports = {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'timesketch/static/dist/'),
   },
-  plugins: [extractSass, aotPlugin],
+  plugins: [extractSass, aotPlugin, jqueryLoader],
 }

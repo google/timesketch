@@ -258,8 +258,7 @@ class BaseResource(object):
             Dictionary with resource data.
         """
         if not self.resource_data or refresh_cache:
-            self.resource_data = self.api.fetch_resource_data(
-                self.resource_uri)
+            self.resource_data = self.api.fetch_resource_data(self.resource_uri)
         return self.resource_data
 
     @property
@@ -525,8 +524,7 @@ class View(BaseResource):
         """
         self.id = view_id
         self.name = view_name
-        resource_uri = u'sketches/{0:d}/views/{1:d}/'.format(
-            sketch_id, self.id)
+        resource_uri = u'sketches/{0:d}/views/{1:d}/'.format(sketch_id, self.id)
         super(View, self).__init__(api, resource_uri)
 
     @property
@@ -567,11 +565,7 @@ class Timeline(BaseResource):
         id: Primary key of the view.
     """
 
-    def __init__(self,
-                 timeline_id,
-                 sketch_id,
-                 api,
-                 name=None,
+    def __init__(self, timeline_id, sketch_id, api, name=None,
                  searchindex=None):
         """Initializes the Timeline object.
 

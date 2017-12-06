@@ -1,5 +1,3 @@
-import angular from 'angularjs-for-webpack'
-
 export const tsCoreUpload = ['timesketchApi', '$rootScope', '$window', function (timesketchApi, $rootScope, $window) {
     /**
      * Upload directive that handles the form and API call.
@@ -46,8 +44,8 @@ export const tsCoreFileModel = ['$parse', function ($parse) {
             const model = $parse(attrs.tsCoreFileModel)
             const modelSetter = model.assign
 
-            element.bind('change', function (){
-                scope.$apply(function (){
+            element.bind('change', function () {
+                scope.$apply(function () {
                     modelSetter(scope, element[0].files[0])
                 })
             })
