@@ -2,9 +2,6 @@
 node_modules
 timesketch/static/dist
 
-# Ignore data files
-*.plaso
-
 # Ignore back-up files.
 *~
 
