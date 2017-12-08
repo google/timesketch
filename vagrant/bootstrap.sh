@@ -47,7 +47,7 @@ fi
 apt-get update
 apt-get install -y \
   neo4j openjdk-8-jre-headless elasticsearch postgresql python-psycopg2 \
-  python-pip python-dev libffi-dev redis-server python-plaso plaso-tools nodejs yarn
+  python-pip python-dev libffi-dev redis-server python-plaso plaso-tools
 
 # Install python dependencies
 pip install --upgrade pip
