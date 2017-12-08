@@ -31,11 +31,12 @@ echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | tee -a /e
 wget -O - https://debian.neo4j.org/neotechnology.gpg.key | apt-key add -
 echo "deb https://debian.neo4j.org/repo stable/" | tee /etc/apt/sources.list.d/neo4j.list
 
-# Add Node.js 8.x repo
-curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | sudo apt-key add -
-VERSION=node_8.x
-DISTRO="$(lsb_release -s -c)"
-echo "deb https://deb.nodesource.com/$VERSION $DISTRO main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+if [ "$VAGRANT" = true ]; then
+  # Add Node.js 8.x repo
+  curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | sudo apt-key add -
+  VERSION=node_8.x
+  DISTRO="$(lsb_release -s -c)"
+  echo "deb https://deb.nodesource.com/$VERSION $DISTRO main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
   # Add Yarn repo
   curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
@@ -46,7 +47,7 @@ fi
 apt-get update
 apt-get install -y \
   neo4j openjdk-8-jre-headless elasticsearch postgresql python-psycopg2 \
-  python-pip python-dev libffi-dev redis-server python-plaso plaso-tools nodejs yarn
+  python-pip python-dev libffi-dev redis-server python-plaso plaso-tools jq
 
 # Install python dependencies
 pip install --upgrade pip
