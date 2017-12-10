@@ -448,7 +448,7 @@ class SimilarityScore(Command):
         scorer = SimilarityScorer(
             index=index_name,
             data_type=data_type)
-        result = scorer.process()
+        result = scorer.run()
         for k, v in result.items():
             sys.stdout.write(u'{0}:{1} '.format(k, v))
         sys.stdout.write(u'\n')
