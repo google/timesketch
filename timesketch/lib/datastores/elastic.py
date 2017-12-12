@@ -286,8 +286,8 @@ class ElasticsearchDataStore(datastore.DataStore):
             scroll=scroll_timeout)
 
     def search_stream(
-            self, sketch_id=None, query_string=None, query_filter=None, query_dsl=None, indices=None,
-            return_fields=None):
+            self, sketch_id=None, query_string=None, query_filter=None,
+            query_dsl=None, indices=None, return_fields=None):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -323,6 +323,7 @@ class ElasticsearchDataStore(datastore.DataStore):
             yield event
 
         while scroll_size > 0:
+            # pylint: disable=unexpected-keyword-arg
             result = self.client.scroll(scroll_id=scroll_id, scroll=u'1m')
             scroll_id = result[u'_scroll_id']
             scroll_size = len(result[u'hits'][u'hits'])

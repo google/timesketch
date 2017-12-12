@@ -68,9 +68,10 @@ class TestSimilarityScorer(BaseTest):
         u'timesketch.lib.experimental.similarity.ElasticsearchDataStore',
         MockDataStore)
     def test_shingles_from_text(self):
-        """Test split up text string to words."""
+        """Test splitting up a text string to words."""
         scorer = SimilarityScorer(
             index=self.test_index, data_type=self.test_data_type)
+        # pylint: disable=protected-access
         shingles = scorer._shingles_from_text(self.test_text)
         self.assertIsInstance(shingles, list)
         self.assertEqual(len(shingles), 8)
@@ -79,9 +80,9 @@ class TestSimilarityScorer(BaseTest):
         u'timesketch.lib.experimental.similarity.ElasticsearchDataStore',
         MockDataStore)
     def test_minhash_from_text(self):
-        """Test minhash from text."""
+        """Test create minhash from text."""
         scorer = SimilarityScorer(
             index=self.test_index, data_type=self.test_data_type)
+        # pylint: disable=protected-access
         minhash = scorer._minhash_from_text(self.test_text)
         self.assertIsInstance(minhash, MinHash)
-
