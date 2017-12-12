@@ -35,6 +35,9 @@ es_logger.addHandler(logging.NullHandler())
 class ElasticsearchDataStore(datastore.DataStore):
     """Implements the datastore."""
 
+    # Number of events to queue up when bulk inserting events.
+    DEFAULT_FLUSH_INTERVAL = 1000
+
     def __init__(self, host=u'127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
         super(ElasticsearchDataStore, self).__init__()
@@ -448,8 +451,8 @@ class ElasticsearchDataStore(datastore.DataStore):
         return index_name, doc_type
 
     def import_event(
-            self, flush_interval, index_name, event_type, event=None,
-            event_id=None):
+            self, index_name, event_type, event=None,
+            event_id=None, flush_interval=DEFAULT_FLUSH_INTERVAL):
         """Add event to Elasticsearch.
 
         Args:

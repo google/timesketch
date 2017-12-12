@@ -67,14 +67,12 @@ def run_csv(source_file_path, timeline_name, index_name, username=None):
     Returns:
         Dictionary with count of processed events.
     """
-    flush_interval = 1000  # events to queue before bulk index
     event_type = u'generic_event'  # Document type for Elasticsearch
     app = create_app()
 
     # Log information to Celery
     logging.info(u'Index name: %s', index_name)
     logging.info(u'Timeline name: %s', timeline_name)
-    logging.info(u'Flush interval: %d', flush_interval)
     logging.info(u'Document type: %s', event_type)
     logging.info(u'Owner: %s', username)
 
@@ -84,10 +82,10 @@ def run_csv(source_file_path, timeline_name, index_name, username=None):
 
     es.create_index(index_name=index_name, doc_type=event_type)
     for event in read_and_validate_csv(source_file_path):
-        es.import_event(flush_interval, index_name, event_type, event)
+        es.import_event(index_name, event_type, event)
 
     # Import the remaining events
-    total_events = es.import_event(flush_interval, index_name, event_type)
+    total_events = es.import_event(index_name, event_type)
 
     # We are done so let's remove the processing status flag
     with app.app_context():

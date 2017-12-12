@@ -329,14 +329,15 @@ class CreateTimelineFromJson(CreateTimelineBase):
             # TODO: Check file size and bail out if big.
             es.create_index(index_name=index_name, doc_type=event_type)
             for event in json.load(fh):
-                _counter = es.import_event(flush_interval, index_name,
-                                           event_type, event)
+                _counter = es.import_event(
+                    index_name, event_type, event,
+                    flush_interval=flush_interval)
                 if _counter % int(flush_interval) == 0:
                     sys.stdout.write(
                         u'Events inserted: {0:d}\n'.format(_counter))
 
         # Import the remaining events in the queue
-        es.import_event(flush_interval, index_name, event_type)
+        es.import_event(index_name, event_type, flush_interval=flush_interval)
         self.create_searchindex(timeline_name, index_name)
 
 
@@ -366,15 +367,16 @@ class CreateTimelineFromCsv(CreateTimelineBase):
 
         es.create_index(index_name=index_name, doc_type=event_type)
         for event in read_and_validate_csv(file_path):
-            event_counter = es.import_event(flush_interval, index_name,
-                                            event_type, event)
+            event_counter = es.import_event(
+                index_name, event_type, event, flush_interval=flush_interval)
             if event_counter % int(flush_interval) == 0:
                 sys.stdout.write(
                     u'Indexing progress: {0:d} events\r'.format(event_counter))
                 sys.stdout.flush()
 
         # Import the remaining events in the queue
-        total_events = es.import_event(flush_interval, index_name, event_type)
+        total_events = es.import_event(
+            index_name, event_type, flush_interval=flush_interval)
         sys.stdout.write(u'\nTotal events: {0:d}\n'.format(total_events))
         self.create_searchindex(timeline_name, index_name)
 
