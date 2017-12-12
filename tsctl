@@ -440,20 +440,15 @@ class SimilarityScore(Command):
 
     def run(self, index_name, data_type):
         index_name = unicode(index_name.decode(encoding=u'utf-8'))
-        searchindex = SearchIndex.query.filter_by(
-            index_name=index_name).first()
+        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
         if not searchindex:
             sys.stdout.write(u'No such index\n')
             sys.exit()
 
-        scorer = SimilarityScorer(
-            index=index_name,
-            data_type=data_type)
+        scorer = SimilarityScorer(index=index_name, data_type=data_type)
         result = scorer.run()
-        for k, v in result.items():
-            sys.stdout.write(u'{0}:{1} '.format(k, v))
-        sys.stdout.write(u'\n')
+        sys.stdout.write(u'{0}'.format(result))
 
 
 if __name__ == '__main__':

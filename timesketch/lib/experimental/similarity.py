@@ -49,15 +49,15 @@ class SimilarityScorerConfig(object):
         }
     }
 
-    def __init__(self, data_type, index):
+    def __init__(self, index, data_type):
         """Initializes a similarity scorer config.
 
         Args:
             index: Elasticsearch index name.
             data_type: Name of the data_type.
         """
-        self._data_type = data_type
         self._index = index
+        self._data_type = data_type
         for k, v in self._get_config().items():
             setattr(self, k, v)
 
