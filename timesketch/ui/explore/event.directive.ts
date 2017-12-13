@@ -43,7 +43,7 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
         require: '^tsSearch',
         controller: function ($scope) {
             // Convert to Javascript boolean
-            $scope.similarityEnabled = ($scope.similarityEnabled == 'True');
+            $scope.similarityEnabled = ($scope.similarityEnabled == 'True')
 
             if ($scope.namedView) {
                 timesketchApi.getView($scope.sketchId, $scope.viewId).success(function (data) {
