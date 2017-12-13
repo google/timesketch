@@ -76,7 +76,7 @@
         </button>
 
         <div class="btn-group" style="margin-left:10px;">
-            <button class="btn btn-default" ng-click="similarityLayer = !similarityLayer" ng-style="{true: {'background-color':'#f5f5f5'}}[similarityLayer]">Similarity layer</button>
+            <button class="btn btn-default" ng-show="similarityEnabled" ng-click="similarityLayer = !similarityLayer" ng-style="{true: {'background-color':'#f5f5f5'}}[similarityLayer]">Similarity layer</button>
             <button class="btn btn-default" ng-click="filter.order = { 'asc': 'desc', 'desc': 'asc'}[filter.order];applyOrder()"><i ng-class="{'asc': 'fa fa-sort-asc', 'desc': 'fa fa-sort-desc'}[filter.order]"></i> Sort</button>
             <a class="btn btn-default" ng-disabled="meta.es_total_count > 10000" href="/sketch/{{ sketchId }}/explore/export/" download="export.csv"><i class="fa fa-cloud-download"></i> Export</a>
             <button class="btn btn-default" ng-click="toggleAll()"><i class="fa fa-check"></i> Toggle all</button>

@@ -31,6 +31,7 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
             viewId: '=',
             namedView: '=',
             searchtemplateId: '=',
+            similarityEnabled: '@',
         },
         controllerAs: 'ctrl',
         link: function (scope, elem, attrs, ctrl) {
