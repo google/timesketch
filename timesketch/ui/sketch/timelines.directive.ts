@@ -15,7 +15,7 @@
  */
 import * as moment from 'moment'
 
-export const tsTimelinesList = ['timesketchApi', function (timesketchApi) {
+export const tsTimelinesList = ['$interval', 'timesketchApi', function ($interval, timesketchApi) {
     /**
      * Render the list of timelines.
      */
@@ -28,16 +28,27 @@ export const tsTimelinesList = ['timesketchApi', function (timesketchApi) {
             showDelete: '=',
         },
         controller: function ($scope) {
-            timesketchApi.getTimelines($scope.sketchId).success(function (data) {
-                $scope.timelines = []
-                const timelines = data.objects[0]
-                if (timelines) {
-                    for (const timeline of timelines) {
-                        timeline.updated_at = moment.utc(timeline.updated_at).format('YYYY-MM-DD')
-                        $scope.timelines.push(timeline)
+            // How often to poll the task API endpoint in milliseconds.
+            const pollIntervall = 10000
+
+            let getTimelines = function () {
+                timesketchApi.getTimelines($scope.sketchId).success(function (data) {
+                    $scope.timelines = []
+                    let timelines = data.objects[0]
+                    if (timelines) {
+                        for (let timeline of timelines) {
+                            console.log(timeline)
+                            timeline.updated_at = moment.utc(timeline.updated_at).format('YYYY-MM-DD')
+                            timeline.ready = true
+                            let status = timeline.searchindex.status[0].status
+                            if (status == 'processing') {
+                                timeline.ready = false
+                            }
+                            $scope.timelines.push(timeline)
+                        }
                     }
-                }
-            })
+                })
+            }
 
             $scope.deleteTimeline = function (timeline) {
                 timesketchApi.deleteTimeline($scope.sketchId, timeline.id)
@@ -50,6 +61,12 @@ export const tsTimelinesList = ['timesketchApi', function (timesketchApi) {
             this.updateTimelines = function (timeline) {
                 $scope.timelines.unshift(timeline)
             }
+
+            getTimelines()
+            $interval(function () {
+                getTimelines()
+            }, pollIntervall)
+
         },
     }
 }]

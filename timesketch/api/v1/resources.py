@@ -881,11 +881,11 @@ class UploadFileResource(ResourceMixin, Resource):
         Raises:
             ApiHTTPError
         """
-        UPLOAD_ENABLED = current_app.config[u'UPLOAD_ENABLED']
-        UPLOAD_FOLDER = current_app.config[u'UPLOAD_FOLDER']
+        upload_enabled = current_app.config[u'UPLOAD_ENABLED']
+        upload_folder = current_app.config[u'UPLOAD_FOLDER']
 
         form = UploadFileForm()
-        if form.validate_on_submit() and UPLOAD_ENABLED:
+        if form.validate_on_submit() and upload_enabled:
             from timesketch.lib.tasks import run_plaso
             from timesketch.lib.tasks import run_csv
 
@@ -910,7 +910,7 @@ class UploadFileResource(ResourceMixin, Resource):
             filename = unicode(uuid.uuid4().hex)
             index_name = unicode(uuid.uuid4().hex)
 
-            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            file_path = os.path.join(upload_folder, filename)
             file_storage.save(file_path)
 
             # Create the search index in the Timesketch database
@@ -1166,6 +1166,8 @@ class TimelineListResource(ResourceMixin, Resource):
             View in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        for timeline in sketch.timelines:
+            print timeline.searchindex.status[0].status
         return self.to_json(sketch.timelines)
 
     @login_required
