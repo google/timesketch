@@ -37,6 +37,8 @@ class ElasticsearchDataStore(datastore.DataStore):
 
     # Number of events to queue up when bulk inserting events.
     DEFAULT_FLUSH_INTERVAL = 1000
+    DEFAULT_LIMIT = 500  # Max events to return
+    DEFAULT_STREAM_LIMIT = 10000  # Max events to return when streaming results
 
     def __init__(self, host=u'127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
@@ -230,8 +232,7 @@ class ElasticsearchDataStore(datastore.DataStore):
             Set of event documents in JSON format
         """
         # Limit the number of returned documents.
-        DEFAULT_LIMIT = 500  # Maximum events to return
-        LIMIT_RESULTS = query_filter.get(u'limit', DEFAULT_LIMIT)
+        limit_results = query_filter.get(u'limit', self.DEFAULT_LIMIT)
 
         scroll_timeout = None
         if enable_scroll:
@@ -265,7 +266,7 @@ class ElasticsearchDataStore(datastore.DataStore):
 
         # Set limit to 0 to not return any results
         if not return_results:
-            LIMIT_RESULTS = 0
+            limit_results = 0
 
         # Only return how many documents matches the query.
         if count:
@@ -280,7 +281,7 @@ class ElasticsearchDataStore(datastore.DataStore):
         return self.client.search(
             body=query_dsl,
             index=list(indices),
-            size=LIMIT_RESULTS,
+            size=limit_results,
             search_type=search_type,
             _source_include=return_fields,
             scroll=scroll_timeout)
@@ -305,7 +306,7 @@ class ElasticsearchDataStore(datastore.DataStore):
         """
 
         if not query_filter.get(u'limit'):
-            query_filter[u'limit'] = 10000
+            query_filter[u'limit'] = self.DEFAULT_STREAM_LIMIT
 
         result = self.search(
             sketch_id=sketch_id,

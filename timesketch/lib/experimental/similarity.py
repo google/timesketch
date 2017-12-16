@@ -69,7 +69,7 @@ class SimilarityScorerConfig(object):
         """
         config_dict = self.CONFIG_REGISTRY.get(self._data_type)
 
-        # If there are no config for this data_type, use generic config and set
+        # If there is no config for this data_type, use default config and set
         # the query based on the data_type.
         if not config_dict:
             config_dict = self.DEFAULT_CONFIG
@@ -162,11 +162,15 @@ class SimilarityScorer(object):
 
         The score is calculated based on how many similar events that there are
         for the event being scored. This is called neighbours and we simply
-        calculate how many neighbours the event has devided by the total events
+        calculate how many neighbours the event has divided by the total events
         in the LSH.
 
-        Returns: A float between 0 and 1.
+        Args:
+            lsh: Instance of datasketch.lsh.MinHashLSH
+            minhash: Instance of datasketch.minhash.MinHash
+            total_num_events: Integer of how many events in the LSH
 
+        Returns: A float between 0 and 1.
         """
         neighbours = lsh.query(minhash)
         return float(len(neighbours)) / float(total_num_events)
