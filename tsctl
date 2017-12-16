@@ -32,6 +32,7 @@ from sqlalchemy.exc import IntegrityError
 from timesketch import create_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
+from timesketch.lib.experimental.similarity import SimilarityScorer
 from timesketch.models import db_session
 from timesketch.models import drop_all
 from timesketch.models.user import Group
@@ -328,14 +329,15 @@ class CreateTimelineFromJson(CreateTimelineBase):
             # TODO: Check file size and bail out if big.
             es.create_index(index_name=index_name, doc_type=event_type)
             for event in json.load(fh):
-                _counter = es.import_event(flush_interval, index_name,
-                                           event_type, event)
+                _counter = es.import_event(
+                    index_name, event_type, event,
+                    flush_interval=flush_interval)
                 if _counter % int(flush_interval) == 0:
                     sys.stdout.write(
                         u'Events inserted: {0:d}\n'.format(_counter))
 
         # Import the remaining events in the queue
-        es.import_event(flush_interval, index_name, event_type)
+        es.import_event(index_name, event_type, flush_interval=flush_interval)
         self.create_searchindex(timeline_name, index_name)
 
 
@@ -365,15 +367,16 @@ class CreateTimelineFromCsv(CreateTimelineBase):
 
         es.create_index(index_name=index_name, doc_type=event_type)
         for event in read_and_validate_csv(file_path):
-            event_counter = es.import_event(flush_interval, index_name,
-                                            event_type, event)
+            event_counter = es.import_event(
+                index_name, event_type, event, flush_interval=flush_interval)
             if event_counter % int(flush_interval) == 0:
                 sys.stdout.write(
                     u'Indexing progress: {0:d} events\r'.format(event_counter))
                 sys.stdout.flush()
 
         # Import the remaining events in the queue
-        total_events = es.import_event(flush_interval, index_name, event_type)
+        total_events = es.import_event(
+            index_name, event_type, flush_interval=flush_interval)
         sys.stdout.write(u'\nTotal events: {0:d}\n'.format(total_events))
         self.create_searchindex(timeline_name, index_name)
 
@@ -424,6 +427,30 @@ class PurgeTimeline(Command):
             es.client.indices.delete(index=index_name)
 
 
+class SimilarityScore(Command):
+    """Calculate similarity between events with same data_type."""
+    option_list = (
+        Option(
+            u'--index', u'-i', dest=u'index_name', required=True
+        ),
+        Option(
+            u'--data_type', u'-d', dest=u'data_type', required=True
+        ),
+    )
+
+    def run(self, index_name, data_type):
+        index_name = unicode(index_name.decode(encoding=u'utf-8'))
+        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+
+        if not searchindex:
+            sys.stdout.write(u'No such index\n')
+            sys.exit()
+
+        scorer = SimilarityScorer(index=index_name, data_type=data_type)
+        result = scorer.run()
+        sys.stdout.write(u'{0}'.format(result))
+
+
 if __name__ == '__main__':
     # Setup Flask-script command manager and register commands.
     shell_manager = Manager(create_app)
@@ -436,6 +463,7 @@ if __name__ == '__main__':
     shell_manager.add_command(u'drop_db', DropDataBaseTables())
     shell_manager.add_command(u'json2ts', CreateTimelineFromJson())
     shell_manager.add_command(u'purge', PurgeTimeline())
+    shell_manager.add_command(u'similarity_score', SimilarityScore())
     shell_manager.add_command(u'runserver',
                               Server(host=u'127.0.0.1', port=5000))
     shell_manager.add_option(

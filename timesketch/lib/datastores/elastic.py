@@ -35,6 +35,11 @@ es_logger.addHandler(logging.NullHandler())
 class ElasticsearchDataStore(datastore.DataStore):
     """Implements the datastore."""
 
+    # Number of events to queue up when bulk inserting events.
+    DEFAULT_FLUSH_INTERVAL = 1000
+    DEFAULT_LIMIT = 500  # Max events to return
+    DEFAULT_STREAM_LIMIT = 10000  # Max events to return when streaming results
+
     def __init__(self, host=u'127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
         super(ElasticsearchDataStore, self).__init__()
@@ -227,8 +232,7 @@ class ElasticsearchDataStore(datastore.DataStore):
             Set of event documents in JSON format
         """
         # Limit the number of returned documents.
-        DEFAULT_LIMIT = 500  # Maximum events to return
-        LIMIT_RESULTS = query_filter.get(u'limit', DEFAULT_LIMIT)
+        limit_results = query_filter.get(u'limit', self.DEFAULT_LIMIT)
 
         scroll_timeout = None
         if enable_scroll:
@@ -237,7 +241,7 @@ class ElasticsearchDataStore(datastore.DataStore):
         # Use default fields if none is provided
         default_fields = [
             u'datetime', u'timestamp', u'message', u'timestamp_desc',
-            u'timesketch_label', u'tag'
+            u'timesketch_label', u'tag', u'similarity_score'
         ]
         if not return_fields:
             return_fields = default_fields
@@ -262,7 +266,7 @@ class ElasticsearchDataStore(datastore.DataStore):
 
         # Set limit to 0 to not return any results
         if not return_results:
-            LIMIT_RESULTS = 0
+            limit_results = 0
 
         # Only return how many documents matches the query.
         if count:
@@ -277,10 +281,55 @@ class ElasticsearchDataStore(datastore.DataStore):
         return self.client.search(
             body=query_dsl,
             index=list(indices),
-            size=LIMIT_RESULTS,
+            size=limit_results,
             search_type=search_type,
             _source_include=return_fields,
             scroll=scroll_timeout)
+
+    def search_stream(
+            self, sketch_id=None, query_string=None, query_filter=None,
+            query_dsl=None, indices=None, return_fields=None):
+        """Search ElasticSearch. This will take a query string from the UI
+        together with a filter definition. Based on this it will execute the
+        search request on ElasticSearch and get result back.
+
+        Args :
+            sketch_id: Integer of sketch primary key
+            query_string: Query string
+            query_filter: Dictionary containing filters to apply
+            query_dsl: Dictionary containing Elasticsearch DSL query
+            indices: List of indices to query
+            return_fields: List of fields to return
+
+        Returns:
+            Generator of event documents in JSON format
+        """
+
+        if not query_filter.get(u'limit'):
+            query_filter[u'limit'] = self.DEFAULT_STREAM_LIMIT
+
+        result = self.search(
+            sketch_id=sketch_id,
+            query_string=query_string,
+            query_dsl=query_dsl,
+            query_filter=query_filter,
+            indices=indices,
+            return_fields=return_fields,
+            enable_scroll=True)
+
+        scroll_id = result[u'_scroll_id']
+        scroll_size = result[u'hits'][u'total']
+
+        for event in result[u'hits'][u'hits']:
+            yield event
+
+        while scroll_size > 0:
+            # pylint: disable=unexpected-keyword-arg
+            result = self.client.scroll(scroll_id=scroll_id, scroll=u'1m')
+            scroll_id = result[u'_scroll_id']
+            scroll_size = len(result[u'hits'][u'hits'])
+            for event in result[u'hits'][u'hits']:
+                yield event
 
     def get_event(self, searchindex_id, event_id):
         """Get one event from the datastore.
@@ -403,7 +452,9 @@ class ElasticsearchDataStore(datastore.DataStore):
         doc_type = unicode(doc_type.decode(encoding=u'utf-8'))
         return index_name, doc_type
 
-    def import_event(self, flush_interval, index_name, event_type, event=None):
+    def import_event(
+            self, index_name, event_type, event=None,
+            event_id=None, flush_interval=DEFAULT_FLUSH_INTERVAL):
         """Add event to Elasticsearch.
 
         Args:
@@ -411,6 +462,7 @@ class ElasticsearchDataStore(datastore.DataStore):
             index_name: Name of the index in Elasticsearch
             event_type: Type of event (e.g. plaso_event)
             event: Event dictionary
+            event_id: Event Elasticsearch ID
         """
         if event:
             # Make sure we have decoded strings in the event dict.
@@ -421,12 +473,25 @@ class ElasticsearchDataStore(datastore.DataStore):
             }
 
             # Header needed by Elasticsearch when bulk inserting.
-            self.import_events.append({
+            header = {
                 u'index': {
                     u'_index': index_name,
                     u'_type': event_type
                 }
-            })
+            }
+            update_header = {
+                u'update': {
+                    u'_index': index_name,
+                    u'_type': event_type,
+                    u'_id': event_id
+                }
+            }
+
+            if event_id:
+                header = update_header
+                event = {u'doc': event}
+
+            self.import_events.append(header)
             self.import_events.append(event)
             self.import_counter[u'events'] += 1
             if self.import_counter[u'events'] % int(flush_interval) == 0:
@@ -435,11 +500,11 @@ class ElasticsearchDataStore(datastore.DataStore):
                     doc_type=event_type,
                     body=self.import_events)
                 self.import_events = []
-        else:
-            if self.import_events:
-                self.client.bulk(
-                    index=index_name,
-                    doc_type=event_type,
-                    body=self.import_events)
+            else:
+                if self.import_events:
+                    self.client.bulk(
+                        index=index_name,
+                        doc_type=event_type,
+                        body=self.import_events)
 
         return self.import_counter[u'events']

@@ -17,6 +17,7 @@ python-dateutil
 gunicorn
 pycypher
 parameterized
+datasketch
 
 # dev-requirements:
 Flask-Testing
