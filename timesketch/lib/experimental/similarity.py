@@ -170,7 +170,8 @@ class SimilarityScorer(object):
             minhash: Instance of datasketch.minhash.MinHash
             total_num_events: Integer of how many events in the LSH
 
-        Returns: A float between 0 and 1.
+        Returns:
+            A float between 0 and 1.
         """
         neighbours = lsh.query(minhash)
         return float(len(neighbours)) / float(total_num_events)
