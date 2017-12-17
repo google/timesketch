@@ -16,10 +16,10 @@ Install Java
     $ sudo apt-get install openjdk-8-jre-headless
     $ sudo apt-get install apt-transport-https
 
-Install the latest Elasticsearch 2.x release (5.x is not yet supported):
+Install the latest Elasticsearch 5.x release:
 
-    $ wget https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.4.3/elasticsearch-2.4.3.deb
-    $ sudo dpkg -i elasticsearch-2.4.3.deb
+    $ wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.5.deb
+    $ sudo dpkg -i elasticsearch-5.6.5.deb
 
 **Configure Elasticsearch**
 
