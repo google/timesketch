@@ -16,11 +16,17 @@
         <div class="pull-right">
             <span>{{ timeline.updated_at }}</span>
         </div>
-        <div class="pull-left" style="margin-top:-5px">
+
+        <div ng-show="!timeline.ready" class="pull-left" style="margin-right:10px;margin-left:10px;">
+            <i class="fa fa-spin fa-circle-o-notch"></i>
+        </div>
+
+        <div ng-show="timeline.ready" class="pull-left" style="margin-top:-5px">
             <div class="color-box" style="background:#{{ timeline.color }};"></div>
         </div>
         <div class="title">
-            <a style="text-decoration: none; font-weight: 500;font-size: 1.1em;" href="/sketch/{{ sketchId }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
+            <a ng-show="timeline.ready" style="text-decoration: none; font-weight: 500;font-size: 1.1em;" href="/sketch/{{ sketchId }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
+            <span ng-show="!timeline.ready" style="color:#999999; font-weight: 500;font-size: 1.1em;">{{ timeline.name }}</span>
         </div>
     </li>
 </ul>

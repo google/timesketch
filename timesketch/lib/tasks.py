@@ -22,7 +22,6 @@ from timesketch import create_app
 from timesketch import create_celery_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
-from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 
 celery = create_celery_app()
@@ -41,6 +40,7 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
     Returns:
         String with summary of processed events.
     """
+    app = create_app()
     cmd = [
         u'psort.py', u'-o', u'timesketch', source_file_path, u'--name',
         timeline_name, u'--status_view', u'none', u'--index', index_name
@@ -51,6 +51,12 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
 
     # Run psort.py
     cmd_output = subprocess.check_output(cmd)
+
+    # Set status to ready when done.
+    with app.app_context():
+        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+        searchindex.set_status(u'ready')
+
     return cmd_output
 
 
@@ -87,12 +93,9 @@ def run_csv(source_file_path, timeline_name, index_name, username=None):
     # Import the remaining events
     total_events = es.import_event(index_name, event_type)
 
-    # We are done so let's remove the processing status flag
+    # Set status to ready when done.
     with app.app_context():
-        search_index = SearchIndex.query.filter_by(
-            index_name=index_name).first()
-        search_index.status.remove(search_index.status[0])
-        db_session.add(search_index)
-        db_session.commit()
+        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+        searchindex.set_status(u'ready')
 
     return {u'Events processed': total_events}
