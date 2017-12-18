@@ -28,19 +28,16 @@ export const tsTimelinesList = ['$interval', 'timesketchApi', function ($interva
             showDelete: '=',
         },
         controller: function ($scope) {
-            // How often to poll the task API endpoint in milliseconds.
-            const pollIntervall = 10000
 
-            let getTimelines = function () {
+            const getTimelines = function () {
                 timesketchApi.getTimelines($scope.sketchId).success(function (data) {
                     $scope.timelines = []
-                    let timelines = data.objects[0]
+                    const timelines = data.objects[0]
                     if (timelines) {
-                        for (let timeline of timelines) {
-                            console.log(timeline)
+                        for (const timeline of timelines) {
                             timeline.updated_at = moment.utc(timeline.updated_at).format('YYYY-MM-DD')
                             timeline.ready = true
-                            let status = timeline.searchindex.status[0].status
+                            const status = timeline.searchindex.status[0].status
                             if (status == 'processing') {
                                 timeline.ready = false
                             }
@@ -62,7 +59,11 @@ export const tsTimelinesList = ['$interval', 'timesketchApi', function ($interva
                 $scope.timelines.unshift(timeline)
             }
 
+            // Get initial list of timelines
             getTimelines()
+
+            // Fetch list of timelines periodically to update status.
+            const pollIntervall = 10000
             $interval(function () {
                 getTimelines()
             }, pollIntervall)

@@ -52,10 +52,10 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
     # Run psort.py
     cmd_output = subprocess.check_output(cmd)
 
-    # We are done so let's change the status to "processed".
+    # Set status to ready when done.
     with app.app_context():
         searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
-        searchindex.set_status(u'complete')
+        searchindex.set_status(u'ready')
 
     return cmd_output
 
@@ -93,9 +93,9 @@ def run_csv(source_file_path, timeline_name, index_name, username=None):
     # Import the remaining events
     total_events = es.import_event(index_name, event_type)
 
-    # We are done so let's change the status to "processed".
+    # Set status to ready when done.
     with app.app_context():
         searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
-        searchindex.set_status(u'complete')
+        searchindex.set_status(u'ready')
 
     return {u'Events processed': total_events}
