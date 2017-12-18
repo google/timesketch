@@ -60,6 +60,12 @@
                     </table>
                 </div>
                 <div class="col-md-4">
+                  <div style="margin-bottom:10px;">
+                         <a style="color:#666" href="/sketch/{{ sketchId }}/explore/?q=_id:{{event._id}}&index={{ event._index }}">
+                           <i class="fa fa-lg fa-link icon-grey"></i> Direct link to this event
+                        </a>
+                    </div>
+
                     <div ng-repeat="comment in comments">
                         <div class="comment-bubble">
                             <div class="comment-name">{{::comment.user.username}}</div>
