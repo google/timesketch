@@ -29,4 +29,4 @@ https://github.com/log2timeline/plaso/wiki/Ubuntu-Packaged-Release
 
     $ celery -A timesketch.lib.tasks worker --loglevel=info
 
-Read on how to run the Celery worker in the background over at the [official Celery documentation](http://celery.readthedocs.org/en/latest/tutorials/daemonizing.html#daemonizing).
+Read on how to run the Celery worker in the background over at the [official Celery documentation](http://docs.celeryproject.org/en/latest/userguide/daemonizing.html#daemonizing).
