@@ -20,6 +20,7 @@ Install the latest Elasticsearch 5.x release:
 
     $ sudo wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
     $ sudo echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | tee -a /etc/apt/sources.list.d/elastic-5.x.list
+    $ sudo apt-get update
     $ sudo apt-get install elasticsearch
 
 **Configure Elasticsearch**
