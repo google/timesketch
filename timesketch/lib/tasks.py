@@ -22,6 +22,7 @@ from timesketch import create_app
 from timesketch import create_celery_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
+from timesketch.lib.utils import read_and_validate_jsonl
 from timesketch.models.sketch import SearchIndex
 
 celery = create_celery_app()

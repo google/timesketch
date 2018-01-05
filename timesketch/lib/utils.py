@@ -15,6 +15,7 @@
 
 import colorsys
 import csv
+import json
 import random
 import time
 
@@ -94,7 +95,7 @@ def read_and_validate_jsonl(path):
                     raise RuntimeError(
                         u"Missing fields in JSON at line {0:n}: {1:s}"
                         .format(lineno, missing_fields))
-                yield line
+                yield linedict
 
             except ValueError as e:
                 raise RuntimeError(
