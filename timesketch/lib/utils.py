@@ -68,6 +68,40 @@ def read_and_validate_csv(path):
             yield row
 
 
+def read_and_validate_jsonl(path):
+    """Generator for reading a JSONL (json lines) file.
+
+    Args:
+        path: Path to the JSONL file
+    """
+    # Fields that must be present in each entry of the JSONL file.
+    # We normally require datetime here, but plaso jsonl only has timestamp
+    # need to learn if this is necessary or can be changed
+    mandatory_fields = [u'message', u'timestamp', u'timestamp_desc']
+
+    with open(path, 'rb') as fh:
+
+        lineno = 0
+        for line in fh:
+            lineno += 1
+            try:
+                linedict = json.loads(line)
+                missing_fields = []
+                for field in mandatory_fields:
+                    if field not in linedict.keys():
+                        missing_fields.append(field)
+                if missing_fields:
+                    raise RuntimeError(
+                        u"Missing fields in JSON at line {0:n}: {1:s}"
+                        .format(lineno, missing_fields))
+                yield line
+
+            except ValueError as e:
+                raise RuntimeError(
+                    u"Error parsing JSON at line {0:n}: {1:s}"
+                    .format(lineno, e))
+
+
 def get_validated_indices(indices, sketch_indices):
     """Exclude any deleted search index references.
 

@@ -888,9 +888,12 @@ class UploadFileResource(ResourceMixin, Resource):
         if form.validate_on_submit() and upload_enabled:
             from timesketch.lib.tasks import run_plaso
             from timesketch.lib.tasks import run_csv
+            from timesketch.lib.tasks import run_jsonl
 
             # Map the right task based on the file type
-            task_directory = {u'plaso': run_plaso, u'csv': run_csv}
+            task_directory = {u'plaso': run_plaso,
+                              u'csv': run_csv,
+                              u'jsonl': run_jsonl}
 
             sketch_id = form.sketch_id.data
             file_storage = form.file.data

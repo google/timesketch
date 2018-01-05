@@ -99,3 +99,43 @@ def run_csv(source_file_path, timeline_name, index_name, username=None):
         searchindex.set_status(u'ready')
 
     return {u'Events processed': total_events}
+
+@celery.task(track_started=True)
+def run_jsonl(source_file_path, timeline_name, index_name, username=None):
+    """Create a Celery task for processing a JSONL file.
+
+    Args:
+        source_file_path: Path to JSONL file.
+        timeline_name: Name of the Timesketch timeline.
+        index_name: Name of the datastore index.
+        username: Username of the user who will own the timeline.
+
+    Returns:
+        Dictionary with count of processed events.
+    """
+    event_type = u'generic_event'  # Document type for Elasticsearch
+    app = create_app()
+
+    # Log information to Celery
+    logging.info(u'Index name: %s', index_name)
+    logging.info(u'Timeline name: %s', timeline_name)
+    logging.info(u'Document type: %s', event_type)
+    logging.info(u'Owner: %s', username)
+
+    es = ElasticsearchDataStore(
+        host=current_app.config[u'ELASTIC_HOST'],
+        port=current_app.config[u'ELASTIC_PORT'])
+
+    es.create_index(index_name=index_name, doc_type=event_type)
+    for event in read_and_validate_jsonl(source_file_path):
+        es.import_event(index_name, event_type, event)
+
+    # Import the remaining events
+    total_events = es.import_event(index_name, event_type)
+
+    # Set status to ready when done.
+    with app.app_context():
+        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+        searchindex.set_status(u'ready')
+
+    return {u'Events processed': total_events}
