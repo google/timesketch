@@ -500,6 +500,7 @@ if __name__ == '__main__':
     shell_manager.add_command(u'manage_group', GroupManager())
     shell_manager.add_command(u'add_index', AddSearchIndex())
     shell_manager.add_command(u'csv2ts', CreateTimelineFromCsv())
+    shell_manager.add_command(u'jsonl2ts', CreateTimelineFromJSONL())
     shell_manager.add_command(u'db', MigrateCommand)
     shell_manager.add_command(u'drop_db', DropDataBaseTables())
     shell_manager.add_command(u'json2ts', CreateTimelineFromJson())

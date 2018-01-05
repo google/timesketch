@@ -86,11 +86,13 @@ def read_and_validate_jsonl(path):
             lineno += 1
             try:
                 linedict = json.loads(line)
-                if u'datetime' not in linedict.keys() and u'timestamp' in linedict.keys():
+                if u'datetime' not in linedict.keys()\
+                  and u'timestamp' in linedict.keys():
                     epoch = int(str(linedict[u'timestamp'])[:10])
                     dt = datetime.datetime.fromtimestamp(epoch)
                     linedict[u'datetime'] = dt.isoformat()
-                if u'timestamp' not in linedict.keys() and u'datetime' in linedict.keys():
+                if u'timestamp' not in linedict.keys()\
+                  and u'datetime' in linedict.keys():
                     linedict[u'timestamp'] = parser.parse(linedict[u'datetime'])
 
                 missing_fields = []
