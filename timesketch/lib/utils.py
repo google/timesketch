@@ -15,6 +15,7 @@
 
 import colorsys
 import csv
+import datetime
 import json
 import random
 import time
@@ -76,9 +77,7 @@ def read_and_validate_jsonl(path):
         path: Path to the JSONL file
     """
     # Fields that must be present in each entry of the JSONL file.
-    # We normally require datetime here, but plaso jsonl only has timestamp
-    # need to learn if this is necessary or can be changed
-    mandatory_fields = [u'message', u'timestamp', u'timestamp_desc']
+    mandatory_fields = [u'message', u'datetime', u'timestamp_desc']
 
     with open(path, 'rb') as fh:
 
@@ -87,6 +86,13 @@ def read_and_validate_jsonl(path):
             lineno += 1
             try:
                 linedict = json.loads(line)
+                if u'datetime' not in linedict.keys() and u'timestamp' in linedict.keys():
+                    epoch = int(str(linedict[u'timestamp'])[:10])
+                    dt = datetime.datetime.fromtimestamp(epoch)
+                    linedict[u'datetime'] = dt.isoformat()
+                if u'timestamp' not in linedict.keys() and u'datetime' in linedict.keys():
+                    linedict[u'timestamp'] = parser.parse(linedict[u'datetime'])
+
                 missing_fields = []
                 for field in mandatory_fields:
                     if field not in linedict.keys():
@@ -95,6 +101,7 @@ def read_and_validate_jsonl(path):
                     raise RuntimeError(
                         u"Missing fields in JSON at line {0:n}: {1:s}"
                         .format(lineno, missing_fields))
+
                 yield linedict
 
             except ValueError as e:
