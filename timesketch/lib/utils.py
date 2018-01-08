@@ -98,15 +98,13 @@ def read_and_validate_jsonl(path):
                     if field not in linedict.keys():
                         missing_fields.append(field)
                 if missing_fields:
-                    raise RuntimeError
-                        (u"Missing fields in JSON at line {0:n}: {1:s}"
+                    raise RuntimeError(u"Missing field(s) at line {0:n}: {1:s}"
                         .format(lineno, missing_fields))
 
                 yield linedict
 
             except ValueError as e:
-                raise RuntimeError
-                    (u"Error parsing JSON at line {0:n}: {1:s}"
+                raise RuntimeError(u"Error parsing JSON at line {0:n}: {1:s}"
                     .format(lineno, e))
 
 
