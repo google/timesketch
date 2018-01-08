@@ -15,6 +15,8 @@
 
 import colorsys
 import csv
+import datetime
+import json
 import random
 import time
 
@@ -66,6 +68,46 @@ def read_and_validate_csv(path):
                     continue
 
             yield row
+
+
+def read_and_validate_jsonl(path):
+    """Generator for reading a JSONL (json lines) file.
+
+    Args:
+        path: Path to the JSONL file
+    """
+    # Fields that must be present in each entry of the JSONL file.
+    mandatory_fields = [u'message', u'datetime', u'timestamp_desc']
+    with open(path, 'rb') as fh:
+
+        lineno = 0
+        for line in fh:
+            lineno += 1
+            try:
+                linedict = json.loads(line)
+                ld_keys = linedict.keys()
+                if u'datetime' not in ld_keys and u'timestamp' in ld_keys:
+                    epoch = int(str(linedict[u'timestamp'])[:10])
+                    dt = datetime.datetime.fromtimestamp(epoch)
+                    linedict[u'datetime'] = dt.isoformat()
+                if u'timestamp' not in ld_keys and u'datetime' in ld_keys:
+                    linedict[u'timestamp'] = parser.parse(linedict[u'datetime'])
+
+                missing_fields = []
+                for field in mandatory_fields:
+                    if field not in linedict.keys():
+                        missing_fields.append(field)
+                if missing_fields:
+                    raise RuntimeError(
+                        u"Missing field(s) at line {0:n}: {1:s}"
+                        .format(lineno, missing_fields))
+
+                yield linedict
+
+            except ValueError as e:
+                raise RuntimeError(
+                    u"Error parsing JSON at line {0:n}: {1:s}"
+                    .format(lineno, e))
 
 
 def get_validated_indices(indices, sketch_indices):

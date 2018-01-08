@@ -12,12 +12,12 @@
     {% if sketch.has_permission(current_user, 'write') and upload_enabled %}
         <div class="card">
             <h4>Import timeline</h4>
-            <p>You can upload either a Plaso storage file or a CSV file.<br>
+            <p>You can upload either a Plaso storage file, JSONL, or a CSV file.<br>
                 <i>Supported Plaso version: {{ plaso_version }}</i>
             </p>
             <ts-core-upload sketch-id="{{ sketch.id }}" visible="true" btn-text="'Select file'"></ts-core-upload>
             <br>
-            <p>If you are uploading a CSV file make sure to read the <a href="https://github.com/google/timesketch/wiki/UserGuideTimelineFromFile" rel="noreferrer" target="_blank">documentation</a> to learn what columns are mandatory.</p>
+            <p>If you are uploading a CSV or JSONL file make sure to read the <a href="https://github.com/google/timesketch/wiki/UserGuideTimelineFromFile" rel="noreferrer" target="_blank">documentation</a> to learn what columns are mandatory.</p>
         </div>
     {% endif %}
 
