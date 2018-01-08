@@ -78,7 +78,6 @@ def read_and_validate_jsonl(path):
     """
     # Fields that must be present in each entry of the JSONL file.
     mandatory_fields = [u'message', u'datetime', u'timestamp_desc']
-
     with open(path, 'rb') as fh:
 
         lineno = 0
@@ -86,13 +85,12 @@ def read_and_validate_jsonl(path):
             lineno += 1
             try:
                 linedict = json.loads(line)
-                if u'datetime' not in linedict.keys()\
-                  and u'timestamp' in linedict.keys():
+                ld_keys = linedict.keys()
+                if u'datetime' not in ld_keys and u'timestamp' in ld_keys:
                     epoch = int(str(linedict[u'timestamp'])[:10])
                     dt = datetime.datetime.fromtimestamp(epoch)
                     linedict[u'datetime'] = dt.isoformat()
-                if u'timestamp' not in linedict.keys()\
-                  and u'datetime' in linedict.keys():
+                if u'timestamp' not in ld_keys and u'datetime' in ld_keys:
                     linedict[u'timestamp'] = parser.parse(linedict[u'datetime'])
 
                 missing_fields = []
@@ -100,15 +98,15 @@ def read_and_validate_jsonl(path):
                     if field not in linedict.keys():
                         missing_fields.append(field)
                 if missing_fields:
-                    raise RuntimeError(
-                        u"Missing fields in JSON at line {0:n}: {1:s}"
+                    raise RuntimeError
+                        (u"Missing fields in JSON at line {0:n}: {1:s}"
                         .format(lineno, missing_fields))
 
                 yield linedict
 
             except ValueError as e:
-                raise RuntimeError(
-                    u"Error parsing JSON at line {0:n}: {1:s}"
+                raise RuntimeError
+                    (u"Error parsing JSON at line {0:n}: {1:s}"
                     .format(lineno, e))
 
 

@@ -397,7 +397,6 @@ class CreateTimelineFromJSONL(CreateTimelineBase):
             file_path: Path to the file to process
             event_type: Type of event (e.g. plaso_event)
             flush_interval: Number of events to queue up before bulk insert
-
         """
         timeline_name = unicode(timeline_name.decode(encoding=u'utf-8'))
         index_name = unicode(index_name.decode(encoding=u'utf-8'))
