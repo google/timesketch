@@ -6,7 +6,7 @@ if [ "$1" = 'timesketch' ]; then
 	if grep -q "SECRET_KEY = u'<KEY_GOES_HERE>'" /etc/timesketch.conf; then
 		OPENSSL_RAND=$( openssl rand -base64 32 )
 		# Using the pound sign as a delimiter to avoid problems with / being output from openssl
-		sed -i 's#SECRET_KEY = u\x27\x27#SECRET_KEY = u\x27'$OPENSSL_RAND'\x27#' /etc/timesketch.conf
+		sed -i 's#SECRET_KEY = u\x27\x3CKEY_GOES_HERE\x3E\x27#SECRET_KEY = u\x27'$OPENSSL_RAND'\x27#' /etc/timesketch.conf
 	fi
 
 	# Set up the Postgres connection
