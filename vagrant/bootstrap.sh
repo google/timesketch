@@ -96,7 +96,7 @@ sed s/"SECRET_KEY = u'<KEY_GOES_HERE>'"/"SECRET_KEY = u'${SECRET_KEY}'"/ /etc/ti
 mv /etc/timesketch.conf.new /etc/timesketch.conf
 
 # Configure the DB password
-sed s/"timesketch:<PG_PASSWORD>@localhost"/"timesketch:${PSQL_PW}@localhost"/ /etc/timesketch.conf > /etc/timesketch.conf.new
+sed s/"<USERNAME>:<PASSWORD>@localhost"/"timesketch:${PSQL_PW}@localhost"/ /etc/timesketch.conf > /etc/timesketch.conf.new
 mv /etc/timesketch.conf.new /etc/timesketch.conf
 
 # Configure the Neo4j password
