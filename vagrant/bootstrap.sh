@@ -2,6 +2,7 @@
 set -e
 set -u
 
+DEBIAN_FRONTEND=noninteractive
 VAGRANT=false
 RUN_AS_USER=$USER
 TIMESKETCH_PATH="."
