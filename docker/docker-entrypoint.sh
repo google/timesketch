@@ -3,10 +3,10 @@
 # Run the container the default way
 if [ "$1" = 'timesketch' ]; then
 	# Set SECRET_KEY in /etc/timesketch.conf if it isn't already set
-	if grep -q "SECRET_KEY = u''" /etc/timesketch.conf; then
+	if grep -q "SECRET_KEY = u'<KEY_GOES_HERE>'" /etc/timesketch.conf; then
 		OPENSSL_RAND=$( openssl rand -base64 32 )
 		# Using the pound sign as a delimiter to avoid problems with / being output from openssl
-		sed -i 's#SECRET_KEY = u\x27\x27#SECRET_KEY = u\x27'$OPENSSL_RAND'\x27#' /etc/timesketch.conf
+		sed -i 's#SECRET_KEY = u\x27\x3CKEY_GOES_HERE\x3E\x27#SECRET_KEY = u\x27'$OPENSSL_RAND'\x27#' /etc/timesketch.conf
 	fi
 
 	# Set up the Postgres connection
@@ -30,7 +30,7 @@ if [ "$1" = 'timesketch' ]; then
 	# Replace Redis Hostname
 	sed -i "s#^CELERY_BROKER_URL=.*#CELERY_BROKER_URL='redis://redis:6379'#" /etc/timesketch.conf
 	sed -i "s#^CELERY_RESULT_BACKEND=.*#CELERY_RESULT_BACKEND='redis://redis:6379'#" /etc/timesketch.conf
-	
+
 	# Set up web credentials
 	if [ -z ${TIMESKETCH_USER+x} ]; then
 		TIMESKETCH_USER="admin"
@@ -40,6 +40,7 @@ if [ "$1" = 'timesketch' ]; then
 		TIMESKETCH_PASSWORD="$(openssl rand -base64 32)"
 		echo "TIMESKETCH_PASSWORD set randomly to: ${TIMESKETCH_PASSWORD}";
 	fi
+        sleep 5
 	tsctl add_user -u "$TIMESKETCH_USER" -p "$TIMESKETCH_PASSWORD"
 
 
