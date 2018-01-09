@@ -157,6 +157,4 @@ until [ "${CLUSTER_HEALTH}" == "green" ] || [ "${CLUSTER_HEALTH}" == "yellow" ];
 done
 
 # Create a test timeline
-sudo -u "${RUN_AS_USER}" pwd
-sudo -u "${RUN_AS_USER}" ls .
 sudo -u "${RUN_AS_USER}" psort.py -o timesketch "${PLASO_TEST_FILE}" --name test-timeline
