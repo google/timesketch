@@ -52,7 +52,7 @@ def mock_session():
         @staticmethod
         def post(*args, **kwargs):
             """Mock POST request handler."""
-            return
+            return mock_response(*args, **kwargs)
 
     return MockSession()
 
@@ -88,10 +88,8 @@ def mock_response(*args, **kwargs):
         u'objects': [{
             u'id':
             1,
-            u'name':
-            u'test',
-            u'description':
-            u'test',
+            u'name': u'test',
+            u'description': u'test',
             u'timelines': [{
                 u'id': 1,
                 u'name': u'test',
@@ -129,6 +127,8 @@ def mock_response(*args, **kwargs):
         u'http://127.0.0.1/api/v1/sketches/1':
         MockResponse(json_data=sketch_data),
         u'http://127.0.0.1/api/v1/sketches/1/timelines/1':
+        MockResponse(json_data=timeline_data),
+        u'http://127.0.0.1/api/v1/sketches/1/explore/':
         MockResponse(json_data=timeline_data),
     }
     return url_router.get(args[0], MockResponse(None, 404))
@@ -177,7 +177,6 @@ class SketchTest(unittest.TestCase):
         self.sketch = self.api_client.get_sketch(1)
 
     # TODO: Add test for upload()
-    # TODO: Add test for explore()
 
     def test_get_views(self):
         """Test to get a view."""
@@ -192,6 +191,12 @@ class SketchTest(unittest.TestCase):
         self.assertIsInstance(timelines, list)
         self.assertEqual(len(timelines), 2)
         self.assertIsInstance(timelines[0], client.Timeline)
+
+    def test_explore(self):
+        """Tests to explore a timeline."""
+        results = self.sketch.explore(query_string="description:test")
+        self.assertEqual(len(results['objects']), 1)
+        self.assertIsInstance(results['objects'], list)
 
 
 class ViewTest(unittest.TestCase):
