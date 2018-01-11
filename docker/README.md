@@ -18,7 +18,7 @@ cd timesketch
 
 ```shell
 cd docker
-docker-compose up
+sudo docker-compose up
 ```
 
 ### Access Timesketch
@@ -32,9 +32,11 @@ docker-compose up
 3. Go to http://127.0.0.1:5000/explore/ and have fun exploring!
 
 ### Where is my data stored?
-The timesketch docker config is set to write your elasticsearch and postgres data to the host filesystem,
-not the containers.  This is accomplished with docker [volumes](https://docs.docker.com/engine/admin/volumes/volumes/) that map to
-the following locations:
+The timesketch docker config is set to write all data to the host filesystem, not the containers.  This is accomplished with docker [volumes](https://docs.docker.com/engine/admin/volumes/volumes/) that map to the following locations:
 
 - elasticsearch: /var/lib/elasticsearch
-- postgres: /var/lib/postres
+- neo4j: /var/lib/neo4j/data
+- postgres: /var/lib/postgresql
+- redis: /var/lib/redis
+
+These locations on the host filesystem can be backed with any storage mechanism to persist sketch data beyond the container lifetimes.

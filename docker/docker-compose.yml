@@ -24,7 +24,7 @@ services:
     restart: always
 
   elasticsearch:
-    image: elasticsearch:2.4
+    image: elasticsearch
     ports:
       - "9200:9200"
       - "9300:9300"
@@ -32,10 +32,10 @@ services:
     volumes:
       - ../contrib/add_label.groovy:/usr/share/elasticsearch/config/scripts/add_label.groovy
       - ../contrib/toggle_label.groovy:/usr/share/elasticsearch/config/scripts/toggle_label.groovy
-      - /usr/share/data/elasticsearch:/var/lib/elasticsearch
+      - /var/lib/elasticsearch:/usr/share/elasticsearch/data/elasticsearch
 
   postgres:
-    image: postgres:9.6
+    image: postgres
     ports:
       - "5432:5432"
     environment:
@@ -43,13 +43,18 @@ services:
       - POSTGRES_PASSWORD=password
     restart: always
     volumes:
-      - /var/lib/postgres:/var/lib/postgres
+      - /var/lib/postgresql/data:/var/lib/postgresql/data
+
 
   redis:
-    image: redis:3
+    image: redis
+    volumes:
+      - /var/lib/redis:/data
 
   neo4j:
     image: neo4j
     environment:
       - NEO4J_AUTH=none
     restart: always
+    volumes:
+      - /var/lib/neo4j/data:/var/lib/neo4j/data
