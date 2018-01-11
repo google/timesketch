@@ -21,7 +21,7 @@ services:
       - REDIS_PORT=6379
       - NEO4J_ADDRESS=neo4j
       - NEO4J_PORT=7474
-restart: always
+    restart: always
 
   elasticsearch:
     image: elasticsearch:2.4
@@ -30,7 +30,9 @@ restart: always
       - "9300:9300"
     restart: always
     volumes:
-      - ../contrib:/usr/share/elasticsearch/config/scripts
+      - ../contrib/add_label.groovy:/usr/share/elasticsearch/config/scripts/add_label.groovy
+      - ../contrib/toggle_label.groovy:/usr/share/elasticsearch/config/scripts/toggle_label.groovy
+      - /usr/share/data/elasticsearch:/var/lib/elasticsearch
 
   postgres:
     image: postgres:9.6
@@ -40,6 +42,8 @@ restart: always
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password
     restart: always
+    volumes:
+      - /var/lib/postgres:/var/lib/postgres
 
   redis:
     image: redis:3
