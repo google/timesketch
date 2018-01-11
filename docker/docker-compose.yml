@@ -30,8 +30,7 @@ services:
       - "9300:9300"
     restart: always
     volumes:
-      - ../contrib/add_label.groovy:/usr/share/elasticsearch/config/scripts/add_label.groovy
-      - ../contrib/toggle_label.groovy:/usr/share/elasticsearch/config/scripts/toggle_label.groovy
+      - ../contrib/:/usr/share/elasticsearch/config/scripts/
       - /var/lib/elasticsearch:/usr/share/elasticsearch/data/elasticsearch
 
   postgres:
