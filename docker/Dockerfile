@@ -4,8 +4,16 @@ FROM ubuntu:16.04
 # Update the base image
 RUN apt-get update && apt-get -y upgrade && apt-get -y dist-upgrade
 
-# Install Timesketch dependencies
-RUN apt-get -y install python-pip python-dev libffi-dev python-psycopg2 curl lsb-release apt-transport-https
+# Setup install environment and Timesketch dependencies
+RUN apt-get -y install apt-transport-https\
+                       curl\
+                       git\
+                       libffi-dev\
+                       lsb-release\
+                       python-dev\
+                       python-pip\
+                       python-psycopg2
+
 RUN curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -
 RUN VERSION=node_8.x && \
     DISTRO="$(lsb_release -s -c)" && \
@@ -16,15 +24,13 @@ RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.lis
 # Install Plaso
 RUN apt-get -y install software-properties-common
 RUN add-apt-repository ppa:gift/stable && apt-get update
-RUN apt-get update && apt-get -y install nodejs yarn
+RUN apt-get update && apt-get -y install python-plaso plaso-tools nodejs yarn
 
 # Use pip to install Timesketch
 RUN pip install --upgrade pip
 ADD . /tmp/timesketch
-RUN pip install /tmp/timesketch/
-
-# Build Timesketch frontend
 RUN cd /tmp/timesketch && yarn install && yarn run build
+RUN pip install /tmp/timesketch/
 
 # Copy the Timesketch configuration file into /etc
 RUN cp /usr/local/share/timesketch/timesketch.conf /etc

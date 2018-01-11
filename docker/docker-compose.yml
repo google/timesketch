@@ -15,15 +15,23 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_ADDRESS=postgres
       - POSTGRES_PORT=5432
-      - ELASTIC_ADDRESS=elastic
+      - ELASTIC_ADDRESS=elasticsearch
       - ELASTIC_PORT=9200
-    restart: always
+      - REDIS_ADDRESS=redis
+      - REDIS_PORT=6379
+      - NEO4J_ADDRESS=neo4j
+      - NEO4J_PORT=7474
+restart: always
+
   elasticsearch:
     image: elasticsearch:2.4
     ports:
       - "9200:9200"
       - "9300:9300"
     restart: always
+    volumes:
+      - ../contrib:/usr/share/elasticsearch/config/scripts
+
   postgres:
     image: postgres:9.6
     ports:
@@ -32,5 +40,12 @@ services:
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password
     restart: always
+
   redis:
     image: redis:3
+
+  neo4j:
+    image: neo4j
+    environment:
+      - NEO4J_AUTH=none
+    restart: always
