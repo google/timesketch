@@ -29,7 +29,7 @@ if [ "$1" = 'timesketch' ]; then
 
 	# Set up the Redis connection
 	if [ $REDIS_ADDRESS ] && [ $REDIS_PORT ]; then
-    sed -i 's#UPLOAD_ENABLED = False#UPLOAD_ENABLED = True#' /etc/timesketch.conf
+		sed -i 's#UPLOAD_ENABLED = False#UPLOAD_ENABLED = True#' /etc/timesketch.conf
 	  sed -i 's#^CELERY_BROKER_URL =.*#CELERY_BROKER_URL = \x27redis://'$REDIS_ADDRESS':'$REDIS_PORT'\x27#' /etc/timesketch.conf
 	  sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = \x27redis://'$REDIS_ADDRESS':'$REDIS_PORT'\x27#' /etc/timesketch.conf
 	else
@@ -58,7 +58,7 @@ if [ "$1" = 'timesketch' ]; then
 	fi
 
 	# Sleep to allow the other processes to start
-  sleep 5
+	sleep 5
 	tsctl add_user -u "$TIMESKETCH_USER" -p "$TIMESKETCH_PASSWORD"
 
 	# Run the Timesketch server (without SSL)
