@@ -16,13 +16,17 @@
 # pylint: skip-file
 import sys
 
+from flask import current_app
+
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models.sketch import Sketch
 from xml.etree import ElementTree
 
 
 def event_stream(sketch_id, query):
-    es = ElasticsearchDataStore(u'127.0.0.1', 9200)
+    es = ElasticsearchDataStore(
+        host=current_app.config[u'ELASTIC_HOST'],
+        port=current_app.config[u'ELASTIC_PORT'])
     sketch = Sketch.query.get(sketch_id)
     if not sketch:
         sys.exit('No such sketch')
