@@ -11,7 +11,7 @@ PLASO_TEST_FILE="${VAGRANT_PATH}/test.plaso"
 
 if [ -z ${1:-} ] || [ $1 == "vagrant" ]; then
   VAGRANT=true
-  RUN_AS_USER="ubuntu"
+  RUN_AS_USER="vagrant"
   TIMESKETCH_PATH="/usr/local/src/timesketch"
   VAGRANT_PATH="${TIMESKETCH_PATH}/vagrant"
   PLASO_TEST_FILE="${VAGRANT_PATH}/test.plaso"
@@ -59,7 +59,7 @@ if [ "$VAGRANT" = true ]; then
   # Install yarn and nodejs
   apt-get install -y nodejs yarn
   # Install nodejs dependencies
-  HOME=/home/ubuntu sudo -u ubuntu bash -c 'cd /usr/local/src/timesketch && yarn install'
+  HOME=/home/$RUN_AS_USER sudo -u $RUN_AS_USER bash -c 'cd /usr/local/src/timesketch && yarn install'
 fi
 
 # Install Timesketch
@@ -114,7 +114,7 @@ cp "${TIMESKETCH_PATH}"/contrib/*.groovy /etc/elasticsearch/scripts/
 
 # Enable Celery task manager (for uploads)
 mkdir -p /var/{lib,log,run}/celery
-chown ubuntu /var/{lib,log,run}/celery
+chown $RUN_AS_USER /var/{lib,log,run}/celery
 cp "${VAGRANT_PATH}"/celery.service /etc/systemd/system/
 cp "${VAGRANT_PATH}"/celery.conf /etc/
 /bin/systemctl daemon-reload
@@ -136,7 +136,7 @@ fi
 
 if [ "$VAGRANT" = true ]; then
   # Build Timesketch frontend
-  HOME=/home/ubuntu sudo -u ubuntu bash -c 'cd /usr/local/src/timesketch && yarn run build'
+  HOME=/home/$RUN_AS_USER sudo -u $RUN_AS_USER bash -c 'cd /usr/local/src/timesketch && yarn run build'
 fi
 
 # Create test user
