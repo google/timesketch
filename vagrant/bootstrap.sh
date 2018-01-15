@@ -11,7 +11,7 @@ PLASO_TEST_FILE="${VAGRANT_PATH}/test.plaso"
 
 if [ -z ${1:-} ] || [ $1 == "vagrant" ]; then
   VAGRANT=true
-  RUN_AS_USER="vagran"
+  RUN_AS_USER="vagrant"
   TIMESKETCH_PATH="/usr/local/src/timesketch"
   VAGRANT_PATH="${TIMESKETCH_PATH}/vagrant"
   PLASO_TEST_FILE="${VAGRANT_PATH}/test.plaso"
