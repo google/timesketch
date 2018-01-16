@@ -15,6 +15,10 @@ const aotPlugin = new AotPlugin({
   entryModule: path.resolve(__dirname, 'timesketch/ui/app.module#AppModule'),
 })
 
+const minimizePlugin = new webpack.optimize.UglifyJsPlugin({
+      mangle: false
+})
+
 // Make sure JQuery is loaded before Angular
 const jqueryLoader = new webpack.ProvidePlugin({
   $: "jquery",
@@ -63,5 +67,5 @@ module.exports = {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'timesketch/static/dist/'),
   },
-  plugins: [extractSass, aotPlugin, jqueryLoader],
+  plugins: [extractSass, aotPlugin, jqueryLoader, minimizePlugin],
 }
