@@ -940,8 +940,9 @@ class UploadFileResource(ResourceMixin, Resource):
                     sketch=sketch,
                     user=current_user,
                     searchindex=searchindex)
-                db_session.add(timeline)
+                timeline.set_status(u'processing')
                 sketch.timelines.append(timeline)
+                db_session.add(timeline)
                 db_session.commit()
 
             # Run the task in the background
