@@ -35,6 +35,7 @@ export interface Timeline {
   color: string
   searchindex: SearchIndex
   deleted: boolean
+  status: Status
   created_at: DateTime
   updated_at: DateTime
 }
