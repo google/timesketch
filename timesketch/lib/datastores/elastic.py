@@ -461,8 +461,10 @@ class ElasticsearchDataStore(datastore.DataStore):
         if self.client.indices.exists(index_name):
             try:
                 self.client.indices.delete(index=index_name)
-            except ConnectionError:
-                raise RuntimeError(u'Unable to connect to Timesketch backend.')
+            except ConnectionError as e:
+                raise RuntimeError(
+                    u'Unable to connect to Timesketch backend: {}'.format(e)
+                )
 
     def import_event(
             self, index_name, event_type, event=None,
