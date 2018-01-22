@@ -23,7 +23,7 @@ sudo docker-compose up
 
 ### Access Timesketch
 * Retrieve the randomly generated password from startup logs: `TIMESKETCH_PASSWORD set randomly to: xxx`
-* Go to: http://127.0.0.1:5000/
+* Go to: http://127.0.0.1/
 * Login with username: admin and the retrieved random password
 
 ### Test your installation
