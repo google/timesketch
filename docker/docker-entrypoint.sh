@@ -62,8 +62,8 @@ if [ "$1" = 'timesketch' ]; then
   tsctl add_user -u "$TIMESKETCH_USER" -p "$TIMESKETCH_PASSWORD"
 
   # Run the Timesketch server (without SSL)
-  #exec `bash -c "/usr/local/bin/celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & /usr/local/bin/tsctl runserver -h 0.0.0.0 -p 5000"`
-  exec `bash -c "/usr/local/bin/celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & gunicorn -b 127.0.0.1:80 --log-file - --timeout 120 timesketch.wsgi:application"`
+  exec `bash -c "/usr/local/bin/celery -A timesketch.lib.tasks worker --uid nobody --loglevel info &\
+  gunicorn -b 0.0.0.0:80 --access-logfile - --error-logfile - --log-level info --timeout 120 timesketch.wsgi:application"`
 fi
 
 # Run a custom command on container start
