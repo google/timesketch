@@ -71,6 +71,22 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         return views
 
     @property
+    def active_timelines(self):
+        """List timelines that are ready for analysis.
+
+        Returns:
+            List of instances of timesketch.models.sketch.Timeline
+        """
+        _timelines = []
+        for timeline in self.timelines:
+            timeline_status = timeline.get_status.status
+            index_status = timeline.searchindex.get_status.status
+            if (timeline_status or index_status) in [u'processing', u'fail']:
+                continue
+            _timelines.append(timeline)
+        return _timelines
+
+    @property
     def get_search_templates(self):
         """Get search templates."""
         return SearchTemplate.query.all()
