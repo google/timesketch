@@ -32,7 +32,7 @@ flask_app = create_app()
 
 
 def _set_timeline_status(index_name, status, error_msg=None):
-    """Helper function to set searchindex and all related timelines status.
+    """Helper function to set status for searchindex and all related timelines.
 
     Args:
         index_name: Name of the datastore index.
