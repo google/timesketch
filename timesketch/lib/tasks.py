@@ -29,9 +29,6 @@ from timesketch.models.sketch import Timeline
 
 celery = create_celery_app()
 flask_app = create_app()
-es = ElasticsearchDataStore(
-    host=current_app.config[u'ELASTIC_HOST'],
-    port=current_app.config[u'ELASTIC_PORT'])
 
 
 def _set_timeline_status(index_name, status, error_msg=None):
@@ -46,6 +43,10 @@ def _set_timeline_status(index_name, status, error_msg=None):
     with flask_app.app_context():
         searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
         timelines = Timeline.query.filter_by(searchindex=searchindex).all()
+
+        es = ElasticsearchDataStore(
+            host=current_app.config[u'ELASTIC_HOST'],
+            port=current_app.config[u'ELASTIC_PORT'])
 
         # Set status
         searchindex.set_status(status)
@@ -85,14 +86,16 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
         cmd.append(u'--username')
         cmd.append(username)
 
+    import time
+
     # Run psort.py
     try:
+        time.sleep(10)
         cmd_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
         _set_timeline_status(index_name, status=u'fail', error_msg=e.output)
-        logging.error(e.output)
-        return
+        return e.output
 
     # Mark the searchindex and timelines as ready
     _set_timeline_status(index_name, status=u'ready')
@@ -120,6 +123,10 @@ def run_csv(source_file_path, timeline_name, index_name, username=None):
     logging.info(u'Timeline name: %s', timeline_name)
     logging.info(u'Document type: %s', event_type)
     logging.info(u'Owner: %s', username)
+
+    es = ElasticsearchDataStore(
+        host=current_app.config[u'ELASTIC_HOST'],
+        port=current_app.config[u'ELASTIC_PORT'])
 
     es.create_index(index_name=index_name, doc_type=event_type)
     for event in read_and_validate_csv(source_file_path):
@@ -154,6 +161,10 @@ def run_jsonl(source_file_path, timeline_name, index_name, username=None):
     logging.info(u'Timeline name: %s', timeline_name)
     logging.info(u'Document type: %s', event_type)
     logging.info(u'Owner: %s', username)
+
+    es = ElasticsearchDataStore(
+        host=current_app.config[u'ELASTIC_HOST'],
+        port=current_app.config[u'ELASTIC_PORT'])
 
     es.create_index(index_name=index_name, doc_type=event_type)
     for event in read_and_validate_jsonl(source_file_path):
