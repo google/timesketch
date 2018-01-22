@@ -107,6 +107,7 @@ class ResourceMixin(object):
     searchindex_fields = {
         u'id': fields.Integer,
         u'name': fields.String,
+        u'description': fields.String,
         u'index_name': fields.String,
         u'status': fields.Nested(status_fields),
         u'deleted': fields.Boolean,
