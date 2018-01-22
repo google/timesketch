@@ -86,11 +86,8 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
         cmd.append(u'--username')
         cmd.append(username)
 
-    import time
-
     # Run psort.py
     try:
-        time.sleep(10)
         cmd_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
