@@ -107,6 +107,7 @@ class ResourceMixin(object):
     searchindex_fields = {
         u'id': fields.Integer,
         u'name': fields.String,
+        u'description': fields.String,
         u'index_name': fields.String,
         u'status': fields.Nested(status_fields),
         u'deleted': fields.Boolean,
@@ -118,6 +119,7 @@ class ResourceMixin(object):
         u'id': fields.Integer,
         u'name': fields.String,
         u'description': fields.String,
+        u'status': fields.Nested(status_fields),
         u'color': fields.String,
         u'searchindex': fields.Nested(searchindex_fields),
         u'deleted': fields.Boolean,
@@ -156,6 +158,7 @@ class ResourceMixin(object):
         u'description': fields.String,
         u'user': fields.Nested(user_fields),
         u'timelines': fields.List(fields.Nested(timeline_fields)),
+        u'active_timelines': fields.List(fields.Nested(timeline_fields)),
         u'status': fields.Nested(status_fields),
         u'created_at': fields.DateTime,
         u'updated_at': fields.DateTime
@@ -938,8 +941,9 @@ class UploadFileResource(ResourceMixin, Resource):
                     sketch=sketch,
                     user=current_user,
                     searchindex=searchindex)
-                db_session.add(timeline)
+                timeline.set_status(u'processing')
                 sketch.timelines.append(timeline)
+                db_session.add(timeline)
                 db_session.commit()
 
             # Run the task in the background
@@ -1144,14 +1148,7 @@ class CountEventsResource(ResourceMixin, Resource):
             Number of events in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-
-        # Exclude any timeline that is processing, i.e. not ready yet.
-        indices = []
-        for timeline in sketch.timelines:
-            if timeline.searchindex.get_status.status == u'processing':
-                continue
-            indices.append(timeline.searchindex.index_name)
-
+        indices = [t.searchindex.index_name for t in sketch.active_timelines]
         count = self.datastore.count(indices)
         meta = dict(count=count)
         schema = dict(meta=meta, objects=[])
