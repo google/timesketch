@@ -30,6 +30,6 @@ Vagrant.configure(2) do |config|
   end
 
   # Setup the system with a shell script
-  config.vm.provision :shell, path: "bootstrap.sh"
+  config.vm.provision :shell, keep_color: true, path: "bootstrap.sh"
   config.vm.hostname = "timesketch-dev"
 end

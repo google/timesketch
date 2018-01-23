@@ -2,17 +2,19 @@
 set -e
 set -u
 
+DEBIAN_FRONTEND=noninteractive
 VAGRANT=false
 RUN_AS_USER=$USER
-TIMESKETCH_PATH="./"
-VAGRANT_PATH="./vagrant/"
+TIMESKETCH_PATH="."
+VAGRANT_PATH="${TIMESKETCH_PATH}/vagrant"
 PLASO_TEST_FILE="${VAGRANT_PATH}/test.plaso"
 
 if [ -z ${1:-} ] || [ $1 == "vagrant" ]; then
   VAGRANT=true
-  RUN_AS_USER="ubuntu"
-  TIMESKETCH_PATH="/usr/local/src/timesketch/"
-  VAGRANT_PATH="/vagrant/"
+  RUN_AS_USER="vagrant"
+  TIMESKETCH_PATH="/usr/local/src/timesketch"
+  VAGRANT_PATH="${TIMESKETCH_PATH}/vagrant"
+  PLASO_TEST_FILE="${VAGRANT_PATH}/test.plaso"
 fi
 
 if [ ! -z ${2:-} ]; then
@@ -57,7 +59,7 @@ if [ "$VAGRANT" = true ]; then
   # Install yarn and nodejs
   apt-get install -y nodejs yarn
   # Install nodejs dependencies
-  HOME=/home/ubuntu sudo -u ubuntu bash -c 'cd /usr/local/src/timesketch && yarn install'
+  HOME=/home/$RUN_AS_USER sudo -u $RUN_AS_USER bash -c 'cd /usr/local/src/timesketch && yarn install'
 fi
 
 # Install Timesketch
@@ -88,14 +90,18 @@ sudo -u postgres sh -c 'echo "local all timesketch md5" >> /etc/postgresql/9.5/m
 # Initialize Timesketch
 mkdir -p /var/lib/timesketch/
 chown "${RUN_AS_USER}" /var/lib/timesketch
-cp "${VAGRANT_PATH}"/timesketch.conf /etc/
+cp "${TIMESKETCH_PATH}"/timesketch.conf /etc/
 
 # Set session key for Timesketch
-sed s/"SECRET_KEY = u'this is just a dev environment'"/"SECRET_KEY = u'${SECRET_KEY}'"/ /etc/timesketch.conf > /etc/timesketch.conf.new
+sed s/"SECRET_KEY = u'<KEY_GOES_HERE>'"/"SECRET_KEY = u'${SECRET_KEY}'"/ /etc/timesketch.conf > /etc/timesketch.conf.new
 mv /etc/timesketch.conf.new /etc/timesketch.conf
 
 # Configure the DB password
-sed s/"timesketch:foobar@localhost"/"timesketch:${PSQL_PW}@localhost"/ /etc/timesketch.conf > /etc/timesketch.conf.new
+sed s/"<USERNAME>:<PASSWORD>@localhost"/"timesketch:${PSQL_PW}@localhost"/ /etc/timesketch.conf > /etc/timesketch.conf.new
+mv /etc/timesketch.conf.new /etc/timesketch.conf
+
+# Configure the Neo4j password
+sed s/"<N4J_PASSWORD>"/"neo4j"/ /etc/timesketch.conf > /etc/timesketch.conf.new
 mv /etc/timesketch.conf.new /etc/timesketch.conf
 
 # Copy groovy scripts
@@ -108,7 +114,7 @@ cp "${TIMESKETCH_PATH}"/contrib/*.groovy /etc/elasticsearch/scripts/
 
 # Enable Celery task manager (for uploads)
 mkdir -p /var/{lib,log,run}/celery
-chown ubuntu /var/{lib,log,run}/celery
+chown $RUN_AS_USER /var/{lib,log,run}/celery
 cp "${VAGRANT_PATH}"/celery.service /etc/systemd/system/
 cp "${VAGRANT_PATH}"/celery.conf /etc/
 /bin/systemctl daemon-reload
@@ -130,7 +136,7 @@ fi
 
 if [ "$VAGRANT" = true ]; then
   # Build Timesketch frontend
-  HOME=/home/ubuntu sudo -u ubuntu bash -c 'cd /usr/local/src/timesketch && yarn run build'
+  HOME=/home/$RUN_AS_USER sudo -u $RUN_AS_USER bash -c 'cd /usr/local/src/timesketch && yarn run build'
 fi
 
 # Create test user

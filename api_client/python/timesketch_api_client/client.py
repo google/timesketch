@@ -460,6 +460,58 @@ class Sketch(BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
 
+    def label_events(self, events, label_name):
+        """Labels one or more events with label_name.
+
+        Args:
+            events: Array of JSON objects representing events.
+            label_name: String to label the event with.
+
+        Returns:
+            Dictionary with query results.
+        """
+        form_data = {
+            'annotation': label_name,
+            'annotation_type': 'label',
+            'events': events
+        }
+        resource_url = u'{0:s}/sketches/{1:d}/event/annotate/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.post(resource_url, json=form_data)
+        return response.json()
+
+    def search_by_label(self, label_name):
+        """Searches for all events containing a given label.
+
+        Args:
+            label_name: A string representing the label to search for.
+
+        Returns:
+            A dictionary with query results.
+        """
+        query = {
+            "nested": {
+                "path": "timesketch_label",
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "term": {
+                                    "timesketch_label.name": label_name
+                                }
+                            },
+                            {
+                                "term": {
+                                    "timesketch_label.sketch_id": self.id
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        return self.explore(query_dsl=json.dumps({'query': query}))
+
 
 class SearchIndex(BaseResource):
     """Timesketch searchindex object.

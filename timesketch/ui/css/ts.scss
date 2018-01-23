@@ -58,8 +58,12 @@ body > header {
 #subheader {
     height: 60px;
     background: #fff;
-    margin-top:55px;
+    top:55px;
     border-bottom: 1px solid #f1f1f1;
+    position: fixed;
+    z-index:9998;
+    width:100%;
+    box-shadow:0 0 4px rgba(0,0,0,.14), 0 4px 8px rgba(0,0,0,.28);
 }
 
 #navigation {
@@ -67,7 +71,7 @@ body > header {
 }
 
 #main {
-    margin:20px 30px 15px 30px;
+    margin:150px 30px 15px 30px;
 }
 
 #sketch-name {
@@ -223,6 +227,10 @@ body > header {
 
 .btn-default:focus {
     background: #fff;
+}
+
+.btn-primary {
+    background: #0076d0;
 }
 
 .select {
@@ -440,7 +448,7 @@ rect.bordered {
     background: transparent;
     color:#555;
     padding: 16px 5px 14px 5px;
-    margin-top:7px;
+    margin-top:8px;
     border: none;
     font-weight: normal;
     margin-right:20px;
@@ -456,7 +464,7 @@ rect.bordered {
     background: transparent;
     color:#333;
     border: none;
-    border-bottom:2px solid #428bca;
+    border-bottom:2px solid #0065bc;
     cursor: pointer;
 }
 

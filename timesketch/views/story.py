@@ -14,6 +14,7 @@
 """This module implements HTTP request handlers for the story views."""
 
 from flask import Blueprint
+from flask import current_app
 from flask import render_template
 from flask_login import login_required
 
@@ -34,8 +35,11 @@ def story(sketch_id, story_id=None):
         Template with context.
     """
     sketch = Sketch.query.get_with_acl(sketch_id)
+    graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
+
     current_story = None
     if story_id:
         current_story = Story.query.get(story_id)
     return render_template(
-        u'sketch/stories.html', sketch=sketch, story=current_story)
+        u'sketch/stories.html', sketch=sketch, story=current_story,
+        graphs_enabled=graphs_enabled)
