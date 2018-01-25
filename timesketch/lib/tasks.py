@@ -44,10 +44,6 @@ def _set_timeline_status(index_name, status, error_msg=None):
         searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
         timelines = Timeline.query.filter_by(searchindex=searchindex).all()
 
-        es = ElasticsearchDataStore(
-            host=current_app.config[u'ELASTIC_HOST'],
-            port=current_app.config[u'ELASTIC_PORT'])
-
         # Set status
         searchindex.set_status(status)
         for timeline in timelines:
@@ -58,7 +54,6 @@ def _set_timeline_status(index_name, status, error_msg=None):
         if error_msg and status == u'fail':
             # TODO: Don't overload the description field.
             searchindex.description = error_msg
-            es.delete_index(index_name)
 
         # Commit changes to database
         db_session.add(searchindex)
