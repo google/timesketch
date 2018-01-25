@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=forking
-User=ubuntu
-Group=ubuntu
+User=vagrant
+Group=vagrant
 EnvironmentFile=-/etc/celery.conf
 WorkingDirectory=/var/lib/celery
 ExecStart=/bin/sh -c '${CELERY_BIN} multi start ${CELERYD_NODES} \

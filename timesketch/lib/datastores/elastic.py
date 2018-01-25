@@ -38,6 +38,9 @@ class ElasticsearchDataStore(datastore.DataStore):
     # Number of events to queue up when bulk inserting events.
     DEFAULT_FLUSH_INTERVAL = 1000
     DEFAULT_LIMIT = 500  # Max events to return
+    ##ajn## added DEFAULT_SIZE
+    DEFAULT_SIZE = 500
+    DEFAULT_FROM = 0
     DEFAULT_STREAM_LIMIT = 10000  # Max events to return when streaming results
 
     def __init__(self, host=u'127.0.0.1', port=9200):
@@ -232,7 +235,10 @@ class ElasticsearchDataStore(datastore.DataStore):
             Set of event documents in JSON format
         """
         # Limit the number of returned documents.
-        limit_results = query_filter.get(u'limit', self.DEFAULT_LIMIT)
+        ##ajn## changed to limit the amount via from/size
+        #limit_results = query_filter.get(u'limit', self.DEFAULT_LIMIT)
+        result_size = query_filter.get(u'size', self.DEFAULT_SIZE)
+        result_from = query_filter.get(u'from', self.DEFAULT_FROM)
 
         scroll_timeout = None
         if enable_scroll:
@@ -281,7 +287,8 @@ class ElasticsearchDataStore(datastore.DataStore):
         return self.client.search(
             body=query_dsl,
             index=list(indices),
-            size=limit_results,
+            size=result_size,
+            #result_from=result_from,
             search_type=search_type,
             _source_include=return_fields,
             scroll=scroll_timeout)

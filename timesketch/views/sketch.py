@@ -178,6 +178,7 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
         Template with context.
     """
     save_view = False  # If the view should be saved to the database.
+    ##ajn## this Sketch is from models
     sketch = Sketch.query.get_with_acl(sketch_id)
     sketch_timelines = [t.searchindex.index_name for t in sketch.timelines]
     view_form = SaveViewForm()
@@ -185,11 +186,15 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     similarity_enabled = current_app.config[u'SIMILARITY_EXPERIMENT_ENABLED']
 
     # Get parameters from the GET query
+    ##ajn## query string
     url_query = request.args.get(u'q', u'')
+    url_event_from = request.args.get(u'from', None)
+    print url_event_from
     url_time_start = request.args.get(u'time_start', None)
     url_time_end = request.args.get(u'time_end', None)
     url_index = request.args.get(u'index', None)
-    url_limit = request.args.get(u'limit', None)
+    url_size = request.args.get(u'size', None)
+
 
     if searchtemplate_id:
         searchtemplate = SearchTemplate.query.get(searchtemplate_id)
@@ -222,12 +227,14 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     if url_query:
         view.query_string = url_query
         query_filter = json.loads(view.query_filter)
+        query_filter[u'from'] = url_event_from
         query_filter[u'time_start'] = url_time_start
         query_filter[u'time_end'] = url_time_end
         if url_index in sketch_timelines:
             query_filter[u'indices'] = [url_index]
-        if url_limit:
-            query_filter[u'limit'] = url_limit
+        ##ajn## limit->size
+        if url_size:
+            query_filter[u'size'] = url_size
         view.query_filter = view.validate_filter(query_filter)
         view.query_dsl = None
         save_view = True

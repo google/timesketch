@@ -122,7 +122,7 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
                     .success(function (data) {
                         $scope.events = data.objects
                         $scope.meta = data.meta
-                        if (data.meta.es_total_count > filter['limit']) {
+                        if (data.meta.es_total_count > filter['size']) {
                             $scope.meta.noisy = true
                         }
                         $scope.meta.numHiddenEvents = 0
