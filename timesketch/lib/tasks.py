@@ -15,6 +15,7 @@
 
 import logging
 import subprocess
+import traceback
 
 from flask import current_app
 
@@ -61,22 +62,28 @@ def _set_timeline_status(index_name, status, error_msg=None):
 
 
 @celery.task(track_started=True)
-def run_plaso(source_file_path, timeline_name, index_name, username=None):
+def run_plaso(source_file_path, timeline_name, index_name, source_type,
+              username=None):
     """Create a Celery task for processing Plaso storage file.
 
     Args:
         source_file_path: Path to plaso storage file.
         timeline_name: Name of the Timesketch timeline.
         index_name: Name of the datastore index.
+        source_type: Type of file, csv or jsonl.
         username: Username of the user who will own the timeline.
 
     Returns:
         String with summary of processed events.
     """
+    # Log information to Celery
+    logging.info(u'Source type: %s', source_type)
+
     cmd = [
         u'psort.py', u'-o', u'timesketch', source_file_path, u'--name',
         timeline_name, u'--status_view', u'none', u'--index', index_name
     ]
+
     if username:
         cmd.append(u'--username')
         cmd.append(username)
@@ -96,23 +103,31 @@ def run_plaso(source_file_path, timeline_name, index_name, username=None):
 
 
 @celery.task(track_started=True)
-def run_csv(source_file_path, timeline_name, index_name, username=None):
-    """Create a Celery task for processing a CSV file.
+def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type,
+                  username=None):
+    """Create a Celery task for processing a CSV or JSONL file.
 
     Args:
-        source_file_path: Path to CSV file.
+        source_file_path: Path to CSV or JSONL file.
         timeline_name: Name of the Timesketch timeline.
         index_name: Name of the datastore index.
+        source_type: Type of file, csv or jsonl.
         username: Username of the user who will own the timeline.
 
     Returns:
         Dictionary with count of processed events.
     """
     event_type = u'generic_event'  # Document type for Elasticsearch
+    validators = {
+        u'csv': read_and_validate_csv,
+        u'jsonl': read_and_validate_jsonl
+    }
+    read_and_validate = validators.get(source_type)
 
     # Log information to Celery
     logging.info(u'Index name: %s', index_name)
     logging.info(u'Timeline name: %s', timeline_name)
+    logging.info(u'Source type: %s', source_type)
     logging.info(u'Document type: %s', event_type)
     logging.info(u'Owner: %s', username)
 
@@ -120,52 +135,23 @@ def run_csv(source_file_path, timeline_name, index_name, username=None):
         host=current_app.config[u'ELASTIC_HOST'],
         port=current_app.config[u'ELASTIC_PORT'])
 
-    es.create_index(index_name=index_name, doc_type=event_type)
-    for event in read_and_validate_csv(source_file_path):
-        es.import_event(index_name, event_type, event)
-
-    # Import the remaining events
-    total_events = es.import_event(index_name, event_type)
-
-    # Set status to ready when done
-    _set_timeline_status(index_name, status=u'ready')
-
-    return {u'Events processed': total_events}
-
-
-@celery.task(track_started=True)
-def run_jsonl(source_file_path, timeline_name, index_name, username=None):
-    """Create a Celery task for processing a JSONL file.
-
-    Args:
-        source_file_path: Path to JSONL file.
-        timeline_name: Name of the Timesketch timeline.
-        index_name: Name of the datastore index.
-        username: Username of the user who will own the timeline.
-
-    Returns:
-        Dictionary with count of processed events.
-    """
-    event_type = u'generic_event'  # Document type for Elasticsearch
-
-    # Log information to Celery
-    logging.info(u'Index name: %s', index_name)
-    logging.info(u'Timeline name: %s', timeline_name)
-    logging.info(u'Document type: %s', event_type)
-    logging.info(u'Owner: %s', username)
-
-    es = ElasticsearchDataStore(
-        host=current_app.config[u'ELASTIC_HOST'],
-        port=current_app.config[u'ELASTIC_PORT'])
-
-    es.create_index(index_name=index_name, doc_type=event_type)
-    for event in read_and_validate_jsonl(source_file_path):
-        es.import_event(index_name, event_type, event)
-
-    # Import the remaining events
-    total_events = es.import_event(index_name, event_type)
+    # Reason for the broad exception catch is that we want to capture
+    # all possible errors and exit the task.
+    try:
+        es.create_index(index_name=index_name, doc_type=event_type)
+        for event in read_and_validate(source_file_path):
+            es.import_event(index_name, event_type, event)
+        # Import the remaining events
+        total_events = es.import_event(index_name, event_type)
+    except Exception as e:
+        # Mark the searchindex and timelines as failed and exit the task
+        error_msg = traceback.format_exc(e)
+        _set_timeline_status(index_name, status=u'fail', error_msg=error_msg)
+        logging.error(error_msg)
+        return
 
     # Set status to ready when done
     _set_timeline_status(index_name, status=u'ready')
 
     return {u'Events processed': total_events}
+

@@ -890,13 +890,12 @@ class UploadFileResource(ResourceMixin, Resource):
         form = UploadFileForm()
         if form.validate_on_submit() and upload_enabled:
             from timesketch.lib.tasks import run_plaso
-            from timesketch.lib.tasks import run_csv
-            from timesketch.lib.tasks import run_jsonl
+            from timesketch.lib.tasks import run_csv_jsonl
 
             # Map the right task based on the file type
             task_directory = {u'plaso': run_plaso,
-                              u'csv': run_csv,
-                              u'jsonl': run_jsonl}
+                              u'csv': run_csv_jsonl,
+                              u'jsonl': run_csv_jsonl}
 
             sketch_id = form.sketch_id.data
             file_storage = form.file.data
@@ -949,8 +948,15 @@ class UploadFileResource(ResourceMixin, Resource):
             # Run the task in the background
             task = task_directory.get(file_extension)
             task.apply_async(
-                (file_path, timeline_name, index_name, username),
-                task_id=index_name)
+                (
+                    file_path,
+                    timeline_name,
+                    index_name,
+                    file_extension,
+                    username
+                ),
+                task_id=index_name
+            )
 
             # Return Timeline if it was created.
             # pylint: disable=no-else-return

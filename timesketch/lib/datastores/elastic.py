@@ -514,11 +514,12 @@ class ElasticsearchDataStore(datastore.DataStore):
                     doc_type=event_type,
                     body=self.import_events)
                 self.import_events = []
-            else:
-                if self.import_events:
-                    self.client.bulk(
-                        index=index_name,
-                        doc_type=event_type,
-                        body=self.import_events)
+        else:
+            if self.import_events:
+                self.client.bulk(
+                    index=index_name,
+                    doc_type=event_type,
+                    body=self.import_events
+                )
 
         return self.import_counter[u'events']
