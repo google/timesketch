@@ -39,9 +39,13 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
             viewId: '=',
             namedView: '=',
             similarityEnabled: '=',
+            currentPage: '=',
+            totalPages: '=',
         },
         require: '^tsSearch',
         controller: function ($scope) {
+            // $scope.currentPage = ($scope.currentPage = 0)
+            // $scope.totalPages = ($scope.totalPages = 0)
             // Convert to Javascript boolean
             $scope.similarityEnabled = ($scope.similarityEnabled == 'True')
 
@@ -154,6 +158,33 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
                 toggleStar(event_list)
             }
 
+            $scope.numPages = function () {
+                let start = 0
+                let end = ($scope.meta.numHiddenEvents/$scope.meta.pageSize) - 1
+                let ret = [];
+                for (var i = start; i < end; i++) {
+                    ret.push(i);
+                }
+                $scope.totalPages = ret.length
+                return ret;
+            }
+
+            $scope.prevPage = function () {
+                if ($scope.currentPage > 0) {
+                    $scope.currentPage--;
+                }
+            }
+
+            $scope.nextPage = function () {
+                if ($scope.currentPage < $scope.totalPages - 1) {
+                    $scope.currentPage++;
+                }
+            }
+
+            $scope.setPage = function () {
+                $scope.currentPage = this.n;
+            }
+
             $scope.$watch('events', function (value) {
                 if (angular.isDefined(value)) {
                     $scope.anySelected = value.some(function (event) {
@@ -166,10 +197,16 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
             scope.applyOrder = function () {
                 ctrl.search(scope.query, scope.filter)
             }
-            scope.$watch('userLimit', function (value) {
-                scope.filter['limit'] = scope.userLimit
+            scope.$watch('pageSize', function (value) {
+                scope.filter['size'] = scope.pageSize
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
             })
+
+            // scope.$watch('pageNum', function (value) {
+            //     console.log(value)
+            //     scope.filter['from'] = (pageNum * scop.pageSize)
+            //     ctrl.search(scope.query, scope.filter, scope.queryDsl)
+            // })
         },
     }
 }]

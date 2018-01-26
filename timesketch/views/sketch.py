@@ -189,13 +189,14 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     ##ajn## query string
     url_query = request.args.get(u'q', u'')
     url_event_from = request.args.get(u'from', None)
-    print url_event_from
     url_time_start = request.args.get(u'time_start', None)
     url_time_end = request.args.get(u'time_end', None)
     url_index = request.args.get(u'index', None)
     url_size = request.args.get(u'size', None)
 
-
+    ##ajn## searchtemplate provides all the base junk
+    ##ajn## necessary for a search.  models/sketch.py:247
+    ##ajn## where the fuck does query.get() come from?
     if searchtemplate_id:
         searchtemplate = SearchTemplate.query.get(searchtemplate_id)
         view = sketch.get_user_view(current_user)
@@ -274,7 +275,7 @@ def export(sketch_id):
 
     # Export more than the 500 first results.
     max_events_to_fetch = 10000
-    query_filter[u'limit'] = max_events_to_fetch
+    query_filter[u'size'] = max_events_to_fetch
 
     datastore = ElasticsearchDataStore(
         host=current_app.config[u'ELASTIC_HOST'],

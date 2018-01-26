@@ -168,6 +168,10 @@ class ElasticsearchDataStore(datastore.DataStore):
                         }]
                     }
                 }
+            if query_filter.get(u'from', None):
+                query_dsl[u'from'] = query_filter[u'from']
+            if query_filter.get(u'size', None):
+                query_dsl[u'size'] = query_filter[u'size']
             if query_filter.get(u'exclude', None):
                 query_dsl[u'post_filter'] = {
                     u'bool': {
@@ -287,8 +291,6 @@ class ElasticsearchDataStore(datastore.DataStore):
         return self.client.search(
             body=query_dsl,
             index=list(indices),
-            size=result_size,
-            #result_from=result_from,
             search_type=search_type,
             _source_include=return_fields,
             scroll=scroll_timeout)

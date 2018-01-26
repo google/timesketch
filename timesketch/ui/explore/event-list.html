@@ -52,9 +52,9 @@
         </span>
         <span ng-show="events.length || meta.es_total_count == 0">
             {{ meta.es_total_count }} events <span ng-show="meta.numHiddenEvents > 0 && !meta.showHiddenEvents" style="color:red;">({{ meta.numHiddenEvents }} hidden)</span> ({{ meta.es_time/1000 }}s)
-            <span ng-show="meta.noisy" style="margin-left:10px;color:red;font-weight:bold;">
-                <i class="fa fa-warning"></i> Showing
-                <select style="background: #fff;border: 1px solid #f5f5f5;color:red;font-weight: bold" ng-model="userLimit">
+            <span ng-show="meta.noisy" style="margin-left:10px;font-weight:bold;">
+                <!--<i class="fa fa-warning"></i>--> Showing
+                <select style="background: #fff;border: 1px solid #f5f5f5;font-weight: bold" ng-model="pageSize">
                     <option value="{{ filter.size }}" ng-selected="filter.size">{{ filter.size }}</option>
                     <option value="10">10</option>
                     <option value="20">20</option>
@@ -63,7 +63,7 @@
                     <option value="100">100</option>
                     <option value="200">200</option>
                     <option value="500">500</option>
-                </select> first events
+                </select> per page
             </span>
         </span>
     </div>
@@ -89,5 +89,28 @@
 
     <div ng-repeat="event in events">
         <ts-event ng-hide="event.hidden && !meta.showHiddenEvents" enable-context-query="true" similarity-layer="similarityLayer" event="::event" meta="::meta" sketch-id="::sketchId" prev-timestamp="::events[$index-1]['_source'].timestamp" next-timestamp="::events[$index+1]['_source'].timestamp" index="::$index" order="::filter.order"></ts-event>
+    </div>
+    <div class="center">
+      <ul class="pagination pagination-sm">
+         <li ng-class="{disabled: currentPage == 0}">
+             <a href ng-click="prevPage()">« Prev</a>
+         </li>
+         <li ng-repeat="n in range(meta.numHiddenEvents)" ng-class="{active: n == currentPage}" ng-click="setPage()">
+             <a href ng-bind="n + 1">1</a>
+         </li>
+         <li ng-class="{disabled: currentPage == pagedItems.length - 1}">
+             <a href ng-click="nextPage()">Next »</a>
+         </li>
+      </ul>
+          <!-- <a class="page-link" href="#" tabindex="-1">Previous</a>
+        </li>
+        <li class="page-item disabled">
+        <li class="page-item"><a class="page-link" href="#">1</a></li>
+        <li class="page-item"><a class="page-link" href="#">2</a></li>
+        <li class="page-item"><a class="page-link" href="#">3</a></li>
+        <li class="page-item">
+          <a class="page-link" href="#">Next</a>
+        </li>
+      </ul> -->
     </div>
 </div>
