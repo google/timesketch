@@ -154,4 +154,3 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type,
     _set_timeline_status(index_name, status=u'ready')
 
     return {u'Events processed': total_events}
-
