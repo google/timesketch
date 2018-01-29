@@ -39,15 +39,17 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
             viewId: '=',
             namedView: '=',
             similarityEnabled: '=',
-            currentPage: '=',
-            totalPages: '=',
         },
         require: '^tsSearch',
         controller: function ($scope) {
-            // $scope.currentPage = ($scope.currentPage = 0)
-            // $scope.totalPages = ($scope.totalPages = 0)
             // Convert to Javascript boolean
             $scope.similarityEnabled = ($scope.similarityEnabled == 'True')
+            if (!$scope.currentPage){
+                $scope.currentPage = 0
+            }
+            if (!$scope.events){
+                $scope.events = []
+            }
 
             if ($scope.namedView) {
                 timesketchApi.getView($scope.sketchId, $scope.viewId).success(function (data) {
@@ -159,14 +161,35 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
             }
 
             $scope.numPages = function () {
-                let start = 0
-                let end = ($scope.meta.numHiddenEvents/$scope.meta.pageSize) - 1
-                let ret = [];
-                for (var i = start; i < end; i++) {
-                    ret.push(i);
+                var current = $scope.currentPage,
+                    last = Math.floor(1604/$scope.filter.size) - 1,
+                    delta = 2,
+                    left = (current - delta > 0) ? current - delta : 0,
+                    right = current + delta + 1,
+                    range = [],
+                    rangeWithDots = [],
+                    l;
+
+                for (let i = 0; i <= last; i++) {
+                    if (i == 0 || i == last || i >= left && i < right) {
+                        range.push(i);
+                    }
                 }
-                $scope.totalPages = ret.length
-                return ret;
+
+                for (let i of range) {
+                    if (l) {
+                        if (i - l === 2) {
+                            rangeWithDots.push(Math.floor(current/ 2))
+                            ;
+                        } else if (i - l !== 1) {
+                            rangeWithDots.push(Math.floor((last - current) / 2) + (current));
+                        }
+                    }
+                    rangeWithDots.push(i);
+                    l = i;
+                }
+                $scope.totalPages = last
+                return rangeWithDots;
             }
 
             $scope.prevPage = function () {
@@ -199,14 +222,14 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
             }
             scope.$watch('pageSize', function (value) {
                 scope.filter['size'] = scope.pageSize
+                scope.currentPage = 0
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
             })
 
-            // scope.$watch('pageNum', function (value) {
-            //     console.log(value)
-            //     scope.filter['from'] = (pageNum * scop.pageSize)
-            //     ctrl.search(scope.query, scope.filter, scope.queryDsl)
-            // })
+            scope.$watch('currentPage', function (value) {
+                scope.filter['from'] = (scope.currentPage * scope.pageSize)
+                ctrl.search(scope.query, scope.filter, scope.queryDsl)
+            })
         },
     }
 }]

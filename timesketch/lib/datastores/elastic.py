@@ -37,9 +37,9 @@ class ElasticsearchDataStore(datastore.DataStore):
 
     # Number of events to queue up when bulk inserting events.
     DEFAULT_FLUSH_INTERVAL = 1000
-    DEFAULT_LIMIT = 500  # Max events to return
     ##ajn## added DEFAULT_SIZE
-    DEFAULT_SIZE = 500
+    DEFAULT_SIZE = 100
+    DEFAULT_LIMIT = DEFAULT_SIZE  # Max events to return
     DEFAULT_FROM = 0
     DEFAULT_STREAM_LIMIT = 10000  # Max events to return when streaming results
 

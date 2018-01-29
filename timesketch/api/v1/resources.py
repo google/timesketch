@@ -582,9 +582,6 @@ class ExploreResource(ResourceMixin, Resource):
         form = ExploreForm.build(request)
 
         if form.validate_on_submit():
-            print form.query.data
-            print form.dsl.data
-            print form.filter.data
             query_dsl = form.dsl.data
             query_filter = form.filter.data
             sketch_indices = {
@@ -657,7 +654,6 @@ class ExploreResource(ResourceMixin, Resource):
                 u'timeline_names': tl_names,
             }
             schema = {u'meta': meta, u'objects': result[u'hits'][u'hits']}
-            print jsonify(schema)
             return jsonify(schema)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
