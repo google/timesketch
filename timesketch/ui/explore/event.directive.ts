@@ -180,7 +180,6 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
                     if (l) {
                         if (i - l === 2) {
                             rangeWithDots.push(Math.floor(current/ 2))
-                            ;
                         } else if (i - l !== 1) {
                             rangeWithDots.push(Math.floor((last - current) / 2) + (current));
                         }

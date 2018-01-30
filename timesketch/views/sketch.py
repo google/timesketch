@@ -186,7 +186,6 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     similarity_enabled = current_app.config[u'SIMILARITY_EXPERIMENT_ENABLED']
 
     # Get parameters from the GET query
-    ##ajn## query string
     url_query = request.args.get(u'q', u'')
     url_event_from = request.args.get(u'from', None)
     url_time_start = request.args.get(u'time_start', None)
@@ -194,9 +193,6 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     url_index = request.args.get(u'index', None)
     url_size = request.args.get(u'size', None)
 
-    ##ajn## searchtemplate provides all the base junk
-    ##ajn## necessary for a search.  models/sketch.py:247
-    ##ajn## where the fuck does query.get() come from?
     if searchtemplate_id:
         searchtemplate = SearchTemplate.query.get(searchtemplate_id)
         view = sketch.get_user_view(current_user)
@@ -228,12 +224,12 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     if url_query:
         view.query_string = url_query
         query_filter = json.loads(view.query_filter)
-        query_filter[u'from'] = url_event_from
         query_filter[u'time_start'] = url_time_start
         query_filter[u'time_end'] = url_time_end
         if url_index in sketch_timelines:
             query_filter[u'indices'] = [url_index]
-        ##ajn## limit->size
+        if url_event_from:
+            query_filter[u'from'] = url_event_from
         if url_size:
             query_filter[u'size'] = url_size
         view.query_filter = view.validate_filter(query_filter)

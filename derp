@@ -1,0 +1,31 @@
+import json
+
+query_filter = {}
+
+DEFAULT_FROM = 0
+DEFAULT_SIZE = 40 # Number of resulting documents to return
+DEFAULT_LIMIT = DEFAULT_SIZE  # Number of resulting documents to return
+DEFAULT_VALUES = {
+  u'time_start': None,
+  u'time_end': None,
+  u'limit': DEFAULT_LIMIT,
+  u'from': DEFAULT_FROM,
+  u'size': DEFAULT_SIZE,
+  u'indices': [],
+  u'exclude': [],
+  u'order': u'asc'
+}
+# If not provided, get the saved filter from the view
+
+# Make sure we have the filter as a dictionary
+if not isinstance(query_filter, dict):
+  filter_dict = json.loads(query_filter)
+else:
+  filter_dict = query_filter
+
+# Get all missing attributes and set them to their default value
+missing_attributes = list(set(DEFAULT_VALUES.keys()) - set(filter_dict.keys()))
+for key in missing_attributes:
+  filter_dict[key] = DEFAULT_VALUES[key]
+
+print json.dumps(filter_dict, ensure_ascii=False)

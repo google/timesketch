@@ -227,14 +227,12 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 
         """
         DEFAULT_FROM = 0
-        ##ajn## DEFAULT_LIMIT = 40  # Number of resulting documents to return
         DEFAULT_SIZE = 40 # Number of resulting documents to return
+        DEFAULT_LIMIT = DEFAULT_SIZE  # Number of resulting documents to return
         DEFAULT_VALUES = {
             u'time_start': None,
             u'time_end': None,
-            ##ajn## comment out DEFAULT_LIMIT because we shouldn't need to
-            ##ajn## limit based on providing from+size (limits automatically).
-            #u'limit': DEFAULT_LIMIT,
+            u'limit': DEFAULT_LIMIT,
             u'from': DEFAULT_FROM,
             u'size': DEFAULT_SIZE,
             u'indices': [],
@@ -257,6 +255,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         for key in missing_attributes:
             filter_dict[key] = DEFAULT_VALUES[key]
 
+        print json.dumps(filter_dict, ensure_ascii=False)
         return json.dumps(filter_dict, ensure_ascii=False)
 
 
