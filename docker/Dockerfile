@@ -2,26 +2,38 @@
 FROM ubuntu:16.04
 
 # Update the base image
-RUN apt-get update
-RUN apt-get -y upgrade
-RUN apt-get -y dist-upgrade
+RUN apt-get update && apt-get -y upgrade && apt-get -y dist-upgrade
 
-# Install Timesketch dependencies
-RUN apt-get -y install python-pip python-dev libffi-dev python-psycopg2
+# Setup install environment and Timesketch dependencies
+RUN apt-get -y install apt-transport-https\
+                       curl\
+                       git\
+                       libffi-dev\
+                       lsb-release\
+                       python-dev\
+                       python-pip\
+                       python-psycopg2
+
+RUN curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -
+RUN VERSION=node_8.x && \
+    DISTRO="$(lsb_release -s -c)" && \
+    echo "deb https://deb.nodesource.com/$VERSION $DISTRO main" > /etc/apt/sources.list.d/nodesource.list
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list
 
 # Install Plaso
 RUN apt-get -y install software-properties-common
-RUN add-apt-repository ppa:gift/stable
-RUN apt-get update
-RUN apt-get -y install python-plaso
+RUN add-apt-repository ppa:gift/stable && apt-get update
+RUN apt-get update && apt-get -y install python-plaso plaso-tools nodejs yarn
 
 # Use pip to install Timesketch
+RUN pip install --upgrade pip
 ADD . /tmp/timesketch
-RUN pip install /tmp/timesketch
+RUN cd /tmp/timesketch && yarn install && yarn run build
+RUN pip install /tmp/timesketch/
 
 # Copy the Timesketch configuration file into /etc
 RUN cp /usr/local/share/timesketch/timesketch.conf /etc
-RUN chmod 600 /etc/timesketch.conf
 
 # Copy the entrypoint script into the container
 COPY docker/docker-entrypoint.sh /

@@ -461,6 +461,20 @@ class ElasticsearchDataStore(datastore.DataStore):
         doc_type = unicode(doc_type.decode(encoding=u'utf-8'))
         return index_name, doc_type
 
+    def delete_index(self, index_name):
+        """Delete Elasticsearch index.
+
+        Args:
+            index_name: Name of the index to delete.
+        """
+        if self.client.indices.exists(index_name):
+            try:
+                self.client.indices.delete(index=index_name)
+            except ConnectionError as e:
+                raise RuntimeError(
+                    u'Unable to connect to Timesketch backend: {}'.format(e)
+                )
+
     def import_event(
             self, index_name, event_type, event=None,
             event_id=None, flush_interval=DEFAULT_FLUSH_INTERVAL):
@@ -509,11 +523,12 @@ class ElasticsearchDataStore(datastore.DataStore):
                     doc_type=event_type,
                     body=self.import_events)
                 self.import_events = []
-            else:
-                if self.import_events:
-                    self.client.bulk(
-                        index=index_name,
-                        doc_type=event_type,
-                        body=self.import_events)
+        else:
+            if self.import_events:
+                self.client.bulk(
+                    index=index_name,
+                    doc_type=event_type,
+                    body=self.import_events
+                )
 
         return self.import_counter[u'events']

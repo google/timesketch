@@ -18,6 +18,7 @@ Follow the official instructions [here](https://www.vagrantup.com/docs/installat
 
 ### Create Timesketch Vagrant box
     $ cd timesketch/vagrant
+    $ vagrant plugin install vagrant-disksize
     $ vagrant up
     .. wait until the installation process is complete
     $ vagrant ssh
