@@ -255,6 +255,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         for key in missing_attributes:
             filter_dict[key] = DEFAULT_VALUES[key]
 
+        print "working from models"
         print json.dumps(filter_dict, ensure_ascii=False)
         return json.dumps(filter_dict, ensure_ascii=False)
 

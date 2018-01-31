@@ -95,10 +95,10 @@
          <li ng-class="{disabled: currentPage == 0}">
              <a href ng-click="prevPage()">« Prev</a>
          </li>
-         <li ng-repeat="n in numPages()" ng-class="{active: n == currentPage}" ng-click="setPage()">
+         <li ng-repeat="n in buildPager()" ng-class="{active: n == currentPage}" ng-click="setPage()">
              <a href ng-bind="n+1">1</a>
          </li>
-         <li ng-class="{disabled: currentPage == totalPages - 1}">
+         <li ng-class="{disabled: currentPage == totalPages}">
              <a href ng-click="nextPage()">Next »</a>
          </li>
       </ul>
