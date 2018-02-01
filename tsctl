@@ -345,17 +345,26 @@ class CreateTimelineFromJson(CreateTimelineBase):
 class CreateTimelineFromCsv(CreateTimelineBase):
     """Create a new Timesketch timeline from a CSV file."""
 
+    option_list = (
+        Option(
+            u'--delimiter',
+            u'-d',
+            dest=u'delimiter',
+            required=False,
+            help=u'Character used as a field separator.  Defaults to comma.'))
+
     def __init__(self):
         super(CreateTimelineFromCsv, self).__init__()
 
-    def run(self, timeline_name, index_name, file_path, event_type,
-            flush_interval):
+    def run(self, timeline_name, index_name, file_path, delimiter=",",
+            event_type, flush_interval):
         """Create the timeline from a CSV file.
 
         Args:
             timeline_name: The name of the timeline in Timesketch
             index_name: Name of the index in Elasticsearch
             file_path: Path to the file to process
+            delimiter: Character used as a field separator
             event_type: Type of event (e.g. plaso_event)
             flush_interval: Number of events to queue up before bulk insert
 
@@ -367,7 +376,7 @@ class CreateTimelineFromCsv(CreateTimelineBase):
             port=current_app.config[u'ELASTIC_PORT'])
 
         es.create_index(index_name=index_name, doc_type=event_type)
-        for event in read_and_validate_csv(file_path):
+        for event in read_and_validate_csv(file_path, delimiter):
             event_counter = es.import_event(
                 index_name, event_type, event, flush_interval=flush_interval)
             if event_counter % int(flush_interval) == 0:
