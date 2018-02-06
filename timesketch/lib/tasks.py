@@ -154,3 +154,19 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type,
     _set_timeline_status(index_name, status=u'ready')
 
     return {u'Events processed': total_events}
+
+    @celery.task(track_started=True)
+    def run_api_jsonl(timeline_name, index_name, source_type,
+                      username=None):
+        """Create a Celery task for processing a CSV or JSONL file.
+
+        Args:
+            source_file_path: Path to CSV or JSONL file.
+            timeline_name: Name of the Timesketch timeline.
+            index_name: Name of the datastore index.
+            source_type: Type of file, csv or jsonl.
+            username: Username of the user who will own the timeline.
+
+        Returns:
+            Dictionary with count of processed events.
+        """

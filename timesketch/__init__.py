@@ -25,6 +25,7 @@ from flask_wtf import CSRFProtect
 
 from timesketch.api.v1.resources import AggregationResource
 from timesketch.api.v1.resources import ExploreResource
+from timesketch.api.v1.resources import EventCreateResource
 from timesketch.api.v1.resources import EventResource
 from timesketch.api.v1.resources import EventAnnotationResource
 from timesketch.api.v1.resources import GraphResource
@@ -40,6 +41,7 @@ from timesketch.api.v1.resources import StoryListResource
 from timesketch.api.v1.resources import StoryResource
 from timesketch.api.v1.resources import QueryResource
 from timesketch.api.v1.resources import CountEventsResource
+from timesketch.api.v1.resources import TimelineCreateResource
 from timesketch.api.v1.resources import TimelineResource
 from timesketch.api.v1.resources import TimelineListResource
 from timesketch.api.v1.resources import SearchIndexListResource
@@ -128,6 +130,7 @@ def create_app(config=None):
                         u'/sketches/<int:sketch_id>/aggregation/')
     api_v1.add_resource(ExploreResource, u'/sketches/<int:sketch_id>/explore/')
     api_v1.add_resource(EventResource, u'/sketches/<int:sketch_id>/event/')
+    api_v1.add_resource(EventCreateResource, u'/sketches/<int:sketch_id>/event/create/')
     api_v1.add_resource(EventAnnotationResource,
                         u'/sketches/<int:sketch_id>/event/annotate/')
     api_v1.add_resource(ViewListResource, u'/sketches/<int:sketch_id>/views/')
@@ -146,6 +149,8 @@ def create_app(config=None):
                         u'/sketches/<int:sketch_id>/explore/query/')
     api_v1.add_resource(CountEventsResource,
                         u'/sketches/<int:sketch_id>/count/')
+    api_v1.add_resource(TimelineCreateResource,
+                        u'/sketches/<int:sketch_id>/timelines/create/')
     api_v1.add_resource(TimelineListResource,
                         u'/sketches/<int:sketch_id>/timelines/')
     api_v1.add_resource(

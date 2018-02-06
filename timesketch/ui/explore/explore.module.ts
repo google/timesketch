@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import angular from 'angularjs-for-webpack'
-import {tsEvent, tsEventList} from './event.directive'
+import {tsEvent, tsEventAdd, tsEventList} from './event.directive'
 import {tsFilter, tsTimelinePickerItem} from './filter.directive'
 import {tsHeatmap} from './heatmap.directive'
 import {tsHistogram} from './histogram.directive'
@@ -25,6 +25,7 @@ import {
 
 export const tsExploreModule = angular.module('timesketch.explore', [])
   .directive('tsEvent', tsEvent)
+  .directive('tsEventAdd', tsEventAdd)
   .directive('tsEventList', tsEventList)
   .directive('tsFilter', tsFilter)
   .directive('tsTimelinePickerItem', tsTimelinePickerItem)

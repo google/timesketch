@@ -256,8 +256,8 @@ export const tsEvent = function () {
             }
 
             $scope.addFilterStart = function () {
-            $scope.$emit('datetime-clicked', {datetimeclicked: $scope.event._source.datetime})
-}
+                $scope.$emit('datetime-clicked', {datetimeclicked: $scope.event._source.datetime})
+            }
 
             $scope.getDetail = function () {
                 if ($scope.eventdetail) {return}
@@ -306,6 +306,44 @@ export const tsEvent = function () {
 
             })
 
+        },
+        link: function (scope, elem, attrs, ctrl) {
+            scope.getContext = function (event) {
+                ctrl.getContext(event)
+            }
+        },
+    }
+}
+
+export const tsEventAdd = function () {
+    /**
+     * Render event details.
+     * @param sketch-id - The id for the sketch.
+     * @param meta - Metadata object returned from the datastore search.
+     * @param event - Event object.
+     */
+    return {
+        restrict: 'E',
+        template: require('./event-add.html'),
+        scope: {
+            sketchId: '=',
+            meta: '=',
+            event: '=',
+            prevTimestamp: '=',
+            nextTimestamp: '=',
+            index: '=',
+            isContextEvent: '=',
+            enableContextQuery: '=',
+            order: '=',
+            similarityLayer: '=',
+        },
+        require: '?^tsSearch',
+        controller: function ($scope, timesketchApi) {
+            // Defaults to not showing form to add events.
+            $scope.showForm = false
+            $scope.clearForm = function () {
+              $scope.showForm = !$scope.showForm
+            }
         },
         link: function (scope, elem, attrs, ctrl) {
             scope.getContext = function (event) {

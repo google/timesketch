@@ -271,11 +271,59 @@ body > header {
     padding:0;
 }
 
+.event-add {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
 .event-detail-container {
     margin-top:15px;
     margin-bottom:35px;
     padding: 0;
     max-width: 100%;
+}
+
+.event-insert-grow {
+  padding: 1px 1px 1px 1px;
+  border-radius: 1px;
+  // border-bottom: 2px solid red;
+  height: 1px;
+  //width: 100%;
+  //margin: 1px 1% 1px 1%;
+  // float: left;
+  position: relative;
+  transition: height 0.5s;
+  -webkit-transition: height 0.5s;
+  // transition: border-bottom 0.5s;
+  // -webkit-transition: border-bottom 0.5s;
+  //text-align: center;
+  overflow: hidden;
+}
+
+.event-insert-grow:after {
+  content: '';
+  width: 100%;
+  position: absolute;
+  height: 3px;
+  //border-bottom: solid 3px #019fb6;
+  background-color: #019fb6;
+  -webkit-transform: scaleX(0.0001);
+  -ms-transform: scaleX(0.0001);
+  transform: scaleX(0.0001);
+  -webkit-transition: -webkit-transform 250ms ease-in-out;
+  transition: transform 250ms ease-in-out;
+}
+
+.event-insert-grow:hover {
+  height: 5px;
+  // margin-bottom: 15px;
+  // border-bottom-color: red;
+}
+
+.event-insert-grow:hover:after {
+  -webkit-transform: scaleX(1);
+  -ms-transform: scaleX(1);
+  transform: scaleX(1);
 }
 
 .btn-warning {

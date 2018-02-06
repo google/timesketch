@@ -724,6 +724,17 @@ class AggregationResource(ResourceMixin, Resource):
             return jsonify(schema)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
+class EventCreateResource(ResourceMixin, Resource):
+    """Resource to create a single event in the datastore.
+
+    HTTP Args:
+        searchindex_id: The datastore searchindex id as string
+        event_id: The datastore event id as string
+    """
+
+    def __init__(self, timeline_id, event):
+        return self
+
 
 class EventResource(ResourceMixin, Resource):
     """Resource to get a single event from the datastore.
@@ -1159,6 +1170,74 @@ class CountEventsResource(ResourceMixin, Resource):
         meta = dict(count=count)
         schema = dict(meta=meta, objects=[])
         return jsonify(schema)
+
+
+class TimelineCreateResource(ResourceMixin, Resource):
+    @login_required
+    def post(self):
+         """Handles POST request to the resource.
+
+         Returns:
+             A view in JSON (instance of flask.wrappers.Response)
+
+         Raises:
+             ApiHTTPError
+         """
+         upload_enabled = current_app.config[u'UPLOAD_ENABLED']
+         form = CreateTimelineForm()
+         if form.validate_on_submit() and upload_enabled:
+             sketch_id = form.sketch_id.data
+             timeline_name = form.name.data
+
+             sketch = None
+             if sketch_id:
+                 sketch = Sketch.query.get_with_acl(sketch_id)
+
+             # Current user
+             username = current_user.username
+
+             # We do not need a human readable filename or
+             # datastore index name, so we use UUIDs here.
+             index_name = unicode(uuid.uuid4().hex)
+
+             # Create the search index in the Timesketch database
+             searchindex = SearchIndex.get_or_create(
+                 name=timeline_name,
+                 description=timeline_name,
+                 user=current_user,
+                 index_name=index_name)
+             searchindex.grant_permission(permission=u'read', user=current_user)
+             searchindex.grant_permission(permission=u'write', user=current_user)
+             searchindex.grant_permission(
+                 permission=u'delete', user=current_user)
+             searchindex.set_status(u'processing')
+             db_session.add(searchindex)
+             db_session.commit()
+
+             timeline = None
+             if sketch and sketch.has_permission(current_user, u'write'):
+                 timeline = Timeline(
+                     name=searchindex.name,
+                     description=searchindex.description,
+                     sketch=sketch,
+                     user=current_user,
+                     searchindex=searchindex)
+                 sketch.timelines.append(timeline)
+                 db_session.add(timeline)
+                 db_session.commit()
+
+             # Return Timeline if it was created.
+             # pylint: disable=no-else-return
+             if timeline:
+                 return self.to_json(
+                     timeline, status_code=HTTP_STATUS_CODE_CREATED)
+             else:
+                 return self.to_json(
+                     searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+
+         else:
+             raise ApiHTTPError(
+                 status_code=HTTP_STATUS_CODE_BAD_REQUEST)
 
 
 class TimelineListResource(ResourceMixin, Resource):

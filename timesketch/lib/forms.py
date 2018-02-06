@@ -119,6 +119,12 @@ class HiddenNameDescriptionForm(BaseForm):
     description = HiddenField(u'Description')
 
 
+class CreateTimelineForm(BaseForm):
+    """Form to handle ad-hoc timeline creation."""
+    name = StringField(u'Timeline name', validators=[Optional()])
+    sketch_id = IntegerField(u'Sketch ID', validators=[Optional()])
+
+
 class TimelineForm(NameDescriptionForm):
     """Form to edit a timeline."""
     color = StringField(

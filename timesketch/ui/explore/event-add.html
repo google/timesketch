@@ -1,0 +1,13 @@
+<div class="event-insert-grow" ng-click="showForm = !showForm" ng-show="!showForm"></div>
+<form name="eventaddform" class="form-inline" ng-submit="submitAddForm()">
+    <div ng-show="showForm" class="event-add">
+        <span class="form-group">
+            <input class="form-control" placeholder="Timeline name" ng-model="uploadForm.name"/>
+            <input class="form-control" placeholder="Timestamp" ng-model="uploadForm.timestamp"/>
+            <input class="form-control" placeholder="Timestamp description" ng-model="uploadForm.timestamp_desc"/>
+            <input class="form-control" placeholder="Event message" ng-model="uploadForm.message"/>
+        </span>
+        <input type="submit" class="btn btn-success" value="Add Event"/>
+        <input type="reset" class="btn btn-default" value="Cancel" ng-click="clearForm()"/>
+    </div>
+</form>
