@@ -89,6 +89,6 @@
 
     <div ng-repeat="event in events">
         <ts-event ng-hide="event.hidden && !meta.showHiddenEvents" enable-context-query="true" similarity-layer="similarityLayer" event="::event" meta="::meta" sketch-id="::sketchId" prev-timestamp="::events[$index-1]['_source'].timestamp" next-timestamp="::events[$index+1]['_source'].timestamp" index="::$index" order="::filter.order"></ts-event>
-        <ts-event-add ng-hide="event.hidden" meta="::meta" sketch-id="::sketchId" after-timestamp="::events[$index]['_source'].timestamp"></ts-event-add>
+        <ts-event-add ng-hide="event.hidden" event="::event" meta="::meta" sketch-id="::sketchId" after-timestamp="::events[$index]['_source'].timestamp"></ts-event-add>
     </div>
 </div>

@@ -341,9 +341,22 @@ export const tsEventAdd = function () {
         controller: function ($scope, timesketchApi) {
             // Defaults to not showing form to add events.
             $scope.showForm = false
+            $scope.newTimeline = false
+            $scope.newTimestamp = $scope.event._source.datetime
+            $scope.timeline_names = $scope.meta.timeline_names
+            $scope.timeline_names['new'] = "Create new..."
             $scope.clearForm = function () {
               $scope.showForm = !$scope.showForm
             }
+
+            $scope.$watch('timeline_selected', function (value) {
+              console.log(value)
+              if(value === "Create new..."){
+                  $scope.newTimeline = true
+              } else {
+                  $scope.newTimeline = false
+              }
+            })
         },
         link: function (scope, elem, attrs, ctrl) {
             scope.getContext = function (event) {
