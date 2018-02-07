@@ -2,7 +2,7 @@
 <div class="container card" style="margin: 10px 5px 10px 5px;" ng-show="showForm">
 <form name="eventaddform" class="form-inline"  ng-submit="submitAddForm()">
   <fieldset>
-    <div class="row"><div class="col-md-12"><h3>Insert event</h3></div></div>
+    <div class="row"><div class="col-md-12"><h3>Insert event</h3><hr></div></div>
     <div class="row">
         <label for="timelineSelect" class="col-md-2">Select timeline: </label>
         <div class="col-md-4">
@@ -10,25 +10,25 @@
         </div>
         <label for="timelineNameInput" class="col-md-2" ng-show="newTimeline">Timeline name: </label>
         <div class="col-md-4" ng-show="newTimeline">
-            <input class="form-control" id="timelineNameInput" placeholder="new_timeline_1" ng-model="timelineName"/>
+            <input class="form-control" id="timelineNameInput" placeholder="new_timeline_1" ng-model="eventAddForm.timelineName"/>
         </div>
     </div>
-    <hr>
+    <br>
     <div class="row">
         <div class="col-md-6">
             <span class="form-group">
                 <label for="eventTimestampInput">Timestamp: </label>
-                <input class="form-control" id="eventTimestampInput" placeholder="Timestamp" ng-model="newTimestamp"/>
+                <input class="form-control" id="eventTimestampInput" placeholder="Timestamp" ng-model="eventAddForm.timestamp"/>
             </span>
             <span class="form-group">
                 <label for="eventTimestampDescInput">Timestamp description: </label>
-                <input class="form-control" id="eventTimestampDescInput" placeholder="Attack mitigated" ng-model="uploadForm.timestamp_desc"/>
+                <input class="form-control" id="eventTimestampDescInput" placeholder="Attack mitigated" ng-model="eventAddForm.timestampDesc"/>
             </span>
         </div>
         <div class="col-md-6">
             <span class="form-group" style="width: 100%;">
                 <label for="eventMessageTextarea">Event message: </label>
-                <textarea class="form-control" id="eventMessageTextarea" style="width: 100%;" placeholder="Event message" ng-model="uploadForm.message"></textarea>
+                <textarea class="form-control" id="eventMessageTextarea" style="width: 100%;" placeholder="Event message" ng-model="eventAddForm.message"></textarea>
             </span>
         </div>
     </div>
