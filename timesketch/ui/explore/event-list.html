@@ -50,10 +50,26 @@
         <span ng-show="!events.length && meta.es_total_count > 0">
             <i class="fa fa-circle-o-notch fa-spin"></i> Searching..
         </span>
-        <span ng-show="events.length || meta.es_total_count == 0">
+        <span ng-hide="showLimitedResults">
             {{ meta.es_total_count }} events <span ng-show="meta.numHiddenEvents > 0 && !meta.showHiddenEvents" style="color:red;">({{ meta.numHiddenEvents }} hidden)</span> ({{ meta.es_time/1000 }}s)
             <span ng-show="meta.noisy" style="margin-left:10px;font-weight:bold;">
-                <!--<i class="fa fa-warning"></i>--> Showing
+                Showing
+                <select style="background: #fff;border: 1px solid #f5f5f5;font-weight: bold" ng-model="pageSize">
+                    <option value="{{ filter.size }}" ng-selected="filter.size">{{ filter.size }}</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="40">40</option>
+                    <option value="80">80</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                    <option value="500">500</option>
+                </select> per page
+            </span>
+        </span>
+        <span ng-show="showLimitedResults">
+            Limited to 10000/{{ meta.es_total_count }} events <span ng-show="meta.numHiddenEvents > 0 && !meta.showHiddenEvents" style="color:red;">({{ meta.numHiddenEvents }} hidden)</span> ({{ meta.es_time/1000 }}s)
+            <span ng-show="meta.noisy" style="margin-left:10px;font-weight:bold;">
+                Showing
                 <select style="background: #fff;border: 1px solid #f5f5f5;font-weight: bold" ng-model="pageSize">
                     <option value="{{ filter.size }}" ng-selected="filter.size">{{ filter.size }}</option>
                     <option value="10">10</option>

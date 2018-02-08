@@ -200,7 +200,15 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
 
             $scope.$watch('meta', function (value) {
                 if (angular.isDefined(value)) {
-                    $scope.totalPages = Math.ceil(value.es_total_count/$scope.filter.size) - 1
+                    var event_count
+                    if (value.es_total_count > 10000) {
+                        event_count = 10000
+                        $scope.showLimitedResults = ($scope.events.length || $scope.meta.es_total_count == 0) && true
+                    } else {
+                        event_count = value.es_total_count
+                        $scope.showLimitedResults = ($scope.events.length || $scope.meta.es_total_count == 0) && false
+                    }
+                    $scope.totalPages = Math.ceil(event_count/$scope.filter.size) - 1
                     $scope.buildPager()
                 }
             })
