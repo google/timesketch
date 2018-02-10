@@ -43,6 +43,8 @@ export const tsHistogram = function ($window, timesketchApi) {
 
             scope.$watchGroup(['meta', 'showCharts', 'chartType'], function (newval, oldval) {
                 if (scope.showCharts) {
+                    // delete scope.filter.size
+                    // delete scope.filter.from
                     timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, scope.queryDsl, 'histogram')
                         .success(function (data) {
                             render_histogram(data['objects'])

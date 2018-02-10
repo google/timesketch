@@ -44,9 +44,6 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
         controller: function ($scope) {
             // Convert to Javascript boolean
             $scope.similarityEnabled = ($scope.similarityEnabled == 'True')
-            if (!$scope.currentPage){
-                $scope.currentPage = 0
-            }
 
             if ($scope.namedView) {
                 timesketchApi.getView($scope.sketchId, $scope.viewId).success(function (data) {
@@ -157,10 +154,31 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
                 toggleStar(event_list)
             }
 
+            // ES limits our method of paging to the first 10k events.  Deep
+            // pagination will require some major refactoring at a later date.
+            // TODO(ajn): Correct this nonsense.
+            $scope.getEventCount = function() {
+                var event_count
+                var total_pages
+                if ($scope.meta.es_total_count > 10000) {
+                    event_count = 10000
+                    $scope.showLimitedResults = $scope.dataLoaded && true
+                } else {
+                    event_count = $scope.meta.es_total_count
+                    $scope.showLimitedResults = $scope.dataLoaded && false
+                }
+
+                total_pages = Math.ceil(event_count/$scope.filter.size) - 1
+                if (total_pages !== $scope.totalPages) {
+                    $scope.currentPage = 0
+                }
+                $scope.totalPages = total_pages
+            }
+
             $scope.buildPager = function () {
                 var anchorLeft = 0
                 var anchorRight = $scope.totalPages || 0
-                var currentPage = $scope.currentPage
+                var currentPage = $scope.currentPage || 0
                 var pageRange = []
                 for(let i = 0; i <= anchorRight; i++) {
                     if (i == 0 || i == anchorRight || i >= (currentPage - 2) && i < (currentPage + 3)) {
@@ -200,27 +218,30 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
 
             $scope.$watch('meta', function (value) {
                 if (angular.isDefined(value)) {
-                    var event_count
-                    if (value.es_total_count > 10000) {
-                        event_count = 10000
-                        $scope.showLimitedResults = ($scope.events.length || $scope.meta.es_total_count == 0) && true
-                    } else {
-                        event_count = value.es_total_count
-                        $scope.showLimitedResults = ($scope.events.length || $scope.meta.es_total_count == 0) && false
+                    // reciprocal dataLoaded check
+                    if (angular.isDefined($scope.events) && $scope.events.length && value.es_total_count > 0) {
+                        $scope.dataLoaded = true
+                        $scope.getEventCount()
+                        $scope.buildPager()
                     }
-                    $scope.totalPages = Math.ceil(event_count/$scope.filter.size) - 1
-                    $scope.buildPager()
                 }
             })
 
             $scope.$watch('events', function (value) {
                 if (angular.isDefined(value)) {
+                    // reciprocal dataLoaded check
+                    if (angular.isDefined($scope.meta) && $scope.meta.es_total_count > 0 && value.length ) {
+                        $scope.dataLoaded = true
+                        $scope.getEventCount()
+                        $scope.buildPager()
+                    }
                     $scope.anySelected = value.some(function (event) {
                         return event.selected
                     })
                 }
             }, true)
         },
+
         link: function (scope, elem, attrs, ctrl) {
             scope.applyOrder = function () {
                 ctrl.search(scope.query, scope.filter)
@@ -228,11 +249,13 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
             scope.$watch('pageSize', function (value) {
                 scope.filter['size'] = scope.pageSize
                 scope.currentPage = 0
+                scope.dataLoaded = false
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
             })
 
             scope.$watch('currentPage', function (value) {
                 scope.filter['from'] = (scope.currentPage * scope.filter['size'])
+                scope.dataLoaded = false
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
             })
         },
