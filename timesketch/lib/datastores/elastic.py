@@ -37,7 +37,6 @@ class ElasticsearchDataStore(datastore.DataStore):
 
     # Number of events to queue up when bulk inserting events.
     DEFAULT_FLUSH_INTERVAL = 1000
-    ##ajn## added DEFAULT_SIZE
     DEFAULT_SIZE = 100
     DEFAULT_LIMIT = DEFAULT_SIZE  # Max events to return
     DEFAULT_FROM = 0
@@ -239,8 +238,6 @@ class ElasticsearchDataStore(datastore.DataStore):
             Set of event documents in JSON format
         """
         # Limit the number of returned documents.
-        ##ajn## changed to limit the amount via from/size
-        #limit_results = query_filter.get(u'limit', self.DEFAULT_LIMIT)
         result_size = query_filter.get(u'size', self.DEFAULT_SIZE)
         result_from = query_filter.get(u'from', self.DEFAULT_FROM)
 

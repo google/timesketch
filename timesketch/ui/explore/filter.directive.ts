@@ -43,7 +43,6 @@ export const tsFilter = function () {
         link: function (scope, elem, attrs, ctrl) {
             scope.applyFilter = function () {
                 scope.filter.from = 0
-                scope.currentPage = 0
                 scope.parseFilterDate(scope.filter.time_start, scope.filter.time_end)
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
             }

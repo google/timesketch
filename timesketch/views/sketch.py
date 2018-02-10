@@ -178,7 +178,6 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
         Template with context.
     """
     save_view = False  # If the view should be saved to the database.
-    ##ajn## this Sketch is from models
     sketch = Sketch.query.get_with_acl(sketch_id)
     sketch_timelines = [t.searchindex.index_name for t in sketch.timelines]
     view_form = SaveViewForm()
@@ -188,7 +187,6 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     # Get parameters from the GET query
     url_query = request.args.get(u'q', u'')
     url_event_from = request.args.get(u'from', None)
-    print type(url_event_from)
     url_time_start = request.args.get(u'time_start', None)
     url_time_end = request.args.get(u'time_end', None)
     url_index = request.args.get(u'index', None)
