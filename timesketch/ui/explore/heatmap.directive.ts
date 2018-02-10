@@ -41,8 +41,6 @@ export const tsHeatmap = function ($window, timesketchApi) {
         link: function (scope, element, attrs, ctrl) {
             scope.$watchGroup(['meta', 'showCharts'], function (newval, oldval) {
                 if (scope.showCharts) {
-                    // delete scope.filter.size
-                    // delete scope.filter.from
                     timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, scope.queryDsl, 'heatmap')
                         .success(function (data) {
                             scope.render_heatmap(data['objects'])
@@ -58,8 +56,6 @@ export const tsHeatmap = function ($window, timesketchApi) {
                 return angular.element($window)[0].innerWidth
             }, function () {
                 if (scope.meta && scope.showCharts) {
-                    // delete scope.filter.size
-                    // delete scope.filter.from
                     timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, scope.queryDsl, 'heatmap')
                         .success(function (data) {
                             scope.render_heatmap(data['objects'])
