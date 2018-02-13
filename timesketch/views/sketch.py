@@ -186,7 +186,6 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
 
     # Get parameters from the GET query
     url_query = request.args.get(u'q', u'')
-    url_event_from = request.args.get(u'from', None)
     url_time_start = request.args.get(u'time_start', None)
     url_time_end = request.args.get(u'time_end', None)
     url_index = request.args.get(u'index', None)
@@ -223,7 +222,7 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     if url_query:
         view.query_string = url_query
         query_filter = json.loads(view.query_filter)
-        query_filter[u'from'] = 0 # if we loaded from a get, start at first event
+        query_filter[u'from'] = 0 # if we loaded from get, start at first event
         query_filter[u'time_start'] = url_time_start
         query_filter[u'time_end'] = url_time_end
         if url_index in sketch_timelines:

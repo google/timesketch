@@ -96,6 +96,8 @@ class SketchModelTest(ModelBaseTest):
          """
         DEFAULT_LIMIT = 40
         default_values = {
+            u'from': 0,
+            u'size': 40,
             u'time_start': None,
             u'time_end': None,
             u'limit': DEFAULT_LIMIT,
