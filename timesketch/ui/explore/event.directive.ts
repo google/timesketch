@@ -157,9 +157,9 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
             // ES limits our method of paging to the first 10k events.  Deep
             // pagination will require some major refactoring at a later date.
             // TODO(ajn): Correct this nonsense.
-            $scope.getEventCount = function() {
-                var event_count
-                var total_pages
+            $scope.getEventCount = function () {
+                let event_count
+                let total_pages
                 if ($scope.meta.es_total_count > 10000) {
                     event_count = 10000
                     $scope.showLimitedResults = $scope.dataLoaded && true
@@ -168,7 +168,7 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
                     $scope.showLimitedResults = $scope.dataLoaded && false
                 }
 
-                total_pages = Math.ceil(event_count/$scope.filter.size) - 1
+                total_pages = Math.ceil(event_count / $scope.filter.size) - 1
                 if (total_pages !== $scope.totalPages) {
                     $scope.currentPage = 0
                 }
@@ -176,23 +176,23 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
             }
 
             $scope.buildPager = function () {
-                var anchorLeft = 0
-                var anchorRight = $scope.totalPages || 0
-                var currentPage = $scope.currentPage || 0
-                var pageRange = []
-                for(let i = 0; i <= anchorRight; i++) {
+                const anchorLeft = 0
+                const anchorRight = $scope.totalPages || 0
+                const currentPage = $scope.currentPage || 0
+                const pageRange = []
+                for (let i = 0; i <= anchorRight; i++) {
                     if (i == 0 || i == anchorRight || i >= (currentPage - 2) && i < (currentPage + 3)) {
                         pageRange.push(i)
                     }
                 }
                 if ((currentPage - (anchorRight / 4)) > anchorLeft) {
-                    var pageL = Math.floor(currentPage / 2)
+                    const pageL = Math.floor(currentPage / 2)
                     if ( pageRange.indexOf( pageL ) === -1 ) {
                         pageRange.splice(1, 0, pageL)
                     }
                 }
                 if ((anchorRight - currentPage) > (anchorRight / 4)) {
-                    var pageR = Math.floor((anchorRight - currentPage) / 2) + currentPage
+                    const pageR = Math.floor((anchorRight - currentPage) / 2) + currentPage
                     if ( pageRange.indexOf( pageR ) === -1 ) {
                         pageRange.splice(-1, 0, pageR)
                     }
