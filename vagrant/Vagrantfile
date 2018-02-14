@@ -29,7 +29,7 @@ Vagrant.configure(2) do |config|
   # VirtualBox configuration
   config.vm.provider "virtualbox" do |vb|
     vb.cpus = 2
-    vb.memory = 6192
+    vb.memory = 8192
   end
 
   # Setup the system with a shell script
