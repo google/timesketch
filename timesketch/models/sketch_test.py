@@ -21,6 +21,7 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Event
+from timesketch.models.sketch import Story
 from timesketch.lib.testlib import ModelBaseTest
 
 
@@ -109,3 +110,17 @@ class SketchModelTest(ModelBaseTest):
         validated_filter_json = self.view1.validate_filter(test_filter_json)
         self.assertDictEqual(json.loads(validated_filter_dict), default_values)
         self.assertDictEqual(json.loads(validated_filter_json), default_values)
+
+
+class StoryModelTest(ModelBaseTest):
+    """Tests the user model."""
+
+    def test_story_model(self):
+        """
+        Test that the test story has the expected data stored in the
+        database.
+        """
+        expected_result = frozenset(
+            [(u'title', u'Test'), (u'content', u'Test'), (u'user', self.user1),
+             (u'sketch', self.sketch1)])
+        self._test_db_object(expected_result=expected_result, model_cls=Story)
