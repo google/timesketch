@@ -55,7 +55,7 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.user import User
 from timesketch.views.home import home_views
 from timesketch.views.sketch import sketch_views
-from timesketch.views.user import user_views
+from timesketch.views.auth import auth_views
 
 
 def create_app(config=None):
@@ -114,7 +114,7 @@ def create_app(config=None):
     # Register blueprints. Blueprints are a way to organize your Flask
     # Flask application. See this for more information:
     # http://flask.pocoo.org/docs/latest/blueprints/
-    app.register_blueprint(user_views)
+    app.register_blueprint(auth_views)
     app.register_blueprint(home_views)
     app.register_blueprint(sketch_views)
 
