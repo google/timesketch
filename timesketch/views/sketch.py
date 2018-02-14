@@ -44,7 +44,7 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
-from timesketch.models.story import Story
+from timesketch.models.sketch import Story
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
