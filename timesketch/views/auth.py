@@ -29,10 +29,10 @@ from timesketch.models.user import Group
 from timesketch.models.user import User
 
 # Register flask blueprint
-user_views = Blueprint(u'user_views', __name__)
+auth_views = Blueprint(u'user_views', __name__)
 
 
-@user_views.route(u'/login/', methods=[u'GET', u'POST'])
+@auth_views.route(u'/login/', methods=[u'GET', u'POST'])
 def login():
     """Handler for the login page view.
 
@@ -98,7 +98,7 @@ def login():
     return render_template(u'user/login.html', form=form)
 
 
-@user_views.route(u'/logout/', methods=[u'GET'])
+@auth_views.route(u'/logout/', methods=[u'GET'])
 def logout():
     """Handler for the logout page view.
 
