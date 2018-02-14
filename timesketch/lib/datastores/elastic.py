@@ -237,9 +237,6 @@ class ElasticsearchDataStore(datastore.DataStore):
         Returns:
             Set of event documents in JSON format
         """
-        # # Limit the number of returned documents.
-        # result_size = query_filter.get(u'size', self.DEFAULT_SIZE)
-        # result_from = query_filter.get(u'from', self.DEFAULT_FROM)
 
         scroll_timeout = None
         if enable_scroll:
@@ -270,10 +267,6 @@ class ElasticsearchDataStore(datastore.DataStore):
 
         # Default search type for elasticsearch is query_then_fetch.
         search_type = u'query_then_fetch'
-
-        # # Set limit to 0 to not return any results
-        # if not return_results:
-        #     limit_results = 0
 
         # Only return how many documents matches the query.
         if count:
