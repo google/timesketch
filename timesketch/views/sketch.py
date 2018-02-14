@@ -44,7 +44,11 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
+<<<<<<< HEAD
 from timesketch.models.sketch import Story
+=======
+from timesketch.models.story import Story
+>>>>>>> Refactor: Move story view code to be consistent
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
@@ -270,7 +274,7 @@ def graphs(sketch_id):
         u'sketch/graphs.html',
         sketch=sketch,
         graphs_enabled=graphs_enabled)
-    
+
 
 @sketch_views.route(u'/sketch/<int:sketch_id>/stories/')
 @sketch_views.route(u'/sketch/<int:sketch_id>/stories/<int:story_id>/')
