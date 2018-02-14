@@ -65,3 +65,15 @@ class ViewTest(BaseTest):
         response = self.client.get(self.resource_url)
         self.assert200(response)
         self.assert_template_used(u'sketch/views.html')
+
+
+class StoryViewTest(BaseTest):
+    """Test the story view."""
+    resource_url = u'/sketch/1/stories/'
+
+    def test_stories_view(self):
+        """Test the view handler."""
+        self.login()
+        response = self.client.get(self.resource_url)
+        self.assert200(response)
+        self.assert_template_used(u'sketch/stories.html')

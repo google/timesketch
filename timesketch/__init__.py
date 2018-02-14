@@ -55,7 +55,6 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.user import User
 from timesketch.views.home import home_views
 from timesketch.views.sketch import sketch_views
-from timesketch.views.story import story_views
 from timesketch.views.user import user_views
 
 
@@ -118,7 +117,6 @@ def create_app(config=None):
     app.register_blueprint(user_views)
     app.register_blueprint(home_views)
     app.register_blueprint(sketch_views)
-    app.register_blueprint(story_views)
 
     # Setup URL routes for the API.
     api_v1 = Api(app, prefix=u'/api/v1')
