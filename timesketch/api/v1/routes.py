@@ -38,6 +38,9 @@ from .resources import SearchIndexListResource
 from .resources import SearchIndexResource
 
 
+# Disable error for long line. Readability is more important than line
+# length in this case.
+# pylint: disable=line-too-long
 API_ROUTES = [
     (SketchListResource, '/sketches/'),
     (SketchResource, '/sketches/<int:sketch_id>/'),
