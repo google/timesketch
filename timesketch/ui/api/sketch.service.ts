@@ -45,7 +45,7 @@ export class SketchService {
   search(query: string): Observable<Event[]> {
     return this.http
       .post(`${SKETCH_BASE_URL}${this.sketchId}/explore/`, {
-        query, filter: {limit: 100}, dsl: {},
+        query, filter: {size: 100, from: 0}, dsl: {},
       })
       .map((result) => result['objects'])
   }

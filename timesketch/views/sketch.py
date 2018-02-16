@@ -189,7 +189,7 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     url_time_start = request.args.get(u'time_start', None)
     url_time_end = request.args.get(u'time_end', None)
     url_index = request.args.get(u'index', None)
-    url_limit = request.args.get(u'limit', None)
+    url_size = request.args.get(u'size', None)
 
     if searchtemplate_id:
         searchtemplate = SearchTemplate.query.get(searchtemplate_id)
@@ -222,13 +222,18 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     if url_query:
         view.query_string = url_query
         query_filter = json.loads(view.query_filter)
+        query_filter[u'from'] = 0 # if we loaded from get, start at first event
         query_filter[u'time_start'] = url_time_start
         query_filter[u'time_end'] = url_time_end
         if url_index in sketch_timelines:
             query_filter[u'indices'] = [url_index]
-        if url_limit:
-            query_filter[u'limit'] = url_limit
+        if url_size:
+            query_filter[u'size'] = url_size
         view.query_filter = view.validate_filter(query_filter)
+        print "query_filter before:"
+        print query_filter
+        print "query_filter after:"
+        print view.query_filter
         view.query_dsl = None
         save_view = True
 
@@ -267,7 +272,7 @@ def export(sketch_id):
 
     # Export more than the 500 first results.
     max_events_to_fetch = 10000
-    query_filter[u'limit'] = max_events_to_fetch
+    query_filter[u'size'] = max_events_to_fetch
 
     datastore = ElasticsearchDataStore(
         host=current_app.config[u'ELASTIC_HOST'],

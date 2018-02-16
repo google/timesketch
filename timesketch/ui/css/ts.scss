@@ -732,6 +732,10 @@ ts-graphs-graph-view {
     box-shadow: 0 0 1px rgba(0,0,0,0.3);
     padding: 5px;
   }
+  .pull-left .#{&}__dropdown-content {
+    left: 0px;
+    right: auto;
+  }
   .pull-right .#{&}__dropdown-content {
     right: 0px;
     left: auto;

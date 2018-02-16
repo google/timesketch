@@ -154,20 +154,108 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
                 toggleStar(event_list)
             }
 
+            // ES limits our method of paging to the first 10k events.  Deep
+            // pagination will require some major refactoring at a later date.
+            // TODO(ajn): Correct this nonsense.
+            $scope.getEventCount = function () {
+                let event_count
+                let total_pages
+                if ($scope.meta.es_total_count > 10000) {
+                    event_count = 10000
+                    $scope.showLimitedResults = $scope.dataLoaded && true
+                } else {
+                    event_count = $scope.meta.es_total_count
+                    $scope.showLimitedResults = $scope.dataLoaded && false
+                }
+
+                total_pages = Math.ceil(event_count / $scope.filter.size) - 1
+                if (total_pages !== $scope.totalPages) {
+                    $scope.currentPage = 0
+                }
+                $scope.totalPages = total_pages
+            }
+
+            $scope.buildPager = function () {
+                const anchorLeft = 0
+                const anchorRight = $scope.totalPages || 0
+                const currentPage = $scope.currentPage || 0
+                const pageRange = []
+                for (let i = 0; i <= anchorRight; i++) {
+                    if (i == 0 || i == anchorRight || i >= (currentPage - 2) && i < (currentPage + 3)) {
+                        pageRange.push(i)
+                    }
+                }
+                if ((currentPage - (anchorRight / 4)) > anchorLeft) {
+                    const pageL = Math.floor(currentPage / 2)
+                    if ( pageRange.indexOf( pageL ) === -1 ) {
+                        pageRange.splice(1, 0, pageL)
+                    }
+                }
+                if ((anchorRight - currentPage) > (anchorRight / 4)) {
+                    const pageR = Math.floor((anchorRight - currentPage) / 2) + currentPage
+                    if ( pageRange.indexOf( pageR ) === -1 ) {
+                        pageRange.splice(-1, 0, pageR)
+                    }
+                }
+                return pageRange
+            }
+
+            $scope.prevPage = function () {
+                if ($scope.currentPage > 0) {
+                    $scope.currentPage--;
+                }
+            }
+
+            $scope.nextPage = function () {
+                if ($scope.currentPage < $scope.totalPages - 1) {
+                    $scope.currentPage++;
+                }
+            }
+
+            $scope.setPage = function () {
+                $scope.currentPage = this.n;
+            }
+
+            $scope.$watch('meta', function (value) {
+                if (angular.isDefined(value)) {
+                    // reciprocal dataLoaded check
+                    if (angular.isDefined($scope.events) && $scope.events.length && value.es_total_count > 0) {
+                        $scope.dataLoaded = true
+                        $scope.getEventCount()
+                        $scope.buildPager()
+                    }
+                }
+            })
+
             $scope.$watch('events', function (value) {
                 if (angular.isDefined(value)) {
+                    // reciprocal dataLoaded check
+                    if (angular.isDefined($scope.meta) && $scope.meta.es_total_count > 0 && value.length ) {
+                        $scope.dataLoaded = true
+                        $scope.getEventCount()
+                        $scope.buildPager()
+                    }
                     $scope.anySelected = value.some(function (event) {
                         return event.selected
                     })
                 }
             }, true)
         },
+
         link: function (scope, elem, attrs, ctrl) {
             scope.applyOrder = function () {
                 ctrl.search(scope.query, scope.filter)
             }
-            scope.$watch('userLimit', function (value) {
-                scope.filter['limit'] = scope.userLimit
+            scope.$watch('pageSize', function (value) {
+                scope.filter['size'] = scope.pageSize
+                scope.currentPage = 0
+                scope.dataLoaded = false
+                ctrl.search(scope.query, scope.filter, scope.queryDsl)
+            })
+
+            scope.$watch('currentPage', function (value) {
+                scope.filter['from'] = (scope.currentPage * scope.filter['size'])
+                scope.dataLoaded = false
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
             })
         },
