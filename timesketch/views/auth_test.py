@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for the user views."""
+"""Tests for the auth views."""
 
 from flask import current_app
 from flask_login import current_user
@@ -20,8 +20,8 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.lib.testlib import BaseTest
 
 
-class UserViewTest(BaseTest):
-    """Test the user view."""
+class AuthViewTest(BaseTest):
+    """Test the auth view."""
 
     def test_login_view_unauthenticated(self):
         """Test the login view handler with an unauthenticated session."""

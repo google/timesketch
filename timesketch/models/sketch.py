@@ -310,3 +310,27 @@ class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.sketch = sketch
         self.searchindex = searchindex
         self.document_id = document_id
+
+
+class Story(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
+            BaseModel):
+    """Implements the Story model."""
+    title = Column(Unicode(255))
+    content = Column(UnicodeText())
+    user_id = Column(Integer, ForeignKey(u'user.id'))
+    sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
+
+    def __init__(self, title, content, sketch, user):
+        """Initialize the Story object.
+
+        Args:
+            title: The title of the story
+            content: Content of the story
+            sketch: A sketch (instance of timesketch.models.sketch.Sketch)
+            user: A user (instance of timesketch.models.user.User)
+        """
+        super(Story, self).__init__()
+        self.title = title
+        self.content = content
+        self.sketch = sketch
+        self.user = user
