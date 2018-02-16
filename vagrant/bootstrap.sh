@@ -126,7 +126,7 @@ echo "dbms.shell.enabled=true" >> /etc/neo4j/neo4j.conf
 
 if [ "$VAGRANT" = true ]; then
   # Expose Neo4j to the host, for development purposes
-  sudo echo "dbms.connectors.default_listen_address=0.0.0.0" >> /etc/neo4j/neo4j.conf
+  echo "dbms.connectors.default_listen_address=0.0.0.0" >> /etc/neo4j/neo4j.conf
 fi
 
 # Start Neo4j automatically
