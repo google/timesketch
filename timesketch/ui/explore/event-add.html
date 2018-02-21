@@ -2,14 +2,14 @@
 <div class="container card" style="margin: 10px 5px 10px 5px;" ng-show="showForm">
 <form name="eventaddform" class="form-inline"  ng-submit="submitAddForm()">
   <fieldset>
-    <div class="row"><div class="col-md-12"><h3>Insert event</h3><hr></div></div>
+    <div class="row"><div class="col-md-12"><h3>Insert event</h3></div></div>
     <div class="row">
         <label for="timelineSelect" class="col-md-2">Select timeline: </label>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <select class="form-control" id="timelineSelect" ng-options="n for (t, n) in timeline_names" ng-model="timeline_selected"></select>
         </div>
-        <label for="timelineNameInput" class="col-md-2" ng-show="newTimeline">Timeline name: </label>
-        <div class="col-md-4" ng-show="newTimeline">
+        <!-- <label for="timelineNameInput" class="col-md-2" ng-show="newTimeline">Timeline name: </label> -->
+        <div class="col-md-3" ng-show="newTimeline">
             <input class="form-control" id="timelineNameInput" placeholder="new_timeline_1" ng-model="eventAddForm.timelineName"/>
         </div>
     </div>
