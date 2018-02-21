@@ -17,6 +17,10 @@
 # paths.
 ignore=CVS
 
+# Add files or directories matching the regex patterns to the blacklist. The
+# regex matches against base names, not paths.
+ignore-patterns=.*node_modules.*
+
 # Pickle collected data for later comparisons.
 persistent=yes
 

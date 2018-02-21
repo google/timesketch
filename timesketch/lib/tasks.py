@@ -104,7 +104,7 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type,
 
 @celery.task(track_started=True)
 def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type,
-                  username=None):
+                  delimiter=None, username=None):
     """Create a Celery task for processing a CSV or JSONL file.
 
     Args:
@@ -112,6 +112,7 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type,
         timeline_name: Name of the Timesketch timeline.
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
+        delimiter: Character used as a field separator
         username: Username of the user who will own the timeline.
 
     Returns:
@@ -139,7 +140,7 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type,
     # all possible errors and exit the task.
     try:
         es.create_index(index_name=index_name, doc_type=event_type)
-        for event in read_and_validate(source_file_path):
+        for event in read_and_validate(source_file_path, delimiter):
             es.import_event(index_name, event_type, event)
         # Import the remaining events
         total_events = es.import_event(index_name, event_type)

@@ -45,17 +45,49 @@
     </div>
 </div>
 
-<div class="card" style="min-height:100px;">
-    <div class="pull-left" ng-show="meta" style="padding:10px;">
-        <span ng-show="!events.length && meta.es_total_count > 0">
-            <i class="fa fa-circle-o-notch fa-spin"></i> Searching..
+<div class="card" style="min-height:200px;">
+    <div class="pull-left" ng-show="meta">
+        <ul class="pagination" style="margin-top: 0px; margin-bottom: 0px; padding-top: 0px;">
+             <li ng-class="{disabled: currentPage == 0}">
+                 <a href ng-click="prevPage()">« Prev</a>
+             </li>
+             <li ng-repeat="n in buildPager()" ng-class="{active: n == currentPage}" ng-click="setPage()">
+                 <a href ng-bind="n+1">1</a>
+             </li>
+             <li ng-class="{disabled: currentPage == totalPages}">
+                 <a href ng-click="nextPage()">Next »</a>
+             </li>
+        </ul>
+    </div>
+    <div class="pull-right">
+        <button style="min-width:200px;" class="btn btn-danger" ng-show="meta.numHiddenEvents > 0" ng-click="meta.showHiddenEvents = !meta.showHiddenEvents">
+            <span ng-show="!meta.showHiddenEvents"><i class="fa fa-eye"></i> Show </span>
+            <span ng-show="meta.showHiddenEvents"><i class="fa fa-eye-slash"></i> Hide </span>
+            {{ meta.numHiddenEvents }} hidden events
+        </button>
+        <div class="btn-group" style="margin-left:10px;">
+            <button class="btn btn-default" ng-show="similarityEnabled" ng-click="similarityLayer = !similarityLayer" ng-style="{true: {'background-color':'#f5f5f5'}}[similarityLayer]">Similarity layer</button>
+            <button class="btn btn-default" ng-click="filter.order = { 'asc': 'desc', 'desc': 'asc'}[filter.order];applyOrder()"><i ng-class="{'asc': 'fa fa-sort-asc', 'desc': 'fa fa-sort-desc'}[filter.order]"></i> Sort</button>
+            <a class="btn btn-default" ng-disabled="meta.es_total_count > 10000" href="/sketch/{{ sketchId }}/explore/export/" download="export.csv"><i class="fa fa-cloud-download"></i> Export</a>
+            <button class="btn btn-default" data-toggle="modal" ng-hide="!anySelected" data-target="#save-event-view-modal"><i class="fa fa-save"></i> Save selection</button>
+            <button class="btn btn-default" ng-click="addStar()" ng-hide="!anySelected"><i class="fa fa-star icon-yellow"></i> Add star</button>
+            <button class="btn btn-default" ng-click="removeStar()" ng-hide="!anySelected"><i class="fa fa-star icon-grey"></i> Remove star</button>
+            <button class="btn btn-default" ng-click="toggleAll()"><i class="fa fa-check"></i> Toggle all</button>
+        </div>
+    </div>
+    <br>
+    <br>
+    <br>
+    <div class="pull-left" ng-show="meta">
+        <span ng-hide="dataLoaded">
+            <i class="fa fa-circle-o-notch fa-spin"></i> Searching...
         </span>
-        <span ng-show="events.length || meta.es_total_count == 0">
+        <span ng-show="!showLimitedResults && dataLoaded">
             {{ meta.es_total_count }} events <span ng-show="meta.numHiddenEvents > 0 && !meta.showHiddenEvents" style="color:red;">({{ meta.numHiddenEvents }} hidden)</span> ({{ meta.es_time/1000 }}s)
-            <span ng-show="meta.noisy" style="margin-left:10px;color:red;font-weight:bold;">
-                <i class="fa fa-warning"></i> Showing
-                <select style="background: #fff;border: 1px solid #f5f5f5;color:red;font-weight: bold" ng-model="userLimit">
-                    <option value="{{ filter.limit }}" ng-selected="filter.limit">{{ filter.limit }}</option>
+            <span ng-show="meta.noisy" style="margin-left:10px;font-weight:bold;">
+                Showing
+                <select style="background: #fff;border: 1px solid #f5f5f5;font-weight: bold" ng-model="pageSize">
+                    <option value="{{ filter.size }}" ng-selected="filter.size">{{ filter.size }}</option>
                     <option value="10">10</option>
                     <option value="20">20</option>
                     <option value="40">40</option>
@@ -63,32 +95,43 @@
                     <option value="100">100</option>
                     <option value="200">200</option>
                     <option value="500">500</option>
-                </select> first events
+                </select> per page
+            </span>
+        </span>
+        <span ng-show="showLimitedResults && dataLoaded">
+            Limited to 10000/{{ meta.es_total_count }} events <span ng-show="meta.numHiddenEvents > 0 && !meta.showHiddenEvents" style="color:red;">({{ meta.numHiddenEvents }} hidden)</span> ({{ meta.es_time/1000 }}s)
+            <span ng-show="meta.noisy" style="margin-left:10px;font-weight:bold;">
+                Showing
+                <select style="background: #fff;border: 1px solid #f5f5f5;font-weight: bold" ng-model="pageSize">
+                    <option value="{{ filter.size }}" ng-selected="filter.size">{{ filter.size }}</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="40">40</option>
+                    <option value="80">80</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                    <option value="500">500</option>
+                </select> per page
             </span>
         </span>
     </div>
-    <div class="pull-right">
-
-        <button style="min-width:200px;" class="btn btn-danger" ng-show="meta.numHiddenEvents > 0" ng-click="meta.showHiddenEvents = !meta.showHiddenEvents">
-            <span ng-show="!meta.showHiddenEvents"><i class="fa fa-eye"></i> Show </span>
-            <span ng-show="meta.showHiddenEvents"><i class="fa fa-eye-slash"></i> Hide </span>
-            {{ meta.numHiddenEvents }} hidden events
-        </button>
-
-        <div class="btn-group" style="margin-left:10px;">
-            <button class="btn btn-default" ng-show="similarityEnabled" ng-click="similarityLayer = !similarityLayer" ng-style="{true: {'background-color':'#f5f5f5'}}[similarityLayer]">Similarity layer</button>
-            <button class="btn btn-default" ng-click="filter.order = { 'asc': 'desc', 'desc': 'asc'}[filter.order];applyOrder()"><i ng-class="{'asc': 'fa fa-sort-asc', 'desc': 'fa fa-sort-desc'}[filter.order]"></i> Sort</button>
-            <a class="btn btn-default" ng-disabled="meta.es_total_count > 10000" href="/sketch/{{ sketchId }}/explore/export/" download="export.csv"><i class="fa fa-cloud-download"></i> Export</a>
-            <button class="btn btn-default" ng-click="toggleAll()"><i class="fa fa-check"></i> Toggle all</button>
-            <button class="btn btn-default" data-toggle="modal" ng-hide="!anySelected" data-target="#save-event-view-modal"><i class="fa fa-save"></i> Save selection</button>
-            <button class="btn btn-default" ng-click="addStar()" ng-hide="!anySelected"><i class="fa fa-star icon-yellow"></i> Add star</button>
-            <button class="btn btn-default" ng-click="removeStar()" ng-hide="!anySelected"><i class="fa fa-star icon-grey"></i> Remove star</button>
-        </div>
-    </div>
-    <br><br><br>
-
+    <br>
+    <br>
     <div ng-repeat="event in events">
         <ts-event ng-hide="event.hidden && !meta.showHiddenEvents" enable-context-query="true" similarity-layer="similarityLayer" event="::event" meta="::meta" sketch-id="::sketchId" prev-timestamp="::events[$index-1]['_source'].timestamp" next-timestamp="::events[$index+1]['_source'].timestamp" index="::$index" order="::filter.order"></ts-event>
         <ts-event-add ng-hide="event.hidden" event="::event" meta="::meta" sketch-id="::sketchId" after-timestamp="::events[$index]['_source'].timestamp"></ts-event-add>
+    </div>
+    <div ng-show="dataLoaded" style="margin: 0 auto; display:inline-block;">
+      <ul class="pagination">
+         <li ng-class="{disabled: currentPage == 0}">
+             <a href ng-click="prevPage()">« Prev</a>
+         </li>
+         <li ng-repeat="n in buildPager()" ng-class="{active: n == currentPage}" ng-click="setPage()">
+             <a href ng-bind="n+1">1</a>
+         </li>
+         <li ng-class="{disabled: currentPage == totalPages}">
+             <a href ng-click="nextPage()">Next »</a>
+         </li>
+      </ul>
     </div>
 </div>

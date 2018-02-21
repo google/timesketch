@@ -31,7 +31,7 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Event
-from timesketch.models.story import Story
+from timesketch.models.sketch import Story
 
 
 class TestConfig(object):

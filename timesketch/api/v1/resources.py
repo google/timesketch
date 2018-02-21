@@ -76,7 +76,7 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
 from timesketch.models.sketch import SearchTemplate
-from timesketch.models.story import Story
+from timesketch.models.sketch import Story
 
 
 def bad_request(message):

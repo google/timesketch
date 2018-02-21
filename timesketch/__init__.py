@@ -23,33 +23,8 @@ from flask_migrate import Migrate
 from flask_restful import Api
 from flask_wtf import CSRFProtect
 
-from timesketch.api.v1.resources import AggregationResource
-from timesketch.api.v1.resources import ExploreResource
-from timesketch.api.v1.resources import EventCreateResource
-from timesketch.api.v1.resources import EventResource
-from timesketch.api.v1.resources import EventAnnotationResource
-from timesketch.api.v1.resources import GraphResource
-from timesketch.api.v1.resources import SketchResource
-from timesketch.api.v1.resources import SketchListResource
-from timesketch.api.v1.resources import ViewResource
-from timesketch.api.v1.resources import ViewListResource
-from timesketch.api.v1.resources import SearchTemplateResource
-from timesketch.api.v1.resources import SearchTemplateListResource
-from timesketch.api.v1.resources import UploadFileResource
-from timesketch.api.v1.resources import TaskResource
-from timesketch.api.v1.resources import StoryListResource
-from timesketch.api.v1.resources import StoryResource
-from timesketch.api.v1.resources import QueryResource
-from timesketch.api.v1.resources import CountEventsResource
-from timesketch.api.v1.resources import TimelineCreateResource
-from timesketch.api.v1.resources import TimelineResource
-from timesketch.api.v1.resources import TimelineListResource
-from timesketch.api.v1.resources import SearchIndexListResource
-from timesketch.api.v1.resources import SearchIndexResource
-from timesketch.api.experimental.resources import WinLoginsResource
-from timesketch.api.experimental.resources import WinServicesResource
-from timesketch.api.experimental.resources import CreateGraphResource
-from timesketch.api.experimental.resources import DeleteGraphResource
+from timesketch.api.v1.routes import API_ROUTES as V1_API_ROUTES
+from timesketch.api.experimental.routes import API_ROUTES as EXP_API_ROUTES
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.models import configure_engine
 from timesketch.models import init_db
@@ -57,8 +32,7 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.user import User
 from timesketch.views.home import home_views
 from timesketch.views.sketch import sketch_views
-from timesketch.views.story import story_views
-from timesketch.views.user import user_views
+from timesketch.views.auth import auth_views
 
 
 def create_app(config=None):
@@ -117,61 +91,19 @@ def create_app(config=None):
     # Register blueprints. Blueprints are a way to organize your Flask
     # Flask application. See this for more information:
     # http://flask.pocoo.org/docs/latest/blueprints/
-    app.register_blueprint(user_views)
+    app.register_blueprint(auth_views)
     app.register_blueprint(home_views)
     app.register_blueprint(sketch_views)
-    app.register_blueprint(story_views)
 
     # Setup URL routes for the API.
     api_v1 = Api(app, prefix=u'/api/v1')
-    api_v1.add_resource(SketchListResource, u'/sketches/')
-    api_v1.add_resource(SketchResource, u'/sketches/<int:sketch_id>/')
-    api_v1.add_resource(AggregationResource,
-                        u'/sketches/<int:sketch_id>/aggregation/')
-    api_v1.add_resource(ExploreResource, u'/sketches/<int:sketch_id>/explore/')
-    api_v1.add_resource(EventResource, u'/sketches/<int:sketch_id>/event/')
-    api_v1.add_resource(EventCreateResource, u'/sketches/<int:sketch_id>/event/create/')
-    api_v1.add_resource(EventAnnotationResource,
-                        u'/sketches/<int:sketch_id>/event/annotate/')
-    api_v1.add_resource(ViewListResource, u'/sketches/<int:sketch_id>/views/')
-    api_v1.add_resource(ViewResource,
-                        u'/sketches/<int:sketch_id>/views/<int:view_id>/')
-    api_v1.add_resource(SearchTemplateListResource, u'/searchtemplate/')
-    api_v1.add_resource(SearchTemplateResource,
-                        u'/searchtemplate/<int:searchtemplate_id>/')
-    api_v1.add_resource(UploadFileResource, u'/upload/')
-    api_v1.add_resource(TaskResource, u'/tasks/')
-    api_v1.add_resource(StoryListResource,
-                        u'/sketches/<int:sketch_id>/stories/')
-    api_v1.add_resource(StoryResource,
-                        u'/sketches/<int:sketch_id>/stories/<int:story_id>/')
-    api_v1.add_resource(QueryResource,
-                        u'/sketches/<int:sketch_id>/explore/query/')
-    api_v1.add_resource(CountEventsResource,
-                        u'/sketches/<int:sketch_id>/count/')
-    api_v1.add_resource(TimelineCreateResource,
-                        u'/sketches/<int:sketch_id>/timelines/create/')
-    api_v1.add_resource(TimelineListResource,
-                        u'/sketches/<int:sketch_id>/timelines/')
-    api_v1.add_resource(
-        TimelineResource,
-        u'/sketches/<int:sketch_id>/timelines/<int:timeline_id>/')
-    api_v1.add_resource(SearchIndexListResource, u'/searchindices/')
-    api_v1.add_resource(SearchIndexResource,
-                        u'/searchindices/<int:searchindex_id>/')
-    api_v1.add_resource(GraphResource,
-                        u'/sketches/<int:sketch_id>/explore/graph/')
+    for route in V1_API_ROUTES:
+        api_v1.add_resource(*route)
 
-    # Experimental API resources
+    # Setup URL routes for the experimental API.
     api_experimental = Api(app, prefix=u'/api/experimental')
-    api_experimental.add_resource(WinLoginsResource,
-                                  u'/sketches/<int:sketch_id>/win_logins/')
-    api_experimental.add_resource(WinServicesResource,
-                                  u'/sketches/<int:sketch_id>/win_services/')
-    api_experimental.add_resource(CreateGraphResource,
-                                  u'/sketches/<int:sketch_id>/create_graph/')
-    api_experimental.add_resource(DeleteGraphResource,
-                                  u'/sketches/<int:sketch_id>/delete_graph/')
+    for route in EXP_API_ROUTES:
+        api_experimental.add_resource(*route)
 
     # Register error handlers
     # pylint: disable=unused-variable
