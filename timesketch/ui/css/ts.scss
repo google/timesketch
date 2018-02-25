@@ -285,18 +285,10 @@ body > header {
 
 .event-insert-grow {
   padding: 1px 1px 1px 1px;
-  border-radius: 1px;
-  // border-bottom: 2px solid red;
-  height: 3px;
-  //width: 100%;
-  //margin: 1px 1% 1px 1%;
-  // float: left;
   position: relative;
-  transition: height 0.5s;
-  -webkit-transition: height 0.5s;
-  // transition: border-bottom 0.5s;
-  // -webkit-transition: border-bottom 0.5s;
-  //text-align: center;
+  border-bottom: solid 0px;
+  transition: border-bottom 0.5s;
+  -webkit-transition: border-bottom 0.5s;
   overflow: hidden;
 }
 
@@ -304,9 +296,7 @@ body > header {
   content: '';
   width: 100%;
   position: absolute;
-  height: 3px;
-  //border-bottom: solid 3px #019fb6;
-  background-color: #019fb6;
+  border-bottom: solid 0px;
   -webkit-transform: scaleX(0.0001);
   -ms-transform: scaleX(0.0001);
   transform: scaleX(0.0001);
@@ -314,13 +304,11 @@ body > header {
   transition: transform 250ms ease-in-out;
 }
 
-.event-insert-grow:hover {
-  height: 15px;
-  // margin-bottom: 15px;
-  // border-bottom-color: red;
+.event-insert-hover {
+  border-bottom: solid 10px;
 }
 
-.event-insert-grow:hover:after {
+.event-insert-hover:after {
   -webkit-transform: scaleX(1);
   -ms-transform: scaleX(1);
   transform: scaleX(1);

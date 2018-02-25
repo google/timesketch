@@ -39,6 +39,7 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
             viewId: '=',
             namedView: '=',
             similarityEnabled: '=',
+            addEvent: '&',
         },
         require: '^tsSearch',
         controller: function ($scope) {
@@ -246,6 +247,7 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
             scope.applyOrder = function () {
                 ctrl.search(scope.query, scope.filter)
             }
+
             scope.$watch('pageSize', function (value) {
                 scope.filter['size'] = scope.pageSize
                 scope.currentPage = 0
@@ -283,6 +285,7 @@ export const tsEvent = function () {
             enableContextQuery: '=',
             order: '=',
             similarityLayer: '=',
+            addEvent: '=',
         },
         require: '?^tsSearch',
         controller: function ($scope, timesketchApi) {
@@ -347,6 +350,18 @@ export const tsEvent = function () {
                 $scope.$emit('datetime-clicked', {datetimeclicked: $scope.event._source.datetime})
             }
 
+            // this function provides the hover effect/visual cues for manual
+            // event addition.  we're not able to access the parent div from
+            // a child via css, so we end up with this hacky thing.
+            $scope.eventAddNgClass = ""
+            $scope.eventAddHover = function($event){
+              $scope.eventAddNgClass = "event-insert-hover"
+            }
+
+            $scope.eventAddLeave = function($event){
+              $scope.eventAddNgClass = ""
+            }
+
             $scope.getDetail = function () {
                 if ($scope.eventdetail) {return}
                 timesketchApi.getEvent(
@@ -393,12 +408,6 @@ export const tsEvent = function () {
                 }
 
             })
-
-        },
-        link: function (scope, elem, attrs, ctrl) {
-            scope.getContext = function (event) {
-                ctrl.getContext(event)
-            }
         },
     }
 }
@@ -424,35 +433,18 @@ export const tsEventAdd = function () {
             enableContextQuery: '=',
             order: '=',
             similarityLayer: '=',
+            addEvent: '=',
         },
-        require: '?^tsSearch',
+        require: '^tsSearch',
         controller: function ($scope, timesketchApi) {
             // Defaults to not showing form to add events.
-            $scope.showForm = false
-            $scope.newTimeline = false
+            $scope.addEvent.timestamp = $scope.event._source.datetime
 
-            $scope.eventAddForm = {}
-            $scope.timeline_names = $scope.meta.timeline_names
-            $scope.timeline_names['new'] = "Create new..."
-
-            $scope.eventAddForm.timestamp = $scope.event._source.datetime
-
-            $scope.clearForm = function () {
-              $scope.eventAddForm = {}
-              $scope.showForm = !$scope.showForm
-            }
-
-            $scope.$watch('timeline_selected', function (value) {
-              if(value === "Create new..."){
-                  $scope.newTimeline = true
-              } else {
-                  $scope.newTimeline = false
-              }
-            })
-        },
-        link: function (scope, elem, attrs, ctrl) {
-            scope.getContext = function (event) {
-                ctrl.getContext(event)
+            $scope.clearForm = function (eventId) {
+              $scope.addEvent.timestampDesc = ""
+              $scope.addEvent.message = ""
+              $scope.addEvent.timestamp = $scope.event._source.datetime
+              $scope.addEvent[eventId].showForm = !$scope.addEvent[eventId].showForm
             }
         },
     }

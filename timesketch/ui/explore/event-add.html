@@ -1,46 +1,35 @@
-<div class="event-insert-grow" ng-click="showForm = !showForm" ng-show="!showForm"></div>
-<div class="container card" style="margin: 10px 5px 10px 5px;" ng-show="showForm">
-<form name="eventaddform" class="form-inline"  ng-submit="submitAddForm()">
-  <fieldset>
-    <div class="row"><div class="col-md-12"><h3>Insert event</h3></div></div>
-    <div class="row">
-        <label for="timelineSelect" class="col-md-2">Select timeline: </label>
-        <div class="col-md-3">
-            <select class="form-control" id="timelineSelect" ng-options="n for (t, n) in timeline_names" ng-model="timeline_selected"></select>
+<!-- <div class="event-insert-grow" ng-click="showForm = !showForm" ng-show="!showForm"></div> -->
+<div class="container card" style="margin: 10px 0px 10px 0px;" ng-show="addEvent[event._id].showForm">
+    <form name="eventaddform" class="form-inline"  ng-submit="submitAddForm()">
+      <fieldset>
+        <div class="row"><div class="col-md-12"><h3>Insert event</h3></div></div>
+        <div class="row">
+            <div class="col-md-6">
+                <span class="form-group">
+                    <label for="eventTimestampInput">Timestamp: </label>
+                    <input class="form-control" id="eventTimestampInput" placeholder="Timestamp" ng-model="addEvent.timestamp"/>
+                </span>
+                <span class="form-group">
+                    <label for="eventTimestampDescInput">Timestamp description: </label>
+                    <input class="form-control" id="eventTimestampDescInput" placeholder="Attack mitigated" ng-model="addEvent.timestampDesc"/>
+                </span>
+            </div>
+            <div class="col-md-6">
+                <span class="form-group" style="width: 100%;">
+                    <label for="eventMessageTextarea">Event message: </label>
+                    <textarea class="form-control" id="eventMessageTextarea" style="width: 100%;" placeholder="Event message" ng-model="addEvent.message"></textarea>
+                </span>
+            </div>
         </div>
-        <!-- <label for="timelineNameInput" class="col-md-2" ng-show="newTimeline">Timeline name: </label> -->
-        <div class="col-md-3" ng-show="newTimeline">
-            <input class="form-control" id="timelineNameInput" placeholder="new_timeline_1" ng-model="eventAddForm.timelineName"/>
-        </div>
-    </div>
-    <br>
-    <div class="row">
-        <div class="col-md-6">
+        <br>
+        <div class="row">
+          <div class="col-md-12">
             <span class="form-group">
-                <label for="eventTimestampInput">Timestamp: </label>
-                <input class="form-control" id="eventTimestampInput" placeholder="Timestamp" ng-model="eventAddForm.timestamp"/>
+                <input type="submit" class="btn btn-primary" value="Create"/>
+                <input type="reset" class="btn btn-default" value="Cancel" ng-click="clearForm(event._id)"/>
             </span>
-            <span class="form-group">
-                <label for="eventTimestampDescInput">Timestamp description: </label>
-                <input class="form-control" id="eventTimestampDescInput" placeholder="Attack mitigated" ng-model="eventAddForm.timestampDesc"/>
-            </span>
+          </div>
         </div>
-        <div class="col-md-6">
-            <span class="form-group" style="width: 100%;">
-                <label for="eventMessageTextarea">Event message: </label>
-                <textarea class="form-control" id="eventMessageTextarea" style="width: 100%;" placeholder="Event message" ng-model="eventAddForm.message"></textarea>
-            </span>
-        </div>
-    </div>
-    <br>
-    <div class="row">
-      <div class="col-md-12">
-        <span class="form-group">
-            <input type="submit" class="btn btn-primary" value="Create"/>
-            <input type="reset" class="btn btn-default" value="Cancel" ng-click="clearForm()"/>
-        </span>
-      </div>
-    </div>
-  </fieldset>
-</form>
+      </fieldset>
+    </form>
 </div>

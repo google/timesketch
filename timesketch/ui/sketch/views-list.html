@@ -1,4 +1,5 @@
 <ul class="content-list" ng-hide="!savedViews.length">
+    <ts-search-template-list sketch-id="sketchId"></ts-search-template-list>
     <li class="content-item" ng-repeat="view in savedViews">
         <div ng-if="showDelete">
             <i ng-click="confirmDelete =! confirmDelete" ng-hide="confirmDelete" class="fa fa-trash pull-right" style="cursor: pointer; margin-top:3px;margin-left:10px;"></i>

@@ -6,49 +6,57 @@
     </div>
 </div>
 
-<table id="search-result-table" width="100%">
-    <tr ng-style="{'opacity': similarityLayer ? opacity : 1}">
-        <td ng-click="addFilterStart()" style="cursor: copy; background: #{{::timeline_color}}" width="210px">
-            {{::event._source.datetime}}
-        </td>
+<div ng-class="eventAddNgClass" class="event-insert-grow" ng-init="addEvent[event._id].showForm = false">
+    <table id="search-result-table" width="100%">
+      <tr ng-style="{'opacity': similarityLayer ? opacity : 1}">
+          <td ng-click="addFilterStart()" style="cursor: copy; background: #{{::timeline_color}}" width="210px">
+              {{::event._source.datetime}}
+          </td>
 
-        <td width="20px">
-            <input type="checkbox" ng-click="toggleSelected()" ng-checked="event.selected">
-        </td>
+          <td width="20px">
+              <input type="checkbox" ng-click="toggleSelected()" ng-checked="event.selected">
+          </td>
 
-        <td width="25px">
-            <i ng-click="event.star = !event.star;toggleStar()" ng-class="{true: 'fa fa-lg fa-star icon-yellow', false: 'fa fa-lg fa-star-o icon-grey'}[event.star]"></i>
-        </td>
+          <td width="25px">
+              <i ng-click="event.star = !event.star;toggleStar()" ng-class="{true: 'fa fa-lg fa-star icon-yellow', false: 'fa fa-lg fa-star-o icon-grey'}[event.star]"></i>
+          </td>
 
-        <td width="30px">
-            <i ng-click="event.hidden = !event.hidden;toggleHidden()" ng-class="{true: 'fa fa-lg fa-eye-slash', false: 'fa fa-lg fa-eye-slash icon-grey'}[event.hidden]"></i>
-        </td>
+          <td width="30px">
+              <i ng-click="event.hidden = !event.hidden;toggleHidden()" ng-class="{true: 'fa fa-lg fa-eye-slash', false: 'fa fa-lg fa-eye-slash icon-grey'}[event.hidden]"></i>
+          </td>
 
-        <td width="35px">
-          <div ng-if="enableContextQuery" style="width:20px;height:20px;cursor: pointer;" class="tooltips" ng-click="getContext(event)">
-              <span>Context query</span><i class="fa fa-search-plus" style="color:#999;"></i>
-          </div>
-        </td>
+          <td width="30px">
+            <div ng-mouseover="eventAddHover($event)" ng-mouseleave="eventAddLeave($event)" style="width:20px;height:20px;cursor: pointer;" class="tooltips" ng-click="eventAddLeave();addEvent[event._id].showForm = !addEvent[event._id].showForm">
+                <span>Insert event</span><i ng-class="{true: 'fa fa-lg fa-tasks', false: 'fa fa-lg fa-tasks icon-grey'}[event.hidden]"></i>
+            </div>
+          </td>
 
-        <td class="event-message" ng-class="{'event-message-selected': event.selected, 'event-message-starred': event.star, 'event-message-wrap': !showDetails, 'event-message-details': showDetails}" ng-click="getDetail();showDetails = !showDetails">
-            <span ng-show="comment"><i class="fa fa-comments"></i></span>
-            <span ng-if="::event._source.tag" ng-repeat="tag in ::event._source.tag" class="label label-success">{{::tag}}</span>
-            <span ng-if="::event._source.label" ng-repeat="label in ::event._source.label">
-              <span ng-if="::label.indexOf('__') != 0" class="label label-success">{{::label}}</span>
-            </span>
-            <span ng-class="{true: 'message-hidden'}[event.hidden]">[{{ event._source.timestamp_desc }}] <span title="{{ event._source.message }}">{{ event._source.message|limitTo:1000 }}</span></span>
-        </td>
+          <td width="30px">
+            <div ng-if="enableContextQuery" style="width:20px;height:20px;cursor: pointer;" class="tooltips" ng-click="getContext(event)">
+                <span>Context query</span><i class="fa fa-search-plus" style="color:#999;"></i>
+            </div>
+          </td>
 
-        <td width="25px" class="event-message" ng-class="{'event-message-selected': event.selected, 'event-message-starred': event.star, 'event-message-details': showDetails}">
-            <div style="width:20px;height:20px;cursor: pointer;" class="pull-right tooltips"><span>Details</span><i ng-class="{true: 'fa fa-minus-square-o', false: 'fa fa-plus-square-o'}[showDetails]" ng-click="getDetail();showDetails = !showDetails" style="color:#999;"></i></div>
-        </td>
+          <td class="event-message" ng-class="{'event-message-selected': event.selected, 'event-message-starred': event.star, 'event-message-wrap': !showDetails, 'event-message-details': showDetails}" ng-click="getDetail();showDetails = !showDetails">
+              <span ng-show="comment"><i class="fa fa-comments"></i></span>
+              <span ng-if="::event._source.tag" ng-repeat="tag in ::event._source.tag" class="label label-success">{{::tag}}</span>
+              <span ng-if="::event._source.label" ng-repeat="label in ::event._source.label">
+                <span ng-if="::label.indexOf('__') != 0" class="label label-success">{{::label}}</span>
+              </span>
+              <span ng-class="{true: 'message-hidden'}[event.hidden]">[{{ event._source.timestamp_desc }}] <span title="{{ event._source.message }}">{{ event._source.message|limitTo:1000 }}</span></span>
+          </td>
 
-        <td width="150px" style="text-align: right;background: #f1f1f1; white-space:nowrap; overflow:hidden; text-overflow: ellipsis;">
-            <span title="{{::timeline_name}}" class="label ts-name-label">{{::timeline_name}}</span>
-        </td>
+          <td width="25px" class="event-message" ng-class="{'event-message-selected': event.selected, 'event-message-starred': event.star, 'event-message-details': showDetails}">
+              <div style="width:20px;height:20px;cursor: pointer;" class="pull-right tooltips"><span>Details</span><i ng-class="{true: 'fa fa-minus-square-o', false: 'fa fa-plus-square-o'}[showDetails]" ng-click="getDetail();showDetails = !showDetails" style="color:#999;"></i></div>
+          </td>
 
-    </tr >
-</table>
+          <td width="150px" style="text-align: right;background: #f1f1f1; white-space:nowrap; overflow:hidden; text-overflow: ellipsis;">
+              <span title="{{::timeline_name}}" class="label ts-name-label">{{::timeline_name}}</span>
+          </td>
+
+      </tr >
+    </table>
+</div>
 
 <div ng-show="showDetails" class="event-detail">
     <div class="event-detail-container">

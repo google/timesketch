@@ -65,6 +65,8 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
             }, true)
         },
         controller: function ($scope) {
+            $scope.addEvent = {}
+            $scope.addEvent.showForm = false
             $scope.filter = {'indices': []}
             $scope.new_searchtemplate = false
             timesketchApi.getSketch($scope.sketchId).success(function (data) {
