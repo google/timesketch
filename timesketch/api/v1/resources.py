@@ -29,9 +29,12 @@ POST /sketches/:sketch_id/views/
 
 import datetime
 import json
+import md5
 import os
+import time
 import uuid
 
+from dateutil import parser
 from flask import abort
 from flask import current_app
 from flask import jsonify
@@ -62,6 +65,7 @@ from timesketch.lib.forms import AggregationForm
 from timesketch.lib.forms import SaveViewForm
 from timesketch.lib.forms import NameDescriptionForm
 from timesketch.lib.forms import EventAnnotationForm
+from timesketch.lib.forms import EventCreateForm
 from timesketch.lib.forms import ExploreForm
 from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
@@ -250,6 +254,9 @@ class ResourceMixin(object):
                 try:
                     model_fields = self.fields_registry[model.__tablename__]
                 except AttributeError:
+                    print self.fields_registry
+                    print model
+                    print model[0]
                     model_fields = self.fields_registry[model[0].__tablename__]
             schema[u'objects'] = [marshal(model, model_fields)]
 
@@ -725,15 +732,108 @@ class AggregationResource(ResourceMixin, Resource):
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
 class EventCreateResource(ResourceMixin, Resource):
-    """Resource to create a single event in the datastore.
+    """Resource to create an annotation for an event."""
 
-    HTTP Args:
-        searchindex_id: The datastore searchindex id as string
-        event_id: The datastore event id as string
-    """
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+        Handler for /api/v1/sketches/:sketch_id/event/create/
 
-    def __init__(self, timeline_id, event):
-        return self
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            An annotation in JSON (instance of flask.wrappers.Response)
+        """
+        form = EventCreateForm.build(request)
+        if form.validate_on_submit():
+            sketch = Sketch.query.get_with_acl(sketch_id)
+            timeline_name = u'sketch internal timeline'
+            index_name_seed = u'herpderp' + str(sketch_id)
+            event_type = u'user_created_event'
+
+            # derive datetime from timestamp:
+            parsed_datetime = parser.parse(form.timestamp.data)
+            timestamp = int(time.mktime(parsed_datetime.timetuple())) * 100000
+
+            event = {
+                "datetime": form.timestamp.data,
+                "timestamp": timestamp,
+                "timestamp_desc": form.timestamp_desc.data,
+                "message": form.message.data,
+            }
+
+            # Current user
+            username = current_user.username
+
+            # We do not need a human readable filename or
+            # datastore index name, so we use UUIDs here.
+            index_name = unicode(md5.new(index_name_seed).hexdigest())
+
+            # Hold on to your butts...
+            try:
+                # Create the index in Elasticsearch (unless it already exists)
+                self.datastore.create_index(
+                    index_name=index_name,
+                    doc_type=event_type)
+
+                # Create the search index in the Timesketch database
+                searchindex = SearchIndex.get_or_create(
+                    name=timeline_name,
+                    description=u'internal timeline for user-created events',
+                    user=current_user,
+                    index_name=index_name)
+                searchindex.grant_permission(
+                    permission=u'read', user=current_user)
+                searchindex.grant_permission(
+                    permission=u'write', user=current_user)
+                searchindex.grant_permission(
+                    permission=u'delete', user=current_user)
+                print self.to_json(searchindex).data
+                searchindex.set_status(u'ready')
+                db_session.add(searchindex)
+                db_session.commit()
+
+                timeline = None
+                if sketch and sketch.has_permission(current_user, u'write'):
+                    self.datastore.import_event(
+                        index_name,
+                        event_type,
+                        event,
+                        flush_interval=1)
+
+                    timeline = Timeline.get_or_create(
+                        name=searchindex.name,
+                        description=searchindex.description,
+                        sketch=sketch,
+                        user=current_user,
+                        searchindex=searchindex)
+                    # print self.to_json(timeline).data
+                    if timeline not in sketch.timelines:
+                        sketch.timelines.append(timeline)
+
+                    db_session.add(timeline)
+                    db_session.commit()
+
+                # Return Timeline if it was created.
+                # pylint: disable=no-else-return
+                if timeline:
+                    return self.to_json(
+                        timeline, status_code=HTTP_STATUS_CODE_CREATED)
+                else:
+                    return self.to_json(
+                        searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+
+            except Exception as e:
+                print e
+                raise ApiHTTPError(
+                    message="failed to add event",
+                    status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+
+        else:
+            print form.errors
+            raise ApiHTTPError(
+                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
 
 
 class EventResource(ResourceMixin, Resource):
@@ -913,6 +1013,7 @@ class UploadFileResource(ResourceMixin, Resource):
             _filename, _extension = os.path.splitext(file_storage.filename)
             file_extension = _extension.lstrip(u'.')
             timeline_name = form.name.data or _filename.rstrip(u'.')
+            delimiter = u','
 
             sketch = None
             if sketch_id:
@@ -964,6 +1065,7 @@ class UploadFileResource(ResourceMixin, Resource):
                     timeline_name,
                     index_name,
                     file_extension,
+                    delimiter,
                     username
                 ),
                 task_id=index_name

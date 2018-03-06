@@ -297,6 +297,23 @@ export const timesketchApiImplementation = function ($http) {
         return $http.post(resource_url, params)
     }
 
+    this.addEvent = function (sketch_id, event) {
+        /**
+         * Execute query and filter on the datastore.
+         * @param sketch_id - The id for the sketch.
+         * @param event - Object containing event details
+         * @returns A $http promise with two methods, success and error.
+         */
+        console.log(event)
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/event/create/'
+        const params = {
+            message: event.message,
+            timestamp: event.timestamp,
+            timestamp_desc: event.timestamp_desc,
+        }
+        return $http.post(resource_url, params)
+    }
+
     this.aggregation = function (sketch_id, query, filter, queryDsl, aggtype) {
         /**
          * Execute query and filter on the datastore.

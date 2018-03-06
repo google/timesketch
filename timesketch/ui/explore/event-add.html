@@ -1,5 +1,5 @@
 <!-- <div class="event-insert-grow" ng-click="showForm = !showForm" ng-show="!showForm"></div> -->
-<div class="container card" style="margin: 10px 0px 10px 0px;" ng-show="addEvent[event._id].showForm">
+<div class="container card" style="margin: 10px 0px 10px 0px;" ng-show="addEventData[event._id].showForm" ng-init="addEventData[event._id].timestamp = event._source.datetime">
     <form name="eventaddform" class="form-inline"  ng-submit="submitAddForm()">
       <fieldset>
         <div class="row"><div class="col-md-12"><h3>Insert event</h3></div></div>
@@ -7,17 +7,17 @@
             <div class="col-md-6">
                 <span class="form-group">
                     <label for="eventTimestampInput">Timestamp: </label>
-                    <input class="form-control" id="eventTimestampInput" placeholder="Timestamp" ng-model="addEvent.timestamp"/>
+                    <input class="form-control" id="eventTimestampInput" placeholder="Timestamp" ng-model="addEventData[event._id].timestamp"/>
                 </span>
                 <span class="form-group">
                     <label for="eventTimestampDescInput">Timestamp description: </label>
-                    <input class="form-control" id="eventTimestampDescInput" placeholder="Attack mitigated" ng-model="addEvent.timestampDesc"/>
+                    <input class="form-control" id="eventTimestampDescInput" placeholder="Attack mitigated" ng-model="addEventData[event._id].timestamp_desc"/>
                 </span>
             </div>
             <div class="col-md-6">
                 <span class="form-group" style="width: 100%;">
-                    <label for="eventMessageTextarea">Event message: </label>
-                    <textarea class="form-control" id="eventMessageTextarea" style="width: 100%;" placeholder="Event message" ng-model="addEvent.message"></textarea>
+                    <label for="eventMessageTextarea">Message: </label>
+                    <textarea class="form-control" id="eventMessageTextarea" style="width: 100%;" placeholder="Ruleset updated to block traffic" ng-model="addEventData[event._id].message"></textarea>
                 </span>
             </div>
         </div>
@@ -25,8 +25,8 @@
         <div class="row">
           <div class="col-md-12">
             <span class="form-group">
-                <input type="submit" class="btn btn-primary" value="Create"/>
-                <input type="reset" class="btn btn-default" value="Cancel" ng-click="clearForm(event._id)"/>
+                <input type="submit" class="btn btn-primary" value="Create" ng-click="doAddEvent(event._id)"/>
+                <input type="reset" class="btn btn-default" value="Cancel" ng-click="clearAddEvent(event._id)"/>
             </span>
           </div>
         </div>

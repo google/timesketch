@@ -39,7 +39,7 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
             viewId: '=',
             namedView: '=',
             similarityEnabled: '=',
-            addEvent: '&',
+            addEventData: '=',
         },
         require: '^tsSearch',
         controller: function ($scope) {
@@ -285,7 +285,7 @@ export const tsEvent = function () {
             enableContextQuery: '=',
             order: '=',
             similarityLayer: '=',
-            addEvent: '=',
+            addEventData: '=',
         },
         require: '?^tsSearch',
         controller: function ($scope, timesketchApi) {
@@ -354,7 +354,10 @@ export const tsEvent = function () {
             // event addition.  we're not able to access the parent div from
             // a child via css, so we end up with this hacky thing.
             $scope.eventAddNgClass = ""
-            $scope.eventAddHover = function($event){
+            $scope.eventAddHover = function(eventId){
+              if($scope.addEventData[eventId].showForm){
+                  return
+              }
               $scope.eventAddNgClass = "event-insert-hover"
             }
 
@@ -424,27 +427,39 @@ export const tsEventAdd = function () {
         template: require('./event-add.html'),
         scope: {
             sketchId: '=',
-            meta: '=',
+            // meta: '=',
             event: '=',
-            prevTimestamp: '=',
-            nextTimestamp: '=',
-            index: '=',
-            isContextEvent: '=',
-            enableContextQuery: '=',
-            order: '=',
-            similarityLayer: '=',
-            addEvent: '=',
+            filter: '=',
+            query: '=',
+            queryDsl: '=',
+            // prevTimestamp: '=',
+            // nextTimestamp: '=',
+            // index: '=',
+            // isContextEvent: '=',
+            // enableContextQuery: '=',
+            // order: '=',
+            // similarityLayer: '=',
+            addEventData: '=',
         },
         require: '^tsSearch',
         controller: function ($scope, timesketchApi) {
-            // Defaults to not showing form to add events.
-            $scope.addEvent.timestamp = $scope.event._source.datetime
-
-            $scope.clearForm = function (eventId) {
-              $scope.addEvent.timestampDesc = ""
-              $scope.addEvent.message = ""
-              $scope.addEvent.timestamp = $scope.event._source.datetime
-              $scope.addEvent[eventId].showForm = !$scope.addEvent[eventId].showForm
+            $scope.clearAddEvent = function (eventId) {
+                $scope.addEventData[eventId].timestamp_desc = ""
+                $scope.addEventData[eventId].message = ""
+                $scope.addEventData[eventId].timestamp = ""
+                $scope.addEventData[eventId].showForm = !$scope.addEvent[eventId].showForm
+            }
+        },
+        link: function (scope, elem, attrs, ctrl) {
+            console.log(scope)
+            scope.doAddEvent = function (eventId) {
+                let event = scope.addEventData[eventId]
+                ctrl.addEvent(event).then( function (response) {
+                    if ( scope.filter.indices.indexOf( response.data.objects[0].searchindex.index_name ) === -1 ){
+                        scope.filter.indices.push( response.data.objects[0].searchindex.index_name )
+                    }
+                    ctrl.search(scope.query, scope.filter, scope.queryDsl)
+                })
             }
         },
     }

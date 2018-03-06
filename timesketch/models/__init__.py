@@ -13,6 +13,7 @@
 # limitations under the License.
 """This package handles setting up and providing the database connection."""
 
+import traceback
 from flask import abort
 from flask_login import current_user
 from flask_sqlalchemy import BaseQuery
@@ -28,10 +29,31 @@ from sqlalchemy import Integer
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 
+def query_wrapper(orig_query_method):
+    def _query(*args, **kwargs):
+        print(traceback.extract_stack(limit=10))
+        return orig_query_method(*args, **kwargs)
+    return _query
+
+def add_wrapper(orig_add_method):
+    def _add(*args, **kwargs):
+        print(traceback.extract_stack(limit=10))
+        return orig_add_method(*args, **kwargs)
+    return _add
+
+def commit_wrapper(orig_commit_method):
+    def _commit(*args, **kwargs):
+        print(traceback.extract_stack(limit=10))
+        return orig_commit_method(*args, **kwargs)
+    return _commit
+
 # The database session
 engine = None
 session_maker = sessionmaker()
 db_session = scoped_session(session_maker)
+db_session.query_property = query_wrapper(db_session.query_property)
+db_session.add = add_wrapper(db_session.add)
+db_session.commit = commit_wrapper(db_session.commit)
 
 
 def configure_engine(url):
@@ -118,4 +140,5 @@ class BaseModel(object):
             instance = cls(**kwargs)
             db_session.add(instance)
             db_session.commit()
+        print instance
         return instance

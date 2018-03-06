@@ -231,10 +231,6 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
         if url_size:
             query_filter[u'size'] = url_size
         view.query_filter = view.validate_filter(query_filter)
-        print "query_filter before:"
-        print query_filter
-        print "query_filter after:"
-        print view.query_filter
         view.query_dsl = None
         save_view = True
 
