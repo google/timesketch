@@ -117,12 +117,14 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
                 $scope.query = query
                 $scope.filter = filter
                 $scope.queryDsl = queryDsl
+                $scope.dataLoaded = false
 
                 timesketchApi.search($scope.sketchId, query, filter, queryDsl)
                     .success(function (data) {
                         $scope.events = data.objects
                         $scope.meta = data.meta
-                        if (data.meta.es_total_count > filter['limit']) {
+                        $scope.currentPage = 0
+                        if (data.meta.es_total_count > filter['size']) {
                             $scope.meta.noisy = true
                         }
                         $scope.meta.numHiddenEvents = 0

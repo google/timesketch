@@ -42,6 +42,7 @@ export const tsFilter = function () {
         require: '^tsSearch',
         link: function (scope, elem, attrs, ctrl) {
             scope.applyFilter = function () {
+                scope.filter.from = 0
                 scope.parseFilterDate(scope.filter.time_start, scope.filter.time_end)
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
             }
@@ -55,6 +56,7 @@ export const tsFilter = function () {
 
             scope.enableAllTimelines = function () {
                 scope.filter.indices = []
+                scope.filter.from = 0
                 for (const timeline of scope.sketch.active_timelines) {
                     scope.filter.indices.push(timeline.searchindex.index_name)
                 }
@@ -67,6 +69,7 @@ export const tsFilter = function () {
                 scope.meta.es_total_count = 0
                 scope.meta.es_time = 0
                 scope.meta.noisy = false
+                scope.filter.from = 0
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
             }
 
