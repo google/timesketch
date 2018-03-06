@@ -210,14 +210,14 @@ ab(ab)?     # no match \
    </td>
    <td><code>Acts as "OR operator"</code>
    </td>
-   <td><code>For "aabb"</code>
+   <td>For **"aabb"**
 <p>
-<code>aabb|bbaa   # match \
-aacc|bb     # no match \
-aa(cc|bb)   # match \
-a+|b+       # no match \
-a+b+|b+a+   # match \
-a+(b|c)+    # match</code>
+<code>aabb|bbaa   # match 
+<code>aacc|bb     # no match </code>
+<code>aa(cc|bb)   # match </code>
+<code>a+|b+       # no match </code>
+<code>a+b+|b+a+   # match </code>
+<code>a+(b|c)+    # match</code>
    </td>
   </tr>
   <tr>
@@ -235,5 +235,25 @@ a+(b|c)+    # match</code>
 </table>
 
 ### Advanced search
+
+Advanced search queries are in JSON format,  and let you use the full power of Elasticsearch. You can view your existing Query String query as an advanced Elasticsearch query by clicking "Advanced" button below the query entry field.
+
+[Full Elasticsearch guide](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html)
+
 ## Views
+
+Views are saved results of your search queries, for easier access later. 
+
+To save search results as a view, run your search query, apply filters if needed, and click the “Save view” button under the query field. Now you can access this view from Overview page, from the “Views” tab, and from “Saved views” drop-down menu on Explore page of your sketch.
+
+You can further refine the data in your views by manually hiding certain events. To do it, click a small eye icon next to the icon. If you have hidden events in your view, they can be un-hidden by clicking red button “Show hidden events” in the upper right corner of your timeline.
+
+You can save changes to your views by clicking “Update View” button
+
+
 ## Search templates
+Search templates allow quick creation of most commonly used views.
+You can browse available templates in the “Search templates” drop-down menu below search query window on “Explore page”
+
+On “Views” page, you can quickly generate and add a view from a template to your sketch. To do so, just scroll down to the template you want to use, and click “Quick add”
+
