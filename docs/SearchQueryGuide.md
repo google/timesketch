@@ -9,86 +9,23 @@ Simple search queries relies on[ Query String Query](https://www.elastic.co/guid
 
 Data fields will vary depending on the source being uploaded, but here are some that are mandatory, and therefore will be present in any timeline.
 
+| Field | Description |Example query|
+|-------|-------------|-------------|
+| `message`|String with information about event| `message:”This is a message”`|
+| `timestamp`|Timestamp as microseconds since Unix epoch|`timestamp:”363420000”`|
+| `datetime`|Date and time in ISO8601 format| `datetime:”2016-03-31T22:56:32+00:00”`
+| `timestamp_desc`|String explaining what type of timestamp it is|`timestamp_desc:”Content Modification Time”`|
 
 
-<table>
-  <tr>
-   <td>Field
-   </td>
-   <td>Description
-   </td>
-   <td>Example query
-   </td>
-  </tr>
-  <tr>
-   <td><code>message</code>
-   </td>
-   <td>String with information about event
-   </td>
-   <td><code>message:"This is a message"</code>
-   </td>
-  </tr>
-  <tr>
-   <td><code>timestamp</code>
-   </td>
-   <td>Timestamp as microseconds since Unix epoch
-   </td>
-   <td><code>timestamp:"363420000"</code>
-   </td>
-  </tr>
-  <tr>
-   <td><code>datetime</code>
-   </td>
-   <td>Date and time in ISO8601 format
-   </td>
-   <td><code>datetime:"2016-03-31T22:56:32+00:00"</code>
-   </td>
-  </tr>
-  <tr>
-   <td><code>timestamp_desc</code>
-   </td>
-   <td>String explaining what type of timestamp it is
-   </td>
-   <td><code>timestamp_desc:"Content Modification Time"</code>
-   </td>
-  </tr>
-</table>
+
 
 Additional fields come from the imported Plaso file  and depend on source type. You can see which additional fields are available in your timeline by clicking on any event and seeing the detailed list of all fields and their values.
-<table>
-  <tr>
-   <td>Field
-   </td>
-   <td>Description
-   </td>
-   <td>Example query
-   </td>
-  </tr>
-  <tr>
-   <td>data_type
-   </td>
-   <td>Data types present in timeline (depends on source)
-   </td>
-   <td>data_type:"windows:registry:key_value" 
-   </td>
-  </tr>
-  <tr>
-   <td>filename
-   </td>
-   <td>Search for particular filetypes
-   </td>
-   <td>filename:*.exe
-   </td>
-  </tr>
-  <tr>
-   <td>strings:
-   </td>
-   <td>Search for a particular string
-   </td>
-   <td>strings:"PsExec" 
-   </td>
-  </tr>
-</table>
+
+|Field|	Description|	Example query|
+|-----|------------|---------------|
+|`data_type`|	Data types present in timeline (depends on source)|	`data_type:"windows:registry:key_value"`
+|`filename`|	Search for particular filetypes|	`filename:*.exe`|
+|`strings:`|	Search for a particular string|	`strings:"PsExec"`|
 
 
 ### Search operators
@@ -111,6 +48,7 @@ Some characters are reserved for regular expressions and must be escaped in the 
 Below are syntax elements and example regular expressions
 
 
+
 <table>
   <tr>
    <td>Sign
@@ -123,13 +61,12 @@ Below are syntax elements and example regular expressions
   <tr>
    <td><code>"."</code>
    </td>
-   <td><code>Match any character</code>
+   <td>Match any character
    </td>
-   <td> For *"aaabbb"*:
+    <td>For <b>"aaabbb"</b>:
 <p>
-<code>ab...   # match 
-<p>
-a.c.e   # match </code>
+<code>ab...   # match </code><br />
+<code>a.c.e   # match</code>
    </td>
   </tr>
   <tr>
@@ -210,14 +147,14 @@ ab(ab)?     # no match \
    </td>
    <td><code>Acts as "OR operator"</code>
    </td>
-   <td>For **"aabb"**
+   <td><code>For "aabb"</code>
 <p>
-<code>aabb|bbaa   # match 
-<code>aacc|bb     # no match </code>
-<code>aa(cc|bb)   # match </code>
-<code>a+|b+       # no match </code>
-<code>a+b+|b+a+   # match </code>
-<code>a+(b|c)+    # match</code>
+<code>aabb|bbaa   # match \
+aacc|bb     # no match \
+aa(cc|bb)   # match \
+a+|b+       # no match \
+a+b+|b+a+   # match \
+a+(b|c)+    # match</code>
    </td>
   </tr>
   <tr>
@@ -233,6 +170,12 @@ ab(ab)?     # no match \
    </td>
   </tr>
 </table>
+
+
+
+
+
+
 
 ### Advanced search
 
