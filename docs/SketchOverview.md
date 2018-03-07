@@ -12,7 +12,7 @@ Alternatively, you can go to “Timelines” tab and select from all available t
 ## Navigating a sketch
 A sketch consists of 5 tabs: “Overview”, “Explore”, “Stories”, “Views” and “Timelines”.
 
-![navigation bar](docs/images/Navigation.png)
+![navigation bar](images/Navigation.png)
 
 **Overview** tab contains summary information about your sketch, such as sketch title, description, as well as shortcuts to saved views and timelines.
 
