@@ -129,7 +129,7 @@ Below are syntax elements and example regular expressions
    </td>
    <td>Forms sub-patterns
    </td>
-    <td><b>For "ababab"</b></td>
+    <td><b>For "ababab"</b>
 <p>
 <code>(ab)+       # match </code><br />
 <code>ab(ab)+     # match </code><br />
