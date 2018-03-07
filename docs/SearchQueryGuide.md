@@ -74,98 +74,98 @@ Below are syntax elements and example regular expressions
    </td>
    <td><code>One or more</code>
    </td>
-   <td><code>For "aaabbb":</code>
+   <td>For <b>"aaabbb"</b>:
 <p>
-<code>a+b+        # match \
-aa+bb+      # match \
-a+.+        # match \
+<code>a+b+        # match <br />
+aa+bb+      # match <br />
+a+.+        # match <br />
 aa+bbb+     # match</code>
    </td>
   </tr>
   <tr>
    <td><code>"*" </code>
    </td>
-   <td><code>Zero-or-more</code>
+   <td>Zero-or-more
    </td>
-   <td><code>For "aaabbb":</code>
+   <td>For <b>"aaabbb"</b>:
 <p>
-<code>a*b*        # match \
-a*b*c*      # match \
-.*bbb.*     # match \
+<code>a*b*        # match <br />
+a*b*c*      # match <br />
+.*bbb.*     # match <br />
 aaa*bbb*    # match</code>
    </td>
   </tr>
   <tr>
    <td><code>"?"</code> 
    </td>
-   <td><code>Zero-or-one</code>
+   <td>Zero-or-one
    </td>
-   <td><code>For "aaabbb":</code>
+    <td>For <b>"aaabbb"</b>:
 <p>
-<code>aaa?bbb?    # match \
-aaaa?bbbb?  # match \
-.....?.?    # match \
-aa?bb?      # no match</code>
+<code>aaa?bbb?    # match </code>
+<code>aaaa?bbbb?  # match </code>
+<code>.....?.?    # match </code>
+<code>aa?bb?      # no match</code>
    </td>
   </tr>
   <tr>
    <td><code>"{}"</code>
    </td>
-   <td><code>Min-to-max repetitions</code>
+   <td>Min-to-max repetitions
    </td>
-   <td><code>For "aaabbb":</code>
+   <td>For <b>"aaabbb"</b>:
 <p>
-<code>a{3}b{3}        # match \
-a{2,4}b{2,4}    # match \
-a{2,}b{2,}      # match \
-.{3}.{3}        # match \
-a{4}b{4}        # no match \
-a{4,6}b{4,6}    # no match \
+<code>a{3}b{3}        # match <br />
+a{2,4}b{2,4}    # match <br />
+a{2,}b{2,}      # match <br />
+.{3}.{3}        # match <br />
+a{4}b{4}        # no match <br />
+a{4,6}b{4,6}    # no match <br />
 a{4,}b{4,}      # no match</code>
    </td>
   </tr>
   <tr>
    <td><code>"()"</code>
    </td>
-   <td><code>Is used to form sub-patterns</code>
+   <td>Forms sub-patterns
    </td>
-   <td><code>For "ababab"</code>
+    <td><b>For "ababab"</b></td>
 <p>
-<code>(ab)+       # match \
-ab(ab)+     # match \
-(..)+       # match \
-(...)+      # no match \
-(ab)*       # match \
-abab(ab)?   # match \
-ab(ab)?     # no match \
-(ab){3}     # match \
+<code>(ab)+       # match <br />
+ab(ab)+     # match <br />
+(..)+       # match <br />
+(...)+      # no match <br />
+(ab)*       # match <br />
+abab(ab)?   # match <br />
+ab(ab)?     # no match <br />
+(ab){3}     # match <br />
 (ab){1,2}   # no match</code>
    </td>
   </tr>
   <tr>
    <td><code>"|"</code>
    </td>
-   <td><code>Acts as "OR operator"</code>
+   <td>Acts as "OR" operator
    </td>
-   <td><code>For "aabb"</code>
+   <td><b>For "aabb"</b>
 <p>
-<code>aabb|bbaa   # match \
-aacc|bb     # no match \
-aa(cc|bb)   # match \
-a+|b+       # no match \
-a+b+|b+a+   # match \
+<code>aabb|bbaa   # match <br />
+aacc|bb     # no match <br />
+aa(cc|bb)   # match <br />
+a+|b+       # no match <br />
+a+b+|b+a+   # match <br />
 a+(b|c)+    # match</code>
    </td>
   </tr>
   <tr>
    <td><code>"[]"</code>.
    </td>
-   <td><code>Sets range of potential characters</code>
+   <td>Sets range of potential characters
    </td>
-   <td><code>For "abcd":</code>
+   <td><b>For "abcd":</b>
 <p>
-<code>ab[cd]+     # match \
-[a-d]+      # match \
+<code>ab[cd]+     # match <br />
+[a-d]+      # match <br />
 [^a-d]+     # no match</code>
    </td>
   </tr>
