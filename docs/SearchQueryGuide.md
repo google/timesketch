@@ -66,20 +66,20 @@ Below are syntax elements and example regular expressions
     <td>For <b>"aaabbb"</b>:
 <p>
 <code>ab...   # match </code><br />
-<code>a.c.e   # match</code>
+<code>a.c.e   # match </code>
    </td>
   </tr>
   <tr>
    <td><code>"+"</code>
    </td>
-   <td><code>One or more</code>
+   <td>One or more
    </td>
    <td>For <b>"aaabbb"</b>:
 <p>
-<code>a+b+        # match <br />
-aa+bb+      # match <br />
-a+.+        # match <br />
-aa+bbb+     # match</code>
+<code>a+b+        # match </code><br />
+<code>aa+bb+      # match  </code><br />
+<code>a+.+        # match  </code><br />
+<code>aa+bbb+     # match </code>
    </td>
   </tr>
   <tr>
@@ -89,10 +89,10 @@ aa+bbb+     # match</code>
    </td>
    <td>For <b>"aaabbb"</b>:
 <p>
-<code>a*b*        # match <br />
-a*b*c*      # match <br />
-.*bbb.*     # match <br />
-aaa*bbb*    # match</code>
+<code>a*b*        # match </code><br />
+<code>a*b*c*      # match </code><br />
+<code>.*bbb.*     # match </code><br />
+<code>aaa*bbb*    # match</code>
    </td>
   </tr>
   <tr>
@@ -102,9 +102,9 @@ aaa*bbb*    # match</code>
    </td>
     <td>For <b>"aaabbb"</b>:
 <p>
-<code>aaa?bbb?    # match </code>
-<code>aaaa?bbbb?  # match </code>
-<code>.....?.?    # match </code>
+<code>aaa?bbb?    # match </code><br />
+<code>aaaa?bbbb?  # match </code><br />
+<code>.....?.?    # match </code><br />
 <code>aa?bb?      # no match</code>
    </td>
   </tr>
@@ -115,13 +115,13 @@ aaa*bbb*    # match</code>
    </td>
    <td>For <b>"aaabbb"</b>:
 <p>
-<code>a{3}b{3}        # match <br />
-a{2,4}b{2,4}    # match <br />
-a{2,}b{2,}      # match <br />
-.{3}.{3}        # match <br />
-a{4}b{4}        # no match <br />
-a{4,6}b{4,6}    # no match <br />
-a{4,}b{4,}      # no match</code>
+<code>a{3}b{3}        # match </code><br />
+<code>a{2,4}b{2,4}    # match </code><br />
+<code>a{2,}b{2,}      # match </code><br />
+<code>.{3}.{3}        # match </code><br />
+<code>a{4}b{4}        # no match </code><br />
+<code>a{4,6}b{4,6}    # no match </code><br />
+<code>a{4,}b{4,}      # no match</code>
    </td>
   </tr>
   <tr>
@@ -131,15 +131,16 @@ a{4,}b{4,}      # no match</code>
    </td>
     <td><b>For "ababab"</b></td>
 <p>
-<code>(ab)+       # match <br />
-ab(ab)+     # match <br />
-(..)+       # match <br />
-(...)+      # no match <br />
-(ab)*       # match <br />
-abab(ab)?   # match <br />
-ab(ab)?     # no match <br />
-(ab){3}     # match <br />
-(ab){1,2}   # no match</code>
+<code>(ab)+       # match </code><br />
+<code>ab(ab)+     # match </code><br />
+<code>ab(ab)+     # match </code><br />
+<code>(..)+       # match </code><br />
+<code>(...)+      # no match </code><br />
+<code>(ab)*       # match </code><br />
+<code>abab(ab)?   # match </code><br/>
+<code>ab(ab)?     # no match </code><br />
+<code>(ab){3}     # match </code><br />
+<code>(ab){1,2}   # no match</code>
    </td>
   </tr>
   <tr>
@@ -149,12 +150,12 @@ ab(ab)?     # no match <br />
    </td>
    <td><b>For "aabb"</b>
 <p>
-<code>aabb|bbaa   # match <br />
-aacc|bb     # no match <br />
-aa(cc|bb)   # match <br />
-a+|b+       # no match <br />
-a+b+|b+a+   # match <br />
-a+(b|c)+    # match</code>
+<code>aabb|bbaa   # match </code><br />
+<code>aacc|bb     # no match </code><br />
+<code>aa(cc|bb)   # match </code><br />
+<code>a+|b+       # no match </code><br />
+<code>a+b+|b+a+   # match </code><br />
+<code>a+(b|c)+    # match</code>
    </td>
   </tr>
   <tr>
@@ -164,9 +165,9 @@ a+(b|c)+    # match</code>
    </td>
    <td><b>For "abcd":</b>
 <p>
-<code>ab[cd]+     # match <br />
-[a-d]+      # match <br />
-[^a-d]+     # no match</code>
+<code>ab[cd]+     # match </code><br />
+<code>[a-d]+      # match </code><br />
+<code>[^a-d]+     # no match</code>
    </td>
   </tr>
 </table>
