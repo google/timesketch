@@ -36,3 +36,6 @@ Vagrant.configure(2) do |config|
   config.vm.provision :shell, keep_color: true, path: "bootstrap.sh"
   config.vm.hostname = "timesketch-dev"
 end
+
+## Needed due to moved base image hosting, ref: https://github.com/hashicorp/vagrant/issues/9442#issuecomment-363080565
+Vagrant::DEFAULT_SERVER_URL.replace('https://vagrantcloud.com')
