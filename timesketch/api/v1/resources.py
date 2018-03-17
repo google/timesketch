@@ -948,15 +948,18 @@ class UploadFileResource(ResourceMixin, Resource):
 
             # Run the task in the background
             task = task_directory.get(file_extension)
-            task.apply_async(
-                (
-                    file_path,
-                    timeline_name,
-                    index_name,
-                    file_extension,
-                    delimiter,
+            task_args = {
+                u'plaso': (
+                    file_path, timeline_name, index_name, file_extension,
                     username
                 ),
+                u'default': (
+                    file_path, timeline_name, index_name, file_extension,
+                    delimiter, username
+                )
+            }
+            task.apply_async(
+                task_args.get(file_extension, task_args[u'default']),
                 task_id=index_name
             )
 
