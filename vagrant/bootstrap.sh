@@ -117,6 +117,8 @@ mkdir -p /var/{lib,log,run}/celery
 chown $RUN_AS_USER /var/{lib,log,run}/celery
 cp "${VAGRANT_PATH}"/celery.service /etc/systemd/system/
 cp "${VAGRANT_PATH}"/celery.conf /etc/
+sed -i s/"User=vagrant"/"User=${RUN_AS_USER}"/ /etc/systemd/system/celery.service
+sed -i s/"Group=vagrant"/"Group=${RUN_AS_USER}"/ /etc/systemd/system/celery.service
 /bin/systemctl daemon-reload
 /bin/systemctl enable celery.service
 /bin/systemctl start celery.service
