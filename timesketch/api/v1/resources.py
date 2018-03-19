@@ -902,6 +902,7 @@ class UploadFileResource(ResourceMixin, Resource):
             _filename, _extension = os.path.splitext(file_storage.filename)
             file_extension = _extension.lstrip(u'.')
             timeline_name = form.name.data or _filename.rstrip(u'.')
+            delimiter = u','
 
             sketch = None
             if sketch_id:
@@ -947,14 +948,18 @@ class UploadFileResource(ResourceMixin, Resource):
 
             # Run the task in the background
             task = task_directory.get(file_extension)
-            task.apply_async(
-                (
-                    file_path,
-                    timeline_name,
-                    index_name,
-                    file_extension,
+            task_args = {
+                u'plaso': (
+                    file_path, timeline_name, index_name, file_extension,
                     username
                 ),
+                u'default': (
+                    file_path, timeline_name, index_name, file_extension,
+                    delimiter, username
+                )
+            }
+            task.apply_async(
+                task_args.get(file_extension, task_args[u'default']),
                 task_id=index_name
             )
 
