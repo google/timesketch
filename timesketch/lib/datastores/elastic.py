@@ -37,7 +37,9 @@ class ElasticsearchDataStore(datastore.DataStore):
 
     # Number of events to queue up when bulk inserting events.
     DEFAULT_FLUSH_INTERVAL = 1000
-    DEFAULT_LIMIT = 500  # Max events to return
+    DEFAULT_SIZE = 100
+    DEFAULT_LIMIT = DEFAULT_SIZE  # Max events to return
+    DEFAULT_FROM = 0
     DEFAULT_STREAM_LIMIT = 10000  # Max events to return when streaming results
 
     def __init__(self, host=u'127.0.0.1', port=9200):
@@ -165,6 +167,10 @@ class ElasticsearchDataStore(datastore.DataStore):
                         }]
                     }
                 }
+            if query_filter.get(u'from', None):
+                query_dsl[u'from'] = query_filter[u'from']
+            if query_filter.get(u'size', None):
+                query_dsl[u'size'] = query_filter[u'size']
             if query_filter.get(u'exclude', None):
                 query_dsl[u'post_filter'] = {
                     u'bool': {
@@ -231,8 +237,6 @@ class ElasticsearchDataStore(datastore.DataStore):
         Returns:
             Set of event documents in JSON format
         """
-        # Limit the number of returned documents.
-        limit_results = query_filter.get(u'limit', self.DEFAULT_LIMIT)
 
         scroll_timeout = None
         if enable_scroll:
@@ -264,10 +268,6 @@ class ElasticsearchDataStore(datastore.DataStore):
         # Default search type for elasticsearch is query_then_fetch.
         search_type = u'query_then_fetch'
 
-        # Set limit to 0 to not return any results
-        if not return_results:
-            limit_results = 0
-
         # Only return how many documents matches the query.
         if count:
             del query_dsl[u'sort']
@@ -281,7 +281,6 @@ class ElasticsearchDataStore(datastore.DataStore):
         return self.client.search(
             body=query_dsl,
             index=list(indices),
-            size=limit_results,
             search_type=search_type,
             _source_include=return_fields,
             scroll=scroll_timeout)

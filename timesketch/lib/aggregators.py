@@ -33,6 +33,11 @@ def heatmap(es_client, sketch_id, query_string, query_filter, query_dsl,
     returns:
         List of events per hour/day
     """
+
+    # scripts don't like our pagination method, so remove them
+    query_filter.pop("size", None)
+    query_filter.pop("from", None)
+
     RESULT_COUNT = search_result = es_client.search(
         sketch_id, query_string, query_filter, query_dsl, indices, count=True)
 
@@ -132,6 +137,10 @@ def histogram(es_client, sketch_id, query_string, query_filter, query_dsl,
     returns:
         List of events per hour/day
     """
+    # scripts don't like our pagination method, so remove them
+    query_filter.pop("size", None)
+    query_filter.pop("from", None)
+
     RESULT_COUNT = search_result = es_client.search(
         sketch_id, query_string, query_filter, query_dsl, indices, count=True)
 

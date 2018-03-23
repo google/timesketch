@@ -42,6 +42,7 @@ export const tsFilter = function () {
         require: '^tsSearch',
         link: function (scope, elem, attrs, ctrl) {
             scope.applyFilter = function () {
+                scope.filter.from = 0
                 scope.parseFilterDate(scope.filter.time_start, scope.filter.time_end)
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
             }
@@ -55,6 +56,7 @@ export const tsFilter = function () {
 
             scope.enableAllTimelines = function () {
                 scope.filter.indices = []
+                scope.filter.from = 0
                 for (const timeline of scope.sketch.active_timelines) {
                     scope.filter.indices.push(timeline.searchindex.index_name)
                 }
@@ -67,43 +69,51 @@ export const tsFilter = function () {
                 scope.meta.es_total_count = 0
                 scope.meta.es_time = 0
                 scope.meta.noisy = false
+                scope.filter.from = 0
                 ctrl.search(scope.query, scope.filter, scope.queryDsl)
+            }
+
+            // Make typescript compiler happy.
+            const getDurationUnit = function (unit) {
+                if (!unit) {
+                    return 'm'
+                }
+                return unit
             }
 
             scope.parseFilterDate = function (datevalue, datevalue_end) {
                     if (datevalue != null) {
-                    const datetimetemplate = 'YYYY-MM-DDTHH:mm:ss'
-                    // Parse out 'T' date time seperator needed by ELK but not by moment.js
-                    datevalue = datevalue.replace(/T/g, ' ')
-                    // Parse offset given by user. Eg. +-10m
-                    const offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s|M|Q|w|ms)/g
-                    const match = offsetRegexp.exec(datevalue)
+                        const datetimetemplate = 'YYYY-MM-DDTHH:mm:ss'
+                        // Parse out 'T' date time seperator needed by ELK but not by moment.js
+                        datevalue = datevalue.replace(/T/g, ' ')
+                        // Parse offset given by user. Eg. +-10m
+                        const offsetRegexp = /(.*?)(-|\+|\+-|-\+)(\d+)(y|d|h|m|s|M|Q|w|ms)/g
+                        const match = offsetRegexp.exec(datevalue)
 
-                    if (match != null) {
-                        let filterbase = match[1]
-                        const filteroffset = match[2]
-                        const filteramount = match[3]
-                        const filtertype = match[4]
+                        if (match != null) {
+                            const filterbase = moment.utc(match[1], 'YYYY-MM-DD HH:mm:ssZZ')
+                            const filteroffset = match[2]
+                            const filteramount = match[3]
+                            const filtertype = getDurationUnit(match[4])
 
-                        filterbase = moment.utc(filterbase, 'YYYY-MM-DD HH:mm:ssZZ')
-                        // calculate filter start and end datetimes
-                        if (filteroffset == '+') {
-                            scope.filter.time_start = moment.utc(filterbase).format(datetimetemplate)
-                            scope.filter.time_end = moment.utc(filterbase).add(filteramount, filtertype).format(datetimetemplate)
+                            // calculate filter start and end datetimes
+                            if (filteroffset == '+') {
+                                scope.filter.time_start = moment.utc(filterbase).format(datetimetemplate)
+                                scope.filter.time_end = moment.utc(filterbase).add(filteramount, filtertype).format(datetimetemplate)
+                            }
+                            if (filteroffset == '-') {
+                                scope.filter.time_start = moment.utc(filterbase).subtract(filteramount, filtertype).format(datetimetemplate)
+                                scope.filter.time_end = moment.utc(filterbase).format(datetimetemplate)
+                            }
+                            if (filteroffset == '-+' || filteroffset == '+-') {
+                                scope.filter.time_start = moment.utc(filterbase).subtract(filteramount, filtertype).format(datetimetemplate)
+                                scope.filter.time_end = moment.utc(filterbase).add(filteramount, filtertype).format(datetimetemplate)
+                            }
+                        } else {
+                            if (datevalue_end == null || datevalue_end == '') {
+                                scope.filter.time_end = scope.filter.time_start
+                            }
                         }
-                        if (filteroffset == '-') {
-                            scope.filter.time_start = moment.utc(filterbase).subtract(filteramount, filtertype).format(datetimetemplate)
-                            scope.filter.time_end = moment.utc(filterbase).format(datetimetemplate)
-                        }
-                        if (filteroffset == '-+' || filteroffset == '+-') {
-                            scope.filter.time_start = moment.utc(filterbase).subtract(filteramount, filtertype).format(datetimetemplate)
-                            scope.filter.time_end = moment.utc(filterbase).add(filteramount, filtertype).format(datetimetemplate)
-                        }
-                    } else {
-                        if (datevalue_end == null || datevalue_end == '') {
-                            scope.filter.time_end = scope.filter.time_start
-                        }
-                    }
                 }
             }
 
