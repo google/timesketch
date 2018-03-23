@@ -25,7 +25,8 @@ A sketch consists of 5 tabs: “Overview”, “Explore”, “Stories”, “Vi
 **Timelines** tab contains all available timelines and allows quick adding of new timelines to sketch
 
 ## Sharing and access control
-After the sketch is created, you can share it with other users in the system. To do so, click [Share](images/sharebutton.png) button. You will be presented with the following dialogue:
+After the sketch is created, you can share it with other users in the system. To do so, click ![Share](images/sharebutton.png) button. You will be presented with the following dialogue:
+
 ![Share dialogue](images/Sharingdialog.png) 
 
 You can share the sketch with users, groups of users, make it available to all users in your system, or leave private.
