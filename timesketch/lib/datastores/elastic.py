@@ -24,7 +24,6 @@ from elasticsearch.exceptions import NotFoundError
 from elasticsearch.exceptions import ConnectionError
 from flask import abort
 
-from timesketch.lib import datastore
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
 # Setup logging
@@ -32,7 +31,7 @@ es_logger = logging.getLogger(u'elasticsearch')
 es_logger.addHandler(logging.NullHandler())
 
 
-class ElasticsearchDataStore(datastore.DataStore):
+class ElasticsearchDataStore(object):
     """Implements the datastore."""
 
     # Number of events to queue up when bulk inserting events.
@@ -215,7 +214,6 @@ class ElasticsearchDataStore(datastore.DataStore):
                indices,
                count=False,
                aggregations=None,
-               return_results=True,
                return_fields=None,
                enable_scroll=False):
         """Search ElasticSearch. This will take a query string from the UI
@@ -230,7 +228,6 @@ class ElasticsearchDataStore(datastore.DataStore):
             indices: List of indices to query
             count: Boolean indicating if we should only return result count
             aggregations: Dict of Elasticsearch aggregations
-            return_results: Boolean indicating if results should be returned
             return_fields: List of fields to return
             enable_scroll: If Elasticsearch scroll API should be used
 
