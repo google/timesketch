@@ -9,8 +9,6 @@ button on "Overview" tab, or use "Import timeline" option on "Timelines" tab.
 
 
 
-<p id="gdcalert2" ><span style="color: red; font-weight: bold">>>>>  GDC alert: inline image link here (to images/Documentation-development1.png). Store image on your image server and adjust path/filename if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert3">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>> </span></p>
-
 
 ![alt_text](images/Documentation-development1.png "image_tooltip")
 
@@ -27,12 +25,12 @@ You can import from Plaso, CSV or JSONL formats.
 
 To be able to add timelines directly from Plaso, <span style="color:#24292e;">you need to run version >= 1.5.0 Plaso on your Timesketch server. See the [official Plaso documentation](https://github.com/log2timeline/plaso/wiki/Ubuntu-Packaged-Release)<span style="color:#24292e;"> for installing Plaso and it's dependencies.</span></span>
 
-(insert full contents of https://github.com/google/timesketch/wiki/UserGuideAddTimelines)
+
 
 
 ### From CSV or JSONL file
 
-(full contents of https://github.com/google/timesketch/wiki/UserGuideTimelineFromFile)
+
 
 
 ## Navigating timelines
@@ -41,7 +39,6 @@ To be able to add timelines directly from Plaso, <span style="color:#24292e;">yo
 
 
 
-<p id="gdcalert3" ><span style="color: red; font-weight: bold">>>>>  GDC alert: inline image link here (to images/Documentation-development2.png). Store image on your image server and adjust path/filename if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert4">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>> </span></p>
 
 
 ![alt_text](images/Documentation-development2.png "image_tooltip")
@@ -54,8 +51,6 @@ Single event view includes all the fields from the original import file. There i
 
 
 
-<p id="gdcalert4" ><span style="color: red; font-weight: bold">>>>>  GDC alert: inline image link here (to images/Documentation-development3.png). Store image on your image server and adjust path/filename if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert5">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>> </span></p>
-
 
 ![alt_text](images/Documentation-development3.png "image_tooltip")
 
@@ -65,7 +60,6 @@ Single event view includes all the fields from the original import file. There i
 
 
 
-<p id="gdcalert5" ><span style="color: red; font-weight: bold">>>>>  GDC alert: inline image link here (to images/Documentation-development4.png). Store image on your image server and adjust path/filename if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert6">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>> </span></p>
 
 
 ![alt_text](images/Documentation-development4.png "image_tooltip")
@@ -73,7 +67,6 @@ Single event view includes all the fields from the original import file. There i
 
 
 
-<p id="gdcalert6" ><span style="color: red; font-weight: bold">>>>>  GDC alert: inline image link here (to images/Documentation-development5.png). Store image on your image server and adjust path/filename if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert7">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>> </span></p>
 
 
 ![alt_text](images/Documentation-development5.png "image_tooltip")
