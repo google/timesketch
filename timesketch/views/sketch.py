@@ -453,8 +453,7 @@ def export(sketch_id):
         query_filter,
         query_dsl,
         indices,
-        aggregations=None,
-        return_results=True)
+        aggregations=None)
 
     csv_out = StringIO()
     csv_writer = csv.DictWriter(
