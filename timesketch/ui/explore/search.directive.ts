@@ -117,7 +117,6 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
                 $scope.query = query
                 $scope.filter = filter
                 $scope.queryDsl = queryDsl
-                $scope.dataLoaded = false
 
                 timesketchApi.search($scope.sketchId, query, filter, queryDsl)
                     .success(function (data) {
