@@ -167,7 +167,6 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
                     event_count = $scope.meta.es_total_count
                     $scope.showLimitedResults = $scope.dataLoaded && false
                 }
-
                 total_pages = Math.ceil(event_count / $scope.filter.size) - 1
                 if (total_pages !== $scope.totalPages) {
                     $scope.currentPage = 0
@@ -218,18 +217,15 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
 
             $scope.$watch('meta', function (value) {
                 if (angular.isDefined(value)) {
-                    // reciprocal dataLoaded check
-                    if (angular.isDefined($scope.events) && $scope.events.length && value.es_total_count > 0) {
+                    if (angular.isDefined($scope.events)) {
                         $scope.dataLoaded = true
                         $scope.getEventCount()
-                        $scope.buildPager()
                     }
                 }
             })
 
             $scope.$watch('events', function (value) {
                 if (angular.isDefined(value)) {
-                    // reciprocal dataLoaded check
                     if (angular.isDefined($scope.meta) && $scope.meta.es_total_count > 0 && value.length ) {
                         $scope.dataLoaded = true
                         $scope.getEventCount()
@@ -344,8 +340,8 @@ export const tsEvent = function () {
             }
 
             $scope.addFilterStart = function () {
-            $scope.$emit('datetime-clicked', {datetimeclicked: $scope.event._source.datetime})
-}
+                $scope.$emit('datetime-clicked', {datetimeclicked: $scope.event._source.datetime})
+            }
 
             $scope.getDetail = function () {
                 if ($scope.eventdetail) {return}
