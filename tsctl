@@ -535,12 +535,16 @@ class SearchTemplateManager(Command):
                 with open(import_location, 'rb') as fh:
                     search_templates = yaml.load(fh)
                     for search_template in search_templates:
-                        if not SearchTemplate.get(name=search_template[u'name']):
+                        name = search_template[u'name']
+                        query_string = search_template[u'query_string'],
+                        query_dsl = search_template[u'query_dsl']
+
+                        if not SearchTemplate.query.filter_by(name=name):
                             imported_template = SearchTemplate(
-                                name=search_template[u'name'],
+                                name=name,
                                 user=User(None),
-                                query_string=search_template[u'query_string'],
-                                query_dsl=search_template[u'query_dsl'])
+                                query_string=query_string,
+                                query_dsl=query_dsl)
                             db_session.add(imported_template)
                             db_session.commit()
             except IOError as e:

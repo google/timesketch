@@ -107,15 +107,6 @@ class BaseModel(object):
     updated_at = Column(DateTime(), default=func.now(), onupdate=func.now())
 
     @classmethod
-    def get(cls, **kwargs):
-        """Get a database object.
-
-        Returns:
-            A model instance or None.
-        """
-        return cls.query.filter_by(**kwargs).first()
-
-    @classmethod
     def get_or_create(cls, **kwargs):
         """Get or create a database object.
 
