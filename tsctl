@@ -521,9 +521,10 @@ class SearchTemplateManager(Command):
             search_templates = []
             for search_template in SearchTemplate.query.all():
                 labels = []
-                for l in search_template.labels:
-                    if l.label.startswith(u'supported_os:'):
-                        labels.append(l.label.replace(u'supported_os:', u''))
+                for label in search_template.labels:
+                    if label.label.startswith(u'supported_os:'):
+                        labels.append(label.label.replace(
+                            u'supported_os:', u''))
                 search_templates.append({
                     u'name': search_template.name,
                     u'query_string': search_template.query_string,
@@ -558,8 +559,8 @@ class SearchTemplateManager(Command):
                     query_dsl=query_dsl)
 
                 # Add supported_os labels.
-                for platform in search_template[u'supported_os']:
-                    label_name = u'supported_os:{0:s}'.format(platform)
+                for supported_os in search_template[u'supported_os']:
+                    label_name = u'supported_os:{0:s}'.format(supported_os)
                     label = SearchTemplate.Label.get_or_create(
                         label=label_name, user=None)
                     imported_template.labels.append(label)
