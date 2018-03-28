@@ -16,7 +16,6 @@
 
 import json
 import sys
-import os
 import yaml
 from uuid import uuid4
 
@@ -521,10 +520,16 @@ class SearchTemplateManager(Command):
         if export_location:
             search_templates = []
             for search_template in SearchTemplate.query.all():
+                labels = []
+                for label in search_template.labels:
+                    if label.label.startswith(u'supported_os:'):
+                        labels.append(label.label.replace(
+                            u'supported_os:', u''))
                 search_templates.append({
                     u'name': search_template.name,
                     u'query_string': search_template.query_string,
-                    u'query_dsl': search_template.query_dsl
+                    u'query_dsl': search_template.query_dsl,
+                    u'supported_os': labels
                 })
 
             with open(export_location, 'w') as fh:
@@ -534,23 +539,39 @@ class SearchTemplateManager(Command):
             try:
                 with open(import_location, 'rb') as fh:
                     search_templates = yaml.load(fh)
-                    for search_template in search_templates:
-                        name = search_template[u'name']
-                        query_string = search_template[u'query_string'],
-                        query_dsl = search_template[u'query_dsl']
-
-                        if not SearchTemplate.query.filter_by(name=name):
-                            imported_template = SearchTemplate(
-                                name=name,
-                                user=User(None),
-                                query_string=query_string,
-                                query_dsl=query_dsl)
-                            db_session.add(imported_template)
-                            db_session.commit()
             except IOError as e:
                 sys.stdout.write(u'Unable to open file: {0:s}\n'.format(e))
                 sys.exit(1)
 
+            for search_template in search_templates:
+                name = search_template[u'name']
+                query_string = search_template[u'query_string'],
+                query_dsl = search_template[u'query_dsl']
+
+                # Skip search template if already exits.
+                if SearchTemplate.query.filter_by(name=name).first():
+                    continue
+
+                imported_template = SearchTemplate(
+                    name=name,
+                    user=User(None),
+                    query_string=query_string,
+                    query_dsl=query_dsl)
+
+                # Add supported_os labels.
+                for supported_os in search_template[u'supported_os']:
+                    label_name = u'supported_os:{0:s}'.format(supported_os)
+                    label = SearchTemplate.Label.get_or_create(
+                        label=label_name, user=None)
+                    imported_template.labels.append(label)
+
+                # Set flag to identify local vs import templates.
+                remote_flag = SearchTemplate.Label.get_or_create(
+                    label=u'remote_template', user=None)
+                imported_template.labels.append(remote_flag)
+
+                db_session.add(imported_template)
+                db_session.commit()
 
 
 if __name__ == '__main__':
