@@ -90,6 +90,7 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
             }
 
             this.search = function (query, filter, queryDsl) {
+                console.log(filter)
                 if (!filter.order) {
                     filter.order = 'asc'
                 }

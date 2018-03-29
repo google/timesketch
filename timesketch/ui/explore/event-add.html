@@ -1,6 +1,6 @@
 <!-- <div class="event-insert-grow" ng-click="showForm = !showForm" ng-show="!showForm"></div> -->
-<div class="container card" style="margin: 10px 0px 10px 0px;" ng-show="addEventData[event._id].showForm" ng-init="addEventData[event._id].timestamp = event._source.datetime">
-    <form name="eventaddform" class="form-inline"  ng-submit="submitAddForm()">
+<div class="container card" style="margin: 10px 0px 10px 0px;" ng-show="addEventData[event._id].showForm" ng-init="addEventData[event._id].timestamp = event._source.datetime; addEventData[event._id].disabled=false">
+    <form name="eventaddform" class="form-inline"  ng-submit="submitAddForm()"  ng-disabled="addEventData[event._id].disabled">
       <fieldset>
         <div class="row"><div class="col-md-12"><h3>Insert event</h3></div></div>
         <div class="row">

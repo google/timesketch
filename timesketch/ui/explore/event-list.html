@@ -117,9 +117,9 @@
     </div>
     <br>
     <br>
-    <div ng-repeat="event in events">
+    <div ng-repeat="event in events track by $index">
         <ts-event ng-hide="event.hidden && !meta.showHiddenEvents" enable-context-query="true" similarity-layer="similarityLayer" event="::event" add-event-data="addEventData" meta="::meta" sketch-id="::sketchId" prev-timestamp="::events[$index-1]['_source'].timestamp" next-timestamp="::events[$index+1]['_source'].timestamp" index="::$index" order="::filter.order"></ts-event>
-        <ts-event-add ng-hide="event.hidden" event="::event" add-event-data="addEventData" sketch-id="::sketchId" filter="::filter" query="::query" queryDsl="::queryDsl"></ts-event-add>
+        <ts-event-add ng-hide="event.hidden" event="event" events="events" add-event-data="addEventData" sketch="sketch" sketch-id="::sketchId" filter="filter" query="query" queryDsl="queryDsl"></ts-event-add>
         <!-- <ts-event-add ng-hide="event.hidden" event="::event" add-event-data="addEventData" meta="::meta" sketch-id="::sketchId" after-timestamp="::events[$index]['_source'].timestamp"></ts-event-add> -->
     </div>
     </div>

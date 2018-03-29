@@ -754,7 +754,7 @@ class EventCreateResource(ResourceMixin, Resource):
 
             # derive datetime from timestamp:
             parsed_datetime = parser.parse(form.timestamp.data)
-            timestamp = int(time.mktime(parsed_datetime.timetuple())) * 100000
+            timestamp = int(time.mktime(parsed_datetime.timetuple())) * 1000000
 
             event = {
                 "datetime": form.timestamp.data,
@@ -808,6 +808,7 @@ class EventCreateResource(ResourceMixin, Resource):
                         sketch=sketch,
                         user=current_user,
                         searchindex=searchindex)
+                    timeline.echo = event
                     # print self.to_json(timeline).data
                     if timeline not in sketch.timelines:
                         sketch.timelines.append(timeline)
@@ -1059,19 +1060,9 @@ class UploadFileResource(ResourceMixin, Resource):
 
             # Run the task in the background
             task = task_directory.get(file_extension)
-<<<<<<< HEAD
-            task.apply_async(
-                (
-                    file_path,
-                    timeline_name,
-                    index_name,
-                    file_extension,
-                    delimiter,
-=======
             task_args = {
                 u'plaso': (
                     file_path, timeline_name, index_name, file_extension,
->>>>>>> master
                     username
                 ),
                 u'default': (

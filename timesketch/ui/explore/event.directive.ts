@@ -31,6 +31,7 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
         template: require('./event-list.html'),
         scope: {
             sketchId: '=',
+            sketch: '=',
             meta: '=',
             events: '=',
             query: '=',
@@ -415,7 +416,7 @@ export const tsEvent = function () {
     }
 }
 
-export const tsEventAdd = function () {
+export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
     /**
      * Render event details.
      * @param sketch-id - The id for the sketch.
@@ -427,8 +428,9 @@ export const tsEventAdd = function () {
         template: require('./event-add.html'),
         scope: {
             sketchId: '=',
-            // meta: '=',
+            sketch: '=',
             event: '=',
+            events: '=',
             filter: '=',
             query: '=',
             queryDsl: '=',
@@ -449,18 +451,64 @@ export const tsEventAdd = function () {
                 $scope.addEventData[eventId].timestamp = ""
                 $scope.addEventData[eventId].showForm = !$scope.addEvent[eventId].showForm
             }
+            $scope.genEventId = function() {
+              let id = "";
+              let alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
+              for (let i = 0; i < 20; i++) {
+                id += alpha.charAt(Math.floor(Math.random() * alpha.length));
+              }
+              return id;
+            }
         },
-        link: function (scope, elem, attrs, ctrl) {
-            console.log(scope)
+        link: function (scope, elem, attrs, ctrl, window) {
             scope.doAddEvent = function (eventId) {
                 let event = scope.addEventData[eventId]
+                scope.addEventData[eventId].disabled = true
                 ctrl.addEvent(event).then( function (response) {
-                    if ( scope.filter.indices.indexOf( response.data.objects[0].searchindex.index_name ) === -1 ){
+                    let resp_timeline = response.data.objects[0]
+
+                    // let ts = Date.parse(scope.addEventData[eventId].timestamp)
+                    // let tsm = ts * 1000
+                    //
+                    // let new_event = {
+                    //   "_id": scope.genEventId(),
+                    //   "_index": resp_timeline.searchindex.index_name,
+                    //   "_score": null,
+                    //   "_source": {
+                    //     "datetime": scope.addEventData[eventId].timestamp,
+                    //     "label": [],
+                    //     "message": scope.addEventData[eventId].message,
+                    //     "tag": [],
+                    //     "timestamp": tsm,
+                    //     "timestamp_desc": scope.addEventData[eventId].timestamp_desc,
+                    //   },
+                    //   "_type": "user_created_event",
+                    //   "selected": false,
+                    //   "sort": [ts]
+                    // }
+                    //
+                    // scope.events.splice(39, 1, new_event)
+
+                    if ( scope.filter.indices.indexOf( response.data.objects[0].searchindex.index_name ) == -1 ){
                         scope.filter.indices.push( response.data.objects[0].searchindex.index_name )
                     }
-                    ctrl.search(scope.query, scope.filter, scope.queryDsl)
+                    let resp_timeline_active = false
+                    for (const timeline of scope.sketch.active_timelines) {
+                      if (timeline.searchindex.index_name == resp_timeline.searchindex.index_name) {
+                        resp_timeline_active = true
+                      }
+                    }
+                    if (!resp_timeline_active) {
+                        scope.sketch.active_timelines.push(resp_timeline)
+                    }
+
+                    $timeout(function() {
+                      ctrl.search(scope.query, scope.filter, scope.queryDsl)
+                    }, 1000)
+                    // $window.location.reload()
+                    console.log(scope.events)
                 })
             }
         },
     }
-}
+}]
