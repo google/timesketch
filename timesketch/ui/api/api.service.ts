@@ -304,7 +304,6 @@ export const timesketchApiImplementation = function ($http) {
          * @param event - Object containing event details
          * @returns A $http promise with two methods, success and error.
          */
-        console.log(event)
         const resource_url = SKETCH_BASE_URL + sketch_id + '/event/create/'
         const params = {
             message: event.message,

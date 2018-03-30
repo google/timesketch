@@ -467,27 +467,27 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
                 ctrl.addEvent(event).then( function (response) {
                     let resp_timeline = response.data.objects[0]
 
-                    // let ts = Date.parse(scope.addEventData[eventId].timestamp)
-                    // let tsm = ts * 1000
-                    //
-                    // let new_event = {
-                    //   "_id": scope.genEventId(),
-                    //   "_index": resp_timeline.searchindex.index_name,
-                    //   "_score": null,
-                    //   "_source": {
-                    //     "datetime": scope.addEventData[eventId].timestamp,
-                    //     "label": [],
-                    //     "message": scope.addEventData[eventId].message,
-                    //     "tag": [],
-                    //     "timestamp": tsm,
-                    //     "timestamp_desc": scope.addEventData[eventId].timestamp_desc,
-                    //   },
-                    //   "_type": "user_created_event",
-                    //   "selected": false,
-                    //   "sort": [ts]
-                    // }
-                    //
-                    // scope.events.splice(39, 1, new_event)
+                    let ts = Date.parse(scope.addEventData[eventId].timestamp)
+                    let tsm = ts * 1000
+
+                    let new_event = {
+                      "_id": scope.genEventId(),
+                      "_index": resp_timeline.searchindex.index_name,
+                      "_score": null,
+                      "_source": {
+                        "datetime": scope.addEventData[eventId].timestamp,
+                        "label": [],
+                        "message": scope.addEventData[eventId].message,
+                        "tag": [],
+                        "timestamp": tsm,
+                        "timestamp_desc": scope.addEventData[eventId].timestamp_desc,
+                      },
+                      "_type": "user_created_event",
+                      "selected": false,
+                      "sort": [ts]
+                    }
+
+                    scope.events = [new_event]
 
                     if ( scope.filter.indices.indexOf( response.data.objects[0].searchindex.index_name ) == -1 ){
                         scope.filter.indices.push( response.data.objects[0].searchindex.index_name )
@@ -501,12 +501,10 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
                     if (!resp_timeline_active) {
                         scope.sketch.active_timelines.push(resp_timeline)
                     }
-
-                    $timeout(function() {
-                      ctrl.search(scope.query, scope.filter, scope.queryDsl)
-                    }, 1000)
-                    // $window.location.reload()
-                    console.log(scope.events)
+                    // 
+                    // $timeout(function() {
+                    //   ctrl.search(scope.query, scope.filter, scope.queryDsl)
+                    // }, 1000)
                 })
             }
         },

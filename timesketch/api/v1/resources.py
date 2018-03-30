@@ -254,9 +254,6 @@ class ResourceMixin(object):
                 try:
                     model_fields = self.fields_registry[model.__tablename__]
                 except AttributeError:
-                    print self.fields_registry
-                    print model
-                    print model[0]
                     model_fields = self.fields_registry[model[0].__tablename__]
             schema[u'objects'] = [marshal(model, model_fields)]
 

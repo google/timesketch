@@ -29,6 +29,9 @@ from sqlalchemy import Integer
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 
+# These are useful debug wrappers that produce query debug output where
+# necessary.
+
 def query_wrapper(orig_query_method):
     def _query(*args, **kwargs):
         print(traceback.extract_stack(limit=10))
