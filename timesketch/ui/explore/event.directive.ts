@@ -434,6 +434,7 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
             filter: '=',
             query: '=',
             queryDsl: '=',
+            index: '@',
             // prevTimestamp: '=',
             // nextTimestamp: '=',
             // index: '=',
@@ -460,16 +461,14 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
               return id;
             }
         },
-        link: function (scope, elem, attrs, ctrl, window) {
-            scope.doAddEvent = function (eventId) {
+        link: function (scope, elem, attrs, ctrl) {
+            scope.doAddEvent = function (eventId, index) {
                 let event = scope.addEventData[eventId]
                 scope.addEventData[eventId].disabled = true
                 ctrl.addEvent(event).then( function (response) {
                     let resp_timeline = response.data.objects[0]
-
                     let ts = Date.parse(scope.addEventData[eventId].timestamp)
                     let tsm = ts * 1000
-
                     let new_event = {
                       "_id": scope.genEventId(),
                       "_index": resp_timeline.searchindex.index_name,
@@ -487,8 +486,6 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
                       "sort": [ts]
                     }
 
-                    scope.events = [new_event]
-
                     if ( scope.filter.indices.indexOf( response.data.objects[0].searchindex.index_name ) == -1 ){
                         scope.filter.indices.push( response.data.objects[0].searchindex.index_name )
                     }
@@ -501,10 +498,11 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
                     if (!resp_timeline_active) {
                         scope.sketch.active_timelines.push(resp_timeline)
                     }
-                    // 
-                    // $timeout(function() {
-                    //   ctrl.search(scope.query, scope.filter, scope.queryDsl)
-                    // }, 1000)
+                    // scope.events.splice(index+1, 1, new_event)
+
+                    $timeout(function() {
+                      ctrl.search(scope.query, scope.filter, scope.queryDsl)
+                    }, 1000)
                 })
             }
         },
