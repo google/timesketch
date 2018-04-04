@@ -872,3 +872,8 @@ ts-graphs-main {
     flex-grow: 1; flex-shrink: 1; position: relative;
   }
 }
+
+.fa-times-thin:before {
+	content: '\00d7';
+  vertical-align: text-top;
+}

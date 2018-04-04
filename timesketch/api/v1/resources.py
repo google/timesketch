@@ -786,7 +786,6 @@ class EventCreateResource(ResourceMixin, Resource):
                     permission=u'write', user=current_user)
                 searchindex.grant_permission(
                     permission=u'delete', user=current_user)
-                print self.to_json(searchindex).data
                 searchindex.set_status(u'ready')
                 db_session.add(searchindex)
                 db_session.commit()

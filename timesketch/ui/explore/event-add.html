@@ -2,7 +2,10 @@
 <div class="container card" style="margin: 10px 0px 10px 0px;" ng-show="addEventData[event._id].showForm" ng-init="addEventData[event._id].timestamp = event._source.datetime; addEventData[event._id].disabled=false">
     <form name="eventaddform" class="form-inline"  ng-submit="submitAddForm()"  ng-disabled="addEventData[event._id].disabled">
       <fieldset>
-        <div class="row"><div class="col-md-12"><h3>Insert event</h3></div></div>
+        <div class="row">
+          <div class="col-md-11"><h3>Insert event</h3></div>
+          <div class="col-md-1"><i style="float:right;" ng-click="addEventData[event._id].showForm = false" class="fa fa-times-thin fa-2x"></i></div>
+        </div>
         <div class="row">
             <div class="col-md-6">
                 <span class="form-group">
@@ -26,7 +29,7 @@
           <div class="col-md-12">
             <span class="form-group">
                 <input type="submit" class="btn btn-primary" value="Create" ng-click="doAddEvent(event._id, index)"/>
-                <input type="reset" class="btn btn-default" value="Cancel" ng-click="clearAddEvent(event._id)"/>
+                <input type="reset" class="btn btn-default" value="Clear" ng-click="clearAddEvent(event)"/>
             </span>
           </div>
         </div>

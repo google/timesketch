@@ -27,7 +27,7 @@
 
           <td width="30px">
             <div ng-mouseover="eventAddHover(event._id)" ng-mouseleave="eventAddLeave()" style="width:20px;height:20px;cursor: pointer;" class="tooltips" ng-click="eventAddLeave();addEventData[event._id].showForm = !addEventData[event._id].showForm">
-                <span>Insert event</span><i ng-class="{true: 'fa fa-lg fa-tasks', false: 'fa fa-lg fa-tasks icon-grey'}[event.hidden]"></i>
+                <span>Insert event</span><i ng-class="{true: 'fa fa-lg fa-plus', false: 'fa fa-lg fa-plus icon-grey'}[addEventData[event._id].showForm]"></i>
             </div>
           </td>
 

@@ -446,11 +446,11 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
         },
         require: '^tsSearch',
         controller: function ($scope, timesketchApi) {
-            $scope.clearAddEvent = function (eventId) {
-                $scope.addEventData[eventId].timestamp_desc = ""
-                $scope.addEventData[eventId].message = ""
-                $scope.addEventData[eventId].timestamp = ""
-                $scope.addEventData[eventId].showForm = !$scope.addEvent[eventId].showForm
+            $scope.clearAddEvent = function (event) {
+                $scope.addEventData[event._id].timestamp_desc = ""
+                $scope.addEventData[event._id].message = ""
+                $scope.addEventData[event._id].timestamp = event._source.datetime
+                $scope.addEventData[event._id].showForm = !$scope.addEvent[event._id].showForm
             }
             $scope.genEventId = function() {
               let id = "";
