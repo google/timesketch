@@ -24,8 +24,12 @@ import time
 
 from setuptools import find_packages
 from setuptools import setup
-from pip.req import parse_requirements
-from pip.download import PipSession
+try: # for pip >= 10
+    from pip._internal.download import PipSession
+    from pip._internal.req import parse_requirements
+except ImportError: # for pip <= 9.0.3
+    from pip.download import PipSession
+    from pip.req import parse_requirements
 
 timesketch_version = u'20170721'
 
