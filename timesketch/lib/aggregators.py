@@ -60,7 +60,7 @@ def heatmap(es_client, sketch_id, query_string, query_filter, query_dsl,
             u'terms': {
                 u'script': {
                     u'file': 'dateaggregation',
-                    u'lang': 'groovy',
+                    u'lang': 'painless',
                     u'params': {
                         u'date_field': 'datetime',
                         u'format': 'EE'
@@ -75,7 +75,7 @@ def heatmap(es_client, sketch_id, query_string, query_filter, query_dsl,
                         },
                         u'script': {
                             u'file': 'dateaggregation',
-                            u'lang': 'groovy',
+                            u'lang': 'painless',
                             u'params': {
                                 u'date_field': 'datetime',
                                 u'format': 'HH'
