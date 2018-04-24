@@ -184,14 +184,8 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
     searchtemplate_id = Column(Integer, ForeignKey(u'searchtemplate.id'))
 
-    def __init__(self,
-                 name,
-                 sketch,
-                 user,
-                 searchtemplate=None,
-                 query_string=None,
-                 query_filter=None,
-                 query_dsl=None):
+    def __init__(self, name, sketch, user, searchtemplate=None,
+                 query_string=None, query_filter=None, query_dsl=None):
         """Initialize the View object.
 
         Args:
@@ -262,30 +256,33 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
                      BaseModel):
     """Implements the Search Template model."""
     name = Column(Unicode(255))
+    description = Column(UnicodeText())
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
+    source_id = Column(Integer, ForeignKey(u'searchtemplatesource.id'))
     user_id = Column(Integer, ForeignKey(u'user.id'))
     views = relationship(u'View', backref=u'searchtemplate', lazy=u'select')
 
-    def __init__(self,
-                 name,
-                 user,
-                 query_string=None,
-                 query_filter=None,
-                 query_dsl=None):
+    def __init__(self, name, description, user, source, query_string=None,
+                 query_filter=None, query_dsl=None):
         """Initialize the Search Template object.
 
         Args:
-            name: The name of the timeline
-            user: A user (instance of timesketch.models.user.User)
+            name: The name of the template
+            description: Description of the template
+            user: Instance of timesketch.models.user.User
+            source: Instance of timesketch.models.sketch.SearchTemplateSource
             query_string: The query string
             query_filter: The filter to apply (JSON format as string)
             query_dsl: A query DSL document (JSON format as string)
+            source: Reference to the origin of the template
         """
         super(SearchTemplate, self).__init__()
         self.name = name
+        self.description = description
         self.user = user
+        self.source = source
         self.query_string = query_string
         if not query_filter:
             filter_template = {
@@ -301,6 +298,30 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             query_filter = json.dumps(filter_template, ensure_ascii=False)
         self.query_filter = query_filter
         self.query_dsl = query_dsl
+
+
+class SearchTemplateSource(AccessControlMixin, LabelMixin, StatusMixin,
+                           CommentMixin, BaseModel):
+    """Source for a search template."""
+    name = Column(Unicode(255))
+    description = Column(UnicodeText())
+    type = Column(Unicode(255))
+    source = Column(UnicodeText())
+
+    def __init__(self, name, description, type, source):
+        """Initialize the Search Template Source object.
+
+        Args:
+            name: The name of the template source
+            description: Description of the template source
+            type: Type of source (e.g. URL, FILE)
+            source: Source of the template (e.g. URL, file path)
+        """
+        super(SearchTemplateSource, self).__init__()
+        self.name = name
+        self.description = description
+        self.type = type
+        self.source = source
 
 
 class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):
