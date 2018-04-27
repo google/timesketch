@@ -617,7 +617,6 @@ class ExploreResource(ResourceMixin, Resource):
                 query_dsl,
                 indices,
                 aggregations=None,
-                return_results=True,
                 return_fields=None,
                 enable_scroll=False)
 

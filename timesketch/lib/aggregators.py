@@ -95,7 +95,6 @@ def heatmap(es_client, sketch_id, query_string, query_filter, query_dsl,
         query_dsl,
         indices,
         aggregations=aggregation,
-        return_results=False,
         return_fields=None,
         enable_scroll=False)
 
@@ -177,8 +176,7 @@ def histogram(es_client, sketch_id, query_string, query_filter, query_dsl,
             query_filter,
             query_dsl,
             indices,
-            aggregations=aggregation,
-            return_results=False)
+            aggregations=aggregation)
     else:
         search_result = {}
 

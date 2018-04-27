@@ -46,19 +46,6 @@
 </div>
 
 <div class="card" style="min-height:200px;">
-    <div class="pull-left" ng-show="meta">
-        <ul class="pagination" style="margin-top: 0px; margin-bottom: 0px; padding-top: 0px;">
-             <li ng-class="{disabled: currentPage == 0}">
-                 <a href ng-click="prevPage()">« Prev</a>
-             </li>
-             <li ng-repeat="n in buildPager()" ng-class="{active: n == currentPage}" ng-click="setPage()">
-                 <a href ng-bind="n+1">1</a>
-             </li>
-             <li ng-class="{disabled: currentPage == totalPages}">
-                 <a href ng-click="nextPage()">Next »</a>
-             </li>
-        </ul>
-    </div>
     <div class="pull-right">
         <button style="min-width:200px;" class="btn btn-danger" ng-show="meta.numHiddenEvents > 0" ng-click="meta.showHiddenEvents = !meta.showHiddenEvents">
             <span ng-show="!meta.showHiddenEvents"><i class="fa fa-eye"></i> Show </span>
@@ -75,9 +62,6 @@
             <button class="btn btn-default" ng-click="toggleAll()"><i class="fa fa-check"></i> Toggle all</button>
         </div>
     </div>
-    <br>
-    <br>
-    <br>
     <div class="pull-left" ng-show="meta">
         <span ng-hide="dataLoaded">
             <i class="fa fa-circle-o-notch fa-spin"></i> Searching...
@@ -117,13 +101,27 @@
     </div>
     <br>
     <br>
+    <div ng-show="totalPages > 0">
+        <ul class="pagination" style="margin-top: 0px; margin-bottom: 0px; padding-top: 0px;">
+             <li ng-class="{disabled: currentPage == 0}">
+                 <a href ng-click="prevPage()">« Prev</a>
+             </li>
+             <li ng-repeat="n in buildPager()" ng-class="{active: n == currentPage}" ng-click="setPage()">
+                 <a href ng-bind="n+1">1</a>
+             </li>
+             <li ng-class="{disabled: currentPage == totalPages}">
+                 <a href ng-click="nextPage()">Next »</a>
+             </li>
+        </ul>
+    </div>
+    <br>
     <div ng-repeat="event in events">
         <ts-event ng-hide="event.hidden && !meta.showHiddenEvents" enable-context-query="true" similarity-layer="similarityLayer" event="::event" add-event-data="addEventData" meta="::meta" sketch-id="::sketchId" prev-timestamp="::events[$index-1]['_source'].timestamp" next-timestamp="::events[$index+1]['_source'].timestamp" index="::$index" order="::filter.order"></ts-event>
         <ts-event-add event="::event" events="events" index="{{$index}}" add-event-data="addEventData" sketch="sketch" sketch-id="::sketchId" filter="filter" query="query" queryDsl="queryDsl"></ts-event-add>
         <!-- <ts-event-add ng-hide="event.hidden" event="::event" add-event-data="addEventData" meta="::meta" sketch-id="::sketchId" after-timestamp="::events[$index]['_source'].timestamp"></ts-event-add> -->
     </div>
     </div>
-    <div ng-show="dataLoaded" style="margin: 0 auto; display:inline-block;">
+    <div ng-show="totalPages > 0 && dataLoaded" style="margin: 0 auto; display:inline-block;">
       <ul class="pagination">
          <li ng-class="{disabled: currentPage == 0}">
              <a href ng-click="prevPage()">« Prev</a>

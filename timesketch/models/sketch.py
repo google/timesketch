@@ -287,6 +287,18 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.name = name
         self.user = user
         self.query_string = query_string
+        if not query_filter:
+            filter_template = {
+                u'exclude': [],
+                u'indices': u'_all',
+                u'time_start': None,
+                u'time_end': None,
+                u'limit': 40,
+                u'from': 0,
+                u'order': u'asc',
+                u'size': u'40'
+            }
+            query_filter = json.dumps(filter_template, ensure_ascii=False)
         self.query_filter = query_filter
         self.query_dsl = query_dsl
 

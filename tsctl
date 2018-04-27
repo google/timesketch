@@ -16,6 +16,7 @@
 
 import json
 import sys
+import yaml
 from uuid import uuid4
 
 from flask import current_app
@@ -39,6 +40,7 @@ from timesketch.models import drop_all
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import SearchIndex
+from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import Timeline
 
 
@@ -500,6 +502,78 @@ class SimilarityScore(Command):
         sys.stdout.write(u'{0}'.format(result))
 
 
+class SearchTemplateManager(Command):
+    """Command Module to manipulate Search templates."""
+    option_list = (
+        Option(u'--import', u'-i', dest=u'import_location', required=False),
+        Option(u'--export', u'-e', dest=u'export_location', required=False),
+    )
+
+    def run(self, import_location, export_location):
+        """Export/Import search templates to/from file.
+
+        Args:
+            import_location: Path to the yaml file to import templates.
+            export_location: Path to the yaml file to export templates.
+        """
+
+        if export_location:
+            search_templates = []
+            for search_template in SearchTemplate.query.all():
+                labels = []
+                for label in search_template.labels:
+                    if label.label.startswith(u'supported_os:'):
+                        labels.append(label.label.replace(
+                            u'supported_os:', u''))
+                search_templates.append({
+                    u'name': search_template.name,
+                    u'query_string': search_template.query_string,
+                    u'query_dsl': search_template.query_dsl,
+                    u'supported_os': labels
+                })
+
+            with open(export_location, 'w') as fh:
+                yaml.safe_dump(search_templates, stream=fh)
+
+        if import_location:
+            try:
+                with open(import_location, 'rb') as fh:
+                    search_templates = yaml.load(fh)
+            except IOError as e:
+                sys.stdout.write(u'Unable to open file: {0:s}\n'.format(e))
+                sys.exit(1)
+
+            for search_template in search_templates:
+                name = search_template[u'name']
+                query_string = search_template[u'query_string'],
+                query_dsl = search_template[u'query_dsl']
+
+                # Skip search template if already exits.
+                if SearchTemplate.query.filter_by(name=name).first():
+                    continue
+
+                imported_template = SearchTemplate(
+                    name=name,
+                    user=User(None),
+                    query_string=query_string,
+                    query_dsl=query_dsl)
+
+                # Add supported_os labels.
+                for supported_os in search_template[u'supported_os']:
+                    label_name = u'supported_os:{0:s}'.format(supported_os)
+                    label = SearchTemplate.Label.get_or_create(
+                        label=label_name, user=None)
+                    imported_template.labels.append(label)
+
+                # Set flag to identify local vs import templates.
+                remote_flag = SearchTemplate.Label.get_or_create(
+                    label=u'remote_template', user=None)
+                imported_template.labels.append(remote_flag)
+
+                db_session.add(imported_template)
+                db_session.commit()
+
+
 if __name__ == '__main__':
     # Setup Flask-script command manager and register commands.
     shell_manager = Manager(create_app)
@@ -513,6 +587,7 @@ if __name__ == '__main__':
     shell_manager.add_command(u'drop_db', DropDataBaseTables())
     shell_manager.add_command(u'json2ts', CreateTimelineFromJson())
     shell_manager.add_command(u'purge', PurgeTimeline())
+    shell_manager.add_command(u'search_template', SearchTemplateManager())
     shell_manager.add_command(u'similarity_score', SimilarityScore())
     shell_manager.add_command(u'runserver',
                               Server(host=u'127.0.0.1', port=5000))

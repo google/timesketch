@@ -94,6 +94,7 @@ def overview(sketch_id):
         return redirect(url_for(u'sketch_views.overview', sketch_id=sketch.id))
 
     # Toggle public/private form POST
+    # TODO: Move these resources to the API.
     if permission_form.validate_on_submit():
         if not sketch.has_permission(current_user, u'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
@@ -102,8 +103,9 @@ def overview(sketch_id):
         # TODO(jbn): Make write permission off by default
         # and selectable in the UI
         if permission_form.username.data:
-            user = User.query.filter_by(
-                username=permission_form.username.data).first()
+            username = permission_form.username.data
+            base_username = username.split(u'@')[0]
+            user = User.query.filter_by(username=base_username).first()
             if user:
                 sketch.grant_permission(permission=u'read', user=user)
                 sketch.grant_permission(permission=u'write', user=user)
@@ -447,8 +449,7 @@ def export(sketch_id):
         query_filter,
         query_dsl,
         indices,
-        aggregations=None,
-        return_results=True)
+        aggregations=None)
 
     csv_out = StringIO()
     csv_writer = csv.DictWriter(
