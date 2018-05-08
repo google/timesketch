@@ -36,7 +36,7 @@ export const tsTimelinesList = ['$interval', 'timesketchApi', function ($interva
                     if (timelines) {
                         for (const timeline of timelines) {
                             timeline.updated_at = moment.utc(timeline.updated_at).format('YYYY-MM-DD');
-                            timeline.status = timeline.status[0].status;
+                            timeline.status = timeline.searchindex.status[0].status;
                             $scope.timelines.push(timeline)
                         }
                     }
