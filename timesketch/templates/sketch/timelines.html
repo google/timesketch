@@ -58,7 +58,7 @@
                                 <th>Created</th>
                                 </thead>
                                 {% for timeline in timelines %}
-                                    {% if timeline.get_status.status == 'ready' %}
+                                    {% if timeline.get_status.status == 'ready' or timeline.get_status.status == 'new' %}
                                         <tr>
                                             <td><input name="timelines" type="checkbox" value={{ timeline.id }}></td>
                                             <td>{{ timeline.name }}</td>
