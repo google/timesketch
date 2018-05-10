@@ -1,3 +1,11 @@
+## Table of Contents
+1. [tsctl](#tsctl)
+   - [User management](#User-management)
+     - Adding users
+     - Removing users
+   - Group management
+3. [Using Stories](#stories)
+
 ## tsctl
 
 tsctl is a command line tool used to control timesketch.
@@ -61,9 +69,7 @@ Parameters:
 
 #### Managing group membership
 
-
-
-## Using Stories
+## Stories
 
 A story is a place where you can capture the narrative of your technical investigation and add detail to your story with raw timeline data.
 The editor let you to write and capture the story behind your investigation and at the same time enable you to share detailed findings without spending hours writing reports.
