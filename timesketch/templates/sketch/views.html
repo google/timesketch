@@ -11,9 +11,7 @@
                     <div class="card">
                         <div class="text-center" style="padding:100px;">
                             <h3 style="color:#777"><i class="fa fa-meh-o"></i> No data to analyze</h3>
-                            <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
-                            <br>
-                            <a href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}">or add an existing timeline</a>
+                            <a class="btn btn-success" href="{{ url_for('sketch_views.timelines', sketch_id=sketch.id) }}"><i class="fa fa-plus"></i> Add timeline</a>
                         </div>
                     </div>
                 {% else %}
