@@ -744,8 +744,8 @@ class EventCreateResource(ResourceMixin, Resource):
         form = EventCreateForm.build(request)
         if form.validate_on_submit():
             sketch = Sketch.query.get_with_acl(sketch_id)
-            timeline_name = u'sketch internal timeline'
-            index_name_seed = u'herpderp' + str(sketch_id)
+            timeline_name = u'sketch specific timeline'
+            index_name_seed = u'timesketch' + str(sketch_id)
             event_type = u'user_created_event'
 
             # derive datetime from timestamp:
@@ -764,9 +764,9 @@ class EventCreateResource(ResourceMixin, Resource):
 
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
-            index_name = unicode(md5.new(index_name_seed).hexdigest())
+            index_name = uuid.uuid4().hex
 
-            # Hold on to your butts...
+            # Try to create index
             try:
                 # Create the index in Elasticsearch (unless it already exists)
                 self.datastore.create_index(
@@ -803,8 +803,7 @@ class EventCreateResource(ResourceMixin, Resource):
                         sketch=sketch,
                         user=current_user,
                         searchindex=searchindex)
-                    timeline.echo = event
-                    # print self.to_json(timeline).data
+
                     if timeline not in sketch.timelines:
                         sketch.timelines.append(timeline)
 

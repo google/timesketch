@@ -346,7 +346,6 @@ export const tsEvent = function () {
             $scope.addFilterStart = function () {
                 $scope.$emit('datetime-clicked', {datetimeclicked: $scope.event._source.datetime})
             }
-<<<<<<< HEAD
 
             // this function provides the hover effect/visual cues for manual
             // event addition.  we're not able to access the parent div from
@@ -362,8 +361,6 @@ export const tsEvent = function () {
             $scope.eventAddLeave = function($event){
               $scope.eventAddNgClass = ""
             }
-=======
->>>>>>> master
 
             $scope.getDetail = function () {
                 if ($scope.eventdetail) {return}
@@ -434,13 +431,6 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
             query: '=',
             queryDsl: '=',
             index: '@',
-            // prevTimestamp: '=',
-            // nextTimestamp: '=',
-            // index: '=',
-            // isContextEvent: '=',
-            // enableContextQuery: '=',
-            // order: '=',
-            // similarityLayer: '=',
             addEventData: '=',
         },
         require: '^tsSearch',
