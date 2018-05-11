@@ -52,8 +52,8 @@ apt-get install -y \
   python-pip python-dev libffi-dev redis-server python-plaso plaso-tools jq
 
 # Install python dependencies
-pip install --upgrade pip
-pip install gunicorn pylint nose flask-testing coverage mock BeautifulSoup
+# pip -v install --upgrade pip  # don't do this https://github.com/pypa/pip/issues/5221
+pip -v install gunicorn pylint nose flask-testing coverage mock BeautifulSoup
 
 if [ "$VAGRANT" = true ]; then
   # Install yarn and nodejs
