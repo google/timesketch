@@ -53,7 +53,7 @@ apt-get install -y \
 
 # Install python dependencies
 # pip -v install --upgrade pip  # don't do this https://github.com/pypa/pip/issues/5221
-pip -v install gunicorn pylint nose flask-testing coverage mock BeautifulSoup
+pip install gunicorn pylint nose flask-testing coverage mock BeautifulSoup
 
 if [ "$VAGRANT" = true ]; then
   # Install yarn and nodejs
@@ -93,16 +93,16 @@ chown "${RUN_AS_USER}" /var/lib/timesketch
 cp "${TIMESKETCH_PATH}"/timesketch.conf /etc/
 
 # Set session key for Timesketch
-sed s/"SECRET_KEY = u'<KEY_GOES_HERE>'"/"SECRET_KEY = u'${SECRET_KEY}'"/ /etc/timesketch.conf > /etc/timesketch.conf.new
-mv /etc/timesketch.conf.new /etc/timesketch.conf
+sed -i s/"SECRET_KEY = u'<KEY_GOES_HERE>'"/"SECRET_KEY = u'${SECRET_KEY}'"/ /etc/timesketch.conf
 
 # Configure the DB password
-sed s/"<USERNAME>:<PASSWORD>@localhost"/"timesketch:${PSQL_PW}@localhost"/ /etc/timesketch.conf > /etc/timesketch.conf.new
-mv /etc/timesketch.conf.new /etc/timesketch.conf
+sed -i s/"<USERNAME>:<PASSWORD>@localhost"/"timesketch:${PSQL_PW}@localhost"/ /etc/timesketch.conf
 
 # Configure the Neo4j password
-sed s/"<N4J_PASSWORD>"/"neo4j"/ /etc/timesketch.conf > /etc/timesketch.conf.new
-mv /etc/timesketch.conf.new /etc/timesketch.conf
+sed -i s/"<N4J_PASSWORD>"/"neo4j"/ /etc/timesketch.conf
+
+# Enable upload
+sed -i s/"UPLOAD_ENABLED = False"/"UPLOAD_ENABLED = True"/ /etc/timesketch.conf
 
 # Copy groovy scripts
 cp "${TIMESKETCH_PATH}"/contrib/*.groovy /etc/elasticsearch/scripts/
