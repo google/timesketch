@@ -764,7 +764,7 @@ class EventCreateResource(ResourceMixin, Resource):
 
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
-            index_name = uuid.uuid4().hex
+            index_name = unicode(md5.new(index_name_seed).hexdigest())
 
             # Try to create index
             try:
