@@ -45,7 +45,7 @@ tsctl runserver -c /etc/timesketch.conf
 
 Will start the timesketch server
 
-Comand:
+Command:
 ```
 tsctl runserver
 ```
@@ -54,7 +54,7 @@ tsctl runserver
 
 #### Adding users
 
-Comand:
+Command:
 ```
 tsctl add_user
 ```
@@ -78,7 +78,7 @@ Not yet implemented.
 
 #### Adding groups
 
-Comand:
+Command:
 ```
 tsctl add_group
 ```
@@ -96,7 +96,7 @@ Not yet implemented
 
 Add or remove a user to a group
 
-Comand:
+Command:
 ```
 tsctl manage_group
 ```
@@ -118,7 +118,7 @@ tsctl manage_group -a -u user_foo -g group_bar
 
 Create a new Timesketch searchindex.
 
-Comand:
+Command:
 ```
 tsctl add_index
 ```
@@ -137,7 +137,7 @@ tsctl add_index -u user_foo -i test_index_name -n sample
 
 ### Migrate db
 
-Comand:
+Command:
 ```
 tsctl db
 ```
@@ -153,7 +153,7 @@ tsctl drop_db
 
 ### Import json to Timesketch
 
-Comand:
+Command:
 ```
 tsctl json2ts
 ```
@@ -169,7 +169,7 @@ tsctl purge
 
 Export/Import search templates to/from file.
 
-Comand:
+Command:
 ```
 tsctl search_template
 ```
@@ -185,7 +185,7 @@ export_location: Path to the yaml file to export templates.
 
 ### similarity_score
 
-Comand:
+Command:
 ```
 tsctl similarity_score
 ```
