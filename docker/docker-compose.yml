@@ -21,6 +21,8 @@ services:
       - REDIS_PORT=6379
       - NEO4J_ADDRESS=neo4j
       - NEO4J_PORT=7474
+      - TIMESKETCH_USER=${TIMESKETCH_USER}
+      - TIMESKETCH_PASSWORD=${TIMESKETCH_PASSWORD}
     restart: always
 
   elasticsearch:
