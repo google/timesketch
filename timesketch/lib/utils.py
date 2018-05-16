@@ -69,6 +69,52 @@ def read_and_validate_csv(path):
 
             yield row
 
+def read_and_validate_redline(path, delimiter):
+    """Generator for reading a Redline CSV file.
+    Args:
+        path: Path to the file
+        delimiter: character used as a field separator
+    """
+    # Columns that must be present in the CSV file
+
+    # check if it is the right redline format
+    mandatory_fields = [u'Alert', u'Tag', u'Timestamp',u'Field',u'Summary']
+
+    with open(path, 'rb') as fh:
+        csv.register_dialect('myDialect',
+                             delimiter=',',
+                             quoting=csv.QUOTE_ALL,
+                             skipinitialspace=True)
+        reader = csv.DictReader(fh, delimiter=',', dialect='myDialect')
+
+        csv_header = reader.fieldnames
+        missing_fields = []
+        # Validate the CSV header
+        for field in mandatory_fields:
+            if field not in csv_header:
+                missing_fields.append(field)
+        if missing_fields:
+            raise RuntimeError(
+                u'Missing fields in CSV header: {0:s}'.format(missing_fields))
+        for row in reader:
+
+            entry_unix_timestamp = convert_date_to_timestamp(row['Timestamp'])
+            entry_timestamp = convert_date_to_datetime(row['Timestamp'])
+            timestamp_desc = row['Field']
+            summary = clean_summary(row['Summary'])
+            alert = row['Alert']
+            tag = row['Tag']
+
+            row_to_yield = {}
+
+            row_to_yield["message"]=summary
+            row_to_yield["timestamp"] = str(entry_unix_timestamp)
+            row_to_yield["datetime"] = entry_timestamp
+            row_to_yield["timestamp_desc"] = timestamp_desc
+            row_to_yield["alert"] = alert #extra field
+            row_to_yield["tag"] = tag # extra field
+
+            yield row_to_yield
 
 def read_and_validate_jsonl(path):
     """Generator for reading a JSONL (json lines) file.
