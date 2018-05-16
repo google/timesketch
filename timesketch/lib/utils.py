@@ -36,6 +36,30 @@ def random_color():
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
     return u'{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
 
+# to avoid hickups in timesketch, some newlines, commas etc will be removed
+def clean_summary(argument):
+    argument = argument.replace('\n', '')
+    argument = argument.replace(',', '.') # otherwise timesketch will be confused
+    argument = argument.replace('\t', '')
+    return argument
+
+
+# method to create the datetime
+def convert_date_to_datetime(argument):
+    argument  = argument.replace('Z', '')
+    d = datetime.datetime.strptime(argument, '%Y-%m-%d %H:%M:%S')
+    iso_date = d.isoformat()
+    iso_date_new = iso_date + "+00:00"
+    return  iso_date_new
+
+# helper to create the timestamp
+def convert_date_to_timestamp(argument):
+    argument = argument.replace('Z', '')
+    d = datetime.datetime.strptime(argument, '%Y-%m-%d %H:%M:%S')
+    unixtime = time.mktime(d.timetuple())
+    unix_print = int(unixtime)
+    unix_print = unix_print*1000
+    return unix_print
 
 def read_and_validate_csv(path):
     """Generator for reading a CSV file.
