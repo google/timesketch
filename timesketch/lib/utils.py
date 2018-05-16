@@ -46,7 +46,7 @@ def clean_summary(argument):
 
 # method to create the datetime
 def convert_date_to_datetime(argument):
-    argument  = argument.replace('Z', '')
+    argument = argument.replace('Z', '')
     d = datetime.datetime.strptime(argument, '%Y-%m-%d %H:%M:%S')
     iso_date = d.isoformat()
     iso_date_new = iso_date + "+00:00"
@@ -102,7 +102,7 @@ def read_and_validate_redline(path, delimiter):
     # Columns that must be present in the CSV file
 
     # check if it is the right redline format
-    mandatory_fields = [u'Alert', u'Tag', u'Timestamp',u'Field',u'Summary']
+    mandatory_fields = [u'Alert', u'Tag', u'Timestamp', u'Field', u'Summary']
 
     with open(path, 'rb') as fh:
         csv.register_dialect('myDialect',
@@ -131,7 +131,7 @@ def read_and_validate_redline(path, delimiter):
 
             row_to_yield = {}
 
-            row_to_yield["message"]=summary
+            row_to_yield["message"] = summary
             row_to_yield["timestamp"] = str(entry_unix_timestamp)
             row_to_yield["datetime"] = entry_timestamp
             row_to_yield["timestamp_desc"] = timestamp_desc
