@@ -62,6 +62,7 @@ from timesketch.lib.datastores.neo4j import SCHEMA as neo4j_schema
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.lib.forms import AddTimelineSimpleForm
 from timesketch.lib.forms import AggregationForm
+from timesketch.lib.forms import CreateTimelineForm
 from timesketch.lib.forms import SaveViewForm
 from timesketch.lib.forms import NameDescriptionForm
 from timesketch.lib.forms import EventAnnotationForm
@@ -759,9 +760,6 @@ class EventCreateResource(ResourceMixin, Resource):
                 "message": form.message.data,
             }
 
-            # Current user
-            username = current_user.username
-
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
             index_name = unicode(md5.new(index_name_seed).hexdigest())
@@ -828,6 +826,7 @@ class EventCreateResource(ResourceMixin, Resource):
         else:
             print form.errors
             raise ApiHTTPError(
+                message="failed to add event",
                 status_code=HTTP_STATUS_CODE_BAD_REQUEST)
 
 
@@ -1275,69 +1274,67 @@ class CountEventsResource(ResourceMixin, Resource):
 class TimelineCreateResource(ResourceMixin, Resource):
     @login_required
     def post(self):
-         """Handles POST request to the resource.
+        """Handles POST request to the resource.
 
-         Returns:
-             A view in JSON (instance of flask.wrappers.Response)
+        Returns:
+            A view in JSON (instance of flask.wrappers.Response)
 
-         Raises:
-             ApiHTTPError
-         """
-         upload_enabled = current_app.config[u'UPLOAD_ENABLED']
-         form = CreateTimelineForm()
-         if form.validate_on_submit() and upload_enabled:
-             sketch_id = form.sketch_id.data
-             timeline_name = form.name.data
+        Raises:
+            ApiHTTPError
+        """
+        upload_enabled = current_app.config[u'UPLOAD_ENABLED']
+        form = CreateTimelineForm()
+        if form.validate_on_submit() and upload_enabled:
+            sketch_id = form.sketch_id.data
+            timeline_name = form.name.data
 
-             sketch = None
-             if sketch_id:
-                 sketch = Sketch.query.get_with_acl(sketch_id)
+            sketch = None
+            if sketch_id:
+                sketch = Sketch.query.get_with_acl(sketch_id)
 
-             # Current user
-             username = current_user.username
+            # We do not need a human readable filename or
+            # datastore index name, so we use UUIDs here.
+            index_name = unicode(uuid.uuid4().hex)
 
-             # We do not need a human readable filename or
-             # datastore index name, so we use UUIDs here.
-             index_name = unicode(uuid.uuid4().hex)
+            # Create the search index in the Timesketch database
+            searchindex = SearchIndex.get_or_create(
+                name=timeline_name,
+                description=timeline_name,
+                user=current_user,
+                index_name=index_name)
+            searchindex.grant_permission(permission=u'read', user=current_user)
+            searchindex.grant_permission(permission=u'write', user=current_user)
+            searchindex.grant_permission(
+                permission=u'delete', user=current_user)
+            searchindex.set_status(u'processing')
+            db_session.add(searchindex)
+            db_session.commit()
 
-             # Create the search index in the Timesketch database
-             searchindex = SearchIndex.get_or_create(
-                 name=timeline_name,
-                 description=timeline_name,
-                 user=current_user,
-                 index_name=index_name)
-             searchindex.grant_permission(permission=u'read', user=current_user)
-             searchindex.grant_permission(permission=u'write', user=current_user)
-             searchindex.grant_permission(
-                 permission=u'delete', user=current_user)
-             searchindex.set_status(u'processing')
-             db_session.add(searchindex)
-             db_session.commit()
+            timeline = None
+            if sketch and sketch.has_permission(current_user, u'write'):
+                timeline = Timeline(
+                    name=searchindex.name,
+                    description=searchindex.description,
+                    sketch=sketch,
+                    user=current_user,
+                    searchindex=searchindex)
+                sketch.timelines.append(timeline)
+                db_session.add(timeline)
+                db_session.commit()
 
-             timeline = None
-             if sketch and sketch.has_permission(current_user, u'write'):
-                 timeline = Timeline(
-                     name=searchindex.name,
-                     description=searchindex.description,
-                     sketch=sketch,
-                     user=current_user,
-                     searchindex=searchindex)
-                 sketch.timelines.append(timeline)
-                 db_session.add(timeline)
-                 db_session.commit()
+            # Return Timeline if it was created.
+            # pylint: disable=no-else-return
+            if timeline:
+                return self.to_json(
+                    timeline, status_code=HTTP_STATUS_CODE_CREATED)
+            else:
+                return self.to_json(
+                    searchindex, status_code=HTTP_STATUS_CODE_CREATED)
 
-             # Return Timeline if it was created.
-             # pylint: disable=no-else-return
-             if timeline:
-                 return self.to_json(
-                     timeline, status_code=HTTP_STATUS_CODE_CREATED)
-             else:
-                 return self.to_json(
-                     searchindex, status_code=HTTP_STATUS_CODE_CREATED)
-
-         else:
-             raise ApiHTTPError(
-                 status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+        else:
+            raise ApiHTTPError(
+                message="failed to create timeline",
+                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
 
 
 class TimelineListResource(ResourceMixin, Resource):
