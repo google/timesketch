@@ -30,8 +30,9 @@ The configuration for Elasticsearch is located in `/etc/elasticsearch/elasticsea
 
 You need to deploy two Groovy scripts. Copy the following two files to `/etc/elasticsearch/scripts/`:
 
-    https://raw.githubusercontent.com/google/timesketch/master/contrib/add_label.groovy
-    https://raw.githubusercontent.com/google/timesketch/master/contrib/toggle_label.groovy
+    wget https://raw.githubusercontent.com/google/timesketch/master/contrib/add_label.groovy
+    wget https://raw.githubusercontent.com/google/timesketch/master/contrib/toggle_label.groovy
+    cp *.groovy /etc/elasticsearch/scripts/
 
 Make sure that Elasticsearch is started on boot:
 
