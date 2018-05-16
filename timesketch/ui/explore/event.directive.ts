@@ -351,14 +351,14 @@ export const tsEvent = function () {
             // event addition.  we're not able to access the parent div from
             // a child via css, so we end up with this hacky thing.
             $scope.eventAddNgClass = ''
-            $scope.eventAddHover = function(eventId){
+            $scope.eventAddHover = function (eventId) {
               if ($scope.addEventData[eventId].showForm) {
                   return
               }
-              $scope.eventAddNgClass = "event-insert-hover"
+              $scope.eventAddNgClass = 'event-insert-hover'
             }
 
-            $scope.eventAddLeave = function($event){
+            $scope.eventAddLeave = function ($event) {
               $scope.eventAddNgClass = ''
             }
 
@@ -441,9 +441,9 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
                 $scope.addEventData[event._id].timestamp = event._source.datetime
                 $scope.addEventData[event._id].showForm = !$scope.addEvent[event._id].showForm
             }
-            $scope.genEventId = function() {
+            $scope.genEventId = function () {
               let id = '';
-              let alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
+              const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
               for (let i = 0; i < 20; i++) {
                 id += alpha.charAt(Math.floor(Math.random() * alpha.length));
               }
@@ -452,30 +452,30 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
         },
         link: function (scope, elem, attrs, ctrl) {
             scope.doAddEvent = function (eventId, index) {
-                let event = scope.addEventData[eventId]
+                const event = scope.addEventData[eventId]
                 scope.addEventData[eventId].disabled = true
                 ctrl.addEvent(event).then( function (response) {
-                    let resp_timeline = response.data.objects[0]
-                    let ts = Date.parse(scope.addEventData[eventId].timestamp)
-                    let tsm = ts * 1000
-                    let new_event = {
-                      '_id': scope.genEventId(),
-                      '_index': resp_timeline.searchindex.index_name,
-                      '_score': null,
-                      '_source': {
-                        'datetime': scope.addEventData[eventId].timestamp,
-                        'label': [],
-                        'message': scope.addEventData[eventId].message,
-                        'tag': [],
-                        'timestamp': tsm,
-                        'timestamp_desc': scope.addEventData[eventId].timestamp_desc,
-                      },
-                      '_type': 'user_created_event',
-                      'selected': false,
-                      'sort': [ts]
-                    }
+                    const resp_timeline = response.data.objects[0]
+                    const ts = Date.parse(scope.addEventData[eventId].timestamp)
+                    const tsm = ts * 1000
+                    // const new_event = {
+                    //   '_id': scope.genEventId(),
+                    //   '_index': resp_timeline.searchindex.index_name,
+                    //   '_score': null,
+                    //   '_source': {
+                    //     'datetime': scope.addEventData[eventId].timestamp,
+                    //     'label': [],
+                    //     'message': scope.addEventData[eventId].message,
+                    //     'tag': [],
+                    //     'timestamp': tsm,
+                    //     'timestamp_desc': scope.addEventData[eventId].timestamp_desc,
+                    //   },
+                    //   '_type': 'user_created_event',
+                    //   'selected': false,
+                    //   'sort': [ts],
+                    // }
 
-                    if ( scope.filter.indices.indexOf( response.data.objects[0].searchindex.index_name ) == -1 ){
+                    if ( scope.filter.indices.indexOf( response.data.objects[0].searchindex.index_name ) == -1 ) {
                         scope.filter.indices.push( response.data.objects[0].searchindex.index_name )
                     }
                     let resp_timeline_active = false
@@ -489,7 +489,7 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
                     }
                     // scope.events.splice(index+1, 1, new_event)
 
-                    $timeout(function() {
+                    $timeout(function () {
                       ctrl.search(scope.query, scope.filter, scope.queryDsl)
                     }, 1000)
                 })
