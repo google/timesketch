@@ -350,16 +350,16 @@ export const tsEvent = function () {
             // this function provides the hover effect/visual cues for manual
             // event addition.  we're not able to access the parent div from
             // a child via css, so we end up with this hacky thing.
-            $scope.eventAddNgClass = ""
+            $scope.eventAddNgClass = ''
             $scope.eventAddHover = function(eventId){
-              if($scope.addEventData[eventId].showForm){
+              if ($scope.addEventData[eventId].showForm) {
                   return
               }
               $scope.eventAddNgClass = "event-insert-hover"
             }
 
             $scope.eventAddLeave = function($event){
-              $scope.eventAddNgClass = ""
+              $scope.eventAddNgClass = ''
             }
 
             $scope.getDetail = function () {
@@ -436,13 +436,13 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
         require: '^tsSearch',
         controller: function ($scope, timesketchApi) {
             $scope.clearAddEvent = function (event) {
-                $scope.addEventData[event._id].timestamp_desc = ""
-                $scope.addEventData[event._id].message = ""
+                $scope.addEventData[event._id].timestamp_desc = ''
+                $scope.addEventData[event._id].message = ''
                 $scope.addEventData[event._id].timestamp = event._source.datetime
                 $scope.addEventData[event._id].showForm = !$scope.addEvent[event._id].showForm
             }
             $scope.genEventId = function() {
-              let id = "";
+              let id = '';
               let alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
               for (let i = 0; i < 20; i++) {
                 id += alpha.charAt(Math.floor(Math.random() * alpha.length));
@@ -459,20 +459,20 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
                     let ts = Date.parse(scope.addEventData[eventId].timestamp)
                     let tsm = ts * 1000
                     let new_event = {
-                      "_id": scope.genEventId(),
-                      "_index": resp_timeline.searchindex.index_name,
-                      "_score": null,
-                      "_source": {
-                        "datetime": scope.addEventData[eventId].timestamp,
-                        "label": [],
-                        "message": scope.addEventData[eventId].message,
-                        "tag": [],
-                        "timestamp": tsm,
-                        "timestamp_desc": scope.addEventData[eventId].timestamp_desc,
+                      '_id': scope.genEventId(),
+                      '_index': resp_timeline.searchindex.index_name,
+                      '_score': null,
+                      '_source': {
+                        'datetime': scope.addEventData[eventId].timestamp,
+                        'label': [],
+                        'message': scope.addEventData[eventId].message,
+                        'tag': [],
+                        'timestamp': tsm,
+                        'timestamp_desc': scope.addEventData[eventId].timestamp_desc,
                       },
-                      "_type": "user_created_event",
-                      "selected": false,
-                      "sort": [ts]
+                      '_type': 'user_created_event',
+                      'selected': false,
+                      'sort': [ts]
                     }
 
                     if ( scope.filter.indices.indexOf( response.data.objects[0].searchindex.index_name ) == -1 ){
