@@ -39,6 +39,9 @@ Make sure that Elasticsearch is started on boot:
     /bin/systemctl daemon-reload
     /bin/systemctl enable elasticsearch.service
     /bin/systemctl start elasticsearch.service
+    
+Make sure that Elasticsearch is running:
+
     /bin/systemctl status elasticsearch.service
 
 #### Install PostgreSQL
