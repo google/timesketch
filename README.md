@@ -20,6 +20,10 @@ Timesketch is an open source tool for collaborative forensic timeline analysis. 
 * [Create timeline from Plaso file](docs/CreateTimelineFromPlaso.md)
 * [Enable Plaso upload via HTTP](docs/EnablePlasoUpload.md)
 
+#### Using Timesketch
+
+* [Users guide](docs/Users-Guide.md)
+
 ## Community
 * [Community guide](docs/Community-Guide.md)
 
