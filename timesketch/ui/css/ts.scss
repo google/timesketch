@@ -300,12 +300,12 @@ body > header {
   -webkit-transform: scaleX(0.0001);
   -ms-transform: scaleX(0.0001);
   transform: scaleX(0.0001);
-  -webkit-transition: -webkit-transform 250ms ease-in-out;
-  transition: transform 250ms ease-in-out;
+  -webkit-transition: -webkit-transform 150ms ease-in-out;
+  transition: transform 150ms ease-in-out;
 }
 
 .event-insert-hover {
-  border-bottom: solid 10px;
+  border-bottom: solid 10px transparent;
 }
 
 .event-insert-hover:after {

@@ -458,22 +458,6 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
                     const resp_timeline = response.data.objects[0]
                     const ts = Date.parse(scope.addEventData[eventId].timestamp)
                     const tsm = ts * 1000
-                    // const new_event = {
-                    //   '_id': scope.genEventId(),
-                    //   '_index': resp_timeline.searchindex.index_name,
-                    //   '_score': null,
-                    //   '_source': {
-                    //     'datetime': scope.addEventData[eventId].timestamp,
-                    //     'label': [],
-                    //     'message': scope.addEventData[eventId].message,
-                    //     'tag': [],
-                    //     'timestamp': tsm,
-                    //     'timestamp_desc': scope.addEventData[eventId].timestamp_desc,
-                    //   },
-                    //   '_type': 'user_created_event',
-                    //   'selected': false,
-                    //   'sort': [ts],
-                    // }
 
                     if ( scope.filter.indices.indexOf( response.data.objects[0].searchindex.index_name ) == -1 ) {
                         scope.filter.indices.push( response.data.objects[0].searchindex.index_name )
@@ -487,7 +471,6 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
                     if (!resp_timeline_active) {
                         scope.sketch.active_timelines.push(resp_timeline)
                     }
-                    // scope.events.splice(index+1, 1, new_event)
 
                     $timeout(function () {
                       ctrl.search(scope.query, scope.filter, scope.queryDsl)
