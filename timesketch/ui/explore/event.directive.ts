@@ -443,7 +443,7 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
             }
             $scope.genEventId = function () {
               let id = '';
-              const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_";
+              const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_';
               for (let i = 0; i < 20; i++) {
                 id += alpha.charAt(Math.floor(Math.random() * alpha.length));
               }
@@ -457,7 +457,6 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
                 ctrl.addEvent(event).then( function (response) {
                     const resp_timeline = response.data.objects[0]
                     const ts = Date.parse(scope.addEventData[eventId].timestamp)
-                    const tsm = ts * 1000
 
                     if ( scope.filter.indices.indexOf( response.data.objects[0].searchindex.index_name ) == -1 ) {
                         scope.filter.indices.push( response.data.objects[0].searchindex.index_name )
