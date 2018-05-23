@@ -19,6 +19,7 @@ from .resources import AggregationResource
 from .resources import ExploreResource
 from .resources import EventResource
 from .resources import EventAnnotationResource
+from .resources import EventCreateResource
 from .resources import GraphResource
 from .resources import SketchResource
 from .resources import SketchListResource
@@ -48,6 +49,7 @@ API_ROUTES = [
     (ExploreResource, '/sketches/<int:sketch_id>/explore/'),
     (EventResource, '/sketches/<int:sketch_id>/event/'),
     (EventAnnotationResource, '/sketches/<int:sketch_id>/event/annotate/'),
+    (EventCreateResource, u'/sketches/<int:sketch_id>/event/create/'),
     (ViewListResource, '/sketches/<int:sketch_id>/views/'),
     (ViewResource, '/sketches/<int:sketch_id>/views/<int:view_id>/'),
     (SearchTemplateListResource, '/searchtemplate/'),

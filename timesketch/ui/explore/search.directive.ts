@@ -64,7 +64,8 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
                 }
             }, true)
         },
-        controller: function ($scope) {
+        controller: function ($scope, $window) {
+            $scope.addEventData = {}
             $scope.filter = {'indices': []}
             $scope.new_searchtemplate = false
             timesketchApi.getSketch($scope.sketchId).success(function (data) {
@@ -128,6 +129,10 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
                         }
                         $scope.meta.numHiddenEvents = 0
                 })
+            }
+
+            this.addEvent = function (event) {
+                return timesketchApi.addEvent($scope.sketchId, event)
             }
 
             this.aggregation = function (query, filter, aggtype) {

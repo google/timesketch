@@ -31,6 +31,7 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
         template: require('./event-list.html'),
         scope: {
             sketchId: '=',
+            sketch: '=',
             meta: '=',
             events: '=',
             query: '=',
@@ -39,6 +40,7 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
             viewId: '=',
             namedView: '=',
             similarityEnabled: '=',
+            addEventData: '=',
         },
         require: '^tsSearch',
         controller: function ($scope) {
@@ -242,6 +244,7 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
             scope.applyOrder = function () {
                 ctrl.search(scope.query, scope.filter)
             }
+
             scope.$watch('pageSize', function (value) {
                 scope.filter['size'] = scope.pageSize
                 scope.currentPage = 0
@@ -279,6 +282,7 @@ export const tsEvent = function () {
             enableContextQuery: '=',
             order: '=',
             similarityLayer: '=',
+            addEventData: '=',
         },
         require: '?^tsSearch',
         controller: function ($scope, timesketchApi) {
@@ -343,6 +347,21 @@ export const tsEvent = function () {
                 $scope.$emit('datetime-clicked', {datetimeclicked: $scope.event._source.datetime})
             }
 
+            // this function provides the hover effect/visual cues for manual
+            // event addition.  we're not able to access the parent div from
+            // a child via css, so we end up with this hacky thing.
+            $scope.eventAddNgClass = ''
+            $scope.eventAddHover = function (eventId) {
+              if ($scope.addEventData[eventId].showForm) {
+                  return
+              }
+              $scope.eventAddNgClass = 'event-insert-hover'
+            }
+
+            $scope.eventAddLeave = function ($event) {
+              $scope.eventAddNgClass = ''
+            }
+
             $scope.getDetail = function () {
                 if ($scope.eventdetail) {return}
                 timesketchApi.getEvent(
@@ -389,12 +408,73 @@ export const tsEvent = function () {
                 }
 
             })
-
-        },
-        link: function (scope, elem, attrs, ctrl) {
-            scope.getContext = function (event) {
-                ctrl.getContext(event)
-            }
         },
     }
 }
+
+export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
+    /**
+     * Render event details.
+     * @param sketch-id - The id for the sketch.
+     * @param meta - Metadata object returned from the datastore search.
+     * @param event - Event object.
+     */
+    return {
+        restrict: 'E',
+        template: require('./event-add.html'),
+        scope: {
+            sketchId: '=',
+            sketch: '=',
+            event: '=',
+            events: '=',
+            filter: '=',
+            query: '=',
+            queryDsl: '=',
+            index: '@',
+            addEventData: '=',
+        },
+        require: '^tsSearch',
+        controller: function ($scope, timesketchApi) {
+            $scope.clearAddEvent = function (event) {
+                $scope.addEventData[event._id].timestamp_desc = ''
+                $scope.addEventData[event._id].message = ''
+                $scope.addEventData[event._id].timestamp = event._source.datetime
+                $scope.addEventData[event._id].showForm = !$scope.addEvent[event._id].showForm
+            }
+            $scope.genEventId = function () {
+              let id = '';
+              const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_';
+              for (let i = 0; i < 20; i++) {
+                id += alpha.charAt(Math.floor(Math.random() * alpha.length));
+              }
+              return id;
+            }
+        },
+        link: function (scope, elem, attrs, ctrl) {
+            scope.doAddEvent = function (eventId, index) {
+                const event = scope.addEventData[eventId]
+                scope.addEventData[eventId].disabled = true
+                ctrl.addEvent(event).then( function (response) {
+                    const resp_timeline = response.data.objects[0]
+
+                    if ( scope.filter.indices.indexOf( response.data.objects[0].searchindex.index_name ) == -1 ) {
+                        scope.filter.indices.push( response.data.objects[0].searchindex.index_name )
+                    }
+                    let resp_timeline_active = false
+                    for (const timeline of scope.sketch.active_timelines) {
+                      if (timeline.searchindex.index_name == resp_timeline.searchindex.index_name) {
+                        resp_timeline_active = true
+                      }
+                    }
+                    if (!resp_timeline_active) {
+                        scope.sketch.active_timelines.push(resp_timeline)
+                    }
+
+                    $timeout(function () {
+                      ctrl.search(scope.query, scope.filter, scope.queryDsl)
+                    }, 1000)
+                })
+            }
+        },
+    }
+}]

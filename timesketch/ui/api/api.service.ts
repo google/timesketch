@@ -297,6 +297,22 @@ export const timesketchApiImplementation = function ($http) {
         return $http.post(resource_url, params)
     }
 
+    this.addEvent = function (sketch_id, event) {
+        /**
+         * Execute query and filter on the datastore.
+         * @param sketch_id - The id for the sketch.
+         * @param event - Object containing event details
+         * @returns A $http promise with two methods, success and error.
+         */
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/event/create/'
+        const params = {
+            message: event.message,
+            timestamp: event.timestamp,
+            timestamp_desc: event.timestamp_desc,
+        }
+        return $http.post(resource_url, params)
+    }
+
     this.aggregation = function (sketch_id, query, filter, queryDsl, aggtype) {
         /**
          * Execute query and filter on the datastore.
@@ -326,6 +342,32 @@ export const timesketchApiImplementation = function ($http) {
          * @returns A $http promise with two methods, success and error.
          */
         const resource_url = '/api/v1/upload/'
+        // Default Content-Type in angular for GET/POST is application/json
+        // so we nee to change this. By setting this to undefined we let the
+        // browser set the Content-Type to multipart/form-data and also set
+        // the correct boundary parameters.
+        const config = {
+            transformRequest: angular.identity,
+            headers: {
+                'Content-Type': undefined,
+            },
+        }
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('name', name)
+        formData.append('sketch_id', sketchId)
+        return $http.post(resource_url, formData, config)
+    }
+
+    this.createTimeline = function (file, name, sketchId) {
+        /**
+         * Handles the upload form and send a POST request to the server.
+         * @param file - File object.
+         * @param name - Name if the timeline to be created.
+         * @param sketchId - (optional) Sketch id to add the timeline to.
+         * @returns A $http promise with two methods, success and error.
+         */
+        const resource_url = '/api/v1/sketches/' + sketchId + '/timelines/create/'
         // Default Content-Type in angular for GET/POST is application/json
         // so we nee to change this. By setting this to undefined we let the
         // browser set the Content-Type to multipart/form-data and also set
