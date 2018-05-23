@@ -456,7 +456,6 @@ export const tsEventAdd = ['$window', '$timeout', function ($window, $timeout) {
                 scope.addEventData[eventId].disabled = true
                 ctrl.addEvent(event).then( function (response) {
                     const resp_timeline = response.data.objects[0]
-                    // const ts = Date.parse(scope.addEventData[eventId].timestamp)
 
                     if ( scope.filter.indices.indexOf( response.data.objects[0].searchindex.index_name ) == -1 ) {
                         scope.filter.indices.push( response.data.objects[0].searchindex.index_name )
