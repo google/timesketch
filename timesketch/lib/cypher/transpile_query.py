@@ -14,11 +14,11 @@
 """Entry point module for cypher transpilation."""
 import pycypher
 
-from timesketch.lib.cypher_transpilation.restrict_query_to_sketch import \
+from timesketch.lib.cypher.restrict_query_to_sketch import \
     restrict_query_to_sketch
-from timesketch.lib.cypher_transpilation.append_return_clause import \
+from timesketch.lib.cypher.append_return_clause import \
     append_return_clause
-from timesketch.lib.cypher_transpilation.unwind_timestamps import \
+from timesketch.lib.cypher.unwind_timestamps import \
     unwind_timestamps
 
 

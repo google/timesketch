@@ -73,7 +73,7 @@ from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
 from timesketch.lib.utils import get_validated_indices
-from timesketch.lib.cypher_transpilation import transpile_query, InvalidQuery
+from timesketch.lib.cypher import transpile_query, InvalidQuery
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchIndex

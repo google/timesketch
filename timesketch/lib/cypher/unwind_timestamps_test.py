@@ -14,7 +14,7 @@
 """Tests."""
 import unittest
 
-from timesketch.lib.cypher_transpilation.unwind_timestamps import \
+from timesketch.lib.cypher.unwind_timestamps import \
     unwind_timestamps
 
 
