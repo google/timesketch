@@ -39,6 +39,7 @@ timesketch_description = (
     u'timelines and analyze them all at the same time.  Add meaning to '
     u'your raw data with rich annotations, comments, tags and stars.')
 
+
 def check_before_upload():
     """Warn user if frontend build is not present or is not recent.
 
@@ -66,6 +67,7 @@ def check_before_upload():
             + " (see docs/Developers-Guide.md)"
         )
 
+
 if 'upload' in sys.argv:
     check_before_upload()
 
@@ -84,7 +86,11 @@ setup(
         u'Operating System :: OS Independent',
         u'Programming Language :: Python',
     ],
-    data_files=[(u'share/timesketch', [u'timesketch.conf'])],
+    data_files=[
+        (u'share/timesketch', [u'timesketch.conf']),
+        (u'share/timesketch', [u'contrib/search_template_sources.yaml']),
+
+    ],
     packages=find_packages(),
     package_data={'timesketch.lib.experimental': ['*.cql'],},
     include_package_data=True,
