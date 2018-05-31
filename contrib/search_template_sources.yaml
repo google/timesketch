@@ -1,0 +1,8 @@
+# Search template source definitions.
+
+name: Timesketch Windows templates
+description: Timesketch bundeled search templates for the Windows operating system
+source:
+- type: FILE
+  path: '/etc/timesketch/search_templates/windows.yaml'
+config: 

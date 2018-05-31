@@ -305,22 +305,22 @@ class SearchTemplateSource(AccessControlMixin, LabelMixin, StatusMixin,
     """Source for a search template."""
     name = Column(Unicode(255))
     description = Column(UnicodeText())
-    type = Column(Unicode(255))
+    source_type = Column(Unicode(255))
     source = Column(UnicodeText())
 
-    def __init__(self, name, description, type, source):
+    def __init__(self, name, description, source, source_type):
         """Initialize the Search Template Source object.
 
         Args:
             name: The name of the template source
             description: Description of the template source
-            type: Type of source (e.g. URL, FILE)
+            source_type: Type of the source (e.g. URL, FILE)
             source: Source of the template (e.g. URL, file path)
         """
         super(SearchTemplateSource, self).__init__()
         self.name = name
         self.description = description
-        self.type = type
+        self.source_type = source_type
         self.source = source
 
 
