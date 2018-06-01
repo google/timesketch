@@ -51,6 +51,7 @@ parameterized==0.6.1
 pbr==3.1.1                # via mock
 pycparser==2.18           # via cffi
 pycypher==0.5.9
+pyjwt==1.6.4
 pylint==1.7.2
 python-dateutil==2.6.1
 python-editor==1.0.3      # via alembic
