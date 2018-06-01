@@ -24,6 +24,7 @@ from flask_login import login_user
 from flask_login import logout_user
 
 from timesketch.lib.forms import UsernamePasswordForm
+from timesketch.lib.iap_jwt import validate_iap_jwt
 from timesketch.models import db_session
 from timesketch.models.user import Group
 from timesketch.models.user import User
@@ -47,7 +48,20 @@ def login():
         Redirect if authentication is successful or template with context
         otherwise.
     """
-    form = UsernamePasswordForm()
+
+    # Google Identity-Aware Proxy authentication (using JSON Web Tokens)
+    if current_app.config.get(u'GOOGLE_IAP_ENABLED', False):
+        iap_jwt = request.environ.get(u'HTTP_X_GOOG_IAP_JWT_ASSERTION', None)
+        if iap_jwt:
+            project_number = current_app.config.get(u'CLOUD_PROJECT_NUMBER')
+            backend_id = current_app.config.get(u'CLOUD_BACKEND_ID')
+            valid_jwt = validate_iap_jwt(iap_jwt, project_number, backend_id)
+            if valid_jwt:
+                user_email = valid_jwt.get(u'email')
+                if user_email:
+                    user = User.get_or_create(
+                        username=user_email, name=user_email)
+                    login_user(user)
 
     # SSO login based on environment variable, e.g. REMOTE_USER.
     if current_app.config.get(u'SSO_ENABLED', False):
@@ -86,12 +100,14 @@ def login():
             db_session.commit()
 
     # Login form POST
+    form = UsernamePasswordForm()
     if form.validate_on_submit:
         user = User.query.filter_by(username=form.username.data).first()
         if user:
             if user.check_password(plaintext=form.password.data):
                 login_user(user)
 
+    # Log the user in and setup the session.
     if current_user.is_authenticated:
         return redirect(request.args.get(u'next') or u'/')
 

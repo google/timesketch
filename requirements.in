@@ -18,6 +18,8 @@ gunicorn
 pycypher
 parameterized
 datasketch
+PyJWT
+requests
 
 # dev-requirements:
 Flask-Testing
@@ -25,7 +27,6 @@ nose
 mock
 pylint
 coverage
-requests
 BeautifulSoup
 
 # Remove the following when pip-sync finally stops deleting pkg_resources.
