@@ -409,6 +409,11 @@ export const tsEvent = function () {
 
             })
         },
+        link: function (scope, elem, attrs, ctrl) {
+            scope.getContext = function (event) {
+                ctrl.getContext(event)
+            }
+        }
     }
 }
 
