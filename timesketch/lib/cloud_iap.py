@@ -31,7 +31,7 @@ class IapKeyException(Exception):
     pass
 
 
-def validate_iap_jwt(iap_jwt, cloud_project_number, backend_service_id):
+def validate_jwt(iap_jwt, cloud_project_number, backend_service_id):
     """Validate a Google Identity-Aware Proxy (IAP) JSON Web token (JWT).
 
     Args:
