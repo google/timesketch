@@ -413,7 +413,7 @@ export const tsEvent = function () {
             scope.getContext = function (event) {
                 ctrl.getContext(event)
             }
-        }
+        },
     }
 }
 
