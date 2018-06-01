@@ -31,20 +31,20 @@ class IapKeyException(Exception):
     pass
 
 
-def validate_jwt(iap_jwt, cloud_project_number, backend_service_id):
+def validate_jwt(iap_jwt, cloud_project_number, cloud_backend_id):
     """Validate a Google Identity-Aware Proxy (IAP) JSON Web token (JWT).
 
     Args:
         iap_jwt: The contents of the X-Goog-IAP-JWT-Assertion header.
         cloud_project_number: The project number for your Google Cloud project.
-        backend_service_id: The ID of the Google Cloud backend service.
+        cloud_backend_id: The ID of the Google Cloud backend service.
 
     Returns:
         Decoded JWT on successful validation, None otherwise.
     """
 
     audience = '/projects/{}/global/backendServices/{}'.format(
-        cloud_project_number, backend_service_id)
+        cloud_project_number, cloud_backend_id)
 
     key_id = jwt.get_unverified_header(iap_jwt).get('kid')
     if not key_id:
@@ -59,7 +59,7 @@ def validate_jwt(iap_jwt, cloud_project_number, backend_service_id):
 
     try:
         decoded_jwt = jwt.decode(
-            iap_jwt, iap_public_key, algorithms=['ES256'], audience=audience)
+            iap_jwt, iap_public_key, algorithm='ES256', audience=audience)
         return decoded_jwt
     except jwt.exceptions.InvalidTokenError as e:
         current_app.logger.error('JWT validation error: {}'.format(e))
