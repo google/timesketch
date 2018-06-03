@@ -15,8 +15,8 @@
 
 from __future__ import unicode_literals
 
-import mock
 import time
+import mock
 import jwt
 
 from timesketch.lib.testlib import BaseTest

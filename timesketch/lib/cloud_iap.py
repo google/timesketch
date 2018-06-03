@@ -18,9 +18,9 @@ https://cloud.google.com/iap/docs/signed-headers-howto
 
 from __future__ import unicode_literals
 
+import time
 import jwt
 import requests
-import time
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 
