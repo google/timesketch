@@ -20,19 +20,23 @@ from __future__ import unicode_literals
 
 import jwt
 import requests
-from flask import current_app
+import time
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 
-GOOGLE_IAP_PUBLIC_KEY_URL = 'https://www.gstatic.com/iap/verify/public_key'
+IAP_PUBLIC_KEY_URL = 'https://www.gstatic.com/iap/verify/public_key'
+VALID_JWT_ISSUER = 'https://cloud.google.com/iap'
+JWT_ALGORITHM = 'ES256'
 
 
-class IapKeyException(Exception):
+class JwtValidationError(Exception):
     pass
 
 
 def validate_jwt(iap_jwt, cloud_project_number, cloud_backend_id):
     """Validate a Google Identity-Aware Proxy (IAP) JSON Web token (JWT).
+
+    Documentation: https://cloud.google.com/iap/docs/signed-headers-howto
 
     Args:
         iap_jwt: The contents of the X-Goog-IAP-JWT-Assertion header.
@@ -40,30 +44,58 @@ def validate_jwt(iap_jwt, cloud_project_number, cloud_backend_id):
         cloud_backend_id: The ID of the Google Cloud backend service.
 
     Returns:
-        Decoded JWT on successful validation, None otherwise.
+        Decoded JWT on successful validation.
     """
 
     audience = '/projects/{}/global/backendServices/{}'.format(
         cloud_project_number, cloud_backend_id)
 
+    # What key to use for verifying the signature.
     key_id = jwt.get_unverified_header(iap_jwt).get('kid')
     if not key_id:
-        current_app.logger.error('No Key ID found in JWT')
-        return None
+        raise JwtValidationError('No Key ID found')
 
+    # Get the public key to verify the token signature.
     try:
         iap_public_key = get_iap_public_key(key_id)
-    except IapKeyException as e:
-        current_app.logger.error('Error with IAP public key: {}'.format(e))
-        return None
+    except Exception as e:
+        raise JwtValidationError('{}'.format(e))
 
+    # Finally try to decode the token and verify it's payload.
     try:
         decoded_jwt = jwt.decode(
-            iap_jwt, iap_public_key, algorithm='ES256', audience=audience)
+            iap_jwt, iap_public_key, algorithm=JWT_ALGORITHM, audience=audience)
+
+        # Make sure the token is not created in the future or has expired.
+        try:
+            now = int(time.time())
+            issued_at = decoded_jwt['iat']
+            expires_at = decoded_jwt['exp']
+            if issued_at > now:
+                raise JwtValidationError('Token was issued in the future')
+            elif expires_at < now:
+                raise JwtValidationError('Token has expired')
+        except KeyError as e:
+            raise JwtValidationError('Missing timestamp: {}'.format(e))
+
+        # Check that the issuer of the token is correct.
+        try:
+            issuer = decoded_jwt['iss']
+            if issuer != VALID_JWT_ISSUER:
+                raise JwtValidationError('Wrong issuer: {}'.format(issuer))
+        except KeyError:
+            raise JwtValidationError('Missing issuer')
+
+        # Bail out if email is missing.
+        if 'email' not in decoded_jwt:
+            raise JwtValidationError('Missing email field in token')
+
+        # If everything checks out, return the decoded token.
         return decoded_jwt
-    except jwt.exceptions.InvalidTokenError as e:
-        current_app.logger.error('JWT validation error: {}'.format(e))
-        return None
+
+    except (jwt.exceptions.InvalidTokenError,
+            jwt.exceptions.InvalidKeyError) as e:
+        raise JwtValidationError('JWT validation error: {}'.format(e))
 
 
 def get_iap_public_key(key_id):
@@ -82,17 +114,21 @@ def get_iap_public_key(key_id):
     key = key_cache.get(key_id)
     if not key:
         # Re-fetch the key file.
-        resp = requests.get(GOOGLE_IAP_PUBLIC_KEY_URL)
+        try:
+            resp = requests.get(IAP_PUBLIC_KEY_URL)
+        except requests.exceptions.RequestException as e:
+            raise Exception('Unable to fetch IAP public key: {}'.format(e))
+
         if resp.status_code != HTTP_STATUS_CODE_OK:
-            raise IapKeyException(
+            raise Exception(
                 'Unable to fetch IAP public key: {} / {} / {}'.format(
                     resp.status_code, resp.headers, resp.text))
+
         key_cache = resp.json()
         get_iap_public_key.key_cache = key_cache
         key = key_cache.get(key_id)
         if not key:
-            raise IapKeyException(
-                'IAP public key {!r} not found'.format(key_id))
+            raise Exception('IAP public key {!r} not found'.format(key_id))
     return key
 
 

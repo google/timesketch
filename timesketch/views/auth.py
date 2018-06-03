@@ -25,6 +25,7 @@ from flask_login import logout_user
 
 from timesketch.lib.forms import UsernamePasswordForm
 from timesketch.lib.cloud_iap import validate_jwt
+from timesketch.lib.cloud_iap import JwtValidationError
 from timesketch.models import db_session
 from timesketch.models.user import Group
 from timesketch.models.user import User
@@ -55,13 +56,14 @@ def login():
         if iap_jwt:
             project_number = current_app.config.get(u'CLOUD_PROJECT_NUMBER')
             backend_id = current_app.config.get(u'CLOUD_BACKEND_ID')
-            valid_jwt = validate_jwt(iap_jwt, project_number, backend_id)
-            if valid_jwt:
-                user_email = valid_jwt.get(u'email')
-                if user_email:
-                    user = User.get_or_create(
-                        username=user_email, name=user_email)
+            try:
+                valid_jwt = validate_jwt(iap_jwt, project_number, backend_id)
+                email = valid_jwt.get(u'email')
+                if email:
+                    user = User.get_or_create(username=email, name=email)
                     login_user(user)
+            except (JwtValidationError, Exception) as e:
+                current_app.logger.error('{}'.format(e))
 
     # SSO login based on environment variable, e.g. REMOTE_USER.
     if current_app.config.get(u'SSO_ENABLED', False):
