@@ -1,4 +1,3 @@
-<!-- <div class="event-insert-grow" ng-click="showForm = !showForm" ng-show="!showForm"></div> -->
 <div class="container card" style="margin: 10px 0px 10px 0px;" ng-show="addEventData[event._id].showForm" ng-init="addEventData[event._id].timestamp = event._source.datetime; addEventData[event._id].disabled=false">
     <form name="eventaddform" class="form-inline"  ng-submit="submitAddForm()"  ng-disabled="addEventData[event._id].disabled">
       <fieldset>
