@@ -17,7 +17,6 @@ import logging
 import subprocess
 import traceback
 
-from celery import Task
 from flask import current_app
 
 from timesketch import create_app
