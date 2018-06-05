@@ -20,6 +20,7 @@ parameterized
 datasketch
 PyJWT
 requests
+cryptography
 
 # dev-requirements:
 Flask-Testing
@@ -28,7 +29,6 @@ mock
 pylint
 coverage
 BeautifulSoup
-cryptography
 
 # Remove the following when pip-sync finally stops deleting pkg_resources.
 # This is a hack that forces reinstall of setuptools and thus brings
