@@ -51,33 +51,36 @@ MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE45WYklVqGutB1h/v0FFOtjeACMA0
 -----END PUBLIC KEY-----
 """
 
+# pylint: disable=line-too-long
 # Created with https://mkjwk.org/
 MOCK_RSA_PRIVATE_PUBLIC_KEY_JWK = {
-  "kty": "RSA",
-  "d": "DlJPaEHlCOtPg2qIQ3sFYDJRG-JnHVaz4jJoICLP-BDyo6oVBqGuiia2TdZ1OM_1Df1PCk0sfFyacQw0i1Cno-b2ypZZrAgU5zH8tXiBoFSTu6xp2eeLLPeVKueigbR9Uf0NU3BZ2WcxHojq3T6pil1Au7bMzff0JIPXWcECcO4eLOAqPupYswKO8ebT-sl-wT_AtKqCCxAWKbbSpkgHXLNB7k5A-R7m-hiIK5rSQWoqJu-5SROYzCCADCiwRH5tXbaWLWvFFtiF5rl8VnHHRAPFSEG0iIe6-KlsOFdPA2qdiXgJ-Qb39vxOZ5g8qlCRTU7eshvMKs5dtyBtSTo4eQ",
-  "e": "AQAB",
-  "use": "sig",
-  "kid": "oidc_1234",
-  "alg": "RS256",
-  "n": "jVUkmrTXhFmaahZExVcdJqb3BqZp2A6Kk-IFkmeLimK2DJg3OpUSxEJ5mlaymu7XQJUlG2qKI7zhL7WV-S9CNYdLCVWMhg_XQ9dKB9VoYf92eAufkGrl2GbGd0y6KdMrTuxGfESC-l-exTcQAPvn1Md95difnruob6K1KXQTqEqQEFhKLiciFtssyiC90r8ia7-082MSJUXpXNhHyyuehuV5Xs5GCVqZfP65MMiDiKidUxq40UNTodqJCzhum7iSK42SF9la7ao0FTizF1uFl7oU7fIbN2qzNBgn5U3CTfaZaII54Xn6pzoIwinYXCZzeTy7x-8ZIN41VDNGulTK_w"
+    "kty": "RSA",
+    "d": "DlJPaEHlCOtPg2qIQ3sFYDJRG-JnHVaz4jJoICLP-BDyo6oVBqGuiia2TdZ1OM_1Df1PCk0sfFyacQw0i1Cno-b2ypZZrAgU5zH8tXiBoFSTu6xp2eeLLPeVKueigbR9Uf0NU3BZ2WcxHojq3T6pil1Au7bMzff0JIPXWcECcO4eLOAqPupYswKO8ebT-sl-wT_AtKqCCxAWKbbSpkgHXLNB7k5A-R7m-hiIK5rSQWoqJu-5SROYzCCADCiwRH5tXbaWLWvFFtiF5rl8VnHHRAPFSEG0iIe6-KlsOFdPA2qdiXgJ-Qb39vxOZ5g8qlCRTU7eshvMKs5dtyBtSTo4eQ",
+    "e": "AQAB",
+    "use": "sig",
+    "kid": "oidc_1234",
+    "alg": "RS256",
+    "n": "jVUkmrTXhFmaahZExVcdJqb3BqZp2A6Kk-IFkmeLimK2DJg3OpUSxEJ5mlaymu7XQJUlG2qKI7zhL7WV-S9CNYdLCVWMhg_XQ9dKB9VoYf92eAufkGrl2GbGd0y6KdMrTuxGfESC-l-exTcQAPvn1Md95difnruob6K1KXQTqEqQEFhKLiciFtssyiC90r8ia7-082MSJUXpXNhHyyuehuV5Xs5GCVqZfP65MMiDiKidUxq40UNTodqJCzhum7iSK42SF9la7ao0FTizF1uFl7oU7fIbN2qzNBgn5U3CTfaZaII54Xn6pzoIwinYXCZzeTy7x-8ZIN41VDNGulTK_w"
 }
 
+# pylint: disable=line-too-long
 MOCK_RSA_PUBLIC_KEY_JWK = {
-  "kty": "RSA",
-  "e": "AQAB",
-  "use": "sig",
-  "kid": "oidc_1234",
-  "alg": "RS256",
-  "n": "jVUkmrTXhFmaahZExVcdJqb3BqZp2A6Kk-IFkmeLimK2DJg3OpUSxEJ5mlaymu7XQJUlG2qKI7zhL7WV-S9CNYdLCVWMhg_XQ9dKB9VoYf92eAufkGrl2GbGd0y6KdMrTuxGfESC-l-exTcQAPvn1Md95difnruob6K1KXQTqEqQEFhKLiciFtssyiC90r8ia7-082MSJUXpXNhHyyuehuV5Xs5GCVqZfP65MMiDiKidUxq40UNTodqJCzhum7iSK42SF9la7ao0FTizF1uFl7oU7fIbN2qzNBgn5U3CTfaZaII54Xn6pzoIwinYXCZzeTy7x-8ZIN41VDNGulTK_w"
+    "kty": "RSA",
+    "e": "AQAB",
+    "use": "sig",
+    "kid": "oidc_1234",
+    "alg": "RS256",
+    "n": "jVUkmrTXhFmaahZExVcdJqb3BqZp2A6Kk-IFkmeLimK2DJg3OpUSxEJ5mlaymu7XQJUlG2qKI7zhL7WV-S9CNYdLCVWMhg_XQ9dKB9VoYf92eAufkGrl2GbGd0y6KdMrTuxGfESC-l-exTcQAPvn1Md95difnruob6K1KXQTqEqQEFhKLiciFtssyiC90r8ia7-082MSJUXpXNhHyyuehuV5Xs5GCVqZfP65MMiDiKidUxq40UNTodqJCzhum7iSK42SF9la7ao0FTizF1uFl7oU7fIbN2qzNBgn5U3CTfaZaII54Xn6pzoIwinYXCZzeTy7x-8ZIN41VDNGulTK_w"
 }
 
+# pylint: disable=line-too-long
 MOCK_INVALID_RSA_PUBLIC_KEY_JWK = {
-  "kty": "RSA",
-  "e": "AQAB",
-  "use": "sig",
-  "kid": "invalid_oidc_1234",
-  "alg": "RS256",
-  "n": "tQjrbztEuU3GFrNzgxCyb2lAeMXBQPsMctyaQAx05JLiqIxWYE__oSgMXyGz9SR7F_cCZ-x0FVQO1UjIyHU1BUPQxlO88NwEXlIrP5Eo_dnKzn972Cl4AjmoISApp2dTlwhSkHRqycOxJApzsqsg2HQxbrtM6oZrOyFU3uc2u0PHJqVAO6W7fplZXRHRGMd7KaT2a4GJ8zfNHD157Mv7ttjCeQ7rmqkB6OLVpNzO8idKo33gz5gDID2f7IGIPlqpAOAZaaKkRlGqUoaG0EZHns3fPcl27AvNOvmvOl9Blb43UnbBIBFGm6MY9aJUEJzmqcX-td9mch5HtGG14v3sUQ"
+    "kty": "RSA",
+    "e": "AQAB",
+    "use": "sig",
+    "kid": "invalid_oidc_1234",
+    "alg": "RS256",
+    "n": "tQjrbztEuU3GFrNzgxCyb2lAeMXBQPsMctyaQAx05JLiqIxWYE__oSgMXyGz9SR7F_cCZ-x0FVQO1UjIyHU1BUPQxlO88NwEXlIrP5Eo_dnKzn972Cl4AjmoISApp2dTlwhSkHRqycOxJApzsqsg2HQxbrtM6oZrOyFU3uc2u0PHJqVAO6W7fplZXRHRGMd7KaT2a4GJ8zfNHD157Mv7ttjCeQ7rmqkB6OLVpNzO8idKo33gz5gDID2f7IGIPlqpAOAZaaKkRlGqUoaG0EZHns3fPcl27AvNOvmvOl9Blb43UnbBIBFGm6MY9aJUEJzmqcX-td9mch5HtGG14v3sUQ"
 }
 
 # Converted to PEM format with pem-jwk (npm install -g pem-jwk)
