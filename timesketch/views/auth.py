@@ -24,8 +24,10 @@ from flask_login import login_user
 from flask_login import logout_user
 
 from timesketch.lib.forms import UsernamePasswordForm
-from timesketch.lib.cloud_iap import validate_jwt
-from timesketch.lib.cloud_iap import JwtValidationError
+from timesketch.lib.google_jwt import get_public_key_for_jwt
+from timesketch.lib.google_jwt import validate_jwt
+from timesketch.lib.google_jwt import JwtValidationError
+from timesketch.lib.google_jwt import JwtKeyError
 from timesketch.models import db_session
 from timesketch.models.user import Group
 from timesketch.models.user import User
@@ -38,11 +40,12 @@ auth_views = Blueprint(u'user_views', __name__)
 def login():
     """Handler for the login page view.
 
-    There are two ways of authentication.
-    1) If Single Sign On (SSO) is enabled in configuration and the environment
+    There are three ways of authentication.
+    1) Google Cloud Identity-Aware Proxy.
+    2) If Single Sign On (SSO) is enabled in configuration and the environment
        variable is present, e.g. REMOTE_USER then the system will get or create
        the user object and setup a session for the user.
-    2) Local authentication is used if SSO login is not enabled. This will
+    3) Local authentication is used if SSO login is not enabled. This will
        authenticate the user against the local user database.
 
     Returns:
@@ -52,17 +55,23 @@ def login():
 
     # Google Identity-Aware Proxy authentication (using JSON Web Tokens)
     if current_app.config.get(u'GOOGLE_IAP_ENABLED', False):
-        iap_jwt = request.environ.get(u'HTTP_X_GOOG_IAP_JWT_ASSERTION', None)
-        if iap_jwt:
-            project_number = current_app.config.get(u'CLOUD_PROJECT_NUMBER')
-            backend_id = current_app.config.get(u'CLOUD_BACKEND_ID')
+        encoded_jwt = request.environ.get(
+            u'HTTP_X_GOOG_IAP_JWT_ASSERTION', None)
+        if encoded_jwt:
+            expected_audience = current_app.config.get(u'GOOGLE_IAP_AUDIENCE')
+            expected_issuer = current_app.config.get(u'GOOGLE_IAP_ISSUER')
+            algorithm = current_app.config.get(u'GOOGLE_IAP_ALGORITHM')
+            url = current_app.config.get(u'GOOGLE_IAP_PUBLIC_KEY_URL')
             try:
-                valid_jwt = validate_jwt(iap_jwt, project_number, backend_id)
-                email = valid_jwt.get(u'email')
+                public_key = get_public_key_for_jwt(encoded_jwt, url)
+                validated_jwt = validate_jwt(
+                    encoded_jwt, public_key, algorithm, expected_audience,
+                    expected_issuer)
+                email = validated_jwt.get(u'email')
                 if email:
                     user = User.get_or_create(username=email, name=email)
                     login_user(user)
-            except (JwtValidationError, Exception) as e:
+            except (JwtValidationError, JwtKeyError, Exception) as e:
                 current_app.logger.error('{}'.format(e))
 
     # SSO login based on environment variable, e.g. REMOTE_USER.
