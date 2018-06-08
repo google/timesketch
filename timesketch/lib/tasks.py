@@ -59,6 +59,7 @@ def _set_timeline_status(index_name, status, error_msg=None):
         # Commit changes to database
         db_session.add(searchindex)
         db_session.commit()
+        db_session.remove()
 
 
 @celery.task(track_started=True)
