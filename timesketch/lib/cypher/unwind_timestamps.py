@@ -14,7 +14,7 @@
 """Module containing the unwind_timestamps function."""
 import pycypher
 
-from timesketch.lib.cypher_transpilation.insertable_string import \
+from timesketch.lib.cypher.insertable_string import \
     InsertableString
 
 

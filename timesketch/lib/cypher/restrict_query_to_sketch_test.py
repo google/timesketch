@@ -16,9 +16,9 @@ import unittest
 
 from parameterized import parameterized
 
-from timesketch.lib.cypher_transpilation.restrict_query_to_sketch import \
+from timesketch.lib.cypher.restrict_query_to_sketch import \
     restrict_query_to_sketch
-from timesketch.lib.cypher_transpilation.invalid_query import InvalidQuery
+from timesketch.lib.cypher.invalid_query import InvalidQuery
 # pylint: disable=bad-continuation
 
 
