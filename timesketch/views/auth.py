@@ -42,9 +42,9 @@ def login():
 
     There are three ways of authentication.
     1) Google Cloud Identity-Aware Proxy.
-    2) If Single Sign On (SSO) is enabled in configuration and the environment
-       variable is present, e.g. REMOTE_USER then the system will get or create
-       the user object and setup a session for the user.
+    2) If Single Sign On (SSO) is enabled in the configuration and the
+       environment variable is present, e.g. REMOTE_USER then the system will
+       get or create the user object and setup a session for the user.
     3) Local authentication is used if SSO login is not enabled. This will
        authenticate the user against the local user database.
 

@@ -36,7 +36,7 @@ class JwtKeyError(Exception):
 
 def validate_jwt(encoded_jwt, public_key, algorithm, expected_audience,
                  expected_issuer, expected_domain=None):
-    """Decode anb validate a JSON Web token (JWT).
+    """Decode and validate a JSON Web token (JWT).
 
     Cloud IAP:
     https://cloud.google.com/iap/docs/signed-headers-howto
@@ -55,49 +55,48 @@ def validate_jwt(encoded_jwt, public_key, algorithm, expected_audience,
     Returns:
         Decoded JWT on successful validation.
     """
-    # Decode the token and verify it's payload.
+    # Decode the token and verify its payload.
     try:
         decoded_jwt = jwt.decode(
             encoded_jwt, public_key, algorithm=algorithm,
             audience=expected_audience)
-
-        # Make sure the token is not created in the future or has expired.
-        try:
-            now = int(time.time())
-            issued_at = decoded_jwt['iat']
-            expires_at = decoded_jwt['exp']
-            if issued_at > now:
-                raise JwtValidationError('Token was issued in the future')
-            elif expires_at < now:
-                raise JwtValidationError('Token has expired')
-        except KeyError as e:
-            raise JwtValidationError('Missing timestamp: {}'.format(e))
-
-        # Check that the issuer of the token is correct.
-        try:
-            issuer = decoded_jwt['iss']
-            if issuer != expected_issuer:
-                raise JwtValidationError('Wrong issuer: {}'.format(issuer))
-        except KeyError:
-            raise JwtValidationError('Missing issuer')
-
-        if 'email' not in decoded_jwt:
-            raise JwtValidationError('Missing email field in token')
-
-        if expected_domain:
-            try:
-                domain = decoded_jwt['hd']
-                if not domain == expected_domain:
-                    raise JwtValidationError('Wrong domain: {}'.format(domain))
-            except KeyError as e:
-                raise JwtValidationError('Missing domain: {}'.format(e))
-
-        # If everything checks out, return the decoded token.
-        return decoded_jwt
-
     except (jwt.exceptions.InvalidTokenError,
             jwt.exceptions.InvalidKeyError) as e:
         raise JwtValidationError('JWT validation error: {}'.format(e))
+
+    # Make sure the token is not created in the future or has expired.
+    try:
+        now = int(time.time())
+        issued_at = decoded_jwt['iat']
+        expires_at = decoded_jwt['exp']
+        if issued_at > now:
+            raise JwtValidationError('Token was issued in the future')
+        elif expires_at < now:
+            raise JwtValidationError('Token has expired')
+    except KeyError as e:
+        raise JwtValidationError('Missing timestamp: {}'.format(e))
+
+    # Check that the issuer of the token is correct.
+    try:
+        issuer = decoded_jwt['iss']
+        if issuer != expected_issuer:
+            raise JwtValidationError('Wrong issuer: {}'.format(issuer))
+    except KeyError:
+        raise JwtValidationError('Missing issuer')
+
+    if 'email' not in decoded_jwt:
+        raise JwtValidationError('Missing email field in token')
+
+    if expected_domain:
+        try:
+            domain = decoded_jwt['hd']
+            if not domain == expected_domain:
+                raise JwtValidationError('Wrong domain: {}'.format(domain))
+        except KeyError as e:
+            raise JwtValidationError('Missing domain: {}'.format(e))
+
+    # If everything checks out, return the decoded token.
+    return decoded_jwt
 
 
 def fetch_public_keys(url):
@@ -125,7 +124,7 @@ def fetch_public_keys(url):
 def get_public_key_for_jwt(encoded_jwt, url):
     """Get public key for JWT in order to verify the signature.
 
-    The keys get's cached in order to limit the amount of network round trips.
+    The keys get cached in order to limit the amount of network round trips.
 
     Args:
         encoded_jwt: Base64 encoded JWT.
@@ -143,22 +142,25 @@ def get_public_key_for_jwt(encoded_jwt, url):
         raise JwtKeyError('Missing key ID field in token header')
     key_cache = get_public_key_for_jwt.key_cache
     key = key_cache.get(key_id)
+    if key:
+        return key
+
+    # Re-fetch the key file.
+    keys_json = fetch_public_keys(url)
+    if 'keys' in keys_json:
+        _new_keys_dict = {}
+        for key_dict in keys_json['keys']:
+            public_key = jwt.algorithms.RSAAlgorithm.from_jwk(
+                json.dumps(key_dict))
+            _new_keys_dict[key_dict['kid']] = public_key
+        key_cache = _new_keys_dict
+    else:
+        key_cache = keys_json
+    get_public_key_for_jwt.key_cache = key_cache
+    key = key_cache.get(key_id)
     if not key:
-        # Re-fetch the key file.
-        keys_json = fetch_public_keys(url)
-        if 'keys' in keys_json:
-            _new_keys_dict = {}
-            for key_dict in keys_json['keys']:
-                public_key = jwt.algorithms.RSAAlgorithm.from_jwk(
-                    json.dumps(key_dict))
-                _new_keys_dict[key_dict['kid']] = public_key
-            key_cache = _new_keys_dict
-        else:
-            key_cache = keys_json
-        get_public_key_for_jwt.key_cache = key_cache
-        key = key_cache.get(key_id)
-        if not key:
-            raise JwtKeyError('IAP public key {!r} not found'.format(key_id))
+        raise JwtKeyError('IAP public key {!r} not found'.format(key_id))
+
     return key
 
 

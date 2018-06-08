@@ -198,11 +198,11 @@ def create_mock_jwt(key, algorithm, key_id, audience, issuer, header=None,
 
 
 @mock.patch(
-    u'timesketch.lib.google_jwt.fetch_public_keys', mock_fetch_iap_public_keys)
+    'timesketch.lib.google_jwt.fetch_public_keys', mock_fetch_iap_public_keys)
 class TestGoogleCloudIAP(BaseTest):
     """Tests for the functionality of the google_jwt module."""
 
-    def _test_payload(self, payload, domain=None):
+    def _test_payload_raises_jwt_validation_error(self, payload, domain=None):
         """Test JWT with supplied payload."""
         test_jwt = create_mock_jwt(
             MOCK_EC_PRIVATE_KEY, algorithm=IAP_JWT_ALGORITHM, key_id='iap_1234',
@@ -213,7 +213,7 @@ class TestGoogleCloudIAP(BaseTest):
             JwtValidationError, validate_jwt, test_jwt, public_key,
             IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE, IAP_VALID_ISSUER, domain)
 
-    def _test_header(self, header):
+    def _test_header_raises_jwt_validation_error(self, header):
         """Test JWT with supplied header."""
         test_jwt = create_mock_jwt(
             MOCK_EC_PRIVATE_KEY, algorithm=IAP_JWT_ALGORITHM, key_id='iap_1234',
@@ -235,7 +235,7 @@ class TestGoogleCloudIAP(BaseTest):
         self.assertIsInstance(valid_jwt, dict)
         self.assertEqual(valid_jwt.get('email'), 'test@example.com')
 
-    def test_invalid_audience(self):
+    def test_invalid_audience_raises_jwt_validation_error(self):
         """Test to validate a JWT with wrong audience."""
         test_jwt = create_mock_jwt(
             MOCK_EC_PRIVATE_KEY, algorithm=IAP_JWT_ALGORITHM, key_id='iap_1234',
@@ -245,13 +245,13 @@ class TestGoogleCloudIAP(BaseTest):
             JwtValidationError, validate_jwt, test_jwt, public_key,
             IAP_JWT_ALGORITHM, IAP_INVALID_AUDIENCE, IAP_VALID_ISSUER)
 
-    def test_invalid_algorithm(self):
+    def test_invalid_algorithm_raises_jwt_validation_error(self):
         """Test to validate a JWT with invalid algorithm."""
         header = create_default_header(IAP_JWT_ALGORITHM, 'iap_1234')
         header['alg'] = 'HS256'
-        self._test_header(header)
+        self._test_header_raises_jwt_validation_error(header)
 
-    def test_missing_key_id(self):
+    def test_missing_key_id_raises_jwt_key_error(self):
         """Test to validate a JWT with key ID missing."""
         header = create_default_header(IAP_JWT_ALGORITHM, 'iap_1234')
         del header['kid']
@@ -261,34 +261,34 @@ class TestGoogleCloudIAP(BaseTest):
         self.assertRaises(
             JwtKeyError, get_public_key_for_jwt, test_jwt, IAP_PUBLIC_KEY_URL)
 
-    def test_missing_email(self):
+    def test_missing_email_raises_jwt_validation_error(self):
         """Test to validate a JWT with email missing."""
         payload = create_default_payload(IAP_VALID_AUDIENCE, IAP_VALID_ISSUER)
         del payload['email']
-        self._test_payload(payload)
+        self._test_payload_raises_jwt_validation_error(payload)
 
-    def test_missing_issuer(self):
+    def test_missing_issuer_raises_jwt_validation_error(self):
         """Test to validate a JWT with issuer missing."""
         payload = create_default_payload(IAP_VALID_AUDIENCE, IAP_VALID_ISSUER)
         del payload['iss']
-        self._test_payload(payload)
+        self._test_payload_raises_jwt_validation_error(payload)
 
-    def test_invalid_issuer(self):
+    def test_invalid_issuer_raises_jwt_validation_error(self):
         """Test to validate a JWT with invalid issuer"""
         payload = create_default_payload(IAP_VALID_AUDIENCE, 'invalid_issuer')
-        self._test_payload(payload)
+        self._test_payload_raises_jwt_validation_error(payload)
 
-    def test_issued_in_the_future(self):
+    def test_issued_in_the_future_raises_jwt_validation_error(self):
         """Test to validate a JWT created in the future."""
         payload = create_default_payload(IAP_VALID_AUDIENCE, IAP_VALID_ISSUER)
         payload['iat'] = payload['iat'] + 600  # seconds
-        self._test_payload(payload)
+        self._test_payload_raises_jwt_validation_error(payload)
 
-    def test_expired_jwt(self):
+    def test_expired_jwt_raises_jwt_validation_error(self):
         """Test to validate an expired JWT."""
         payload = create_default_payload(IAP_VALID_AUDIENCE, IAP_VALID_ISSUER)
         payload['exp'] = payload['exp'] - 600  # seconds
-        self._test_payload(payload)
+        self._test_payload_raises_jwt_validation_error(payload)
 
     def test_valid_domain(self):
         """Test to validate a JWT with domain."""
@@ -303,13 +303,13 @@ class TestGoogleCloudIAP(BaseTest):
         self.assertIsInstance(valid_jwt, dict)
         self.assertEqual(valid_jwt.get('hd'), 'example.com')
 
-    def test_invalid_domain(self):
+    def test_invalid_domain_raises_jwt_validation_error(self):
         """Test to validate a JWT with an invalid domain."""
         invalid_domain = 'foobar.com'
         payload = create_default_payload(IAP_VALID_AUDIENCE, IAP_VALID_ISSUER)
-        self._test_payload(payload, domain=invalid_domain)
+        self._test_payload_raises_jwt_validation_error(payload, domain=invalid_domain)
 
-    def test_valid_jwt_with_wrong_public_key(self):
+    def test_invalid_public_key_raises_jwt_validation_error(self):
         """Test to validate a JWT with wrong public key."""
         test_jwt = create_mock_jwt(
             MOCK_EC_PRIVATE_KEY, algorithm=IAP_JWT_ALGORITHM, key_id='iap_1234',
@@ -321,7 +321,7 @@ class TestGoogleCloudIAP(BaseTest):
 
 
 @mock.patch(
-    u'timesketch.lib.google_jwt.fetch_public_keys', mock_fetch_oidc_public_keys)
+    'timesketch.lib.google_jwt.fetch_public_keys', mock_fetch_oidc_public_keys)
 class TestGoogleCloudOpenIdConnect(BaseTest):
     """Tests for the functionality of the google_jwt module."""
     def test_fetching_oidc_keys(self):
