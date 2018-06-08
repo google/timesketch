@@ -27,11 +27,11 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 
 
 class JwtValidationError(Exception):
-    pass
+    """Raised when a JSON Web Token cannot be validated."""
 
 
 class JwtKeyError(Exception):
-    pass
+    """Raised when there is a problem with the public key used for signing."""
 
 
 def validate_jwt(encoded_jwt, public_key, algorithm, expected_audience,
