@@ -202,10 +202,16 @@ def google_openid_connect():
         current_app.logger.error(u'{}'.format(e))
         return abort(HTTP_STATUS_CODE_UNAUTHORIZED)
 
-    email = validated_jwt.get(u'email')
-    if email:
-        user = User.get_or_create(username=email, name=email)
-        login_user(user)
+    validated_email = validated_jwt.get(u'email')
+    user_whitelist = current_app.config.get(u'GOOGLE_OIDC_USER_WHITELIST')
+
+    # Check if the authenticating user is on the whitelist.
+    if user_whitelist:
+        if validated_email not in user_whitelist:
+            return abort(HTTP_STATUS_CODE_UNAUTHORIZED)
+
+    user = User.get_or_create(username=validated_email, name=validated_email)
+    login_user(user)
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
