@@ -20,10 +20,10 @@ import mock
 import jwt
 
 from timesketch.lib.testlib import BaseTest
-from timesketch.lib.google_jwt import validate_jwt
-from timesketch.lib.google_jwt import get_public_key_for_jwt
-from timesketch.lib.google_jwt import JwtValidationError
-from timesketch.lib.google_jwt import JwtKeyError
+from timesketch.lib.google_auth import validate_jwt
+from timesketch.lib.google_auth import get_public_key_for_jwt
+from timesketch.lib.google_auth import JwtValidationError
+from timesketch.lib.google_auth import JwtKeyError
 
 from cryptography.hazmat.backends.openssl.rsa import _RSAPublicKey
 
@@ -198,9 +198,9 @@ def create_mock_jwt(key, algorithm, key_id, audience, issuer, header=None,
 
 
 @mock.patch(
-    'timesketch.lib.google_jwt.fetch_public_keys', mock_fetch_iap_public_keys)
+    'timesketch.lib.google_auth._fetch_public_keys', mock_fetch_iap_public_keys)
 class TestGoogleCloudIAP(BaseTest):
-    """Tests for the functionality of the google_jwt module."""
+    """Tests for the functionality of the google_auth module."""
 
     def _test_payload_raises_jwt_validation_error(self, payload, domain=None):
         """Test JWT with supplied payload."""
@@ -321,9 +321,10 @@ class TestGoogleCloudIAP(BaseTest):
 
 
 @mock.patch(
-    'timesketch.lib.google_jwt.fetch_public_keys', mock_fetch_oidc_public_keys)
+    'timesketch.lib.google_auth._fetch_public_keys',
+    mock_fetch_oidc_public_keys)
 class TestGoogleCloudOpenIdConnect(BaseTest):
-    """Tests for the functionality of the google_jwt module."""
+    """Tests for the functionality of the google_auth module."""
     def test_fetching_oidc_keys(self):
         """Test to fetch OpenID Connect formatted keys."""
         test_jwt = create_mock_jwt(
