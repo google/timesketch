@@ -25,3 +25,10 @@ tests-coverage.txt
 # Exclude Vagrant runtime files
 vagrant/.vagrant/
 vagrant/*.log
+
+# Exclude Terraform runtime files
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/terraform.tfvars
+terraform/*.auto.tfvars
