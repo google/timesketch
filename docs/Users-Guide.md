@@ -209,6 +209,9 @@ Every sketch can consist of multiple timelines with multiple views.
 To manually adding an event, visit the sketch view. Within that screen, there is the possibility to star an event, hide an event as well as add a manual event (marked with a little +).
 This event will have the previously selected time pre-filled but can be changed.
 
+![Add event screenshot](/docs/add_event.png)
+
+
 ### Views
 
 #### Hiding events from a view
