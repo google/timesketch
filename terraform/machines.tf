@@ -9,7 +9,7 @@ resource "google_compute_instance" "timesketch" {
   # Use default Ubuntu image as operating system.
   boot_disk {
     initialize_params {
-      image = "${var.os_image}"
+      image = "${var.ubuntu_1604_image}"
     }
   }
 
