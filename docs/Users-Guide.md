@@ -19,7 +19,7 @@
 3. [Concepts](#concepts)
    - [Adding Timelines](#adding-timelines)
    - [Using Stories](#stories)
-   - [Insert event](#insert-event)
+   - [Adding event](#adding-event)
 4. [Searching](#searching)
 
 
