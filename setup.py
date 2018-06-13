@@ -31,7 +31,7 @@ except ImportError: # for pip <= 9.0.3
     from pip.download import PipSession
     from pip.req import parse_requirements
 
-timesketch_version = u'20180612'
+timesketch_version = u'20180613'
 
 timesketch_description = (
     u'Timesketch is a web based tool for collaborative forensic timeline '
