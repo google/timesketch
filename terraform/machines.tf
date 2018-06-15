@@ -19,6 +19,9 @@ resource "google_compute_instance" "timesketch" {
     access_config = {}
   }
 
+  # Allow HTTP(S) traffic
+  tags = ["http-server", "https-server"]
+
   # Provision the machine with a script.
   metadata_startup_script = "${data.template_file.timesketch.rendered}"
 }
