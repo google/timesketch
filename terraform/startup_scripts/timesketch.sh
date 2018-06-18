@@ -11,8 +11,8 @@ readonly BOOT_FINISHED_FILE="/var/lib/cloud/instance/boot-finished"
 readonly STARTUP_FINISHED_FILE="/var/lib/cloud/instance/startup-script-finished"
 
 # Redirect stdout and stderr to logfile
-#exec > /var/log/terraform_provision.log
-#exec 2>&1
+exec > /var/log/terraform_provision.log
+exec 2>&1
 
 # Exit if the startup script has already been executed successfully
 if [[ -f "$${STARTUP_FINISHED_FILE}" ]]; then
@@ -63,10 +63,45 @@ sed -i s/"SECRET_KEY = u'<KEY_GOES_HERE>'"/"SECRET_KEY = u'$${SECRET_KEY}'"/ /et
 # Configure the DB password
 sed -i s/"<USERNAME>:<PASSWORD>@localhost"/"timesketch:$${PSQL_PW}@localhost"/ /etc/timesketch.conf
 
+# What Elasticsearch server to use
+sed -i s/"ELASTIC_HOST = u'127.0.0.1'"/"ELASTIC_HOST = u'${elasticsearch_node}'"/ /etc/timesketch.conf
+
 # Systemd configuration for Gunicorn
-#cat > /etc/systemd/system/gunicorn.service <<EOF
-#
-#EOF
+cat > /etc/systemd/system/gunicorn.service <<EOF
+[Unit]
+Description=gunicorn daemon
+Requires=gunicorn.socket
+After=network.target
+
+[Service]
+PIDFile=/run/gunicorn/pid
+User=www-data
+Group=www-data
+RuntimeDirectory=gunicorn
+ExecStart=/usr/bin/env gunicorn --pid /run/gunicorn/timesketch.pid --timeout 120 --workers 1 --bind unix:/run/gunicorn/socket --access-logfile /var/log/gunicorn/access.log --error-logfile /var/log/gunicorn/error.log --log-level DEBUG timesketch.wsgi
+ExecReload=/bin/kill -s HUP \$MAINPID
+ExecStop=/bin/kill -s TERM \$MAINPID
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat > /etc/systemd/system/gunicorn.socket <<EOF
+[Unit]
+Description=gunicorn socket
+
+[Socket]
+ListenStream=/run/gunicorn/socket
+
+[Install]
+WantedBy=sockets.target
+EOF
+
+cat > /etc/tmpfiles.d/gunicorn.conf <<EOF
+d /run/gunicorn 0755 www-data www-data -
+EOF
+/bin/systemd-tmpfiles --create
 
 # Create Gunicorn log dir
 if [ ! -d /var/log/gunicorn/ ]; then
@@ -85,7 +120,7 @@ server {
   ssl_certificate_key /etc/nginx/ssl/nginx.key;
 
   location / {
-    proxy_pass http://127.0.0.1:8000;
+    proxy_pass http://unix:/run/gunicorn/socket;
     proxy_set_header Host \$host;
     proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
   }
@@ -103,13 +138,10 @@ ln -sf /etc/nginx/sites-available/timesketch /etc/nginx/sites-enabled/default
 mkdir /etc/nginx/ssl
 openssl req -new -newkey rsa:4096 -days 999 -nodes -x509 -subj "/C=US/ST=Example/L=Example/O=DExample/CN=example.com" -keyout /etc/nginx/ssl/nginx.key -out /etc/nginx/ssl/nginx.crt
 
-# Enable and start Gunicorn WSGI server
-#/bin/systemctl daemon-reload
-#/bin/systemctl enable gunicorn
-#/bin/systemctl stop gunicorn
-#/bin/systemctl start gunicorn
-
-# Restart Nginx
+# Enable and start Gunicorn WSGI and Nginx servers
+/bin/systemctl daemon-reload
+/bin/systemctl enable gunicorn.socket
+/bin/systemctl restart gunicorn.socket
 /bin/systemctl restart nginx
 
 # --- END MAIN ---
