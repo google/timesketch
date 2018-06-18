@@ -9,17 +9,17 @@
             <div class="col-md-6">
                 <span class="form-group">
                     <label for="eventTimestampInput">Timestamp: </label>
-                    <input class="form-control" id="eventTimestampInput" placeholder="Timestamp" ng-model="addEventData[event._id].timestamp"/>
+                    <input class="form-control" id="eventTimestampInput" placeholder="Timestamp" required ng-model="addEventData[event._id].timestamp"/>
                 </span>
                 <span class="form-group">
                     <label for="eventTimestampDescInput">Timestamp description: </label>
-                    <input class="form-control" id="eventTimestampDescInput" placeholder="Attack mitigated" ng-model="addEventData[event._id].timestamp_desc"/>
+                    <input class="form-control" id="eventTimestampDescInput" placeholder="Attack mitigated" required ng-model="addEventData[event._id].timestamp_desc"/>
                 </span>
             </div>
             <div class="col-md-6">
                 <span class="form-group" style="width: 100%;">
                     <label for="eventMessageTextarea">Message: </label>
-                    <textarea class="form-control" id="eventMessageTextarea" style="width: 100%;" placeholder="Ruleset updated to block traffic" ng-model="addEventData[event._id].message"></textarea>
+                    <textarea class="form-control" id="eventMessageTextarea" style="width: 100%;" placeholder="Ruleset updated to block traffic" required ng-model="addEventData[event._id].message"></textarea>
                 </span>
             </div>
         </div>
