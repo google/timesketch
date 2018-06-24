@@ -36,23 +36,6 @@ def random_color():
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
     return u'{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
 
-# method to create the datetime
-def convert_date_to_datetime(argument):
-    argument = argument.replace('Z', '')
-    d = datetime.datetime.strptime(argument, '%Y-%m-%d %H:%M:%S')
-    iso_date = d.isoformat()
-    iso_date_new = iso_date + "+00:00"
-    return  iso_date_new
-
-# helper to create the timestamp
-def convert_date_to_timestamp(argument):
-    argument = argument.replace('Z', '')
-    d = datetime.datetime.strptime(argument, '%Y-%m-%d %H:%M:%S')
-    unixtime = time.mktime(d.timetuple())
-    unix_print = int(unixtime)
-    unix_print = unix_print*1000
-    return unix_print
-
 def read_and_validate_csv(path, delimiter):
     """Generator for reading a CSV or TSV file.
 
@@ -115,18 +98,19 @@ def read_and_validate_redline(path):
                 u'Missing fields in CSV header: {0:s}'.format(missing_fields))
         for row in reader:
 
-            entry_unix_timestamp = convert_date_to_timestamp(row['Timestamp'])
-            entry_timestamp = convert_date_to_datetime(row['Timestamp'])
+            dt = parser.parse(row['Timestamp'])
+            timestamp = int(time.mktime(dt.timetuple())) * 1000
+            dt_iso_format = dt.isoformat()
             timestamp_desc = row['Field']
+
             summary = row['Summary']
             alert = row['Alert']
             tag = row['Tag']
 
             row_to_yield = {}
-
             row_to_yield["message"] = summary
-            row_to_yield["timestamp"] = str(entry_unix_timestamp)
-            row_to_yield["datetime"] = entry_timestamp
+            row_to_yield["timestamp"] = timestamp
+            row_to_yield["datetime"] = dt_iso_format
             row_to_yield["timestamp_desc"] = timestamp_desc
             row_to_yield["alert"] = alert #extra field
             row_to_yield["tag"] = tag # extra field
