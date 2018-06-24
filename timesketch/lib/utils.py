@@ -36,87 +36,82 @@ def random_color():
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
     return u'{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
 
+
+def get_csv_dialect(csv_header):
+    """Get CSV dialect format.
+
+    Args:
+        csv_header: List of CSV column names
+
+    Returns:
+        Name of the dialect if known, otherwise None
+    """
+
+    # Check if redline format
+    redline_fields = {
+        u'Alert', u'Tag', u'Timestamp', u'Field', u'Summary'}
+    redline_intersection = set(
+        redline_fields).intersection(set(csv_header))
+    if len(redline_fields) == len(redline_intersection):
+        return u'redline'
+
+    # Check if Timesketch supported format
+    timesketch_fields = {u'message', u'datetime', u'timestamp_desc'}
+    timesketch_intersection = timesketch_fields.intersection(
+        set(csv_header))
+    if len(timesketch_fields) == len(timesketch_intersection):
+        return u'timesketch'
+
+    return None
+
+
 def read_and_validate_csv(path, delimiter):
     """Generator for reading a CSV or TSV file.
 
     Args:
         path: Path to the file
         delimiter: character used as a field separator
+
+    Returns:
+        Generator of event rows
+
+    Raises:
+        RuntimeError is CSV format is unknown
     """
-    # Columns that must be present in the CSV file
-    mandatory_fields = [u'message', u'datetime', u'timestamp_desc']
-
     with open(path, 'rb') as fh:
-
         reader = csv.DictReader(fh, delimiter=delimiter.decode('string_escape'))
         csv_header = reader.fieldnames
-        missing_fields = []
-        # Validate the CSV header
-        for field in mandatory_fields:
-            if field not in csv_header:
-                missing_fields.append(field)
-        if missing_fields:
-            raise RuntimeError(
-                u'Missing fields in CSV header: {0:s}'.format(missing_fields))
-        for row in reader:
-            if u'timestamp' not in csv_header and u'datetime' in csv_header:
-                try:
-                    parsed_datetime = parser.parse(row[u'datetime'])
-                    row[u'timestamp'] = str(
-                        int(time.mktime(parsed_datetime.timetuple())))
-                except ValueError:
-                    continue
+        csv_dialect = get_csv_dialect(csv_header)
 
-            yield row
+        if u'redline' in csv_dialect:
+            for row in reader:
+                parsed_datetime = parser.parse(row[u'Timestamp'])
+                timestamp = int(
+                    time.mktime(parsed_datetime.timetuple())) * 1000000
+                parsed_datetime_iso_format = parsed_datetime.isoformat()
+                row = dict(
+                    message=row[u'Summary'],
+                    timestamp=timestamp,
+                    datetime=parsed_datetime_iso_format,
+                    timestamp_desc=row[u'Field'],
+                    alert=row[u'Alert'],
+                    tag=[row[u'Tag']]
+                )
+                yield row
 
-def read_and_validate_redline(path):
-    """Generator for reading a Redline CSV file.
-    Args:
-        path: Path to the file
-        delimiter: character used as a field separator
-    """
-    # Columns that must be present in the CSV file
+        elif u'timesketch' in csv_dialect:
+            for row in reader:
+                if u'timestamp' not in csv_header and u'datetime' in csv_header:
+                    try:
+                        parsed_datetime = parser.parse(row[u'datetime'])
+                        row[u'timestamp'] = int(
+                            time.mktime(parsed_datetime.timetuple())) * 1000000
+                    except ValueError:
+                        continue
+                yield row
+        else:
+            raise RuntimeError(u'Unknown CSV format')
 
-    # check if it is the right redline format
-    mandatory_fields = [u'Alert', u'Tag', u'Timestamp', u'Field', u'Summary']
-
-    with open(path, 'rb') as fh:
-        csv.register_dialect('myDialect',
-                             delimiter=',',
-                             quoting=csv.QUOTE_ALL,
-                             skipinitialspace=True)
-        reader = csv.DictReader(fh, delimiter=',', dialect='myDialect')
-
-        csv_header = reader.fieldnames
-        missing_fields = []
-        # Validate the CSV header
-        for field in mandatory_fields:
-            if field not in csv_header:
-                missing_fields.append(field)
-        if missing_fields:
-            raise RuntimeError(
-                u'Missing fields in CSV header: {0:s}'.format(missing_fields))
-        for row in reader:
-
-            dt = parser.parse(row['Timestamp'])
-            timestamp = int(time.mktime(dt.timetuple())) * 1000
-            dt_iso_format = dt.isoformat()
-            timestamp_desc = row['Field']
-
-            summary = row['Summary']
-            alert = row['Alert']
-            tag = row['Tag']
-
-            row_to_yield = {}
-            row_to_yield["message"] = summary
-            row_to_yield["timestamp"] = timestamp
-            row_to_yield["datetime"] = dt_iso_format
-            row_to_yield["timestamp_desc"] = timestamp_desc
-            row_to_yield["alert"] = alert #extra field
-            tags = [tag]
-            row_to_yield["tag"] = tags # extra field
-
-            yield row_to_yield
 
 def read_and_validate_jsonl(path, _):
     """Generator for reading a JSONL (json lines) file.
@@ -127,7 +122,6 @@ def read_and_validate_jsonl(path, _):
     # Fields that must be present in each entry of the JSONL file.
     mandatory_fields = [u'message', u'datetime', u'timestamp_desc']
     with open(path, 'rb') as fh:
-
         lineno = 0
         for line in fh:
             lineno += 1
