@@ -36,6 +36,30 @@ def random_color():
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
     return u'{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
 
+# to avoid hickups in timesketch, some newlines, commas etc will be removed
+def clean_summary(argument):
+    argument = argument.replace('\n', '')
+    argument = argument.replace(',', '.') # otherwise timesketch will be confused
+    argument = argument.replace('\t', '')
+    return argument
+
+
+# method to create the datetime
+def convert_date_to_datetime(argument):
+    argument = argument.replace('Z', '')
+    d = datetime.datetime.strptime(argument, '%Y-%m-%d %H:%M:%S')
+    iso_date = d.isoformat()
+    iso_date_new = iso_date + "+00:00"
+    return  iso_date_new
+
+# helper to create the timestamp
+def convert_date_to_timestamp(argument):
+    argument = argument.replace('Z', '')
+    d = datetime.datetime.strptime(argument, '%Y-%m-%d %H:%M:%S')
+    unixtime = time.mktime(d.timetuple())
+    unix_print = int(unixtime)
+    unix_print = unix_print*1000
+    return unix_print
 
 def read_and_validate_csv(path, delimiter):
     """Generator for reading a CSV or TSV file.
@@ -70,6 +94,52 @@ def read_and_validate_csv(path, delimiter):
 
             yield row
 
+def read_and_validate_redline(path):
+    """Generator for reading a Redline CSV file.
+    Args:
+        path: Path to the file
+        delimiter: character used as a field separator
+    """
+    # Columns that must be present in the CSV file
+
+    # check if it is the right redline format
+    mandatory_fields = [u'Alert', u'Tag', u'Timestamp', u'Field', u'Summary']
+
+    with open(path, 'rb') as fh:
+        csv.register_dialect('myDialect',
+                             delimiter=',',
+                             quoting=csv.QUOTE_ALL,
+                             skipinitialspace=True)
+        reader = csv.DictReader(fh, delimiter=',', dialect='myDialect')
+
+        csv_header = reader.fieldnames
+        missing_fields = []
+        # Validate the CSV header
+        for field in mandatory_fields:
+            if field not in csv_header:
+                missing_fields.append(field)
+        if missing_fields:
+            raise RuntimeError(
+                u'Missing fields in CSV header: {0:s}'.format(missing_fields))
+        for row in reader:
+
+            entry_unix_timestamp = convert_date_to_timestamp(row['Timestamp'])
+            entry_timestamp = convert_date_to_datetime(row['Timestamp'])
+            timestamp_desc = row['Field']
+            summary = clean_summary(row['Summary'])
+            alert = row['Alert']
+            tag = row['Tag']
+
+            row_to_yield = {}
+
+            row_to_yield["message"] = summary
+            row_to_yield["timestamp"] = str(entry_unix_timestamp)
+            row_to_yield["datetime"] = entry_timestamp
+            row_to_yield["timestamp_desc"] = timestamp_desc
+            row_to_yield["alert"] = alert #extra field
+            row_to_yield["tag"] = tag # extra field
+
+            yield row_to_yield
 
 def read_and_validate_jsonl(path, _):
     """Generator for reading a JSONL (json lines) file.
