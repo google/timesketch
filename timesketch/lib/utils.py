@@ -69,7 +69,7 @@ def read_and_validate_csv(path, delimiter):
 
             yield row
 
-def read_and_validate_redline(path,delimiter):
+def read_and_validate_redline(path, delimiter):
     """Generator for reading a Redline CSV file.
     Args:
         path: Path to the file
@@ -113,7 +113,8 @@ def read_and_validate_redline(path,delimiter):
             row_to_yield["datetime"] = dt_iso_format
             row_to_yield["timestamp_desc"] = timestamp_desc
             row_to_yield["alert"] = alert #extra field
-            row_to_yield["tag"] = tag # extra field
+            tags = [tag]
+            row_to_yield["tag"] = tags # extra field
 
             yield row_to_yield
 
