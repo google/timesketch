@@ -36,14 +36,6 @@ def random_color():
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
     return u'{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
 
-# to avoid hickups in timesketch, some newlines, commas etc will be removed
-def clean_summary(argument):
-    argument = argument.replace('\n', '')
-    argument = argument.replace(',', '.') # otherwise timesketch will be confused
-    argument = argument.replace('\t', '')
-    return argument
-
-
 # method to create the datetime
 def convert_date_to_datetime(argument):
     argument = argument.replace('Z', '')
@@ -126,7 +118,7 @@ def read_and_validate_redline(path):
             entry_unix_timestamp = convert_date_to_timestamp(row['Timestamp'])
             entry_timestamp = convert_date_to_datetime(row['Timestamp'])
             timestamp_desc = row['Field']
-            summary = clean_summary(row['Summary'])
+            summary = row['Summary']
             alert = row['Alert']
             tag = row['Tag']
 
