@@ -4,6 +4,7 @@
    - [Start timesketch](#start-timesketch)
    - [User management](#user-management)
      - [Adding users](#adding-users)
+     - [Change user password](#change-user-password)
      - [Removing users](#removing-users)
    - [Group Management](#group-management)
      - [Adding groups](#adding-groups)
@@ -53,6 +54,26 @@ tsctl runserver
 ### User management
 
 #### Adding users
+
+Command:
+```
+tsctl add_user
+```
+
+Parameters:
+```
+--name / -n
+--password / -p (optional)
+```
+
+Example
+```
+tsctl add_user --name foo
+```
+
+#### Change user password
+
+To change a user password, the add_user command can be used, as it is checking if the user exists if yes it will update the update.
 
 Command:
 ```
