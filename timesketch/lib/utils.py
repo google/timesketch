@@ -69,7 +69,7 @@ def read_and_validate_csv(path, delimiter):
 
             yield row
 
-def read_and_validate_redline(path):
+def read_and_validate_redline(path,delimiter):
     """Generator for reading a Redline CSV file.
     Args:
         path: Path to the file
