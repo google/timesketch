@@ -419,7 +419,7 @@ class CreateTimelineFromRedline(CreateTimelineBase):
             port=current_app.config[u'ELASTIC_PORT'])
 
         es.create_index(index_name=index_name, doc_type=event_type)
-        for event in read_and_validate_redline(file_path, delimiter):
+        for event in read_and_validate_redline(file_path):
             event_counter = es.import_event(
                 index_name, event_type, event, flush_interval=flush_interval)
             if event_counter % int(flush_interval) == 0:
