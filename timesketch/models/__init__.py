@@ -13,6 +13,7 @@
 # limitations under the License.
 """This package handles setting up and providing the database connection."""
 
+import traceback
 from flask import abort
 from flask_login import current_user
 from flask_sqlalchemy import BaseQuery

@@ -9,7 +9,7 @@
       "options": [150]
     },
     "indent": [true, "spaces", 4],
-    "semicolon": [true, "never"],
+    "semicolon": [false, "never"],
     "quotemark": [true, "single", "avoid-escape"],
     "only-arrow-functions": false,
     "ordered-imports": false,

@@ -14,9 +14,9 @@
 """Module containing the restrict_query_to_sketch function."""
 import pycypher
 
-from timesketch.lib.cypher_transpilation.insertable_string import \
+from timesketch.lib.cypher.insertable_string import \
     InsertableString
-from timesketch.lib.cypher_transpilation.invalid_query import InvalidQuery
+from timesketch.lib.cypher.invalid_query import InvalidQuery
 
 
 def query_is_restricted_to_sketch(query, sketch_id):

@@ -46,6 +46,18 @@
 
         <div class="row">
             <div class="col-md-12">
+
+                {% if timeline.get_status.status == 'fail' %}
+                <div class="card" style="background:#d9534f; color:#fff;">
+                    <strong>Oops.. something is wrong with this timeline:</strong>
+                    <br>
+                    <br>
+                    <pre>
+                        {{ timeline.searchindex.description }}
+                    </pre>
+                </div>
+                {% endif %}
+
                 <div class="card card-top">
                     <div class="pull-left" style="width:50px;height:50px;background:#{{ timeline.color }};cursor: pointer" data-toggle="modal" data-target="#edit-timeline-modal"></div>
                     {% if sketch.has_permission(user=current_user, permission='write') %}

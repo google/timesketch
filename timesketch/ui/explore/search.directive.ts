@@ -52,7 +52,7 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
                         // Special case where all indices should be queried.
                         if (filter.indices == '_all') {
                             filter.indices = []
-                            for (const timeline of scope.sketch.timelines) {
+                            for (const timeline of scope.sketch.active_timelines) {
                                 filter.indices.push(timeline.searchindex.index_name)
                             }
                         }
@@ -64,7 +64,8 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
                 }
             }, true)
         },
-        controller: function ($scope) {
+        controller: function ($scope, $window) {
+            $scope.addEventData = {}
             $scope.filter = {'indices': []}
             $scope.new_searchtemplate = false
             timesketchApi.getSketch($scope.sketchId).success(function (data) {
@@ -72,7 +73,7 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
                 $scope.sketch.views = data.meta.views
                 $scope.sketch.searchtemplates = data.meta.searchtemplates
                 $scope.filter.indices = []
-                for (const timeline of $scope.sketch.timelines) {
+                for (const timeline of $scope.sketch.active_timelines) {
                     $scope.filter.indices.push(timeline.searchindex.index_name)
                 }
             })
@@ -122,11 +123,16 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
                     .success(function (data) {
                         $scope.events = data.objects
                         $scope.meta = data.meta
-                        if (data.meta.es_total_count > filter['limit']) {
+                        $scope.currentPage = 0
+                        if (data.meta.es_total_count > filter['size']) {
                             $scope.meta.noisy = true
                         }
                         $scope.meta.numHiddenEvents = 0
                 })
+            }
+
+            this.addEvent = function (event) {
+                return timesketchApi.addEvent($scope.sketchId, event)
             }
 
             this.aggregation = function (query, filter, aggtype) {

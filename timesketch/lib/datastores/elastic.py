@@ -24,7 +24,6 @@ from elasticsearch.exceptions import NotFoundError
 from elasticsearch.exceptions import ConnectionError
 from flask import abort
 
-from timesketch.lib import datastore
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
 # Setup logging
@@ -32,12 +31,14 @@ es_logger = logging.getLogger(u'elasticsearch')
 es_logger.addHandler(logging.NullHandler())
 
 
-class ElasticsearchDataStore(datastore.DataStore):
+class ElasticsearchDataStore(object):
     """Implements the datastore."""
 
     # Number of events to queue up when bulk inserting events.
     DEFAULT_FLUSH_INTERVAL = 1000
-    DEFAULT_LIMIT = 500  # Max events to return
+    DEFAULT_SIZE = 100
+    DEFAULT_LIMIT = DEFAULT_SIZE  # Max events to return
+    DEFAULT_FROM = 0
     DEFAULT_STREAM_LIMIT = 10000  # Max events to return when streaming results
 
     def __init__(self, host=u'127.0.0.1', port=9200):
@@ -165,6 +166,10 @@ class ElasticsearchDataStore(datastore.DataStore):
                         }]
                     }
                 }
+            if query_filter.get(u'from', None):
+                query_dsl[u'from'] = query_filter[u'from']
+            if query_filter.get(u'size', None):
+                query_dsl[u'size'] = query_filter[u'size']
             if query_filter.get(u'exclude', None):
                 query_dsl[u'post_filter'] = {
                     u'bool': {
@@ -209,7 +214,6 @@ class ElasticsearchDataStore(datastore.DataStore):
                indices,
                count=False,
                aggregations=None,
-               return_results=True,
                return_fields=None,
                enable_scroll=False):
         """Search ElasticSearch. This will take a query string from the UI
@@ -224,15 +228,12 @@ class ElasticsearchDataStore(datastore.DataStore):
             indices: List of indices to query
             count: Boolean indicating if we should only return result count
             aggregations: Dict of Elasticsearch aggregations
-            return_results: Boolean indicating if results should be returned
             return_fields: List of fields to return
             enable_scroll: If Elasticsearch scroll API should be used
 
         Returns:
             Set of event documents in JSON format
         """
-        # Limit the number of returned documents.
-        limit_results = query_filter.get(u'limit', self.DEFAULT_LIMIT)
 
         scroll_timeout = None
         if enable_scroll:
@@ -264,10 +265,6 @@ class ElasticsearchDataStore(datastore.DataStore):
         # Default search type for elasticsearch is query_then_fetch.
         search_type = u'query_then_fetch'
 
-        # Set limit to 0 to not return any results
-        if not return_results:
-            limit_results = 0
-
         # Only return how many documents matches the query.
         if count:
             del query_dsl[u'sort']
@@ -281,7 +278,6 @@ class ElasticsearchDataStore(datastore.DataStore):
         return self.client.search(
             body=query_dsl,
             index=list(indices),
-            size=limit_results,
             search_type=search_type,
             _source_include=return_fields,
             scroll=scroll_timeout)
@@ -452,6 +448,20 @@ class ElasticsearchDataStore(datastore.DataStore):
         doc_type = unicode(doc_type.decode(encoding=u'utf-8'))
         return index_name, doc_type
 
+    def delete_index(self, index_name):
+        """Delete Elasticsearch index.
+
+        Args:
+            index_name: Name of the index to delete.
+        """
+        if self.client.indices.exists(index_name):
+            try:
+                self.client.indices.delete(index=index_name)
+            except ConnectionError as e:
+                raise RuntimeError(
+                    u'Unable to connect to Timesketch backend: {}'.format(e)
+                )
+
     def import_event(
             self, index_name, event_type, event=None,
             event_id=None, flush_interval=DEFAULT_FLUSH_INTERVAL):
@@ -500,11 +510,12 @@ class ElasticsearchDataStore(datastore.DataStore):
                     doc_type=event_type,
                     body=self.import_events)
                 self.import_events = []
-            else:
-                if self.import_events:
-                    self.client.bulk(
-                        index=index_name,
-                        doc_type=event_type,
-                        body=self.import_events)
+        else:
+            if self.import_events:
+                self.client.bulk(
+                    index=index_name,
+                    doc_type=event_type,
+                    body=self.import_events
+                )
 
         return self.import_counter[u'events']

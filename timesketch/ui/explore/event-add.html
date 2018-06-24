@@ -1,0 +1,37 @@
+<div class="container card" style="margin: 10px 0px 10px 0px;" ng-show="addEventData[event._id].showForm" ng-init="addEventData[event._id].timestamp = event._source.datetime; addEventData[event._id].disabled=false">
+    <form name="eventaddform" class="form-inline"  ng-submit="submitAddForm()"  ng-disabled="addEventData[event._id].disabled">
+      <fieldset>
+        <div class="row">
+          <div class="col-md-11"><h3>Insert event</h3></div>
+          <div class="col-md-1"><i style="float:right;" ng-click="addEventData[event._id].showForm = false" class="fa fa-times-thin fa-2x"></i></div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <span class="form-group">
+                    <label for="eventTimestampInput">Timestamp: </label>
+                    <input class="form-control" id="eventTimestampInput" placeholder="Timestamp" ng-model="addEventData[event._id].timestamp"/>
+                </span>
+                <span class="form-group">
+                    <label for="eventTimestampDescInput">Timestamp description: </label>
+                    <input class="form-control" id="eventTimestampDescInput" placeholder="Attack mitigated" ng-model="addEventData[event._id].timestamp_desc"/>
+                </span>
+            </div>
+            <div class="col-md-6">
+                <span class="form-group" style="width: 100%;">
+                    <label for="eventMessageTextarea">Message: </label>
+                    <textarea class="form-control" id="eventMessageTextarea" style="width: 100%;" placeholder="Ruleset updated to block traffic" ng-model="addEventData[event._id].message"></textarea>
+                </span>
+            </div>
+        </div>
+        <br>
+        <div class="row">
+          <div class="col-md-12">
+            <span class="form-group">
+                <input type="submit" class="btn btn-primary" value="Create" ng-click="doAddEvent(event._id, index)"/>
+                <input type="reset" class="btn btn-default" value="Clear" ng-click="clearAddEvent(event)"/>
+            </span>
+          </div>
+        </div>
+      </fieldset>
+    </form>
+</div>

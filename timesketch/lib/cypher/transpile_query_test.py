@@ -14,7 +14,7 @@
 """Tests."""
 import unittest
 
-from timesketch.lib.cypher_transpilation.transpile_query import \
+from timesketch.lib.cypher.transpile_query import \
     transpile_query
 
 

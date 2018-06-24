@@ -14,7 +14,7 @@
 """Tests."""
 import unittest
 
-from timesketch.lib.cypher_transpilation.append_return_clause import \
+from timesketch.lib.cypher.append_return_clause import \
     append_return_clause
 
 

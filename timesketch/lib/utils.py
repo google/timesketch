@@ -61,18 +61,19 @@ def convert_date_to_timestamp(argument):
     unix_print = unix_print*1000
     return unix_print
 
-def read_and_validate_csv(path):
-    """Generator for reading a CSV file.
+def read_and_validate_csv(path, delimiter):
+    """Generator for reading a CSV or TSV file.
 
     Args:
-        path: Path to the CSV file
+        path: Path to the file
+        delimiter: character used as a field separator
     """
     # Columns that must be present in the CSV file
     mandatory_fields = [u'message', u'datetime', u'timestamp_desc']
 
     with open(path, 'rb') as fh:
 
-        reader = csv.DictReader(fh)
+        reader = csv.DictReader(fh, delimiter=delimiter.decode('string_escape'))
         csv_header = reader.fieldnames
         missing_fields = []
         # Validate the CSV header
@@ -140,7 +141,7 @@ def read_and_validate_redline(path):
 
             yield row_to_yield
 
-def read_and_validate_jsonl(path):
+def read_and_validate_jsonl(path, _):
     """Generator for reading a JSONL (json lines) file.
 
     Args:

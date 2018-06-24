@@ -21,6 +21,7 @@ export interface SearchIndex {
   id: number
   name: string
   index_name: string
+  description: string
   status: Status
   deleted: boolean
   created_at: DateTime
@@ -34,6 +35,7 @@ export interface Timeline {
   color: string
   searchindex: SearchIndex
   deleted: boolean
+  status: Status
   created_at: DateTime
   updated_at: DateTime
 }
@@ -71,6 +73,7 @@ export interface Sketch {
   description: string
   user: User
   timelines: Timeline[]
+  active_timelines: Timeline[]
   status: Status
   created_at: DateTime
   updated_at: DateTime
