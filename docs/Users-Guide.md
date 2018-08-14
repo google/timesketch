@@ -4,6 +4,7 @@
    - [Start timesketch](#start-timesketch)
    - [User management](#user-management)
      - [Adding users](#adding-users)
+     - [Change user password](#change-user-password)
      - [Removing users](#removing-users)
    - [Group Management](#group-management)
      - [Adding groups](#adding-groups)
@@ -19,6 +20,7 @@
 3. [Concepts](#concepts)
    - [Adding Timelines](#adding-timelines)
    - [Using Stories](#stories)
+   - [Adding event](#adding-event)
 4. [Searching](#searching)
 
 
@@ -53,6 +55,26 @@ tsctl runserver
 ### User management
 
 #### Adding users
+
+Command:
+```
+tsctl add_user
+```
+
+Parameters:
+```
+--name / -n
+--password / -p (optional)
+```
+
+Example
+```
+tsctl add_user --name foo
+```
+
+#### Change user password
+
+To change a user password, the add_user command can be used, as it is checking if the user exists if yes it will update the update.
 
 Command:
 ```
@@ -202,6 +224,14 @@ Every sketch can consist of multiple timelines with multiple views.
 * [Create timeline from JSON/JSONL/CSV file](docs/CreateTimelineFromJSONorCSV.md)
 * [Create timeline from Plaso file](docs/CreateTimelineFromPlaso.md)
 * [Enable Plaso upload via HTTP](docs/EnablePlasoUpload.md)
+
+### Adding event
+
+To manually adding an event, visit the sketch view. Within that screen, there is the possibility to star an event, hide an event as well as add a manual event (marked with a little +).
+This event will have the previously selected time pre-filled but can be changed.
+
+![Add event screenshot](/docs/add_event.png)
+
 
 ### Views
 

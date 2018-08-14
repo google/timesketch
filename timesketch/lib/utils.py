@@ -36,7 +36,6 @@ def random_color():
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
     return u'{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
 
-
 def read_and_validate_csv(path, delimiter):
     """Generator for reading a CSV or TSV file.
 
@@ -70,6 +69,54 @@ def read_and_validate_csv(path, delimiter):
 
             yield row
 
+def read_and_validate_redline(path):
+    """Generator for reading a Redline CSV file.
+    Args:
+        path: Path to the file
+        delimiter: character used as a field separator
+    """
+    # Columns that must be present in the CSV file
+
+    # check if it is the right redline format
+    mandatory_fields = [u'Alert', u'Tag', u'Timestamp', u'Field', u'Summary']
+
+    with open(path, 'rb') as fh:
+        csv.register_dialect('myDialect',
+                             delimiter=',',
+                             quoting=csv.QUOTE_ALL,
+                             skipinitialspace=True)
+        reader = csv.DictReader(fh, delimiter=',', dialect='myDialect')
+
+        csv_header = reader.fieldnames
+        missing_fields = []
+        # Validate the CSV header
+        for field in mandatory_fields:
+            if field not in csv_header:
+                missing_fields.append(field)
+        if missing_fields:
+            raise RuntimeError(
+                u'Missing fields in CSV header: {0:s}'.format(missing_fields))
+        for row in reader:
+
+            dt = parser.parse(row['Timestamp'])
+            timestamp = int(time.mktime(dt.timetuple())) * 1000
+            dt_iso_format = dt.isoformat()
+            timestamp_desc = row['Field']
+
+            summary = row['Summary']
+            alert = row['Alert']
+            tag = row['Tag']
+
+            row_to_yield = {}
+            row_to_yield["message"] = summary
+            row_to_yield["timestamp"] = timestamp
+            row_to_yield["datetime"] = dt_iso_format
+            row_to_yield["timestamp_desc"] = timestamp_desc
+            row_to_yield["alert"] = alert #extra field
+            tags = [tag]
+            row_to_yield["tag"] = tags # extra field
+
+            yield row_to_yield
 
 def read_and_validate_jsonl(path, _):
     """Generator for reading a JSONL (json lines) file.
