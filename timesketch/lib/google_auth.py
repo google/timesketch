@@ -173,6 +173,10 @@ def get_encoded_jwt_over_https(code):
     if response.status_code != HTTP_STATUS_CODE_OK:
         raise JwtFetchError(
             'Cannot fetch JWT: {}'.format(response.status_code))
+
+    if not encoded_jwt:
+        raise JwtFetchError('Cannot fetch JWT: Missing id_token in response')
+
     return encoded_jwt
 
 
@@ -318,5 +322,5 @@ def get_oauth2_discovery_document():
 # Used to cache public keys.
 get_public_key_for_jwt.key_cache = {}
 
-# Used to cache public keys.
+# Used to cache discovery documents.
 get_oauth2_discovery_document.cache = {}
