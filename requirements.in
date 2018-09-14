@@ -21,6 +21,7 @@ datasketch
 PyJWT
 requests
 cryptography
+PyYAML
 
 # dev-requirements:
 Flask-Testing
