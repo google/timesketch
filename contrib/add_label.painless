@@ -1,3 +1,0 @@
-if( ! ctx._source.timesketch_label.contains (params.timesketch_label)) {
-    ctx._source.timesketch_label.add(params.timesketch_label)
-}
