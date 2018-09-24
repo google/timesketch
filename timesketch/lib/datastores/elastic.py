@@ -31,6 +31,26 @@ es_logger = logging.getLogger(u'elasticsearch')
 es_logger.addHandler(logging.NullHandler())
 
 
+ADD_LABEL_SCRIPT = """
+if( ! ctx._source.timesketch_label.contains (params.timesketch_label)) {
+    ctx._source.timesketch_label.add(params.timesketch_label)
+}
+"""
+
+TOGGLE_LABEL_SCRIPT = """
+if(ctx._source.timesketch_label.contains(params.timesketch_label)) {
+    for (int i = 0; i < ctx._source.timesketch_label.size(); i++) {
+      if (ctx._source.timesketch_label[i] == params.timesketch_label) {
+        ctx._source.timesketch_label.remove(i)
+      }
+      i++;
+    }
+} else {
+    ctx._source.timesketch_label.add(params.timesketch_label)
+}
+"""
+
+
 class ElasticsearchDataStore(object):
     """Implements the datastore."""
 
@@ -393,14 +413,11 @@ class ElasticsearchDataStore(object):
                 id=event_id,
                 body=doc)
 
-        # Choose the correct script.
-        script_name = u'add_label'
-        if toggle:
-            script_name = u'toggle_label'
+        # Elasticsearch painless script.
         script = {
             u'script': {
-                u'lang': u'groovy',
-                u'file': script_name,
+                u'lang': u'painless',
+                u'source': ADD_LABEL_SCRIPT,
                 u'params': {
                     u'timesketch_label': {
                         u'name': str(label),
@@ -410,6 +427,9 @@ class ElasticsearchDataStore(object):
                 }
             }
         }
+        if toggle:
+            script[u'script'][u'source'] = TOGGLE_LABEL_SCRIPT
+
         self.client.update(
             index=searchindex_id,
             id=event_id,
@@ -519,3 +539,13 @@ class ElasticsearchDataStore(object):
                 )
 
         return self.import_counter[u'events']
+
+    @property
+    def version(self):
+        """Get Elasticsearch version.
+
+        Returns:
+          Version number as a string.
+        """
+        version_info = self.client.info().get(u'version')
+        return version_info.get(u'number')
