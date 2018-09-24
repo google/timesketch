@@ -104,9 +104,6 @@ sed -i s/"<N4J_PASSWORD>"/"neo4j"/ /etc/timesketch.conf
 # Enable upload
 sed -i s/"UPLOAD_ENABLED = False"/"UPLOAD_ENABLED = True"/ /etc/timesketch.conf
 
-# Copy groovy scripts
-cp "${TIMESKETCH_PATH}"/contrib/*.groovy /etc/elasticsearch/scripts/
-
 # Start Elasticsearch automatically
 /bin/systemctl daemon-reload
 /bin/systemctl enable elasticsearch.service

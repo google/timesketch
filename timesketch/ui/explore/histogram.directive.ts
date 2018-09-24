@@ -91,19 +91,21 @@ export const tsHistogram = function ($window, timesketchApi) {
                             label: 'events',
                             data: chart_values,
                             backgroundColor: '#428bca',
-                            borderWidth: 0,
+                            borderColor: '#428bca',
+                            fill: false,
+                            pointRadius: 0,
+                            borderWidth: 1,
                         }],
                     },
                     options: {
                         legend: {
-                            display: false,
+                            display: true,
                         },
                         scales: {
                             yAxes: [{
                                 gridLines: {
-                                    display: false,
+                                    display: true,
                                 },
-                                type: 'logarithmic',
                                 ticks: {
                                     beginAtZero: true,
                                 },
@@ -111,7 +113,7 @@ export const tsHistogram = function ($window, timesketchApi) {
                             xAxes: [{
                                 type: 'time',
                                 gridLines: {
-                                    display: false,
+                                    display: true,
                                 },
                             }],
 
