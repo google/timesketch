@@ -28,12 +28,6 @@ Install the latest Elasticsearch 5.x release:
 This is up to your specific environment, but if you run elasticsearch on the same host as Timesketch you should lock it down to only listen to localhost.
 The configuration for Elasticsearch is located in `/etc/elasticsearch/elasticsearch.yml`
 
-You need to deploy two Groovy scripts. Copy the following two files to `/etc/elasticsearch/scripts/`:
-
-    wget https://raw.githubusercontent.com/google/timesketch/master/contrib/add_label.groovy
-    wget https://raw.githubusercontent.com/google/timesketch/master/contrib/toggle_label.groovy
-    cp *.groovy /etc/elasticsearch/scripts/
-
 Make sure that Elasticsearch is started on boot:
 
     /bin/systemctl daemon-reload
