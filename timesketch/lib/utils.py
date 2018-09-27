@@ -59,13 +59,17 @@ def read_and_validate_csv(path, delimiter):
             raise RuntimeError(
                 u'Missing fields in CSV header: {0:s}'.format(missing_fields))
         for row in reader:
-            if u'timestamp' not in csv_header and u'datetime' in csv_header:
-                try:
-                    parsed_datetime = parser.parse(row[u'datetime'])
-                    row[u'timestamp'] = str(
-                        int(time.mktime(parsed_datetime.timetuple())))
-                except ValueError:
-                    continue
+            try:
+                # normalize datetime to ISO 8601 format if it's not the case.
+                parsed_datetime = parser.parse(row[u'datetime'])
+                row[u'datetime'] = parsed_datetime.isoformat()
+
+                normalized_timestamp = int(
+                    time.mktime(parsed_datetime.utctimetuple()) * 1000000)
+                normalized_timestamp += parsed_datetime.microsecond
+                row[u'timestamp'] = str(normalized_timestamp)
+            except ValueError:
+                continue
 
             yield row
 
