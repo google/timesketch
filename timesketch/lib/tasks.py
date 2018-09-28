@@ -32,6 +32,15 @@ celery = create_celery_app()
 flask_app = create_app()
 
 
+class SqlAlchemyTask(celery.Task):
+    """An abstract task that closes the database on task completion."""
+    abstract = True
+
+    @staticmethod
+    def after_return(*args, **kwargs):
+        db_session.remove()
+
+
 def _set_timeline_status(index_name, status, error_msg=None):
     """Helper function to set status for searchindex and all related timelines.
 
@@ -59,10 +68,9 @@ def _set_timeline_status(index_name, status, error_msg=None):
         # Commit changes to database
         db_session.add(searchindex)
         db_session.commit()
-        db_session.remove()
 
 
-@celery.task(track_started=True)
+@celery.task(track_started=True, base=SqlAlchemyTask)
 def run_plaso(source_file_path, timeline_name, index_name, source_type,
               username=None):
     """Create a Celery task for processing Plaso storage file.
@@ -103,7 +111,7 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type,
     return cmd_output
 
 
-@celery.task(track_started=True)
+@celery.task(track_started=True, base=SqlAlchemyTask)
 def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type,
                   delimiter=None, username=None):
     """Create a Celery task for processing a CSV or JSONL file.
