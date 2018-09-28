@@ -46,6 +46,20 @@ class SimilarityScorerConfig(object):
             'delimiters': [' ', '-', '/'],
             'threshold': DEFAULT_THRESHOLD,
             'num_perm': DEFAULT_PERMUTATIONS
+        },
+        'chrome:cookie:entry': {
+            'query': 'data_type:"chrome:cookie:entry"',
+            'field': 'url',
+            'delimiters': ['/', '\.'],
+            'threshold': DEFAULT_THRESHOLD,
+            'num_perm': DEFAULT_PERMUTATIONS
+        },
+        'msie:webcache:container': {
+            'query': 'data_type:"msie:webcache:container"',
+            'field': 'url',
+            'delimiters': ['/', '\.'],
+            'threshold': DEFAULT_THRESHOLD,
+            'num_perm': DEFAULT_PERMUTATIONS
         }
     }
 
@@ -107,7 +121,7 @@ class SimilarityScorer(object):
         # TODO: Remove stopwords using the NLTK python package.
         # TODO: Remove configured patterns from string.
         delimiters = self._config.delimiters
-        return re.split('|'.join(delimiters), text)
+        return filter(None, re.split('|'.join(delimiters), text))
 
     def _minhash_from_text(self, text):
         """Calculate minhash of text.
@@ -187,7 +201,8 @@ class SimilarityScorer(object):
         """
         update_doc = {'similarity_score': score}
         self._datastore.import_event(
-            index_name, event_type, event_id=event_id, event=update_doc)
+            index_name, event_type, event_id=event_id, event=update_doc,
+            flush_interval=100)
 
     def run(self):
         """Entry point for a SimilarityScorer.
