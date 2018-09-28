@@ -24,6 +24,7 @@ from timesketch import create_celery_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_jsonl
+from timesketch.lib.experimental.similarity import SimilarityScorer
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Timeline
@@ -36,9 +37,9 @@ class SqlAlchemyTask(celery.Task):
     """An abstract task that closes the database on task completion."""
     abstract = True
 
-    @staticmethod
-    def after_return(*args, **kwargs):
+    def after_return(self, *args, **kwargs):
         db_session.remove()
+        super(SqlAlchemyTask, self).after_return(*args, **kwargs)
 
 
 def _set_timeline_status(index_name, status, error_msg=None):
@@ -70,9 +71,22 @@ def _set_timeline_status(index_name, status, error_msg=None):
         db_session.commit()
 
 
+@celery.task(track_started=True)
+def run_similarity_scorer(index_name, data_type):
+    message = (u'[ANALYSIS TASK] Similarity scorer running for data_type {0:s} '
+               u'on index {1:s}')
+    logging.info(message.format(data_type, index_name))
+    scorer = SimilarityScorer(index=index_name, data_type=data_type)
+    result = scorer.run()
+    logging.info(u'[ANALYSIS TASK] Similarity scorer result: {0}'.format(
+        result)
+    )
+    return index_name
+
+
 @celery.task(track_started=True, base=SqlAlchemyTask)
 def run_plaso(source_file_path, timeline_name, index_name, source_type,
-              username=None):
+              delimiter=None, username=None):
     """Create a Celery task for processing Plaso storage file.
 
     Args:
@@ -86,7 +100,8 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type,
         String with summary of processed events.
     """
     # Log information to Celery
-    logging.info(u'Source type: %s', source_type)
+    message = u'[INDEX TASK] Timeline [{0:s}] to index [{1:s}] (source: {2:s})'
+    logging.info(message.format(timeline_name, index_name, source_type))
 
     cmd = [
         u'psort.py', u'-o', u'timesketch', source_file_path, u'--name',
@@ -99,7 +114,7 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type,
 
     # Run psort.py
     try:
-        cmd_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
         _set_timeline_status(index_name, status=u'fail', error_msg=e.output)
@@ -108,7 +123,7 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type,
     # Mark the searchindex and timelines as ready
     _set_timeline_status(index_name, status=u'ready')
 
-    return cmd_output
+    return index_name
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
@@ -135,11 +150,9 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type,
     read_and_validate = validators.get(source_type)
 
     # Log information to Celery
-    logging.info(u'Index name: %s', index_name)
-    logging.info(u'Timeline name: %s', timeline_name)
-    logging.info(u'Source type: %s', source_type)
-    logging.info(u'Document type: %s', event_type)
-    logging.info(u'Owner: %s', username)
+    logging.info(
+        u'Ingest timeline [{0:s}] to index [{1:s}] (source: {2:s})'.format(
+            timeline_name, index_name, source_type))
 
     es = ElasticsearchDataStore(
         host=current_app.config[u'ELASTIC_HOST'],
