@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Calculate similarity scores based on the Jaccard distance between events."""
+
 from __future__ import unicode_literals
 
 import re

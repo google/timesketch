@@ -996,14 +996,12 @@ class UploadFileResource(ResourceMixin, Resource):
 
         form = UploadFileForm()
         if form.validate_on_submit() and upload_enabled:
-            from timesketch.lib.tasks import run_plaso
-            from timesketch.lib.tasks import run_csv_jsonl
-            from timesketch.lib.tasks import run_similarity_scorer
+            from timesketch.lib import tasks
 
             # Map the right task based on the file type
-            task_directory = {u'plaso': run_plaso,
-                              u'csv': run_csv_jsonl,
-                              u'jsonl': run_csv_jsonl}
+            task_directory = {u'plaso': tasks.run_plaso,
+                              u'csv': tasks.run_csv_jsonl,
+                              u'jsonl': tasks.run_csv_jsonl}
 
             sketch_id = form.sketch_id.data
             file_storage = form.file.data
@@ -1056,27 +1054,19 @@ class UploadFileResource(ResourceMixin, Resource):
                 db_session.add(timeline)
                 db_session.commit()
 
-            data_types_to_analyze = (
-                u'chrome:history:page_visited',
-                u'chrome:history:file_downloaded',
-                u'safari:history:visit',
-                u'msiecf:url',
-                u'opera:history:entry',
-                u'firefox:places:page_visited',
-                u'firefox:downloads:download'
-            )
-
-            analysis_task_group = group(
-                run_similarity_scorer.s(data_type=data_type)
-                for data_type in data_types_to_analyze
-            )
-
-            pipeline = chain(
-                index_task.s(
-                    file_path, timeline_name, index_name, file_extension),
-                analysis_task_group
-            )
-            pipeline.apply_async(task_id=index_name)
+            # Send index and analysis jobs to Celery for async processing.
+            analysis_tasks = group(tasks.get_analyzer_tasks())
+            if analysis_tasks:
+                pipeline = chain(
+                    index_task.s(
+                        file_path, timeline_name, index_name, file_extension),
+                    analysis_tasks
+                )
+                pipeline.apply_async(task_id=index_name)
+            else:
+                index_task.apply_async(
+                    (file_path, timeline_name, index_name, file_extension),
+                    task_id=index_name)
 
             # Return Timeline if it was created.
             # pylint: disable=no-else-return
