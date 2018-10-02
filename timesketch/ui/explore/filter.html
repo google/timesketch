@@ -23,10 +23,9 @@
         <button class="btn btn-default" ng-click="disableAllTimelines()"><i class="fa fa-ban"></i> Disable all</button>
     </div>
     <br><br>
-    <div ng-repeat="timeline in sketch.active_timelines" class="pull-left timeline-box">
-        <ts-timeline-picker-item timeline="timeline" query="query" filter="filter" query-dsl="queryDsl"></ts-timeline-picker-item>
+    <div style="overflow: hidden">
+        <div ng-repeat="timeline in sketch.active_timelines" class="pull-left timeline-box">
+            <ts-timeline-picker-item timeline="timeline" query="query" filter="filter" query-dsl="queryDsl"></ts-timeline-picker-item>
+        </div>
     </div>
-
-    <br><br><br>
-
 </div>

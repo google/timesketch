@@ -46,20 +46,6 @@ class SimilarityScorerConfig(object):
             'delimiters': [' ', '-', '/'],
             'threshold': DEFAULT_THRESHOLD,
             'num_perm': DEFAULT_PERMUTATIONS
-        },
-        'chrome:cookie:entry': {
-            'query': 'data_type:"chrome:cookie:entry"',
-            'field': 'url',
-            'delimiters': ['/', '\.'],
-            'threshold': DEFAULT_THRESHOLD,
-            'num_perm': DEFAULT_PERMUTATIONS
-        },
-        'msie:webcache:container': {
-            'query': 'data_type:"msie:webcache:container"',
-            'field': 'url',
-            'delimiters': ['/', '\.'],
-            'threshold': DEFAULT_THRESHOLD,
-            'num_perm': DEFAULT_PERMUTATIONS
         }
     }
 
