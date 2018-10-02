@@ -13,6 +13,8 @@
 # limitations under the License.
 """Celery task for processing Plaso storage files."""
 
+from __future__ import unicode_literals
+
 import logging
 import subprocess
 import traceback
@@ -62,13 +64,35 @@ def _set_timeline_status(index_name, status, error_msg=None):
             db_session.add(timeline)
 
         # Update description if there was a failure in ingestion
-        if error_msg and status == u'fail':
+        if error_msg and status == 'fail':
             # TODO: Don't overload the description field.
             searchindex.description = error_msg
 
         # Commit changes to database
         db_session.add(searchindex)
         db_session.commit()
+
+
+# TODO: Implement with task manager pattern instead.
+def get_analyzer_tasks():
+    """Get list of analysis tasks to run.
+
+    Returns:
+      List of analysis tasks as Celery subtask signatures.
+    """
+    tasks = []
+
+    # Similarity scorer tasks
+    if current_app.config['SIMILARITY_EXPERIMENT_ENABLED']:
+        try:
+            data_types = current_app.config['SIMILARITY_DATA_TYPES']
+            if data_types:
+                for data_type in data_types:
+                    tasks.append(run_similarity_scorer.s(data_type))
+        except KeyError:
+            pass
+
+    return tasks
 
 
 @celery.task(track_started=True)
@@ -82,11 +106,11 @@ def run_similarity_scorer(index_name, data_type):
     Returns:
       index_name as a string.
     """
-    log_message = u'Similarity scorer for data_type {0:s} on index {1:s}'
+    log_message = 'Similarity scorer for data_type {0:s} on index {1:s}'
     logging.info(log_message.format(data_type, index_name))
     scorer = SimilarityScorer(index=index_name, data_type=data_type)
     result = scorer.run()
-    logging.info(u'Similarity scorer result: %s' % result)
+    logging.info('Similarity scorer result: %s' % result)
     return index_name
 
 
@@ -104,12 +128,12 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
         String with summary of processed events.
     """
     # Log information to Celery
-    message = u'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
+    message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
     logging.info(message.format(timeline_name, index_name, source_type))
 
     cmd = [
-        u'psort.py', u'-o', u'timesketch', source_file_path, u'--name',
-        timeline_name, u'--status_view', u'none', u'--index', index_name
+        'psort.py', '-o', 'timesketch', source_file_path, '--name',
+        timeline_name, '--status_view', 'none', '--index', index_name
     ]
 
     # Run psort.py
@@ -117,11 +141,11 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
         subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
-        _set_timeline_status(index_name, status=u'fail', error_msg=e.output)
+        _set_timeline_status(index_name, status='fail', error_msg=e.output)
         return e.output
 
     # Mark the searchindex and timelines as ready
-    _set_timeline_status(index_name, status=u'ready')
+    _set_timeline_status(index_name, status='ready')
 
     return index_name
 
@@ -139,21 +163,21 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
     Returns:
         Dictionary with count of processed events.
     """
-    event_type = u'generic_event'  # Document type for Elasticsearch
+    event_type = 'generic_event'  # Document type for Elasticsearch
     validators = {
-        u'csv': read_and_validate_csv,
-        u'jsonl': read_and_validate_jsonl
+        'csv': read_and_validate_csv,
+        'jsonl': read_and_validate_jsonl
     }
     read_and_validate = validators.get(source_type)
 
     # Log information to Celery
     logging.info(
-        u'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'.format(
+        'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'.format(
             timeline_name, index_name, source_type))
 
     es = ElasticsearchDataStore(
-        host=current_app.config[u'ELASTIC_HOST'],
-        port=current_app.config[u'ELASTIC_PORT'])
+        host=current_app.config['ELASTIC_HOST'],
+        port=current_app.config['ELASTIC_PORT'])
 
     # Reason for the broad exception catch is that we want to capture
     # all possible errors and exit the task.
@@ -166,11 +190,11 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
     except Exception as e:
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc(e)
-        _set_timeline_status(index_name, status=u'fail', error_msg=error_msg)
+        _set_timeline_status(index_name, status='fail', error_msg=error_msg)
         logging.error(error_msg)
         return
 
     # Set status to ready when done
-    _set_timeline_status(index_name, status=u'ready')
+    _set_timeline_status(index_name, status='ready')
 
     return index_name
