@@ -17,8 +17,8 @@ from __future__ import unicode_literals
 import mock
 from datasketch import MinHash
 
-from timesketch.lib.experimental.similarity import SimilarityScorer
-from timesketch.lib.experimental.similarity import SimilarityScorerConfig
+from timesketch.lib.analyzers.similarity import SimilarityScorer
+from timesketch.lib.analyzers.similarity import SimilarityScorerConfig
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 

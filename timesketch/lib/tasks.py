@@ -24,7 +24,7 @@ from timesketch import create_celery_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_jsonl
-from timesketch.lib.experimental.similarity import SimilarityScorer
+from timesketch.lib.analyzers.similarity import SimilarityScorer
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Timeline
@@ -82,12 +82,11 @@ def run_similarity_scorer(index_name, data_type):
     Returns:
       index_name as a string.
     """
-    log_message = (u'[ANALYSIS TASK] Similarity scorer for data_type {0:s} '
-                   u'on index {1:s}')
+    log_message = u'Similarity scorer for data_type {0:s} on index {1:s}'
     logging.info(log_message.format(data_type, index_name))
     scorer = SimilarityScorer(index=index_name, data_type=data_type)
     result = scorer.run()
-    logging.info(u'[ANALYSIS TASK] Similarity scorer result: %s' % result)
+    logging.info(u'Similarity scorer result: %s' % result)
     return index_name
 
 
@@ -105,7 +104,7 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
         String with summary of processed events.
     """
     # Log information to Celery
-    message = u'[INDEX TASK] Timeline [{0:s}] to index [{1:s}] (source: {2:s})'
+    message = u'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
     logging.info(message.format(timeline_name, index_name, source_type))
 
     cmd = [
@@ -149,7 +148,7 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
 
     # Log information to Celery
     logging.info(
-        u'Ingest timeline [{0:s}] to index [{1:s}] (source: {2:s})'.format(
+        u'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'.format(
             timeline_name, index_name, source_type))
 
     es = ElasticsearchDataStore(

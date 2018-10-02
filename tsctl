@@ -35,7 +35,7 @@ from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_redline
 from timesketch.lib.utils import read_and_validate_jsonl
-from timesketch.lib.experimental.similarity import SimilarityScorer
+from timesketch.lib.analyzers.similarity import SimilarityScorer
 from timesketch.models import db_session
 from timesketch.models import drop_all
 from timesketch.models.user import Group
