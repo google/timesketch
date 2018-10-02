@@ -1010,14 +1010,16 @@ class UploadFileResource(ResourceMixin, Resource):
             _filename, _extension = os.path.splitext(file_storage.filename)
             file_extension = _extension.lstrip(u'.')
             timeline_name = form.name.data or _filename.rstrip(u'.')
-            delimiter = u','
+
+            # Celery task specific for uploaded file type. Exit early if file
+            # type is unknown.
+            index_task = task_directory.get(file_extension)
+            if not index_task:
+                return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
             sketch = None
             if sketch_id:
                 sketch = Sketch.query.get_with_acl(sketch_id)
-
-            # Current user
-            username = current_user.username
 
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
@@ -1054,9 +1056,6 @@ class UploadFileResource(ResourceMixin, Resource):
                 db_session.add(timeline)
                 db_session.commit()
 
-            # Run the task in the background
-            task = task_directory.get(file_extension)
-
             data_types_to_analyze = (
                 u'chrome:history:page_visited',
                 u'chrome:history:file_downloaded',
@@ -1073,8 +1072,8 @@ class UploadFileResource(ResourceMixin, Resource):
             )
 
             pipeline = chain(
-                task.s(file_path, timeline_name, index_name, file_extension,
-                       delimiter, username),
+                index_task.s(
+                    file_path, timeline_name, index_name, file_extension),
                 analysis_task_group
             )
             pipeline.apply_async(task_id=index_name)

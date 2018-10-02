@@ -73,20 +73,26 @@ def _set_timeline_status(index_name, status, error_msg=None):
 
 @celery.task(track_started=True)
 def run_similarity_scorer(index_name, data_type):
-    message = (u'[ANALYSIS TASK] Similarity scorer running for data_type {0:s} '
-               u'on index {1:s}')
-    logging.info(message.format(data_type, index_name))
+    """Create a Celery task for calculating similarity scores.
+
+    Args:
+      index_name: Name of the datastore index.
+      data_type: Data type attribute to process.
+
+    Returns:
+      index_name as a string.
+    """
+    log_message = (u'[ANALYSIS TASK] Similarity scorer for data_type {0:s} '
+                   u'on index {1:s}')
+    logging.info(log_message.format(data_type, index_name))
     scorer = SimilarityScorer(index=index_name, data_type=data_type)
     result = scorer.run()
-    logging.info(u'[ANALYSIS TASK] Similarity scorer result: {0}'.format(
-        result)
-    )
+    logging.info(u'[ANALYSIS TASK] Similarity scorer result: %s' % result)
     return index_name
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
-def run_plaso(source_file_path, timeline_name, index_name, source_type,
-              delimiter=None, username=None):
+def run_plaso(source_file_path, timeline_name, index_name, source_type):
     """Create a Celery task for processing Plaso storage file.
 
     Args:
@@ -94,7 +100,6 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type,
         timeline_name: Name of the Timesketch timeline.
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
-        username: Username of the user who will own the timeline.
 
     Returns:
         String with summary of processed events.
@@ -107,10 +112,6 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type,
         u'psort.py', u'-o', u'timesketch', source_file_path, u'--name',
         timeline_name, u'--status_view', u'none', u'--index', index_name
     ]
-
-    if username:
-        cmd.append(u'--username')
-        cmd.append(username)
 
     # Run psort.py
     try:
@@ -127,8 +128,7 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type,
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
-def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type,
-                  delimiter=None, username=None):
+def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
     """Create a Celery task for processing a CSV or JSONL file.
 
     Args:
@@ -136,8 +136,6 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type,
         timeline_name: Name of the Timesketch timeline.
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
-        delimiter: Character used as a field separator
-        username: Username of the user who will own the timeline.
 
     Returns:
         Dictionary with count of processed events.
@@ -162,10 +160,10 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type,
     # all possible errors and exit the task.
     try:
         es.create_index(index_name=index_name, doc_type=event_type)
-        for event in read_and_validate(source_file_path, delimiter):
+        for event in read_and_validate(source_file_path):
             es.import_event(index_name, event_type, event)
         # Import the remaining events
-        total_events = es.import_event(index_name, event_type)
+        es.import_event(index_name, event_type)
     except Exception as e:
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc(e)
@@ -176,4 +174,4 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type,
     # Set status to ready when done
     _set_timeline_status(index_name, status=u'ready')
 
-    return {u'Events processed': total_events}
+    return index_name
