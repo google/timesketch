@@ -1009,8 +1009,8 @@ class UploadFileResource(ResourceMixin, Resource):
             file_extension = _extension.lstrip(u'.')
             timeline_name = form.name.data or _filename.rstrip(u'.')
 
-            # Celery task specific for uploaded file type. Exit early if file
-            # type is unknown.
+            # Celery task for the uploaded file. Exit early if file type
+            # is unknown.
             index_task = task_directory.get(file_extension)
             if not index_task:
                 return abort(HTTP_STATUS_CODE_BAD_REQUEST)
@@ -1054,7 +1054,7 @@ class UploadFileResource(ResourceMixin, Resource):
                 db_session.add(timeline)
                 db_session.commit()
 
-            # Send index and analysis jobs to Celery for async processing.
+            # Start Celery async tasks for indexing and analysis.
             analysis_tasks = group(tasks.get_analyzer_tasks())
             if analysis_tasks:
                 pipeline = chain(
