@@ -56,7 +56,7 @@ class TestSimilarityScorer(BaseTest):
         self.test_text = 'This is a test text-with tests/test'
 
     @mock.patch(
-        u'timesketch.lib.experimental.similarity.ElasticsearchDataStore',
+        u'timesketch.lib.analyzers.similarity.ElasticsearchDataStore',
         MockDataStore)
     def test_scorer(self):
         """Test scorer object."""
@@ -65,7 +65,7 @@ class TestSimilarityScorer(BaseTest):
         self.assertIsInstance(scorer, SimilarityScorer)
 
     @mock.patch(
-        u'timesketch.lib.experimental.similarity.ElasticsearchDataStore',
+        u'timesketch.lib.analyzers.similarity.ElasticsearchDataStore',
         MockDataStore)
     def test_shingles_from_text(self):
         """Test splitting up a text string to words."""
@@ -77,7 +77,7 @@ class TestSimilarityScorer(BaseTest):
         self.assertEqual(len(shingles), 8)
 
     @mock.patch(
-        u'timesketch.lib.experimental.similarity.ElasticsearchDataStore',
+        u'timesketch.lib.analyzers.similarity.ElasticsearchDataStore',
         MockDataStore)
     def test_minhash_from_text(self):
         """Test create minhash from text."""

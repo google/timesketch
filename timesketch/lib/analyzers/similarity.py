@@ -188,8 +188,9 @@ class SimilarityScorer(object):
         """
         update_doc = {'similarity_score': score}
         self._datastore.import_event(
-            index_name, event_type, event_id=event_id, event=update_doc,
-            flush_interval=100)
+            index_name, event_type, event_id=event_id, event=update_doc)
+        # Import any remaining events
+        self._datastore.import_event(index_name, event_type)
 
     def run(self):
         """Entry point for a SimilarityScorer.
