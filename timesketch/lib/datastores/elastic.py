@@ -29,6 +29,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 # Setup logging
 es_logger = logging.getLogger(u'elasticsearch')
 es_logger.addHandler(logging.NullHandler())
+es_logger.setLevel(logging.WARNING)
 
 ADD_LABEL_SCRIPT = """
 if( ! ctx._source.timesketch_label.contains (params.timesketch_label)) {
