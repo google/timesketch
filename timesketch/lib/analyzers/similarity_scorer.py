@@ -16,10 +16,13 @@
 from __future__ import unicode_literals
 
 import re
+
 from flask import current_app
+
 from datasketch.minhash import MinHash
 from datasketch.lsh import MinHashLSH
-from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+from timesketch.lib.analyzers import interface
+from timesketch.lib.analyzers import manager
 
 
 class SimilarityScorerConfig(object):
@@ -50,14 +53,14 @@ class SimilarityScorerConfig(object):
         }
     }
 
-    def __init__(self, index, data_type):
+    def __init__(self, index_name, data_type):
         """Initializes a similarity scorer config.
 
         Args:
-            index: Elasticsearch index name.
+            index_name: Elasticsearch index name.
             data_type: Name of the data_type.
         """
-        self._index = index
+        self._index_name = index_name
         self._data_type = data_type
         for k, v in self._get_config().items():
             setattr(self, k, v)
@@ -76,25 +79,28 @@ class SimilarityScorerConfig(object):
             config_dict = self.DEFAULT_CONFIG
             config_dict['query'] = 'data_type:"{0}"'.format(self._data_type)
 
-        config_dict['index'] = self._index
+        config_dict['index_name'] = self._index_name
         config_dict['data_type'] = self._data_type
         return config_dict
 
 
-class SimilarityScorer(object):
+class SimilarityScorer(interface.BaseAnalyzer):
     """Score events based on Jaccard distance."""
 
-    def __init__(self, index, data_type):
+    NAME = 'SimilarityScorer'
+
+    def __init__(self, index_name, data_type=None):
         """Initializes a similarity scorer.
 
         Args:
-            index: Elasticsearch index name.
+            index_name: Elasticsearch index name.
             data_type: Name of the data_type.
         """
-        self._datastore = ElasticsearchDataStore(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
-        self._config = SimilarityScorerConfig(index, data_type)
+        if data_type:
+            self._config = SimilarityScorerConfig(index_name, data_type)
+        else:
+            self._config = None
+        super(SimilarityScorer, self).__init__()
 
     def _shingles_from_text(self, text):
         """Splits string into words.
@@ -135,10 +141,10 @@ class SimilarityScorer(object):
         lsh = MinHashLSH(self._config.threshold, self._config.num_perm)
 
         # Event generator for streaming Elasticsearch results.
-        events = self._datastore.search_stream(
+        events = self.datastore.search_stream(
             query_string=self._config.query,
             query_filter={},
-            indices=[self._config.index],
+            indices=[self._config.index_name],
             return_fields=[self._config.field]
         )
 
@@ -177,36 +183,53 @@ class SimilarityScorer(object):
         neighbours = lsh.query(minhash)
         return float(len(neighbours)) / float(total_num_events)
 
-    def _update_event(self, event_id, event_type, index_name, score):
-        """Add a similarity_score attribute to the event in Elasticsearch.
+    @classmethod
+    def get_kwargs(cls):
+        """Keyword arguments needed to instantiate the class.
 
-        Args:
-            event_id: ID of the Elasticsearch document.
-            event_type: The Elasticsearch type of the event.
-            index_name: The name of the index in Elasticsearch.
-            score: A numerical similarity score with value between 0 and 1.
+        In addition to the index_name passed to the constructor by default we
+        need the data_type name as well. Furthermore we want to instantiate
+        one task per data_type in order to run the analyzer in parallel. To
+        achieve this we override this method and return a list of keyword
+        argument dictionaries.
+
+        Returns:
+            List of keyword arguments (dict), one per data_type.
         """
-        update_doc = {'similarity_score': score}
-        self._datastore.import_event(
-            index_name, event_type, event_id=event_id, event=update_doc)
-        # Import any remaining events
-        self._datastore.import_event(index_name, event_type)
+        kwargs_list = []
+        try:
+            data_types = current_app.config['SIMILARITY_DATA_TYPES']
+            if data_types:
+                for data_type in data_types:
+                    kwargs_list.append({'data_type': data_type})
+        except KeyError:
+            return None
+        return kwargs_list
 
     def run(self):
-        """Entry point for a SimilarityScorer.
+        """Entry point for the SimilarityScorer.
 
         Returns:
             A dict with metadata about the processed data set.
         """
+        # Exit early if there is no data_type to process.
+        if not self._config:
+            return 'No data_types configured, there is nothing to analyze'
+
         lsh, minhashes = self._new_lsh_index()
         total_num_events = len(minhashes)
         for key, minhash in minhashes.items():
             event_id, event_type, index_name = key
             score = self._calculate_score(lsh, minhash, total_num_events)
-            self._update_event(event_id, event_type, index_name, score)
+            attribute_to_add = {'similarity_score': score}
+            self.add_event_attributes(
+                index_name, event_type, event_id, attribute_to_add)
 
         return dict(
-            index=self._config.index,
+            index=self._config.index_name,
             data_type=self._config.data_type,
             num_events_processed=total_num_events
         )
+
+
+manager.AnalysisManager.register_analyzer(SimilarityScorer)

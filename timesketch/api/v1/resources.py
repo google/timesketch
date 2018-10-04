@@ -34,8 +34,6 @@ import os
 import time
 import uuid
 
-from celery import chain
-from celery import group
 from dateutil import parser
 from flask import abort
 from flask import current_app
@@ -998,22 +996,11 @@ class UploadFileResource(ResourceMixin, Resource):
         if form.validate_on_submit() and upload_enabled:
             from timesketch.lib import tasks
 
-            # Map the right task based on the file type
-            task_directory = {u'plaso': tasks.run_plaso,
-                              u'csv': tasks.run_csv_jsonl,
-                              u'jsonl': tasks.run_csv_jsonl}
-
             sketch_id = form.sketch_id.data
             file_storage = form.file.data
             _filename, _extension = os.path.splitext(file_storage.filename)
             file_extension = _extension.lstrip(u'.')
             timeline_name = form.name.data or _filename.rstrip(u'.')
-
-            # Celery task for the uploaded file. Exit early if file type
-            # is unknown.
-            index_task = task_directory.get(file_extension)
-            if not index_task:
-                return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
             sketch = None
             if sketch_id:
@@ -1054,19 +1041,15 @@ class UploadFileResource(ResourceMixin, Resource):
                 db_session.add(timeline)
                 db_session.commit()
 
-            # Start Celery async tasks for indexing and analysis.
-            analysis_tasks = group(tasks.get_analyzer_tasks())
-            if analysis_tasks:
-                pipeline = chain(
-                    index_task.s(
-                        file_path, timeline_name, index_name, file_extension),
-                    analysis_tasks
-                )
-                pipeline.apply_async(task_id=index_name)
-            else:
-                index_task.apply_async(
-                    (file_path, timeline_name, index_name, file_extension),
-                    task_id=index_name)
+            # Start Celery pipeline for indexing and analysis.
+            try:
+                pipeline = tasks.build_index_pipeline(
+                    file_path, timeline_name, index_name, file_extension)
+            except KeyError:
+                return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            pipeline.apply_async(task_id=index_name)
+
+            print tasks.build_sketch_analysis_pipeline(sketch_id=4711)
 
             # Return Timeline if it was created.
             # pylint: disable=no-else-return

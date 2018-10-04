@@ -19,14 +19,17 @@ import logging
 import subprocess
 import traceback
 
+from celery import group
+from celery import chain
 from flask import current_app
 
 from timesketch import create_app
 from timesketch import create_celery_app
+from timesketch.lib.analyzers import manager
+
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_jsonl
-from timesketch.lib.analyzers.similarity import SimilarityScorer
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Timeline
@@ -74,45 +77,134 @@ def _set_timeline_status(index_name, status, error_msg=None):
         db_session.commit()
 
 
-# TODO: Implement with task manager pattern instead.
-def get_analyzer_tasks():
+def _get_index_analyzer_task_group(sketch_id=None):
     """Get list of analysis tasks to run.
 
+    Args:
+        sketch_id: ID of sketch to analyze, None to get indexing tasks only.
+
     Returns:
-      List of analysis tasks as Celery subtask signatures.
+        Group of analysis tasks as Celery subtask signatures.
     """
     tasks = []
 
-    # Similarity scorer tasks
-    if current_app.config['SIMILARITY_EXPERIMENT_ENABLED']:
-        try:
-            data_types = current_app.config['SIMILARITY_DATA_TYPES']
-            if data_types:
-                for data_type in data_types:
-                    tasks.append(run_similarity_scorer.s(data_type))
-        except KeyError:
-            pass
+    for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
+        kwarg_list = analyzer_cls.get_kwargs()
 
-    return tasks
+        if sketch_id:
+            if not analyzer_cls.IS_INDEX_TASK:
+                if kwarg_list:
+                    for kwargs in kwarg_list:
+                        tasks.append(
+                            run_sketch_analyzer.s(
+                                sketch_id, analyzer_name, **kwargs))
+                else:
+                    tasks.append(
+                        run_sketch_analyzer.s(sketch_id, analyzer_name))
+
+        else:
+            if analyzer_cls.IS_INDEX_TASK:
+                if kwarg_list:
+                    for kwargs in kwarg_list:
+                        tasks.append(
+                            run_index_analyzer.s(analyzer_name, **kwargs))
+                else:
+                    tasks.append(run_index_analyzer.s(analyzer_name))
+    return group(tasks)
+
+
+def _get_index_task_class(file_extension):
+    """Get correct index task function for the supplied file type.
+
+    Args:
+        file_extension (str): File type based on filename extension.
+
+    Returns:
+        A task function.
+
+    Raises:
+        KeyError if no task class can be found.
+    """
+    if file_extension == 'plaso':
+        index_class = run_plaso
+    elif file_extension in ['csv', 'jsonl']:
+        index_class = run_csv_jsonl
+    else:
+        raise KeyError('No task that supports {0:s}'.format(file_extension))
+    return index_class
+
+
+def build_index_pipeline(file_path, timeline_name, index_name, file_extension):
+    """Build a pipeline for index and analysis.
+
+    Args:
+        file_path: Path to the file to index.
+        timeline_name: Name of the timeline to create.
+        index_name: Name of the index to index to.
+        file_extension: The file extension of the file.
+
+    Returns:
+        Celery chain with indexing task and analyzer task group.
+    """
+    index_task_class = _get_index_task_class(file_extension)
+    analyzer_task_group = _get_index_analyzer_task_group()
+
+    index_task = index_task_class.s(
+        file_path, timeline_name, index_name, file_extension)
+
+    # If there are no analyzers just run the indexer.
+    if not analyzer_task_group:
+        return index_task
+
+    return chain(index_task, analyzer_task_group)
+
+
+def build_sketch_analysis_pipeline(sketch_id):
+    """Build a pipeline for sketch analyzers.
+
+    Args:
+        sketch_id: The ID of the sketch to analyze.
+
+    Returns:
+        Celery group with analysis tasks.
+    """
+    return _get_index_analyzer_task_group(sketch_id=sketch_id)
 
 
 @celery.task(track_started=True)
-def run_similarity_scorer(index_name, data_type):
-    """Create a Celery task for calculating similarity scores.
+def run_index_analyzer(index_name, analyzer_name, **kwargs):
+    """Create a Celery task for an index analyzer.
 
     Args:
       index_name: Name of the datastore index.
-      data_type: Data type attribute to process.
+      analyzer_name: Name of the analyzer.
 
     Returns:
-      index_name as a string.
+      Name (str) of the index.
     """
-    log_message = 'Similarity scorer for data_type {0:s} on index {1:s}'
-    logging.info(log_message.format(data_type, index_name))
-    scorer = SimilarityScorer(index=index_name, data_type=data_type)
-    result = scorer.run()
-    logging.info('Similarity scorer result: %s' % result)
+    analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
+    analyzer = analyzer_class(index_name=index_name, **kwargs)
+    result = analyzer.run_wrapper()
+    logging.info('[%s] result: %s' % (analyzer_name, result))
     return index_name
+
+
+@celery.task(track_started=True)
+def run_sketch_analyzer(sketch_id, analyzer_name, **kwargs):
+    """Create a Celery task for a sketch analyzer.
+
+    Args:
+      sketch_id: ID of the sketch to analyze.
+      analyzer_name: Name of the analyzer.
+
+    Returns:
+      ID (str) of the sketch.
+    """
+    analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
+    analyzer = analyzer_class(sketch_id=sketch_id, **kwargs)
+    result = analyzer.run_wrapper()
+    logging.info('[%s] result: %s' % (analyzer_name, result))
+    return sketch_id
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
@@ -132,8 +224,13 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
     logging.info(message.format(timeline_name, index_name, source_type))
 
+    try:
+        psort_path = current_app.config['PSORT_PATH']
+    except KeyError:
+        psort_path = 'psort'
+
     cmd = [
-        'psort.py', '-o', 'timesketch', source_file_path, '--name',
+        psort_path, '-o', 'timesketch', source_file_path, '--name',
         timeline_name, '--status_view', 'none', '--index', index_name
     ]
 

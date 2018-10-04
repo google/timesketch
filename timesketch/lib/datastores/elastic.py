@@ -540,6 +540,10 @@ class ElasticsearchDataStore(object):
 
         return self.import_counter[u'events']
 
+    def flush_queued_events(self):
+        if self.import_events:
+            self.client.bulk(body=self.import_events)
+
     @property
     def version(self):
         """Get Elasticsearch version.
