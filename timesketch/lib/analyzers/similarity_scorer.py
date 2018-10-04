@@ -88,6 +88,7 @@ class SimilarityScorer(interface.BaseAnalyzer):
     """Score events based on Jaccard distance."""
 
     NAME = 'SimilarityScorer'
+    IS_INDEX_ANALYZER = True
 
     def __init__(self, index_name, data_type=None):
         """Initializes a similarity scorer.

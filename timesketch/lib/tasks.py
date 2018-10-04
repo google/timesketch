@@ -92,7 +92,7 @@ def _get_index_analyzer_task_group(sketch_id=None):
         kwarg_list = analyzer_cls.get_kwargs()
 
         if sketch_id:
-            if not analyzer_cls.IS_INDEX_TASK:
+            if not analyzer_cls.IS_INDEX_ANALYZER:
                 if kwarg_list:
                     for kwargs in kwarg_list:
                         tasks.append(
@@ -103,7 +103,7 @@ def _get_index_analyzer_task_group(sketch_id=None):
                         run_sketch_analyzer.s(sketch_id, analyzer_name))
 
         else:
-            if analyzer_cls.IS_INDEX_TASK:
+            if analyzer_cls.IS_INDEX_ANALYZER:
                 if kwarg_list:
                     for kwargs in kwarg_list:
                         tasks.append(

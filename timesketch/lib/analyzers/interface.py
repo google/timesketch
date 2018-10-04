@@ -39,7 +39,7 @@ class BaseAnalyzer(object):
     NAME = 'name'
     # Run at indexing time. If you are building a sketch analyzer then you need
     # to set this to False in your analyzer class.
-    IS_INDEX_TASK = True
+    IS_INDEX_ANALYZER = True
 
     def __init__(self):
         self.name = self.NAME
