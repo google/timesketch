@@ -752,6 +752,7 @@ class EventCreateResource(ResourceMixin, Resource):
             # derive datetime from timestamp:
             parsed_datetime = parser.parse(form.timestamp.data)
             timestamp = int(time.mktime(parsed_datetime.timetuple())) * 1000000
+            timestamp += parsed_datetime.microsecond
 
             event = {
                 "datetime": form.timestamp.data,
