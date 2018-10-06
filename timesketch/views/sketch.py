@@ -451,13 +451,16 @@ def export(sketch_id):
         indices,
         aggregations=None)
 
+    all_fields = set()
+    for event in result[u'hits'][u'hits']:
+        all_fields.update(event[u'_source'].keys())
+
+    default_fields = [u'datetime', u'timestamp', u'timestamp_desc', u'message']
+    all_fields.difference_update(default_fields)
+    fieldnames = default_fields + sorted(all_fields)
+
     csv_out = StringIO()
-    csv_writer = csv.DictWriter(
-        csv_out,
-        fieldnames=[
-            u'timestamp', u'message', u'timestamp_desc', u'datetime',
-            u'timesketch_label', u'tag'
-        ])
+    csv_writer = csv.DictWriter(csv_out, fieldnames=fieldnames)
     csv_writer.writeheader()
     for _event in result[u'hits'][u'hits']:
         csv_writer.writerow(

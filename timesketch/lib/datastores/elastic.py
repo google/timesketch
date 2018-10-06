@@ -235,7 +235,8 @@ class ElasticsearchDataStore(object):
                count=False,
                aggregations=None,
                return_fields=None,
-               enable_scroll=False):
+               enable_scroll=False,
+               all_fields=False):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -250,6 +251,7 @@ class ElasticsearchDataStore(object):
             aggregations: Dict of Elasticsearch aggregations
             return_fields: List of fields to return
             enable_scroll: If Elasticsearch scroll API should be used
+            all_fields: Boolean indicating if we should return all fields
 
         Returns:
             Set of event documents in JSON format
@@ -291,6 +293,16 @@ class ElasticsearchDataStore(object):
             count_result = self.client.count(
                 body=query_dsl, index=list(indices))
             return count_result.get(u'count', 0)
+
+        if all_fields:
+            # Suppress the lint error because elasticsearch-py adds parameters
+            # to the function with a decorator and this makes pylint sad.
+            # pylint: disable=unexpected-keyword-arg
+            return self.client.search(
+                body=query_dsl,
+                index=list(indices),
+                search_type=search_type,
+                scroll=scroll_timeout)
 
         # Suppress the lint error because elasticsearch-py adds parameters
         # to the function with a decorator and this makes pylint sad.
