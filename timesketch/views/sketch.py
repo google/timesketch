@@ -449,7 +449,8 @@ def export(sketch_id):
         query_filter,
         query_dsl,
         indices,
-        aggregations=None)
+        aggregations=None,
+        all_fields=True)
 
     all_fields = set()
     for event in result[u'hits'][u'hits']:
