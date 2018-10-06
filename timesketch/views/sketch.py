@@ -32,7 +32,7 @@ from sqlalchemy import not_
 
 from timesketch.models import db_session
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
-from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
+from timesketch.lib.definitions import DEFAULT_FIELDS
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.forms import AddTimelineForm
@@ -457,8 +457,8 @@ def export(sketch_id):
     for event in result[u'hits'][u'hits']:
         all_fields.update(event[u'_source'].keys())
 
-    all_fields.difference_update(DEFAULT_SOURCE_FIELDS)
-    fieldnames = DEFAULT_SOURCE_FIELDS + sorted(all_fields)
+    all_fields.difference_update(DEFAULT_FIELDS)
+    fieldnames = DEFAULT_FIELDS + sorted(all_fields)
 
     csv_out = StringIO()
     csv_writer = csv.DictWriter(csv_out, fieldnames=fieldnames)
