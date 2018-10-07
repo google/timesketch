@@ -18,9 +18,13 @@ import csv
 import datetime
 import json
 import random
+import sys
 import time
 
 from dateutil import parser
+
+# Set CSV field size limit to systems max value.
+csv.field_size_limit(sys.maxsize)
 
 
 def random_color():
