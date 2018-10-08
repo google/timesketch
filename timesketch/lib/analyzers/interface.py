@@ -45,9 +45,8 @@ class BaseAnalyzer(object):
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
 
-    def add_event_attributes(self, index_name, event_type, event_id,
-                             attributes):
-        """Add attributes to an event.
+    def update_event(self, index_name, event_type, event_id, attributes):
+        """Update an event in Elasticsearch.
 
         Args:
             event_id: ID of the Elasticsearch document.
@@ -57,6 +56,21 @@ class BaseAnalyzer(object):
         """
         self.datastore.import_event(
             index_name, event_type, event_id=event_id, event=attributes)
+
+    def set_label(self,
+                  searchindex_id,
+                  event_id,
+                  event_type,
+                  sketch_id,
+                  user_id,
+                  label,
+                  toggle=False):
+
+    def label_event(self, event, sketch_id, label):
+        
+        self.datastore.set_label(
+            index_name, event_type, event_id=event_id, event=attributes)
+
 
     @_flush_datastore_decorator
     def run_wrapper(self):

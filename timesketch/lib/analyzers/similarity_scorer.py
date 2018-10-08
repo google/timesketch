@@ -222,7 +222,7 @@ class SimilarityScorer(interface.BaseAnalyzer):
             event_id, event_type, index_name = key
             score = self._calculate_score(lsh, minhash, total_num_events)
             attribute_to_add = {'similarity_score': score}
-            self.add_event_attributes(
+            self.update_event(
                 index_name, event_type, event_id, attribute_to_add)
 
         return dict(
