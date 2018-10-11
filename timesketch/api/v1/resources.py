@@ -728,6 +728,7 @@ class AggregationResource(ResourceMixin, Resource):
             return jsonify(schema)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
+
 class EventCreateResource(ResourceMixin, Resource):
     """Resource to create an annotation for an event."""
 
@@ -818,13 +819,11 @@ class EventCreateResource(ResourceMixin, Resource):
                         searchindex, status_code=HTTP_STATUS_CODE_CREATED)
 
             except Exception as e:
-                print e
                 raise ApiHTTPError(
                     message="failed to add event",
                     status_code=HTTP_STATUS_CODE_BAD_REQUEST)
 
         else:
-            print form.errors
             raise ApiHTTPError(
                 message="failed to add event",
                 status_code=HTTP_STATUS_CODE_BAD_REQUEST)
@@ -878,9 +877,13 @@ class EventResource(ResourceMixin, Resource):
         comments = []
         if event:
             for comment in event.comments:
+                if not comment.user:
+                    username = u'System'
+                else:
+                    username = comment.user.username
                 comment_dict = {
                     u'user': {
-                        u'username': comment.user.username,
+                        u'username': username,
                     },
                     u'created_at': comment.created_at,
                     u'comment': comment.comment
@@ -1048,8 +1051,6 @@ class UploadFileResource(ResourceMixin, Resource):
             except KeyError:
                 return abort(HTTP_STATUS_CODE_BAD_REQUEST)
             pipeline.apply_async(task_id=index_name)
-
-            print tasks.build_sketch_analysis_pipeline(sketch_id=4711)
 
             # Return Timeline if it was created.
             # pylint: disable=no-else-return

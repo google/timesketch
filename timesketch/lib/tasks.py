@@ -92,7 +92,7 @@ def _get_index_analyzer_task_group(sketch_id=None):
         kwarg_list = analyzer_cls.get_kwargs()
 
         if sketch_id:
-            if not analyzer_cls.IS_INDEX_ANALYZER:
+            if analyzer_cls.IS_SKETCH_ANALYZER:
                 if kwarg_list:
                     for kwargs in kwarg_list:
                         tasks.append(
@@ -103,7 +103,7 @@ def _get_index_analyzer_task_group(sketch_id=None):
                         run_sketch_analyzer.s(sketch_id, analyzer_name))
 
         else:
-            if analyzer_cls.IS_INDEX_ANALYZER:
+            if not analyzer_cls.IS_SKETCH_ANALYZER:
                 if kwarg_list:
                     for kwargs in kwarg_list:
                         tasks.append(
@@ -227,7 +227,7 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
     try:
         psort_path = current_app.config['PSORT_PATH']
     except KeyError:
-        psort_path = 'psort'
+        psort_path = 'psort.py'
 
     cmd = [
         psort_path, '-o', 'timesketch', source_file_path, '--name',
@@ -284,7 +284,7 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
         for event in read_and_validate(source_file_path):
             es.import_event(index_name, event_type, event)
         # Import the remaining events
-        es.import_event(index_name, event_type)
+        es.flush_queued_events()
     except Exception as e:
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc(e)

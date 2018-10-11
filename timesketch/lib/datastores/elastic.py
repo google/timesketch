@@ -32,12 +32,18 @@ es_logger.addHandler(logging.NullHandler())
 es_logger.setLevel(logging.WARNING)
 
 ADD_LABEL_SCRIPT = """
+if (ctx._source.timesketch_label == null) {
+    ctx._source.timesketch_label = new ArrayList()
+}
 if( ! ctx._source.timesketch_label.contains (params.timesketch_label)) {
     ctx._source.timesketch_label.add(params.timesketch_label)
 }
 """
 
 TOGGLE_LABEL_SCRIPT = """
+if (ctx._source.timesketch_label == null) {
+    ctx._source.timesketch_label = new ArrayList()
+}
 if(ctx._source.timesketch_label.contains(params.timesketch_label)) {
     for (int i = 0; i < ctx._source.timesketch_label.size(); i++) {
       if (ctx._source.timesketch_label[i] == params.timesketch_label) {
@@ -382,14 +388,8 @@ class ElasticsearchDataStore(object):
         result = self.client.count(index=indices)
         return result.get(u'count', 0)
 
-    def set_label(self,
-                  searchindex_id,
-                  event_id,
-                  event_type,
-                  sketch_id,
-                  user_id,
-                  label,
-                  toggle=False):
+    def set_label(self, searchindex_id, event_id, event_type, sketch_id,
+                  user_id, label, toggle=False, single_update=True):
         """Set label on event in the datastore.
 
         Args:
@@ -400,21 +400,11 @@ class ElasticsearchDataStore(object):
             user_id: Integer of user primary key
             label: String with the name of the label
             toggle: Optional boolean value if the label should be toggled
+            single_update: Boolean if the label should be indexed immediately.
             (add/remove). The default is False.
         """
-        doc = self.client.get(index=searchindex_id, id=event_id)
-        try:
-            doc[u'_source'][u'timesketch_label']
-        except KeyError:
-            doc = {u'doc': {u'timesketch_label': []}}
-            self.client.update(
-                index=searchindex_id,
-                doc_type=event_type,
-                id=event_id,
-                body=doc)
-
         # Elasticsearch painless script.
-        script = {
+        update_body = {
             u'script': {
                 u'lang': u'painless',
                 u'source': ADD_LABEL_SCRIPT,
@@ -427,14 +417,33 @@ class ElasticsearchDataStore(object):
                 }
             }
         }
+
         if toggle:
-            script[u'script'][u'source'] = TOGGLE_LABEL_SCRIPT
+            update_body[u'script'][u'source'] = TOGGLE_LABEL_SCRIPT
+
+        if not single_update:
+            script = update_body[u'script']
+            return dict(
+                source=script[u'source'], lang=script[u'lang'],
+                params=script[u'params']
+            )
+
+        doc = self.client.get(index=searchindex_id, id=event_id)
+        try:
+            doc[u'_source'][u'timesketch_label']
+        except KeyError:
+            doc = {u'doc': {u'timesketch_label': []}}
+            self.client.update(
+                index=searchindex_id,
+                doc_type=event_type,
+                id=event_id,
+                body=doc)
 
         self.client.update(
             index=searchindex_id,
             id=event_id,
             doc_type=event_type,
-            body=script)
+            body=update_body)
 
     def create_index(self, index_name=uuid4().hex, doc_type=u'generic_event'):
         """Create index with Timesketch settings.
@@ -518,25 +527,22 @@ class ElasticsearchDataStore(object):
             }
 
             if event_id:
+                if event.get(u'lang'):
+                    event = {u'script': event}
+                else:
+                    event = {u'doc': event}
                 header = update_header
-                event = {u'doc': event}
 
             self.import_events.append(header)
             self.import_events.append(event)
             self.import_counter[u'events'] += 1
+
             if self.import_counter[u'events'] % int(flush_interval) == 0:
-                self.client.bulk(
-                    index=index_name,
-                    doc_type=event_type,
-                    body=self.import_events)
+                self.client.bulk(body=self.import_events)
                 self.import_events = []
         else:
             if self.import_events:
-                self.client.bulk(
-                    index=index_name,
-                    doc_type=event_type,
-                    body=self.import_events
-                )
+                self.client.bulk(body=self.import_events)
 
         return self.import_counter[u'events']
 

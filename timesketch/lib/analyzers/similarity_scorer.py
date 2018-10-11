@@ -96,6 +96,7 @@ class SimilarityScorer(interface.BaseAnalyzer):
             index_name: Elasticsearch index name.
             data_type: Name of the data_type.
         """
+        self.index_name = index_name
         if data_type:
             self._config = SimilarityScorerConfig(index_name, data_type)
         else:
@@ -130,7 +131,7 @@ class SimilarityScorer(interface.BaseAnalyzer):
             minhash.update(word.encode('utf8'))
         return minhash
 
-    def _new_lsh_index(self):
+    def _new_lsh_index(self, events):
         """Create a new LSH from a set of Timesketch events.
 
         Returns:
@@ -140,24 +141,12 @@ class SimilarityScorer(interface.BaseAnalyzer):
         minhashes = {}
         lsh = MinHashLSH(self._config.threshold, self._config.num_perm)
 
-        # Event generator for streaming Elasticsearch results.
-        events = self.datastore.search_stream(
-            query_string=self._config.query,
-            query_filter={},
-            indices=[self._config.index_name],
-            return_fields=[self._config.field]
-        )
-
         with lsh.insertion_session() as lsh_session:
             for event in events:
-                event_id = event['_id']
-                index_name = event['_index']
-                event_type = event['_type']
-                event_text = event['_source'][self._config.field]
-
                 # Insert minhash in LSH index
-                key = (event_id, event_type, index_name)
-                minhash = self._minhash_from_text(event_text)
+                key = (event.event_id, event.event_type, event.index_name)
+                minhash = self._minhash_from_text(
+                    event.source[self._config.field])
                 minhashes[key] = minhash
                 lsh_session.insert(key, minhash)
 
@@ -216,14 +205,21 @@ class SimilarityScorer(interface.BaseAnalyzer):
         if not self._config:
             return 'No data_types configured, there is nothing to analyze'
 
-        lsh, minhashes = self._new_lsh_index()
+        # Event generator for streaming results.
+        events = self.event_stream(
+            query_string=self._config.query,
+            return_fields=[self._config.field]
+        )
+
+        lsh, minhashes = self._new_lsh_index(events)
         total_num_events = len(minhashes)
         for key, minhash in minhashes.items():
             event_id, event_type, index_name = key
+            event_dict = dict(_id=event_id, _type=event_type, _index=index_name)
+            event = interface.Event(event_dict, self.datastore)
             score = self._calculate_score(lsh, minhash, total_num_events)
-            attribute_to_add = {'similarity_score': score}
-            self.update_event(
-                index_name, event_type, event_id, attribute_to_add)
+            attributes_to_add = {'similarity_score': score}
+            event.add_attributes(attributes_to_add)
 
         return dict(
             index=self._config.index_name,
