@@ -72,7 +72,6 @@ from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
-from timesketch.lib import tasks
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.cypher import transpile_query, InvalidQuery
 from timesketch.models import db_session
@@ -1342,6 +1341,8 @@ class TimelineListResource(ResourceMixin, Resource):
         Returns:
             A sketch in JSON (instance of flask.wrappers.Response)
         """
+        from timesketch.lib import tasks
+
         sketch = Sketch.query.get_with_acl(sketch_id)
         form = AddTimelineSimpleForm.build(request)
         metadata = {u'created': True}

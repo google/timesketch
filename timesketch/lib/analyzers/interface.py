@@ -110,6 +110,12 @@ class Sketch(object):
 
         return view
 
+    @property
+    def all_indices(self):
+        active_indices = [t.searchindex.index_name
+                          for t in self.sql_sketch.active_timelines]
+        return active_indices
+
 
 class BaseAnalyzer(object):
     """Base class for analyzers.
@@ -122,15 +128,14 @@ class BaseAnalyzer(object):
     NAME = 'name'
     IS_SKETCH_ANALYZER = False
 
-    def __init__(self, sketch_id=None):
+    def __init__(self):
         self.name = self.NAME
         self.datastore = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
-        self.sketch_id = sketch_id
         self.sketch = None
-        if sketch_id:
-            self.sketch = Sketch(sketch_id=sketch_id)
+        if self.sketch_id:
+            self.sketch = Sketch(sketch_id=self.sketch_id)
 
     def event_stream(self, query_string, query_filter=None, return_fields=None,
                      indices=None):
