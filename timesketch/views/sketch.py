@@ -367,6 +367,7 @@ def timelines(sketch_id):
                 sketch.timelines.append(_timeline)
                 db_session.commit()
 
+                # Run sketch analyzers when timeline is added.
                 pipeline = tasks.build_sketch_analysis_pipeline(
                     sketch_id, searchindex_id)
                 pipeline.apply_async()

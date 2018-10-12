@@ -72,6 +72,7 @@ from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
+from timesketch.lib import tasks
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.cypher import transpile_query, InvalidQuery
 from timesketch.models import db_session
@@ -1372,7 +1373,10 @@ class TimelineListResource(ResourceMixin, Resource):
                 return_code = HTTP_STATUS_CODE_OK
                 timeline = Timeline.query.get(timeline_id)
 
-            print sketch_id, timeline_id, searchindex_id
+            # Run sketch analyzers when timeline is added.
+            pipeline = tasks.build_sketch_analysis_pipeline(
+                sketch_id, searchindex_id)
+            pipeline.apply_async()
 
             return self.to_json(
                 timeline, meta=metadata, status_code=return_code)
