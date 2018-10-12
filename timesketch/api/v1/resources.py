@@ -1372,6 +1372,8 @@ class TimelineListResource(ResourceMixin, Resource):
                 return_code = HTTP_STATUS_CODE_OK
                 timeline = Timeline.query.get(timeline_id)
 
+            print sketch_id, timeline_id, searchindex_id
+
             return self.to_json(
                 timeline, meta=metadata, status_code=return_code)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)

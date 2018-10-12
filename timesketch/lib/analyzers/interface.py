@@ -19,8 +19,9 @@ from flask import current_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models import db_session
 from timesketch.models.sketch import Event as SQLEvent
-from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import Sketch as SQLSketch
 from timesketch.models.sketch import SearchIndex
+from timesketch.models.sketch import View
 
 
 def _flush_datastore_decorator(func):
@@ -42,8 +43,8 @@ class Event(object):
             self.event_type = event.get('_type')
             self.index_name = event.get('_index')
             self.source = event.get('_source')
-        except KeyError:
-            raise KeyError('Malformed event')
+        except KeyError as e:
+            raise KeyError('Malformed event: {0:s}'.format(e))
 
     def _update(self, event):
         """Update an event."""
@@ -65,11 +66,7 @@ class Event(object):
         self._update(updated_event)
 
     def add_tags(self, tags):
-        try:
-            existing_tags = self.source['tag']
-        except KeyError:
-            existing_tags = []
-
+        existing_tags = self.source.get('tag', [])
         new_tags = list(set().union(existing_tags, tags))
         updated_event_attribute = {'tag': new_tags}
         self._update(updated_event_attribute)
@@ -78,7 +75,7 @@ class Event(object):
         self.add_label(label='__ts_star')
 
     def add_comment(self, comment):
-        sketch = Sketch.query.get(self.sketch_id)
+        sketch = SQLSketch.query.get(self.sketch_id)
         searchindex = SearchIndex.query.filter_by(
             index_name=self.index_name).first()
         db_event = SQLEvent.get_or_create(
@@ -88,6 +85,30 @@ class Event(object):
         db_session.add(db_event)
         db_session.commit()
         self.add_label(label='__ts_comment')
+
+
+class Sketch(object):
+    def __init__(self, sketch_id):
+        self.sql_sketch = SQLSketch.query.get(sketch_id)
+
+    def add_view(self, name, query_string=None, query_dsl=None,
+                 query_filter=None):
+
+        if not query_filter:
+            query_filter = {}
+
+        if not query_string or query_dsl:
+            raise ValueError('query_string and query_dsl is missing.')
+
+        view = View(name=name, sketch=self.sql_sketch, user=None,
+                    query_string=query_string, query_filter=query_filter,
+                    query_dsl=query_dsl, searchtemplate=None)
+
+        view.query_filter = view.validate_filter(query_filter)
+        db_session.add(view)
+        db_session.commit()
+
+        return view
 
 
 class BaseAnalyzer(object):
@@ -101,30 +122,40 @@ class BaseAnalyzer(object):
     NAME = 'name'
     IS_SKETCH_ANALYZER = False
 
-    def __init__(self):
+    def __init__(self, sketch_id=None):
         self.name = self.NAME
         self.datastore = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
+        self.sketch_id = sketch_id
+        self.sketch = None
+        if sketch_id:
+            self.sketch = Sketch(sketch_id=sketch_id)
 
-    def event_stream(self, query_string, query_filter=None, return_fields=None):
+    def event_stream(self, query_string, query_filter=None, return_fields=None,
+                     indices=None):
+
         if not query_filter:
             query_filter = {}
 
         if not return_fields:
             return_fields = 'message'
 
+        if not indices:
+            indices = [self.index_name]
+
         # Refresh the index to make sure it is searchable.
-        self.datastore.client.indices.refresh(index=self.index_name)
+        for index in indices:
+            self.datastore.client.indices.refresh(index=index)
 
         event_generator = self.datastore.search_stream(
             query_string=query_string,
             query_filter=query_filter,
-            indices=[self.index_name],
+            indices=indices,
             return_fields=return_fields
         )
         for event in event_generator:
-            yield Event(event, self.datastore, sketch_id=4716)
+            yield Event(event, self.datastore, sketch_id=self.sketch_id)
 
     @_flush_datastore_decorator
     def run_wrapper(self):

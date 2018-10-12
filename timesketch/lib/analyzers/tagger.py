@@ -44,7 +44,7 @@ class Tagger(interface.BaseAnalyzer):
         tags = ['foo', 'bar']
 
         for event in events:
-            #event.add_tags(tags)
+            event.add_tags(tags)
             #event.add_comment("foobar")
             #event.add_star()
             counter += 1

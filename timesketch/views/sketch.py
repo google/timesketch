@@ -350,6 +350,8 @@ def timelines(sketch_id):
 
     # Create new timeline form POST
     if form.validate_on_submit():
+        from timesketch.lib import tasks
+
         if not sketch.has_permission(current_user, u'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
         for searchindex_id in form.timelines.data:
@@ -363,7 +365,12 @@ def timelines(sketch_id):
                     searchindex=searchindex)
                 db_session.add(_timeline)
                 sketch.timelines.append(_timeline)
-        db_session.commit()
+                db_session.commit()
+
+                pipeline = tasks.build_sketch_analysis_pipeline(
+                    sketch_id, searchindex_id)
+                pipeline.apply_async()
+
         return redirect(
             url_for(u'sketch_views.timelines', sketch_id=sketch.id))
 

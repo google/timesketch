@@ -77,7 +77,7 @@ def _set_timeline_status(index_name, status, error_msg=None):
         db_session.commit()
 
 
-def _get_index_analyzer_task_group(sketch_id=None):
+def _get_analyzer_task_group(sketch_id=None, index_name=None):
     """Get list of analysis tasks to run.
 
     Args:
@@ -91,16 +91,17 @@ def _get_index_analyzer_task_group(sketch_id=None):
     for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
         kwarg_list = analyzer_cls.get_kwargs()
 
-        if sketch_id:
+        if sketch_id and index_name:
             if analyzer_cls.IS_SKETCH_ANALYZER:
                 if kwarg_list:
                     for kwargs in kwarg_list:
                         tasks.append(
                             run_sketch_analyzer.s(
-                                sketch_id, analyzer_name, **kwargs))
+                                sketch_id, index_name, analyzer_name, **kwargs))
                 else:
                     tasks.append(
-                        run_sketch_analyzer.s(sketch_id, analyzer_name))
+                        run_sketch_analyzer.s(
+                            sketch_id, index_name, analyzer_name))
 
         else:
             if not analyzer_cls.IS_SKETCH_ANALYZER:
@@ -147,7 +148,7 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension):
         Celery chain with indexing task and analyzer task group.
     """
     index_task_class = _get_index_task_class(file_extension)
-    analyzer_task_group = _get_index_analyzer_task_group()
+    analyzer_task_group = _get_analyzer_task_group()
 
     index_task = index_task_class.s(
         file_path, timeline_name, index_name, file_extension)
@@ -159,8 +160,8 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension):
     return chain(index_task, analyzer_task_group)
 
 
-def build_sketch_analysis_pipeline(sketch_id):
-    """Build a pipeline for sketch analyzers.
+def build_sketch_analysis_pipeline(sketch_id, index_name):
+    """Build a pipeline for sketch analysis.
 
     Args:
         sketch_id: The ID of the sketch to analyze.
@@ -168,7 +169,7 @@ def build_sketch_analysis_pipeline(sketch_id):
     Returns:
         Celery group with analysis tasks.
     """
-    return _get_index_analyzer_task_group(sketch_id=sketch_id)
+    return _get_analyzer_task_group(sketch_id=sketch_id, index_name=index_name)
 
 
 @celery.task(track_started=True)
@@ -190,7 +191,7 @@ def run_index_analyzer(index_name, analyzer_name, **kwargs):
 
 
 @celery.task(track_started=True)
-def run_sketch_analyzer(sketch_id, analyzer_name, **kwargs):
+def run_sketch_analyzer(sketch_id, index_name, analyzer_name, **kwargs):
     """Create a Celery task for a sketch analyzer.
 
     Args:
@@ -201,7 +202,8 @@ def run_sketch_analyzer(sketch_id, analyzer_name, **kwargs):
       ID (str) of the sketch.
     """
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
-    analyzer = analyzer_class(sketch_id=sketch_id, **kwargs)
+    analyzer = analyzer_class(
+        sketch_id=sketch_id, index_name=index_name, **kwargs)
     result = analyzer.run_wrapper()
     logging.info('[%s] result: %s' % (analyzer_name, result))
     return sketch_id

@@ -16,3 +16,4 @@
 # Register all analyzers here by importing them.
 from timesketch.lib.analyzers import similarity_scorer
 from timesketch.lib.analyzers import tagger
+from timesketch.lib.analyzers import sketcher
