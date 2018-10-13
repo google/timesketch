@@ -27,9 +27,8 @@ class AnalysisManager(object):
 
         Yields:
             tuple: containing:
-
-            str: the uniquely identifying name of the analyzer
-            type: the analyzer class.
+                str: the uniquely identifying name of the analyzer
+                type: the analyzer class.
         """
         for analyzer_name, analyzer_class in iter(cls._class_registry.items()):
             yield analyzer_name, analyzer_class
