@@ -26,8 +26,6 @@ from flask import current_app
 from timesketch import create_app
 from timesketch import create_celery_app
 from timesketch.lib.analyzers import manager
-from timesketch.lib.analyzers import interface
-
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_jsonl

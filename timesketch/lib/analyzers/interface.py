@@ -62,7 +62,7 @@ class Event(object):
             self.event_id = event['_id']
             self.event_type = event['_type']
             self.index_name = event['_index']
-            self.source = event['_source']
+            self.source = event.get('_source', None)
         except KeyError as e:
             raise KeyError('Malformed event: {0:s}'.format(e))
 

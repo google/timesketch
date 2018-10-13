@@ -818,7 +818,7 @@ class EventCreateResource(ResourceMixin, Resource):
                     return self.to_json(
                         searchindex, status_code=HTTP_STATUS_CODE_CREATED)
 
-            except Exception as e:
+            except Exception:
                 raise ApiHTTPError(
                     message="failed to add event",
                     status_code=HTTP_STATUS_CODE_BAD_REQUEST)
@@ -1341,8 +1341,6 @@ class TimelineListResource(ResourceMixin, Resource):
         Returns:
             A sketch in JSON (instance of flask.wrappers.Response)
         """
-        from timesketch.lib import tasks
-
         sketch = Sketch.query.get_with_acl(sketch_id)
         form = AddTimelineSimpleForm.build(request)
         metadata = {u'created': True}
@@ -1374,10 +1372,15 @@ class TimelineListResource(ResourceMixin, Resource):
                 return_code = HTTP_STATUS_CODE_OK
                 timeline = Timeline.query.get(timeline_id)
 
-            # Run sketch analyzers when timeline is added.
-            pipeline = tasks.build_sketch_analysis_pipeline(
-                sketch_id, searchindex_id)
-            pipeline.apply_async(task_id=searchindex_id)
+            # If enabled, run sketch analyzers when timeline is added.
+            try:
+                if current_app.config[u'ENABLE_SKETCH_ANALYZERS']:
+                    from timesketch.lib import tasks
+                    pipeline = tasks.build_sketch_analysis_pipeline(
+                        sketch_id, searchindex_id)
+                    pipeline.apply_async(task_id=searchindex_id)
+            except KeyError:
+                pass
 
             return self.to_json(
                 timeline, meta=metadata, status_code=return_code)
