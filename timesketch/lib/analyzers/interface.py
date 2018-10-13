@@ -59,10 +59,10 @@ class Event(object):
         self.sketch = sketch
 
         try:
-            self.event_id = event.get('_id')
-            self.event_type = event.get('_type')
-            self.index_name = event.get('_index')
-            self.source = event.get('_source')
+            self.event_id = event['_id']
+            self.event_type = event['_type']
+            self.index_name = event['_index']
+            self.source = event['_source']
         except KeyError as e:
             raise KeyError('Malformed event: {0:s}'.format(e))
 
