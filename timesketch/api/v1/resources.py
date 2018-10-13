@@ -1377,7 +1377,7 @@ class TimelineListResource(ResourceMixin, Resource):
             # Run sketch analyzers when timeline is added.
             pipeline = tasks.build_sketch_analysis_pipeline(
                 sketch_id, searchindex_id)
-            pipeline.apply_async()
+            pipeline.apply_async(task_id=searchindex_id)
 
             return self.to_json(
                 timeline, meta=metadata, status_code=return_code)

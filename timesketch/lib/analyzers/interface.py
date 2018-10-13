@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Interface for Analyzers."""
+"""Interface for analyzers."""
 
 from __future__ import unicode_literals
 
@@ -25,7 +25,7 @@ from timesketch.models.sketch import View
 
 
 def _flush_datastore_decorator(func):
-    """Decorator that flushes the bulk insert queue on the datastore."""
+    """Decorator that flushes the bulk insert queue in the datastore."""
     def wrapper(self, *args, **kwargs):
         func_return = func(self, *args, **kwargs)
         self.datastore.flush_queued_events()
@@ -34,9 +34,29 @@ def _flush_datastore_decorator(func):
 
 
 class Event(object):
-    def __init__(self, event, datastore, sketch_id=None):
+    """Event object with helper methods.
+
+    Attributes:
+        datastore: Instance of ElasticsearchDatastore.
+        sketch: Sketch ID or None if not provided.
+        event_id: ID of the Event.
+        event_type: Document type in Elasticsearch.
+        index_name: The name of the Elasticsearch index.
+        source: Source document from Elasticsearch.
+    """
+    def __init__(self, event, datastore, sketch=None):
+        """Initialize Event object.
+
+        Args:
+            event: Dictionary of event from Elasticsearch.
+            datastore: Instance of ElasticsearchDatastore.
+            sketch: Optional instance of a Sketch object.
+
+        Raises:
+            KeyError if event dictionary is missing mandatory fields.
+        """
         self.datastore = datastore
-        self.sketch_id = sketch_id
+        self.sketch = sketch
 
         try:
             self.event_id = event.get('_id')
@@ -47,39 +67,73 @@ class Event(object):
             raise KeyError('Malformed event: {0:s}'.format(e))
 
     def _update(self, event):
-        """Update an event."""
+        """Update Event in Elasticsearch.
+
+        Args:
+            event: Dictionary with new or updated values.
+        """
         self.datastore.import_event(
             self.index_name, self.event_type, event_id=self.event_id,
             event=event)
 
     def add_attributes(self, attributes):
+        """Add key/values to an Event.
+
+        Args:
+            attributes: Dictionary with new or updated values to add.
+        """
         self._update(attributes)
 
     def add_label(self, label, toggle=False):
-        if not self.sketch_id:
-            raise RuntimeError('No sketch_id provided.')
+        """Add label to the Event.
+
+        Args:
+            label: Label name.
+            toggle: If True the label will be removed if it exists already.
+
+        Raises: RuntimeError of sketch ID is missing.
+        """
+        if not self.sketch:
+            raise RuntimeError('No sketch provided.')
 
         user_id = 0
         updated_event = self.datastore.set_label(
-            self.index_name, self.event_id, self.event_type, self.sketch_id,
+            self.index_name, self.event_id, self.event_type, self.sketch.id,
             user_id, label, toggle=toggle, single_update=False)
         self._update(updated_event)
 
     def add_tags(self, tags):
+        """Add tags to the Event.
+
+        Args:
+            tags: List of tags to add.
+        """
         existing_tags = self.source.get('tag', [])
         new_tags = list(set().union(existing_tags, tags))
         updated_event_attribute = {'tag': new_tags}
         self._update(updated_event_attribute)
 
     def add_star(self):
+        """Star event."""
         self.add_label(label='__ts_star')
 
     def add_comment(self, comment):
-        sketch = SQLSketch.query.get(self.sketch_id)
+        """Add comment to event.
+
+        Args:
+            comment: Comment string.
+
+        Raises:
+            RuntimeError: if no sketch is present.
+        """
+        if not self.sketch:
+            raise RuntimeError('No sketch provided.')
+
         searchindex = SearchIndex.query.filter_by(
             index_name=self.index_name).first()
         db_event = SQLEvent.get_or_create(
-            sketch=sketch, searchindex=searchindex, document_id=self.event_id)
+            sketch=self.sketch.sql_sketch, searchindex=searchindex,
+            document_id=self.event_id)
         comment = SQLEvent.Comment(comment=comment, user=None)
         db_event.comments.append(comment)
         db_session.add(db_event)
@@ -88,17 +142,41 @@ class Event(object):
 
 
 class Sketch(object):
+    """Sketch object with helper methods.
+
+    Attributes:
+        id: Sketch ID.
+        sql_sketch: Instance if a SQLAlchemy Sketch object.
+    """
     def __init__(self, sketch_id):
+        """Initializes a Sketch object.
+
+        Args:
+            sketch_id: The Sketch ID.
+        """
+        self.id = sketch_id
         self.sql_sketch = SQLSketch.query.get(sketch_id)
 
     def add_view(self, name, query_string=None, query_dsl=None,
                  query_filter=None):
+        """Add saved view to the Sketch.
+
+        Args:
+            name: The name of the view.
+            query_string: Elasticsearch query string.
+            query_dsl: Dictionary with Elasticsearch DSL query.
+            query_filter: Dictionary with Elasticsearch filters.
+
+        Raises:
+            ValueError: If both query_string an query_dsl are missing.
+
+        Returns: An instance of a SQLAlchemy View object.
+        """
+        if not query_string or query_dsl:
+            raise ValueError('Both query_string and query_dsl are missing.')
 
         if not query_filter:
             query_filter = {}
-
-        if not query_string or query_dsl:
-            raise ValueError('query_string and query_dsl is missing.')
 
         view = View(name=name, sketch=self.sql_sketch, user=None,
                     query_string=query_string, query_filter=query_filter,
@@ -107,42 +185,73 @@ class Sketch(object):
         view.query_filter = view.validate_filter(query_filter)
         db_session.add(view)
         db_session.commit()
-
         return view
 
-    @property
-    def all_indices(self):
-        active_indices = [t.searchindex.index_name
-                          for t in self.sql_sketch.active_timelines]
-        return active_indices
+    def get_all_indices(self):
+        """List all indices in the Sketch.
+
+        Returns:
+            List of index names.
+        """
+        active_timelines = self.sql_sketch.active_timelines
+        indices = [t.searchindex.index_name for t in active_timelines]
+        return indices
 
 
-class BaseAnalyzer(object):
+class BaseIndexAnalyzer(object):
     """Base class for analyzers.
 
     Attributes:
-        name: of analyzer
-        datastore: Elasticsearch datastore client
+        name: Analyzer name.
+        index_name: Name if Elasticsearch index.
+        datastore: Elasticsearch datastore client.
+        sketch: Instance of Sketch object.
     """
 
     NAME = 'name'
     IS_SKETCH_ANALYZER = False
 
-    def __init__(self):
+    def __init__(self, index_name):
+        """Initialize the analyzer object.
+
+        Args:
+            index_name: Elasticsearch index name.
+        """
         self.name = self.NAME
+        self.index_name = index_name
         self.datastore = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
-        self.sketch = None
-        if self.sketch_id:
-            self.sketch = Sketch(sketch_id=self.sketch_id)
 
-    def event_stream(self, query_string, query_filter=None, return_fields=None,
-                     indices=None):
+        if not hasattr(self, 'sketch'):
+            self.sketch = None
+
+    def event_stream(self, query_string, query_filter=None, query_dsl=None,
+                     indices=None, return_fields=None):
+        """Search ElasticSearch.
+
+        Args:
+            query_string: Query string.
+            query_filter: Dictionary containing filters to apply.
+            query_dsl: Dictionary containing Elasticsearch DSL query.
+            indices: List of indices to query.
+            return_fields: List of fields to return.
+
+        Returns:
+            Generator of Event objects.
+
+        Raises:
+            ValueError: if neither query_string or query_dsl is provided.
+        """
+
+        if not query_string or query_dsl:
+            raise ValueError('Both query_string and query_dsl are missing')
 
         if not query_filter:
             query_filter = {}
 
+        # If not provided we default to the message field as this will always
+        # be present.
         if not return_fields:
             return_fields = 'message'
 
@@ -156,19 +265,19 @@ class BaseAnalyzer(object):
         event_generator = self.datastore.search_stream(
             query_string=query_string,
             query_filter=query_filter,
+            query_dsl=query_dsl,
             indices=indices,
             return_fields=return_fields
         )
         for event in event_generator:
-            yield Event(event, self.datastore, sketch_id=self.sketch_id)
+            yield Event(event, self.datastore, sketch=self.sketch)
 
     @_flush_datastore_decorator
     def run_wrapper(self):
         """A wrapper method to run the analyzer.
 
-        This method is decorated with a decorator for flushing the bulk insert
-        operation on the datastore. This makes sure all events are flushed at
-        exit.
+        This method is decorated to flush the bulk insert operation on the
+        datastore. This make sure that all events are indexed at exit.
 
         Returns:
             Return value of the run method.
@@ -180,8 +289,8 @@ class BaseAnalyzer(object):
     def get_kwargs(cls):
         """Get keyword arguments needed to instantiate the class.
 
-        Every analyzer gets the index_name aas its first argument from Celery.
-        By default, this is the only argument. If your analyzer needs more
+        Every analyzer gets the index_name as its first argument from Celery.
+        By default this is the only argument. If your analyzer need more
         arguments you can override this method and return as a dictionary.
 
         If you want more than one instance to be created for your analyzer you
@@ -196,4 +305,30 @@ class BaseAnalyzer(object):
         return None
 
     def run(self):
+        """Entry point for the analyzer."""
+        raise NotImplementedError
+
+
+class BaseSketchAnalyzer(BaseIndexAnalyzer):
+    """Base class for sketch analyzers.
+
+    Attributes:
+        sketch: A Sketch instance.
+    """
+
+    NAME = 'name'
+    IS_SKETCH_ANALYZER = True
+
+    def __init__(self, sketch_id, index_name):
+        """Initialize the analyzer object.
+
+        Args:
+            sketch_id: Sketch ID.
+            index_name: Elasticsearch index name.
+        """
+        self.sketch = Sketch(sketch_id=sketch_id)
+        super(BaseSketchAnalyzer, self).__init__(index_name)
+
+    def run(self):
+        """Entry point for the analyzer."""
         raise NotImplementedError

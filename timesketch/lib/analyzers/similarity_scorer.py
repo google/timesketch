@@ -84,7 +84,7 @@ class SimilarityScorerConfig(object):
         return config_dict
 
 
-class SimilarityScorer(interface.BaseAnalyzer):
+class SimilarityScorer(interface.BaseIndexAnalyzer):
     """Score events based on Jaccard distance."""
 
     NAME = 'SimilarityScorer'
@@ -96,12 +96,11 @@ class SimilarityScorer(interface.BaseAnalyzer):
             index_name: Elasticsearch index name.
             data_type: Name of the data_type.
         """
-        self.index_name = index_name
         if data_type:
             self._config = SimilarityScorerConfig(index_name, data_type)
         else:
             self._config = None
-        super(SimilarityScorer, self).__init__()
+        super(SimilarityScorer, self).__init__(index_name)
 
     def _shingles_from_text(self, text):
         """Splits string into words.

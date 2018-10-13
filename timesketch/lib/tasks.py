@@ -26,6 +26,7 @@ from flask import current_app
 from timesketch import create_app
 from timesketch import create_celery_app
 from timesketch.lib.analyzers import manager
+from timesketch.lib.analyzers import interface
 
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
@@ -102,7 +103,6 @@ def _get_analyzer_task_group(sketch_id=None, index_name=None):
                     tasks.append(
                         run_sketch_analyzer.s(
                             sketch_id, index_name, analyzer_name))
-
         else:
             if not analyzer_cls.IS_SKETCH_ANALYZER:
                 if kwarg_list:
@@ -165,6 +165,7 @@ def build_sketch_analysis_pipeline(sketch_id, index_name):
 
     Args:
         sketch_id: The ID of the sketch to analyze.
+        index_name: Elasticsearch index name.
 
     Returns:
         Celery group with analysis tasks.
