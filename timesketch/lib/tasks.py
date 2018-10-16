@@ -147,12 +147,13 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension):
     """
     index_task_class = _get_index_task_class(file_extension)
     analyzer_task_group = _get_analyzer_task_group()
+    analyzers_enabled = current_app.config.get(u'ENABLE_INDEX_ANALYZERS')
 
     index_task = index_task_class.s(
         file_path, timeline_name, index_name, file_extension)
 
     # If there are no analyzers just run the indexer.
-    if not analyzer_task_group:
+    if not analyzer_task_group or not analyzers_enabled:
         return index_task
 
     return chain(index_task, analyzer_task_group)
