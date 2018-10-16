@@ -402,6 +402,9 @@ class ElasticsearchDataStore(object):
             toggle: Optional boolean value if the label should be toggled
             single_update: Boolean if the label should be indexed immediately.
             (add/remove). The default is False.
+
+        Returns:
+            Dict with updated document body, or None if this is a signle update.
         """
         # Elasticsearch painless script.
         update_body = {
@@ -444,6 +447,8 @@ class ElasticsearchDataStore(object):
             id=event_id,
             doc_type=event_type,
             body=update_body)
+
+        return None
 
     def create_index(self, index_name=uuid4().hex, doc_type=u'generic_event'):
         """Create index with Timesketch settings.

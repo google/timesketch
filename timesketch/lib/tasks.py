@@ -292,7 +292,7 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
         error_msg = traceback.format_exc(e)
         _set_timeline_status(index_name, status='fail', error_msg=error_msg)
         logging.error(error_msg)
-        return
+        return None
 
     # Set status to ready when done
     _set_timeline_status(index_name, status='ready')
