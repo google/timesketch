@@ -76,42 +76,6 @@ def _set_timeline_status(index_name, status, error_msg=None):
         db_session.commit()
 
 
-def _get_analyzer_task_group(sketch_id=None, index_name=None):
-    """Get list of analysis tasks to run.
-
-    Args:
-        sketch_id: ID of sketch to analyze, None to get indexing tasks only.
-
-    Returns:
-        Group of analysis tasks as Celery subtask signatures.
-    """
-    tasks = []
-
-    for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
-        kwarg_list = analyzer_cls.get_kwargs()
-
-        if sketch_id and index_name:
-            if analyzer_cls.IS_SKETCH_ANALYZER:
-                if kwarg_list:
-                    for kwargs in kwarg_list:
-                        tasks.append(
-                            run_sketch_analyzer.s(
-                                sketch_id, index_name, analyzer_name, **kwargs))
-                else:
-                    tasks.append(
-                        run_sketch_analyzer.s(
-                            sketch_id, index_name, analyzer_name))
-        else:
-            if not analyzer_cls.IS_SKETCH_ANALYZER:
-                if kwarg_list:
-                    for kwargs in kwarg_list:
-                        tasks.append(
-                            run_index_analyzer.s(analyzer_name, **kwargs))
-                else:
-                    tasks.append(run_index_analyzer.s(analyzer_name))
-    return group(tasks)
-
-
 def _get_index_task_class(file_extension):
     """Get correct index task function for the supplied file type.
 
@@ -133,6 +97,32 @@ def _get_index_task_class(file_extension):
     return index_class
 
 
+def _get_index_analyzers():
+    """Get list of index analysis tasks to run.
+
+    Returns:
+        Group of index analysis tasks as Celery subtask signatures.
+    """
+    tasks = []
+
+    # Exit early if index analyzers are disabled.
+    if not current_app.config.get(u'ENABLE_INDEX_ANALYZERS', False):
+        return None
+
+    for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
+        kwarg_list = analyzer_cls.get_kwargs()
+
+        if not analyzer_cls.IS_SKETCH_ANALYZER:
+            if kwarg_list:
+                for kwargs in kwarg_list:
+                    tasks.append(
+                        run_index_analyzer.s(analyzer_name, **kwargs))
+            else:
+                tasks.append(run_index_analyzer.s(analyzer_name))
+
+    return group(tasks)
+
+
 def build_index_pipeline(file_path, timeline_name, index_name, file_extension):
     """Build a pipeline for index and analysis.
 
@@ -146,14 +136,13 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension):
         Celery chain with indexing task and analyzer task group.
     """
     index_task_class = _get_index_task_class(file_extension)
-    analyzer_task_group = _get_analyzer_task_group()
-    analyzers_enabled = current_app.config.get(u'ENABLE_INDEX_ANALYZERS')
+    analyzer_task_group = _get_index_analyzers()
 
     index_task = index_task_class.s(
         file_path, timeline_name, index_name, file_extension)
 
     # If there are no analyzers just run the indexer.
-    if not analyzer_task_group or not analyzers_enabled:
+    if not analyzer_task_group:
         return index_task
 
     return chain(index_task, analyzer_task_group)
@@ -167,9 +156,29 @@ def build_sketch_analysis_pipeline(sketch_id, index_name):
         index_name: Elasticsearch index name.
 
     Returns:
-        Celery group with analysis tasks.
+        Celery group with analysis tasks or None if not analyzers are enabled.
     """
-    return _get_analyzer_task_group(sketch_id=sketch_id, index_name=index_name)
+    tasks = []
+
+    # Exit early if sketch analyzers are disabled.
+    if not current_app.config.get(u'ENABLE_SKETCH_ANALYZERS', False):
+        return None
+
+    for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
+        kwarg_list = analyzer_cls.get_kwargs()
+
+        if not analyzer_cls.IS_SKETCH_ANALYZER:
+            continue
+
+        if kwarg_list:
+            for kwargs in kwarg_list:
+                tasks.append(run_sketch_analyzer.s(
+                    sketch_id, index_name, analyzer_name, **kwargs))
+        else:
+            tasks.append(run_sketch_analyzer.s(
+                sketch_id, index_name, analyzer_name))
+
+    return group(tasks)
 
 
 @celery.task(track_started=True)

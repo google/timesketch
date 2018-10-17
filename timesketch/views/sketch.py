@@ -366,14 +366,11 @@ def timelines(sketch_id):
                 db_session.commit()
 
                 # If enabled, run sketch analyzers when timeline is added.
-                try:
-                    if current_app.config[u'ENABLE_SKETCH_ANALYZERS']:
-                        from timesketch.lib import tasks
-                        pipeline = tasks.build_sketch_analysis_pipeline(
-                            sketch_id, searchindex_id)
-                        pipeline.apply_async()
-                except KeyError:
-                    pass
+                from timesketch.lib import tasks
+                pipeline = tasks.build_sketch_analysis_pipeline(
+                    sketch_id, searchindex_id)
+                if pipeline:
+                    pipeline.apply_async(task_id=searchindex_id)
 
         return redirect(
             url_for(u'sketch_views.timelines', sketch_id=sketch.id))

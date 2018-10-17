@@ -1373,17 +1373,15 @@ class TimelineListResource(ResourceMixin, Resource):
                 timeline = Timeline.query.get(timeline_id)
 
             # If enabled, run sketch analyzers when timeline is added.
-            try:
-                if current_app.config[u'ENABLE_SKETCH_ANALYZERS']:
-                    from timesketch.lib import tasks
-                    pipeline = tasks.build_sketch_analysis_pipeline(
-                        sketch_id, searchindex_id)
-                    pipeline.apply_async(task_id=searchindex_id)
-            except KeyError:
-                pass
+            from timesketch.lib import tasks
+            pipeline = tasks.build_sketch_analysis_pipeline(
+                sketch_id, searchindex_id)
+            if pipeline:
+                pipeline.apply_async(task_id=searchindex_id)
 
             return self.to_json(
                 timeline, meta=metadata, status_code=return_code)
+
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
 
