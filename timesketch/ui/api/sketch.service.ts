@@ -4,7 +4,7 @@ import {HttpClient, HttpParams} from '@angular/common/http';
 
 import {SKETCH_BASE_URL} from './api.service';
 import {Sketch, Timeline} from './models';
-import {Event, EventDetail} from '../graphs/models';
+import {Event, EventDetail} from '../graph/models';
 
 /**
  * A service that is intended to gather most of the resources defined in

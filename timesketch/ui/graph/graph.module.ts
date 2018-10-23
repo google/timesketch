@@ -28,7 +28,7 @@ import {EventComponent} from './event.component';
 import {MainComponent} from './main.component';
 import {ApiModule} from '../api/api.module';
 
-export const tsGraphsModule = angular.module('timesketch.graphs', [])
+export const tsGraphModule = angular.module('timesketch.graphs', [])
   .directive('tsGraphsMain', downgradeComponent({
       component: MainComponent, propagateDigest: false,
   }));
@@ -46,4 +46,4 @@ export const tsGraphsModule = angular.module('timesketch.graphs', [])
   ],
   entryComponents: [MainComponent],
 })
-export class GraphsModule {}
+export class GraphModule {}

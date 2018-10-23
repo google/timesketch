@@ -1,7 +1,7 @@
 import {Component, Input, Output, EventEmitter, ChangeDetectorRef} from '@angular/core';
 import {GraphState, CytoscapeLayout, SelectedElement} from './models';
 
-import * as data from './graph-view.data';
+import * as data from './cytoscape.data';
 
 @Component({
   selector: 'ts-graphs-graph-view',

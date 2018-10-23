@@ -5,7 +5,7 @@ import {HttpClient} from '@angular/common/http';
 import {SKETCH_BASE_URL} from './api.service';
 import {SketchService} from './sketch.service';
 
-import {ElementData, GraphDef, ElementScratch} from '../graphs/models';
+import {ElementData, GraphDef, ElementScratch} from '../graph/models';
 
 /**
  * Service for fetching graph-related API resources.

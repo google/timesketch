@@ -42,7 +42,7 @@ import {tsCoreModule} from './core/core.module';
 import {tsExploreModule} from './explore/explore.module';
 import {tsSketchModule, SketchModule} from './sketch/sketch.module';
 import {tsStoryModule} from './story/story.module';
-import {tsGraphsModule, GraphsModule} from './graphs/graphs.module';
+import {tsGraphModule, GraphModule} from './graph/graph.module';
 
 export const tsAppModule = angular.module('timesketch', [
     tsApiModule.name,
@@ -50,7 +50,7 @@ export const tsAppModule = angular.module('timesketch', [
     tsExploreModule.name,
     tsSketchModule.name,
     tsStoryModule.name,
-    tsGraphsModule.name,
+    tsGraphModule.name,
 ])
 
 .config(function ($httpProvider) {
@@ -90,7 +90,7 @@ export const tsAppModule = angular.module('timesketch', [
 @NgModule({
   imports: [
     BrowserModule, FormsModule, HttpClientModule,
-    SketchModule, GraphsModule,
+    SketchModule, GraphModule,
   ],
   providers: [{
     provide: HTTP_INTERCEPTORS,
