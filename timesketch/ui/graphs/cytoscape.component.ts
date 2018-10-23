@@ -123,32 +123,6 @@ export class CytoscapeComponent implements OnChanges, AfterViewInit, OnDestroy {
   @Input() pan?: Opt['pan'];
   @Output() panChange = new EventEmitter<Opt['pan']>();
 
-  // interaction options
-  @Input() minZoom?: Opt['minZoom'];
-  @Input() maxZoom?: Opt['maxZoom'];
-  @Input() zoomingEnabled?: Opt['zoomingEnabled'];
-  @Input() userZoomingEnabled?: Opt['userZoomingEnabled'];
-  @Input() panningEnabled?: Opt['panningEnabled'];
-  @Input() userPanningEnabled?: Opt['userPanningEnabled'];
-  @Input() boxSelectionEnabled?: Opt['boxSelectionEnabled'];
-  @Input() selectionType?: Opt['selectionType'];
-  @Input() touchTapThreshold?: Opt['touchTapThreshold'];
-  @Input() desktopTapThreshold?: Opt['desktopTapThreshold'];
-  @Input() autolock?: Opt['autolock'];
-  @Input() autoungrabify?: Opt['autoungrabify'];
-  @Input() autounselectify?: Opt['autounselectify'];
-
-  // rendering options
-  @Input() headless?: Opt['headless'];
-  @Input() styleEnabled?: Opt['styleEnabled'];
-  @Input() hideEdgesOnViewport?: Opt['hideEdgesOnViewport'];
-  @Input() hideLabelsOnViewport?: Opt['hideLabelsOnViewport'];
-  @Input() textureOnViewport?: Opt['textureOnViewport'];
-  @Input() motionBlur?: Opt['motionBlur'];
-  @Input() motionBlurOpacity?: Opt['motionBlurOpacity'];
-  @Input() wheelSensitivity?: Opt['wheelSensitivity'];
-  @Input() pixelRatio?: Opt['pixelRatio'];
-
   // user input device events
   @Output() mousedown = new EventEmitter<Evt['mousedown']>();
   @Output() mouseup = new EventEmitter<Evt['mouseup']>();
