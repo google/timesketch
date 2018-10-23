@@ -1,16 +1,16 @@
-import {Component, Input, ChangeDetectorRef} from '@angular/core'
+import {Component, Input, ChangeDetectorRef} from '@angular/core';
 
-import {SketchService} from '../api/sketch.service'
-import {Event} from './models'
+import {SketchService} from '../api/sketch.service';
+import {Event} from './models';
 
 @Component({
   selector: 'ts-graphs-event-list',
   templateUrl: './event-list.component.html',
 })
 export class EventListComponent {
-  events?: Event[]
-  private _query = ''
-  local_query: string
+  events?: Event[];
+  private _query = '';
+  local_query: string;
 
   constructor(
     private readonly sketchService: SketchService,
@@ -19,20 +19,20 @@ export class EventListComponent {
 
   @Input()
   set query(query: string) {
-    this._query = query
-    this.local_query = query
-    delete this.events
+    this._query = query;
+    this.local_query = query;
+    delete this.events;
     this.sketchService.search(query).subscribe((events) => {
-      this.events = events
-      this.changeDetectorRef.detectChanges()
-    })
+      this.events = events;
+      this.changeDetectorRef.detectChanges();
+    });
   }
 
   get query() {
-    return this._query
+    return this._query;
   }
 
   onSubmit() {
-    this.query = this.local_query
+    this.query = this.local_query;
   }
 }

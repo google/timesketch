@@ -11,27 +11,27 @@ export const tsCoreUpload = ['timesketchApi', '$rootScope', '$window', function 
             btnText: '=',
         },
         controller: function ($scope) {
-            $scope.uploadForm = {}
+            $scope.uploadForm = {};
             $scope.clearForm = function () {
-                $scope.uploadForm = {}
-            }
+                $scope.uploadForm = {};
+            };
             // We need an integer here because Flask WTF form don't validate
             // undefined values.
             if (!$scope.sketchId) {
-                $scope.sketchId = 0
+                $scope.sketchId = 0;
             }
             $scope.uploadFile = function () {
                 if (!$scope.uploadForm.name) {
-                    $scope.uploadForm.name = ''
+                    $scope.uploadForm.name = '';
                 }
                 timesketchApi.uploadFile($scope.uploadForm.file, $scope.uploadForm.name, $scope.sketchId).success(function () {
-                    $scope.uploadForm = {}
-                    $window.location.reload()
-                })
-            }
+                    $scope.uploadForm = {};
+                    $window.location.reload();
+                });
+            };
         },
-    }
-}]
+    };
+}];
 
 export const tsCoreFileModel = ['$parse', function ($parse) {
     /**
@@ -41,25 +41,25 @@ export const tsCoreFileModel = ['$parse', function ($parse) {
         restrict: 'A',
         scope: false,
         link: function (scope, element, attrs) {
-            const model = $parse(attrs.tsCoreFileModel)
-            const modelSetter = model.assign
+            const model = $parse(attrs.tsCoreFileModel);
+            const modelSetter = model.assign;
 
             element.bind('change', function () {
                 scope.$apply(function () {
-                    modelSetter(scope, element[0].files[0])
-                })
-            })
+                    modelSetter(scope, element[0].files[0]);
+                });
+            });
 
         },
-    }
-}]
+    };
+}];
 
 export const tsCoreUploadQueue = ['$interval', 'timesketchApi', function ($interval, timesketchApi) {
     /**
      * Poll the API for active Celery tasks and render list.
      */
     // How often to poll the task API endpoint in milliseconds.
-    const pollIntervall = 10000
+    const pollIntervall = 10000;
     return {
         restrict: 'E',
         template: require('./upload-queue.html'),
@@ -67,13 +67,13 @@ export const tsCoreUploadQueue = ['$interval', 'timesketchApi', function ($inter
         controller: function ($scope) {
             const update_tasks = function () {
                 timesketchApi.getTasks().success(function (data) {
-                    $scope.tasks = data['objects']
-                })
-            }
-            update_tasks()
+                    $scope.tasks = data['objects'];
+                });
+            };
+            update_tasks();
             $interval(function () {
-                update_tasks()
-            }, pollIntervall)
+                update_tasks();
+            }, pollIntervall);
         },
-    }
-}]
+    };
+}];

@@ -1521,6 +1521,40 @@ class GraphResource(ResourceMixin, Resource):
             return jsonify(schema)
 
 
+class GraphResourceNew(ResourceMixin, Resource):
+    """Resource to get result from graph query."""
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            Graph in JSON (instance of flask.wrappers.Response)
+        """
+        # Check access to the sketch
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        form = GraphExploreForm.build(request)
+
+        if form.validate_on_submit():
+            query = form.query.data
+
+            result = self.graph_datastore.query(
+                query, output_format='cytoscape', return_rows=True)
+
+            schema = {
+                u'meta': {
+                    u'schema': neo4j_schema
+                },
+                u'objects': [{
+                    u'graph': result[u'graph'],
+                }]
+            }
+            return jsonify(schema)
+
+
 class SearchIndexListResource(ResourceMixin, Resource):
     """Resource to get all search indices."""
 

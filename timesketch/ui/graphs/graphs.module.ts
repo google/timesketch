@@ -13,34 +13,36 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import angular from 'angularjs-for-webpack'
-import {NgModule} from '@angular/core'
-import {CommonModule} from '@angular/common'
-import {FormsModule} from '@angular/forms'
-import {downgradeComponent} from '@angular/upgrade/static'
+import angular from 'angularjs-for-webpack';
+import {NgModule} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {downgradeComponent} from '@angular/upgrade/static';
 
-import {CytoscapeComponent} from './cytoscape.component'
-import {CypherQueryComponent} from './cypher-query.component'
-import {GraphViewComponent} from './graph-view.component'
-import {CytoscapeSettingsComponent} from './cytoscape-settings.component'
-import {GraphActionsComponent} from './graph-actions.component'
-import {SidebarComponent} from './sidebar.component'
-import {EventListComponent} from './event-list.component'
-import {EventComponent} from './event.component'
-import {MainComponent} from './main.component'
-import {ApiModule} from '../api/api.module'
+import {CytoscapeComponent} from './cytoscape.component';
+import {CypherQueryComponent} from './cypher-query.component';
+import {GraphViewComponent} from './graph-view.component';
+import {SidebarComponent} from './sidebar.component';
+import {EventListComponent} from './event-list.component';
+import {EventComponent} from './event.component';
+import {MainComponent} from './main.component';
+import {ApiModule} from '../api/api.module';
 
 export const tsGraphsModule = angular.module('timesketch.graphs', [])
   .directive('tsGraphsMain', downgradeComponent({
       component: MainComponent, propagateDigest: false,
-  }))
+  }));
 
 @NgModule({
   imports: [CommonModule, FormsModule, ApiModule],
   declarations: [
-    CytoscapeComponent, CypherQueryComponent, GraphViewComponent,
-    CytoscapeSettingsComponent, GraphActionsComponent, SidebarComponent,
-    EventListComponent, EventComponent, MainComponent,
+      CytoscapeComponent,
+      CypherQueryComponent,
+      GraphViewComponent,
+      SidebarComponent,
+      EventListComponent,
+      EventComponent,
+      MainComponent,
   ],
   entryComponents: [MainComponent],
 })

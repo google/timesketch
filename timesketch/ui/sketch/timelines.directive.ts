@@ -13,7 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-import * as moment from 'moment'
+import * as moment from 'moment';
 
 export const tsTimelinesList = ['$interval', 'timesketchApi', function ($interval, timesketchApi) {
     /**
@@ -37,22 +37,22 @@ export const tsTimelinesList = ['$interval', 'timesketchApi', function ($interva
                         for (const timeline of timelines) {
                             timeline.updated_at = moment.utc(timeline.updated_at).format('YYYY-MM-DD');
                             timeline.status = timeline.searchindex.status[0].status;
-                            $scope.timelines.push(timeline)
+                            $scope.timelines.push(timeline);
                         }
                     }
-                })
+                });
             };
 
             $scope.deleteTimeline = function (timeline) {
                 timesketchApi.deleteTimeline($scope.sketchId, timeline.id);
                 const index = $scope.timelines.indexOf(timeline);
                 if (index > -1) {
-                    $scope.timelines.splice(index, 1)
+                    $scope.timelines.splice(index, 1);
                 }
             };
 
             this.updateTimelines = function (timeline) {
-                $scope.timelines.unshift(timeline)
+                $scope.timelines.unshift(timeline);
             };
 
             // Get initial list of timelines
@@ -61,9 +61,9 @@ export const tsTimelinesList = ['$interval', 'timesketchApi', function ($interva
             // Fetch list of timelines periodically to update status.
             const pollInterval = 10000;
             $interval(function () {
-                getTimelines()
-            }, pollInterval)
+                getTimelines();
+            }, pollInterval);
 
         },
-    }
+    };
 }];

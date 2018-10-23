@@ -1,10 +1,5 @@
-<ts-graphs-cypher-query
-  (cypherSearch)="onCypherSearch($event)"
-></ts-graphs-cypher-query>
+<ts-graphs-cypher-query (cypherSearch)="onCypherSearch($event)"></ts-graphs-cypher-query>
 
 <div class="card">
-  <ts-graphs-graph-view
-    [state]="graphState"
-    (invalidate)="onInvalidate()"
-  ></ts-graphs-graph-view>
+  <ts-graphs-graph-view [state]="graphState" (invalidate)="onInvalidate()"></ts-graphs-graph-view>
 </div>
