@@ -1,9 +1,8 @@
-import {Component, ViewChild} from '@angular/core'
-import {TestBed, ComponentFixture} from '@angular/core/testing'
-import {BrowserDynamicTestingModule, platformBrowserDynamicTesting} from '@angular/platform-browser-dynamic/testing'
-import {BrowserModule} from '@angular/platform-browser'
-
-import {CytoscapeComponent} from './cytoscape.component'
+import {Component, ViewChild} from '@angular/core';
+import {TestBed, ComponentFixture} from '@angular/core/testing';
+import {BrowserDynamicTestingModule, platformBrowserDynamicTesting} from '@angular/platform-browser-dynamic/testing';
+import {BrowserModule} from '@angular/platform-browser';
+import {CytoscapeComponent} from './cytoscape.component';
 
 export const testCytoscapeOptions = Object.seal({
   zoomingEnabled: false,
@@ -28,7 +27,7 @@ export const testCytoscapeOptions = Object.seal({
   wheelSensitivity: 0.8,
   pixelRatio: 1.0,
   selectionType: 'additive',
-})
+});
 
 export function getOptionFromCytoscape(_cy: Cy.Core, option: string): any {
   type CytoscapeInternals = {
@@ -36,14 +35,14 @@ export function getOptionFromCytoscape(_cy: Cy.Core, option: string): any {
   } & {json: () => {}} & {_private: {
     options: {[option in keyof Cy.CytoscapeOptions]?: {}},
     renderer: {options: {[option in keyof Cy.CytoscapeOptions]?: {}}},
-  }}
-  const cy: CytoscapeInternals = _cy as any
+  }};
+  const cy: CytoscapeInternals = _cy as any;
   if (option in cy) {
-    return cy[option]()
+    return cy[option]();
   } else if (option in cy.json()) {
-    return cy.json()[option]
+    return cy.json()[option];
   } else {
-    return cy._private.options[option] || cy._private.renderer.options[option]
+    return cy._private.options[option] || cy._private.renderer.options[option];
   }
 }
 
@@ -55,125 +54,125 @@ export const testCytoscapeEvents = [
   'cxttap', 'cxtdrag', 'cxtdragover', 'cxtdragout', 'boxstart', 'boxend',
   'boxselect', 'box', 'layoutstart', 'layoutready', 'layoutstop',
   'destroy', 'render', 'resize',
-]
+];
 
 describe('CytoscapeComponent', () => {
   beforeAll(() => {
-    TestBed.resetTestEnvironment()
+    TestBed.resetTestEnvironment();
     TestBed.initTestEnvironment(
       BrowserDynamicTestingModule, platformBrowserDynamicTesting(),
-    )
-  })
+    );
+  });
 
   describe('options', () => {
-    let fixture: ComponentFixture<OptionsTestComponent>
+    let fixture: ComponentFixture<OptionsTestComponent>;
     beforeEach(async () => {
       TestBed.configureTestingModule({
         imports: [BrowserModule],
         declarations: [CytoscapeComponent, OptionsTestComponent],
-      })
-      fixture = TestBed.createComponent(OptionsTestComponent)
+      });
+      fixture = TestBed.createComponent(OptionsTestComponent);
       // prevent 'Error: Timeout - Async callback was not invoked within timeout':
-      fixture.componentInstance.cytoscapeComponent['cytoscapeHostRef'] = undefined
-      await fixture.whenStable()
-    })
+      fixture.componentInstance.cytoscapeComponent['cytoscapeHostRef'] = undefined;
+      await fixture.whenStable();
+    });
 
     for (const [option, value] of Object.entries(testCytoscapeOptions)) {
       it(`should handle changes of "${option}" correctly`, () => {
-        fixture.detectChanges()
-        fixture.componentInstance.options[option] = value
-        fixture.detectChanges()
-        const cy = fixture.componentInstance.cytoscapeComponent.cy
-        const newValue = getOptionFromCytoscape(cy, option)
-        expect(newValue).toEqual(value)
-      })
+        fixture.detectChanges();
+        fixture.componentInstance.options[option] = value;
+        fixture.detectChanges();
+        const cy = fixture.componentInstance.cytoscapeComponent.cy;
+        const newValue = getOptionFromCytoscape(cy, option);
+        expect(newValue).toEqual(value);
+      });
     }
 
     for (const option_to_change of Object.keys(testCytoscapeOptions)) {
       it(`should retain other options after changing "${option_to_change}"`, () => {
-        fixture.componentInstance.options = {...testCytoscapeOptions}
-        fixture.detectChanges()
+        fixture.componentInstance.options = {...testCytoscapeOptions};
+        fixture.detectChanges();
         if (option_to_change === 'styleEnabled') {
-          fixture.componentInstance.options[option_to_change] = 'true'
+          fixture.componentInstance.options[option_to_change] = 'true';
         }
         if (testCytoscapeOptions[option_to_change] === 'additive') {
-          fixture.componentInstance.options[option_to_change] = 'single'
+          fixture.componentInstance.options[option_to_change] = 'single';
         }
         if (typeof testCytoscapeOptions[option_to_change] === 'boolean') {
-          fixture.componentInstance.options[option_to_change] = !fixture.componentInstance.options[option_to_change]
+          fixture.componentInstance.options[option_to_change] = !fixture.componentInstance.options[option_to_change];
         }
         if (typeof testCytoscapeOptions[option_to_change] === 'number') {
-          fixture.componentInstance.options[option_to_change] = 3.1415
+          fixture.componentInstance.options[option_to_change] = 3.1415;
         }
-        fixture.detectChanges()
-        const cy = fixture.componentInstance.cytoscapeComponent.cy
+        fixture.detectChanges();
+        const cy = fixture.componentInstance.cytoscapeComponent.cy;
         for (const [option, value] of Object.entries(testCytoscapeOptions)) {
           if (option !== option_to_change) {
-            const actualValue = getOptionFromCytoscape(cy, option)
-            expect(actualValue).toEqual(value)
+            const actualValue = getOptionFromCytoscape(cy, option);
+            expect(actualValue).toEqual(value);
           }
         }
-      })
+      });
     }
-  })
+  });
 
   describe('events', () => {
-    let fixture: ComponentFixture<EventsTestComponent>
+    let fixture: ComponentFixture<EventsTestComponent>;
     beforeEach(async () => {
       TestBed.configureTestingModule({
         imports: [BrowserModule],
         declarations: [CytoscapeComponent, EventsTestComponent],
-      })
-      fixture = TestBed.createComponent(EventsTestComponent)
+      });
+      fixture = TestBed.createComponent(EventsTestComponent);
       // prevent 'Error: Timeout - Async callback was not invoked within timeout':
-      fixture.componentInstance.cytoscapeComponent['cytoscapeHostRef'] = undefined
-      fixture.detectChanges()
-      await fixture.whenStable()
-      fixture.detectChanges()
-      fixture.componentInstance.events = []
-    })
+      fixture.componentInstance.cytoscapeComponent['cytoscapeHostRef'] = undefined;
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      fixture.componentInstance.events = [];
+    });
 
     for (const event_name of testCytoscapeEvents) {
       it(`should correctly emit "${event_name}"`, () => {
-        const cy = fixture.componentInstance.cytoscapeComponent.cy
-        cy.emit(event_name)
-        const [[recorded_event, recorded_name]] = fixture.componentInstance.events
-        expect(recorded_name).toEqual(event_name)
-        expect(recorded_event.type).toEqual(event_name)
-      })
+        const cy = fixture.componentInstance.cytoscapeComponent.cy;
+        cy.emit(event_name);
+        const [[recorded_event, recorded_name]] = fixture.componentInstance.events;
+        expect(recorded_name).toEqual(event_name);
+        expect(recorded_event.type).toEqual(event_name);
+      });
     }
 
     for (const event_name of testCytoscapeEvents) {
       it(`should correctly emit "${event_name}", even after re-initialization`, () => {
         // change some immutable option to force re-initialization of cytoscape
-        fixture.componentInstance.options['motionBlur'] = true
-        fixture.detectChanges()
-        const cy = fixture.componentInstance.cytoscapeComponent.cy
-        fixture.componentInstance.events = []
-        cy.emit(event_name)
-        const [[recorded_event, recorded_name]] = fixture.componentInstance.events
-        expect(recorded_name).toEqual(event_name)
-        expect(recorded_event.type).toEqual(event_name)
-      })
+        fixture.componentInstance.options['motionBlur'] = true;
+        fixture.detectChanges();
+        const cy = fixture.componentInstance.cytoscapeComponent.cy;
+        fixture.componentInstance.events = [];
+        cy.emit(event_name);
+        const [[recorded_event, recorded_name]] = fixture.componentInstance.events;
+        expect(recorded_name).toEqual(event_name);
+        expect(recorded_event.type).toEqual(event_name);
+      });
     }
 
     it(`should correctly emit "panChange"`, () => {
-      const cy = fixture.componentInstance.cytoscapeComponent.cy
-      cy.pan({x: 1, y: 2})
-      const options = fixture.componentInstance.options
-      expect(options['pan'].x).toEqual(1)
-      expect(options['pan'].y).toEqual(2)
-    })
+      const cy = fixture.componentInstance.cytoscapeComponent.cy;
+      cy.pan({x: 1, y: 2});
+      const options = fixture.componentInstance.options;
+      expect(options['pan'].x).toEqual(1);
+      expect(options['pan'].y).toEqual(2);
+    });
 
     it(`should correctly emit "zoomChange"`, () => {
-      const cy = fixture.componentInstance.cytoscapeComponent.cy
-      cy.zoom(2)
-      const options = fixture.componentInstance.options
-      expect(options['zoom']).toEqual(2)
-    })
+      const cy = fixture.componentInstance.cytoscapeComponent.cy;
+      cy.zoom(2);
+      const options = fixture.componentInstance.options;
+      expect(options['zoom']).toEqual(2);
+    });
 
-  })
-})
+  });
+});
 
 // tslint:disable:max-classes-per-file
 
@@ -213,9 +212,10 @@ describe('CytoscapeComponent', () => {
     ></ts-graphs-cytoscape>
   `,
 })
+
 class OptionsTestComponent {
-  @ViewChild(CytoscapeComponent) cytoscapeComponent: CytoscapeComponent
-  options = {}
+  @ViewChild(CytoscapeComponent) cytoscapeComponent: CytoscapeComponent;
+  options = {};
 }
 
 @Component({
@@ -266,11 +266,12 @@ class OptionsTestComponent {
     ></ts-graphs-cytoscape>
   `,
 })
+
 class EventsTestComponent {
-  @ViewChild(CytoscapeComponent) cytoscapeComponent: CytoscapeComponent
-  options = {}
-  events = []
+  @ViewChild(CytoscapeComponent) cytoscapeComponent: CytoscapeComponent;
+  options = {};
+  events = [];
   handle(event, name) {
-    this.events.push([event, name])
+    this.events.push([event, name]);
   }
 }
