@@ -512,6 +512,27 @@ class Sketch(BaseResource):
         }
         return self.explore(query_dsl=json.dumps({'query': query}))
 
+    def add_event(self, message, timestamp):
+        """Adds an event to the sketch specific timeline.
+
+        Args:
+            message: Array of JSON objects representing events.
+            timestamp: Timestamp of the event.
+            timestamp_desc : Description of the timestamp.
+
+        Returns:
+            Dictionary with query results.
+        """
+        form_data = {
+            'timestamp': timestamp,
+            'timestamp_desc': 'test',
+            'message': message
+        }
+
+        resource_url = u'{0:s}/sketches/{1:d}/event/create/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.post(resource_url, json=form_data)
+        return response.json()
 
 class SearchIndex(BaseResource):
     """Timesketch searchindex object.
