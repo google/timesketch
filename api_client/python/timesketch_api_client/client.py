@@ -512,7 +512,7 @@ class Sketch(BaseResource):
         }
         return self.explore(query_dsl=json.dumps({'query': query}))
 
-    def add_event(self, message, timestamp):
+    def add_event(self, message, timestamp, timestamp_desc):
         """Adds an event to the sketch specific timeline.
 
         Args:
@@ -525,7 +525,7 @@ class Sketch(BaseResource):
         """
         form_data = {
             'timestamp': timestamp,
-            'timestamp_desc': 'test',
+            'timestamp_desc': timestamp_desc,
             'message': message
         }
 
