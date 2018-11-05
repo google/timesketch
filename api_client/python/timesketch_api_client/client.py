@@ -459,7 +459,46 @@ class Sketch(BaseResource):
         }
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
+    
+    def comment_event(self, event_id, index, comment_text):
+        """
+        Adds a comment to a single event.
 
+        :param event_id:
+        :param index:
+        :param comment_text:
+        :return: a json data of the query.
+        """
+        form_data = \
+            {"annotation": comment_text,
+             "annotation_type": "comment",
+             "events": {"_id": event_id, "_index": index,
+                        "_type": "generic_event"}}
+        resource_url = u'{0:s}/sketches/{1:d}/event/annotate/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.post(resource_url, json=form_data)
+        return response.json()
+
+    def label_event(self, event_id, index, label_text):
+        """
+        Adds a comment to a single event.
+
+        :param event_id:
+        :param index:
+        :param label_text:
+        :return: a json data of the query.
+        """
+        form_data = \
+            {"annotation": label_text,
+             "annotation_type": "label",
+             "events": {"_id": event_id, "_index": index,
+                        "_type": "generic_event"}}
+        resource_url = u'{0:s}/sketches/{1:d}/event/annotate/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.post(resource_url, json=form_data)
+        return response.json()
+    
+    
     def label_events(self, events, label_name):
         """Labels one or more events with label_name.
 
