@@ -729,6 +729,7 @@ class AggregationResource(ResourceMixin, Resource):
             return jsonify(schema)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
+
 class EventCreateResource(ResourceMixin, Resource):
     """Resource to create an annotation for an event."""
 
@@ -752,7 +753,9 @@ class EventCreateResource(ResourceMixin, Resource):
 
             # derive datetime from timestamp:
             parsed_datetime = parser.parse(form.timestamp.data)
-            timestamp = int(time.mktime(parsed_datetime.timetuple())) * 1000000
+            timestamp = int(
+                time.mktime(parsed_datetime.utctimetuple())) * 1000000
+            timestamp += parsed_datetime.microsecond
 
             event = {
                 "datetime": form.timestamp.data,
@@ -818,14 +821,12 @@ class EventCreateResource(ResourceMixin, Resource):
                     return self.to_json(
                         searchindex, status_code=HTTP_STATUS_CODE_CREATED)
 
-            except Exception as e:
-                print e
+            except Exception:
                 raise ApiHTTPError(
                     message="failed to add event",
                     status_code=HTTP_STATUS_CODE_BAD_REQUEST)
 
         else:
-            print form.errors
             raise ApiHTTPError(
                 message="failed to add event",
                 status_code=HTTP_STATUS_CODE_BAD_REQUEST)
@@ -879,9 +880,13 @@ class EventResource(ResourceMixin, Resource):
         comments = []
         if event:
             for comment in event.comments:
+                if not comment.user:
+                    username = u'System'
+                else:
+                    username = comment.user.username
                 comment_dict = {
                     u'user': {
-                        u'username': comment.user.username,
+                        u'username': username,
                     },
                     u'created_at': comment.created_at,
                     u'comment': comment.comment
@@ -995,27 +1000,15 @@ class UploadFileResource(ResourceMixin, Resource):
 
         form = UploadFileForm()
         if form.validate_on_submit() and upload_enabled:
-            from timesketch.lib.tasks import run_plaso
-            from timesketch.lib.tasks import run_csv_jsonl
-
-            # Map the right task based on the file type
-            task_directory = {u'plaso': run_plaso,
-                              u'csv': run_csv_jsonl,
-                              u'jsonl': run_csv_jsonl}
-
             sketch_id = form.sketch_id.data
             file_storage = form.file.data
             _filename, _extension = os.path.splitext(file_storage.filename)
             file_extension = _extension.lstrip(u'.')
             timeline_name = form.name.data or _filename.rstrip(u'.')
-            delimiter = u','
 
             sketch = None
             if sketch_id:
                 sketch = Sketch.query.get_with_acl(sketch_id)
-
-            # Current user
-            username = current_user.username
 
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
@@ -1052,22 +1045,12 @@ class UploadFileResource(ResourceMixin, Resource):
                 db_session.add(timeline)
                 db_session.commit()
 
-            # Run the task in the background
-            task = task_directory.get(file_extension)
-            task_args = {
-                u'plaso': (
-                    file_path, timeline_name, index_name, file_extension,
-                    username
-                ),
-                u'default': (
-                    file_path, timeline_name, index_name, file_extension,
-                    delimiter, username
-                )
-            }
-            task.apply_async(
-                task_args.get(file_extension, task_args[u'default']),
-                task_id=index_name
-            )
+            # Start Celery pipeline for indexing and analysis.
+            if current_app.config.get(u'ENABLE_INDEX_ANALYZERS'):
+                from timesketch.lib import tasks
+                pipeline = tasks.build_index_pipeline(
+                    file_path, timeline_name, index_name, file_extension)
+                pipeline.apply_async(task_id=index_name)
 
             # Return Timeline if it was created.
             # pylint: disable=no-else-return
@@ -1389,8 +1372,17 @@ class TimelineListResource(ResourceMixin, Resource):
                 return_code = HTTP_STATUS_CODE_OK
                 timeline = Timeline.query.get(timeline_id)
 
+            # If enabled, run sketch analyzers when timeline is added.
+            if current_app.config.get(u'ENABLE_SKETCH_ANALYZERS'):
+                from timesketch.lib import tasks
+                pipeline = tasks.build_sketch_analysis_pipeline(
+                    sketch_id, searchindex_id)
+                if pipeline:
+                    pipeline.apply_async(task_id=searchindex_id)
+
             return self.to_json(
                 timeline, meta=metadata, status_code=return_code)
+
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
 

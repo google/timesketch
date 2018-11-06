@@ -1,13 +1,14 @@
 /** Generic helpers for 'RemoteData' pattern. */
-type Empty = {type: 'empty'}
-type Loading = {type: 'loading'}
+type Empty = {type: 'empty'};
+type Loading = {type: 'loading'};
 
 export type Event = {
   _index: string
 } & {
   [k: string]: any
-}
-export type EventDetail = {}
+};
+
+export type EventDetail = {};
 
 /**
  * GraphDef - received from GraphService
@@ -18,28 +19,34 @@ export type ElementData = {
   [field_name: string]: string | string[]
 } & {
   type: string
-}
+};
+
 export type ElementScratch = {
   label: string
   hidden_fields: string[]
-}
+};
+
 export type GraphSchema = {
   nodes: {[type: string]: ElementScratch}
   edges: {[type: string]: ElementScratch}
-}
+};
+
 export type ElementDef = {
   data: ElementData
   scratch: ElementScratch
-}
+};
+
 export type GraphDef = {
   nodes: ElementDef[]
   edges: ElementDef[]
-}
+};
+
 type GraphReady = {
   type: 'ready'
   elements: GraphDef
-}
-export type GraphState = Empty | Loading | GraphReady
+};
+
+export type GraphState = Empty | Loading | GraphReady;
 
 /**
  * Types related to displaying details about currently selected node/edge.
@@ -49,12 +56,14 @@ export type GraphState = Empty | Loading | GraphReady
 export type SelectedEdge = {
   type: 'edge',
   element: Cy.EdgeSingular,
-}
+};
+
 export type SelectedNode = {
   type: 'node',
   element: Cy.NodeSingular,
-}
-export type SelectedElement = Empty | SelectedEdge | SelectedNode
+};
+
+export type SelectedElement = Empty | SelectedEdge | SelectedNode;
 
 /**
  * Types related to Cytoscape initialization options. The only existing
@@ -68,8 +77,8 @@ export type SelectedElement = Empty | SelectedEdge | SelectedNode
  * CytoscapeSettings - all other options, stored in GraphViewComponent, controlled by CytoscapeSettingsComponent
  * @see {@link http://js.cytoscape.org/#core/initialisation}
  */
-export type CytoscapeLayout = Cy.LayoutOptions & {animationThreshold?: number}
-export type CytoscapeStyle = Array<Cy.Stylesheet & {padding?: number}>
+export type CytoscapeLayout = Cy.LayoutOptions & {animationThreshold?: number};
+export type CytoscapeStyle = Array<Cy.Stylesheet & {padding?: number}>;
 export type CytoscapeSettings = {
   // interaction options
   minZoom?: number
@@ -96,7 +105,7 @@ export type CytoscapeSettings = {
   motionBlurOpacity?: number
   wheelSensitivity?: number
   pixelRatio?: number
-}
+};
 
 /**
  * Type of predefined queries in cypher-query.data.ts.
@@ -104,4 +113,4 @@ export type CytoscapeSettings = {
 export type PredefinedQuery = {
   name: string
   query: string
-}
+};

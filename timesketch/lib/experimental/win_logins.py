@@ -143,14 +143,15 @@ def main():
     sketch_id = args.sketch
 
     csvwriter = csv.writer(sys.stdout, delimiter=',')
-    csvwriter.writerow([u'user', u'uid', u'src', u'dst', u'method'])
+    csvwriter.writerow([u'user', u'uid', u'src', u'dst', u'method', u'timestamp', u'es_index_name', u'es_query', u'sketch_id'])
     for event in parser.parse(sketch_id=sketch_id):
-        src_ws, user, dst_ws, method = event
+        src_ws, user, dst_ws, method, timestamp, es_index_name, es_id = event
+        es_query = u'_index:{} AND _id:{}'.format(es_index_name, es_id)
         uid = user2id.get(user, None)
         if not uid:
             user2id[user] = u'a' + uuid.uuid4().hex
             uid = user2id[user]
-        csvwriter.writerow([user, uid, src_ws, dst_ws, method])
+        csvwriter.writerow([user, uid, src_ws, dst_ws, method, timestamp, es_index_name, es_query, sketch_id])
 
 
 def win_logins(sketch_id):

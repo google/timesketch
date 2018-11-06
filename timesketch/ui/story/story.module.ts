@@ -13,14 +13,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import angular from 'angularjs-for-webpack'
+import angular from 'angularjs-for-webpack';
 import {
   tsStoryList, tsCreateStory, tsStory, tsStoryDropdown, tsStoryEventList,
-} from './story.directive'
+} from './story.directive';
 
 export const tsStoryModule = angular.module('timesketch.story', [])
   .directive('tsStoryList', tsStoryList)
   .directive('tsCreateStory', tsCreateStory)
   .directive('tsStory', tsStory)
   .directive('tsStoryDropdown', tsStoryDropdown)
-  .directive('tsStoryEventList', tsStoryEventList)
+  .directive('tsStoryEventList', tsStoryEventList);
