@@ -265,14 +265,6 @@ class ElasticsearchDataStore(object):
         if enable_scroll:
             scroll_timeout = u'1m'  # Default to 1 minute scroll timeout
 
-        # Use default fields if none is provided
-        default_fields = [
-            u'datetime', u'timestamp', u'message', u'timestamp_desc',
-            u'timesketch_label', u'tag', u'similarity_score'
-        ]
-        if not return_fields:
-            return_fields = default_fields
-
         # Exit early if we have no indices to query
         if not indices:
             return {u'hits': {u'hits': [], u'total': 0}, u'took': 0}
@@ -297,6 +289,16 @@ class ElasticsearchDataStore(object):
             count_result = self.client.count(
                 body=query_dsl, index=list(indices))
             return count_result.get(u'count', 0)
+
+        if not return_fields:
+            # Suppress the lint error because elasticsearch-py adds parameters
+            # to the function with a decorator and this makes pylint sad.
+            # pylint: disable=unexpected-keyword-arg
+            return self.client.search(
+                body=query_dsl,
+                index=list(indices),
+                search_type=search_type,
+                scroll=scroll_timeout)
 
         # Suppress the lint error because elasticsearch-py adds parameters
         # to the function with a decorator and this makes pylint sad.

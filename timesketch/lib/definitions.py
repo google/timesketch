@@ -24,3 +24,14 @@ HTTP_STATUS_CODE_NOT_FOUND = 404
 
 # Time and date
 MICROSECONDS_PER_SECOND = 1000000
+
+# _source fields for search and export functions
+DEFAULT_FIELDS = [
+    u'datetime',
+    u'timestamp',
+    u'timestamp_desc',
+    u'message']
+DEFAULT_SOURCE_FIELDS = DEFAULT_FIELDS + [
+    u'timesketch_label',
+    u'tag',
+    u'similarity_score']
