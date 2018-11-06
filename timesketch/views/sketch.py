@@ -31,6 +31,10 @@ from sqlalchemy import or_
 from sqlalchemy import not_
 
 from timesketch.models import db_session
+from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+from timesketch.lib.definitions import DEFAULT_FIELDS
+from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.forms import AddTimelineForm
 from timesketch.lib.forms import NameDescriptionForm
 from timesketch.lib.forms import TimelineForm
@@ -47,9 +51,7 @@ from timesketch.models.sketch import View
 from timesketch.models.sketch import Story
 from timesketch.models.user import Group
 from timesketch.models.user import User
-from timesketch.lib.datastores.elastic import ElasticsearchDataStore
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+
 
 # Register flask blueprint
 sketch_views = Blueprint(u'sketch_views', __name__)
@@ -460,13 +462,15 @@ def export(sketch_id):
         indices,
         aggregations=None)
 
+    all_fields = set()
+    for event in result[u'hits'][u'hits']:
+        all_fields.update(event[u'_source'].keys())
+
+    all_fields.difference_update(DEFAULT_FIELDS)
+    fieldnames = DEFAULT_FIELDS + sorted(all_fields)
+
     csv_out = StringIO()
-    csv_writer = csv.DictWriter(
-        csv_out,
-        fieldnames=[
-            u'timestamp', u'message', u'timestamp_desc', u'datetime',
-            u'timesketch_label', u'tag'
-        ])
+    csv_writer = csv.DictWriter(csv_out, fieldnames=fieldnames)
     csv_writer.writeheader()
     for _event in result[u'hits'][u'hits']:
         csv_writer.writerow(
