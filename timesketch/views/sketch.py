@@ -366,6 +366,7 @@ def timelines(sketch_id):
                 db_session.commit()
 
                 # If enabled, run sketch analyzers when timeline is added.
+                # Import here to avoid circular imports.
                 from timesketch.lib import tasks
                 pipeline = tasks.build_sketch_analysis_pipeline(
                     sketch_id, searchindex_id)

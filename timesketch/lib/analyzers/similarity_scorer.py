@@ -198,11 +198,12 @@ class SimilarityScorer(interface.BaseIndexAnalyzer):
         """Entry point for the SimilarityScorer.
 
         Returns:
-            A dict with metadata about the processed data set.
+            A dict with metadata about the processed data set or None if no
+            data_types has been configured.
         """
         # Exit early if there is no data_type to process.
         if not self._config:
-            return 'No data_types configured, there is nothing to analyze'
+            return
 
         # Event generator for streaming results.
         events = self.event_stream(

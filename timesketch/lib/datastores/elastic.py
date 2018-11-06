@@ -404,7 +404,7 @@ class ElasticsearchDataStore(object):
             (add/remove). The default is False.
 
         Returns:
-            Dict with updated document body, or None if this is a signle update.
+            Dict with updated document body, or None if this is a single update.
         """
         # Elasticsearch painless script.
         update_body = {
@@ -532,6 +532,7 @@ class ElasticsearchDataStore(object):
             }
 
             if event_id:
+                # Event has "lang" defined if there is a script used for import.
                 if event.get(u'lang'):
                     event = {u'script': event}
                 else:
@@ -546,6 +547,7 @@ class ElasticsearchDataStore(object):
                 self.client.bulk(body=self.import_events)
                 self.import_events = []
         else:
+            # Import the remaining events in the queue.
             if self.import_events:
                 self.client.bulk(body=self.import_events)
 

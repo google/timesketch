@@ -157,6 +157,9 @@ class Sketch(object):
         self.id = sketch_id
         self.sql_sketch = SQLSketch.query.get(sketch_id)
 
+        if not self.sql_sketch:
+            raise RuntimeError('No such sketch')
+
     def add_view(self, name, query_string=None, query_dsl=None,
                  query_filter=None):
         """Add saved view to the Sketch.
@@ -299,8 +302,8 @@ class BaseIndexAnalyzer(object):
         your analyzer with different arguments in parallel.
 
         Returns:
-            Keyword arguments (dict) or a list of keyword argument dicts or None
-            if no extra arguments are needed.
+            List of keyword argument dicts or None if no extra arguments are
+            needed.
         """
         return None
 

@@ -101,7 +101,8 @@ def _get_index_analyzers():
     """Get list of index analysis tasks to run.
 
     Returns:
-        Group of index analysis tasks as Celery subtask signatures.
+        Group of index analysis tasks as Celery subtask signatures or None if
+        index analyzers are disabled in config.
     """
     tasks = []
 
@@ -133,7 +134,8 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension):
         file_extension: The file extension of the file.
 
     Returns:
-        Celery chain with indexing task and analyzer task group.
+        Celery chain with indexing task (or single indexing task) and analyzer
+        task group.
     """
     index_task_class = _get_index_task_class(file_extension)
     analyzer_task_group = _get_index_analyzers()
@@ -156,7 +158,7 @@ def build_sketch_analysis_pipeline(sketch_id, index_name):
         index_name: Elasticsearch index name.
 
     Returns:
-        Celery group with analysis tasks or None if not analyzers are enabled.
+        Celery group with analysis tasks or None if no analyzers are enabled.
     """
     tasks = []
 
@@ -195,7 +197,7 @@ def run_index_analyzer(index_name, analyzer_name, **kwargs):
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
     analyzer = analyzer_class(index_name=index_name, **kwargs)
     result = analyzer.run_wrapper()
-    logging.info('[%s] result: %s' % (analyzer_name, result))
+    logging.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
     return index_name
 
 
@@ -214,7 +216,7 @@ def run_sketch_analyzer(sketch_id, index_name, analyzer_name, **kwargs):
     analyzer = analyzer_class(
         sketch_id=sketch_id, index_name=index_name, **kwargs)
     result = analyzer.run_wrapper()
-    logging.info('[%s] result: %s' % (analyzer_name, result))
+    logging.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
     return sketch_id
 
 
@@ -229,7 +231,7 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
         source_type: Type of file, csv or jsonl.
 
     Returns:
-        String with summary of processed events.
+        Elasticsearch index name.
     """
     # Log information to Celery
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
@@ -270,7 +272,7 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
         source_type: Type of file, csv or jsonl.
 
     Returns:
-        Dictionary with count of processed events.
+        Elasticsearch index name.
     """
     event_type = 'generic_event'  # Document type for Elasticsearch
     validators = {
