@@ -146,7 +146,7 @@ class Sketch(object):
 
     Attributes:
         id: Sketch ID.
-        sql_sketch: Instance if a SQLAlchemy Sketch object.
+        sql_sketch: Instance of a SQLAlchemy Sketch object.
     """
     def __init__(self, sketch_id):
         """Initializes a Sketch object.
