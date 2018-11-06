@@ -277,7 +277,7 @@ class BaseIndexAnalyzer(object):
         """A wrapper method to run the analyzer.
 
         This method is decorated to flush the bulk insert operation on the
-        datastore. This make sure that all events are indexed at exit.
+        datastore. This makes sure that all events are indexed at exit.
 
         Returns:
             Return value of the run method.
