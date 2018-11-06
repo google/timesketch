@@ -1,4 +1,4 @@
-import {CytoscapeSettings, CytoscapeLayout, CytoscapeStyle} from './models'
+import {CytoscapeSettings, CytoscapeLayout, CytoscapeStyle} from './models';
 
 export const settings: CytoscapeSettings = {
   // interaction options:
@@ -15,6 +15,7 @@ export const settings: CytoscapeSettings = {
   autolock: false,
   autoungrabify: false,
   autounselectify: false,
+
   // rendering options:
   headless: false,
   styleEnabled: true,
@@ -25,7 +26,7 @@ export const settings: CytoscapeSettings = {
   motionBlurOpacity: 0.2,
   wheelSensitivity: 1,
   pixelRatio: ('auto' as any),
-}
+};
 
 export const layout: CytoscapeLayout = {
   name: 'cose',
@@ -50,7 +51,7 @@ export const layout: CytoscapeLayout = {
   minTemp: 1.0,
   weaver: false,
   nodeDimensionsIncludeLabels: false,
-}
+};
 
 export const style: CytoscapeStyle = [
   {
@@ -146,4 +147,4 @@ export const style: CytoscapeStyle = [
         'color': '#333333',
       },
   },
-]
+];

@@ -13,14 +13,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import angular from 'angularjs-for-webpack'
-import {NgModule} from '@angular/core'
-import {HttpClientModule} from '@angular/common/http'
+import angular from 'angularjs-for-webpack';
+import {NgModule} from '@angular/core';
+import {HttpClientModule} from '@angular/common/http';
 
-import {timesketchApiImplementation} from './api.service'
+import {timesketchApiImplementation} from './api.service';
 
 export const tsApiModule = angular.module('timesketch.api', [])
-  .service('timesketchApi', timesketchApiImplementation)
+  .service('timesketchApi', timesketchApiImplementation);
 
 @NgModule({
   imports: [HttpClientModule],
