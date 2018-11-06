@@ -185,7 +185,7 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     sketch_timelines = [t.searchindex.index_name for t in sketch.timelines]
     view_form = SaveViewForm()
     graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
-    similarity_enabled = current_app.config[u'SIMILARITY_EXPERIMENT_ENABLED']
+    similarity_enabled = current_app.config.get(u'SIMILARITY_DATA_TYPES')
 
     # Get parameters from the GET query
     url_query = request.args.get(u'q', u'')
@@ -363,7 +363,16 @@ def timelines(sketch_id):
                     searchindex=searchindex)
                 db_session.add(_timeline)
                 sketch.timelines.append(_timeline)
-        db_session.commit()
+                db_session.commit()
+
+                # If enabled, run sketch analyzers when timeline is added.
+                # Import here to avoid circular imports.
+                from timesketch.lib import tasks
+                pipeline = tasks.build_sketch_analysis_pipeline(
+                    sketch_id, searchindex_id)
+                if pipeline:
+                    pipeline.apply_async(task_id=searchindex_id)
+
         return redirect(
             url_for(u'sketch_views.timelines', sketch_id=sketch.id))
 

@@ -39,9 +39,9 @@
 
           <td class="event-message" ng-class="{'event-message-selected': event.selected, 'event-message-starred': event.star, 'event-message-wrap': !showDetails, 'event-message-details': showDetails}" ng-click="getDetail();showDetails = !showDetails">
               <span ng-show="comment"><i class="fa fa-comments"></i></span>
-              <span ng-if="::event._source.tag" ng-repeat="tag in ::event._source.tag" class="label label-success">{{::tag}}</span>
-              <span ng-if="::event._source.label" ng-repeat="label in ::event._source.label">
-                <span ng-if="::label.indexOf('__') != 0" class="label label-success">{{::label}}</span>
+              <span style="margin-right:2px;" ng-if="::event._source.tag" ng-repeat="tag in ::event._source.tag" class="label label-default">{{::tag}}</span>
+              <span style="margin-right:2px;" ng-if="::event._source.label" ng-repeat="label in ::event._source.label">
+                <span ng-if="::label.indexOf('__') != 0" class="label label-default">{{::label}}</span>
               </span>
               <span ng-class="{true: 'message-hidden'}[event.hidden]">[{{ event._source.timestamp_desc }}] <span title="{{ event._source.message }}">{{ event._source.message|limitTo:1000 }}</span></span>
           </td>
