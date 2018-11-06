@@ -13,15 +13,15 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import angular from 'angularjs-for-webpack'
-import {NgModule} from '@angular/core'
-import {CommonModule} from '@angular/common'
-import {downgradeComponent} from '@angular/upgrade/static'
+import angular from 'angularjs-for-webpack';
+import {NgModule} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {downgradeComponent} from '@angular/upgrade/static';
 
-import {tsCountEvents} from './count-events.directive'
-import {tsTimelinesList} from './timelines.directive'
-import {tsSavedViewList, tsSearchTemplateList} from './views.directive'
-import {NavigationComponent} from './navigation.component'
+import {tsCountEvents} from './count-events.directive';
+import {tsTimelinesList} from './timelines.directive';
+import {tsSavedViewList, tsSearchTemplateList} from './views.directive';
+import {NavigationComponent} from './navigation.component';
 
 export const tsSketchModule = angular.module('timesketch.sketch', [])
   .directive('tsCountEvents', tsCountEvents)
@@ -30,7 +30,7 @@ export const tsSketchModule = angular.module('timesketch.sketch', [])
   .directive('tsSearchTemplateList', tsSearchTemplateList)
   .directive('tsSketchNavigation', downgradeComponent({
       component: NavigationComponent, propagateDigest: false,
-  }))
+  }));
 
 @NgModule({
   imports: [CommonModule],
