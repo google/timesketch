@@ -517,7 +517,7 @@ class Sketch(BaseResource):
 
         Args:
             message: Array of JSON objects representing events.
-            timestamp: Timestamp of the event.
+            timestamp: Micro seconds since 1970-01-01 00:00:00.
             timestamp_desc : Description of the timestamp.
 
         Returns:
