@@ -45,5 +45,30 @@
   [elements]="state.type === 'ready' ? state.elements : []"
   [style]="style"
   [layout]="layout"
+
+  [minZoom]="settings.minZoom"
+  [maxZoom]="settings.maxZoom"
+  [zoomingEnabled]="settings.zoomingEnabled"
+  [userZoomingEnabled]="settings.userZoomingEnabled"
+  [panningEnabled]="settings.panningEnabled"
+  [userPanningEnabled]="settings.userPanningEnabled"
+  [boxSelectionEnabled]="settings.boxSelectionEnabled"
+  [selectionType]="settings.selectionType"
+  [touchTapThreshold]="settings.touchTapThreshold"
+  [desktopTapThreshold]="settings.desktopTapThreshold"
+  [autolock]="settings.autolock"
+  [autoungrabify]="settings.autoungrabify"
+  [autounselectify]="settings.autounselectify"
+
+  [headless]="settings.headless"
+  [styleEnabled]="settings.styleEnabled"
+  [hideEdgesOnViewport]="settings.hideEdgesOnViewport"
+  [hideLabelsOnViewport]="settings.hideLabelsOnViewport"
+  [textureOnViewport]="settings.textureOnViewport"
+  [motionBlur]="settings.motionBlur"
+  [motionBlurOpacity]="settings.motionBlurOpacity"
+  [wheelSensitivity]="settings.wheelSensitivity"
+  [pixelRatio]="settings.pixelRatio"
+
   (ready)="initEvents($event.cy)">
 </ts-graphs-cytoscape>

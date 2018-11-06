@@ -171,7 +171,7 @@ class ExploreForm(BaseForm):
 
 class GraphExploreForm(BaseForm):
     """Form used to search the graph datastore."""
-    query = StringField(u'Query')
+    graph_view_id = IntegerField(u'Query ID')
     output_format = StringField(u'Output format')
 
 

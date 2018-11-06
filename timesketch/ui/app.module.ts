@@ -43,6 +43,8 @@ import {tsExploreModule} from './explore/explore.module';
 import {tsSketchModule, SketchModule} from './sketch/sketch.module';
 import {tsStoryModule} from './story/story.module';
 import {tsGraphModule, GraphModule} from './graph/graph.module';
+import {SketchService} from "./api/sketch.service";
+import {GraphService} from "./api/graph.service";
 
 export const tsAppModule = angular.module('timesketch', [
     tsApiModule.name,
@@ -88,15 +90,19 @@ export const tsAppModule = angular.module('timesketch', [
 });
 
 @NgModule({
-  imports: [
-    BrowserModule, FormsModule, HttpClientModule,
-    SketchModule, GraphModule,
-  ],
-  providers: [{
-    provide: HTTP_INTERCEPTORS,
-    useClass: AttachCsrfTokenInterceptor,
-    multi: true,
-  }],
+
+    imports: [
+        BrowserModule,
+        FormsModule,
+        HttpClientModule,
+        SketchModule,
+        GraphModule
+    ],
+    providers: [{
+        provide: HTTP_INTERCEPTORS,
+        useClass: AttachCsrfTokenInterceptor,
+        multi: true,
+    }, SketchService, GraphService],
 })
 
 export class AppModule {

@@ -5,7 +5,12 @@ import {HttpClient} from '@angular/common/http';
 import {SKETCH_BASE_URL} from './api.service';
 import {SketchService} from './sketch.service';
 
-import {ElementData, GraphDef, ElementScratch} from '../graph/models';
+import {
+    ElementData,
+    GraphDef,
+    ElementScratch,
+    GraphViews
+} from '../graph/models';
 
 /**
  * Service for fetching graph-related API resources.
@@ -20,9 +25,13 @@ export class GraphService {
     private readonly http: HttpClient,
   ) {}
 
-  search(query: string): Observable<GraphDef> {
+  search(graph_view_id: number): Observable<GraphDef> {
     type Dict<T> = {[k: string]: T};
+
     function object_map<V, W>(obj: Dict<V>, func: (k: string, v: V) => [string, W]): Dict<W> {
+      if (! obj) {
+        return
+      }
       const parts = Object.entries(obj)
         .map(([k, v]) => func(k, v))
         .map(([k, v]) => ({[k]: v}));
@@ -55,7 +64,7 @@ export class GraphService {
       for (const edge of elements.edges) {
         const edge_data = {
           ...object_map(nodes_by_id[edge.data.source].data, (k, v) => ['source.' + k, v]),
-          ...object_map(nodes_by_id[edge.data.target].data, (k, v) => ['target.' + k,  v]),
+          ...object_map(nodes_by_id[edge.data.target].data, (k, v) => ['target.' + k, v]),
           ...edge.data,
         };
         edge.scratch = element_scratch(schema.edges[edge.data.type], edge_data);
@@ -63,13 +72,21 @@ export class GraphService {
       return elements;
     }
 
-    return this.http
+   return this.http
       .post(`${SKETCH_BASE_URL}${this.sketchService.sketchId}/explore/graph/`, {
-        query, output_format: 'cytoscape',
+        graph_view_id, output_format: 'cytoscape',
       })
       .map((result) => format_graph({
         elements: result['objects'][0]['graph'],
         schema: result['meta']['schema'],
       }));
   }
+
+  getGraphViews(): Observable<GraphViews> {
+    return this.http.get(`${SKETCH_BASE_URL}${this.sketchService.sketchId}/explore/graph/views/`, {})
+        .map((result) => {
+          return result['objects'][0]['views']
+        });
+  }
+
 }

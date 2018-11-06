@@ -8774,6 +8774,7 @@ ts-graphs-cypher-query button[type="submit"] i {
 
 ts-graphs-cypher-query .ts-graphs-cypher-query__predefined-queries {
   height: 57px;
+  min-width: 300px;
   background-color: #f9f9f9;
   margin-right: 10px;
   border: 0px;

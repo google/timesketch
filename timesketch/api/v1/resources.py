@@ -47,7 +47,6 @@ from flask_restful import reqparse
 from flask_restful import Resource
 from sqlalchemy import desc
 from sqlalchemy import not_
-import pycypher
 
 from timesketch.lib.aggregators import heatmap
 from timesketch.lib.aggregators import histogram
@@ -73,7 +72,9 @@ from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
 from timesketch.lib.utils import get_validated_indices
-from timesketch.lib.cypher import transpile_query, InvalidQuery
+from timesketch.lib.experimental.utils import GRAPH_VIEWS
+from timesketch.lib.experimental.utils import get_graph_views
+from timesketch.lib.experimental.utils import get_graph_view
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchIndex
@@ -1457,58 +1458,25 @@ class GraphResource(ResourceMixin, Resource):
 
         form = GraphExploreForm.build(request)
         if form.validate_on_submit():
-            query = form.query.data
+            graph_view_id = form.graph_view_id.data
             output_format = form.output_format.data
 
-            try:
-                transpiled = transpile_query(query, sketch_id)
-            except (pycypher.CypherParseError, InvalidQuery) as e:
-                return bad_request(e.message)
+            graph_view = GRAPH_VIEWS[graph_view_id]
+            query = graph_view[u'query']
 
-            intermediate_result = self.graph_datastore.query(
-                transpiled, output_format='neo4j', return_rows=True)
-            nodes = []
-            edges = []
-            timestamps_by_edge_id = {}
-            if intermediate_result['rows'] is None:
-                intermediate_result['rows'] = []
-            for node_ids, edge_ids, timestamps_s in intermediate_result['rows']:
-                nodes.extend(node_ids)
-                for edge_id, timestamps in zip(edge_ids, timestamps_s):
-                    if edge_id not in timestamps_by_edge_id:
-                        timestamps_by_edge_id[edge_id] = []
-                    if timestamps is None:
-                        timestamps = []
-                    timestamps_by_edge_id[edge_id].extend(timestamps)
-            nodes = list(set(nodes))
-            edges = list(timestamps_by_edge_id.keys())
-            for edge_id in timestamps_by_edge_id:
-                timestamps_by_edge_id[edge_id] = list(set(
-                    timestamps_by_edge_id[edge_id]
-                ))
-            final_query = '''
-                UNWIND {edge_ids} AS edge_id MATCH ()-[e]->()
-                WHERE id(e) = edge_id AND e.sketch_id = {sketch_id}
-                RETURN e, null AS n
-                UNION ALL
-                UNWIND {node_ids} AS node_id MATCH (n)
-                WHERE id(n) = node_id AND n.sketch_id = {sketch_id}
-                RETURN null AS e, n
-            '''
+            result = self.graph_datastore.query(
+                query, params={u'sketch_id': str(sketch_id)},
+                output_format=output_format)
 
-            result = self.graph_datastore.query(final_query, params={
-                'sketch_id': sketch_id, 'edge_ids': edges, 'node_ids': nodes,
-            }, output_format=output_format)
-            for edge in result['graph']['edges']:
-                edge_data = edge['data']
-                edge_data['timestamps'] = timestamps_by_edge_id[
-                    int(edge_data['id'].replace('edge', ''))
-                ]
-                edge_data['count'] = str(len(edge_data['timestamps']))
-                if edge_data.get('timestamps_incomplete'):
-                    edge_data['count'] += '+'
-                if edge_data['count'] == '0+':
-                    edge_data['count'] = '???'
+            for edge in result[u'graph'][u'edges']:
+                edge_data = edge[u'data']
+                timestamps = edge_data.get(u'timestamps', [])
+                edge_data[u'count'] = str(len(timestamps))
+
+                if edge_data.get(u'timestamps_incomplete'):
+                    edge_data[u'count'] += u'+'
+                if edge_data[u'count'] == u'0+':
+                    edge_data[u'count'] = u'???'
 
             schema = {
                 u'meta': {
@@ -1519,6 +1487,59 @@ class GraphResource(ResourceMixin, Resource):
                 }]
             }
             return jsonify(schema)
+
+
+class GraphViewListResource(ResourceMixin, Resource):
+    """Resource to get result from graph query."""
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            Graph in JSON (instance of flask.wrappers.Response)
+        """
+        # Check access to the sketch
+        Sketch.query.get_with_acl(sketch_id)
+
+        schema = {
+            u'objects': [{
+                u'views': get_graph_views()
+            }]
+        }
+        return jsonify(schema)
+
+
+class GraphViewResource(ResourceMixin, Resource):
+    """Resource to get result from graph query."""
+
+    @login_required
+    def get(self, sketch_id, view_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            view_id: Integer key for a graph view.
+
+        Returns:
+            Graph in JSON (instance of flask.wrappers.Response)
+        """
+        # Check access to the sketch
+        Sketch.query.get_with_acl(sketch_id)
+        view = get_graph_view(view_id)
+
+        if not view:
+            return abort(HTTP_STATUS_CODE_NOT_FOUND)
+
+        schema = {
+            u'objects': [{
+                u'views': view
+            }]
+        }
+        return jsonify(schema)
 
 
 class SearchIndexListResource(ResourceMixin, Resource):

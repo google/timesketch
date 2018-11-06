@@ -21,6 +21,8 @@ from .resources import EventResource
 from .resources import EventAnnotationResource
 from .resources import EventCreateResource
 from .resources import GraphResource
+from .resources import GraphViewListResource
+from .resources import GraphViewResource
 from .resources import SketchResource
 from .resources import SketchListResource
 from .resources import ViewResource
@@ -64,5 +66,7 @@ API_ROUTES = [
     (TimelineResource, '/sketches/<int:sketch_id>/timelines/<int:timeline_id>/'),
     (SearchIndexListResource, '/searchindices/'),
     (SearchIndexResource, '/searchindices/<int:searchindex_id>/'),
-    (GraphResource, '/sketches/<int:sketch_id>/explore/graph/')
+    (GraphResource, '/sketches/<int:sketch_id>/explore/graph/'),
+    (GraphViewListResource, '/sketches/<int:sketch_id>/explore/graph/views/'),
+    (GraphViewResource, '/sketches/<int:sketch_id>/explore/graph/views/<int:view_id>/'),
 ]

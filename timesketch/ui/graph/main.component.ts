@@ -1,4 +1,9 @@
-import {Component, Input, OnChanges, SimpleChanges} from '@angular/core';
+import {
+    Component,
+    Input,
+    OnChanges,
+    SimpleChanges
+} from '@angular/core';
 
 import {SketchService} from '../api/sketch.service';
 import {GraphService} from '../api/graph.service';
@@ -9,24 +14,23 @@ import {GraphState} from './models';
   templateUrl: './main.component.html',
   providers: [SketchService, GraphService],
 })
-
 export class MainComponent implements OnChanges {
   @Input() sketchId: string;
 
   graphState: GraphState = {type: 'empty'};
 
   constructor(
-    private readonly sketchService: SketchService,
-    private readonly graphService: GraphService,
+      private readonly sketchService: SketchService,
+      private readonly graphService: GraphService,
   ) {}
 
   ngOnChanges(changes: SimpleChanges) {
     this.sketchService.sketchId = Number(this.sketchId);
   }
 
-  onCypherSearch(query: string) {
+  onCypherSearch(graph_view_id: number) {
     this.graphState = {type: 'loading'};
-    this.graphService.search(query).subscribe((elements) => {
+    this.graphService.search(graph_view_id).subscribe((elements) => {
       this.graphState = {type: 'ready', elements};
     });
   }

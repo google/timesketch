@@ -1,29 +1,20 @@
 <div class="card card-top">
 
-  <form class="form-inline" (ngSubmit)="onSubmit()">
+    <form class="form-inline" (ngSubmit)="onSubmit()">
 
-    <select class="select ts-graphs-cypher-query__predefined-queries pull-left" (change)="onQuerySelect($event.target.value)">
-      <option disabled>Predefined queries</option>
-      <option *ngFor="let item of predefinedQueries" [value]="item.query">
-        {{item.name}}
-      </option>
-    </select>
+        <select class="select ts-graphs-cypher-query__predefined-queries pull-left" (change)="onQuerySelect($event.target.value)">
+            <option disabled>Predefined queries</option>
+            <option *ngFor="let item of predefinedQueries" [value]="item.id">
+                {{item.name}}
+            </option>
+        </select>
 
-    <div class="input-group">
-      <input
-        [(ngModel)]="query"
-        type="search"
-        class="search-input"
-        placeholder="Search"
-        [ngModelOptions]="{standalone: true}"
-        autofocus
-      >
-      <span class="input-group-btn">
+        <span class="input-group-btn">
         <button type="submit" class="btn search-input">
           <i class="fa fa-search"></i>
         </button>
       </span>
-    </div>
-  </form>
+
+    </form>
 
 </div>

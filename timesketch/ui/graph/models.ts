@@ -33,7 +33,7 @@ export type GraphSchema = {
 
 export type ElementDef = {
   data: ElementData
-  scratch: ElementScratch
+  //scratch: ElementScratch
 };
 
 export type GraphDef = {
@@ -107,10 +107,14 @@ export type CytoscapeSettings = {
   pixelRatio?: number
 };
 
-/**
- * Type of predefined queries in cypher-query.data.ts.
- */
-export type PredefinedQuery = {
-  name: string
+export type GraphView = {
+  name: string,
+  description: string,
+  labels: string[],
+  supported_os: string[],
   query: string
+};
+
+export type GraphViews = {
+  views: GraphView[]
 };

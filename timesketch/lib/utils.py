@@ -36,6 +36,7 @@ def random_color():
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
     return u'{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
 
+
 def read_and_validate_csv(path, delimiter):
     """Generator for reading a CSV or TSV file.
 
@@ -72,6 +73,7 @@ def read_and_validate_csv(path, delimiter):
                 continue
 
             yield row
+
 
 def read_and_validate_redline(path):
     """Generator for reading a Redline CSV file.
@@ -121,6 +123,7 @@ def read_and_validate_redline(path):
             row_to_yield["tag"] = tags # extra field
 
             yield row_to_yield
+
 
 def read_and_validate_jsonl(path, _):
     """Generator for reading a JSONL (json lines) file.
