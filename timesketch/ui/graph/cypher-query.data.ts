@@ -1,4 +1,4 @@
-import {PredefinedQuery} from './models'
+import {PredefinedQuery} from './models';
 
 export const predefinedQueries: PredefinedQuery[] = [
   {
@@ -23,4 +23,4 @@ export const predefinedQueries: PredefinedQuery[] = [
       AND r1.timestamp < r2.timestamp < r1.timestamp + 60 * 20
     `,
   },
-]
+];

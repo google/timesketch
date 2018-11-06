@@ -18,9 +18,13 @@ import csv
 import datetime
 import json
 import random
+import sys
 import time
 
 from dateutil import parser
+
+# Set CSV field size limit to systems max value.
+csv.field_size_limit(sys.maxsize)
 
 
 def random_color():
@@ -36,19 +40,18 @@ def random_color():
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
     return u'{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
 
-def read_and_validate_csv(path, delimiter):
+
+def read_and_validate_csv(path):
     """Generator for reading a CSV or TSV file.
 
     Args:
         path: Path to the file
-        delimiter: character used as a field separator
     """
     # Columns that must be present in the CSV file
     mandatory_fields = [u'message', u'datetime', u'timestamp_desc']
 
     with open(path, 'rb') as fh:
-
-        reader = csv.DictReader(fh, delimiter=delimiter.decode('string_escape'))
+        reader = csv.DictReader(fh)
         csv_header = reader.fieldnames
         missing_fields = []
         # Validate the CSV header
@@ -73,11 +76,11 @@ def read_and_validate_csv(path, delimiter):
 
             yield row
 
+
 def read_and_validate_redline(path):
     """Generator for reading a Redline CSV file.
     Args:
         path: Path to the file
-        delimiter: character used as a field separator
     """
     # Columns that must be present in the CSV file
 
@@ -122,6 +125,7 @@ def read_and_validate_redline(path):
 
             yield row_to_yield
 
+
 def read_and_validate_jsonl(path, _):
     """Generator for reading a JSONL (json lines) file.
 
@@ -131,7 +135,6 @@ def read_and_validate_jsonl(path, _):
     # Fields that must be present in each entry of the JSONL file.
     mandatory_fields = [u'message', u'datetime', u'timestamp_desc']
     with open(path, 'rb') as fh:
-
         lineno = 0
         for line in fh:
             lineno += 1
