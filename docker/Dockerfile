@@ -30,6 +30,8 @@ RUN apt-get update && apt-get -y install python-plaso plaso-tools nodejs yarn
 RUN pip install --upgrade pip
 ADD . /tmp/timesketch
 RUN cd /tmp/timesketch && yarn install && yarn run build
+# Remove pyyaml from requiriments.txt to avoid conflits with python-yaml ubuntu package
+RUN sed -i -e '/pyyaml/d' /tmp/timesketch/requirements.txt
 RUN pip install /tmp/timesketch/
 
 # Copy the Timesketch configuration file into /etc
