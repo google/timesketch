@@ -1,4 +1,4 @@
-timestamp,message,timestamp_desc,datetime,timesketch_label,tag
+timestamp,message,timestamp_desc,datetime,extra_field1,extra_field2
 1331698658276340,"[7036 / 0x1b7c] Source Name: Service Control Manager Strings: ['Windows Modules Installer', 'stopped', '540072007500730074006500640049006E007300740061006C006C00650072002F0031000000'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12050 Event Level: 4",Content Modification Time,2012-03-14T04:17:38+00:00,,[]
 1331698663354562,"[105 / 0x0069] Source Name: Microsoft-Windows-Eventlog Strings: ['System', 'C:\Windows\System32\Winevt\Logs\Archive-System-2012-03-14-04-17-39-932.evtx'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12049 Event Level: 4",Content Modification Time,2012-03-14T04:17:43+00:00,,[]
 1331699591957337,"[7036 / 0x1b7c] Source Name: Service Control Manager Strings: ['WinHTTP Web Proxy Auto-Discovery Service', 'stopped', '570069006E0048007400740070004100750074006F00500072006F00780079005300760063002F0031000000'] Computer Name: WKS-WIN764BITB.shieldbase.local Record Number: 12051 Event Level: 4",Content Modification Time,2012-03-14T04:33:12+00:00,,[]

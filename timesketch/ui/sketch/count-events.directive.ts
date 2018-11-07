@@ -13,7 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-import * as numeral from 'numeral/numeral.js'
+import * as numeral from 'numeral/numeral.js';
 
 export const tsCountEvents = ['timesketchApi', function (timesketchApi) {
     /**
@@ -27,8 +27,8 @@ export const tsCountEvents = ['timesketchApi', function (timesketchApi) {
         },
         controller: function ($scope) {
             timesketchApi.countEvents($scope.sketchId).success(function (data) {
-                $scope.count = numeral(data.meta['count']).format('0.0a')
-            })
+                $scope.count = numeral(data.meta['count']).format('0.0a');
+            });
         },
-    }
-}]
+    };
+}];

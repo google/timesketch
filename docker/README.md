@@ -2,6 +2,8 @@
 
 Timesketch has support for Docker. This is a convenient way of getting up and running.
 
+NOTE: Windows based host systems are not supported at this time.
+
 ### Install Docker
 Follow the official instructions [here](https://www.docker.com/community-edition)
 

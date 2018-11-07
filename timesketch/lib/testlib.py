@@ -18,7 +18,6 @@ import json
 from flask_testing import TestCase
 
 from timesketch import create_app
-from timesketch.lib import datastore
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.models import init_db
 from timesketch.models import drop_all
@@ -31,7 +30,7 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Event
-from timesketch.models.story import Story
+from timesketch.models.sketch import Story
 
 
 class TestConfig(object):
@@ -46,7 +45,7 @@ class TestConfig(object):
     GRAPH_BACKEND_ENABLED = False
 
 
-class MockDataStore(datastore.DataStore):
+class MockDataStore(object):
     """A mock implementation of a Datastore."""
     event_dict = {
         u'_index': [],

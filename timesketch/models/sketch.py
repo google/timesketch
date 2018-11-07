@@ -226,11 +226,15 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             query_filter: Query filter dictionary serialized to JSON
 
         """
-        DEFAULT_LIMIT = 40  # Number of resulting documents to return
+        DEFAULT_FROM = 0
+        DEFAULT_SIZE = 40 # Number of resulting documents to return
+        DEFAULT_LIMIT = DEFAULT_SIZE  # Number of resulting documents to return
         DEFAULT_VALUES = {
             u'time_start': None,
             u'time_end': None,
             u'limit': DEFAULT_LIMIT,
+            u'from': DEFAULT_FROM,
+            u'size': DEFAULT_SIZE,
             u'indices': [],
             u'exclude': [],
             u'order': u'asc'
@@ -283,6 +287,18 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.name = name
         self.user = user
         self.query_string = query_string
+        if not query_filter:
+            filter_template = {
+                u'exclude': [],
+                u'indices': u'_all',
+                u'time_start': None,
+                u'time_end': None,
+                u'limit': 40,
+                u'from': 0,
+                u'order': u'asc',
+                u'size': u'40'
+            }
+            query_filter = json.dumps(filter_template, ensure_ascii=False)
         self.query_filter = query_filter
         self.query_dsl = query_dsl
 
@@ -306,3 +322,27 @@ class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.sketch = sketch
         self.searchindex = searchindex
         self.document_id = document_id
+
+
+class Story(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
+            BaseModel):
+    """Implements the Story model."""
+    title = Column(Unicode(255))
+    content = Column(UnicodeText())
+    user_id = Column(Integer, ForeignKey(u'user.id'))
+    sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
+
+    def __init__(self, title, content, sketch, user):
+        """Initialize the Story object.
+
+        Args:
+            title: The title of the story
+            content: Content of the story
+            sketch: A sketch (instance of timesketch.models.sketch.Sketch)
+            user: A user (instance of timesketch.models.user.User)
+        """
+        super(Story, self).__init__()
+        self.title = title
+        self.content = content
+        self.sketch = sketch
+        self.user = user

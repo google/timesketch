@@ -18,9 +18,13 @@ import csv
 import datetime
 import json
 import random
+import sys
 import time
 
 from dateutil import parser
+
+# Set CSV field size limit to systems max value.
+csv.field_size_limit(sys.maxsize)
 
 
 def random_color():
@@ -37,19 +41,17 @@ def random_color():
     return u'{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
 
 
-def read_and_validate_csv(path, delimiter):
+def read_and_validate_csv(path):
     """Generator for reading a CSV or TSV file.
 
     Args:
         path: Path to the file
-        delimiter: character used as a field separator
     """
     # Columns that must be present in the CSV file
     mandatory_fields = [u'message', u'datetime', u'timestamp_desc']
 
     with open(path, 'rb') as fh:
-
-        reader = csv.DictReader(fh, delimiter=delimiter.decode('string_escape'))
+        reader = csv.DictReader(fh)
         csv_header = reader.fieldnames
         missing_fields = []
         # Validate the CSV header
@@ -60,15 +62,68 @@ def read_and_validate_csv(path, delimiter):
             raise RuntimeError(
                 u'Missing fields in CSV header: {0:s}'.format(missing_fields))
         for row in reader:
-            if u'timestamp' not in csv_header and u'datetime' in csv_header:
-                try:
-                    parsed_datetime = parser.parse(row[u'datetime'])
-                    row[u'timestamp'] = str(
-                        int(time.mktime(parsed_datetime.timetuple())))
-                except ValueError:
-                    continue
+            try:
+                # normalize datetime to ISO 8601 format if it's not the case.
+                parsed_datetime = parser.parse(row[u'datetime'])
+                row[u'datetime'] = parsed_datetime.isoformat()
+
+                normalized_timestamp = int(
+                    time.mktime(parsed_datetime.utctimetuple()) * 1000000)
+                normalized_timestamp += parsed_datetime.microsecond
+                row[u'timestamp'] = str(normalized_timestamp)
+            except ValueError:
+                continue
 
             yield row
+
+
+def read_and_validate_redline(path):
+    """Generator for reading a Redline CSV file.
+    Args:
+        path: Path to the file
+    """
+    # Columns that must be present in the CSV file
+
+    # check if it is the right redline format
+    mandatory_fields = [u'Alert', u'Tag', u'Timestamp', u'Field', u'Summary']
+
+    with open(path, 'rb') as fh:
+        csv.register_dialect('myDialect',
+                             delimiter=',',
+                             quoting=csv.QUOTE_ALL,
+                             skipinitialspace=True)
+        reader = csv.DictReader(fh, delimiter=',', dialect='myDialect')
+
+        csv_header = reader.fieldnames
+        missing_fields = []
+        # Validate the CSV header
+        for field in mandatory_fields:
+            if field not in csv_header:
+                missing_fields.append(field)
+        if missing_fields:
+            raise RuntimeError(
+                u'Missing fields in CSV header: {0:s}'.format(missing_fields))
+        for row in reader:
+
+            dt = parser.parse(row['Timestamp'])
+            timestamp = int(time.mktime(dt.timetuple())) * 1000
+            dt_iso_format = dt.isoformat()
+            timestamp_desc = row['Field']
+
+            summary = row['Summary']
+            alert = row['Alert']
+            tag = row['Tag']
+
+            row_to_yield = {}
+            row_to_yield["message"] = summary
+            row_to_yield["timestamp"] = timestamp
+            row_to_yield["datetime"] = dt_iso_format
+            row_to_yield["timestamp_desc"] = timestamp_desc
+            row_to_yield["alert"] = alert #extra field
+            tags = [tag]
+            row_to_yield["tag"] = tags # extra field
+
+            yield row_to_yield
 
 
 def read_and_validate_jsonl(path, _):
@@ -80,7 +135,6 @@ def read_and_validate_jsonl(path, _):
     # Fields that must be present in each entry of the JSONL file.
     mandatory_fields = [u'message', u'datetime', u'timestamp_desc']
     with open(path, 'rb') as fh:
-
         lineno = 0
         for line in fh:
             lineno += 1

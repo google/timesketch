@@ -4,16 +4,13 @@ You can ingest timeline data from a JSON, JSONL or CSV file. You can have any nu
 
 **Mandatory fields:**
 * message
- - String with an informative message of the event
-* timestamp
- - Timestamp as microseconds since Unix epoch
- - Ex: 1331698658276340
+   * String with an informative message of the event
 * datetime
- - ISO8601 format
- - Ex: 2015-07-24T19:01:01+00:00
+   * ISO8601 format
+   * Ex: 2015-07-24T19:01:01+00:00
 * timestamp_desc
- - String explaining what type of timestamp it is. E.g file created
- - Ex: "Time created"
+   * String explaining what type of timestamp it is. E.g file created
+   * Ex: "Time created"
 
 ## Example CSV file
 You need to provide the CSV header with the column names as the first line in the file.
