@@ -30,6 +30,7 @@ DEFAULT_FIELDS = [
     u'datetime',
     u'timestamp',
     u'timestamp_desc',
+    u'_index',
     u'message']
 DEFAULT_SOURCE_FIELDS = DEFAULT_FIELDS + [
     u'timesketch_label',
