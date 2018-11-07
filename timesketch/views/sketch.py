@@ -473,8 +473,11 @@ def export(sketch_id):
     csv_writer = csv.DictWriter(csv_out, fieldnames=fieldnames)
     csv_writer.writeheader()
     for _event in result[u'hits'][u'hits']:
-        csv_writer.writerow(
-            dict((k, v.encode(u'utf-8') if isinstance(v, basestring) else v)
-                 for k, v in _event[u'_source'].iteritems()))
+        row = dict((k, v.encode(u'utf-8') if isinstance(v, basestring) else v)
+                   for k, v in _event[u'_source'].iteritems())
+        row[u'_index'] = _event[u'_index']
+        if isinstance(row[u'_index'], basestring):
+            row[u'_index'] = row[u'_index'].encode(u'utf-8')
+        csv_writer.writerow(row)
 
     return csv_out.getvalue()
