@@ -18,8 +18,8 @@ export class CypherQueryComponent implements OnChanges {
   @Input() sketchId: number;
   @Output() cypherSearch = new EventEmitter<string>();
 
-  graph_view_id: string;
-  predefinedQueries = null;
+  predefinedQueries;
+  selectedQuery;
 
   constructor(
     private readonly graphService: GraphService,
@@ -33,12 +33,12 @@ export class CypherQueryComponent implements OnChanges {
     }
   }
 
-  onQuerySelect(graph_view_id) {
-    this.graph_view_id = graph_view_id;
-    this.onSubmit();
+  onQuerySelect(query) {
+      this.selectedQuery = this.predefinedQueries[query];
   }
 
-  onSubmit() {
-    this.cypherSearch.emit(this.graph_view_id);
+  onQuerySubmit(queryData) {
+      this.cypherSearch.emit(queryData);
   }
+
 }

@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import * as cytoscape from 'cytoscape';
 
-type Opt = Cy.CytoscapeOptions;
+ type Opt = Cy.CytoscapeOptions;
 
 interface CytoscapeEvent<T> {
   cy: Cy.Core;

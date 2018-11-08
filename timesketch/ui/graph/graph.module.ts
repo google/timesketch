@@ -17,10 +17,12 @@ import angular from 'angularjs-for-webpack';
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import {downgradeComponent} from '@angular/upgrade/static';
 
 import {CytoscapeComponent} from './cytoscape.component';
 import {CypherQueryComponent} from './cypher-query.component';
+import {CypherFormComponent} from './cypher-form.component';
 import {GraphViewComponent} from './graph-view.component';
 import {SidebarComponent} from './sidebar.component';
 import {EventListComponent} from './event-list.component';
@@ -34,10 +36,11 @@ export const tsGraphModule = angular.module('timesketch.graphs', [])
   }));
 
 @NgModule({
-  imports: [CommonModule, FormsModule, ApiModule],
+  imports: [CommonModule, FormsModule, ApiModule, ReactiveFormsModule],
   declarations: [
       CytoscapeComponent,
       CypherQueryComponent,
+      CypherFormComponent,
       GraphViewComponent,
       SidebarComponent,
       EventListComponent,

@@ -25,7 +25,7 @@ export class GraphService {
     private readonly http: HttpClient,
   ) {}
 
-  search(graph_view_id: number): Observable<GraphDef> {
+  search(queryData): Observable<GraphDef> {
     type Dict<T> = {[k: string]: T};
 
     function object_map<V, W>(obj: Dict<V>, func: (k: string, v: V) => [string, W]): Dict<W> {
@@ -71,10 +71,9 @@ export class GraphService {
       }
       return elements;
     }
-
    return this.http
       .post(`${SKETCH_BASE_URL}${this.sketchService.sketchId}/explore/graph/`, {
-        graph_view_id, output_format: 'cytoscape',
+        graph_view_id: queryData.id, parameters: queryData.parameters, output_format: 'cytoscape',
       })
       .map((result) => format_graph({
         elements: result['objects'][0]['graph'],

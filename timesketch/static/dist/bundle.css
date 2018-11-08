@@ -8780,41 +8780,6 @@ ts-graphs-cypher-query .ts-graphs-cypher-query__predefined-queries {
   border: 0px;
   -webkit-border-radius: 0px; }
 
-ts-graphs-cytoscape-settings {
-  min-width: 250px; }
-  ts-graphs-cytoscape-settings input[type="number"] {
-    width: 70px; }
-  ts-graphs-cytoscape-settings input[type="checkbox"] {
-    vertical-align: middle;
-    margin: 0px; }
-  ts-graphs-cytoscape-settings input[type="radio"] {
-    vertical-align: middle;
-    margin: 0px; }
-
-ts-graphs-graph-actions button {
-  margin: 5px !important;
-  text-align: left !important;
-  box-sizing: border-box;
-  display: block;
-  width: calc(100% - 10px); }
-
-ts-graphs-graph-actions .ts-graphs-graph-actions__modal-background {
-  position: fixed;
-  left: 0px;
-  top: 0px;
-  right: 0px;
-  bottom: 0px;
-  z-index: 1040;
-  padding-top: 200px;
-  background-color: rgba(0, 0, 0, 0.5);
-  text-align: center; }
-
-ts-graphs-graph-actions .ts-graphs-graph-actions__modal {
-  padding: 20px;
-  background-color: white;
-  box-shadow: 0 0 6px 2px rgba(0, 0, 0, 0.4);
-  display: inline-block; }
-
 ts-graphs-graph-view {
   position: absolute;
   top: 0px;

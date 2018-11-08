@@ -1452,14 +1452,16 @@ class GraphResource(ResourceMixin, Resource):
         form = GraphExploreForm.build(request)
         if form.validate_on_submit():
             graph_view_id = form.graph_view_id.data
+            parameters = form.parameters.data
             output_format = form.output_format.data
 
             graph_view = GRAPH_VIEWS[graph_view_id]
             query = graph_view[u'query']
 
+            parameters[u'sketch_id'] = str(sketch_id)
+
             result = self.graph_datastore.query(
-                query, params={u'sketch_id': str(sketch_id)},
-                output_format=output_format)
+                query, params=parameters, output_format=output_format)
 
             for edge in result[u'graph'][u'edges']:
                 edge_data = edge[u'data']

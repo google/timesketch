@@ -28,9 +28,9 @@ export class MainComponent implements OnChanges {
     this.sketchService.sketchId = Number(this.sketchId);
   }
 
-  onCypherSearch(graph_view_id: number) {
+  onCypherSearch(queryData) {
     this.graphState = {type: 'loading'};
-    this.graphService.search(graph_view_id).subscribe((elements) => {
+    this.graphService.search(queryData).subscribe((elements) => {
       this.graphState = {type: 'ready', elements};
     });
   }

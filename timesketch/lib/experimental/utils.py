@@ -29,20 +29,30 @@ GRAPH_VIEWS = [
         u'description': u'Show the entire graph.',
         u'labels': [u'Browser'],
         u'supported_os': [u'Darwin', u'Linux', u'Windows'],
+        u'form_data': {},
         u'query': u'MATCH (:Sketch{sketch_id:{sketch_id}})<-[:HAS]-(a)-[b]->(c) RETURN *'
     },
     {
-        u'name': u'Interactive logins',
+        u'name': u'Windows interactive logins',
         u'description': u'Windows interactive logins.',
         u'labels': [],
         u'supported_os': [u'Windows'],
-        u'query': u'MATCH (:Sketch{sketch_id:{sketch_id}})<-[:HAS]-(user:WindowsADUser)-[r1:ACCESS]->(m1:WindowsMachine) WHERE r1.method = "Interactive" AND user.username = "*" RETURN *'
+        u'form_data': {
+            u'username': {
+                u'label': u'Username',
+                u'value': u'',
+                u'type': u'text',
+                u'validation': {u'required': True},
+            }
+        },
+        u'query': u'MATCH (:Sketch{sketch_id:{sketch_id}})<-[:HAS]-(user:WindowsADUser)-[r1:ACCESS]->(m1:WindowsMachine) WHERE r1.method = "Interactive" AND user.username = {username} RETURN *'
     },
     {
-        u'name': u'All logins',
+        u'name': u'All Windows logins',
         u'description': u'Windows interactive logins.',
         u'labels': [],
         u'supported_os': [u'Windows'],
+        u'form_data': {},
         u'query': u'MATCH (:Sketch{sketch_id:{sketch_id}})<-[:HAS]-(user:WindowsADUser)-[r1:ACCESS]->(m1:WindowsMachine) RETURN *'
     },
 ]

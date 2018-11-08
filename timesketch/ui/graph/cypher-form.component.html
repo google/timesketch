@@ -1,0 +1,18 @@
+<form *ngIf="form" novalidate (ngSubmit)="onSubmit(form.value)" [formGroup]="form">
+    <div *ngFor="let prop of formDataIterable">
+
+        <label>{{ prop.label }}</label>
+        <div [ngSwitch]="prop.type">
+
+            <input *ngSwitchCase="'text'"
+                   [formControlName]="prop.key"
+                   [id]="prop.key"
+                   [type]="prop.type">
+
+        </div>
+    </div>
+    <br>
+    <p>
+        <button type="submit">Search</button>
+    </p>
+</form>
