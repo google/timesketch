@@ -42,8 +42,28 @@ Unlike JSON files, imports in JSONL format can be streamed from disk, making the
     {"message": "Another message","timestamp": 123456790,"datetime": "2015-07-24T19:01:02+00:00","timestamp_desc": "Write time","extra_field_1": "bar"}
     {"message": "Yet more messages","timestamp": 123456791,"datetime": "2015-07-24T19:01:03+00:00","timestamp_desc": "Write time","extra_field_1": "baz"}
 
+## Import file via tsctl
+
 Then you can create a new Timesketch timeline from the file:
 
     $ tsctl csv2ts --name my_timeline --file timeline.csv
     $ tsctl json2ts --name my_timeline --file timeline.json
     $ tsctl jsonl2ts --name my_timeline --file timeline.jsonl
+    
+## Upload via HTTPS
+
+You can also upload the file directly via Web UI if enabled in /etc/timesketch.conf:
+
+``
+UPLOAD_ENABLED = True
+``
+
+### Known issue
+
+There is a known issue that in some cases celery is not running and thus not processing newly uploaded files via WebUI. To get the files processes you need to start celery manually by:
+
+``
+bash -c "/usr/local/bin/celery -A timesketch.lib.tasks worker --uid nobody --loglevel info"
+``
+    
+    
