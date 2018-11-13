@@ -156,10 +156,9 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
         if not index_analyzer_group:
             return chain(
                 index_task, run_sketch_init.s(), sketch_analyzer_group)
-        else:
-            return chain(
-                index_task, index_analyzer_group, run_sketch_init.s(),
-                sketch_analyzer_group)
+        return chain(
+            index_task, index_analyzer_group, run_sketch_init.s(),
+            sketch_analyzer_group)
 
     return chain(index_task, index_analyzer_group)
 

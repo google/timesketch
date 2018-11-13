@@ -1046,10 +1046,10 @@ class UploadFileResource(ResourceMixin, Resource):
                 db_session.commit()
 
             # Start Celery pipeline for indexing and analysis.
+            # Import here to avoid circular imports.
             from timesketch.lib import tasks
             pipeline = tasks.build_index_pipeline(
                 file_path, timeline_name, index_name, file_extension, sketch_id)
-            print pipeline
             pipeline.apply_async(task_id=index_name)
 
             # Return Timeline if it was created.
@@ -1374,13 +1374,14 @@ class TimelineListResource(ResourceMixin, Resource):
 
             # If enabled, run sketch analyzers when timeline is added.
             # Import here to avoid circular imports.
-            from timesketch.lib import tasks
-            sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
-                sketch_id)
-            if sketch_analyzer_group:
-                pipeline = (tasks.run_sketch_init.s(
-                    [searchindex.index_name]) | sketch_analyzer_group)
-                pipeline.apply_async(task_id=searchindex.index_name)
+            if current_app.config.get(u'ENABLE_SKETCH_ANALYZERS'):
+                from timesketch.lib import tasks
+                sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+                    sketch_id)
+                if sketch_analyzer_group:
+                    pipeline = (tasks.run_sketch_init.s(
+                        [searchindex.index_name]) | sketch_analyzer_group)
+                    pipeline.apply_async(task_id=searchindex.index_name)
 
             return self.to_json(
                 timeline, meta=metadata, status_code=return_code)

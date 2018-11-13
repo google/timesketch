@@ -43,6 +43,9 @@ class TestConfig(object):
     ELASTIC_PORT = None
     UPLOAD_ENABLED = False
     GRAPH_BACKEND_ENABLED = False
+    ENABLE_INDEX_ANALYZERS = False
+    ENABLE_SKETCH_ANALYZERS = False
+    SIMILARITY_DATA_TYPES = []
 
 
 class MockDataStore(object):
