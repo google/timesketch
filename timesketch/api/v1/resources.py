@@ -1000,7 +1000,7 @@ class UploadFileResource(ResourceMixin, Resource):
 
         form = UploadFileForm()
         if form.validate_on_submit() and upload_enabled:
-            sketch_id = form.sketch_id.data
+            sketch_id = form.sketch_id.data or None
             file_storage = form.file.data
             _filename, _extension = os.path.splitext(file_storage.filename)
             file_extension = _extension.lstrip(u'.')
@@ -1046,11 +1046,11 @@ class UploadFileResource(ResourceMixin, Resource):
                 db_session.commit()
 
             # Start Celery pipeline for indexing and analysis.
-            if current_app.config.get(u'ENABLE_INDEX_ANALYZERS'):
-                from timesketch.lib import tasks
-                pipeline = tasks.build_index_pipeline(
-                    file_path, timeline_name, index_name, file_extension)
-                pipeline.apply_async(task_id=index_name)
+            # Import here to avoid circular imports.
+            from timesketch.lib import tasks
+            pipeline = tasks.build_index_pipeline(
+                file_path, timeline_name, index_name, file_extension, sketch_id)
+            pipeline.apply_async(task_id=index_name)
 
             # Return Timeline if it was created.
             # pylint: disable=no-else-return
@@ -1373,12 +1373,15 @@ class TimelineListResource(ResourceMixin, Resource):
                 timeline = Timeline.query.get(timeline_id)
 
             # If enabled, run sketch analyzers when timeline is added.
+            # Import here to avoid circular imports.
             if current_app.config.get(u'ENABLE_SKETCH_ANALYZERS'):
                 from timesketch.lib import tasks
-                pipeline = tasks.build_sketch_analysis_pipeline(
-                    sketch_id, searchindex_id)
-                if pipeline:
-                    pipeline.apply_async(task_id=searchindex_id)
+                sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+                    sketch_id)
+                if sketch_analyzer_group:
+                    pipeline = (tasks.run_sketch_init.s(
+                        [searchindex.index_name]) | sketch_analyzer_group)
+                    pipeline.apply_async(task_id=searchindex.index_name)
 
             return self.to_json(
                 timeline, meta=metadata, status_code=return_code)
