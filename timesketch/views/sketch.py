@@ -187,7 +187,7 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     sketch_timelines = [t.searchindex.index_name for t in sketch.timelines]
     view_form = SaveViewForm()
     graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
-    similarity_enabled = current_app.config.get(u'ENABLE_SKETCH_ANALYZERS')
+    similarity_enabled = current_app.config.get(u'ENABLE_EXPERIMENTAL_UI')
 
     # Get parameters from the GET query
     url_query = request.args.get(u'q', u'')
