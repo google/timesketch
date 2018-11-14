@@ -1,5 +1,7 @@
 # Vagrant
 
+NOTE: Due to a bug with Yarn and Vagrant on Windows, Windows is not supported at the moment. Please use Linux or MacOS as host.
+
 Timesketch has support for Vagrant. This is a convenient way of getting up and running with Timesketch development, or just to test Timesketch.
 
 1. Install VirtualBox for your operating system
@@ -18,6 +20,7 @@ Follow the official instructions [here](https://www.vagrantup.com/docs/installat
 
 ### Create Timesketch Vagrant box
     $ cd timesketch/vagrant
+    $ vagrant plugin install vagrant-disksize
     $ vagrant up
     .. wait until the installation process is complete
     $ vagrant ssh

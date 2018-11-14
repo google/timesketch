@@ -13,7 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-import * as moment from 'moment'
+import * as moment from 'moment';
 
 export const tsTimelinesList = ['$interval', 'timesketchApi', function ($interval, timesketchApi) {
     /**
@@ -31,43 +31,39 @@ export const tsTimelinesList = ['$interval', 'timesketchApi', function ($interva
 
             const getTimelines = function () {
                 timesketchApi.getTimelines($scope.sketchId).success(function (data) {
-                    $scope.timelines = []
-                    const timelines = data.objects[0]
+                    $scope.timelines = [];
+                    const timelines = data.objects[0];
                     if (timelines) {
                         for (const timeline of timelines) {
-                            timeline.updated_at = moment.utc(timeline.updated_at).format('YYYY-MM-DD')
-                            timeline.ready = true
-                            const status = timeline.searchindex.status[0].status
-                            if (status == 'processing') {
-                                timeline.ready = false
-                            }
-                            $scope.timelines.push(timeline)
+                            timeline.updated_at = moment.utc(timeline.updated_at).format('YYYY-MM-DD');
+                            timeline.status = timeline.searchindex.status[0].status;
+                            $scope.timelines.push(timeline);
                         }
                     }
-                })
-            }
+                });
+            };
 
             $scope.deleteTimeline = function (timeline) {
-                timesketchApi.deleteTimeline($scope.sketchId, timeline.id)
-                const index = $scope.timelines.indexOf(timeline)
+                timesketchApi.deleteTimeline($scope.sketchId, timeline.id);
+                const index = $scope.timelines.indexOf(timeline);
                 if (index > -1) {
-                    $scope.timelines.splice(index, 1)
+                    $scope.timelines.splice(index, 1);
                 }
-            }
+            };
 
             this.updateTimelines = function (timeline) {
-                $scope.timelines.unshift(timeline)
-            }
+                $scope.timelines.unshift(timeline);
+            };
 
             // Get initial list of timelines
-            getTimelines()
+            getTimelines();
 
             // Fetch list of timelines periodically to update status.
-            const pollIntervall = 10000
+            const pollInterval = 10000;
             $interval(function () {
-                getTimelines()
-            }, pollIntervall)
+                getTimelines();
+            }, pollInterval);
 
         },
-    }
-}]
+    };
+}];

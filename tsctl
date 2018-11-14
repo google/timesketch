@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # Copyright 2015 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,7 @@
 
 import json
 import sys
+import yaml
 from uuid import uuid4
 
 from flask import current_app
@@ -32,13 +33,15 @@ from sqlalchemy.exc import IntegrityError
 from timesketch import create_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
+from timesketch.lib.utils import read_and_validate_redline
 from timesketch.lib.utils import read_and_validate_jsonl
-from timesketch.lib.experimental.similarity import SimilarityScorer
+from timesketch.lib.analyzers.similarity_scorer import SimilarityScorer
 from timesketch.models import db_session
 from timesketch.models import drop_all
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import SearchIndex
+from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import Timeline
 
 
@@ -232,7 +235,15 @@ class CreateTimelineBase(Command):
             required=False,
             default=DEFAULT_FLUSH_INTERVAL,
             help=u'OPTIONAL: How often to bulk insert events to Elasticsearch. '
-            u'Default: Every {0:d} event.'.format(DEFAULT_FLUSH_INTERVAL)))
+            u'Default: Every {0:d} event.'.format(DEFAULT_FLUSH_INTERVAL)),
+        Option(
+            u'--delimiter',
+            u'-d',
+            dest=u'delimiter',
+            required=False,
+            #type='bytes',
+            default=",",
+            help=u'Character used as a field separator.  Ex.: \'\\t\''))
 
     def __init__(self):
         super(CreateTimelineBase, self).__init__()
@@ -349,7 +360,7 @@ class CreateTimelineFromCsv(CreateTimelineBase):
         super(CreateTimelineFromCsv, self).__init__()
 
     def run(self, timeline_name, index_name, file_path, event_type,
-            flush_interval):
+            flush_interval, delimiter):
         """Create the timeline from a CSV file.
 
         Args:
@@ -358,6 +369,7 @@ class CreateTimelineFromCsv(CreateTimelineBase):
             file_path: Path to the file to process
             event_type: Type of event (e.g. plaso_event)
             flush_interval: Number of events to queue up before bulk insert
+            delimiter: Character used as a field separator
 
         """
         timeline_name = unicode(timeline_name.decode(encoding=u'utf-8'))
@@ -367,7 +379,7 @@ class CreateTimelineFromCsv(CreateTimelineBase):
             port=current_app.config[u'ELASTIC_PORT'])
 
         es.create_index(index_name=index_name, doc_type=event_type)
-        for event in read_and_validate_csv(file_path):
+        for event in read_and_validate_csv(file_path, delimiter):
             event_counter = es.import_event(
                 index_name, event_type, event, flush_interval=flush_interval)
             if event_counter % int(flush_interval) == 0:
@@ -381,6 +393,48 @@ class CreateTimelineFromCsv(CreateTimelineBase):
         sys.stdout.write(u'\nTotal events: {0:d}\n'.format(total_events))
         self.create_searchindex(timeline_name, index_name)
 
+
+class CreateTimelineFromRedline(CreateTimelineBase):
+    """Create a new Timesketch timeline from a Redline csv file."""
+
+    def __init__(self):
+        super(CreateTimelineFromRedline, self).__init__()
+
+    def run(self, timeline_name, index_name, file_path, event_type,
+            flush_interval, delimiter):
+        """Create the timeline from a Redline file.
+
+        Args:
+            timeline_name: The name of the timeline in Timesketch
+            index_name: Name of the index in Elasticsearch
+            file_path: Path to the file to process
+            event_type: Type of event (e.g. plaso_event)
+            flush_interval: Number of events to queue up before bulk insert
+            delimiter: Character used as a field separator
+
+        """
+        timeline_name = unicode(timeline_name.decode(encoding=u'utf-8'))
+        index_name = unicode(index_name.decode(encoding=u'utf-8'))
+        es = ElasticsearchDataStore(
+            host=current_app.config[u'ELASTIC_HOST'],
+            port=current_app.config[u'ELASTIC_PORT'])
+
+        es.create_index(index_name=index_name, doc_type=event_type)
+        for event in read_and_validate_redline(file_path):
+            event_counter = es.import_event(
+                index_name, event_type, event, flush_interval=flush_interval)
+            if event_counter % int(flush_interval) == 0:
+                sys.stdout.write(
+                    u'Indexing progress: {0:d} events\r'.format(event_counter))
+                sys.stdout.flush()
+
+        # Import the remaining events in the queue
+        total_events = es.import_event(
+            index_name, event_type, flush_interval=flush_interval)
+        sys.stdout.write(u'\nTotal events: {0:d}\n'.format(total_events))
+        self.create_searchindex(timeline_name, index_name)
+        
+        
 class CreateTimelineFromJSONL(CreateTimelineBase):
     """Create a new Timesketch timeline from a JSONL file."""
 
@@ -388,7 +442,7 @@ class CreateTimelineFromJSONL(CreateTimelineBase):
         super(CreateTimelineFromJSONL, self).__init__()
 
     def run(self, timeline_name, index_name, file_path, event_type,
-            flush_interval):
+            flush_interval, delimiter):
         """Create the timeline from a JSONL file.
 
         Args:
@@ -405,7 +459,7 @@ class CreateTimelineFromJSONL(CreateTimelineBase):
             port=current_app.config[u'ELASTIC_PORT'])
 
         es.create_index(index_name=index_name, doc_type=event_type)
-        for event in read_and_validate_jsonl(file_path):
+        for event in read_and_validate_jsonl(file_path, None):
             event_counter = es.import_event(
                 index_name, event_type, event, flush_interval=flush_interval)
             if event_counter % int(flush_interval) == 0:
@@ -418,7 +472,6 @@ class CreateTimelineFromJSONL(CreateTimelineBase):
             index_name, event_type, flush_interval=flush_interval)
         sys.stdout.write(u'\nTotal events: {0:d}\n'.format(total_events))
         self.create_searchindex(timeline_name, index_name)
-
 
 
 class PurgeTimeline(Command):
@@ -486,9 +539,81 @@ class SimilarityScore(Command):
             sys.stdout.write(u'No such index\n')
             sys.exit()
 
-        scorer = SimilarityScorer(index=index_name, data_type=data_type)
-        result = scorer.run()
-        sys.stdout.write(u'{0}'.format(result))
+        scorer = SimilarityScorer(index_name=index_name, data_type=data_type)
+        result = scorer.run_wrapper()
+        sys.stdout.write(u'{0}\n'.format(result))
+
+
+class SearchTemplateManager(Command):
+    """Command Module to manipulate Search templates."""
+    option_list = (
+        Option(u'--import', u'-i', dest=u'import_location', required=False),
+        Option(u'--export', u'-e', dest=u'export_location', required=False),
+    )
+
+    def run(self, import_location, export_location):
+        """Export/Import search templates to/from file.
+
+        Args:
+            import_location: Path to the yaml file to import templates.
+            export_location: Path to the yaml file to export templates.
+        """
+
+        if export_location:
+            search_templates = []
+            for search_template in SearchTemplate.query.all():
+                labels = []
+                for label in search_template.labels:
+                    if label.label.startswith(u'supported_os:'):
+                        labels.append(label.label.replace(
+                            u'supported_os:', u''))
+                search_templates.append({
+                    u'name': search_template.name,
+                    u'query_string': search_template.query_string,
+                    u'query_dsl': search_template.query_dsl,
+                    u'supported_os': labels
+                })
+
+            with open(export_location, 'w') as fh:
+                yaml.safe_dump(search_templates, stream=fh)
+
+        if import_location:
+            try:
+                with open(import_location, 'rb') as fh:
+                    search_templates = yaml.load(fh)
+            except IOError as e:
+                sys.stdout.write(u'Unable to open file: {0:s}\n'.format(e))
+                sys.exit(1)
+
+            for search_template in search_templates:
+                name = search_template[u'name']
+                query_string = search_template[u'query_string'],
+                query_dsl = search_template[u'query_dsl']
+
+                # Skip search template if already exits.
+                if SearchTemplate.query.filter_by(name=name).first():
+                    continue
+
+                imported_template = SearchTemplate(
+                    name=name,
+                    user=User(None),
+                    query_string=query_string,
+                    query_dsl=query_dsl)
+
+                # Add supported_os labels.
+                for supported_os in search_template[u'supported_os']:
+                    label_name = u'supported_os:{0:s}'.format(supported_os)
+                    label = SearchTemplate.Label.get_or_create(
+                        label=label_name, user=None)
+                    imported_template.labels.append(label)
+
+                # Set flag to identify local vs import templates.
+                remote_flag = SearchTemplate.Label.get_or_create(
+                    label=u'remote_template', user=None)
+                imported_template.labels.append(remote_flag)
+
+                db_session.add(imported_template)
+                db_session.commit()
 
 
 if __name__ == '__main__':
@@ -499,11 +624,13 @@ if __name__ == '__main__':
     shell_manager.add_command(u'manage_group', GroupManager())
     shell_manager.add_command(u'add_index', AddSearchIndex())
     shell_manager.add_command(u'csv2ts', CreateTimelineFromCsv())
+    shell_manager.add_command(u'redline2ts', CreateTimelineFromRedline())
     shell_manager.add_command(u'jsonl2ts', CreateTimelineFromJSONL())
     shell_manager.add_command(u'db', MigrateCommand)
     shell_manager.add_command(u'drop_db', DropDataBaseTables())
     shell_manager.add_command(u'json2ts', CreateTimelineFromJson())
     shell_manager.add_command(u'purge', PurgeTimeline())
+    shell_manager.add_command(u'search_template', SearchTemplateManager())
     shell_manager.add_command(u'similarity_score', SimilarityScore())
     shell_manager.add_command(u'runserver',
                               Server(host=u'127.0.0.1', port=5000))

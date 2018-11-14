@@ -1,3 +1,3 @@
-import 'angular'
+import 'angular';
 
-export default (window as any).angular
+export default (window as any).angular;
