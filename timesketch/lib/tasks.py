@@ -133,6 +133,7 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
         timeline_name: Name of the timeline to create.
         index_name: Name of the index to index to.
         file_extension: The file extension of the file.
+        sketch_id: The ID of the sketch to analyze.
 
     Returns:
         Celery chain with indexing task (or single indexing task) and analyzer
