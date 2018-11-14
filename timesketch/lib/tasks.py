@@ -124,7 +124,8 @@ def _get_index_analyzers():
     return group(tasks)
 
 
-def build_index_pipeline(file_path, timeline_name, index_name, file_extension):
+def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
+                         sketch_id=None):
     """Build a pipeline for index and analysis.
 
     Args:
@@ -132,30 +133,42 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension):
         timeline_name: Name of the timeline to create.
         index_name: Name of the index to index to.
         file_extension: The file extension of the file.
+        sketch_id: The ID of the sketch to analyze.
 
     Returns:
         Celery chain with indexing task (or single indexing task) and analyzer
         task group.
     """
     index_task_class = _get_index_task_class(file_extension)
-    analyzer_task_group = _get_index_analyzers()
+    index_analyzer_group = _get_index_analyzers()
+    sketch_analyzer_group = None
+
+    if sketch_id:
+        sketch_analyzer_group = build_sketch_analysis_pipeline(sketch_id)
 
     index_task = index_task_class.s(
         file_path, timeline_name, index_name, file_extension)
 
     # If there are no analyzers just run the indexer.
-    if not analyzer_task_group:
+    if not index_analyzer_group and not sketch_analyzer_group:
         return index_task
 
-    return chain(index_task, analyzer_task_group)
+    if sketch_analyzer_group:
+        if not index_analyzer_group:
+            return chain(
+                index_task, run_sketch_init.s(), sketch_analyzer_group)
+        return chain(
+            index_task, index_analyzer_group, run_sketch_init.s(),
+            sketch_analyzer_group)
+
+    return chain(index_task, index_analyzer_group)
 
 
-def build_sketch_analysis_pipeline(sketch_id, index_name):
+def build_sketch_analysis_pipeline(sketch_id):
     """Build a pipeline for sketch analysis.
 
     Args:
         sketch_id: The ID of the sketch to analyze.
-        index_name: Elasticsearch index name.
 
     Returns:
         Celery group with analysis tasks or None if no analyzers are enabled.
@@ -175,12 +188,30 @@ def build_sketch_analysis_pipeline(sketch_id, index_name):
         if kwarg_list:
             for kwargs in kwarg_list:
                 tasks.append(run_sketch_analyzer.s(
-                    sketch_id, index_name, analyzer_name, **kwargs))
+                    sketch_id, analyzer_name, **kwargs))
         else:
-            tasks.append(run_sketch_analyzer.s(
-                sketch_id, index_name, analyzer_name))
+            tasks.append(run_sketch_analyzer.s(sketch_id, analyzer_name))
 
     return group(tasks)
+
+
+@celery.task(track_started=True)
+def run_sketch_init(index_name_list):
+    """Create sketch init Celery task.
+
+    This task is needed to enable chaining of index analyzers and sketch
+    analyzer task groups. In order to run the sketch analyzers after indexing
+    this task needs to execute before any sketch analyzers.
+
+    Args:
+        index_name_list: List of index names.
+
+    Returns:
+        List with first entry of index_name_list.
+    """
+    if isinstance(index_name_list, basestring):
+        index_name_list = [index_name_list]
+    return index_name_list[:1]
 
 
 @celery.task(track_started=True)
@@ -202,7 +233,7 @@ def run_index_analyzer(index_name, analyzer_name, **kwargs):
 
 
 @celery.task(track_started=True)
-def run_sketch_analyzer(sketch_id, index_name, analyzer_name, **kwargs):
+def run_sketch_analyzer(index_name, sketch_id, analyzer_name, **kwargs):
     """Create a Celery task for a sketch analyzer.
 
     Args:

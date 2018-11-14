@@ -370,10 +370,12 @@ def timelines(sketch_id):
                 # If enabled, run sketch analyzers when timeline is added.
                 # Import here to avoid circular imports.
                 from timesketch.lib import tasks
-                pipeline = tasks.build_sketch_analysis_pipeline(
-                    sketch_id, searchindex_id)
-                if pipeline:
-                    pipeline.apply_async(task_id=searchindex_id)
+                sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+                    sketch_id)
+                if sketch_analyzer_group:
+                    pipeline = (tasks.run_sketch_init.s(
+                        [searchindex.index_name]) | sketch_analyzer_group)
+                    pipeline.apply_async(task_id=searchindex.index_name)
 
         return redirect(
             url_for(u'sketch_views.timelines', sketch_id=sketch.id))
@@ -473,8 +475,11 @@ def export(sketch_id):
     csv_writer = csv.DictWriter(csv_out, fieldnames=fieldnames)
     csv_writer.writeheader()
     for _event in result[u'hits'][u'hits']:
-        csv_writer.writerow(
-            dict((k, v.encode(u'utf-8') if isinstance(v, basestring) else v)
-                 for k, v in _event[u'_source'].iteritems()))
+        row = dict((k, v.encode(u'utf-8') if isinstance(v, basestring) else v)
+                   for k, v in _event[u'_source'].iteritems())
+        row[u'_index'] = _event[u'_index']
+        if isinstance(row[u'_index'], basestring):
+            row[u'_index'] = row[u'_index'].encode(u'utf-8')
+        csv_writer.writerow(row)
 
     return csv_out.getvalue()

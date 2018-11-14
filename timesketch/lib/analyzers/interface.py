@@ -322,12 +322,12 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
     NAME = 'name'
     IS_SKETCH_ANALYZER = True
 
-    def __init__(self, sketch_id, index_name):
+    def __init__(self, index_name, sketch_id):
         """Initialize the analyzer object.
 
         Args:
-            sketch_id: Sketch ID.
             index_name: Elasticsearch index name.
+            sketch_id: Sketch ID.
         """
         self.sketch = Sketch(sketch_id=sketch_id)
         super(BaseSketchAnalyzer, self).__init__(index_name)
