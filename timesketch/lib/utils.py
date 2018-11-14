@@ -37,7 +37,7 @@ def random_color():
     return u'{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
 
 
-def read_and_validate_csv(path):
+def read_and_validate_csv(path,delimiter=","):
     """Generator for reading a CSV file.
 
     Args:
