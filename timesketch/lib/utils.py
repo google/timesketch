@@ -42,7 +42,7 @@ def read_and_validate_csv(path, delimiter=','):
 
     Args:
         path: Path to the CSV file
-        delimiter: CSV delimiter, default: ','
+        delimiter: character used as a field separator, default: ','
     """
     # Columns that must be present in the CSV file
     mandatory_fields = [u'message', u'datetime', u'timestamp_desc']
