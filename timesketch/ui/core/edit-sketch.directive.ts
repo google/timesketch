@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import angular from 'angularjs-for-webpack'
+import angular from 'angularjs-for-webpack';
 
 export const tsEditSketch = function () {
     /**
@@ -23,8 +23,8 @@ export const tsEditSketch = function () {
         restrict : 'E',
         scope: {},
         link : function (scope, element, attrs) {
-            const modal_element = angular.element(document.getElementById('new-sketch-modal'))
-            modal_element.modal('show')
+            const modal_element = angular.element(document.getElementById('new-sketch-modal'));
+            modal_element.modal('show');
         },
-    }
-}
+    };
+};

@@ -52,7 +52,7 @@ apt-get install -y \
   python-pip python-dev libffi-dev redis-server python-plaso plaso-tools jq
 
 # Install python dependencies
-pip install --upgrade pip
+# pip -v install --upgrade pip  # don't do this https://github.com/pypa/pip/issues/5221
 pip install gunicorn pylint nose flask-testing coverage mock BeautifulSoup
 
 if [ "$VAGRANT" = true ]; then
@@ -93,19 +93,16 @@ chown "${RUN_AS_USER}" /var/lib/timesketch
 cp "${TIMESKETCH_PATH}"/timesketch.conf /etc/
 
 # Set session key for Timesketch
-sed s/"SECRET_KEY = u'<KEY_GOES_HERE>'"/"SECRET_KEY = u'${SECRET_KEY}'"/ /etc/timesketch.conf > /etc/timesketch.conf.new
-mv /etc/timesketch.conf.new /etc/timesketch.conf
+sed -i s/"SECRET_KEY = u'<KEY_GOES_HERE>'"/"SECRET_KEY = u'${SECRET_KEY}'"/ /etc/timesketch.conf
 
 # Configure the DB password
-sed s/"<USERNAME>:<PASSWORD>@localhost"/"timesketch:${PSQL_PW}@localhost"/ /etc/timesketch.conf > /etc/timesketch.conf.new
-mv /etc/timesketch.conf.new /etc/timesketch.conf
+sed -i s/"<USERNAME>:<PASSWORD>@localhost"/"timesketch:${PSQL_PW}@localhost"/ /etc/timesketch.conf
 
 # Configure the Neo4j password
-sed s/"<N4J_PASSWORD>"/"neo4j"/ /etc/timesketch.conf > /etc/timesketch.conf.new
-mv /etc/timesketch.conf.new /etc/timesketch.conf
+sed -i s/"<N4J_PASSWORD>"/"neo4j"/ /etc/timesketch.conf
 
-# Copy groovy scripts
-cp "${TIMESKETCH_PATH}"/contrib/*.groovy /etc/elasticsearch/scripts/
+# Enable upload
+sed -i s/"UPLOAD_ENABLED = False"/"UPLOAD_ENABLED = True"/ /etc/timesketch.conf
 
 # Start Elasticsearch automatically
 /bin/systemctl daemon-reload
@@ -117,6 +114,8 @@ mkdir -p /var/{lib,log,run}/celery
 chown $RUN_AS_USER /var/{lib,log,run}/celery
 cp "${VAGRANT_PATH}"/celery.service /etc/systemd/system/
 cp "${VAGRANT_PATH}"/celery.conf /etc/
+sed -i s/"User=vagrant"/"User=${RUN_AS_USER}"/ /etc/systemd/system/celery.service
+sed -i s/"Group=vagrant"/"Group=${RUN_AS_USER}"/ /etc/systemd/system/celery.service
 /bin/systemctl daemon-reload
 /bin/systemctl enable celery.service
 /bin/systemctl start celery.service

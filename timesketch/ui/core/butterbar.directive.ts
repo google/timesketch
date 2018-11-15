@@ -23,18 +23,18 @@ export const tsButterbar = ['$rootScope', function ($rootScope) {
         scope: {},
         link : function (scope, element, attrs) {
             scope.$on('httpreq-start', function (e) {
-                element.text('Loading..')
-                element.css({'display': 'block'})
-            })
+                element.text('Loading..');
+                element.css({'display': 'block'});
+            });
 
             scope.$on('httpreq-error', function (e) {
-                element.css({'display': 'block'})
-                element.text($rootScope.XHRError.message || 'Error')
-            })
+                element.css({'display': 'block'});
+                element.text($rootScope.XHRError.message || 'Error');
+            });
 
             scope.$on('httpreq-complete', function (e) {
-                element.css({'display': 'none'})
-            })
+                element.css({'display': 'none'});
+            });
         },
-    }
-}]
+    };
+}];

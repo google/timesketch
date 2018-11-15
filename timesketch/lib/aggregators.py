@@ -13,8 +13,10 @@
 # limitations under the License.
 """Elasticsearch aggregations."""
 
+from __future__ import unicode_literals
+
 # Max number of search hits to chart
-# TDOD: Move to config
+# TODO: Move to config
 MAX_RESULT_LIMIT = 300000
 
 
@@ -33,50 +35,62 @@ def heatmap(es_client, sketch_id, query_string, query_filter, query_dsl,
     returns:
         List of events per hour/day
     """
-    RESULT_COUNT = search_result = es_client.search(
+
+    # scripts don't like our pagination method, so remove them
+    query_filter.pop("size", None)
+    query_filter.pop("from", None)
+
+    result_count = es_client.search(
         sketch_id, query_string, query_filter, query_dsl, indices, count=True)
 
     # Exit early if we have too many search hits.
-    if RESULT_COUNT > MAX_RESULT_LIMIT or RESULT_COUNT == 0:
+    if result_count > MAX_RESULT_LIMIT or result_count == 0:
         return []
 
-    DAYS = {
-        u'Mon': 1,
-        u'Tue': 2,
-        u'Wed': 3,
-        u'Thu': 4,
-        u'Fri': 5,
-        u'Sat': 6,
-        u'Sun': 7,
+    days_map = {
+        'Mon': 1,
+        'Tue': 2,
+        'Wed': 3,
+        'Thu': 4,
+        'Fri': 5,
+        'Sat': 6,
+        'Sun': 7,
     }
 
+    # Elasticsearch 5.x doesn't support toString for dates. Use SimpleDateFormat
+    # instead.
+    # pylint: disable=line-too-long
+
+    if es_client.version.startswith('5.'):
+        source_script = 'new SimpleDateFormat(params.format).format(new Date(doc["datetime"].value))'
+    else:
+        source_script = 'doc["datetime"].value.toString(params.format);'
+
     aggregation = {
-        u'byDay': {
-            u'terms': {
-                u'script': {
-                    u'file': 'dateaggregation',
-                    u'lang': 'groovy',
-                    u'params': {
-                        u'date_field': 'datetime',
-                        u'format': 'EE'
+        'byDay': {
+            'terms': {
+                'script': {
+                    'source': source_script,
+                    'lang': 'painless',
+                    'params': {
+                        'format': 'E'
                     }
                 }
             },
-            u'aggs': {
-                u'byHour': {
-                    u'terms': {
-                        u'order': {
-                            u'_term': 'asc'
+            'aggs': {
+                'byHour': {
+                    'terms': {
+                        'order': {
+                            '_term': 'asc'
                         },
-                        u'script': {
-                            u'file': 'dateaggregation',
-                            u'lang': 'groovy',
-                            u'params': {
-                                u'date_field': 'datetime',
-                                u'format': 'HH'
+                        'script': {
+                            'source': source_script,
+                            'lang': 'painless',
+                            'params': {
+                                'format': 'H'
                             }
                         },
-                        u'size': 24
+                        'size': 24
                     }
                 }
             }
@@ -90,13 +104,12 @@ def heatmap(es_client, sketch_id, query_string, query_filter, query_dsl,
         query_dsl,
         indices,
         aggregations=aggregation,
-        return_results=False,
         return_fields=None,
         enable_scroll=False)
 
     try:
-        aggregation_result = search_result[u'aggregations']
-        day_buckets = aggregation_result[u'byDay'][u'buckets']
+        aggregation_result = search_result['aggregations']
+        day_buckets = aggregation_result['byDay']['buckets']
     except KeyError:
         day_buckets = []
 
@@ -106,12 +119,12 @@ def heatmap(es_client, sketch_id, query_string, query_filter, query_dsl,
             per_hour[(day, hour)] = 0
 
     for day_bucket in day_buckets:
-        day = DAYS[day_bucket.get(u'key')]
-        day_hours = day_bucket[u'byHour'][u'buckets']
+        day = days_map[day_bucket.get('key')]
+        day_hours = day_bucket['byHour']['buckets']
 
         for day_hour in day_hours:
-            hour = int(day_hour[u'key'])
-            count = day_hour[u'doc_count']
+            hour = int(day_hour['key'])
+            count = day_hour['doc_count']
             per_hour[(day, int(hour))] = count
 
     return [dict(day=k[0], hour=k[1], count=v) for k, v in per_hour.items()]
@@ -132,36 +145,36 @@ def histogram(es_client, sketch_id, query_string, query_filter, query_dsl,
     returns:
         List of events per hour/day
     """
-    RESULT_COUNT = search_result = es_client.search(
+    # scripts don't like our pagination method, so remove them
+    query_filter.pop("size", None)
+    query_filter.pop("from", None)
+
+    result_count = es_client.search(
         sketch_id, query_string, query_filter, query_dsl, indices, count=True)
 
     # Exit early if we have too many search hits.
-    if RESULT_COUNT > MAX_RESULT_LIMIT or RESULT_COUNT == 0:
+    if result_count > MAX_RESULT_LIMIT or result_count == 0:
         return []
 
     # Default aggregation config
-    interval = u'day'
+    interval = 'day'
     min_doc_count = 10
 
-    if not query_filter.get(u'time_start') and RESULT_COUNT > 1000:
-        interval = u'year'
-        min_doc_count = 100
-
-    if RESULT_COUNT < 10:
+    if result_count < 10:
         min_doc_count = 1
 
     aggregation = {
-        u'histogram': {
-            u'date_histogram': {
-                u'min_doc_count': min_doc_count,
-                u'field': u'datetime',
-                u'interval': interval,
-                u'format': u'yyyy-MM-dd'
+        'histogram': {
+            'date_histogram': {
+                'min_doc_count': min_doc_count,
+                'field': 'datetime',
+                'interval': interval,
+                'format': 'yyyy-MM-dd'
             }
         }
     }
 
-    if RESULT_COUNT < MAX_RESULT_LIMIT:
+    if result_count < MAX_RESULT_LIMIT:
         search_result = es_client.search(
             sketch_id,
             query_string,
@@ -169,16 +182,17 @@ def histogram(es_client, sketch_id, query_string, query_filter, query_dsl,
             query_dsl,
             indices,
             aggregations=aggregation,
-            return_results=False)
+            return_fields=None,
+            enable_scroll=False)
     else:
         search_result = {}
 
     try:
-        aggregation_result = search_result[u'aggregations']
-        if aggregation_result.get(u'exclude', None):
-            buckets = aggregation_result[u'exclude'][u'histogram'][u'buckets']
+        aggregation_result = search_result['aggregations']
+        if aggregation_result.get('exclude', None):
+            buckets = aggregation_result['exclude']['histogram']['buckets']
         else:
-            buckets = aggregation_result[u'histogram'][u'buckets']
+            buckets = aggregation_result['histogram']['buckets']
     except KeyError:
         buckets = []
 

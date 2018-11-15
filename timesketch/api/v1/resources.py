@@ -29,9 +29,12 @@ POST /sketches/:sketch_id/views/
 
 import datetime
 import json
+import md5
 import os
+import time
 import uuid
 
+from dateutil import parser
 from flask import abort
 from flask import current_app
 from flask import jsonify
@@ -48,6 +51,7 @@ import pycypher
 
 from timesketch.lib.aggregators import heatmap
 from timesketch.lib.aggregators import histogram
+from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -59,16 +63,18 @@ from timesketch.lib.datastores.neo4j import SCHEMA as neo4j_schema
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.lib.forms import AddTimelineSimpleForm
 from timesketch.lib.forms import AggregationForm
+from timesketch.lib.forms import CreateTimelineForm
 from timesketch.lib.forms import SaveViewForm
 from timesketch.lib.forms import NameDescriptionForm
 from timesketch.lib.forms import EventAnnotationForm
+from timesketch.lib.forms import EventCreateForm
 from timesketch.lib.forms import ExploreForm
 from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
 from timesketch.lib.utils import get_validated_indices
-from timesketch.lib.cypher_transpilation import transpile_query, InvalidQuery
+from timesketch.lib.cypher import transpile_query, InvalidQuery
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchIndex
@@ -76,7 +82,7 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
 from timesketch.models.sketch import SearchTemplate
-from timesketch.models.story import Story
+from timesketch.models.sketch import Story
 
 
 def bad_request(message):
@@ -107,6 +113,7 @@ class ResourceMixin(object):
     searchindex_fields = {
         u'id': fields.Integer,
         u'name': fields.String,
+        u'description': fields.String,
         u'index_name': fields.String,
         u'status': fields.Nested(status_fields),
         u'deleted': fields.Boolean,
@@ -118,6 +125,7 @@ class ResourceMixin(object):
         u'id': fields.Integer,
         u'name': fields.String,
         u'description': fields.String,
+        u'status': fields.Nested(status_fields),
         u'color': fields.String,
         u'searchindex': fields.Nested(searchindex_fields),
         u'deleted': fields.Boolean,
@@ -156,6 +164,7 @@ class ResourceMixin(object):
         u'description': fields.String,
         u'user': fields.Nested(user_fields),
         u'timelines': fields.List(fields.Nested(timeline_fields)),
+        u'active_timelines': fields.List(fields.Nested(timeline_fields)),
         u'status': fields.Nested(status_fields),
         u'created_at': fields.DateTime,
         u'updated_at': fields.DateTime
@@ -610,8 +619,7 @@ class ExploreResource(ResourceMixin, Resource):
                 query_dsl,
                 indices,
                 aggregations=None,
-                return_results=True,
-                return_fields=None,
+                return_fields=DEFAULT_SOURCE_FIELDS,
                 enable_scroll=False)
 
             # Get labels for each event that matches the sketch.
@@ -722,6 +730,108 @@ class AggregationResource(ResourceMixin, Resource):
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
 
+class EventCreateResource(ResourceMixin, Resource):
+    """Resource to create an annotation for an event."""
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+        Handler for /api/v1/sketches/:sketch_id/event/create/
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            An annotation in JSON (instance of flask.wrappers.Response)
+        """
+        form = EventCreateForm.build(request)
+        if form.validate_on_submit():
+            sketch = Sketch.query.get_with_acl(sketch_id)
+            timeline_name = u'sketch specific timeline'
+            index_name_seed = u'timesketch' + str(sketch_id)
+            event_type = u'user_created_event'
+
+            # derive datetime from timestamp:
+            parsed_datetime = parser.parse(form.timestamp.data)
+            timestamp = int(
+                time.mktime(parsed_datetime.utctimetuple())) * 1000000
+            timestamp += parsed_datetime.microsecond
+
+            event = {
+                "datetime": form.timestamp.data,
+                "timestamp": timestamp,
+                "timestamp_desc": form.timestamp_desc.data,
+                "message": form.message.data,
+            }
+
+            # We do not need a human readable filename or
+            # datastore index name, so we use UUIDs here.
+            index_name = unicode(md5.new(index_name_seed).hexdigest())
+
+            # Try to create index
+            try:
+                # Create the index in Elasticsearch (unless it already exists)
+                self.datastore.create_index(
+                    index_name=index_name,
+                    doc_type=event_type)
+
+                # Create the search index in the Timesketch database
+                searchindex = SearchIndex.get_or_create(
+                    name=timeline_name,
+                    description=u'internal timeline for user-created events',
+                    user=current_user,
+                    index_name=index_name)
+                searchindex.grant_permission(
+                    permission=u'read', user=current_user)
+                searchindex.grant_permission(
+                    permission=u'write', user=current_user)
+                searchindex.grant_permission(
+                    permission=u'delete', user=current_user)
+                searchindex.set_status(u'ready')
+                db_session.add(searchindex)
+                db_session.commit()
+
+                timeline = None
+                if sketch and sketch.has_permission(current_user, u'write'):
+                    self.datastore.import_event(
+                        index_name,
+                        event_type,
+                        event,
+                        flush_interval=1)
+
+                    timeline = Timeline.get_or_create(
+                        name=searchindex.name,
+                        description=searchindex.description,
+                        sketch=sketch,
+                        user=current_user,
+                        searchindex=searchindex)
+
+                    if timeline not in sketch.timelines:
+                        sketch.timelines.append(timeline)
+
+                    db_session.add(timeline)
+                    db_session.commit()
+
+                # Return Timeline if it was created.
+                # pylint: disable=no-else-return
+                if timeline:
+                    return self.to_json(
+                        timeline, status_code=HTTP_STATUS_CODE_CREATED)
+                else:
+                    return self.to_json(
+                        searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+
+            except Exception:
+                raise ApiHTTPError(
+                    message="failed to add event",
+                    status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+
+        else:
+            raise ApiHTTPError(
+                message="failed to add event",
+                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+
+
 class EventResource(ResourceMixin, Resource):
     """Resource to get a single event from the datastore.
 
@@ -770,9 +880,13 @@ class EventResource(ResourceMixin, Resource):
         comments = []
         if event:
             for comment in event.comments:
+                if not comment.user:
+                    username = u'System'
+                else:
+                    username = comment.user.username
                 comment_dict = {
                     u'user': {
-                        u'username': comment.user.username,
+                        u'username': username,
                     },
                     u'created_at': comment.created_at,
                     u'comment': comment.comment
@@ -886,16 +1000,7 @@ class UploadFileResource(ResourceMixin, Resource):
 
         form = UploadFileForm()
         if form.validate_on_submit() and upload_enabled:
-            from timesketch.lib.tasks import run_plaso
-            from timesketch.lib.tasks import run_csv
-            from timesketch.lib.tasks import run_jsonl
-
-            # Map the right task based on the file type
-            task_directory = {u'plaso': run_plaso,
-                              u'csv': run_csv,
-                              u'jsonl': run_jsonl}
-
-            sketch_id = form.sketch_id.data
+            sketch_id = form.sketch_id.data or None
             file_storage = form.file.data
             _filename, _extension = os.path.splitext(file_storage.filename)
             file_extension = _extension.lstrip(u'.')
@@ -904,9 +1009,6 @@ class UploadFileResource(ResourceMixin, Resource):
             sketch = None
             if sketch_id:
                 sketch = Sketch.query.get_with_acl(sketch_id)
-
-            # Current user
-            username = current_user.username
 
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
@@ -938,15 +1040,17 @@ class UploadFileResource(ResourceMixin, Resource):
                     sketch=sketch,
                     user=current_user,
                     searchindex=searchindex)
-                db_session.add(timeline)
+                timeline.set_status(u'processing')
                 sketch.timelines.append(timeline)
+                db_session.add(timeline)
                 db_session.commit()
 
-            # Run the task in the background
-            task = task_directory.get(file_extension)
-            task.apply_async(
-                (file_path, timeline_name, index_name, username),
-                task_id=index_name)
+            # Start Celery pipeline for indexing and analysis.
+            # Import here to avoid circular imports.
+            from timesketch.lib import tasks
+            pipeline = tasks.build_index_pipeline(
+                file_path, timeline_name, index_name, file_extension, sketch_id)
+            pipeline.apply_async(task_id=index_name)
 
             # Return Timeline if it was created.
             # pylint: disable=no-else-return
@@ -1144,18 +1248,77 @@ class CountEventsResource(ResourceMixin, Resource):
             Number of events in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-
-        # Exclude any timeline that is processing, i.e. not ready yet.
-        indices = []
-        for timeline in sketch.timelines:
-            if timeline.searchindex.get_status.status == u'processing':
-                continue
-            indices.append(timeline.searchindex.index_name)
-
+        indices = [t.searchindex.index_name for t in sketch.active_timelines]
         count = self.datastore.count(indices)
         meta = dict(count=count)
         schema = dict(meta=meta, objects=[])
         return jsonify(schema)
+
+
+class TimelineCreateResource(ResourceMixin, Resource):
+    @login_required
+    def post(self):
+        """Handles POST request to the resource.
+
+        Returns:
+            A view in JSON (instance of flask.wrappers.Response)
+
+        Raises:
+            ApiHTTPError
+        """
+        upload_enabled = current_app.config[u'UPLOAD_ENABLED']
+        form = CreateTimelineForm()
+        if form.validate_on_submit() and upload_enabled:
+            sketch_id = form.sketch_id.data
+            timeline_name = form.name.data
+
+            sketch = None
+            if sketch_id:
+                sketch = Sketch.query.get_with_acl(sketch_id)
+
+            # We do not need a human readable filename or
+            # datastore index name, so we use UUIDs here.
+            index_name = unicode(uuid.uuid4().hex)
+
+            # Create the search index in the Timesketch database
+            searchindex = SearchIndex.get_or_create(
+                name=timeline_name,
+                description=timeline_name,
+                user=current_user,
+                index_name=index_name)
+            searchindex.grant_permission(permission=u'read', user=current_user)
+            searchindex.grant_permission(permission=u'write', user=current_user)
+            searchindex.grant_permission(
+                permission=u'delete', user=current_user)
+            searchindex.set_status(u'processing')
+            db_session.add(searchindex)
+            db_session.commit()
+
+            timeline = None
+            if sketch and sketch.has_permission(current_user, u'write'):
+                timeline = Timeline(
+                    name=searchindex.name,
+                    description=searchindex.description,
+                    sketch=sketch,
+                    user=current_user,
+                    searchindex=searchindex)
+                sketch.timelines.append(timeline)
+                db_session.add(timeline)
+                db_session.commit()
+
+            # Return Timeline if it was created.
+            # pylint: disable=no-else-return
+            if timeline:
+                return self.to_json(
+                    timeline, status_code=HTTP_STATUS_CODE_CREATED)
+            else:
+                return self.to_json(
+                    searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+
+        else:
+            raise ApiHTTPError(
+                message="failed to create timeline",
+                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
 
 
 class TimelineListResource(ResourceMixin, Resource):
@@ -1209,8 +1372,20 @@ class TimelineListResource(ResourceMixin, Resource):
                 return_code = HTTP_STATUS_CODE_OK
                 timeline = Timeline.query.get(timeline_id)
 
+            # If enabled, run sketch analyzers when timeline is added.
+            # Import here to avoid circular imports.
+            if current_app.config.get(u'ENABLE_SKETCH_ANALYZERS'):
+                from timesketch.lib import tasks
+                sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+                    sketch_id)
+                if sketch_analyzer_group:
+                    pipeline = (tasks.run_sketch_init.s(
+                        [searchindex.index_name]) | sketch_analyzer_group)
+                    pipeline.apply_async(task_id=searchindex.index_name)
+
             return self.to_json(
                 timeline, meta=metadata, status_code=return_code)
+
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
 

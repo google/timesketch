@@ -14,22 +14,22 @@
 """Form definitions and validators for the forms used in the application."""
 
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed
 from flask_wtf.file import FileField
 from flask_wtf.file import FileRequired
-from flask_wtf.file import FileAllowed
 from wtforms import widgets
-from wtforms.fields import StringField
-from wtforms.fields import PasswordField
-from wtforms.fields import SelectMultipleField
-from wtforms.fields import RadioField
-from wtforms.fields import HiddenField
-from wtforms.fields import SelectField
 from wtforms.fields import BooleanField
+from wtforms.fields import HiddenField
 from wtforms.fields import IntegerField
+from wtforms.fields import PasswordField
+from wtforms.fields import RadioField
+from wtforms.fields import SelectField
+from wtforms.fields import SelectMultipleField
+from wtforms.fields import StringField
 from wtforms.validators import DataRequired
+from wtforms.validators import Length
 from wtforms.validators import Optional
 from wtforms.validators import Regexp
-from wtforms.validators import Length
 
 
 class MultiDict(dict):
@@ -119,6 +119,12 @@ class HiddenNameDescriptionForm(BaseForm):
     description = HiddenField(u'Description')
 
 
+class CreateTimelineForm(BaseForm):
+    """Form to handle ad-hoc timeline creation."""
+    name = StringField(u'Timeline name', validators=[Optional()])
+    sketch_id = IntegerField(u'Sketch ID', validators=[Optional()])
+
+
 class TimelineForm(NameDescriptionForm):
     """Form to edit a timeline."""
     color = StringField(
@@ -190,6 +196,13 @@ class TrashForm(BaseForm):
 class TrashViewForm(BaseForm):
     """Form to handle thrash view confirmation."""
     view_id = IntegerField(u'View ID', validators=[DataRequired()])
+
+
+class EventCreateForm(BaseForm):
+    """Generic form to handle event addition. E.g. message and timestamp."""
+    timestamp = StringField(u'timestamp', validators=[DataRequired()])
+    timestamp_desc = StringField(u'timestamp_desc', validators=[DataRequired()])
+    message = StringField(u'message', validators=[DataRequired()])
 
 
 class EventAnnotationForm(BaseForm):

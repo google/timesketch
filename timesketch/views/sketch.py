@@ -31,6 +31,10 @@ from sqlalchemy import or_
 from sqlalchemy import not_
 
 from timesketch.models import db_session
+from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+from timesketch.lib.definitions import DEFAULT_FIELDS
+from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.forms import AddTimelineForm
 from timesketch.lib.forms import NameDescriptionForm
 from timesketch.lib.forms import TimelineForm
@@ -44,11 +48,10 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
+from timesketch.models.sketch import Story
 from timesketch.models.user import Group
 from timesketch.models.user import User
-from timesketch.lib.datastores.elastic import ElasticsearchDataStore
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+
 
 # Register flask blueprint
 sketch_views = Blueprint(u'sketch_views', __name__)
@@ -93,6 +96,7 @@ def overview(sketch_id):
         return redirect(url_for(u'sketch_views.overview', sketch_id=sketch.id))
 
     # Toggle public/private form POST
+    # TODO: Move these resources to the API.
     if permission_form.validate_on_submit():
         if not sketch.has_permission(current_user, u'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
@@ -101,8 +105,9 @@ def overview(sketch_id):
         # TODO(jbn): Make write permission off by default
         # and selectable in the UI
         if permission_form.username.data:
-            user = User.query.filter_by(
-                username=permission_form.username.data).first()
+            username = permission_form.username.data
+            base_username = username.split(u'@')[0]
+            user = User.query.filter_by(username=base_username).first()
             if user:
                 sketch.grant_permission(permission=u'read', user=user)
                 sketch.grant_permission(permission=u'write', user=user)
@@ -182,14 +187,14 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     sketch_timelines = [t.searchindex.index_name for t in sketch.timelines]
     view_form = SaveViewForm()
     graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
-    similarity_enabled = current_app.config[u'SIMILARITY_EXPERIMENT_ENABLED']
+    similarity_enabled = current_app.config.get(u'ENABLE_EXPERIMENTAL_UI')
 
     # Get parameters from the GET query
     url_query = request.args.get(u'q', u'')
     url_time_start = request.args.get(u'time_start', None)
     url_time_end = request.args.get(u'time_end', None)
     url_index = request.args.get(u'index', None)
-    url_limit = request.args.get(u'limit', None)
+    url_size = request.args.get(u'size', None)
 
     if searchtemplate_id:
         searchtemplate = SearchTemplate.query.get(searchtemplate_id)
@@ -222,12 +227,13 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     if url_query:
         view.query_string = url_query
         query_filter = json.loads(view.query_filter)
+        query_filter[u'from'] = 0 # if we loaded from get, start at first event
         query_filter[u'time_start'] = url_time_start
         query_filter[u'time_end'] = url_time_end
         if url_index in sketch_timelines:
             query_filter[u'indices'] = [url_index]
-        if url_limit:
-            query_filter[u'limit'] = url_limit
+        if url_size:
+            query_filter[u'size'] = url_size
         view.query_filter = view.validate_filter(query_filter)
         view.query_dsl = None
         save_view = True
@@ -249,53 +255,73 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
 
 
 @sketch_views.route(
-    u'/sketch/<int:sketch_id>/explore/export/', methods=[u'GET'])
+    u'/sketch/<int:sketch_id>/graphs/', methods=[u'GET', u'POST'])
 @login_required
-def export(sketch_id):
-    """Generates CSV from search result.
+def graphs(sketch_id):
+    """Generates the sketch views template.
 
-    Args:
-        sketch_id: Primary key for a sketch.
     Returns:
-        CSV string with header.
+        Template with context.
     """
     sketch = Sketch.query.get_with_acl(sketch_id)
-    view = sketch.get_user_view(current_user)
-    query_filter = json.loads(view.query_filter)
-    query_dsl = json.loads(view.query_dsl)
-    indices = query_filter.get(u'indices', [])
+    graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
 
-    # Export more than the 500 first results.
-    max_events_to_fetch = 10000
-    query_filter[u'limit'] = max_events_to_fetch
+    return render_template(
+        u'sketch/graphs.html',
+        sketch=sketch,
+        graphs_enabled=graphs_enabled)
 
-    datastore = ElasticsearchDataStore(
-        host=current_app.config[u'ELASTIC_HOST'],
-        port=current_app.config[u'ELASTIC_PORT'])
 
-    result = datastore.search(
-        sketch_id,
-        view.query_string,
-        query_filter,
-        query_dsl,
-        indices,
-        aggregations=None,
-        return_results=True)
+@sketch_views.route(u'/sketch/<int:sketch_id>/stories/')
+@sketch_views.route(u'/sketch/<int:sketch_id>/stories/<int:story_id>/')
+@login_required
+def story(sketch_id, story_id=None):
+    """Generates the story list template.
 
-    csv_out = StringIO()
-    csv_writer = csv.DictWriter(
-        csv_out,
-        fieldnames=[
-            u'timestamp', u'message', u'timestamp_desc', u'datetime',
-            u'timesketch_label', u'tag'
-        ])
-    csv_writer.writeheader()
-    for _event in result[u'hits'][u'hits']:
-        csv_writer.writerow(
-            dict((k, v.encode(u'utf-8') if isinstance(v, basestring) else v)
-                 for k, v in _event[u'_source'].iteritems()))
+    Returns:
+        Template with context.
+    """
+    sketch = Sketch.query.get_with_acl(sketch_id)
+    graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
 
-    return csv_out.getvalue()
+    current_story = None
+    if story_id:
+        current_story = Story.query.get(story_id)
+    return render_template(
+        u'sketch/stories.html', sketch=sketch, story=current_story,
+        graphs_enabled=graphs_enabled)
+
+
+@sketch_views.route(
+    u'/sketch/<int:sketch_id>/views/', methods=[u'GET', u'POST'])
+@login_required
+def views(sketch_id):
+    """Generates the sketch views template.
+
+    Returns:
+        Template with context.
+    """
+    sketch = Sketch.query.get_with_acl(sketch_id)
+    trash_form = TrashViewForm()
+    graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
+
+    # Trash form POST
+    if trash_form.validate_on_submit():
+        if not sketch.has_permission(current_user, u'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
+        view_id = trash_form.view_id.data
+        view = View.query.get(view_id)
+        # Check that this view belongs to the sketch
+        if view.sketch_id != sketch.id:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+        view.set_status(status=u'deleted')
+        return redirect(u'/sketch/{0:d}/views/'.format(sketch.id))
+
+    return render_template(
+        u'sketch/views.html',
+        sketch=sketch,
+        trash_form=trash_form,
+        graphs_enabled=graphs_enabled)
 
 
 @sketch_views.route(
@@ -339,7 +365,18 @@ def timelines(sketch_id):
                     searchindex=searchindex)
                 db_session.add(_timeline)
                 sketch.timelines.append(_timeline)
-        db_session.commit()
+                db_session.commit()
+
+                # If enabled, run sketch analyzers when timeline is added.
+                # Import here to avoid circular imports.
+                from timesketch.lib import tasks
+                sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+                    sketch_id)
+                if sketch_analyzer_group:
+                    pipeline = (tasks.run_sketch_init.s(
+                        [searchindex.index_name]) | sketch_analyzer_group)
+                    pipeline.apply_async(task_id=searchindex.index_name)
+
         return redirect(
             url_for(u'sketch_views.timelines', sketch_id=sketch.id))
 
@@ -395,50 +432,54 @@ def timeline(sketch_id, timeline_id):
 
 
 @sketch_views.route(
-    u'/sketch/<int:sketch_id>/views/', methods=[u'GET', u'POST'])
+    u'/sketch/<int:sketch_id>/explore/export/', methods=[u'GET'])
 @login_required
-def views(sketch_id):
-    """Generates the sketch views template.
+def export(sketch_id):
+    """Generates CSV from search result.
 
+    Args:
+        sketch_id: Primary key for a sketch.
     Returns:
-        Template with context.
+        CSV string with header.
     """
     sketch = Sketch.query.get_with_acl(sketch_id)
-    trash_form = TrashViewForm()
-    graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
+    view = sketch.get_user_view(current_user)
+    query_filter = json.loads(view.query_filter)
+    query_dsl = json.loads(view.query_dsl)
+    indices = query_filter.get(u'indices', [])
 
-    # Trash form POST
-    if trash_form.validate_on_submit():
-        if not sketch.has_permission(current_user, u'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN)
-        view_id = trash_form.view_id.data
-        view = View.query.get(view_id)
-        # Check that this view belongs to the sketch
-        if view.sketch_id != sketch.id:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
-        view.set_status(status=u'deleted')
-        return redirect(u'/sketch/{0:d}/views/'.format(sketch.id))
+    # Export more than the 500 first results.
+    max_events_to_fetch = 10000
+    query_filter[u'limit'] = max_events_to_fetch
 
-    return render_template(
-        u'sketch/views.html',
-        sketch=sketch,
-        trash_form=trash_form,
-        graphs_enabled=graphs_enabled)
+    datastore = ElasticsearchDataStore(
+        host=current_app.config[u'ELASTIC_HOST'],
+        port=current_app.config[u'ELASTIC_PORT'])
 
+    result = datastore.search(
+        sketch_id,
+        view.query_string,
+        query_filter,
+        query_dsl,
+        indices,
+        aggregations=None)
 
-@sketch_views.route(
-    u'/sketch/<int:sketch_id>/graphs/', methods=[u'GET', u'POST'])
-@login_required
-def graphs(sketch_id):
-    """Generates the sketch views template.
+    all_fields = set()
+    for event in result[u'hits'][u'hits']:
+        all_fields.update(event[u'_source'].keys())
 
-    Returns:
-        Template with context.
-    """
-    sketch = Sketch.query.get_with_acl(sketch_id)
-    graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
+    all_fields.difference_update(DEFAULT_FIELDS)
+    fieldnames = DEFAULT_FIELDS + sorted(all_fields)
 
-    return render_template(
-        u'sketch/graphs.html',
-        sketch=sketch,
-        graphs_enabled=graphs_enabled)
+    csv_out = StringIO()
+    csv_writer = csv.DictWriter(csv_out, fieldnames=fieldnames)
+    csv_writer.writeheader()
+    for _event in result[u'hits'][u'hits']:
+        row = dict((k, v.encode(u'utf-8') if isinstance(v, basestring) else v)
+                   for k, v in _event[u'_source'].iteritems())
+        row[u'_index'] = _event[u'_index']
+        if isinstance(row[u'_index'], basestring):
+            row[u'_index'] = row[u'_index'].encode(u'utf-8')
+        csv_writer.writerow(row)
+
+    return csv_out.getvalue()

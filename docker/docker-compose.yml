@@ -5,7 +5,7 @@ services:
       context: ../
       dockerfile: ./docker/Dockerfile
     ports:
-      - "5000:5000"
+      - "80:80"
     links:
       - elasticsearch
       - postgres
@@ -15,22 +15,52 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_ADDRESS=postgres
       - POSTGRES_PORT=5432
-      - ELASTIC_ADDRESS=elastic
+      - ELASTIC_ADDRESS=elasticsearch
       - ELASTIC_PORT=9200
+      - REDIS_ADDRESS=redis
+      - REDIS_PORT=6379
+      - NEO4J_ADDRESS=neo4j
+      - NEO4J_PORT=7474
+      - TIMESKETCH_USER=${TIMESKETCH_USER}
+      - TIMESKETCH_PASSWORD=${TIMESKETCH_PASSWORD}
     restart: always
+
   elasticsearch:
-    image: elasticsearch:2.4
+    # uncomment the following lines to control JVM memory utilization
+    # in smaller deployments with minimal resources
+
+    #environment:
+    #  - ES_JAVA_OPTS= -Xms1g -Xmx1g # 1G min/1G max
+    image: elasticsearch
     ports:
       - "9200:9200"
       - "9300:9300"
     restart: always
+    volumes:
+      - ../contrib/:/usr/share/elasticsearch/config/scripts/
+      - /var/lib/elasticsearch:/usr/share/elasticsearch/data/elasticsearch
+
   postgres:
-    image: postgres:9.6
+    image: postgres
     ports:
       - "5432:5432"
     environment:
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password
     restart: always
+    volumes:
+      - /var/lib/postgresql/data:/var/lib/postgresql/data
+
+
   redis:
-    image: redis:3
+    image: redis
+    volumes:
+      - /var/lib/redis:/data
+
+  neo4j:
+    image: neo4j
+    environment:
+      - NEO4J_AUTH=none
+    restart: always
+    volumes:
+      - /var/lib/neo4j/data:/var/lib/neo4j/data

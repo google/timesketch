@@ -11,7 +11,7 @@
             <span>{{ view.updated_at }}</span>
         </div>
         <div class="title">
-            <a style="text-decoration: none; font-weight: 500;font-size: 1.1em;" href="/sketch/{{ sketchId }}/explore/view/{{ view.id }}/">{{ view.name }}</a>
+            <a style="text-decoration: none;" href="/sketch/{{ sketchId }}/explore/view/{{ view.id }}/">{{ view.name }}</a>
         </div>
     </li>
 </ul>
@@ -21,6 +21,5 @@
 </div>
 
 <div ng-if="showSearchTemplates">
-    <br><br>
     <ts-search-template-list sketch-id="sketchId"></ts-search-template-list>
 </div>
