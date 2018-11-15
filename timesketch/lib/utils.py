@@ -49,7 +49,7 @@ def read_and_validate_csv(path, delimiter=','):
 
     with open(path, 'rb') as fh:
 
-        reader = csv.DictReader(fh,delimiter=delimiter.decode('string_escape'))
+        reader = csv.DictReader(fh, delimiter=delimiter.decode('string_escape'))
         csv_header = reader.fieldnames
         missing_fields = []
         # Validate the CSV header
