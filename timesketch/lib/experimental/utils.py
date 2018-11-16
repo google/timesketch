@@ -22,7 +22,7 @@ from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models.sketch import Sketch
 from xml.etree import ElementTree
 
-
+# TODO: Just for testing, remove as soon as graph analyzers are implemented.
 GRAPH_VIEWS = [
     {
         u'name': u'Entire graph',
