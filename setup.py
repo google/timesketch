@@ -51,11 +51,11 @@ setup(
     ],
     data_files=[(u'share/timesketch', [u'timesketch.conf'])],
     packages=find_packages(),
-    package_data={u'timesketch.lib.experimental': [u'*.cql'],},
+    package_data={u'timesketch.lib.experimental': ['*.cql'],},
     include_package_data=True,
     zip_safe=False,
     scripts=[u'tsctl'],
     install_requires=[str(req.req) for req in parse_requirements(
-        u'requirements.txt', session=PipSession(),
+        "requirements.txt", session=PipSession(),
     )],
 )
