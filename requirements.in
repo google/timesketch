@@ -1,5 +1,5 @@
 # requirements:
-Flask
+Flask>=0.12.3
 Flask-Login
 Flask-script
 Flask-SQLAlchemy
@@ -19,8 +19,8 @@ pycypher
 parameterized
 datasketch
 PyJWT
-requests
-cryptography
+requests>=2.20.0
+cryptography>=2.3
 PyYAML
 
 # dev-requirements:
