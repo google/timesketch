@@ -3,17 +3,15 @@
     <form class="form-inline">
 
         <select class="select ts-graphs-cypher-query__predefined-queries" (change)="onQuerySelect($event.target.value)">
-            <option disabled>Predefined queries</option>
+            <option disabled>Start by choosing a query</option>
             <option *ngFor="let item of predefinedQueries" [value]="item.id">
                 {{item.name}}
             </option>
         </select>
 
     </form>
-
-</div>
-
-<div *ngIf="selectedQuery" class="card">
-    <h3>{{ selectedQuery.name }}</h3>
+    <br>
     <ts-cypher-form (cypherSearch)="onQuerySubmit($event)" [selectedQuery]="selectedQuery"></ts-cypher-form>
+
 </div>
+

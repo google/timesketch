@@ -43,6 +43,12 @@ GRAPH_VIEWS = [
                 u'value': u'',
                 u'type': u'text',
                 u'validation': {u'required': True},
+            },
+            u'machine': {
+                u'label': u'Machine',
+                u'value': u'',
+                u'type': u'text',
+                u'validation': {u'required': False},
             }
         },
         u'query': u'MATCH (:Sketch{sketch_id:{sketch_id}})<-[:HAS]-(user:WindowsADUser)-[r1:ACCESS]->(m1:WindowsMachine) WHERE r1.method = "Interactive" AND user.username = {username} RETURN *'
