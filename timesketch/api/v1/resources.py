@@ -1495,7 +1495,7 @@ class GraphViewListResource(ResourceMixin, Resource):
         """Handles GET request to the resource.
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
+            sketch_id: Integer primary key for a sketch database model.
 
         Returns:
             Graph in JSON (instance of flask.wrappers.Response)
