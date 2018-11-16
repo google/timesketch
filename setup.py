@@ -18,56 +18,21 @@
    sudo python setup.py install
 """
 
-import os.path
-import sys
-import time
-
 from setuptools import find_packages
 from setuptools import setup
-try: # for pip >= 10
+try:  # for pip >= 10
     from pip._internal.download import PipSession
     from pip._internal.req import parse_requirements
-except ImportError: # for pip <= 9.0.3
+except ImportError:  # for pip <= 9.0.3
     from pip.download import PipSession
     from pip.req import parse_requirements
 
-timesketch_version = u'20180613'
-
+timesketch_version = u'20181116'
 timesketch_description = (
     u'Timesketch is a web based tool for collaborative forensic timeline '
     u'analysis. Using sketches you and your collaborators can easily organize '
     u'timelines and analyze them all at the same time.  Add meaning to '
     u'your raw data with rich annotations, comments, tags and stars.')
-
-def check_before_upload():
-    """Warn user if frontend build is not present or is not recent.
-
-    Make sure that .js and .css bundles included in the PyPI package are up to
-    date.
-
-    Raises:
-    UserWarning
-    """
-    this_dir = os.path.dirname(__file__)
-    frontend_dist_dir = os.path.join(
-        this_dir, 'timesketch', 'static', 'dist',
-    )
-    js = os.path.join(frontend_dist_dir, 'bundle.js')
-    css = os.path.join(frontend_dist_dir, 'bundle.css')
-    if not (os.path.isfile(js) and os.path.isfile(css)):
-        raise UserWarning(
-            "Build the frontend before uploading to PyPI!"
-            + " (see docs/Developers-Guide.md)"
-        )
-    mtime = min(os.path.getmtime(js), os.path.getmtime(css))
-    if time.time() - mtime > 180:
-        raise UserWarning(
-            "Frontend build is older than 3 minutes, please rebuild!"
-            + " (see docs/Developers-Guide.md)"
-        )
-
-if 'upload' in sys.argv:
-    check_before_upload()
 
 setup(
     name=u'timesketch',
@@ -86,11 +51,11 @@ setup(
     ],
     data_files=[(u'share/timesketch', [u'timesketch.conf'])],
     packages=find_packages(),
-    package_data={'timesketch.lib.experimental': ['*.cql'],},
+    package_data={u'timesketch.lib.experimental': [u'*.cql'],},
     include_package_data=True,
     zip_safe=False,
     scripts=[u'tsctl'],
     install_requires=[str(req.req) for req in parse_requirements(
-        "requirements.txt", session=PipSession(),
+        u'requirements.txt', session=PipSession(),
     )],
 )
