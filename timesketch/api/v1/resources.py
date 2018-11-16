@@ -1519,7 +1519,7 @@ class GraphViewResource(ResourceMixin, Resource):
         """Handles GET request to the resource.
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
+            sketch_id: Integer primary key for a sketch database model.
             view_id: Integer key for a graph view.
 
         Returns:
