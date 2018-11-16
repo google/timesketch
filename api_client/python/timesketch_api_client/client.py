@@ -459,7 +459,7 @@ class Sketch(BaseResource):
         }
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
-    
+
     def comment_event(self, event_id, index, comment_text):
         """
         Adds a comment to a single event.
@@ -497,7 +497,6 @@ class Sketch(BaseResource):
             self.api.api_root, self.id)
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
-    
     
     def label_events(self, events, label_name):
         """Labels one or more events with label_name.
