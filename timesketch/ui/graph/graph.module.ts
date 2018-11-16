@@ -17,7 +17,7 @@ import angular from 'angularjs-for-webpack';
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {FormsModule} from '@angular/forms';
-import { ReactiveFormsModule } from '@angular/forms';
+import {ReactiveFormsModule} from '@angular/forms';
 import {downgradeComponent} from '@angular/upgrade/static';
 
 import {CytoscapeComponent} from './cytoscape.component';
