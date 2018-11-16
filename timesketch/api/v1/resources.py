@@ -1492,7 +1492,7 @@ class GraphViewListResource(ResourceMixin, Resource):
 
     @login_required
     def get(self, sketch_id):
-        """Handles GET request to the resource.
+        """Handles GET requests to the resource.
 
         Args:
             sketch_id: Integer primary key for a sketch database model.
