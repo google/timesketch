@@ -33,7 +33,7 @@ export type GraphSchema = {
 
 export type ElementDef = {
   data: ElementData
-  //scratch: ElementScratch
+  scratch: ElementScratch
 };
 
 export type GraphDef = {

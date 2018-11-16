@@ -43,8 +43,8 @@ import {tsExploreModule} from './explore/explore.module';
 import {tsSketchModule, SketchModule} from './sketch/sketch.module';
 import {tsStoryModule} from './story/story.module';
 import {tsGraphModule, GraphModule} from './graph/graph.module';
-import {SketchService} from "./api/sketch.service";
-import {GraphService} from "./api/graph.service";
+import {SketchService} from './api/sketch.service';
+import {GraphService} from './api/graph.service';
 
 export const tsAppModule = angular.module('timesketch', [
     tsApiModule.name,
@@ -96,7 +96,7 @@ export const tsAppModule = angular.module('timesketch', [
         FormsModule,
         HttpClientModule,
         SketchModule,
-        GraphModule
+        GraphModule,
     ],
     providers: [{
         provide: HTTP_INTERCEPTORS,

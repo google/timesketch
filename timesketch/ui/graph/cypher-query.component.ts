@@ -7,12 +7,12 @@ import {
     Output
 } from '@angular/core';
 
-import {GraphService} from "../api/graph.service";
+import {GraphService} from '../api/graph.service';
 
 @Component({
     selector: 'ts-graphs-cypher-query',
     templateUrl: './cypher-query.component.html',
-    providers: [GraphService]
+    providers: [GraphService],
 })
 export class CypherQueryComponent implements OnChanges {
   @Input() sketchId: number;
@@ -29,7 +29,7 @@ export class CypherQueryComponent implements OnChanges {
     if (this.sketchId) {
       this.graphService.getGraphViews().subscribe((result) => {
         this.predefinedQueries = result;
-      })
+      });
     }
   }
 

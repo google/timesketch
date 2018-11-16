@@ -30,7 +30,7 @@ export class GraphService {
 
     function object_map<V, W>(obj: Dict<V>, func: (k: string, v: V) => [string, W]): Dict<W> {
       if (! obj) {
-        return
+        return;
       }
       const parts = Object.entries(obj)
         .map(([k, v]) => func(k, v))
@@ -71,7 +71,7 @@ export class GraphService {
       }
       return elements;
     }
-   return this.http
+    return this.http
       .post(`${SKETCH_BASE_URL}${this.sketchService.sketchId}/explore/graph/`, {
         graph_view_id: queryData.id, parameters: queryData.parameters, output_format: 'cytoscape',
       })
@@ -84,7 +84,7 @@ export class GraphService {
   getGraphViews(): Observable<GraphViews> {
     return this.http.get(`${SKETCH_BASE_URL}${this.sketchService.sketchId}/explore/graph/views/`, {})
         .map((result) => {
-          return result['objects'][0]['views']
+          return result['objects'][0]['views'];
         });
   }
 
