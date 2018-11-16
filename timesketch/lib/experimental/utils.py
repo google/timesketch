@@ -22,6 +22,47 @@ from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models.sketch import Sketch
 from xml.etree import ElementTree
 
+# TODO: Just for testing, remove as soon as graph analyzers are implemented.
+GRAPH_VIEWS = [
+    {
+        u'name': u'Entire graph',
+        u'description': u'Show the entire graph.',
+        u'labels': [u'Browser'],
+        u'supported_os': [u'Darwin', u'Linux', u'Windows'],
+        u'form_data': {},
+        u'query': u'MATCH (:Sketch{sketch_id:{sketch_id}})<-[:HAS]-(a)-[b]->(c) RETURN *'
+    },
+    {
+        u'name': u'Windows interactive logins',
+        u'description': u'Windows interactive logins.',
+        u'labels': [],
+        u'supported_os': [u'Windows'],
+        u'form_data': {
+            u'username': {
+                u'label': u'Username',
+                u'value': u'',
+                u'type': u'text',
+                u'validation': {u'required': True},
+            },
+            u'machine': {
+                u'label': u'Machine',
+                u'value': u'',
+                u'type': u'text',
+                u'validation': {u'required': False},
+            }
+        },
+        u'query': u'MATCH (:Sketch{sketch_id:{sketch_id}})<-[:HAS]-(user:WindowsADUser)-[r1:ACCESS]->(m1:WindowsMachine) WHERE r1.method = "Interactive" AND user.username = {username} RETURN *'
+    },
+    {
+        u'name': u'All Windows logins',
+        u'description': u'Windows interactive logins.',
+        u'labels': [],
+        u'supported_os': [u'Windows'],
+        u'form_data': {},
+        u'query': u'MATCH (:Sketch{sketch_id:{sketch_id}})<-[:HAS]-(user:WindowsADUser)-[r1:ACCESS]->(m1:WindowsMachine) RETURN *'
+    },
+]
+
 
 def event_stream(sketch_id, query):
     es = ElasticsearchDataStore(
@@ -78,3 +119,18 @@ def parse_xml_event(event_xml):
         event_container[u'EventData'][element_name] = element_value
 
     return event_container
+
+
+def get_graph_views():
+    views = []
+
+    for index, view in enumerate(GRAPH_VIEWS):
+        view[u'id'] = index
+        views.append(view)
+
+    return views
+
+
+def get_graph_view(view_id):
+    return GRAPH_VIEWS[view_id]
+

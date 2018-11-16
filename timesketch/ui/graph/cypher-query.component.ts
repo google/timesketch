@@ -1,22 +1,44 @@
-import {Component, EventEmitter, Output} from '@angular/core';
+import {
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    SimpleChanges,
+    Output
+} from '@angular/core';
 
-import * as data from './cypher-query.data';
+import {GraphService} from '../api/graph.service';
 
 @Component({
-  selector: 'ts-graphs-cypher-query',
-  templateUrl: './cypher-query.component.html',
+    selector: 'ts-graphs-cypher-query',
+    templateUrl: './cypher-query.component.html',
+    providers: [GraphService],
 })
-export class CypherQueryComponent {
+export class CypherQueryComponent implements OnChanges {
+  @Input() sketchId: number;
   @Output() cypherSearch = new EventEmitter<string>();
-  query = '';
-  predefinedQueries = data.predefinedQueries;
+
+  predefinedQueries;
+  selectedQuery;
+
+  constructor(
+    private readonly graphService: GraphService,
+  ) {}
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (this.sketchId) {
+      this.graphService.getGraphViews().subscribe((result) => {
+        this.predefinedQueries = result;
+      });
+    }
+  }
 
   onQuerySelect(query) {
-    this.query = query;
-    this.onSubmit();
+      this.selectedQuery = this.predefinedQueries[query];
   }
 
-  onSubmit() {
-    this.cypherSearch.emit(this.query);
+  onQuerySubmit(queryData) {
+      this.cypherSearch.emit(queryData);
   }
+
 }

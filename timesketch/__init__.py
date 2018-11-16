@@ -24,7 +24,6 @@ from flask_restful import Api
 from flask_wtf import CSRFProtect
 
 from timesketch.api.v1.routes import API_ROUTES as V1_API_ROUTES
-from timesketch.api.experimental.routes import API_ROUTES as EXP_API_ROUTES
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.models import configure_engine
 from timesketch.models import init_db
@@ -99,11 +98,6 @@ def create_app(config=None):
     api_v1 = Api(app, prefix=u'/api/v1')
     for route in V1_API_ROUTES:
         api_v1.add_resource(*route)
-
-    # Setup URL routes for the experimental API.
-    api_experimental = Api(app, prefix=u'/api/experimental')
-    for route in EXP_API_ROUTES:
-        api_experimental.add_resource(*route)
 
     # Register error handlers
     # pylint: disable=unused-variable

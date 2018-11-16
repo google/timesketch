@@ -255,7 +255,7 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
 
 
 @sketch_views.route(
-    u'/sketch/<int:sketch_id>/graphs/', methods=[u'GET', u'POST'])
+    u'/sketch/<int:sketch_id>/graph/', methods=[u'GET', u'POST'])
 @login_required
 def graphs(sketch_id):
     """Generates the sketch views template.
@@ -267,7 +267,7 @@ def graphs(sketch_id):
     graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
 
     return render_template(
-        u'sketch/graphs.html',
+        u'sketch/graph.html',
         sketch=sketch,
         graphs_enabled=graphs_enabled)
 

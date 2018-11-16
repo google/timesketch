@@ -691,52 +691,11 @@ ts-graphs-cypher-query {
   }
   .#{&}__predefined-queries {
     height:57px;
+    min-width: 300px;
     background-color:#f9f9f9;
     margin-right: 10px;
     border:0px;
     -webkit-border-radius: 0px;
-  }
-}
-
-ts-graphs-cytoscape-settings {
-  min-width: 250px;
-  input[type="number"] {
-    width: 70px;
-  }
-  input[type="checkbox"] {
-    vertical-align: middle;
-    margin: 0px;
-  }
-  input[type="radio"] {
-    vertical-align: middle;
-    margin: 0px;
-  }
-}
-
-ts-graphs-graph-actions {
-  button {
-    margin: 5px !important;
-    text-align: left !important;
-    box-sizing: border-box;
-    display: block;
-    width: calc(100% - 10px);
-  }
-  .#{&}__modal-background {
-    position: fixed;
-    left: 0px;
-    top: 0px;
-    right: 0px;
-    bottom: 0px;
-    z-index: 1040;
-    padding-top: 200px;
-    background-color: rgba(0,0,0,0.5);
-    text-align: center;
-  }
-  .#{&}__modal {
-    padding: 20px;
-    background-color: white;
-    box-shadow: 0 0 6px 2px rgba(0,0,0,0.4);
-    display: inline-block;
   }
 }
 
@@ -747,12 +706,12 @@ ts-graphs-graph-view {
     display: inline-block;
     vertical-align: top;
     position: relative;
-    box-shadow: 0 0 1px rgba(0,0,0,0.3);
     z-index: 10;
     label {
       display: inline-block;
       padding-left: 15px;
       padding-right: 15px;
+      padding-top: 10px;
       margin: 0px;
     }
   }
