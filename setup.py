@@ -20,14 +20,15 @@
 
 from setuptools import find_packages
 from setuptools import setup
-try:  # for pip >= 10
+try: # for pip >= 10
     from pip._internal.download import PipSession
     from pip._internal.req import parse_requirements
-except ImportError:  # for pip <= 9.0.3
+except ImportError: # for pip <= 9.0.3
     from pip.download import PipSession
     from pip.req import parse_requirements
 
 timesketch_version = u'20181116'
+
 timesketch_description = (
     u'Timesketch is a web based tool for collaborative forensic timeline '
     u'analysis. Using sketches you and your collaborators can easily organize '
@@ -51,7 +52,7 @@ setup(
     ],
     data_files=[(u'share/timesketch', [u'timesketch.conf'])],
     packages=find_packages(),
-    package_data={u'timesketch.lib.experimental': ['*.cql'],},
+    package_data={'timesketch.lib.experimental': ['*.cql'],},
     include_package_data=True,
     zip_safe=False,
     scripts=[u'tsctl'],
