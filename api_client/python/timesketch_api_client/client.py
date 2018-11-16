@@ -459,7 +459,7 @@ class Sketch(BaseResource):
         }
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
-
+    
     def comment_event(self, event_id, index, comment_text):
         """
         Adds a comment to a single event.
