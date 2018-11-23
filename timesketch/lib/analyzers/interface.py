@@ -179,7 +179,7 @@ class Sketch(object):
             raise ValueError('Both query_string and query_dsl are missing.')
 
         if not query_filter:
-            query_filter = {}
+            query_filter = {'indices': '_all'}
 
         view = View(name=name, sketch=self.sql_sketch, user=None,
                     query_string=query_string, query_filter=query_filter,
@@ -251,7 +251,7 @@ class BaseIndexAnalyzer(object):
             raise ValueError('Both query_string and query_dsl are missing')
 
         if not query_filter:
-            query_filter = {}
+            query_filter = {'indices': self.index_name}
 
         # If not provided we default to the message field as this will always
         # be present.
@@ -259,7 +259,7 @@ class BaseIndexAnalyzer(object):
             return_fields = 'message'
 
         if not indices:
-            indices = [self.index_name]
+            indices = self.index_name
 
         # Refresh the index to make sure it is searchable.
         for index in indices:
