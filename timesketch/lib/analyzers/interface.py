@@ -259,7 +259,7 @@ class BaseIndexAnalyzer(object):
             return_fields = 'message'
 
         if not indices:
-            indices = self.index_name
+            indices = [self.index_name]
 
         # Refresh the index to make sure it is searchable.
         for index in indices:
