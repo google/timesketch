@@ -211,7 +211,7 @@ def run_sketch_init(index_name_list):
     """
     if isinstance(index_name_list, basestring):
         index_name_list = [index_name_list]
-    return index_name_list[:1]
+    return index_name_list[:1][0]
 
 
 @celery.task(track_started=True)
