@@ -35,4 +35,5 @@ DEFAULT_FIELDS = [
 DEFAULT_SOURCE_FIELDS = DEFAULT_FIELDS + [
     u'timesketch_label',
     u'tag',
-    u'similarity_score']
+    u'similarity_score',
+    u'human_readable']
