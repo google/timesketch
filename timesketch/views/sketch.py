@@ -451,6 +451,7 @@ def export(sketch_id):
     # Export more than the 500 first results.
     max_events_to_fetch = 10000
     query_filter[u'limit'] = max_events_to_fetch
+    query_filter[u'size'] = max_events_to_fetch
 
     datastore = ElasticsearchDataStore(
         host=current_app.config[u'ELASTIC_HOST'],
