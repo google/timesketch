@@ -80,8 +80,18 @@ if [ "$1" = 'timesketch' ]; then
     echo "Please pass values for the NEO4J_ADDRESS and NEO4J_PORT environment variables if you want graph support"
   fi
 
+  # Enable debug for the development server
+  sed -i s/"DEBUG = False"/"DEBUG = True"/ /etc/timesketch.conf
+
+  # Enable index and sketch analyzers
+  sed -i s/"ENABLE_INDEX_ANALYZERS = False"/"ENABLE_INDEX_ANALYZERS = True"/ /etc/timesketch.conf
+  sed -i s/"ENABLE_SKETCH_ANALYZERS = False"/"ENABLE_SKETCH_ANALYZERS = True"/ /etc/timesketch.conf
+  sed -i s/"ENABLE_EXPERIMENTAL_UI = False"/"ENABLE_EXPERIMENTAL_UI = True"/ /etc/timesketch.conf
+
   # Add web user
   tsctl add_user -u "${TIMESKETCH_USER}" -p "${TIMESKETCH_USER}"
+
+  echo "Timesketch development server is ready!"
 
   # Sleep forever to keep the container running
   sleep infinity
