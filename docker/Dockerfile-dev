@@ -1,4 +1,4 @@
-# Use the official Docker Hub Ubuntu 14.04 base image
+# Use the official Docker Hub Ubuntu 16.04 base image
 FROM ubuntu:16.04
 
 # Update the base image
@@ -21,7 +21,7 @@ RUN VERSION=node_8.x && \
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list
 
-# Install Plaso NodeJS and Yarn
+# Install Plaso, NodeJS 8.x, and Yarn
 RUN apt-get -y install software-properties-common
 RUN add-apt-repository ppa:gift/stable && apt-get update
 RUN apt-get update && apt-get -y install python-plaso plaso-tools nodejs yarn
