@@ -6,6 +6,11 @@ services:
       dockerfile: ./docker/Dockerfile
     ports:
       - "80:80"
+    depends_on:
+      - postgres
+      - elasticsearch
+      - redis
+      - neo4j
     links:
       - elasticsearch
       - postgres

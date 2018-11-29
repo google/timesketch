@@ -6,6 +6,11 @@ services:
       dockerfile: ./docker/Dockerfile-dev
     ports:
             - "127.0.0.1:5000:5000"
+    depends_on:
+      - postgres
+      - elasticsearch
+      - redis
+      - neo4j
     links:
       - elasticsearch
       - postgres
