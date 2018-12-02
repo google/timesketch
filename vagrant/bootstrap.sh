@@ -49,12 +49,11 @@ fi
 apt-get update
 apt-get install -y --upgrade \
   neo4j openjdk-8-jre-headless elasticsearch postgresql python-psycopg2 \
-  python-pip python-dev libffi-dev redis-server python-plaso plaso-tools jq \
-  python-openssl
+  python-pip python-dev libffi-dev redis-server python-plaso plaso-tools jq
 
 # Install python dependencies
 # pip -v install --upgrade pip  # don't do this https://github.com/pypa/pip/issues/5221
-pip install gunicorn pylint nose flask-testing coverage mock BeautifulSoup
+pip install -U gunicorn pylint nose flask-testing coverage mock BeautifulSoup pyopenssl
 
 if [ "$VAGRANT" = true ]; then
   # Install yarn and nodejs
