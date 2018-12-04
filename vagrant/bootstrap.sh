@@ -47,13 +47,13 @@ fi
 
 # Install apt dependencies
 apt-get update
-apt-get install -y \
+apt-get install -y --upgrade \
   neo4j openjdk-8-jre-headless elasticsearch postgresql python-psycopg2 \
   python-pip python-dev libffi-dev redis-server python-plaso plaso-tools jq
 
 # Install python dependencies
 # pip -v install --upgrade pip  # don't do this https://github.com/pypa/pip/issues/5221
-pip install gunicorn pylint nose flask-testing coverage mock BeautifulSoup
+pip install -U gunicorn pylint nose flask-testing coverage mock BeautifulSoup pyopenssl
 
 if [ "$VAGRANT" = true ]; then
   # Install yarn and nodejs
@@ -157,4 +157,4 @@ until [ "${CLUSTER_HEALTH}" == "green" ] || [ "${CLUSTER_HEALTH}" == "yellow" ];
 done
 
 # Create a test timeline
-sudo -u "${RUN_AS_USER}" psort.py -o timesketch "${PLASO_TEST_FILE}" --name test-timeline
+sudo -u "${RUN_AS_USER}" psort.py --status-view=none -o timesketch "${PLASO_TEST_FILE}" --name test-timeline
