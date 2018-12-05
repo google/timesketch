@@ -113,6 +113,18 @@ class Event(object):
         updated_event_attribute = {'tag': new_tags}
         self._update(updated_event_attribute)
 
+    def add_emojis(self, emojis):
+        """Add emojis to the Event.
+
+        Args:
+            emojis: List of emojis to add (as unicode codepoints).
+        """
+        existing_emojis = self.source.get('__ts_emojis', '')
+        existing_emoji_list = existing_emojis.split()
+        new_emoji_list = list(set().union(existing_emoji_list, emojis))
+        updated_event_attribute = {'__ts_emojis': ' '.join(new_emoji_list)}
+        self._update(updated_event_attribute)
+
     def add_star(self):
         """Star event."""
         self.add_label(label='__ts_star')
@@ -256,7 +268,11 @@ class BaseIndexAnalyzer(object):
         # If not provided we default to the message field as this will always
         # be present.
         if not return_fields:
-            return_fields = 'message'
+            return_fields = ['message']
+
+        # Make sure we always return tag and emoji attributes.
+        return_fields.extend(['tag', '__ts_emojis'])
+        return_fields = list(set(return_fields))
 
         if not indices:
             indices = [self.index_name]
