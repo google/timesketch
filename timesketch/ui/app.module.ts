@@ -87,6 +87,12 @@ export const tsAppModule = angular.module('timesketch', [
     });
     const csrftoken = document.getElementsByTagName('meta')[0]['content'];
     $httpProvider.defaults.headers.common['X-CSRFToken'] = csrftoken;
+})
+
+.filter('unsafe', function ($sce) {
+    return function (val) {
+        return $sce.trustAsHtml(val);
+    };
 });
 
 @NgModule({
