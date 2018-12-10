@@ -42,7 +42,6 @@ def configure_engine(url):
     # TODO: Can we wrap this in a class?
     global engine, session_maker, db_session
     engine = create_engine(url)
-    db_session.remove()
     # Set the query class to our own AclBaseQuery
     session_maker.configure(
         autocommit=False, autoflush=False, bind=engine, query_cls=AclBaseQuery)
