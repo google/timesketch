@@ -152,6 +152,15 @@ class Event(object):
         db_session.commit()
         self.add_label(label='__ts_comment')
 
+    def set_human_readable(self, human_readable):
+        """Set a human readable string to event.
+
+        Args:
+            human_readable: human readable string.
+        """
+        human_readable_attribute = {'human_readable': human_readable}
+        self.add_attributes(human_readable_attribute)
+
 
 class Sketch(object):
     """Sketch object with helper methods.
