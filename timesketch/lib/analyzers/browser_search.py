@@ -30,11 +30,13 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
         ('DuckDuckGo', re.compile(r'duckduckgo\.com'),
          '_extract_search_query_from_url', 'q'),
         ('GMail', re.compile(r'mail\.google\.com'),
-         '_extract_mail_search_query', None),
+         '_extract_urlpart_search_query', None),
         ('Google Inbox', re.compile(r'inbox\.google\.com'),
-         '_extract_mail_search_query', None),
+         '_extract_urlpart_search_query', None),
         ('Google Docs', re.compile(r'docs\.google\.com'),
          '_extract_search_query_from_url', 'q'),
+        ('Google Groups', re.compile(r'groups\.google\.com/a'),
+         '_extract_urlpart_search_query', None),
         ('Google Drive', re.compile(r'drive\.google\.com/.+/search'),
          '_extract_search_query_from_url', 'q'),
         ('Google Search',
@@ -84,18 +86,19 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
         return decoded_url
 
-    def _extract_mail_search_query(self, url):
-        """Extracts a search query from a GMail search URL.
+    def _extract_urlpart_search_query(self, url):
+        """Extracts a search query from a URL that uses search/query notation.
 
         Examples:
             GMail: https://mail.google.com/mail/u/0/#search/query[/?]
             Inbox: https://inbox.google.com/search/<query>
+            Groups: https://groups.google.com/a/google.com/forum/#!search/query
 
         Args:
-          url (str): URL.
+            url (str): URL.
 
         Returns:
-          str: search query or None if no query was found.
+            str: search query or None if no query was found.
         """
         if 'search/' not in url:
             return None

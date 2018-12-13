@@ -68,3 +68,9 @@ class TestBrowserSearchPlugin(BaseTest):
         duck_result = analyzer._extract_search_query_from_url(
             duck_search, 'q')
         self.assertEqual(duck_result, 'from:me@stuff.com')
+
+        group_search = (
+            'https://groups.google.com/a/mydomain/forum/#!search'
+            '/secret/somestuff')
+        group_result = analyzer._extract_urlpart_search_query(group_search)
+        self.assertEqual(group_result, 'secret')
