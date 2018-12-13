@@ -14,4 +14,5 @@
 """Analyzer module."""
 
 # Register all analyzers here by importing them.
+from timesketch.lib.analyzers import browser_search
 from timesketch.lib.analyzers import similarity_scorer
