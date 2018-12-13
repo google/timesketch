@@ -1,9 +1,11 @@
 """Sketch analyzer plugin for browser search."""
 from __future__ import unicode_literals
 
+import logging
 import re
 import sys
 
+# pylint:disable=wrong-import-position
 if sys.version_info[0] < 3:
     import urllib as urlparse
     BYTES_TYPE = str
@@ -24,28 +26,28 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
     # Here we define filters and callback methods for all hits on each filter.
     _URL_FILTERS = frozenset([
         ('Bing', re.compile(r'bing\.com/search'),
-         '_ExtractSearchQueryFromURL', 'q'),
+         '_extract_search_query_from_url', 'q'),
         ('DuckDuckGo', re.compile(r'duckduckgo\.com'),
-         '_ExtractSearchQueryFromURL', 'q'),
+         '_extract_search_query_from_url', 'q'),
         ('GMail', re.compile(r'mail\.google\.com'),
-         '_ExtractGMailSearchQuery', None),
+         '_extract_mail_search_query', None),
         ('Google Inbox', re.compile(r'inbox\.google\.com'),
-         '_ExtractGMailSearchQuery', None),
+         '_extract_mail_search_query', None),
         ('Google Docs', re.compile(r'docs\.google\.com'),
-         '_ExtractSearchQueryFromURL', 'q'),
+         '_extract_search_query_from_url', 'q'),
         ('Google Drive', re.compile(r'drive\.google\.com/.+/search'),
-         '_ExtractSearchQueryFromURL', 'q'),
+         '_extract_search_query_from_url', 'q'),
         ('Google Search',
          re.compile(r'(www\.|[a-zA-Z]\.|/)google\.[a-zA-Z]+/search'),
-         '_ExtractSearchQueryFromURL', 'q'),
+         '_extract_search_query_from_url', 'q'),
         ('Google Sites', re.compile(r'sites\.google\.'),
-         '_ExtractSearchQueryFromURL', 'q'),
+         '_extract_search_query_from_url', 'q'),
         ('Yahoo', re.compile(r'yahoo\.com/search'),
-         '_ExtractSearchQueryFromURL', 'p'),
+         '_extract_search_query_from_url', 'p'),
         ('Yandex', re.compile(r'yandex\.com/search'),
-         '_ExtractSearchQueryFromURL', 'text'),
+         '_extract_search_query_from_url', 'text'),
         ('Youtube', re.compile(r'youtube\.com'),
-         '_ExtractSearchQueryFromURL', 'search_query'),
+         '_extract_search_query_from_url', 'search_query'),
     ])
 
     def __init__(self, index_name, sketch_id):
@@ -58,7 +60,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
         self.index_name = index_name
         super(BrowserSearchSketchPlugin, self).__init__(index_name, sketch_id)
 
-    def _DecodeURL(self, url):
+    def _decode_url(self, url):
         """Decodes the URL, replaces %XX to their corresponding characters.
 
         Args:
@@ -76,13 +78,13 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 decoded_url = decoded_url.decode('utf-8')
             except UnicodeDecodeError as exception:
                 decoded_url = decoded_url.decode('utf-8', errors='replace')
-                logger.warning(
+                logging.warning(
                     'Unable to decode URL: {0:s} with error: {1!s}'.format(
                         url, exception))
 
         return decoded_url
 
-    def _ExtractGMailSearchQuery(self, url):
+    def _extract_mail_search_query(self, url):
         """Extracts a search query from a GMail search URL.
 
         Examples:
@@ -104,7 +106,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
         return line.replace('+', ' ')
 
-    def _ExtractSearchQueryFromURL(self, url, parameter):
+    def _extract_search_query_from_url(self, url, parameter):
         """Extracts a search query from the URL.
 
         Examples:
@@ -131,9 +133,9 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
         if '{0:s}='.format(parameter) not in url:
             return None
 
-        return self._GetURLParameterValue(url, parameter)
+        return self._get_url_parameter_value(url, parameter)
 
-    def _GetURLParameterValue(self, url, parameter):
+    def _get_url_parameter_value(self, url, parameter):
         """Retrieves the GET parameter from a URL.
 
         Args:
@@ -154,7 +156,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
         parameter, _, _ = url.partition('&')
         parameter = parameter.replace('+', ' ')
 
-        return self._DecodeURL(parameter)
+        return self._decode_url(parameter)
 
     def run(self):
         """Entry point for the browser search analyzer.
@@ -176,14 +178,14 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
             message = event.source.get('message')
 
             if url is None:
-              continue
+                continue
 
-            for engine, url_expression, method_name, parameter in self._URL_FILTERS:
+            for engine, expression, method_name, parameter in self._URL_FILTERS:
                 callback_method = getattr(self, method_name, None)
                 if not callback_method:
                     continue
 
-                match = url_expression.search(url)
+                match = expression.search(url)
                 if not match:
                     continue
 
@@ -198,13 +200,14 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 event.add_attributes(
                     {'search_string': search_query,
                      'human_readable': '[{0:s}] Search: {1:s} - {2:s}'.format(
-                        engine, search_query, message)})
+                         engine, search_query, message)})
                 event.add_emojis([search_emoji])
                 event.add_tags(['browser_search'])
                 # We break at the first hit of a successful search engine.
                 break
 
-        self.sketch.add_view('Browser Search', query_string='tag:"browser_search"')
+        self.sketch.add_view(
+            'Browser Search', query_string='tag:"browser_search"')
 
         return 'Browser Search completed.'
 

@@ -18,7 +18,48 @@ class TestBrowserSearchPlugin(BaseTest):
     @mock.patch(
         u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
-    def test_analyzer(self):
-        """Test analyzer."""
-        # TODO: Write actual tests here.
-        self.assertIsEqual(True, False)
+    def test_url_extraction(self):
+        """Test the browser search analyzer."""
+        analyzer = browser_search.BrowserSearchSketchPlugin('test_index', 1)
+
+        # Need to access protected members for testing purposes.
+        # pylint: disable=protected-access
+        bing_search = 'https://www.bing.com/search?q=foobar+stuff&f=en'
+        bing_result = analyzer._extract_search_query_from_url(bing_search, 'q')
+        self.assertEqual(bing_result, 'foobar stuff')
+
+        github_search = 'https://github.com/search?q=foobar&another=true'
+        github_result = analyzer._extract_search_query_from_url(
+            github_search, 'q')
+        self.assertEqual(github_result, 'foobar')
+
+        drive_search = (
+            'https://drive.google.com/drive/search'
+            '?q=my%20secret%20stuff&ln=en')
+        drive_result = analyzer._extract_search_query_from_url(
+            drive_search, 'q')
+        self.assertEqual(drive_result, 'my secret stuff')
+
+        google_search = (
+            'https://subsite.google.is/search?q=my%20sec'
+            'ret%20stuff&ln=en')
+        google_result = analyzer._extract_search_query_from_url(
+            google_search, 'q')
+        self.assertEqual(google_result, 'my secret stuff')
+        google_search = 'https://google.com/search?q=my%20secret%20stuff&ln=en'
+        google_result = analyzer._extract_search_query_from_url(
+            google_search, 'q')
+        self.assertEqual(google_result, 'my secret stuff')
+
+
+        sites_search = (
+            'https://sites.google.com/site/mydomain/system/app/pages/'
+            'meta/search?q=my%20secret%20stuff&ln=en')
+        sites_result = analyzer._extract_search_query_from_url(
+            sites_search, 'q')
+        self.assertEqual(sites_result, 'my secret stuff')
+
+        duck_search = 'https://duckduckgo.com/?q=foobar+stuff&f=en'
+        duck_result = analyzer._extract_search_query_from_url(
+            duck_search, 'q')
+        self.assertEqual(duck_result, 'foobar stuff')
