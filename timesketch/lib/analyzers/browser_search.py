@@ -104,7 +104,8 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
         line, _, _ = line.partition('/')
         line, _, _ = line.partition('?')
 
-        return line.replace('+', ' ')
+        search_quoted = line.replace('+', ' ')
+        return self._decode_url(search_quoted)
 
     def _extract_search_query_from_url(self, url, parameter):
         """Extracts a search query from the URL.

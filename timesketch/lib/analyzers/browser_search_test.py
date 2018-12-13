@@ -63,3 +63,8 @@ class TestBrowserSearchPlugin(BaseTest):
         duck_result = analyzer._extract_search_query_from_url(
             duck_search, 'q')
         self.assertEqual(duck_result, 'foobar stuff')
+
+        duck_search = 'https://duckduckgo.com/?q=from%3Ame%40stuff.com&f=en'
+        duck_result = analyzer._extract_search_query_from_url(
+            duck_search, 'q')
+        self.assertEqual(duck_result, 'from:me@stuff.com')
