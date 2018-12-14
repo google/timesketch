@@ -201,8 +201,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 if not search_query:
                     continue
 
-                event.add_attributes(
-                    {'search_string': search_query})
+                event.add_attributes({'search_string': search_query})
 
                 event.set_human_readable('{0:s} search: {1:s} - {2:s}'.format(
                     engine, search_query, message))
