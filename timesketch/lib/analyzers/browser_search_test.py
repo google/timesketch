@@ -51,7 +51,6 @@ class TestBrowserSearchPlugin(BaseTest):
             google_search, 'q')
         self.assertEqual(google_result, 'my secret stuff')
 
-
         sites_search = (
             'https://sites.google.com/site/mydomain/system/app/pages/'
             'meta/search?q=my%20secret%20stuff&ln=en')

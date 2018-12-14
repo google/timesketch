@@ -202,9 +202,10 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                     continue
 
                 event.add_attributes(
-                    {'search_string': search_query,
-                     'human_readable': '[{0:s}] Search: {1:s} - {2:s}'.format(
-                         engine, search_query, message)})
+                    {'search_string': search_query})
+
+                event.set_human_readable('{0:s} search: {1:s} - {2:s}'.format(
+                    engine, search_query, message))
                 event.add_emojis([search_emoji])
                 event.add_tags(['browser_search'])
                 # We break at the first hit of a successful search engine.
