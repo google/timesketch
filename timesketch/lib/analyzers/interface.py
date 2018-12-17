@@ -152,13 +152,36 @@ class Event(object):
         db_session.commit()
         self.add_label(label='__ts_comment')
 
-    def set_human_readable(self, human_readable):
+    def set_human_readable(self, human_readable, append=True, overwrite=False):
         """Set a human readable string to event.
 
         Args:
             human_readable: human readable string.
+            append: boolean defining whether the data should be appended
+                or prepended to the human readable string, if it has already
+                been defined. Defaults to True, and does nothing if
+                human_readable is not defined.
+            overwrite: a boolean that if set to True will ignore previously
+                defined human_readable fields and overwrite it. Defaults
+                to False.
         """
-        human_readable_attribute = {'human_readable': human_readable}
+        # TODO: Check if "message" field already exists in human readable and
+        # make sure it is not repeated.
+        existing_human_readable = self.source.get('human_readable')
+
+        if overwrite:
+            human_readable_string = human_readable
+        elif existing_human_readable:
+            if append:
+                human_readable_string = '{0:s} - {1:s}'.format(
+                    existing_human_readable, human_readable)
+            else:
+                human_readable_string = '{0:s} - {1:s}'.format(
+                    human_readable, existing_human_readable)
+        else:
+            human_readable_string = human_readable
+
+        human_readable_attribute = {'human_readable': human_readable_string}
         self.add_attributes(human_readable_attribute)
 
 
