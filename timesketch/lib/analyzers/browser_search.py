@@ -14,6 +14,7 @@ else:
     BYTES_TYPE = bytes
 
 
+from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
@@ -175,8 +176,6 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
         events = self.event_stream(
             query_string=query, return_fields=return_fields)
 
-        search_emoji = '&#x1F50E'
-
         for event in events:
             url = event.source.get('url')
             message = event.source.get('message')
@@ -205,7 +204,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
                 event.set_human_readable('{0:s} search: {1:s} - {2:s}'.format(
                     engine, search_query, message))
-                event.add_emojis([search_emoji])
+                event.add_emojis([emojis.MAGNIFYING_GLASS])
                 event.add_tags(['browser_search'])
                 # We break at the first hit of a successful search engine.
                 break
