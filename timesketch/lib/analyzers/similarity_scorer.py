@@ -140,8 +140,9 @@ class SimilarityScorer(interface.BaseIndexAnalyzer):
         )
 
         lsh, minhashes = similar.new_lsh_index(
-            events, self._config.delimiters, self._config.num_perm,
-            self._config.threshold, self._config.field)
+            events, field=self._config.field,
+            delimiters=self._config.delimiters, num_perm=self._config.num_perm,
+            threshold=self._config.threshold)
         total_num_events = len(minhashes)
         for key, minhash in minhashes.items():
             event_id, event_type, index_name = key

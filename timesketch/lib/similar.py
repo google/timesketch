@@ -22,6 +22,7 @@ from datasketch.lsh import MinHashLSH
 
 
 # Parameters for Jaccard and Minhash calculations.
+DEFAULT_DELIMITERS = [' ', '-', '/']
 DEFAULT_THRESHOLD = 0.5
 DEFAULT_PERMUTATIONS = 128
 
@@ -30,8 +31,9 @@ def _shingles_from_text(text, delimiters):
     """Splits string into words.
 
     Args:
-        text: String to extract words from.
-        delimiters:
+        text: string to extract words from.
+        delimiters: list of strings used as delimiters for splitting text
+            into words.
 
     Returns:
         List of words.
@@ -45,9 +47,11 @@ def _minhash_from_text(text, num_perm, delimiters):
     """Calculate minhash of text.
 
     Args:
-        text: String to calculate minhash of.
-        num_perm:
-        delimiters:
+        text: string to calculate minhash of.
+        num_perm: number of random permutation functions used by MinHash to
+            be indexed.
+        delimiters: list of strings used as delimiters for splitting text
+            into words.
 
     Returns:
         A minhash (instance of datasketch.minhash.MinHash)
@@ -58,20 +62,32 @@ def _minhash_from_text(text, num_perm, delimiters):
     return minhash
 
 
-def new_lsh_index(events, delimiters, num_perm, threshold, field):
+def new_lsh_index(events, field, delimiters=None, num_perm=None,
+                  threshold=None):
     """Create a new LSH from a set of Timesketch events.
 
     Args:
-        events:
-        delimiters:
-        num_perm:
-        threshold:
-        field:
+        events: list or an iterator of Event objects.
+        field: string denoting the event field to use for the LSH.
+        delimiters: list of strings used as delimiters for splitting text
+            into words.
+        num_perm: number of random permutation functions used by MinHash to
+            be indexed.
+        threshold: a float for the Jaccard similarity threshold between 0.0 and
+            1.0. The initialized MinHash LSH will be optimized for the
+            threshold by minizing the false positive and false negative.
 
     Returns:
         A tuple with an LSH (instance of datasketch.lsh.LSH) and a
         dictionary with event ID as key and minhash as value.
     """
+    if delimiters is None:
+        delimiters = DEFAULT_DELIMITERS
+    if num_perm is None:
+        num_perm = DEFAULT_PERMUTATIONS
+    if threshold is None:
+        threshold = DEFAULT_THRESHOLD
+
     minhashes = {}
     lsh = MinHashLSH(threshold, num_perm)
 
@@ -96,9 +112,9 @@ def calculate_score(lsh, minhash, total_num_events):
     in the LSH.
 
     Args:
-        lsh: Instance of datasketch.lsh.MinHashLSH
-        minhash: Instance of datasketch.minhash.MinHash
-        total_num_events: Integer of how many events in the LSH
+        lsh: instance of datasketch.lsh.MinHashLSH
+        minhash: instance of datasketch.minhash.MinHash
+        total_num_events: integer of how many events in the LSH
 
     Returns:
         A float between 0 and 1.
