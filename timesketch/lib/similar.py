@@ -15,6 +15,8 @@
 
 from __future__ import unicode_literals
 
+import re
+
 from datasketch.minhash import MinHash
 from datasketch.lsh import MinHashLSH
 
@@ -23,52 +25,62 @@ from datasketch.lsh import MinHashLSH
 DEFAULT_THRESHOLD = 0.5
 DEFAULT_PERMUTATIONS = 128
 
-def _shingles_from_text(text):
+
+def _shingles_from_text(text, delimiters):
     """Splits string into words.
 
     Args:
         text: String to extract words from.
+        delimiters:
 
     Returns:
         List of words.
     """
     # TODO: Remove stopwords using the NLTK python package.
     # TODO: Remove configured patterns from string.
-    delimiters = self._config.delimiters
     return filter(None, re.split('|'.join(delimiters), text))
 
 
-def _minhash_from_text(text):
+def _minhash_from_text(text, num_perm, delimiters):
     """Calculate minhash of text.
 
     Args:
         text: String to calculate minhash of.
+        num_perm:
+        delimiters:
 
     Returns:
         A minhash (instance of datasketch.minhash.MinHash)
     """
-    minhash = MinHash(self._config.num_perm)
-    for word in _shingles_from_text(text):
+    minhash = MinHash(num_perm)
+    for word in _shingles_from_text(text, delimiters):
         minhash.update(word.encode('utf8'))
     return minhash
 
 
-def new_lsh_index(events):
+def new_lsh_index(events, delimiters, num_perm, threshold, field):
     """Create a new LSH from a set of Timesketch events.
+
+    Args:
+        events:
+        delimiters:
+        num_perm:
+        threshold:
+        field:
 
     Returns:
         A tuple with an LSH (instance of datasketch.lsh.LSH) and a
         dictionary with event ID as key and minhash as value.
     """
     minhashes = {}
-    lsh = MinHashLSH(self._config.threshold, self._config.num_perm)
+    lsh = MinHashLSH(threshold, num_perm)
 
     with lsh.insertion_session() as lsh_session:
         for event in events:
-            # Insert minhash in LSH index
+            # Insert minhash in LSH index.
             key = (event.event_id, event.event_type, event.index_name)
             minhash = _minhash_from_text(
-                event.source[self._config.field])
+                event.source[field], num_perm, delimiters)
             minhashes[key] = minhash
             lsh_session.insert(key, minhash)
 
