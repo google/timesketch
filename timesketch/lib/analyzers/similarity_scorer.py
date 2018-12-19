@@ -17,7 +17,7 @@ from __future__ import unicode_literals
 
 from flask import current_app
 
-from timesketch.lib import similar
+from timesketch.lib import similarity
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
@@ -139,7 +139,7 @@ class SimilarityScorer(interface.BaseIndexAnalyzer):
             return_fields=[self._config.field]
         )
 
-        lsh, minhashes = similar.new_lsh_index(
+        lsh, minhashes = similarity.new_lsh_index(
             events, field=self._config.field,
             delimiters=self._config.delimiters, num_perm=self._config.num_perm,
             threshold=self._config.threshold)
@@ -148,7 +148,7 @@ class SimilarityScorer(interface.BaseIndexAnalyzer):
             event_id, event_type, index_name = key
             event_dict = dict(_id=event_id, _type=event_type, _index=index_name)
             event = interface.Event(event_dict, self.datastore)
-            score = similar.calculate_score(lsh, minhash, total_num_events)
+            score = similarity.calculate_score(lsh, minhash, total_num_events)
             attributes_to_add = {'similarity_score': score}
             event.add_attributes(attributes_to_add)
 

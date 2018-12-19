@@ -20,7 +20,7 @@ from __future__ import unicode_literals
 import mock
 from datasketch import MinHash
 
-from timesketch.lib import similar
+from timesketch.lib import similarity
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
@@ -41,7 +41,8 @@ class TestSimilarityLibScorer(BaseTest):
     def test_shingles_from_text(self):
         """Test splitting up a text string to words."""
         # pylint: disable=protected-access
-        shingles = similar._shingles_from_text(self.test_text, self.delimiters)
+        shingles = similarity._shingles_from_text(
+            self.test_text, self.delimiters)
         self.assertIsInstance(shingles, list)
         self.assertEqual(len(shingles), 8)
 
@@ -51,6 +52,6 @@ class TestSimilarityLibScorer(BaseTest):
     def test_minhash_from_text(self):
         """Test create minhash from text."""
         # pylint: disable=protected-access
-        minhash = similar._minhash_from_text(
-            self.test_text, similar.DEFAULT_PERMUTATIONS, self.delimiters)
+        minhash = similarity._minhash_from_text(
+            self.test_text, similarity.DEFAULT_PERMUTATIONS, self.delimiters)
         self.assertIsInstance(minhash, MinHash)
