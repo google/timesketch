@@ -169,15 +169,15 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
             String with summary of the analyzer result
         """
         query = 'source_short:"WEBHIST"'
-        return_fields = ['message', 'url']
+        return_fields = ['url']
 
         # Generator of events based on your query.
         events = self.event_stream(
             query_string=query, return_fields=return_fields)
 
+        simple_counter = 0
         for event in events:
             url = event.source.get('url')
-            message = event.source.get('message')
 
             if url is None:
                 continue
@@ -199,10 +199,11 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 if not search_query:
                     continue
 
+                simple_counter += 1
                 event.add_attributes({'search_string': search_query})
 
-                event.set_human_readable('{0:s} search: {1:s} - {2:s}'.format(
-                    engine, search_query, message))
+                event.add_human_readable('{0:s} search: {1:s}'.format(
+                    engine, search_query))
                 event.add_emojis([emojis.MAGNIFYING_GLASS])
                 event.add_tags(['browser_search'])
                 # We break at the first hit of a successful search engine.
@@ -211,7 +212,9 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
         self.sketch.add_view(
             'Browser Search', query_string='tag:"browser_search"')
 
-        return 'Browser Search completed.'
+        return (
+            'Browser Search completed with {0:d} search results '
+            'extracted.').format(simple_counter)
 
 
 manager.AnalysisManager.register_analyzer(BrowserSearchSketchPlugin)

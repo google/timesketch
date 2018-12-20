@@ -51,7 +51,6 @@ class TestSimilarityLibScorer(BaseTest):
         MockDataStore)
     def test_minhash_from_text(self):
         """Test create minhash from text."""
-        # pylint: disable=protected-access
-        minhash = similarity._minhash_from_text(
+        minhash = similarity.minhash_from_text(
             self.test_text, similarity.DEFAULT_PERMUTATIONS, self.delimiters)
         self.assertIsInstance(minhash, MinHash)
