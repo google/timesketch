@@ -19,7 +19,6 @@ import logging
 import subprocess
 import traceback
 
-from celery import group
 from celery import chain
 from flask import current_app
 
@@ -101,8 +100,8 @@ def _get_index_analyzers():
     """Get list of index analysis tasks to run.
 
     Returns:
-        Celery chain of index analysis tasks as Celery subtask signatures or None if
-        index analyzers are disabled in config.
+        Celery chain of index analysis tasks as Celery subtask signatures or
+        None if index analyzers are disabled in config.
     """
     tasks = []
 
