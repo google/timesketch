@@ -192,7 +192,7 @@ def build_sketch_analysis_pipeline(sketch_id):
         else:
             tasks.append(run_sketch_analyzer.s(sketch_id, analyzer_name))
 
-    return group(tasks)
+    return chain(tasks)
 
 
 @celery.task(track_started=True)
@@ -248,7 +248,7 @@ def run_sketch_analyzer(index_name, sketch_id, analyzer_name, **kwargs):
         sketch_id=sketch_id, index_name=index_name, **kwargs)
     result = analyzer.run_wrapper()
     logging.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
-    return sketch_id
+    return index_name
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)

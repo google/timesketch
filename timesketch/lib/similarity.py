@@ -43,7 +43,7 @@ def _shingles_from_text(text, delimiters):
     return filter(None, re.split('|'.join(delimiters), text))
 
 
-def _minhash_from_text(text, num_perm, delimiters):
+def minhash_from_text(text, num_perm, delimiters):
     """Calculate minhash of text.
 
     Args:
@@ -95,7 +95,7 @@ def new_lsh_index(events, field, delimiters=None, num_perm=None,
         for event in events:
             # Insert minhash in LSH index.
             key = (event.event_id, event.event_type, event.index_name)
-            minhash = _minhash_from_text(
+            minhash = minhash_from_text(
                 event.source[field], num_perm, delimiters)
             minhashes[key] = minhash
             lsh_session.insert(key, minhash)
