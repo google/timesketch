@@ -19,10 +19,10 @@ See https://emojipedia.org for list of available unicode emojis.
 from __future__ import unicode_literals
 
 
-MAGNIFYING_GLASS = '&#x1F50E'
-LOCOMOTIVE = '&#x1F682'
-WASTEBASKET = '&#x1F5D1'
 CAMERA = '&#x1F4F7'
 GLOBE = '&#x1F30D'
+LOCOMOTIVE = '&#x1F682'
+MAGNIFYING_GLASS = '&#x1F50E'
 SATELLITE = '&#x1F4E1'
 SKULL_CROSSBONE = '&#x2620'
+WASTEBASKET = '&#x1F5D1'
