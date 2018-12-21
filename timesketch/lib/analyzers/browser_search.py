@@ -39,7 +39,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
          '_extract_urlpart_search_query', None),
         ('Google Drive', re.compile(r'drive\.google\.com/.+/search'),
          '_extract_search_query_from_url', 'q'),
-        ('Google Search',
+        ('Google',
          re.compile(r'(www\.|[a-zA-Z]\.|/)google\.[a-zA-Z]+/search'),
          '_extract_search_query_from_url', 'q'),
         ('Google Sites', re.compile(r'sites\.google\.'),
@@ -202,8 +202,8 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 simple_counter += 1
                 event.add_attributes({'search_string': search_query})
 
-                event.add_human_readable('{0:s} search: {1:s}'.format(
-                    engine, search_query))
+                event.add_human_readable('{0:s} search query: {1:s}'.format(
+                    engine, search_query), self.NAME)
                 event.add_emojis([emojis.MAGNIFYING_GLASS])
                 event.add_tags(['browser_search'])
                 # We break at the first hit of a successful search engine.
