@@ -48,6 +48,7 @@ class SqlAlchemyTask(celery.Task):
 
 
 @signals.worker_process_init.connect
+# pylint: disable=unused-variable
 def init_worker(**kwargs):
     """Create new database engine per worker process."""
     url = celery.conf.get('SQLALCHEMY_DATABASE_URI')
