@@ -54,6 +54,7 @@
         </button>
         <div class="btn-group" style="margin-left:10px;">
             <button class="btn btn-default" ng-show="similarityEnabled" ng-click="similarityLayer = !similarityLayer" ng-style="{true: {'background-color':'#f5f5f5'}}[similarityLayer]">Similarity layer</button>
+            <button class="btn btn-default" ng-click="messageLayer = !messageLayer" ng-style="{true: {'background-color':'#f5f5f5'}}[messageLayer]">Verbose View</button>
             <button class="btn btn-default" ng-click="filter.order = { 'asc': 'desc', 'desc': 'asc'}[filter.order];applyOrder()"><i ng-class="{'asc': 'fa fa-sort-asc', 'desc': 'fa fa-sort-desc'}[filter.order]"></i> Sort</button>
             <a class="btn btn-default" ng-disabled="meta.es_total_count > 10000" href="/sketch/{{ sketchId }}/explore/export/" download="export.csv"><i class="fa fa-cloud-download"></i> Export</a>
             <button class="btn btn-default" data-toggle="modal" ng-hide="!anySelected" data-target="#save-event-view-modal"><i class="fa fa-save"></i> Save selection</button>
@@ -116,7 +117,7 @@
     </div>
     <br>
     <div ng-repeat="event in events">
-        <ts-event ng-hide="event.hidden && !meta.showHiddenEvents" enable-context-query="true" similarity-layer="similarityLayer" event="::event" add-event-data="addEventData" meta="::meta" sketch-id="::sketchId" prev-timestamp="::events[$index-1]['_source'].timestamp" next-timestamp="::events[$index+1]['_source'].timestamp" index="::$index" order="::filter.order"></ts-event>
+        <ts-event ng-hide="event.hidden && !meta.showHiddenEvents" enable-context-query="true" similarity-layer="similarityLayer" message-layer="messageLayer" event="::event" add-event-data="addEventData" meta="::meta" sketch-id="::sketchId" prev-timestamp="::events[$index-1]['_source'].timestamp" next-timestamp="::events[$index+1]['_source'].timestamp" index="::$index" order="::filter.order"></ts-event>
         <ts-event-add event="::event" events="events" index="{{$index}}" add-event-data="addEventData" sketch="sketch" sketch-id="::sketchId" filter="filter" query="query" queryDsl="queryDsl"></ts-event-add>
     </div>
     <div ng-show="totalPages > 0 && dataLoaded" style="margin: 0 auto; display:inline-block;">
