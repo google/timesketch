@@ -1,14 +1,28 @@
-sudo: false
 language: python
-python: '2.7'
+python:
+  - '2.7'
+  - '3.6'
 node_js: '8'
 cache:
   - yarn
   - pip
 
+matrix:
+  allow_failures:
+    - python: '3.6'
+
 install:
+  - pip install --upgrade pip
+  - pip install flake8 -r requirements.txt
   - pip install .
   - yarn install
+
+before_script:
+  - EXCLUDE=./.*,node_modules/node-gyp/gyp
+  # stop the build if there are Python syntax errors or undefined names
+  - flake8 . --count --exclude=$EXCLUDE --select=E901,E999,F821,F822,F823 --show-source --statistics
+  # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
+  - flake8 . --count --exit-zero --ignore=E111,E114 --max-complexity=10 --max-line-length=127 --statistics
 
 script:
   - ./run_tests.py --full
