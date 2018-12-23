@@ -29,11 +29,12 @@ POST /sketches/:sketch_id/views/
 
 import datetime
 import json
-import md5
 import os
 import time
 import uuid
+from hashlib import md5
 
+from six import text_type
 from dateutil import parser
 from flask import abort
 from flask import current_app
@@ -271,8 +272,8 @@ class SketchListResource(ResourceMixin, Resource):
     def __init__(self):
         super(SketchListResource, self).__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument(u'name', type=unicode, required=True)
-        self.parser.add_argument(u'description', type=unicode, required=False)
+        self.parser.add_argument(u'name', type=text_type, required=True)
+        self.parser.add_argument(u'description', type=text_type, required=False)
 
     @login_required
     def get(self):
@@ -767,7 +768,7 @@ class EventCreateResource(ResourceMixin, Resource):
 
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
-            index_name = unicode(md5.new(index_name_seed).hexdigest())
+            index_name = text_type(md5.new(index_name_seed).hexdigest())
 
             # Try to create index
             try:
@@ -844,8 +845,9 @@ class EventResource(ResourceMixin, Resource):
     def __init__(self):
         super(EventResource, self).__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument(u'searchindex_id', type=unicode, required=True)
-        self.parser.add_argument(u'event_id', type=unicode, required=True)
+        self.parser.add_argument(u'searchindex_id', type=text_type,
+                                 required=True)
+        self.parser.add_argument(u'event_id', type=text_type, required=True)
 
     @login_required
     def get(self, sketch_id):
@@ -1013,8 +1015,8 @@ class UploadFileResource(ResourceMixin, Resource):
 
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
-            filename = unicode(uuid.uuid4().hex)
-            index_name = unicode(uuid.uuid4().hex)
+            filename = text_type(uuid.uuid4().hex)
+            index_name = text_type(uuid.uuid4().hex)
 
             file_path = os.path.join(upload_folder, filename)
             file_storage.save(file_path)
@@ -1279,7 +1281,7 @@ class TimelineCreateResource(ResourceMixin, Resource):
 
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
-            index_name = unicode(uuid.uuid4().hex)
+            index_name = text_type(uuid.uuid4().hex)
 
             # Create the search index in the Timesketch database
             searchindex = SearchIndex.get_or_create(

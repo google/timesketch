@@ -478,7 +478,7 @@ class BaseTest(TestCase):
         response = self.client.get(self.resource_url)
         if response.status_code == 405:
             response = self.client.post(self.resource_url)
-        self.assertIn(u'/login/', response.data)
+        self.assertIn(b'/login/', response.data)
         self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
 

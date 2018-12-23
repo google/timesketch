@@ -19,6 +19,7 @@ import logging
 import subprocess
 import traceback
 
+from six import string_types
 from celery import group
 from celery import chain
 from flask import current_app
@@ -209,7 +210,7 @@ def run_sketch_init(index_name_list):
     Returns:
         List with first entry of index_name_list.
     """
-    if isinstance(index_name_list, basestring):
+    if isinstance(index_name_list, string_types):
         index_name_list = [index_name_list]
     return index_name_list[:1][0]
 

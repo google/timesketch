@@ -16,6 +16,7 @@
 import os
 import sys
 
+from six import text_type
 from celery import Celery
 from flask import Flask
 from flask_login import LoginManager
@@ -50,7 +51,7 @@ def create_app(config=None):
     if not config:
         config = u'/etc/timesketch.conf'
 
-    if isinstance(config, unicode):
+    if isinstance(config, text_type):
         os.environ[u'TIMESKETCH_SETTINGS'] = config
         try:
             app.config.from_envvar(u'TIMESKETCH_SETTINGS')

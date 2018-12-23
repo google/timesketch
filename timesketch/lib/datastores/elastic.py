@@ -19,6 +19,8 @@ import logging
 
 from uuid import uuid4
 
+from six import string_types
+from six import text_type
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch.exceptions import ConnectionError
@@ -479,9 +481,9 @@ class ElasticsearchDataStore(object):
                     index=index_name, body={u'mappings': _document_mapping})
             except ConnectionError:
                 raise RuntimeError(u'Unable to connect to Timesketch backend.')
-        # We want to return unicode here to keep SQLalchemy happy.
-        index_name = unicode(index_name.decode(encoding=u'utf-8'))
-        doc_type = unicode(doc_type.decode(encoding=u'utf-8'))
+        # We want to return Unicode here to keep SQLalchemy happy.
+        index_name = text_type(index_name.decode(encoding=u'utf-8'))
+        doc_type = text_type(doc_type.decode(encoding=u'utf-8'))
         return index_name, doc_type
 
     def delete_index(self, index_name):
@@ -514,7 +516,7 @@ class ElasticsearchDataStore(object):
             # Make sure we have decoded strings in the event dict.
             event = {
                 k.decode(u'utf8'): (v.decode(u'utf8')
-                                    if isinstance(v, basestring) else v)
+                                    if isinstance(v, string_types) else v)
                 for k, v in event.items()
             }
 

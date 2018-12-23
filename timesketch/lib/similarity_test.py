@@ -41,8 +41,8 @@ class TestSimilarityLibScorer(BaseTest):
     def test_shingles_from_text(self):
         """Test splitting up a text string to words."""
         # pylint: disable=protected-access
-        shingles = similarity._shingles_from_text(
-            self.test_text, self.delimiters)
+        shingles = list(similarity._shingles_from_text(
+            self.test_text, self.delimiters))
         self.assertIsInstance(shingles, list)
         self.assertEqual(len(shingles), 8)
 

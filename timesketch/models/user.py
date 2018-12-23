@@ -13,6 +13,7 @@
 # limitations under the License.
 """This module implements the user model."""
 
+from six import text_type
 from flask_bcrypt import generate_password_hash
 from flask_bcrypt import check_password_hash
 from flask_login import UserMixin
@@ -80,7 +81,7 @@ class User(UserMixin, BaseModel):
             rounds: Number of rounds to use for the bcrypt hashing
         """
         password_hash = generate_password_hash(plaintext, rounds)
-        self.password = unicode(password_hash)
+        self.password = text_type(password_hash)
 
     def check_password(self, plaintext):
         """Check a plaintext password against a stored password hash.

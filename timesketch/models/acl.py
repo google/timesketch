@@ -20,6 +20,7 @@ make it easy to annotate models to give them access to the ACL system.
 The model has the following permissions: "read", "write" and "delete".
 """
 
+from six import text_type
 from flask_login import current_user
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
@@ -221,7 +222,7 @@ class AccessControlMixin(object):
         public_ace = self.is_public
         if public_ace and permission == u'read':
             return public_ace
-        return self._get_ace(permission=unicode(permission), user=user)
+        return self._get_ace(permission=text_type(permission), user=user)
 
     def grant_permission(self, permission, user=None, group=None):
         """Grant permission to a user or group  with the specific permission.

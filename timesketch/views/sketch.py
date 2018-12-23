@@ -15,8 +15,9 @@
 
 import csv
 import json
-from StringIO import StringIO
 
+from six import StringIO
+from six import string_types
 from flask import abort
 from flask import Blueprint
 from flask import current_app
@@ -476,10 +477,10 @@ def export(sketch_id):
     csv_writer = csv.DictWriter(csv_out, fieldnames=fieldnames)
     csv_writer.writeheader()
     for _event in result[u'hits'][u'hits']:
-        row = dict((k, v.encode(u'utf-8') if isinstance(v, basestring) else v)
+        row = dict((k, v.encode(u'utf-8') if isinstance(v, string_types) else v)
                    for k, v in _event[u'_source'].iteritems())
         row[u'_index'] = _event[u'_index']
-        if isinstance(row[u'_index'], basestring):
+        if isinstance(row[u'_index'], string_types):
             row[u'_index'] = row[u'_index'].encode(u'utf-8')
         csv_writer.writerow(row)
 
