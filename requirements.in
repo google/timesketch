@@ -22,6 +22,7 @@ PyJWT
 requests>=2.20.0
 cryptography>=2.3
 PyYAML
+urllib3>=1.23
 
 # dev-requirements:
 Flask-Testing
