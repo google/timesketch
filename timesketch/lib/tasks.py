@@ -19,7 +19,6 @@ import logging
 import subprocess
 import traceback
 
-from celery import group
 from celery import chain
 from celery import signals
 from flask import current_app
@@ -108,8 +107,8 @@ def _get_index_analyzers():
     """Get list of index analysis tasks to run.
 
     Returns:
-        Group of index analysis tasks as Celery subtask signatures or None if
-        index analyzers are disabled in config.
+        Celery chain of index analysis tasks as Celery subtask signatures or
+        None if index analyzers are disabled in config.
     """
     tasks = []
 
@@ -128,7 +127,7 @@ def _get_index_analyzers():
             else:
                 tasks.append(run_index_analyzer.s(analyzer_name))
 
-    return group(tasks)
+    return chain(tasks)
 
 
 def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
@@ -244,11 +243,12 @@ def run_sketch_analyzer(index_name, sketch_id, analyzer_name, **kwargs):
     """Create a Celery task for a sketch analyzer.
 
     Args:
-      sketch_id: ID of the sketch to analyze.
-      analyzer_name: Name of the analyzer.
+        index_name: Name of the datastore index.
+        sketch_id: ID of the sketch to analyze.
+        analyzer_name: Name of the analyzer.
 
     Returns:
-      ID (str) of the sketch.
+      Name (str) of the index.
     """
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
     analyzer = analyzer_class(
@@ -269,7 +269,7 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
         source_type: Type of file, csv or jsonl.
 
     Returns:
-        Elasticsearch index name.
+        Name (str) of the index.
     """
     # Log information to Celery
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
@@ -310,7 +310,7 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
         source_type: Type of file, csv or jsonl.
 
     Returns:
-        Elasticsearch index name.
+        Name (str) of the index.
     """
     event_type = 'generic_event'  # Document type for Elasticsearch
     validators = {

@@ -209,8 +209,9 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 # We break at the first hit of a successful search engine.
                 break
 
-        self.sketch.add_view(
-            'Browser Search', query_string='tag:"browser_search"')
+        if simple_counter > 0:
+            self.sketch.add_view(
+                'Browser Search', query_string='tag:"browser_search"')
 
         return (
             'Browser Search completed with {0:d} search results '

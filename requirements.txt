@@ -65,7 +65,7 @@ requests==2.20.1
 singledispatch==3.4.0.3   # via astroid, pylint
 six==1.10.0               # via astroid, bcrypt, cryptography, flask-restful, mock, pylint, python-dateutil, singledispatch
 sqlalchemy==1.1.13
-urllib3==1.22             # via elasticsearch, requests
+urllib3==1.24.1
 vine==1.1.4               # via amqp
 werkzeug==0.14.1          # via flask
 wrapt==1.10.11            # via astroid
