@@ -166,7 +166,7 @@ class Event(object):
         """
         existing_human_readable = self.source.get('human_readable', [])
 
-        human_readable = '[{0:s}] {1:s}]'.format(analyzer_name, human_readable)
+        human_readable = '[{0:s}] {1:s}'.format(analyzer_name, human_readable)
 
         if human_readable in existing_human_readable:
             return
