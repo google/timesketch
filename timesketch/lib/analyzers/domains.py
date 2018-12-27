@@ -127,16 +127,14 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
         for domain in top_domain_list:
             minhash = similarity.minhash_from_text(
-                domain, similarity.DEFAULT_PERMUTATIONS,
-                similarity.DEFAULT_DELIMITERS)
+                domain, similarity.DEFAULT_PERMUTATIONS, ['\.', '/'])
             top_domains[domain] = minhash
 
         for domain in tld_counter.iterkeys():
             if domain in top_domain_list:
                 continue
             minhash = similarity.minhash_from_text(
-                domain, similarity.DEFAULT_PERMUTATIONS,
-                similarity.DEFAULT_DELIMITERS)
+                domain, similarity.DEFAULT_PERMUTATIONS, ['\.', '/'])
             # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
             if 'greendale' in domain or 'grendale' in domain:
                 print 'inspecting: {}'.format(domain)
