@@ -40,12 +40,14 @@ export const tsEventList = ['timesketchApi', function (timesketchApi) {
             viewId: '=',
             namedView: '=',
             similarityEnabled: '=',
+            verboseView: '=',
             addEventData: '=',
         },
         require: '^tsSearch',
         controller: function ($scope) {
             // Convert to Javascript boolean
             $scope.similarityEnabled = ($scope.similarityEnabled == 'True');
+            $scope.verboseView = ($scope.verboseView == 'True');
 
             if ($scope.namedView) {
                 timesketchApi.getView($scope.sketchId, $scope.viewId).success(function (data) {
@@ -284,6 +286,7 @@ export const tsEvent = function () {
             enableContextQuery: '=',
             order: '=',
             similarityLayer: '=',
+            messageLayer: '=',
             addEventData: '=',
         },
         require: '?^tsSearch',
