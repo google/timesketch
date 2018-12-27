@@ -20,9 +20,10 @@ import subprocess
 import traceback
 
 from celery import chain
+from celery import signals
 from flask import current_app
+from sqlalchemy import create_engine
 
-from timesketch import create_app
 from timesketch import create_celery_app
 from timesketch.lib.analyzers import manager
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
@@ -33,7 +34,6 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Timeline
 
 celery = create_celery_app()
-flask_app = create_app()
 
 
 class SqlAlchemyTask(celery.Task):
@@ -46,6 +46,15 @@ class SqlAlchemyTask(celery.Task):
         super(SqlAlchemyTask, self).after_return(*args, **kwargs)
 
 
+# pylint: disable=unused-argument
+@signals.worker_process_init.connect
+def init_worker(**kwargs):
+    """Create new database engine per worker process."""
+    url = celery.conf.get('SQLALCHEMY_DATABASE_URI')
+    engine = create_engine(url)
+    db_session.configure(bind=engine)
+
+
 def _set_timeline_status(index_name, status, error_msg=None):
     """Helper function to set status for searchindex and all related timelines.
 
@@ -54,25 +63,23 @@ def _set_timeline_status(index_name, status, error_msg=None):
         status: Status to set.
         error_msg: Error message.
     """
-    # Run within Flask context so we can make database changes
-    with flask_app.app_context():
-        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
-        timelines = Timeline.query.filter_by(searchindex=searchindex).all()
+    searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+    timelines = Timeline.query.filter_by(searchindex=searchindex).all()
 
-        # Set status
-        searchindex.set_status(status)
-        for timeline in timelines:
-            timeline.set_status(status)
-            db_session.add(timeline)
+    # Set status
+    searchindex.set_status(status)
+    for timeline in timelines:
+        timeline.set_status(status)
+        db_session.add(timeline)
 
-        # Update description if there was a failure in ingestion
-        if error_msg and status == 'fail':
-            # TODO: Don't overload the description field.
-            searchindex.description = error_msg
+    # Update description if there was a failure in ingestion
+    if error_msg and status == 'fail':
+        # TODO: Don't overload the description field.
+        searchindex.description = error_msg
 
-        # Commit changes to database
-        db_session.add(searchindex)
-        db_session.commit()
+    # Commit changes to database
+    db_session.add(searchindex)
+    db_session.commit()
 
 
 def _get_index_task_class(file_extension):
