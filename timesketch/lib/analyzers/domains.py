@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import collections
+import difflib
 
 from flask import current_app
 
@@ -23,18 +24,9 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
     NAME = 'domains'
 
-    # Defines how deep into the most frequently visited top
-    # level domains the analyzer should include in its watch list.
-    WATCHED_DOMAINS_THRESHOLD = 5
-
-    # The minimum Jaccard distance for a domain to be considered
-    # similar to the domains in the watch list.
-    WATCHED_DOMAINS_SCORE_THRESHOLD = 0.75
-
-    # A list of domains to include in the watched domain list.
-    # There are two ways to manually add domains, either adding
-    # them to this list or the timesketch.conf file. By default
-    # the list includes domains from the Alexa top 10 list (as of 2018-12-27).
+    # This list contains entries from Alexa top 10 list (as of 2018-12-27).
+    # They are used to create the base of a domain watch list. For custom
+    # entries use DOMAIN_ANALYZER_WATCHED_DOMAINS in timesketch.conf.
     WATCHED_DOMAINS_BASE_LIST = [
         'google.com', 'youtube.com', 'facebook.com', 'baidu.com',
         'wikipedia.org', 'qq.com', 'amazon.com', 'yahoo.com', 'taobao.com',
@@ -50,12 +42,20 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
         self.index_name = index_name
         super(DomainsSketchPlugin, self).__init__(index_name, sketch_id)
 
+        self.domain_scoring_threshold = current_app.config[
+            'DOMAIN_ANALYZER_WATCHED_DOMAINS_SCORE_THRESHOLD']
+        self.domain_scoring_whitelist = current_app.config[
+            'DOMAIN_ANALYZER_WHITELISTED_DOMAINS']
+
     def _get_minhash_from_domain(self, domain):
         """Get the Minhash value from a domain name.
 
         This function takes a domain, removes the TLD extension
         from it and then creates a MinHash object from every
         remaining character in the domain.
+
+        If a domain starts with www., it will be stripped of the
+        domain before the Minhash is calculated.
 
         Args:
           domain: string with a full domain, eg. www.google.com
@@ -72,6 +72,76 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
         return minhash
 
+    def _get_similar_domains(self, domain, domain_dict):
+        """Compare a domain to a list of domains and return similar domains.
+
+        This function takes a domain and a dict object that contains
+        as key domain names and value the calculated MinHash value for that
+        domain. It will then strip www. if needed from the domain, and compare
+        the Jaccard distance between all domains in the dict and the supplied
+        domain (removing the TLD extension from all domains).
+
+        If the Jaccard distance between the supplied domain and one or more of
+        the domains in the domain dict is higher than the configured threshold
+        the domain is further tested to see if there are overlapping substrings
+        between the two domains. If there is a common substring that is longer
+        than half the domain name and the Jaccard distance is above the
+        threshold the domain is considered to be similar.
+
+        Args:
+            domain: string with a full domain, eg. www.google.com
+            domain_dict: dict with domain names (keys) and MinHash objects
+                (values) for all domains to compare against.
+
+        Returns:
+            a list of tuples (score, similar_domain_name) with the names of
+            the similar domains as well as the Jaccard distance between
+            the supplied domain and the matching one.
+        """
+        domain = self._strip_www(domain)
+
+        similar = []
+        if not '.' in domain:
+            return similar
+
+        if domain in domain_dict:
+            return similar
+
+        if any(domain.endswith(x) for x in domain_dict):
+            return similar
+
+        minhash = self._get_minhash_from_domain(domain)
+
+        # We want to get rid of the TLD extension of the domain.
+        # This is only used in the substring match in case the Jaccard
+        # distance is above the threshold.
+        domain_items = domain.split('.')
+        domain_part = '.'.join(domain_items[:-1])
+
+        for watched_domain, watched_hash in domain_dict.iteritems():
+            score = watched_hash.jaccard(minhash)
+            if score < self.domain_scoring_threshold:
+                continue
+
+            watched_domain_items = watched_domain.split('.')
+            watched_domain_part = '.'.join(watched_domain_items[:-1])
+
+            # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
+            print 'BINGO: domain {0:s} similar to {1:s} with score {2}'.format(domain, watched_domain, score)
+
+            # Check if there are also any overlapping strings.
+            sequence = difflib.SequenceMatcher(None, domain_part, watched_domain_part)
+            match = sequence.find_longest_match(0, len(domain_part), 0, len(watched_domain_part))
+
+            # We want to have at least half of the domain matching.
+            match_size = min(int(len(domain_part)/2), int(len(watched_domain_part)/2))
+            if match.size < match_size:
+                print 'WE ARE SCRAPPING THIS, NOT A MATCHY MATCHY'
+                continue
+            similar.append((watched_domain, score))
+
+        return similar
+
     def _get_tld(self, domain):
         """Get the top level domain from a domain string.
 
@@ -83,6 +153,12 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
               eg: google.com
         """
         return '.'.join(domain.split('.')[-2:])
+
+    def _strip_www(self, domain):
+        """Strip www. from beginning of domain names."""
+        if domain.startswith('www.'):
+            return domain[4:]
+        return domain
 
     def run(self):
         """Entry point for the analyzer.
@@ -97,7 +173,6 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
         return_fields = ['domain', 'url', 'message', 'human_readable']
 
-        # Generator of events based on your query.
         events = self.event_stream(
             '', query_dsl=query, return_fields=return_fields)
 
@@ -129,65 +204,73 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
         watched_domains_list = current_app.config[
             'DOMAIN_ANALYZER_WATCHED_DOMAINS']
+        domain_threshold = current_app.config[
+            'DOMAIN_ANALYZER_WATCHED_DOMAINS_THRESHOLD']
         watched_domains_list.extend([
-            x for x, _ in tld_counter.most_common(self.WATCHED_DOMAINS_THRESHOLD)])
+            self._strip_www(x) for x, _ in domain_counter.most_common(
+                domain_threshold)])
+        watched_domains_list.extend([
+            x for x, _ in tld_counter.most_common(domain_threshold)])
         watched_domains_list.extend(self.WATCHED_DOMAINS_BASE_LIST)
-        watched_domains_list = list(set(watched_domains_list))
+        watched_domains_list_temp = set(watched_domains_list)
+        watched_domains_list = []
+        for domain in watched_domains_list_temp:
+            if domain in self.domain_scoring_whitelist:
+                continue
+            if any(domain.endswith(x) for x in self.domain_scoring_whitelist):
+                continue
+
+            if not '.' in domain:
+                continue
+            watched_domains_list.append(domain)
 
         # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
         print 'Domains to be inspected: {0:s}'.format(', '.join(watched_domains_list))
 
         watched_domains = {}
-        potentially_evil_tlds = {}
-
         for domain in watched_domains_list:
             minhash = self._get_minhash_from_domain(domain)
             watched_domains[domain] = minhash
 
-        for domain in tld_counter.iterkeys():
-            if domain in watched_domains_list:
-                continue
-            minhash = self._get_minhash_from_domain(domain)
-
-            # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
-            if 'greendale' in domain or 'grendale' in domain:
-                print 'inspecting: {}'.format(domain)
-
-            for watched_domain, watched_hash in watched_domains.iteritems():
-                score = watched_hash.jaccard(minhash)
-                if score > self.WATCHED_DOMAINS_SCORE_THRESHOLD:
-                    # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
-                    print 'BINGO: domain {0:s} similar to {1:s} with score {2}'.format(domain, watched_domain, score)
-                    potentially_evil_tlds.setdefault(domain, [])
-                    potentially_evil_tlds[domain].append(watched_domain)
-
+        similar_domain_counter = 0
         for domain, count in domain_counter.iteritems():
+            emojis_to_add = [emojis.SATELLITE]
+            tags_to_add = []
+
             if count == 1:
                 text = 'Domain: only occurance of domain'
             else:
                 text = 'Domain seen: {0:d} times'.format(count)
 
-            emojis_to_add = [emojis.SATELLITE]
+            similar_domains = self._get_similar_domains(domain, watched_domains)
 
-            tld = self._get_tld(domain)
-            if tld in potentially_evil_tlds:
+            if similar_domains:
+                similar_domain_counter += 1
                 emojis_to_add.append(emojis.SKULL_CROSSBONE)
-                added_text = 'domain similar to: {0:s}'.format(', '.join(
-                    potentially_evil_tlds[tld]))
-                text = '{0:s} - {1:s}'.format(text, added_text)
+                tags_to_add.append('phishy_domain')
+                similar_text_list = ['{0:s} [{1:.2f}]'.format(
+                    phishy_domain, score) for phishy_domain, score in similar_domains]
+                added_text = 'domain {0:s} similar to: {1:s}'.format(domain, ', '.join(similar_text_list))
+                text = '{0:s} - {1:s}'.format(added_text, text)
+                if any(domain.endswith(x) for x in self.domain_scoring_whitelist):
+                    tags_to_add.append('known_network')
 
             for event in domains.get(domain, []):
                 event.add_emojis(emojis_to_add)
+                event.add_tags(tags_to_add)
                 event.add_human_readable(text, self.NAME, append=False)
                 event.add_attributes({'domain_count': count})
 
         # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
         print 'Done with minhashes and count'
+        if similar_domain_counter:
+            self.sketch.add_view(
+                'Phishy Domains', query_string='tag:"phishy_domain"')
 
         return (
             'Domain extraction ({0:d} domains discovered with {1:d} TLDs) '
             'and {2:d} potentially evil domains discovered.').format(
-                len(domains), len(tld_counter), len(potentially_evil_tlds))
+                len(domains), len(tld_counter), similar_domain_counter)
 
 
 manager.AnalysisManager.register_analyzer(DomainsSketchPlugin)
