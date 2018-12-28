@@ -3,13 +3,14 @@ from __future__ import unicode_literals
 
 import collections
 
-#from flask import current_app
+from flask import current_app
 
 try:
     from urlparse import urlparse
 except ImportError:
     from urllib import parse as urlparse  # pylint: disable=no-name-in-module
 
+from datasketch.minhash import MinHash
 
 from timesketch.lib import emojis
 from timesketch.lib import similarity
@@ -24,15 +25,15 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
     # Defines how deep into the top level domains the analyzer
     # should look for similarities.
-    TOP_DOMAIN_THRESHOLD = 5
+    WATCHED_DOMAINS_THRESHOLD = 5
 
     # The minimum jaccard distance for a domain to be considered
     # similar to the top domains.
-    TOP_DOMAIN_SCORE_THRESHOLD = 0.33
+    WATCHED_DOMAINS_SCORE_THRESHOLD = 0.75
 
     # A list of domains to include in the top domain list, by default
     # it's taken from the Alexa top 10 list (as of 2018-12-27).
-    TOP_DOMAIN_BASE_LIST = [
+    WATCHED_DOMAINS_BASE_LIST = [
         'google.com', 'youtube.com', 'facebook.com', 'baidu.com',
         'wikipedia.org', 'qq.com', 'amazon.com', 'yahoo.com', 'taobao.com',
         'reddit.com']
@@ -46,6 +47,23 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
         """
         self.index_name = index_name
         super(DomainsSketchPlugin, self).__init__(index_name, sketch_id)
+
+    def _get_minhash_from_domain(self, domain):
+        """Get the Minhash value from a domain name.
+
+        Args:
+
+        Returns:
+            A minhash (instance of datasketch.minhash.MinHash)
+        """
+        domain_items = domain.split('.')
+        domain_part = '.'.join(domain_items[:-1])
+
+        minhash = MinHash(similarity.DEFAULT_PERMUTATIONS)
+        for char in domain_part:
+            minhash.update(char.encode('utf8'))
+
+        return minhash
 
     def _get_tld(self, domain):
         """Get the top level domain from a domain string.
@@ -112,43 +130,42 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
             tld = self._get_tld(domain)
             tld_counter[tld] += 1
 
-        minhashes = {}
-        most_common_tlds = [
-            x for x, _ in tld_counter.most_common(self.TOP_DOMAIN_THRESHOLD)]
+        watched_domains_list = current_app.config[
+            'DOMAIN_ANALYZER_WATCHED_DOMAINS']
+        watched_domains_list.extend([
+            x for x, _ in tld_counter.most_common(self.WATCHED_DOMAINS_THRESHOLD)])
+        watched_domains_list.extend(self.WATCHED_DOMAINS_BASE_LIST)
+        watched_domains_list = list(set(watched_domains_list))
 
         # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
-        most_common_tlds.append('greendale.xyz')
-        top_domain_list = list(
-            set().union(self.TOP_DOMAIN_BASE_LIST, most_common_tlds))
-        # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
-        print 'Domains inspected: {0:s}'.format(', '.join(top_domain_list))
-        top_domains = {}
+        print 'Domains to be inspected: {0:s}'.format(', '.join(watched_domains_list))
+
+        watched_domains = {}
         potentially_evil_tlds = {}
 
-        for domain in top_domain_list:
-            minhash = similarity.minhash_from_text(
-                domain, similarity.DEFAULT_PERMUTATIONS, ['\.', '/'])
-            top_domains[domain] = minhash
+        for domain in watched_domains_list:
+            minhash = self._get_minhash_from_domain(domain)
+            watched_domains[domain] = minhash
 
         for domain in tld_counter.iterkeys():
-            if domain in top_domain_list:
+            if domain in watched_domains_list:
                 continue
-            minhash = similarity.minhash_from_text(
-                domain, similarity.DEFAULT_PERMUTATIONS, ['\.', '/'])
+            minhash = self._get_minhash_from_domain(domain)
+
             # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
             if 'greendale' in domain or 'grendale' in domain:
                 print 'inspecting: {}'.format(domain)
 
-            for top_domain, top_hash in top_domains.iteritems():
-                score = top_hash.jaccard(minhash)
+            for watched_domain, watched_hash in watched_domains.iteritems():
+                score = watched_hash.jaccard(minhash)
                 # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
-                if 'greendale' in top_domain and 'grendale' in domain:
-                    print 'Inspecting {} and {} = {}'.format(domain, top_domain, score)
-                if score > self.TOP_DOMAIN_SCORE_THRESHOLD:
+                if 'greendale' in watched_domain and 'grendale' in domain:
+                    print 'Inspecting {} and {} = {}'.format(domain, watched_domain, score)
+                if score > self.WATCHED_DOMAINS_SCORE_THRESHOLD:
                     # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
-                    print 'BINGO: domain {0:s} similar to {1:s} with score {2}'.format(domain, top_domain, score)
+                    print 'BINGO: domain {0:s} similar to {1:s} with score {2}'.format(domain, watched_domain, score)
                     potentially_evil_tlds.setdefault(domain, [])
-                    potentially_evil_tlds[domain].append(top_domain)
+                    potentially_evil_tlds[domain].append(watched_domain)
 
         for domain, count in domain_counter.iteritems():
             if count == 1:
