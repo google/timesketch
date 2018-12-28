@@ -616,7 +616,7 @@ class SearchTemplateManager(Command):
                 db_session.commit()
 
 
-if __name__ == '__main__':
+def main():
     # Setup Flask-script command manager and register commands.
     shell_manager = Manager(create_app)
     shell_manager.add_command(u'add_user', AddUser())
@@ -641,3 +641,7 @@ if __name__ == '__main__':
         default=u'/etc/timesketch.conf',
         required=False)
     shell_manager.run()
+
+
+if __name__ == '__main__':
+    main()
