@@ -520,30 +520,6 @@ class PurgeTimeline(Command):
             es.client.indices.delete(index=index_name)
 
 
-class SimilarityScore(Command):
-    """Calculate similarity between events with same data_type."""
-    option_list = (
-        Option(
-            u'--index', u'-i', dest=u'index_name', required=True
-        ),
-        Option(
-            u'--data_type', u'-d', dest=u'data_type', required=True
-        ),
-    )
-
-    def run(self, index_name, data_type):
-        index_name = unicode(index_name.decode(encoding=u'utf-8'))
-        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
-
-        if not searchindex:
-            sys.stdout.write(u'No such index\n')
-            sys.exit()
-
-        scorer = SimilarityScorer(index_name=index_name, data_type=data_type)
-        result = scorer.run_wrapper()
-        sys.stdout.write(u'{0}\n'.format(result))
-
-
 class SearchTemplateManager(Command):
     """Command Module to manipulate Search templates."""
     option_list = (
@@ -631,7 +607,6 @@ def main():
     shell_manager.add_command(u'json2ts', CreateTimelineFromJson())
     shell_manager.add_command(u'purge', PurgeTimeline())
     shell_manager.add_command(u'search_template', SearchTemplateManager())
-    shell_manager.add_command(u'similarity_score', SimilarityScore())
     shell_manager.add_command(u'runserver',
                               Server(host=u'127.0.0.1', port=5000))
     shell_manager.add_option(
