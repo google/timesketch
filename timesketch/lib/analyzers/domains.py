@@ -19,20 +19,22 @@ from timesketch.lib.analyzers import manager
 
 
 class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sketch analyzer for Domains."""
+    """Sketch analyzer for domains."""
 
     NAME = 'domains'
 
-    # Defines how deep into the top level domains the analyzer
-    # should look for similarities.
+    # Defines how deep into the most frequently visited top
+    # level domains the analyzer should include in its watch list.
     WATCHED_DOMAINS_THRESHOLD = 5
 
-    # The minimum jaccard distance for a domain to be considered
-    # similar to the top domains.
+    # The minimum Jaccard distance for a domain to be considered
+    # similar to the domains in the watch list.
     WATCHED_DOMAINS_SCORE_THRESHOLD = 0.75
 
-    # A list of domains to include in the top domain list, by default
-    # it's taken from the Alexa top 10 list (as of 2018-12-27).
+    # A list of domains to include in the watched domain list.
+    # There are two ways to manually add domains, either adding
+    # them to this list or the timesketch.conf file. By default
+    # the list includes domains from the Alexa top 10 list (as of 2018-12-27).
     WATCHED_DOMAINS_BASE_LIST = [
         'google.com', 'youtube.com', 'facebook.com', 'baidu.com',
         'wikipedia.org', 'qq.com', 'amazon.com', 'yahoo.com', 'taobao.com',
@@ -51,7 +53,12 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
     def _get_minhash_from_domain(self, domain):
         """Get the Minhash value from a domain name.
 
+        This function takes a domain, removes the TLD extension
+        from it and then creates a MinHash object from every
+        remaining character in the domain.
+
         Args:
+          domain: string with a full domain, eg. www.google.com
 
         Returns:
             A minhash (instance of datasketch.minhash.MinHash)
@@ -98,15 +105,6 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
         domain_counter = collections.Counter()
         tld_counter = collections.Counter()
 
-        # TODO: Add analyzer logic here.
-        # Methods available to use for sketch analyzers:
-        # sketch.get_all_indices()
-        # sketch.add_view(name, query_string, query_filter={})
-        # event.add_attributes({'foo': 'bar'})
-        # event.add_tags(['tag_name'])
-        # event_add_label('label')
-        # event.add_star()
-        # event.add_comment('comment')
         for event in events:
             domain = event.source.get('domain')
 
@@ -126,7 +124,6 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
             domains.setdefault(domain, [])
             domains[domain].append(event)
 
-            # Extract the top level domain.
             tld = self._get_tld(domain)
             tld_counter[tld] += 1
 
@@ -158,9 +155,6 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
             for watched_domain, watched_hash in watched_domains.iteritems():
                 score = watched_hash.jaccard(minhash)
-                # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
-                if 'greendale' in watched_domain and 'grendale' in domain:
-                    print 'Inspecting {} and {} = {}'.format(domain, watched_domain, score)
                 if score > self.WATCHED_DOMAINS_SCORE_THRESHOLD:
                     # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
                     print 'BINGO: domain {0:s} similar to {1:s} with score {2}'.format(domain, watched_domain, score)
@@ -173,21 +167,16 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
             else:
                 text = 'Domain seen: {0:d} times'.format(count)
 
+            emojis_to_add = [emojis.SATELLITE]
+
             tld = self._get_tld(domain)
             if tld in potentially_evil_tlds:
-                evil = True
-            else:
-                evil = False
+                emojis_to_add.append(emojis.SKULL_CROSSBONE)
+                added_text = 'domain similar to: {0:s}'.format(', '.join(
+                    potentially_evil_tlds[tld]))
+                text = '{0:s} - {1:s}'.format(text, added_text)
 
             for event in domains.get(domain, []):
-                emojis_to_add = [emojis.SATELLITE]
-
-                if evil:
-                    emojis_to_add.append(emojis.SKULL_CROSSBONE)
-                    added_text = 'domain similar to: {0:s}'.format(', '.join(
-                        potentially_evil_tlds[tld]))
-                    text = '{0:s} - {1:s}'.format(text, added_text)
-
                 event.add_emojis(emojis_to_add)
                 event.add_human_readable(text, self.NAME, append=False)
                 event.add_attributes({'domain_count': count})
