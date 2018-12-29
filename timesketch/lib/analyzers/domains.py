@@ -126,17 +126,16 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
             watched_domain_items = watched_domain.split('.')
             watched_domain_part = '.'.join(watched_domain_items[:-1])
 
-            # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
-            print 'BINGO: domain {0:s} similar to {1:s} with score {2}'.format(domain, watched_domain, score)
-
             # Check if there are also any overlapping strings.
-            sequence = difflib.SequenceMatcher(None, domain_part, watched_domain_part)
-            match = sequence.find_longest_match(0, len(domain_part), 0, len(watched_domain_part))
+            sequence = difflib.SequenceMatcher(
+                None, domain_part, watched_domain_part)
+            match = sequence.find_longest_match(
+                0, len(domain_part), 0, len(watched_domain_part))
 
             # We want to have at least half of the domain matching.
-            match_size = min(int(len(domain_part)/2), int(len(watched_domain_part)/2))
+            match_size = min(
+                int(len(domain_part)/2), int(len(watched_domain_part)/2))
             if match.size < match_size:
-                print 'WE ARE SCRAPPING THIS, NOT A MATCHY MATCHY'
                 continue
             similar.append((watched_domain, score))
 
@@ -224,9 +223,6 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
                 continue
             watched_domains_list.append(domain)
 
-        # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
-        print 'Domains to be inspected: {0:s}'.format(', '.join(watched_domains_list))
-
         watched_domains = {}
         for domain in watched_domains_list:
             minhash = self._get_minhash_from_domain(domain)
@@ -242,17 +238,21 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
             else:
                 text = 'Domain seen: {0:d} times'.format(count)
 
-            similar_domains = self._get_similar_domains(domain, watched_domains)
+            similar_domains = self._get_similar_domains(
+                domain, watched_domains)
 
             if similar_domains:
                 similar_domain_counter += 1
                 emojis_to_add.append(emojis.SKULL_CROSSBONE)
                 tags_to_add.append('phishy_domain')
                 similar_text_list = ['{0:s} [{1:.2f}]'.format(
-                    phishy_domain, score) for phishy_domain, score in similar_domains]
-                added_text = 'domain {0:s} similar to: {1:s}'.format(domain, ', '.join(similar_text_list))
+                    phishy_domain,
+                    score) for phishy_domain, score in similar_domains]
+                added_text = 'domain {0:s} similar to: {1:s}'.format(
+                    domain, ', '.join(similar_text_list))
                 text = '{0:s} - {1:s}'.format(added_text, text)
-                if any(domain.endswith(x) for x in self.domain_scoring_whitelist):
+                if any(domain.endswith(
+                        x) for x in self.domain_scoring_whitelist):
                     tags_to_add.append('known_network')
 
             for event in domains.get(domain, []):
@@ -261,8 +261,6 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
                 event.add_human_readable(text, self.NAME, append=False)
                 event.add_attributes({'domain_count': count})
 
-        # THROW AWAY FOR EXPERIMENTAL PURPOSES!!!
-        print 'Done with minhashes and count'
         if similar_domain_counter:
             self.sketch.add_view(
                 'Phishy Domains', query_string='tag:"phishy_domain"')
