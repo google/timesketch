@@ -107,6 +107,10 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
         if domain in domain_dict:
             return similar
 
+        # TODO: this can be improved, if the domain being inspected is
+        # evilgoogle.com and google.com is in the domain_dict we are
+        # skipping it here... this should be checking subdomains, so
+        # evil.google.com would be skipped but evilgoogle.com included.
         if any(domain.endswith(x) for x in domain_dict):
             return similar
 
