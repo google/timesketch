@@ -29,24 +29,24 @@ class TestDomainsPlugin(BaseTest):
                 'ytimg.com', 'gstatic.com', 'yimg.com',
                 'akamaized.net', 'akamaihd.net', 's-microsoft.com']
 
-        self.analyzer = domains.DomainsSketchPlugin('test_index', 1)
-
     # Mock the Elasticsearch datastore.
     @mock.patch(
         u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
     def test_minhash(self):
         """Test minhash function."""
+        analyzer = domains.DomainsSketchPlugin('test_index', 1)
         domain = 'www.mbl.is'
         # pylint: disable=protected-access
-        minhash = self.analyzer._get_minhash_from_domain(domain)
+        minhash = analyzer._get_minhash_from_domain(domain)
 
         self.assertIsInstance(minhash, MinHash)
 
         another_domain = 'mbl.is'
-        minhash2 = self.analyzer._get_minhash_from_domain(another_domain)
+        # pylint: disable=protected-access
+        minhash2 = analyzer._get_minhash_from_domain(another_domain)
 
-        self.assertEqual(minhash.jaccard(minhash2), 1.0)
+        self.assertEqual(minhash.jaccard(minhash2), 0.546875)
 
     # Mock the Elasticsearch datastore.
     @mock.patch(
@@ -54,17 +54,20 @@ class TestDomainsPlugin(BaseTest):
         MockDataStore)
     def test_get_similar_domains(self):
         """Test get_similar_domains function."""
-        domain = 'mbl.is'
-        minhash = self.analyzer._get_minhash_from_domain(domain)
-        domains = {domain: minhash}
+        analyzer = domains.DomainsSketchPlugin('test_index', 1)
+        domain = 'login.stortmbl.is'
+        # pylint: disable=protected-access
+        minhash = analyzer._get_minhash_from_domain(domain)
+        domain_dict = {domain: minhash}
 
-        similar = self.analyzer._get_similar_domains('www.mbi.is', domains)
-
+        # pylint: disable=protected-access
+        similar = analyzer._get_similar_domains(
+            'login.stortmbi.is', domain_dict)
         self.assertEquals(len(similar), 1)
 
-        similar = self.analyzer._get_similar_domains('www.google.com', domains)
+        # pylint: disable=protected-access
+        similar = analyzer._get_similar_domains('www.google.com', domain_dict)
         self.assertEquals(len(similar), 0)
-
 
     # Mock the Elasticsearch datastore.
     @mock.patch(
@@ -72,16 +75,20 @@ class TestDomainsPlugin(BaseTest):
         MockDataStore)
     def test_get_tld(self):
         """Test get_tld function."""
+        analyzer = domains.DomainsSketchPlugin('test_index', 1)
         domain = 'this.is.a.subdomain.evil.com'
-        tld = self.analyzer._get_tld(domain)
+        # pylint: disable=protected-access
+        tld = analyzer._get_tld(domain)
         self.assertEquals(tld, 'evil.com')
 
         domain = 'a'
-        tld = self.analyzer._get_tld(domain)
+        # pylint: disable=protected-access
+        tld = analyzer._get_tld(domain)
         self.assertEquals(tld, 'a')
 
         domain = 'foo.com'
-        tld = self.analyzer._get_tld(domain)
+        # pylint: disable=protected-access
+        tld = analyzer._get_tld(domain)
         self.assertEquals(tld, 'foo.com')
 
 
@@ -91,10 +98,13 @@ class TestDomainsPlugin(BaseTest):
         MockDataStore)
     def test_strip_www(self):
         """Test strip_www function."""
+        analyzer = domains.DomainsSketchPlugin('test_index', 1)
         domain = 'www.mbl.is'
-        stripped = self.analyzer._strip_www(domain)
+        # pylint: disable=protected-access
+        stripped = analyzer._strip_www(domain)
         self.assertEquals(stripped, 'mbl.is')
 
         domain = 'mbl.is'
-        stripped = self.analyzer._strip_www(domain)
+        # pylint: disable=protected-access
+        stripped = analyzer._strip_www(domain)
         self.assertEquals(stripped, domain)
