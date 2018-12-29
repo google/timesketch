@@ -137,6 +137,9 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
                 0, len(domain_part), 0, len(watched_domain_part))
 
             # We want to have at least half of the domain matching.
+            # TODO: This can be improved, this is a value and part that
+            # needs or can be tweaked. Perhaps move this to a config option
+            # that is the min length of strings.
             match_size = min(
                 int(len(domain_part)/2), int(len(watched_domain_part)/2))
             if match.size < match_size:
