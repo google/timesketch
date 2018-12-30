@@ -42,10 +42,10 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
         self.index_name = index_name
         super(DomainsSketchPlugin, self).__init__(index_name, sketch_id)
 
-        self.domain_scoring_threshold = current_app.config[
-            'DOMAIN_ANALYZER_WATCHED_DOMAINS_SCORE_THRESHOLD']
-        self.domain_scoring_whitelist = current_app.config[
-            'DOMAIN_ANALYZER_WHITELISTED_DOMAINS']
+        self.domain_scoring_threshold = current_app.config.get(
+            'DOMAIN_ANALYZER_WATCHED_DOMAINS_SCORE_THRESHOLD', 0.75)
+        self.domain_scoring_whitelist = current_app.config.get(
+            'DOMAIN_ANALYZER_WHITELISTED_DOMAINS', [])
 
     def _get_minhash_from_domain(self, domain):
         """Get the Minhash value from a domain name.
@@ -107,11 +107,7 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
         if domain in domain_dict:
             return similar
 
-        # TODO: this can be improved, if the domain being inspected is
-        # evilgoogle.com and google.com is in the domain_dict we are
-        # skipping it here... this should be checking subdomains, so
-        # evil.google.com would be skipped but evilgoogle.com included.
-        if any(domain.endswith(x) for x in domain_dict):
+        if any(domain.endswith('.{0:s}'.format(x)) for x in domain_dict):
             return similar
 
         minhash = self._get_minhash_from_domain(domain)
@@ -208,10 +204,10 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
             tld = self._get_tld(domain)
             tld_counter[tld] += 1
 
-        watched_domains_list = current_app.config[
-            'DOMAIN_ANALYZER_WATCHED_DOMAINS']
-        domain_threshold = current_app.config[
-            'DOMAIN_ANALYZER_WATCHED_DOMAINS_THRESHOLD']
+        watched_domains_list = current_app.config.get(
+            'DOMAIN_ANALYZER_WATCHED_DOMAINS', [])
+        domain_threshold = current_app.config.get(
+            'DOMAIN_ANALYZER_WATCHED_DOMAINS_THRESHOLD', 10)
         watched_domains_list.extend([
             self._strip_www(x) for x, _ in domain_counter.most_common(
                 domain_threshold)])
@@ -241,9 +237,11 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
             tags_to_add = []
 
             if count == 1:
-                text = 'Domain: only occurance of domain'
+                text = 'Domain [{0:s}]: only occurance of domain'.format(
+                    domain)
             else:
-                text = 'Domain seen: {0:d} times'.format(count)
+                text = 'Domain [{0:s}] seen: {1:d} times'.format(
+                    domain, count)
 
             similar_domains = self._get_similar_domains(
                 domain, watched_domains)
