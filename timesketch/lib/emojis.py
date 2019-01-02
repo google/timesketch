@@ -47,4 +47,7 @@ def get_emoji(name):
         Unicode string for the emoji if it exists or a blank string otherwise.
     """
     name_upper = name.upper()
-    return EMOJI_MAP.get(name_upper, '')
+    emoji_object = EMOJI_MAP.get(name_upper)
+    if emoji_object:
+        return emoji_object.code
+    return ''
