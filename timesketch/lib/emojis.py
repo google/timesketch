@@ -26,12 +26,13 @@ emoji = collections.namedtuple('emoji', 'code help')
 
 EMOJI_MAP = {
     'CAMERA': emoji('&#x1F4F7', 'Screenshot activity'),
-    'GLOBE': emoji('&#x1F30D', 'The world'),
+    'LOCK': emoji('&#x1F512', 'Logon activity'),
     'LOCOMOTIVE': emoji('&#x1F682', 'Execution activity'),
     'MAGNIFYING_GLASS': emoji('&#x1F50E', 'Search related activity'),
     'SATELLITE': emoji('&#x1F4E1', 'Domain activity'),
     'SKULL_CROSSBONE': emoji(
         '&#x2620', 'Suspicious or a potentiall evil entry'),
+    'UNLOCK': emoji('&#x1F513', 'Logoff activity'),
     'WASTEBASKET': emoji('&#x1F5D1', 'Deletion activity'),
 }
 
