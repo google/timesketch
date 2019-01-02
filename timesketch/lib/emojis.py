@@ -51,3 +51,20 @@ def get_emoji(name):
     if emoji_object:
         return emoji_object.code
     return ''
+
+
+def get_helper_from_unicode(code):
+    """Returns a helper string from an emoji Unicode code point.
+
+    Args:
+        code: a Unicode code point for an emoji.
+
+    Returns:
+        Helper text as a string or an empty string if emoji is not configured.
+    """
+    code_upper = code.upper()
+    for emoji_object in EMOJI_MAP.itervalues():
+        if code_upper == emoji_object.code.upper():
+            return emoji_object.help
+
+    return ''
