@@ -18,11 +18,32 @@ See https://emojipedia.org for list of available unicode emojis.
 
 from __future__ import unicode_literals
 
+import collections
 
-CAMERA = '&#x1F4F7'
-GLOBE = '&#x1F30D'
-LOCOMOTIVE = '&#x1F682'
-MAGNIFYING_GLASS = '&#x1F50E'
-SATELLITE = '&#x1F4E1'
-SKULL_CROSSBONE = '&#x2620'
-WASTEBASKET = '&#x1F5D1'
+
+emoji = collections.namedtuple('emoji', 'code help')
+
+
+EMOJI_MAP = {
+    'CAMERA': emoji('&#x1F4F7', 'Screenshot activity'),
+    'GLOBE': emoji('&#x1F30D', 'The world'),
+    'LOCOMOTIVE': emoji('&#x1F682', 'Execution activity'),
+    'MAGNIFYING_GLASS': emoji('&#x1F50E', 'Search related activity'),
+    'SATELLITE': emoji('&#x1F4E1', 'Domain activity'),
+    'SKULL_CROSSBONE': emoji(
+        '&#x2620', 'Suspicious or a potentiall evil entry'),
+    'WASTEBASKET': emoji('&#x1F5D1', 'Deletion activity'),
+}
+
+
+def get_emoji(name):
+    """Returns a Unicode for an emoji given the name or blank if not saved.
+
+    Args:
+        name: string with the emoji name.
+
+    Returns:
+        Unicode string for the emoji if it exists or a blank string otherwise.
+    """
+    name_upper = name.upper()
+    return EMOJI_MAP.get(name_upper, '')

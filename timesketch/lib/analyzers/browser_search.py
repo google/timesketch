@@ -170,6 +170,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
         """
         query = 'source_short:"WEBHIST"'
         return_fields = ['url']
+        search_emoji = emojis.get_emoji('MAGNIFYING_GLASS')
 
         # Generator of events based on your query.
         events = self.event_stream(
@@ -204,7 +205,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
                 event.add_human_readable('{0:s} search query: {1:s}'.format(
                     engine, search_query), self.NAME)
-                event.add_emojis([emojis.MAGNIFYING_GLASS])
+                event.add_emojis([search_emoji])
                 event.add_tags(['browser_search'])
                 # We break at the first hit of a successful search engine.
                 break
