@@ -33,12 +33,13 @@ class TestAnalysisManager(BaseTest):
         """Test to get analyzer class objects."""
         analyzers = manager.AnalysisManager.get_analyzers()
         analyzer_list = [x for x in analyzers]
-        first_analyzer_tuple = analyzer_list[0]
-        analyzer_name, analyzer_class = first_analyzer_tuple
         self.assertIsInstance(analyzer_list, list)
-        self.assertIsInstance(first_analyzer_tuple, tuple)
+        analyzer_dict = {}
+        for name, analyzer_class in analyzer_list:
+            analyzer_dict[name] = analyzer_class
+        self.assertIn('mockanalyzer', analyzer_dict)
+        analyzer_class = analyzer_dict.get('mockanalyzer')
         self.assertEqual(analyzer_class, MockAnalyzer)
-        self.assertEqual(analyzer_name, 'mockanalyzer')
 
     def test_get_analyzer(self):
         """Test to get analyzer class from registry."""
