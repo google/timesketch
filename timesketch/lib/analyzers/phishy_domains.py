@@ -232,8 +232,10 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
             watched_domains[domain] = minhash
 
         similar_domain_counter = 0
+        satellite_emoji = emojis.get_emoji('SATELLITE')
+        evil_emoji = emojis.get_emoji('SKULL_CROSSBONE')
         for domain, count in domain_counter.iteritems():
-            emojis_to_add = [emojis.SATELLITE]
+            emojis_to_add = [satellite_emoji]
             tags_to_add = []
 
             if count == 1:
@@ -248,7 +250,7 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
             if similar_domains:
                 similar_domain_counter += 1
-                emojis_to_add.append(emojis.SKULL_CROSSBONE)
+                emojis_to_add.append(evil_emoji)
                 tags_to_add.append('phishy_domain')
                 similar_text_list = ['{0:s} [{1:.2f}]'.format(
                     phishy_domain,
