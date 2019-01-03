@@ -236,7 +236,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
         similar_domain_counter = 0
         evil_emoji = emojis.get_emoji('SKULL_CROSSBONE')
-        for domain, count in domain_counter.iteritems():
+        for domain, _ in domain_counter.iteritems():
             emojis_to_add = []
             tags_to_add = []
             text = None
