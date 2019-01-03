@@ -270,7 +270,8 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
         if similar_domain_counter:
             self.sketch.add_view(
-                'Phishy Domains', query_string='tag:"phishy_domain"')
+                view_name='Phishy Domains', analyzer_name=self.NAME,
+                query_string='tag:"phishy_domain"')
 
         return (
             'Domain extraction ({0:d} domains discovered with {1:d} TLDs) '
