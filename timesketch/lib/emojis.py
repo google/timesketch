@@ -30,8 +30,7 @@ EMOJI_MAP = {
     'LOCOMOTIVE': emoji('&#x1F682', 'Execution activity'),
     'MAGNIFYING_GLASS': emoji('&#x1F50E', 'Search related activity'),
     'SATELLITE': emoji('&#x1F4E1', 'Domain activity'),
-    'SKULL_CROSSBONE': emoji(
-        '&#x2620', 'Suspicious or a potentiall evil entry'),
+    'SKULL_CROSSBONE': emoji('&#x2620', 'Suspicious entry'),
     'UNLOCK': emoji('&#x1F513', 'Logoff activity'),
     'WASTEBASKET': emoji('&#x1F5D1', 'Deletion activity'),
 }
@@ -66,5 +65,13 @@ def get_helper_from_unicode(code):
     for emoji_object in EMOJI_MAP.itervalues():
         if code_upper == emoji_object.code.upper():
             return emoji_object.help
-
     return ''
+
+
+def get_emojis_as_dict():
+    """Returns a dictionary with emoji codes and helper texts.
+
+    Returns:
+        Dict with emoji unicode code points as key and helper text as value.
+    """
+    return {e.code: e.help for e in EMOJI_MAP.itervalues()}

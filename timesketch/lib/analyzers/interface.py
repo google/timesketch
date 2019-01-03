@@ -119,10 +119,9 @@ class Event(object):
         Args:
             emojis: List of emojis to add (as unicode codepoints).
         """
-        existing_emojis = self.source.get('__ts_emojis', '')
-        existing_emoji_list = existing_emojis.split()
+        existing_emoji_list = self.source.get('__ts_emojis', [])
         new_emoji_list = list(set().union(existing_emoji_list, emojis))
-        updated_event_attribute = {'__ts_emojis': ' '.join(new_emoji_list)}
+        updated_event_attribute = {'__ts_emojis': new_emoji_list}
         self._update(updated_event_attribute)
 
     def add_star(self):
