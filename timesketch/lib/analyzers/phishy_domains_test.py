@@ -35,7 +35,7 @@ class TestDomainsPlugin(BaseTest):
         MockDataStore)
     def test_minhash(self):
         """Test minhash function."""
-        analyzer = phishy_domains.DomainsSketchPlugin('test_index', 1)
+        analyzer = phishy_domains.PhishyDomainsSketchPlugin('test_index', 1)
         domain = 'www.mbl.is'
         # pylint: disable=protected-access
         minhash = analyzer._get_minhash_from_domain(domain)
@@ -54,7 +54,7 @@ class TestDomainsPlugin(BaseTest):
         MockDataStore)
     def test_get_similar_domains(self):
         """Test get_similar_domains function."""
-        analyzer = phishy_domains.DomainsSketchPlugin('test_index', 1)
+        analyzer = phishy_domains.PhishyDomainsSketchPlugin('test_index', 1)
         domain = 'login.stortmbl.is'
         # pylint: disable=protected-access
         minhash = analyzer._get_minhash_from_domain(domain)
@@ -75,7 +75,7 @@ class TestDomainsPlugin(BaseTest):
         MockDataStore)
     def test_get_tld(self):
         """Test get_tld function."""
-        analyzer = phishy_domains.DomainsSketchPlugin('test_index', 1)
+        analyzer = phishy_domains.PhishyDomainsSketchPlugin('test_index', 1)
         domain = 'this.is.a.subdomain.evil.com'
         # pylint: disable=protected-access
         tld = analyzer._get_tld(domain)
@@ -98,7 +98,7 @@ class TestDomainsPlugin(BaseTest):
         MockDataStore)
     def test_strip_www(self):
         """Test strip_www function."""
-        analyzer = phishy_domains.DomainsSketchPlugin('test_index', 1)
+        analyzer = phishy_domains.PhishyDomainsSketchPlugin('test_index', 1)
         domain = 'www.mbl.is'
         # pylint: disable=protected-access
         stripped = analyzer._strip_www(domain)

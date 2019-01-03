@@ -19,10 +19,10 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
-class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sketch analyzer for domains."""
+class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
+    """Sketch analyzer for phishy domains."""
 
-    NAME = 'domains'
+    NAME = 'phishy_domains'
 
     # This list contains entries from Alexa top 10 list (as of 2018-12-27).
     # They are used to create the base of a domain watch list. For custom
@@ -40,14 +40,15 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
             sketch_id: Sketch ID
         """
         self.index_name = index_name
-        super(DomainsSketchPlugin, self).__init__(index_name, sketch_id)
+        super(PhishyDomainsSketchPlugin, self).__init__(index_name, sketch_id)
 
         self.domain_scoring_threshold = current_app.config.get(
             'DOMAIN_ANALYZER_WATCHED_DOMAINS_SCORE_THRESHOLD', 0.75)
         self.domain_scoring_whitelist = current_app.config.get(
             'DOMAIN_ANALYZER_WHITELISTED_DOMAINS', [])
 
-    def _get_minhash_from_domain(self, domain):
+    @staticmethod
+    def _get_minhash_from_domain(domain):
         """Get the Minhash value from a domain name.
 
         This function takes a domain, removes the TLD extension
@@ -101,7 +102,7 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
         domain = self._strip_www(domain)
 
         similar = []
-        if not '.' in domain:
+        if '.' not in domain:
             return similar
 
         if domain in domain_dict:
@@ -144,7 +145,8 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
         return similar
 
-    def _get_tld(self, domain):
+    @staticmethod
+    def _get_tld(domain):
         """Get the top level domain from a domain string.
 
         Args:
@@ -156,7 +158,8 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
         """
         return '.'.join(domain.split('.')[-2:])
 
-    def _strip_www(self, domain):
+    @staticmethod
+    def _strip_www(domain):
         """Strip www. from beginning of domain names."""
         if domain.startswith('www.'):
             return domain[4:]
@@ -222,7 +225,7 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
             if any(domain.endswith(x) for x in self.domain_scoring_whitelist):
                 continue
 
-            if not '.' in domain:
+            if '.' not in domain:
                 continue
             watched_domains_list.append(domain)
 
@@ -232,18 +235,11 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
             watched_domains[domain] = minhash
 
         similar_domain_counter = 0
-        satellite_emoji = emojis.get_emoji('SATELLITE')
         evil_emoji = emojis.get_emoji('SKULL_CROSSBONE')
         for domain, count in domain_counter.iteritems():
-            emojis_to_add = [satellite_emoji]
+            emojis_to_add = []
             tags_to_add = []
-
-            if count == 1:
-                text = 'Domain [{0:s}]: only occurance of domain'.format(
-                    domain)
-            else:
-                text = 'Domain [{0:s}] seen: {1:d} times'.format(
-                    domain, count)
+            text = None
 
             similar_domains = self._get_similar_domains(
                 domain, watched_domains)
@@ -251,32 +247,30 @@ class DomainsSketchPlugin(interface.BaseSketchAnalyzer):
             if similar_domains:
                 similar_domain_counter += 1
                 emojis_to_add.append(evil_emoji)
-                tags_to_add.append('phishy_domain')
-                similar_text_list = ['{0:s} [{1:.2f}]'.format(
+                tags_to_add.append('phishy-domain')
+                similar_text_list = ['{0:s} [score: {1:.2f}]'.format(
                     phishy_domain,
                     score) for phishy_domain, score in similar_domains]
-                added_text = 'domain {0:s} similar to: {1:s}'.format(
+                text = 'Domain {0:s} is similar to {1:s}'.format(
                     domain, ', '.join(similar_text_list))
-                text = '{0:s} - {1:s}'.format(added_text, text)
                 if any(domain.endswith(
                         x) for x in self.domain_scoring_whitelist):
-                    tags_to_add.append('known_network')
+                    tags_to_add.append('known-network')
 
             for event in domains.get(domain, []):
                 event.add_emojis(emojis_to_add)
                 event.add_tags(tags_to_add)
-                event.add_human_readable(text, self.NAME, append=False)
-                event.add_attributes({'domain_count': count})
+                if text:
+                    event.add_human_readable(text, self.NAME, append=False)
 
         if similar_domain_counter:
             self.sketch.add_view(
                 view_name='Phishy Domains', analyzer_name=self.NAME,
-                query_string='tag:"phishy_domain"')
+                query_string='tag:"phishy-domain"')
 
         return (
-            'Domain extraction ({0:d} domains discovered with {1:d} TLDs) '
-            'and {2:d} potentially evil domains discovered.').format(
-                len(domains), len(tld_counter), similar_domain_counter)
+            '{0:d} potentially phishy domains discovered.').format(
+                similar_domain_counter)
 
 
-manager.AnalysisManager.register_analyzer(DomainsSketchPlugin)
+manager.AnalysisManager.register_analyzer(PhishyDomainsSketchPlugin)
