@@ -212,7 +212,8 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
         if simple_counter > 0:
             self.sketch.add_view(
-                'Browser Search', query_string='tag:"browser_search"')
+                view_name='Browser Search', analyzer_name=self.NAME,
+                query_string='tag:"browser_search"')
 
         return (
             'Browser Search completed with {0:d} search results '
