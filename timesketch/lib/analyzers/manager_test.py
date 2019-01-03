@@ -23,6 +23,43 @@ class MockAnalyzer(object):
     """Mock analyzer class,"""
     NAME = 'MockAnalyzer'
 
+    DEPENDENCIES = frozenset()
+
+
+class MockAnalyzer2(object):
+    """Mock analyzer class,"""
+    NAME = 'MockAnalyzer2'
+
+    DEPENDENCIES = frozenset(['MockAnalyzer'])
+
+
+class MockAnalyzer3(object):
+    """Mock analyzer class,"""
+    NAME = 'MockAnalyzer3'
+
+    DEPENDENCIES = frozenset()
+
+
+class MockAnalyzer4(object):
+    """Mock analyzer class,"""
+    NAME = 'MockAnalyzer4'
+
+    DEPENDENCIES = frozenset(['MockAnalyzer2', 'MockAnalyzer3'])
+
+
+class MockAnalyzerFail1(object):
+    """Mock analyzer class,"""
+    NAME = 'MockAnalyzerFail1'
+
+    DEPENDENCIES = frozenset(['MockAnalyzerFail2'])
+
+
+class MockAnalyzerFail2(object):
+    """Mock analyzer class,"""
+    NAME = 'MockAnalyzerFail2'
+
+    DEPENDENCIES = frozenset(['MockAnalyzerFail1'])
+
 
 class TestAnalysisManager(BaseTest):
     """Tests for the functionality of the manager module."""
@@ -40,6 +77,22 @@ class TestAnalysisManager(BaseTest):
         self.assertIn('mockanalyzer', analyzer_dict)
         analyzer_class = analyzer_dict.get('mockanalyzer')
         self.assertEqual(analyzer_class, MockAnalyzer)
+
+        manager.AnalysisManager.clear_registration()
+        analyzers = manager.AnalysisManager.get_analyzers()
+        analyzer_list = [x for x in analyzers]
+        self.assertEquals(analyzer_list, [])
+
+        manager.AnalysisManager.register_analyzer(MockAnalyzer)
+        manager.AnalysisManager.register_analyzer(MockAnalyzer2)
+        manager.AnalysisManager.register_analyzer(MockAnalyzer3)
+        manager.AnalysisManager.register_analyzer(MockAnalyzer4)
+
+        analyzers = manager.AnalysisManager.get_analyzers()
+        analyzer_list = [x for x, _ in analyzers]
+        self.assertEquals(len(analyzer_list), 4)
+        self.assertIn('mockanalyzer', analyzer_list)
+        print analyzer_list
 
     def test_get_analyzer(self):
         """Test to get analyzer class from registry."""
