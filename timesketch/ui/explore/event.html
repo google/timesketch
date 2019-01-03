@@ -44,7 +44,7 @@
                 <span ng-if="::label.indexOf('__') != 0" class="label label-default">{{::label}}</span>
               </span>
               <span ng-class="{true: 'message-hidden'}[event.hidden]">
-                <span ng-bind-html="event._source.__ts_emojis | unsafe"> [{{ event._source.timestamp_desc }}] </span>
+                <span ng-repeat="emoji in event._source.__ts_emojis" ng-bind-html="emoji | unsafe" title="{{emojis[emoji]}}"> [{{ event._source.timestamp_desc }}] </span>
                 <span title="{{ (event._source.human_readable) || (event._source.message) }}">
                   <span ng-if="messageLayer">
                     <span ng-if="::event._source.human_readable" ng-repeat="readable in ::event._source.human_readable">{{::readable}}<br/></span>
