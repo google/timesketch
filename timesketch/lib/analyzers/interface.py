@@ -255,6 +255,11 @@ class BaseIndexAnalyzer(object):
     NAME = 'name'
     IS_SKETCH_ANALYZER = False
 
+    # If this analyzer depends on another analyzer
+    # it needs to be included in this frozenset by using
+    # the indexer names.
+    DEPENDENCIES = frozenset()
+
     def __init__(self, index_name):
         """Initialize the analyzer object.
 
