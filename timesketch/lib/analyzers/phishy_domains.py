@@ -5,24 +5,21 @@ import collections
 import difflib
 
 from flask import current_app
-
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib import parse as urlparse  # pylint: disable=no-name-in-module
-
 from datasketch.minhash import MinHash
 
 from timesketch.lib import emojis
 from timesketch.lib import similarity
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
+from timesketch.lib.analyzers import utils
 
 
 class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for phishy domains."""
 
     NAME = 'phishy_domains'
+
+    DEPENDENCIES = frozenset(['domain'])
 
     # This list contains entries from Alexa top 10 list (as of 2018-12-27).
     # They are used to create the base of a domain watch list. For custom
@@ -99,7 +96,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
             the similar domains as well as the Jaccard distance between
             the supplied domain and the matching one.
         """
-        domain = self._strip_www(domain)
+        domain = utils.strip_www_from_domain(domain)
 
         similar = []
         if '.' not in domain:
@@ -145,26 +142,6 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
         return similar
 
-    @staticmethod
-    def _get_tld(domain):
-        """Get the top level domain from a domain string.
-
-        Args:
-          domain: string with a full domain, eg. www.google.com
-
-        Returns:
-          string: TLD or a top level domain extracted from the domain,
-              eg: google.com
-        """
-        return '.'.join(domain.split('.')[-2:])
-
-    @staticmethod
-    def _strip_www(domain):
-        """Strip www. from beginning of domain names."""
-        if domain.startswith('www.'):
-            return domain[4:]
-        return domain
-
     def run(self):
         """Entry point for the analyzer.
 
@@ -189,22 +166,13 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
             domain = event.source.get('domain')
 
             if not domain:
-                url = event.source.get('url')
-                if not url:
-                    continue
-                domain_parsed = urlparse(url)
-                domain_full = domain_parsed.netloc
-                domain, _, _ = domain_full.partition(':')
-                event.add_attributes({'domain': domain})
-
-            if not domain:
                 continue
 
             domain_counter[domain] += 1
             domains.setdefault(domain, [])
             domains[domain].append(event)
 
-            tld = self._get_tld(domain)
+            tld = utils.get_tld_from_domain(domain)
             tld_counter[tld] += 1
 
         watched_domains_list = current_app.config.get(
@@ -212,8 +180,8 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         domain_threshold = current_app.config.get(
             'DOMAIN_ANALYZER_WATCHED_DOMAINS_THRESHOLD', 10)
         watched_domains_list.extend([
-            self._strip_www(x) for x, _ in domain_counter.most_common(
-                domain_threshold)])
+            utils.strip_www_from_domain(x)
+            for x, _ in domain_counter.most_common(domain_threshold)])
         watched_domains_list.extend([
             x for x, _ in tld_counter.most_common(domain_threshold)])
         watched_domains_list.extend(self.WATCHED_DOMAINS_BASE_LIST)
@@ -236,6 +204,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
         similar_domain_counter = 0
         evil_emoji = emojis.get_emoji('SKULL_CROSSBONE')
+        phishing_emoji = emojis.get_emoji('FISHING_POLE')
         for domain, _ in domain_counter.iteritems():
             emojis_to_add = []
             tags_to_add = []
@@ -247,6 +216,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
             if similar_domains:
                 similar_domain_counter += 1
                 emojis_to_add.append(evil_emoji)
+                emojis_to_add.append(phishing_emoji)
                 tags_to_add.append('phishy-domain')
                 similar_text_list = ['{0:s} [score: {1:.2f}]'.format(
                     phishy_domain,

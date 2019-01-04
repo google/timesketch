@@ -33,6 +33,7 @@ EMOJI_MAP = {
     'SKULL_CROSSBONE': emoji('&#x2620', 'Suspicious entry'),
     'UNLOCK': emoji('&#x1F513', 'Logoff activity'),
     'WASTEBASKET': emoji('&#x1F5D1', 'Deletion activity'),
+    'FISHING_POLE': emoji('&#x1F3A3', 'Phishing')
 }
 
 

@@ -18,10 +18,10 @@ class TestDomainPlugin(BaseTest):
     @mock.patch(
         u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
-    def test_get_domain_from_url(self):
-        """Test get_domain_from_url function."""
-        analyzer = domain.DomainSketchPlugin('test_index', 1)
-        url = 'http://example.com/?foo=bar'
-        # pylint: disable=protected-access
-        _domain = analyzer._get_domain_from_url(url)
-        self.assertEquals(_domain, 'example.com')
+    def test_domain_analyzer_class(self):
+        """Test core functionality of the analyzer class."""
+        index_name = 'test'
+        sketch_id = 1
+        analyzer = domain.DomainSketchPlugin(index_name, sketch_id)
+        self.assertEquals(analyzer.index_name, index_name)
+        self.assertEquals(analyzer.sketch.id, sketch_id)

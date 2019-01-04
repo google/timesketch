@@ -3,20 +3,18 @@ from __future__ import unicode_literals
 
 import collections
 
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib import parse as urlparse  # pylint: disable=no-name-in-module
-
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
+from timesketch.lib.analyzers import utils
 
 
 class DomainSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Domain."""
 
     NAME = 'domain'
+
+    DEPENDENCIES = frozenset()
 
     def __init__(self, index_name, sketch_id):
         """Initialize The Sketch Analyzer.
@@ -27,22 +25,6 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
         """
         self.index_name = index_name
         super(DomainSketchPlugin, self).__init__(index_name, sketch_id)
-
-    @staticmethod
-    def _get_domain_from_url(url):
-        """Extract domain from URL.
-
-        Args:
-            url: URL to parse.
-
-        Returns:
-            String with domain from URL.
-        """
-        # TODO: See if we can optimize this because it is rather slow.
-        domain_parsed = urlparse(url)
-        domain_full = domain_parsed.netloc
-        domain, _, _ = domain_full.partition(':')
-        return domain
 
     def run(self):
         """Entry point for the analyzer.
@@ -71,7 +53,7 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
                 url = event.source.get('url')
                 if not url:
                     continue
-                domain = self._get_domain_from_url(url)
+                domain = utils.get_domain_from_url(url)
                 event.add_attributes({'domain': domain})
 
             if not domain:
