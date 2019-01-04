@@ -23,6 +23,8 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
     NAME = 'browser_search'
 
+    DEPENDENCIES = frozenset()
+
     # Here we define filters and callback methods for all hits on each filter.
     _URL_FILTERS = frozenset([
         ('Bing', re.compile(r'bing\.com/search'),
