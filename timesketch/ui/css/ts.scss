@@ -23,7 +23,9 @@ i {
 }
 
 body {
-    background: #f9f9f9;
+    /* #f9f9f9 -> #f1f1f1 */
+    background: rgb(249,249,249);
+    background: linear-gradient(90deg, rgba(249,249,249,1) 11%, rgba(241,241,241,1) 100%);
     line-height: 1.5;
     color: #333;
 }
@@ -90,6 +92,7 @@ body > header {
     background: #fff;
     padding: 20px;
     box-shadow: 0 0 1px rgba(0,0,0,0.15);
+    border-radius: 5px;
 }
 
 .card-header {
@@ -132,9 +135,9 @@ body > header {
     border:none;
     box-shadow:none !important;
     font-size: 1.3em;
-    border-radius: 0;
+    border-radius: 5px;
     padding: 15px;
-    background:#f9f9f9;
+    background:#f7fafc;
     width: 100%;
 }
 
@@ -201,6 +204,7 @@ body > header {
     width:30px;
     height:30px;
     margin-right: 10px;
+    border-radius: 4px;
 }
 
 .index-enabled {
@@ -556,11 +560,13 @@ rect.bordered {
 }
 
 .btn {
-    border-radius: 0;
+    border-radius: 4px;
+    letter-spacing: .06rem;
 }
 
 .label {
-    border-radius: 0;
+    border-radius: 3px;
+    letter-spacing: .06rem;
 }
 
 .medium-editor-placeholder {
