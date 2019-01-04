@@ -61,6 +61,7 @@ export const tsAppModule = angular.module('timesketch', [
       const excludeURLs = [
         '/api/v1/tasks/',
         '/api/v1/sketches/[0-9]+/stories/[0-9]+/',
+        '/api/v1/sketches/[0-9]+/timelines/',
       ];
       const re = new RegExp(excludeURLs.join('|'), 'i');
       return url.match(re) != null;
