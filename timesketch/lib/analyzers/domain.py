@@ -37,7 +37,7 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
             '{ "exists" : { "field" : "url" }}, '
             '{ "exists" : { "field" : "domain" }} ] } } }')
 
-        return_fields = ['domain', 'url', 'message', 'human_readable']
+        return_fields = ['domain', 'url']
 
         events = self.event_stream(
             '', query_dsl=query, return_fields=return_fields)
