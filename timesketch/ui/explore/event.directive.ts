@@ -279,6 +279,7 @@ export const tsEvent = function () {
             sketchId: '=',
             meta: '=',
             event: '=',
+            emojis: '=',
             prevTimestamp: '=',
             nextTimestamp: '=',
             index: '=',

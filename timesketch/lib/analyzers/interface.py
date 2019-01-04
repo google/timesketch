@@ -119,10 +119,9 @@ class Event(object):
         Args:
             emojis: List of emojis to add (as unicode codepoints).
         """
-        existing_emojis = self.source.get('__ts_emojis', '')
-        existing_emoji_list = existing_emojis.split()
+        existing_emoji_list = self.source.get('__ts_emojis', [])
         new_emoji_list = list(set().union(existing_emoji_list, emojis))
-        updated_event_attribute = {'__ts_emojis': ' '.join(new_emoji_list)}
+        updated_event_attribute = {'__ts_emojis': new_emoji_list}
         self._update(updated_event_attribute)
 
     def add_star(self):
@@ -199,12 +198,13 @@ class Sketch(object):
         if not self.sql_sketch:
             raise RuntimeError('No such sketch')
 
-    def add_view(self, name, query_string=None, query_dsl=None,
-                 query_filter=None):
+    def add_view(self, view_name, analyzer_name, query_string=None,
+                 query_dsl=None, query_filter=None):
         """Add saved view to the Sketch.
 
         Args:
-            name: The name of the view.
+            view_name: The name of the view.
+            analyzer_name: The name of the analyzer.
             query_string: Elasticsearch query string.
             query_dsl: Dictionary with Elasticsearch DSL query.
             query_filter: Dictionary with Elasticsearch filters.
@@ -220,11 +220,13 @@ class Sketch(object):
         if not query_filter:
             query_filter = {'indices': '_all'}
 
-        view = View(name=name, sketch=self.sql_sketch, user=None,
-                    query_string=query_string, query_filter=query_filter,
-                    query_dsl=query_dsl, searchtemplate=None)
-
+        name = '[{0:s}] {1:s}'.format(analyzer_name, view_name)
+        view = View.get_or_create(name=name, sketch=self.sql_sketch, user=None)
+        view.query_string = query_string
         view.query_filter = view.validate_filter(query_filter)
+        view.query_dsl = query_dsl
+        view.searchtemplate = None
+
         db_session.add(view)
         db_session.commit()
         return view
@@ -252,6 +254,11 @@ class BaseIndexAnalyzer(object):
 
     NAME = 'name'
     IS_SKETCH_ANALYZER = False
+
+    # If this analyzer depends on another analyzer
+    # it needs to be included in this frozenset by using
+    # the indexer names.
+    DEPENDENCIES = frozenset()
 
     def __init__(self, index_name):
         """Initialize the analyzer object.

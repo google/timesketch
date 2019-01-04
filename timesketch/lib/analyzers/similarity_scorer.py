@@ -86,6 +86,8 @@ class SimilarityScorer(interface.BaseIndexAnalyzer):
 
     NAME = 'SimilarityScorer'
 
+    DEPENDENCIES = frozenset()
+
     def __init__(self, index_name, data_type=None):
         """Initializes a similarity scorer.
 

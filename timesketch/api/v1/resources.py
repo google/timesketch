@@ -60,6 +60,7 @@ from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.datastores.neo4j import Neo4jDataStore
 from timesketch.lib.datastores.neo4j import SCHEMA as neo4j_schema
 from timesketch.lib.errors import ApiHTTPError
+from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.lib.forms import AddTimelineSimpleForm
 from timesketch.lib.forms import AggregationForm
 from timesketch.lib.forms import CreateTimelineForm
@@ -342,7 +343,8 @@ class SketchResource(ResourceMixin, Resource):
             searchtemplates=[{
                 u'name': searchtemplate.name,
                 u'id': searchtemplate.id
-            } for searchtemplate in SearchTemplate.query.all()])
+            } for searchtemplate in SearchTemplate.query.all()],
+            emojis=get_emojis_as_dict())
         return self.to_json(sketch, meta=meta)
 
 

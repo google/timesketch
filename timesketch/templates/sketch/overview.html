@@ -7,7 +7,7 @@
 {% block right_nav %}
     <div class="btn-group">
         {% if sketch.has_permission(current_user, 'write') and sketch.timelines  and upload_enabled %}
-            <a href="timelines/" class="btn btn-success"><i class="fa fa-cloud-upload"></i>Import timeline</a>
+            <a href="timelines/" class="btn btn-success"><i class="fa fa-plus"></i>Timeline</a>
         {% endif %}
     </div>
 

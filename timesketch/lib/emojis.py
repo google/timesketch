@@ -18,11 +18,61 @@ See https://emojipedia.org for list of available unicode emojis.
 
 from __future__ import unicode_literals
 
+import collections
 
-CAMERA = '&#x1F4F7'
-GLOBE = '&#x1F30D'
-LOCOMOTIVE = '&#x1F682'
-MAGNIFYING_GLASS = '&#x1F50E'
-SATELLITE = '&#x1F4E1'
-SKULL_CROSSBONE = '&#x2620'
-WASTEBASKET = '&#x1F5D1'
+
+emoji = collections.namedtuple('emoji', 'code help')
+
+
+EMOJI_MAP = {
+    'CAMERA': emoji('&#x1F4F7', 'Screenshot activity'),
+    'FISHING_POLE': emoji('&#x1F3A3', 'Phishing'),
+    'LOCK': emoji('&#x1F512', 'Logon activity'),
+    'LOCOMOTIVE': emoji('&#x1F682', 'Execution activity'),
+    'MAGNIFYING_GLASS': emoji('&#x1F50E', 'Search related activity'),
+    'SATELLITE': emoji('&#x1F4E1', 'Domain activity'),
+    'SKULL_CROSSBONE': emoji('&#x2620', 'Suspicious entry'),
+    'UNLOCK': emoji('&#x1F513', 'Logoff activity'),
+    'WASTEBASKET': emoji('&#x1F5D1', 'Deletion activity')
+}
+
+
+def get_emoji(name):
+    """Returns a Unicode for an emoji given the name or blank if not saved.
+
+    Args:
+        name: string with the emoji name.
+
+    Returns:
+        Unicode string for the emoji if it exists or a blank string otherwise.
+    """
+    name_upper = name.upper()
+    emoji_object = EMOJI_MAP.get(name_upper)
+    if emoji_object:
+        return emoji_object.code
+    return ''
+
+
+def get_helper_from_unicode(code):
+    """Returns a helper string from an emoji Unicode code point.
+
+    Args:
+        code: a Unicode code point for an emoji.
+
+    Returns:
+        Helper text as a string or an empty string if emoji is not configured.
+    """
+    code_upper = code.upper()
+    for emoji_object in EMOJI_MAP.itervalues():
+        if code_upper == emoji_object.code.upper():
+            return emoji_object.help
+    return ''
+
+
+def get_emojis_as_dict():
+    """Returns a dictionary with emoji codes and helper texts.
+
+    Returns:
+        Dict with emoji unicode code points as key and helper text as value.
+    """
+    return {e.code: e.help for e in EMOJI_MAP.itervalues()}

@@ -73,6 +73,7 @@ class SketchResourceTest(BaseTest):
         self.assertEqual(len(response.json[u'objects']), 1)
         self.assertEqual(len(response.json[u'objects'][0][u'timelines']), 1)
         self.assertEqual(response.json[u'objects'][0][u'name'], u'Test 1')
+        self.assertIsInstance(response.json[u'meta'][u'emojis'], dict)
         self.assert200(response)
 
     def test_sketch_acl(self):

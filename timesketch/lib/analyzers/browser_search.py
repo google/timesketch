@@ -23,6 +23,8 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
     NAME = 'browser_search'
 
+    DEPENDENCIES = frozenset()
+
     # Here we define filters and callback methods for all hits on each filter.
     _URL_FILTERS = frozenset([
         ('Bing', re.compile(r'bing\.com/search'),
@@ -170,6 +172,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
         """
         query = 'source_short:"WEBHIST"'
         return_fields = ['url']
+        search_emoji = emojis.get_emoji('MAGNIFYING_GLASS')
 
         # Generator of events based on your query.
         events = self.event_stream(
@@ -204,14 +207,15 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
                 event.add_human_readable('{0:s} search query: {1:s}'.format(
                     engine, search_query), self.NAME)
-                event.add_emojis([emojis.MAGNIFYING_GLASS])
+                event.add_emojis([search_emoji])
                 event.add_tags(['browser_search'])
                 # We break at the first hit of a successful search engine.
                 break
 
         if simple_counter > 0:
             self.sketch.add_view(
-                'Browser Search', query_string='tag:"browser_search"')
+                view_name='Browser Search', analyzer_name=self.NAME,
+                query_string='tag:"browser_search"')
 
         return (
             'Browser Search completed with {0:d} search results '
