@@ -26,8 +26,8 @@ class AnalysisManager(object):
         """Build a dependency list of analyzers.
 
         Returns:
-            A list of sets, each one representing each priority
-            of analyzers.
+            A list of sets of analyzer names. Each set represents
+            one dependency group.
 
         Raises:
             KeyError: if class introduces circular dependencies.
@@ -47,7 +47,7 @@ class AnalysisManager(object):
             # Find items without a dependency.
             dependency_set = set(dependency_list) - set(dependencies.keys())
             dependency_set.update(
-                d for d, v in iter(dependencies.items()) if not v)
+                name for name, dep in iter(dependencies.items()) if not dep)
 
             if not dependency_set:
                 raise KeyError((
@@ -56,7 +56,7 @@ class AnalysisManager(object):
 
             dependency_tree.append(dependency_set)
 
-            # Let's remove these entries from the dependencies dict.
+            # Let's remove the entries already in the tree and start again.
             new_dependencies = {}
             for name, analyzer_dependencies in dependencies.items():
                 if not analyzer_dependencies:
@@ -65,8 +65,6 @@ class AnalysisManager(object):
                     set(analyzer_dependencies) - dependency_set)
             dependencies = new_dependencies
 
-        #print 'AND NOW'
-        #print cls._class_ordering
         return dependency_tree
 
     @classmethod

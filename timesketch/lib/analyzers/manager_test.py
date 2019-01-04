@@ -64,7 +64,11 @@ class MockAnalyzerFail2(object):
 class TestAnalysisManager(BaseTest):
     """Tests for the functionality of the manager module."""
 
-    manager.AnalysisManager.register_analyzer(MockAnalyzer)
+    def setUp(self):
+        """Set up the tests."""
+        super(TestAnalysisManager, self).setUp()
+        manager.AnalysisManager.clear_registration()
+        manager.AnalysisManager.register_analyzer(MockAnalyzer)
 
     def test_get_analyzers(self):
         """Test to get analyzer class objects."""
@@ -92,7 +96,21 @@ class TestAnalysisManager(BaseTest):
         analyzer_list = [x for x, _ in analyzers]
         self.assertEquals(len(analyzer_list), 4)
         self.assertIn('mockanalyzer', analyzer_list)
-        print analyzer_list
+
+        # pylint: disable=protected-access
+        dependency_tree = manager.AnalysisManager._build_dependencies()
+        self.assertEquals(len(dependency_tree), 3)
+        self.assertIn('mockanalyzer', dependency_tree[0])
+        self.assertIn('mockanalyzer3', dependency_tree[0])
+        self.assertIn('mockanalyzer2', dependency_tree[1])
+        self.assertIn('mockanalyzer4', dependency_tree[2])
+
+        manager.AnalysisManager.clear_registration()
+        manager.AnalysisManager.register_analyzer(MockAnalyzerFail1)
+        manager.AnalysisManager.register_analyzer(MockAnalyzerFail2)
+        with self.assertRaises(KeyError):
+            analyzers = manager.AnalysisManager.get_analyzers()
+            analyzer_list = [x for x, _ in analyzers]
 
     def test_get_analyzer(self):
         """Test to get analyzer class from registry."""
