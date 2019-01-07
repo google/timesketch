@@ -221,9 +221,9 @@ Every sketch can consist of multiple timelines with multiple views.
 
 ### Adding Timelines
 
-* [Create timeline from JSON/JSONL/CSV file](docs/CreateTimelineFromJSONorCSV.md)
-* [Create timeline from Plaso file](docs/CreateTimelineFromPlaso.md)
-* [Enable Plaso upload via HTTP](docs/EnablePlasoUpload.md)
+* [Create timeline from JSON/JSONL/CSV file](/docs/CreateTimelineFromJSONorCSV.md)
+* [Create timeline from Plaso file](/docs/CreateTimelineFromPlaso.md)
+* [Enable Plaso upload via HTTP](/docs/EnablePlasoUpload.md)
 
 ### Adding event
 
