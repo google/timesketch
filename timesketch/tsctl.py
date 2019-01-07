@@ -440,7 +440,13 @@ class SearchTemplateManager(Command):
 
 
 class ImportTimeline(Command):
-    """Create a new Timesketch timeline from a file."""
+    """Create a new Timesketch timeline from a file.
+
+    Use Celery workers to import timelines to Timesketch. Username will be set
+    to the logged in user if not set by flag. Timeline name will be the filename
+    (split on underscore) if not set by flag and sketch_id will be taken from
+    filename, or new sketch is created, if flag is not set.
+    """
     option_list = (
         Option('--file', '-f', dest='file_path', required=True),
         Option('--sketch_id', '-s', dest='sketch_id', required=False),
