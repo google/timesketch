@@ -479,14 +479,13 @@ class ImportTimeline(Command):
         if sketch_id:
             sketch = Sketch.query.get_with_acl(sketch_id, user=user)
         else:
-            # Create a new sketch to hold the timeline.
+            # Create a new sketch.
             sketch_name = 'Sketch for: {0:s}'.format(timeline_name)
             sketch = Sketch(
                 name=sketch_name, description=sketch_name, user=user)
+            # Need to commit here to be able to set permissions later.
             db_session.add(sketch)
             db_session.commit()
-
-            # Set permissions on sketch.
             sketch.grant_permission(permission='read', user=user)
             sketch.grant_permission(permission='write', user=user)
             sketch.grant_permission(permission='delete', user=user)
@@ -524,7 +523,6 @@ class ImportTimeline(Command):
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
         from timesketch.lib import tasks
-
         pipeline = tasks.build_index_pipeline(
             file_path, timeline_name, index_name, extension, sketch_id)
         pipeline.apply_async(task_id=index_name)
