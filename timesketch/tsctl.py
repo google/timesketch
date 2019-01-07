@@ -479,9 +479,6 @@ class ImportTimeline(Command):
         if not user:
             sys.exit('Cannot determine user for file: {0:s}'.format(file_path))
 
-        if not timeline_name:
-            timeline_name = unicode(filename.replace('_', ' '))
-
         sketch = None
         # If filename starts with <number> then use that as sketch_id.
         # E.g: 42_file_name.plaso means sketch_id is 42.
@@ -494,6 +491,12 @@ class ImportTimeline(Command):
                 sketch = Sketch.query.get_with_acl(sketch_id, user=user)
             except Forbidden:
                 pass
+
+        if not timeline_name:
+            timeline_name = unicode(filename.replace('_', ' '))
+            # Remove sketch ID if present in the filename.
+            if timeline_name.split()[0].isdigit():
+                timeline_name = ' '.join(timeline_name.split()[1:])
 
         if not sketch:
             # Create a new sketch.
