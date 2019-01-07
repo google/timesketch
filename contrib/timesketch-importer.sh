@@ -24,6 +24,6 @@ else
   exit 1
 fi
 
-inotifywait -m $IMPORT_DIR -e close_write | while read path action file; do
+inotifywait -m $IMPORT_DIR -e close_write | while read -r path action file; do
   tsctl import -f $path$file
 done

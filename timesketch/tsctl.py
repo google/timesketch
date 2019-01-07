@@ -273,7 +273,7 @@ class SearchTemplateManager(Command):
         if import_location:
             try:
                 with open(import_location, 'rb') as fh:
-                    search_templates = yaml.load(fh)
+                    search_templates = yaml.safe_load(fh)
             except IOError as e:
                 sys.stdout.write(u'Unable to open file: {0:s}\n'.format(e))
                 sys.exit(1)
