@@ -611,12 +611,15 @@ class ImportTimeline(Command):
     def run(self, file_path, sketch_id, username, timeline_name):
         """This is the run method."""
 
-        if not os.path.isfile(file_path):
-            raise RuntimeError('No such file.')
-
         file_path_no_extension, extension = os.path.splitext(file_path)
         extension = extension.lstrip('.')
         filename = os.path.basename(file_path_no_extension)
+
+        if not os.path.isfile(file_path):
+            sys.exit('No such file: {0:s}'.format(file_path))
+
+        if extension not in ('plaso', 'csv', 'jsonl'):
+            sys.exit('Unknown extension: {0:s}'.format(file_path))
 
         user = None
         if not username:
@@ -624,7 +627,7 @@ class ImportTimeline(Command):
         if username is not 'root':
             user = User.query.filter_by(username=unicode(username)).first()
         if not user:
-            raise RuntimeError('Cannot determine user.')
+            sys.exit('Cannot determine user for file: {0:s}'.format(file_path))
 
         if not timeline_name:
             timeline_name = unicode(filename.replace('_', ' '))
@@ -682,7 +685,7 @@ class ImportTimeline(Command):
             file_path, timeline_name, index_name, extension, sketch_id)
         pipeline.apply_async(task_id=index_name)
 
-        print('Importing {0:s} to sketch: {1:d} ({2:s})'.format(
+        print('Imported {0:s} to sketch: {1:d} ({2:s})'.format(
             file_path, sketch.id, sketch.name))
 
 
