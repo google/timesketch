@@ -461,6 +461,7 @@ class ImportTimeline(Command):
     def run(self, file_path, sketch_id, username, timeline_name):
         """This is the run method."""
 
+        file_path = os.path.realpath(file_path)
         file_path_no_extension, extension = os.path.splitext(file_path)
         extension = extension.lstrip('.')
         filename = os.path.basename(file_path_no_extension)
@@ -544,7 +545,7 @@ class ImportTimeline(Command):
         # Import here to avoid circular imports.
         from timesketch.lib import tasks
         pipeline = tasks.build_index_pipeline(
-            file_path, timeline_name, index_name, extension, sketch_id)
+            file_path, timeline_name, index_name, extension, sketch.id)
         pipeline.apply_async(task_id=index_name)
 
         print('Imported {0:s} to sketch: {1:d} ({2:s})'.format(
