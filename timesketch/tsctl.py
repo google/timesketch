@@ -18,8 +18,8 @@ from __future__ import unicode_literals
 import os
 import pwd
 import sys
+import uuid
 import yaml
-from uuid import uuid4
 
 from flask import current_app
 from flask_migrate import MigrateCommand
@@ -34,7 +34,6 @@ from werkzeug.exceptions import Forbidden
 
 from timesketch import create_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
-from timesketch.lib.utils import read_and_validate_redline
 from timesketch.models import db_session
 from timesketch.models import drop_all
 from timesketch.models.user import Group
@@ -114,13 +113,6 @@ class GroupManager(Command):
     """Manage group memberships."""
     option_list = (
         Option(
-            u'--add',
-            u'-a',
-            dest=u'add',
-            action=u'store_true',
-            required=False,
-            default=False),
-        Option(
             u'--remove',
             u'-r',
             dest=u'remove',
@@ -134,7 +126,7 @@ class GroupManager(Command):
         super(GroupManager, self).__init__()
 
     # pylint: disable=arguments-differ, method-hidden
-    def run(self, add, remove, group_name, user_name):
+    def run(self, remove, group_name, user_name):
         """Add the user to the group."""
         group_name = unicode(group_name.decode(encoding=u'utf-8'))
         user_name = unicode(user_name.decode(encoding=u'utf-8'))
@@ -197,130 +189,6 @@ class AddSearchIndex(Command):
         sys.stdout.write(u'Search index {0:s} created\n'.format(name))
 
 
-class CreateTimelineBase(Command):
-    """Base class for file based ingestion of events."""
-    DEFAULT_FLUSH_INTERVAL = 1000
-    DEFAULT_EVENT_TYPE = u'generic_event'
-    DEFAULT_INDEX_NAME = uuid4().hex
-    option_list = (
-        Option(
-            u'--name',
-            u'-n',
-            dest=u'timeline_name',
-            required=True,
-            help=u'Name of the timeline as it will appear in the '
-            u'Timesketch UI.'), Option(
-                u'--file',
-                u'-f',
-                dest=u'file_path',
-                required=True,
-                help=u'Path to the JSON file to process'),
-        Option(
-            u'--index_name',
-            dest=u'index_name',
-            required=False,
-            default=DEFAULT_INDEX_NAME,
-            help=u'OPTIONAL: Name of the Elasticsearch index. Specify an '
-            u'existing one to append to it. Default: unique UUID'), Option(
-                u'--event_type',
-                dest=u'event_type',
-                required=False,
-                default=DEFAULT_EVENT_TYPE,
-                help=u'OPTIONAL: Type of event. This is what becomes the '
-                u'document type in Elasticsearch. '
-                u'Default: {0:s}.'.format(DEFAULT_EVENT_TYPE)),
-        Option(
-            u'--flush_interval',
-            dest=u'flush_interval',
-            required=False,
-            default=DEFAULT_FLUSH_INTERVAL,
-            help=u'OPTIONAL: How often to bulk insert events to Elasticsearch. '
-            u'Default: Every {0:d} event.'.format(DEFAULT_FLUSH_INTERVAL)),
-        Option(
-            u'--delimiter',
-            u'-d',
-            dest=u'delimiter',
-            required=False,
-            #type='bytes',
-            default=",",
-            help=u'Character used as a field separator.  Ex.: \'\\t\''))
-
-    def __init__(self):
-        super(CreateTimelineBase, self).__init__()
-
-    @staticmethod
-    def create_searchindex(timeline_name, index_name):
-        """Create the timeline in Timesketch.
-
-        Args:
-            timeline_name: The name of the timeline in Timesketch
-            index_name: Name of the index in Elasticsearch
-        """
-        # Create a searchindex in the Timesketch database.
-        searchindex = SearchIndex.get_or_create(
-            name=timeline_name,
-            description=timeline_name,
-            user=None,
-            index_name=index_name)
-        searchindex.grant_permission(u'read')
-        db_session.add(searchindex)
-        db_session.commit()
-
-    def run(self, timeline_name, index_name, file_path, event_type,
-            flush_interval):
-        """Flask-script entrypoint for running the command.
-
-        Args:
-            timeline_name: The name of the timeline in Timesketch
-            index_name: Name of the index in Elasticsearch
-            file_path: Path to the file to process
-            event_type: Type of event (e.g. plaso_event)
-            flush_interval: Number of events to queue up before bulk insert
-        """
-        return NotImplementedError
-
-
-class CreateTimelineFromRedline(CreateTimelineBase):
-    """Create a new Timesketch timeline from a Redline csv file."""
-
-    def __init__(self):
-        super(CreateTimelineFromRedline, self).__init__()
-
-    def run(self, timeline_name, index_name, file_path, event_type,
-            flush_interval, delimiter):
-        """Create the timeline from a Redline file.
-
-        Args:
-            timeline_name: The name of the timeline in Timesketch
-            index_name: Name of the index in Elasticsearch
-            file_path: Path to the file to process
-            event_type: Type of event (e.g. plaso_event)
-            flush_interval: Number of events to queue up before bulk insert
-            delimiter: Character used as a field separator
-
-        """
-        timeline_name = unicode(timeline_name.decode(encoding=u'utf-8'))
-        index_name = unicode(index_name.decode(encoding=u'utf-8'))
-        es = ElasticsearchDataStore(
-            host=current_app.config[u'ELASTIC_HOST'],
-            port=current_app.config[u'ELASTIC_PORT'])
-
-        es.create_index(index_name=index_name, doc_type=event_type)
-        for event in read_and_validate_redline(file_path):
-            event_counter = es.import_event(
-                index_name, event_type, event, flush_interval=flush_interval)
-            if event_counter % int(flush_interval) == 0:
-                sys.stdout.write(
-                    u'Indexing progress: {0:d} events\r'.format(event_counter))
-                sys.stdout.flush()
-
-        # Import the remaining events in the queue
-        total_events = es.import_event(
-            index_name, event_type, flush_interval=flush_interval)
-        sys.stdout.write(u'\nTotal events: {0:d}\n'.format(total_events))
-        self.create_searchindex(timeline_name, index_name)
-        
-
 class PurgeTimeline(Command):
     """Delete timeline permanently from Timesketch and Elasticsearch."""
     option_list = (Option(
@@ -329,6 +197,7 @@ class PurgeTimeline(Command):
     def __init__(self):
         super(PurgeTimeline, self).__init__()
 
+    # pylint: disable=arguments-differ, method-hidden
     def run(self, index_name):
         """Delete timeline in both Timesketch and Elasticsearch.
 
@@ -374,6 +243,7 @@ class SearchTemplateManager(Command):
         Option(u'--export', u'-e', dest=u'export_location', required=False),
     )
 
+    # pylint: disable=arguments-differ, method-hidden
     def run(self, import_location, export_location):
         """Export/Import search templates to/from file.
 
@@ -458,6 +328,7 @@ class ImportTimeline(Command):
     def __init__(self):
         super(ImportTimeline, self).__init__()
 
+    # pylint: disable=arguments-differ, method-hidden
     def run(self, file_path, sketch_id, username, timeline_name):
         """This is the run method."""
 
@@ -514,7 +385,7 @@ class ImportTimeline(Command):
             db_session.add(sketch)
             db_session.commit()
 
-        index_name = unicode(uuid4().hex)
+        index_name = unicode(uuid.uuid4().hex)
         searchindex = SearchIndex.get_or_create(
             name=timeline_name,
             description=timeline_name,
@@ -559,7 +430,6 @@ def main():
     shell_manager.add_command('add_group', AddGroup())
     shell_manager.add_command('manage_group', GroupManager())
     shell_manager.add_command('add_index', AddSearchIndex())
-    shell_manager.add_command('redline2ts', CreateTimelineFromRedline())
     shell_manager.add_command('db', MigrateCommand)
     shell_manager.add_command('drop_db', DropDataBaseTables())
     shell_manager.add_command('purge', PurgeTimeline())
