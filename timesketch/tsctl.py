@@ -13,8 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """This module is for management of the Timesketch application."""
+from __future__ import unicode_literals
 
 import json
+import os
+import pwd
 import sys
 import yaml
 from uuid import uuid4
@@ -35,13 +38,13 @@ from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_redline
 from timesketch.lib.utils import read_and_validate_jsonl
-from timesketch.lib.analyzers.similarity_scorer import SimilarityScorer
 from timesketch.models import db_session
 from timesketch.models import drop_all
 from timesketch.models.user import Group
 from timesketch.models.user import User
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import SearchTemplate
+from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 
 
@@ -592,28 +595,120 @@ class SearchTemplateManager(Command):
                 db_session.commit()
 
 
+class ImportTimeline(Command):
+    """Create a new Timesketch timeline from a file."""
+    option_list = (
+        Option('--file', '-f', dest='file_path', required=True),
+        Option('--sketch_id', '-s', dest='sketch_id', required=False),
+        Option('--username', '-u', dest='username', required=False),
+        Option('--timeline_name', '-n', dest='timeline_name',
+               required=False),
+    )
+
+    def __init__(self):
+        super(ImportTimeline, self).__init__()
+
+    def run(self, file_path, sketch_id, username, timeline_name):
+        """This is the run method."""
+
+        if not os.path.isfile(file_path):
+            raise RuntimeError('No such file.')
+
+        file_path_no_extension, extension = os.path.splitext(file_path)
+        extension = extension.lstrip('.')
+        filename = os.path.basename(file_path_no_extension)
+
+        user = None
+        if not username:
+            username = pwd.getpwuid(os.stat(file_path).st_uid).pw_name
+        if username is not 'root':
+            user = User.query.filter_by(username=unicode(username)).first()
+        if not user:
+            raise RuntimeError('Cannot determine user.')
+
+        if not timeline_name:
+            timeline_name = unicode(filename.replace('_', ' '))
+
+        if sketch_id:
+            sketch = Sketch.query.get_with_acl(sketch_id, user=user)
+        else:
+            # Create a new sketch to hold the timeline.
+            sketch_name = 'Sketch for: {0:s}'.format(timeline_name)
+            sketch = Sketch(
+                name=sketch_name, description=sketch_name, user=user)
+            db_session.add(sketch)
+            db_session.commit()
+
+            # Set permissions on sketch.
+            sketch.grant_permission(permission='read', user=user)
+            sketch.grant_permission(permission='write', user=user)
+            sketch.grant_permission(permission='delete', user=user)
+            sketch.status.append(sketch.Status(user=None, status=u'new'))
+            db_session.add(sketch)
+            db_session.commit()
+
+        index_name = unicode(uuid4().hex)
+        searchindex = SearchIndex.get_or_create(
+            name=timeline_name,
+            description=timeline_name,
+            user=user,
+            index_name=index_name)
+
+        searchindex.grant_permission(permission='read', user=user)
+        searchindex.grant_permission(permission='write', user=user)
+        searchindex.grant_permission(permission='delete', user=user)
+
+        searchindex.set_status('processing')
+        db_session.add(searchindex)
+        db_session.commit()
+
+        if sketch and sketch.has_permission(user, 'write'):
+            timeline = Timeline(
+                name=searchindex.name,
+                description=searchindex.description,
+                sketch=sketch,
+                user=user,
+                searchindex=searchindex)
+            timeline.set_status('processing')
+            sketch.timelines.append(timeline)
+            db_session.add(timeline)
+            db_session.commit()
+
+        # Start Celery pipeline for indexing and analysis.
+        # Import here to avoid circular imports.
+        from timesketch.lib import tasks
+
+        pipeline = tasks.build_index_pipeline(
+            file_path, timeline_name, index_name, extension, sketch_id)
+        pipeline.apply_async(task_id=index_name)
+
+        print('Importing {0:s} to sketch: {1:d} ({2:s})'.format(
+            file_path, sketch.id, sketch.name))
+
+
 def main():
     # Setup Flask-script command manager and register commands.
     shell_manager = Manager(create_app)
-    shell_manager.add_command(u'add_user', AddUser())
-    shell_manager.add_command(u'add_group', AddGroup())
-    shell_manager.add_command(u'manage_group', GroupManager())
-    shell_manager.add_command(u'add_index', AddSearchIndex())
-    shell_manager.add_command(u'csv2ts', CreateTimelineFromCsv())
-    shell_manager.add_command(u'redline2ts', CreateTimelineFromRedline())
-    shell_manager.add_command(u'jsonl2ts', CreateTimelineFromJSONL())
-    shell_manager.add_command(u'db', MigrateCommand)
-    shell_manager.add_command(u'drop_db', DropDataBaseTables())
-    shell_manager.add_command(u'json2ts', CreateTimelineFromJson())
-    shell_manager.add_command(u'purge', PurgeTimeline())
-    shell_manager.add_command(u'search_template', SearchTemplateManager())
-    shell_manager.add_command(u'runserver',
-                              Server(host=u'127.0.0.1', port=5000))
+    shell_manager.add_command('add_user', AddUser())
+    shell_manager.add_command('add_group', AddGroup())
+    shell_manager.add_command('manage_group', GroupManager())
+    shell_manager.add_command('add_index', AddSearchIndex())
+    shell_manager.add_command('csv2ts', CreateTimelineFromCsv())
+    shell_manager.add_command('redline2ts', CreateTimelineFromRedline())
+    shell_manager.add_command('jsonl2ts', CreateTimelineFromJSONL())
+    shell_manager.add_command('db', MigrateCommand)
+    shell_manager.add_command('drop_db', DropDataBaseTables())
+    shell_manager.add_command('json2ts', CreateTimelineFromJson())
+    shell_manager.add_command('purge', PurgeTimeline())
+    shell_manager.add_command('search_template', SearchTemplateManager())
+    shell_manager.add_command('import', ImportTimeline())
+    shell_manager.add_command('runserver',
+                              Server(host='127.0.0.1', port=5000))
     shell_manager.add_option(
-        u'-c',
-        u'--config',
-        dest=u'config',
-        default=u'/etc/timesketch.conf',
+        '-c',
+        '--config',
+        dest='config',
+        default='/etc/timesketch.conf',
         required=False)
     shell_manager.run()
 
