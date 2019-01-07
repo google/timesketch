@@ -29,8 +29,8 @@ from flask_script import Server
 from flask_script import Option
 from flask_script import prompt_bool
 from flask_script import prompt_pass
-
 from sqlalchemy.exc import IntegrityError
+from werkzeug.exceptions import Forbidden
 
 from timesketch import create_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
@@ -476,9 +476,20 @@ class ImportTimeline(Command):
         if not timeline_name:
             timeline_name = unicode(filename.replace('_', ' '))
 
+        sketch = None
+        # If filename starts with <number> then use that as sketch_id.
+        # E.g: 42_file_name.plaso means sketch_id is 42.
+        sketch_id_from_filename = filename.split('_')[0]
+        if not sketch_id and sketch_id_from_filename.isdigit():
+            sketch_id = sketch_id_from_filename
+
         if sketch_id:
-            sketch = Sketch.query.get_with_acl(sketch_id, user=user)
-        else:
+            try:
+                sketch = Sketch.query.get_with_acl(sketch_id, user=user)
+            except Forbidden:
+                pass
+
+        if not sketch:
             # Create a new sketch.
             sketch_name = 'Sketch for: {0:s}'.format(timeline_name)
             sketch = Sketch(
