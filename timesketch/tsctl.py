@@ -15,7 +15,6 @@
 """This module is for management of the Timesketch application."""
 from __future__ import unicode_literals
 
-import json
 import os
 import pwd
 import sys
@@ -35,9 +34,7 @@ from sqlalchemy.exc import IntegrityError
 
 from timesketch import create_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
-from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_redline
-from timesketch.lib.utils import read_and_validate_jsonl
 from timesketch.models import db_session
 from timesketch.models import drop_all
 from timesketch.models.user import Group
