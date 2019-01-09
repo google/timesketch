@@ -170,7 +170,6 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
             sketch_analyzer_chain)
 
     if current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS'):
-        print('EMAIL')
         return chain(
             index_task,
             index_analyzer_chain,
@@ -243,6 +242,9 @@ def run_email_result_task(index_name, sketch_id=None):
     Args:
         index_name: An index name.
         sketch_id: A sketch ID (optional).
+
+    Returns:
+        Email sent status.
     """
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
     sketch = None
@@ -273,7 +275,13 @@ def run_email_result_task(index_name, sketch_id=None):
             body = body + '<br><br><b>Views</b><br>' + '<br>'.join(view_links)
 
     to_username = searchindex.user.username
-    send_email(subject, body, to_username, html=True)
+
+    try:
+        send_email(subject, body, to_username, html=True)
+    except RuntimeError as e:
+        return unicode(e)
+
+    return 'Sent email to {0:s}'.format(to_username)
 
 
 @celery.task(track_started=True)
