@@ -13,7 +13,6 @@
 # limitations under the License.
 """This package handles setting up and providing the database connection."""
 
-import traceback
 from flask import abort
 from flask_login import current_user
 from flask_sqlalchemy import BaseQuery
@@ -67,11 +66,12 @@ class AclBaseQuery(BaseQuery):
     as well.
     """
 
-    def get_with_acl(self, model_id):
+    def get_with_acl(self, model_id, user=current_user):
         """Get a database object with permission check enforced.
 
         Args:
             model_id: The integer ID of the model to get.
+            user: User (instance of timesketch.models.user.User)
 
         Returns:
             A BaseQuery instance.
@@ -86,8 +86,7 @@ class AclBaseQuery(BaseQuery):
             pass
         if result_obj.is_public:
             return result_obj
-        if not result_obj.has_permission(
-                user=current_user, permission=u'read'):
+        if not result_obj.has_permission(user=user, permission=u'read'):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
         return result_obj
 
