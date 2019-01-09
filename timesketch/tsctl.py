@@ -337,9 +337,10 @@ class ImportTimeline(Command):
             sys.exit('No such file: {0:s}'.format(file_path))
 
         if extension not in supported_extensions:
-            sys.exit('Extension {0:s} is not supported. '
-                     '(supported extensions are: {1:s})'.format(
-                        extension, ', '.join(supported_extensions)))
+            sys.exit(
+                'Extension {0:s} is not supported. '
+                '(supported extensions are: {1:s})'.format(
+                    extension, ', '.join(supported_extensions)))
 
         user = None
         if not username:
