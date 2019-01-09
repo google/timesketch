@@ -596,6 +596,11 @@ class ExploreResource(ResourceMixin, Resource):
         if form.validate_on_submit():
             query_dsl = form.dsl.data
             query_filter = form.filter.data
+            return_fields = form.fields.data
+
+            if not return_fields:
+                return_fields = DEFAULT_SOURCE_FIELDS
+
             sketch_indices = {
                 t.searchindex.index_name
                 for t in sketch.timelines
@@ -622,7 +627,7 @@ class ExploreResource(ResourceMixin, Resource):
                 query_dsl,
                 indices,
                 aggregations=None,
-                return_fields=DEFAULT_SOURCE_FIELDS,
+                return_fields=return_fields,
                 enable_scroll=False)
 
             # Get labels for each event that matches the sketch.
