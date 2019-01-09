@@ -56,7 +56,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    scripts=[u'tsctl'],
+    entry_points={'console_scripts': ['tsctl=timesketch.tsctl:main']},
     install_requires=[str(req.req) for req in parse_requirements(
         'requirements.txt', session=PipSession(),
     )],
