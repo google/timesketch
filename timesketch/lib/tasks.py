@@ -277,7 +277,7 @@ def run_email_result_task(index_name, sketch_id=None):
     to_username = searchindex.user.username
 
     try:
-        send_email(subject, body, to_username, html=True)
+        send_email(subject, body, to_username, use_html=True)
     except RuntimeError as e:
         return unicode(e)
 
