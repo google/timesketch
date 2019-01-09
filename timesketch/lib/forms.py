@@ -167,6 +167,7 @@ class ExploreForm(BaseForm):
     query = StringField(u'Query')
     filter = StringField(u'Filter')
     dsl = StringField(u'DSL')
+    fields = StringField(u'Fields', default='')
 
 
 class GraphExploreForm(BaseForm):
