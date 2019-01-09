@@ -189,10 +189,10 @@ def get_validated_indices(indices, sketch_indices):
     return indices
 
 
-def send_html_email(subject, body, username):
-
+def send_email(subject, body, to_username, html=False):
     email_enabled = current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS')
     email_domain = current_app.config.get('EMAIL_DOMAIN')
+    email_smtp_server = current_app.config.get('EMAIL_SMTP_SERVER')
 
     if not email_enabled:
         raise RuntimeError('EMAIL NOTIFICATIONS are not enabled, aborting.')
@@ -200,17 +200,23 @@ def send_html_email(subject, body, username):
     if not email_domain:
         raise RuntimeError('EMAIL DOMAIN is not configured, aborting.')
 
+    if not email_smtp_server:
+        raise RuntimeError('EMAIL SMTP SERVER is not configured, aborting.')
+
     from_address = current_app.config.get('EMAIL_FROM_ADDRESS')
-    to_address = '{0:s}@{1:s}'.format(username, email_domain)
+    # TODO: Add email address to user object and pick it up from there.
+    to_address = '{0:s}@{1:s}'.format(to_username, email_domain)
+    email_content_type = 'text'
+    if html:
+        email_content_type = 'text/html'
 
     msg = email.message.Message()
-    msg.add_header('Content-Type', 'text/html')
-
     msg['Subject'] = subject
     msg['From'] = from_address
     msg['To'] = to_address
+    msg.add_header('Content-Type', email_content_type)
     msg.set_payload(body)
 
-    smtp = smtplib.SMTP('localhost')
+    smtp = smtplib.SMTP(email_smtp_server)
     smtp.sendmail(msg['From'], [msg['To']], msg.as_string())
     smtp.quit()

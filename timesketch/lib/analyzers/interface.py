@@ -29,13 +29,6 @@ def _flush_datastore_decorator(func):
     def wrapper(self, *args, **kwargs):
         func_return = func(self, *args, **kwargs)
         self.datastore.flush_queued_events()
-        searchindex = SearchIndex.query.filter_by(
-            index_name=self.index_name).first()
-        if searchindex.description == searchindex.name:
-            searchindex.description = ''
-        searchindex.description = searchindex.description + '\n' + func_return
-        db_session.add(searchindex)
-        db_session.commit()
         return func_return
     return wrapper
 
@@ -342,6 +335,22 @@ class BaseIndexAnalyzer(object):
             Return value of the run method.
         """
         result = self.run()
+
+        # Update the searchindex description with analyzer result.
+        # TODO: Don't overload the description field.
+        searchindex = SearchIndex.query.filter_by(
+            index_name=self.index_name).first()
+
+        # Some code paths set the description equals to the name. Remove that
+        # here to get a clean description with only analyzer results.
+        if searchindex.description == searchindex.name:
+            searchindex.description = ''
+
+        # Append the analyzer result.
+        searchindex.description = searchindex.description + '\n' + result
+        db_session.add(searchindex)
+        db_session.commit()
+
         return result
 
     @classmethod

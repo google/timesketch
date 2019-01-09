@@ -22,7 +22,6 @@ import traceback
 from celery import chain
 from celery import signals
 from flask import current_app
-from flask import url_for
 from sqlalchemy import create_engine
 
 from timesketch import create_celery_app
@@ -30,7 +29,7 @@ from timesketch.lib.analyzers import manager
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_jsonl
-from timesketch.lib.utils import send_html_email
+from timesketch.lib.utils import send_email
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
@@ -116,7 +115,7 @@ def _get_index_analyzers():
     tasks = []
 
     # Exit early if index analyzers are disabled.
-    if not current_app.config.get(u'ENABLE_INDEX_ANALYZERS', False):
+    if not current_app.config.get(u'ENABLE_INDEX_ANALYZERS'):
         return None
 
     for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
@@ -149,28 +148,36 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
         task group.
     """
     index_task_class = _get_index_task_class(file_extension)
-    index_analyzer_group = _get_index_analyzers()
+    index_analyzer_chain = _get_index_analyzers()
     sketch_analyzer_chain = None
 
-    if sketch_id:
+    if sketch_id and current_app.config.get(u'ENABLE_SKETCH_ANALYZERS'):
         sketch_analyzer_chain = build_sketch_analysis_pipeline(sketch_id)
 
     index_task = index_task_class.s(
         file_path, timeline_name, index_name, file_extension)
 
     # If there are no analyzers just run the indexer.
-    if not index_analyzer_group and not sketch_analyzer_chain:
+    if not index_analyzer_chain and not sketch_analyzer_chain:
         return index_task
 
     if sketch_analyzer_chain:
-        if not index_analyzer_group:
+        if not index_analyzer_chain:
             return chain(
                 index_task, run_sketch_init.s(), sketch_analyzer_chain)
         return chain(
-            index_task, index_analyzer_group, run_sketch_init.s(),
+            index_task, index_analyzer_chain, run_sketch_init.s(),
             sketch_analyzer_chain)
 
-    return chain(index_task, index_analyzer_group)
+    if current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS'):
+        print('EMAIL')
+        return chain(
+            index_task,
+            index_analyzer_chain,
+            run_email_result_task.s()
+        )
+
+    return chain(index_task, index_analyzer_chain)
 
 
 def build_sketch_analysis_pipeline(sketch_id):
@@ -202,7 +209,7 @@ def build_sketch_analysis_pipeline(sketch_id):
             tasks.append(run_sketch_analyzer.s(sketch_id, analyzer_name))
 
     if current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS'):
-        tasks.append(run_email_task.s(sketch_id))
+        tasks.append(run_email_result_task.s(sketch_id))
 
     return chain(tasks)
 
@@ -227,44 +234,46 @@ def run_sketch_init(index_name_list):
 
 
 @celery.task(track_started=True)
-def run_email_task(index_name, sketch_id):
+def run_email_result_task(index_name, sketch_id=None):
     """Create email Celery task.
 
-    This task is run after all other sketch analyzers are done and will email
-    the result of all analyzers to the user who uploaded the data.
+    This task is run after all sketch analyzers are done and emails
+    the result of all analyzers to the user who imported the data.
 
     Args:
         index_name: An index name.
-        sketch_id: A sketch ID.
+        sketch_id: A sketch ID (optional).
     """
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
-    sketch = Sketch.query.get(sketch_id)
+    sketch = None
 
-    views = []
-    for view in sketch.views:
-        view_url = url_for(
-            'sketch_views.explore', sketch_id=sketch_id, view_id=view.id,
-            _external=True, _scheme='https')
-        views.append('<a href="{0:s}">{1:s}</a>'.format(view_url, view.name))
+    if sketch_id:
+        sketch = Sketch.query.get(sketch_id)
 
-    sketch_url = url_for(
-        'sketch_views.overview', sketch_id=sketch_id, _external=True,
-        _scheme='https')
+    subject = 'Timesketch: [{0:s}] is ready'.format(searchindex.name)
 
-    subject = 'Your Timesketch import of [{0:s}]is ready.'.format(
+    # TODO: Use jinja templates.
+    body = 'Your timeline [{0:s}] has been imported and is ready.'.format(
         searchindex.name)
 
-    body = (
-        'Your timeline [{0:s}] has been imported and is available at:<br>'
-        '{1:s}<br><br><b>Analyzer results</b>{2:s}'.format(
-            searchindex.name, sketch_url,
-            searchindex.description.replace('\n', '<br>')))
+    if sketch:
+        view_links = []
+        for view_url, view_name in sketch.get_view_urls():
+            view_links.append('<a href="{0:s}">{1:s}</a>'.format(
+                view_url,
+                view_name))
 
-    if views:
-        body = body + '<br><br><b>Views</b><br>' + '<br>'.join(views)
+        body = body + '<br><br><b>Sketch</b><br>{0:s}'.format(
+            sketch.external_url)
+
+        analysis_results = searchindex.description.replace('\n', '<br>')
+        body = body + '<br><br><b>Analysis</b>{0:s}'.format(analysis_results)
+
+        if view_links:
+            body = body + '<br><br><b>Views</b><br>' + '<br>'.join(view_links)
 
     to_username = searchindex.user.username
-    send_html_email(subject, body, to_username)
+    send_email(subject, body, to_username, html=True)
 
 
 @celery.task(track_started=True)
