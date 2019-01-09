@@ -259,8 +259,9 @@ def run_email_result_task(index_name, sketch_id=None):
         searchindex.name)
 
     if sketch:
+        view_urls = sketch.get_view_urls()
         view_links = []
-        for view_url, view_name in sketch.get_view_urls():
+        for view_url, view_name in view_urls.iteritems():
             view_links.append('<a href="{0:s}">{1:s}</a>'.format(
                 view_url,
                 view_name))
