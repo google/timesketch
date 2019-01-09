@@ -331,11 +331,15 @@ class ImportTimeline(Command):
         extension = extension.lstrip('.')
         filename = os.path.basename(file_path_no_extension)
 
+        supported_extensions = ('plaso', 'csv', 'jsonl')
+
         if not os.path.isfile(file_path):
             sys.exit('No such file: {0:s}'.format(file_path))
 
-        if extension not in ('plaso', 'csv', 'jsonl'):
-            sys.exit('Unknown extension: {0:s}'.format(file_path))
+        if extension not in supported_extensions:
+            sys.exit('Extension {0:s} is not supported. '
+                     '(supported extensions are: {1:s})'.format(
+                        extension, ', '.join(supported_extensions)))
 
         user = None
         if not username:
@@ -361,7 +365,8 @@ class ImportTimeline(Command):
         if not timeline_name:
             timeline_name = unicode(filename.replace('_', ' '))
             # Remove sketch ID if present in the filename.
-            if timeline_name.split()[0].isdigit():
+            timeline_parts = timeline_name.split()
+            if timeline_parts[0].isdigit():
                 timeline_name = ' '.join(timeline_name.split()[1:])
 
         if not sketch:
