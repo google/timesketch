@@ -598,8 +598,6 @@ class ExploreResource(ResourceMixin, Resource):
             query_filter = form.filter.data
             return_fields = form.fields.data
 
-            print 'FORM DATA IS: {}'.format(return_fields)
-
             if not return_fields:
                 return_fields = DEFAULT_SOURCE_FIELDS
 
