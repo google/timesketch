@@ -22,6 +22,8 @@ from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy.orm import relationship
 
+from flask import url_for
+
 from timesketch.models import BaseModel
 from timesketch.models.acl import AccessControlMixin
 from timesketch.models.annotations import LabelMixin
@@ -68,6 +70,34 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             view for view in self.views
             if view.get_status.status != u'deleted' and view.name != u''
         ]
+        return views
+
+    @property
+    def external_url(self):
+        """Get external URL for the sketch.
+
+        E.g: https://localhost/sketch/42/
+
+        Returns:
+            Full URL to the sketch as string.
+        """
+        url = url_for(
+            u'sketch_views.overview', sketch_id=self.id, _external=True,
+            _scheme=u'https')
+        return url
+
+    def get_view_urls(self):
+        """Get external URL for all views in the sketch.
+
+        Returns:
+            Dictionary with url as key and view name as value.
+        """
+        views = {}
+        for view in self.get_named_views:
+            url = url_for(
+                u'sketch_views.explore', sketch_id=self.id, view_id=view.id,
+                _external=True, _scheme=u'https')
+            views[url] = view.name
         return views
 
     @property
