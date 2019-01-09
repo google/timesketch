@@ -29,6 +29,13 @@ def _flush_datastore_decorator(func):
     def wrapper(self, *args, **kwargs):
         func_return = func(self, *args, **kwargs)
         self.datastore.flush_queued_events()
+        searchindex = SearchIndex.query.filter_by(
+            index_name=self.index_name).first()
+        if searchindex.description == searchindex.name:
+            searchindex.description = ''
+        searchindex.description = searchindex.description + '\n' + func_return
+        db_session.add(searchindex)
+        db_session.commit()
         return func_return
     return wrapper
 

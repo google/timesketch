@@ -13,13 +13,19 @@
 # limitations under the License.
 """Common functions and utilities."""
 
+from __future__ import unicode_literals
+
 import colorsys
 import csv
 import datetime
+import email
 import json
 import random
+import smtplib
 import sys
 import time
+
+from flask import current_app
 
 from dateutil import parser
 
@@ -181,3 +187,30 @@ def get_validated_indices(indices, sketch_indices):
     if exclude:
         indices = [index for index in indices if index not in exclude]
     return indices
+
+
+def send_html_email(subject, body, username):
+
+    email_enabled = current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS')
+    email_domain = current_app.config.get('EMAIL_DOMAIN')
+
+    if not email_enabled:
+        raise RuntimeError('EMAIL NOTIFICATIONS are not enabled, aborting.')
+
+    if not email_domain:
+        raise RuntimeError('EMAIL DOMAIN is not configured, aborting.')
+
+    from_address = current_app.config.get('EMAIL_FROM_ADDRESS')
+    to_address = '{0:s}@{1:s}'.format(username, email_domain)
+
+    msg = email.message.Message()
+    msg.add_header('Content-Type', 'text/html')
+
+    msg['Subject'] = subject
+    msg['From'] = from_address
+    msg['To'] = to_address
+    msg.set_payload(body)
+
+    smtp = smtplib.SMTP('localhost')
+    smtp.sendmail(msg['From'], [msg['To']], msg.as_string())
+    smtp.quit()
