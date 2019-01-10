@@ -22,6 +22,7 @@ from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy.orm import relationship
 
+from flask import current_app
 from flask import url_for
 
 from timesketch.models import BaseModel
@@ -81,10 +82,10 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         Returns:
             Full URL to the sketch as string.
         """
-        url = url_for(
-            u'sketch_views.overview', sketch_id=self.id, _external=True,
-            _scheme=u'https')
-        return url
+        url_host = current_app.config.get(
+            u'EXTERNAL_HOST_URL', u'https://localhost')
+        url_path = url_for(u'sketch_views.overview', sketch_id=self.id)
+        return url_host + url_path
 
     def get_view_urls(self):
         """Get external URL for all views in the sketch.
@@ -92,11 +93,14 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         Returns:
             Dictionary with url as key and view name as value.
         """
+
         views = {}
         for view in self.get_named_views:
-            url = url_for(
-                u'sketch_views.explore', sketch_id=self.id, view_id=view.id,
-                _external=True, _scheme=u'https')
+            url_host = current_app.config.get(
+                u'EXTERNAL_HOST_URL', u'https://localhost')
+            url_path = url_for(
+                u'sketch_views.explore', sketch_id=self.id, view_id=view.id)
+            url = url_host + url_path
             views[url] = view.name
         return views
 
