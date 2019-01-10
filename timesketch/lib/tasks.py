@@ -246,41 +246,45 @@ def run_email_result_task(index_name, sketch_id=None):
     Returns:
         Email sent status.
     """
-    searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
-    sketch = None
+    # We need to get a fake request context so that url_for() will work.
+    with current_app.test_request_context():
+        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+        sketch = None
 
-    if sketch_id:
-        sketch = Sketch.query.get(sketch_id)
+        if sketch_id:
+            sketch = Sketch.query.get(sketch_id)
 
-    subject = 'Timesketch: [{0:s}] is ready'.format(searchindex.name)
+        subject = 'Timesketch: [{0:s}] is ready'.format(searchindex.name)
 
-    # TODO: Use jinja templates.
-    body = 'Your timeline [{0:s}] has been imported and is ready.'.format(
-        searchindex.name)
+        # TODO: Use jinja templates.
+        body = 'Your timeline [{0:s}] has been imported and is ready.'.format(
+            searchindex.name)
 
-    if sketch:
-        view_urls = sketch.get_view_urls()
-        view_links = []
-        for view_url, view_name in view_urls.iteritems():
-            view_links.append('<a href="{0:s}">{1:s}</a>'.format(
-                view_url,
-                view_name))
+        if sketch:
+            view_urls = sketch.get_view_urls()
+            view_links = []
+            for view_url, view_name in view_urls.iteritems():
+                view_links.append('<a href="{0:s}">{1:s}</a>'.format(
+                    view_url,
+                    view_name))
 
-        body = body + '<br><br><b>Sketch</b><br>{0:s}'.format(
-            sketch.external_url)
+            body = body + '<br><br><b>Sketch</b><br>{0:s}'.format(
+                sketch.external_url)
 
-        analysis_results = searchindex.description.replace('\n', '<br>')
-        body = body + '<br><br><b>Analysis</b>{0:s}'.format(analysis_results)
+            analysis_results = searchindex.description.replace('\n', '<br>')
+            body = body + '<br><br><b>Analysis</b>{0:s}'.format(
+                analysis_results)
 
-        if view_links:
-            body = body + '<br><br><b>Views</b><br>' + '<br>'.join(view_links)
+            if view_links:
+                body = body + '<br><br><b>Views</b><br>' + '<br>'.join(
+                    view_links)
 
-    to_username = searchindex.user.username
+        to_username = searchindex.user.username
 
-    try:
-        send_email(subject, body, to_username, use_html=True)
-    except RuntimeError as e:
-        return unicode(e)
+        try:
+            send_email(subject, body, to_username, use_html=True)
+        except RuntimeError as e:
+            return unicode(e)
 
     return 'Sent email to {0:s}'.format(to_username)
 
