@@ -101,7 +101,8 @@ class SketchModelTest(ModelBaseTest):
             u'size': 40,
             u'time_start': None,
             u'time_end': None,
-            u'limit': DEFAULT_LIMIT,
+            u'size': DEFAULT_LIMIT,
+            u'terminate_after': DEFAULT_LIMIT,
             u'indices': [],
             u'exclude': [],
             u'order': u'asc'

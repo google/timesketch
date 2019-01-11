@@ -76,7 +76,7 @@ def event_stream(sketch_id, query):
     result = es.search(
         sketch_id=sketch_id,
         query_string=query,
-        query_filter={u'limit': 10000},
+        query_filter={u'size': 10000, 'terminate_after': 1000},
         query_dsl={},
         indices=[u'_all'],
         return_fields=[u'xml_string', u'timestamp'],
