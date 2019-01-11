@@ -44,7 +44,7 @@ KNOWN_CDN_DOMAINS = {
     '.azion.net': 'Azion',
     '.azioncdn.com': 'Azion',
     '.azioncdn.net': 'Azion',
-    'bo.lt': 'BO.LT',
+    '.bo.lt': 'BO.LT',
     '.bisongrid.net': 'Bison Grid',
     '.bitgravity.com': 'BitGravity',
     '.bluehatnetwork.com': 'Blue Hat Network',
@@ -74,7 +74,7 @@ KNOWN_CDN_DOMAINS = {
     '.v3cdn.net': 'Edgecast',
     '.v4cdn.net': 'Edgecast',
     '.v5cdn.net': 'Edgecast',
-    'edgecastcdn.net': 'Edgecast',
+    '.edgecastcdn.net': 'Edgecast',
     '.cdninstagram.com': 'Facebook',
     '.fbcdn.net': 'Facebook',
     '.fastly.net': 'Fastly',
@@ -84,10 +84,10 @@ KNOWN_CDN_DOMAINS = {
     '.doubleclick.net': 'Google',
     '.googleusercontent.com': 'Google',
     '.gstatic.com': 'Google',
-    'googlehosted.com': 'Google',
-    'googlesyndication.': 'Google',
+    '.googlehosted.com': 'Google',
+    '.googlesyndication.': 'Google',
     '.hiberniacdn.com': 'HiberniaCDN',
-    'hwcdn.net': 'Highwinds',
+    '.hwcdn.net': 'Highwinds',
     '.hosting4cdn.com': 'Hosting4CDN',
     '.incapdns.net': 'Incapsula',
     '.inscname.net': 'Instart Logic',
@@ -130,7 +130,7 @@ KNOWN_CDN_DOMAINS = {
     '.revdn.net': 'Rev Software',
     '.roast.io': 'Roast.io',
     '.streamprovider.net': 'Rocket CDN',
-    'cdn.sfr.net': 'SFR',
+    '.cdn.sfr.net': 'SFR',
     '.simplecdn.net': 'Simple CDN',
     '.singularcdn.net.br': 'Singular CDN',
     '.stackpathdns.com': 'StackPath',
@@ -139,7 +139,7 @@ KNOWN_CDN_DOMAINS = {
     '.trbcdn.ru': 'TRBCDN',
     '.gslb.taobao.com': 'Taobao',
     '.taobaocdn.com': 'Taobao',
-    'tbcdn.cn': 'Taobao',
+    '.tbcdn.cn': 'Taobao',
     '.cdntel.net': 'Telenor',
     '.twimg.com': 'Twitter',
     '.unicorncdn.net': 'UnicornCDN',
@@ -154,7 +154,7 @@ KNOWN_CDN_DOMAINS = {
     '.zenedge.net': 'Zenedge',
     '.afxcdn.net': 'afxcdn.net',
     '.cubecdn.net': 'cubeCDN',
-    'cdn.jsdelivr.net': 'jsDelivr',
+    '.cdn.jsdelivr.net': 'jsDelivr',
     '.squixa.net': 'section.io'}
 
 
@@ -201,15 +201,16 @@ def strip_www_from_domain(domain):
     return domain
 
 
-def get_cdn_providers(domain):
+def get_cdn_provider(domain):
     """Return name of CDN provider if domain is recognized as a CDN.
 
     Args:
         domain: Domain name to check against CDN list.
 
     Returns:
-        List of names of CDN providers or empty list if not found.
+        String of names of CDN providers or empty string if not found.
 
     """
-    return [v for k, v in KNOWN_CDN_DOMAINS.iteritems() if
-            domain.endswith(k.lower())]
+    cdn_providers = [v for k, v in KNOWN_CDN_DOMAINS.iteritems() if
+                     domain.endswith(k.lower())]
+    return ' '.join(set(cdn_providers))

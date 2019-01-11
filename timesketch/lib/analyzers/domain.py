@@ -73,19 +73,18 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
             tags_to_add = []
             text = '{0:s} seen {1:d} times'.format(domain, count)
 
-            is_known_cdn = utils.get_cdn_providers(domain)
-            if is_known_cdn:
+            cdn_provider = utils.get_cdn_provider(domain)
+            if cdn_provider:
                 tags_to_add.append('known-cdn')
-                for cdn in is_known_cdn:
-                    cdn_counter[cdn] += 1
+                cdn_counter[cdn_provider] += 1
 
             for event in domains.get(domain, []):
                 event.add_tags(tags_to_add)
                 event.add_emojis(emojis_to_add)
                 event.add_human_readable(text, self.NAME, append=False)
                 new_attributes = {'domain_count': count}
-                if is_known_cdn:
-                    new_attributes['cdn_provider'] = ' '.join(is_known_cdn)
+                if cdn_provider:
+                    new_attributes['cdn_provider'] = cdn_provider
                 event.add_attributes(new_attributes)
 
         return (
