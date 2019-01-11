@@ -439,7 +439,8 @@ class Sketch(BaseResource):
         default_filter = {
             u'time_start': None,
             u'time_end': None,
-            u'limit': 40,
+            u'size': 100,
+            u'terminate_after': 100,
             u'indices': u'_all',
             u'order': u'asc'
         }
