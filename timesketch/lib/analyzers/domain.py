@@ -45,6 +45,7 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
         domains = {}
         domain_counter = collections.Counter()
         tld_counter = collections.Counter()
+        cdn_counter = collections.Counter()
 
         for event in events:
             domain = event.source.get('domain')
@@ -75,6 +76,8 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
             is_known_cdn = utils.get_cdn_providers(domain)
             if is_known_cdn:
                 tags_to_add.append('known-cdn')
+                for cdn in is_known_cdn:
+                    cdn_counter[cdn] += 1
 
             for event in domains.get(domain, []):
                 event.add_tags(tags_to_add)
@@ -86,8 +89,9 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
                 event.add_attributes(new_attributes)
 
         return (
-            '{0:d} domains discovered with {1:d} TLDs.').format(
-                len(domains), len(tld_counter))
+            '{0:d} domains discovered ({1:d} TLDs) and {2:d} known '
+            'CDN networks found.').format(
+                len(domains), len(tld_counter), len(cdn_counter))
 
 
 manager.AnalysisManager.register_analyzer(DomainSketchPlugin)
