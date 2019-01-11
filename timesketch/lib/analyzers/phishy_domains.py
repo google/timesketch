@@ -242,7 +242,8 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
             if known_networks_encountered:
                 self.sketch.add_view(
-                    view_name='Phishy Domains', analyzer_name=self.NAME,
+                    view_name='Phishy Domains, sans known',
+                    analyzer_name=self.NAME,
                     query_string=(
                         'tag:"phishy-domain" AND NOT tag:"known-network"'))
 
