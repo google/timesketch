@@ -203,6 +203,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
             watched_domains[domain] = minhash
 
         similar_domain_counter = 0
+        known_networks_encountered = False
         evil_emoji = emojis.get_emoji('SKULL_CROSSBONE')
         phishing_emoji = emojis.get_emoji('FISHING_POLE')
         for domain, _ in domain_counter.iteritems():
@@ -226,6 +227,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
                 if any(domain.endswith(
                         x) for x in self.domain_scoring_whitelist):
                     tags_to_add.append('known-network')
+                    known_networks_encountered = True
 
             for event in domains.get(domain, []):
                 event.add_emojis(emojis_to_add)
@@ -237,6 +239,12 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
             self.sketch.add_view(
                 view_name='Phishy Domains', analyzer_name=self.NAME,
                 query_string='tag:"phishy-domain"')
+
+            if known_networks_encountered:
+                self.sketch.add_view(
+                    view_name='Phishy Domains', analyzer_name=self.NAME,
+                    query_string=(
+                        'tag:"phishy-domain" AND NOT tag:"known-network"'))
 
         return (
             '{0:d} potentially phishy domains discovered.').format(
