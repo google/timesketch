@@ -226,7 +226,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
                     domain, ', '.join(similar_text_list))
                 if any(domain.endswith(
                         x) for x in self.domain_scoring_whitelist):
-                    tags_to_add.append('known-network')
+                    tags_to_add.append('known-domain')
                     known_networks_encountered = True
 
             for event in domains.get(domain, []):
@@ -242,10 +242,10 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
             if known_networks_encountered:
                 self.sketch.add_view(
-                    view_name='Phishy Domains, sans known',
+                    view_name='Phishy Domains, excl. known',
                     analyzer_name=self.NAME,
                     query_string=(
-                        'tag:"phishy-domain" AND NOT tag:"known-network"'))
+                        'tag:"phishy-domain" AND NOT tag:"known-domain"'))
 
         return (
             '{0:d} potentially phishy domains discovered.').format(
