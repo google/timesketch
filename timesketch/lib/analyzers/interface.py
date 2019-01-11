@@ -347,9 +347,11 @@ class BaseIndexAnalyzer(object):
             searchindex.description = ''
 
         # Append the analyzer result.
-        searchindex.description = searchindex.description + '\n' + result
-        db_session.add(searchindex)
-        db_session.commit()
+        if result:
+            searchindex.description = '{0:s}\n{1:s}'.format(
+                searchindex.description, result)
+            db_session.add(searchindex)
+            db_session.commit()
 
         return result
 
