@@ -21,7 +21,7 @@ datasketch
 PyJWT
 requests>=2.20.0
 cryptography>=2.3
-PyYAML
+pyyaml>=4.2b1
 urllib3>=1.23
 
 # dev-requirements:
