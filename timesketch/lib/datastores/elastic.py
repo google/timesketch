@@ -375,6 +375,7 @@ class ElasticsearchDataStore(object):
             return self.client.get(
                 index=searchindex_id,
                 id=event_id,
+                doc_type=u'_all',
                 _source_exclude=[u'timesketch_label'])
         except NotFoundError:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
@@ -436,7 +437,8 @@ class ElasticsearchDataStore(object):
                 params=script[u'params']
             )
 
-        doc = self.client.get(index=searchindex_id, id=event_id)
+        doc = self.client.get(
+            index=searchindex_id, id=event_id, doc_type=u'_all')
         try:
             doc[u'_source'][u'timesketch_label']
         except KeyError:
