@@ -54,3 +54,15 @@ class TestAnalyzerUtils(BaseTest):
         domain = 'mbl.is'
         stripped = utils.strip_www_from_domain(domain)
         self.assertEquals(stripped, domain)
+
+    def test_get_cdn_providers(self):
+        """Test get_cdn_providers function."""
+        domain = 'foobar.gstatic.com'
+        provider = utils.get_cdn_providers(domain)
+        self.assertIsInstance(provider, list)
+        self.assertEquals(provider, ['Google'])
+
+        domain = 'www.mbl.is'
+        provider = utils.get_cdn_providers(domain)
+        self.assertIsInstance(provider, list)
+        self.assertEquals(provider, [])

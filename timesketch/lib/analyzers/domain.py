@@ -69,12 +69,21 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
         satellite_emoji = emojis.get_emoji('SATELLITE')
         for domain, count in domain_counter.iteritems():
             emojis_to_add = [satellite_emoji]
+            tags_to_add = []
             text = '{0:s} seen {1:d} times'.format(domain, count)
 
+            is_known_cdn = utils.get_cdn_providers(domain)
+            if is_known_cdn:
+                tags_to_add.append('known-cdn')
+
             for event in domains.get(domain, []):
+                event.add_tags(tags_to_add)
                 event.add_emojis(emojis_to_add)
                 event.add_human_readable(text, self.NAME, append=False)
-                event.add_attributes({'domain_count': count})
+                new_attributes = {'domain_count': count}
+                if is_known_cdn:
+                    new_attributes['cdn_provider'] = ' '.join(is_known_cdn)
+                event.add_attributes(new_attributes)
 
         return (
             '{0:d} domains discovered with {1:d} TLDs.').format(
