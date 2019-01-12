@@ -34,6 +34,7 @@ def parse_evtx_logoff_event(event, string_list, emoji):
     Returns:
         int: 1 if the event got processed correctly, 0 otherwise.
     """
+    emojis_to_add = [emoji]
     if not len(string_list) == 5:
         return 0
 
@@ -46,9 +47,14 @@ def parse_evtx_logoff_event(event, string_list, emoji):
     attributes['logon_type'] = LOGON_TYPES.get(
         logon_type_code, LOGON_TYPES.get(u'0'))
 
+    # Want to add an emoji in case this is a screensaver unlock.
+    if logon_type_code == '7':
+        screen_emoji = emojis.get_emoji('screen')
+        emojis_to_add.append(screen_emoji)
+
     event.add_tags(['logoff-event'])
     event.add_attributes(attributes)
-    event.add_emojis([emoji])
+    event.add_emojis(emojis_to_add)
     return 1
 
 
@@ -65,6 +71,7 @@ def parse_evtx_logon_event(event, string_list, string_parsed, emoji):
         int: 1 if the event got processed correctly, 0 otherwise.
     """
     attributes = {}
+    emojis_to_add = [emoji]
 
     if not string_parsed:
         string_parsed = {}
@@ -78,6 +85,11 @@ def parse_evtx_logon_event(event, string_list, string_parsed, emoji):
     attributes['logon_type'] = LOGON_TYPES.get(
         logon_type_code, LOGON_TYPES.get(u'0'))
 
+    # Want to add an emoji in case this is a screensaver unlock.
+    if logon_type_code == '7':
+        screen_emoji = emojis.get_emoji('screen')
+        emojis_to_add.append(screen_emoji)
+
     attributes['username'] = '{0:s}/{1:s}'.format(
         string_parsed.get('target_user_id', 'N/A'),
         string_parsed.get('target_user_name', 'Unknown'))
@@ -86,7 +98,7 @@ def parse_evtx_logon_event(event, string_list, string_parsed, emoji):
 
     event.add_tags(['logon-event'])
     event.add_attributes(attributes)
-    event.add_emojis([emoji])
+    event.add_emojis(emojis_to_add)
     return 1
 
 
@@ -112,6 +124,7 @@ class LoginSketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
+        screenshot_emoji = emojis.get_emoji('camera')
         login_emoji = emojis.get_emoji('lock')
         logoff_emoji = emojis.get_emoji('unlock')
         login_counter = 0

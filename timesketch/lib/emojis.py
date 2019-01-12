@@ -31,6 +31,7 @@ EMOJI_MAP = {
     'LOCOMOTIVE': emoji('&#x1F682', 'Execution activity'),
     'MAGNIFYING_GLASS': emoji('&#x1F50E', 'Search related activity'),
     'SATELLITE': emoji('&#x1F4E1', 'Domain activity'),
+    'SCREEN': emoji('&#x1F5B5', 'Screensaver activity'),
     'SKULL_CROSSBONE': emoji('&#x2620', 'Suspicious entry'),
     'UNLOCK': emoji('&#x1F513', 'Logoff activity'),
     'WASTEBASKET': emoji('&#x1F5D1', 'Deletion activity')
