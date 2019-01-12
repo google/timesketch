@@ -22,6 +22,9 @@ from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy.orm import relationship
 
+from flask import current_app
+from flask import url_for
+
 from timesketch.models import BaseModel
 from timesketch.models.acl import AccessControlMixin
 from timesketch.models.annotations import LabelMixin
@@ -68,6 +71,37 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             view for view in self.views
             if view.get_status.status != u'deleted' and view.name != u''
         ]
+        return views
+
+    @property
+    def external_url(self):
+        """Get external URL for the sketch.
+
+        E.g: https://localhost/sketch/42/
+
+        Returns:
+            Full URL to the sketch as string.
+        """
+        url_host = current_app.config.get(
+            u'EXTERNAL_HOST_URL', u'https://localhost')
+        url_path = url_for(u'sketch_views.overview', sketch_id=self.id)
+        return url_host + url_path
+
+    def get_view_urls(self):
+        """Get external URL for all views in the sketch.
+
+        Returns:
+            Dictionary with url as key and view name as value.
+        """
+
+        views = {}
+        for view in self.get_named_views:
+            url_host = current_app.config.get(
+                u'EXTERNAL_HOST_URL', u'https://localhost')
+            url_path = url_for(
+                u'sketch_views.explore', sketch_id=self.id, view_id=view.id)
+            url = url_host + url_path
+            views[url] = view.name
         return views
 
     @property
@@ -232,9 +266,9 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         DEFAULT_VALUES = {
             u'time_start': None,
             u'time_end': None,
-            u'limit': DEFAULT_LIMIT,
             u'from': DEFAULT_FROM,
             u'size': DEFAULT_SIZE,
+            u'terminate_after': DEFAULT_LIMIT,
             u'indices': [],
             u'exclude': [],
             u'order': u'asc'
@@ -293,7 +327,7 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
                 u'indices': u'_all',
                 u'time_start': None,
                 u'time_end': None,
-                u'limit': 40,
+                u'terminate_after': 40,
                 u'from': 0,
                 u'order': u'asc',
                 u'size': u'40'

@@ -119,10 +119,9 @@ class Event(object):
         Args:
             emojis: List of emojis to add (as unicode codepoints).
         """
-        existing_emojis = self.source.get('__ts_emojis', '')
-        existing_emoji_list = existing_emojis.split()
+        existing_emoji_list = self.source.get('__ts_emojis', [])
         new_emoji_list = list(set().union(existing_emoji_list, emojis))
-        updated_event_attribute = {'__ts_emojis': ' '.join(new_emoji_list)}
+        updated_event_attribute = {'__ts_emojis': new_emoji_list}
         self._update(updated_event_attribute)
 
     def add_star(self):
@@ -152,19 +151,21 @@ class Event(object):
         db_session.commit()
         self.add_label(label='__ts_comment')
 
-    def add_human_readable(self, human_readable, append=True):
+    def add_human_readable(self, human_readable, analyzer_name, append=True):
         """Add a human readable string to event.
 
         Args:
             human_readable: human readable string.
+            analyzer_name: string with the name of the analyzer that was
+                used to generate the human_readable string.
             append: boolean defining whether the data should be appended
                 or prepended to the human readable string, if it has already
                 been defined. Defaults to True, and does nothing if
                 human_readable is not defined.
         """
-        # TODO: Check if "message" field already exists in human readable and
-        # make sure it is not repeated.
         existing_human_readable = self.source.get('human_readable', [])
+
+        human_readable = '[{0:s}] {1:s}'.format(analyzer_name, human_readable)
 
         if human_readable in existing_human_readable:
             return
@@ -197,12 +198,13 @@ class Sketch(object):
         if not self.sql_sketch:
             raise RuntimeError('No such sketch')
 
-    def add_view(self, name, query_string=None, query_dsl=None,
-                 query_filter=None):
+    def add_view(self, view_name, analyzer_name, query_string=None,
+                 query_dsl=None, query_filter=None):
         """Add saved view to the Sketch.
 
         Args:
-            name: The name of the view.
+            view_name: The name of the view.
+            analyzer_name: The name of the analyzer.
             query_string: Elasticsearch query string.
             query_dsl: Dictionary with Elasticsearch DSL query.
             query_filter: Dictionary with Elasticsearch filters.
@@ -218,11 +220,13 @@ class Sketch(object):
         if not query_filter:
             query_filter = {'indices': '_all'}
 
-        view = View(name=name, sketch=self.sql_sketch, user=None,
-                    query_string=query_string, query_filter=query_filter,
-                    query_dsl=query_dsl, searchtemplate=None)
-
+        name = '[{0:s}] {1:s}'.format(analyzer_name, view_name)
+        view = View.get_or_create(name=name, sketch=self.sql_sketch, user=None)
+        view.query_string = query_string
         view.query_filter = view.validate_filter(query_filter)
+        view.query_dsl = query_dsl
+        view.searchtemplate = None
+
         db_session.add(view)
         db_session.commit()
         return view
@@ -250,6 +254,11 @@ class BaseIndexAnalyzer(object):
 
     NAME = 'name'
     IS_SKETCH_ANALYZER = False
+
+    # If this analyzer depends on another analyzer
+    # it needs to be included in this frozenset by using
+    # the indexer names.
+    DEPENDENCIES = frozenset()
 
     def __init__(self, index_name):
         """Initialize the analyzer object.
@@ -326,6 +335,24 @@ class BaseIndexAnalyzer(object):
             Return value of the run method.
         """
         result = self.run()
+
+        # Update the searchindex description with analyzer result.
+        # TODO: Don't overload the description field.
+        searchindex = SearchIndex.query.filter_by(
+            index_name=self.index_name).first()
+
+        # Some code paths set the description equals to the name. Remove that
+        # here to get a clean description with only analyzer results.
+        if searchindex.description == searchindex.name:
+            searchindex.description = ''
+
+        # Append the analyzer result.
+        if result:
+            searchindex.description = '{0:s}\n{1:s}'.format(
+                searchindex.description, result)
+        db_session.add(searchindex)
+        db_session.commit()
+
         return result
 
     @classmethod

@@ -86,6 +86,8 @@ class SimilarityScorer(interface.BaseIndexAnalyzer):
 
     NAME = 'SimilarityScorer'
 
+    DEPENDENCIES = frozenset()
+
     def __init__(self, index_name, data_type=None):
         """Initializes a similarity scorer.
 
@@ -152,11 +154,8 @@ class SimilarityScorer(interface.BaseIndexAnalyzer):
             attributes_to_add = {'similarity_score': score}
             event.add_attributes(attributes_to_add)
 
-        return dict(
-            index=self._config.index_name,
-            data_type=self._config.data_type,
-            num_events_processed=total_num_events
-        )
+        msg = 'Similarity scorer processed {0:d} events for data_type {1:s}'
+        return msg.format(total_num_events, self._config.data_type)
 
 
 manager.AnalysisManager.register_analyzer(SimilarityScorer)

@@ -32,6 +32,7 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
             namedView: '=',
             searchtemplateId: '=',
             similarityEnabled: '@',
+            verboseView: '@',
         },
         controllerAs: 'ctrl',
         link: function (scope, elem, attrs, ctrl) {
@@ -72,6 +73,7 @@ export const tsSearch = ['$location', 'timesketchApi', function ($location, time
                 $scope.sketch = data.objects[0];
                 $scope.sketch.views = data.meta.views;
                 $scope.sketch.searchtemplates = data.meta.searchtemplates;
+                $scope.sketch.emojis = data.meta.emojis;
                 $scope.filter.indices = [];
                 for (const timeline of $scope.sketch.active_timelines) {
                     $scope.filter.indices.push(timeline.searchindex.index_name);

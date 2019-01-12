@@ -8205,7 +8205,9 @@ i {
   margin-right: 5px; }
 
 body {
+  /* #f9f9f9 -> #f1f1f1 */
   background: #f9f9f9;
+  background: linear-gradient(90deg, #f9f9f9 11%, #f1f1f1 100%);
   line-height: 1.5;
   color: #333; }
 
@@ -8261,7 +8263,8 @@ body > header {
   margin-bottom: 20px;
   background: #fff;
   padding: 20px;
-  box-shadow: 0 0 1px rgba(0, 0, 0, 0.15); }
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.15);
+  border-radius: 5px; }
 
 .card-header {
   background: #fff;
@@ -8297,7 +8300,7 @@ body > header {
   border: none;
   box-shadow: none !important;
   font-size: 1.3em;
-  border-radius: 0;
+  border-radius: 5px;
   padding: 15px;
   background: #f9f9f9;
   width: 100%; }
@@ -8353,7 +8356,8 @@ body > header {
 .color-box {
   width: 30px;
   height: 30px;
-  margin-right: 10px; }
+  margin-right: 10px;
+  border-radius: 4px; }
 
 .index-enabled {
   color: #333; }
@@ -8657,10 +8661,12 @@ rect.bordered {
   font-style: italic; }
 
 .btn {
-  border-radius: 0; }
+  border-radius: 4px;
+  letter-spacing: .06rem; }
 
 .label {
-  border-radius: 0; }
+  border-radius: 3px;
+  letter-spacing: .06rem; }
 
 .medium-editor-placeholder {
   position: relative; }

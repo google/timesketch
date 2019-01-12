@@ -43,7 +43,20 @@
               <span style="margin-right:2px;" ng-if="::event._source.label" ng-repeat="label in ::event._source.label">
                 <span ng-if="::label.indexOf('__') != 0" class="label label-default">{{::label}}</span>
               </span>
-              <span ng-class="{true: 'message-hidden'}[event.hidden]"><span ng-bind-html="event._source.__ts_emojis | unsafe"> [{{ event._source.timestamp_desc }}] </span><span title="{{ (event._source.human_readable) || (event._source.message) }}">{{ (event._source.human_readable|limitTo:1000) || (event._source.message|limitTo:1000) }}</span></span>
+              <span ng-class="{true: 'message-hidden'}[event.hidden]">
+                <span ng-repeat="emoji in event._source.__ts_emojis" ng-bind-html="emoji | unsafe" title="{{emojis[emoji]}}"> [{{ event._source.timestamp_desc }}] </span>
+                <span title="{{ (event._source.human_readable) || (event._source.message) }}">
+                  <span ng-if="messageLayer">
+                    <span ng-if="::event._source.human_readable" ng-repeat="readable in ::event._source.human_readable">{{::readable}}<br/></span>
+                    <span ng-if="::event._source.human_readable">{{ (event._source.message|limitTo:1000) }}</span>
+                    <span ng-if="!event._source.human_readable">{{ (event._source.message|limitTo:1000) }} </span>
+                  </span>
+                  <span ng-if="!messageLayer">
+                      <span ng-if="::event._source.human_readable" ng-repeat="readable in ::event._source.human_readable">{{::readable}}<br/></span>
+                      <span ng-if="!event._source.human_readable">{{ (event._source.message|limitTo:1000) }} </span>
+                  </span>
+                </span>
+              </span>
           </td>
 
           <td width="25px" class="event-message" ng-class="{'event-message-selected': event.selected, 'event-message-starred': event.star, 'event-message-details': showDetails}">

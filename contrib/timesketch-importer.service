@@ -1,0 +1,9 @@
+[Unit]
+Description=Timesketch Importer
+
+[Service]
+ExecStart=/usr/local/bin/timesketch-importer.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -61,6 +61,7 @@ from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.datastores.neo4j import Neo4jDataStore
 from timesketch.lib.datastores.neo4j import SCHEMA as neo4j_schema
 from timesketch.lib.errors import ApiHTTPError
+from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.lib.forms import AddTimelineSimpleForm
 from timesketch.lib.forms import AggregationForm
 from timesketch.lib.forms import CreateTimelineForm
@@ -343,7 +344,8 @@ class SketchResource(ResourceMixin, Resource):
             searchtemplates=[{
                 u'name': searchtemplate.name,
                 u'id': searchtemplate.id
-            } for searchtemplate in SearchTemplate.query.all()])
+            } for searchtemplate in SearchTemplate.query.all()],
+            emojis=get_emojis_as_dict())
         return self.to_json(sketch, meta=meta)
 
 
@@ -595,6 +597,11 @@ class ExploreResource(ResourceMixin, Resource):
         if form.validate_on_submit():
             query_dsl = form.dsl.data
             query_filter = form.filter.data
+            return_fields = form.fields.data
+
+            if not return_fields:
+                return_fields = DEFAULT_SOURCE_FIELDS
+
             sketch_indices = {
                 t.searchindex.index_name
                 for t in sketch.timelines
@@ -621,7 +628,7 @@ class ExploreResource(ResourceMixin, Resource):
                 query_dsl,
                 indices,
                 aggregations=None,
-                return_fields=DEFAULT_SOURCE_FIELDS,
+                return_fields=return_fields,
                 enable_scroll=False)
 
             # Get labels for each event that matches the sketch.

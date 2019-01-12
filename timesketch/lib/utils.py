@@ -13,13 +13,19 @@
 # limitations under the License.
 """Common functions and utilities."""
 
+from __future__ import unicode_literals
+
 import colorsys
 import csv
 import datetime
+import email
 import json
 import random
+import smtplib
 import sys
 import time
+
+from flask import current_app
 
 from dateutil import parser
 
@@ -128,7 +134,7 @@ def read_and_validate_redline(path):
             yield row_to_yield
 
 
-def read_and_validate_jsonl(path, _):
+def read_and_validate_jsonl(path):
     """Generator for reading a JSONL (json lines) file.
 
     Args:
@@ -181,3 +187,54 @@ def get_validated_indices(indices, sketch_indices):
     if exclude:
         indices = [index for index in indices if index not in exclude]
     return indices
+
+
+def send_email(subject, body, to_username, use_html=False):
+    """Send email using configure SMTP server.
+
+    Args:
+        subject: Email subject string.
+        body: Email message body.
+        to_username: User to send email to.
+        use_html: Boolean indicating if the email body should be sent as html.
+
+    Raises:
+        RuntimeError if not properly configured or if the recipient user is no
+        in the whitelist.
+    """
+    email_enabled = current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS')
+    email_domain = current_app.config.get('EMAIL_DOMAIN')
+    email_smtp_server = current_app.config.get('EMAIL_SMTP_SERVER')
+    email_from_user = current_app.config.get('EMAIL_FROM_ADDRESS', 'timesketch')
+    email_user_whitelist = current_app.config.get('EMAIL_USER_WHITELIST', [])
+
+    if not email_enabled:
+        raise RuntimeError('Email notifications are not enabled, aborting.')
+
+    if not email_domain:
+        raise RuntimeError('Email domain is not configured, aborting.')
+
+    if not email_smtp_server:
+        raise RuntimeError('Email SMTP server is not configured, aborting.')
+
+    # Only send mail to whitelisted usernames.
+    if to_username not in email_user_whitelist:
+        return
+
+    from_address = '{0:s}@{1:s}'.format(email_from_user, email_domain)
+    # TODO: Add email address to user object and pick it up from there.
+    to_address = '{0:s}@{1:s}'.format(to_username, email_domain)
+    email_content_type = 'text'
+    if use_html:
+        email_content_type = 'text/html'
+
+    msg = email.message.Message()
+    msg['Subject'] = subject
+    msg['From'] = from_address
+    msg['To'] = to_address
+    msg.add_header('Content-Type', email_content_type)
+    msg.set_payload(body)
+
+    smtp = smtplib.SMTP(email_smtp_server)
+    smtp.sendmail(msg['From'], [msg['To']], msg.as_string())
+    smtp.quit()

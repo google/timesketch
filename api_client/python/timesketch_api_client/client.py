@@ -418,7 +418,8 @@ class Sketch(BaseResource):
                 query_string=None,
                 query_dsl=None,
                 query_filter=None,
-                view=None):
+                view=None,
+                return_fields=None):
         """Explore the sketch.
 
         Args:
@@ -426,14 +427,20 @@ class Sketch(BaseResource):
             query_dsl: Elasticsearch query DSL as JSON string.
             query_filter: Filter for the query as JSON string.
             view: View object instance (optional).
+            return_fields: List of fields that should be included in the
+                response.
 
         Returns:
             Dictionary with query results.
+
+        Raises:
+            ValueError: if unable to query for the results.
         """
         default_filter = {
             u'time_start': None,
             u'time_end': None,
-            u'limit': 40,
+            u'size': 100,
+            u'terminate_after': 100,
             u'indices': u'_all',
             u'order': u'asc'
         }
@@ -445,9 +452,11 @@ class Sketch(BaseResource):
             query_filter = default_filter
 
         if view:
-            query_string = view.query_string
+            if view.query_string:
+                query_string = view.query_string
             query_filter = json.loads(view.query_filter)
-            query_dsl = json.loads(view.query_dsl)
+            if view.query_dsl:
+                query_dsl = json.loads(view.query_dsl)
 
         resource_url = u'{0:s}/sketches/{1:d}/explore/'.format(
             self.api.api_root, self.id)
@@ -456,9 +465,15 @@ class Sketch(BaseResource):
             u'query': query_string,
             u'filter': query_filter,
             u'dsl': query_dsl,
+            u'fields': return_fields,
         }
         response = self.api.session.post(resource_url, json=form_data)
-        return response.json()
+        if response.status_code == 200:
+            return response.json()
+
+        raise ValueError(
+            u'Unable to query results, with error: [{0:d}] {1:s}'.format(
+                response.status_code, response.reason))
 
     def label_events(self, events, label_name):
         """Labels one or more events with label_name.

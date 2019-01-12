@@ -331,8 +331,11 @@ class ElasticsearchDataStore(object):
             Generator of event documents in JSON format
         """
 
-        if not query_filter.get(u'limit'):
-            query_filter[u'limit'] = self.DEFAULT_STREAM_LIMIT
+        if not query_filter.get(u'size'):
+            query_filter[u'size'] = self.DEFAULT_STREAM_LIMIT
+
+        if not query_filter.get(u'terminate_after'):
+            query_filter[u'terminate_after'] = self.DEFAULT_STREAM_LIMIT
 
         result = self.search(
             sketch_id=sketch_id,
@@ -374,6 +377,7 @@ class ElasticsearchDataStore(object):
             return self.client.get(
                 index=searchindex_id,
                 id=event_id,
+                doc_type=u'_all',
                 _source_exclude=[u'timesketch_label'])
         except NotFoundError:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
@@ -435,7 +439,8 @@ class ElasticsearchDataStore(object):
                 params=script[u'params']
             )
 
-        doc = self.client.get(index=searchindex_id, id=event_id)
+        doc = self.client.get(
+            index=searchindex_id, id=event_id, doc_type=u'_all')
         try:
             doc[u'_source'][u'timesketch_label']
         except KeyError:
