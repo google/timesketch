@@ -4,12 +4,19 @@
 #       query_string: *
 #       query_dsl:
 #       attribute:
+#       store_as: 
 #       re:
 #       emojis: []
 #       tags: []
+#       create_view: False
 #
 # Each definition needs to define either a query_string or a query_dsl.
 # The fields tags and emojis are optional.
+# The field store_as defines the name of the attribute the feature is
+# stored as.
+# The create_view is an optional boolean that determines whether a view
+# should be created if there are hits.
+#
 # The feature extraction works in the way that the query is run, and
 # the chosen attribute is extracted and the regular expression run against
 # it. If the regular expression is able to extract value out of the
@@ -21,4 +28,5 @@ browser_usernames:
         query_string: source_short:"WEBHIST"
         attribute: username
         re: ^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$
+        store_as: username
 
