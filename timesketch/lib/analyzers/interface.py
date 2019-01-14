@@ -45,7 +45,7 @@ def get_config(file_name):
         string: Full path to the config file, or an empty string
         if the config file was not found.
     """
-    root_path = os.path.join(['etc', 'timesketch'])
+    root_path = os.path.join(os.path.sep, 'etc', 'timesketch')
     if not os.path.isdir(root_path):
         return ''
 

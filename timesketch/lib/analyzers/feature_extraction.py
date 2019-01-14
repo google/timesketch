@@ -85,7 +85,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             return
 
         emoji_names = config.get('emojis', [])
-        emojis_to_add = [emoji.get_emoji(x) for x in emoji_names]
+        emojis_to_add = [emojis.get_emoji(x) for x in emoji_names]
 
         return_fields = [attribute]
 

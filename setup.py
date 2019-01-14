@@ -52,7 +52,8 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
     ],
-    data_files=[('share/timesketch', ['timesketch.conf', 'config/features.yaml'])],
+    data_files=[
+        ('share/timesketch', ['timesketch.conf', 'config/features.yaml'])],
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
