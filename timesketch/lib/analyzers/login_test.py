@@ -26,7 +26,7 @@ class TestLoginPlugin(BaseTest):
             'target_machine_name': 'rudolph'}
 
         attributes = login.parse_evtx_logon_event(string_list, string_parsed)
-        self.assertEquals(len(attributes), 4)
+        self.assertEquals(len(attributes), 5)
 
         hostname = attributes.get('hostname', 'N/A')
         self.assertEquals(hostname, 'rudolph')

@@ -56,7 +56,7 @@ def parse_evtx_logon_event(string_list, string_parsed):
     Returns:
         Dict with attributes parsd out of the logon events.
     """
-    if not len(string_list) == 23:
+    if not (len(string_list) == 23 or len(string_list) == 21):
         return {}
 
     if not string_parsed:
@@ -64,17 +64,32 @@ def parse_evtx_logon_event(string_list, string_parsed):
         string_parsed['target_user_id'] = string_list[4]
         string_parsed['target_user_name'] = string_list[5]
         string_parsed['hostname'] = string_list[11]
+        string_parsed['source_user_name'] = string_list[1]
 
     attributes = {}
     logon_type_code = string_list[8]
     attributes['logon_type'] = LOGON_TYPES.get(
         logon_type_code, LOGON_TYPES.get(u'0'))
 
-    attributes['username'] = '{0:s}/{1:s}'.format(
-        string_parsed.get('target_user_id', 'N/A'),
-        string_parsed.get('target_user_name', 'Unknown'))
-    attributes['hostname'] = string_parsed.get('target_machine_name', 'N/A')
-    attributes['session_id'] = string_list[3]
+    username = string_parsed.get('target_user_name')
+    if username:
+        attributes['username'] = username
+
+    user_id = string_parsed.get('target_user_id')
+    if user_id:
+        attributes['user_id'] = user_id
+
+    hostname = string_parsed.get('target_machine_name', 'N/A')
+    if hostname:
+        attributes['hostname'] = hostname
+
+    session_id = string_list[3]
+    if session_id:
+        attributes['session_id'] = session_id
+
+    source_username = string_parsed.get('source_user_name')
+    if source_username:
+        attributes['source_username'] = source_username
 
     return attributes
 
@@ -147,6 +162,7 @@ class LoginSketchPlugin(interface.BaseSketchAnalyzer):
                     continue
                 emojis_to_add.append(login_emoji)
                 tags_to_add.append('logon-event')
+                login_counter += 1
 
             elif identifier == 4634 or identifier == 4647:
                 attribute_dict = parse_evtx_logoff_event(strings)
@@ -154,6 +170,7 @@ class LoginSketchPlugin(interface.BaseSketchAnalyzer):
                     continue
                 emojis_to_add.append(logoff_emoji)
                 tags_to_add.append('logoff-event')
+                logoff_counter += 1
 
             # TODO: Add support for RDP events, ID 4778 (logon) and 4779
             # (logoff).
