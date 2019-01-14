@@ -15,7 +15,9 @@
 
 from __future__ import unicode_literals
 
+import logging
 import os
+import yaml
 
 from flask import current_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
@@ -35,25 +37,33 @@ def _flush_datastore_decorator(func):
     return wrapper
 
 
-def get_config(file_name):
-    """Return a config file if it exists.
+def get_yaml_config(file_name):
+    """Return a dict parsed from a YAML file within the config directory.
 
     Args:
         file_name: String that defines the config file name.
 
     Returns:
-        string: Full path to the config file, or an empty string
-        if the config file was not found.
+        A dict with the parsed YAML content from the config file or
+        an empty dict if the file is not found or YAML was unable
+        to parse it.
     """
     root_path = os.path.join(os.path.sep, 'etc', 'timesketch')
     if not os.path.isdir(root_path):
-        return ''
+        return {}
 
     path = os.path.join(root_path, file_name)
-    if os.path.isfile(path):
-        return path
+    if not os.path.isfile(path):
+        return {}
 
-    return ''
+    with open(path, 'r') as fh:
+        try:
+            return yaml.safe_load(fh)
+        except yaml.parser.ParserError as exception:
+            logging.warning((
+                'Unable to read in YAML config file, '
+                'with error: {0:s}').format(exception))
+            return {}
 
 
 class Event(object):

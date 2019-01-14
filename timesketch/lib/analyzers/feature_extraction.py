@@ -2,9 +2,7 @@
 from __future__ import unicode_literals
 
 import logging
-import os
 import re
-import yaml
 
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
@@ -16,7 +14,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
 
     NAME = 'feature_extraction'
 
-    CONFIG_FILE = interface.get_config('features.yaml')
+    CONFIG_FILE = 'features.yaml'
 
     def __init__(self, index_name, sketch_id):
         """Initialize The Sketch Analyzer.
@@ -35,17 +33,10 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String with summary of the analyzer result.
         """
-        if not os.path.isfile(self.CONFIG_FILE):
-            return 'Unable to read config file, no features extracted.'
+        config = interface.get_yaml_config(self.CONFIG_FILE)
 
-        with open(self.CONFIG_FILE, 'r') as fh:
-            try:
-                config = yaml.safe_load(fh)
-            except yaml.parser.ParserError as exception:
-                logging.warning((
-                    'Unable to read in YAML config file, '
-                    'with error: {0:s}').format(exception))
-                return 'No results, unable to parse config file.'
+        if not config:
+            return 'Unable to parse the config file.'
 
         return_strings = []
         for name, feature_config in config.iteritems():
@@ -73,26 +64,26 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
 
         if not attribute:
             logging.warning('No attribute defined.')
-            return
+            return ''
 
         store_as = config.get('store_as')
         if not store_as:
             logging.warning('No attribute defined to store results in.')
-            return
+            return ''
 
         tags = config.get('tags', [])
 
         expression_string = config.get('re')
         if not expression_string:
             logging.warning('No regular expression defined.')
-            return
+            return ''
         try:
             expression = re.compile(expression_string)
         except re.error as exception:
             logging.warning((
                 'Regular expression failed to compile, with '
                 'error: {0:s}').format(exception))
-            return
+            return ''
 
         emoji_names = config.get('emojis', [])
         emojis_to_add = [emojis.get_emoji(x) for x in emoji_names]
