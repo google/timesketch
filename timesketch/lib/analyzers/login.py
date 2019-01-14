@@ -22,21 +22,17 @@ LOGON_TYPES = {
 }
 
 
-def parse_evtx_logoff_event(event, string_list, emoji):
-    """Parse logoff events and return a count of event processed.
+def parse_evtx_logoff_event(string_list):
+    """Parse logoff events and return a dict with attributes.
 
     Args:
-        event: an event object (instance of interface.Event).
         string_list: a list of strings extracted from the Event Log.
-        emoji: string with the Unicode point for the emoji that will be
-            added to the event.
 
     Returns:
-        int: 1 if the event got processed correctly, 0 otherwise.
+        Dict with attributes parsd out of the logoff events.
     """
-    emojis_to_add = [emoji]
     if not len(string_list) == 5:
-        return 0
+        return {}
 
     attributes = {}
     attributes['username'] = string_list[1]
@@ -47,48 +43,32 @@ def parse_evtx_logoff_event(event, string_list, emoji):
     attributes['logon_type'] = LOGON_TYPES.get(
         logon_type_code, LOGON_TYPES.get(u'0'))
 
-    # Want to add an emoji in case this is a screensaver unlock.
-    if logon_type_code == '7':
-        screen_emoji = emojis.get_emoji('screen')
-        emojis_to_add.append(screen_emoji)
-
-    event.add_tags(['logoff-event'])
-    event.add_attributes(attributes)
-    event.add_emojis(emojis_to_add)
-    return 1
+    return attributes
 
 
-def parse_evtx_logon_event(event, string_list, string_parsed, emoji):
+def parse_evtx_logon_event(string_list, string_parsed):
     """Parse logon events and return a count of event processed.
 
     Args:
-        event: an event object (instance of interface.Event).
         string_list: a list of strings extracted from the Event Log.
-        emoji: string with the Unicode point for the emoji that will be
-            added to the event.
+        string_parsed: a dict with strings extracted from the Event log.
 
     Returns:
-        int: 1 if the event got processed correctly, 0 otherwise.
+        Dict with attributes parsd out of the logon events.
     """
-    attributes = {}
-    emojis_to_add = [emoji]
+    if not len(string_list) == 23:
+        return {}
 
     if not string_parsed:
         string_parsed = {}
-        if not len(string_list) == 23:
-            return 0
         string_parsed['target_user_id'] = string_list[4]
         string_parsed['target_user_name'] = string_list[5]
         string_parsed['hostname'] = string_list[11]
 
+    attributes = {}
     logon_type_code = string_list[8]
     attributes['logon_type'] = LOGON_TYPES.get(
         logon_type_code, LOGON_TYPES.get(u'0'))
-
-    # Want to add an emoji in case this is a screensaver unlock.
-    if logon_type_code == '7':
-        screen_emoji = emojis.get_emoji('screen')
-        emojis_to_add.append(screen_emoji)
 
     attributes['username'] = '{0:s}/{1:s}'.format(
         string_parsed.get('target_user_id', 'N/A'),
@@ -96,10 +76,7 @@ def parse_evtx_logon_event(event, string_list, string_parsed, emoji):
     attributes['hostname'] = string_parsed.get('target_machine_name', 'N/A')
     attributes['session_id'] = string_list[3]
 
-    event.add_tags(['logon-event'])
-    event.add_attributes(attributes)
-    event.add_emojis(emojis_to_add)
-    return 1
+    return attributes
 
 
 class LoginSketchPlugin(interface.BaseSketchAnalyzer):
@@ -124,9 +101,10 @@ class LoginSketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
-        screenshot_emoji = emojis.get_emoji('camera')
-        login_emoji = emojis.get_emoji('lock')
-        logoff_emoji = emojis.get_emoji('unlock')
+        login_emoji = emojis.get_emoji('unlock')
+        logoff_emoji = emojis.get_emoji('lock')
+        screen_emoji = emojis.get_emoji('screen')
+        screensaver_logon = LOGON_TYPES.get('7')
         login_counter = 0
         logoff_counter = 0
 
@@ -135,7 +113,7 @@ class LoginSketchPlugin(interface.BaseSketchAnalyzer):
         query = (
             'data_type:"windows:evtx:record" AND (event_identifier:4624 OR '
             'event_identifier:4778 OR event_identifier:4779 OR '
-            'event_identifier:4634)')
+            'event_identifier:4634 OR event_identifier:4647)')
 
         return_fields = [
             'message', 'data_type', 'strings', 'strings_parsed',
@@ -149,6 +127,10 @@ class LoginSketchPlugin(interface.BaseSketchAnalyzer):
             strings = event.source.get('strings')
             strings_parsed = event.source.get('strings_parsed')
             identifier = event.source.get('event_identifier')
+            emojis_to_add = []
+            tags_to_add = []
+            attribute_dict = {}
+
             if isinstance(identifier, (str, unicode)):
                 try:
                     identifier = int(identifier, 10)
@@ -159,13 +141,35 @@ class LoginSketchPlugin(interface.BaseSketchAnalyzer):
                     continue
 
             if identifier == 4624:
-                login_counter += parse_evtx_logon_event(
-                    event, strings, strings_parsed, login_emoji)
-            elif identifier == 4634:
-                logoff_counter += parse_evtx_logoff_event(
-                    event, strings, logoff_emoji)
+                attribute_dict = parse_evtx_logon_event(
+                    strings, strings_parsed)
+                if not attribute_dict:
+                    continue
+                emojis_to_add.append(login_emoji)
+                tags_to_add.append('logon-event')
+
+            elif identifier == 4634 or identifier == 4647:
+                attribute_dict = parse_evtx_logoff_event(strings)
+                if not attribute_dict:
+                    continue
+                emojis_to_add.append(logoff_emoji)
+                tags_to_add.append('logoff-event')
+
             # TODO: Add support for RDP events, ID 4778 (logon) and 4779
             # (logoff).
+            if not attribute_dict:
+                continue
+            event.add_attributes(attribute_dict)
+
+            # Want to add an emoji in case this is a screensaver unlock.
+            if attribute_dict.get('logon_type', '') == screensaver_logon:
+                emojis_to_add.append(screen_emoji)
+
+            if emojis_to_add:
+                event.add_emojis(emojis_to_add)
+
+            if tags_to_add:
+                event.add_tags(tags_to_add)
 
         # TODO: Add support for Linux syslog logon/logoff events.
         # TODO: Add support for Mac OS X logon/logoff events.
