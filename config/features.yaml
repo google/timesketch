@@ -12,6 +12,7 @@
 #       emojis: []
 #       tags: []
 #       create_view: False
+#       aggregate: False
 #
 # Each definition needs to define either a query_string or a query_dsl.
 #
@@ -22,6 +23,10 @@
 #
 # The create_view is an optional boolean that determines whether a view
 # should be created if there are hits.
+#
+# The aggregate is an optional boolean that determines if we want to
+# create an aggregation of the results and store it (ATM this does
+# nothing, but once aggregations are supported it will).
 #
 # The feature extraction works in the way that the query is run, and
 # the regular expression is run against the attribute to extract a value.
@@ -36,4 +41,5 @@ browser_usernames:
         attribute: 'message'
         store_as: 'username'
         re: '([a-zA-Z0-9_\.+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-\.]+)'
+        aggregate: True
 

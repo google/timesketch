@@ -46,6 +46,10 @@ class TestFeatureExtractionPlugin(BaseTest):
         if create_view:
             self.assertIsInstance(create_view, bool)
 
+        aggregate = config.get('aggregate')
+        if aggregate:
+            self.assertIsInstance(aggregate, bool)
+
     # TODO: Add tests for the feature extraction.
     def test_config(self):
         """Tests that the config file is valid."""

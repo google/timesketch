@@ -128,6 +128,9 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
                 query_string = query_dsl
             self.sketch.add_view(name, query_string)
 
+        # TODO: Add aggregation check when that is exposed in the UI.
+        # aggregate_results = config.get('aggregate', False)
+
         return 'Feature extraction [{0:s}] extracted {1:d} features.'.format(
             name, event_counter)
 
