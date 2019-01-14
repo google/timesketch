@@ -45,6 +45,7 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
         domains = {}
         domain_counter = collections.Counter()
         tld_counter = collections.Counter()
+        cdn_counter = collections.Counter()
 
         for event in events:
             domain = event.source.get('domain')
@@ -69,16 +70,27 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
         satellite_emoji = emojis.get_emoji('SATELLITE')
         for domain, count in domain_counter.iteritems():
             emojis_to_add = [satellite_emoji]
+            tags_to_add = []
             text = '{0:s} seen {1:d} times'.format(domain, count)
 
+            cdn_provider = utils.get_cdn_provider(domain)
+            if cdn_provider:
+                tags_to_add.append('known-cdn')
+                cdn_counter[cdn_provider] += 1
+
             for event in domains.get(domain, []):
+                event.add_tags(tags_to_add)
                 event.add_emojis(emojis_to_add)
                 event.add_human_readable(text, self.NAME, append=False)
-                event.add_attributes({'domain_count': count})
+                new_attributes = {'domain_count': count}
+                if cdn_provider:
+                    new_attributes['cdn_provider'] = cdn_provider
+                event.add_attributes(new_attributes)
 
         return (
-            '{0:d} domains discovered with {1:d} TLDs.').format(
-                len(domains), len(tld_counter))
+            '{0:d} domains discovered ({1:d} TLDs) and {2:d} known '
+            'CDN networks found.').format(
+                len(domains), len(tld_counter), len(cdn_counter))
 
 
 manager.AnalysisManager.register_analyzer(DomainSketchPlugin)
