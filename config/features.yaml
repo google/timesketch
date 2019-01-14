@@ -43,3 +43,9 @@ browser_usernames:
         re: '([a-zA-Z0-9_\.+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-\.]+)'
         aggregate: True
 
+gmail_addresses:
+        query_string: 'source_short:"WEBHIST" AND domain:"mail.google.com"'
+        attribute: 'title'
+        store_as: 'user_email_address'
+        re: '.* - (.*?@.*?) - .*?$'
+        aggregate: True
