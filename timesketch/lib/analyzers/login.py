@@ -13,8 +13,8 @@ LOGON_TYPES = {
     u'2': u'Interactive',
     u'3': u'Network',
     u'4': u'Batch',
-    u'5': u'WindowsService',
-    u'7': u'UnlockScreen',
+    u'5': u'Service',
+    u'7': u'Unlock',
     u'8': u'NetworkCleartext',
     u'9': u'NewCredentials',
     u'10': u'RemoteInteractive',
@@ -29,7 +29,7 @@ def parse_evtx_logoff_event(string_list):
         string_list: a list of strings extracted from the Event Log.
 
     Returns:
-        Dict with attributes parsd out of the logoff events.
+        Dict with attributes parsed out of the logoff events.
     """
     if not len(string_list) == 5:
         return {}
@@ -54,7 +54,7 @@ def parse_evtx_logon_event(string_list, string_parsed):
         string_parsed: a dict with strings extracted from the Event log.
 
     Returns:
-        Dict with attributes parsd out of the logon events.
+        Dict with attributes parsed out of the logon events.
     """
     if not (len(string_list) == 23 or len(string_list) == 21):
         return {}
@@ -71,6 +71,10 @@ def parse_evtx_logon_event(string_list, string_parsed):
     attributes['logon_type'] = LOGON_TYPES.get(
         logon_type_code, LOGON_TYPES.get(u'0'))
 
+    win_domain = string_list[2]
+    if win_domain:
+        attributes['windows_domain'] = win_domain
+
     username = string_parsed.get('target_user_name')
     if username:
         attributes['username'] = username
@@ -78,6 +82,20 @@ def parse_evtx_logon_event(string_list, string_parsed):
     user_id = string_parsed.get('target_user_id')
     if user_id:
         attributes['user_id'] = user_id
+
+    logon_process_name = string_list[9]
+    if logon_process_name:
+        attributes['logon_process'] = logon_process_name
+
+    workstation_name = string_list[11]
+    if workstation_name == '-':
+        attributes['workstation'] = 'localhost'
+    elif workstation_name:
+        attributes['workstation'] = workstation_name
+
+    ip_address = string_list[18]
+    if ip_address and ip_address != '-':
+        attributes['source_address'] = ip_address
 
     hostname = string_parsed.get('target_machine_name', 'N/A')
     if hostname:
