@@ -15,6 +15,8 @@
 
 from __future__ import unicode_literals
 
+import os
+
 from flask import current_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models import db_session
@@ -31,6 +33,27 @@ def _flush_datastore_decorator(func):
         self.datastore.flush_queued_events()
         return func_return
     return wrapper
+
+
+def get_config(file_name):
+    """Return a config file if it exists.
+
+    Args:
+        file_name: String that defines the config file name.
+
+    Returns:
+        string: Full path to the config file, or an empty string
+        if the config file was not found.
+    """
+    root_path = os.path.join(['etc', 'timesketch'])
+    if not os.path.isdir(root_path):
+        return ''
+
+    path = os.path.join(root_path, file_name)
+    if os.path.isfile(path):
+        return path
+
+    return ''
 
 
 class Event(object):

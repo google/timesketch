@@ -91,6 +91,8 @@ sudo -u postgres sh -c 'echo "local all timesketch md5" >> /etc/postgresql/9.5/m
 mkdir -p /var/lib/timesketch/
 chown "${RUN_AS_USER}" /var/lib/timesketch
 cp "${TIMESKETCH_PATH}"/timesketch.conf /etc/
+mkdir /etc/timesketch
+cp "${TIMESKETCH_PATH}"/config/* /etc/timesketch
 
 # Set session key for Timesketch
 sed -i s/"SECRET_KEY = u'<KEY_GOES_HERE>'"/"SECRET_KEY = u'${SECRET_KEY}'"/ /etc/timesketch.conf

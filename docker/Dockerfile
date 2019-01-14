@@ -36,6 +36,9 @@ RUN pip install /tmp/timesketch/
 
 # Copy the Timesketch configuration file into /etc
 RUN cp /usr/local/share/timesketch/timesketch.conf /etc
+# Copy Timesketch config files into /etc/timesketch
+RUN mkdir /etc/timesketch
+RUN cp /usr/local/share/timesketch/config/* /etc/timesketch/
 
 # Copy the entrypoint script into the container
 COPY docker/docker-entrypoint.sh /

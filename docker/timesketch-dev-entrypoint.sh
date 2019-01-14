@@ -35,6 +35,10 @@ if [ "$1" = 'timesketch' ]; then
   # Copy the Timesketch configuration file into /etc
   cp /usr/local/src/timesketch/timesketch.conf /etc
 
+  # Copy config files in /etc/timesketch
+  mkdir /etc/timesketch
+  cp /usr/local/src/timesketch/config/* /etc/timesketch/
+
   # Set SECRET_KEY in /etc/timesketch.conf if it isn't already set
   if grep -q "SECRET_KEY = u'<KEY_GOES_HERE>'" /etc/timesketch.conf; then
     OPENSSL_RAND=$( openssl rand -base64 32 )

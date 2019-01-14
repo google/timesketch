@@ -11,16 +11,12 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
-# JUST FOR TESTING PURPOSES REMOVE ME REMOVE ME REMOVE ME REMOVE ME.
-C = '/usr/local/src/timesketch/config/features.yaml'
-
-
 class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for FeatureExtraction."""
 
     NAME = 'feature_extraction'
 
-    CONFIG_FILE = C
+    CONFIG_FILE = interface.get_config('features.yaml')
 
     def __init__(self, index_name, sketch_id):
         """Initialize The Sketch Analyzer.
