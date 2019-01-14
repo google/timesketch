@@ -33,7 +33,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         """Entry point for the analyzer.
 
         Returns:
-            String with summary of the analyzer result
+            String with summary of the analyzer result.
         """
         if not os.path.isfile(self.CONFIG_FILE):
             return 'Unable to read config file, no features extracted.'
@@ -56,7 +56,17 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         return ', '.join(return_strings)
 
     def extract_feature(self, name, config):
-        """Ext..."""
+        """Extract features from events.
+
+        Args:
+            name: String with the name describing the feature to be extracted.
+            config: A dict that contains the configuration for the feature
+                extraction. See ~/config/features.yaml for fields and further
+                documentation of what needs to be defined.
+
+        Returns:
+            String with summary of the analyzer result.
+        """
         query = config.get('query_string')
         query_dsl = config.get('query_dsl')
         attribute = config.get('attribute')
