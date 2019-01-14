@@ -15,6 +15,10 @@
 
 from __future__ import unicode_literals
 
+import logging
+import os
+import yaml
+
 from flask import current_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models import db_session
@@ -31,6 +35,35 @@ def _flush_datastore_decorator(func):
         self.datastore.flush_queued_events()
         return func_return
     return wrapper
+
+
+def get_yaml_config(file_name):
+    """Return a dict parsed from a YAML file within the config directory.
+
+    Args:
+        file_name: String that defines the config file name.
+
+    Returns:
+        A dict with the parsed YAML content from the config file or
+        an empty dict if the file is not found or YAML was unable
+        to parse it.
+    """
+    root_path = os.path.join(os.path.sep, 'etc', 'timesketch')
+    if not os.path.isdir(root_path):
+        return {}
+
+    path = os.path.join(root_path, file_name)
+    if not os.path.isfile(path):
+        return {}
+
+    with open(path, 'r') as fh:
+        try:
+            return yaml.safe_load(fh)
+        except yaml.parser.ParserError as exception:
+            logging.warning((
+                'Unable to read in YAML config file, '
+                'with error: {0:s}').format(exception))
+            return {}
 
 
 class Event(object):
