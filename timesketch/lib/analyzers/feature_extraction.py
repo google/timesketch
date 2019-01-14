@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import logging
+import os
 import re
 import yaml
 
@@ -10,10 +11,16 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
+# JUST FOR TESTING PURPOSES REMOVE ME REMOVE ME REMOVE ME REMOVE ME.
+C = '/usr/local/src/timesketch/config/features.yaml'
+
+
 class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for FeatureExtraction."""
 
     NAME = 'feature_extraction'
+
+    CONFIG_FILE = C
 
     def __init__(self, index_name, sketch_id):
         """Initialize The Sketch Analyzer.
@@ -32,10 +39,25 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
-        #TODO: Add stuff here.
-        # Read config file, for each config, run...
-        # for name, config in config_files.iteritems():
-        #     self.extract_feature(name, config)
+        if not os.path.isfile(self.CONFIG_FILE):
+            return 'Unable to read config file, no features extracted.'
+
+        with open(self.CONFIG_FILE, 'r') as fh:
+            try:
+                config = yaml.safe_load(fh)
+            except yaml.parser.ParserError as exception:
+                logging.warning((
+                    'Unable to read in YAML config file, '
+                    'with error: {0:s}').format(exception))
+                return 'No results, unable to parse config file.'
+
+        return_strings = []
+        for name, feature_config in config.iteritems():
+            feature_string = self.extract_feature(name, feature_config)
+            if feature_string:
+                return_strings.append(feature_string)
+
+        return ', '.join(return_strings)
 
     def extract_feature(self, name, config):
         """Ext..."""
@@ -53,16 +75,20 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             return
 
         tags = config.get('tags', [])
-        expression_string = config.get('re')
 
+        expression_string = config.get('re')
         if not expression_string:
             logging.warning('No regular expression defined.')
             return
-        expression = re.compile(expression_string)
+        try:
+            expression = re.compile(expression_string)
+        except re.error as exception:
+            logging.warning((
+                'Regular expression failed to compile, with '
+                'error: {0:s}').format(exception))
+            return
 
-        create_view = config.get('create_view', False)
-
-        emojis_names = config.get('emojis', [])
+        emoji_names = config.get('emojis', [])
         emojis_to_add = [emoji.get_emoji(x) for x in emoji_names]
 
         return_fields = [attribute]
@@ -71,23 +97,43 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             query_string=query, query_dsl=query_dsl,
             return_fields=return_fields)
 
-        # TODO: Add analyzer logic here.
-        # Methods available to use for sketch analyzers:
-        # sketch.get_all_indices()
-        # sketch.add_view(name, query_string, query_filter={})
-        # event.add_attributes({'foo': 'bar'})
-        # event.add_tags(['tag_name'])
-        # event_add_label('label')
-        # event.add_star()
-        # event.add_comment('comment')
-        # event.add_emojis([my_emoji])
-        # event.add_human_readable('human readable text', self.NAME)
+        event_counter = 0
         for event in events:
-            attribute_result = event.source.get(attribute)
-            # TODO: Apply RE to get results.
+            attribute_field = event.source.get(attribute)
+            if isinstance(attribute_field, (str, unicode)):
+                attribute_value = attribute_field.lower()
+            elif isinstance(attribute_field, (list, tuple)):
+                attribute_value = ','.join(attribute_field)
+            elif isinstance(attribute_field, (int, float)):
+                attribute_value = attribute_field
+            else:
+                attribute_value = None
 
-        # TODO: Return a summary from the analyzer.
-        return 'String to be returned'
+            if not attribute_value:
+                continue
+
+            result = expression.findall(attribute_value)
+            if not result:
+                continue
+
+            event_counter += 1
+            event.add_attributes({store_as: result[0]})
+            if emojis_to_add:
+                event.add_emojis(emojis_to_add)
+
+            if tags:
+                event.add_tags(tags)
+
+        create_view = config.get('create_view', False)
+        if create_view and event_counter:
+            if query:
+                query_string = query
+            else:
+                query_string = query_dsl
+            self.sketch.add_view(name, query_string)
+
+        return 'Feature extraction [{0:s}] extracted {1:d} features.'.format(
+            name, event_counter)
 
 
 manager.AnalysisManager.register_analyzer(FeatureExtractionSketchPlugin)

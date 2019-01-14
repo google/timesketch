@@ -1,32 +1,39 @@
 # Config file for the feature extraction analyzer.
 # A feature extraction definition looks like this:
 # name:
+#       # Define either a query_string or query_dsl.
 #       query_string: *
 #       query_dsl:
+#       # Mandatory fields.
 #       attribute:
-#       store_as: 
+#       store_as:
 #       re:
+#       # Optional fields.
 #       emojis: []
 #       tags: []
 #       create_view: False
 #
 # Each definition needs to define either a query_string or a query_dsl.
+#
 # The fields tags and emojis are optional.
+#
 # The field store_as defines the name of the attribute the feature is
 # stored as.
+#
 # The create_view is an optional boolean that determines whether a view
 # should be created if there are hits.
 #
 # The feature extraction works in the way that the query is run, and
-# the chosen attribute is extracted and the regular expression run against
-# it. If the regular expression is able to extract value out of the
-# attribute field it gets stored as the attribute that is defined in the
-# config.
+# the regular expression is run against the attribute to extract a value.
+# The first value extracted is then stored inside the "store_as" attribute.
+# If there are emojis or tags defined they are also applied to that event.
+# In the end, if a view is supposed to be created a view searching for
+# the added tag is added (only if there are results).
 # ------------------------------------------------------------------------
 
 browser_usernames:
-        query_string: source_short:"WEBHIST"
-        attribute: username
-        re: ^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$
-        store_as: username
+        query_string: 'source_short:"WEBHIST"'
+        attribute: 'message'
+        store_as: 'username'
+        re: '([a-zA-Z0-9_\.+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-\.]+)'
 
