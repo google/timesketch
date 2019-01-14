@@ -48,11 +48,13 @@ def get_yaml_config(file_name):
         an empty dict if the file is not found or YAML was unable
         to parse it.
     """
-    root_path = os.path.join(os.path.sep, 'etc', 'timesketch')
-    if not os.path.isdir(root_path):
+    # root_path = os.path.join(os.path.sep, 'etc', 'timesketch')
+    config_path = os.path.join(os.path.sep, 'usr', 'local', 'src', 'timesketch', 'config')
+
+    if not os.path.isdir(config_path):
         return {}
 
-    path = os.path.join(root_path, file_name)
+    path = os.path.join(config_path, file_name)
     if not os.path.isfile(path):
         return {}
 
