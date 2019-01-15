@@ -36,9 +36,9 @@
 # the added tag is added (only if there are results).
 # ------------------------------------------------------------------------
 
-browser_usernames:
-        query_string: 'source_short:"WEBHIST"'
-        attribute: 'message'
-        store_as: 'email_address'
-        re: '([a-zA-Z0-9_\.+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-\.]+)'
-        aggregate: True
+gmail_addresses:
+        display_name: 'Gmail Account'
+        query_string: 'source_short:"WEBHIST" AND url:"mail.google.com"'
+        attribute: 'title'
+        store_as: 'found_account'
+        re: '.* - (.*?@.*?) - .*?$'
