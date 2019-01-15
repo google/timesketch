@@ -44,7 +44,7 @@ class AccountFinderSketchPlugin(interface.BaseSketchAnalyzer):
             accounts_found = self.extract_account(name, feature_config)
             if accounts_found['total_events'] > 0:
                 number_found = accounts_found.pop('total_events')
-                return_strings.append(number_found)
+                return_strings.append("Total {} found: {}".format(name, str(number_found)))
                 for account, count in accounts_found.iteritems():
                     return_strings.append("{}: {}".format(account, count))
 
@@ -119,13 +119,14 @@ class AccountFinderSketchPlugin(interface.BaseSketchAnalyzer):
             if not result:
                 continue
 
+            result = result[0]
             if result not in accounts_found:
                 accounts_found[result] = 1
             else:
                 accounts_found[result] += 1
 
             event_counter += 1
-            event.add_attributes({store_as: result[0]})
+            event.add_attributes({store_as: result})
             if emojis_to_add:
                 event.add_emojis(emojis_to_add)
 
