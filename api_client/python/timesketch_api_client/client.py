@@ -18,10 +18,9 @@ import uuid
 import BeautifulSoup
 import requests
 
-import pandas
-
 from requests.exceptions import ConnectionError
 
+import pandas
 from .definitions import HTTP_STATUS_CODE_20X
 
 

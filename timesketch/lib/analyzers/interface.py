@@ -22,8 +22,8 @@ import yaml
 import pandas
 
 from flask import current_app
-from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib import definitions
+from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models import db_session
 from timesketch.models.sketch import Event as SQLEvent
 from timesketch.models.sketch import Sketch as SQLSketch
@@ -312,8 +312,8 @@ class BaseIndexAnalyzer(object):
             self.sketch = None
 
     def event_stream(
-        self, query_string=None, query_filter=None, query_dsl=None,
-        indices=None, return_fields=None):
+            self, query_string=None, query_filter=None, query_dsl=None,
+            indices=None, return_fields=None):
         """Search ElasticSearch.
 
         Args:
@@ -437,8 +437,8 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
         super(BaseSketchAnalyzer, self).__init__(index_name)
 
     def event_pandas(
-        self, query_string=None, query_filter=None, query_dsl=None,
-        indices=None, return_fields=None):
+            self, query_string=None, query_filter=None, query_dsl=None,
+            indices=None, return_fields=None):
         """Search ElasticSearch.
 
         Args:
