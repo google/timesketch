@@ -16,5 +16,7 @@
 # Register all analyzers here by importing them.
 from timesketch.lib.analyzers import browser_search
 from timesketch.lib.analyzers import domain
+from timesketch.lib.analyzers import feature_extraction
+from timesketch.lib.analyzers import login
 from timesketch.lib.analyzers import phishy_domains
 from timesketch.lib.analyzers import similarity_scorer
