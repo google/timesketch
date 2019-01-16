@@ -20,6 +20,7 @@ import requests
 
 from requests.exceptions import ConnectionError
 
+import pandas
 from .definitions import HTTP_STATUS_CODE_20X
 
 
@@ -328,6 +329,25 @@ class Sketch(BaseResource):
         sketch = self.lazyload_data()
         return sketch[u'objects'][0][u'status'][0][u'status']
 
+    def _build_pandas_dataframe(self, search_response):
+        """Return a Pandas DataFrame from a query result dict.
+
+        Args:
+            search_response: dictionary with query results.
+
+        Returns:
+            pandas DataFrame with the results.
+        """
+        return_list = []
+        for result in search_response.get('objects', []):
+            source = result.get('_source', {})
+            source['_id'] = result.get('_id')
+            source['_type'] = result.get('_id')
+            source['_index'] = result.get('_id')
+            return_list.append(source)
+
+        return pandas.DataFrame(return_list)
+
     def list_views(self):
         """List all saved views for this sketch.
 
@@ -419,7 +439,8 @@ class Sketch(BaseResource):
                 query_dsl=None,
                 query_filter=None,
                 view=None,
-                return_fields=None):
+                return_fields=None,
+                as_pandas=False):
         """Explore the sketch.
 
         Args:
@@ -429,9 +450,12 @@ class Sketch(BaseResource):
             view: View object instance (optional).
             return_fields: List of fields that should be included in the
                 response.
+            as_pandas: Optional bool that determines if the results should
+                be returned back as a dictionary or a Pandas DataFrame.
 
         Returns:
-            Dictionary with query results.
+            Dictionary with query results or a pandas DataFrame if as_pandas
+            is set to True.
 
         Raises:
             ValueError: if unable to query for the results.
@@ -444,6 +468,10 @@ class Sketch(BaseResource):
             u'indices': u'_all',
             u'order': u'asc'
         }
+
+        if as_pandas:
+            default_filter['size'] = 10000
+            default_filter['terminate_after'] = 10000
 
         if not (query_string or query_filter or query_dsl or view):
             raise RuntimeError(u'You need to supply a query or view')
@@ -467,8 +495,12 @@ class Sketch(BaseResource):
             u'dsl': query_dsl,
             u'fields': return_fields,
         }
+
         response = self.api.session.post(resource_url, json=form_data)
         if response.status_code == 200:
+            if as_pandas:
+                return self._build_pandas_dataframe(response.json())
+
             return response.json()
 
         raise ValueError(
