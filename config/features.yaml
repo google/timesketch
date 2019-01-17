@@ -42,3 +42,19 @@ browser_usernames:
         store_as: 'email_address'
         re: '([a-zA-Z0-9_\.+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-\.]+)'
         aggregate: True
+
+gmail_accounts:
+        query_string: 'source_short:"WEBHIST" AND url:"mail.google.com"'
+        attribute: 'title'
+        store_as: 'found_account'
+        re: '.* - (.*?@.*?) - .*?$'
+        aggregate: True
+        tags: ['Gmail Account']
+
+github_accounts:
+        query_string: 'source_short:"WEBHIST" AND url:"https://github.com/users" AND title:"Your Profile"'
+        attribute: 'url'
+        store_as: 'found_account'
+        re: 'https://github.com/users/([A-z-\d]{1,39})'
+        aggregate: True
+        tags: ['Github Account']

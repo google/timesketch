@@ -14,7 +14,7 @@ class AccountFinderSketchPlugin(interface.BaseSketchAnalyzer):
 
     NAME = 'account_finder'
 
-    CONFIG_FILE = 'accounts.yaml'
+    # CONFIG_FILE = 'accounts.yaml'
 
     def __init__(self, index_name, sketch_id):
         """Initialize The Sketch Analyzer.
@@ -33,22 +33,24 @@ class AccountFinderSketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String with summary of the analyzer result.
         """
-        config = interface.get_yaml_config(self.CONFIG_FILE)
 
-        if not config:
-            return 'Unable to parse the config file.'
-
-        return_strings = []
-
-        for name, feature_config in config.iteritems():
-            accounts_found = self.extract_account(name, feature_config)
-            if accounts_found['total_events'] > 0:
-                number_found = accounts_found.pop('total_events')
-                return_strings.append("Total {} found: {}".format(name, str(number_found)))
-                for account, count in accounts_found.iteritems():
-                    return_strings.append("{}: {}".format(account, count))
-
-        return ', '.join(return_strings)
+        # config = interface.get_yaml_config(self.CONFIG_FILE)
+        #
+        # if not config:
+        #     return 'Unable to parse the config file.'
+        #
+        # return_strings = []
+        #
+        # for name, feature_config in config.iteritems():
+        #     accounts_found = self.extract_account(name, feature_config)
+        #     if accounts_found['total_events'] > 0:
+        #         number_found = accounts_found.pop('total_events')
+        #         return_strings.append("Total {} found: {}".format(name, str(number_found)))
+        #         for account, count in accounts_found.iteritems():
+        #             return_strings.append("{}: {}".format(account, count))
+        #
+        # return ', '.join(return_strings)
+        return "pass"
 
     def extract_account(self, name, config):
         """Extract accounts from events.
