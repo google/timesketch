@@ -34,7 +34,8 @@ EMOJI_MAP = {
     'SCREEN': emoji('&#x1F5B5', 'Screensaver activity'),
     'SKULL_CROSSBONE': emoji('&#x2620', 'Suspicious entry'),
     'UNLOCK': emoji('&#x1F513', 'Logoff activity'),
-    'WASTEBASKET': emoji('&#x1F5D1', 'Deletion activity')
+    'WASTEBASKET': emoji('&#x1F5D1', 'Deletion activity'),
+    'ID': emoji('&#x1F194', 'Account ID')
 }
 
 

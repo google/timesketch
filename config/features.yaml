@@ -36,7 +36,7 @@
 # the added tag is added (only if there are results).
 # ------------------------------------------------------------------------
 
-browser_usernames:
+email_addresses:
         query_string: 'source_short:"WEBHIST"'
         attribute: 'message'
         store_as: 'email_address'
@@ -50,12 +50,14 @@ gmail_accounts:
         re: '.* - (.*?@.*?) - .*?$'
         aggregate: True
         tags: ['Gmail Account']
+        emojis: ['ID']
 
 github_accounts:
-        query_string: "'source_short:\"WEBHIST\" AND
-          url:\"https://github.com/users\" AND title:\"Your Profile\"'
+        query_string: 'source_short:"WEBHIST" AND
+          url:"https://github.com/users" AND title:"Your Profile"'
         attribute: 'url'
         store_as: 'found_account'
         re: 'https://github.com/users/([A-z-\d]{1,39})'
         aggregate: True
         tags: ['Github Account']
+        emojis: ['ID']
