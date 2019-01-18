@@ -13,7 +13,7 @@ class AccountFinderSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for AccountFinder."""
 
     NAME = 'account_finder'
-
+    DEPENDENCIES = frozenset(['feature_extraction'])
     # CONFIG_FILE = 'accounts.yaml'
 
     def __init__(self, index_name, sketch_id):
@@ -60,17 +60,22 @@ class AccountFinderSketchPlugin(interface.BaseSketchAnalyzer):
         accounts_found = {}
 
         for event in events:
-            account_type = event.source.get('tag')
+            event_tags = event.source.get('tag')
+            for account_tag in event_tags:
+                # There could be other tags on these events; only get the ones
+                # related to accounts
+                if " Account" not in account_tag:
+                    continue
 
-            if account_type not in accounts_found:
-                accounts_found[account_type] = {}
+                if account_tag not in accounts_found:
+                    accounts_found[account_tag] = {}
 
-            found_account = event.source.get('found_account')
-            if found_account not in accounts_found[account_type]:
-                accounts_found[account_type][found_account] = 1
+                found_account = event.source.get('found_account')
+                if found_account not in accounts_found[account_tag]:
+                    accounts_found[account_tag][found_account] = 1
 
-            else:
-                accounts_found[account_type][found_account] += 1
+                else:
+                    accounts_found[account_tag][found_account] += 1
 
         return str(accounts_found)
 
