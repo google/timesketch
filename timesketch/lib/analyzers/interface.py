@@ -19,7 +19,10 @@ import logging
 import os
 import yaml
 
+import pandas
+
 from flask import current_app
+from timesketch.lib import definitions
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models import db_session
 from timesketch.models.sketch import Event as SQLEvent
@@ -308,8 +311,9 @@ class BaseIndexAnalyzer(object):
         if not hasattr(self, 'sketch'):
             self.sketch = None
 
-    def event_stream(self, query_string, query_filter=None, query_dsl=None,
-                     indices=None, return_fields=None):
+    def event_stream(
+            self, query_string=None, query_filter=None, query_dsl=None,
+            indices=None, return_fields=None):
         """Search ElasticSearch.
 
         Args:
@@ -431,6 +435,73 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
         """
         self.sketch = Sketch(sketch_id=sketch_id)
         super(BaseSketchAnalyzer, self).__init__(index_name)
+
+    def event_pandas(
+            self, query_string=None, query_filter=None, query_dsl=None,
+            indices=None, return_fields=None):
+        """Search ElasticSearch.
+
+        Args:
+            query_string: Query string.
+            query_filter: Dictionary containing filters to apply.
+            query_dsl: Dictionary containing Elasticsearch DSL query.
+            indices: List of indices to query.
+            return_fields: List of fields to be included in the search results,
+                if not included all fields will be included in the results.
+
+        Returns:
+            A python pandas object with all the events.
+
+        Raises:
+            ValueError: if neither query_string or query_dsl is provided.
+        """
+        if not (query_string or query_dsl):
+            raise ValueError('Both query_string and query_dsl are missing')
+
+        if not query_filter:
+            query_filter = {'indices': self.index_name, 'size': 10000}
+
+        if not indices:
+            indices = [self.index_name]
+
+        # Refresh the index to make sure it is searchable.
+        for index in indices:
+            self.datastore.client.indices.refresh(index=index)
+
+        if return_fields:
+            default_fields = definitions.DEFAULT_SOURCE_FIELDS
+            return_fields.extend(default_fields)
+            return_fields = list(set(return_fields))
+            results = self.datastore.search(
+                sketch_id=self.sketch.id,
+                query_string=query_string,
+                query_filter=query_filter,
+                query_dsl=query_dsl,
+                indices=indices,
+                return_fields=','.join(return_fields)
+            )
+        else:
+            results = self.datastore.search(
+                sketch_id=self.sketch.id,
+                query_string=query_string,
+                query_filter=query_filter,
+                query_dsl=query_dsl,
+                indices=indices,
+            )
+
+        raw_events = results.get('hits', {}).get('hits')
+        if not raw_events:
+            return pandas.DataFrame()
+
+        events = []
+        for event in raw_events:
+            source = event.get('_source')
+            source['_id'] = event.get('_id')
+            source['_type'] = event.get('_type')
+            source['_index'] = event.get('_index')
+            events.append(source)
+
+        return pandas.DataFrame(events)
 
     def run(self):
         """Entry point for the analyzer."""
