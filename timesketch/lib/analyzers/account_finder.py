@@ -50,7 +50,29 @@ class AccountFinderSketchPlugin(interface.BaseSketchAnalyzer):
         #             return_strings.append("{}: {}".format(account, count))
         #
         # return ', '.join(return_strings)
-        return "pass"
+
+        return_fields = ['tags', 'found_account']
+
+        events = self.event_stream(
+            query_string="tag:* AND found_account:*",
+            return_fields=return_fields)
+
+        accounts_found = {}
+
+        for event in events:
+            account_type = event.source.get('tag')
+
+            if account_type not in accounts_found:
+                accounts_found[account_type] = {}
+
+            found_account = event.source.get('found_account')
+            if found_account not in accounts_found[account_type]:
+                accounts_found[account_type][found_account] = 1
+
+            else:
+                accounts_found[account_type][found_account] += 1
+
+        return str(accounts_found)
 
     def extract_account(self, name, config):
         """Extract accounts from events.
