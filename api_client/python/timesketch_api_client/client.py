@@ -506,7 +506,7 @@ class Sketch(BaseResource):
 
         response_json = response.json()
 
-        scroll_id = response_json.get('meta',{}).get('scroll_id', 0)
+        scroll_id = response_json.get('meta', {}).get('scroll_id', 0)
         form_data['scroll_id'] = scroll_id
 
         count = len(response_json.get('objects', []))
@@ -519,7 +519,8 @@ class Sketch(BaseResource):
                         response.status_code, response.reason))
             more_response_json = more_response.json()
             count = len(more_response_json.get('objects', []))
-            response_json['objects'].extend(more_response_json.get('objects', []))
+            response_json['objects'].extend(
+                more_response_json.get('objects', []))
             added_time = more_response_json['meta']['es_time']
             response_json['meta']['es_time'] += added_time
 
