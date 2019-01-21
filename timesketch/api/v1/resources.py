@@ -593,33 +593,40 @@ class ExploreResource(ResourceMixin, Resource):
         sketch = Sketch.query.get_with_acl(sketch_id)
         form = ExploreForm.build(request)
 
-        if form.validate_on_submit():
-            query_dsl = form.dsl.data
-            query_filter = form.filter.data
-            return_fields = form.fields.data
+        if not form.validate_on_submit():
+            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
-            if not return_fields:
-                return_fields = DEFAULT_SOURCE_FIELDS
+        query_dsl = form.dsl.data
+        query_filter = form.filter.data
+        return_fields = form.fields.data
+        scroll_id = form.scroll_id.data
 
-            sketch_indices = {
-                t.searchindex.index_name
-                for t in sketch.timelines
-            }
-            indices = query_filter.get(u'indices', sketch_indices)
+        if not return_fields:
+            return_fields = DEFAULT_SOURCE_FIELDS
 
-            # If _all in indices then execute the query on all indices
-            if u'_all' in indices:
-                indices = sketch_indices
+        sketch_indices = {
+            t.searchindex.index_name
+            for t in sketch.timelines
+        }
+        indices = query_filter.get(u'indices', sketch_indices)
 
-            # Make sure that the indices in the filter are part of the sketch.
-            # This will also remove any deleted timeline from the search result.
-            indices = get_validated_indices(indices, sketch_indices)
+        # If _all in indices then execute the query on all indices
+        if u'_all' in indices:
+            indices = sketch_indices
 
-            # Make sure we have a query string or star filter
-            if not (form.query.data, query_filter.get(u'star'),
-                    query_filter.get(u'events'), query_dsl):
-                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        # Make sure that the indices in the filter are part of the sketch.
+        # This will also remove any deleted timeline from the search result.
+        indices = get_validated_indices(indices, sketch_indices)
 
+        # Make sure we have a query string or star filter
+        if not (form.query.data, query_filter.get(u'star'),
+                query_filter.get(u'events'), query_dsl):
+            abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+        if scroll_id:
+            result = self.datastore.client.scroll(
+                scroll_id=scroll_id, scroll=u'1m')
+        else:
             result = self.datastore.search(
                 sketch_id,
                 form.query.data,
@@ -628,50 +635,50 @@ class ExploreResource(ResourceMixin, Resource):
                 indices,
                 aggregations=None,
                 return_fields=return_fields,
-                enable_scroll=False)
+                enable_scroll=True)
 
-            # Get labels for each event that matches the sketch.
-            # Remove all other labels.
-            for event in result[u'hits'][u'hits']:
-                event[u'selected'] = False
-                event[u'_source'][u'label'] = []
-                try:
-                    for label in event[u'_source'][u'timesketch_label']:
-                        if sketch.id != label[u'sketch_id']:
-                            continue
-                        event[u'_source'][u'label'].append(label[u'name'])
-                    del event[u'_source'][u'timesketch_label']
-                except KeyError:
-                    pass
+        # Get labels for each event that matches the sketch.
+        # Remove all other labels.
+        for event in result[u'hits'][u'hits']:
+            event[u'selected'] = False
+            event[u'_source'][u'label'] = []
+            try:
+                for label in event[u'_source'][u'timesketch_label']:
+                    if sketch.id != label[u'sketch_id']:
+                        continue
+                    event[u'_source'][u'label'].append(label[u'name'])
+                del event[u'_source'][u'timesketch_label']
+            except KeyError:
+                pass
 
-            # Update or create user state view. This is used in the UI to let
-            # the user get back to the last state in the explore view.
-            view = View.get_or_create(
-                user=current_user, sketch=sketch, name=u'')
-            view.query_string = form.query.data
-            view.query_filter = json.dumps(query_filter, ensure_ascii=False)
-            view.query_dsl = json.dumps(query_dsl, ensure_ascii=False)
-            db_session.add(view)
-            db_session.commit()
+        # Update or create user state view. This is used in the UI to let
+        # the user get back to the last state in the explore view.
+        view = View.get_or_create(
+            user=current_user, sketch=sketch, name=u'')
+        view.query_string = form.query.data
+        view.query_filter = json.dumps(query_filter, ensure_ascii=False)
+        view.query_dsl = json.dumps(query_dsl, ensure_ascii=False)
+        db_session.add(view)
+        db_session.commit()
 
-            # Add metadata for the query result. This is used by the UI to
-            # render the event correctly and to display timing and hit count
-            # information.
-            tl_colors = {}
-            tl_names = {}
-            for timeline in sketch.timelines:
-                tl_colors[timeline.searchindex.index_name] = timeline.color
-                tl_names[timeline.searchindex.index_name] = timeline.name
+        # Add metadata for the query result. This is used by the UI to
+        # render the event correctly and to display timing and hit count
+        # information.
+        tl_colors = {}
+        tl_names = {}
+        for timeline in sketch.timelines:
+            tl_colors[timeline.searchindex.index_name] = timeline.color
+            tl_names[timeline.searchindex.index_name] = timeline.name
 
-            meta = {
-                u'es_time': result[u'took'],
-                u'es_total_count': result[u'hits'][u'total'],
-                u'timeline_colors': tl_colors,
-                u'timeline_names': tl_names,
-            }
-            schema = {u'meta': meta, u'objects': result[u'hits'][u'hits']}
-            return jsonify(schema)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        meta = {
+            u'es_time': result[u'took'],
+            u'es_total_count': result[u'hits'][u'total'],
+            u'timeline_colors': tl_colors,
+            u'timeline_names': tl_names,
+            u'scroll_id': result[u'_scroll_id'],
+        }
+        schema = {u'meta': meta, u'objects': result[u'hits'][u'hits']}
+        return jsonify(schema)
 
 
 class AggregationResource(ResourceMixin, Resource):

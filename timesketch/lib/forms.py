@@ -168,6 +168,7 @@ class ExploreForm(BaseForm):
     filter = StringField(u'Filter')
     dsl = StringField(u'DSL')
     fields = StringField(u'Fields', default='')
+    scroll_id = StringField(u'Scroll ID', default='')
 
 
 class GraphExploreForm(BaseForm):
