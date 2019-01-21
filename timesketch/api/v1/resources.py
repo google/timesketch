@@ -624,6 +624,7 @@ class ExploreResource(ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
         if scroll_id:
+            # pylint: disable=unexpected-keyword-arg
             result = self.datastore.client.scroll(
                 scroll_id=scroll_id, scroll=u'1m')
         else:
@@ -675,7 +676,7 @@ class ExploreResource(ResourceMixin, Resource):
             u'es_total_count': result[u'hits'][u'total'],
             u'timeline_colors': tl_colors,
             u'timeline_names': tl_names,
-            u'scroll_id': result[u'_scroll_id'],
+            u'scroll_id': result.get(u'_scroll_id', ''),
         }
         schema = {u'meta': meta, u'objects': result[u'hits'][u'hits']}
         return jsonify(schema)

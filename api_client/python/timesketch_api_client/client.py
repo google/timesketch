@@ -520,6 +520,8 @@ class Sketch(BaseResource):
             more_response_json = more_response.json()
             count = len(more_response_json.get('objects', []))
             response_json['objects'].extend(more_response_json.get('objects', []))
+            added_time = more_response_json['meta']['es_time']
+            response_json['meta']['es_time'] += added_time
 
         if as_pandas:
             return self._build_pandas_dataframe(response_json)
