@@ -283,6 +283,8 @@ class Sketch(BaseResource):
         api: An instance of TimesketchApi object.
     """
 
+    DEFAULT_SIZE_LIMIT = 10000
+
     def __init__(self, sketch_id, api, sketch_name=None):
         """Initializes the Sketch object.
 
@@ -463,8 +465,8 @@ class Sketch(BaseResource):
         default_filter = {
             u'time_start': None,
             u'time_end': None,
-            u'size': 100,
-            u'terminate_after': 100,
+            u'size': self.DEFAULT_SIZE_LIMIT,
+            u'terminate_after': self.DEFAULT_SIZE_LIMIT,
             u'indices': u'_all',
             u'order': u'asc'
         }
@@ -497,15 +499,36 @@ class Sketch(BaseResource):
         }
 
         response = self.api.session.post(resource_url, json=form_data)
-        if response.status_code == 200:
-            if as_pandas:
-                return self._build_pandas_dataframe(response.json())
+        if response.status_code != 200:
+            raise ValueError(
+                u'Unable to query results, with error: [{0:d}] {1:s}'.format(
+                    response.status_code, response.reason))
 
-            return response.json()
+        response_json = response.json()
 
-        raise ValueError(
-            u'Unable to query results, with error: [{0:d}] {1:s}'.format(
-                response.status_code, response.reason))
+        scroll_id = response_json.get('meta', {}).get('scroll_id', 0)
+        form_data['scroll_id'] = scroll_id
+
+        count = len(response_json.get('objects', []))
+        while count > 0:
+            more_response = self.api.session.post(resource_url, json=form_data)
+            if more_response.status_code != 200:
+                raise ValueError((
+                    u'Unable to query results, with error: '
+                    u'[{0:d}] {1:s}').format(
+                        response.status_code, response.reason))
+            more_response_json = more_response.json()
+            count = len(more_response_json.get('objects', []))
+            response_json['objects'].extend(
+                more_response_json.get('objects', []))
+            added_time = more_response_json['meta']['es_time']
+            response_json['meta']['es_time'] += added_time
+
+        if as_pandas:
+            return self._build_pandas_dataframe(response_json)
+
+        return response_json
+
 
     def label_events(self, events, label_name):
         """Labels one or more events with label_name.
