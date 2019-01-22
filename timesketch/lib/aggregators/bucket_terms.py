@@ -1,0 +1,59 @@
+from __future__ import unicode_literals
+
+from timesketch.lib.aggregators import manager
+from timesketch.lib.aggregators import interface
+
+
+class TermsAggregation(interface.BaseAggregator):
+
+    NAME = 'bucket_terms'
+
+    SUPPORTED_CHARTS = frozenset(['barchart', 'h_barchart'])
+
+    FORM_FIELDS = {
+        'field': {
+            'type_hint': 'text',
+            'description': 'What field to aggregate.'
+        },
+        'limit': {
+            'type_hint': 'number',
+            'description': 'Number of results to return.'
+        }
+    }
+
+    def __init__(self, sketch_id=None, indices=None):
+        super(TermsAggregation, self).__init__(sketch_id, indices)
+
+    def run_wrapper(self, field, limit=10):
+
+        # Encoding information for Vega-Lite.
+        encoding = {
+            'x': {'field': field, 'type': u'nominal'},
+            'y': {'field': u'count', 'type': u'quantitative'}
+        }
+
+        # Elasticsearch aggregation DSL.
+        aggregation_dict = {
+            "aggs": {
+                "aggregation": {
+                    "terms": {
+                        "field": '{0:s}.keyword'.format(field),
+                        "size": limit,
+                        "exclude": ""
+                    }
+                }
+            }
+        }
+        response = self.run_es_query(aggregation_dict)
+        buckets = response['aggregations']['aggregation']['buckets']
+
+        # Iterate over the result and transform to supported format.
+        result = interface.AggregationResult(encoding)
+        for bucket in buckets:
+            d = {field: bucket['key'], 'count': bucket['doc_count']}
+            result.append(d)
+
+        return result
+
+
+manager.AggregatorManager.register_aggregator(TermsAggregation)
