@@ -50,7 +50,7 @@ gmail_accounts:
         re: '.* - (.*?@.*?) - .*?$'
         aggregate: True
         tags: ['Gmail Account']
-        emojis: ['ID']
+        emojis: ['ID_BUTTON']
 
 github_accounts:
         query_string: 'source_short:"WEBHIST" AND
@@ -60,4 +60,4 @@ github_accounts:
         re: 'https://github.com/users/([A-z-\d]{1,39})'
         aggregate: True
         tags: ['Github Account']
-        emojis: ['ID']
+        emojis: ['ID_BUTTON']
