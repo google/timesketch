@@ -2,9 +2,7 @@
 from __future__ import unicode_literals
 
 import logging
-import re
 
-from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
@@ -59,7 +57,11 @@ class AccountFinderSketchPlugin(interface.BaseSketchAnalyzer):
                 else:
                     accounts_found[account_tag][found_account] += 1
 
+        logging.info("{} identified use of the following accounts: {}"
+                     .format(self.NAME, str(accounts_found)))
+
         # Placeholder return string until aggregation is implemented
+        # TODO: add a summary of found accounts in the UI
         return str(accounts_found)
 
 
