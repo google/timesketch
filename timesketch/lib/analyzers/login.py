@@ -56,7 +56,7 @@ def parse_evtx_logon_event(string_list, string_parsed):
     Returns:
         Dict with attributes parsed out of the logon events.
     """
-    if not (len(string_list) == 23 or len(string_list) == 21):
+    if len(string_list) < 20:
         return {}
 
     if not string_parsed:
