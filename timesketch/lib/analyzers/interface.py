@@ -117,13 +117,11 @@ class Event(object):
 
         Args:
             event_dict: (optional) Dictionary with updated event attributes.
-
-        Returns:
-            None if the event dictionary is empty.
         """
-        event_to_commit = self.updated_event
         if event_dict:
             event_to_commit = event_dict
+        else:
+            event_to_commit = self.updated_event
 
         if not event_to_commit:
             return
