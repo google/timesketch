@@ -14,10 +14,10 @@
 """Timesketch API client."""
 from __future__ import unicode_literals
 
-import bs4
 import json
 import uuid
 
+import bs4
 import requests
 
 from requests.exceptions import ConnectionError
