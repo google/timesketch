@@ -465,7 +465,8 @@ class Sketch(BaseResource):
                 query_filter=None,
                 view=None,
                 return_fields=None,
-                as_pandas=False):
+                as_pandas=False,
+                max_entries=None):
         """Explore the sketch.
 
         Args:
@@ -477,6 +478,10 @@ class Sketch(BaseResource):
                 response.
             as_pandas: Optional bool that determines if the results should
                 be returned back as a dictionary or a Pandas DataFrame.
+            max_entries: Optional integer denoting a best effort to limit
+                the output size to the number of events. Events are read in,
+                10k at a time so there may be more events in the answer back
+                than this number denotes, this is a best effort.
 
         Returns:
             Dictionary with query results or a pandas DataFrame if as_pandas
@@ -533,7 +538,10 @@ class Sketch(BaseResource):
         form_data['scroll_id'] = scroll_id
 
         count = len(response_json.get('objects', []))
+        total_count = count
         while count > 0:
+            if max_entries and total_count >= max_entries:
+                break
             more_response = self.api.session.post(resource_url, json=form_data)
             if more_response.status_code != 200:
                 raise ValueError((
@@ -542,6 +550,7 @@ class Sketch(BaseResource):
                         response.status_code, response.reason))
             more_response_json = more_response.json()
             count = len(more_response_json.get('objects', []))
+            total_count += count
             response_json['objects'].extend(
                 more_response_json.get('objects', []))
             added_time = more_response_json['meta']['es_time']
