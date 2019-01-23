@@ -55,7 +55,6 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
                 if not url:
                     continue
                 domain = utils.get_domain_from_url(url)
-                event.add_attributes({'domain': domain})
 
             if not domain:
                 continue
@@ -81,11 +80,15 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
             for event in domains.get(domain, []):
                 event.add_tags(tags_to_add)
                 event.add_emojis(emojis_to_add)
+
                 event.add_human_readable(text, self.NAME, append=False)
-                new_attributes = {'domain_count': count}
+                new_attributes = {'domain': domain, 'domain_count': count}
                 if cdn_provider:
                     new_attributes['cdn_provider'] = cdn_provider
                 event.add_attributes(new_attributes)
+
+                # Commit the event to the datastore.
+                event.commit()
 
         return (
             '{0:d} domains discovered ({1:d} TLDs) and {2:d} known '

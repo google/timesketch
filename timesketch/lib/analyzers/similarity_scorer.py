@@ -153,6 +153,8 @@ class SimilarityScorer(interface.BaseIndexAnalyzer):
             score = similarity.calculate_score(lsh, minhash, total_num_events)
             attributes_to_add = {'similarity_score': score}
             event.add_attributes(attributes_to_add)
+            # Commit the event to the datastore.
+            event.commit()
 
         msg = 'Similarity scorer processed {0:d} events for data_type {1:s}'
         return msg.format(total_num_events, self._config.data_type)
