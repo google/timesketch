@@ -12,10 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client."""
+from __future__ import unicode_literals
 
 import json
 import uuid
-import BeautifulSoup
+try:
+  import BeautifulSoup
+except ImportError:
+  import bs4
+  BeautifulSoup=None
+
 import requests
 
 from requests.exceptions import ConnectionError
@@ -37,7 +43,7 @@ class TimesketchApi(object):
                  username,
                  password,
                  verify=True,
-                 auth_mode=u'timesketch'):
+                 auth_mode='timesketch'):
         """Initializes the TimesketchApi object.
 
         Args:
@@ -50,12 +56,12 @@ class TimesketchApi(object):
                 'http-basic' (HTTP Basic authentication).
         """
         self._host_uri = host_uri
-        self.api_root = u'{0:s}/api/v1'.format(host_uri)
+        self.api_root = '{0:s}/api/v1'.format(host_uri)
         try:
             self.session = self._create_session(
                 username, password, verify=verify, auth_mode=auth_mode)
         except ConnectionError:
-            raise ConnectionError(u'Timesketch server unreachable')
+            raise ConnectionError('Timesketch server unreachable')
 
     def _authenticate_session(self, session, username, password):
         """Post username/password to authenticate the HTTP seesion.
@@ -66,8 +72,8 @@ class TimesketchApi(object):
             password: User password.
         """
         # Do a POST to the login handler to set up the session cookies
-        data = {u'username': username, u'password': password}
-        session.post(u'{0:s}/login/'.format(self._host_uri), data=data)
+        data = {'username': username, 'password': password}
+        session.post('{0:s}/login/'.format(self._host_uri), data=data)
 
     def _set_csrf_token(self, session):
         """Retrieve CSRF token from the server and append to HTTP headers.
@@ -77,12 +83,15 @@ class TimesketchApi(object):
         """
         # Scrape the CSRF token from the response
         response = session.get(self._host_uri)
-        soup = BeautifulSoup.BeautifulSoup(response.text)
-        csrf_token = soup.find(id=u'csrf_token').get(u'value')
+        if BeautifulSoup:
+            soup = BeautifulSoup.BeautifulSoup(response.text)
+        else:
+            soup = bs4.BeautifulSoup(response.text, features='lxml')
+        csrf_token = soup.find(id='csrf_token').get('value')
 
         session.headers.update({
-            u'x-csrftoken': csrf_token,
-            u'referer': self._host_uri
+            'x-csrftoken': csrf_token,
+            'referer': self._host_uri
         })
 
     def _create_session(self, username, password, verify, auth_mode):
@@ -102,12 +111,12 @@ class TimesketchApi(object):
         session = requests.Session()
         session.verify = verify  # Depending if SSL cert is verifiable
         # If using HTTP Basic auth, add the user/pass to the session
-        if auth_mode == u'http-basic':
+        if auth_mode == 'http-basic':
             session.auth = (username, password)
 
         # Get and set CSRF token and authenticate the session if appropriate.
         self._set_csrf_token(session)
-        if auth_mode == u'timesketch':
+        if auth_mode == 'timesketch':
             self._authenticate_session(session, username, password)
 
         return session
@@ -122,7 +131,7 @@ class TimesketchApi(object):
             Dictionary with the response data.
         """
         # TODO: Catch HTTP errors and add descriptive message string.
-        resource_url = u'{0:s}/{1:s}'.format(self.api_root, resource_uri)
+        resource_url = '{0:s}/{1:s}'.format(self.api_root, resource_uri)
         response = self.session.get(resource_url)
         return response.json()
 
@@ -139,11 +148,11 @@ class TimesketchApi(object):
         if not description:
             description = name
 
-        resource_url = u'{0:s}/sketches/'.format(self.api_root)
-        form_data = {u'name': name, u'description': description}
+        resource_url = '{0:s}/sketches/'.format(self.api_root)
+        form_data = {'name': name, 'description': description}
         response = self.session.post(resource_url, json=form_data)
         response_dict = response.json()
-        sketch_id = response_dict[u'objects'][0][u'id']
+        sketch_id = response_dict['objects'][0]['id']
         return self.get_sketch(sketch_id)
 
     def get_sketch(self, sketch_id):
@@ -164,10 +173,10 @@ class TimesketchApi(object):
             List of Sketch objects instances.
         """
         sketches = []
-        response = self.fetch_resource_data(u'sketches/')
-        for sketch in response[u'objects'][0]:
-            sketch_id = sketch[u'id']
-            sketch_name = sketch[u'name']
+        response = self.fetch_resource_data('sketches/')
+        for sketch in response['objects'][0]:
+            sketch_id = sketch['id']
+            sketch_name = sketch['name']
             sketch_obj = Sketch(
                 sketch_id=sketch_id, api=self, sketch_name=sketch_name)
             sketches.append(sketch_obj)
@@ -202,21 +211,21 @@ class TimesketchApi(object):
         if not es_index_name:
             es_index_name = uuid.uuid4().hex
 
-        resource_url = u'{0:s}/searchindices/'.format(self.api_root)
+        resource_url = '{0:s}/searchindices/'.format(self.api_root)
         form_data = {
-            u'searchindex_name': searchindex_name,
-            u'es_index_name': es_index_name,
-            u'public': public
+            'searchindex_name': searchindex_name,
+            'es_index_name': es_index_name,
+            'public': public
         }
         response = self.session.post(resource_url, json=form_data)
 
         if response.status_code not in HTTP_STATUS_CODE_20X:
-            raise RuntimeError(u'Error creating searchindex')
+            raise RuntimeError('Error creating searchindex')
 
         response_dict = response.json()
-        metadata_dict = response_dict[u'meta']
-        created = metadata_dict.get(u'created', False)
-        searchindex_id = response_dict[u'objects'][0][u'id']
+        metadata_dict = response_dict['meta']
+        created = metadata_dict.get('created', False)
+        searchindex_id = response_dict['objects'][0]['id']
         return self.get_searchindex(searchindex_id), created
 
     def list_searchindices(self):
@@ -226,10 +235,10 @@ class TimesketchApi(object):
             List of SearchIndex object instances.
         """
         indices = []
-        response = self.fetch_resource_data(u'searchindices/')
-        for index in response[u'objects'][0]:
-            index_id = index[u'id']
-            index_name = index[u'name']
+        response = self.fetch_resource_data('searchindices/')
+        for index in response['objects'][0]:
+            index_id = index['id']
+            index_name = index['name']
             index_obj = SearchIndex(
                 searchindex_id=index_id, api=self, searchindex_name=index_name)
             indices.append(index_obj)
@@ -296,7 +305,7 @@ class Sketch(BaseResource):
         self.id = sketch_id
         self.api = api
         self._sketch_name = sketch_name
-        self._resource_uri = u'sketches/{0:d}'.format(self.id)
+        self._resource_uri = 'sketches/{0:d}'.format(self.id)
         super(Sketch, self).__init__(api=api, resource_uri=self._resource_uri)
 
     @property
@@ -308,7 +317,7 @@ class Sketch(BaseResource):
         """
         if not self._sketch_name:
             sketch = self.lazyload_data()
-            self._sketch_name = sketch[u'objects'][0][u'name']
+            self._sketch_name = sketch['objects'][0]['name']
         return self._sketch_name
 
     @property
@@ -319,7 +328,7 @@ class Sketch(BaseResource):
             Sketch description as string.
         """
         sketch = self.lazyload_data()
-        return sketch[u'objects'][0][u'description']
+        return sketch['objects'][0]['description']
 
     @property
     def status(self):
@@ -329,7 +338,7 @@ class Sketch(BaseResource):
             Sketch status as string.
         """
         sketch = self.lazyload_data()
-        return sketch[u'objects'][0][u'status'][0][u'status']
+        return sketch['objects'][0]['status'][0]['status']
 
     def _build_pandas_dataframe(self, search_response):
         """Return a Pandas DataFrame from a query result dict.
@@ -371,10 +380,10 @@ class Sketch(BaseResource):
         """
         sketch = self.lazyload_data()
         views = []
-        for view in sketch[u'meta'][u'views']:
+        for view in sketch['meta']['views']:
             view_obj = View(
-                view_id=view[u'id'],
-                view_name=view[u'name'],
+                view_id=view['id'],
+                view_name=view['name'],
                 sketch_id=self.id,
                 api=self.api)
             views.append(view_obj)
@@ -388,13 +397,13 @@ class Sketch(BaseResource):
         """
         sketch = self.lazyload_data()
         timelines = []
-        for timeline in sketch[u'objects'][0][u'timelines']:
+        for timeline in sketch['objects'][0]['timelines']:
             timeline_obj = Timeline(
-                timeline_id=timeline[u'id'],
+                timeline_id=timeline['id'],
                 sketch_id=self.id,
                 api=self.api,
-                name=timeline[u'name'],
-                searchindex=timeline[u'searchindex'][u'index_name'])
+                name=timeline['name'],
+                searchindex=timeline['searchindex']['index_name'])
             timelines.append(timeline_obj)
         return timelines
 
@@ -408,18 +417,18 @@ class Sketch(BaseResource):
         Returns:
             Timeline object instance.
         """
-        resource_url = u'{0:s}/upload/'.format(self.api.api_root)
-        files = {u'file': open(file_path, 'rb')}
-        data = {u'name': timeline_name, u'sketch_id': self.id}
+        resource_url = '{0:s}/upload/'.format(self.api.api_root)
+        files = {'file': open(file_path, 'rb')}
+        data = {'name': timeline_name, 'sketch_id': self.id}
         response = self.api.session.post(resource_url, files=files, data=data)
         response_dict = response.json()
-        timeline = response_dict[u'objects'][0]
+        timeline = response_dict['objects'][0]
         timeline_obj = Timeline(
-            timeline_id=timeline[u'id'],
+            timeline_id=timeline['id'],
             sketch_id=self.id,
             api=self.api,
-            name=timeline[u'name'],
-            searchindex=timeline[u'searchindex'][u'index_name'])
+            name=timeline['name'],
+            searchindex=timeline['searchindex']['index_name'])
         return timeline_obj
 
     def add_timeline(self, searchindex):
@@ -431,22 +440,22 @@ class Sketch(BaseResource):
         Returns:
             Timeline object instance.
         """
-        resource_url = u'{0:s}/sketches/{1:d}/timelines/'.format(
+        resource_url = '{0:s}/sketches/{1:d}/timelines/'.format(
             self.api.api_root, self.id)
-        form_data = {u'timeline': searchindex.id}
+        form_data = {'timeline': searchindex.id}
         response = self.api.session.post(resource_url, json=form_data)
 
         if response.status_code not in HTTP_STATUS_CODE_20X:
-            raise RuntimeError(u'Failed adding timeline')
+            raise RuntimeError('Failed adding timeline')
 
         response_dict = response.json()
-        timeline = response_dict[u'objects'][0]
+        timeline = response_dict['objects'][0]
         timeline_obj = Timeline(
-            timeline_id=timeline[u'id'],
+            timeline_id=timeline['id'],
             sketch_id=self.id,
             api=self.api,
-            name=timeline[u'name'],
-            searchindex=timeline[u'searchindex'][u'index_name'])
+            name=timeline['name'],
+            searchindex=timeline['searchindex']['index_name'])
         return timeline_obj
 
     def explore(self,
@@ -476,12 +485,12 @@ class Sketch(BaseResource):
             ValueError: if unable to query for the results.
         """
         default_filter = {
-            u'time_start': None,
-            u'time_end': None,
-            u'size': self.DEFAULT_SIZE_LIMIT,
-            u'terminate_after': self.DEFAULT_SIZE_LIMIT,
-            u'indices': u'_all',
-            u'order': u'asc'
+            'time_start': None,
+            'time_end': None,
+            'size': self.DEFAULT_SIZE_LIMIT,
+            'terminate_after': self.DEFAULT_SIZE_LIMIT,
+            'indices': '_all',
+            'order': 'asc'
         }
 
         if as_pandas:
@@ -489,7 +498,7 @@ class Sketch(BaseResource):
             default_filter['terminate_after'] = 10000
 
         if not (query_string or query_filter or query_dsl or view):
-            raise RuntimeError(u'You need to supply a query or view')
+            raise RuntimeError('You need to supply a query or view')
 
         if not query_filter:
             query_filter = default_filter
@@ -501,20 +510,20 @@ class Sketch(BaseResource):
             if view.query_dsl:
                 query_dsl = json.loads(view.query_dsl)
 
-        resource_url = u'{0:s}/sketches/{1:d}/explore/'.format(
+        resource_url = '{0:s}/sketches/{1:d}/explore/'.format(
             self.api.api_root, self.id)
 
         form_data = {
-            u'query': query_string,
-            u'filter': query_filter,
-            u'dsl': query_dsl,
-            u'fields': return_fields,
+            'query': query_string,
+            'filter': query_filter,
+            'dsl': query_dsl,
+            'fields': return_fields,
         }
 
         response = self.api.session.post(resource_url, json=form_data)
         if response.status_code != 200:
             raise ValueError(
-                u'Unable to query results, with error: [{0:d}] {1:s}'.format(
+                'Unable to query results, with error: [{0:d}] {1:s}'.format(
                     response.status_code, response.reason))
 
         response_json = response.json()
@@ -527,8 +536,8 @@ class Sketch(BaseResource):
             more_response = self.api.session.post(resource_url, json=form_data)
             if more_response.status_code != 200:
                 raise ValueError((
-                    u'Unable to query results, with error: '
-                    u'[{0:d}] {1:s}').format(
+                    'Unable to query results, with error: '
+                    '[{0:d}] {1:s}').format(
                         response.status_code, response.reason))
             more_response_json = more_response.json()
             count = len(more_response_json.get('objects', []))
@@ -558,7 +567,7 @@ class Sketch(BaseResource):
             'annotation_type': 'label',
             'events': events
         }
-        resource_url = u'{0:s}/sketches/{1:d}/event/annotate/'.format(
+        resource_url = '{0:s}/sketches/{1:d}/event/annotate/'.format(
             self.api.api_root, self.id)
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
@@ -612,7 +621,7 @@ class Sketch(BaseResource):
             'message': message
         }
 
-        resource_url = u'{0:s}/sketches/{1:d}/event/create/'.format(
+        resource_url = '{0:s}/sketches/{1:d}/event/create/'.format(
             self.api.api_root, self.id)
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
@@ -634,7 +643,7 @@ class SearchIndex(BaseResource):
         """
         self.id = searchindex_id
         self._searchindex_name = searchindex_name
-        self._resource_uri = u'searchindices/{0:d}'.format(self.id)
+        self._resource_uri = 'searchindices/{0:d}'.format(self.id)
         super(SearchIndex, self).__init__(
             api=api, resource_uri=self._resource_uri)
 
@@ -647,7 +656,7 @@ class SearchIndex(BaseResource):
         """
         if not self._searchindex_name:
             searchindex = self.lazyload_data()
-            self._searchindex_name = searchindex[u'objects'][0][u'name']
+            self._searchindex_name = searchindex['objects'][0]['name']
         return self._searchindex_name
 
     @property
@@ -658,7 +667,7 @@ class SearchIndex(BaseResource):
             Elasticsearch index name as string.
         """
         searchindex = self.lazyload_data()
-        return searchindex[u'objects'][0][u'index_name']
+        return searchindex['objects'][0]['index_name']
 
 
 class View(BaseResource):
@@ -680,7 +689,7 @@ class View(BaseResource):
         """
         self.id = view_id
         self.name = view_name
-        resource_uri = u'sketches/{0:d}/views/{1:d}/'.format(sketch_id, self.id)
+        resource_uri = 'sketches/{0:d}/views/{1:d}/'.format(sketch_id, self.id)
         super(View, self).__init__(api, resource_uri)
 
     @property
@@ -691,7 +700,7 @@ class View(BaseResource):
             Elasticsearch query as string.
         """
         view = self.lazyload_data()
-        return view[u'objects'][0][u'query_string']
+        return view['objects'][0]['query_string']
 
     @property
     def query_filter(self):
@@ -701,7 +710,7 @@ class View(BaseResource):
             Elasticsearch filter as JSON string.
         """
         view = self.lazyload_data()
-        return view[u'objects'][0][u'query_filter']
+        return view['objects'][0]['query_filter']
 
     @property
     def query_dsl(self):
@@ -711,7 +720,7 @@ class View(BaseResource):
             Elasticsearch DSL as JSON string.
         """
         view = self.lazyload_data()
-        return view[u'objects'][0][u'query_dsl']
+        return view['objects'][0]['query_dsl']
 
 
 class Timeline(BaseResource):
@@ -735,7 +744,7 @@ class Timeline(BaseResource):
         self.id = timeline_id
         self._name = name
         self._searchindex = searchindex
-        resource_uri = u'sketches/{0:d}/timelines/{1:d}/'.format(
+        resource_uri = 'sketches/{0:d}/timelines/{1:d}/'.format(
             sketch_id, self.id)
         super(Timeline, self).__init__(api, resource_uri)
 
@@ -748,7 +757,7 @@ class Timeline(BaseResource):
         """
         if not self._name:
             timeline = self.lazyload_data()
-            self._name = timeline[u'objects'][0][u'name']
+            self._name = timeline['objects'][0]['name']
         return self._name
 
     @property
@@ -760,6 +769,6 @@ class Timeline(BaseResource):
         """
         if not self._searchindex:
             timeline = self.lazyload_data()
-            index_name = timeline[u'objects'][0][u'searchindex'][u'index_name']
+            index_name = timeline['objects'][0]['searchindex']['index_name']
             self._searchindex = index_name
         return self._searchindex
