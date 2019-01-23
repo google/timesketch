@@ -179,7 +179,8 @@ class ExploreResourceTest(BaseTest):
                 u'test': u'FFFFFF'
             },
             u'es_total_count': 1,
-            u'es_time': 5
+            u'es_time': 5,
+            u'scroll_id': ''
         },
         u'objects': [{
             u'sort': [1410593223000],

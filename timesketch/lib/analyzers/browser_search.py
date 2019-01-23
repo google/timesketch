@@ -212,6 +212,9 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 # We break at the first hit of a successful search engine.
                 break
 
+            # Commit the event to the datastore.
+            event.commit()
+
         if simple_counter > 0:
             self.sketch.add_view(
                 view_name='Browser Search', analyzer_name=self.NAME,

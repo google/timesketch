@@ -24,6 +24,8 @@ services:
       - TIMESKETCH_USER=${TIMESKETCH_USER}
       - TIMESKETCH_PASSWORD=${TIMESKETCH_PASSWORD}
     restart: always
+    volumes:
+      - ../:/usr/local/src/timesketch/
 
   elasticsearch:
     # uncomment the following lines to control JVM memory utilization

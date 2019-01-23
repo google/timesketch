@@ -19,7 +19,10 @@ import logging
 import os
 import yaml
 
+import pandas
+
 from flask import current_app
+from timesketch.lib import definitions
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models import db_session
 from timesketch.models.sketch import Event as SQLEvent
@@ -91,6 +94,8 @@ class Event(object):
         self.datastore = datastore
         self.sketch = sketch
 
+        self.updated_event = {}
+
         try:
             self.event_id = event['_id']
             self.event_type = event['_type']
@@ -100,14 +105,32 @@ class Event(object):
             raise KeyError('Malformed event: {0:s}'.format(e))
 
     def _update(self, event):
-        """Update Event in Elasticsearch.
+        """Update event attributes to add.
 
         Args:
             event: Dictionary with new or updated values.
         """
+        self.updated_event.update(event)
+
+    def commit(self, event_dict=None):
+        """Commit an event to Elasticsearch.
+
+        Args:
+            event_dict: (optional) Dictionary with updated event attributes.
+            Defaults to self.updated_event.
+        """
+        if event_dict:
+            event_to_commit = event_dict
+        else:
+            event_to_commit = self.updated_event
+
+        if not event_to_commit:
+            return
+
         self.datastore.import_event(
             self.index_name, self.event_type, event_id=self.event_id,
-            event=event)
+            event=event_to_commit)
+        self.updated_event = {}
 
     def add_attributes(self, attributes):
         """Add key/values to an Event.
@@ -133,7 +156,7 @@ class Event(object):
         updated_event = self.datastore.set_label(
             self.index_name, self.event_id, self.event_type, self.sketch.id,
             user_id, label, toggle=toggle, single_update=False)
-        self._update(updated_event)
+        self.commit(updated_event)
 
     def add_tags(self, tags):
         """Add tags to the Event.
@@ -141,6 +164,9 @@ class Event(object):
         Args:
             tags: List of tags to add.
         """
+        if not tags:
+            return
+
         existing_tags = self.source.get('tag', [])
         new_tags = list(set().union(existing_tags, tags))
         updated_event_attribute = {'tag': new_tags}
@@ -152,6 +178,9 @@ class Event(object):
         Args:
             emojis: List of emojis to add (as unicode codepoints).
         """
+        if not emojis:
+            return
+
         existing_emoji_list = self.source.get('__ts_emojis', [])
         new_emoji_list = list(set().union(existing_emoji_list, emojis))
         updated_event_attribute = {'__ts_emojis': new_emoji_list}
@@ -308,8 +337,9 @@ class BaseIndexAnalyzer(object):
         if not hasattr(self, 'sketch'):
             self.sketch = None
 
-    def event_stream(self, query_string, query_filter=None, query_dsl=None,
-                     indices=None, return_fields=None):
+    def event_stream(
+            self, query_string=None, query_filter=None, query_dsl=None,
+            indices=None, return_fields=None):
         """Search ElasticSearch.
 
         Args:
@@ -431,6 +461,73 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
         """
         self.sketch = Sketch(sketch_id=sketch_id)
         super(BaseSketchAnalyzer, self).__init__(index_name)
+
+    def event_pandas(
+            self, query_string=None, query_filter=None, query_dsl=None,
+            indices=None, return_fields=None):
+        """Search ElasticSearch.
+
+        Args:
+            query_string: Query string.
+            query_filter: Dictionary containing filters to apply.
+            query_dsl: Dictionary containing Elasticsearch DSL query.
+            indices: List of indices to query.
+            return_fields: List of fields to be included in the search results,
+                if not included all fields will be included in the results.
+
+        Returns:
+            A python pandas object with all the events.
+
+        Raises:
+            ValueError: if neither query_string or query_dsl is provided.
+        """
+        if not (query_string or query_dsl):
+            raise ValueError('Both query_string and query_dsl are missing')
+
+        if not query_filter:
+            query_filter = {'indices': self.index_name, 'size': 10000}
+
+        if not indices:
+            indices = [self.index_name]
+
+        # Refresh the index to make sure it is searchable.
+        for index in indices:
+            self.datastore.client.indices.refresh(index=index)
+
+        if return_fields:
+            default_fields = definitions.DEFAULT_SOURCE_FIELDS
+            return_fields.extend(default_fields)
+            return_fields = list(set(return_fields))
+            results = self.datastore.search(
+                sketch_id=self.sketch.id,
+                query_string=query_string,
+                query_filter=query_filter,
+                query_dsl=query_dsl,
+                indices=indices,
+                return_fields=','.join(return_fields)
+            )
+        else:
+            results = self.datastore.search(
+                sketch_id=self.sketch.id,
+                query_string=query_string,
+                query_filter=query_filter,
+                query_dsl=query_dsl,
+                indices=indices,
+            )
+
+        raw_events = results.get('hits', {}).get('hits')
+        if not raw_events:
+            return pandas.DataFrame()
+
+        events = []
+        for event in raw_events:
+            source = event.get('_source')
+            source['_id'] = event.get('_id')
+            source['_type'] = event.get('_type')
+            source['_index'] = event.get('_index')
+            events.append(source)
+
+        return pandas.DataFrame(events)
 
     def run(self):
         """Entry point for the analyzer."""
