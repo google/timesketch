@@ -87,7 +87,7 @@ class TimesketchApi(object):
         if BeautifulSoup:
             soup = BeautifulSoup.BeautifulSoup(response.text)
         else:
-            soup = bs4.BeautifulSoup(response.text, features='lxml')
+            soup = bs4.BeautifulSoup(response.text, features='html.parser')
         csrf_token = soup.find(id='csrf_token').get('value')
 
         session.headers.update({

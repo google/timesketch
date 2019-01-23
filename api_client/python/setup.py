@@ -27,7 +27,6 @@ if sys.version[0] == '2':
 else:
     install_requires = frozenset([
         'requests',
-        'lxml',
         'beautifulsoup4'])
 
 setup(
