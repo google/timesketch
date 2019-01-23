@@ -117,6 +117,7 @@ class Event(object):
 
         Args:
             event_dict: (optional) Dictionary with updated event attributes.
+            Defaults to self.updated_event.
         """
         if event_dict:
             event_to_commit = event_dict
