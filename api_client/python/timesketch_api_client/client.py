@@ -17,10 +17,11 @@ from __future__ import unicode_literals
 import json
 import uuid
 try:
-  import BeautifulSoup
+    # This is just for Python2.
+    import BeautifulSoup
 except ImportError:
-  import bs4
-  BeautifulSoup=None
+    import bs4
+    BeautifulSoup = None
 
 import requests
 
