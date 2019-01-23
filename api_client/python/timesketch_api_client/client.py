@@ -14,14 +14,9 @@
 """Timesketch API client."""
 from __future__ import unicode_literals
 
+import bs4
 import json
 import uuid
-try:
-    # This is just for Python2.
-    import BeautifulSoup
-except ImportError:
-    import bs4
-    BeautifulSoup = None
 
 import requests
 
@@ -84,10 +79,7 @@ class TimesketchApi(object):
         """
         # Scrape the CSRF token from the response
         response = session.get(self._host_uri)
-        if BeautifulSoup:
-            soup = BeautifulSoup.BeautifulSoup(response.text)
-        else:
-            soup = bs4.BeautifulSoup(response.text, features='html.parser')
+        soup = bs4.BeautifulSoup(response.text, features='html.parser')
         csrf_token = soup.find(id='csrf_token').get('value')
 
         session.headers.update({

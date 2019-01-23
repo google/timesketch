@@ -15,23 +15,13 @@
 """This is the setup file for the project."""
 from __future__ import unicode_literals
 
-import sys
-
 from setuptools import find_packages
 from setuptools import setup
 
-if sys.version[0] == '2':
-    install_requires = frozenset([
-        'requests',
-        'BeautifulSoup'])
-else:
-    install_requires = frozenset([
-        'requests',
-        'beautifulsoup4'])
 
 setup(
     name='timesketch-api-client',
-    version='20190123',
+    version='20190124',
     description='Timesketch API client',
     license='Apache License, Version 2.0',
     url='http://www.timesketch.org/',
@@ -46,5 +36,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    install_requires=install_requires,
+    install_requires=frozenset([
+        'requests',
+        'beautifulsoup4']),
     )
