@@ -13,28 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """This is the setup file for the project."""
+from __future__ import unicode_literals
 
 from setuptools import find_packages
 from setuptools import setup
 
+
 setup(
-    name=u'timesketch-api-client',
-    version=u'20190121',
-    description=u'Timesketch API client',
-    license=u'Apache License, Version 2.0',
-    url=u'http://www.timesketch.org/',
-    maintainer=u'Timesketch development team',
-    maintainer_email=u'timesketch-dev@googlegroups.com',
+    name='timesketch-api-client',
+    version='20190124',
+    description='Timesketch API client',
+    license='Apache License, Version 2.0',
+    url='http://www.timesketch.org/',
+    maintainer='Timesketch development team',
+    maintainer_email='timesketch-dev@googlegroups.com',
     classifiers=[
-        u'Development Status :: 4 - Beta',
-        u'Environment :: Console',
-        u'Operating System :: OS Independent',
-        u'Programming Language :: Python',
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
     ],
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
     install_requires=frozenset([
-        u'requests',
-        u'BeautifulSoup',
-    ]))
+        'requests',
+        'beautifulsoup4']),
+    )
