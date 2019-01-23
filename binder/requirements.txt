@@ -2,4 +2,4 @@
 timesketch_api_client>=20190123
 altair>=2.3.0
 vega_datasets
-jupyterlab>=0.32.0
+jupyterlab>=0.34.0
