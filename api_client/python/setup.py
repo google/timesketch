@@ -21,11 +21,11 @@ from setuptools import find_packages
 from setuptools import setup
 
 if sys.version[0] == '2':
-    install_requires=frozenset([
+    install_requires = frozenset([
         'requests',
         'BeautifulSoup'])
 else:
-    install_requires=frozenset([
+    install_requires = frozenset([
         'requests',
         'lxml',
         'beautifulsoup4'])
