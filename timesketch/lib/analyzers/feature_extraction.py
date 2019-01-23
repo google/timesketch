@@ -115,11 +115,11 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
 
             event_counter += 1
             event.add_attributes({store_as: result[0]})
-            if emojis_to_add:
-                event.add_emojis(emojis_to_add)
+            event.add_emojis(emojis_to_add)
+            event.add_tags(tags)
 
-            if tags:
-                event.add_tags(tags)
+            # Commit the event to the datastore.
+            event.commit()
 
         create_view = config.get('create_view', False)
         if create_view and event_counter:

@@ -200,11 +200,11 @@ class LoginSketchPlugin(interface.BaseSketchAnalyzer):
             if attribute_dict.get('logon_type', '') == screensaver_logon:
                 emojis_to_add.append(screen_emoji)
 
-            if emojis_to_add:
-                event.add_emojis(emojis_to_add)
+            event.add_emojis(emojis_to_add)
+            event.add_tags(tags_to_add)
 
-            if tags_to_add:
-                event.add_tags(tags_to_add)
+            # Commit the event to the datastore.
+            event.commit()
 
         # TODO: Add support for Linux syslog logon/logoff events.
         # TODO: Add support for Mac OS X logon/logoff events.

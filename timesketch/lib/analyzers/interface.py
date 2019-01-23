@@ -94,6 +94,8 @@ class Event(object):
         self.datastore = datastore
         self.sketch = sketch
 
+        self.updated_event = {}
+
         try:
             self.event_id = event['_id']
             self.event_type = event['_type']
@@ -103,14 +105,33 @@ class Event(object):
             raise KeyError('Malformed event: {0:s}'.format(e))
 
     def _update(self, event):
-        """Update Event in Elasticsearch.
+        """Update event attributes to add.
 
         Args:
             event: Dictionary with new or updated values.
         """
+        self.updated_event.update(event)
+
+    def commit(self, event_dict=None):
+        """Commit an event to Elasticsearch.
+
+        Args:
+            event_dict: (optional) Dictionary with updated event attributes.
+
+        Returns:
+            None if the event dictionary is empty.
+        """
+        event_to_commit = self.updated_event
+        if event_dict:
+            event_to_commit = event_dict
+
+        if not event_to_commit:
+            return
+
         self.datastore.import_event(
             self.index_name, self.event_type, event_id=self.event_id,
-            event=event)
+            event=event_to_commit)
+        self.updated_event = {}
 
     def add_attributes(self, attributes):
         """Add key/values to an Event.
@@ -136,7 +157,7 @@ class Event(object):
         updated_event = self.datastore.set_label(
             self.index_name, self.event_id, self.event_type, self.sketch.id,
             user_id, label, toggle=toggle, single_update=False)
-        self._update(updated_event)
+        self.commit(updated_event)
 
     def add_tags(self, tags):
         """Add tags to the Event.
@@ -144,6 +165,9 @@ class Event(object):
         Args:
             tags: List of tags to add.
         """
+        if not tags:
+            return
+
         existing_tags = self.source.get('tag', [])
         new_tags = list(set().union(existing_tags, tags))
         updated_event_attribute = {'tag': new_tags}
@@ -155,6 +179,9 @@ class Event(object):
         Args:
             emojis: List of emojis to add (as unicode codepoints).
         """
+        if not emojis:
+            return
+
         existing_emoji_list = self.source.get('__ts_emojis', [])
         new_emoji_list = list(set().union(existing_emoji_list, emojis))
         updated_event_attribute = {'__ts_emojis': new_emoji_list}

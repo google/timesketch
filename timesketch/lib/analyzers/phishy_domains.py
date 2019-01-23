@@ -235,6 +235,9 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
                 if text:
                     event.add_human_readable(text, self.NAME, append=False)
 
+                # Commit the event to the datastore.
+                event.commit()
+
         if similar_domain_counter:
             self.sketch.add_view(
                 view_name='Phishy Domains', analyzer_name=self.NAME,
