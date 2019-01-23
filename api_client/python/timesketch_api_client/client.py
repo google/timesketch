@@ -341,14 +341,27 @@ class Sketch(BaseResource):
             pandas DataFrame with the results.
         """
         return_list = []
+        timelines = {}
+        for timeline in self.list_timelines():
+            timelines[timeline.index] = timeline.name
+
         for result in search_response.get('objects', []):
             source = result.get('_source', {})
             source['_id'] = result.get('_id')
-            source['_type'] = result.get('_id')
-            source['_index'] = result.get('_id')
+            source['_type'] = result.get('_type')
+            source['_index'] = result.get('_index')
+            source['_source'] = timelines.get(result.get('_index'))
+
             return_list.append(source)
 
-        return pandas.DataFrame(return_list)
+        data_frame = pandas.DataFrame(return_list)
+        if 'datetime' in data_frame:
+            data_frame['datetime'] = pandas.to_datetime(data_frame.datetime)
+        elif 'timestamp' in data_frame:
+            data_frame['datetime'] = pandas.to_datetime(
+                data_frame.timestamp / 1e6, utc=True, unit='s')
+
+        return data_frame
 
     def list_views(self):
         """List all saved views for this sketch.
@@ -506,7 +519,7 @@ class Sketch(BaseResource):
 
         response_json = response.json()
 
-        scroll_id = response_json.get('meta', {}).get('scroll_id', 0)
+        scroll_id = response_json.get('meta', {}).get('scroll_id', '')
         form_data['scroll_id'] = scroll_id
 
         count = len(response_json.get('objects', []))
