@@ -30,7 +30,6 @@ nose
 mock
 pylint
 coverage
-BeautifulSoup
 
 # Remove the following when pip-sync finally stops deleting pkg_resources.
 # This is a hack that forces reinstall of setuptools and thus brings
