@@ -15,7 +15,6 @@
 from __future__ import unicode_literals
 
 import mock
-from datasketch import MinHash
 
 from timesketch.lib.analyzers.similarity_scorer import SimilarityScorer
 from timesketch.lib.analyzers.similarity_scorer import SimilarityScorerConfig
@@ -63,26 +62,3 @@ class TestSimilarityScorer(BaseTest):
         scorer = SimilarityScorer(
             index_name=self.test_index, data_type=self.test_data_type)
         self.assertIsInstance(scorer, SimilarityScorer)
-
-    @mock.patch(
-        u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
-        MockDataStore)
-    def test_shingles_from_text(self):
-        """Test splitting up a text string to words."""
-        scorer = SimilarityScorer(
-            index_name=self.test_index, data_type=self.test_data_type)
-        # pylint: disable=protected-access
-        shingles = scorer._shingles_from_text(self.test_text)
-        self.assertIsInstance(shingles, list)
-        self.assertEqual(len(shingles), 8)
-
-    @mock.patch(
-        u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
-        MockDataStore)
-    def test_minhash_from_text(self):
-        """Test create minhash from text."""
-        scorer = SimilarityScorer(
-            index_name=self.test_index, data_type=self.test_data_type)
-        # pylint: disable=protected-access
-        minhash = scorer._minhash_from_text(self.test_text)
-        self.assertIsInstance(minhash, MinHash)

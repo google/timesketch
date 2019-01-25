@@ -30,10 +30,15 @@ RUN apt-get update && apt-get -y install python-plaso plaso-tools nodejs yarn
 RUN pip install --upgrade pip
 ADD . /tmp/timesketch
 RUN cd /tmp/timesketch && yarn install && yarn run build
+# Remove pyyaml from requirements.txt to avoid conflits with python-yaml ubuntu package
+RUN sed -i -e '/pyyaml/d' /tmp/timesketch/requirements.txt
 RUN pip install /tmp/timesketch/
 
 # Copy the Timesketch configuration file into /etc
 RUN cp /usr/local/share/timesketch/timesketch.conf /etc
+# Copy Timesketch config files into /etc/timesketch
+RUN mkdir /etc/timesketch
+RUN cp /usr/local/share/timesketch/config/* /etc/timesketch/
 
 # Copy the entrypoint script into the container
 COPY docker/docker-entrypoint.sh /

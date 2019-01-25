@@ -19,22 +19,23 @@ import logging
 import subprocess
 import traceback
 
-from celery import group
 from celery import chain
+from celery import signals
 from flask import current_app
+from sqlalchemy import create_engine
 
-from timesketch import create_app
 from timesketch import create_celery_app
 from timesketch.lib.analyzers import manager
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_jsonl
+from timesketch.lib.utils import send_email
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
+from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 
 celery = create_celery_app()
-flask_app = create_app()
 
 
 class SqlAlchemyTask(celery.Task):
@@ -47,6 +48,15 @@ class SqlAlchemyTask(celery.Task):
         super(SqlAlchemyTask, self).after_return(*args, **kwargs)
 
 
+# pylint: disable=unused-argument
+@signals.worker_process_init.connect
+def init_worker(**kwargs):
+    """Create new database engine per worker process."""
+    url = celery.conf.get('SQLALCHEMY_DATABASE_URI')
+    engine = create_engine(url)
+    db_session.configure(bind=engine)
+
+
 def _set_timeline_status(index_name, status, error_msg=None):
     """Helper function to set status for searchindex and all related timelines.
 
@@ -55,25 +65,23 @@ def _set_timeline_status(index_name, status, error_msg=None):
         status: Status to set.
         error_msg: Error message.
     """
-    # Run within Flask context so we can make database changes
-    with flask_app.app_context():
-        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
-        timelines = Timeline.query.filter_by(searchindex=searchindex).all()
+    searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+    timelines = Timeline.query.filter_by(searchindex=searchindex).all()
 
-        # Set status
-        searchindex.set_status(status)
-        for timeline in timelines:
-            timeline.set_status(status)
-            db_session.add(timeline)
+    # Set status
+    searchindex.set_status(status)
+    for timeline in timelines:
+        timeline.set_status(status)
+        db_session.add(timeline)
 
-        # Update description if there was a failure in ingestion
-        if error_msg and status == 'fail':
-            # TODO: Don't overload the description field.
-            searchindex.description = error_msg
+    # Update description if there was a failure in ingestion
+    if error_msg and status == 'fail':
+        # TODO: Don't overload the description field.
+        searchindex.description = error_msg
 
-        # Commit changes to database
-        db_session.add(searchindex)
-        db_session.commit()
+    # Commit changes to database
+    db_session.add(searchindex)
+    db_session.commit()
 
 
 def _get_index_task_class(file_extension):
@@ -101,13 +109,13 @@ def _get_index_analyzers():
     """Get list of index analysis tasks to run.
 
     Returns:
-        Group of index analysis tasks as Celery subtask signatures or None if
-        index analyzers are disabled in config.
+        Celery chain of index analysis tasks as Celery subtask signatures or
+        None if index analyzers are disabled in config.
     """
     tasks = []
 
     # Exit early if index analyzers are disabled.
-    if not current_app.config.get(u'ENABLE_INDEX_ANALYZERS', False):
+    if not current_app.config.get(u'ENABLE_INDEX_ANALYZERS'):
         return None
 
     for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
@@ -121,10 +129,11 @@ def _get_index_analyzers():
             else:
                 tasks.append(run_index_analyzer.s(analyzer_name))
 
-    return group(tasks)
+    return chain(tasks)
 
 
-def build_index_pipeline(file_path, timeline_name, index_name, file_extension):
+def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
+                         sketch_id=None):
     """Build a pipeline for index and analysis.
 
     Args:
@@ -132,30 +141,49 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension):
         timeline_name: Name of the timeline to create.
         index_name: Name of the index to index to.
         file_extension: The file extension of the file.
+        sketch_id: The ID of the sketch to analyze.
 
     Returns:
         Celery chain with indexing task (or single indexing task) and analyzer
         task group.
     """
     index_task_class = _get_index_task_class(file_extension)
-    analyzer_task_group = _get_index_analyzers()
+    index_analyzer_chain = _get_index_analyzers()
+    sketch_analyzer_chain = None
+
+    if sketch_id and current_app.config.get(u'ENABLE_SKETCH_ANALYZERS'):
+        sketch_analyzer_chain = build_sketch_analysis_pipeline(sketch_id)
 
     index_task = index_task_class.s(
         file_path, timeline_name, index_name, file_extension)
 
     # If there are no analyzers just run the indexer.
-    if not analyzer_task_group:
+    if not index_analyzer_chain and not sketch_analyzer_chain:
         return index_task
 
-    return chain(index_task, analyzer_task_group)
+    if sketch_analyzer_chain:
+        if not index_analyzer_chain:
+            return chain(
+                index_task, run_sketch_init.s(), sketch_analyzer_chain)
+        return chain(
+            index_task, index_analyzer_chain, run_sketch_init.s(),
+            sketch_analyzer_chain)
+
+    if current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS'):
+        return chain(
+            index_task,
+            index_analyzer_chain,
+            run_email_result_task.s()
+        )
+
+    return chain(index_task, index_analyzer_chain)
 
 
-def build_sketch_analysis_pipeline(sketch_id, index_name):
+def build_sketch_analysis_pipeline(sketch_id):
     """Build a pipeline for sketch analysis.
 
     Args:
         sketch_id: The ID of the sketch to analyze.
-        index_name: Elasticsearch index name.
 
     Returns:
         Celery group with analysis tasks or None if no analyzers are enabled.
@@ -175,12 +203,90 @@ def build_sketch_analysis_pipeline(sketch_id, index_name):
         if kwarg_list:
             for kwargs in kwarg_list:
                 tasks.append(run_sketch_analyzer.s(
-                    sketch_id, index_name, analyzer_name, **kwargs))
+                    sketch_id, analyzer_name, **kwargs))
         else:
-            tasks.append(run_sketch_analyzer.s(
-                sketch_id, index_name, analyzer_name))
+            tasks.append(run_sketch_analyzer.s(sketch_id, analyzer_name))
 
-    return group(tasks)
+    if current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS'):
+        tasks.append(run_email_result_task.s(sketch_id))
+
+    return chain(tasks)
+
+
+@celery.task(track_started=True)
+def run_sketch_init(index_name_list):
+    """Create sketch init Celery task.
+
+    This task is needed to enable chaining of index analyzers and sketch
+    analyzer task groups. In order to run the sketch analyzers after indexing
+    this task needs to execute before any sketch analyzers.
+
+    Args:
+        index_name_list: List of index names.
+
+    Returns:
+        List with first entry of index_name_list.
+    """
+    if isinstance(index_name_list, basestring):
+        index_name_list = [index_name_list]
+    return index_name_list[:1][0]
+
+
+@celery.task(track_started=True)
+def run_email_result_task(index_name, sketch_id=None):
+    """Create email Celery task.
+
+    This task is run after all sketch analyzers are done and emails
+    the result of all analyzers to the user who imported the data.
+
+    Args:
+        index_name: An index name.
+        sketch_id: A sketch ID (optional).
+
+    Returns:
+        Email sent status.
+    """
+    # We need to get a fake request context so that url_for() will work.
+    with current_app.test_request_context():
+        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+        sketch = None
+
+        if sketch_id:
+            sketch = Sketch.query.get(sketch_id)
+
+        subject = 'Timesketch: [{0:s}] is ready'.format(searchindex.name)
+
+        # TODO: Use jinja templates.
+        body = 'Your timeline [{0:s}] has been imported and is ready.'.format(
+            searchindex.name)
+
+        if sketch:
+            view_urls = sketch.get_view_urls()
+            view_links = []
+            for view_url, view_name in view_urls.iteritems():
+                view_links.append('<a href="{0:s}">{1:s}</a>'.format(
+                    view_url,
+                    view_name))
+
+            body = body + '<br><br><b>Sketch</b><br>{0:s}'.format(
+                sketch.external_url)
+
+            analysis_results = searchindex.description.replace('\n', '<br>')
+            body = body + '<br><br><b>Analysis</b>{0:s}'.format(
+                analysis_results)
+
+            if view_links:
+                body = body + '<br><br><b>Views</b><br>' + '<br>'.join(
+                    view_links)
+
+        to_username = searchindex.user.username
+
+        try:
+            send_email(subject, body, to_username, use_html=True)
+        except RuntimeError as e:
+            return unicode(e)
+
+    return 'Sent email to {0:s}'.format(to_username)
 
 
 @celery.task(track_started=True)
@@ -202,22 +308,23 @@ def run_index_analyzer(index_name, analyzer_name, **kwargs):
 
 
 @celery.task(track_started=True)
-def run_sketch_analyzer(sketch_id, index_name, analyzer_name, **kwargs):
+def run_sketch_analyzer(index_name, sketch_id, analyzer_name, **kwargs):
     """Create a Celery task for a sketch analyzer.
 
     Args:
-      sketch_id: ID of the sketch to analyze.
-      analyzer_name: Name of the analyzer.
+        index_name: Name of the datastore index.
+        sketch_id: ID of the sketch to analyze.
+        analyzer_name: Name of the analyzer.
 
     Returns:
-      ID (str) of the sketch.
+      Name (str) of the index.
     """
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
     analyzer = analyzer_class(
         sketch_id=sketch_id, index_name=index_name, **kwargs)
     result = analyzer.run_wrapper()
     logging.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
-    return sketch_id
+    return index_name
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
@@ -231,7 +338,7 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
         source_type: Type of file, csv or jsonl.
 
     Returns:
-        Elasticsearch index name.
+        Name (str) of the index.
     """
     # Log information to Celery
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
@@ -272,7 +379,7 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
         source_type: Type of file, csv or jsonl.
 
     Returns:
-        Elasticsearch index name.
+        Name (str) of the index.
     """
     event_type = 'generic_event'  # Document type for Elasticsearch
     validators = {

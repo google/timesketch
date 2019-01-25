@@ -24,6 +24,8 @@ services:
       - TIMESKETCH_USER=${TIMESKETCH_USER}
       - TIMESKETCH_PASSWORD=${TIMESKETCH_PASSWORD}
     restart: always
+    volumes:
+      - ../:/usr/local/src/timesketch/
 
   elasticsearch:
     # uncomment the following lines to control JVM memory utilization
@@ -31,13 +33,12 @@ services:
 
     #environment:
     #  - ES_JAVA_OPTS= -Xms1g -Xmx1g # 1G min/1G max
-    image: elasticsearch
+    image: elasticsearch:6.4.2
     ports:
       - "9200:9200"
       - "9300:9300"
     restart: always
     volumes:
-      - ../contrib/:/usr/share/elasticsearch/config/scripts/
       - /var/lib/elasticsearch:/usr/share/elasticsearch/data/elasticsearch
 
   postgres:

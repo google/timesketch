@@ -56,7 +56,8 @@ class TestAnalysisSketch(BaseTest):
     def test_add_view(self):
         """Test adding a view to a sketch."""
         sketch = interface.Sketch(sketch_id=self.SKETCH_ID)
-        view = sketch.add_view('MockView', query_string='test')
+        view = sketch.add_view(
+            view_name='MockView', analyzer_name="Test", query_string='test')
         self.assertIsInstance(view, View)
 
     def test_get_all_instances(self):

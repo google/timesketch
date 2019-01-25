@@ -167,11 +167,14 @@ class ExploreForm(BaseForm):
     query = StringField(u'Query')
     filter = StringField(u'Filter')
     dsl = StringField(u'DSL')
+    fields = StringField(u'Fields', default='')
+    scroll_id = StringField(u'Scroll ID', default='')
 
 
 class GraphExploreForm(BaseForm):
     """Form used to search the graph datastore."""
-    query = StringField(u'Query')
+    graph_view_id = IntegerField(u'Query ID')
+    parameters = StringField(u'Parameters')
     output_format = StringField(u'Output format')
 
 

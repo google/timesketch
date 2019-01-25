@@ -8205,7 +8205,9 @@ i {
   margin-right: 5px; }
 
 body {
+  /* #f9f9f9 -> #f1f1f1 */
   background: #f9f9f9;
+  background: linear-gradient(90deg, #f9f9f9 11%, #f1f1f1 100%);
   line-height: 1.5;
   color: #333; }
 
@@ -8261,7 +8263,8 @@ body > header {
   margin-bottom: 20px;
   background: #fff;
   padding: 20px;
-  box-shadow: 0 0 1px rgba(0, 0, 0, 0.15); }
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.15);
+  border-radius: 5px; }
 
 .card-header {
   background: #fff;
@@ -8297,7 +8300,7 @@ body > header {
   border: none;
   box-shadow: none !important;
   font-size: 1.3em;
-  border-radius: 0;
+  border-radius: 5px;
   padding: 15px;
   background: #f9f9f9;
   width: 100%; }
@@ -8353,7 +8356,8 @@ body > header {
 .color-box {
   width: 30px;
   height: 30px;
-  margin-right: 10px; }
+  margin-right: 10px;
+  border-radius: 4px; }
 
 .index-enabled {
   color: #333; }
@@ -8657,10 +8661,12 @@ rect.bordered {
   font-style: italic; }
 
 .btn {
-  border-radius: 0; }
+  border-radius: 4px;
+  letter-spacing: .06rem; }
 
 .label {
-  border-radius: 0; }
+  border-radius: 3px;
+  letter-spacing: .06rem; }
 
 .medium-editor-placeholder {
   position: relative; }
@@ -8774,45 +8780,11 @@ ts-graphs-cypher-query button[type="submit"] i {
 
 ts-graphs-cypher-query .ts-graphs-cypher-query__predefined-queries {
   height: 57px;
+  min-width: 300px;
   background-color: #f9f9f9;
   margin-right: 10px;
   border: 0px;
   -webkit-border-radius: 0px; }
-
-ts-graphs-cytoscape-settings {
-  min-width: 250px; }
-  ts-graphs-cytoscape-settings input[type="number"] {
-    width: 70px; }
-  ts-graphs-cytoscape-settings input[type="checkbox"] {
-    vertical-align: middle;
-    margin: 0px; }
-  ts-graphs-cytoscape-settings input[type="radio"] {
-    vertical-align: middle;
-    margin: 0px; }
-
-ts-graphs-graph-actions button {
-  margin: 5px !important;
-  text-align: left !important;
-  box-sizing: border-box;
-  display: block;
-  width: calc(100% - 10px); }
-
-ts-graphs-graph-actions .ts-graphs-graph-actions__modal-background {
-  position: fixed;
-  left: 0px;
-  top: 0px;
-  right: 0px;
-  bottom: 0px;
-  z-index: 1040;
-  padding-top: 200px;
-  background-color: rgba(0, 0, 0, 0.5);
-  text-align: center; }
-
-ts-graphs-graph-actions .ts-graphs-graph-actions__modal {
-  padding: 20px;
-  background-color: white;
-  box-shadow: 0 0 6px 2px rgba(0, 0, 0, 0.4);
-  display: inline-block; }
 
 ts-graphs-graph-view {
   position: absolute;
@@ -8827,12 +8799,12 @@ ts-graphs-graph-view {
     display: inline-block;
     vertical-align: top;
     position: relative;
-    box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
     z-index: 10; }
     ts-graphs-graph-view .ts-graphs-graph-view__dropdown label {
       display: inline-block;
       padding-left: 15px;
       padding-right: 15px;
+      padding-top: 10px;
       margin: 0px; }
   ts-graphs-graph-view .ts-graphs-graph-view__dropdown-trigger {
     display: none; }

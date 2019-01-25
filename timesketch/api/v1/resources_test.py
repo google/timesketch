@@ -73,6 +73,7 @@ class SketchResourceTest(BaseTest):
         self.assertEqual(len(response.json[u'objects']), 1)
         self.assertEqual(len(response.json[u'objects'][0][u'timelines']), 1)
         self.assertEqual(response.json[u'objects'][0][u'name'], u'Test 1')
+        self.assertIsInstance(response.json[u'meta'][u'emojis'], dict)
         self.assert200(response)
 
     def test_sketch_acl(self):
@@ -178,7 +179,8 @@ class ExploreResourceTest(BaseTest):
                 u'test': u'FFFFFF'
             },
             u'es_total_count': 1,
-            u'es_time': 5
+            u'es_time': 5,
+            u'scroll_id': ''
         },
         u'objects': [{
             u'sort': [1410593223000],

@@ -187,7 +187,7 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
     sketch_timelines = [t.searchindex.index_name for t in sketch.timelines]
     view_form = SaveViewForm()
     graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
-    similarity_enabled = current_app.config.get(u'SIMILARITY_DATA_TYPES')
+    similarity_enabled = current_app.config.get(u'ENABLE_EXPERIMENTAL_UI')
 
     # Get parameters from the GET query
     url_query = request.args.get(u'q', u'')
@@ -255,7 +255,7 @@ def explore(sketch_id, view_id=None, searchtemplate_id=None):
 
 
 @sketch_views.route(
-    u'/sketch/<int:sketch_id>/graphs/', methods=[u'GET', u'POST'])
+    u'/sketch/<int:sketch_id>/graph/', methods=[u'GET', u'POST'])
 @login_required
 def graphs(sketch_id):
     """Generates the sketch views template.
@@ -267,7 +267,7 @@ def graphs(sketch_id):
     graphs_enabled = current_app.config[u'GRAPH_BACKEND_ENABLED']
 
     return render_template(
-        u'sketch/graphs.html',
+        u'sketch/graph.html',
         sketch=sketch,
         graphs_enabled=graphs_enabled)
 
@@ -370,10 +370,12 @@ def timelines(sketch_id):
                 # If enabled, run sketch analyzers when timeline is added.
                 # Import here to avoid circular imports.
                 from timesketch.lib import tasks
-                pipeline = tasks.build_sketch_analysis_pipeline(
-                    sketch_id, searchindex_id)
-                if pipeline:
-                    pipeline.apply_async(task_id=searchindex_id)
+                sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+                    sketch_id)
+                if sketch_analyzer_group:
+                    pipeline = (tasks.run_sketch_init.s(
+                        [searchindex.index_name]) | sketch_analyzer_group)
+                    pipeline.apply_async(task_id=searchindex.index_name)
 
         return redirect(
             url_for(u'sketch_views.timelines', sketch_id=sketch.id))
@@ -448,7 +450,8 @@ def export(sketch_id):
 
     # Export more than the 500 first results.
     max_events_to_fetch = 10000
-    query_filter[u'limit'] = max_events_to_fetch
+    query_filter[u'terminate_after'] = max_events_to_fetch
+    query_filter[u'size'] = max_events_to_fetch
 
     datastore = ElasticsearchDataStore(
         host=current_app.config[u'ELASTIC_HOST'],

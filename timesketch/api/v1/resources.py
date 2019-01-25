@@ -47,7 +47,6 @@ from flask_restful import reqparse
 from flask_restful import Resource
 from sqlalchemy import desc
 from sqlalchemy import not_
-import pycypher
 
 from timesketch.lib.aggregators import heatmap
 from timesketch.lib.aggregators import histogram
@@ -61,6 +60,7 @@ from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.datastores.neo4j import Neo4jDataStore
 from timesketch.lib.datastores.neo4j import SCHEMA as neo4j_schema
 from timesketch.lib.errors import ApiHTTPError
+from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.lib.forms import AddTimelineSimpleForm
 from timesketch.lib.forms import AggregationForm
 from timesketch.lib.forms import CreateTimelineForm
@@ -74,7 +74,9 @@ from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
 from timesketch.lib.utils import get_validated_indices
-from timesketch.lib.cypher import transpile_query, InvalidQuery
+from timesketch.lib.experimental.utils import GRAPH_VIEWS
+from timesketch.lib.experimental.utils import get_graph_views
+from timesketch.lib.experimental.utils import get_graph_view
 from timesketch.models import db_session
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchIndex
@@ -341,7 +343,8 @@ class SketchResource(ResourceMixin, Resource):
             searchtemplates=[{
                 u'name': searchtemplate.name,
                 u'id': searchtemplate.id
-            } for searchtemplate in SearchTemplate.query.all()])
+            } for searchtemplate in SearchTemplate.query.all()],
+            emojis=get_emojis_as_dict())
         return self.to_json(sketch, meta=meta)
 
 
@@ -590,28 +593,41 @@ class ExploreResource(ResourceMixin, Resource):
         sketch = Sketch.query.get_with_acl(sketch_id)
         form = ExploreForm.build(request)
 
-        if form.validate_on_submit():
-            query_dsl = form.dsl.data
-            query_filter = form.filter.data
-            sketch_indices = {
-                t.searchindex.index_name
-                for t in sketch.timelines
-            }
-            indices = query_filter.get(u'indices', sketch_indices)
+        if not form.validate_on_submit():
+            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
-            # If _all in indices then execute the query on all indices
-            if u'_all' in indices:
-                indices = sketch_indices
+        query_dsl = form.dsl.data
+        query_filter = form.filter.data
+        return_fields = form.fields.data
+        scroll_id = form.scroll_id.data
 
-            # Make sure that the indices in the filter are part of the sketch.
-            # This will also remove any deleted timeline from the search result.
-            indices = get_validated_indices(indices, sketch_indices)
+        if not return_fields:
+            return_fields = DEFAULT_SOURCE_FIELDS
 
-            # Make sure we have a query string or star filter
-            if not (form.query.data, query_filter.get(u'star'),
-                    query_filter.get(u'events'), query_dsl):
-                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        sketch_indices = {
+            t.searchindex.index_name
+            for t in sketch.timelines
+        }
+        indices = query_filter.get(u'indices', sketch_indices)
 
+        # If _all in indices then execute the query on all indices
+        if u'_all' in indices:
+            indices = sketch_indices
+
+        # Make sure that the indices in the filter are part of the sketch.
+        # This will also remove any deleted timeline from the search result.
+        indices = get_validated_indices(indices, sketch_indices)
+
+        # Make sure we have a query string or star filter
+        if not (form.query.data, query_filter.get(u'star'),
+                query_filter.get(u'events'), query_dsl):
+            abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+        if scroll_id:
+            # pylint: disable=unexpected-keyword-arg
+            result = self.datastore.client.scroll(
+                scroll_id=scroll_id, scroll=u'1m')
+        else:
             result = self.datastore.search(
                 sketch_id,
                 form.query.data,
@@ -619,51 +635,51 @@ class ExploreResource(ResourceMixin, Resource):
                 query_dsl,
                 indices,
                 aggregations=None,
-                return_fields=DEFAULT_SOURCE_FIELDS,
-                enable_scroll=False)
+                return_fields=return_fields,
+                enable_scroll=True)
 
-            # Get labels for each event that matches the sketch.
-            # Remove all other labels.
-            for event in result[u'hits'][u'hits']:
-                event[u'selected'] = False
-                event[u'_source'][u'label'] = []
-                try:
-                    for label in event[u'_source'][u'timesketch_label']:
-                        if sketch.id != label[u'sketch_id']:
-                            continue
-                        event[u'_source'][u'label'].append(label[u'name'])
-                    del event[u'_source'][u'timesketch_label']
-                except KeyError:
-                    pass
+        # Get labels for each event that matches the sketch.
+        # Remove all other labels.
+        for event in result[u'hits'][u'hits']:
+            event[u'selected'] = False
+            event[u'_source'][u'label'] = []
+            try:
+                for label in event[u'_source'][u'timesketch_label']:
+                    if sketch.id != label[u'sketch_id']:
+                        continue
+                    event[u'_source'][u'label'].append(label[u'name'])
+                del event[u'_source'][u'timesketch_label']
+            except KeyError:
+                pass
 
-            # Update or create user state view. This is used in the UI to let
-            # the user get back to the last state in the explore view.
-            view = View.get_or_create(
-                user=current_user, sketch=sketch, name=u'')
-            view.query_string = form.query.data
-            view.query_filter = json.dumps(query_filter, ensure_ascii=False)
-            view.query_dsl = json.dumps(query_dsl, ensure_ascii=False)
-            db_session.add(view)
-            db_session.commit()
+        # Update or create user state view. This is used in the UI to let
+        # the user get back to the last state in the explore view.
+        view = View.get_or_create(
+            user=current_user, sketch=sketch, name=u'')
+        view.query_string = form.query.data
+        view.query_filter = json.dumps(query_filter, ensure_ascii=False)
+        view.query_dsl = json.dumps(query_dsl, ensure_ascii=False)
+        db_session.add(view)
+        db_session.commit()
 
-            # Add metadata for the query result. This is used by the UI to
-            # render the event correctly and to display timing and hit count
-            # information.
-            tl_colors = {}
-            tl_names = {}
-            for timeline in sketch.timelines:
-                tl_colors[timeline.searchindex.index_name] = timeline.color
-                tl_names[timeline.searchindex.index_name] = timeline.name
+        # Add metadata for the query result. This is used by the UI to
+        # render the event correctly and to display timing and hit count
+        # information.
+        tl_colors = {}
+        tl_names = {}
+        for timeline in sketch.timelines:
+            tl_colors[timeline.searchindex.index_name] = timeline.color
+            tl_names[timeline.searchindex.index_name] = timeline.name
 
-            meta = {
-                u'es_time': result[u'took'],
-                u'es_total_count': result[u'hits'][u'total'],
-                u'timeline_colors': tl_colors,
-                u'timeline_names': tl_names,
-            }
-            schema = {u'meta': meta, u'objects': result[u'hits'][u'hits']}
-            return jsonify(schema)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        meta = {
+            u'es_time': result[u'took'],
+            u'es_total_count': result[u'hits'][u'total'],
+            u'timeline_colors': tl_colors,
+            u'timeline_names': tl_names,
+            u'scroll_id': result.get(u'_scroll_id', ''),
+        }
+        schema = {u'meta': meta, u'objects': result[u'hits'][u'hits']}
+        return jsonify(schema)
 
 
 class AggregationResource(ResourceMixin, Resource):
@@ -1000,7 +1016,7 @@ class UploadFileResource(ResourceMixin, Resource):
 
         form = UploadFileForm()
         if form.validate_on_submit() and upload_enabled:
-            sketch_id = form.sketch_id.data
+            sketch_id = form.sketch_id.data or None
             file_storage = form.file.data
             _filename, _extension = os.path.splitext(file_storage.filename)
             file_extension = _extension.lstrip(u'.')
@@ -1046,11 +1062,11 @@ class UploadFileResource(ResourceMixin, Resource):
                 db_session.commit()
 
             # Start Celery pipeline for indexing and analysis.
-            if current_app.config.get(u'ENABLE_INDEX_ANALYZERS'):
-                from timesketch.lib import tasks
-                pipeline = tasks.build_index_pipeline(
-                    file_path, timeline_name, index_name, file_extension)
-                pipeline.apply_async(task_id=index_name)
+            # Import here to avoid circular imports.
+            from timesketch.lib import tasks
+            pipeline = tasks.build_index_pipeline(
+                file_path, timeline_name, index_name, file_extension, sketch_id)
+            pipeline.apply_async(task_id=index_name)
 
             # Return Timeline if it was created.
             # pylint: disable=no-else-return
@@ -1373,12 +1389,15 @@ class TimelineListResource(ResourceMixin, Resource):
                 timeline = Timeline.query.get(timeline_id)
 
             # If enabled, run sketch analyzers when timeline is added.
+            # Import here to avoid circular imports.
             if current_app.config.get(u'ENABLE_SKETCH_ANALYZERS'):
                 from timesketch.lib import tasks
-                pipeline = tasks.build_sketch_analysis_pipeline(
-                    sketch_id, searchindex_id)
-                if pipeline:
-                    pipeline.apply_async(task_id=searchindex_id)
+                sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+                    sketch_id)
+                if sketch_analyzer_group:
+                    pipeline = (tasks.run_sketch_init.s(
+                        [searchindex.index_name]) | sketch_analyzer_group)
+                    pipeline.apply_async(task_id=searchindex.index_name)
 
             return self.to_json(
                 timeline, meta=metadata, status_code=return_code)
@@ -1450,58 +1469,27 @@ class GraphResource(ResourceMixin, Resource):
 
         form = GraphExploreForm.build(request)
         if form.validate_on_submit():
-            query = form.query.data
+            graph_view_id = form.graph_view_id.data
+            parameters = form.parameters.data
             output_format = form.output_format.data
 
-            try:
-                transpiled = transpile_query(query, sketch_id)
-            except (pycypher.CypherParseError, InvalidQuery) as e:
-                return bad_request(e.message)
+            graph_view = GRAPH_VIEWS[graph_view_id]
+            query = graph_view[u'query']
 
-            intermediate_result = self.graph_datastore.query(
-                transpiled, output_format='neo4j', return_rows=True)
-            nodes = []
-            edges = []
-            timestamps_by_edge_id = {}
-            if intermediate_result['rows'] is None:
-                intermediate_result['rows'] = []
-            for node_ids, edge_ids, timestamps_s in intermediate_result['rows']:
-                nodes.extend(node_ids)
-                for edge_id, timestamps in zip(edge_ids, timestamps_s):
-                    if edge_id not in timestamps_by_edge_id:
-                        timestamps_by_edge_id[edge_id] = []
-                    if timestamps is None:
-                        timestamps = []
-                    timestamps_by_edge_id[edge_id].extend(timestamps)
-            nodes = list(set(nodes))
-            edges = list(timestamps_by_edge_id.keys())
-            for edge_id in timestamps_by_edge_id:
-                timestamps_by_edge_id[edge_id] = list(set(
-                    timestamps_by_edge_id[edge_id]
-                ))
-            final_query = '''
-                UNWIND {edge_ids} AS edge_id MATCH ()-[e]->()
-                WHERE id(e) = edge_id AND e.sketch_id = {sketch_id}
-                RETURN e, null AS n
-                UNION ALL
-                UNWIND {node_ids} AS node_id MATCH (n)
-                WHERE id(n) = node_id AND n.sketch_id = {sketch_id}
-                RETURN null AS e, n
-            '''
+            parameters[u'sketch_id'] = str(sketch_id)
 
-            result = self.graph_datastore.query(final_query, params={
-                'sketch_id': sketch_id, 'edge_ids': edges, 'node_ids': nodes,
-            }, output_format=output_format)
-            for edge in result['graph']['edges']:
-                edge_data = edge['data']
-                edge_data['timestamps'] = timestamps_by_edge_id[
-                    int(edge_data['id'].replace('edge', ''))
-                ]
-                edge_data['count'] = str(len(edge_data['timestamps']))
-                if edge_data.get('timestamps_incomplete'):
-                    edge_data['count'] += '+'
-                if edge_data['count'] == '0+':
-                    edge_data['count'] = '???'
+            result = self.graph_datastore.query(
+                query, params=parameters, output_format=output_format)
+
+            for edge in result[u'graph'][u'edges']:
+                edge_data = edge[u'data']
+                timestamps = edge_data.get(u'timestamps', [])
+                edge_data[u'count'] = str(len(timestamps))
+
+                if edge_data.get(u'timestamps_incomplete'):
+                    edge_data[u'count'] += u'+'
+                if edge_data[u'count'] == u'0+':
+                    edge_data[u'count'] = u'???'
 
             schema = {
                 u'meta': {
@@ -1512,6 +1500,59 @@ class GraphResource(ResourceMixin, Resource):
                 }]
             }
             return jsonify(schema)
+
+
+class GraphViewListResource(ResourceMixin, Resource):
+    """Resource to get result from graph query."""
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET requests to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model.
+
+        Returns:
+            Graph in JSON (instance of flask.wrappers.Response)
+        """
+        # Check access to the sketch
+        Sketch.query.get_with_acl(sketch_id)
+
+        schema = {
+            u'objects': [{
+                u'views': get_graph_views()
+            }]
+        }
+        return jsonify(schema)
+
+
+class GraphViewResource(ResourceMixin, Resource):
+    """Resource to get result from graph query."""
+
+    @login_required
+    def get(self, sketch_id, view_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model.
+            view_id: Integer key for a graph view.
+
+        Returns:
+            Graph in JSON (instance of flask.wrappers.Response)
+        """
+        # Check access to the sketch
+        Sketch.query.get_with_acl(sketch_id)
+        view = get_graph_view(view_id)
+
+        if not view:
+            return abort(HTTP_STATUS_CODE_NOT_FOUND)
+
+        schema = {
+            u'objects': [{
+                u'views': view
+            }]
+        }
+        return jsonify(schema)
 
 
 class SearchIndexListResource(ResourceMixin, Resource):
