@@ -636,7 +636,7 @@ class ExploreResource(ResourceMixin, Resource):
                 indices,
                 aggregations=None,
                 return_fields=return_fields,
-                enable_scroll=True)
+                enable_scroll=False)
 
         # Get labels for each event that matches the sketch.
         # Remove all other labels.
