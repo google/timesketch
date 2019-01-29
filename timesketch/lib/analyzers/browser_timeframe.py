@@ -5,25 +5,21 @@ import pandas as pd
 
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
+from timesketch.lib.analyzers import utils
 
 
-def GetEventFromFrame(frame, datastore):
-  """Return."""
-  for row in frame.iterrows():
-      _, entry = row
-      event_id = entry.get('_id')
-      if not event_id:
-          continue
-      event_index = entry.get('_index')
-      if not event_index:
-          continue
-      event_type = entry.get('_type')
+def get_runs(hour_list):
+    """Returns a list of runs from a list of numbers.
 
-      event_dict = dict(_id=event_id, _type=event_type, _index=index_name)
-      yield interface.Event(event_dict, datastore)
+    Args:
+        hour_list: a list of integers.
 
-
-def GetRuns(hour_list):
+    Returns:
+        A list of tuples, where each tuple indicates the first
+        and last record of a consecutive run of numbers, eg
+        list 1, 2, 3, 7, 8, 9 would produce the output
+        of (1,3), (7, 9).
+    """
     runs = []
     start = hour_list[0]
     now = start
@@ -47,8 +43,20 @@ def GetRuns(hour_list):
     return runs
 
 
-def FixGap(hour_list):
-    runs = GetRuns(hour_list)
+def fix_gap_in_list(hour_list):
+    """Returns a list with gaps in it fixed.
+
+    Args:
+        hour_list: a list of integers in a sequence, potentially
+            with holes in the sequence.
+
+    Returns:
+        A list that consists of the input numbers with single
+        integer gaps filled. The list should not have more than
+        two runs. Therefore if there are more than two runs after
+        all gaps have been filled the "extra" runs will be dropped.
+    """
+    runs = get_runs(hour_list)
     len_runs = len(runs)
 
     for i in range(0, len_runs - 1):
@@ -58,12 +66,12 @@ def FixGap(hour_list):
             hour_list.append(upper + 1)
 
     hours = sorted(hour_list)
-    runs = GetRuns(hour_list)
+    runs = get_runs(hour_list)
 
     if len(runs) <= 2:
         return hours
     elif len_runs < len(runs):
-        return FixGap(hours)
+        return fix_gap_in_list(hours)
 
     # Now we need to remove runs, we only need the first and last.
     run_start = runs[0]
@@ -74,40 +82,42 @@ def FixGap(hour_list):
     return sorted(hours)
 
 
-def GetHours(frame):
-    """Attempt to define a function to get the hours, based on frequency of counts."""
-    # Aggregate based on hours.
-    fc = frame[['datetime' ,'hour']].groupby('hour',
-    as_index=False).count()
-    fc['count'] = fc['datetime']
-    del fc['datetime']
+def get_hours(frame):
+    """Return a list of the hours with the most activity within a frame.
 
-    # Get all the stats values.
-    a = fc['count'].describe()
-    # We are looking at the 75% count and reduce it by the mean to find the lower value count.
-    c_value = a['75%'] - a['mean']
+    Args:
+        frame: a pandas DataFrame object that contains a datetime column.
 
-    # Now we've got a "bar" we can compare against to find all hours.
+    Returns:
+        A list of hours where the most activity within the DataFrame occurs.
+    """
+    frame_count = frame[['datetime' ,'hour']].groupby(
+        'hour', as_index=False).count()
+    frame_count['count'] = frame_count['datetime']
+    del frame_count['datetime']
 
-    # Get a list of all hours where the count is higher or equal to the bar we defined above.
-    hours = list(fc[fc['count'] >= c_value].hour.values)
+    stats = frame_count['count'].describe()
+
+    # We use the 75% value - mean of all counts as the "bar" to which we
+    # determine an hour to be active.
+    threshold = stats['75%'] - stats['mean']
+
+    threshold_filter = frame_count['count'] >= threshold
+    hours = list(frame_count[threshold_filter].hour.values)
     hours = sorted(hours)
 
-    # let's find out if these are contigious or not.
-    runs = GetRuns(hours)
+    runs = get_runs(hours)
 
-    # It should be either a single run, or two at most.
+    # There should either be a single run or at most two.
     number_runs = len(runs)
-
     if number_runs == 1:
-        # contigious
         return hours
 
     elif number_runs == 2 and runs[0][0] == 0:
-        # First run starts at zero.
+        # Two runs, first one starts at hour zero.
         return hours
 
-    return FixGap(hours)
+    return fix_gap_in_list(hours)
 
 
 class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
@@ -148,18 +158,16 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         data_frame['hour'] = pd.to_numeric(
             data_frame.datetime.dt.strftime('%H'))
 
-        activity_hours = GetHours(data_frame)
-
+        activity_hours = get_hours(data_frame)
         data_frame_outside = data_frame[~data_frame.hour.isin(activity_hours)]
 
-        counter = 0
-        for event in GetEventFromFrame(data_frame_outside, self.datastore):
-          event.add_tags(['outside-active-hours'])
-          counter += 1
-          event.commit()
+        for event in utils.get_events_from_data_frame(
+            data_frame_outside, self.datastore):
+            event.add_tags(['outside-active-hours'])
+            event.commit()
 
         return 'Tagged {0:d} as outside of normal active hours.'.format(
-            counter)
+            data_frame_outside.shape[0])
 
 
 manager.AnalysisManager.register_analyzer(BrowserTimeframeSketchPlugin)

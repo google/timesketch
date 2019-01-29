@@ -20,6 +20,9 @@ try:
 except ImportError:
     from urllib import parse as urlparse  # pylint: disable=no-name-in-module
 
+from timesketch.lib.analyzers import interface
+
+
 # CDN domain list based on:
 # https://github.com/WPO-Foundation/webpagetest/blob/master/agent/wpthook/cdn.h
 # Last updated: 2019-01-11
@@ -214,3 +217,29 @@ def get_cdn_provider(domain):
     cdn_providers = [v for k, v in KNOWN_CDN_DOMAINS.iteritems() if
                      domain.endswith(k.lower())]
     return ' '.join(set(cdn_providers))
+
+
+def get_events_from_data_frame(frame, datastore):
+  """Generates events from a data frame.
+
+  Args:
+      frame: a pandas DataFrame object.
+      datastore: Elasticsearch datastore client.
+
+  Yields:
+      An event (interface.Event) object for each row
+      in the DataFrame.
+  """
+  for row in frame.iterrows():
+      _, entry = row
+      event_id = entry.get('_id')
+      if not event_id:
+          continue
+      event_index = entry.get('_index')
+      if not event_index:
+          continue
+      event_type = entry.get('_type')
+
+      event_dict = dict(_id=event_id, _type=event_type, _index=index_name)
+      yield interface.Event(event_dict, datastore)
+
