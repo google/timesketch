@@ -91,7 +91,7 @@ def get_hours(frame):
     Returns:
         A list of hours where the most activity within the DataFrame occurs.
     """
-    frame_count = frame[['datetime' ,'hour']].groupby(
+    frame_count = frame[['datetime', 'hour']].groupby(
         'hour', as_index=False).count()
     frame_count['count'] = frame_count['datetime']
     del frame_count['datetime']
@@ -162,7 +162,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         data_frame_outside = data_frame[~data_frame.hour.isin(activity_hours)]
 
         for event in utils.get_events_from_data_frame(
-            data_frame_outside, self.datastore):
+                data_frame_outside, self.datastore):
             event.add_tags(['outside-active-hours'])
             event.commit()
 

@@ -220,26 +220,25 @@ def get_cdn_provider(domain):
 
 
 def get_events_from_data_frame(frame, datastore):
-  """Generates events from a data frame.
+    """Generates events from a data frame.
 
-  Args:
-      frame: a pandas DataFrame object.
-      datastore: Elasticsearch datastore client.
+    Args:
+        frame: a pandas DataFrame object.
+        datastore: Elasticsearch datastore client.
 
-  Yields:
-      An event (interface.Event) object for each row
-      in the DataFrame.
-  """
-  for row in frame.iterrows():
-      _, entry = row
-      event_id = entry.get('_id')
-      if not event_id:
-          continue
-      event_index = entry.get('_index')
-      if not event_index:
-          continue
-      event_type = entry.get('_type')
+    Yields:
+        An event (interface.Event) object for each row
+        in the DataFrame.
+    """
+    for row in frame.iterrows():
+        _, entry = row
+        event_id = entry.get('_id')
+        if not event_id:
+            continue
+        event_index = entry.get('_index')
+        if not event_index:
+            continue
+        event_type = entry.get('_type')
 
-      event_dict = dict(_id=event_id, _type=event_type, _index=index_name)
-      yield interface.Event(event_dict, datastore)
-
+        event_dict = dict(_id=event_id, _type=event_type, _index=event_index)
+        yield interface.Event(event_dict, datastore)
