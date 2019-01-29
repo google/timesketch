@@ -139,6 +139,10 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         data_frame = self.event_pandas(
             query_string=query, return_fields=return_fields)
 
+        if not data_frame.shape[0]:
+            return 'No browser events discovered.'
+
+        data_frame['timestamp'] = pd.to_numeric(data_frame.timestamp)
         data_frame['datetime'] = pd.to_datetime(
             data_frame.timestamp / 1e6, utc=True, unit='s')
         data_frame['hour'] = pd.to_numeric(
