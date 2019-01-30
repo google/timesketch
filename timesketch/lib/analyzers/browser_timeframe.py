@@ -154,6 +154,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         # updated to include all user generated events instead of focusing
         # solely on browser events.
         query = 'source_short:"WEBHIST"'
+
         return_fields = ['timestamp', 'url', 'tag', '__ts_emojis']
 
         data_frame = self.event_pandas(
@@ -164,6 +165,10 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
 
         sleeping_emoji = emojis.get_emoji('SLEEPING_FACE')
 
+        # This query filters out all timestamps that have a zero timestamp as
+        # well as those that occure after 2035-01-01, this may need to be
+        # changed in the future.
+        data_frame = data_frame[data_frame.timestamp < 2051222400000000]
         data_frame['timestamp'] = pd.to_numeric(data_frame.timestamp)
         data_frame['datetime'] = pd.to_datetime(
             data_frame.timestamp / 1e6, utc=True, unit='s')
