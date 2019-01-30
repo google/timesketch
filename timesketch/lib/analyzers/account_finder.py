@@ -50,8 +50,9 @@ class AccountFinderSketchPlugin(interface.BaseSketchAnalyzer):
                 accounts_found[account_tag].setdefault(found_account, 0)
                 accounts_found[account_tag][found_account] += 1
 
-        return '{0:s} identified use of the following accounts: {1!s}'\
-            .format(self.NAME, accounts_found)
+        return (
+            '{0:s} identified use of the following accounts: '
+            '{1!s}'.format(self.NAME, accounts_found))
 
 
 manager.AnalysisManager.register_analyzer(AccountFinderSketchPlugin)
