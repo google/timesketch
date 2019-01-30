@@ -502,43 +502,22 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             return_fields = list(set(return_fields))
             return_fields = ','.join(return_fields)
 
-        results = self.datastore.search(
+        results = self.datastore.search_stream(
             sketch_id=self.sketch.id,
             query_string=query_string,
             query_filter=query_filter,
             query_dsl=query_dsl,
             indices=indices,
             return_fields=','.join(return_fields),
-            enable_scroll=True
         )
 
-        raw_events = results.get('hits', {}).get('hits')
-        if not raw_events:
-            return pandas.DataFrame()
-
         events = []
-        for event in raw_events:
+        for event in results:
             source = event.get('_source')
             source['_id'] = event.get('_id')
             source['_type'] = event.get('_type')
             source['_index'] = event.get('_index')
             events.append(source)
-
-        scroll_id = results.get('_scroll_id', '')
-        scroll_size = results[u'hits'][u'total']
-
-        while scroll_size > 0:
-            # pylint: disable=unexpected-keyword-arg
-            result = self.datastore.client.scroll(
-                scroll_id=scroll_id, scroll=u'1m')
-            scroll_size = result[u'hits'][u'total']
-
-            for event in result[u'hits'][u'hits']:
-                source = event.get('_source')
-                source['_id'] = event.get('_id')
-                source['_type'] = event.get('_type')
-                source['_index'] = event.get('_index')
-                events.append(source)
 
         return pandas.DataFrame(events)
 
