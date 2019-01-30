@@ -27,6 +27,7 @@ emoji = collections.namedtuple('emoji', 'code help')
 EMOJI_MAP = {
     'CAMERA': emoji('&#x1F4F7', 'Screenshot activity'),
     'FISHING_POLE': emoji('&#x1F3A3', 'Phishing'),
+    'ID_BUTTON': emoji('&#x1F194', 'Account ID'),
     'LOCK': emoji('&#x1F512', 'Logon activity'),
     'LOCOMOTIVE': emoji('&#x1F682', 'Execution activity'),
     'MAGNIFYING_GLASS': emoji('&#x1F50E', 'Search related activity'),
