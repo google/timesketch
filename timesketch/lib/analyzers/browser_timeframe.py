@@ -144,7 +144,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
             String with summary of the analyzer result
         """
         query = 'source_short:"WEBHIST"'
-        return_fields = ['timestamp', 'url']
+        return_fields = ['timestamp', 'url', 'tag']
 
         data_frame = self.event_pandas(
             query_string=query, return_fields=return_fields)

@@ -240,5 +240,7 @@ def get_events_from_data_frame(frame, datastore):
             continue
         event_type = entry.get('_type')
 
-        event_dict = dict(_id=event_id, _type=event_type, _index=event_index)
+        event_dict = dict(
+            _id=event_id, _type=event_type, _index=event_index,
+            _source=entry.to_dict())
         yield interface.Event(event_dict, datastore)
