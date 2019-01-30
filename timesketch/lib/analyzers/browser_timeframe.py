@@ -89,7 +89,13 @@ def get_active_hours(frame):
         frame: a pandas DataFrame object that contains a datetime column.
 
     Returns:
-        A list of hours where the most activity within the DataFrame occurs.
+        A tuple that contains three items:
+            1. list of hours where the most activity within the DataFrame
+            occurs.
+            2. the threshold used to determine what is considered to be
+            an active hour.
+            3. a DataFrame object containing the aggregation.
+
     """
     frame_count = frame[['datetime', 'hour']].groupby(
         'hour', as_index=False).count()
@@ -117,7 +123,7 @@ def get_active_hours(frame):
         # Two runs, first one starts at hour zero.
         return hours
 
-    return fix_gap_in_list(hours)
+    return fix_gap_in_list(hours), threshold, frame_count
 
 
 class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
@@ -143,6 +149,9 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
+        # TODO: Once we can identify user generated events this should be
+        # updated to include all user generated events instead of focusing
+        # solely on browser events.
         query = 'source_short:"WEBHIST"'
         return_fields = ['timestamp', 'url', 'tag']
 
@@ -158,15 +167,23 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         data_frame['hour'] = pd.to_numeric(
             data_frame.datetime.dt.strftime('%H'))
 
-        activity_hours = get_active_hours(data_frame)
+        activity_hours, threshold, aggregation = get_active_hours(data_frame)
+
+        hour_count = dict(aggregation.values.tolist())
         data_frame_outside = data_frame[~data_frame.hour.isin(activity_hours)]
 
         for event in utils.get_events_from_data_frame(
                 data_frame_outside, self.datastore):
             event.add_tags(['outside-active-hours'])
+            hour = event.source.get('hour')
+            event.add_attributes(
+                {'activity_summary': (
+                    'Number of events for this hour ({0:d): {1:d}, with the '
+                    'threshold value: {2:0.2f}').format(
+                        hour, hour_count.get(hour), threshold)})
             event.commit()
 
-        return 'Tagged {0:d} as outside of normal active hours.'.format(
+        return 'Tagged {0:d} events as outside of normal active hours.'.format(
             data_frame_outside.shape[0])
 
 

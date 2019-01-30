@@ -59,5 +59,5 @@ class TestBrowserTimeframePlugin(BaseTest):
             'datetime': date_array})
 
         expected_hours = [0, 1, 18, 19, 20, 21, 22, 23]
-        active_hours = browser_timeframe.get_active_hours(data_frame)
+        active_hours, _, _ = browser_timeframe.get_active_hours(data_frame)
         self.assertEquals(active_hours, expected_hours)
