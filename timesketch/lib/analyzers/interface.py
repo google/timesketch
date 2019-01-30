@@ -182,6 +182,8 @@ class Event(object):
             return
 
         existing_emoji_list = self.source.get('__ts_emojis', [])
+        if not isinstance(existing_emoji_list, (list, tuple)):
+            existing_emoji_list = []
         new_emoji_list = list(set().union(existing_emoji_list, emojis))
         updated_event_attribute = {'__ts_emojis': new_emoji_list}
         self._update(updated_event_attribute)

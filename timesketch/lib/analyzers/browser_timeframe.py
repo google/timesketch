@@ -154,7 +154,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         # updated to include all user generated events instead of focusing
         # solely on browser events.
         query = 'source_short:"WEBHIST"'
-        return_fields = ['timestamp', 'url', 'tag']
+        return_fields = ['timestamp', 'url', 'tag', '__ts_emojis']
 
         data_frame = self.event_pandas(
             query_string=query, return_fields=return_fields)
