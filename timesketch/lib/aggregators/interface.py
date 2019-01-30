@@ -94,12 +94,11 @@ class BaseAggregator(object):
         return chart.to_html()
 
     def to_dict(self):
-        return dict(values=self.cached_result.get('values'))
+        return dict(values=self.cached_result.values)
 
     def run(self, *args, **kwargs):
         """Entry point for the aggregator."""
         self.cached_result = self.run_wrapper(*args, **kwargs)
-        return self.cached_result
 
     def run_wrapper(self, *args, **kwargs):
         raise NotImplementedError
