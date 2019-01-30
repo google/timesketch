@@ -178,7 +178,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
             hour = event.source.get('hour')
             event.add_attributes(
                 {'activity_summary': (
-                    'Number of events for this hour ({0:d): {1:d}, with the '
+                    'Number of events for this hour ({0:d}): {1:d}, with the '
                     'threshold value: {2:0.2f}').format(
                         hour, hour_count.get(hour), threshold)})
             event.commit()
