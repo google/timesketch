@@ -118,11 +118,11 @@ def get_active_hours(frame):
     # There should either be a single run or at most two.
     number_runs = len(runs)
     if number_runs == 1:
-        return hours
+        return hours, threshold, frame_count
 
     elif number_runs == 2 and runs[0][0] == 0:
         # Two runs, first one starts at hour zero.
-        return hours
+        return hours, threshold, frame_count
 
     return fix_gap_in_list(hours), threshold, frame_count
 
