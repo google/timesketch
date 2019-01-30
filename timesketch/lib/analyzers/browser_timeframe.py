@@ -167,6 +167,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         data_frame['hour'] = pd.to_numeric(
             data_frame.datetime.dt.strftime('%H'))
 
+        total_count = data_frame.shape[0]
         activity_hours, threshold, aggregation = get_active_hours(data_frame)
 
         hour_count = dict(aggregation.values.tolist())
@@ -183,8 +184,9 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                         hour, hour_count.get(hour), threshold)})
             event.commit()
 
-        return 'Tagged {0:d} events as outside of normal active hours.'.format(
-            data_frame_outside.shape[0])
+        return (
+            'Tagged {0:d} out of {1:d} events as outside of normal '
+            'active hours.').format(data_frame_outside.shape[0], total_count)
 
 
 manager.AnalysisManager.register_analyzer(BrowserTimeframeSketchPlugin)
