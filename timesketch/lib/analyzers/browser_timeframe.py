@@ -82,7 +82,7 @@ def fix_gap_in_list(hour_list):
     return sorted(hours)
 
 
-def get_hours(frame):
+def get_active_hours(frame):
     """Return a list of the hours with the most activity within a frame.
 
     Args:
@@ -158,7 +158,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         data_frame['hour'] = pd.to_numeric(
             data_frame.datetime.dt.strftime('%H'))
 
-        activity_hours = get_hours(data_frame)
+        activity_hours = get_active_hours(data_frame)
         data_frame_outside = data_frame[~data_frame.hour.isin(activity_hours)]
 
         for event in utils.get_events_from_data_frame(
