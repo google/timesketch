@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import pandas as pd
 
+from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import utils
@@ -161,6 +162,8 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         if not data_frame.shape[0]:
             return 'No browser events discovered.'
 
+        sleeping_emoji = emojis.get_emoji('SLEEPING_FACE')
+
         data_frame['timestamp'] = pd.to_numeric(data_frame.timestamp)
         data_frame['datetime'] = pd.to_datetime(
             data_frame.timestamp / 1e6, utc=True, unit='s')
@@ -177,11 +180,14 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                 data_frame_outside, self.datastore):
             event.add_tags(['outside-active-hours'])
             hour = event.source.get('hour')
+            this_hour_count = hour_count.get(hour)
             event.add_attributes(
                 {'activity_summary': (
                     'Number of events for this hour ({0:d}): {1:d}, with the '
                     'threshold value: {2:0.2f}').format(
-                        hour, hour_count.get(hour), threshold)})
+                        hour, this_hour_count, threshold),
+                 'hour_count': this_hour_count})
+            event.add_emojis([sleeping_emoji])
             event.commit()
 
         return (

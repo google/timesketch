@@ -33,6 +33,7 @@ EMOJI_MAP = {
     'SATELLITE': emoji('&#x1F4E1', 'Domain activity'),
     'SCREEN': emoji('&#x1F5B5', 'Screensaver activity'),
     'SKULL_CROSSBONE': emoji('&#x2620', 'Suspicious entry'),
+    'SLEEPING_FACE': emoji('&#1F634', 'Activity outside of regular hours'),
     'UNLOCK': emoji('&#x1F513', 'Logoff activity'),
     'WASTEBASKET': emoji('&#x1F5D1', 'Deletion activity')
 }
