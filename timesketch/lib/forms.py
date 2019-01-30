@@ -168,6 +168,8 @@ class ExploreForm(BaseForm):
     filter = StringField(u'Filter')
     dsl = StringField(u'DSL')
     fields = StringField(u'Fields', default='')
+    enable_scroll = BooleanField(
+        u'Enable scroll', false_values={False, u'false', u''}, default=False)
     scroll_id = StringField(u'Scroll ID', default='')
 
 
