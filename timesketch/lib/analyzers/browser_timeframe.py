@@ -164,7 +164,6 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
 
         sleeping_emoji = emojis.get_emoji('SLEEPING_FACE')
 
-        print data_frame.columns
         data_frame['timestamp'] = pd.to_numeric(data_frame.timestamp)
         data_frame['datetime'] = pd.to_datetime(
             data_frame.timestamp / 1e6, utc=True, unit='s')

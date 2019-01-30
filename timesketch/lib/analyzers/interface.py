@@ -508,7 +508,7 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             query_filter=query_filter,
             query_dsl=query_dsl,
             indices=indices,
-            return_fields=','.join(return_fields),
+            return_fields=return_fields,
         )
 
         events = []
