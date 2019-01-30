@@ -516,6 +516,7 @@ class Sketch(BaseResource):
             'filter': query_filter,
             'dsl': query_dsl,
             'fields': return_fields,
+            'enable_scroll': True,
         }
 
         response = self.api.session.post(resource_url, json=form_data)

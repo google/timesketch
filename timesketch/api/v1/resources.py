@@ -599,6 +599,7 @@ class ExploreResource(ResourceMixin, Resource):
         query_dsl = form.dsl.data
         query_filter = form.filter.data
         return_fields = form.fields.data
+        enable_scroll = form.enable_scroll.data
         scroll_id = form.scroll_id.data
 
         if not return_fields:
@@ -636,7 +637,7 @@ class ExploreResource(ResourceMixin, Resource):
                 indices,
                 aggregations=None,
                 return_fields=return_fields,
-                enable_scroll=False)
+                enable_scroll=enable_scroll)
 
         # Get labels for each event that matches the sketch.
         # Remove all other labels.
