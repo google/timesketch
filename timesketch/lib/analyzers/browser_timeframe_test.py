@@ -11,10 +11,10 @@ from timesketch.lib.testlib import BaseTest
 class TestBrowserTimeframePlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
-    def test_get_runs(self):
-        """Test the get_runs function."""
+    def test_get_list_of_consecutive_sequences(self):
+        """Test the get_list_of_consecutive_sequences function."""
         hours = [0, 1, 2, 3, 9, 10, 11, 12, 13, 14]
-        runs = browser_timeframe.get_runs(hours)
+        runs = browser_timeframe.get_list_of_consecutive_sequences(hours)
 
         self.assertEquals(len(runs), 2)
 
@@ -27,7 +27,7 @@ class TestBrowserTimeframePlugin(BaseTest):
         self.assertEquals(second_run[1], 14)
 
         hours = [0, 2, 3, 9, 10, 12, 14]
-        runs = browser_timeframe.get_runs(hours)
+        runs = browser_timeframe.get_list_of_consecutive_sequences(hours)
         self.assertEquals(len(runs), 5)
 
     def test_fix_gap_in_list(self):

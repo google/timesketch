@@ -9,7 +9,7 @@ from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import utils
 
 
-def get_runs(hour_list):
+def get_list_of_consecutive_sequences(hour_list):
     """Returns a list of runs from a list of numbers.
 
     Args:
@@ -57,7 +57,7 @@ def fix_gap_in_list(hour_list):
         two runs. Therefore if there are more than two runs after
         all gaps have been filled the "extra" runs will be dropped.
     """
-    runs = get_runs(hour_list)
+    runs = get_list_of_consecutive_sequences(hour_list)
     len_runs = len(runs)
 
     for i in range(0, len_runs - 1):
@@ -67,7 +67,7 @@ def fix_gap_in_list(hour_list):
             hour_list.append(upper + 1)
 
     hours = sorted(hour_list)
-    runs = get_runs(hour_list)
+    runs = get_list_of_consecutive_sequences(hour_list)
 
     if len(runs) <= 2:
         return hours
@@ -113,7 +113,7 @@ def get_active_hours(frame):
     hours = list(frame_count[threshold_filter].hour.values)
     hours = sorted(hours)
 
-    runs = get_runs(hours)
+    runs = get_list_of_consecutive_sequences(hours)
 
     # There should either be a single run or at most two.
     number_runs = len(runs)
@@ -153,7 +153,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         # TODO: Once we can identify user generated events this should be
         # updated to include all user generated events instead of focusing
         # solely on browser events.
-        query = 'source_short:"WEBHIST"'
+        query = 'source_short:"WEBHIST" OR source:"WEBHIST"'
 
         return_fields = ['timestamp', 'url', 'tag', '__ts_emojis']
 
@@ -166,9 +166,9 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         sleeping_emoji = emojis.get_emoji('SLEEPING_FACE')
 
         # This query filters out all timestamps that have a zero timestamp as
-        # well as those that occure after 2035-01-01, this may need to be
+        # well as those that occure after 2038-01-01, this may need to be
         # changed in the future.
-        data_frame = data_frame[data_frame.timestamp < 2051222400000000]
+        data_frame = data_frame[data_frame.timestamp < 2145916800000000]
         data_frame['timestamp'] = pd.to_numeric(data_frame.timestamp)
         data_frame['datetime'] = pd.to_datetime(
             data_frame.timestamp / 1e6, utc=True, unit='s')
