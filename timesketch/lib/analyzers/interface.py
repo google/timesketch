@@ -182,6 +182,8 @@ class Event(object):
             return
 
         existing_emoji_list = self.source.get('__ts_emojis', [])
+        if not isinstance(existing_emoji_list, (list, tuple)):
+            existing_emoji_list = []
         new_emoji_list = list(set().union(existing_emoji_list, emojis))
         updated_event_attribute = {'__ts_emojis': new_emoji_list}
         self._update(updated_event_attribute)
@@ -498,29 +500,19 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             default_fields = definitions.DEFAULT_SOURCE_FIELDS
             return_fields.extend(default_fields)
             return_fields = list(set(return_fields))
-            results = self.datastore.search(
-                sketch_id=self.sketch.id,
-                query_string=query_string,
-                query_filter=query_filter,
-                query_dsl=query_dsl,
-                indices=indices,
-                return_fields=','.join(return_fields)
-            )
-        else:
-            results = self.datastore.search(
-                sketch_id=self.sketch.id,
-                query_string=query_string,
-                query_filter=query_filter,
-                query_dsl=query_dsl,
-                indices=indices,
-            )
+            return_fields = ','.join(return_fields)
 
-        raw_events = results.get('hits', {}).get('hits')
-        if not raw_events:
-            return pandas.DataFrame()
+        results = self.datastore.search_stream(
+            sketch_id=self.sketch.id,
+            query_string=query_string,
+            query_filter=query_filter,
+            query_dsl=query_dsl,
+            indices=indices,
+            return_fields=return_fields,
+        )
 
         events = []
-        for event in raw_events:
+        for event in results:
             source = event.get('_source')
             source['_id'] = event.get('_id')
             source['_type'] = event.get('_type')

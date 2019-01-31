@@ -15,6 +15,7 @@
 
 # Register all analyzers here by importing them.
 from timesketch.lib.analyzers import browser_search
+from timesketch.lib.analyzers import browser_timeframe
 from timesketch.lib.analyzers import domain
 from timesketch.lib.analyzers import feature_extraction
 from timesketch.lib.analyzers import account_finder
