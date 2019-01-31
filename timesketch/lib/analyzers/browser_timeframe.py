@@ -168,7 +168,9 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         # This query filters out all timestamps that have a zero timestamp as
         # well as those that occure after 2038-01-01, this may need to be
         # changed in the future.
-        data_frame = data_frame[data_frame.timestamp < 2145916800000000]
+        data_frame = data_frame[
+            (data_frame.timestamp > 0) & (
+                data_frame.timestamp < 2145916800000000)]
         data_frame['timestamp'] = pd.to_numeric(data_frame.timestamp)
         data_frame['datetime'] = pd.to_datetime(
             data_frame.timestamp / 1e6, utc=True, unit='s')
