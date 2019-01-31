@@ -330,10 +330,10 @@ class ElasticsearchDataStore(object):
         """
 
         if not query_filter.get(u'size'):
-            query_filter[u'size'] = self.DEFAULT_STREAM_LIMIT
+            query_filter[u'size'] = self.DEFAULT_STREAM_LIMIT / 2
 
         if not query_filter.get(u'terminate_after'):
-            query_filter[u'terminate_after'] = self.DEFAULT_STREAM_LIMIT
+            query_filter[u'terminate_after'] = self.DEFAULT_STREAM_LIMIT / 2
 
         result = self.search(
             sketch_id=sketch_id,
@@ -352,7 +352,7 @@ class ElasticsearchDataStore(object):
 
         while scroll_size > 0:
             # pylint: disable=unexpected-keyword-arg
-            result = self.client.scroll(scroll_id=scroll_id, scroll=u'1m')
+            result = self.client.scroll(scroll_id=scroll_id, scroll=u'5m')
             scroll_id = result[u'_scroll_id']
             scroll_size = len(result[u'hits'][u'hits'])
             for event in result[u'hits'][u'hits']:
