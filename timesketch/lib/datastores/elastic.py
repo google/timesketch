@@ -65,7 +65,7 @@ class ElasticsearchDataStore(object):
     DEFAULT_SIZE = 100
     DEFAULT_LIMIT = DEFAULT_SIZE  # Max events to return
     DEFAULT_FROM = 0
-    DEFAULT_STREAM_LIMIT = 10000  # Max events to return when streaming results
+    DEFAULT_STREAM_LIMIT = 5000 # Max events to return when streaming results
 
     def __init__(self, host=u'127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
@@ -330,10 +330,10 @@ class ElasticsearchDataStore(object):
         """
 
         if not query_filter.get(u'size'):
-            query_filter[u'size'] = self.DEFAULT_STREAM_LIMIT / 2
+            query_filter[u'size'] = self.DEFAULT_STREAM_LIMIT
 
         if not query_filter.get(u'terminate_after'):
-            query_filter[u'terminate_after'] = self.DEFAULT_STREAM_LIMIT / 2
+            query_filter[u'terminate_after'] = self.DEFAULT_STREAM_LIMIT
 
         result = self.search(
             sketch_id=sketch_id,
