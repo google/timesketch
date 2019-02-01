@@ -22,6 +22,9 @@ def get_list_of_consecutive_sequences(hour_list):
         of (1,3), (7, 9).
     """
     runs = []
+    if not hour_list:
+        return runs
+
     start = hour_list[0]
     now = start
     for hour in hour_list[1:]:
@@ -57,6 +60,9 @@ def fix_gap_in_list(hour_list):
         two runs. Therefore if there are more than two runs after
         all gaps have been filled the "extra" runs will be dropped.
     """
+    if not hour_list:
+        return hour_list
+
     runs = get_list_of_consecutive_sequences(hour_list)
     len_runs = len(runs)
 
@@ -179,6 +185,9 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
 
         total_count = data_frame.shape[0]
         activity_hours, threshold, aggregation = get_active_hours(data_frame)
+
+        if not activity_hours:
+            return 'Did not discover any activity hours.'
 
         hour_count = dict(aggregation.values.tolist())
         data_frame_outside = data_frame[~data_frame.hour.isin(activity_hours)]
