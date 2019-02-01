@@ -65,7 +65,7 @@ class ElasticsearchDataStore(object):
     DEFAULT_SIZE = 100
     DEFAULT_LIMIT = DEFAULT_SIZE  # Max events to return
     DEFAULT_FROM = 0
-    DEFAULT_STREAM_LIMIT = 10000  # Max events to return when streaming results
+    DEFAULT_STREAM_LIMIT = 5000 # Max events to return when streaming results
 
     def __init__(self, host=u'127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
@@ -352,7 +352,7 @@ class ElasticsearchDataStore(object):
 
         while scroll_size > 0:
             # pylint: disable=unexpected-keyword-arg
-            result = self.client.scroll(scroll_id=scroll_id, scroll=u'1m')
+            result = self.client.scroll(scroll_id=scroll_id, scroll=u'5m')
             scroll_id = result[u'_scroll_id']
             scroll_size = len(result[u'hits'][u'hits'])
             for event in result[u'hits'][u'hits']:
