@@ -84,7 +84,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         except re.error as exception:
             logging.warning((
                 'Regular expression failed to compile, with '
-                'error: {0:s}').format(exception))
+                'error: {0!s}').format(exception))
             return ''
 
         emoji_names = config.get('emojis', [])

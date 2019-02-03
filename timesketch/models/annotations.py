@@ -123,14 +123,16 @@ class LabelMixin(object):
             class_name = '{0:s}Label'.format(self.__name__)
 
         self.Label = type(class_name, (
-                Label,
-                BaseModel,),
-            dict(
-                __tablename__='{0:s}_label'.format(self.__tablename__),
-                parent_id=Column(
-                    Integer,
-                    ForeignKey('{0:s}.id'.format(self.__tablename__))),
-                parent=relationship(self)))
+            Label,
+            BaseModel,),
+                          dict(
+                              __tablename__='{0:s}_label'.format(
+                                  self.__tablename__),
+                              parent_id=Column(
+                                  Integer,
+                                  ForeignKey('{0:s}.id'.format(
+                                      self.__tablename__))),
+                              parent=relationship(self)))
         return relationship(self.Label)
 
 

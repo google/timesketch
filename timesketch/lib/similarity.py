@@ -17,6 +17,8 @@ from __future__ import unicode_literals
 
 import re
 
+from six.moves import filter
+
 from datasketch.minhash import MinHash
 from datasketch.lsh import MinHashLSH
 
