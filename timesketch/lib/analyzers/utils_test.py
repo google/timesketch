@@ -15,6 +15,8 @@
 
 from __future__ import unicode_literals
 
+import pandas as pd
+
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.analyzers import utils
 
@@ -66,3 +68,20 @@ class TestAnalyzerUtils(BaseTest):
         provider = utils.get_cdn_provider(domain)
         self.assertIsInstance(provider, basestring)
         self.assertEquals(provider, '')
+
+    def test_get_events_from_data_frame(self):
+        """Test getting all events from data frame."""
+        lines = [
+            {'_id': '123', '_type': 'manual', '_index': 'asdfasdf',
+             'tool': 'isskeid'},
+            {'_id': '124', '_type': 'manual', '_index': 'asdfasdf',
+             'tool': 'tong'},
+            {'_id': '125', '_type': 'manual', '_index': 'asdfasdf',
+             'tool': 'klemma'},
+        ]
+        frame = pd.DataFrame(lines)
+
+        events = list(utils.get_events_from_data_frame(frame, None))
+        self.assertEquals(len(events), 3)
+        ids = [x.event_id for x in events]
+        self.assertEquals(set(ids), set(['123', '124', '125']))
