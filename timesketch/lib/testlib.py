@@ -158,6 +158,15 @@ class MockDataStore(object):
         """Mock creating an index."""
         return
 
+    @property
+    def version(self):
+        """Get Elasticsearch version.
+
+        Returns:
+          Version number as a string.
+        """
+        return '6.0'
+
 
 class MockGraphDatabase(object):
     """A mock implementation of a Datastore."""
