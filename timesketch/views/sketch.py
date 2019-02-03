@@ -15,8 +15,10 @@
 
 from __future__ import unicode_literals
 
+import codecs
 import csv
 import json
+
 import six
 from six import StringIO
 
@@ -479,8 +481,12 @@ def export(sketch_id):
     csv_writer = csv.DictWriter(csv_out, fieldnames=fieldnames)
     csv_writer.writeheader()
     for _event in result['hits']['hits']:
-        row = dict((k, v.encode('utf-8') if isinstance(v, six.binary_type) else v)
-                   for k, v in iter(_event['_source'].items()))
+        sources = _event['_source']
+        row = {}
+        for key, value in iter(sources.items()):
+            if isinstance(value, six.binary_type):
+                value = codecs.decode(value, 'utf-8')
+            row[key] = value
         row['_index'] = _event['_index']
         if isinstance(row['_index'], six.binary_type):
             row['_index'] = row['_index'].encode('utf-8')

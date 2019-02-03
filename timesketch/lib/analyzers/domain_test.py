@@ -23,5 +23,5 @@ class TestDomainPlugin(BaseTest):
         index_name = 'test'
         sketch_id = 1
         analyzer = domain.DomainSketchPlugin(index_name, sketch_id)
-        self.assertEquals(analyzer.index_name, index_name)
-        self.assertEquals(analyzer.sketch.id, sketch_id)
+        self.assertEqual(analyzer.index_name, index_name)
+        self.assertEqual(analyzer.sketch.id, sketch_id)

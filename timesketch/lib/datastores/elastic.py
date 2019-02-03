@@ -16,13 +16,17 @@
 from __future__ import unicode_literals
 
 from collections import Counter
+import codecs
 import json
 import logging
 
 from uuid import uuid4
 
+import six
+
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
+# pylint: disable=redefined-builtin
 from elasticsearch.exceptions import ConnectionError
 from flask import abort
 
@@ -487,8 +491,12 @@ class ElasticsearchDataStore(object):
             except ConnectionError:
                 raise RuntimeError('Unable to connect to Timesketch backend.')
         # We want to return unicode here to keep SQLalchemy happy.
-        index_name = unicode(index_name.decode(encoding='utf-8'))
-        doc_type = unicode(doc_type.decode(encoding='utf-8'))
+        if not isinstance(index_name, six.text_type):
+            index_name = codecs.decode(index_name, 'utf-8')
+
+        if not isinstance(doc_type, six.text_type):
+            doc_type = codecs.decode(doc_type, 'utf-8')
+
         return index_name, doc_type
 
     def delete_index(self, index_name):
@@ -520,8 +528,8 @@ class ElasticsearchDataStore(object):
         if event:
             # Make sure we have decoded strings in the event dict.
             event = {
-                k.decode('utf8'): (v.decode('utf8')
-                                    if isinstance(v, str) else v)
+                k.decode('utf8'): (codecs.decode(v, 'utf8')
+                                   if isinstance(v, six.binary_type) else v)
                 for k, v in event.items()
             }
 

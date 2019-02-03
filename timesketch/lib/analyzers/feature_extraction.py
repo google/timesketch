@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 import logging
 import re
 
+import six
+
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
@@ -97,7 +99,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         event_counter = 0
         for event in events:
             attribute_field = event.source.get(attribute)
-            if isinstance(attribute_field, (str, unicode)):
+            if isinstance(attribute_field, six.text_type):
                 attribute_value = attribute_field.lower()
             elif isinstance(attribute_field, (list, tuple)):
                 attribute_value = ','.join(attribute_field)

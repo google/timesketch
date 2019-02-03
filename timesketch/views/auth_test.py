@@ -35,7 +35,7 @@ class AuthViewTest(BaseTest):
         """Test the login view handler with an authenticated session."""
         self.login()
         response = self.client.get('/login/')
-        self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
     def test_login_view_sso_authenticated(self):
         """Test the login view handler with an SSO authenticated session."""
@@ -53,10 +53,10 @@ class AuthViewTest(BaseTest):
             self.assertEqual(current_user.username, 'test1')
             self.assertIn(self.group1, current_user.groups)
             self.assertNotIn(self.group2, current_user.groups)
-            self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
     def test_logout_view(self):
         """Test the logout view handler."""
         self.login()
         response = self.client.get('/logout/')
-        self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)

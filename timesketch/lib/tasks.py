@@ -19,6 +19,8 @@ import logging
 import subprocess
 import traceback
 
+import six
+
 from celery import chain
 from celery import signals
 from flask import current_app
@@ -227,7 +229,7 @@ def run_sketch_init(index_name_list):
     Returns:
         List with first entry of index_name_list.
     """
-    if isinstance(index_name_list, basestring):
+    if isinstance(index_name_list, six.string_types):
         index_name_list = [index_name_list]
     return index_name_list[:1][0]
 
@@ -284,7 +286,7 @@ def run_email_result_task(index_name, sketch_id=None):
         try:
             send_email(subject, body, to_username, use_html=True)
         except RuntimeError as e:
-            return unicode(e)
+            return repr(e)
 
     return 'Sent email to {0:s}'.format(to_username)
 

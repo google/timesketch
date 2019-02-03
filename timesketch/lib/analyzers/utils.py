@@ -168,7 +168,7 @@ def get_domain_from_url(url):
         String with domain from URL.
     """
     # TODO: See if we can optimize this because it is rather slow.
-    domain_parsed = urlparse(url)
+    domain_parsed = urlparse.urlparse(url)
     domain_full = domain_parsed.netloc
     domain, _, _ = domain_full.partition(':')
     return domain

@@ -483,7 +483,7 @@ class BaseTest(TestCase):
             response = self.client.post(self.resource_url)
         response_data = codecs.decode(response.data, 'utf-8')
         self.assertIn('/login/', response_data)
-        self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
 
 class ModelBaseTest(BaseTest):
@@ -494,4 +494,4 @@ class ModelBaseTest(BaseTest):
         db_obj = model_cls.query.get(1)
         for x in expected_result:
             k, v = x[0], x[1]
-            self.assertEquals(db_obj.__getattribute__(k), v)
+            self.assertEqual(db_obj.__getattribute__(k), v)

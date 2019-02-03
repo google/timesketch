@@ -66,4 +66,4 @@ class TestAnalysisSketch(BaseTest):
         indices = sketch.get_all_indices()
         self.assertIsInstance(indices, list)
         self.assertEqual(len(indices), 1)
-        self.assertEquals(indices[0], 'test')
+        self.assertEqual(indices[0], 'test')

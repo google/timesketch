@@ -33,43 +33,43 @@ class TestAnalyzerUtils(BaseTest):
         """Test get_domain_from_url function."""
         url = 'http://www.example.com/?foo=bar'
         domain = utils.get_domain_from_url(url)
-        self.assertEquals(domain, 'www.example.com')
+        self.assertEqual(domain, 'www.example.com')
 
     def test_get_tld_from_domain(self):
         """Test get_tld_from_domain function."""
         domain = 'this.is.a.subdomain.example.com'
         tld = utils.get_tld_from_domain(domain)
-        self.assertEquals(tld, 'example.com')
+        self.assertEqual(tld, 'example.com')
 
         domain = 'a'
         tld = utils.get_tld_from_domain(domain)
-        self.assertEquals(tld, 'a')
+        self.assertEqual(tld, 'a')
 
         domain = 'example.com'
         tld = utils.get_tld_from_domain(domain)
-        self.assertEquals(tld, 'example.com')
+        self.assertEqual(tld, 'example.com')
 
     def test_strip_www_from_domain(self):
         """Test strip_www_from_domain function."""
         domain = 'www.mbl.is'
         stripped = utils.strip_www_from_domain(domain)
-        self.assertEquals(stripped, 'mbl.is')
+        self.assertEqual(stripped, 'mbl.is')
 
         domain = 'mbl.is'
         stripped = utils.strip_www_from_domain(domain)
-        self.assertEquals(stripped, domain)
+        self.assertEqual(stripped, domain)
 
     def test_get_cdn_provider(self):
         """Test get_cdn_provider function."""
         domain = 'foobar.gstatic.com'
         provider = utils.get_cdn_provider(domain)
         self.assertIsInstance(provider, six.text_type)
-        self.assertEquals(provider, 'Google')
+        self.assertEqual(provider, 'Google')
 
         domain = 'www.mbl.is'
         provider = utils.get_cdn_provider(domain)
         self.assertIsInstance(provider, six.text_type)
-        self.assertEquals(provider, '')
+        self.assertEqual(provider, '')
 
     def test_get_events_from_data_frame(self):
         """Test getting all events from data frame."""
@@ -84,6 +84,6 @@ class TestAnalyzerUtils(BaseTest):
         frame = pd.DataFrame(lines)
 
         events = list(utils.get_events_from_data_frame(frame, None))
-        self.assertEquals(len(events), 3)
+        self.assertEqual(len(events), 3)
         ids = [x.event_id for x in events]
-        self.assertEquals(set(ids), set(['123', '124', '125']))
+        self.assertEqual(set(ids), set(['123', '124', '125']))

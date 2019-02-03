@@ -28,8 +28,7 @@ class UserModelTest(ModelBaseTest):
         Test that the test user has the expected data stored in the
         database.
         """
-        expected_result = frozenset([('name', 'test1'), ('username',
-                                                           'test1')])
+        expected_result = frozenset([('name', 'test1'), ('username', 'test1')])
         self._test_db_object(expected_result=expected_result, model_cls=User)
 
     def test_set_password(self):

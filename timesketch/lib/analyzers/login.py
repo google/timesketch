@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 import logging
 
+import six
+
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
@@ -164,7 +166,7 @@ class LoginSketchPlugin(interface.BaseSketchAnalyzer):
             tags_to_add = []
             attribute_dict = {}
 
-            if isinstance(identifier, (str, unicode)):
+            if isinstance(identifier, six.text_type):
                 try:
                     identifier = int(identifier, 10)
                 except ValueError:

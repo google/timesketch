@@ -29,14 +29,15 @@ POST /sketches/:sketch_id/views/
 
 from __future__ import unicode_literals
 
-import six
-
+import codecs
 import datetime
 import json
 import hashlib
 import os
 import time
 import uuid
+
+import six
 
 from dateutil import parser
 from flask import abort
@@ -789,7 +790,8 @@ class EventCreateResource(ResourceMixin, Resource):
 
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
-            index_name = unicode(hashlib.md5(index_name_seed).hexdigest())
+            index_name = codecs.decode(
+                hashlib.md5(index_name_seed).hexdigest(), 'utf-8')
 
             # Try to create index
             try:
@@ -866,7 +868,8 @@ class EventResource(ResourceMixin, Resource):
     def __init__(self):
         super(EventResource, self).__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument('searchindex_id', type=six.text_type, required=True)
+        self.parser.add_argument(
+            'searchindex_id', type=six.text_type, required=True)
         self.parser.add_argument('event_id', type=six.text_type, required=True)
 
     @login_required
@@ -1035,8 +1038,13 @@ class UploadFileResource(ResourceMixin, Resource):
 
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
-            filename = unicode(uuid.uuid4().hex)
-            index_name = unicode(uuid.uuid4().hex)
+            filename = uuid.uuid4().hex
+            if not isinstance(filename, six.text_type):
+                filename = codecs.decode(filename, 'utf-8')
+
+            index_name = uuid.uuid4().hex
+            if not isinstance(index_name, six.text_type):
+                index_name = codecs.decode(index_name, 'utf-8')
 
             file_path = os.path.join(upload_folder, filename)
             file_storage.save(file_path)
@@ -1300,7 +1308,9 @@ class TimelineCreateResource(ResourceMixin, Resource):
 
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
-            index_name = unicode(uuid.uuid4().hex)
+            index_name = uuid.uuid4().hex
+            if not isinstance(index_name, six.text_type):
+                index_name = codecs.decode(index_name, 'utf-8')
 
             # Create the search index in the Timesketch database
             searchindex = SearchIndex.get_or_create(

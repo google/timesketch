@@ -15,11 +15,14 @@
 """This module is for management of the Timesketch application."""
 from __future__ import unicode_literals
 
+import codecs
 import os
 import pwd
 import sys
 import uuid
 import yaml
+
+import six
 
 from flask import current_app
 from flask_migrate import MigrateCommand
@@ -83,8 +86,9 @@ class AddUser(Command):
         """Creates the user."""
         if not password:
             password = self.get_password_from_prompt()
-        password = unicode(password.decode(encoding='utf-8'))
-        username = unicode(username.decode(encoding='utf-8'))
+        if not isinstance(password, six.text_type):
+            password = codecs.decode(password, 'utf-8')
+        username = codecs.decode(username, 'utf-8')
         user = User.get_or_create(username=username)
         user.set_password(plaintext=password)
         db_session.add(user)
@@ -102,7 +106,8 @@ class AddGroup(Command):
     # pylint: disable=arguments-differ, method-hidden
     def run(self, name):
         """Creates the group."""
-        name = unicode(name.decode(encoding='utf-8'))
+        if not isinstance(name, six.text_type):
+            name = codecs.decode(name, 'utf-8')
         group = Group.get_or_create(name=name)
         db_session.add(group)
         db_session.commit()
@@ -128,8 +133,12 @@ class GroupManager(Command):
     # pylint: disable=arguments-differ, method-hidden
     def run(self, remove, group_name, user_name):
         """Add the user to the group."""
-        group_name = unicode(group_name.decode(encoding='utf-8'))
-        user_name = unicode(user_name.decode(encoding='utf-8'))
+        if not isinstance(group_name, six.text_type):
+            group_name = codecs.decode(group_name, 'utf-8')
+
+        if not isinstance(user_name, six.text_type):
+            user_name = codecs.decode(user_name, 'utf-8')
+
         group = Group.query.filter_by(name=group_name).first()
         user = User.query.filter_by(username=user_name).first()
 
@@ -204,7 +213,9 @@ class PurgeTimeline(Command):
         Args:
             index_name: The name of the index in Elasticsearch
         """
-        index_name = unicode(index_name.decode(encoding='utf-8'))
+        if not isinstance(index_name, six.text_type):
+            index_name = codecs.decode(index_name, 'utf-8')
+
         searchindex = SearchIndex.query.filter_by(
             index_name=index_name).first()
 
@@ -345,8 +356,10 @@ class ImportTimeline(Command):
         user = None
         if not username:
             username = pwd.getpwuid(os.stat(file_path).st_uid).pw_name
-        if username is not 'root':
-            user = User.query.filter_by(username=unicode(username)).first()
+        if not username == 'root':
+            if not isinstance(username, six.text_type):
+                username = codecs.decode(username, 'utf-8')
+            user = User.query.filter_by(username=username).first()
         if not user:
             sys.exit('Cannot determine user for file: {0:s}'.format(file_path))
 
@@ -364,7 +377,10 @@ class ImportTimeline(Command):
                 pass
 
         if not timeline_name:
-            timeline_name = unicode(filename.replace('_', ' '))
+            if not isinstance(timeline_name, six.text_type):
+                timeline_name = codecs.decode(timeline_name, 'utf-8')
+
+            timeline_name = timeline_name.replace('_', ' ')
             # Remove sketch ID if present in the filename.
             timeline_parts = timeline_name.split()
             if timeline_parts[0].isdigit():
@@ -385,7 +401,10 @@ class ImportTimeline(Command):
             db_session.add(sketch)
             db_session.commit()
 
-        index_name = unicode(uuid.uuid4().hex)
+        index_name = uuid.uuid4().hex
+        if not isinstance(index_name, six.text_type):
+            index_name = codecs.decode(index_name, 'utf-8')
+
         searchindex = SearchIndex.get_or_create(
             name=timeline_name,
             description=timeline_name,

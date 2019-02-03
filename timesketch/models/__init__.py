@@ -82,7 +82,7 @@ class AclBaseQuery(BaseQuery):
         if not result_obj:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
         try:
-            if result_obj.get_status.status =='deleted':
+            if result_obj.get_status.status == 'deleted':
                 abort(HTTP_STATUS_CODE_NOT_FOUND)
         except AttributeError:
             pass

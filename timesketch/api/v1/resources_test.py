@@ -60,7 +60,7 @@ class SketchListResourceTest(BaseTest):
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
             content_type='application/json')
-        self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
 
 class SketchResourceTest(BaseTest):
@@ -109,9 +109,9 @@ class ViewListResourceTest(BaseTest):
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
             content_type='application/json')
-        self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
-        self.assertEquals(response_with_searchtemplate.status_code,
-                          HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(response_with_searchtemplate.status_code,
+                         HTTP_STATUS_CODE_CREATED)
 
 
 class ViewResourceTest(BaseTest):
@@ -134,7 +134,7 @@ class ViewResourceTest(BaseTest):
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
             content_type='application/json')
-        self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
     def test_invalid_user_in_view(self):
         """Authenticated request to get a view for another user."""
@@ -295,7 +295,7 @@ class EventAnnotationResourceTest(BaseTest):
                 data=json.dumps(data),
                 content_type='application/json')
             self.assertIsInstance(response.json, dict)
-            self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
     def test_post_annotate_invalid_index_resource(self):
         """
@@ -311,7 +311,7 @@ class EventAnnotationResourceTest(BaseTest):
             self.resource_url,
             data=json.dumps(data),
             content_type='application/json')
-        self.assertEquals(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
 
 
 class SearchIndexResourceTest(BaseTest):
@@ -330,7 +330,7 @@ class SearchIndexResourceTest(BaseTest):
             data=json.dumps(data),
             content_type='application/json')
         self.assertIsInstance(response.json, dict)
-        self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
 
 class TimelineListResourceTest(BaseTest):
@@ -345,7 +345,7 @@ class TimelineListResourceTest(BaseTest):
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
             content_type='application/json')
-        self.assertEquals(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
 
     def test_add_new_timeline_resource(self):
         """Authenticated request to add a timeline to a sketch."""
@@ -355,4 +355,4 @@ class TimelineListResourceTest(BaseTest):
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
             content_type='application/json')
-        self.assertEquals(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)

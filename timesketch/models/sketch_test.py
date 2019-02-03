@@ -35,9 +35,10 @@ class SketchModelTest(ModelBaseTest):
         Test that the test sketch has the expected data stored in the
         database.
         """
-        expected_result = frozenset([('name', 'Test 1'), ('description',
-                                                            'Test 1'),
-                                     ('user', self.user1)])
+        expected_result = frozenset([
+            ('name', 'Test 1'),
+            ('description', 'Test 1'),
+            ('user', self.user1)])
         self._test_db_object(expected_result=expected_result, model_cls=Sketch)
 
     def test_searchindex_model(self):
@@ -56,10 +57,12 @@ class SketchModelTest(ModelBaseTest):
         Test that the test timeline has the expected data stored in the
         database.
         """
-        expected_result = frozenset(
-            [('name', 'Timeline 1'), ('description',
-                                        'Timeline 1'), ('user', self.user1),
-             ('sketch', self.sketch1), ('searchindex', self.searchindex)])
+        expected_result = frozenset([
+            ('name', 'Timeline 1'),
+            ('description', 'Timeline 1'),
+            ('user', self.user1),
+            ('sketch', self.sketch1),
+            ('searchindex', self.searchindex)])
         self._test_db_object(
             expected_result=expected_result, model_cls=Timeline)
 
