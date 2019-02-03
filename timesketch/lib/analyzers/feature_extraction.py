@@ -82,6 +82,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         try:
             expression = re.compile(expression_string)
         except re.error as exception:
+            # pylint: disable=logging-format-interpolation
             logging.warning((
                 'Regular expression failed to compile, with '
                 'error: {0!s}').format(exception))
