@@ -15,6 +15,8 @@
 This module implements annotations that can be use on other database models.
 """
 
+from __future__ import unicode_literals
+
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
@@ -37,7 +39,7 @@ class BaseAnnotation(object):
         Returns:
             A column (instance of sqlalchemy.Column)
         """
-        return Column(Integer, ForeignKey(u'user.id'))
+        return Column(Integer, ForeignKey('user.id'))
 
     @declared_attr
     def user(self):
@@ -46,7 +48,7 @@ class BaseAnnotation(object):
         Returns:
             A relationship (instance of sqlalchemy.orm.relationship)
         """
-        return relationship(u'User')
+        return relationship('User')
 
 
 class Label(BaseAnnotation):
@@ -204,5 +206,5 @@ class StatusMixin(object):
             The status as a string
         """
         if not self.status:
-            self.status.append(self.Status(user=None, status=u'new'))
+            self.status.append(self.Status(user=None, status='new'))
         return self.status[0]

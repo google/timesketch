@@ -13,6 +13,8 @@
 # limitations under the License.
 """This package handles setting up and providing the database connection."""
 
+from __future__ import unicode_literals
+
 from flask import abort
 from flask_login import current_user
 from flask_sqlalchemy import BaseQuery
@@ -80,13 +82,13 @@ class AclBaseQuery(BaseQuery):
         if not result_obj:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
         try:
-            if result_obj.get_status.status == u'deleted':
+            if result_obj.get_status.status =='deleted':
                 abort(HTTP_STATUS_CODE_NOT_FOUND)
         except AttributeError:
             pass
         if result_obj.is_public:
             return result_obj
-        if not result_obj.has_permission(user=user, permission=u'read'):
+        if not result_obj.has_permission(user=user, permission='read'):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
         return result_obj
 

@@ -17,6 +17,8 @@ from __future__ import unicode_literals
 
 import pandas as pd
 
+import six
+
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.analyzers import utils
 
@@ -61,12 +63,12 @@ class TestAnalyzerUtils(BaseTest):
         """Test get_cdn_provider function."""
         domain = 'foobar.gstatic.com'
         provider = utils.get_cdn_provider(domain)
-        self.assertIsInstance(provider, basestring)
+        self.assertIsInstance(provider, six.text_type)
         self.assertEquals(provider, 'Google')
 
         domain = 'www.mbl.is'
         provider = utils.get_cdn_provider(domain)
-        self.assertIsInstance(provider, basestring)
+        self.assertIsInstance(provider, six.text_type)
         self.assertEquals(provider, '')
 
     def test_get_events_from_data_frame(self):

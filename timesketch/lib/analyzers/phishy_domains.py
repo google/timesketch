@@ -116,7 +116,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         domain_items = domain.split('.')
         domain_part = '.'.join(domain_items[:-1])
 
-        for watched_domain, watched_hash in domain_dict.iteritems():
+        for watched_domain, watched_hash in iter(domain_dict.items()):
             score = watched_hash.jaccard(minhash)
             if score < self.domain_scoring_threshold:
                 continue
@@ -206,7 +206,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         whitelist_encountered = False
         evil_emoji = emojis.get_emoji('SKULL_CROSSBONE')
         phishing_emoji = emojis.get_emoji('FISHING_POLE')
-        for domain, _ in domain_counter.iteritems():
+        for domain, _ in iter(domain_counter.items()):
             emojis_to_add = []
             tags_to_add = []
             text = None

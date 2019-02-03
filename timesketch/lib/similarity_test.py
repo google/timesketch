@@ -36,7 +36,7 @@ class TestSimilarityLibScorer(BaseTest):
         self.delimiters = [' ', '-', '/']
 
     @mock.patch(
-        u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+       'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
     def test_shingles_from_text(self):
         """Test splitting up a text string to words."""
@@ -47,7 +47,7 @@ class TestSimilarityLibScorer(BaseTest):
         self.assertEqual(len(shingles), 8)
 
     @mock.patch(
-        u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+       'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
     def test_minhash_from_text(self):
         """Test create minhash from text."""

@@ -13,6 +13,8 @@
 # limitations under the License.
 """Utilities for generating graphs from elasticsearch data."""
 
+from __future__ import unicode_literals
+
 # pylint: skip-file
 import sys
 
@@ -25,49 +27,49 @@ from xml.etree import ElementTree
 # TODO: Just for testing, remove as soon as graph analyzers are implemented.
 GRAPH_VIEWS = [
     {
-        u'name': u'Entire graph',
-        u'description': u'Show the entire graph.',
-        u'labels': [u'Browser'],
-        u'supported_os': [u'Darwin', u'Linux', u'Windows'],
-        u'form_data': {},
-        u'query': u'MATCH (:Sketch{sketch_id:{sketch_id}})<-[:HAS]-(a)-[b]->(c) RETURN *'
+        'name': 'Entire graph',
+        'description': 'Show the entire graph.',
+        'labels': ['Browser'],
+        'supported_os': ['Darwin', 'Linux', 'Windows'],
+        'form_data': {},
+        'query': 'MATCH (:Sketch{sketch_id:{sketch_id}})<-[:HAS]-(a)-[b]->(c) RETURN *'
     },
     {
-        u'name': u'Windows interactive logins',
-        u'description': u'Windows interactive logins.',
-        u'labels': [],
-        u'supported_os': [u'Windows'],
-        u'form_data': {
-            u'username': {
-                u'label': u'Username',
-                u'value': u'',
-                u'type': u'text',
-                u'validation': {u'required': True},
+        'name': 'Windows interactive logins',
+        'description': 'Windows interactive logins.',
+        'labels': [],
+        'supported_os': ['Windows'],
+        'form_data': {
+            'username': {
+                'label': 'Username',
+                'value': '',
+                'type': 'text',
+                'validation': {'required': True},
             },
-            u'machine': {
-                u'label': u'Machine',
-                u'value': u'',
-                u'type': u'text',
-                u'validation': {u'required': False},
+            'machine': {
+                'label': 'Machine',
+                'value': '',
+                'type': 'text',
+                'validation': {'required': False},
             }
         },
-        u'query': u'MATCH (:Sketch{sketch_id:{sketch_id}})<-[:HAS]-(user:WindowsADUser)-[r1:ACCESS]->(m1:WindowsMachine) WHERE r1.method = "Interactive" AND user.username = {username} RETURN *'
+        'query': 'MATCH (:Sketch{sketch_id:{sketch_id}})<-[:HAS]-(user:WindowsADUser)-[r1:ACCESS]->(m1:WindowsMachine) WHERE r1.method = "Interactive" AND user.username = {username} RETURN *'
     },
     {
-        u'name': u'All Windows logins',
-        u'description': u'Windows interactive logins.',
-        u'labels': [],
-        u'supported_os': [u'Windows'],
-        u'form_data': {},
-        u'query': u'MATCH (:Sketch{sketch_id:{sketch_id}})<-[:HAS]-(user:WindowsADUser)-[r1:ACCESS]->(m1:WindowsMachine) RETURN *'
+        'name': 'All Windows logins',
+        'description': 'Windows interactive logins.',
+        'labels': [],
+        'supported_os': ['Windows'],
+        'form_data': {},
+        'query': 'MATCH (:Sketch{sketch_id:{sketch_id}})<-[:HAS]-(user:WindowsADUser)-[r1:ACCESS]->(m1:WindowsMachine) RETURN *'
     },
 ]
 
 
 def event_stream(sketch_id, query):
     es = ElasticsearchDataStore(
-        host=current_app.config[u'ELASTIC_HOST'],
-        port=current_app.config[u'ELASTIC_PORT'])
+        host=current_app.config['ELASTIC_HOST'],
+        port=current_app.config['ELASTIC_PORT'])
     sketch = Sketch.query.get(sketch_id)
     if not sketch:
         sys.exit('No such sketch')
@@ -76,47 +78,47 @@ def event_stream(sketch_id, query):
     result = es.search(
         sketch_id=sketch_id,
         query_string=query,
-        query_filter={u'size': 10000, 'terminate_after': 1000},
+        query_filter={'size': 10000, 'terminate_after': 1000},
         query_dsl={},
-        indices=[u'_all'],
-        return_fields=[u'xml_string', u'timestamp'],
+        indices=['_all'],
+        return_fields=['xml_string', 'timestamp'],
         enable_scroll=True)
 
-    scroll_id = result[u'_scroll_id']
-    scroll_size = result[u'hits'][u'total']
+    scroll_id = result['_scroll_id']
+    scroll_size = result['hits']['total']
 
-    for event in result[u'hits'][u'hits']:
+    for event in result['hits']['hits']:
         yield event
 
     while scroll_size > 0:
-        result = es.client.scroll(scroll_id=scroll_id, scroll=u'1m')
-        scroll_id = result[u'_scroll_id']
-        scroll_size = len(result[u'hits'][u'hits'])
-        for event in result[u'hits'][u'hits']:
+        result = es.client.scroll(scroll_id=scroll_id, scroll='1m')
+        scroll_id = result['_scroll_id']
+        scroll_size = len(result['hits']['hits'])
+        for event in result['hits']['hits']:
             yield event
 
 
 def parse_xml_event(event_xml):
     xml_root = ElementTree.fromstring(event_xml)
-    base = u'.//{http://schemas.microsoft.com/win/2004/08/events/event}'
-    event_container = {u'System': {}, u'EventData': {}}
+    base = './/{http://schemas.microsoft.com/win/2004/08/events/event}'
+    event_container = {'System': {}, 'EventData': {}}
 
     def _sanitize_event_value(value):
-        none_values = [u'-', u' ']
+        none_values = ['-', ' ']
         if value in none_values:
             return None
         return value
 
-    for child in xml_root.find(u'{0:s}System'.format(base)):
-        element_name = child.tag.split(u'}')[1]
+    for child in xml_root.find('{0:s}System'.format(base)):
+        element_name = child.tag.split('}')[1]
         element_value = _sanitize_event_value(child.text)
-        event_container[u'System'][element_name] = {u'value': element_value}
-        event_container[u'System'][element_name][u'attributes'] = child.attrib
+        event_container['System'][element_name] = {'value': element_value}
+        event_container['System'][element_name]['attributes'] = child.attrib
 
-    for child in xml_root.find(u'{0:s}EventData'.format(base)):
-        element_name = child.get(u'Name')
+    for child in xml_root.find('{0:s}EventData'.format(base)):
+        element_name = child.get('Name')
         element_value = _sanitize_event_value(child.text)
-        event_container[u'EventData'][element_name] = element_value
+        event_container['EventData'][element_name] = element_value
 
     return event_container
 
@@ -125,7 +127,7 @@ def get_graph_views():
     views = []
 
     for index, view in enumerate(GRAPH_VIEWS):
-        view[u'id'] = index
+        view['id'] = index
         views.append(view)
 
     return views

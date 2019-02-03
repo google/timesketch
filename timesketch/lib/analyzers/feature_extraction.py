@@ -39,7 +39,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             return 'Unable to parse the config file.'
 
         return_strings = []
-        for name, feature_config in config.iteritems():
+        for name, feature_config in iter(config.items()):
             feature_string = self.extract_feature(name, feature_config)
             if feature_string:
                 return_strings.append(feature_string)

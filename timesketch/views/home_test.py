@@ -13,16 +13,18 @@
 # limitations under the License.
 """Tests for the home view."""
 
+from __future__ import unicode_literals
+
 from timesketch.lib.testlib import BaseTest
 
 
 class HomeViewTest(BaseTest):
     """Class for the view handler tests."""
-    resource_url = u'/'
+    resource_url = '/'
 
     def test_home_view(self):
         """Test the home view handler."""
         self.login()
         response = self.client.get(self.resource_url)
         self.assert200(response)
-        self.assert_template_used(u'home/home.html')
+        self.assert_template_used('home/home.html')

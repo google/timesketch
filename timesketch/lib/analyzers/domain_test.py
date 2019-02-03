@@ -16,7 +16,7 @@ class TestDomainPlugin(BaseTest):
 
     # Mock the Elasticsearch datastore.
     @mock.patch(
-        u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
     def test_domain_analyzer_class(self):
         """Test core functionality of the analyzer class."""

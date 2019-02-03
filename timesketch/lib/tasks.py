@@ -115,7 +115,7 @@ def _get_index_analyzers():
     tasks = []
 
     # Exit early if index analyzers are disabled.
-    if not current_app.config.get(u'ENABLE_INDEX_ANALYZERS'):
+    if not current_app.config.get('ENABLE_INDEX_ANALYZERS'):
         return None
 
     for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
@@ -151,7 +151,7 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
     index_analyzer_chain = _get_index_analyzers()
     sketch_analyzer_chain = None
 
-    if sketch_id and current_app.config.get(u'ENABLE_SKETCH_ANALYZERS'):
+    if sketch_id and current_app.config.get('ENABLE_SKETCH_ANALYZERS'):
         sketch_analyzer_chain = build_sketch_analysis_pipeline(sketch_id)
 
     index_task = index_task_class.s(
@@ -191,7 +191,7 @@ def build_sketch_analysis_pipeline(sketch_id):
     tasks = []
 
     # Exit early if sketch analyzers are disabled.
-    if not current_app.config.get(u'ENABLE_SKETCH_ANALYZERS', False):
+    if not current_app.config.get('ENABLE_SKETCH_ANALYZERS', False):
         return None
 
     for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
@@ -263,7 +263,7 @@ def run_email_result_task(index_name, sketch_id=None):
         if sketch:
             view_urls = sketch.get_view_urls()
             view_links = []
-            for view_url, view_name in view_urls.iteritems():
+            for view_url, view_name in iter(view_urls.items()):
                 view_links.append('<a href="{0:s}">{1:s}</a>'.format(
                     view_url,
                     view_name))

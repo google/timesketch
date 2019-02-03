@@ -31,7 +31,7 @@ class TestDomainsPlugin(BaseTest):
 
     # Mock the Elasticsearch datastore.
     @mock.patch(
-        u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+       'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
     def test_minhash(self):
         """Test minhash function."""
@@ -50,7 +50,7 @@ class TestDomainsPlugin(BaseTest):
 
     # Mock the Elasticsearch datastore.
     @mock.patch(
-        u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+       'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
     def test_get_similar_domains(self):
         """Test get_similar_domains function."""
