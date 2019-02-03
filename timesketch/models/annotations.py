@@ -17,6 +17,8 @@ This module implements annotations that can be use on other database models.
 
 from __future__ import unicode_literals
 
+import six
+
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
@@ -39,7 +41,7 @@ class BaseAnnotation(object):
         Returns:
             A column (instance of sqlalchemy.Column)
         """
-        return Column(Integer, ForeignKey('user.id'))
+        return Column(Integer, ForeignKey(u'user.id'))
 
     @declared_attr
     def user(self):
@@ -48,7 +50,7 @@ class BaseAnnotation(object):
         Returns:
             A relationship (instance of sqlalchemy.orm.relationship)
         """
-        return relationship('User')
+        return relationship(u'User')
 
 
 class Label(BaseAnnotation):
@@ -115,10 +117,14 @@ class LabelMixin(object):
         Returns:
             A relationship to an label (timesketch.models.annotation.Label)
         """
-        self.Label = type(
-            '{0:s}Label'.format(self.__name__), (
+        if six.PY2:
+            class_name = b'{0:s}Label'.format(self.__name__)
+        else:
+            class_name = '{0:s}Label'.format(self.__name__)
+
+        self.Label = type(class_name, (
                 Label,
-                BaseModel, ),
+                BaseModel,),
             dict(
                 __tablename__='{0:s}_label'.format(self.__tablename__),
                 parent_id=Column(
@@ -144,8 +150,13 @@ class CommentMixin(object):
         Returns:
             A relationship to a comment (timesketch.models.annotation.Comment)
         """
+        if six.PY2:
+            class_name = b'{0:s}Comment'.format(self.__name__)
+        else:
+            class_name = '{0:s}Comment'.format(self.__name__)
+
         self.Comment = type(
-            '{0:s}Comment'.format(self.__name__), (
+            class_name, (
                 Comment,
                 BaseModel, ),
             dict(
@@ -173,8 +184,13 @@ class StatusMixin(object):
         Returns:
             A relationship to a status (timesketch.models.annotation.Status)
         """
+        if six.PY2:
+            class_name = b'{0:s}Status'.format(self.__name__)
+        else:
+            class_name = '{0:s}Status'.format(self.__name__)
+
         self.Status = type(
-            '{0:s}Status'.format(self.__name__), (
+            class_name, (
                 Status,
                 BaseModel, ),
             dict(
@@ -206,5 +222,5 @@ class StatusMixin(object):
             The status as a string
         """
         if not self.status:
-            self.status.append(self.Status(user=None, status='new'))
+            self.status.append(self.Status(user=None, status=u'new'))
         return self.status[0]

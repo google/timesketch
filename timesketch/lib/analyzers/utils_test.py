@@ -15,9 +15,9 @@
 
 from __future__ import unicode_literals
 
-import pandas as pd
-
 import six
+
+import pandas as pd
 
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.analyzers import utils

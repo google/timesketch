@@ -32,7 +32,7 @@ class TestDomainsPlugin(BaseTest):
     # Mock the Elasticsearch datastore.
     @mock.patch(
         'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
-         MockDataStore)
+        MockDataStore)
     def test_minhash(self):
         """Test minhash function."""
         analyzer = phishy_domains.PhishyDomainsSketchPlugin('test_index', 1)
