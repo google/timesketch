@@ -58,7 +58,7 @@ class TestDomainsPlugin(BaseTest):
         domain = 'login.stortmbl.is'
         # pylint: disable=protected-access
         minhash = analyzer._get_minhash_from_domain(domain)
-        domain_dict = {domain: minhash}
+        domain_dict = {domain: {'hash': minhash, 'depth': 3}}
 
         # pylint: disable=protected-access
         similar = analyzer._get_similar_domains(
