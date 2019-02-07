@@ -129,8 +129,14 @@ class MockDataStore(object):
         """Mock a search query.
 
         Returns:
-            A dictionary with search result.
+            A dictionary with search result or integer if count is requested.
         """
+        if kwargs.get('count'):
+            # 4711 is sometimes used instead of 17, on occasions when you want
+            # to denote a slightly larger number. Probably comes from the name
+            # of 'genuine' Eau-de-cologne, 'No. 4711 ".
+            # Ref: https://hack.org/mc/writings/hackerswe/hackerswe.html
+            return 4711
         return self.search_result_dict
 
     # pylint: disable=arguments-differ,unused-argument
