@@ -27,7 +27,7 @@ class MockAggregator(object):
 class TestAggregatorManager(BaseTest):
     """Tests for the functionality of the manager module."""
 
-    manager.AggregatorManager.register_aggregator(MockAggregator)
+    manager.AggregatorManager.register(MockAggregator)
 
     def test_get_aggregators(self):
         """Test to get aggregator class objects."""
@@ -49,6 +49,6 @@ class TestAggregatorManager(BaseTest):
     def test_register_aggregator(self):
         """Test so we raise KeyError when aggregator is already registered."""
         self.assertRaises(
-            KeyError, manager.AggregatorManager.register_aggregator,
+            KeyError, manager.AggregatorManager.register,
             MockAggregator
         )

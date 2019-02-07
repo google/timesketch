@@ -44,16 +44,16 @@ class TermsAggregation(interface.BaseAggregator):
                 }
             }
         }
-        response = self.run_es_query(aggregation_dict)
+        response = self.run_es_aggregation(aggregation_dict)
         buckets = response['aggregations']['aggregation']['buckets']
 
         # Iterate over the result and transform to supported format.
-        result = interface.AggregationResult(encoding)
+        values = []
         for bucket in buckets:
             d = {field: bucket['key'], 'count': bucket['doc_count']}
-            result.append(d)
+            values.append(d)
 
-        return result
+        return interface.AggregationResult(encoding, values)
 
 
-manager.AggregatorManager.register_aggregator(TermsAggregation)
+manager.AggregatorManager.register(TermsAggregation)
