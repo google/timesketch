@@ -15,7 +15,6 @@ elasticsearch
 neo4jrestclient
 python-dateutil
 gunicorn
-pycypher
 parameterized
 datasketch
 PyJWT
@@ -23,6 +22,7 @@ requests>=2.20.0
 cryptography>=2.3
 pyyaml>=4.2b1
 urllib3>=1.23
+pandas>=0.23
 
 # dev-requirements:
 Flask-Testing

@@ -13,6 +13,8 @@
 # limitations under the License.
 """This module implements HTTP request handler."""
 
+from __future__ import unicode_literals
+
 from flask import Blueprint
 from flask import current_app
 from flask import render_template
@@ -27,11 +29,11 @@ from timesketch.lib.forms import HiddenNameDescriptionForm
 from timesketch.models import db_session
 
 # Register flask blueprint
-home_views = Blueprint(u'home_views', __name__)
+home_views = Blueprint('home_views', __name__)
 
 
-@home_views.route(u'/', methods=[u'GET', u'POST'])
-@home_views.route(u'/sketch/', methods=[u'GET', u'POST'])
+@home_views.route('/', methods=['GET', 'POST'])
+@home_views.route('/sketch/', methods=['GET', 'POST'])
 @login_required
 def home():
     """Generates the home page view template.
@@ -41,10 +43,10 @@ def home():
     """
     form = HiddenNameDescriptionForm()
     sketches = Sketch.all_with_acl().filter(
-        not_(Sketch.Status.status == u'deleted'),
+        not_(Sketch.Status.status == 'deleted'),
         Sketch.Status.parent).order_by(Sketch.updated_at.desc())
     # Only render upload button if it is configured.
-    upload_enabled = current_app.config[u'UPLOAD_ENABLED']
+    upload_enabled = current_app.config['UPLOAD_ENABLED']
 
     # Handle form for creating a new sketch.
     if form.validate_on_submit():
@@ -52,17 +54,17 @@ def home():
             name=form.name.data,
             description=form.description.data,
             user=current_user)
-        sketch.status.append(sketch.Status(user=None, status=u'new'))
+        sketch.status.append(sketch.Status(user=None, status='new'))
         # Give the requesting user permissions on the new sketch.
-        sketch.grant_permission(permission=u'read', user=current_user)
-        sketch.grant_permission(permission=u'write', user=current_user)
-        sketch.grant_permission(permission=u'delete', user=current_user)
+        sketch.grant_permission(permission='read', user=current_user)
+        sketch.grant_permission(permission='write', user=current_user)
+        sketch.grant_permission(permission='delete', user=current_user)
         db_session.add(sketch)
         db_session.commit()
-        return redirect(url_for(u'sketch_views.overview', sketch_id=sketch.id))
+        return redirect(url_for('sketch_views.overview', sketch_id=sketch.id))
 
     return render_template(
-        u'home/home.html',
+        'home/home.html',
         sketches=sketches,
         form=form,
         upload_enabled=upload_enabled)

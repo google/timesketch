@@ -1,5 +1,7 @@
 language: python
-python: '2.7'
+python:
+  - '2.7'
+  - '3.6'
 node_js: '8'
 cache:
   - yarn

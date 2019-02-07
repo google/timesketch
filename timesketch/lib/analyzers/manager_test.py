@@ -85,7 +85,7 @@ class TestAnalysisManager(BaseTest):
         manager.AnalysisManager.clear_registration()
         analyzers = manager.AnalysisManager.get_analyzers()
         analyzer_list = [x for x in analyzers]
-        self.assertEquals(analyzer_list, [])
+        self.assertEqual(analyzer_list, [])
 
         manager.AnalysisManager.register_analyzer(MockAnalyzer)
         manager.AnalysisManager.register_analyzer(MockAnalyzer2)
@@ -94,12 +94,12 @@ class TestAnalysisManager(BaseTest):
 
         analyzers = manager.AnalysisManager.get_analyzers()
         analyzer_list = [x for x, _ in analyzers]
-        self.assertEquals(len(analyzer_list), 4)
+        self.assertEqual(len(analyzer_list), 4)
         self.assertIn('mockanalyzer', analyzer_list)
 
         # pylint: disable=protected-access
         dependency_tree = manager.AnalysisManager._build_dependencies()
-        self.assertEquals(len(dependency_tree), 3)
+        self.assertEqual(len(dependency_tree), 3)
         self.assertIn('mockanalyzer', dependency_tree[0])
         self.assertIn('mockanalyzer3', dependency_tree[0])
         self.assertIn('mockanalyzer2', dependency_tree[1])

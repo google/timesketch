@@ -13,6 +13,8 @@
 # limitations under the License.
 """Definitions for Timesketch."""
 
+from __future__ import unicode_literals
+
 # HTTP status codes
 HTTP_STATUS_CODE_OK = 200
 HTTP_STATUS_CODE_CREATED = 201
@@ -27,14 +29,14 @@ MICROSECONDS_PER_SECOND = 1000000
 
 # _source fields for search and export functions
 DEFAULT_FIELDS = [
-    u'datetime',
-    u'timestamp',
-    u'timestamp_desc',
-    u'_index',
-    u'message']
+    'datetime',
+    'timestamp',
+    'timestamp_desc',
+    '_index',
+    'message']
 DEFAULT_SOURCE_FIELDS = DEFAULT_FIELDS + [
-    u'timesketch_label',
-    u'tag',
-    u'similarity_score',
-    u'human_readable',
-    u'__ts_emojis']
+    'timesketch_label',
+    'tag',
+    'similarity_score',
+    'human_readable',
+    '__ts_emojis']
