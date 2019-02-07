@@ -17,6 +17,8 @@ from __future__ import unicode_literals
 
 import re
 
+from six.moves import filter
+
 from datasketch.minhash import MinHash
 from datasketch.lsh import MinHashLSH
 
@@ -40,7 +42,7 @@ def _shingles_from_text(text, delimiters):
     """
     # TODO: Remove stopwords using the NLTK python package.
     # TODO: Remove configured patterns from string.
-    return filter(None, re.split('|'.join(delimiters), text))
+    return list(filter(None, re.split('|'.join(delimiters), text)))
 
 
 def minhash_from_text(text, num_perm, delimiters):

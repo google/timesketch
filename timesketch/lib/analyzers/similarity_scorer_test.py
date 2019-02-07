@@ -55,7 +55,7 @@ class TestSimilarityScorer(BaseTest):
         self.test_text = 'This is a test text-with tests/test'
 
     @mock.patch(
-        u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
     def test_scorer(self):
         """Test scorer object."""
