@@ -129,8 +129,10 @@ class MockDataStore(object):
         """Mock a search query.
 
         Returns:
-            A dictionary with search result.
+            A dictionary with search result or integer if count is requested.
         """
+        if kwargs.get('count'):
+            return 4711
         return self.search_result_dict
 
     # pylint: disable=arguments-differ,unused-argument
