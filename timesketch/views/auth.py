@@ -13,6 +13,8 @@
 # limitations under the License.
 """This module implements HTTP request handlers for the user views."""
 
+from __future__ import unicode_literals
+
 from flask import abort
 from flask import Blueprint
 from flask import current_app
@@ -43,10 +45,10 @@ from timesketch.models.user import Group
 from timesketch.models.user import User
 
 # Register flask blueprint
-auth_views = Blueprint(u'user_views', __name__)
+auth_views = Blueprint('user_views', __name__)
 
 
-@auth_views.route(u'/login/', methods=[u'GET', u'POST'])
+@auth_views.route('/login/', methods=['GET', 'POST'])
 def login():
     """Handler for the login page view.
 
@@ -63,25 +65,25 @@ def login():
         otherwise.
     """
     # Google OpenID Connect authentication.
-    if current_app.config.get(u'GOOGLE_OIDC_ENABLED', False):
-        hosted_domain = current_app.config.get(u'GOOGLE_OIDC_HOSTED_DOMAIN')
+    if current_app.config.get('GOOGLE_OIDC_ENABLED', False):
+        hosted_domain = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
         return redirect(get_oauth2_authorize_url(hosted_domain))
 
     # Google Identity-Aware Proxy authentication (using JSON Web Tokens)
-    if current_app.config.get(u'GOOGLE_IAP_ENABLED', False):
+    if current_app.config.get('GOOGLE_IAP_ENABLED', False):
         encoded_jwt = request.environ.get(
-            u'HTTP_X_GOOG_IAP_JWT_ASSERTION', None)
+            'HTTP_X_GOOG_IAP_JWT_ASSERTION', None)
         if encoded_jwt:
-            expected_audience = current_app.config.get(u'GOOGLE_IAP_AUDIENCE')
-            expected_issuer = current_app.config.get(u'GOOGLE_IAP_ISSUER')
-            algorithm = current_app.config.get(u'GOOGLE_IAP_ALGORITHM')
-            url = current_app.config.get(u'GOOGLE_IAP_PUBLIC_KEY_URL')
+            expected_audience = current_app.config.get('GOOGLE_IAP_AUDIENCE')
+            expected_issuer = current_app.config.get('GOOGLE_IAP_ISSUER')
+            algorithm = current_app.config.get('GOOGLE_IAP_ALGORITHM')
+            url = current_app.config.get('GOOGLE_IAP_PUBLIC_KEY_URL')
             try:
                 public_key = get_public_key_for_jwt(encoded_jwt, url)
                 validated_jwt = validate_jwt(
                     encoded_jwt, public_key, algorithm, expected_audience,
                     expected_issuer)
-                email = validated_jwt.get(u'email')
+                email = validated_jwt.get('email')
                 if email:
                     user = User.get_or_create(username=email, name=email)
                     login_user(user)
@@ -89,10 +91,10 @@ def login():
                 current_app.logger.error('{}'.format(e))
 
     # SSO login based on environment variable, e.g. REMOTE_USER.
-    if current_app.config.get(u'SSO_ENABLED', False):
-        remote_user_env = current_app.config.get(u'SSO_USER_ENV_VARIABLE',
-                                                 u'REMOTE_USER')
-        sso_group_env = current_app.config.get(u'SSO_GROUP_ENV_VARIABLE', None)
+    if current_app.config.get('SSO_ENABLED', False):
+        remote_user_env = current_app.config.get('SSO_USER_ENV_VARIABLE',
+                                                 'REMOTE_USER')
+        sso_group_env = current_app.config.get('SSO_GROUP_ENV_VARIABLE', None)
 
         remote_user = request.environ.get(remote_user_env, None)
         if remote_user:
@@ -102,10 +104,10 @@ def login():
         # If we get groups from the SSO system create the group(s) in
         # Timesketch and add/remove the user from it.
         if sso_group_env:
-            groups_string = request.environ.get(sso_group_env, u'')
-            separator = current_app.config.get(u'SSO_GROUP_SEPARATOR', u';')
+            groups_string = request.environ.get(sso_group_env, '')
+            separator = current_app.config.get('SSO_GROUP_SEPARATOR', ';')
             not_member_sign = current_app.config.get(
-                u'SSO_GROUP_NOT_MEMBER_SIGN', None)
+                'SSO_GROUP_NOT_MEMBER_SIGN', None)
             for group_name in groups_string.split(separator):
                 remove_group = False
                 if not_member_sign:
@@ -134,12 +136,12 @@ def login():
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
-        return redirect(request.args.get(u'next') or u'/')
+        return redirect(request.args.get('next') or '/')
 
-    return render_template(u'user/login.html', form=form)
+    return render_template('user/login.html', form=form)
 
 
-@auth_views.route(u'/logout/', methods=[u'GET'])
+@auth_views.route('/logout/', methods=['GET'])
 def logout():
     """Handler for the logout page view.
 
@@ -147,10 +149,10 @@ def logout():
         Redirect response.
     """
     logout_user()
-    return redirect(url_for(u'user_views.login'))
+    return redirect(url_for('user_views.login'))
 
 
-@auth_views.route(u'/login/google_openid_connect/', methods=[u'GET'])
+@auth_views.route('/login/google_openid_connect/', methods=['GET'])
 def google_openid_connect():
     """Handler for the Google OpenID Connect callback.
 
@@ -160,21 +162,21 @@ def google_openid_connect():
     Returns:
         Redirect response.
     """
-    error = request.args.get(u'error', None)
+    error = request.args.get('error', None)
 
     if error:
-        current_app.logger.error(u'OAuth2 flow error: {}'.format(error))
+        current_app.logger.error('OAuth2 flow error: {}'.format(error))
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
     try:
-        code = request.args[u'code']
-        client_csrf_token = request.args.get(u'state')
+        code = request.args['code']
+        client_csrf_token = request.args.get('state')
         server_csrf_token = session[CSRF_KEY]
     except KeyError:
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
     if client_csrf_token != server_csrf_token:
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST, u'Invalid CSRF token')
+        return abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Invalid CSRF token')
 
     try:
         encoded_jwt = get_encoded_jwt_over_https(code)
@@ -186,24 +188,24 @@ def google_openid_connect():
     except DiscoveryDocumentError:
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
-    algorithm = discovery_document[u'id_token_signing_alg_values_supported'][0]
-    expected_audience = current_app.config.get(u'GOOGLE_OIDC_CLIENT_ID')
-    expected_domain = current_app.config.get(u'GOOGLE_OIDC_HOSTED_DOMAIN')
-    expected_issuer = discovery_document[u'issuer']
+    algorithm = discovery_document['id_token_signing_alg_values_supported'][0]
+    expected_audience = current_app.config.get('GOOGLE_OIDC_CLIENT_ID')
+    expected_domain = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
+    expected_issuer = discovery_document['issuer']
 
     # Fetch the public key and try to validate the JWT.
     try:
         public_key = get_public_key_for_jwt(
-            encoded_jwt, discovery_document[u'jwks_uri'])
+            encoded_jwt, discovery_document['jwks_uri'])
         validated_jwt = validate_jwt(
             encoded_jwt, public_key, algorithm, expected_audience,
             expected_issuer, expected_domain)
     except (JwtValidationError, JwtKeyError) as e:
-        current_app.logger.error(u'{}'.format(e))
+        current_app.logger.error('{}'.format(e))
         return abort(HTTP_STATUS_CODE_UNAUTHORIZED)
 
-    validated_email = validated_jwt.get(u'email')
-    user_whitelist = current_app.config.get(u'GOOGLE_OIDC_USER_WHITELIST')
+    validated_email = validated_jwt.get('email')
+    user_whitelist = current_app.config.get('GOOGLE_OIDC_USER_WHITELIST')
 
     # Check if the authenticating user is on the whitelist.
     if user_whitelist:
@@ -215,4 +217,4 @@ def google_openid_connect():
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
-        return redirect(request.args.get(u'next') or u'/')
+        return redirect(request.args.get('next') or '/')

@@ -13,6 +13,8 @@
 # limitations under the License.
 """Test for the ACL model."""
 
+from __future__ import unicode_literals
+
 from timesketch.lib.testlib import BaseTest
 
 
@@ -21,7 +23,7 @@ class AclModelTest(BaseTest):
 
     def test_change_permission(self):
         """Test changing permissions on a sketch with ACL."""
-        for permission in (u'read', u'write', u'delete'):
+        for permission in ('read', 'write', 'delete'):
             self.sketch1.grant_permission(
                 permission=permission, user=self.user1)
             self.assertTrue(
@@ -47,7 +49,7 @@ class AclModelTest(BaseTest):
 
     def test_change_public(self):
         """Test toggle the public permission on a sketch."""
-        self.sketch1.grant_permission(permission=u'read')
+        self.sketch1.grant_permission(permission='read')
         self.assertTrue(self.sketch1.is_public)
-        self.sketch1.revoke_permission(permission=u'read')
+        self.sketch1.revoke_permission(permission='read')
         self.assertFalse(self.sketch1.is_public)

@@ -13,6 +13,8 @@
 # limitations under the License.
 """Neo4j graph datastore."""
 
+from __future__ import unicode_literals
+
 from neo4jrestclient.client import GraphDatabase
 from neo4jrestclient.constants import DATA_GRAPH
 
@@ -22,43 +24,43 @@ HIDDEN_FIELDS = [
 
 # Schema for Neo4j nodes and edges
 SCHEMA = {
-    u'nodes': {
-        u'WindowsMachine': {
-            u'label': u'\uf009\u00A0\u00A0{hostname}',
-            u'hidden_fields': HIDDEN_FIELDS,
+    'nodes': {
+        'WindowsMachine': {
+            'label': '\uf009\u00A0\u00A0{hostname}',
+            'hidden_fields': HIDDEN_FIELDS,
         },
-        u'WindowsADUser': {
-            u'label': u'\uf2c0\u00A0\u00A0{username}',
-            u'hidden_fields': HIDDEN_FIELDS,
+        'WindowsADUser': {
+            'label': '\uf2c0\u00A0\u00A0{username}',
+            'hidden_fields': HIDDEN_FIELDS,
         },
-        u'WindowsLocalUser': {
-            u'label': u'\uf007\u00A0\u00A0{username}',
-            u'hidden_fields': HIDDEN_FIELDS,
+        'WindowsLocalUser': {
+            'label': '\uf007\u00A0\u00A0{username}',
+            'hidden_fields': HIDDEN_FIELDS,
         },
-        u'WindowsService': {
-            u'label': u'{service_name}',
-            u'hidden_fields': HIDDEN_FIELDS,
+        'WindowsService': {
+            'label': '{service_name}',
+            'hidden_fields': HIDDEN_FIELDS,
         },
-        u'WindowsServiceImagePath': {
-            u'label': u'\uf15b\u00A0\u00A0{image_path_short}',
-            u'hidden_fields': HIDDEN_FIELDS,
+        'WindowsServiceImagePath': {
+            'label': '\uf15b\u00A0\u00A0{image_path_short}',
+            'hidden_fields': HIDDEN_FIELDS,
         },
     },
-    u'edges': {
-        u'ACCESS': {
-            u'label': u'{username} [{method}] ({count})',
-            u'hidden_fields': HIDDEN_FIELDS,
-            u'es_query': u'event_identifier:4624 AND xml_string:"{username}" AND xml_string:"{target.hostname}*"',  # pylint: disable=line-too-long
+    'edges': {
+        'ACCESS': {
+            'label': '{username} [{method}] ({count})',
+            'hidden_fields': HIDDEN_FIELDS,
+            'es_query': 'event_identifier:4624 AND xml_string:"{username}" AND xml_string:"{target.hostname}*"',  # pylint: disable=line-too-long
         },
-        u'START': {
-            u'label': u'{start_type} ({count})',
-            u'hidden_fields': HIDDEN_FIELDS,
-            u'es_query': u'event_identifier:7045 AND xml_string:"{start_type}" AND xml_string:"{source.service_name}" AND xml_string:"{target.hostname}*"',  # pylint: disable=line-too-long
+        'START': {
+            'label': '{start_type} ({count})',
+            'hidden_fields': HIDDEN_FIELDS,
+            'es_query': 'event_identifier:7045 AND xml_string:"{start_type}" AND xml_string:"{source.service_name}" AND xml_string:"{target.hostname}*"',  # pylint: disable=line-too-long
         },
-        u'HAS': {
-            u'label': u'HAS',
-            u'hidden_fields': HIDDEN_FIELDS,
-            u'es_query': u'event_identifier:7045 AND xml_string:"{target.image_path}" AND xml_string:"{source.service_name}"',  # pylint: disable=line-too-long
+        'HAS': {
+            'label': 'HAS',
+            'hidden_fields': HIDDEN_FIELDS,
+            'es_query': 'event_identifier:7045 AND xml_string:"{target.image_path}" AND xml_string:"{source.service_name}"',  # pylint: disable=line-too-long
         }
     }
 }
@@ -71,7 +73,7 @@ class Neo4jDataStore(object):
         client: Instance of Neo4j GraphDatabase
     """
 
-    def __init__(self, username, password, host=u'127.0.0.1', port=7474):
+    def __init__(self, username, password, host='127.0.0.1', port=7474):
         """Create a neo4j client.
 
         Args:
@@ -82,7 +84,7 @@ class Neo4jDataStore(object):
         """
         super(Neo4jDataStore, self).__init__()
         self.client = GraphDatabase(
-            u'http://{0:s}:{1:d}/db/data/'.format(host, port),
+            'http://{0:s}:{1:d}/db/data/'.format(host, port),
             username=username,
             password=password)
 
@@ -96,10 +98,10 @@ class Neo4jDataStore(object):
         Returns:
             Output formatter object
         """
-        default_output_format = u'neo4j'
+        default_output_format = 'neo4j'
         formatter_registry = {
-            u'neo4j': Neo4jOutputFormatter,
-            u'cytoscape': CytoscapeOutputFormatter
+            'neo4j': Neo4jOutputFormatter,
+            'cytoscape': CytoscapeOutputFormatter
         }
         formatter = formatter_registry.get(output_format, None)
         if not formatter:
@@ -149,10 +151,10 @@ class OutputFormatterBaseClass(object):
         Returns:
             Dictionary with formatted result
         """
-        self.schema[u'stats'] = data.stats
-        self.schema[u'graph'] = self.format_graph(data.graph)
+        self.schema['stats'] = data.stats
+        self.schema['graph'] = self.format_graph(data.graph)
         if return_rows:
-            self.schema[u'rows'] = data.rows
+            self.schema['rows'] = data.rows
         return self.schema
 
     def format_graph(self, graph):
@@ -165,12 +167,12 @@ class OutputFormatterBaseClass(object):
             Dictionary with formatted graph
         """
         if graph is None:
-            return {u'nodes': [], u'edges': []}
+            return {'nodes': [], 'edges': []}
         node_list = []
         edge_list = []
         for subgraph in graph:
-            nodes = subgraph[u'nodes']
-            edges = subgraph[u'relationships']
+            nodes = subgraph['nodes']
+            edges = subgraph['relationships']
             for node in nodes:
                 formatted_node = self.format_node(node)
                 if formatted_node not in node_list:
@@ -179,7 +181,7 @@ class OutputFormatterBaseClass(object):
                 formatted_edge = self.format_edge(edge)
                 if formatted_edge not in edge_list:
                     edge_list.append(formatted_edge)
-        formatted_graph = {u'nodes': node_list, u'edges': edge_list}
+        formatted_graph = {'nodes': node_list, 'edges': edge_list}
         return formatted_graph
 
     # pylint: disable=unused-argument
@@ -244,10 +246,10 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
         Returns:
             Dictionary with a Cytoscape formatted node
         """
-        node_data = dict(id='node' + node[u'id'], type=node[u'labels'][0])
+        node_data = dict(id='node' + node['id'], type=node['labels'][0])
         if node.get('properties'):
             node_data.update(node['properties'])
-        return {u'data': node_data}
+        return {'data': node_data}
 
     def format_edge(self, edge):
         """Format a Cytoscape graph egde.
@@ -259,10 +261,10 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
             Dictionary with a Cytoscape formatted edge
         """
         edge_data = dict(
-            id='edge' + edge[u'id'], type=edge[u'type'],
-            source='node' + edge[u'startNode'],
-            target='node' + edge[u'endNode'],
+            id='edge' + edge['id'], type=edge['type'],
+            source='node' + edge['startNode'],
+            target='node' + edge['endNode'],
         )
         if edge.get('properties'):
             edge_data.update(edge['properties'])
-        return {u'data': edge_data}
+        return {'data': edge_data}

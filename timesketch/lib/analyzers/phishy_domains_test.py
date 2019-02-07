@@ -31,7 +31,7 @@ class TestDomainsPlugin(BaseTest):
 
     # Mock the Elasticsearch datastore.
     @mock.patch(
-        u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
     def test_minhash(self):
         """Test minhash function."""
@@ -50,7 +50,7 @@ class TestDomainsPlugin(BaseTest):
 
     # Mock the Elasticsearch datastore.
     @mock.patch(
-        u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
     def test_get_similar_domains(self):
         """Test get_similar_domains function."""
@@ -63,8 +63,8 @@ class TestDomainsPlugin(BaseTest):
         # pylint: disable=protected-access
         similar = analyzer._get_similar_domains(
             'login.stortmbi.is', domain_dict)
-        self.assertEquals(len(similar), 1)
+        self.assertEqual(len(similar), 1)
 
         # pylint: disable=protected-access
         similar = analyzer._get_similar_domains('www.google.com', domain_dict)
-        self.assertEquals(len(similar), 0)
+        self.assertEqual(len(similar), 0)

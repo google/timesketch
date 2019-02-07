@@ -13,8 +13,12 @@
 # limitations under the License.
 """Entry point for the application."""
 
+from __future__ import unicode_literals
+
 import os
 import sys
+
+import six
 
 from celery import Celery
 from flask import Flask
@@ -45,41 +49,41 @@ def create_app(config=None):
         Application object (instance of flask.Flask).
     """
     # Setup the Flask app and load the config.
-    app = Flask(__name__, template_folder=u'templates', static_folder=u'static')
+    app = Flask(__name__, template_folder='templates', static_folder='static')
 
     if not config:
-        config = u'/etc/timesketch.conf'
+        config = '/etc/timesketch.conf'
 
-    if isinstance(config, unicode):
-        os.environ[u'TIMESKETCH_SETTINGS'] = config
+    if isinstance(config, six.text_type):
+        os.environ['TIMESKETCH_SETTINGS'] = config
         try:
-            app.config.from_envvar(u'TIMESKETCH_SETTINGS')
+            app.config.from_envvar('TIMESKETCH_SETTINGS')
         except IOError:
             sys.stderr.write(
-                u'Config file {0} does not exist.\n'.format(config))
+                'Config file {0} does not exist.\n'.format(config))
             sys.exit()
     else:
         app.config.from_object(config)
 
     # Make sure that SECRET_KEY is configured.
-    if not app.config[u'SECRET_KEY']:
-        sys.stderr.write(u'ERROR: Secret key not present. '
-                         u'Please update your configuration.\n'
-                         u'To generate a key you can use openssl:\n\n'
-                         u'$ openssl rand -base64 32\n\n')
+    if not app.config['SECRET_KEY']:
+        sys.stderr.write('ERROR: Secret key not present. '
+                         'Please update your configuration.\n'
+                         'To generate a key you can use openssl:\n\n'
+                         '$ openssl rand -base64 32\n\n')
         sys.exit()
 
     # Plaso version that we support
-    if app.config[u'UPLOAD_ENABLED']:
+    if app.config['UPLOAD_ENABLED']:
         try:
             from plaso import __version__ as plaso_version
         except ImportError:
-            sys.stderr.write(u'Upload is enabled, but Plaso is not installed.')
+            sys.stderr.write('Upload is enabled, but Plaso is not installed.')
             sys.exit()
-        app.config[u'PLASO_VERSION'] = plaso_version
+        app.config['PLASO_VERSION'] = plaso_version
 
     # Setup the database.
-    configure_engine(app.config[u'SQLALCHEMY_DATABASE_URI'])
+    configure_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     db = init_db()
 
     # Alembic migration support:
@@ -95,7 +99,7 @@ def create_app(config=None):
     app.register_blueprint(sketch_views)
 
     # Setup URL routes for the API.
-    api_v1 = Api(app, prefix=u'/api/v1')
+    api_v1 = Api(app, prefix='/api/v1')
     for route in V1_API_ROUTES:
         api_v1.add_resource(*route)
 
@@ -113,7 +117,7 @@ def create_app(config=None):
     # Setup the login manager.
     login_manager = LoginManager()
     login_manager.init_app(app)
-    login_manager.login_view = u'user_views.login'
+    login_manager.login_view = 'user_views.login'
 
     # This is used by the flask_login extension.
     # pylint: disable=unused-variable
@@ -140,7 +144,7 @@ def create_app(config=None):
 def create_celery_app():
     """Create a Celery app instance."""
     app = create_app()
-    celery = Celery(app.import_name, broker=app.config[u'CELERY_BROKER_URL'])
+    celery = Celery(app.import_name, broker=app.config['CELERY_BROKER_URL'])
     celery.conf.update(app.config)
     TaskBase = celery.Task
 

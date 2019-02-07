@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 import logging
 import re
 
+import six
+
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
@@ -39,7 +41,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             return 'Unable to parse the config file.'
 
         return_strings = []
-        for name, feature_config in config.iteritems():
+        for name, feature_config in iter(config.items()):
             feature_string = self.extract_feature(name, feature_config)
             if feature_string:
                 return_strings.append(feature_string)
@@ -80,9 +82,10 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         try:
             expression = re.compile(expression_string)
         except re.error as exception:
+            # pylint: disable=logging-format-interpolation
             logging.warning((
                 'Regular expression failed to compile, with '
-                'error: {0:s}').format(exception))
+                'error: {0!s}').format(exception))
             return ''
 
         emoji_names = config.get('emojis', [])
@@ -97,7 +100,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         event_counter = 0
         for event in events:
             attribute_field = event.source.get(attribute)
-            if isinstance(attribute_field, (str, unicode)):
+            if isinstance(attribute_field, six.text_type):
                 attribute_value = attribute_field.lower()
             elif isinstance(attribute_field, (list, tuple)):
                 attribute_value = ','.join(attribute_field)

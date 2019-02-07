@@ -14,7 +14,7 @@ class TestLoginPlugin(BaseTest):
         string_parsed = {}
 
         attributes = login.parse_evtx_logon_event(string_list, string_parsed)
-        self.assertEquals(len(attributes), 0)
+        self.assertEqual(len(attributes), 0)
 
         string_list = [
             'S-1-5', '1', '2', '0x0034', 'S-1-5-5-4-54', 'secret_santa', '6',
@@ -26,16 +26,16 @@ class TestLoginPlugin(BaseTest):
             'target_machine_name': 'rudolph'}
 
         attributes = login.parse_evtx_logon_event(string_list, string_parsed)
-        self.assertEquals(len(attributes), 9)
+        self.assertEqual(len(attributes), 9)
 
         hostname = attributes.get('hostname', 'N/A')
-        self.assertEquals(hostname, 'rudolph')
+        self.assertEqual(hostname, 'rudolph')
 
         session = attributes.get('session_id', 'N/A')
-        self.assertEquals(session, string_list[3])
+        self.assertEqual(session, string_list[3])
 
         logoff_type = attributes.get('logon_type', 'N/A')
-        self.assertEquals(logoff_type, 'Interactive')
+        self.assertEqual(logoff_type, 'Interactive')
 
     def test_parse_evtx_logoff(self):
         """Test EVTX logoff parsing."""
@@ -43,12 +43,12 @@ class TestLoginPlugin(BaseTest):
 
         attributes = login.parse_evtx_logoff_event(string_list)
 
-        self.assertEquals(len(attributes), 4)
+        self.assertEqual(len(attributes), 4)
         username = attributes.get('username', 'N/A')
-        self.assertEquals(username, string_list[1])
+        self.assertEqual(username, string_list[1])
 
         session = attributes.get('session_id', 'N/A')
-        self.assertEquals(session, string_list[3])
+        self.assertEqual(session, string_list[3])
 
         logoff_type = attributes.get('logon_type', 'N/A')
-        self.assertEquals(logoff_type, 'Interactive')
+        self.assertEqual(logoff_type, 'Interactive')

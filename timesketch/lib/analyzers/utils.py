@@ -15,10 +15,7 @@
 
 from __future__ import unicode_literals
 
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib import parse as urlparse  # pylint: disable=no-name-in-module
+from six.moves import urllib_parse as urlparse
 
 from timesketch.lib.analyzers import interface
 
@@ -171,7 +168,7 @@ def get_domain_from_url(url):
         String with domain from URL.
     """
     # TODO: See if we can optimize this because it is rather slow.
-    domain_parsed = urlparse(url)
+    domain_parsed = urlparse.urlparse(url)
     domain_full = domain_parsed.netloc
     domain, _, _ = domain_full.partition(':')
     return domain
@@ -214,7 +211,7 @@ def get_cdn_provider(domain):
         String of names of CDN providers or empty string if not found.
 
     """
-    cdn_providers = [v for k, v in KNOWN_CDN_DOMAINS.iteritems() if
+    cdn_providers = [v for k, v in iter(KNOWN_CDN_DOMAINS.items()) if
                      domain.endswith(k.lower())]
     return ' '.join(set(cdn_providers))
 

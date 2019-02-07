@@ -16,26 +16,26 @@ class TestBrowserTimeframePlugin(BaseTest):
         hours = [0, 1, 2, 3, 9, 10, 11, 12, 13, 14]
         runs = browser_timeframe.get_list_of_consecutive_sequences(hours)
 
-        self.assertEquals(len(runs), 2)
+        self.assertEqual(len(runs), 2)
 
         first_run = runs[0]
-        self.assertEquals(first_run[0], 0)
-        self.assertEquals(first_run[1], 3)
+        self.assertEqual(first_run[0], 0)
+        self.assertEqual(first_run[1], 3)
 
         second_run = runs[1]
-        self.assertEquals(second_run[0], 9)
-        self.assertEquals(second_run[1], 14)
+        self.assertEqual(second_run[0], 9)
+        self.assertEqual(second_run[1], 14)
 
         hours = [0, 2, 3, 9, 10, 12, 14]
         runs = browser_timeframe.get_list_of_consecutive_sequences(hours)
-        self.assertEquals(len(runs), 5)
+        self.assertEqual(len(runs), 5)
 
     def test_fix_gap_in_list(self):
         """Test the fix_gap_in_list function."""
         hours = [0, 6, 10, 11, 13, 14]
         fixed_hours = browser_timeframe.fix_gap_in_list(hours)
 
-        self.assertEquals(fixed_hours, [0, 10, 11, 12, 13, 14])
+        self.assertEqual(fixed_hours, [0, 10, 11, 12, 13, 14])
 
     def test_get_active_hours(self):
         """Test get_active_hours function."""
@@ -60,4 +60,4 @@ class TestBrowserTimeframePlugin(BaseTest):
 
         expected_hours = [0, 1, 18, 19, 20, 21, 22, 23]
         active_hours, _, _ = browser_timeframe.get_active_hours(data_frame)
-        self.assertEquals(active_hours, expected_hours)
+        self.assertEqual(active_hours, expected_hours)

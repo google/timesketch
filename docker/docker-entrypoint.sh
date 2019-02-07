@@ -59,7 +59,7 @@ if [ "$1" = 'timesketch' ]; then
 
   # Sleep to allow the other processes to start
   sleep 5
-  tsctl add_user -u "$TIMESKETCH_USER" -p "$TIMESKETCH_PASSWORD"
+  tsctl add_user --username "$TIMESKETCH_USER" --password "$TIMESKETCH_PASSWORD"
 
   # Run the Timesketch server (without SSL)
   exec `bash -c "/usr/local/bin/celery -A timesketch.lib.tasks worker --uid nobody --loglevel info &\

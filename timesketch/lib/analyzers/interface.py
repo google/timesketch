@@ -63,9 +63,10 @@ def get_yaml_config(file_name):
         try:
             return yaml.safe_load(fh)
         except yaml.parser.ParserError as exception:
+            # pylint: disable=logging-format-interpolation
             logging.warning((
                 'Unable to read in YAML config file, '
-                'with error: {0:s}').format(exception))
+                'with error: {0!s}').format(exception))
             return {}
 
 
@@ -102,7 +103,7 @@ class Event(object):
             self.index_name = event['_index']
             self.source = event.get('_source', None)
         except KeyError as e:
-            raise KeyError('Malformed event: {0:s}'.format(e))
+            raise KeyError('Malformed event: {0!s}'.format(e))
 
     def _update(self, event):
         """Update event attributes to add.
