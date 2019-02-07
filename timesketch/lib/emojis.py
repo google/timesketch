@@ -66,7 +66,7 @@ def get_helper_from_unicode(code):
         Helper text as a string or an empty string if emoji is not configured.
     """
     code_upper = code.upper()
-    for emoji_object in EMOJI_MAP.itervalues():
+    for emoji_object in iter(EMOJI_MAP.values()):
         if code_upper == emoji_object.code.upper():
             return emoji_object.help
     return ''
@@ -78,4 +78,4 @@ def get_emojis_as_dict():
     Returns:
         Dict with emoji unicode code points as key and helper text as value.
     """
-    return {e.code: e.help for e in EMOJI_MAP.itervalues()}
+    return {e.code: e.help for e in iter(EMOJI_MAP.values())}

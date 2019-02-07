@@ -13,6 +13,8 @@
 # limitations under the License.
 """Tests for utils."""
 
+from __future__ import unicode_literals
+
 import re
 
 from timesketch.lib.testlib import BaseTest
@@ -26,16 +28,16 @@ class TestUtils(BaseTest):
     def test_random_color(self):
         """Test to generate a random color."""
         color = random_color()
-        self.assertTrue(re.match(u'^[0-9a-fA-F]{6}$', color))
+        self.assertTrue(re.match('^[0-9a-fA-F]{6}$', color))
 
     def test_get_validated_indices(self):
         """Test for validating indices."""
         sketch = self.sketch1
         sketch_indices = [t.searchindex.index_name for t in sketch.timelines]
-        valid_indices = [u'test']
-        invalid_indices = [u'test', u'fail']
+        valid_indices = ['test']
+        invalid_indices = ['test', 'fail']
         self.assertListEqual(sketch_indices,
                              get_validated_indices(valid_indices,
                                                    sketch_indices))
-        self.assertFalse(u'fail' in get_validated_indices(
+        self.assertFalse('fail' in get_validated_indices(
             invalid_indices, sketch_indices))

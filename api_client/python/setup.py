@@ -37,6 +37,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=frozenset([
+        'pandas',
         'requests',
         'beautifulsoup4']),
     )

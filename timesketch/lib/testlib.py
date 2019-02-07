@@ -13,6 +13,9 @@
 # limitations under the License.
 """This module contains common test utilities for Timesketch."""
 
+from __future__ import unicode_literals
+
+import codecs
 import json
 
 from flask_testing import TestCase
@@ -36,8 +39,8 @@ from timesketch.models.sketch import Story
 class TestConfig(object):
     """Config for the test environment."""
     DEBUG = True
-    SECRET_KEY = u'testing'
-    SQLALCHEMY_DATABASE_URI = u'sqlite://'
+    SECRET_KEY = 'testing'
+    SQLALCHEMY_DATABASE_URI = 'sqlite://'
     WTF_CSRF_ENABLED = False
     ELASTIC_HOST = None
     ELASTIC_PORT = None
@@ -51,64 +54,64 @@ class TestConfig(object):
 class MockDataStore(object):
     """A mock implementation of a Datastore."""
     event_dict = {
-        u'_index': [],
-        u'_id': u'adc123',
-        u'_type': u'plaso_event',
-        u'_source': {
-            u'es_index': u'',
-            u'es_id': u'',
-            u'label': u'',
-            u'timestamp': 1410895419859714,
-            u'timestamp_desc': u'',
-            u'datetime': u'2014-09-16T19:23:40+00:00',
-            u'source_short': u'',
-            u'source_long': u'',
-            u'message': u'',
+        '_index': [],
+        '_id': 'adc123',
+        '_type': 'plaso_event',
+        '_source': {
+            'es_index': '',
+            'es_id': '',
+            'label': '',
+            'timestamp': 1410895419859714,
+            'timestamp_desc': '',
+            'datetime': '2014-09-16T19:23:40+00:00',
+            'source_short': '',
+            'source_long': '',
+            'message': '',
         }
     }
     search_result_dict = {
-        u'hits': {
-            u'hits': [{
-                u'sort': [1410593223000],
-                u'_type': u'plaso_event',
-                u'_source': {
-                    u'timestamp':
+        'hits': {
+            'hits': [{
+                'sort': [1410593223000],
+                '_type': 'plaso_event',
+                '_source': {
+                    'timestamp':
                     1410593222543942,
-                    u'message':
-                    u'Test event',
-                    u'timesketch_label': [
+                    'message':
+                    'Test event',
+                    'timesketch_label': [
                         {
-                            u'user_id': 1,
-                            u'name': u'__ts_star',
-                            u'sketch_id': 1
+                            'user_id': 1,
+                            'name': '__ts_star',
+                            'sketch_id': 1
                         },
                         {
-                            u'user_id': 2,
-                            u'name': u'__ts_star',
-                            u'sketch_id': 99
+                            'user_id': 2,
+                            'name': '__ts_star',
+                            'sketch_id': 99
                         },
                     ],
-                    u'timestamp_desc':
-                    u'Content Modification Time',
-                    u'datetime':
-                    u'2014-09-13T07:27:03+00:00'
+                    'timestamp_desc':
+                    'Content Modification Time',
+                    'datetime':
+                    '2014-09-13T07:27:03+00:00'
                 },
-                u'_score': u'null',
-                u'_index': u'test',
-                u'_id': u'test'
+                '_score': 'null',
+                '_index': 'test',
+                '_id': 'test'
             }],
-            u'total':
+            'total':
             1,
-            u'max_score':
-            u'null'
+            'max_score':
+            'null'
         },
-        u'_shards': {
-            u'successful': 10,
-            u'failed': 0,
-            u'total': 10
+        '_shards': {
+            'successful': 10,
+            'failed': 0,
+            'total': 10
         },
-        u'took': 5,
-        u'timed_out': False
+        'took': 5,
+        'timed_out': False
     }
 
     def __init__(self, host, port):
@@ -126,8 +129,14 @@ class MockDataStore(object):
         """Mock a search query.
 
         Returns:
-            A dictionary with search result.
+            A dictionary with search result or integer if count is requested.
         """
+        if kwargs.get('count'):
+            # 4711 is sometimes used instead of 17, on occasions when you want
+            # to denote a slightly larger number. Probably comes from the name
+            # of 'genuine' Eau-de-cologne, 'No. 4711 ".
+            # Ref: https://hack.org/mc/writings/hackerswe/hackerswe.html
+            return 4711
         return self.search_result_dict
 
     # pylint: disable=arguments-differ,unused-argument
@@ -155,6 +164,15 @@ class MockDataStore(object):
         """Mock creating an index."""
         return
 
+    @property
+    def version(self):
+        """Get Elasticsearch version.
+
+        Returns:
+          Version number as a string.
+        """
+        return '6.0'
+
 
 class MockGraphDatabase(object):
     """A mock implementation of a Datastore."""
@@ -174,28 +192,28 @@ class MockGraphDatabase(object):
     class MockQuerySequence(object):
         """A mock implementation of a QuerySequence."""
         MOCK_GRAPH = [{
-            u'nodes': [{
-                u'id': u'1',
-                u'labels': [u'User'],
-                u'properties': {
-                    u'username': u'test',
-                    u'uid': u'123456'
+            'nodes': [{
+                'id': '1',
+                'labels': ['User'],
+                'properties': {
+                    'username': 'test',
+                    'uid': '123456'
                 }
             }, {
-                u'id': u'2',
-                u'labels': [u'Machine'],
-                u'properties': {
-                    u'hostname': u'test'
+                'id': '2',
+                'labels': ['Machine'],
+                'properties': {
+                    'hostname': 'test'
                 }
             }],
-            u'relationships': [{
-                u'endNode': u'2',
-                u'id': u'3',
-                u'startNode': u'1',
-                u'properties': {
-                    u'method': u'Network'
+            'relationships': [{
+                'endNode': '2',
+                'id': '3',
+                'startNode': '1',
+                'properties': {
+                    'method': 'Network'
                 },
-                u'type': u'ACCESS'
+                'type': 'ACCESS'
             }]
         }]
         MOCK_ROWS = {}
@@ -228,7 +246,7 @@ class MockGraphDatabase(object):
 class BaseTest(TestCase):
     """Base class for tests."""
 
-    COLOR_WHITE = u'FFFFFF'
+    COLOR_WHITE = 'FFFFFF'
 
     def create_app(self):
         """Setup the Flask application.
@@ -259,7 +277,7 @@ class BaseTest(TestCase):
         """
         user = User(username=username)
         if set_password:
-            user.set_password(plaintext=u'test', rounds=4)
+            user.set_password(plaintext='test', rounds=4)
         self._commit_to_database(user)
         return user
 
@@ -290,10 +308,10 @@ class BaseTest(TestCase):
         """
         sketch = Sketch(name=name, description=name, user=user)
         if acl:
-            for permission in [u'read', u'write', u'delete']:
+            for permission in ['read', 'write', 'delete']:
                 sketch.grant_permission(permission=permission, user=user)
-        label = sketch.Label(label=u'Test label', user=user)
-        status = sketch.Status(status=u'Test status', user=user)
+        label = sketch.Label(label='Test label', user=user)
+        status = sketch.Status(status='Test status', user=user)
         sketch.labels.append(label)
         sketch.status.append(status)
         self._commit_to_database(sketch)
@@ -313,7 +331,7 @@ class BaseTest(TestCase):
         searchindex = SearchIndex(
             name=name, description=name, index_name=name, user=user)
         if acl:
-            for permission in [u'read', u'write', u'delete']:
+            for permission in ['read', 'write', 'delete']:
                 searchindex.grant_permission(permission=permission, user=user)
         self._commit_to_database(searchindex)
         return searchindex
@@ -331,8 +349,8 @@ class BaseTest(TestCase):
             An event (instance of timesketch.models.sketch.Event)
         """
         event = Event(
-            sketch=sketch, searchindex=searchindex, document_id=u'test')
-        comment = event.Comment(comment=u'test', user=user)
+            sketch=sketch, searchindex=searchindex, document_id='test')
+        comment = event.Comment(comment='test', user=user)
         event.comments.append(comment)
         self._commit_to_database(event)
         return event
@@ -347,7 +365,7 @@ class BaseTest(TestCase):
         Returns:
             A story (instance of timesketch.models.story.Story)
         """
-        story = Story(title=u'Test', content=u'Test', sketch=sketch, user=user)
+        story = Story(title='Test', content='Test', sketch=sketch, user=user)
         self._commit_to_database(story)
         return story
 
@@ -416,39 +434,39 @@ class BaseTest(TestCase):
         """Setup the test database."""
         init_db()
 
-        self.user1 = self._create_user(username=u'test1', set_password=True)
-        self.user2 = self._create_user(username=u'test2', set_password=False)
+        self.user1 = self._create_user(username='test1', set_password=True)
+        self.user2 = self._create_user(username='test2', set_password=False)
 
-        self.group1 = self._create_group(name=u'test_group1', user=self.user1)
-        self.group2 = self._create_group(name=u'test_group2', user=self.user1)
+        self.group1 = self._create_group(name='test_group1', user=self.user1)
+        self.group2 = self._create_group(name='test_group2', user=self.user1)
 
         self.sketch1 = self._create_sketch(
-            name=u'Test 1', user=self.user1, acl=True)
+            name='Test 1', user=self.user1, acl=True)
         self.sketch2 = self._create_sketch(
-            name=u'Test 2', user=self.user1, acl=False)
+            name='Test 2', user=self.user1, acl=False)
         self.sketch3 = self._create_sketch(
-            name=u'Test 3', user=self.user1, acl=True)
+            name='Test 3', user=self.user1, acl=True)
 
         self.searchindex = self._create_searchindex(
-            name=u'test', user=self.user1, acl=True)
+            name='test', user=self.user1, acl=True)
         self.searchindex2 = self._create_searchindex(
-            name=u'test2', user=self.user1, acl=True)
+            name='test2', user=self.user1, acl=True)
 
         self.timeline = self._create_timeline(
-            name=u'Timeline 1',
+            name='Timeline 1',
             sketch=self.sketch1,
             searchindex=self.searchindex,
             user=self.user1)
 
         self.view1 = self._create_view(
-            name=u'View 1', sketch=self.sketch1, user=self.user1)
+            name='View 1', sketch=self.sketch1, user=self.user1)
         self.view2 = self._create_view(
-            name=u'View 2', sketch=self.sketch2, user=self.user1)
+            name='View 2', sketch=self.sketch2, user=self.user1)
         self.view3 = self._create_view(
-            name=u'', sketch=self.sketch1, user=self.user2)
+            name='', sketch=self.sketch1, user=self.user2)
 
         self.searchtemplate = self._create_searchtemplate(
-            name=u'template', user=self.user1)
+            name='template', user=self.user1)
 
         self.event = self._create_event(
             sketch=self.sketch1, searchindex=self.searchindex, user=self.user1)
@@ -463,8 +481,8 @@ class BaseTest(TestCase):
     def login(self):
         """Authenticate the test user."""
         self.client.post(
-            u'/login/',
-            data=dict(username=u'test1', password=u'test'),
+            '/login/',
+            data=dict(username='test1', password='test'),
             follow_redirects=True)
 
     def test_unauthenticated(self):
@@ -472,14 +490,15 @@ class BaseTest(TestCase):
         Generic test for all resources. It tests that no
         unauthenticated request are accepted.
         """
-        if not getattr(self, u'resource_url', False):
+        if not getattr(self, 'resource_url', False):
             self.skipTest(self)
 
         response = self.client.get(self.resource_url)
         if response.status_code == 405:
             response = self.client.post(self.resource_url)
-        self.assertIn(u'/login/', response.data)
-        self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        response_data = codecs.decode(response.data, 'utf-8')
+        self.assertIn('/login/', response_data)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
 
 class ModelBaseTest(BaseTest):
@@ -490,4 +509,4 @@ class ModelBaseTest(BaseTest):
         db_obj = model_cls.query.get(1)
         for x in expected_result:
             k, v = x[0], x[1]
-            self.assertEquals(db_obj.__getattribute__(k), v)
+            self.assertEqual(db_obj.__getattribute__(k), v)

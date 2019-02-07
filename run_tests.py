@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Main entry point for running tests and linters."""
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import subprocess
 import argparse

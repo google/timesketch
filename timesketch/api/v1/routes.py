@@ -51,7 +51,7 @@ API_ROUTES = [
     (ExploreResource, '/sketches/<int:sketch_id>/explore/'),
     (EventResource, '/sketches/<int:sketch_id>/event/'),
     (EventAnnotationResource, '/sketches/<int:sketch_id>/event/annotate/'),
-    (EventCreateResource, u'/sketches/<int:sketch_id>/event/create/'),
+    (EventCreateResource, '/sketches/<int:sketch_id>/event/create/'),
     (ViewListResource, '/sketches/<int:sketch_id>/views/'),
     (ViewResource, '/sketches/<int:sketch_id>/views/<int:view_id>/'),
     (SearchTemplateListResource, '/searchtemplate/'),

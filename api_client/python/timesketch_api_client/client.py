@@ -20,6 +20,7 @@ import uuid
 import bs4
 import requests
 
+# pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
 
 import pandas

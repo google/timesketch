@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import unicode_literals
+
 # pylint: skip-file
 import csv
 import sys
@@ -27,15 +29,15 @@ def parse_xml(data):
 
     root = ElementTree.fromstring(data)
     d = dict()
-    d[u'src_ws'] = root.find(u'{0:s}Computer'.format(base_node)).text
-    d[u'svc_name'] = root.find(
-        u'{0:s}Data[@Name="ServiceName"]'.format(base_node)).text
-    d[u'start_type'] = root.find(
-        u'{0:s}Data[@Name="StartType"]'.format(base_node)).text
-    d[u'image_path'] = root.find(
-        u'{0:s}Data[@Name="ImagePath"]'.format(base_node)).text
+    d['src_ws'] = root.find('{0:s}Computer'.format(base_node)).text
+    d['svc_name'] = root.find(
+        '{0:s}Data[@Name="ServiceName"]'.format(base_node)).text
+    d['start_type'] = root.find(
+        '{0:s}Data[@Name="StartType"]'.format(base_node)).text
+    d['image_path'] = root.find(
+        '{0:s}Data[@Name="ImagePath"]'.format(base_node)).text
 
-    return [d[u'src_ws'], d[u'svc_name'], d[u'start_type'], d[u'image_path']]
+    return [d['src_ws'], d['svc_name'], d['start_type'], d['image_path']]
 
 
 def main():
@@ -48,14 +50,14 @@ def main():
     sketch_id = args.sketch
 
     for event in event_stream(
-            sketch_id=sketch_id, query=u'event_identifier:7045'):
-        data = event[u'_source'][u'xml_string']
+            sketch_id=sketch_id, query='event_identifier:7045'):
+        data = event['_source']['xml_string']
         res = parse_xml(data)
         if res:
             events.add(res)
 
     csvwriter = csv.writer(sys.stdout, delimiter=',')
-    csvwriter.writerow([u'src', u'svc_name', u'start_type', u'image_path'])
+    csvwriter.writerow(['src', 'svc_name', 'start_type', 'image_path'])
     for event in events:
         src_ws, svc_name, start_type, image_path = event
         src_ws = src_ws.split('.')[0].upper()
@@ -66,14 +68,14 @@ def win_services(sketch_id):
     events = set()
 
     for event in event_stream(
-            sketch_id=sketch_id, query=u'event_identifier:7045'):
-        data = event[u'_source'][u'xml_string']
+            sketch_id=sketch_id, query='event_identifier:7045'):
+        data = event['_source']['xml_string']
         res = parse_xml(data)
         res.extend(
             (
-                event[u'_source'].get(u'timestamp'),
-                event.get(u'_index'),
-                event.get(u'_id')
+                event['_source'].get('timestamp'),
+                event.get('_index'),
+                event.get('_id')
             )
         )
         res = tuple(res)
@@ -94,14 +96,14 @@ def win_services(sketch_id):
         src_ws = src_ws.split('.')[0].upper()
 
         result.append({
-            u'src': src_ws,
-            u'svc_name': svc_name,
-            u'start_type': start_type,
-            u'image_path': image_path,
-            u'image_path_short': image_path_short,
-            u'timestamp': timestamp,
-            u'es_index_name': es_index_name,
-            u'es_query': u'_index:{} AND _id:{}'.format(es_index_name, es_id)
+            'src': src_ws,
+            'svc_name': svc_name,
+            'start_type': start_type,
+            'image_path': image_path,
+            'image_path_short': image_path_short,
+            'timestamp': timestamp,
+            'es_index_name': es_index_name,
+            'es_query': '_index:{} AND _id:{}'.format(es_index_name, es_id)
         })
     return result
 
