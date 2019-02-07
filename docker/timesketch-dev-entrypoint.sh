@@ -93,7 +93,7 @@ if [ "$1" = 'timesketch' ]; then
   sed -i s/"ENABLE_EXPERIMENTAL_UI = False"/"ENABLE_EXPERIMENTAL_UI = True"/ /etc/timesketch.conf
 
   # Add web user
-  tsctl add_user -u "${TIMESKETCH_USER}" -p "${TIMESKETCH_USER}"
+  tsctl add_user --username "${TIMESKETCH_USER}" --password "${TIMESKETCH_USER}"
 
   echo "Timesketch development server is ready!"
 
