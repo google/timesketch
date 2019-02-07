@@ -13,6 +13,8 @@
 # limitations under the License.
 """Error classes."""
 
+from __future__ import unicode_literals
+
 from flask import jsonify
 
 
@@ -37,8 +39,8 @@ class ApiHTTPError(Exception):
             Response object (instance of flask.wrappers.Response)
         """
         response = jsonify({
-            u'message': self.message,
-            u'status': self.status_code
+            'message': self.message,
+            'status': self.status_code
         })
         response.status_code = self.status_code
         return response

@@ -44,7 +44,7 @@ def random_color():
     hue += golden_ratio_conjugate
     hue %= 1
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
-    return u'{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
+    return '{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
 
 
 
@@ -56,7 +56,7 @@ def read_and_validate_csv(path, delimiter=','):
         delimiter: character used as a field separator, default: ','
     """
     # Columns that must be present in the CSV file
-    mandatory_fields = [u'message', u'datetime', u'timestamp_desc']
+    mandatory_fields = ['message', 'datetime', 'timestamp_desc']
 
     with open(path, 'rb') as fh:
         reader = csv.DictReader(fh, delimiter=delimiter.decode('string_escape'))
@@ -68,17 +68,17 @@ def read_and_validate_csv(path, delimiter=','):
                 missing_fields.append(field)
         if missing_fields:
             raise RuntimeError(
-                u'Missing fields in CSV header: {0:s}'.format(missing_fields))
+                'Missing fields in CSV header: {0:s}'.format(missing_fields))
         for row in reader:
             try:
                 # normalize datetime to ISO 8601 format if it's not the case.
-                parsed_datetime = parser.parse(row[u'datetime'])
-                row[u'datetime'] = parsed_datetime.isoformat()
+                parsed_datetime = parser.parse(row['datetime'])
+                row['datetime'] = parsed_datetime.isoformat()
 
                 normalized_timestamp = int(
                     time.mktime(parsed_datetime.utctimetuple()) * 1000000)
                 normalized_timestamp += parsed_datetime.microsecond
-                row[u'timestamp'] = str(normalized_timestamp)
+                row['timestamp'] = str(normalized_timestamp)
             except ValueError:
                 continue
 
@@ -93,7 +93,7 @@ def read_and_validate_redline(path):
     # Columns that must be present in the CSV file
 
     # check if it is the right redline format
-    mandatory_fields = [u'Alert', u'Tag', u'Timestamp', u'Field', u'Summary']
+    mandatory_fields = ['Alert', 'Tag', 'Timestamp', 'Field', 'Summary']
 
     with open(path, 'rb') as fh:
         csv.register_dialect('myDialect',
@@ -110,7 +110,7 @@ def read_and_validate_redline(path):
                 missing_fields.append(field)
         if missing_fields:
             raise RuntimeError(
-                u'Missing fields in CSV header: {0:s}'.format(missing_fields))
+                'Missing fields in CSV header: {0:s}'.format(missing_fields))
         for row in reader:
 
             dt = parser.parse(row['Timestamp'])
@@ -141,7 +141,7 @@ def read_and_validate_jsonl(path):
         path: Path to the JSONL file
     """
     # Fields that must be present in each entry of the JSONL file.
-    mandatory_fields = [u'message', u'datetime', u'timestamp_desc']
+    mandatory_fields = ['message', 'datetime', 'timestamp_desc']
     with open(path, 'rb') as fh:
         lineno = 0
         for line in fh:
@@ -149,12 +149,12 @@ def read_and_validate_jsonl(path):
             try:
                 linedict = json.loads(line)
                 ld_keys = linedict.keys()
-                if u'datetime' not in ld_keys and u'timestamp' in ld_keys:
-                    epoch = int(str(linedict[u'timestamp'])[:10])
+                if 'datetime' not in ld_keys and 'timestamp' in ld_keys:
+                    epoch = int(str(linedict['timestamp'])[:10])
                     dt = datetime.datetime.fromtimestamp(epoch)
-                    linedict[u'datetime'] = dt.isoformat()
-                if u'timestamp' not in ld_keys and u'datetime' in ld_keys:
-                    linedict[u'timestamp'] = parser.parse(linedict[u'datetime'])
+                    linedict['datetime'] = dt.isoformat()
+                if 'timestamp' not in ld_keys and 'datetime' in ld_keys:
+                    linedict['timestamp'] = parser.parse(linedict['datetime'])
 
                 missing_fields = []
                 for field in mandatory_fields:

@@ -44,7 +44,7 @@ def heatmap(es_client, sketch_id, query_string, query_filter, query_dsl,
         sketch_id, query_string, query_filter, query_dsl, indices, count=True)
 
     # Exit early if we have too many search hits.
-    if result_count > MAX_RESULT_LIMIT or result_count == 0:
+    if len(result_count) > MAX_RESULT_LIMIT or result_count == 0:
         return []
 
     days_map = {

@@ -20,6 +20,10 @@ make it easy to annotate models to give them access to the ACL system.
 The model has the following permissions: "read", "write" and "delete".
 """
 
+import codecs
+
+import six
+
 from flask_login import current_user
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
@@ -48,7 +52,7 @@ class AccessControlEntry(object):
         Returns:
             A column (instance of sqlalchemy.Column)
         """
-        return Column(Integer, ForeignKey(u'user.id'))
+        return Column(Integer, ForeignKey('user.id'))
 
     @declared_attr
     def user(self):
@@ -57,7 +61,7 @@ class AccessControlEntry(object):
         Returns:
             A relationship (instance of sqlalchemy.orm.relationship)
         """
-        return relationship(u'User')
+        return relationship('User')
 
     @declared_attr
     def group_id(self):
@@ -66,7 +70,7 @@ class AccessControlEntry(object):
         Returns:
             A column (instance of sqlalchemy.Column)
         """
-        return Column(Integer, ForeignKey(u'group.id'))
+        return Column(Integer, ForeignKey('group.id'))
 
     @declared_attr
     def group(self):
@@ -75,7 +79,7 @@ class AccessControlEntry(object):
         Returns:
             A relationship (instance of sqlalchemy.orm.relationship)
         """
-        return relationship(u'Group')
+        return relationship('Group')
 
     # Permission column (read, write or delete)
     permission = Column(Unicode(255))
@@ -132,7 +136,7 @@ class AccessControlMixin(object):
                      cls.AccessControlEntry.group == None),
                 cls.AccessControlEntry.group_id.in_([
                     group.id for group in user.groups
-                ])), cls.AccessControlEntry.permission == u'read',
+                ])), cls.AccessControlEntry.permission == 'read',
             cls.AccessControlEntry.parent)
 
     def _get_ace(self, permission, user=None, group=None, check_group=True):
@@ -189,7 +193,7 @@ class AccessControlMixin(object):
             An ACE (instance of timesketch.models.acl.AccessControlEntry) if the
             object is readable by everyone or None if the object is private.
         """
-        return self._get_ace(permission=u'read', user=None, group=None)
+        return self._get_ace(permission='read', user=None, group=None)
 
     @property
     def collaborators(self):
@@ -202,7 +206,7 @@ class AccessControlMixin(object):
         aces = self.AccessControlEntry.query.filter(
             not_(self.AccessControlEntry.user == self.user),
             not_(self.AccessControlEntry.user == None),
-            self.AccessControlEntry.permission == u'read',
+            self.AccessControlEntry.permission == 'read',
             self.AccessControlEntry.parent == self).all()
         return set(ace.user for ace in aces)
 
@@ -219,9 +223,11 @@ class AccessControlMixin(object):
             permission.
         """
         public_ace = self.is_public
-        if public_ace and permission == u'read':
+        if public_ace and permission == 'read':
             return public_ace
-        return self._get_ace(permission=unicode(permission), user=user)
+        if isinstance(permission, six.binary_type):
+            permission = codecs.decode(permission, 'utf-8')
+        return self._get_ace(permission=permission, user=user)
 
     def grant_permission(self, permission, user=None, group=None):
         """Grant permission to a user or group  with the specific permission.

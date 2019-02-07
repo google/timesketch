@@ -67,7 +67,7 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
             tld_counter[tld] += 1
 
         satellite_emoji = emojis.get_emoji('SATELLITE')
-        for domain, count in domain_counter.iteritems():
+        for domain, count in iter(domain_counter.items()):
             emojis_to_add = [satellite_emoji]
             tags_to_add = []
             text = '{0:s} seen {1:d} times'.format(domain, count)

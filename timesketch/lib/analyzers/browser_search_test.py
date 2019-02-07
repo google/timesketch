@@ -16,7 +16,7 @@ class TestBrowserSearchPlugin(BaseTest):
 
     # Mock the Elasticsearch datastore.
     @mock.patch(
-        u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
     def test_url_extraction(self):
         """Test the browser search analyzer."""

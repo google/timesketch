@@ -20,6 +20,7 @@ import uuid
 import bs4
 import requests
 
+# pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
 
 import pandas
@@ -505,6 +506,10 @@ class Sketch(BaseResource):
             if view.query_string:
                 query_string = view.query_string
             query_filter = json.loads(view.query_filter)
+
+            query_filter['size'] = self.DEFAULT_SIZE_LIMIT
+            query_filter['terminate_after'] = self.DEFAULT_SIZE_LIMIT
+
             if view.query_dsl:
                 query_dsl = json.loads(view.query_dsl)
 
