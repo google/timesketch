@@ -17,6 +17,7 @@ from __future__ import unicode_literals
 
 import codecs
 import json
+import six
 
 from flask_testing import TestCase
 
@@ -496,7 +497,8 @@ class BaseTest(TestCase):
         response = self.client.get(self.resource_url)
         if response.status_code == 405:
             response = self.client.post(self.resource_url)
-        response_data = codecs.decode(response.data, 'utf-8')
+        if isinstance(responde_data, six.binary_type):
+            response_data = codecs.decode(response.data, 'utf-8')
         self.assertIn('/login/', response_data)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 

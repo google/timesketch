@@ -306,7 +306,10 @@ def run_index_analyzer(index_name, analyzer_name, **kwargs):
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
     analyzer = analyzer_class(index_name=index_name, **kwargs)
     result = analyzer.run_wrapper()
-    logging.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
+    if result:
+        logging.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
+    else:
+        logging.info('[{0:s}] return with no results.'.format(analyzer_name))
     return index_name
 
 

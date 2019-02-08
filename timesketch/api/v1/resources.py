@@ -53,6 +53,7 @@ from flask_restful import Resource
 from sqlalchemy import desc
 from sqlalchemy import not_
 
+from timesketch.lib import py2to3
 from timesketch.lib.aggregators import heatmap
 from timesketch.lib.aggregators import histogram
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
@@ -790,8 +791,9 @@ class EventCreateResource(ResourceMixin, Resource):
 
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
-            index_name = codecs.decode(
-                hashlib.md5(index_name_seed).hexdigest(), 'utf-8')
+            index_name = hashlib.md5(index_name_seed).hexdigest()
+            if py2to3.PY_2:
+                index_name = codecs.decode(index_name, 'utf-8')
 
             # Try to create index
             try:
