@@ -61,19 +61,3 @@ github_accounts:
         aggregate: True
         tags: ['Github Account']
         emojis: ['ID_BUTTON']
-
-ip_address:
-        query_string: 'source_short:"LOG"'
-        attribute: 'ipv4'
-        store_as: 'ip_address'
-        re: '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-        aggregate: True
-        tags: ['IP address']
-
-username:
-        query_string: 'source_short:"LOG" AND body:"Invalid user"'
-        attribute: 'username'
-        store_as: 'username'
-        re: 'Invalid user ([A-z-\d]{1,39}) from'
-        aggregate: True
-        tags: ['Username']
