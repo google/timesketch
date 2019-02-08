@@ -27,6 +27,7 @@ from flask import current_app
 from sqlalchemy import create_engine
 
 from timesketch import create_celery_app
+from timesketch.lib import py2to3
 from timesketch.lib.analyzers import manager
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
@@ -358,7 +359,11 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
 
     # Run psort.py
     try:
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        if py2to3.PY_3:
+            subprocess.check_output(
+                cmd, stderr=subprocess.STDOUT, encoding='utf-8')
+        else:
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
         _set_timeline_status(index_name, status='fail', error_msg=e.output)
