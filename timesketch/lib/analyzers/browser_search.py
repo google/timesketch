@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 
 import logging
 import re
+
 import six
-import sys
 
 from six.moves import urllib_parse as urlparse
 
