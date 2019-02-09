@@ -71,6 +71,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
         if not url:
             return ''
 
+        # pylint: disable=too-many-function-args
         decoded_url = urlparse.unquote(url)
         if isinstance(decoded_url, six.binary_type):
             try:
