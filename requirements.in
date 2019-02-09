@@ -32,7 +32,6 @@ altair>=2.4.1
 Flask-Testing
 nose
 mock
-pylint
 coverage
 
 # Remove the following when pip-sync finally stops deleting pkg_resources.

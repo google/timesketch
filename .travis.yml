@@ -1,16 +1,37 @@
-language: python
-python:
-  - '2.7'
-  - '3.6'
-node_js: '8'
+matrix:
+  include:
+  - name: "Pylint on Ubuntu Xenial (16.04) with Python 3.5"
+    env: TARGET="pylint"
+    os: linux
+    dist: xenial
+    group: edge
+    language: python
+    python: 3.5
+    node_js: '8'
+    virtualenv:
+      system_site_packages: true
+  - name: "Ubuntu Xenial (16.04) with Python 2.7"
+    env: TARGET="linux-python27"
+    os: linux
+    dist: xenial
+    group: edge
+    language: python
+    python: 2.7
+    node_js: '8'
+  - name: "Ubuntu Xenial (16.04) with Python 3.6"
+    env: TARGET="linux-python36"
+    os: linux
+    dist: xenial
+    group: edge
+    language: python
+    python: 3.6
+    node_js: '8'
 cache:
-  - yarn
-  - pip
-
+- yarn
+- pip
 install:
-  - pip install .
-  - yarn install
-
+- pip install -r requirements.txt
+- if test ${TARGET} = "pylint"; then pip install astroid==1.5.3 pylint==1.7.2; fi
+- yarn install
 script:
-  - ./run_tests.py --full
-  - yarn run build
+- ./config/travis/run_with_timeout.sh 30 ./config/travis/runtests.sh
