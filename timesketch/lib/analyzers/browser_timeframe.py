@@ -78,7 +78,7 @@ def fix_gap_in_list(hour_list):
 
     if len(runs) <= 2:
         return hours
-    elif len_runs < len(runs):
+    if len_runs < len(runs):
         return fix_gap_in_list(hours)
 
     # Now we need to remove runs, we only need the first and last.
@@ -143,7 +143,7 @@ def get_active_hours(frame):
     if number_runs == 1:
         return hours, threshold, frame_count
 
-    elif number_runs == 2 and runs[0][0] == 0:
+    if number_runs == 2 and runs[0][0] == 0:
         # Two runs, first one starts at hour zero.
         return hours, threshold, frame_count
 

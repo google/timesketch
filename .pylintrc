@@ -105,6 +105,10 @@ evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / stateme
 # evaluation report (RP0004).
 #comment=no
 
+# Activate the evaluation score.
+# score=yes
+score=no
+
 
 [VARIABLES]
 

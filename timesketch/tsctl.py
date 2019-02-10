@@ -291,7 +291,7 @@ class SearchTemplateManager(Command):
 
             for search_template in search_templates:
                 name = search_template['name']
-                query_string = search_template['query_string'],
+                query_string = search_template['query_string']
                 query_dsl = search_template['query_dsl']
 
                 # Skip search template if already exits.

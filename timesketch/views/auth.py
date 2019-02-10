@@ -218,3 +218,5 @@ def google_openid_connect():
     # Log the user in and setup the session.
     if current_user.is_authenticated:
         return redirect(request.args.get('next') or '/')
+
+    return abort(HTTP_STATUS_CODE_BAD_REQUEST)
