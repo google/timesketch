@@ -184,7 +184,7 @@ class LoginSketchPlugin(interface.BaseSketchAnalyzer):
                 tags_to_add.append('logon-event')
                 login_counter += 1
 
-            elif identifier == 4634 or identifier == 4647:
+            elif identifier in (4634, 4647):
                 attribute_dict = parse_evtx_logoff_event(strings)
                 if not attribute_dict:
                     continue

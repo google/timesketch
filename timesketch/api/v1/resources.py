@@ -372,7 +372,7 @@ class ViewListResource(ResourceMixin, Resource):
         # Default to user supplied data
         view_name = form.name.data
         query_string = form.query.data
-        query_filter = json.dumps(form.filter.data, ensure_ascii=False),
+        query_filter = json.dumps(form.filter.data, ensure_ascii=False)
         query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
 
         if isinstance(query_filter, tuple):
@@ -391,7 +391,7 @@ class ViewListResource(ResourceMixin, Resource):
             # Copy values from the template
             view_name = searchtemplate.name
             query_string = searchtemplate.query_string
-            query_filter = searchtemplate.query_filter,
+            query_filter = searchtemplate.query_filter
             query_dsl = searchtemplate.query_dsl
             # WTF form returns a tuple for the filter. This is not
             # compatible with SQLAlchemy.
@@ -1088,14 +1088,13 @@ class UploadFileResource(ResourceMixin, Resource):
             if timeline:
                 return self.to_json(
                     timeline, status_code=HTTP_STATUS_CODE_CREATED)
-            else:
-                return self.to_json(
-                    searchindex, status_code=HTTP_STATUS_CODE_CREATED)
 
-        else:
-            raise ApiHTTPError(
-                message=form.errors['file'][0],
-                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+            return self.to_json(
+                searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+
+        raise ApiHTTPError(
+            message=form.errors['file'][0],
+            status_code=HTTP_STATUS_CODE_BAD_REQUEST)
 
 
 class TaskResource(ResourceMixin, Resource):
@@ -1286,6 +1285,8 @@ class CountEventsResource(ResourceMixin, Resource):
 
 
 class TimelineCreateResource(ResourceMixin, Resource):
+    """Resource to create a timeline."""
+
     @login_required
     def post(self):
         """Handles POST request to the resource.
@@ -1343,14 +1344,13 @@ class TimelineCreateResource(ResourceMixin, Resource):
             if timeline:
                 return self.to_json(
                     timeline, status_code=HTTP_STATUS_CODE_CREATED)
-            else:
-                return self.to_json(
-                    searchindex, status_code=HTTP_STATUS_CODE_CREATED)
 
-        else:
-            raise ApiHTTPError(
-                message="failed to create timeline",
-                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+            return self.to_json(
+                searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+
+        raise ApiHTTPError(
+            message="failed to create timeline",
+            status_code=HTTP_STATUS_CODE_BAD_REQUEST)
 
 
 class TimelineListResource(ResourceMixin, Resource):
@@ -1478,7 +1478,8 @@ class GraphResource(ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model
 
         Returns:
-            Graph in JSON (instance of flask.wrappers.Response)
+            Graph in JSON (instance of flask.wrappers.Response) or None if
+            form does not validate on submit.
         """
         # Check access to the sketch
         Sketch.query.get_with_acl(sketch_id)
@@ -1516,6 +1517,8 @@ class GraphResource(ResourceMixin, Resource):
                 }]
             }
             return jsonify(schema)
+
+        return None
 
 
 class GraphViewListResource(ResourceMixin, Resource):
