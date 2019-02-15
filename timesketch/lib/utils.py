@@ -25,9 +25,9 @@ import smtplib
 import sys
 import time
 
+from dateutil import parser
 from flask import current_app
 
-from dateutil import parser
 
 # Set CSV field size limit to systems max value.
 csv.field_size_limit(sys.maxsize)

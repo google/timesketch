@@ -1,10 +1,10 @@
 """Tests for DomainsPlugin."""
 from __future__ import unicode_literals
 
-from flask import current_app
 import mock
 
 from datasketch.minhash import MinHash
+from flask import current_app
 
 from timesketch.lib.analyzers import phishy_domains
 from timesketch.lib.testlib import BaseTest
@@ -58,7 +58,7 @@ class TestDomainsPlugin(BaseTest):
         domain = 'login.stortmbl.is'
         # pylint: disable=protected-access
         minhash = analyzer._get_minhash_from_domain(domain)
-        domain_dict = {domain: minhash}
+        domain_dict = {domain: {'hash': minhash, 'depth': 3}}
 
         # pylint: disable=protected-access
         similar = analyzer._get_similar_domains(
