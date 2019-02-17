@@ -30,7 +30,6 @@ from elasticsearch.exceptions import NotFoundError
 from elasticsearch.exceptions import ConnectionError
 from flask import abort
 
-from timesketch.lib import py2to3
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
 # Setup logging
@@ -492,7 +491,7 @@ class ElasticsearchDataStore(object):
             except ConnectionError:
                 raise RuntimeError('Unable to connect to Timesketch backend.')
         # We want to return unicode here to keep SQLalchemy happy.
-        if py2to3.PY_2:
+        if six.PY2:
             if not isinstance(index_name, six.text_type):
                 index_name = codecs.decode(index_name, 'utf-8')
 
