@@ -10,14 +10,18 @@ class BarChart(interface.BaseChart):
 
     NAME = 'barchart'
 
-    def __init__(self):
-        super(BarChart, self).__init__()
+    def __init__(self, data):
+        super(BarChart, self).__init__(data)
 
-    @staticmethod
-    def generate(data):
-        chart = alt.Chart(data.values).mark_bar()
-        chart.encoding = alt.Encoding.from_dict(data.encoding)
+    def to_vega_lite_spec(self):
+        chart = alt.Chart(self.data.values).mark_bar()
+        chart.encoding = alt.Encoding.from_dict(self.data.encoding)
         return chart
+
+    def to_vega_lite_html(self):
+        chart = alt.Chart(self.data.values).mark_bar()
+        chart.encoding = alt.Encoding.from_dict(self.data.encoding)
+        return chart.to_html()
 
 
 class HorizontalBarChart(interface.BaseChart):

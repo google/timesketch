@@ -19,7 +19,7 @@ from flask import current_app
 from elasticsearch import Elasticsearch
 
 from timesketch.lib.aggregators import manager
-from timesketch.lib.analyzers import interface
+from timesketch.models.sketch import Sketch as SQLSketch
 
 
 class AggregationResult(object):
@@ -28,13 +28,20 @@ class AggregationResult(object):
         self.encoding = encoding
         self.values = values
 
+    def _get_chart(self, chart_name):
+        chart_class = manager.ChartManager.get_chart(chart_name)
+        return chart_class(data=self.to_dict())
+
     def to_dict(self):
         return dict(encoding=self.encoding, values=self.values)
 
-    def to_chart(self, chart_name):
-        chart = manager.ChartManager.get_chart(chart_name)
-        chart = chart.generate(data=self.to_dict())
-        return chart.to_dict()
+    def to_vega_lite_spec(self, chart_name):
+        chart = self._get_chart(chart_name)
+        return chart.to_vega_lite_spec()
+
+    def to_vega_lite_html(self, chart_name):
+        chart = self._get_chart(chart_name)
+        return chart.to_vega_lite_spec()
 
 
 class BaseAggregator(object):
@@ -44,38 +51,33 @@ class BaseAggregator(object):
     FORM_FIELDS = {}
     SUPPORTED_CHARTS = frozenset()
 
-    def __init__(self, sketch_id=None, indices=None):
+    def __init__(self, sketch_id=None, index=None):
         """Initialize the aggregator object.
 
         Args:
             sketch_id: Sketch ID.
-            indices: List of elasticsearch index names.
+            index: List of elasticsearch index names.
         """
-        if not sketch_id and not indices:
+        if not sketch_id and not index:
             raise RuntimeError('Need at least sketch_id or index')
 
-        self.sketch = None
-        self.indices = indices
+        self.sketch = SQLSketch.query.get(sketch_id)
+        self.index = index
 
-        if sketch_id:
-            self.sketch = interface.Sketch(sketch_id=sketch_id)
-
-        if self.sketch and not indices:
-            self.indices = self.sketch.get_all_indices()
+        if self.sketch and not index:
+            active_timelines = self.sketch.active_timelines
+            self.index = [t.searchindex.index_name for t in active_timelines]
 
     def run_es_aggregation(self, aggregation_dict):
         es_client = Elasticsearch(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
         aggregation = es_client.search(
-            index=self.indices, body=aggregation_dict, size=0)
+            index=self.index, body=aggregation_dict, size=0)
         return aggregation
 
     def run(self, *args, **kwargs):
         """Entry point for the aggregator."""
-        return self.run_wrapper(*args, **kwargs)
-
-    def run_wrapper(self, *args, **kwargs):
         raise NotImplementedError
 
 
@@ -83,5 +85,6 @@ class BaseChart(object):
 
     NAME = 'name'
 
-    def __init__(self):
+    def __init__(self, data):
         self.name = self.NAME
+        self.data = data

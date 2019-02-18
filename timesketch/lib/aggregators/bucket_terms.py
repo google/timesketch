@@ -4,12 +4,10 @@ from timesketch.lib.aggregators import manager
 from timesketch.lib.aggregators import interface
 
 
-class TermsAggregation(interface.BaseAggregator):
+class BucketTermsAggregation(interface.BaseAggregator):
 
     NAME = 'bucket_terms'
-
     SUPPORTED_CHARTS = frozenset(['barchart', 'h_barchart'])
-
     FORM_FIELDS = {
         'field': {
             'type_hint': 'text',
@@ -21,10 +19,10 @@ class TermsAggregation(interface.BaseAggregator):
         }
     }
 
-    def __init__(self, sketch_id=None, indices=None):
-        super(TermsAggregation, self).__init__(sketch_id, indices)
+    def __init__(self, sketch_id=None, index=None):
+        super(BucketTermsAggregation, self).__init__(sketch_id, index)
 
-    def run_wrapper(self, field, limit=10):
+    def run(self, field, limit=10):
 
         # Encoding information for Vega-Lite.
         encoding = {
@@ -56,4 +54,4 @@ class TermsAggregation(interface.BaseAggregator):
         return interface.AggregationResult(encoding, values)
 
 
-manager.AggregatorManager.register(TermsAggregation)
+manager.AggregatorManager.register(BucketTermsAggregation)
