@@ -491,11 +491,12 @@ class ElasticsearchDataStore(object):
             except ConnectionError:
                 raise RuntimeError('Unable to connect to Timesketch backend.')
         # We want to return unicode here to keep SQLalchemy happy.
-        if not isinstance(index_name, six.text_type):
-            index_name = codecs.decode(index_name, 'utf-8')
+        if six.PY2:
+            if not isinstance(index_name, six.text_type):
+                index_name = codecs.decode(index_name, 'utf-8')
 
-        if not isinstance(doc_type, six.text_type):
-            doc_type = codecs.decode(doc_type, 'utf-8')
+            if not isinstance(doc_type, six.text_type):
+                doc_type = codecs.decode(doc_type, 'utf-8')
 
         return index_name, doc_type
 
@@ -526,12 +527,15 @@ class ElasticsearchDataStore(object):
             event_id: Event Elasticsearch ID
         """
         if event:
-            # Make sure we have decoded strings in the event dict.
-            event = {
-                k.decode('utf8'): (codecs.decode(v, 'utf8')
-                                   if isinstance(v, six.binary_type) else v)
-                for k, v in event.items()
-            }
+            for k, v in event.items():
+                if not isinstance(k, six.text_type):
+                    k = codecs.decode(k, 'utf8')
+
+                # Make sure we have decoded strings in the event dict.
+                if isinstance(v, six.binary_type):
+                    v = codecs.decode(v, 'utf8')
+
+                event[k] = v
 
             # Header needed by Elasticsearch when bulk inserting.
             header = {

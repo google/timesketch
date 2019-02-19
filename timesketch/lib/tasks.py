@@ -305,7 +305,10 @@ def run_index_analyzer(index_name, analyzer_name, **kwargs):
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
     analyzer = analyzer_class(index_name=index_name, **kwargs)
     result = analyzer.run_wrapper()
-    logging.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
+    if result:
+        logging.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
+    else:
+        logging.info('[{0:s}] return with no results.'.format(analyzer_name))
     return index_name
 
 
@@ -358,7 +361,11 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
 
     # Run psort.py
     try:
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        if six.PY3:
+            subprocess.check_output(
+                cmd, stderr=subprocess.STDOUT, encoding='utf-8')
+        else:
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
         _set_timeline_status(index_name, status='fail', error_msg=e.output)
