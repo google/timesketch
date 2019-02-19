@@ -76,11 +76,25 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         tags = config.get('tags', [])
 
         expression_string = config.get('re')
+        expression_flags = config.get('re_flags')
         if not expression_string:
             logging.warning('No regular expression defined.')
             return ''
+
+        if expression_flags:
+            flags = set()
+            for flag in expression_flags:
+                try:
+                    flags.add(getattr(re, flag))
+                except AttributeError:
+                    logging.warning('Unknown regular expression flag defined.')
+                    return ''
+            re_flag = sum(flags)
+        else:
+            re_flag = 0
+
         try:
-            expression = re.compile(expression_string)
+            expression = re.compile(expression_string, flags=re_flag)
         except re.error as exception:
             # pylint: disable=logging-format-interpolation
             logging.warning((
@@ -101,7 +115,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         for event in events:
             attribute_field = event.source.get(attribute)
             if isinstance(attribute_field, six.text_type):
-                attribute_value = attribute_field.lower()
+                attribute_value = attribute_field
             elif isinstance(attribute_field, (list, tuple)):
                 attribute_value = ','.join(attribute_field)
             elif isinstance(attribute_field, (int, float)):
