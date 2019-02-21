@@ -253,6 +253,12 @@ def run_email_result_task(index_name, sketch_id=None):
         searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
         sketch = None
 
+        try:
+            to_username = searchindex.user.username
+        except AttributeError:
+            logging.warning('No user to send email to.')
+            return ''
+
         if sketch_id:
             sketch = Sketch.query.get(sketch_id)
 
@@ -280,8 +286,6 @@ def run_email_result_task(index_name, sketch_id=None):
             if view_links:
                 body = body + '<br><br><b>Views</b><br>' + '<br>'.join(
                     view_links)
-
-        to_username = searchindex.user.username
 
         try:
             send_email(subject, body, to_username, use_html=True)
