@@ -75,3 +75,14 @@ github_accounts:
         aggregate: True
         tags: ['Github Account']
         emojis: ['ID_BUTTON']
+
+# Linkedin account extraction from profile edit url        
+linkedin_accounts:
+        query_string: 'source_short:"WEBHIST" AND
+          url:"https://www.linkedin.com/in/" AND "/edit/"'
+        attribute: 'url'
+        store_as: 'found_account'
+        re: 'https://www.linkedin.com/in/([A-z-\d]{1,39})/edit/'
+        aggregate: True
+        tags: ['Linkedin Account']
+        emojis: ['ID_BUTTON']
