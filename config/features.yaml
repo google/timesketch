@@ -76,7 +76,7 @@ github_accounts:
         tags: ['Github Account']
         emojis: ['ID_BUTTON']
 
-# Linkedin account extraction from profile edit url        
+# Linkedin account extraction from profile edit url
 linkedin_accounts:
         query_string: 'source_short:"WEBHIST" AND
           url:"https://www.linkedin.com/in/" AND "/edit/"'
