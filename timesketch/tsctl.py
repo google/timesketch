@@ -88,7 +88,8 @@ class AddUser(Command):
             password = self.get_password_from_prompt()
         if not isinstance(password, six.text_type):
             password = codecs.decode(password, 'utf-8')
-        username = codecs.decode(username, 'utf-8')
+        if not isinstance(username, six.text_type):
+            username = codecs.decode(username, 'utf-8')
         user = User.get_or_create(username=username)
         user.set_password(plaintext=password)
         db_session.add(user)
@@ -291,7 +292,7 @@ class SearchTemplateManager(Command):
 
             for search_template in search_templates:
                 name = search_template['name']
-                query_string = search_template['query_string'],
+                query_string = search_template['query_string']
                 query_dsl = search_template['query_dsl']
 
                 # Skip search template if already exits.

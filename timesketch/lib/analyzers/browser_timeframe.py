@@ -1,6 +1,7 @@
 """Sketch analyzer plugin for browser timeframe."""
 from __future__ import unicode_literals
 
+import collections
 import pandas as pd
 
 from timesketch.lib import emojis
@@ -77,7 +78,7 @@ def fix_gap_in_list(hour_list):
 
     if len(runs) <= 2:
         return hours
-    elif len_runs < len(runs):
+    if len_runs < len(runs):
         return fix_gap_in_list(hours)
 
     # Now we need to remove runs, we only need the first and last.
@@ -111,14 +112,30 @@ def get_active_hours(frame):
 
     stats = frame_count['count'].describe()
 
-    # We use the 75% value - mean of all counts as the "bar" to which we
-    # determine an hour to be active.
-    threshold = stats['75%'] - stats['mean']
+    # Define few different options for the threshold value of what constitutes
+    # an active hour. Then we choose the method that has the highest active
+    # hour count, as long as it is between 3 and 12 hours.
+    thresholds = {
+        stats['75%'] - stats['mean']: 0,
+        stats['75%']: 0,
+        stats['50%']: 0,
+        stats['25%']: 0
+    }
+    for threshold in thresholds:
+        threshold_filter = frame_count['count'] >= threshold
+        hours = list(frame_count[threshold_filter].hour.values)
+        hours = sorted(hours)
+
+        hour_len = len(hours)
+        if hour_len >= 3 and hour_len <= 12:
+            thresholds[threshold] = hour_len
+
+    threshold_counter = collections.Counter(thresholds)
+    threshold, _ = threshold_counter.most_common(1)[0]
 
     threshold_filter = frame_count['count'] >= threshold
     hours = list(frame_count[threshold_filter].hour.values)
     hours = sorted(hours)
-
     runs = get_list_of_consecutive_sequences(hours)
 
     # There should either be a single run or at most two.
@@ -126,7 +143,7 @@ def get_active_hours(frame):
     if number_runs == 1:
         return hours, threshold, frame_count
 
-    elif number_runs == 2 and runs[0][0] == 0:
+    if number_runs == 2 and runs[0][0] == 0:
         # Two runs, first one starts at hour zero.
         return hours, threshold, frame_count
 
