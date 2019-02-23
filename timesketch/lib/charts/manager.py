@@ -11,54 +11,54 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""This file contains a class for managing aggregators."""
+"""This file contains a class for managing charts."""
 
 from __future__ import unicode_literals
 
 
-class AggregatorManager(object):
-    """The aggregator manager."""
+class ChartManager(object):
+    """The chart manager."""
 
     _class_registry = {}
 
     @classmethod
-    def get_aggregators(cls):
-        """Retrieves the registered aggregators.
+    def get_charts(cls):
+        """Retrieves the registered charts.
 
         Yields:
             tuple: containing:
-                unicode: the uniquely identifying name of the aggregator
-                type: the aggregator class.
+                unicode: the uniquely identifying name of the chart
+                type: the chart class.
         """
         for agg_name, agg_class in iter(cls._class_registry.items()):
             yield agg_name, agg_class
 
     @classmethod
-    def get_aggregator(cls, aggregator_name):
-        """Retrieves a class object of a specific aggregator.
+    def get_chart(cls, chart_name):
+        """Retrieves a class object of a specific chart.
 
         Args:
-            aggregator_name (unicode): name of the aaggregator to retrieve.
+            chart_name (unicode): name of the chart to retrieve.
 
         Returns:
-            Aggregator class object.
+            Chart class object.
         """
-        return cls._class_registry[aggregator_name.lower()]
+        return cls._class_registry[chart_name.lower()]
 
     @classmethod
-    def register(cls, aggregator_class):
-        """Registers an aggregator class.
+    def register(cls, chart_class):
+        """Registers an chart class.
 
-        The aggregator classes are identified by their lower case name.
+        The chart classes are identified by their lower case name.
 
         Args:
-            aggregator_class (type): the aggregator class to register.
+            chart_class (type): the chart class to register.
 
         Raises:
             KeyError: if class is already set for the corresponding name.
         """
-        aggregator_name = aggregator_class.NAME.lower()
-        if aggregator_name in cls._class_registry:
+        chart_name = chart_class.NAME.lower()
+        if chart_name in cls._class_registry:
             raise KeyError('Class already set for name: {0:s}.'.format(
-                aggregator_class.NAME))
-        cls._class_registry[aggregator_name] = aggregator_class
+                chart_class.NAME))
+        cls._class_registry[chart_name] = chart_class

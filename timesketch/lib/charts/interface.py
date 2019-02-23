@@ -11,7 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Aggregator module."""
+"""Interface for charts."""
 
-# Register all aggregators here by importing them.
-from timesketch.lib.aggregators import buckets
+from __future__ import unicode_literals
+
+import altair as alt
+
+
+class BaseChart(object):
+
+    NAME = 'name'
+
+    def __init__(self, data):
+        self.name = self.NAME
+        self.encoding = data['encoding']
+        self.values = alt.Data(values=data['values'])
+
+    def generate(self):
+        raise NotImplementedError

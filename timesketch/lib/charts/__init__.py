@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Aggregator module."""
+"""Chart module."""
 
-# Register all aggregators here by importing them.
-from timesketch.lib.aggregators import buckets
+# Register all charts here by importing them.
+from timesketch.lib.charts import barchart

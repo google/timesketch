@@ -18,9 +18,7 @@ from __future__ import unicode_literals
 from flask import current_app
 from elasticsearch import Elasticsearch
 
-import altair as alt
-
-from timesketch.lib.aggregators import manager
+from timesketch.lib.charts import manager as chart_manager
 from timesketch.models.sketch import Sketch as SQLSketch
 
 
@@ -31,7 +29,7 @@ class AggregationResult(object):
         self.values = values
 
     def _get_chart(self, chart_name):
-        chart_class = manager.ChartManager.get_chart(chart_name)
+        chart_class = chart_manager.ChartManager.get_chart(chart_name)
         return chart_class(data=self.to_dict())
 
     def to_dict(self):
@@ -79,13 +77,3 @@ class BaseAggregator(object):
     def run(self, *args, **kwargs):
         """Entry point for the aggregator."""
         raise NotImplementedError
-
-
-class BaseChart(object):
-
-    NAME = 'name'
-
-    def __init__(self, data):
-        self.name = self.NAME
-        self.encoding = data['encoding']
-        self.values = alt.Data(values=data['values'])
