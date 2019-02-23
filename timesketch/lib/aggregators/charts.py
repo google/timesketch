@@ -13,32 +13,26 @@ class BarChart(interface.BaseChart):
     def __init__(self, data):
         super(BarChart, self).__init__(data)
 
-    def to_vega_lite_spec(self):
-        chart = alt.Chart(self.data.values).mark_bar()
-        chart.encoding = alt.Encoding.from_dict(self.data.encoding)
+    def generate(self):
+        chart = alt.Chart(self.values).mark_bar()
+        chart.encoding = alt.Encoding.from_dict(self.encoding)
         return chart
-
-    def to_vega_lite_html(self):
-        chart = alt.Chart(self.data.values).mark_bar()
-        chart.encoding = alt.Encoding.from_dict(self.data.encoding)
-        return chart.to_html()
 
 
 class HorizontalBarChart(interface.BaseChart):
 
-    NAME = 'h_barchart'
+    NAME = 'hbarchart'
 
-    def __init__(self):
-        super(HorizontalBarChart, self).__init__()
+    def __init__(self, data):
+        super(HorizontalBarChart, self).__init__(data)
 
-    @staticmethod
-    def generate(data):
+    def generate(self):
 
-        encoding = data.encoding.copy()
-        encoding['x'] = data.encoding['y']
-        encoding['y'] = data.encoding['x']
+        encoding = self.encoding.copy()
+        encoding['x'] = self.encoding['y']
+        encoding['y'] = self.encoding['x']
 
-        bars = alt.Chart(data.values).mark_bar()
+        bars = alt.Chart(self.values).mark_bar()
         bars.encoding = alt.Encoding.from_dict(encoding)
 
         text = bars.mark_text(align='left', baseline='middle', dx=3).encode(

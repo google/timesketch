@@ -18,6 +18,8 @@ from __future__ import unicode_literals
 from flask import current_app
 from elasticsearch import Elasticsearch
 
+import altair as alt
+
 from timesketch.lib.aggregators import manager
 from timesketch.models.sketch import Sketch as SQLSketch
 
@@ -35,13 +37,11 @@ class AggregationResult(object):
     def to_dict(self):
         return dict(encoding=self.encoding, values=self.values)
 
-    def to_vega_lite_spec(self, chart_name):
-        chart = self._get_chart(chart_name)
-        return chart.to_vega_lite_spec()
-
-    def to_vega_lite_html(self, chart_name):
-        chart = self._get_chart(chart_name)
-        return chart.to_vega_lite_spec()
+    def to_chart(self, chart_name, html=False):
+        chart = self._get_chart(chart_name).generate()
+        if html:
+            return chart.to_html()
+        return chart.to_dict()
 
 
 class BaseAggregator(object):
@@ -63,17 +63,17 @@ class BaseAggregator(object):
 
         self.sketch = SQLSketch.query.get(sketch_id)
         self.index = index
+        self.elastic = Elasticsearch(
+            host=current_app.config['ELASTIC_HOST'],
+            port=current_app.config['ELASTIC_PORT'])
 
-        if self.sketch and not index:
+        if not self.index:
             active_timelines = self.sketch.active_timelines
             self.index = [t.searchindex.index_name for t in active_timelines]
 
-    def run_es_aggregation(self, aggregation_dict):
-        es_client = Elasticsearch(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
-        aggregation = es_client.search(
-            index=self.index, body=aggregation_dict, size=0)
+    def elastic_aggregation(self, aggregation_spec):
+        aggregation = self.elastic.search(
+            index=self.index, body=aggregation_spec, size=0)
         return aggregation
 
     def run(self, *args, **kwargs):
@@ -87,4 +87,5 @@ class BaseChart(object):
 
     def __init__(self, data):
         self.name = self.NAME
-        self.data = data
+        self.encoding = data['encoding']
+        self.values = alt.Data(values=data['values'])

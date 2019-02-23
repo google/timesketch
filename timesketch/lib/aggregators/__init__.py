@@ -14,5 +14,5 @@
 """Aggregator module."""
 
 # Register all aggregators and charts here by importing them.
-from timesketch.lib.aggregators import bucket_terms
+from timesketch.lib.aggregators import buckets
 from timesketch.lib.aggregators import charts
