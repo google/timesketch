@@ -16,14 +16,6 @@ class PotentialBruteforceSketchPlugin(interface.BaseSketchAnalyzer):
     NAME = 'potential_bruteforce'
 	
 
-	
-	# List of common logins
-	COMMON_NAMES = [
-    "admin",
-	"user",
-	"test",
-	"root"]
-
     def __init__(self, index_name, sketch_id):
         """Initialize The Sketch Analyzer.
         Args:
@@ -41,18 +33,19 @@ class PotentialBruteforceSketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
-        # TODO: Add Elasticsearch query to get the events you need.
+        # Add Elasticsearch query to get the events you need.
         query = ('(data_type:"syslog:line"'
                  'AND body:"Invalid user")')
 
-        # TODO: Specify what returned fields you need for your analyzer.
+        # Specify what returned fields you need for your analyzer.
         return_fields = ['message', 'data_type', 'source_short']
+        stop_emoji = emojis.get_emoji('STOP')
 
         # Generator of events based on your query.
         events = self.event_stream(
             query_string=query, return_fields=return_fields)
 
-        # TODO: Add analyzer logic here.
+        #  Add analyzer logic here.
         # Methods available to use for sketch analyzers:
         # sketch.get_all_indices()
         # sketch.add_view(name, query_string, query_filter={})
@@ -68,25 +61,28 @@ class PotentialBruteforceSketchPlugin(interface.BaseSketchAnalyzer):
          data_type = event.source.get('data_type')
          source_short = event.source.get('source_short')
          message = event.source.get('message')
-		 ip_address = re.findall(r'\b25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\.25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\.25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\.25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\b',message)
-		        if ip_address is None:
-                continue
-		 username = re.match()
-		 		if username is None:
-                continue
-		 for username in self._COMMON_NAMES:
-		   event.add_tags('common_name
-		   ')
-		  event.add_attributes({})
+         ip_address = re.findall("\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", message)
+	 if ip_address:
+          event.add_attributes({'ip_address': ip_address})
+         if ip_address is None:
+            continue
+	 username = re.search('Invalid user ([a-zA-Z0-9_\.+\-]{1,32}) from', message)
+         if username:
+          event.add_attributes({'user': username})
+	 if username is None:
+           continue
+         event.add_emojis([stop_emoji])
+         event.add_tags(['unknown_user'])
 
-        if login_count > 0:
-         self.sketch.add_view(
+         if login_count > 0:
+          self.sketch.add_view(
 		 view_name='Potential bruteforce', analyzer_name=self.NAME,
 		 query_string=query)
 
+
         # TODO: Return a summary from the analyzer.
-        return 'Potential bruteforce analyzer completed, {0:d} login attempts from {1:d} unknown users and {2:d} IPs found'.format(
-    login_count, user_count, ip_count)
+        return 'Potential bruteforce analyzer completed, {0:d} login attempts from unknown users found'.format(
+    login_count)
 
 
 
