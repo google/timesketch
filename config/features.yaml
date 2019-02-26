@@ -79,10 +79,10 @@ github_accounts:
 # Linkedin account extraction from profile edit url        
 linkedin_accounts:
         query_string: 'source_short:"WEBHIST" AND
-          url:"https://www.linkedin.com/in/" AND "/edit/"'
+          url:"https://www.linkedin.com/in/" AND url:"/edit/"'
         attribute: 'url'
         store_as: 'found_account'
-        re: 'https://www.linkedin.com/in/([A-z-\d]{1,39})/edit/'
+        re: 'https://www.linkedin.com/in/([A-z-\d]{3,32})/edit/'
         aggregate: True
-        tags: ['Linkedin Account']
+        tags: ['LinkedIn Account']
         emojis: ['ID_BUTTON']
