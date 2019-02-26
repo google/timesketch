@@ -22,27 +22,48 @@ from timesketch.lib.charts import interface
 
 
 class BarChart(interface.BaseChart):
+    """Barchart object."""
 
     NAME = 'barchart'
 
     def __init__(self, data):
+        """Initialize the chart object.
+
+        Args:
+            data: Aggregation result from an aggregator object as a dict.
+        """
         super(BarChart, self).__init__(data)
 
     def generate(self):
+        """Generate the chart.
+
+        Returns:
+            Instance of altair.Chart
+        """
         chart = alt.Chart(self.values).mark_bar()
         chart.encoding = alt.Encoding.from_dict(self.encoding)
         return chart
 
 
 class HorizontalBarChart(interface.BaseChart):
+    """Horizontal barchart."""
 
     NAME = 'hbarchart'
 
     def __init__(self, data):
+        """Initialize the chart object.
+
+        Args:
+            data: Aggregation result from an aggregator object as a dict.
+        """
         super(HorizontalBarChart, self).__init__(data)
 
     def generate(self):
+        """Generate the chart.
 
+        Returns:
+            Instance of altair.Chart
+        """
         encoding = self.encoding.copy()
         encoding['x'] = self.encoding['y']
         encoding['y'] = self.encoding['x']
@@ -58,5 +79,5 @@ class HorizontalBarChart(interface.BaseChart):
         return chart
 
 
-manager.ChartManager.register(BarChart)
-manager.ChartManager.register(HorizontalBarChart)
+manager.ChartManager.register_chart(BarChart)
+manager.ChartManager.register_chart(HorizontalBarChart)

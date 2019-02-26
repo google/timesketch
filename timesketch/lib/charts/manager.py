@@ -46,7 +46,7 @@ class ChartManager(object):
         return cls._class_registry[chart_name.lower()]
 
     @classmethod
-    def register(cls, chart_class):
+    def register_chart(cls, chart_class):
         """Registers an chart class.
 
         The chart classes are identified by their lower case name.

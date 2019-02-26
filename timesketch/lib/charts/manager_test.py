@@ -27,7 +27,7 @@ class MockChart(object):
 class TestChartManager(BaseTest):
     """Tests for the functionality of the manager module."""
 
-    manager.ChartManager.register(MockChart)
+    manager.ChartManager.register_chart(MockChart)
 
     def test_get_charts(self):
         """Test to get chart class objects."""
@@ -47,4 +47,5 @@ class TestChartManager(BaseTest):
 
     def test_register_chart(self):
         """Test so we raise KeyError when chart is already registered."""
-        self.assertRaises(KeyError, manager.ChartManager.register, MockChart)
+        self.assertRaises(
+            KeyError, manager.ChartManager.register_chart, MockChart)

@@ -25,24 +25,55 @@ from timesketch.models.sketch import Sketch as SQLSketch
 
 
 class AggregationResult(object):
+    """Result object for aggregations.
+
+    Attributes:
+        encoding: Dict with Vega-Lite encoding information.
+        values: List of dicts with aggregation data.
+    """
 
     def __init__(self, encoding, values):
+        """Initialize the object.
+
+        Args:
+            encoding: Dict with Vega-Lite encoding information.
+            values: List of dicts with aggregation data.
+        """
         self.encoding = encoding
         self.values = values
 
     def to_dict(self, encoding=False):
+        """Encode aggregation result as dict.
+
+        Args:
+            encoding: Boolean indicating if encoding info should be returned.
+
+        Returns:
+            Dict with aggregation result.
+        """
         aggregation_data = dict(values=self.values)
         if encoding:
             aggregation_data['encoding'] = self.encoding
         return aggregation_data
 
     def to_pandas(self):
+        """Encode aggregation result as a pandas dataframe.
+
+        Returns:
+            Pandas dataframe with aggregation results.
+        """
         return pandas.DataFrame(self.values)
 
-    def to_chart(self, chart_name, html=False):
+    def to_chart(self, chart_name, as_html=False):
+        """Encode aggregation result as Vega-Lite chart.
+
+        Args:
+            chart_name: Name of chart as string.
+            as_html: Boolean indicating if chart should be returned in HTML.
+        """
         chart_class = chart_manager.ChartManager.get_chart(chart_name)
-        chart = chart_class(data=self.to_dict(encoding=True))
-        if html:
+        chart = chart_class(data=self.to_dict(encoding=True)).generate()
+        if as_html:
             return chart.to_html()
         return chart.to_dict()
 
@@ -51,7 +82,11 @@ class BaseAggregator(object):
     """Base class for an aggregator."""
 
     NAME = 'name'
+
+    # Used as hints to the frontend UI in order to render input forms.
     FORM_FIELDS = {}
+
+    # List of supported chart types.
     SUPPORTED_CHARTS = frozenset()
 
     def __init__(self, sketch_id=None, index=None):
@@ -75,6 +110,15 @@ class BaseAggregator(object):
             self.index = [t.searchindex.index_name for t in active_timelines]
 
     def elastic_aggregation(self, aggregation_spec):
+        """Helper method to execute aggregation in Elasticsearch.
+
+        Args:
+            aggregation_spec: Dict with Elasticsearch aggregation spec.
+
+        Returns:
+            Elasticsearch aggregation result.
+        """
+        # pylint: disable=unexpected-keyword-arg
         aggregation = self.elastic.search(
             index=self.index, body=aggregation_spec, size=0)
         return aggregation
