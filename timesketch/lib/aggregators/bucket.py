@@ -4,7 +4,7 @@ from timesketch.lib.aggregators import manager
 from timesketch.lib.aggregators import interface
 
 
-class BucketTermsAggregation(interface.BaseAggregator):
+class TermsAggregation(interface.BaseAggregator):
 
     NAME = 'bucket_terms'
     SUPPORTED_CHARTS = frozenset(['barchart', 'horizontal_barchart'])
@@ -20,7 +20,7 @@ class BucketTermsAggregation(interface.BaseAggregator):
     }
 
     def __init__(self, sketch_id=None, index=None):
-        super(BucketTermsAggregation, self).__init__(sketch_id, index)
+        super(TermsAggregation, self).__init__(sketch_id, index)
 
     def run(self, field, limit=10):
 
@@ -52,4 +52,4 @@ class BucketTermsAggregation(interface.BaseAggregator):
         return interface.AggregationResult(encoding, values)
 
 
-manager.AggregatorManager.register(BucketTermsAggregation)
+manager.AggregatorManager.register_aggregator(TermsAggregation)

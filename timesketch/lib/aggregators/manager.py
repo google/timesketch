@@ -46,7 +46,7 @@ class AggregatorManager(object):
         return cls._class_registry[aggregator_name.lower()]
 
     @classmethod
-    def register(cls, aggregator_class):
+    def register_aggregator(cls, aggregator_class):
         """Registers an aggregator class.
 
         The aggregator classes are identified by their lower case name.

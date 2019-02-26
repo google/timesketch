@@ -18,6 +18,8 @@ from __future__ import unicode_literals
 from flask import current_app
 from elasticsearch import Elasticsearch
 
+import pandas
+
 from timesketch.lib.charts import manager as chart_manager
 from timesketch.models.sketch import Sketch as SQLSketch
 
@@ -28,15 +30,18 @@ class AggregationResult(object):
         self.encoding = encoding
         self.values = values
 
-    def _get_chart(self, chart_name):
-        chart_class = chart_manager.ChartManager.get_chart(chart_name)
-        return chart_class(data=self.to_dict())
+    def to_dict(self, encoding=False):
+        aggregation_data = dict(values=self.values)
+        if encoding:
+            aggregation_data['encoding'] = self.encoding
+        return aggregation_data
 
-    def to_dict(self):
-        return dict(encoding=self.encoding, values=self.values)
+    def to_pandas(self):
+        return pandas.DataFrame(self.values)
 
     def to_chart(self, chart_name, html=False):
-        chart = self._get_chart(chart_name).generate()
+        chart_class = chart_manager.ChartManager.get_chart(chart_name)
+        chart = chart_class(data=self.to_dict(encoding=True))
         if html:
             return chart.to_html()
         return chart.to_dict()
