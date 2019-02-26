@@ -23,6 +23,7 @@ cryptography>=2.3
 pyyaml>=4.2b1
 urllib3>=1.23
 pandas>=0.23
+altair
 
 # dev-requirements:
 Flask-Testing
