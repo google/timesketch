@@ -33,10 +33,10 @@ class TestChartManager(BaseTest):
         """Test to get chart class objects."""
         charts = manager.ChartManager.get_charts()
         chart_list = [x for x in charts]
-        first_chart_tuple = chart_list[0]
-        chart_name, chart_class = first_chart_tuple
+        last_chart_tuple = chart_list[-1]
+        chart_name, chart_class = last_chart_tuple
         self.assertIsInstance(chart_list, list)
-        self.assertIsInstance(first_chart_tuple, tuple)
+        self.assertIsInstance(last_chart_tuple, tuple)
         self.assertEqual(chart_class, MockChart)
         self.assertEqual(chart_name, 'mockchart')
 
