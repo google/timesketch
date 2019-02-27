@@ -45,10 +45,10 @@ class TestAggregatorManager(BaseTest):
         """Test to get aggregator class from registry."""
         aggregator_class = manager.AggregatorManager.get_aggregator(
             'mockaggregator')
-        fail_aggregator_class = manager.AggregatorManager.get_aggregator(
-            'does_not_exist')
         self.assertEqual(aggregator_class, MockAggregator)
-        self.assertEqual(fail_aggregator_class, None)
+        self.assertRaises(
+            KeyError, manager.AggregatorManager.get_aggregator,
+            'no_such_aggregator')
 
     def test_register_aggregator(self):
         """Test so we raise KeyError when aggregator is already registered."""

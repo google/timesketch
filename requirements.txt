@@ -37,7 +37,7 @@ flask-testing==0.6.2
 flask-wtf==0.14.2
 flask==1.0.2
 funcsigs==1.0.2           # via mock
-functools32==3.2.3.post2  # via jsonschema
+#functools32==3.2.3.post2  # via jsonschema
 gunicorn==19.7.1
 idna==2.6                 # via cryptography, requests
 ipaddress==1.0.22         # via cryptography

@@ -70,11 +70,19 @@ class AggregationResult(object):
         Args:
             chart_name: Name of chart as string.
             as_html: Boolean indicating if chart should be returned in HTML.
+            interactive: Boolean indicating if chart should be interactive.
 
         Returns:
             Vega-Lite chart spec in either JSON or HTML format.
+
+        Raises:
+            RuntimeError if chart type does not exist.
         """
         chart_class = chart_manager.ChartManager.get_chart(chart_name)
+
+        if not chart_class:
+            raise RuntimeError('No such chart type: {0:s}'.format(chart_name))
+
         chart_data = self.to_dict(encoding=True)
         chart_object = chart_class(chart_data)
         chart = chart_object.generate()

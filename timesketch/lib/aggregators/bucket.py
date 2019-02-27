@@ -35,15 +35,6 @@ class TermsAggregation(interface.BaseAggregator):
         }
     }
 
-    def __init__(self, sketch_id=None, index=None):
-        """Initialize the aggregation object.
-
-        Args:
-            sketch_id: Sketch ID as string.
-            index: List of indexes to run the aggregation on.
-        """
-        super(TermsAggregation, self).__init__(sketch_id, index)
-
     # pylint: disable=arguments-differ
     def run(self, field, limit=10):
         """Run the aggregation.
@@ -58,18 +49,16 @@ class TermsAggregation(interface.BaseAggregator):
 
         # Encoding information for Vega-Lite.
         encoding = {
-            'x': {'field': field, 'type': u'nominal'},
-            'y': {'field': 'count', 'type': u'quantitative'}
+            'x': {'field': field, 'type': 'nominal'},
+            'y': {'field': 'count', 'type': 'quantitative'}
         }
 
-        # TODO: Make this configurable from form data.
         aggregation_spec = {
             'aggs': {
                 'aggregation': {
                     'terms': {
                         'field': '{0:s}.keyword'.format(field),
-                        'size': limit,
-                        'exclude': ''
+                        'size': limit
                     }
                 }
             }

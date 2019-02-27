@@ -43,7 +43,11 @@ class ChartManager(object):
         Returns:
             Chart class object or None if not existing.
         """
-        chart_class = cls._class_registry.get(chart_name.lower())
+        try:
+            chart_class = cls._class_registry.get(chart_name.lower())
+        except KeyError:
+            raise KeyError(
+                'No such chart type: {0:s}'.format(chart_name.lower()))
         return chart_class
 
     @classmethod

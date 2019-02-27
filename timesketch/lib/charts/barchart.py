@@ -26,14 +26,6 @@ class BarChart(interface.BaseChart):
 
     NAME = 'barchart'
 
-    def __init__(self, data):
-        """Initialize the chart object.
-
-        Args:
-            data: Aggregation result from an aggregator object as a dict.
-        """
-        super(BarChart, self).__init__(data)
-
     def generate(self):
         """Generate the chart.
 
@@ -49,14 +41,6 @@ class HorizontalBarChart(interface.BaseChart):
     """Horizontal barchart."""
 
     NAME = 'hbarchart'
-
-    def __init__(self, data):
-        """Initialize the chart object.
-
-        Args:
-            data: Aggregation result from an aggregator object as a dict.
-        """
-        super(HorizontalBarChart, self).__init__(data)
 
     def generate(self):
         """Generate the chart.
@@ -79,5 +63,6 @@ class HorizontalBarChart(interface.BaseChart):
         return chart
 
 
+# TODO: Consider making register_chart() accept a list of chart classes.
 manager.ChartManager.register_chart(BarChart)
 manager.ChartManager.register_chart(HorizontalBarChart)

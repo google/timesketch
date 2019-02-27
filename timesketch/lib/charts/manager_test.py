@@ -45,6 +45,8 @@ class TestChartManager(BaseTest):
         """Test to get chart class from registry."""
         chart_class = manager.ChartManager.get_chart('mockchart')
         self.assertEqual(chart_class, MockChart)
+        self.assertRaises(
+            KeyError, manager.ChartManager.get_chart, 'no_such_chart')
 
     def test_register_chart(self):
         """Test so we raise KeyError when chart is already registered."""
