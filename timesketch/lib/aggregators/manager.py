@@ -47,7 +47,7 @@ class AggregatorManager(object):
             KeyError: if the aggregator is not registered.
         """
         try:
-            aggregator_class = cls._class_registry.get(aggregator_name.lower())
+            aggregator_class = cls._class_registry[aggregator_name.lower()]
         except KeyError:
             raise KeyError(
                 'No such chart type: {0:s}'.format(aggregator_name.lower()))
