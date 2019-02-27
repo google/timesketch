@@ -41,13 +41,14 @@ class ChartManager(object):
             chart_name (unicode): name of the chart to retrieve.
 
         Returns:
-            Chart class object.
+            Chart class object or None if not existing.
         """
-        return cls._class_registry[chart_name.lower()]
+        chart_class = cls._class_registry.get(chart_name.lower())
+        return chart_class
 
     @classmethod
     def register_chart(cls, chart_class):
-        """Registers an chart class.
+        """Registers a chart class.
 
         The chart classes are identified by their lower case name.
 
@@ -62,3 +63,8 @@ class ChartManager(object):
             raise KeyError('Class already set for name: {0:s}.'.format(
                 chart_class.NAME))
         cls._class_registry[chart_name] = chart_class
+
+    @classmethod
+    def clear_registration(cls):
+        """Clears all chart registrations."""
+        cls._class_registry = {}

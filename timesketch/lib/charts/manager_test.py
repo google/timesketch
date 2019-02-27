@@ -27,16 +27,17 @@ class MockChart(object):
 class TestChartManager(BaseTest):
     """Tests for the functionality of the manager module."""
 
+    manager.ChartManager.clear_registration()
     manager.ChartManager.register_chart(MockChart)
 
     def test_get_charts(self):
         """Test to get chart class objects."""
         charts = manager.ChartManager.get_charts()
         chart_list = [x for x in charts]
-        last_chart_tuple = chart_list[-1]
-        chart_name, chart_class = last_chart_tuple
+        first_chart_tuple = chart_list[0]
+        chart_name, chart_class = first_chart_tuple
         self.assertIsInstance(chart_list, list)
-        self.assertIsInstance(last_chart_tuple, tuple)
+        self.assertIsInstance(first_chart_tuple, tuple)
         self.assertEqual(chart_class, MockChart)
         self.assertEqual(chart_name, 'mockchart')
 

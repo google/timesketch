@@ -64,15 +64,24 @@ class AggregationResult(object):
         """
         return pandas.DataFrame(self.values)
 
-    def to_chart(self, chart_name, as_html=False):
+    def to_chart(self, chart_name, as_html=False, interactive=False):
         """Encode aggregation result as Vega-Lite chart.
 
         Args:
             chart_name: Name of chart as string.
             as_html: Boolean indicating if chart should be returned in HTML.
+
+        Returns:
+            Vega-Lite chart spec in either JSON or HTML format.
         """
         chart_class = chart_manager.ChartManager.get_chart(chart_name)
-        chart = chart_class(data=self.to_dict(encoding=True)).generate()
+        chart_data = self.to_dict(encoding=True)
+        chart_object = chart_class(chart_data)
+        chart = chart_object.generate()
+
+        if interactive:
+            chart = chart.interactive()
+
         if as_html:
             return chart.to_html()
         return chart.to_dict()
@@ -81,6 +90,7 @@ class AggregationResult(object):
 class BaseAggregator(object):
     """Base class for an aggregator."""
 
+    # Name that the aggregator will be registered as.
     NAME = 'name'
 
     # Used as hints to the frontend UI in order to render input forms.

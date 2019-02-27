@@ -46,7 +46,7 @@ class TermsAggregation(interface.BaseAggregator):
 
     # pylint: disable=arguments-differ
     def run(self, field, limit=10):
-        """Run the aggreagtion.
+        """Run the aggregation.
 
         Args:
             field: What field to aggregate.
@@ -59,9 +59,10 @@ class TermsAggregation(interface.BaseAggregator):
         # Encoding information for Vega-Lite.
         encoding = {
             'x': {'field': field, 'type': u'nominal'},
-            'y': {'field': u'count', 'type': u'quantitative'}
+            'y': {'field': 'count', 'type': u'quantitative'}
         }
 
+        # TODO: Make this configurable from form data.
         aggregation_spec = {
             'aggs': {
                 'aggregation': {
@@ -75,7 +76,9 @@ class TermsAggregation(interface.BaseAggregator):
         }
 
         response = self.elastic_aggregation(aggregation_spec)
-        buckets = response['aggregations']['aggregation']['buckets']
+        aggregations = response.get('aggregations', {})
+        aggregation = aggregations.get('aggregation', {})
+        buckets = aggregation.get('buckets', [])
         values = []
         for bucket in buckets:
             d = {field: bucket['key'], 'count': bucket['doc_count']}

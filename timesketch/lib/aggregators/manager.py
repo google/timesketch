@@ -38,12 +38,16 @@ class AggregatorManager(object):
         """Retrieves a class object of a specific aggregator.
 
         Args:
-            aggregator_name (unicode): name of the aaggregator to retrieve.
+            aggregator_name (unicode): name of the aggregator to retrieve.
 
         Returns:
-            Aggregator class object.
+            Instance of Aggregator class object.
+
+        Raises:
+            KeyError: if the aggregator is not registered.
         """
-        return cls._class_registry[aggregator_name.lower()]
+        chart_class = cls._class_registry.get(aggregator_name.lower())
+        return chart_class
 
     @classmethod
     def register_aggregator(cls, aggregator_class):
@@ -62,3 +66,8 @@ class AggregatorManager(object):
             raise KeyError('Class already set for name: {0:s}.'.format(
                 aggregator_class.NAME))
         cls._class_registry[aggregator_name] = aggregator_class
+
+    @classmethod
+    def clear_registration(cls):
+        """Clears all aggregator registrations."""
+        cls._class_registry = {}

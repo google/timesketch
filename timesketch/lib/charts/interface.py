@@ -19,13 +19,30 @@ import altair as alt
 
 
 class BaseChart(object):
+    """Base class for a chart."""
 
+    # Name that the chart will be registered as.
     NAME = 'name'
 
     def __init__(self, data):
+        """Initialize the chart object.
+
+        Args:
+            data: Dictionary with list of values and dict of encoding info.
+
+        Raises:
+            RuntimeError if values or encoding is missing from data.
+        """
+        _values = data.get('values')
+        _encoding = data.get('encoding')
+
+        if not _values or not _encoding:
+            raise RuntimeError('Values and/or Encoding missing from data')
+
         self.name = self.NAME
-        self.encoding = data['encoding']
-        self.values = alt.Data(values=data['values'])
+        self.values = alt.Data(values=_values)
+        self.encoding = _encoding
 
     def generate(self):
+        """Entry point for the chart."""
         raise NotImplementedError
