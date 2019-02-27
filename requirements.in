@@ -1,3 +1,6 @@
+# !!!DEPRECATED!!!
+# TODO: Remove this when we have a plan for how to handle deps.
+
 # requirements:
 Flask>=0.12.3
 Flask-Login
