@@ -15,6 +15,8 @@
 
 from __future__ import unicode_literals
 
+# TODO: Port to new aggregation framework.
+
 # Max number of search hits to chart
 # TODO: Move to config
 MAX_RESULT_LIMIT = 300000

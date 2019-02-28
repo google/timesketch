@@ -53,8 +53,8 @@ from flask_restful import Resource
 from sqlalchemy import desc
 from sqlalchemy import not_
 
-from timesketch.lib.aggregators import heatmap
-from timesketch.lib.aggregators import histogram
+from timesketch.lib.aggregators_old import heatmap
+from timesketch.lib.aggregators_old import histogram
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
