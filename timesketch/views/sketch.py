@@ -113,6 +113,7 @@ def overview(sketch_id):
             usernames = permission_form.username.data
             for username in usernames.split(','):
                 base_username = username.split('@')[0]
+                base_username = base_username.strip()
                 user = User.query.filter_by(username=base_username).first()
                 if user:
                     sketch.grant_permission(permission='read', user=user)
