@@ -15,7 +15,7 @@
 
 from __future__ import unicode_literals
 
-from timesketch.lib.aggregators import heatmap
+from timesketch.lib.aggregators_old import heatmap
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
