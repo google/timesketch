@@ -1,13 +1,13 @@
 """Sketch analyzer plugin for potential bruteforce."""
 from __future__ import unicode_literals
 
+import logging
+import re
+
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
-import logging
-import re
-import sys
 
 
 class PotentialBruteforceSketchPlugin(interface.BaseSketchAnalyzer):
@@ -58,21 +58,21 @@ class PotentialBruteforceSketchPlugin(interface.BaseSketchAnalyzer):
         login_count = 0
 
         for event in events:
-         data_type = event.source.get('data_type')
-         source_short = event.source.get('source_short')
-         message = event.source.get('message')
-         ip_address = re.findall(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', message)
-	 if ip_address:
-          event.add_attributes({'ip_address': ip_address})
-         if ip_address is None:
-            continue
-	 username = re.search(r'Invalid user ([a-zA-Z0-9_\.+\-]{1,32}) from', message)
-         if username:
-          event.add_attributes({'user': username})
-	 if username is None:
-           continue
-         event.add_emojis([stop_emoji])
-         event.add_tags(['unknown_user'])
+            data_type = event.source.get('data_type')
+            source_short = event.source.get('source_short')
+            message = event.source.get('message')
+            ip_address = re.findall(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', message)
+	    if ip_address:
+                event.add_attributes({'ip_address': ip_address})
+            if ip_address is None:
+                continue
+	    username = re.search(r'Invalid user ([a-zA-Z0-9_\.+\-]{1,32}) from', message)
+            if username:
+                event.add_attributes({'user': username})
+	    if username is None:
+                continue
+            event.add_emojis([stop_emoji])
+            event.add_tags(['unknown_user'])
 
          if login_count > 0:
           self.sketch.add_view(
