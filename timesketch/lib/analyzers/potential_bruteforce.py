@@ -61,12 +61,12 @@ class PotentialBruteforceSketchPlugin(interface.BaseSketchAnalyzer):
          data_type = event.source.get('data_type')
          source_short = event.source.get('source_short')
          message = event.source.get('message')
-         ip_address = re.findall("\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", message)
+         ip_address = re.findall(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', message)
 	 if ip_address:
           event.add_attributes({'ip_address': ip_address})
          if ip_address is None:
             continue
-	 username = re.search('Invalid user ([a-zA-Z0-9_\.+\-]{1,32}) from', message)
+	 username = re.search(r'Invalid user ([a-zA-Z0-9_\.+\-]{1,32}) from', message)
          if username:
           event.add_attributes({'user': username})
 	 if username is None:
