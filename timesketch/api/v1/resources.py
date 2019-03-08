@@ -345,7 +345,9 @@ class SketchResource(ResourceMixin, Resource):
         meta = dict(
             views=[{
                 'name': view.name,
-                'id': view.id
+                'id': view.id,
+                'created_at': view.created_at,
+                'updated_at': view.updated_at
             } for view in sketch.get_named_views],
             searchtemplates=[{
                 'name': searchtemplate.name,

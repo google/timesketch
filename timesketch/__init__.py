@@ -36,6 +36,11 @@ from timesketch.models.user import User
 from timesketch.views.home import home_views
 from timesketch.views.sketch import sketch_views
 from timesketch.views.auth import auth_views
+from timesketch.views2.home import home_views as home_views2
+from timesketch.views2.sketch import sketch_views as sketch_views2
+
+# Set to true to use the new Vue.js based frontend.
+USE_NEW_FRONTEND = True
 
 
 def create_app(config=None):
@@ -49,7 +54,13 @@ def create_app(config=None):
         Application object (instance of flask.Flask).
     """
     # Setup the Flask app and load the config.
-    app = Flask(__name__, template_folder='templates', static_folder='static')
+    if USE_NEW_FRONTEND:
+        app = Flask(
+            __name__,
+            template_folder='frontend/dist',
+            static_folder='frontend/dist')
+    else:
+        app = Flask(__name__, template_folder='templates', static_folder='static')
 
     if not config:
         config = '/etc/timesketch.conf'
@@ -94,9 +105,13 @@ def create_app(config=None):
     # Register blueprints. Blueprints are a way to organize your Flask
     # Flask application. See this for more information:
     # http://flask.pocoo.org/docs/latest/blueprints/
-    app.register_blueprint(auth_views)
-    app.register_blueprint(home_views)
-    app.register_blueprint(sketch_views)
+    if USE_NEW_FRONTEND:
+        app.register_blueprint(home_views2)
+        app.register_blueprint(sketch_views2)
+    else:
+        app.register_blueprint(auth_views)
+        app.register_blueprint(home_views)
+        app.register_blueprint(sketch_views)
 
     # Setup URL routes for the API.
     api_v1 = Api(app, prefix='/api/v1')
