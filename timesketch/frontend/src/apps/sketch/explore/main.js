@@ -13,28 +13,26 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-export default {
-  name: 'compactNumber',
-  filter: function (input) {
-<<<<<<< HEAD
-    if (!input) {
-      input = 0
-    }
-=======
->>>>>>> Initial scaffolding of new frontend
-    let mark = ''
-    if (input > 999999999) {
-      input = Math.round((input / 1000000000) * 10) / 10
-      mark = 'B'
-    } else if (input > 999999) {
-      input = Math.round((input / 1000000) * 10) / 10
-      mark = 'M'
-    } else if (input > 999) {
-      input = Math.round((input / 1000) * 10) / 10
-      mark = 'K'
-    } else {
-      return input
-    }
-    return input + mark
+import Vue from 'vue'
+import App from './App.vue'
+
+Vue.config.productionTip = false
+
+require('../../../assets/main.scss')
+require('../../../utils/RegisterAppComponents')
+require('../../../utils/RegisterAppFilters')
+
+Vue.use(require('vue-moment'))
+
+/* eslint-disable no-new */
+new Vue({
+  el: '#app',
+  render (h) {
+    return h(App, {
+      props: {
+        sketchId: this.$el.attributes.sketchid.value
+      }
+    })
   }
-}
+})
+

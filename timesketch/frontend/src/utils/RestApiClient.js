@@ -28,6 +28,7 @@ export default {
   getSketchList () {
     return RestApiClient.get('/sketches/')
   },
+<<<<<<< HEAD
   getSketch (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/')
   },
@@ -39,12 +40,17 @@ export default {
       }
     }
     return RestApiClient.get('/sketches/' + sketchId + '/event/', params)
+=======
+  getSketch (id) {
+    return RestApiClient.get('/sketches/' + id + '/')
+>>>>>>> Initial scaffolding of new frontend
   },
   createSketch (formData) {
     return RestApiClient.post('/sketches/', formData)
   },
   countSketchEvents (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/count/')
+<<<<<<< HEAD
   },
   search (id, formData) {
     return RestApiClient.post('/sketches/' + id + '/explore/', formData)
@@ -57,4 +63,8 @@ export default {
     }
     return RestApiClient.post('/upload/', formData, config)
   }
+=======
+  }
+
+>>>>>>> Initial scaffolding of new frontend
 }
