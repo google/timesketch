@@ -40,7 +40,7 @@ from timesketch.views2.home import home_views as home_views2
 from timesketch.views2.sketch import sketch_views as sketch_views2
 
 # Set to true to use the new Vue.js based frontend.
-USE_NEW_FRONTEND = True
+USE_NEW_FRONTEND = False
 
 
 def create_app(config=None):
