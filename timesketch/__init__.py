@@ -54,13 +54,18 @@ def create_app(config=None):
         Application object (instance of flask.Flask).
     """
     # Setup the Flask app and load the config.
+    template_folder = 'templates'
+    static_folder = 'static'
+
     if USE_NEW_FRONTEND:
-        app = Flask(
-            __name__,
-            template_folder='frontend/dist',
-            static_folder='frontend/dist')
-    else:
-        app = Flask(__name__, template_folder='templates', static_folder='static')
+        template_folder = 'frontend/dist'
+        static_folder = 'frontend/dist'
+
+    app = Flask(
+        __name__,
+        template_folder=template_folder,
+        static_folder=static_folder
+    )
 
     if not config:
         config = '/etc/timesketch.conf'
