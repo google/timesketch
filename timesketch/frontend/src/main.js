@@ -16,23 +16,20 @@ limitations under the License.
 import Vue from 'vue'
 import App from './App.vue'
 
-Vue.config.productionTip = false
+import router from './router'
+import store from './store'
 
-require('../../../assets/main.scss')
-require('../../../utils/RegisterAppComponents')
-require('../../../utils/RegisterAppFilters')
+require('./assets/main.scss')
+require('./utils/RegisterAppComponents')
+require('./utils/RegisterAppFilters')
 
 Vue.use(require('vue-moment'))
 
-/* eslint-disable no-new */
-new Vue({
-  el: '#app',
-  render (h) {
-    return h(App, {
-      props: {
-        sketchId: this.$el.attributes.sketchid.value
-      }
-    })
-  }
-})
+// Disable warning during development
+Vue.config.productionTip = false
 
+new Vue({
+  router,
+  store,
+  render: h => h(App)
+}).$mount('#app')

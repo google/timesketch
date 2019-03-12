@@ -14,8 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div id="app">
-    <ts-navbar-main></ts-navbar-main>
+  <div>
 
     <!-- Secondary navigation -->
     <section class="section">
@@ -35,7 +34,7 @@ limitations under the License.
           </header>
           <div class="card-content">
             <div class="content">
-              <form v-on:submit.prevent="submitForm">
+              <form v-on:submit.prevent="submit">
                 <div class="field">
                   <label class="label">Name</label>
                   <div class="control">
@@ -78,8 +77,8 @@ limitations under the License.
 </template>
 
 <script>
-import TsSketchList from '../../components/HomeSketchList'
-import ApiClient from '../../utils/RestApiClient'
+import TsSketchList from './HomeSketchList'
+import ApiClient from '../utils/RestApiClient'
 
 export default {
   name: 'app',
@@ -92,7 +91,8 @@ export default {
       form: {
         name: '',
         description: ''
-      }
+      },
+      fluid: false,
     }
   },
   methods: {
@@ -108,7 +108,8 @@ export default {
       ApiClient.createSketch(formData).then((response) => {
         let newSketchId = response.data.objects[0].id
         this.cleanFormData()
-        window.location.href = '/sketch/' + newSketchId
+        this.$router.push({ name: 'overview', params: { sketchId: newSketchId } })
+        // window.location.href = '/sketch/' + newSketchId
       }).catch((e) => {})
     }
   }

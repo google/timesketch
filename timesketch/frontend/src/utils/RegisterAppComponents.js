@@ -29,8 +29,6 @@ requireComponent.keys().forEach(fileName => {
   const componentConfig = requireComponent(fileName)
   const componentName = componentConfig.default.name
 
-  console.log('register component: ' + componentName)
-
   // Register component globally
   Vue.component(
     componentName,

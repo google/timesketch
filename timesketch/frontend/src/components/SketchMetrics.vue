@@ -18,13 +18,13 @@ limitations under the License.
     <div class="level-item has-text-centered">
       <div>
         <p class="heading">Timelines</p>
-        <p class="title">{{ sketch.active_timelines.length }}</p>
+        <p class="title">{{ timelines && timelines.length ? timelines.length: 0 }}</p>
       </div>
     </div>
     <div class="level-item has-text-centered">
       <div>
         <p class="heading">Views</p>
-        <p class="title">{{ meta.views.length }}</p>
+        <p class="title">{{ views && views.length ? views.length: 0  }}</p>
       </div>
     </div>
     <div class="level-item has-text-centered">
@@ -37,23 +37,9 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../utils/RestApiClient'
-
 export default {
   name: 'ts-sketch-metrics',
-  props: ['sketch', 'sketchId', 'meta'],
-  data () {
-    return {
-      count: 0
-    }
-  },
-  mounted: function () {
-    ApiClient.countSketchEvents(this.sketchId).then((response) => {
-      this.count = response.data.meta.count
-    }).catch((e) => {
-      console.error(e)
-    })
-  }
+  props: ['timelines', 'views', 'count']
 }
 </script>
 

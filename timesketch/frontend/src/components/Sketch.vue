@@ -1,4 +1,4 @@
-/*
+<!--
 Copyright 2019 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,27 +12,23 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-*/
-import Vue from 'vue'
-import App from './App.vue'
+-->
+<template>
+  <router-view></router-view>
+</template>
 
-Vue.config.productionTip = false
-
-require('../../../assets/main.scss')
-require('../../../utils/RegisterAppComponents')
-require('../../../utils/RegisterAppFilters')
-
-Vue.use(require('vue-moment'))
-
-/* eslint-disable no-new */
-new Vue({
-  el: '#app',
-  render (h) {
-    return h(App, {
-      props: {
-        sketchId: this.$el.attributes.sketchid.value
-      }
-    })
+<script>
+export default {
+  name: 'app',
+  props: ['sketchId'],
+  created: function () {
+    this.$store.dispatch('updateSketch', this.sketchId)
+      .then(result => {})
+      .catch(error => {
+        console.log('error: ', error)
+      })
   }
-})
+}
+</script>
 
+<style lang="scss"></style>

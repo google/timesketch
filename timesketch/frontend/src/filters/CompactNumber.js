@@ -16,6 +16,9 @@ limitations under the License.
 export default {
   name: 'compactNumber',
   filter: function (input) {
+    if (!input) {
+      input = 0
+    }
     let mark = ''
     if (input > 999999999) {
       input = Math.round((input / 1000000000) * 10) / 10

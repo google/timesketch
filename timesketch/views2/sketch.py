@@ -23,13 +23,8 @@ from flask_login import login_required
 sketch_views = Blueprint('sketch_views', __name__)
 
 
-@sketch_views.route('/sketch/<int:sketch_id>/', methods=['GET'])
+@sketch_views.route('/', defaults={'path': ''})
+@sketch_views.route('/<path:path>')
 @login_required
-def overview(sketch_id):
-    return render_template('overview.html', sketch_id=sketch_id)
-
-
-@sketch_views.route('/sketch/<int:sketch_id>/explore/', methods=['GET'])
-@login_required
-def explore(sketch_id):
-    return render_template('explore.html', sketch_id=sketch_id)
+def overview(path):
+    return render_template('index.html')

@@ -14,12 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div id="app">
-    <ts-navbar-main></ts-navbar-main>
+  <div>
 
     <section class="section">
-      <div class="container" v-bind:class="{'is-fluid': fluid}">
-        <ts-navbar-secondary currentAppContext="sketch" currentPage="overview" :sketchId="sketch.id">
+      <div class="container">
+        <ts-navbar-secondary currentAppContext="sketch" currentPage="overview">
           <a class="button is-success is-rounded" style="margin-right:7px;" v-on:click="showModal = !showModal">
               <span class="icon is-small">
                 <i class="fas fa-plus"></i>
@@ -65,8 +64,8 @@ limitations under the License.
 
     <!-- Title and description -->
     <section class="section">
-      <div class="container" v-bind:class="{'is-fluid': fluid}">
-        <div class="card">
+      <div class="container">
+        <div class="card" style="min-height: 200px;">
           <div class="card-content">
             <ts-sketch-summary :sketch="sketch"></ts-sketch-summary>
           </div>
@@ -76,10 +75,10 @@ limitations under the License.
 
     <!-- Stats -->
     <section class="section">
-      <div class="container" v-bind:class="{'is-fluid': fluid}">
-        <div class="card">
+      <div class="container">
+        <div class="card" style="min-height: 100px;">
           <div class="card-content">
-            <ts-sketch-metrics :sketch="sketch" :sketchId="sketchId" :meta="meta"></ts-sketch-metrics>
+            <ts-sketch-metrics :timelines="sketch.active_timelines" :views="meta.views" :count="count"></ts-sketch-metrics>
           </div>
         </div>
       </div>
@@ -87,7 +86,7 @@ limitations under the License.
 
     <!-- Timeline and View lists-->
     <section class="section">
-      <div class="container" v-bind:class="{'is-fluid': fluid}">
+      <div class="container">
         <div class="columns">
           <div class="column">
             <div class="card has-min-height">
@@ -95,7 +94,7 @@ limitations under the License.
                 <p class="card-header-title">Timelines</p>
               </header>
               <div class="card-content" style="padding:5px;">
-                <ts-timeline-list :timelines="sketch.timelines" :sketchId="sketch.id"></ts-timeline-list>
+                <ts-timeline-list :timelines="sketch.timelines"></ts-timeline-list>
               </div>
             </div>
           </div>
@@ -117,11 +116,10 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../../utils/RestApiClient'
-import TsSketchSummary from '../../../components/SketchSummary'
-import TsSketchMetrics from '../../../components/SketchMetrics'
-import TsTimelineList from '../../../components/SketchTimelineList'
-import TsSavedViewList from '../../../components/SketchViewList'
+import TsSketchSummary from './SketchSummary'
+import TsSketchMetrics from './SketchMetrics'
+import TsTimelineList from './SketchTimelineList'
+import TsSavedViewList from './SketchViewList'
 
 export default {
   name: 'app',
@@ -131,18 +129,21 @@ export default {
     TsTimelineList,
     TsSavedViewList
   },
-  props: ['sketchId'],
   data () {
     return {
-      sketch: {},
-      meta: {}
+      settingsDropdownActive: false
     }
   },
-  mounted: function () {
-    ApiClient.getSketch(this.sketchId).then((response) => {
-      this.sketch = response.data.objects[0]
-      this.meta = response.data.meta
-    }).catch((e) => {})
+  computed: {
+    sketch () {
+      return this.$store.state.sketch
+    },
+    meta () {
+      return this.$store.state.meta
+    },
+    count () {
+      return this.$store.state.count
+    }
   }
 }
 </script>

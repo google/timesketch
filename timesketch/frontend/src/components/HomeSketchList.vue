@@ -21,7 +21,7 @@ limitations under the License.
           <span class="is-size-7">{{ sketch.user.username }}</span>
         </div>
         <div>
-          <a style="text-decoration: none;" :href="'sketch/' + sketch.id + '/'"><strong>{{ sketch.name }}</strong></a>
+          <router-link :to="{ name: 'SketchOverview', params: {sketchId: sketch.id } }"><strong>{{ sketch.name }}</strong></router-link>
           <br>
           <span class="is-size-7">Last activity {{ sketch.updated_at }}</span>
         </div>
@@ -40,8 +40,9 @@ export default {
       sketches: []
     }
   },
-  mounted: function () {
+  created: function () {
     ApiClient.getSketchList().then((response) => {
+      this.$store.dispatch('resetState')
       this.sketches = response.data.objects[0]
     }).catch((e) => {
       console.error(e)

@@ -15,25 +15,5 @@ limitations under the License.
 */
 module.exports = {
   lintOnSave: false,
-  publicPath: '/dist/',
-  pages: {
-    home: {
-      entry: 'src/apps/home/main.js',
-      template: 'src/assets/index.html',
-      title: 'Home',
-      chunks: ['chunk-vendors', 'chunk-common', 'home']
-    },
-    overview: {
-      entry: 'src/apps/sketch/overview/main.js',
-      template: 'src/assets/index.html',
-      title: 'Overview',
-      chunks: ['chunk-vendors', 'chunk-common', 'overview']
-    },
-    explore: {
-      entry: 'src/apps/sketch/explore/main.js',
-      template: 'src/assets/index.html',
-      title: 'Explore',
-      chunks: ['chunk-vendors', 'chunk-common', 'explore']
-    }
-  }
+  publicPath: '/dist/'
 }

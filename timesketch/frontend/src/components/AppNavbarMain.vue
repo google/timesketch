@@ -16,13 +16,13 @@ limitations under the License.
 <template>
   <nav class="navbar" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
-      <a class="navbar-item" href="/">
+      <router-link class="navbar-item" to="/">
         <div class="logo">
           <img src="/dist/timesketch-logo-white.svg">
         </div>
-      </a>
+      </router-link>
     </div>
-    <div class="navbar-end">
+    <div class="navbar-end">+
       <div class="navbar-item"></div>
     </div>
   </nav>

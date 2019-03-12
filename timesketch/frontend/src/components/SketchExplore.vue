@@ -14,17 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div id="app">
-    <ts-navbar-main></ts-navbar-main>
+  <div>
+
     <section class="section">
-      <div class="container" v-bind:class="{'is-fluid': fluid}">
-        <ts-navbar-secondary currentAppContext="sketch" currentPage="explore" :sketchId="sketch.id"></ts-navbar-secondary>
+      <div class="container">
+        <ts-navbar-secondary currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
       </div>
     </section>
 
     <!-- Placeholder -->
     <section class="section">
-      <div class="container" v-bind:class="{'is-fluid': fluid}">
+      <div class="container">
         <div class="card">
           <div class="card-content">
             <span>Work in progress..</span>
@@ -37,29 +37,19 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../../utils/RestApiClient'
-
 export default {
   name: 'app',
   components: {},
   props: ['sketchId'],
-  data () {
-    return {
-      sketch: {},
-      meta: {}
+  computed: {
+    sketch () {
+      return this.$store.state.sketch
+    },
+    meta () {
+      return this.$store.state.meta
     }
-  },
-  mounted: function () {
-    ApiClient.getSketch(this.sketchId).then((response) => {
-      this.sketch = response.data.objects[0]
-      this.meta = response.data.meta
-    }).catch((e) => {})
   }
 }
 </script>
 
-<style lang="scss">
-  .has-min-height {
-    min-height: 300px;
-  }
-</style>
+<style lang="scss"></style>

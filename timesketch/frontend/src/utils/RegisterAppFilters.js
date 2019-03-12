@@ -27,7 +27,6 @@ const requireFilter = require.context(
 requireFilter.keys().forEach(fileName => {
   // Get component config
   const filterModule = requireFilter(fileName)
-  console.log('register filter: ' + filterModule.default.name)
 
   // Register filter globally
   Vue.filter(filterModule.default.name, filterModule.default.filter)

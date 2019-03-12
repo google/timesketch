@@ -19,16 +19,16 @@ limitations under the License.
       <div class="tabs is-left">
         <ul>
           <li v-bind:class="{'is-active': currentPage === 'overview'}">
-            <a :href="'/sketch/' + sketchId + '/'">
+            <router-link :to="{ name: 'SketchOverview' }">
               <span class="icon is-small"><i class="fas fa-cubes" aria-hidden="true"></i></span>
               <span>Overview</span>
-            </a>
+            </router-link>
           </li>
           <li v-bind:class="{'is-active': currentPage === 'explore'}">
-            <a :href="'/sketch/' + sketchId + '/explore/'">
+            <router-link :to="{ name: 'SketchExplore' }">
               <span class="icon is-small"><i class="fas fa-search" aria-hidden="true"></i></span>
               <span>Explore</span>
-            </a>
+            </router-link>
           </li>
           <li v-bind:class="{'is-active': currentPage === 'stories'}">
             <a>
@@ -50,7 +50,7 @@ limitations under the License.
 <script>
 export default {
   name: 'ts-navbar-secondary',
-  props: ['currentAppContext', 'currentPage', 'sketchId']
+  props: ['currentAppContext', 'currentPage']
 }
 </script>
 
