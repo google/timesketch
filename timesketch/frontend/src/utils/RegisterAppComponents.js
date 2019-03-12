@@ -29,11 +29,6 @@ requireComponent.keys().forEach(fileName => {
   const componentConfig = requireComponent(fileName)
   const componentName = componentConfig.default.name
 
-<<<<<<< HEAD
-=======
-  console.log('register component: ' + componentName)
-
->>>>>>> Initial scaffolding of new frontend
   // Register component globally
   Vue.component(
     componentName,

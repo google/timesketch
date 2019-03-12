@@ -17,26 +17,17 @@ limitations under the License.
   <div>
 
     <section class="section">
-      <div class="container is-fluid">
+      <div class="container">
         <ts-navbar-secondary currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
       </div>
     </section>
 
+    <!-- Placeholder -->
     <section class="section">
-      <div class="container is-fluid">
+      <div class="container">
         <div class="card">
           <div class="card-content">
-            <ts-sketch-explore-search></ts-sketch-explore-search>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" v-if="eventList.meta.es_time">
-      <div class="container is-fluid">
-        <div class="card">
-          <div class="card-content">
-            <ts-sketch-explore-event-list></ts-sketch-explore-event-list>
+            <span>Work in progress..</span>
           </div>
         </div>
       </div>
@@ -46,24 +37,16 @@ limitations under the License.
 </template>
 
 <script>
-import TsSketchExploreSearch from './SketchExploreSearch'
-import TsSketchExploreEventList from './SketchExploreEventList'
-
 export default {
-  name: 'ts-sketch-explore',
-  components: {
-    TsSketchExploreSearch,
-    TsSketchExploreEventList
-  },
+  name: 'app',
+  components: {},
+  props: ['sketchId'],
   computed: {
     sketch () {
       return this.$store.state.sketch
     },
     meta () {
       return this.$store.state.meta
-    },
-    eventList () {
-      return this.$store.state.eventList
     }
   }
 }
