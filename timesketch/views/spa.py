@@ -20,11 +20,17 @@ from flask import render_template
 from flask_login import login_required
 
 # Register flask blueprint
-sketch_views = Blueprint('sketch_views', __name__)
+spa_views = Blueprint('spa_views', __name__)
 
 
-@sketch_views.route('/', defaults={'path': ''})
-@sketch_views.route('/<path:path>')
+@spa_views.route('/', defaults={'path': ''})
+@spa_views.route('/<path:path>')
 @login_required
+# pylint: disable=unused-argument
 def overview(path):
+    """Generates the template.
+
+    Returns:
+        Template with context.
+    """
     return render_template('index.html')

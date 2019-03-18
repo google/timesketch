@@ -36,8 +36,7 @@ from timesketch.models.user import User
 from timesketch.views.home import home_views
 from timesketch.views.sketch import sketch_views
 from timesketch.views.auth import auth_views
-from timesketch.views2.home import home_views as home_views2
-from timesketch.views2.sketch import sketch_views as sketch_views2
+from timesketch.views.spa import spa_views
 
 # Set to true to use the new Vue.js based frontend.
 USE_NEW_FRONTEND = True
@@ -111,8 +110,7 @@ def create_app(config=None):
     # Flask application. See this for more information:
     # http://flask.pocoo.org/docs/latest/blueprints/
     if USE_NEW_FRONTEND:
-        #app.register_blueprint(home_views2)
-        app.register_blueprint(sketch_views2)
+        app.register_blueprint(spa_views)
     else:
         app.register_blueprint(auth_views)
         app.register_blueprint(home_views)
