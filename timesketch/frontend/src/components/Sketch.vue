@@ -19,7 +19,7 @@ limitations under the License.
 
 <script>
 export default {
-  name: 'app',
+  name: 'ts-sketch',
   props: ['sketchId'],
   created: function () {
     this.$store.dispatch('updateSketch', this.sketchId)
