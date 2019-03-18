@@ -84,5 +84,5 @@ linkedin_accounts:
         store_as: 'found_account'
         re: 'https://www.linkedin.com/in/([A-z-\d]{5,32})/edit/'
         aggregate: True
-        tags: ['LinkedIn Account']
+        tags: ['linkedin-account']
         emojis: ['ID_BUTTON']
