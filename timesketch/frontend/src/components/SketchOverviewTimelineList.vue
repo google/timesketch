@@ -32,7 +32,7 @@ limitations under the License.
 
 <script>
 export default {
-  name: 'ts-timeline-list',
+  name: 'ts-sketch-overview-timeline-list',
   props: ['timelines']
 }
 </script>

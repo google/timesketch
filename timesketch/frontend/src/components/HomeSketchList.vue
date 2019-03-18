@@ -34,7 +34,7 @@ limitations under the License.
 import ApiClient from '../utils/RestApiClient'
 
 export default {
-  name: 'ts-sketch-list',
+  name: 'ts-home-sketch-list',
   data () {
     return {
       sketches: []

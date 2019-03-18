@@ -18,14 +18,14 @@ limitations under the License.
 
     <!-- Secondary navigation -->
     <section class="section">
-      <div class="container" v-bind:class="{'is-fluid': fluid}">
+      <div class="container">
         <ts-navbar-secondary>
-          <button class="button is-success is-rounded" v-on:click="showModal = !showModal"><strong>+ Sketch</strong></button>
+          <button class="button is-success is-rounded" v-on:click="showSketchCreateModal = !showSketchCreateModal"><strong>+ Sketch</strong></button>
         </ts-navbar-secondary>
       </div>
     </section>
 
-    <div class="modal" v-bind:class="{ 'is-active': showModal }">>
+    <div class="modal" v-bind:class="{ 'is-active': showSketchCreateModal }">>
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -34,40 +34,22 @@ limitations under the License.
           </header>
           <div class="card-content">
             <div class="content">
-              <form v-on:submit.prevent="submit">
-                <div class="field">
-                  <label class="label">Name</label>
-                  <div class="control">
-                    <input v-model="form.name" class="input" type="text" required placeholder="Name your sketch">
-                  </div>
-                </div>
-                <div class="field">
-                  <label class="label">Description (optional)</label>
-                  <div class="control">
-                    <textarea v-model="form.description" class="textarea" placeholder="Describe your sketch"></textarea>
-                  </div>
-                </div>
-                <div class="field">
-                  <div class="control">
-                    <button class="button is-success" type="submit" v-on:click="submitForm">Save</button>
-                  </div>
-                </div>
-              </form>
+              <ts-home-sketch-create-form></ts-home-sketch-create-form>
             </div>
           </div>
         </div>
       </div>
-      <button class="modal-close is-large" aria-label="close" v-on:click="showModal = !showModal"></button>
+      <button class="modal-close is-large" aria-label="close" v-on:click="showSketchCreateModal = !showSketchCreateModal"></button>
     </div>
 
     <div class="section">
       <div class="container">
-      <div class="card">
-        <div class="card-content">
-          <div>
-            <ts-sketch-list></ts-sketch-list>
+        <div class="card">
+          <div class="card-content">
+            <div>
+              <ts-home-sketch-list></ts-home-sketch-list>
+            </div>
           </div>
-        </div>
         </div>
       </div>
     </div>
@@ -77,40 +59,18 @@ limitations under the License.
 </template>
 
 <script>
-import TsSketchList from './HomeSketchList'
-import ApiClient from '../utils/RestApiClient'
+import TsHomeSketchList from './HomeSketchList'
+import TsHomeSketchCreateForm from './HomeSketchCreateForm'
 
 export default {
-  name: 'app',
+  name: 'ts-home',
   components: {
-    TsSketchList
+    TsHomeSketchList,
+    TsHomeSketchCreateForm
   },
-  data: function () {
+  data () {
     return {
-      showModal: false,
-      form: {
-        name: '',
-        description: ''
-      },
-      fluid: false,
-    }
-  },
-  methods: {
-    cleanFormData: function () {
-      this.form.name = ''
-      this.form.description = ''
-    },
-    submitForm: function () {
-      let formData = {
-        name: this.form.name,
-        description: this.form.description
-      }
-      ApiClient.createSketch(formData).then((response) => {
-        let newSketchId = response.data.objects[0].id
-        this.cleanFormData()
-        this.$router.push({ name: 'overview', params: { sketchId: newSketchId } })
-        // window.location.href = '/sketch/' + newSketchId
-      }).catch((e) => {})
+      showSketchCreateModal: false
     }
   }
 }

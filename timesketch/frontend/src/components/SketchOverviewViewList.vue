@@ -14,32 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <nav class="level">
-    <div class="level-item has-text-centered">
-      <div>
-        <p class="heading">Timelines</p>
-        <p class="title">{{ timelines && timelines.length ? timelines.length: 0 }}</p>
-      </div>
-    </div>
-    <div class="level-item has-text-centered">
-      <div>
-        <p class="heading">Views</p>
-        <p class="title">{{ views && views.length ? views.length: 0  }}</p>
-      </div>
-    </div>
-    <div class="level-item has-text-centered">
-      <div>
-        <p class="heading">Events</p>
-        <p class="title">{{ count | compactNumber }}</p>
-      </div>
-    </div>
-  </nav>
+  <div>
+    <ul class="content-list">
+      <li style="padding:5px;" v-for="view in views" :key="view.id">
+          {{ view.name }}
+      </li>
+    </ul>
+  </div>
 </template>
 
 <script>
 export default {
-  name: 'ts-sketch-metrics',
-  props: ['timelines', 'views', 'count']
+  name: 'ts-sketch-overview-view-list',
+  props: ['views']
 }
 </script>
 

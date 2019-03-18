@@ -19,7 +19,7 @@ limitations under the License.
     <section class="section">
       <div class="container">
         <ts-navbar-secondary currentAppContext="sketch" currentPage="overview">
-          <a class="button is-success is-rounded" style="margin-right:7px;" v-on:click="showModal = !showModal">
+          <a class="button is-success is-rounded" style="margin-right:7px;" v-on:click="showUploadTimelineModal = !showUploadTimelineModal">
               <span class="icon is-small">
                 <i class="fas fa-plus"></i>
               </span>
@@ -61,6 +61,23 @@ limitations under the License.
         </ts-navbar-secondary>
       </div>
     </section>
+
+    <div class="modal" v-bind:class="{ 'is-active': showUploadTimelineModal }">>
+      <div class="modal-background"></div>
+      <div class="modal-content">
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title">Upload new timeline</p>
+          </header>
+          <div class="card-content">
+            <div class="content">
+              <ts-upload-timeline-form @toggleModal="showUploadTimelineModal = !showUploadTimelineModal"></ts-upload-timeline-form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="modal-close is-large" aria-label="close" v-on:click="showUploadTimelineModal = !showUploadTimelineModal"></button>
+    </div>
 
     <!-- Title and description -->
     <section class="section">
@@ -116,22 +133,25 @@ limitations under the License.
 </template>
 
 <script>
-import TsSketchSummary from './SketchSummary'
-import TsSketchMetrics from './SketchMetrics'
-import TsTimelineList from './SketchTimelineList'
-import TsSavedViewList from './SketchViewList'
+import TsSketchSummary from './SketchOverviewSummary'
+import TsSketchMetrics from './SketchOverviewMetrics'
+import TsTimelineList from './SketchOverviewTimelineList'
+import TsSavedViewList from './SketchOverviewViewList'
+import TsUploadTimelineForm from './SketchUploadTimelineForm'
 
 export default {
-  name: 'app',
+  name: 'ts-sketch-overview',
   components: {
     TsSketchMetrics,
     TsSketchSummary,
     TsTimelineList,
-    TsSavedViewList
+    TsSavedViewList,
+    TsUploadTimelineForm
   },
   data () {
     return {
-      settingsDropdownActive: false
+      settingsDropdownActive: false,
+      showUploadTimelineModal: false
     }
   },
   computed: {

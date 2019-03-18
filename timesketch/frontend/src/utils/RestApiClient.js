@@ -28,14 +28,33 @@ export default {
   getSketchList () {
     return RestApiClient.get('/sketches/')
   },
-  getSketch (id) {
-    return RestApiClient.get('/sketches/' + id + '/')
+  getSketch (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/')
+  },
+  getEvent (sketchId, searchindexId, eventId) {
+    let params = {
+      params: {
+        searchindex_id: searchindexId,
+        event_id: eventId
+      }
+    }
+    return RestApiClient.get('/sketches/' + sketchId + '/event/', params)
   },
   createSketch (formData) {
     return RestApiClient.post('/sketches/', formData)
   },
   countSketchEvents (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/count/')
+  },
+  search (id, formData) {
+    return RestApiClient.post('/sketches/' + id + '/explore/', formData)
+  },
+  uploadTimeline (formData) {
+    let config = {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    }
+    return RestApiClient.post('/upload/', formData, config)
   }
-
 }

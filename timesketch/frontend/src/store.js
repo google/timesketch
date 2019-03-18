@@ -23,7 +23,13 @@ const defaultState = () => {
   return {
     sketch: {},
     meta: {},
-    count: 0
+    count: 0,
+    eventList: {
+      meta: {},
+      objects: []
+    },
+    currentQueryString: '',
+    currentQueryFilter: {}
   }
 }
 
@@ -44,6 +50,15 @@ export default new Vuex.Store({
         Vue.set(state, 'count', response.data.meta.count)
       }).catch((e) => {})
     },
+    updateEventList (state, searchResult) {
+      Vue.set(state, 'eventList', searchResult)
+    },
+    updateCurrentQueryString (state, queryString) {
+      Vue.set(state, 'currentQueryString', queryString)
+    },
+    updateCurrentQueryFilter (state, queryFilter) {
+      Vue.set(state, 'currentQueryFilter', queryFilter)
+    },
     resetState (state) {
       Object.assign(state, defaultState())
     }
@@ -51,6 +66,9 @@ export default new Vuex.Store({
   actions: {
     updateSketch (context, sketchId) {
       context.commit('updateSketch', sketchId)
+    },
+    updateEventList (context, searchResult) {
+      context.commit('updateEventList', searchResult)
     },
     resetState (context) {
       context.commit('resetState')

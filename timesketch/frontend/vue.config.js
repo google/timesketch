@@ -15,5 +15,11 @@ limitations under the License.
 */
 module.exports = {
   lintOnSave: false,
-  publicPath: '/dist/'
+  publicPath: '/dist/',
+  configureWebpack: config => {
+    config.watchOptions = {
+      aggregateTimeout: 500,
+      ignored: /node_modules/
+    }
+  }
 }

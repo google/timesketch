@@ -22,7 +22,7 @@ limitations under the License.
 
 <script>
 export default {
-  name: 'ts-sketch-summary',
+  name: 'ts-sketch-overview-summary',
   props: ['sketch']
 }
 </script>
