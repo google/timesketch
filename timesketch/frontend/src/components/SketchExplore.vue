@@ -17,13 +17,13 @@ limitations under the License.
   <div>
 
     <section class="section">
-      <div class="container is-fluid">
+      <div class="container">
         <ts-navbar-secondary currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
       </div>
     </section>
 
     <section class="section">
-      <div class="container is-fluid">
+      <div class="container">
         <div class="card">
           <div class="card-content">
             <ts-sketch-explore-search></ts-sketch-explore-search>

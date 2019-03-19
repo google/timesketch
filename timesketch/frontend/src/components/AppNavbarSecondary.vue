@@ -31,10 +31,10 @@ limitations under the License.
             </router-link>
           </li>
           <li v-bind:class="{'is-active': currentPage === 'stories'}">
-            <a>
+            <router-link :to="{ name: 'SketchStory' }">
               <span class="icon is-small"><i class="fas fa-book" aria-hidden="true"></i></span>
               <span>Stories</span>
-            </a>
+            </router-link>
           </li>
         </ul>
       </div>

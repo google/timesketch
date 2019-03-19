@@ -20,6 +20,7 @@ import Home from './components/Home'
 import Sketch from './components/Sketch'
 import SketchOverview from './components/SketchOverview'
 import SketchExplore from './components/SketchExplore'
+import SketchStory from './components/SketchStory'
 
 Vue.use(VueRouter)
 
@@ -43,6 +44,11 @@ const routes = [
         path: 'explore',
         name: 'SketchExplore',
         component: SketchExplore
+      },
+      {
+        path: 'story',
+        name: 'SketchStory',
+        component: SketchStory
       }
     ]
   }
