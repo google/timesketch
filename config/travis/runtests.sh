@@ -12,7 +12,7 @@ if test "${TARGET}" = "pylint";
 then
 	pylint --version
 
-	for FILE in `find run_tests.py setup.py config timesketch tests -name \*.py`;
+	for FILE in `find run_tests.py setup.py api_client config timesketch -name \*.py`;
 	do
 		echo "Checking: ${FILE}";
 

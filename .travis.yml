@@ -30,8 +30,8 @@ cache:
 - yarn
 - pip
 install:
+- ./config/travis/install.sh
 - pip install -r requirements.txt
-- if test ${TARGET} = "pylint"; then pip install astroid==1.5.3 pylint==1.7.2; fi
 - yarn install
 script:
 - ./config/travis/run_with_timeout.sh 30 ./config/travis/runtests.sh
