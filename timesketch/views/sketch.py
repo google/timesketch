@@ -110,12 +110,14 @@ def overview(sketch_id):
         # TODO(jbn): Make write permission off by default
         # and selectable in the UI
         if permission_form.username.data:
-            username = permission_form.username.data
-            base_username = username.split('@')[0]
-            user = User.query.filter_by(username=base_username).first()
-            if user:
-                sketch.grant_permission(permission='read', user=user)
-                sketch.grant_permission(permission='write', user=user)
+            usernames = permission_form.username.data
+            for username in usernames.split(','):
+                base_username = username.split('@')[0]
+                base_username = base_username.strip()
+                user = User.query.filter_by(username=base_username).first()
+                if user:
+                    sketch.grant_permission(permission='read', user=user)
+                    sketch.grant_permission(permission='write', user=user)
 
         # Add a group to the sketch
         if permission_form.groups.data:
