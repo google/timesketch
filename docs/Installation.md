@@ -3,7 +3,7 @@
 # Install Timesketch from scratch
 
 #### Install Ubuntu
-This installation guide is based on Ubuntu 16.04LTS Server edition. Follow the installation guide for Ubuntu and install the base system.
+This installation guide is based on Ubuntu 18.04LTS Server edition. Follow the installation guide for Ubuntu and install the base system.
 After the installation is done, login and update the system.
 
     $ sudo apt-get update
