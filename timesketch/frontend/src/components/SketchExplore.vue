@@ -36,6 +36,8 @@ limitations under the License.
       <div class="container is-fluid">
         <div class="card">
           <div class="card-content">
+            <div v-if="totalTime">{{ totalHits }} events ({{ totalTime }}s)</div>
+            <div v-if="totalHits > 0" style="margin-top:20px;"></div>
             <ts-sketch-explore-event-list></ts-sketch-explore-event-list>
           </div>
         </div>
@@ -64,6 +66,12 @@ export default {
     },
     eventList () {
       return this.$store.state.eventList
+    },
+    totalHits () {
+      return this.eventList.meta.es_total_count || 0
+    },
+    totalTime () {
+      return this.eventList.meta.es_time / 1000 || 0
     }
   }
 }

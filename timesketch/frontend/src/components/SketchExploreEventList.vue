@@ -15,10 +15,7 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div v-if="totalTime">{{ totalHits }} events ({{ totalTime }}s)</div>
-    <div v-if="totalHits > 0" style="margin-top:20px;">
-      <ts-sketch-explore-event-list-item v-for="event in eventList.objects" :key="event._id" :event="event"></ts-sketch-explore-event-list-item>
-    </div>
+    <ts-sketch-explore-event-list-item v-for="event in eventList.objects" :key="event._id" :event="event"></ts-sketch-explore-event-list-item>
   </div>
 </template>
 
@@ -39,12 +36,6 @@ export default {
     },
     eventList () {
       return this.$store.state.eventList
-    },
-    totalHits () {
-      return this.eventList.meta.es_total_count || 0
-    },
-    totalTime () {
-      return this.eventList.meta.es_time / 1000 || 0
     }
   }
 }

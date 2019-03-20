@@ -35,7 +35,7 @@ export default {
         'indices': ['_all'],
         'time_start': null,
         'order': 'asc',
-        'size': '40'
+        'size': '4'
       }
     }
   },
