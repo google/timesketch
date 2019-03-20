@@ -17,6 +17,7 @@ from __future__ import unicode_literals
 import json
 import uuid
 
+# pylint: disable=wrong-import-order
 import bs4
 import requests
 

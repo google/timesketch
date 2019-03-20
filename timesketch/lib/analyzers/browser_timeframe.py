@@ -127,7 +127,7 @@ def get_active_hours(frame):
         hours = sorted(hours)
 
         hour_len = len(hours)
-        if hour_len >= 3 and hour_len <= 12:
+        if 3 <= hour_len <= 12:
             thresholds[threshold] = hour_len
 
     threshold_counter = collections.Counter(thresholds)
