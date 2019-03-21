@@ -6,6 +6,11 @@
 .PHONY: override_dh_auto_test
 override_dh_auto_test:
 
+.PHONY: override_dh_auto_install
+override_dh_auto_install:
+	dh_auto_install
+	rm -f debian/tmp/usr/lib/python3*/dist-packages/timesketch-*.egg-info/requires.txt
+
 .PHONY: override_dh_installinit
 override_dh_installinit:
 	dh_installinit --name=timesketch
