@@ -29,6 +29,12 @@ limitations under the License.
     </div>
     <div class="level-item has-text-centered">
       <div>
+        <p class="heading">Stories</p>
+        <p class="title">{{ views && stories.length ? stories.length: 0  }}</p>
+      </div>
+    </div>
+    <div class="level-item has-text-centered">
+      <div>
         <p class="heading">Events</p>
         <p class="title">{{ count | compactNumber }}</p>
       </div>
@@ -39,7 +45,7 @@ limitations under the License.
 <script>
 export default {
   name: 'ts-sketch-overview-metrics',
-  props: ['timelines', 'views', 'count']
+  props: ['timelines', 'views', 'stories', 'count']
 }
 </script>
 

@@ -165,24 +165,24 @@ class ResourceMixin(object):
         'updated_at': fields.DateTime
     }
 
+    story_fields = {
+        'id': fields.Integer,
+        'title': fields.String,
+        'content': fields.String,
+        'user': fields.Nested(user_fields),
+        'created_at': fields.DateTime,
+        'updated_at': fields.DateTime
+    }
+
     sketch_fields = {
         'id': fields.Integer,
         'name': fields.String,
         'description': fields.String,
         'user': fields.Nested(user_fields),
         'timelines': fields.List(fields.Nested(timeline_fields)),
+        'stories': fields.List(fields.Nested(story_fields)),
         'active_timelines': fields.List(fields.Nested(timeline_fields)),
         'status': fields.Nested(status_fields),
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
-    }
-
-    story_fields = {
-        'id': fields.Integer,
-        'title': fields.String,
-        'content': fields.String,
-        'user': fields.Nested(user_fields),
-        'sketch': fields.Nested(sketch_fields),
         'created_at': fields.DateTime,
         'updated_at': fields.DateTime
     }
@@ -1173,9 +1173,12 @@ class StoryListResource(ResourceMixin, Resource):
         """
         form = StoryForm.build(request)
         if form.validate_on_submit():
+            title = ''
+            if form.title.data:
+                title = form.title.data
             sketch = Sketch.query.get_with_acl(sketch_id)
             story = Story(
-                title='', content='', sketch=sketch, user=current_user)
+                title=title, content='', sketch=sketch, user=current_user)
             db_session.add(story)
             db_session.commit()
             return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)

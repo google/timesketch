@@ -43,6 +43,26 @@ export default {
   createSketch (formData) {
     return RestApiClient.post('/sketches/', formData)
   },
+  getStoryList (sketchId) {
+    return RestApiClient.get('sketches/' + sketchId + '/stories/')
+  },
+  createStory (title, content, sketchId) {
+    let formData = {
+      title: title,
+      content: content
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /stories/, formData)
+  },
+  updateStory (title, content, sketchId, storyId) {
+    let formData = {
+      title: title,
+      content: content
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /stories/ + storyId + '/', formData)
+  },
+  getStory (sketchId, storyId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/stories/' + storyId)
+  },
   countSketchEvents (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/count/')
   },

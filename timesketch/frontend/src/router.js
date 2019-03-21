@@ -21,6 +21,8 @@ import Sketch from './components/Sketch'
 import SketchOverview from './components/SketchOverview'
 import SketchExplore from './components/SketchExplore'
 import SketchStory from './components/SketchStory'
+import SketchStoryOverview from './components/SketchStoryOverview'
+import SketchStoryContent from './components/SketchStoryContent'
 
 Vue.use(VueRouter)
 
@@ -47,8 +49,20 @@ const routes = [
       },
       {
         path: 'story',
-        name: 'SketchStory',
-        component: SketchStory
+        component: SketchStory,
+        props: true,
+        children: [
+          {
+            path: '',
+            name: 'SketchStory',
+            component: SketchStoryOverview
+          },
+          {
+            path: ':storyId',
+            name: 'SketchStoryContent',
+            component: SketchStoryContent,
+            props: true
+          }]
       }
     ]
   }
