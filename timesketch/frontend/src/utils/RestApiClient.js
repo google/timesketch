@@ -60,6 +60,9 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + /stories/ + storyId + '/', formData)
   },
+  getView (sketchId, viewId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/views/' + viewId)
+  },
   getStory (sketchId, storyId) {
     return RestApiClient.get('/sketches/' + sketchId + '/stories/' + storyId)
   },

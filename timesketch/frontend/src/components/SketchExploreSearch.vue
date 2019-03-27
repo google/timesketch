@@ -24,19 +24,10 @@ import ApiClient from '../utils/RestApiClient'
 
 export default {
   name: 'ts-sketch-explore-search',
-  components: {},
+  props: ['sketchId'],
   data () {
     return {
-      queryFilter: {
-        'from': 0,
-        'time_end': null,
-        'terminate_after': 40,
-        'exclude': [],
-        'indices': ['_all'],
-        'time_start': null,
-        'order': 'asc',
-        'size': '4'
-      }
+      params: {}
     }
   },
   computed: {
@@ -45,6 +36,14 @@ export default {
     },
     meta () {
       return this.$store.state.meta
+    },
+    searchInProgress: {
+      get: function () {
+        return this.$store.state.searchInProgress
+      },
+      set: function (isSearching) {
+        this.$store.commit('updateSearchInProgress', isSearching)
+      }
     },
     currentQueryString: {
       get: function () {
@@ -65,13 +64,54 @@ export default {
   },
   methods: {
     search: function () {
+      this.searchInProgress = true
       let formData = {
         'query': this.currentQueryString,
-        'filter': this.queryFilter
+        'filter': this.currentQueryFilter
       }
-      ApiClient.search(this.sketch.id, formData).then((response) => {
-        this.$store.dispatch('updateEventList', response.data)
+      ApiClient.search(this.sketchId, formData).then((response) => {
+        this.$store.commit('updateEventList', response.data)
+        this.searchInProgress = false
       }).catch((e) => {})
+    },
+    searchView: function (viewId) {
+      ApiClient.getView(this.sketchId, viewId).then((response) => {
+        let view = response.data.objects[0]
+        this.currentQueryString = view.query_string
+        this.currentQueryFilter = JSON.parse(view.query_filter)
+        this.search()
+      }).catch((e) => {})
+    }
+  },
+  created: function () {
+    let doSearch = false
+
+    this.params = {
+      viewId: this.$route.query.view,
+      indexName: this.$route.query.index,
+      resultLimit: this.$route.query.limit,
+      queryString: this.$route.query.q
+    }
+
+    if (this.params.viewId) {
+      this.searchView(this.params.viewId)
+    }
+
+    if (this.params.queryString) {
+      this.currentQueryString = this.params.queryString
+      doSearch = true
+    }
+
+    if (this.params.indexName) {
+      if (!this.params.queryString) {
+        this.currentQueryString = '*'
+      }
+      this.currentQueryFilter.indices = [this.params.indexName]
+      doSearch = true
+    }
+
+    if (doSearch) {
+      this.search()
     }
   }
 }

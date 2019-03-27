@@ -45,7 +45,8 @@ const routes = [
       {
         path: 'explore',
         name: 'SketchExplore',
-        component: SketchExplore
+        component: SketchExplore,
+        props: true
       },
       {
         path: 'story',
