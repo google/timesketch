@@ -15,3 +15,4 @@
 
 # Register all aggregators here by importing them.
 from timesketch.lib.aggregators import bucket
+from timesketch.lib.aggregators import tags
