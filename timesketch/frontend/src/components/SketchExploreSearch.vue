@@ -14,20 +14,61 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <form v-on:submit.prevent="search">
-    <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
-  </form>
+  <div>
+    <form v-on:submit.prevent="search">
+      <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
+    </form>
+    <br>
+
+    <div class="modal" v-bind:class="{ 'is-active': showCreateViewModal }">>
+      <div class="modal-background"></div>
+      <div class="modal-content">
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title">Create new view</p>
+          </header>
+          <div class="card-content">
+            <div class="content">
+              <ts-create-view-form @toggleCreateViewModal="toggleCreateViewModal" :sketchId="sketchId" :currentQueryString="currentQueryString" :currentQueryFilter="currentQueryFilter"></ts-create-view-form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="modal-close is-large" aria-label="close" v-on:click="showCreateViewModal = !showCreateViewModal"></button>
+    </div>
+
+    <div class="field is-grouped">
+      <p class="control">
+        <ts-view-list-dropdown @setActiveView="searchView"></ts-view-list-dropdown>
+      </p>
+      <p class="control">
+        <a class="button" v-on:click="showCreateViewModal = !showCreateViewModal">
+          <span class="icon is-small">
+            <i class="fas fa-save"></i>
+          </span>
+          <span>Save view</span>
+        </a>
+      </p>
+    </div>
+  </div>
 </template>
 
 <script>
 import ApiClient from '../utils/RestApiClient'
+import TsViewListDropdown from './SketchExploreViewListDropdown'
+import TsCreateViewForm from './SketchCreateViewForm'
 
 export default {
   name: 'ts-sketch-explore-search',
+  components: {
+    TsViewListDropdown,
+    TsCreateViewForm
+  },
   props: ['sketchId'],
   data () {
     return {
-      params: {}
+      params: {},
+      showCreateViewModal: false
     }
   },
   computed: {
@@ -75,12 +116,16 @@ export default {
       }).catch((e) => {})
     },
     searchView: function (viewId) {
+      this.$router.push({ name: 'SketchExplore', query: { view: viewId } })
       ApiClient.getView(this.sketchId, viewId).then((response) => {
         let view = response.data.objects[0]
         this.currentQueryString = view.query_string
         this.currentQueryFilter = JSON.parse(view.query_filter)
         this.search()
       }).catch((e) => {})
+    },
+    toggleCreateViewModal: function () {
+      this.showCreateViewModal = !this.showCreateViewModal
     }
   },
   created: function () {

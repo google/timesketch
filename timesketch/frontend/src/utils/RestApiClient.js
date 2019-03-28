@@ -53,6 +53,15 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + /stories/, formData)
   },
+  createView (sketchId, viewName, queryString, queryFilter) {
+    let formData = {
+      name: viewName,
+      query: queryString,
+      filter: queryFilter,
+      dsl: ''
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /views/, formData)
+  },
   updateStory (title, content, sketchId, storyId) {
     let formData = {
       title: title,

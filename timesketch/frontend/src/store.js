@@ -70,7 +70,6 @@ export default new Vuex.Store({
       Vue.set(state, 'currentQueryFilter', queryFilter)
     },
     updateSearchInProgress (state, isSearching) {
-      console.log('store', isSearching)
       Vue.set(state, 'searchInProgress', isSearching)
     },
     resetState (state) {
