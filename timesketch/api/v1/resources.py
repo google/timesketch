@@ -698,7 +698,43 @@ class AggregationResource(ResourceMixin, Resource):
     @login_required
     def post(self, sketch_id):
         """Handles POST request to the resource.
-        Handler for /api/v1/sketches/:sketch_id/aggregation/
+        Handler for /api/v1/sketches/:sketch_id/aggregation/:aggregation_id
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            JSON with aggregation results
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        form = AggregationForm.build(request)
+
+
+class AggregationListResource(ResourceMixin, Resource):
+    """Resource to query for a list of stored aggregation queries."""
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            Views in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        # TODO: Implement this one.
+        return self.to_json(sketch.get_named_aggregations)
+
+
+class AggregationLegacyResource(ResourceMixin, Resource):
+    """Resource to query for the legacy aggregated results."""
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+        Handler for /api/v1/sketches/:sketch_id/aggregation/legacy
 
         Args:
             sketch_id: Integer primary key for a sketch database model
