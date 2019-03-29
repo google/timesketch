@@ -73,10 +73,10 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
 
         common_domains = [
             x for x, y in domain_counter.most_common()
-                if y >= domain_85th_percentile]
+            if y >= domain_85th_percentile]
         rare_domains = [
             x for x, y in domain_counter.most_common()
-                if y <= domain_20th_percentile]
+            if y <= domain_20th_percentile]
 
         satellite_emoji = emojis.get_emoji('SATELLITE')
         for domain, count in iter(domain_counter.items()):
