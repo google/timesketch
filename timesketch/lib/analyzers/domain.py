@@ -71,7 +71,7 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
         domain_20th_percentile = int(numpy.percentile(domain_count_array, 20))
         domain_85th_percentile = int(numpy.percentile(domain_count_array, 85))
 
-        top_domains = [
+        common_domains = [
             x for x, y in domain_counter.most_common()
                 if y >= domain_85th_percentile]
         rare_domains = [
@@ -88,8 +88,8 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
                 tags_to_add.append('known-cdn')
                 cdn_counter[cdn_provider] += 1
 
-            if domain in top_domains:
-                tags_to_add.append('top_domain')
+            if domain in common_domains:
+                tags_to_add.append('common_domain')
 
             if domain in rare_domains:
                 tags_to_add.append('rare_domain')
