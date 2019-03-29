@@ -123,7 +123,7 @@ class TaggingAggregation(interface.BaseAggregator):
         # If we are doing the aggregation of a specific tag we have an extra
         # layer.
         if 'tag_count' in tag_count:
-          tag_count = tag_count.get('tag_count', {})
+            tag_count = tag_count.get('tag_count', {})
 
         buckets = tag_count.get('buckets', [])
         values = []
