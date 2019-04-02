@@ -24,21 +24,41 @@ then
 
 	docker run --name=${CONTAINER_NAME} --detach -i ubuntu:${UBUNTU_VERSION};
 
+	# Install add-apt-repository and locale-gen.
 	docker exec ${CONTAINER_NAME} apt-get update -q;
-	docker exec ${CONTAINER_NAME} apt-get install -y software-properties-common;
+	docker exec ${CONTAINER_NAME} sh -c "DEBIAN_FRONTEND=noninteractive apt-get install -y locales software-properties-common";
 
 	docker exec ${CONTAINER_NAME} add-apt-repository universe -y;
+
+	# Add additional apt repositories.
+	if test ${TARGET} = "pylint";
+	then
+		docker exec ${CONTAINER_NAME} add-apt-repository ppa:gift/pylint3 -y;
+	fi
 	docker exec ${CONTAINER_NAME} add-apt-repository ppa:gift/dev -y;
 
 	docker exec ${CONTAINER_NAME} apt-key adv --fetch-keys https://dl.yarnpkg.com/debian/pubkey.gpg;
 	docker exec ${CONTAINER_NAME} add-apt-repository "deb https://dl.yarnpkg.com/debian/ stable main";
 
+	docker exec ${CONTAINER_NAME} apt-get update -q;
+
+	# Set locale to US English and UTF-8.
+	docker exec ${CONTAINER_NAME} locale-gen en_US.UTF-8;
+
+	# Install packages.
+	DPKG_PACKAGES="git yarn";
+
+	if test ${TARGET} = "pylint";
+	then
+		DPKG_PACKAGES="${DPKG_PACKAGES} python3-distutils pylint";
+	fi
 	if test ${TRAVIS_PYTHON_VERSION} = "2.7";
 	then
-		docker exec ${CONTAINER_NAME} sh -c "DEBIAN_FRONTEND=noninteractive apt-get install -y git yarn python ${DPKG_PYTHON2_DEPENDENCIES} ${DPKG_PYTHON2_TEST_DEPENDENCIES}";
+		DPKG_PACKAGES="${DPKG_PACKAGES} python ${DPKG_PYTHON2_DEPENDENCIES} ${DPKG_PYTHON2_TEST_DEPENDENCIES}";
 	else
-		docker exec ${CONTAINER_NAME} sh -c "DEBIAN_FRONTEND=noninteractive apt-get install -y git yarn python3 ${DPKG_PYTHON3_DEPENDENCIES} ${DPKG_PYTHON3_TEST_DEPENDENCIES}";
+		DPKG_PACKAGES="${DPKG_PACKAGES} python3 ${DPKG_PYTHON3_DEPENDENCIES} ${DPKG_PYTHON3_TEST_DEPENDENCIES}";
 	fi
+	docker exec ${CONTAINER_NAME} sh -c "DEBIAN_FRONTEND=noninteractive apt-get install -y ${DPKG_PACKAGES}";
 
 	docker cp ../timesketch ${CONTAINER_NAME}:/
 
@@ -48,16 +68,5 @@ elif test ${TRAVIS_OS_NAME} = "linux" && test ${TARGET} != "jenkins";
 then
 	pip install -r requirements.txt;
 
-	if test ${TARGET} = "pylint";
-	then
-		sudo add-apt-repository ppa:gift/pylint3 -y;
-	fi
-
-	sudo apt-get update -q;
-
-	if test ${TARGET} = "pylint";
-	then
-		sudo apt-get install -y pylint;
-	fi
 	yarn install;
 fi
