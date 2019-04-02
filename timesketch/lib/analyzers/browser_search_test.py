@@ -11,9 +11,6 @@ from timesketch.lib.testlib import MockDataStore
 class TestBrowserSearchPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
-    def __init__(self, *args, **kwargs):
-        super(TestBrowserSearchPlugin, self).__init__(*args, **kwargs)
-
     # Mock the Elasticsearch datastore.
     @mock.patch(
         'timesketch.lib.analyzers.interface.ElasticsearchDataStore',

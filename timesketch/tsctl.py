@@ -50,9 +50,6 @@ from timesketch.models.sketch import Timeline
 class DropDataBaseTables(Command):
     """Drop all database tables."""
 
-    def __init__(self):
-        super(DropDataBaseTables, self).__init__()
-
     # pylint: disable=method-hidden
     def run(self):
         """Drop all tables after user ha verified."""
@@ -68,9 +65,6 @@ class AddUser(Command):
     option_list = (
         Option('--username', '-', dest='username', required=True),
         Option('--password', '-p', dest='password', required=False), )
-
-    def __init__(self):
-        super(AddUser, self).__init__()
 
     def get_password_from_prompt(self):
         """Get password from the command line prompt."""
@@ -101,9 +95,6 @@ class AddGroup(Command):
     """Create a new Timesketch group."""
     option_list = (Option('--name', '-n', dest='name', required=True), )
 
-    def __init__(self):
-        super(AddGroup, self).__init__()
-
     # pylint: disable=arguments-differ, method-hidden
     def run(self, name):
         """Creates the group."""
@@ -127,9 +118,6 @@ class GroupManager(Command):
             default=False),
         Option('--group', '-g', dest='group_name', required=True),
         Option('--user', '-', dest='user_name', required=True), )
-
-    def __init__(self):
-        super(GroupManager, self).__init__()
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, remove, group_name, user_name):
@@ -171,9 +159,6 @@ class AddSearchIndex(Command):
         Option('--index', '-i', dest='index', required=True),
         Option('--user', '-', dest='username', required=True), )
 
-    def __init__(self):
-        super(AddSearchIndex, self).__init__()
-
     # pylint: disable=arguments-differ, method-hidden
     def run(self, name, index, username):
         """Create the SearchIndex."""
@@ -203,9 +188,6 @@ class PurgeTimeline(Command):
     """Delete timeline permanently from Timesketch and Elasticsearch."""
     option_list = (Option(
         '--index', '-i', dest='index_name', required=True), )
-
-    def __init__(self):
-        super(PurgeTimeline, self).__init__()
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, index_name):
@@ -330,9 +312,6 @@ class ImportTimeline(Command):
         Option('--timeline_name', '-n', dest='timeline_name',
                required=False),
     )
-
-    def __init__(self):
-        super(ImportTimeline, self).__init__()
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, file_path, sketch_id, username, timeline_name):
