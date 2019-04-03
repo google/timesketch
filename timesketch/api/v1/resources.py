@@ -697,7 +697,7 @@ class AggregationResource(ResourceMixin, Resource):
     """Resource to query for aggregated results."""
 
     @login_required
-    def get(self, sketch_id, aggregation_id):
+    def get(self, sketch_id, aggregation_id):  # pylint: disable=unused-argument
         """Handles POST request to the resource.
 
         Handler for /api/v1/sketches/:sketch_id/aggregation/:aggregation_id
@@ -713,7 +713,7 @@ class AggregationResource(ResourceMixin, Resource):
         return {}
 
     @login_required
-    def post(self, sketch_id, aggregation_id):
+    def post(self, sketch_id, aggregation_id):  # pylint: disable=unused-argument
         """Handles POST request to the resource.
 
         Handler for /api/v1/sketches/:sketch_id/aggregation/:aggregation_id

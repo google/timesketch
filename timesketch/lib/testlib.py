@@ -55,7 +55,7 @@ class TestConfig(object):
 class MockElasticClient(object):
     """A mock implementation of a ElasticSearch client."""
 
-    def search(self, index, body, size):
+    def search(self, index, body, size):  # pylint: disable=unused-argument
         """Mock a client search, used for aggregations."""
         meta = {
             'es_time': 23,
