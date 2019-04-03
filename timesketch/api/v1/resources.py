@@ -68,7 +68,7 @@ from timesketch.lib.errors import ApiHTTPError
 from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.lib.forms import AddTimelineSimpleForm
 from timesketch.lib.forms import AggregationExploreForm
-from timesketch.lib.forms import AggregationForm
+from timesketch.lib.forms import AggregationLegacyForm
 from timesketch.lib.forms import CreateTimelineForm
 from timesketch.lib.forms import SaveViewForm
 from timesketch.lib.forms import NameDescriptionForm
@@ -697,18 +697,33 @@ class AggregationResource(ResourceMixin, Resource):
     """Resource to query for aggregated results."""
 
     @login_required
-    def post(self, sketch_id):
+    def get(self, sketch_id, aggregation_id):
         """Handles POST request to the resource.
+
         Handler for /api/v1/sketches/:sketch_id/aggregation/:aggregation_id
 
         Args:
             sketch_id: Integer primary key for a sketch database model
+            aggregation_id: Integer primary key for an agregation database model
 
         Returns:
             JSON with aggregation results
         """
         # TODO: Implement once aggregations are saved in the datastore.
         return {}
+
+    @login_required
+    def post(self, sketch_id, aggregation_id):
+        """Handles POST request to the resource.
+
+        Handler for /api/v1/sketches/:sketch_id/aggregation/:aggregation_id
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            aggregation_id: Integer primary key for an agregation database model
+        """
+        # TODO: Implement once we have an aggregation model in the datastore.
+        abort(HTTP_STATUS_CODE_FORBIDDEN)
 
 
 class AggregationExploreResource(ResourceMixin, Resource):

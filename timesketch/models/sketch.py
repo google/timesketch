@@ -62,8 +62,6 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.name = name
         self.description = description
         self.user = user
-        # TODO: Implement a storage for aggregations.
-        self.aggregations = []
 
     @property
     def get_named_aggregations(self):
@@ -71,11 +69,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 
         Get named aggregations, i.e. only aggregations that have a name.
         """
-        aggregations = [
-            aggregation for aggregation in self.aggregations
-            if aggregation.name != ''
-        ]
-        return aggregations
+        # Implement a storage for aggregations.
+        return []
 
     @property
     def get_named_views(self):
