@@ -67,6 +67,7 @@ then
 elif test ${TRAVIS_OS_NAME} = "linux" && test ${TARGET} != "jenkins";
 then
 	pip install -r requirements.txt;
+	pip install -r test_requirements.txt;
 
 	yarn install;
 fi

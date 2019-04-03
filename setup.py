@@ -61,4 +61,7 @@ setup(
     install_requires=[str(req.req) for req in parse_requirements(
         'requirements.txt', session=PipSession(),
     )],
+    tests_require=[str(req.req) for req in parse_requirements(
+        'test_requirements.txt', session=PipSession(),
+    )],
 )
