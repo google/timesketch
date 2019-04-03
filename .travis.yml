@@ -1,15 +1,15 @@
 matrix:
   include:
-  - name: "Pylint on Ubuntu Xenial (16.04) with Python 3.5"
-    env: TARGET="pylint"
+  - name: "Pylint on Ubuntu Bionic (18.04) (Docker) with Python 3.6"
+    env: [TARGET="pylint", UBUNTU_VERSION="18.04"]
     os: linux
     dist: xenial
+    sudo: required
     group: edge
     language: python
-    python: 3.5
-    node_js: '8'
-    virtualenv:
-      system_site_packages: true
+    python: 3.6
+    services:
+    - docker
   - name: "Ubuntu Xenial (16.04) with Python 2.7 (pip)"
     env: TARGET="linux-python27"
     os: linux
