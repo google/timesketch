@@ -754,6 +754,7 @@ class AggregationExploreResource(ResourceMixin, Resource):
         }
 
         query = form.query.data
+        # pylint: disable=unexpected-keyword-arg
         result = self.datastore.client.search(
             index=','.join(sketch_indices), body=query, size=0)
 
