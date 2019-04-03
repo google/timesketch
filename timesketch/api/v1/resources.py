@@ -67,6 +67,7 @@ from timesketch.lib.datastores.neo4j import SCHEMA as neo4j_schema
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.lib.forms import AddTimelineSimpleForm
+from timesketch.lib.forms import AggregationExploreForm
 from timesketch.lib.forms import AggregationForm
 from timesketch.lib.forms import CreateTimelineForm
 from timesketch.lib.forms import SaveViewForm
@@ -706,8 +707,52 @@ class AggregationResource(ResourceMixin, Resource):
         Returns:
             JSON with aggregation results
         """
+        # TODO: Implement once aggregations are saved in the datastore.
+        return {}
+
+
+class AggregationExploreResource(ResourceMixin, Resource):
+    """Resource to send an aggregation request."""
+
+    RESULT_FIELDS = frozenset(['_shards', 'hits', 'timed_out', 'took'])
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+
+        Handler for /api/v1/sketches/<int:sketch_id>/aggregation/explore
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            JSON with aggregation results
+        """
+        form = AggregationExploreForm.build(request)
+        if not form.validate_on_submit():
+            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
         sketch = Sketch.query.get_with_acl(sketch_id)
-        form = AggregationForm.build(request)
+        sketch_indices = {
+            t.searchindex.index_name
+            for t in sketch.timelines
+        }
+
+        query = form.query.data
+        result = self.datastore.client.search(
+            index=','.join(sketch_indices), body=query, size=0)
+
+        meta = {
+            'es_time': result.get('took', 0),
+            'es_total_count': result.get('hits', {}).get('total', 0),
+            'timed_out': result.get('timed_out', False),
+            'max_score': result.get('hits', {}).get('max_score', 0.0)
+        }
+
+        result_keys = set(result.keys()) - self.RESULT_FIELDS
+        objects = [result[key] for key in result_keys]
+        schema = {'meta': meta, 'objects': objects}
+        return jsonify(schema)
 
 
 class AggregationListResource(ResourceMixin, Resource):
@@ -717,6 +762,8 @@ class AggregationListResource(ResourceMixin, Resource):
     def get(self, sketch_id):
         """Handles GET request to the resource.
 
+        Handler for /api/v1/sketches/<int:sketch_id>/aggregation/list/
+
         Args:
             sketch_id: Integer primary key for a sketch database model
 
@@ -724,8 +771,7 @@ class AggregationListResource(ResourceMixin, Resource):
             Views in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-        # TODO: Implement this one.
-        return self.to_json(sketch.get_named_aggregations)
+        return jsonify(sketch.get_named_aggregations)
 
 
 class AggregationLegacyResource(ResourceMixin, Resource):
@@ -743,7 +789,7 @@ class AggregationLegacyResource(ResourceMixin, Resource):
             JSON with aggregation results
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-        form = AggregationForm.build(request)
+        form = AggregationLegacyForm.build(request)
 
         if form.validate_on_submit():
             query_filter = form.filter.data

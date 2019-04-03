@@ -561,6 +561,51 @@ class Sketch(BaseResource):
         return response_json
 
 
+    def aggregate(self, query_string=None, as_pandas=False):
+        """Run an aggregation request on the sketch.
+
+        Args:
+            query_string: Elasticsearch aggregation query string.
+            as_pandas: Optional bool that determines if the results should
+                be returned back as a dictionary or a Pandas DataFrame.
+
+        Returns:
+            Dictionary with query results or a pandas DataFrame if as_pandas
+            is set to True.
+
+        Raises:
+            ValueError: if unable to query for the results.
+        """
+        if not query_string:
+            raise RuntimeError('You need to supply a query string.')
+
+        resource_url = '{0:s}/sketches/{1:d}/aggregation/explore/'.format(
+            self.api.api_root, self.id)
+
+        form_data = {
+            'query': query_string,
+        }
+
+        response = self.api.session.post(resource_url, json=form_data)
+        if response.status_code != 200:
+            raise ValueError(
+                'Unable to query results, with error: [{0:d}] {1:s}'.format(
+                    response.status_code, response.reason))
+
+        response_json = response.json()
+
+        if as_pandas:
+            panda_list = []
+            for entry in response_json.get('objects'):
+                for name, entries in iter(entry.items()):
+                    for bucket in entries.get('buckets', []):
+                        bucket['bucket_name'] = name
+                        panda_list.append(bucket)
+            return pandas.DataFrame(panda_list)
+
+        return response_json
+
+
     def label_events(self, events, label_name):
         """Labels one or more events with label_name.
 

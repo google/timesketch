@@ -182,7 +182,12 @@ class GraphExploreForm(BaseForm):
     output_format = StringField('Output format')
 
 
-class AggregationForm(ExploreForm):
+class AggregationExploreForm(BaseForm):
+    """Form used to send aggregation requests to the datastore."""
+    query = StringField('Query')
+
+
+class AggregationLegacyForm(ExploreForm):
     """Form used to search the datastore."""
     aggtype = StringField('Aggregation type')
 
