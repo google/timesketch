@@ -596,15 +596,22 @@ class Sketch(BaseResource):
 
         if as_pandas:
             panda_list = []
-            for entry in response_json.get('objects'):
-                for name, entries in iter(entry.items()):
-                    for bucket in entries.get('buckets', []):
-                        bucket['bucket_name'] = name
-                        panda_list.append(bucket)
+            for entry in response_json.get('objects', []):
+                for bucket in self.get_buckets(entry):
+                    panda_list.append(bucket)
             return pandas.DataFrame(panda_list)
 
         return response_json
 
+    def get_buckets(self, entry):
+        """Yields all buckets from a aggregation result object."""
+        for name, entries in iter(entry.items()):
+            if not bucket in entries:
+                for value in iter(entries.values()):
+                    yield self.get_buckets(value)
+            for bucket in entries.get('buckets', []):
+                bucket['bucket_name'] = name
+                yield bucket
 
     def label_events(self, events, label_name):
         """Labels one or more events with label_name.
