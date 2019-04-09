@@ -370,7 +370,7 @@ class Sketch(BaseResource):
     def _get_aggregation_buckets(self, entry):
         """Yields all buckets from a aggregation result object."""
         for name, entries in iter(entry.items()):
-            if not 'bucket' in entries:
+            if not 'buckets' in entries:
                 for value in iter(entries.values()):
                     if not isinstance(value, dict):
                         continue
