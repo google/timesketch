@@ -173,7 +173,6 @@ class ExploreForm(BaseForm):
     enable_scroll = BooleanField(
         'Enable scroll', false_values={False, 'false', ''}, default=False)
     scroll_id = StringField('Scroll ID', default='')
-    aggregation_query = StringField('Aggregation Query')
 
 
 class GraphExploreForm(BaseForm):

@@ -592,11 +592,11 @@ class Sketch(BaseResource):
         if not query_string:
             raise RuntimeError('You need to supply a query string.')
 
-        resource_url = '{0:s}/sketches/{1:d}/explore/'.format(
+        resource_url = '{0:s}/sketches/{1:d}/aggregation/explore/'.format(
             self.api.api_root, self.id)
 
         form_data = {
-            'aggregation_query': query_string,
+            'query': query_string,
         }
 
         response = self.api.session.post(resource_url, json=form_data)

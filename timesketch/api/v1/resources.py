@@ -612,7 +612,6 @@ class ExploreResource(ResourceMixin, Resource):
         return_fields = form.fields.data
         enable_scroll = form.enable_scroll.data
         scroll_id = form.scroll_id.data
-        aggregation_query = form.aggregation_query.data
 
         if not return_fields:
             return_fields = DEFAULT_SOURCE_FIELDS
@@ -636,7 +635,7 @@ class ExploreResource(ResourceMixin, Resource):
 
         # Make sure we have a query string or star filter
         if not (form.query.data, query_filter.get('star'),
-                query_filter.get('events'), query_dsl, aggregation_query):
+                query_filter.get('events'), query_dsl):
             abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
         if scroll_id:
@@ -650,7 +649,7 @@ class ExploreResource(ResourceMixin, Resource):
                 query_filter,
                 query_dsl,
                 indices,
-                aggregations=aggregation_query,
+                aggregations=None,
                 return_fields=return_fields,
                 enable_scroll=enable_scroll)
 
