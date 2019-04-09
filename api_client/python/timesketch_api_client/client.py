@@ -367,17 +367,18 @@ class Sketch(BaseResource):
 
         return data_frame
 
-    def _get_aggregation_buckets(self, entry):
+    def _get_aggregation_buckets(self, entry, name=''):
         """Yields all buckets from a aggregation result object."""
-        for name, entries in iter(entry.items()):
-            if not 'buckets' in entries:
-                for value in iter(entries.values()):
-                    if not isinstance(value, dict):
-                        continue
-                    yield self._get_aggregation_buckets(value)
-            for bucket in entries.get('buckets', []):
+        if 'buckets' in entry:
+            for bucket in entry.get('buckets', []):
                 bucket['bucket_name'] = name
                 yield bucket
+        else:
+            for name, value in iter(entry.items()):
+                if not isinstance(value, dict):
+                    continue
+                for bucket in self._get_aggregation_buckets(value, name=name):
+                    yield bucket
 
     def list_views(self):
         """List all saved views for this sketch.
