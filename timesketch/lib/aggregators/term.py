@@ -55,7 +55,7 @@ def get_spec(field, query='', query_dsl=''):
     elif query_dsl:
         query_filter = query_dsl
     else:
-      raise ValueError('Neiter query nor query DSL provided.')
+        raise ValueError('Neiter query nor query DSL provided.')
 
 
     return {
@@ -99,13 +99,13 @@ class TermAggregation(interface.BaseAggregator):
     }
 
     # pylint: disable=arguments-differ
-    def run(self, field, query='', query_dsl=''):
+    def run(self, field, query_string='', query_dsl=''):
         """Run the aggregation.
 
         Args:
             field (str): this denotes the event attribute that is used
                 for aggregation.
-            query (str): the query field to run on all documents prior to
+            query_string (str): the query field to run on all documents prior to
                 aggregating the results.
             query_dsl (str): the query DSL field to run on all documents prior
                 to aggregating the results. Either a query string or a query
@@ -121,16 +121,13 @@ class TermAggregation(interface.BaseAggregator):
             raise ValueError('Both query_string and query_dsl are missing')
 
         aggregation_spec = get_spec(
-            field=field, query=query, query_dsl=query_dsl)
+            field=field, query=query_string, query_dsl=query_dsl)
 
         # Encoding information for Vega-Lite.
         encoding = {
-            'x': {'field': attribute, 'type': 'nominal'},
+            'x': {'field': field, 'type': 'nominal'},
             'y': {'field': 'count', 'type': 'quantitative'}
         }
-
-        # Throw away, for tag testing...
-        # 'query': 'tag:"{0:s}"'.format(tag)
 
         response = self.elastic_aggregation(aggregation_spec)
         aggregations = response.get('aggregations', {})
@@ -145,7 +142,7 @@ class TermAggregation(interface.BaseAggregator):
         values = []
         for bucket in buckets:
             d = {
-                attribute: bucket.get('key', 'N/A'),
+                field: bucket.get('key', 'N/A'),
                 'count': bucket.get('doc_count', 0)
             }
             values.append(d)
