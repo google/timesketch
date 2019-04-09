@@ -367,6 +367,16 @@ class Sketch(BaseResource):
 
         return data_frame
 
+    def _get_aggregation_buckets(self, entry):
+        """Yields all buckets from a aggregation result object."""
+        for name, entries in iter(entry.items()):
+            if not bucket in entries:
+                for value in iter(entries.values()):
+                    yield self._get_aggregation_buckets(value)
+            for bucket in entries.get('buckets', []):
+                bucket['bucket_name'] = name
+                yield bucket
+
     def list_views(self):
         """List all saved views for this sketch.
 
@@ -597,21 +607,11 @@ class Sketch(BaseResource):
         if as_pandas:
             panda_list = []
             for entry in response_json.get('objects', []):
-                for bucket in self.get_buckets(entry):
+                for bucket in self._get_aggregation_buckets(entry):
                     panda_list.append(bucket)
             return pandas.DataFrame(panda_list)
 
         return response_json
-
-    def get_buckets(self, entry):
-        """Yields all buckets from a aggregation result object."""
-        for name, entries in iter(entry.items()):
-            if not bucket in entries:
-                for value in iter(entries.values()):
-                    yield self.get_buckets(value)
-            for bucket in entries.get('buckets', []):
-                bucket['bucket_name'] = name
-                yield bucket
 
     def label_events(self, events, label_name):
         """Labels one or more events with label_name.
