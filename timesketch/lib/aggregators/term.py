@@ -46,7 +46,7 @@ def get_spec(field, query='', query_dsl=''):
                 'must': [
                     {
                         'query_string': {
-                            query
+                            'query': query
                         }
                     }
                 ]
