@@ -621,6 +621,9 @@ class ExploreResource(ResourceMixin, Resource):
             t.searchindex.index_name
             for t in sketch.timelines
         }
+        if not query_filter:
+          query_filter = {}
+
         indices = query_filter.get('indices', sketch_indices)
 
         # If _all in indices then execute the query on all indices
