@@ -616,6 +616,46 @@ class Sketch(BaseResource):
 
         return response_json
 
+    def run_aggregator(
+        self, aggregator_name, aggregator_parameters, as_pandas=False):
+        """Run an aggregator class.
+
+        Args:
+            aggregator_name: Name of the aggregator to run.
+            aggregator_parameters: A dict with key/value pairs of parameters
+                the aggregator needs to run.
+            as_pandas: Optional bool that determines if the results should
+                be returned back as a dictionary or a Pandas DataFrame.
+
+        Returns:
+            Dictionary with query results or a pandas DataFrame if as_pandas
+            is set to True.
+        """
+        resource_url = '{0:s}/sketches/{1:d}/aggregation/explore/'.format(
+            self.api.api_root, self.id)
+
+        form_data = {
+            'aggregator_name': aggregator_name,
+            'aggregator_parameters': aggregator_parameters,
+        }
+
+        response = self.api.session.post(resource_url, json=form_data)
+        if response.status_code != 200:
+            raise ValueError(
+                'Unable to query results, with error: [{0:d}] {1:s}'.format(
+                    response.status_code, response.reason))
+
+        response_json = response.json()
+
+        if as_pandas:
+            panda_list = []
+            for entry in response_json.get('objects', []):
+                for bucket in self._get_aggregation_buckets(entry):
+                    panda_list.append(bucket)
+            return pandas.DataFrame(panda_list)
+
+        return response_json
+
     def label_events(self, events, label_name):
         """Labels one or more events with label_name.
 

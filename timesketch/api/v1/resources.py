@@ -53,6 +53,7 @@ from flask_restful import Resource
 from sqlalchemy import desc
 from sqlalchemy import not_
 
+from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.aggregators_old import heatmap
 from timesketch.lib.aggregators_old import histogram
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
@@ -754,16 +755,46 @@ class AggregationExploreResource(ResourceMixin, Resource):
         }
 
         query = form.query.data
-        # pylint: disable=unexpected-keyword-arg
-        result = self.datastore.client.search(
-            index=','.join(sketch_indices), body=query, size=0)
+        aggregator_name = form.aggregator_name.data
+        aggregator_parameters = form.aggregator_parameters.data
 
-        meta = {
-            'es_time': result.get('took', 0),
-            'es_total_count': result.get('hits', {}).get('total', 0),
-            'timed_out': result.get('timed_out', False),
-            'max_score': result.get('hits', {}).get('max_score', 0.0)
-        }
+        if aggregator_name and aggregator_parameters:
+            aggregator_class = aggregator_manager.AggregatorManager.get_aggregator(aggregator_name)
+            if not aggregator_class:
+                return {}
+            if not aggregator_parameters:
+                aggregator_parameters = {}
+            aggregator = aggregator_class(sketch_id=sketch_id)
+            time_before = time.time()
+            result_obj = aggregator.run(**aggregator_parameters)
+            time_after = time.time()
+
+            buckets = result_obj.to_dict()
+            buckets['buckets'] = buckets.pop('values')
+            result = {
+                'aggregation_result': {
+                    aggregator_name: buckets
+                }
+            }
+            meta = {
+                'method': 'aggregator_run',
+                'name': aggregator_name,
+                'es_time': time_after - time_before,
+                'timed_out': False
+            }
+
+        elif query:
+            # pylint: disable=unexpected-keyword-arg
+            result = self.datastore.client.search(
+                index=','.join(sketch_indices), body=query, size=0)
+
+            meta = {
+                'es_time': result.get('took', 0),
+                'es_total_count': result.get('hits', {}).get('total', 0),
+                'timed_out': result.get('timed_out', False),
+                'method': 'aggregator_query',
+                'max_score': result.get('hits', {}).get('max_score', 0.0)
+            }
 
         result_keys = set(result.keys()) - self.RESULT_FIELDS
         objects = [result[key] for key in result_keys]
