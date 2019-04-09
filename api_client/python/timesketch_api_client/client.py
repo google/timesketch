@@ -372,6 +372,8 @@ class Sketch(BaseResource):
         for name, entries in iter(entry.items()):
             if not 'bucket' in entries:
                 for value in iter(entries.values()):
+                    if not isinstance(value, dict):
+                        continue
                     yield self._get_aggregation_buckets(value)
             for bucket in entries.get('buckets', []):
                 bucket['bucket_name'] = name
