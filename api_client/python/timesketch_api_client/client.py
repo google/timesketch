@@ -377,7 +377,8 @@ class Sketch(BaseResource):
             for value_name, value in iter(entry.items()):
                 if not isinstance(value, dict):
                     continue
-                for bucket in self._get_aggregation_buckets(value, name=value_name):
+                for bucket in self._get_aggregation_buckets(
+                    value, name=value_name):
                     yield bucket
 
     def list_views(self):
