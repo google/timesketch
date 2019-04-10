@@ -757,7 +757,7 @@ class AggregationExploreResource(ResourceMixin, Resource):
             for t in sketch.timelines
         }
 
-        query = form.query.data
+        aggregation_dsl = form.aggregation_dsl.data
         aggregator_name = form.aggregator_name.data
         aggregator_parameters = form.aggregator_parameters.data
 
@@ -786,10 +786,10 @@ class AggregationExploreResource(ResourceMixin, Resource):
                 'timed_out': False
             }
 
-        elif query:
+        elif aggregation_dsl:
             # pylint: disable=unexpected-keyword-arg
             result = self.datastore.client.search(
-                index=','.join(sketch_indices), body=query, size=0)
+                index=','.join(sketch_indices), body=aggregation_dsl, size=0)
 
             meta = {
                 'es_time': result.get('took', 0),

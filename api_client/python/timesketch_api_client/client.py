@@ -574,11 +574,11 @@ class Sketch(BaseResource):
         return response_json
 
 
-    def aggregate(self, query_string=None, as_pandas=False):
+    def aggregate(self, aggregate_dsl, as_pandas=False):
         """Run an aggregation request on the sketch.
 
         Args:
-            query_string: Elasticsearch aggregation query string.
+            aggregate_dsl: Elasticsearch aggregation query DSL string.
             as_pandas: Optional bool that determines if the results should
                 be returned back as a dictionary or a Pandas DataFrame.
 
@@ -589,14 +589,15 @@ class Sketch(BaseResource):
         Raises:
             ValueError: if unable to query for the results.
         """
-        if not query_string:
-            raise RuntimeError('You need to supply a query string.')
+        if not aggregate_dsl:
+            raise RuntimeError(
+                'You need to supply an aggregation query DSL string.')
 
         resource_url = '{0:s}/sketches/{1:d}/aggregation/explore/'.format(
             self.api.api_root, self.id)
 
         form_data = {
-            'query': query_string,
+            'aggregation_dsl': aggregate_dsl,
         }
 
         response = self.api.session.post(resource_url, json=form_data)

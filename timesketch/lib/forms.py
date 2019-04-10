@@ -184,7 +184,7 @@ class GraphExploreForm(BaseForm):
 
 class AggregationExploreForm(BaseForm):
     """Form used to send aggregation requests to the datastore."""
-    query = StringField('Query', validators=[Optional()])
+    aggregation_dsl = StringField('Aggregation DSL', validators=[Optional()])
     aggregator_name = StringField('Aggregator Name', validators=[Optional()])
     aggregator_parameters = StringField('Aggregator Parameters', validators=[Optional()])
 
