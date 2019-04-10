@@ -617,7 +617,7 @@ class Sketch(BaseResource):
         return response_json
 
     def run_aggregator(
-        self, aggregator_name, aggregator_parameters, as_pandas=False):
+            self, aggregator_name, aggregator_parameters, as_pandas=False):
         """Run an aggregator class.
 
         Args:
