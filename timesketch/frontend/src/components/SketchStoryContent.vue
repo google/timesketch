@@ -25,14 +25,14 @@ limitations under the License.
     <section class="section" v-if="blocks">
       <div class="container">
         <div class="card">
-          <div class="card-content">
+          <div class="card-content" style="padding:50px;">
 
-            <div class="markdown-body" style="margin-bottom:20px;">
-              <h2>{{ title }}</h2>
+            <div class="markdown-body" style="margin-bottom:20px;padding-left:10px">
+              <h1>{{ title }}</h1>
             </div>
 
             <div v-for="(obj, index) in blocks" :key="index">
-              <div v-if="!obj.componentName">
+              <div v-if="!obj.componentName" @mouseover="obj.isActive = true" @mouseleave="obj.isActive = false" v-bind:class="{ activeBlock: obj.isActive }" class="inactiveBlock" style="padding-left:10px;">
                 <div class="columns" v-if="obj.edit" style="margin-bottom:0;">
                   <div class="column">
                     <textarea class="textarea" style="height: 100%;" :value="obj.content" @input="update($event, obj)" placeholder="Your story starts here.."></textarea>
@@ -45,36 +45,37 @@ limitations under the License.
                 </div>
                 <div v-if="obj.edit" class="field is-grouped">
                   <p class="control">
-                    <button :disabled="!obj.content" class="button is-rounded is-small is-success" v-on:click="saveAndHide(obj)">
+                    <button :disabled="!obj.content" class="button is-rounded is-success" v-on:click="saveAndHide(obj)">
                       <span class="icon is-small"><i class="fas fa-save" aria-hidden="true"></i></span>
                       <span>Save</span>
-                    </button>
-                  </p>
-                  <p class="control" v-if="blocks.length > 1">
-                    <button class="button is-rounded is-small is-danger" v-on:click="deleteBlock(index)">
-                      <span class="icon is-small"><i class="fas fa-trash" aria-hidden="true"></i></span>
-                      <span>Delete</span>
                     </button>
                   </p>
                 </div>
                 <div v-on:dblclick="obj.edit = !obj.edit" class="markdown-body" v-if="!obj.edit" v-html="obj.html"></div>
               </div>
-              <div v-if="obj.componentName">
-                <component :is="obj.componentName" v-bind="obj.props"></component>
+
+              <div v-if="obj.componentName" @mouseover="obj.isActive = true" @mouseleave="obj.isActive = false">
+                <component :is="obj.componentName" v-bind="obj.componentProps"></component>
               </div>
-              <div style="min-height:25px;margin-top:10px;margin-bottom:10px;" @mouseover="obj.showPanel = true" @mouseleave="obj.showPanel = false">
-                <div v-if="obj.showPanel" class="field is-grouped">
-                  <p class="control">
-                    <button class="button is-rounded is-small" v-on:click="addBlock(index)">
-                      + Text
-                    </button>
-                  </p>
-                  <p class="control">
-                    <button class="button is-rounded is-small" v-on:click="addComponent(index)">
-                      + Component
-                    </button>
-                  </p>
-                </div>
+
+              <div style="min-height:35px;margin-top:10px;margin-bottom:10px;" @mouseover="obj.showPanel = true" @mouseleave="obj.showPanel = false">
+                <div v-if="index === blocks.length - 1" style="padding-top:20px;"></div>
+                  <div v-if="index === blocks.length - 1 || obj.showPanel || obj.isActive" class="field is-grouped">
+                    <p class="control">
+                      <button class="button is-rounded" v-on:click="addBlock(index)">
+                        + Text
+                      </button>
+                    </p>
+                    <p class="control">
+                      <ts-view-list-dropdown @setActiveView="addViewComponent($event, index)" :is-rounded="true" :title="'+ Saved view'"></ts-view-list-dropdown>
+                    </p>
+                    <p v-if="index < blocks.length - 1 || obj.showPanel || obj.isActive" class="control" style="margin-left:10px">
+                      <button class="button is-rounded is-danger" v-on:click="deleteBlock(index)">
+                        <span class="icon is-small"><i class="fas fa-trash" aria-hidden="true"></i></span>
+                        <span>Delete</span>
+                      </button>
+                    </p>
+                  </div>
               </div>
             </div>
           </div>
@@ -89,7 +90,8 @@ limitations under the License.
 import ApiClient from '../utils/RestApiClient'
 import marked from 'marked'
 import _ from 'lodash'
-import TsSketchExploreEventList from './SketchExploreEventList'
+import TsViewListDropdown from './SketchExploreViewListDropdown'
+import TsViewEventList from './SketchExploreViewEventList'
 
 const defaultBlock = () => {
   return {
@@ -98,14 +100,15 @@ const defaultBlock = () => {
     content: '',
     html: '',
     edit: true,
-    showPanel: false
+    showPanel: false,
+    isActive: false
   }
 }
 
 export default {
   name: 'ts-sketch-story',
   props: ['sketchId', 'storyId'],
-  components: { TsSketchExploreEventList },
+  components: { TsViewListDropdown, TsViewEventList },
   data () {
     return {
       blocks: [],
@@ -125,11 +128,16 @@ export default {
     },
     deleteBlock (index) {
       this.blocks.splice(index, 1)
+      if (!this.blocks.length) {
+        this.blocks = [defaultBlock()]
+      }
+      this.save()
     },
-    addComponent (index) {
+    addViewComponent (event, index) {
       let newIndex = index + 1
       let newBlock = defaultBlock()
-      newBlock.componentName = 'TsSketchExploreEventList'
+      newBlock.componentName = 'TsViewEventList'
+      newBlock.componentProps = { viewId: event }
       this.blocks.splice(newIndex, 0, newBlock)
       this.save()
     },
@@ -141,6 +149,10 @@ export default {
       this.save()
     },
     save () {
+      this.blocks.forEach(function (block) {
+        block.showPanel = false
+        block.isActive = false
+      })
       let content = JSON.stringify(this.blocks)
       ApiClient.updateStory(this.title, content, this.sketchId, this.storyId)
         .then((response) => {
@@ -172,6 +184,14 @@ export default {
 </script>
 
 <style lang="scss">
+
+.inactiveBlock {
+  border-left: 1px solid transparent;
+}
+
+.activeBlock {
+  border-left: 1px solid lightgray;
+}
 
 // Transition animation
 .fade-enter-active, .fade-leave-active {
