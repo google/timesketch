@@ -74,10 +74,10 @@ def get_spec(field, query='', query_dsl=''):
     }
 
 
-class TermAggregation(interface.BaseAggregator):
-    """Term Aggregation."""
+class FilteredTermsAggregation(interface.BaseAggregator):
+    """Query Filter Term Aggregation."""
 
-    NAME = 'term_bucket'
+    NAME = 'filtered_term_bucket'
 
     SUPPORTED_CHARTS = frozenset(['barchart', 'horizontal_barchart'])
 
@@ -150,4 +150,4 @@ class TermAggregation(interface.BaseAggregator):
         return interface.AggregationResult(encoding, values)
 
 
-manager.AggregatorManager.register_aggregator(TermAggregation)
+manager.AggregatorManager.register_aggregator(FilteredTermsAggregation)
