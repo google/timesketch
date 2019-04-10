@@ -77,7 +77,7 @@ def get_spec(field, query='', query_dsl=''):
 class FilteredTermsAggregation(interface.BaseAggregator):
     """Query Filter Term Aggregation."""
 
-    NAME = 'filtered_term_bucket'
+    NAME = 'query_bucket'
 
     SUPPORTED_CHARTS = frozenset(['barchart', 'horizontal_barchart'])
 
