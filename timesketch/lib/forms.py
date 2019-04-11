@@ -186,7 +186,8 @@ class AggregationExploreForm(BaseForm):
     """Form used to send aggregation requests to the datastore."""
     aggregation_dsl = StringField('Aggregation DSL', validators=[Optional()])
     aggregator_name = StringField('Aggregator Name', validators=[Optional()])
-    aggregator_parameters = StringField('Aggregator Parameters', validators=[Optional()])
+    aggregator_parameters = StringField(
+        'Aggregator Parameters', validators=[Optional()])
 
 
 class AggregationLegacyForm(ExploreForm):
