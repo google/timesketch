@@ -799,6 +799,8 @@ class AggregationExploreResource(ResourceMixin, Resource):
                 'method': 'aggregator_query',
                 'max_score': result.get('hits', {}).get('max_score', 0.0)
             }
+        else:
+            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
         result_keys = set(result.keys()) - self.RESULT_FIELDS
         objects = [result[key] for key in result_keys]

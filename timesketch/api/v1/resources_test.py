@@ -241,7 +241,7 @@ class AggregationExploreResourceTest(BaseTest):
     def test_heatmap_aggregation(self):
         """Authenticated request to get heatmap aggregation."""
         self.login()
-        data = dict(query='test')
+        data = dict(aggregation_dsl='test')
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
