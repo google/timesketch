@@ -621,7 +621,7 @@ class ExploreResource(ResourceMixin, Resource):
             for t in sketch.timelines
         }
         if not query_filter:
-          query_filter = {}
+            query_filter = {}
 
         indices = query_filter.get('indices', sketch_indices)
 
@@ -762,12 +762,13 @@ class AggregationExploreResource(ResourceMixin, Resource):
         aggregator_parameters = form.aggregator_parameters.data
 
         if aggregator_name and aggregator_parameters:
-            aggregator_class = aggregator_manager.AggregatorManager.get_aggregator(aggregator_name)
-            if not aggregator_class:
+            agg_class = aggregator_manager.AggregatorManager.get_aggregator(
+                aggregator_name)
+            if not agg_class:
                 return {}
             if not aggregator_parameters:
                 aggregator_parameters = {}
-            aggregator = aggregator_class(sketch_id=sketch_id)
+            aggregator = agg_class(sketch_id=sketch_id)
             time_before = time.time()
             result_obj = aggregator.run(**aggregator_parameters)
             time_after = time.time()

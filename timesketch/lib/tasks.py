@@ -419,7 +419,7 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
         # Import the remaining events
         es.flush_queued_events()
 
-    except (ImportError, NameError, UnboundLocalError):  # pylint: disable=try-except-raise
+    except (ImportError, NameError, UnboundLocalError):
         raise
 
     except Exception as e:  # pylint: disable=broad-except
