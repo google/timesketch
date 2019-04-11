@@ -22,8 +22,10 @@ from timesketch.lib.aggregators import interface
 class TermsAggregation(interface.BaseAggregator):
     """Terms Bucket Aggregation."""
 
-    NAME = 'bucket_terms'
+    NAME = 'field_bucket'
+
     SUPPORTED_CHARTS = frozenset(['barchart', 'horizontal_barchart'])
+
     FORM_FIELDS = {
         'field': {
             'type': 'text',
