@@ -95,7 +95,7 @@ limitations under the License.
       <div class="container">
         <div class="card" style="min-height: 100px;">
           <div class="card-content">
-            <ts-sketch-metrics :timelines="sketch.active_timelines" :views="meta.views" :count="count"></ts-sketch-metrics>
+            <ts-sketch-metrics :timelines="sketch.active_timelines" :views="meta.views" :stories="sketch.stories" :count="count"></ts-sketch-metrics>
           </div>
         </div>
       </div>
@@ -105,7 +105,7 @@ limitations under the License.
     <section class="section">
       <div class="container">
         <div class="columns">
-          <div class="column">
+          <div class="column" v-if="sketch.timelines && sketch.timelines.length ? sketch.timelines.length: false">
             <div class="card has-min-height">
               <header class="card-header">
                 <p class="card-header-title">Timelines</p>
@@ -115,13 +115,23 @@ limitations under the License.
               </div>
             </div>
           </div>
-          <div class="column">
+          <div class="column" v-if="meta.views && meta.views.length ? meta.views.length: false">
             <div class="card has-min-height">
               <header class="card-header">
                 <p class="card-header-title">Views</p>
               </header>
               <div class="card-content" style="padding:10px;">
                 <ts-saved-view-list :views="meta.views"></ts-saved-view-list>
+              </div>
+            </div>
+          </div>
+          <div class="column" v-if="sketch.stories && sketch.stories.length ? sketch.stories.length: false">
+            <div class="card has-min-height">
+              <header class="card-header">
+                <p class="card-header-title">Stories</p>
+              </header>
+              <div class="card-content" style="padding:5px;">
+                <ts-sketch-story-list></ts-sketch-story-list>
               </div>
             </div>
           </div>
@@ -137,6 +147,7 @@ import TsSketchSummary from './SketchOverviewSummary'
 import TsSketchMetrics from './SketchOverviewMetrics'
 import TsTimelineList from './SketchOverviewTimelineList'
 import TsSavedViewList from './SketchOverviewViewList'
+import TsSketchStoryList from './SketchStoryList'
 import TsUploadTimelineForm from './SketchUploadTimelineForm'
 
 export default {
@@ -146,7 +157,8 @@ export default {
     TsSketchSummary,
     TsTimelineList,
     TsSavedViewList,
-    TsUploadTimelineForm
+    TsUploadTimelineForm,
+    TsSketchStoryList
   },
   data () {
     return {

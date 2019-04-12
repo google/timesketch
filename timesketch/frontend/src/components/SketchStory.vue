@@ -14,21 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
-    <ul class="content-list">
-      <li style="padding:5px;" v-for="view in views" :key="view.id">
-        <router-link :to="{ name: 'SketchExplore', query: {view: view.id}}"><strong>{{ view.name }}</strong></router-link>
-      </li>
-    </ul>
-  </div>
+  <router-view></router-view>
 </template>
 
 <script>
 export default {
-  name: 'ts-sketch-overview-view-list',
-  props: ['views']
+  name: 'ts-sketch-story'
 }
 </script>
 
-<!-- CSS scoped to this component only -->
-<style scoped lang="scss"></style>
+<style lang="scss"></style>

@@ -81,7 +81,7 @@ export default {
     },
     timelineName () {
       return this.timeline(this.event._index).name
-    },
+    }
   }
 }
 </script>

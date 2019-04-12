@@ -20,12 +20,21 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../utils/RestApiClient'
 import TsSketchExploreEventListItem from './SketchExploreEventListItem'
 
 export default {
-  name: 'ts-sketch-explore-event-list',
+  name: 'ts-sketch-explore-view-event-list',
   components: {
     TsSketchExploreEventListItem
+  },
+  props: ['view'],
+  data () {
+    return {
+      queryString: '',
+      queryFilter: {},
+      eventList: []
+    }
   },
   computed: {
     sketch () {
@@ -33,10 +42,29 @@ export default {
     },
     meta () {
       return this.$store.state.meta
-    },
-    eventList () {
-      return this.$store.state.eventList
     }
+  },
+  methods: {
+    search: function () {
+      let formData = {
+        'query': this.queryString,
+        'filter': this.queryFilter
+      }
+      ApiClient.search(this.sketch.id, formData).then((response) => {
+        this.eventList = response.data
+      }).catch((e) => {})
+    },
+    searchView: function (viewId) {
+      ApiClient.getView(this.sketch.id, viewId).then((response) => {
+        let view = response.data.objects[0]
+        this.queryString = view.query_string
+        this.queryFilter = JSON.parse(view.query_filter)
+        this.search()
+      }).catch((e) => {})
+    }
+  },
+  created: function () {
+    this.searchView(this.view.id)
   }
 }
 </script>

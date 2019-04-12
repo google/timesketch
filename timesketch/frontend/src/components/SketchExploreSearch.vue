@@ -14,29 +14,61 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <form v-on:submit.prevent="search">
-    <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
-  </form>
+  <div>
+    <form v-on:submit.prevent="search">
+      <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
+    </form>
+    <br>
+
+    <div class="modal" v-bind:class="{ 'is-active': showCreateViewModal }">>
+      <div class="modal-background"></div>
+      <div class="modal-content">
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title">Create new view</p>
+          </header>
+          <div class="card-content">
+            <div class="content">
+              <ts-create-view-form @toggleCreateViewModal="toggleCreateViewModal" :sketchId="sketchId" :currentQueryString="currentQueryString" :currentQueryFilter="currentQueryFilter"></ts-create-view-form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="modal-close is-large" aria-label="close" v-on:click="showCreateViewModal = !showCreateViewModal"></button>
+    </div>
+
+    <div class="field is-grouped">
+      <p class="control">
+        <ts-view-list-dropdown @setActiveView="searchView"></ts-view-list-dropdown>
+      </p>
+      <p class="control">
+        <a class="button" v-on:click="showCreateViewModal = !showCreateViewModal">
+          <span class="icon is-small">
+            <i class="fas fa-save"></i>
+          </span>
+          <span>Save view</span>
+        </a>
+      </p>
+    </div>
+  </div>
 </template>
 
 <script>
 import ApiClient from '../utils/RestApiClient'
+import TsViewListDropdown from './SketchExploreViewListDropdown'
+import TsCreateViewForm from './SketchCreateViewForm'
 
 export default {
   name: 'ts-sketch-explore-search',
-  components: {},
+  components: {
+    TsViewListDropdown,
+    TsCreateViewForm
+  },
+  props: ['sketchId'],
   data () {
     return {
-      queryFilter: {
-        'from': 0,
-        'time_end': null,
-        'terminate_after': 40,
-        'exclude': [],
-        'indices': ['_all'],
-        'time_start': null,
-        'order': 'asc',
-        'size': '40'
-      }
+      params: {},
+      showCreateViewModal: false
     }
   },
   computed: {
@@ -45,6 +77,14 @@ export default {
     },
     meta () {
       return this.$store.state.meta
+    },
+    searchInProgress: {
+      get: function () {
+        return this.$store.state.searchInProgress
+      },
+      set: function (isSearching) {
+        this.$store.commit('updateSearchInProgress', isSearching)
+      }
     },
     currentQueryString: {
       get: function () {
@@ -65,13 +105,61 @@ export default {
   },
   methods: {
     search: function () {
+      this.searchInProgress = true
       let formData = {
         'query': this.currentQueryString,
-        'filter': this.queryFilter
+        'filter': this.currentQueryFilter
       }
-      ApiClient.search(this.sketch.id, formData).then((response) => {
-        this.$store.dispatch('updateEventList', response.data)
+      ApiClient.search(this.sketchId, formData).then((response) => {
+        this.$store.commit('updateEventList', response.data)
+        this.searchInProgress = false
       }).catch((e) => {})
+    },
+    searchView: function (viewId) {
+      if (viewId !== parseInt(viewId, 10)) {
+        viewId = viewId.id
+      }
+      this.$router.push({ name: 'SketchExplore', query: { view: viewId } })
+      ApiClient.getView(this.sketchId, viewId).then((response) => {
+        let view = response.data.objects[0]
+        this.currentQueryString = view.query_string
+        this.currentQueryFilter = JSON.parse(view.query_filter)
+        this.search()
+      }).catch((e) => {})
+    },
+    toggleCreateViewModal: function () {
+      this.showCreateViewModal = !this.showCreateViewModal
+    }
+  },
+  created: function () {
+    let doSearch = false
+
+    this.params = {
+      viewId: this.$route.query.view,
+      indexName: this.$route.query.index,
+      resultLimit: this.$route.query.limit,
+      queryString: this.$route.query.q
+    }
+
+    if (this.params.viewId) {
+      this.searchView(this.params.viewId)
+    }
+
+    if (this.params.queryString) {
+      this.currentQueryString = this.params.queryString
+      doSearch = true
+    }
+
+    if (this.params.indexName) {
+      if (!this.params.queryString) {
+        this.currentQueryString = '*'
+      }
+      this.currentQueryFilter.indices = [this.params.indexName]
+      doSearch = true
+    }
+
+    if (doSearch) {
+      this.search()
     }
   }
 }

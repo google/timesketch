@@ -28,8 +28,18 @@ const defaultState = () => {
       meta: {},
       objects: []
     },
+    searchInProgress: false,
     currentQueryString: '',
-    currentQueryFilter: {}
+    currentQueryFilter: {
+      'from': 0,
+      'time_end': null,
+      'terminate_after': 40,
+      'exclude': [],
+      'indices': ['_all'],
+      'time_start': null,
+      'order': 'asc',
+      'size': '40'
+    }
   }
 }
 
@@ -58,6 +68,9 @@ export default new Vuex.Store({
     },
     updateCurrentQueryFilter (state, queryFilter) {
       Vue.set(state, 'currentQueryFilter', queryFilter)
+    },
+    updateSearchInProgress (state, isSearching) {
+      Vue.set(state, 'searchInProgress', isSearching)
     },
     resetState (state) {
       Object.assign(state, defaultState())

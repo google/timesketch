@@ -22,11 +22,7 @@ export default {
   name: 'ts-sketch',
   props: ['sketchId'],
   created: function () {
-    this.$store.dispatch('updateSketch', this.sketchId)
-      .then(result => {})
-      .catch(error => {
-        console.log('error: ', error)
-      })
+    this.$store.commit('updateSketch', this.sketchId)
   }
 }
 </script>

@@ -17,25 +17,40 @@ limitations under the License.
   <div>
 
     <section class="section">
-      <div class="container is-fluid">
+      <div class="container">
         <ts-navbar-secondary currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
       </div>
     </section>
 
     <section class="section">
-      <div class="container is-fluid">
+      <div class="container">
         <div class="card">
           <div class="card-content">
-            <ts-sketch-explore-search></ts-sketch-explore-search>
+            <ts-sketch-explore-search :sketchId="sketchId"></ts-sketch-explore-search>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" v-if="searchInProgress">
+      <div class="container">
+        <div class="card">
+          <div class="card-content">
+            <span class="icon">
+              <i class="fas fa-circle-notch fa-pulse"></i>
+            </span>
+            <span>Searching..</span>
           </div>
         </div>
       </div>
     </section>
 
     <section class="section" v-if="eventList.meta.es_time">
-      <div class="container is-fluid">
+      <div class="container" v-if="!searchInProgress">
         <div class="card">
           <div class="card-content">
+            <div v-if="totalTime">{{ totalHits }} events ({{ totalTime }}s)</div>
+            <div v-if="totalHits > 0" style="margin-top:20px;"></div>
             <ts-sketch-explore-event-list></ts-sketch-explore-event-list>
           </div>
         </div>
@@ -51,6 +66,7 @@ import TsSketchExploreEventList from './SketchExploreEventList'
 
 export default {
   name: 'ts-sketch-explore',
+  props: ['sketchId'],
   components: {
     TsSketchExploreSearch,
     TsSketchExploreEventList
@@ -64,6 +80,15 @@ export default {
     },
     eventList () {
       return this.$store.state.eventList
+    },
+    searchInProgress () {
+      return this.$store.state.searchInProgress
+    },
+    totalHits () {
+      return this.eventList.meta.es_total_count || 0
+    },
+    totalTime () {
+      return this.eventList.meta.es_time / 1000 || 0
     }
   }
 }

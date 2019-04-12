@@ -19,7 +19,7 @@ limitations under the License.
       <li style="padding:10px;" v-for="timeline in timelines" :key="timeline.id">
         <div>
           <div class="ts-timeline-color-box is-pulled-left" v-bind:style="{ 'background-color': '#' + timeline.color}"></div>
-          <strong>{{ timeline.name }}</strong>
+          <router-link :to="{ name: 'SketchExplore', query: {index: timeline.searchindex.index_name}}"><strong>{{ timeline.name }}</strong></router-link>
           <br>
           <span class="is-size-7">
             Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}

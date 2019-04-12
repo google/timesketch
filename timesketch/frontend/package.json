@@ -13,6 +13,8 @@
     "@fortawesome/free-solid-svg-icons": "^5.7.2",
     "axios": "^0.18.0",
     "bulma": "^0.7.4",
+    "lodash": "^4.17.11",
+    "marked": "^0.6.1",
     "moment": "^2.24.0",
     "vue": "^2.6.6",
     "vue-moment": "^4.0.0",
