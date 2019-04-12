@@ -87,7 +87,11 @@ def login():
                 if email:
                     user = User.get_or_create(username=email, name=email)
                     login_user(user)
-            except (JwtValidationError, JwtKeyError, Exception) as e:
+
+            except (ImportError, NameError, UnboundLocalError):  # pylint: disable=try-except-raise
+                raise
+
+            except (JwtValidationError, JwtKeyError, Exception) as e:  # pylint: disable=broad-except
                 current_app.logger.error('{}'.format(e))
 
     # SSO login based on environment variable, e.g. REMOTE_USER.

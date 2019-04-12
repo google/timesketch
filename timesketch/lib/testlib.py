@@ -52,6 +52,31 @@ class TestConfig(object):
     SIMILARITY_DATA_TYPES = []
 
 
+class MockElasticClient(object):
+    """A mock implementation of a ElasticSearch client."""
+
+    def search(self, index, body, size):  # pylint: disable=unused-argument
+        """Mock a client search, used for aggregations."""
+        meta = {
+            'es_time': 23,
+            'es_total_count': 5621,
+            'timed_out': False,
+            'max_score': 0.0
+        }
+
+        objects = [{
+            'my_aggregation': {'buckets': [
+                {'foobar': 1, 'second': 'foobar'},
+                {'foobar': 4, 'second': 'more stuff'},
+                {'foobar': 532, 'second': 'hvernig hefurdu thad'}]},
+            'my_second_aggregation': {'buckets': [
+                {'foobar': 54, 'second': 'faranlegt', 'third': 'other text'},
+                {'foobar': 42, 'second': 'asnalegt'}]}
+
+        }]
+        return {'meta': meta, 'objects': objects}
+
+
 class MockDataStore(object):
     """A mock implementation of a Datastore."""
     event_dict = {
@@ -122,6 +147,7 @@ class MockDataStore(object):
             host: Hostname or IP address to the datastore
             port: The port used by the datastore
         """
+        self.client = MockElasticClient()
         self.host = host
         self.port = port
 

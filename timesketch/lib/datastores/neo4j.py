@@ -210,10 +210,6 @@ class Neo4jOutputFormatter(OutputFormatterBaseClass):
     without any formatting.
     """
 
-    def __init__(self):
-        """Initialize the Neo4j output formatter object."""
-        super(Neo4jOutputFormatter, self).__init__()
-
     def format_graph(self, graph):
         """Format the Neo4j graph result.
 
@@ -232,10 +228,6 @@ class CytoscapeOutputFormatter(OutputFormatterBaseClass):
     This formatter will return the graph compatible with the open source
     graph Javascript library Cytoscape (http://js.cytoscape.org/).
     """
-
-    def __init__(self):
-        """Initialize the Cytoscape output formatter object."""
-        super(CytoscapeOutputFormatter, self).__init__()
 
     def format_node(self, node):
         """Format a Cytoscape graph node.

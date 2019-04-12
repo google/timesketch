@@ -21,21 +21,9 @@ def run_python_tests(coverage=False):
     finally:
         subprocess.check_call(['rm', '-f', '.coverage'])
 
-def run_python_linter():
-    subprocess.check_call(['pylint', 'timesketch'])
-    subprocess.check_call(
-        'PYTHONPATH=api_client/python/:$PYTHONPATH'
-        + ' pylint timesketch_api_client',
-        shell=True,
-    )
-    subprocess.check_call(['pylint', 'run_tests'])
-    subprocess.check_call(['pylint', 'setup'])
-
 def run_python(args):
     if not args.no_tests:
         run_python_tests(coverage=args.coverage)
-    if not args.no_lint:
-        run_python_linter()
 
 def run_javascript_tests(coverage=False):
     if coverage:

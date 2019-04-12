@@ -15,8 +15,8 @@
 
 from __future__ import unicode_literals
 
-from flask import current_app
 from elasticsearch import Elasticsearch
+from flask import current_app
 
 import pandas
 

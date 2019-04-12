@@ -418,7 +418,11 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
             es.import_event(index_name, event_type, event)
         # Import the remaining events
         es.flush_queued_events()
-    except Exception as e:
+
+    except (ImportError, NameError, UnboundLocalError):
+        raise
+
+    except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc(e)
         _set_timeline_status(index_name, status='fail', error_msg=error_msg)

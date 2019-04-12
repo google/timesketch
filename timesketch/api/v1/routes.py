@@ -15,6 +15,9 @@
 
 from __future__ import unicode_literals
 
+from .resources import AggregationListResource
+from .resources import AggregationLegacyResource
+from .resources import AggregationExploreResource
 from .resources import AggregationResource
 from .resources import ExploreResource
 from .resources import EventResource
@@ -47,7 +50,10 @@ from .resources import SearchIndexResource
 API_ROUTES = [
     (SketchListResource, '/sketches/'),
     (SketchResource, '/sketches/<int:sketch_id>/'),
-    (AggregationResource, '/sketches/<int:sketch_id>/aggregation/'),
+    (AggregationListResource, '/sketches/<int:sketch_id>/aggregation/list/'),
+    (AggregationLegacyResource, '/sketches/<int:sketch_id>/aggregation/legacy/'),
+    (AggregationExploreResource, '/sketches/<int:sketch_id>/aggregation/explore/'),
+    (AggregationResource, '/sketches/<int:sketch_id>/aggregation/<int:aggregation_id>'),
     (ExploreResource, '/sketches/<int:sketch_id>/explore/'),
     (EventResource, '/sketches/<int:sketch_id>/event/'),
     (EventAnnotationResource, '/sketches/<int:sketch_id>/event/annotate/'),
