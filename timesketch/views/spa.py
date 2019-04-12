@@ -24,7 +24,8 @@ from flask_login import login_required
 spa_views = Blueprint('spa_views', __name__)
 
 
-@spa_views.route('/sketch/<int:sketch_id>/explore/view/<int:view_id>/', methods=['GET'])
+@spa_views.route(
+    '/sketch/<int:sketch_id>/explore/view/<int:view_id>/', methods=['GET'])
 @login_required
 # pylint: disable=unused-argument
 def redirect_view(sketch_id, view_id):
@@ -33,7 +34,8 @@ def redirect_view(sketch_id, view_id):
     Returns:
         Template with context.
     """
-    return redirect('/sketch/{0:d}/explore?view={1:d}'.format(sketch_id, view_id))
+    return redirect(
+        '/sketch/{0:d}/explore?view={1:d}'.format(sketch_id, view_id))
 
 
 @spa_views.route('/', defaults={'path': ''})
