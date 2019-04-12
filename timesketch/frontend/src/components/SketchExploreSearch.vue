@@ -116,6 +116,9 @@ export default {
       }).catch((e) => {})
     },
     searchView: function (viewId) {
+      if (viewId !== parseInt(viewId, 10)) {
+        viewId = viewId.id
+      }
       this.$router.push({ name: 'SketchExplore', query: { view: viewId } })
       ApiClient.getView(this.sketchId, viewId).then((response) => {
         let view = response.data.objects[0]

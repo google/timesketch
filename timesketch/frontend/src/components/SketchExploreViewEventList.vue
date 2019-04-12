@@ -28,7 +28,7 @@ export default {
   components: {
     TsSketchExploreEventListItem
   },
-  props: ['viewId'],
+  props: ['view'],
   data () {
     return {
       queryString: '',
@@ -64,7 +64,7 @@ export default {
     }
   },
   created: function () {
-    this.searchView(this.viewId)
+    this.searchView(this.view.id)
   }
 }
 </script>

@@ -25,7 +25,7 @@ limitations under the License.
     </div>
     <div class="dropdown-menu" id="dropdown-menu" role="menu">
       <div class="dropdown-content">
-        <a class="dropdown-item" v-on:click="setActiveView(view.id)" v-for="view in meta.views" :key="view.id">
+        <a class="dropdown-item" v-on:click="setActiveView(view)" v-for="view in meta.views" :key="view.id">
           <span>{{ view.name }}</span>
         </a>
       </div>
@@ -43,8 +43,8 @@ export default {
     }
   },
   methods: {
-    setActiveView: function (viewId) {
-      this.$emit('setActiveView', viewId)
+    setActiveView: function (view) {
+      this.$emit('setActiveView', view)
       this.viewListDropdownActive = false
     }
   },

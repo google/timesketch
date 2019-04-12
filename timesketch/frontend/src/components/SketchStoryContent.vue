@@ -32,7 +32,13 @@ limitations under the License.
             </div>
 
             <div v-for="(obj, index) in blocks" :key="index">
+
               <div v-if="!obj.componentName" @mouseover="obj.isActive = true" @mouseleave="obj.isActive = false" v-bind:class="{ activeBlock: obj.isActive }" class="inactiveBlock" style="padding-left:10px;">
+
+                <span v-if="obj.isActive" style="float:right;">
+                  <button class="delete" v-on:click="deleteBlock(index)"></button>
+                </span>
+
                 <div class="columns" v-if="obj.edit" style="margin-bottom:0;">
                   <div class="column">
                     <textarea class="textarea" style="height: 100%;" :value="obj.content" @input="update($event, obj)" placeholder="Your story starts here.."></textarea>
@@ -55,7 +61,17 @@ limitations under the License.
               </div>
 
               <div v-if="obj.componentName" @mouseover="obj.isActive = true" @mouseleave="obj.isActive = false">
-                <component :is="obj.componentName" v-bind="obj.componentProps"></component>
+                <article class="message">
+                  <div class="message-header">
+                    <p>
+                      <router-link :to="{ name: 'SketchExplore', query: {view: obj.componentProps.view.id}}"><strong>{{ obj.componentProps.view.name }}</strong></router-link>
+                    </p>
+                    <button class="delete" aria-label="delete" v-on:click="deleteBlock(index)"></button>
+                  </div>
+                  <div class="message-body">
+                    <component :is="obj.componentName" v-bind="obj.componentProps"></component>
+                  </div>
+                </article>
               </div>
 
               <div style="min-height:35px;margin-top:10px;margin-bottom:10px;" @mouseover="obj.showPanel = true" @mouseleave="obj.showPanel = false">
@@ -69,14 +85,9 @@ limitations under the License.
                     <p class="control">
                       <ts-view-list-dropdown @setActiveView="addViewComponent($event, index)" :is-rounded="true" :title="'+ Saved view'"></ts-view-list-dropdown>
                     </p>
-                    <p v-if="index < blocks.length - 1 || obj.showPanel || obj.isActive" class="control" style="margin-left:10px">
-                      <button class="button is-rounded is-danger" v-on:click="deleteBlock(index)">
-                        <span class="icon is-small"><i class="fas fa-trash" aria-hidden="true"></i></span>
-                        <span>Delete</span>
-                      </button>
-                    </p>
                   </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -137,7 +148,7 @@ export default {
       let newIndex = index + 1
       let newBlock = defaultBlock()
       newBlock.componentName = 'TsViewEventList'
-      newBlock.componentProps = { viewId: event }
+      newBlock.componentProps = { view: event }
       this.blocks.splice(newIndex, 0, newBlock)
       this.save()
     },
