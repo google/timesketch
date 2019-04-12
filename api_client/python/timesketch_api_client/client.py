@@ -368,7 +368,17 @@ class Sketch(BaseResource):
         return data_frame
 
     def _get_aggregation_buckets(self, entry, name=''):
-        """Yields all buckets from a aggregation result object."""
+        """Yields all buckets from a aggregation result object.
+
+        Args:
+            entry: result dict from an aggregation request.
+            name: name of aggregation results that contains
+                all aggregation buckets.
+
+        Yields:
+            A dict with each aggregation bucket as well as
+            the bucket_name.
+        """
         if 'buckets' in entry:
             for bucket in entry.get('buckets', []):
                 bucket['bucket_name'] = name

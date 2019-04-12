@@ -69,7 +69,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 
         Get named aggregations, i.e. only aggregations that have a name.
         """
-        # Implement a storage for aggregations.
+        # TODO: Implement a storage for aggregations.
         return []
 
     @property

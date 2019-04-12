@@ -733,7 +733,7 @@ class AggregationResource(ResourceMixin, Resource):
 class AggregationExploreResource(ResourceMixin, Resource):
     """Resource to send an aggregation request."""
 
-    RESULT_FIELDS = frozenset(['_shards', 'hits', 'timed_out', 'took'])
+    REMOVE_FIELDS = frozenset(['_shards', 'hits', 'timed_out', 'took'])
 
     @login_required
     def post(self, sketch_id):
@@ -784,7 +784,6 @@ class AggregationExploreResource(ResourceMixin, Resource):
                 'method': 'aggregator_run',
                 'name': aggregator_name,
                 'es_time': time_after - time_before,
-                'timed_out': False
             }
 
         elif aggregation_dsl:
@@ -802,7 +801,7 @@ class AggregationExploreResource(ResourceMixin, Resource):
         else:
             return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
-        result_keys = set(result.keys()) - self.RESULT_FIELDS
+        result_keys = set(result.keys()) - self.REMOVE_FIELDS
         objects = [result[key] for key in result_keys]
         schema = {'meta': meta, 'objects': objects}
         return jsonify(schema)
