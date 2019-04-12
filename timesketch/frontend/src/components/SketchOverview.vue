@@ -42,18 +42,9 @@ limitations under the License.
             </div>
             <div class="dropdown-menu" id="dropdown-menu" role="menu">
               <div class="dropdown-content">
-                <a class="dropdown-item">
-                <span class="icon is-small" style="margin-right:5px;">
-                  <i class="fas fa-trash"></i>
-                </span>
+                <a v-if="meta.permissions.delete" class="dropdown-item" v-on:click="showDeleteSketchModal = !showDeleteSketchModal">
+                  <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-trash"></i></span>
                   <span>Delete</span>
-                </a>
-                <hr class="dropdown-divider">
-                <a class="dropdown-item">
-                <span class="icon is-small" style="margin-right:5px;">
-                  <i class="fas fa-edit"></i>
-                </span>
-                  <span>Edit</span>
                 </a>
               </div>
             </div>
@@ -62,7 +53,7 @@ limitations under the License.
       </div>
     </section>
 
-    <div class="modal" v-bind:class="{ 'is-active': showUploadTimelineModal }">>
+    <div class="modal" v-bind:class="{ 'is-active': showUploadTimelineModal }">
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -77,6 +68,36 @@ limitations under the License.
         </div>
       </div>
       <button class="modal-close is-large" aria-label="close" v-on:click="showUploadTimelineModal = !showUploadTimelineModal"></button>
+    </div>
+
+    <div class="modal" v-bind:class="{ 'is-active': showDeleteSketchModal }">
+      <div class="modal-background"></div>
+      <div class="modal-content">
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title">Delete sketch</p>
+          </header>
+          <div class="card-content">
+            <div class="content">
+              <p>Are you sure you want to delete this sketch?</p>
+              <div class="field is-grouped">
+                <p class="control">
+                  <button class="button is-danger" v-on:click="deleteSketch">
+                    <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-trash"></i></span>
+                    <span>Delete</span>
+                  </button>
+                </p>
+                <p class="control">
+                  <button class="button" v-on:click="showDeleteSketchModal = !showDeleteSketchModal">
+                    <span>I changed my mind, keep the sketch!</span>
+                  </button>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="modal-close is-large" aria-label="close" v-on:click="showDeleteSketchModal = !showDeleteSketchModal"></button>
     </div>
 
     <!-- Title and description -->
@@ -143,6 +164,7 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../utils/RestApiClient'
 import TsSketchSummary from './SketchOverviewSummary'
 import TsSketchMetrics from './SketchOverviewMetrics'
 import TsTimelineList from './SketchOverviewTimelineList'
@@ -163,7 +185,8 @@ export default {
   data () {
     return {
       settingsDropdownActive: false,
-      showUploadTimelineModal: false
+      showUploadTimelineModal: false,
+      showDeleteSketchModal: false
     }
   },
   computed: {
@@ -176,7 +199,17 @@ export default {
     count () {
       return this.$store.state.count
     }
+  },
+  methods: {
+    deleteSketch: function () {
+      ApiClient.deleteSketch(this.sketch.id).then((response) => {
+        this.$router.push({ name: 'Home' })
+      }).catch((e) => {
+        console.error(e)
+      })
+    }
   }
+
 }
 </script>
 

@@ -31,6 +31,9 @@ export default {
   getSketch (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/')
   },
+  deleteSketch (sketchId) {
+    return RestApiClient.delete('/sketches/' + sketchId + '/')
+  },
   getEvent (sketchId, searchindexId, eventId) {
     let params = {
       params: {
