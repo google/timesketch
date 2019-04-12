@@ -29,10 +29,10 @@ spa_views = Blueprint('spa_views', __name__)
 @login_required
 # pylint: disable=unused-argument
 def redirect_view(sketch_id, view_id):
-    """Generates the template.
+    """Redirect old (deprecated) view URLs to scheme.
 
     Returns:
-        Template with context.
+        Redirect to new URL scheme.
     """
     return redirect(
         '/sketch/{0:d}/explore?view={1:d}'.format(sketch_id, view_id))
