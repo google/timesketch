@@ -182,7 +182,15 @@ class GraphExploreForm(BaseForm):
     output_format = StringField('Output format')
 
 
-class AggregationForm(ExploreForm):
+class AggregationExploreForm(BaseForm):
+    """Form used to send aggregation requests to the datastore."""
+    aggregation_dsl = StringField('Aggregation DSL', validators=[Optional()])
+    aggregator_name = StringField('Aggregator Name', validators=[Optional()])
+    aggregator_parameters = StringField(
+        'Aggregator Parameters', validators=[Optional()])
+
+
+class AggregationLegacyForm(ExploreForm):
     """Form used to search the datastore."""
     aggtype = StringField('Aggregation type')
 

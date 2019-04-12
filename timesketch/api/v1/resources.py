@@ -53,6 +53,7 @@ from flask_restful import Resource
 from sqlalchemy import desc
 from sqlalchemy import not_
 
+from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.aggregators_old import heatmap
 from timesketch.lib.aggregators_old import histogram
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
@@ -67,7 +68,8 @@ from timesketch.lib.datastores.neo4j import SCHEMA as neo4j_schema
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.lib.forms import AddTimelineSimpleForm
-from timesketch.lib.forms import AggregationForm
+from timesketch.lib.forms import AggregationExploreForm
+from timesketch.lib.forms import AggregationLegacyForm
 from timesketch.lib.forms import CreateTimelineForm
 from timesketch.lib.forms import SaveViewForm
 from timesketch.lib.forms import NameDescriptionForm
@@ -618,6 +620,9 @@ class ExploreResource(ResourceMixin, Resource):
             t.searchindex.index_name
             for t in sketch.timelines
         }
+        if not query_filter:
+            query_filter = {}
+
         indices = query_filter.get('indices', sketch_indices)
 
         # If _all in indices then execute the query on all indices
@@ -696,9 +701,138 @@ class AggregationResource(ResourceMixin, Resource):
     """Resource to query for aggregated results."""
 
     @login_required
+    def get(self, sketch_id, aggregation_id):  # pylint: disable=unused-argument
+        """Handles POST request to the resource.
+
+        Handler for /api/v1/sketches/:sketch_id/aggregation/:aggregation_id
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            aggregation_id: Integer primary key for an agregation database model
+
+        Returns:
+            JSON with aggregation results
+        """
+        # TODO: Implement once aggregations are saved in the datastore.
+        return {}
+
+    @login_required
+    def post(self, sketch_id, aggregation_id):  # pylint: disable=unused-argument
+        """Handles POST request to the resource.
+
+        Handler for /api/v1/sketches/:sketch_id/aggregation/:aggregation_id
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            aggregation_id: Integer primary key for an agregation database model
+        """
+        # TODO: Implement once we have an aggregation model in the datastore.
+        abort(HTTP_STATUS_CODE_FORBIDDEN)
+
+
+class AggregationExploreResource(ResourceMixin, Resource):
+    """Resource to send an aggregation request."""
+
+    REMOVE_FIELDS = frozenset(['_shards', 'hits', 'timed_out', 'took'])
+
+    @login_required
     def post(self, sketch_id):
         """Handles POST request to the resource.
-        Handler for /api/v1/sketches/:sketch_id/aggregation/
+
+        Handler for /api/v1/sketches/<int:sketch_id>/aggregation/explore
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            JSON with aggregation results
+        """
+        form = AggregationExploreForm.build(request)
+        if not form.validate_on_submit():
+            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch_indices = {
+            t.searchindex.index_name
+            for t in sketch.timelines
+        }
+
+        aggregation_dsl = form.aggregation_dsl.data
+        aggregator_name = form.aggregator_name.data
+        aggregator_parameters = form.aggregator_parameters.data
+
+        if aggregator_name and aggregator_parameters:
+            agg_class = aggregator_manager.AggregatorManager.get_aggregator(
+                aggregator_name)
+            if not agg_class:
+                return {}
+            if not aggregator_parameters:
+                aggregator_parameters = {}
+            aggregator = agg_class(sketch_id=sketch_id)
+            time_before = time.time()
+            result_obj = aggregator.run(**aggregator_parameters)
+            time_after = time.time()
+
+            buckets = result_obj.to_dict()
+            buckets['buckets'] = buckets.pop('values')
+            result = {
+                'aggregation_result': {
+                    aggregator_name: buckets
+                }
+            }
+            meta = {
+                'method': 'aggregator_run',
+                'name': aggregator_name,
+                'es_time': time_after - time_before,
+            }
+
+        elif aggregation_dsl:
+            # pylint: disable=unexpected-keyword-arg
+            result = self.datastore.client.search(
+                index=','.join(sketch_indices), body=aggregation_dsl, size=0)
+
+            meta = {
+                'es_time': result.get('took', 0),
+                'es_total_count': result.get('hits', {}).get('total', 0),
+                'timed_out': result.get('timed_out', False),
+                'method': 'aggregator_query',
+                'max_score': result.get('hits', {}).get('max_score', 0.0)
+            }
+        else:
+            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+        result_keys = set(result.keys()) - self.REMOVE_FIELDS
+        objects = [result[key] for key in result_keys]
+        schema = {'meta': meta, 'objects': objects}
+        return jsonify(schema)
+
+
+class AggregationListResource(ResourceMixin, Resource):
+    """Resource to query for a list of stored aggregation queries."""
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Handler for /api/v1/sketches/<int:sketch_id>/aggregation/list/
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            Views in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        return jsonify(sketch.get_named_aggregations)
+
+
+class AggregationLegacyResource(ResourceMixin, Resource):
+    """Resource to query for the legacy aggregated results."""
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+        Handler for /api/v1/sketches/:sketch_id/aggregation/legacy
 
         Args:
             sketch_id: Integer primary key for a sketch database model
@@ -707,7 +841,7 @@ class AggregationResource(ResourceMixin, Resource):
             JSON with aggregation results
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-        form = AggregationForm.build(request)
+        form = AggregationLegacyForm.build(request)
 
         if form.validate_on_submit():
             query_filter = form.filter.data
