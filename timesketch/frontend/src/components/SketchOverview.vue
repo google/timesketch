@@ -101,20 +101,29 @@ limitations under the License.
       </div>
     </section>
 
-    <!-- Timeline and View lists-->
+    <!-- Timeline, Saved View and Stories lists-->
     <section class="section">
       <div class="container">
         <div class="columns">
+
+          <!-- Timelines -->
           <div class="column" v-if="sketch.timelines && sketch.timelines.length ? sketch.timelines.length: false">
             <div class="card has-min-height">
               <header class="card-header">
                 <p class="card-header-title">Timelines</p>
+                <p class="is-pulled-right" style="padding: 0.75rem;">
+                  <router-link class="button is-rounded is-small" :to="{ name: 'SketchTimelines' }">
+                    <span>Manage</span>
+                  </router-link>
+                </p>
               </header>
               <div class="card-content" style="padding:5px;">
                 <ts-timeline-list :timelines="sketch.timelines"></ts-timeline-list>
               </div>
             </div>
           </div>
+
+          <!-- Saved views -->
           <div class="column" v-if="meta.views && meta.views.length ? meta.views.length: false">
             <div class="card has-min-height">
               <header class="card-header">
@@ -125,6 +134,8 @@ limitations under the License.
               </div>
             </div>
           </div>
+
+          <!-- Stories -->
           <div class="column" v-if="sketch.stories && sketch.stories.length ? sketch.stories.length: false">
             <div class="card has-min-height">
               <header class="card-header">
