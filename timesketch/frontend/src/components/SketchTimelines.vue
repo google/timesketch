@@ -30,7 +30,7 @@ limitations under the License.
             <p class="card-header-title">Active Timelines</p>
           </header>
           <div class="card-content">
-            <ts-timeline-list :timelines="sketch.timelines"></ts-timeline-list>
+            <ts-timeline-list @removedTimeline="makeTimelineAvailable" :timelines="sketch.timelines" :controls="true"></ts-timeline-list>
           </div>
         </div>
       </div>
@@ -46,9 +46,12 @@ limitations under the License.
           <div class="card-content">
             <ul class="content-list">
               <li style="padding:10px;" v-for="searchindex in availableSearchIndices" :key="searchindex.id">
-                  <div class="ts-timeline-color-box is-pulled-left has-text-centered" style="background-color:#f5f5f5;cursor:pointer;" v-on:click="addTimelineToSketch(searchindex)">
-                    <span style="margin-top:10px;color:#d1d1d1;" class="icon"><i class="fas fa-plus"></i></span>
-                  </div>
+                <div class="ts-timeline-color-box is-pulled-left has-text-centered" style="background-color:#f5f5f5;cursor:pointer;" v-on:click="addTimelineToSketch(searchindex)">
+                  <span style="margin-top:10px;color:#d1d1d1;" class="icon"><i class="fas fa-plus"></i></span>
+                </div>
+                <div class="is-pulled-right" style="margin-top:10px;">
+                  <button v-on:click="addTimelineToSketch(searchindex)" class="button is-small is-rounded is-success is-outlined">Add</button>
+                </div>
                   <strong>{{ searchindex.name }}</strong>
                   <br>
                   <span class="is-size-7">
@@ -95,6 +98,9 @@ export default {
       }).catch((e) => {
         console.error(e)
       })
+    },
+    makeTimelineAvailable (event) {
+      this.availableSearchIndices.unshift(event.searchindex)
     }
   },
   created: function () {

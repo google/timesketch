@@ -19,6 +19,9 @@ limitations under the License.
       <li style="padding:10px;" v-for="timeline in timelines" :key="timeline.id">
         <div>
           <div class="ts-timeline-color-box is-pulled-left" v-bind:style="{ 'background-color': '#' + timeline.color}"></div>
+          <div v-if="controls" class="is-pulled-right" style="margin-top:10px;">
+            <button v-on:click="removeTimelineFromSketch(timeline)" class="button is-small is-rounded is-danger is-outlined">Delete</button>
+          </div>
           <router-link :to="{ name: 'SketchExplore', query: {index: timeline.searchindex.index_name}}"><strong>{{ timeline.name }}</strong></router-link>
           <br>
           <span class="is-size-7">
@@ -31,9 +34,29 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../utils/RestApiClient'
+
 export default {
   name: 'ts-sketch-overview-timeline-list',
-  props: ['timelines']
+  props: ['timelines', 'controls'],
+  computed: {
+    sketch () {
+      return this.$store.state.sketch
+    },
+    meta () {
+      return this.$store.state.meta
+    }
+  },
+  methods: {
+    removeTimelineFromSketch (timeline) {
+      ApiClient.deleteSketchTimeline(this.sketch.id, timeline.id).then((response) => {
+        this.$store.commit('updateSketch', this.sketch.id)
+        this.$emit('removedTimeline', timeline)
+      }).catch((e) => {
+        console.error(e)
+      })
+    }
+  }
 }
 </script>
 
