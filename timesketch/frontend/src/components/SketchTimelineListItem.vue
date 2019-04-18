@@ -16,6 +16,7 @@ limitations under the License.
 <template>
   <div>
 
+    <!-- Timeline detail modal -->
     <div class="modal" v-bind:class="{ 'is-active': showInfoModal }">>
       <div class="modal-background"></div>
       <div class="modal-content">
@@ -40,6 +41,35 @@ limitations under the License.
       <button class="modal-close is-large" aria-label="close" v-on:click="showInfoModal = !showInfoModal"></button>
     </div>
 
+    <!-- Timeline edit modal -->
+    <div class="modal" v-bind:class="{ 'is-active': showEditModal }">
+      <div class="modal-background"></div>
+      <div class="modal-content">
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title">Rename timeline</p>
+          </header>
+          <div class="card-content">
+            <div class="content">
+              <form v-on:submit.prevent="saveTimeline">
+                <div class="field">
+                  <div class="control">
+                    <input v-model="timeline.name" class="input" type="text" required autofocus>
+                  </div>
+                </div>
+                <div class="field">
+                  <div class="control">
+                    <input class="button is-success" type="submit" value="Save">
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="modal-close is-large" aria-label="close" v-on:click="showEditModal = !showEditModal"></button>
+    </div>
+
     <div class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
       <div class="dropdown-trigger">
         <div class="ts-timeline-color-box" v-bind:style="timelineColorStyle" v-on:click="colorPickerActive = !colorPickerActive"></div>
@@ -62,7 +92,7 @@ limitations under the License.
         </button>
       </p>
       <p class="control">
-        <button class="button is-rounded is-small is-outlined">
+        <button class="button is-rounded is-small is-outlined" v-on:click="showEditModal = !showEditModal">
           <span class="icon is-small">
             <i class="fas fa-edit"></i>
           </span>
@@ -86,7 +116,6 @@ import Vue from 'vue'
 import { Chrome } from 'vue-color'
 import _ from 'lodash'
 
-
 export default {
   name: 'ts-sketch-timeline-list-item',
   components: {
@@ -97,8 +126,10 @@ export default {
     return {
       initialColor: {},
       newColor: '',
+      newTimelineName: '',
       colorPickerActive: false,
-      showInfoModal: false
+      showInfoModal: false,
+      showEditModal: false
     }
   },
   computed: {
@@ -123,7 +154,13 @@ export default {
       }
       Vue.set(this.timeline, 'color', this.newColor)
       this.$emit('save', this.timeline)
-    }, 300)
+    }, 300),
+    saveTimeline () {
+      // Vue.set(this.timeline, 'name', this.newTimelineName)
+      // Vue.set(this.timeline, 'description', description)
+      this.showEditModal = false
+      this.$emit('save', this.timeline)
+    }
   },
   mounted () {
     // Hide color picket when clicked outside.
