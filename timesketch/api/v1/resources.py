@@ -112,6 +112,7 @@ def bad_request(message):
 class ResourceMixin(object):
     """Mixin for API resources."""
     # Schemas for database model resources
+    user_fields = {'username': fields.String}
 
     status_fields = {
         'id': fields.Integer,
@@ -123,6 +124,7 @@ class ResourceMixin(object):
     searchindex_fields = {
         'id': fields.Integer,
         'name': fields.String,
+        'user': fields.Nested(user_fields),
         'description': fields.String,
         'index_name': fields.String,
         'status': fields.Nested(status_fields),
@@ -134,6 +136,7 @@ class ResourceMixin(object):
     timeline_fields = {
         'id': fields.Integer,
         'name': fields.String,
+        'user': fields.Nested(user_fields),
         'description': fields.String,
         'status': fields.Nested(status_fields),
         'color': fields.String,
@@ -142,8 +145,6 @@ class ResourceMixin(object):
         'created_at': fields.DateTime,
         'updated_at': fields.DateTime
     }
-
-    user_fields = {'username': fields.String}
 
     searchtemplate_fields = {
         'id': fields.Integer,

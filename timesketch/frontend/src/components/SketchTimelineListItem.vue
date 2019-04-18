@@ -15,6 +15,31 @@ limitations under the License.
 -->
 <template>
   <div>
+
+    <div class="modal" v-bind:class="{ 'is-active': showInfoModal }">>
+      <div class="modal-background"></div>
+      <div class="modal-content">
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title">Detailed information for {{ timeline.name }}</p>
+          </header>
+          <div class="card-content">
+            <div class="content">
+              <ul>
+                <li>Elasticsearch index: {{ timeline.searchindex.index_name }}</li>
+                <li>Original name: {{ timeline.searchindex.name }}</li>
+                <li>Added by: {{ timeline.searchindex.user.username }}</li>
+                <li>Added: {{ timeline.searchindex.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
+              </ul>
+              <strong v-if="timeline.description">Description</strong>
+              <p>{{ timeline.description}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="modal-close is-large" aria-label="close" v-on:click="showInfoModal = !showInfoModal"></button>
+    </div>
+
     <div class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
       <div class="dropdown-trigger">
         <div class="ts-timeline-color-box" v-bind:style="timelineColorStyle" v-on:click="colorPickerActive = !colorPickerActive"></div>
@@ -29,7 +54,7 @@ limitations under the License.
     </div>
     <div v-if="controls" class="field is-grouped is-pulled-right" style="margin-top:10px;">
       <p class="control">
-        <button class="button is-rounded is-small is-outlined">
+        <button class="button is-rounded is-small is-outlined" v-on:click="showInfoModal = !showInfoModal">
                 <span class="icon is-small">
                   <i class="fas fa-info-circle"></i>
                 </span>
@@ -72,7 +97,8 @@ export default {
     return {
       initialColor: {},
       newColor: '',
-      colorPickerActive: false
+      colorPickerActive: false,
+      showInfoModal: false
     }
   },
   computed: {
