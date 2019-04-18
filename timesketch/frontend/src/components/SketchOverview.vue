@@ -19,12 +19,6 @@ limitations under the License.
     <section class="section">
       <div class="container">
         <ts-navbar-secondary currentAppContext="sketch" currentPage="overview">
-          <a class="button is-success is-rounded" style="margin-right:7px;" v-on:click="showUploadTimelineModal = !showUploadTimelineModal">
-              <span class="icon is-small">
-                <i class="fas fa-plus"></i>
-              </span>
-            <span>Timeline</span>
-          </a>
           <a class="button is-link is-rounded" style="margin-right:10px;">
               <span class="icon is-small">
                 <i class="fas fa-users"></i>
@@ -71,6 +65,10 @@ limitations under the License.
           </header>
           <div class="card-content">
             <div class="content">
+              <p>
+                Supported formats are Plaso storage file, JSONL, or a CSV file.
+                If you are uploading a CSV or JSONL file make sure to read the <a href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines" rel="noreferrer" target="_blank">documentation</a> to learn what columns are needed.
+              </p>
               <ts-upload-timeline-form @toggleModal="showUploadTimelineModal = !showUploadTimelineModal"></ts-upload-timeline-form>
             </div>
           </div>
@@ -91,7 +89,7 @@ limitations under the License.
     </section>
 
     <!-- Stats -->
-    <section class="section">
+    <section class="section" v-if="sketch.timelines.length">
       <div class="container">
         <div class="card" style="min-height: 100px;">
           <div class="card-content">
@@ -102,7 +100,7 @@ limitations under the License.
     </section>
 
     <!-- Timeline, Saved View and Stories lists-->
-    <section class="section">
+    <section class="section" v-if="sketch.timelines && sketch.timelines.length ? sketch.timelines.length: false">
       <div class="container">
         <div class="columns">
 
@@ -111,11 +109,24 @@ limitations under the License.
             <div class="card has-min-height">
               <header class="card-header">
                 <p class="card-header-title">Timelines</p>
-                <p class="is-pulled-right" style="padding: 0.75rem;">
-                  <router-link class="button is-rounded is-small" :to="{ name: 'SketchTimelines' }">
-                    <span>Manage</span>
-                  </router-link>
-                </p>
+                <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
+                  <p class="control">
+                    <router-link class="button is-rounded is-small" :to="{ name: 'SketchTimelines' }">
+                      <span class="icon is-small">
+                        <i class="fas fa-cog"></i>
+                      </span>
+                      <span>Manage</span>
+                    </router-link>
+                  </p>
+                  <p class="control">
+                    <button class="button is-success is-rounded is-small" v-on:click="showUploadTimelineModal = !showUploadTimelineModal">
+                        <span class="icon is-small">
+                          <i class="fas fa-plus"></i>
+                        </span>
+                      <span>Timeline</span>
+                    </button>
+                  </p>
+                </div>
               </header>
               <div class="card-content" style="padding:5px;">
                 <ts-timeline-list :timelines="sketch.timelines" :controls="false"></ts-timeline-list>
@@ -129,7 +140,7 @@ limitations under the License.
               <header class="card-header">
                 <p class="card-header-title">Views</p>
               </header>
-              <div class="card-content" style="padding:10px;">
+              <div class="card-content" style="padding:5px;">
                 <ts-saved-view-list :views="meta.views"></ts-saved-view-list>
               </div>
             </div>
@@ -150,16 +161,19 @@ limitations under the License.
       </div>
     </section>
 
+    <ts-sketch-timelines-manage v-if="!sketch.timelines.length"></ts-sketch-timelines-manage>
+
   </div>
 </template>
 
 <script>
 import TsSketchSummary from './SketchOverviewSummary'
 import TsSketchMetrics from './SketchOverviewMetrics'
-import TsTimelineList from './SketchOverviewTimelineList'
+import TsTimelineList from './SketchTimelineList'
 import TsSavedViewList from './SketchOverviewViewList'
 import TsSketchStoryList from './SketchStoryList'
 import TsUploadTimelineForm from './SketchUploadTimelineForm'
+import TsSketchTimelinesManage from './SketchTimelinesManage'
 
 export default {
   name: 'ts-sketch-overview',
@@ -169,7 +183,8 @@ export default {
     TsTimelineList,
     TsSavedViewList,
     TsUploadTimelineForm,
-    TsSketchStoryList
+    TsSketchStoryList,
+    TsSketchTimelinesManage
   },
   data () {
     return {

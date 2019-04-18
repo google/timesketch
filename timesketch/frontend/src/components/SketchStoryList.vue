@@ -16,14 +16,11 @@ limitations under the License.
 <template>
   <div>
     <ul class="content-list">
-      <li style="padding:10px;" v-for="story in sketch.stories" :key="story.id">
-        <div class="is-pulled-right" style="margin-top:10px;">
-          <span class="is-size-7">{{ story.user.username }}</span>
-        </div>
+      <li style="padding:10px;border-bottom:none;" v-for="story in sketch.stories" :key="story.id">
         <div>
           <router-link :to="{ name: 'SketchStoryContent', params: {sketchId: sketch.id, storyId: story.id}}"><strong>{{ story.title }}</strong></router-link>
           <br>
-          <span class="is-size-7">Last activity {{ story.updated_at }}</span>
+          <span class="is-size-7">Last activity {{ story.updated_at | moment("YYYY-MM-DD HH:mm") }}</span>
         </div>
       </li>
     </ul>

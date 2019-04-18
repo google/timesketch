@@ -14,30 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
-    <ul class="content-list">
+  <ul class="content-list">
+    <transition-group name="list" tag="p">
       <li style="padding:10px;" v-for="timeline in timelines" :key="timeline.id">
-        <div>
-          <div class="ts-timeline-color-box is-pulled-left" v-bind:style="{ 'background-color': '#' + timeline.color}"></div>
-          <div v-if="controls" class="is-pulled-right" style="margin-top:10px;">
-            <button v-on:click="removeTimelineFromSketch(timeline)" class="button is-small is-rounded is-danger is-outlined">Delete</button>
-          </div>
-          <router-link :to="{ name: 'SketchExplore', query: {index: timeline.searchindex.index_name}}"><strong>{{ timeline.name }}</strong></router-link>
-          <br>
-          <span class="is-size-7">
-            Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
-          </span>
-        </div>
+        <ts-timeline-list-item :timeline="timeline" :controls="controls" @remove="remove(timeline)" @save="save(timeline)"></ts-timeline-list-item>
       </li>
-    </ul>
-  </div>
+    </transition-group>
+  </ul>
 </template>
 
 <script>
 import ApiClient from '../utils/RestApiClient'
+import TsTimelineListItem from './SketchTimelineListItem'
 
 export default {
   name: 'ts-sketch-overview-timeline-list',
+  components: { TsTimelineListItem },
   props: ['timelines', 'controls'],
   computed: {
     sketch () {
@@ -48,14 +40,21 @@ export default {
     }
   },
   methods: {
-    removeTimelineFromSketch (timeline) {
+    remove (timeline) {
       ApiClient.deleteSketchTimeline(this.sketch.id, timeline.id).then((response) => {
+        this.$emit('remove-timeline', timeline)
         this.$store.commit('updateSketch', this.sketch.id)
-        this.$emit('removedTimeline', timeline)
       }).catch((e) => {
         console.error(e)
       })
-    }
+    },
+    save (timeline) {
+      ApiClient.saveSketchTimeline(this.sketch.id, timeline.id, timeline.name, timeline.description, timeline.color).then((response) => {
+        this.$store.commit('updateSketch', this.sketch.id)
+      }).catch((e) => {
+        console.error(e)
+      })
+    },
   }
 }
 </script>

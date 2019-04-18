@@ -1,0 +1,135 @@
+<!--
+Copyright 2019 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<template>
+  <div>
+    <div class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
+      <div class="dropdown-trigger">
+        <div class="ts-timeline-color-box" v-bind:style="timelineColorStyle" v-on:click="colorPickerActive = !colorPickerActive"></div>
+      </div>
+      <div class="dropdown-menu" id="dropdown-menu" role="menu">
+        <div class="dropdown-content" style="padding:0;">
+          <div class="dropdown-item" style="padding:0;">
+            <color-picker v-model="initialColor" @input="updateColor"></color-picker>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="controls" class="field is-grouped is-pulled-right" style="margin-top:10px;">
+      <p class="control">
+        <button class="button is-rounded is-small is-outlined">
+                <span class="icon is-small">
+                  <i class="fas fa-info-circle"></i>
+                </span>
+          <span>Info</span>
+        </button>
+      </p>
+      <p class="control">
+        <button class="button is-rounded is-small is-outlined">
+          <span class="icon is-small">
+            <i class="fas fa-edit"></i>
+          </span>
+          <span>Rename</span>
+        </button>
+      </p>
+      <p class="control">
+        <button v-on:click="remove(timeline)" class="button is-small is-rounded is-danger is-outlined">Remove</button>
+      </p>
+    </div>
+    <router-link :to="{ name: 'SketchExplore', query: {index: timeline.searchindex.index_name}}"><strong>{{ timeline.name }}</strong></router-link>
+    <br>
+    <span class="is-size-7">
+      Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
+    </span>
+  </div>
+</template>
+
+<script>
+import Vue from 'vue'
+import { Chrome } from 'vue-color'
+import _ from 'lodash'
+
+
+export default {
+  name: 'ts-sketch-timeline-list-item',
+  components: {
+    'color-picker': Chrome
+  },
+  props: ['timeline', 'controls'],
+  data () {
+    return {
+      initialColor: {},
+      newColor: '',
+      colorPickerActive: false
+    }
+  },
+  computed: {
+    timelineColorStyle () {
+      let hexColor = this.newColor || this.timeline.color
+      if (!hexColor.startsWith('#')) {
+        hexColor = '#' + hexColor
+      }
+      return {
+        'background-color': hexColor
+      }
+    }
+  },
+  methods: {
+    remove (timeline) {
+      this.$emit('remove', timeline)
+    },
+    updateColor: _.debounce(function (color) {
+      this.newColor = color.hex
+      if (this.newColor.startsWith('#')) {
+        this.newColor = this.newColor.substring(1)
+      }
+      Vue.set(this.timeline, 'color', this.newColor)
+      this.$emit('save', this.timeline)
+    }, 300)
+  },
+  mounted () {
+    // Hide color picket when clicked outside.
+    let self = this
+    window.addEventListener('click', function (e) {
+      if (!self.$el.contains(e.target)) {
+        self.colorPickerActive = false
+      }
+    })
+  },
+  created () {
+    this.initialColor = {
+      hex: this.timeline.color
+    }
+  }
+}
+</script>
+
+<!-- CSS scoped to this component only -->
+<style scoped lang="scss">
+.list-item {
+  display: inline-block;
+  margin-right: 10px;
+}
+.list-enter-active, .list-leave-active {
+  transition: all 0.5s;
+}
+.list-enter, .list-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
+.vc-sketch {
+  box-shadow: none;
+}
+</style>
