@@ -355,8 +355,22 @@ class SketchResource(ResourceMixin, Resource):
                 'name': searchtemplate.name,
                 'id': searchtemplate.id
             } for searchtemplate in SearchTemplate.query.all()],
-            emojis=get_emojis_as_dict())
+            emojis=get_emojis_as_dict(),
+            permissions={
+                'read': bool(sketch.has_permission(current_user, 'read')),
+                'write': bool(sketch.has_permission(current_user, 'write')),
+                'delete': bool(sketch.has_permission(current_user, 'delete')),
+            })
         return self.to_json(sketch, meta=meta)
+
+    @login_required
+    def delete(self, sketch_id):
+        """Handles DELETE request to the resource."""
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch.has_permission(current_user, 'delete'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
+        sketch.set_status(status='deleted')
+        return HTTP_STATUS_CODE_OK
 
 
 class ViewListResource(ResourceMixin, Resource):
