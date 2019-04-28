@@ -35,6 +35,9 @@ export default {
   createSketch (formData) {
     return RestApiClient.post('/sketches/', formData)
   },
+  deleteSketch (sketchId) {
+    return RestApiClient.delete('/sketches/' + sketchId + '/')
+  },
   // Add or remove timeline to sketch
   createSketchTimeline (sketchId, searchIndexId) {
     let formData = {
