@@ -392,7 +392,8 @@ class BaseTest(TestCase):
         Returns:
             A story (instance of timesketch.models.story.Story)
         """
-        story = Story.get_or_create(title='Test', content='Test', sketch=sketch, user=user)
+        story = Story.get_or_create(
+            title='Test', content='Test', sketch=sketch, user=user)
         self._commit_to_database(story)
         return story
 
