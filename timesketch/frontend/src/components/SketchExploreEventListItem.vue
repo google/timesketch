@@ -18,7 +18,7 @@ limitations under the License.
     <table class="ts-event-list-table">
       <tbody>
         <tr>
-          <td style="width:215px;" class="ts-event-table-column" v-bind:style="{ 'background-color': '#' + timelineColor }">
+          <td style="width:215px;" class="ts-event-table-column" v-bind:style="timelineColor">
             {{ event._source.datetime }}
           </td>
           <!-- TODO: Add options here.
@@ -77,7 +77,13 @@ export default {
       return this.$store.state.meta
     },
     timelineColor () {
-      return this.timeline(this.event._index).color
+      let hexColor = this.timeline(this.event._index).color
+      if (!hexColor.startsWith('#')) {
+        hexColor = '#' + hexColor
+      }
+      return {
+        'background-color': hexColor
+      }
     },
     timelineName () {
       return this.timeline(this.event._index).name

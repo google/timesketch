@@ -80,6 +80,7 @@ from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
+from timesketch.lib.forms import TimelineForm
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.experimental.utils import GRAPH_VIEWS
 from timesketch.lib.experimental.utils import get_graph_views
@@ -111,6 +112,7 @@ def bad_request(message):
 class ResourceMixin(object):
     """Mixin for API resources."""
     # Schemas for database model resources
+    user_fields = {'username': fields.String}
 
     status_fields = {
         'id': fields.Integer,
@@ -122,6 +124,7 @@ class ResourceMixin(object):
     searchindex_fields = {
         'id': fields.Integer,
         'name': fields.String,
+        'user': fields.Nested(user_fields),
         'description': fields.String,
         'index_name': fields.String,
         'status': fields.Nested(status_fields),
@@ -133,6 +136,7 @@ class ResourceMixin(object):
     timeline_fields = {
         'id': fields.Integer,
         'name': fields.String,
+        'user': fields.Nested(user_fields),
         'description': fields.String,
         'status': fields.Nested(status_fields),
         'color': fields.String,
@@ -141,8 +145,6 @@ class ResourceMixin(object):
         'created_at': fields.DateTime,
         'updated_at': fields.DateTime
     }
-
-    user_fields = {'username': fields.String}
 
     searchtemplate_fields = {
         'id': fields.Integer,
@@ -1597,6 +1599,36 @@ class TimelineResource(ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
 
         return self.to_json(timeline)
+
+    @login_required
+    def post(self, sketch_id, timeline_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            timeline_id: Integer primary key for a timeline database model
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        timeline = Timeline.query.get(timeline_id)
+        form = TimelineForm.build(request)
+
+        # Check that this timeline belongs to the sketch
+        if timeline.sketch_id != sketch.id:
+            abort(HTTP_STATUS_CODE_NOT_FOUND)
+
+        if not sketch.has_permission(user=current_user, permission='write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
+
+        if not form.validate_on_submit():
+            abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+        timeline.name = form.name.data
+        timeline.description = form.description.data
+        timeline.color = form.color.data
+        db_session.add(timeline)
+        db_session.commit()
+
+        return HTTP_STATUS_CODE_OK
 
     @login_required
     def delete(self, sketch_id, timeline_id):

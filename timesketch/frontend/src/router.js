@@ -23,6 +23,7 @@ import SketchExplore from './components/SketchExplore'
 import SketchStory from './components/SketchStory'
 import SketchStoryOverview from './components/SketchStoryOverview'
 import SketchStoryContent from './components/SketchStoryContent'
+import SketchTimelines from './components/SketchTimelines'
 
 Vue.use(VueRouter)
 
@@ -46,6 +47,12 @@ const routes = [
         path: 'explore',
         name: 'SketchExplore',
         component: SketchExplore,
+        props: true
+      },
+      {
+        path: 'timelines',
+        name: 'SketchTimelines',
+        component: SketchTimelines,
         props: true
       },
       {
