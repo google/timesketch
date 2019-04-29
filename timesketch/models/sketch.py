@@ -49,6 +49,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     views = relationship('View', backref='sketch', lazy='select')
     events = relationship('Event', backref='sketch', lazy='select')
     stories = relationship('Story', backref='sketch', lazy='select')
+    aggregations = relationship('Aggregation', backref='sketch', lazy='select')
 
     def __init__(self, name, description, user):
         """Initialize the Sketch object.
@@ -228,6 +229,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     user_id = Column(Integer, ForeignKey('user.id'))
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     searchtemplate_id = Column(Integer, ForeignKey('searchtemplate.id'))
+    aggregations = relationship('Aggregation', backref='view', lazy='select')
 
     def __init__(self,
                  name,
@@ -391,3 +393,40 @@ class Story(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.content = content
         self.sketch = sketch
         self.user = user
+
+
+class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
+                  BaseModel):
+    """Implements the Aggregation model."""
+    name = Column(Unicode(255))
+    description = Column(UnicodeText())
+    agg_type = Column(Unicode(255))
+    parameters = Column(UnicodeText())
+    chart_type = Column(Unicode(255))
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    view_id = Column(Integer, ForeignKey('view.id'))
+
+    def __init__(self, name, description, agg_type, parameters, chart_type,
+                 user, sketch, view=None):
+        """Initialize the Aggregation object.
+
+        Args:
+            name (str): Name of the aggregation
+            description (str): Description of the aggregation
+            agg_type (str): Aggregation plugin type
+            parameters (str): JSON serialized dict with aggregation parameters
+            chart_type (str): Chart plugin type
+            user (User): The user who created the aggregation
+            sketch (Sketch): The sketch that the aggregation is bound to
+            view (View): Optional: The view that the aggregation is bound to
+        """
+        super(Aggregation, self).__init__()
+        self.name = name
+        self.description = description
+        self.agg_type = agg_type
+        self.parameters = parameters
+        self.chart_type = chart_type
+        self.user = user
+        self.sketch = sketch
+        self.view = view
