@@ -302,7 +302,7 @@ class BaseTest(TestCase):
         Returns:
             A user (instance of timesketch.models.user.User)
         """
-        user = User(username=username)
+        user = User.get_or_create(username=username)
         if set_password:
             user.set_password(plaintext='test', rounds=4)
         self._commit_to_database(user)
@@ -317,7 +317,7 @@ class BaseTest(TestCase):
         Returns:
             A group (instance of timesketch.models.user.Group)
         """
-        group = Group(name=name)
+        group = Group.get_or_create(name=name)
         user.groups.append(group)
         self._commit_to_database(group)
         return group
@@ -333,7 +333,7 @@ class BaseTest(TestCase):
         Returns:
             A sketch (instance of timesketch.models.sketch.Sketch)
         """
-        sketch = Sketch(name=name, description=name, user=user)
+        sketch = Sketch.get_or_create(name=name, description=name, user=user)
         if acl:
             for permission in ['read', 'write', 'delete']:
                 sketch.grant_permission(permission=permission, user=user)
@@ -355,7 +355,7 @@ class BaseTest(TestCase):
         Returns:
             A searchindex (instance of timesketch.models.sketch.SearchIndex)
         """
-        searchindex = SearchIndex(
+        searchindex = SearchIndex.get_or_create(
             name=name, description=name, index_name=name, user=user)
         if acl:
             for permission in ['read', 'write', 'delete']:
@@ -375,7 +375,7 @@ class BaseTest(TestCase):
         Returns:
             An event (instance of timesketch.models.sketch.Event)
         """
-        event = Event(
+        event = Event.get_or_create(
             sketch=sketch, searchindex=searchindex, document_id='test')
         comment = event.Comment(comment='test', user=user)
         event.comments.append(comment)
@@ -392,7 +392,7 @@ class BaseTest(TestCase):
         Returns:
             A story (instance of timesketch.models.story.Story)
         """
-        story = Story(title='Test', content='Test', sketch=sketch, user=user)
+        story = Story.get_or_create(title='Test', content='Test', sketch=sketch, user=user)
         self._commit_to_database(story)
         return story
 

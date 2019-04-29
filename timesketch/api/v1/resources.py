@@ -323,12 +323,12 @@ class SketchListResource(ResourceMixin, Resource):
                 description=form.description.data,
                 user=current_user)
             sketch.status.append(sketch.Status(user=None, status='new'))
+            db_session.add(sketch)
+            db_session.commit()
             # Give the requesting user permissions on the new sketch.
             sketch.grant_permission(permission='read', user=current_user)
             sketch.grant_permission(permission='write', user=current_user)
             sketch.grant_permission(permission='delete', user=current_user)
-            db_session.add(sketch)
-            db_session.commit()
             return self.to_json(sketch, status_code=HTTP_STATUS_CODE_CREATED)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
