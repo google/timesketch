@@ -15,24 +15,22 @@ limitations under the License.
 -->
 <template>
   <div>
-    <ul class="content-list">
-      <li style="padding:10px;border-bottom:none;" v-for="view in views" :key="view.id">
-        <router-link :to="{ name: 'SketchExplore', query: {view: view.id}}"><strong>{{ view.name }}</strong></router-link>
-        <br>
-        <span class="is-size-7">
-          Created {{ view.created_at | moment("YYYY-MM-DD HH:mm") }}
-        </span>
-      </li>
-    </ul>
+    <section class="section">
+      <div class="container">
+        <ts-navbar-secondary currentAppContext="sketch" currentPage=""></ts-navbar-secondary>
+      </div>
+    </section>
+    <ts-sketch-timelines-manage></ts-sketch-timelines-manage>
   </div>
 </template>
 
 <script>
+import TsSketchTimelinesManage from './SketchTimelinesManage'
+
 export default {
-  name: 'ts-sketch-overview-view-list',
-  props: ['views']
+  name: 'ts-sketch-timelines',
+  components: { TsSketchTimelinesManage }
 }
 </script>
 
-<!-- CSS scoped to this component only -->
-<style scoped lang="scss"></style>
+<style lang="scss"></style>
