@@ -15,7 +15,6 @@ limitations under the License.
 -->
 <template>
   <form v-on:submit.prevent="submitForm">
-    <p>Choose a Plaso storage file, JSONL, or a CSV file to upload.</p>
     <div class="field">
       <div class="file has-name">
         <label class="file-label">

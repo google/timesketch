@@ -25,15 +25,42 @@ const RestApiClient = axios.create({
 })
 
 export default {
+  // Sketch
   getSketchList () {
     return RestApiClient.get('/sketches/')
   },
   getSketch (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/')
   },
+  createSketch (formData) {
+    return RestApiClient.post('/sketches/', formData)
+  },
   deleteSketch (sketchId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/')
   },
+  // Add or remove timeline to sketch
+  createSketchTimeline (sketchId, searchIndexId) {
+    let formData = {
+      timeline: searchIndexId
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /timelines/, formData)
+  },
+  saveSketchTimeline (sketchId, timelineId, name, description, color) {
+    let formData = {
+      name: name,
+      description: description,
+      color: color
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /timelines/ + timelineId + '/', formData)
+  },
+  deleteSketchTimeline (sketchId, timelineId) {
+    return RestApiClient.delete('/sketches/' + sketchId + /timelines/ + timelineId + '/')
+  },
+  // Searchindices
+  getSearchIndexList () {
+    return RestApiClient.get('/searchindices/')
+  },
+  // Get details about an event
   getEvent (sketchId, searchindexId, eventId) {
     let params = {
       params: {
@@ -43,11 +70,12 @@ export default {
     }
     return RestApiClient.get('/sketches/' + sketchId + '/event/', params)
   },
-  createSketch (formData) {
-    return RestApiClient.post('/sketches/', formData)
-  },
+  // Stories
   getStoryList (sketchId) {
     return RestApiClient.get('sketches/' + sketchId + '/stories/')
+  },
+  getStory (sketchId, storyId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/stories/' + storyId)
   },
   createStory (title, content, sketchId) {
     let formData = {
@@ -55,6 +83,17 @@ export default {
       content: content
     }
     return RestApiClient.post('/sketches/' + sketchId + /stories/, formData)
+  },
+  updateStory (title, content, sketchId, storyId) {
+    let formData = {
+      title: title,
+      content: content
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /stories/ + storyId + '/', formData)
+  },
+  // Saved views
+  getView (sketchId, viewId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/views/' + viewId)
   },
   createView (sketchId, viewName, queryString, queryFilter) {
     let formData = {
@@ -65,24 +104,13 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + /views/, formData)
   },
-  updateStory (title, content, sketchId, storyId) {
-    let formData = {
-      title: title,
-      content: content
-    }
-    return RestApiClient.post('/sketches/' + sketchId + /stories/ + storyId + '/', formData)
-  },
-  getView (sketchId, viewId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/views/' + viewId)
-  },
-  getStory (sketchId, storyId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/stories/' + storyId)
-  },
-  countSketchEvents (sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/count/')
-  },
+  // Search
   search (id, formData) {
     return RestApiClient.post('/sketches/' + id + '/explore/', formData)
+  },
+  // Misc resources
+  countSketchEvents (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/count/')
   },
   uploadTimeline (formData) {
     let config = {
