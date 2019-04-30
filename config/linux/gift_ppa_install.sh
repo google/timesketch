@@ -29,7 +29,6 @@ PYTHON2_DEPENDENCIES="python-alembic
                       python-dateutil
                       python-editor
                       python-elasticsearch
-                      python-elasticsearch5
                       python-entrypoints
                       python-enum34
                       python-flask
