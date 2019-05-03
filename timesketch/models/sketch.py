@@ -430,3 +430,39 @@ class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.user = user
         self.sketch = sketch
         self.view = view
+
+
+class Analysis(LabelMixin, StatusMixin, CommentMixin, BaseModel):
+    """Implements the analysis model."""
+    name = Column(Unicode(255))
+    description = Column(UnicodeText())
+    analyzer = Column(Unicode(255))
+    parameters = Column(UnicodeText())
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    timeline_id = Column(Integer, ForeignKey('timeline.id'))
+    result = Column(UnicodeText())
+
+    def __init__(self, name, description, analyzer, parameters, user,
+                 sketch, timeline, result=None):
+        """Initialize the Aggregation object.
+
+        Args:
+            name (str): Name of the analysis
+            description (str): Description of the analysis
+            analyzer (str): Name of the analyzer
+            parameters (str): JSON serialized dict with analyser parameters
+            user (User): The user who created the aggregation
+            sketch (Sketch): The sketch that the aggregation is bound to
+            timeline (Timeline): Timeline to to run the analysis on
+            result (str): Result report of the analysis
+        """
+        super(Analysis, self).__init__()
+        self.name = name
+        self.description = description
+        self.analyzer = analyzer
+        self.parameters = parameters
+        self.user = user
+        self.sketch = sketch
+        self.timeline = timeline
+        self.result = result
