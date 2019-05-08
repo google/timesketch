@@ -13,6 +13,8 @@
 # limitations under the License.
 """This module implements the models for the Timesketch core system."""
 
+from __future__ import unicode_literals
+
 import json
 
 from sqlalchemy import Column
@@ -42,11 +44,12 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     """
     name = Column(Unicode(255))
     description = Column(UnicodeText())
-    user_id = Column(Integer, ForeignKey(u'user.id'))
-    timelines = relationship(u'Timeline', backref=u'sketch', lazy=u'select')
-    views = relationship(u'View', backref=u'sketch', lazy=u'select')
-    events = relationship(u'Event', backref=u'sketch', lazy=u'select')
-    stories = relationship(u'Story', backref=u'sketch', lazy=u'select')
+    user_id = Column(Integer, ForeignKey('user.id'))
+    timelines = relationship('Timeline', backref='sketch', lazy='select')
+    views = relationship('View', backref='sketch', lazy='select')
+    events = relationship('Event', backref='sketch', lazy='select')
+    stories = relationship('Story', backref='sketch', lazy='select')
+    aggregations = relationship('Aggregation', backref='sketch', lazy='select')
 
     def __init__(self, name, description, user):
         """Initialize the Sketch object.
@@ -62,6 +65,15 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.user = user
 
     @property
+    def get_named_aggregations(self):
+        """Get named aggregations.
+
+        Get named aggregations, i.e. only aggregations that have a name.
+        """
+        # TODO: Implement a storage for aggregations.
+        return []
+
+    @property
     def get_named_views(self):
         """
         Get named views, i.e. only views that has a name. Views without names
@@ -69,7 +81,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         """
         views = [
             view for view in self.views
-            if view.get_status.status != u'deleted' and view.name != u''
+            if view.get_status.status != 'deleted' and view.name != ''
         ]
         return views
 
@@ -83,8 +95,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             Full URL to the sketch as string.
         """
         url_host = current_app.config.get(
-            u'EXTERNAL_HOST_URL', u'https://localhost')
-        url_path = url_for(u'sketch_views.overview', sketch_id=self.id)
+            'EXTERNAL_HOST_URL', 'https://localhost')
+        url_path = url_for('sketch_views.overview', sketch_id=self.id)
         return url_host + url_path
 
     def get_view_urls(self):
@@ -97,9 +109,9 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         views = {}
         for view in self.get_named_views:
             url_host = current_app.config.get(
-                u'EXTERNAL_HOST_URL', u'https://localhost')
+                'EXTERNAL_HOST_URL', 'https://localhost')
             url_path = url_for(
-                u'sketch_views.explore', sketch_id=self.id, view_id=view.id)
+                'sketch_views.explore', sketch_id=self.id, view_id=view.id)
             url = url_host + url_path
             views[url] = view.name
         return views
@@ -115,7 +127,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         for timeline in self.timelines:
             timeline_status = timeline.get_status.status
             index_status = timeline.searchindex.get_status.status
-            if (timeline_status or index_status) in [u'processing', u'fail']:
+            if (timeline_status or index_status) in ['processing', 'fail']:
                 continue
             _timelines.append(timeline)
         return _timelines
@@ -134,7 +146,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         Returns:
             view: Instance of timesketch.models.sketch.View
         """
-        view = View.query.filter(View.user == user, View.name == u'',
+        view = View.query.filter(View.user == user, View.name == '',
                                  View.sketch_id == self.id).order_by(
                                      View.created_at.desc()).first()
         return view
@@ -145,9 +157,9 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     name = Column(Unicode(255))
     description = Column(UnicodeText())
     color = Column(Unicode(6))
-    user_id = Column(Integer, ForeignKey(u'user.id'))
-    searchindex_id = Column(Integer, ForeignKey(u'searchindex.id'))
-    sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
+    user_id = Column(Integer, ForeignKey('user.id'))
+    searchindex_id = Column(Integer, ForeignKey('searchindex.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
 
     def __init__(self,
                  name,
@@ -186,10 +198,10 @@ class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     name = Column(Unicode(255))
     description = Column(UnicodeText())
     index_name = Column(Unicode(255))
-    user_id = Column(Integer, ForeignKey(u'user.id'))
+    user_id = Column(Integer, ForeignKey('user.id'))
     timelines = relationship(
-        u'Timeline', backref=u'searchindex', lazy=u'dynamic')
-    events = relationship(u'Event', backref=u'searchindex', lazy=u'dynamic')
+        'Timeline', backref='searchindex', lazy='dynamic')
+    events = relationship('Event', backref='searchindex', lazy='dynamic')
 
     def __init__(self, name, description, index_name, user):
         """Initialize the SearchIndex object.
@@ -214,9 +226,10 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
-    user_id = Column(Integer, ForeignKey(u'user.id'))
-    sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
-    searchtemplate_id = Column(Integer, ForeignKey(u'searchtemplate.id'))
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    searchtemplate_id = Column(Integer, ForeignKey('searchtemplate.id'))
+    aggregations = relationship('Aggregation', backref='view', lazy='select')
 
     def __init__(self,
                  name,
@@ -264,14 +277,14 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         DEFAULT_SIZE = 40 # Number of resulting documents to return
         DEFAULT_LIMIT = DEFAULT_SIZE  # Number of resulting documents to return
         DEFAULT_VALUES = {
-            u'time_start': None,
-            u'time_end': None,
-            u'from': DEFAULT_FROM,
-            u'size': DEFAULT_SIZE,
-            u'terminate_after': DEFAULT_LIMIT,
-            u'indices': [],
-            u'exclude': [],
-            u'order': u'asc'
+            'time_start': None,
+            'time_end': None,
+            'from': DEFAULT_FROM,
+            'size': DEFAULT_SIZE,
+            'terminate_after': DEFAULT_LIMIT,
+            'indices': [],
+            'exclude': [],
+            'order': 'asc'
         }
         # If not provided, get the saved filter from the view
         if not query_filter:
@@ -299,8 +312,8 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
-    user_id = Column(Integer, ForeignKey(u'user.id'))
-    views = relationship(u'View', backref=u'searchtemplate', lazy=u'select')
+    user_id = Column(Integer, ForeignKey('user.id'))
+    views = relationship('View', backref='searchtemplate', lazy='select')
 
     def __init__(self,
                  name,
@@ -323,14 +336,14 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.query_string = query_string
         if not query_filter:
             filter_template = {
-                u'exclude': [],
-                u'indices': u'_all',
-                u'time_start': None,
-                u'time_end': None,
-                u'terminate_after': 40,
-                u'from': 0,
-                u'order': u'asc',
-                u'size': u'40'
+                'exclude': [],
+                'indices': '_all',
+                'time_start': None,
+                'time_end': None,
+                'terminate_after': 40,
+                'from': 0,
+                'order': 'asc',
+                'size': '40'
             }
             query_filter = json.dumps(filter_template, ensure_ascii=False)
         self.query_filter = query_filter
@@ -339,8 +352,8 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 
 class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the Event model."""
-    sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
-    searchindex_id = Column(Integer, ForeignKey(u'searchindex.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    searchindex_id = Column(Integer, ForeignKey('searchindex.id'))
     document_id = Column(Unicode(255))
 
     def __init__(self, sketch, searchindex, document_id):
@@ -363,8 +376,8 @@ class Story(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     """Implements the Story model."""
     title = Column(Unicode(255))
     content = Column(UnicodeText())
-    user_id = Column(Integer, ForeignKey(u'user.id'))
-    sketch_id = Column(Integer, ForeignKey(u'sketch.id'))
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
 
     def __init__(self, title, content, sketch, user):
         """Initialize the Story object.
@@ -380,3 +393,40 @@ class Story(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.content = content
         self.sketch = sketch
         self.user = user
+
+
+class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
+                  BaseModel):
+    """Implements the Aggregation model."""
+    name = Column(Unicode(255))
+    description = Column(UnicodeText())
+    agg_type = Column(Unicode(255))
+    parameters = Column(UnicodeText())
+    chart_type = Column(Unicode(255))
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    view_id = Column(Integer, ForeignKey('view.id'))
+
+    def __init__(self, name, description, agg_type, parameters, chart_type,
+                 user, sketch, view=None):
+        """Initialize the Aggregation object.
+
+        Args:
+            name (str): Name of the aggregation
+            description (str): Description of the aggregation
+            agg_type (str): Aggregation plugin type
+            parameters (str): JSON serialized dict with aggregation parameters
+            chart_type (str): Chart plugin type
+            user (User): The user who created the aggregation
+            sketch (Sketch): The sketch that the aggregation is bound to
+            view (View): Optional: The view that the aggregation is bound to
+        """
+        super(Aggregation, self).__init__()
+        self.name = name
+        self.description = description
+        self.agg_type = agg_type
+        self.parameters = parameters
+        self.chart_type = chart_type
+        self.user = user
+        self.sketch = sketch
+        self.view = view

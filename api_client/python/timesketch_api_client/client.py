@@ -17,9 +17,11 @@ from __future__ import unicode_literals
 import json
 import uuid
 
+# pylint: disable=wrong-import-order
 import bs4
 import requests
 
+# pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
 
 import pandas
@@ -365,6 +367,30 @@ class Sketch(BaseResource):
 
         return data_frame
 
+    def _get_aggregation_buckets(self, entry, name=''):
+        """Yields all buckets from a aggregation result object.
+
+        Args:
+            entry: result dict from an aggregation request.
+            name: name of aggregation results that contains
+                all aggregation buckets.
+
+        Yields:
+            A dict with each aggregation bucket as well as
+            the bucket_name.
+        """
+        if 'buckets' in entry:
+            for bucket in entry.get('buckets', []):
+                bucket['bucket_name'] = name
+                yield bucket
+        else:
+            for key, value in iter(entry.items()):
+                if not isinstance(value, dict):
+                    continue
+                for bucket in self._get_aggregation_buckets(
+                        value, name=key):
+                    yield bucket
+
     def list_views(self):
         """List all saved views for this sketch.
 
@@ -505,6 +531,10 @@ class Sketch(BaseResource):
             if view.query_string:
                 query_string = view.query_string
             query_filter = json.loads(view.query_filter)
+
+            query_filter['size'] = self.DEFAULT_SIZE_LIMIT
+            query_filter['terminate_after'] = self.DEFAULT_SIZE_LIMIT
+
             if view.query_dsl:
                 query_dsl = json.loads(view.query_dsl)
 
@@ -516,6 +546,7 @@ class Sketch(BaseResource):
             'filter': query_filter,
             'dsl': query_dsl,
             'fields': return_fields,
+            'enable_scroll': True,
         }
 
         response = self.api.session.post(resource_url, json=form_data)
@@ -553,6 +584,89 @@ class Sketch(BaseResource):
 
         return response_json
 
+
+    def aggregate(self, aggregate_dsl, as_pandas=False):
+        """Run an aggregation request on the sketch.
+
+        Args:
+            aggregate_dsl: Elasticsearch aggregation query DSL string.
+            as_pandas: Optional bool that determines if the results should
+                be returned back as a dictionary or a Pandas DataFrame.
+
+        Returns:
+            Dictionary with query results or a pandas DataFrame if as_pandas
+            is set to True.
+
+        Raises:
+            ValueError: if unable to query for the results.
+        """
+        if not aggregate_dsl:
+            raise RuntimeError(
+                'You need to supply an aggregation query DSL string.')
+
+        resource_url = '{0:s}/sketches/{1:d}/aggregation/explore/'.format(
+            self.api.api_root, self.id)
+
+        form_data = {
+            'aggregation_dsl': aggregate_dsl,
+        }
+
+        response = self.api.session.post(resource_url, json=form_data)
+        if response.status_code != 200:
+            raise ValueError(
+                'Unable to query results, with error: [{0:d}] {1:s}'.format(
+                    response.status_code, response.reason))
+
+        response_json = response.json()
+
+        if as_pandas:
+            panda_list = []
+            for entry in response_json.get('objects', []):
+                for bucket in self._get_aggregation_buckets(entry):
+                    panda_list.append(bucket)
+            return pandas.DataFrame(panda_list)
+
+        return response_json
+
+    def run_aggregator(
+            self, aggregator_name, aggregator_parameters, as_pandas=False):
+        """Run an aggregator class.
+
+        Args:
+            aggregator_name: Name of the aggregator to run.
+            aggregator_parameters: A dict with key/value pairs of parameters
+                the aggregator needs to run.
+            as_pandas: Optional bool that determines if the results should
+                be returned back as a dictionary or a Pandas DataFrame.
+
+        Returns:
+            Dictionary with query results or a pandas DataFrame if as_pandas
+            is set to True.
+        """
+        resource_url = '{0:s}/sketches/{1:d}/aggregation/explore/'.format(
+            self.api.api_root, self.id)
+
+        form_data = {
+            'aggregator_name': aggregator_name,
+            'aggregator_parameters': aggregator_parameters,
+        }
+
+        response = self.api.session.post(resource_url, json=form_data)
+        if response.status_code != 200:
+            raise ValueError(
+                'Unable to query results, with error: [{0:d}] {1:s}'.format(
+                    response.status_code, response.reason))
+
+        response_json = response.json()
+
+        if as_pandas:
+            panda_list = []
+            for entry in response_json.get('objects', []):
+                for bucket in self._get_aggregation_buckets(entry):
+                    panda_list.append(bucket)
+            return pandas.DataFrame(panda_list)
+
+        return response_json
 
     def label_events(self, events, label_name):
         """Labels one or more events with label_name.

@@ -75,7 +75,8 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
         This function takes a domain and a dict object that contains
         as key domain names and value the calculated MinHash value for that
-        domain. It will then strip www. if needed from the domain, and compare
+        domain as well as the domains depth (mbl.is is 2, foobar.evil.com would
+        be 3). It will then strip www. if needed from the domain, and compare
         the Jaccard distance between all domains in the dict and the supplied
         domain (removing the TLD extension from all domains).
 
@@ -108,15 +109,27 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         if any(domain.endswith('.{0:s}'.format(x)) for x in domain_dict):
             return similar
 
-        minhash = self._get_minhash_from_domain(domain)
-
         # We want to get rid of the TLD extension of the domain.
         # This is only used in the substring match in case the Jaccard
         # distance is above the threshold.
         domain_items = domain.split('.')
+        domain_depth = len(domain_items)
         domain_part = '.'.join(domain_items[:-1])
 
-        for watched_domain, watched_hash in domain_dict.iteritems():
+        minhashes = {}
+        for index in range(0, domain_depth - 1):
+            minhashes[domain_depth - index] = self._get_minhash_from_domain(
+                '.'.join(domain_items[index:]))
+
+        for watched_domain, watched_item in iter(domain_dict.items()):
+            watched_hash = watched_item.get('hash')
+            watched_depth = watched_item.get('depth')
+
+            minhash = minhashes.get(watched_depth)
+            if not minhash:
+                # The supplied domains length does not match this watched
+                # domain.
+                continue
             score = watched_hash.jaccard(minhash)
             if score < self.domain_scoring_threshold:
                 continue
@@ -200,13 +213,16 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         watched_domains = {}
         for domain in watched_domains_list:
             minhash = self._get_minhash_from_domain(domain)
-            watched_domains[domain] = minhash
+            watched_domains[domain] = {
+                'hash': minhash,
+                'depth': len(domain.split('.'))
+            }
 
         similar_domain_counter = 0
         whitelist_encountered = False
         evil_emoji = emojis.get_emoji('SKULL_CROSSBONE')
         phishing_emoji = emojis.get_emoji('FISHING_POLE')
-        for domain, _ in domain_counter.iteritems():
+        for domain, _ in iter(domain_counter.items()):
             emojis_to_add = []
             tags_to_add = []
             text = None

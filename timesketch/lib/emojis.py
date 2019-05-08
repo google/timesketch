@@ -27,12 +27,14 @@ emoji = collections.namedtuple('emoji', 'code help')
 EMOJI_MAP = {
     'CAMERA': emoji('&#x1F4F7', 'Screenshot activity'),
     'FISHING_POLE': emoji('&#x1F3A3', 'Phishing'),
+    'ID_BUTTON': emoji('&#x1F194', 'Account ID'),
     'LOCK': emoji('&#x1F512', 'Logon activity'),
     'LOCOMOTIVE': emoji('&#x1F682', 'Execution activity'),
     'MAGNIFYING_GLASS': emoji('&#x1F50E', 'Search related activity'),
     'SATELLITE': emoji('&#x1F4E1', 'Domain activity'),
     'SCREEN': emoji('&#x1F5B5', 'Screensaver activity'),
     'SKULL_CROSSBONE': emoji('&#x2620', 'Suspicious entry'),
+    'SLEEPING_FACE': emoji('&#x1F634', 'Activity outside of regular hours'),
     'UNLOCK': emoji('&#x1F513', 'Logoff activity'),
     'WASTEBASKET': emoji('&#x1F5D1', 'Deletion activity')
 }
@@ -64,7 +66,7 @@ def get_helper_from_unicode(code):
         Helper text as a string or an empty string if emoji is not configured.
     """
     code_upper = code.upper()
-    for emoji_object in EMOJI_MAP.itervalues():
+    for emoji_object in iter(EMOJI_MAP.values()):
         if code_upper == emoji_object.code.upper():
             return emoji_object.help
     return ''
@@ -76,4 +78,4 @@ def get_emojis_as_dict():
     Returns:
         Dict with emoji unicode code points as key and helper text as value.
     """
-    return {e.code: e.help for e in EMOJI_MAP.itervalues()}
+    return {e.code: e.help for e in iter(EMOJI_MAP.values())}

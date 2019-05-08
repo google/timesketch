@@ -13,6 +13,12 @@
 # limitations under the License.
 """This module implements the user model."""
 
+from __future__ import unicode_literals
+
+import codecs
+
+import six
+
 from flask_bcrypt import generate_password_hash
 from flask_bcrypt import check_password_hash
 from flask_login import UserMixin
@@ -46,17 +52,17 @@ class User(UserMixin, BaseModel):
     name = Column(Unicode(255))
     email = Column(Unicode(255))
     active = Column(Boolean(), default=True)
-    sketches = relationship(u'Sketch', backref=u'user', lazy=u'dynamic')
+    sketches = relationship('Sketch', backref='user', lazy='dynamic')
     searchindices = relationship(
-        u'SearchIndex', backref=u'user', lazy=u'dynamic')
-    timelines = relationship(u'Timeline', backref=u'user', lazy=u'dynamic')
-    views = relationship(u'View', backref=u'user', lazy=u'dynamic')
-    stories = relationship(u'Story', backref=u'user', lazy=u'dynamic')
-    my_groups = relationship(u'Group', backref=u'user', lazy=u'dynamic')
+        'SearchIndex', backref='user', lazy='dynamic')
+    timelines = relationship('Timeline', backref='user', lazy='dynamic')
+    views = relationship('View', backref='user', lazy='dynamic')
+    stories = relationship('Story', backref='user', lazy='dynamic')
+    my_groups = relationship('Group', backref='user', lazy='dynamic')
     groups = relationship(
-        u'Group',
+        'Group',
         secondary=user_group,
-        backref=backref(u'users', lazy=u'dynamic'))
+        backref=backref('users', lazy='dynamic'))
 
     def __init__(self, username, name=None):
         """Initialize the User object.
@@ -80,7 +86,9 @@ class User(UserMixin, BaseModel):
             rounds: Number of rounds to use for the bcrypt hashing
         """
         password_hash = generate_password_hash(plaintext, rounds)
-        self.password = unicode(password_hash)
+        if isinstance(password_hash, six.binary_type):
+            password_hash = codecs.decode(password_hash, 'utf-8')
+        self.password = password_hash
 
     def check_password(self, plaintext):
         """Check a plaintext password against a stored password hash.
@@ -101,7 +109,7 @@ class Group(LabelMixin, StatusMixin, BaseModel):
     name = Column(Unicode(255), unique=True)
     display_name = Column(Unicode(255))
     description = Column(UnicodeText())
-    user_id = Column(Integer, ForeignKey(u'user.id'))
+    user_id = Column(Integer, ForeignKey('user.id'))
 
     def __init__(self, name, display_name=None, description=None, user=None):
         """Initialize the Group object.

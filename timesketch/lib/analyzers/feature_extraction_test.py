@@ -61,7 +61,7 @@ class TestFeatureExtractionPlugin(BaseTest):
 
         self.assertIsInstance(config, dict)
 
-        for key, value in config.iteritems():
+        for key, value in iter(config.items()):
             self.assertIsInstance(key, str)
             self.assertIsInstance(value, dict)
             self._config_validation(value)

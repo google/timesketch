@@ -40,10 +40,10 @@ if [ "$1" = 'timesketch' ]; then
   cp /usr/local/src/timesketch/config/* /etc/timesketch/
 
   # Set SECRET_KEY in /etc/timesketch.conf if it isn't already set
-  if grep -q "SECRET_KEY = u'<KEY_GOES_HERE>'" /etc/timesketch.conf; then
+  if grep -q "SECRET_KEY = '<KEY_GOES_HERE>'" /etc/timesketch.conf; then
     OPENSSL_RAND=$( openssl rand -base64 32 )
     # Using the pound sign as a delimiter to avoid problems with / being output from openssl
-    sed -i 's#SECRET_KEY = u\x27\x3CKEY_GOES_HERE\x3E\x27#SECRET_KEY = u\x27'$OPENSSL_RAND'\x27#' /etc/timesketch.conf
+    sed -i 's#SECRET_KEY = \x27\x3CKEY_GOES_HERE\x3E\x27#SECRET_KEY = \x27'$OPENSSL_RAND'\x27#' /etc/timesketch.conf
   fi
 
   # Set up the Postgres connection
@@ -57,7 +57,7 @@ if [ "$1" = 'timesketch' ]; then
 
   # Set up the Elastic connection
   if [ $ELASTIC_ADDRESS ] && [ $ELASTIC_PORT ]; then
-    sed -i 's#ELASTIC_HOST = u\x27127.0.0.1\x27#ELASTIC_HOST = u\x27'$ELASTIC_ADDRESS'\x27#' /etc/timesketch.conf
+    sed -i 's#ELASTIC_HOST = \x27127.0.0.1\x27#ELASTIC_HOST = \x27'$ELASTIC_ADDRESS'\x27#' /etc/timesketch.conf
     sed -i 's#ELASTIC_PORT = 9200#ELASTIC_PORT = '$ELASTIC_PORT'#' /etc/timesketch.conf
   else
     # Log an error since we need the above-listed environment variables
@@ -77,7 +77,7 @@ if [ "$1" = 'timesketch' ]; then
   # Set up the Neo4j connection
   if [ $NEO4J_ADDRESS ] && [ $NEO4J_PORT ]; then
     sed -i 's#GRAPH_BACKEND_ENABLED = False#GRAPH_BACKEND_ENABLED = True#' /etc/timesketch.conf
-    sed -i 's#NEO4J_HOST =.*#NEO4J_HOST = u\x27'$NEO4J_ADDRESS'\x27#' /etc/timesketch.conf
+    sed -i 's#NEO4J_HOST =.*#NEO4J_HOST = \x27'$NEO4J_ADDRESS'\x27#' /etc/timesketch.conf
     sed -i 's#NEO4J_PORT =.*#NEO4J_PORT = '$NEO4J_PORT'#' /etc/timesketch.conf
   else
     # Log an error since we need the above-listed environment variables
@@ -93,7 +93,7 @@ if [ "$1" = 'timesketch' ]; then
   sed -i s/"ENABLE_EXPERIMENTAL_UI = False"/"ENABLE_EXPERIMENTAL_UI = True"/ /etc/timesketch.conf
 
   # Add web user
-  tsctl add_user -u "${TIMESKETCH_USER}" -p "${TIMESKETCH_USER}"
+  tsctl add_user --username "${TIMESKETCH_USER}" --password "${TIMESKETCH_USER}"
 
   echo "Timesketch development server is ready!"
 

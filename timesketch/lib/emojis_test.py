@@ -29,14 +29,14 @@ class TestEmojisLib(BaseTest):
         skull_emoji = emojis.get_emoji('skull_crossbone')
         skull_code = '&#x2620'
 
-        self.assertEquals(skull_emoji, skull_code)
+        self.assertEqual(skull_emoji, skull_code)
 
         locomotive_emoji = emojis.get_emoji('LOCOMOTIVE')
         locomotive_code = '&#x1F682'
-        self.assertEquals(locomotive_emoji, locomotive_code)
+        self.assertEqual(locomotive_emoji, locomotive_code)
 
         does_not_exist = emojis.get_emoji('er_ekki_til')
-        self.assertEquals(does_not_exist, '')
+        self.assertEqual(does_not_exist, '')
 
     def test_get_helper_from_unicode(self):
         """Test getting helper text from an emoji code."""
@@ -44,10 +44,10 @@ class TestEmojisLib(BaseTest):
         skull_helper = emojis.get_helper_from_unicode(skull_emoji)
         helper_text = 'Suspicious entry'
 
-        self.assertEquals(skull_helper, helper_text)
+        self.assertEqual(skull_helper, helper_text)
 
         does_not_exist = emojis.get_helper_from_unicode('er_ekki_til')
-        self.assertEquals(does_not_exist, '')
+        self.assertEqual(does_not_exist, '')
 
     def test_get_emojis_as_dict(self):
         """Test getting emojis as a dictionary."""
@@ -55,7 +55,7 @@ class TestEmojisLib(BaseTest):
         helper_text = 'Suspicious entry'
         emojis_dict = emojis.get_emojis_as_dict()
         skull_helper = emojis_dict.get(skull_code)
-        self.assertEquals(skull_helper, helper_text)
+        self.assertEqual(skull_helper, helper_text)
 
         does_not_exist = emojis_dict.get('finns_inte')
         self.assertIsNone(does_not_exist)

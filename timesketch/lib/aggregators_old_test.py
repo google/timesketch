@@ -13,7 +13,9 @@
 # limitations under the License.
 """Tests for aggregations."""
 
-from timesketch.lib.aggregators import heatmap
+from __future__ import unicode_literals
+
+from timesketch.lib.aggregators_old import heatmap
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
@@ -23,6 +25,6 @@ class TestAggregators(BaseTest):
 
     def test_heatmap(self):
         """Test to get heatmap data."""
-        es_client = MockDataStore(u'127.0.0,1', 4711)
-        h = heatmap(es_client, 1, u'test', {}, [], [u'all'])
+        es_client = MockDataStore('127.0.0,1', 4711)
+        h = heatmap(es_client, 1, 'test', {}, [], ['all'])
         self.assertIsInstance(h, list)

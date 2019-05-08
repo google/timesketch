@@ -133,7 +133,7 @@ class SimilarityScorer(interface.BaseIndexAnalyzer):
         """
         # Exit early if there is no data_type to process.
         if not self._config:
-            return
+            return None
 
         # Event generator for streaming results.
         events = self.event_stream(

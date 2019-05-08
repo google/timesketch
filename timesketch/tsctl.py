@@ -15,11 +15,14 @@
 """This module is for management of the Timesketch application."""
 from __future__ import unicode_literals
 
+import codecs
 import os
 import pwd
 import sys
 import uuid
 import yaml
+
+import six
 
 from flask import current_app
 from flask_migrate import MigrateCommand
@@ -47,34 +50,28 @@ from timesketch.models.sketch import Timeline
 class DropDataBaseTables(Command):
     """Drop all database tables."""
 
-    def __init__(self):
-        super(DropDataBaseTables, self).__init__()
-
     # pylint: disable=method-hidden
     def run(self):
         """Drop all tables after user ha verified."""
         verified = prompt_bool(
-            u'Do you really want to drop all the database tables?')
+            'Do you really want to drop all the database tables?')
         if verified:
-            sys.stdout.write(u'All tables dropped. Database is now empty.\n')
+            sys.stdout.write('All tables dropped. Database is now empty.\n')
             drop_all()
 
 
 class AddUser(Command):
     """Create a new Timesketch user."""
     option_list = (
-        Option(u'--username', u'-u', dest=u'username', required=True),
-        Option(u'--password', u'-p', dest=u'password', required=False), )
-
-    def __init__(self):
-        super(AddUser, self).__init__()
+        Option('--username', '-', dest='username', required=True),
+        Option('--password', '-p', dest='password', required=False), )
 
     def get_password_from_prompt(self):
         """Get password from the command line prompt."""
-        first_password = prompt_pass(u'Enter password')
-        second_password = prompt_pass(u'Enter password again')
+        first_password = prompt_pass('Enter password')
+        second_password = prompt_pass('Enter password again')
         if first_password != second_password:
-            sys.stderr.write(u'Passwords don\'t match, try again.\n')
+            sys.stderr.write('Passwords don\'t match, try again.\n')
             self.get_password_from_prompt()
         return first_password
 
@@ -83,53 +80,54 @@ class AddUser(Command):
         """Creates the user."""
         if not password:
             password = self.get_password_from_prompt()
-        password = unicode(password.decode(encoding=u'utf-8'))
-        username = unicode(username.decode(encoding=u'utf-8'))
+        if not isinstance(password, six.text_type):
+            password = codecs.decode(password, 'utf-8')
+        if not isinstance(username, six.text_type):
+            username = codecs.decode(username, 'utf-8')
         user = User.get_or_create(username=username)
         user.set_password(plaintext=password)
         db_session.add(user)
         db_session.commit()
-        sys.stdout.write(u'User {0:s} created/updated\n'.format(username))
+        sys.stdout.write('User {0:s} created/updated\n'.format(username))
 
 
 class AddGroup(Command):
     """Create a new Timesketch group."""
-    option_list = (Option(u'--name', u'-n', dest=u'name', required=True), )
-
-    def __init__(self):
-        super(AddGroup, self).__init__()
+    option_list = (Option('--name', '-n', dest='name', required=True), )
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, name):
         """Creates the group."""
-        name = unicode(name.decode(encoding=u'utf-8'))
+        if not isinstance(name, six.text_type):
+            name = codecs.decode(name, 'utf-8')
         group = Group.get_or_create(name=name)
         db_session.add(group)
         db_session.commit()
-        sys.stdout.write(u'Group {0:s} created\n'.format(name))
+        sys.stdout.write('Group {0:s} created\n'.format(name))
 
 
 class GroupManager(Command):
     """Manage group memberships."""
     option_list = (
         Option(
-            u'--remove',
-            u'-r',
-            dest=u'remove',
-            action=u'store_true',
+            '--remove',
+            '-r',
+            dest='remove',
+            action='store_true',
             required=False,
             default=False),
-        Option(u'--group', u'-g', dest=u'group_name', required=True),
-        Option(u'--user', u'-u', dest=u'user_name', required=True), )
-
-    def __init__(self):
-        super(GroupManager, self).__init__()
+        Option('--group', '-g', dest='group_name', required=True),
+        Option('--user', '-', dest='user_name', required=True), )
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, remove, group_name, user_name):
         """Add the user to the group."""
-        group_name = unicode(group_name.decode(encoding=u'utf-8'))
-        user_name = unicode(user_name.decode(encoding=u'utf-8'))
+        if not isinstance(group_name, six.text_type):
+            group_name = codecs.decode(group_name, 'utf-8')
+
+        if not isinstance(user_name, six.text_type):
+            user_name = codecs.decode(user_name, 'utf-8')
+
         group = Group.query.filter_by(name=group_name).first()
         user = User.query.filter_by(username=user_name).first()
 
@@ -137,65 +135,59 @@ class GroupManager(Command):
         if remove:
             try:
                 user.groups.remove(group)
-                sys.stdout.write(u'{0:s} removed from group {1:s}\n'.format(
+                sys.stdout.write('{0:s} removed from group {1:s}\n'.format(
                     user_name, group_name))
                 db_session.commit()
             except ValueError:
-                sys.stdout.write(u'{0:s} is not a member of group {1:s}\n'.
+                sys.stdout.write('{0:s} is not a member of group {1:s}\n'.
                                  format(user_name, group_name))
         else:
             user.groups.append(group)
             try:
                 db_session.commit()
-                sys.stdout.write(u'{0:s} added to group {1:s}\n'.format(
+                sys.stdout.write('{0:s} added to group {1:s}\n'.format(
                     user_name, group_name))
             except IntegrityError:
-                sys.stdout.write(u'{0:s} is already a member of group {1:s}\n'.
+                sys.stdout.write('{0:s} is already a member of group {1:s}\n'.
                                  format(user_name, group_name))
 
 
 class AddSearchIndex(Command):
     """Create a new Timesketch searchindex."""
     option_list = (
-        Option(u'--name', u'-n', dest=u'name', required=True),
-        Option(u'--index', u'-i', dest=u'index', required=True),
-        Option(u'--user', u'-u', dest=u'username', required=True), )
-
-    def __init__(self):
-        super(AddSearchIndex, self).__init__()
+        Option('--name', '-n', dest='name', required=True),
+        Option('--index', '-i', dest='index', required=True),
+        Option('--user', '-', dest='username', required=True), )
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, name, index, username):
         """Create the SearchIndex."""
         es = ElasticsearchDataStore(
-            host=current_app.config[u'ELASTIC_HOST'],
-            port=current_app.config[u'ELASTIC_PORT'])
+            host=current_app.config['ELASTIC_HOST'],
+            port=current_app.config['ELASTIC_PORT'])
         user = User.query.filter_by(username=username).first()
         if not user:
-            sys.stderr.write(u'User does not exist\n')
+            sys.stderr.write('User does not exist\n')
             sys.exit(1)
         if not es.client.indices.exists(index=index):
-            sys.stderr.write(u'Index does not exist in the datastore\n')
+            sys.stderr.write('Index does not exist in the datastore\n')
             sys.exit(1)
         if SearchIndex.query.filter_by(name=name, index_name=index).first():
             sys.stderr.write(
-                u'Index with this name already exist in Timesketch\n')
+                'Index with this name already exist in Timesketch\n')
             sys.exit(1)
         searchindex = SearchIndex(
             name=name, description=name, user=user, index_name=index)
-        searchindex.grant_permission(u'read')
+        searchindex.grant_permission('read')
         db_session.add(searchindex)
         db_session.commit()
-        sys.stdout.write(u'Search index {0:s} created\n'.format(name))
+        sys.stdout.write('Search index {0:s} created\n'.format(name))
 
 
 class PurgeTimeline(Command):
     """Delete timeline permanently from Timesketch and Elasticsearch."""
     option_list = (Option(
-        u'--index', u'-i', dest=u'index_name', required=True), )
-
-    def __init__(self):
-        super(PurgeTimeline, self).__init__()
+        '--index', '-i', dest='index_name', required=True), )
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, index_name):
@@ -204,30 +196,32 @@ class PurgeTimeline(Command):
         Args:
             index_name: The name of the index in Elasticsearch
         """
-        index_name = unicode(index_name.decode(encoding=u'utf-8'))
+        if not isinstance(index_name, six.text_type):
+            index_name = codecs.decode(index_name, 'utf-8')
+
         searchindex = SearchIndex.query.filter_by(
             index_name=index_name).first()
 
         if not searchindex:
-            sys.stdout.write(u'No such index\n')
+            sys.stdout.write('No such index\n')
             sys.exit()
 
         es = ElasticsearchDataStore(
-            host=current_app.config[u'ELASTIC_HOST'],
-            port=current_app.config[u'ELASTIC_PORT'])
+            host=current_app.config['ELASTIC_HOST'],
+            port=current_app.config['ELASTIC_PORT'])
 
         timelines = Timeline.query.filter_by(searchindex=searchindex).all()
         sketches = [
             t.sketch for t in timelines
-            if t.sketch and t.sketch.get_status.status != u'deleted'
+            if t.sketch and t.sketch.get_status.status != 'deleted'
         ]
         if sketches:
-            sys.stdout.write(u'WARNING: This timeline is in use by:\n')
+            sys.stdout.write('WARNING: This timeline is in use by:\n')
             for sketch in sketches:
-                sys.stdout.write(u' * {0:s}\n'.format(sketch.name))
+                sys.stdout.write(' * {0:s}\n'.format(sketch.name))
                 sys.stdout.flush()
         really_delete = prompt_bool(
-            u'Are you sure you want to delete this timeline?')
+            'Are you sure you want to delete this timeline?')
         if really_delete:
             for timeline in timelines:
                 db_session.delete(timeline)
@@ -239,8 +233,8 @@ class PurgeTimeline(Command):
 class SearchTemplateManager(Command):
     """Command Module to manipulate Search templates."""
     option_list = (
-        Option(u'--import', u'-i', dest=u'import_location', required=False),
-        Option(u'--export', u'-e', dest=u'export_location', required=False),
+        Option('--import', '-i', dest='import_location', required=False),
+        Option('--export', '-e', dest='export_location', required=False),
     )
 
     # pylint: disable=arguments-differ, method-hidden
@@ -257,14 +251,14 @@ class SearchTemplateManager(Command):
             for search_template in SearchTemplate.query.all():
                 labels = []
                 for label in search_template.labels:
-                    if label.label.startswith(u'supported_os:'):
+                    if label.label.startswith('supported_os:'):
                         labels.append(label.label.replace(
-                            u'supported_os:', u''))
+                            'supported_os:', ''))
                 search_templates.append({
-                    u'name': search_template.name,
-                    u'query_string': search_template.query_string,
-                    u'query_dsl': search_template.query_dsl,
-                    u'supported_os': labels
+                    'name': search_template.name,
+                    'query_string': search_template.query_string,
+                    'query_dsl': search_template.query_dsl,
+                    'supported_os': labels
                 })
 
             with open(export_location, 'w') as fh:
@@ -275,13 +269,13 @@ class SearchTemplateManager(Command):
                 with open(import_location, 'rb') as fh:
                     search_templates = yaml.safe_load(fh)
             except IOError as e:
-                sys.stdout.write(u'Unable to open file: {0:s}\n'.format(e))
+                sys.stdout.write('Unable to open file: {0!s}\n'.format(e))
                 sys.exit(1)
 
             for search_template in search_templates:
-                name = search_template[u'name']
-                query_string = search_template[u'query_string'],
-                query_dsl = search_template[u'query_dsl']
+                name = search_template['name']
+                query_string = search_template['query_string']
+                query_dsl = search_template['query_dsl']
 
                 # Skip search template if already exits.
                 if SearchTemplate.query.filter_by(name=name).first():
@@ -294,15 +288,15 @@ class SearchTemplateManager(Command):
                     query_dsl=query_dsl)
 
                 # Add supported_os labels.
-                for supported_os in search_template[u'supported_os']:
-                    label_name = u'supported_os:{0:s}'.format(supported_os)
+                for supported_os in search_template['supported_os']:
+                    label_name = 'supported_os:{0:s}'.format(supported_os)
                     label = SearchTemplate.Label.get_or_create(
                         label=label_name, user=None)
                     imported_template.labels.append(label)
 
                 # Set flag to identify local vs import templates.
                 remote_flag = SearchTemplate.Label.get_or_create(
-                    label=u'remote_template', user=None)
+                    label='remote_template', user=None)
                 imported_template.labels.append(remote_flag)
 
                 db_session.add(imported_template)
@@ -314,13 +308,10 @@ class ImportTimeline(Command):
     option_list = (
         Option('--file', '-f', dest='file_path', required=True),
         Option('--sketch_id', '-s', dest='sketch_id', required=False),
-        Option('--username', '-u', dest='username', required=False),
+        Option('--username', '-', dest='username', required=False),
         Option('--timeline_name', '-n', dest='timeline_name',
                required=False),
     )
-
-    def __init__(self):
-        super(ImportTimeline, self).__init__()
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, file_path, sketch_id, username, timeline_name):
@@ -345,8 +336,10 @@ class ImportTimeline(Command):
         user = None
         if not username:
             username = pwd.getpwuid(os.stat(file_path).st_uid).pw_name
-        if username is not 'root':
-            user = User.query.filter_by(username=unicode(username)).first()
+        if not username == 'root':
+            if not isinstance(username, six.text_type):
+                username = codecs.decode(username, 'utf-8')
+            user = User.query.filter_by(username=username).first()
         if not user:
             sys.exit('Cannot determine user for file: {0:s}'.format(file_path))
 
@@ -364,7 +357,10 @@ class ImportTimeline(Command):
                 pass
 
         if not timeline_name:
-            timeline_name = unicode(filename.replace('_', ' '))
+            if not isinstance(timeline_name, six.text_type):
+                timeline_name = codecs.decode(timeline_name, 'utf-8')
+
+            timeline_name = timeline_name.replace('_', ' ')
             # Remove sketch ID if present in the filename.
             timeline_parts = timeline_name.split()
             if timeline_parts[0].isdigit():
@@ -381,11 +377,14 @@ class ImportTimeline(Command):
             sketch.grant_permission(permission='read', user=user)
             sketch.grant_permission(permission='write', user=user)
             sketch.grant_permission(permission='delete', user=user)
-            sketch.status.append(sketch.Status(user=None, status=u'new'))
+            sketch.status.append(sketch.Status(user=None, status='new'))
             db_session.add(sketch)
             db_session.commit()
 
-        index_name = unicode(uuid.uuid4().hex)
+        index_name = uuid.uuid4().hex
+        if not isinstance(index_name, six.text_type):
+            index_name = codecs.decode(index_name, 'utf-8')
+
         searchindex = SearchIndex.get_or_create(
             name=timeline_name,
             description=timeline_name,

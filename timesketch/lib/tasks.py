@@ -19,6 +19,8 @@ import logging
 import subprocess
 import traceback
 
+import six
+
 from celery import chain
 from celery import signals
 from flask import current_app
@@ -115,7 +117,7 @@ def _get_index_analyzers():
     tasks = []
 
     # Exit early if index analyzers are disabled.
-    if not current_app.config.get(u'ENABLE_INDEX_ANALYZERS'):
+    if not current_app.config.get('ENABLE_INDEX_ANALYZERS'):
         return None
 
     for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
@@ -151,7 +153,7 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
     index_analyzer_chain = _get_index_analyzers()
     sketch_analyzer_chain = None
 
-    if sketch_id and current_app.config.get(u'ENABLE_SKETCH_ANALYZERS'):
+    if sketch_id and current_app.config.get('ENABLE_SKETCH_ANALYZERS'):
         sketch_analyzer_chain = build_sketch_analysis_pipeline(sketch_id)
 
     index_task = index_task_class.s(
@@ -191,7 +193,7 @@ def build_sketch_analysis_pipeline(sketch_id):
     tasks = []
 
     # Exit early if sketch analyzers are disabled.
-    if not current_app.config.get(u'ENABLE_SKETCH_ANALYZERS', False):
+    if not current_app.config.get('ENABLE_SKETCH_ANALYZERS', False):
         return None
 
     for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
@@ -227,7 +229,7 @@ def run_sketch_init(index_name_list):
     Returns:
         List with first entry of index_name_list.
     """
-    if isinstance(index_name_list, basestring):
+    if isinstance(index_name_list, six.string_types):
         index_name_list = [index_name_list]
     return index_name_list[:1][0]
 
@@ -251,6 +253,12 @@ def run_email_result_task(index_name, sketch_id=None):
         searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
         sketch = None
 
+        try:
+            to_username = searchindex.user.username
+        except AttributeError:
+            logging.warning('No user to send email to.')
+            return ''
+
         if sketch_id:
             sketch = Sketch.query.get(sketch_id)
 
@@ -263,7 +271,7 @@ def run_email_result_task(index_name, sketch_id=None):
         if sketch:
             view_urls = sketch.get_view_urls()
             view_links = []
-            for view_url, view_name in view_urls.iteritems():
+            for view_url, view_name in iter(view_urls.items()):
                 view_links.append('<a href="{0:s}">{1:s}</a>'.format(
                     view_url,
                     view_name))
@@ -279,12 +287,10 @@ def run_email_result_task(index_name, sketch_id=None):
                 body = body + '<br><br><b>Views</b><br>' + '<br>'.join(
                     view_links)
 
-        to_username = searchindex.user.username
-
         try:
             send_email(subject, body, to_username, use_html=True)
         except RuntimeError as e:
-            return unicode(e)
+            return repr(e)
 
     return 'Sent email to {0:s}'.format(to_username)
 
@@ -303,7 +309,10 @@ def run_index_analyzer(index_name, analyzer_name, **kwargs):
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
     analyzer = analyzer_class(index_name=index_name, **kwargs)
     result = analyzer.run_wrapper()
-    logging.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
+    if result:
+        logging.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
+    else:
+        logging.info('[{0:s}] return with no results.'.format(analyzer_name))
     return index_name
 
 
@@ -356,7 +365,11 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
 
     # Run psort.py
     try:
-        subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        if six.PY3:
+            subprocess.check_output(
+                cmd, stderr=subprocess.STDOUT, encoding='utf-8')
+        else:
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
         _set_timeline_status(index_name, status='fail', error_msg=e.output)
@@ -405,7 +418,11 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
             es.import_event(index_name, event_type, event)
         # Import the remaining events
         es.flush_queued_events()
-    except Exception as e:
+
+    except (ImportError, NameError, UnboundLocalError):
+        raise
+
+    except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc(e)
         _set_timeline_status(index_name, status='fail', error_msg=error_msg)

@@ -3,22 +3,24 @@ from __future__ import unicode_literals
 
 import logging
 
+import six
+
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
 LOGON_TYPES = {
-    u'0': u'Unknown',
-    u'2': u'Interactive',
-    u'3': u'Network',
-    u'4': u'Batch',
-    u'5': u'Service',
-    u'7': u'Unlock',
-    u'8': u'NetworkCleartext',
-    u'9': u'NewCredentials',
-    u'10': u'RemoteInteractive',
-    u'11': u'CachedInteractive'
+    '0': 'Unknown',
+    '2': 'Interactive',
+    '3': 'Network',
+    '4': 'Batch',
+    '5': 'Service',
+    '7': 'Unlock',
+    '8': 'NetworkCleartext',
+    '9': 'NewCredentials',
+    '10': 'RemoteInteractive',
+    '11': 'CachedInteractive'
 }
 
 
@@ -41,7 +43,7 @@ def parse_evtx_logoff_event(string_list):
 
     logon_type_code = string_list[4]
     attributes['logon_type'] = LOGON_TYPES.get(
-        logon_type_code, LOGON_TYPES.get(u'0'))
+        logon_type_code, LOGON_TYPES.get('0'))
 
     return attributes
 
@@ -69,7 +71,7 @@ def parse_evtx_logon_event(string_list, string_parsed):
     attributes = {}
     logon_type_code = string_list[8]
     attributes['logon_type'] = LOGON_TYPES.get(
-        logon_type_code, LOGON_TYPES.get(u'0'))
+        logon_type_code, LOGON_TYPES.get('0'))
 
     win_domain = string_list[2]
     if win_domain:
@@ -164,7 +166,7 @@ class LoginSketchPlugin(interface.BaseSketchAnalyzer):
             tags_to_add = []
             attribute_dict = {}
 
-            if isinstance(identifier, (str, unicode)):
+            if isinstance(identifier, six.text_type):
                 try:
                     identifier = int(identifier, 10)
                 except ValueError:
@@ -182,7 +184,7 @@ class LoginSketchPlugin(interface.BaseSketchAnalyzer):
                 tags_to_add.append('logon-event')
                 login_counter += 1
 
-            elif identifier == 4634 or identifier == 4647:
+            elif identifier in (4634, 4647):
                 attribute_dict = parse_evtx_logoff_event(strings)
                 if not attribute_dict:
                     continue

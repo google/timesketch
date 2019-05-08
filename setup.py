@@ -29,7 +29,7 @@ except ImportError:  # for pip <= 9.0.3
     from pip.download import PipSession
     from pip.req import parse_requirements
 
-timesketch_version = '20181116'
+timesketch_version = '20190207'
 
 timesketch_description = (
     'Timesketch is a web based tool for collaborative forensic timeline '
@@ -60,5 +60,8 @@ setup(
     entry_points={'console_scripts': ['tsctl=timesketch.tsctl:main']},
     install_requires=[str(req.req) for req in parse_requirements(
         'requirements.txt', session=PipSession(),
+    )],
+    tests_require=[str(req.req) for req in parse_requirements(
+        'test_requirements.txt', session=PipSession(),
     )],
 )

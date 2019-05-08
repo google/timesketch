@@ -15,6 +15,10 @@
 
 from __future__ import unicode_literals
 
+import six
+
+import pandas as pd
+
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.analyzers import utils
 
@@ -22,47 +26,61 @@ from timesketch.lib.analyzers import utils
 class TestAnalyzerUtils(BaseTest):
     """Tests the functionality of the utilities."""
 
-    def __init__(self, *args, **kwargs):
-        super(TestAnalyzerUtils, self).__init__(*args, **kwargs)
-
     def test_get_domain_from_url(self):
         """Test get_domain_from_url function."""
         url = 'http://www.example.com/?foo=bar'
         domain = utils.get_domain_from_url(url)
-        self.assertEquals(domain, 'www.example.com')
+        self.assertEqual(domain, 'www.example.com')
 
     def test_get_tld_from_domain(self):
         """Test get_tld_from_domain function."""
         domain = 'this.is.a.subdomain.example.com'
         tld = utils.get_tld_from_domain(domain)
-        self.assertEquals(tld, 'example.com')
+        self.assertEqual(tld, 'example.com')
 
         domain = 'a'
         tld = utils.get_tld_from_domain(domain)
-        self.assertEquals(tld, 'a')
+        self.assertEqual(tld, 'a')
 
         domain = 'example.com'
         tld = utils.get_tld_from_domain(domain)
-        self.assertEquals(tld, 'example.com')
+        self.assertEqual(tld, 'example.com')
 
     def test_strip_www_from_domain(self):
         """Test strip_www_from_domain function."""
         domain = 'www.mbl.is'
         stripped = utils.strip_www_from_domain(domain)
-        self.assertEquals(stripped, 'mbl.is')
+        self.assertEqual(stripped, 'mbl.is')
 
         domain = 'mbl.is'
         stripped = utils.strip_www_from_domain(domain)
-        self.assertEquals(stripped, domain)
+        self.assertEqual(stripped, domain)
 
     def test_get_cdn_provider(self):
         """Test get_cdn_provider function."""
         domain = 'foobar.gstatic.com'
         provider = utils.get_cdn_provider(domain)
-        self.assertIsInstance(provider, basestring)
-        self.assertEquals(provider, 'Google')
+        self.assertIsInstance(provider, six.text_type)
+        self.assertEqual(provider, 'Google')
 
         domain = 'www.mbl.is'
         provider = utils.get_cdn_provider(domain)
-        self.assertIsInstance(provider, basestring)
-        self.assertEquals(provider, '')
+        self.assertIsInstance(provider, six.text_type)
+        self.assertEqual(provider, '')
+
+    def test_get_events_from_data_frame(self):
+        """Test getting all events from data frame."""
+        lines = [
+            {'_id': '123', '_type': 'manual', '_index': 'asdfasdf',
+             'tool': 'isskeid'},
+            {'_id': '124', '_type': 'manual', '_index': 'asdfasdf',
+             'tool': 'tong'},
+            {'_id': '125', '_type': 'manual', '_index': 'asdfasdf',
+             'tool': 'klemma'},
+        ]
+        frame = pd.DataFrame(lines)
+
+        events = list(utils.get_events_from_data_frame(frame, None))
+        self.assertEqual(len(events), 3)
+        ids = [x.event_id for x in events]
+        self.assertEqual(set(ids), set(['123', '124', '125']))

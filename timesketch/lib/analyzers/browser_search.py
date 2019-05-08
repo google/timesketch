@@ -3,15 +3,10 @@ from __future__ import unicode_literals
 
 import logging
 import re
-import sys
 
-# pylint:disable=wrong-import-position
-if sys.version_info[0] < 3:
-    import urllib as urlparse
-    BYTES_TYPE = str
-else:
-    from urllib import parse as urlparse  # pylint: disable=no-name-in-module
-    BYTES_TYPE = bytes
+import six
+
+from six.moves import urllib_parse as urlparse
 
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
@@ -76,8 +71,9 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
         if not url:
             return ''
 
+        # pylint: disable=too-many-function-args
         decoded_url = urlparse.unquote(url)
-        if isinstance(decoded_url, BYTES_TYPE):
+        if isinstance(decoded_url, six.binary_type):
             try:
                 decoded_url = decoded_url.decode('utf-8')
             except UnicodeDecodeError as exception:

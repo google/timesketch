@@ -23,6 +23,7 @@ services:
       - NEO4J_PORT=7474
       - TIMESKETCH_USER=dev
       - TIMESKETCH_PASSWORD=dev
+      - CHOKIDAR_USEPOLLING=true
     restart: always
     volumes:
       - ../:/usr/local/src/timesketch/

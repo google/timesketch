@@ -1,0 +1,79 @@
+@charset "utf-8";
+// Copyright 2019 Google Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Customize Bulma
+$family-primary: Arial, sans-serif;
+$body-size: 15px;
+$card-shadow: 0 0 1px rgba(0,0,0,0.15);
+$card-header-shadow: none;
+$section-padding: 15px 15px 0 15px;
+$tabs-link-active-border-bottom-color: hsl(0, 0%, 29%);
+$tabs-link-active-color: hsl(0, 0%, 21%);
+
+$message-header-background-color: rgba(229, 229, 229, 0.84);
+$message-header-color: #333333;
+$message-background-color: #f9f9f9;
+
+// Font Awesome
+$fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
+@import "../../node_modules/@fortawesome/fontawesome-free/scss/fontawesome";
+@import "../../node_modules/@fortawesome/fontawesome-free/scss/solid";
+
+// Import Bulma CSS
+@import '../../node_modules/bulma/bulma';
+
+// Global CSS
+html, body {
+    height: 100%;
+    overflow: auto;
+}
+
+body {
+    background: linear-gradient(90deg, rgba(249,249,249,1) 11%, rgba(241,241,241,1) 100%);
+}
+
+.card {
+    border-radius: 5px;
+}
+
+.card-header {
+    border-bottom: 1px solid #eee;
+}
+
+.ts-timeline-color-box {
+    width:43px;
+    height:43px;
+    margin-top: 2px;
+    margin-right: 10px;
+    border-radius: 4px;
+}
+
+ul.content-list {
+    list-style: none;
+}
+
+ul.content-list>li {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
+    display: block;
+    margin: 0;
+}
+
+ul.content-list>li:hover {
+    background: #fcfcfc;
+}
+
+ul.content-list>li:last-child { border-bottom: none; }
