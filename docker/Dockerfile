@@ -5,14 +5,14 @@ FROM ubuntu:18.04
 RUN apt-get update && apt-get -y upgrade && apt-get -y dist-upgrade
 
 # Setup install environment and Timesketch dependencies
-RUN apt-get -y install apt-transport-https\
-                       curl\
-                       git\
-                       libffi-dev\
-                       lsb-release\
-                       python-dev\
-                       python-pip\
-                       python-psycopg2
+RUN apt-get -y install apt-transport-https \
+                       curl \
+                       git \
+                       libffi-dev \
+                       lsb-release \
+                       python3-dev \
+                       python3-pip \
+                       python3-psycopg2
 
 RUN curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -
 RUN VERSION=node_8.x && \
@@ -21,18 +21,18 @@ RUN VERSION=node_8.x && \
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list
 
-# Install Plaso
+# Install Plaso, nodejs and yarn.
 RUN apt-get -y install software-properties-common
 RUN add-apt-repository ppa:gift/stable && apt-get update
-RUN apt-get update && apt-get -y install python-plaso plaso-tools nodejs yarn
+RUN apt-get update && apt-get -y install plaso-tools nodejs yarn
 
-# Use pip to install Timesketch
-RUN pip install --upgrade pip
+# Use Python 3 pip (pip3) to install Timesketch
+RUN pip3 install --upgrade pip
 ADD . /tmp/timesketch
 RUN cd /tmp/timesketch && yarn install && yarn run build
-# Remove pyyaml from requirements.txt to avoid conflits with python-yaml ubuntu package
+# Remove pyyaml from requirements.txt to avoid conflits with python-yaml Ubuntu package
 RUN sed -i -e '/pyyaml/d' /tmp/timesketch/requirements.txt
-RUN pip install /tmp/timesketch/
+RUN pip3 install /tmp/timesketch/
 
 # Copy the Timesketch configuration file into /etc
 RUN cp /tmp/timesketch/timesketch.conf /etc
