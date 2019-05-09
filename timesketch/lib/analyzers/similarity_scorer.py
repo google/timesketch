@@ -81,7 +81,7 @@ class SimilarityScorerConfig(object):
         return config_dict
 
 
-class SimilarityScorer(interface.BaseIndexAnalyzer):
+class SimilarityScorer(interface.BaseAnalyzer):
     """Score events based on Jaccard distance."""
 
     NAME = 'SimilarityScorer'

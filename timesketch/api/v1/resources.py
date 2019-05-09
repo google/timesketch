@@ -1560,16 +1560,15 @@ class TimelineListResource(ResourceMixin, Resource):
                 return_code = HTTP_STATUS_CODE_OK
                 timeline = Timeline.query.get(timeline_id)
 
-            # If enabled, run sketch analyzers when timeline is added.
-            # Import here to avoid circular imports.
-            if current_app.config.get('ENABLE_SKETCH_ANALYZERS'):
-                from timesketch.lib import tasks
-                sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
-                    sketch_id)
-                if sketch_analyzer_group:
-                    pipeline = (tasks.run_sketch_init.s(
-                        [searchindex.index_name]) | sketch_analyzer_group)
-                    pipeline.apply_async(task_id=searchindex.index_name)
+            # Run sketch analyzers when timeline is added. Import here to avoid
+            # circular imports.
+            from timesketch.lib import tasks
+            sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+                sketch_id)
+            if sketch_analyzer_group:
+                pipeline = (tasks.run_sketch_init.s(
+                    [searchindex.index_name]) | sketch_analyzer_group)
+                pipeline.apply_async(task_id=searchindex.index_name)
 
             return self.to_json(
                 timeline, meta=metadata, status_code=return_code)

@@ -466,3 +466,24 @@ class Analysis(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.sketch = sketch
         self.timeline = timeline
         self.result = result
+
+    @property
+    def task_id(self):
+        """Celery task ID.
+
+        Returns:
+            Celery task ID created from index name and timeline ID.
+        """
+        return '{0:s}-{1:d}'.format(
+            self.timeline.searchindex.index_name, self.timeline.id)
+
+    def run(self):
+        """Run the analysis pipeline."""
+        # Import here to avoid circular imports.
+        from timesketch.lib import tasks
+        analyzer_group = tasks.build_sketch_analysis_pipeline(
+            self.sketch.id, analyzer_names=[self.analyzer])
+        if analyzer_group:
+            pipeline = (tasks.run_sketch_init.s(
+                [self.timeline.searchindex.index_name]) | analyzer_group)
+            pipeline.apply_async(task_id=self.task_id)

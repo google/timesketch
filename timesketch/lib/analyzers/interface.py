@@ -307,7 +307,7 @@ class Sketch(object):
         return indices
 
 
-class BaseIndexAnalyzer(object):
+class BaseAnalyzer(object):
     """Base class for analyzers.
 
     Attributes:
@@ -445,7 +445,7 @@ class BaseIndexAnalyzer(object):
         raise NotImplementedError
 
 
-class BaseSketchAnalyzer(BaseIndexAnalyzer):
+class BaseSketchAnalyzer(BaseAnalyzer):
     """Base class for sketch analyzers.
 
     Attributes:

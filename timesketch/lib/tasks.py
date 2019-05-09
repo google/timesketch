@@ -115,21 +115,20 @@ def _get_index_analyzers():
         None if index analyzers are disabled in config.
     """
     tasks = []
+    index_analyzers = current_app.config.get('AUTO_INDEX_ANALYZERS')
 
-    # Exit early if index analyzers are disabled.
-    if not current_app.config.get('ENABLE_INDEX_ANALYZERS'):
+    if not index_analyzers:
         return None
 
-    for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
+    for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers(
+            index_analyzers):
         kwarg_list = analyzer_cls.get_kwargs()
 
-        if not analyzer_cls.IS_SKETCH_ANALYZER:
-            if kwarg_list:
-                for kwargs in kwarg_list:
-                    tasks.append(
-                        run_index_analyzer.s(analyzer_name, **kwargs))
-            else:
-                tasks.append(run_index_analyzer.s(analyzer_name))
+        if kwarg_list:
+            for kwargs in kwarg_list:
+                tasks.append(run_index_analyzer.s(analyzer_name, **kwargs))
+        else:
+            tasks.append(run_index_analyzer.s(analyzer_name))
 
     return chain(tasks)
 
@@ -153,7 +152,7 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
     index_analyzer_chain = _get_index_analyzers()
     sketch_analyzer_chain = None
 
-    if sketch_id and current_app.config.get('ENABLE_SKETCH_ANALYZERS'):
+    if sketch_id:
         sketch_analyzer_chain = build_sketch_analysis_pipeline(sketch_id)
 
     index_task = index_task_class.s(
@@ -181,22 +180,28 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
     return chain(index_task, index_analyzer_chain)
 
 
-def build_sketch_analysis_pipeline(sketch_id):
+def build_sketch_analysis_pipeline(sketch_id, analyzer_names=None):
     """Build a pipeline for sketch analysis.
 
     Args:
-        sketch_id: The ID of the sketch to analyze.
+        sketch_id (int): The ID of the sketch to analyze.
+        analyzer_names (list): List of analyzers to run.
 
     Returns:
         Celery group with analysis tasks or None if no analyzers are enabled.
     """
     tasks = []
+    auto_analyzers = current_app.config.get('AUTO_SKETCH_ANALYZERS', None)
 
-    # Exit early if sketch analyzers are disabled.
-    if not current_app.config.get('ENABLE_SKETCH_ANALYZERS', False):
+    # Exit early if no sketch analyzers are configured to run.
+    if not (analyzer_names or auto_analyzers):
         return None
 
-    for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
+    if not analyzer_names:
+        analyzer_names = auto_analyzers
+
+    analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
+    for analyzer_name, analyzer_cls in analyzers:
         kwarg_list = analyzer_cls.get_kwargs()
 
         if not analyzer_cls.IS_SKETCH_ANALYZER:
