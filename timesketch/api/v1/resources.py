@@ -28,7 +28,6 @@ POST /sketches/:sketch_id/views/
 """
 
 from __future__ import unicode_literals
-from __future__ import print_function
 
 import codecs
 import datetime
@@ -928,7 +927,6 @@ class AggregationListResource(ResourceMixin, Resource):
             sketch=sketch,
             view=view_id
         )
-        print('agg: {}'.format(aggregation))
         db_session.add(aggregation)
         db_session.commit()
 
