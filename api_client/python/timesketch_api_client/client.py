@@ -21,10 +21,13 @@ import uuid
 import bs4
 import requests
 
+from timesketch.lib.charts import manager as chart_manager
+
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
 
 import pandas
+import numpy
 from .definitions import HTTP_STATUS_CODE_20X
 
 
@@ -391,6 +394,24 @@ class Sketch(BaseResource):
                         value, name=key):
                     yield bucket
 
+    def list_aggregations(self):
+        """List all saved aggregations for this sketch.
+
+        Returns:
+            List of aggregations (instances of Aggregation objects)
+        """
+        sketch = self.lazyload_data()
+        aggregations = []
+        for aggregation in sketch['meta']['aggregations']:
+            aggregation_obj = Aggregation(
+                aggregation_id=aggregation['id'],
+                aggregation_name=aggregation['name'],
+                sketch=self,
+                sketch_id=self.id,
+                api=self.api)
+            aggregations.append(aggregation_obj)
+        return aggregations
+
     def list_views(self):
         """List all saved views for this sketch.
 
@@ -742,6 +763,7 @@ class Sketch(BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
 
+
 class SearchIndex(BaseResource):
     """Timesketch searchindex object.
 
@@ -784,6 +806,90 @@ class SearchIndex(BaseResource):
         """
         searchindex = self.lazyload_data()
         return searchindex['objects'][0]['index_name']
+
+
+class Aggregation(BaseResource):
+    """Saved aggregation object.
+
+    Attributes:
+        id: Primary key of the aggregation.
+        name: Name of the aggregation.
+    """
+
+    def __init__(self, aggregation_id, aggregation_name, sketch, sketch_id, api):
+      self.id = aggregation_id
+      self.name = aggregation_name
+      self._sketch = sketch
+      resource_uri = 'sketches/{0:d}/aggregation/{1:d}/'.format(sketch_id, aggregation_id)
+      super(Aggregation, self).__init__(api, resource_uri)
+
+    def _aggregation(self):
+      """Return the aggregation object."""
+      data = self.lazyload_data()
+      return data.get('objects', [])[0]
+
+    @property
+    def agg_type(self):
+      """Property that returns the agg_type string."""
+      aggregation = self._aggregation()
+      return aggregation.get('agg_type', '')
+
+    @property
+    def chart_type(self):
+      """Property that returns the chart_type string."""
+      aggregation = self._aggregation()
+      return aggregation.get('chart_type', '')
+
+    @property
+    def description(self):
+      """Property that returns the description string."""
+      aggregation = self._aggregation()
+      return aggregation.get('description', '')
+
+    @property
+    def view(self):
+      """Property that returns the view_id integer."""
+      aggregation = self._aggregation()
+      return aggregation.get('view_id', 0)
+
+    @property
+    def parameters(self):
+      """Property that returns the parameter dict."""
+      aggregation = self._aggregation()
+      param_string = aggregation.get('parameters', '')
+      if not param_string:
+          return {}
+      return json.loads(param_string)
+
+    def chart(self):
+      """Returns a vega specification."""
+      chart_class = chart_manager.ChartManager.get_chart(self.chart_type)
+
+      if not chart_class:
+          return
+
+      data = self.run(as_pandas=True)
+      x_value = ''
+      y_value = ''
+      for name, obj_type in data.dtypes.items():
+          if name == self.name:
+              continue
+          if numpy.issubdtype(obj_type, numpy.integer):
+              y_value = name
+          else:
+              x_value = name
+
+      chart_obj = chart_class({
+          'values': a.run(as_pandas=True),
+          'encoding': {'x': x_value, 'y': y_value}
+      })
+
+      return chart_obj
+
+    def run(self, as_pandas=False):
+      """Returns the results from an aggregator run."""
+      return self._sketch.run_aggregator(
+          self.name, self.parameters, as_pandas=as_pandas)
 
 
 class View(BaseResource):

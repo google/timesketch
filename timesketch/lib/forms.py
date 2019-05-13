@@ -182,6 +182,16 @@ class GraphExploreForm(BaseForm):
     output_format = StringField('Output format')
 
 
+class SaveAggregationForm(BaseForm):
+  """Form used to save an aggregation."""
+  name = StringField('Name')
+  description = StringField('Description')
+  agg_type = StringField('Aggregation Type')
+  parameters = StringField('Aggregation parameters')
+  chart_type = StringField('Chart plugin type')
+  view_id = IntegerField('Attach to View')
+
+
 class AggregationExploreForm(BaseForm):
     """Form used to send aggregation requests to the datastore."""
     aggregation_dsl = StringField('Aggregation DSL', validators=[Optional()])

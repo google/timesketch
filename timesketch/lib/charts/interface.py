@@ -36,7 +36,7 @@ class BaseChart(object):
         _values = data.get('values')
         _encoding = data.get('encoding')
 
-        if not _values or not _encoding:
+        if _values is None or not _encoding:
             raise RuntimeError('Values and/or Encoding missing from data')
 
         self.name = self.NAME
