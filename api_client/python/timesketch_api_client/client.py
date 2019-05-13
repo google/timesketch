@@ -835,6 +835,14 @@ class Aggregation(BaseResource):
       return aggregation.get('agg_type', '')
 
     @property
+    def chart(self):
+      """Property that returns an altair Vega-lite chart."""
+      return self.generate_chart()
+
+    def generate_chart(self):
+      """Returns an altair Vega-lite chart."""
+
+    @property
     def chart_type(self):
       """Property that returns the chart_type string."""
       aggregation = self._aggregation()
@@ -861,8 +869,13 @@ class Aggregation(BaseResource):
           return {}
       return json.loads(param_string)
 
-    def chart(self):
-      """Returns a vega specification."""
+    @property
+    def table(self):
+      """Property that returns a pandas DataFrame."""
+      return self.run(as_pandas=True)
+
+    def generate_chart(self):
+      """Returns an altair Vega-lite chart."""
       chart_class = chart_manager.ChartManager.get_chart(self.chart_type)
 
       if not chart_class:
@@ -879,12 +892,16 @@ class Aggregation(BaseResource):
           else:
               x_value = name
 
+      encoding = {
+          'x': {'field': x_value, 'type': 'ordinal'},
+          'y': {'field': y_value, 'type': 'quantitative'},
+      }
       chart_obj = chart_class({
-          'values': a.run(as_pandas=True),
-          'encoding': {'x': x_value, 'y': y_value}
+          'values': data,
+          'encoding': encoding,
       })
 
-      return chart_obj
+      return chart_obj.generate()
 
     def run(self, as_pandas=False):
       """Returns the results from an aggregator run."""
