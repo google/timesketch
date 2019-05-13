@@ -839,9 +839,6 @@ class Aggregation(BaseResource):
       """Property that returns an altair Vega-lite chart."""
       return self.generate_chart()
 
-    def generate_chart(self):
-      """Returns an altair Vega-lite chart."""
-
     @property
     def chart_type(self):
       """Property that returns the chart_type string."""
