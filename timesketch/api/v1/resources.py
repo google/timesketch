@@ -773,7 +773,8 @@ class AggregationResource(ResourceMixin, Resource):
 
         Args:
             sketch_id: Integer primary key for a sketch database model
-            aggregation_id: Integer primary key for an aggregation database model
+            aggregation_id: Integer primary key for an aggregation database
+                model
         """
         form = SaveAggregationForm.build(request)
         if not form.validate_on_submit():
