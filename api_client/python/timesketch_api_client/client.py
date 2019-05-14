@@ -24,6 +24,7 @@ import requests
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
 from timesketch.lib.charts import manager as chart_manager
+import altair
 import pandas
 import numpy
 from .definitions import HTTP_STATUS_CODE_20X
@@ -876,7 +877,7 @@ class Aggregation(BaseResource):
         chart_class = chart_manager.ChartManager.get_chart(self.chart_type)
 
         if not chart_class:
-            return alt.Chart(pandas.DataFrame()).mark_point()
+            return altair.Chart(pandas.DataFrame()).mark_point()
 
         data = self.run(as_pandas=True)
         x_value = ''
