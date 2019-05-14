@@ -810,7 +810,7 @@ class AggregationExploreResource(ResourceMixin, Resource):
     def post(self, sketch_id):
         """Handles POST request to the resource.
 
-        Handler for /api/v1/sketches/<int:sketch_id>/aggregation/explore
+        Handler for /api/v1/sketches/<int:sketch_id>/aggregation/explore/
 
         Args:
             sketch_id: Integer primary key for a sketch database model
@@ -830,9 +830,9 @@ class AggregationExploreResource(ResourceMixin, Resource):
 
         aggregation_dsl = form.aggregation_dsl.data
         aggregator_name = form.aggregator_name.data
-        aggregator_parameters = json.loads(form.aggregator_parameters.data)
 
-        if aggregator_name and aggregator_parameters:
+        if aggregator_name:
+            aggregator_parameters = json.loads(form.aggregator_parameters.data)
             agg_class = aggregator_manager.AggregatorManager.get_aggregator(
                 aggregator_name)
             if not agg_class:

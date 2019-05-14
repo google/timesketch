@@ -21,11 +21,9 @@ import uuid
 import bs4
 import requests
 
-from timesketch.lib.charts import manager as chart_manager
-
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
-
+from timesketch.lib.charts import manager as chart_manager
 import pandas
 import numpy
 from .definitions import HTTP_STATUS_CODE_20X
@@ -816,94 +814,96 @@ class Aggregation(BaseResource):
         name: Name of the aggregation.
     """
 
-    def __init__(self, aggregation_id, aggregation_name, sketch, sketch_id, api):
-      self.id = aggregation_id
-      self.name = aggregation_name
-      self._sketch = sketch
-      resource_uri = 'sketches/{0:d}/aggregation/{1:d}/'.format(sketch_id, aggregation_id)
-      super(Aggregation, self).__init__(api, resource_uri)
+    def __init__(
+            self, aggregation_id, aggregation_name, sketch, sketch_id, api):
+        self.id = aggregation_id
+        self.name = aggregation_name
+        self._sketch = sketch
+        resource_uri = 'sketches/{0:d}/aggregation/{1:d}/'.format(
+            sketch_id, aggregation_id)
+        super(Aggregation, self).__init__(api, resource_uri)
 
     def _aggregation(self):
-      """Return the aggregation object."""
-      data = self.lazyload_data()
-      return data.get('objects', [])[0]
+        """Return the aggregation object."""
+        data = self.lazyload_data()
+        return data.get('objects', [])[0]
 
     @property
     def agg_type(self):
-      """Property that returns the agg_type string."""
-      aggregation = self._aggregation()
-      return aggregation.get('agg_type', '')
+        """Property that returns the agg_type string."""
+        aggregation = self._aggregation()
+        return aggregation.get('agg_type', '')
 
     @property
     def chart(self):
-      """Property that returns an altair Vega-lite chart."""
-      return self.generate_chart()
+        """Property that returns an altair Vega-lite chart."""
+        return self.generate_chart()
 
     @property
     def chart_type(self):
-      """Property that returns the chart_type string."""
-      aggregation = self._aggregation()
-      return aggregation.get('chart_type', '')
+        """Property that returns the chart_type string."""
+        aggregation = self._aggregation()
+        return aggregation.get('chart_type', '')
 
     @property
     def description(self):
-      """Property that returns the description string."""
-      aggregation = self._aggregation()
-      return aggregation.get('description', '')
+        """Property that returns the description string."""
+        aggregation = self._aggregation()
+        return aggregation.get('description', '')
 
     @property
     def view(self):
-      """Property that returns the view_id integer."""
-      aggregation = self._aggregation()
-      return aggregation.get('view_id', 0)
+        """Property that returns the view_id integer."""
+        aggregation = self._aggregation()
+        return aggregation.get('view_id', 0)
 
     @property
     def parameters(self):
-      """Property that returns the parameter dict."""
-      aggregation = self._aggregation()
-      param_string = aggregation.get('parameters', '')
-      if not param_string:
-          return {}
-      return json.loads(param_string)
+        """Property that returns the parameter dict."""
+        aggregation = self._aggregation()
+        param_string = aggregation.get('parameters', '')
+        if not param_string:
+            return {}
+        return json.loads(param_string)
 
     @property
     def table(self):
-      """Property that returns a pandas DataFrame."""
-      return self.run(as_pandas=True)
+        """Property that returns a pandas DataFrame."""
+        return self.run(as_pandas=True)
 
     def generate_chart(self):
-      """Returns an altair Vega-lite chart."""
-      chart_class = chart_manager.ChartManager.get_chart(self.chart_type)
+        """Returns an altair Vega-lite chart."""
+        chart_class = chart_manager.ChartManager.get_chart(self.chart_type)
 
-      if not chart_class:
-          return
+        if not chart_class:
+            return
 
-      data = self.run(as_pandas=True)
-      x_value = ''
-      y_value = ''
-      for name, obj_type in data.dtypes.items():
-          if name == self.name:
-              continue
-          if numpy.issubdtype(obj_type, numpy.integer):
-              y_value = name
-          else:
-              x_value = name
+        data = self.run(as_pandas=True)
+        x_value = ''
+        y_value = ''
+        for name, obj_type in data.dtypes.items():
+            if name == self.name:
+                continue
+            if numpy.issubdtype(obj_type, numpy.integer):
+                y_value = name
+            else:
+                x_value = name
 
-      encoding = {
-          'x': {'field': x_value, 'type': 'ordinal'},
-          'y': {'field': y_value, 'type': 'quantitative'},
-      }
-      chart_obj = chart_class({
-          'values': data,
-          'encoding': encoding,
-      })
+        encoding = {
+            'x': {'field': x_value, 'type': 'ordinal'},
+            'y': {'field': y_value, 'type': 'quantitative'},
+        }
+        chart_obj = chart_class({
+            'values': data,
+            'encoding': encoding,
+        })
 
-      return chart_obj.generate()
+        return chart_obj.generate()
 
     def run(self, as_pandas=False):
-      """Returns the results from an aggregator run."""
-      return self._sketch.run_aggregator(
-          self.name, self.parameters, as_pandas=as_pandas)
+        """Returns the results from an aggregator run."""
+        return self._sketch.run_aggregator(
+            self.name, self.parameters, as_pandas=as_pandas)
 
 
 class View(BaseResource):
