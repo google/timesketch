@@ -42,9 +42,9 @@ class BaseChart(object):
 
         self.name = self.NAME
         if isinstance(_values, pd.DataFrame):
-          self.values = _values
+            self.values = _values
         else:
-          self.values = alt.Data(values=_values)
+            self.values = alt.Data(values=_values)
         self.encoding = _encoding
 
     def generate(self):
