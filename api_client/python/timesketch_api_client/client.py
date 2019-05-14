@@ -876,7 +876,7 @@ class Aggregation(BaseResource):
         chart_class = chart_manager.ChartManager.get_chart(self.chart_type)
 
         if not chart_class:
-            return
+            return alt.Chart(pandas.DataFrame()).mark_point()
 
         data = self.run(as_pandas=True)
         x_value = ''
