@@ -13,8 +13,12 @@
 # limitations under the License.
 """Entry point for the application."""
 
+from __future__ import unicode_literals
+
 import os
 import sys
+
+import six
 
 from celery import Celery
 from flask import Flask
@@ -23,31 +27,7 @@ from flask_migrate import Migrate
 from flask_restful import Api
 from flask_wtf import CSRFProtect
 
-from timesketch.api.v1.resources import AggregationResource
-from timesketch.api.v1.resources import ExploreResource
-from timesketch.api.v1.resources import EventResource
-from timesketch.api.v1.resources import EventAnnotationResource
-from timesketch.api.v1.resources import GraphResource
-from timesketch.api.v1.resources import SketchResource
-from timesketch.api.v1.resources import SketchListResource
-from timesketch.api.v1.resources import ViewResource
-from timesketch.api.v1.resources import ViewListResource
-from timesketch.api.v1.resources import SearchTemplateResource
-from timesketch.api.v1.resources import SearchTemplateListResource
-from timesketch.api.v1.resources import UploadFileResource
-from timesketch.api.v1.resources import TaskResource
-from timesketch.api.v1.resources import StoryListResource
-from timesketch.api.v1.resources import StoryResource
-from timesketch.api.v1.resources import QueryResource
-from timesketch.api.v1.resources import CountEventsResource
-from timesketch.api.v1.resources import TimelineResource
-from timesketch.api.v1.resources import TimelineListResource
-from timesketch.api.v1.resources import SearchIndexListResource
-from timesketch.api.v1.resources import SearchIndexResource
-from timesketch.api.experimental.resources import WinLoginsResource
-from timesketch.api.experimental.resources import WinServicesResource
-from timesketch.api.experimental.resources import CreateGraphResource
-from timesketch.api.experimental.resources import DeleteGraphResource
+from timesketch.api.v1.routes import API_ROUTES as V1_API_ROUTES
 from timesketch.lib.errors import ApiHTTPError
 from timesketch.models import configure_engine
 from timesketch.models import init_db
@@ -55,8 +35,11 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.user import User
 from timesketch.views.home import home_views
 from timesketch.views.sketch import sketch_views
-from timesketch.views.story import story_views
-from timesketch.views.user import user_views
+from timesketch.views.auth import auth_views
+from timesketch.views.spa import spa_views
+
+# Set to true to use the new Vue.js based frontend.
+USE_NEW_FRONTEND = False
 
 
 def create_app(config=None):
@@ -70,41 +53,52 @@ def create_app(config=None):
         Application object (instance of flask.Flask).
     """
     # Setup the Flask app and load the config.
-    app = Flask(__name__, template_folder=u'templates', static_folder=u'static')
+    template_folder = 'templates'
+    static_folder = 'static'
+
+    if USE_NEW_FRONTEND:
+        template_folder = 'frontend/dist'
+        static_folder = 'frontend/dist'
+
+    app = Flask(
+        __name__,
+        template_folder=template_folder,
+        static_folder=static_folder
+    )
 
     if not config:
-        config = u'/etc/timesketch.conf'
+        config = '/etc/timesketch.conf'
 
-    if isinstance(config, unicode):
-        os.environ[u'TIMESKETCH_SETTINGS'] = config
+    if isinstance(config, six.text_type):
+        os.environ['TIMESKETCH_SETTINGS'] = config
         try:
-            app.config.from_envvar(u'TIMESKETCH_SETTINGS')
+            app.config.from_envvar('TIMESKETCH_SETTINGS')
         except IOError:
             sys.stderr.write(
-                u'Config file {0} does not exist.\n'.format(config))
+                'Config file {0} does not exist.\n'.format(config))
             sys.exit()
     else:
         app.config.from_object(config)
 
     # Make sure that SECRET_KEY is configured.
-    if not app.config[u'SECRET_KEY']:
-        sys.stderr.write(u'ERROR: Secret key not present. '
-                         u'Please update your configuration.\n'
-                         u'To generate a key you can use openssl:\n\n'
-                         u'$ openssl rand -base64 32\n\n')
+    if not app.config['SECRET_KEY']:
+        sys.stderr.write('ERROR: Secret key not present. '
+                         'Please update your configuration.\n'
+                         'To generate a key you can use openssl:\n\n'
+                         '$ openssl rand -base64 32\n\n')
         sys.exit()
 
     # Plaso version that we support
-    if app.config[u'UPLOAD_ENABLED']:
+    if app.config['UPLOAD_ENABLED']:
         try:
             from plaso import __version__ as plaso_version
         except ImportError:
-            sys.stderr.write(u'Upload is enabled, but Plaso is not installed.')
+            sys.stderr.write('Upload is enabled, but Plaso is not installed.')
             sys.exit()
-        app.config[u'PLASO_VERSION'] = plaso_version
+        app.config['PLASO_VERSION'] = plaso_version
 
     # Setup the database.
-    configure_engine(app.config[u'SQLALCHEMY_DATABASE_URI'])
+    configure_engine(app.config['SQLALCHEMY_DATABASE_URI'])
     db = init_db()
 
     # Alembic migration support:
@@ -115,58 +109,17 @@ def create_app(config=None):
     # Register blueprints. Blueprints are a way to organize your Flask
     # Flask application. See this for more information:
     # http://flask.pocoo.org/docs/latest/blueprints/
-    app.register_blueprint(user_views)
-    app.register_blueprint(home_views)
-    app.register_blueprint(sketch_views)
-    app.register_blueprint(story_views)
+    if USE_NEW_FRONTEND:
+        app.register_blueprint(spa_views)
+    else:
+        app.register_blueprint(auth_views)
+        app.register_blueprint(home_views)
+        app.register_blueprint(sketch_views)
 
     # Setup URL routes for the API.
-    api_v1 = Api(app, prefix=u'/api/v1')
-    api_v1.add_resource(SketchListResource, u'/sketches/')
-    api_v1.add_resource(SketchResource, u'/sketches/<int:sketch_id>/')
-    api_v1.add_resource(AggregationResource,
-                        u'/sketches/<int:sketch_id>/aggregation/')
-    api_v1.add_resource(ExploreResource, u'/sketches/<int:sketch_id>/explore/')
-    api_v1.add_resource(EventResource, u'/sketches/<int:sketch_id>/event/')
-    api_v1.add_resource(EventAnnotationResource,
-                        u'/sketches/<int:sketch_id>/event/annotate/')
-    api_v1.add_resource(ViewListResource, u'/sketches/<int:sketch_id>/views/')
-    api_v1.add_resource(ViewResource,
-                        u'/sketches/<int:sketch_id>/views/<int:view_id>/')
-    api_v1.add_resource(SearchTemplateListResource, u'/searchtemplate/')
-    api_v1.add_resource(SearchTemplateResource,
-                        u'/searchtemplate/<int:searchtemplate_id>/')
-    api_v1.add_resource(UploadFileResource, u'/upload/')
-    api_v1.add_resource(TaskResource, u'/tasks/')
-    api_v1.add_resource(StoryListResource,
-                        u'/sketches/<int:sketch_id>/stories/')
-    api_v1.add_resource(StoryResource,
-                        u'/sketches/<int:sketch_id>/stories/<int:story_id>/')
-    api_v1.add_resource(QueryResource,
-                        u'/sketches/<int:sketch_id>/explore/query/')
-    api_v1.add_resource(CountEventsResource,
-                        u'/sketches/<int:sketch_id>/count/')
-    api_v1.add_resource(TimelineListResource,
-                        u'/sketches/<int:sketch_id>/timelines/')
-    api_v1.add_resource(
-        TimelineResource,
-        u'/sketches/<int:sketch_id>/timelines/<int:timeline_id>/')
-    api_v1.add_resource(SearchIndexListResource, u'/searchindices/')
-    api_v1.add_resource(SearchIndexResource,
-                        u'/searchindices/<int:searchindex_id>/')
-    api_v1.add_resource(GraphResource,
-                        u'/sketches/<int:sketch_id>/explore/graph/')
-
-    # Experimental API resources
-    api_experimental = Api(app, prefix=u'/api/experimental')
-    api_experimental.add_resource(WinLoginsResource,
-                                  u'/sketches/<int:sketch_id>/win_logins/')
-    api_experimental.add_resource(WinServicesResource,
-                                  u'/sketches/<int:sketch_id>/win_services/')
-    api_experimental.add_resource(CreateGraphResource,
-                                  u'/sketches/<int:sketch_id>/create_graph/')
-    api_experimental.add_resource(DeleteGraphResource,
-                                  u'/sketches/<int:sketch_id>/delete_graph/')
+    api_v1 = Api(app, prefix='/api/v1')
+    for route in V1_API_ROUTES:
+        api_v1.add_resource(*route)
 
     # Register error handlers
     # pylint: disable=unused-variable
@@ -182,7 +135,7 @@ def create_app(config=None):
     # Setup the login manager.
     login_manager = LoginManager()
     login_manager.init_app(app)
-    login_manager.login_view = u'user_views.login'
+    login_manager.login_view = 'user_views.login'
 
     # This is used by the flask_login extension.
     # pylint: disable=unused-variable
@@ -209,7 +162,7 @@ def create_app(config=None):
 def create_celery_app():
     """Create a Celery app instance."""
     app = create_app()
-    celery = Celery(app.import_name, broker=app.config[u'CELERY_BROKER_URL'])
+    celery = Celery(app.import_name, broker=app.config['CELERY_BROKER_URL'])
     celery.conf.update(app.config)
     TaskBase = celery.Task
 

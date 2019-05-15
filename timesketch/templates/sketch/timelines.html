@@ -17,7 +17,7 @@
             </p>
             <ts-core-upload sketch-id="{{ sketch.id }}" visible="true" btn-text="'Select file'"></ts-core-upload>
             <br>
-            <p>If you are uploading a CSV or JSONL file make sure to read the <a href="https://github.com/google/timesketch/wiki/UserGuideTimelineFromFile" rel="noreferrer" target="_blank">documentation</a> to learn what columns are mandatory.</p>
+            <p>If you are uploading a CSV or JSONL file make sure to read the <a href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines" rel="noreferrer" target="_blank">documentation</a> to learn what columns are mandatory.</p>
         </div>
     {% endif %}
 
@@ -32,13 +32,12 @@
         </div>
     {% endif %}
 
-    {% if sketch.has_permission(user=current_user, permission='write') and not sketch.timelines and not timelines%}
+    {% if sketch.has_permission(user=current_user, permission='write') and not sketch.timelines and not timelines and not upload_enabled %}
         <div class="row">
             <div class="col-md-12">
                 <div class="text-center" style="padding:100px;">
                     <h3 style="color:#777"><i class="fa fa-meh-o"></i> No timelines in the system yet</h3>
-                    <p>Get started by importing a Plaso storage file</p>
-                    <ts-core-upload sketch-id="{{ sketch.id }}"></ts-core-upload>
+                    <p>Uploads are disabled. See the <a href="https://github.com/google/timesketch/blob/master/docs/EnablePlasoUpload.md" rel="noreferrer" target="_blank">documentation</a> on how to enable the upload feature and get started.</p>
                 </div>
             </div>
         </div>
@@ -59,7 +58,7 @@
                                 <th>Created</th>
                                 </thead>
                                 {% for timeline in timelines %}
-                                    {% if timeline.get_status.status == 'new' %}
+                                    {% if timeline.get_status.status == 'ready' or timeline.get_status.status == 'new' %}
                                         <tr>
                                             <td><input name="timelines" type="checkbox" value={{ timeline.id }}></td>
                                             <td>{{ timeline.name }}</td>

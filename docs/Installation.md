@@ -3,7 +3,7 @@
 # Install Timesketch from scratch
 
 #### Install Ubuntu
-This installation guide is based on Ubuntu 16.04LTS Server edition. Follow the installation guide for Ubuntu and install the base system.
+This installation guide is based on Ubuntu 18.04LTS Server edition. Follow the installation guide for Ubuntu and install the base system.
 After the installation is done, login and update the system.
 
     $ sudo apt-get update
@@ -16,10 +16,10 @@ Install Java
     $ sudo apt-get install openjdk-8-jre-headless
     $ sudo apt-get install apt-transport-https
 
-Install the latest Elasticsearch 5.x release:
+Install the latest Elasticsearch 6.x release:
 
-    $ sudo wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
-    $ sudo echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | tee -a /etc/apt/sources.list.d/elastic-5.x.list
+    $ sudo wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+    $ sudo echo "deb https://artifacts.elastic.co/packages/6.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list
     $ sudo apt-get update
     $ sudo apt-get install elasticsearch
 
@@ -28,16 +28,15 @@ Install the latest Elasticsearch 5.x release:
 This is up to your specific environment, but if you run elasticsearch on the same host as Timesketch you should lock it down to only listen to localhost.
 The configuration for Elasticsearch is located in `/etc/elasticsearch/elasticsearch.yml`
 
-You need to deploy two Groovy scripts. Copy the following two files to `/etc/elasticsearch/scripts/`:
-
-    https://raw.githubusercontent.com/google/timesketch/master/contrib/add_label.groovy
-    https://raw.githubusercontent.com/google/timesketch/master/contrib/toggle_label.groovy
-
 Make sure that Elasticsearch is started on boot:
 
     /bin/systemctl daemon-reload
     /bin/systemctl enable elasticsearch.service
     /bin/systemctl start elasticsearch.service
+    
+Make sure that Elasticsearch is running:
+
+    /bin/systemctl status elasticsearch.service
 
 #### Install PostgreSQL
 

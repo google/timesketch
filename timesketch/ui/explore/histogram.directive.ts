@@ -13,7 +13,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
  */
-import {Chart} from 'chart.js'
+import {Chart} from 'chart.js';
 
 export const tsHistogram = function ($window, timesketchApi) {
     /**
@@ -39,50 +39,50 @@ export const tsHistogram = function ($window, timesketchApi) {
         link: function (scope, element, attrs, ctrl) {
 
             // Default chart type
-            scope.chartType = 'bar'
+            scope.chartType = 'bar';
 
             scope.$watchGroup(['meta', 'showCharts', 'chartType'], function (newval, oldval) {
                 if (scope.showCharts) {
                     timesketchApi.aggregation(scope.sketchId, scope.query, scope.filter, scope.queryDsl, 'histogram')
                         .success(function (data) {
-                            render_histogram(data['objects'])
-                        })
+                            render_histogram(data['objects']);
+                        });
                 }
-            }, true)
+            }, true);
 
             scope.toggleChartType = function () {
               if (scope.chartType == 'bar') {
-                  scope.chartType = 'line'
+                  scope.chartType = 'line';
               } else {
-                  scope.chartType = 'bar'
+                  scope.chartType = 'bar';
               }
-            }
+            };
 
             function render_histogram(aggregation) {
                 // Don't render chart if there is no data
-                scope.disableChart = false
+                scope.disableChart = false;
                 if (aggregation.length < 1) {
-                  scope.disableChart = true
-                  return
+                  scope.disableChart = true;
+                  return;
                 }
 
                 // Remove the current histogram canvas to avoid old data
                 // to be rendered.
                 if (scope.histogram) {
-                    scope.histogram.destroy()
+                    scope.histogram.destroy();
                 }
 
                 // Arrays to hold out chart data.
-                const chart_labels: any[] = []
-                const chart_values: any[] = []
+                const chart_labels: any[] = [];
+                const chart_values: any[] = [];
 
                 aggregation.forEach(function (d) {
-                    chart_labels.push(d.key_as_string!)
-                    chart_values.push(d.doc_count!)
-                })
+                    chart_labels.push(d.key_as_string!);
+                    chart_values.push(d.doc_count!);
+                });
 
                 // Get our canvas and initiate the chart.
-                const ctx = document.getElementById('histogram')
+                const ctx = document.getElementById('histogram');
                 scope.histogram = new Chart(ctx, {
                     type: scope.chartType,
                     data: {
@@ -91,19 +91,21 @@ export const tsHistogram = function ($window, timesketchApi) {
                             label: 'events',
                             data: chart_values,
                             backgroundColor: '#428bca',
-                            borderWidth: 0,
+                            borderColor: '#428bca',
+                            fill: false,
+                            pointRadius: 0,
+                            borderWidth: 1,
                         }],
                     },
                     options: {
                         legend: {
-                            display: false,
+                            display: true,
                         },
                         scales: {
                             yAxes: [{
                                 gridLines: {
-                                    display: false,
+                                    display: true,
                                 },
-                                type: 'logarithmic',
                                 ticks: {
                                     beginAtZero: true,
                                 },
@@ -111,14 +113,14 @@ export const tsHistogram = function ($window, timesketchApi) {
                             xAxes: [{
                                 type: 'time',
                                 gridLines: {
-                                    display: false,
+                                    display: true,
                                 },
                             }],
 
                         },
                     },
-                })
+                });
             }
         },
-    }
-}
+    };
+};

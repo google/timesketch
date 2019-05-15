@@ -1,0 +1,12 @@
+# Use the official Docker Hub Ubuntu 14.04 base image
+FROM ubuntu:18.04
+
+# Copy the entrypoint script into the container
+COPY docker/timesketch-dev-entrypoint.sh /docker-entrypoint.sh
+RUN chmod a+x /docker-entrypoint.sh
+
+# Load the entrypoint script to be run later
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
+# Invoke the entrypoint script
+CMD ["timesketch"]

@@ -18,75 +18,50 @@
    sudo python setup.py install
 """
 
-import os.path
-import sys
-import time
+from __future__ import unicode_literals
 
 from setuptools import find_packages
 from setuptools import setup
-from pip.req import parse_requirements
-from pip.download import PipSession
+try:  # for pip >= 10
+    from pip._internal.download import PipSession
+    from pip._internal.req import parse_requirements
+except ImportError:  # for pip <= 9.0.3
+    from pip.download import PipSession
+    from pip.req import parse_requirements
 
-timesketch_version = u'20170721'
+timesketch_version = '20190207'
 
 timesketch_description = (
-    u'Timesketch is a web based tool for collaborative forensic timeline '
-    u'analysis. Using sketches you and your collaborators can easily organize '
-    u'timelines and analyze them all at the same time.  Add meaning to '
-    u'your raw data with rich annotations, comments, tags and stars.')
-
-def check_before_upload():
-    """Warn user if frontend build is not present or is not recent.
-
-    Make sure that .js and .css bundles included in the PyPI package are up to
-    date.
-
-    Raises:
-    UserWarning
-    """
-    this_dir = os.path.dirname(__file__)
-    frontend_dist_dir = os.path.join(
-        this_dir, 'timesketch', 'static', 'dist',
-    )
-    js = os.path.join(frontend_dist_dir, 'bundle.js')
-    css = os.path.join(frontend_dist_dir, 'bundle.css')
-    if not (os.path.isfile(js) and os.path.isfile(css)):
-        raise UserWarning(
-            "Build the frontend before uploading to PyPI!"
-            + " (see docs/Developers-Guide.md)"
-        )
-    mtime = min(os.path.getmtime(js), os.path.getmtime(css))
-    if time.time() - mtime > 180:
-        raise UserWarning(
-            "Frontend build is older than 3 minutes, please rebuild!"
-            + " (see docs/Developers-Guide.md)"
-        )
-
-if 'upload' in sys.argv:
-    check_before_upload()
+    'Timesketch is a web based tool for collaborative forensic timeline '
+    'analysis. Using sketches you and your collaborators can easily organize '
+    'timelines and analyze them all at the same time.  Add meaning to '
+    'your raw data with rich annotations, comments, tags and stars.')
 
 setup(
-    name=u'timesketch',
+    name='timesketch',
     version=timesketch_version,
-    description=u'Digital forensic timeline analysis',
+    description='Digital forensic timeline analysis',
     long_description=timesketch_description,
-    license=u'Apache License, Version 2.0',
-    url=u'http://www.timesketch.org/',
-    maintainer=u'Timesketch development team',
-    maintainer_email=u'timesketch-dev@googlegroups.com',
+    license='Apache License, Version 2.0',
+    url='http://www.timesketch.org/',
+    maintainer='Timesketch development team',
+    maintainer_email='timesketch-dev@googlegroups.com',
     classifiers=[
-        u'Development Status :: 4 - Beta',
-        u'Environment :: Web Environment',
-        u'Operating System :: OS Independent',
-        u'Programming Language :: Python',
+        'Development Status :: 4 - Beta',
+        'Environment :: Web Environment',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
     ],
-    data_files=[(u'share/timesketch', [u'timesketch.conf'])],
+    data_files=[
+        ('share/timesketch', ['timesketch.conf', 'config/features.yaml'])],
     packages=find_packages(),
-    package_data={'timesketch.lib.experimental': ['*.cql'],},
     include_package_data=True,
     zip_safe=False,
-    scripts=[u'tsctl'],
+    entry_points={'console_scripts': ['tsctl=timesketch.tsctl:main']},
     install_requires=[str(req.req) for req in parse_requirements(
-        "requirements.txt", session=PipSession(),
+        'requirements.txt', session=PipSession(),
+    )],
+    tests_require=[str(req.req) for req in parse_requirements(
+        'test_requirements.txt', session=PipSession(),
     )],
 )

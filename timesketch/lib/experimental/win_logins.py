@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import unicode_literals
+
 # pylint: skip-file
 import argparse
 import csv
@@ -41,7 +43,7 @@ class KnowledgeBase(object):
 
 class ParseEvents(object):
 
-    LOCALHOST = [u'::1', u'127.0.0.1']
+    LOCALHOST = ['::1', '127.0.0.1']
 
     def __init__(self):
         super(ParseEvents, self).__init__()
@@ -53,57 +55,57 @@ class ParseEvents(object):
         event_container = dict()
 
         logon_types = {
-            u'0': u'Unknown',
-            u'2': u'Interactive',
-            u'3': u'Network',
-            u'4': u'Batch',
-            u'5': u'Service',
-            u'7': u'Unlock',
-            u'8': u'NetworkCleartext',
-            u'9': u'NewCredentials',
-            u'10': u'RemoteInteractive',
-            u'11': u'CachedInteractive'
+            '0': 'Unknown',
+            '2': 'Interactive',
+            '3': 'Network',
+            '4': 'Batch',
+            '5': 'Service',
+            '7': 'Unlock',
+            '8': 'NetworkCleartext',
+            '9': 'NewCredentials',
+            '10': 'RemoteInteractive',
+            '11': 'CachedInteractive'
         }
 
         event = parse_xml_event(xml)
 
-        src_ip = event[u'EventData'].get(u'IpAddress')
-        event_container[u'src_ip'] = src_ip
+        src_ip = event['EventData'].get('IpAddress')
+        event_container['src_ip'] = src_ip
 
-        src_hostname = event[u'EventData'].get(u'WorkstationName')
+        src_hostname = event['EventData'].get('WorkstationName')
         if src_hostname:
-            src_hostname = src_hostname.split(u'.')[0].upper()
-        event_container[u'src_hostname'] = src_hostname
+            src_hostname = src_hostname.split('.')[0].upper()
+        event_container['src_hostname'] = src_hostname
 
-        dst_hostname = event[u'System'][u'Computer'].get(u'value')
+        dst_hostname = event['System']['Computer'].get('value')
         if dst_hostname:
-            dst_hostname = dst_hostname.split(u'.')[0].upper()
-        event_container[u'dst_hostname'] = dst_hostname
+            dst_hostname = dst_hostname.split('.')[0].upper()
+        event_container['dst_hostname'] = dst_hostname
 
-        username = event[u'EventData'].get(u'TargetUserName')
-        event_container[u'username'] = username
+        username = event['EventData'].get('TargetUserName')
+        event_container['username'] = username
 
-        logon_type = event[u'EventData'].get(u'LogonType')
-        event_container[u'logon_type'] = logon_types[logon_type]
+        logon_type = event['EventData'].get('LogonType')
+        event_container['logon_type'] = logon_types[logon_type]
 
         if src_ip and src_hostname:
             self.kb.add(src_ip, src_hostname)
 
         event_list = [
-            event_container[u'src_ip'],
-            event_container[u'src_hostname'],
-            event_container[u'dst_hostname'],
-            event_container[u'username'],
-            event_container[u'logon_type']]
+            event_container['src_ip'],
+            event_container['src_hostname'],
+            event_container['dst_hostname'],
+            event_container['username'],
+            event_container['logon_type']]
 
         return event_list
 
     def parse(self, sketch_id):
         events = set()
         for timesketch_event in event_stream(
-                sketch_id=sketch_id, query=u'event_identifier:4624'):
-            xml_data = timesketch_event[u'_source'].get(u'xml_string')
-            timestamp = timesketch_event[u'_source'].get(u'timestamp')
+                sketch_id=sketch_id, query='event_identifier:4624'):
+            xml_data = timesketch_event['_source'].get('xml_string')
+            timestamp = timesketch_event['_source'].get('timestamp')
             event_data = self.parse_xml(xml_data)
             event_data.append(timestamp)
             events.add(tuple(event_data))
@@ -116,8 +118,8 @@ class ParseEvents(object):
             username = event[3]
             logon_type = event[4]
             timestamp = event[5]
-            es_index_name = timesketch_event.get(u'_index')
-            es_id = timesketch_event.get(u'_id')
+            es_index_name = timesketch_event.get('_index')
+            es_id = timesketch_event.get('_id')
 
             if src_ip in self.LOCALHOST:
                 src_ip = None
@@ -143,14 +145,15 @@ def main():
     sketch_id = args.sketch
 
     csvwriter = csv.writer(sys.stdout, delimiter=',')
-    csvwriter.writerow([u'user', u'uid', u'src', u'dst', u'method'])
+    csvwriter.writerow(['user', 'uid', 'src', 'dst', 'method', 'timestamp', 'es_index_name', 'es_query', 'sketch_id'])
     for event in parser.parse(sketch_id=sketch_id):
-        src_ws, user, dst_ws, method = event
+        src_ws, user, dst_ws, method, timestamp, es_index_name, es_id = event
+        es_query = '_index:{} AND _id:{}'.format(es_index_name, es_id)
         uid = user2id.get(user, None)
         if not uid:
-            user2id[user] = u'a' + uuid.uuid4().hex
+            user2id[user] = 'a' + uuid.uuid4().hex
             uid = user2id[user]
-        csvwriter.writerow([user, uid, src_ws, dst_ws, method])
+        csvwriter.writerow([user, uid, src_ws, dst_ws, method, timestamp, es_index_name, es_query, sketch_id])
 
 
 def win_logins(sketch_id):
@@ -160,13 +163,13 @@ def win_logins(sketch_id):
     for event in parser.parse(sketch_id=sketch_id):
         src_ws, user, dst_ws, method, timestamp, es_index_name, es_id = event
         result.append({
-            u'user': user,
-            u'src': src_ws,
-            u'dst': dst_ws,
-            u'method': method,
-            u'timestamp': timestamp,
-            u'es_index_name': es_index_name,
-            u'es_query': u'_index:{} AND _id:{}'.format(es_index_name, es_id)
+            'user': user,
+            'src': src_ws,
+            'dst': dst_ws,
+            'method': method,
+            'timestamp': timestamp,
+            'es_index_name': es_index_name,
+            'es_query': '_index:{} AND _id:{}'.format(es_index_name, es_id)
         })
     return result
 

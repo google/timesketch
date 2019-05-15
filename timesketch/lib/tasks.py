@@ -13,130 +13,423 @@
 # limitations under the License.
 """Celery task for processing Plaso storage files."""
 
+from __future__ import unicode_literals
+
 import logging
 import subprocess
+import traceback
 
+import six
+
+from celery import chain
+from celery import signals
 from flask import current_app
+from sqlalchemy import create_engine
 
-from timesketch import create_app
 from timesketch import create_celery_app
+from timesketch.lib.analyzers import manager
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
 from timesketch.lib.utils import read_and_validate_jsonl
+from timesketch.lib.utils import send_email
+from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
+from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import Timeline
 
 celery = create_celery_app()
 
 
+class SqlAlchemyTask(celery.Task):
+    """An abstract task that runs on task completion."""
+    abstract = True
+
+    def after_return(self, *args, **kwargs):
+        """Close the database session on task completion."""
+        db_session.remove()
+        super(SqlAlchemyTask, self).after_return(*args, **kwargs)
+
+
+# pylint: disable=unused-argument
+@signals.worker_process_init.connect
+def init_worker(**kwargs):
+    """Create new database engine per worker process."""
+    url = celery.conf.get('SQLALCHEMY_DATABASE_URI')
+    engine = create_engine(url)
+    db_session.configure(bind=engine)
+
+
+def _set_timeline_status(index_name, status, error_msg=None):
+    """Helper function to set status for searchindex and all related timelines.
+
+    Args:
+        index_name: Name of the datastore index.
+        status: Status to set.
+        error_msg: Error message.
+    """
+    searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+    timelines = Timeline.query.filter_by(searchindex=searchindex).all()
+
+    # Set status
+    searchindex.set_status(status)
+    for timeline in timelines:
+        timeline.set_status(status)
+        db_session.add(timeline)
+
+    # Update description if there was a failure in ingestion
+    if error_msg and status == 'fail':
+        # TODO: Don't overload the description field.
+        searchindex.description = error_msg
+
+    # Commit changes to database
+    db_session.add(searchindex)
+    db_session.commit()
+
+
+def _get_index_task_class(file_extension):
+    """Get correct index task function for the supplied file type.
+
+    Args:
+        file_extension (str): File type based on filename extension.
+
+    Returns:
+        A task function.
+
+    Raises:
+        KeyError if no task class can be found.
+    """
+    if file_extension == 'plaso':
+        index_class = run_plaso
+    elif file_extension in ['csv', 'jsonl']:
+        index_class = run_csv_jsonl
+    else:
+        raise KeyError('No task that supports {0:s}'.format(file_extension))
+    return index_class
+
+
+def _get_index_analyzers():
+    """Get list of index analysis tasks to run.
+
+    Returns:
+        Celery chain of index analysis tasks as Celery subtask signatures or
+        None if index analyzers are disabled in config.
+    """
+    tasks = []
+
+    # Exit early if index analyzers are disabled.
+    if not current_app.config.get('ENABLE_INDEX_ANALYZERS'):
+        return None
+
+    for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
+        kwarg_list = analyzer_cls.get_kwargs()
+
+        if not analyzer_cls.IS_SKETCH_ANALYZER:
+            if kwarg_list:
+                for kwargs in kwarg_list:
+                    tasks.append(
+                        run_index_analyzer.s(analyzer_name, **kwargs))
+            else:
+                tasks.append(run_index_analyzer.s(analyzer_name))
+
+    return chain(tasks)
+
+
+def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
+                         sketch_id=None):
+    """Build a pipeline for index and analysis.
+
+    Args:
+        file_path: Path to the file to index.
+        timeline_name: Name of the timeline to create.
+        index_name: Name of the index to index to.
+        file_extension: The file extension of the file.
+        sketch_id: The ID of the sketch to analyze.
+
+    Returns:
+        Celery chain with indexing task (or single indexing task) and analyzer
+        task group.
+    """
+    index_task_class = _get_index_task_class(file_extension)
+    index_analyzer_chain = _get_index_analyzers()
+    sketch_analyzer_chain = None
+
+    if sketch_id and current_app.config.get('ENABLE_SKETCH_ANALYZERS'):
+        sketch_analyzer_chain = build_sketch_analysis_pipeline(sketch_id)
+
+    index_task = index_task_class.s(
+        file_path, timeline_name, index_name, file_extension)
+
+    # If there are no analyzers just run the indexer.
+    if not index_analyzer_chain and not sketch_analyzer_chain:
+        return index_task
+
+    if sketch_analyzer_chain:
+        if not index_analyzer_chain:
+            return chain(
+                index_task, run_sketch_init.s(), sketch_analyzer_chain)
+        return chain(
+            index_task, index_analyzer_chain, run_sketch_init.s(),
+            sketch_analyzer_chain)
+
+    if current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS'):
+        return chain(
+            index_task,
+            index_analyzer_chain,
+            run_email_result_task.s()
+        )
+
+    return chain(index_task, index_analyzer_chain)
+
+
+def build_sketch_analysis_pipeline(sketch_id):
+    """Build a pipeline for sketch analysis.
+
+    Args:
+        sketch_id: The ID of the sketch to analyze.
+
+    Returns:
+        Celery group with analysis tasks or None if no analyzers are enabled.
+    """
+    tasks = []
+
+    # Exit early if sketch analyzers are disabled.
+    if not current_app.config.get('ENABLE_SKETCH_ANALYZERS', False):
+        return None
+
+    for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
+        kwarg_list = analyzer_cls.get_kwargs()
+
+        if not analyzer_cls.IS_SKETCH_ANALYZER:
+            continue
+
+        if kwarg_list:
+            for kwargs in kwarg_list:
+                tasks.append(run_sketch_analyzer.s(
+                    sketch_id, analyzer_name, **kwargs))
+        else:
+            tasks.append(run_sketch_analyzer.s(sketch_id, analyzer_name))
+
+    if current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS'):
+        tasks.append(run_email_result_task.s(sketch_id))
+
+    return chain(tasks)
+
+
 @celery.task(track_started=True)
-def run_plaso(source_file_path, timeline_name, index_name, username=None):
+def run_sketch_init(index_name_list):
+    """Create sketch init Celery task.
+
+    This task is needed to enable chaining of index analyzers and sketch
+    analyzer task groups. In order to run the sketch analyzers after indexing
+    this task needs to execute before any sketch analyzers.
+
+    Args:
+        index_name_list: List of index names.
+
+    Returns:
+        List with first entry of index_name_list.
+    """
+    if isinstance(index_name_list, six.string_types):
+        index_name_list = [index_name_list]
+    return index_name_list[:1][0]
+
+
+@celery.task(track_started=True)
+def run_email_result_task(index_name, sketch_id=None):
+    """Create email Celery task.
+
+    This task is run after all sketch analyzers are done and emails
+    the result of all analyzers to the user who imported the data.
+
+    Args:
+        index_name: An index name.
+        sketch_id: A sketch ID (optional).
+
+    Returns:
+        Email sent status.
+    """
+    # We need to get a fake request context so that url_for() will work.
+    with current_app.test_request_context():
+        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+        sketch = None
+
+        try:
+            to_username = searchindex.user.username
+        except AttributeError:
+            logging.warning('No user to send email to.')
+            return ''
+
+        if sketch_id:
+            sketch = Sketch.query.get(sketch_id)
+
+        subject = 'Timesketch: [{0:s}] is ready'.format(searchindex.name)
+
+        # TODO: Use jinja templates.
+        body = 'Your timeline [{0:s}] has been imported and is ready.'.format(
+            searchindex.name)
+
+        if sketch:
+            view_urls = sketch.get_view_urls()
+            view_links = []
+            for view_url, view_name in iter(view_urls.items()):
+                view_links.append('<a href="{0:s}">{1:s}</a>'.format(
+                    view_url,
+                    view_name))
+
+            body = body + '<br><br><b>Sketch</b><br>{0:s}'.format(
+                sketch.external_url)
+
+            analysis_results = searchindex.description.replace('\n', '<br>')
+            body = body + '<br><br><b>Analysis</b>{0:s}'.format(
+                analysis_results)
+
+            if view_links:
+                body = body + '<br><br><b>Views</b><br>' + '<br>'.join(
+                    view_links)
+
+        try:
+            send_email(subject, body, to_username, use_html=True)
+        except RuntimeError as e:
+            return repr(e)
+
+    return 'Sent email to {0:s}'.format(to_username)
+
+
+@celery.task(track_started=True)
+def run_index_analyzer(index_name, analyzer_name, **kwargs):
+    """Create a Celery task for an index analyzer.
+
+    Args:
+      index_name: Name of the datastore index.
+      analyzer_name: Name of the analyzer.
+
+    Returns:
+      Name (str) of the index.
+    """
+    analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
+    analyzer = analyzer_class(index_name=index_name, **kwargs)
+    result = analyzer.run_wrapper()
+    if result:
+        logging.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
+    else:
+        logging.info('[{0:s}] return with no results.'.format(analyzer_name))
+    return index_name
+
+
+@celery.task(track_started=True)
+def run_sketch_analyzer(index_name, sketch_id, analyzer_name, **kwargs):
+    """Create a Celery task for a sketch analyzer.
+
+    Args:
+        index_name: Name of the datastore index.
+        sketch_id: ID of the sketch to analyze.
+        analyzer_name: Name of the analyzer.
+
+    Returns:
+      Name (str) of the index.
+    """
+    analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
+    analyzer = analyzer_class(
+        sketch_id=sketch_id, index_name=index_name, **kwargs)
+    result = analyzer.run_wrapper()
+    logging.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
+    return index_name
+
+
+@celery.task(track_started=True, base=SqlAlchemyTask)
+def run_plaso(source_file_path, timeline_name, index_name, source_type):
     """Create a Celery task for processing Plaso storage file.
 
     Args:
         source_file_path: Path to plaso storage file.
         timeline_name: Name of the Timesketch timeline.
         index_name: Name of the datastore index.
-        username: Username of the user who will own the timeline.
+        source_type: Type of file, csv or jsonl.
 
     Returns:
-        String with summary of processed events.
+        Name (str) of the index.
     """
-    app = create_app()
+    # Log information to Celery
+    message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
+    logging.info(message.format(timeline_name, index_name, source_type))
+
+    try:
+        psort_path = current_app.config['PSORT_PATH']
+    except KeyError:
+        psort_path = 'psort.py'
+
     cmd = [
-        u'psort.py', u'-o', u'timesketch', source_file_path, u'--name',
-        timeline_name, u'--status_view', u'none', u'--index', index_name
+        psort_path, '-o', 'timesketch', source_file_path, '--name',
+        timeline_name, '--status_view', 'none', '--index', index_name
     ]
-    if username:
-        cmd.append(u'--username')
-        cmd.append(username)
 
     # Run psort.py
-    cmd_output = subprocess.check_output(cmd)
+    try:
+        if six.PY3:
+            subprocess.check_output(
+                cmd, stderr=subprocess.STDOUT, encoding='utf-8')
+        else:
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        # Mark the searchindex and timelines as failed and exit the task
+        _set_timeline_status(index_name, status='fail', error_msg=e.output)
+        return e.output
 
-    # Set status to ready when done.
-    with app.app_context():
-        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
-        searchindex.set_status(u'ready')
+    # Mark the searchindex and timelines as ready
+    _set_timeline_status(index_name, status='ready')
 
-    return cmd_output
+    return index_name
 
 
-@celery.task(track_started=True)
-def run_csv(source_file_path, timeline_name, index_name, username=None):
-    """Create a Celery task for processing a CSV file.
-
-    Args:
-        source_file_path: Path to CSV file.
-        timeline_name: Name of the Timesketch timeline.
-        index_name: Name of the datastore index.
-        username: Username of the user who will own the timeline.
-
-    Returns:
-        Dictionary with count of processed events.
-    """
-    event_type = u'generic_event'  # Document type for Elasticsearch
-    app = create_app()
-
-    # Log information to Celery
-    logging.info(u'Index name: %s', index_name)
-    logging.info(u'Timeline name: %s', timeline_name)
-    logging.info(u'Document type: %s', event_type)
-    logging.info(u'Owner: %s', username)
-
-    es = ElasticsearchDataStore(
-        host=current_app.config[u'ELASTIC_HOST'],
-        port=current_app.config[u'ELASTIC_PORT'])
-
-    es.create_index(index_name=index_name, doc_type=event_type)
-    for event in read_and_validate_csv(source_file_path):
-        es.import_event(index_name, event_type, event)
-
-    # Import the remaining events
-    total_events = es.import_event(index_name, event_type)
-
-    # Set status to ready when done.
-    with app.app_context():
-        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
-        searchindex.set_status(u'ready')
-
-    return {u'Events processed': total_events}
-
-@celery.task(track_started=True)
-def run_jsonl(source_file_path, timeline_name, index_name, username=None):
-    """Create a Celery task for processing a JSONL file.
+@celery.task(track_started=True, base=SqlAlchemyTask)
+def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
+    """Create a Celery task for processing a CSV or JSONL file.
 
     Args:
-        source_file_path: Path to JSONL file.
+        source_file_path: Path to CSV or JSONL file.
         timeline_name: Name of the Timesketch timeline.
         index_name: Name of the datastore index.
-        username: Username of the user who will own the timeline.
+        source_type: Type of file, csv or jsonl.
 
     Returns:
-        Dictionary with count of processed events.
+        Name (str) of the index.
     """
-    event_type = u'generic_event'  # Document type for Elasticsearch
-    app = create_app()
+    event_type = 'generic_event'  # Document type for Elasticsearch
+    validators = {
+        'csv': read_and_validate_csv,
+        'jsonl': read_and_validate_jsonl
+    }
+    read_and_validate = validators.get(source_type)
 
     # Log information to Celery
-    logging.info(u'Index name: %s', index_name)
-    logging.info(u'Timeline name: %s', timeline_name)
-    logging.info(u'Document type: %s', event_type)
-    logging.info(u'Owner: %s', username)
+    logging.info(
+        'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'.format(
+            timeline_name, index_name, source_type))
 
     es = ElasticsearchDataStore(
-        host=current_app.config[u'ELASTIC_HOST'],
-        port=current_app.config[u'ELASTIC_PORT'])
+        host=current_app.config['ELASTIC_HOST'],
+        port=current_app.config['ELASTIC_PORT'])
 
-    es.create_index(index_name=index_name, doc_type=event_type)
-    for event in read_and_validate_jsonl(source_file_path):
-        es.import_event(index_name, event_type, event)
+    # Reason for the broad exception catch is that we want to capture
+    # all possible errors and exit the task.
+    try:
+        es.create_index(index_name=index_name, doc_type=event_type)
+        for event in read_and_validate(source_file_path):
+            es.import_event(index_name, event_type, event)
+        # Import the remaining events
+        es.flush_queued_events()
 
-    # Import the remaining events
-    total_events = es.import_event(index_name, event_type)
+    except (ImportError, NameError, UnboundLocalError):
+        raise
 
-    # Set status to ready when done.
-    with app.app_context():
-        searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
-        searchindex.set_status(u'ready')
+    except Exception as e:  # pylint: disable=broad-except
+        # Mark the searchindex and timelines as failed and exit the task
+        error_msg = traceback.format_exc(e)
+        _set_timeline_status(index_name, status='fail', error_msg=error_msg)
+        logging.error(error_msg)
+        return None
 
-    return {u'Events processed': total_events}
+    # Set status to ready when done
+    _set_timeline_status(index_name, status='ready')
+
+    return index_name

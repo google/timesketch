@@ -1,5 +1,7 @@
+recursive-include config *
 recursive-include timesketch/static *
 recursive-include timesketch/templates *
+recursive-include timesketch/lib/experimental *.cql
 include timesketch.conf
 include requirements.txt
 include requirements.in

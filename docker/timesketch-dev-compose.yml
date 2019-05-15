@@ -1,0 +1,49 @@
+version: '3'
+services:
+  timesketch:
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile-dev
+    ports:
+            - "127.0.0.1:5000:5000"
+    links:
+      - elasticsearch
+      - postgres
+      - redis
+    environment:
+      - POSTGRES_USER=timesketch
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_ADDRESS=postgres
+      - POSTGRES_PORT=5432
+      - ELASTIC_ADDRESS=elasticsearch
+      - ELASTIC_PORT=9200
+      - REDIS_ADDRESS=redis
+      - REDIS_PORT=6379
+      - NEO4J_ADDRESS=neo4j
+      - NEO4J_PORT=7474
+      - TIMESKETCH_USER=dev
+      - TIMESKETCH_PASSWORD=dev
+      - CHOKIDAR_USEPOLLING=true
+    restart: always
+    volumes:
+      - ../:/usr/local/src/timesketch/
+
+  elasticsearch:
+    image: elasticsearch:6.4.2
+    restart: always
+
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_USER=timesketch
+      - POSTGRES_PASSWORD=password
+    restart: always
+
+  redis:
+    image: redis
+
+  neo4j:
+    image: neo4j
+    environment:
+      - NEO4J_AUTH=none
+    restart: always

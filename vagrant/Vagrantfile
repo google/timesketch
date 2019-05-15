@@ -9,12 +9,15 @@ unless Vagrant.has_plugin?("vagrant-disksize")
 end
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "ubuntu/xenial64"
+  config.vm.box = "ubuntu/bionic64"
   config.disksize.size = "50GB"
   config.vm.box_check_update = true
 
   # Access to Timesketch from the host
   config.vm.network :forwarded_port, guest: 5000, host: 5000
+
+  # Access to Timesketch from the host
+  config.vm.network :forwarded_port, guest: 9200, host: 9200
 
   # Access to Neo4j from the host
   config.vm.network :forwarded_port, guest: 7474, host: 7474

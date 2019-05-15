@@ -17,17 +17,30 @@
             <span>{{ timeline.updated_at }}</span>
         </div>
 
-        <div ng-show="!timeline.ready" class="pull-left" style="margin-right:10px;margin-left:10px;">
-            <i class="fa fa-spin fa-circle-o-notch"></i>
+        <div ng-show="timeline.status == 'processing'">
+            <div class="pull-left" style="margin-right:10px;margin-left:10px;">
+                <i class="fa fa-spin fa-circle-o-notch"></i>
+            </div>
+            <div class="title">
+                <span style="color:#999999;">{{ timeline.name }}</span>
+            </div>
         </div>
 
-        <div ng-show="timeline.ready" class="pull-left" style="margin-top:-5px">
-            <div class="color-box" style="background:#{{ timeline.color }};"></div>
+        <div ng-show="timeline.status == 'fail'">
+            <div class="pull-left color-box" style="margin-top:-5px; background:#d1d1d1;" title="{{ timeline.searchindex.description }}"></div>
+            <div class="title">
+                <span style="color:#999999;">{{ timeline.name }}</span>
+                <span style="margin-left:10px;">[<a href="/sketch/{{ sketchId }}/timelines/{{ timeline.id }}/">error details</a>]</span>
+            </div>
         </div>
-        <div class="title">
-            <a ng-show="timeline.ready" style="text-decoration: none; font-weight: 500;font-size: 1.1em;" href="/sketch/{{ sketchId }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&limit=40">{{ timeline.name }}</a>
-            <span ng-show="!timeline.ready" style="color:#999999; font-weight: 500;font-size: 1.1em;">{{ timeline.name }}</span>
+
+        <div ng-show="timeline.status == 'ready' || timeline.status == 'new'">
+            <div class="pull-left color-box" style="background:#{{ timeline.color }}; margin-top:-5px"></div>
+            <div class="title">
+                <a style="text-decoration: none;" href="/sketch/{{ sketchId }}/explore/?q=*&index={{ timeline.searchindex.index_name }}&size=40">{{ timeline.name }}</a>
+            </div>
         </div>
+
     </li>
 </ul>
 
