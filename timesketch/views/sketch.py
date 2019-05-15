@@ -83,7 +83,7 @@ def overview(sketch_id):
     permission_form.groups.choices = set(
         (g.id, g.name)
         for g in Group.query.filter(
-            or_(Group.user == current_user, Group.user == None)))
+            or_(Group.user == current_user, Group.user is None)))
 
     permission_form.remove_groups.choices = set((g.id, g.name)
                                                 for g in sketch.groups)
