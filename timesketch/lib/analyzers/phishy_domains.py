@@ -188,6 +188,9 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
             tld = utils.get_tld_from_domain(domain)
             tld_counter[tld] += 1
 
+        if not domain_counter:
+            return 'No domains discovered, so no phishy domains.'
+
         watched_domains_list = current_app.config.get(
             'DOMAIN_ANALYZER_WATCHED_DOMAINS', [])
         domain_threshold = current_app.config.get(
