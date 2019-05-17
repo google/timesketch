@@ -68,7 +68,8 @@ def read_and_validate_csv(path, delimiter=','):
                 missing_fields.append(field)
         if missing_fields:
             raise RuntimeError(
-                'Missing fields in CSV header: {0:s}'.format(','.join(missing_fields)))
+                'Missing fields in CSV header: {0:s}'.format(
+                    ','.join(missing_fields)))
         for row in reader:
             try:
                 # normalize datetime to ISO 8601 format if it's not the case.
