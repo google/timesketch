@@ -1,0 +1,16 @@
+[Unit]
+Description=Celery Service
+After=network.target
+
+[Service]
+Type=forking
+User=www-data
+Group=www-data
+EnvironmentFile=-/etc/celery.conf
+WorkingDirectory=/var/lib/celery
+ExecStart=/bin/sh -c '/usr/local/bin/celery multi start w1 -A timesketch.lib.tasks --pidfile=/var/run/celery/%n.pid --logfile=/var/log/celery/%n%I.log --loglevel=INFO'
+ExecStop=/bin/sh -c '/usr/local/bin/celery multi stopwait w1 --pidfile=/var/run/celery/%n.pid'
+ExecReload=/bin/sh -c '/usr/local/bin/celery multi restart w1 -A timesketch.lib.tasks --pidfile=/var/run/celery/%n.pid --logfile=/var/log/celery/%n%I.log --loglevel=INFO'
+
+[Install]
+WantedBy=multi-user.target
