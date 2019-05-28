@@ -67,6 +67,10 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
             tld = '.'.join(domain.split('.')[-2:])
             tld_counter[tld] += 1
 
+        # Exit early if there are no domains in the data set to analyze.
+        if not domain_counter:
+            return 'No domains to analyze.'
+
         domain_count_array = numpy.array(list(domain_counter.values()))
         domain_20th_percentile = int(numpy.percentile(domain_count_array, 20))
         domain_85th_percentile = int(numpy.percentile(domain_count_array, 85))
