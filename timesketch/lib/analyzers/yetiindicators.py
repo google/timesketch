@@ -71,7 +71,6 @@ class YetiIndicators(interface.BaseSketchAnalyzer):
 
         Retrieved intel consists of Intrusion sets and associated Indicators.
         """
-        search_query = {'name': '', 'type': 'intrusion-set'}
         results = requests.post(
             self.yeti_api_root + '/entities/filter/',
             json={'name': '', 'type': 'intrusion-set'},
