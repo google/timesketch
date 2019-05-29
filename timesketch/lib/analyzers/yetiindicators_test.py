@@ -31,16 +31,13 @@ MOCK_YETI_INDICATORS = [{
 class TestThreatintelPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
-    def __init__(self, *args, **kwargs):
-        super(TestThreatintelPlugin, self).__init__(*args, **kwargs)
-
     # Mock the Elasticsearch datastore.
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_build_query_for_indicators(self):
         """Test that ES queries for indicators are correctly built."""
         query = yetiindicators.build_query_for_indicators(MOCK_YETI_INDICATORS)
-        # pylint: ignore=line-too-long
+        # pylint: disable=line-too-long
         self.assertEqual(
             query,
             'domain:/.*help.notphishy.com.*/ OR domain:/.*help.verylegit(.com|.net).*/'
