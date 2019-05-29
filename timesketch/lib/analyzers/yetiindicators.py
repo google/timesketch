@@ -1,4 +1,4 @@
-"""Index analyzer plugin for threatintel."""
+"""Index analyzer plugin for Yeti indicators."""
 from __future__ import unicode_literals
 
 from flask import current_app
