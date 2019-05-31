@@ -2,7 +2,7 @@ version: '3'
 services:
   timesketch:
     build:
-      context: ../
+      context: ../../
       dockerfile: ./docker/development/Dockerfile
     ports:
             - "127.0.0.1:5000:5000"

@@ -5,7 +5,7 @@ if [ "$1" = 'timesketch' ]; then
 
   # Install Timesketch from volume
   cd /usr/local/src/timesketch && yarn install && yarn run build
-  pip install -e /usr/local/src/timesketch/
+  pip3 install -e /usr/local/src/timesketch/
 
   # Copy the Timesketch configuration file into /etc
   cp /usr/local/src/timesketch/timesketch.conf /etc
