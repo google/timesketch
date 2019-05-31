@@ -132,8 +132,8 @@ class AccessControlMixin(object):
         # pylint: disable=singleton-comparison
         return cls.query.filter(
             or_(cls.AccessControlEntry.user == user,
-                and_(cls.AccessControlEntry.user == None,
-                     cls.AccessControlEntry.group == None),
+                and_(cls.AccessControlEntry.user is None,
+                     cls.AccessControlEntry.group is None),
                 cls.AccessControlEntry.group_id.in_([
                     group.id for group in user.groups
                 ])), cls.AccessControlEntry.permission == 'read',
@@ -181,7 +181,7 @@ class AccessControlMixin(object):
         """
         # pylint: disable=singleton-comparison
         group_aces = self.AccessControlEntry.query.filter(
-            not_(self.AccessControlEntry.group == None),
+            not_(self.AccessControlEntry.group is None),
             self.AccessControlEntry.parent == self).all()
         return set(ace.group for ace in group_aces)
 
@@ -205,7 +205,7 @@ class AccessControlMixin(object):
         # pylint: disable=singleton-comparison
         aces = self.AccessControlEntry.query.filter(
             not_(self.AccessControlEntry.user == self.user),
-            not_(self.AccessControlEntry.user == None),
+            not_(self.AccessControlEntry.user is None),
             self.AccessControlEntry.permission == 'read',
             self.AccessControlEntry.parent == self).all()
         return set(ace.user for ace in aces)
