@@ -464,15 +464,21 @@ class Sketch(BaseResource):
         """
         Adds a comment to a single event.
 
-        :param event_id:
-        :param index:
-        :param comment_text:
-        :return: a json data of the query.
+        Args:
+            event_id: id of the event
+            index: The Elasticsearch index name
+            comment_text:
+        Returns:
+             a json data of the query.
         """
-        form_data = {"annotation": comment_text,
-             "annotation_type": "comment",
-             "events": {"_id": event_id, "_index": index,
-                        "_type": "generic_event"}}
+        form_data = {
+            u'annotation': comment_text,
+            u'annotation_type': 'comment',
+            u'events': {
+                '_id': event_id,
+                '_index': index,
+                '_type': 'generic_event'}
+        }
         resource_url = u'{0:s}/sketches/{1:d}/event/annotate/'.format(
             self.api.api_root, self.id)
         response = self.api.session.post(resource_url, json=form_data)
@@ -661,8 +667,8 @@ class Timeline(BaseResource):
             timeline_id: The primary key ID of the timeline.
             sketch_id: ID of a sketch.
             api: Instance of a TimesketchApi object.
-            name: Name of the timeline (optional)
-            searchindex: The Elasticsearch index name (optional)
+            name: Name of the timelne (optional)
+            searchindex: The Elasticsearch index name (optional)i
         """
         self.id = timeline_id
         self._name = name
