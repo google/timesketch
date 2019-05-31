@@ -469,8 +469,7 @@ class Sketch(BaseResource):
         :param comment_text:
         :return: a json data of the query.
         """
-        form_data = \
-            {"annotation": comment_text,
+        form_data = {"annotation": comment_text,
              "annotation_type": "comment",
              "events": {"_id": event_id, "_index": index,
                         "_type": "generic_event"}}
@@ -488,8 +487,7 @@ class Sketch(BaseResource):
         :param label_text:
         :return: a json data of the query.
         """
-        form_data = \
-            {"annotation": label_text,
+        form_data = {"annotation": label_text,
              "annotation_type": "label",
              "events": {"_id": event_id, "_index": index,
                         "_type": "generic_event"}}
