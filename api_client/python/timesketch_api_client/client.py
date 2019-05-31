@@ -467,7 +467,7 @@ class Sketch(BaseResource):
         Args:
             event_id: id of the event
             index: The Elasticsearch index name
-            comment_text:
+            comment_text: text to add as a comment
         Returns:
              a json data of the query.
         """
@@ -488,10 +488,12 @@ class Sketch(BaseResource):
         """
         Adds a comment to a single event.
 
-        :param event_id:
-        :param index:
-        :param label_text:
-        :return: a json data of the query.
+        Args:
+            event_id: id of the event
+            index: The Elasticsearch index name
+            label_text: text used as a label
+        Returns:
+            a json data of the query.
         """
         form_data = {"annotation": label_text,
              "annotation_type": "label",
