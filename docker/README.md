@@ -43,44 +43,6 @@ The timesketch docker config is set to write all data to the host filesystem, no
 
 These locations on the host filesystem can be backed with any storage mechanism to persist sketch data beyond the container lifetimes.
 
-## Development
-
-You can run Timesketch on Docker in development mode. To start a developer server:
-
-### Start a developer version of docker containers
-
-```
-$  docker-compose -f timesketch-dev-compose.yml up -d
-```
-
-### Find out container ID for the timesketch container
-
-```
-$ docker ps
-```
-In the output look for CONTAINER ID for the timesketch container
-
-### Start a timesketch container shell
-
-```
-$ docker exec -it <container ID> /bin/bash
-```
-### Start a celery container shell
-
-```
-celery -A timesketch.lib.tasks worker --loglevel info
-```
-
-### In the timesketch shell command prompt run
-
-```
-tsctl runserver -h 0.0.0.0
-```
-
-You now can access your development version at http://127.0.0.1:5000/
-Log in with user: dev password: dev
-
-
 
 
 

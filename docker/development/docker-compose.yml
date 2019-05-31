@@ -3,7 +3,7 @@ services:
   timesketch:
     build:
       context: ../
-      dockerfile: ./docker/Dockerfile-dev
+      dockerfile: ./docker/development/Dockerfile
     ports:
             - "127.0.0.1:5000:5000"
     links:
@@ -26,7 +26,7 @@ services:
       - CHOKIDAR_USEPOLLING=true
     restart: always
     volumes:
-      - ../:/usr/local/src/timesketch/
+      - ../../:/usr/local/src/timesketch/
 
   elasticsearch:
     image: elasticsearch:6.4.2
