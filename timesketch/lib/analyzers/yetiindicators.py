@@ -10,7 +10,7 @@ from timesketch.lib import emojis
 
 
 def build_query_for_indicators(indicators):
-    """Builds an ElasticSearch query for Yeti indicator patterns.
+    """Builds an Elasticsearch query for Yeti indicator patterns.
 
     Prepends and appends .* to the regex to be able to search within a field.
 
