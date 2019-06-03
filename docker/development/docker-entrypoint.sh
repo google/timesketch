@@ -7,12 +7,10 @@ if [ "$1" = 'timesketch' ]; then
   cd /usr/local/src/timesketch && yarn install && yarn run build
   pip3 install -e /usr/local/src/timesketch/
 
-  # Copy the Timesketch configuration file into /etc
-  cp /usr/local/src/timesketch/timesketch.conf /etc
-
-  # Copy config files in /etc/timesketch
+  # Copy config files
   mkdir /etc/timesketch
-  cp /usr/local/src/timesketch/config/* /etc/timesketch/
+  cp /usr/local/src/timesketch/timesketch.conf /etc
+  cp /usr/local/src/timesketch/config/features.yaml /etc/timesketch/
 
   # Set SECRET_KEY in /etc/timesketch.conf if it isn't already set
   if grep -q "SECRET_KEY = '<KEY_GOES_HERE>'" /etc/timesketch.conf; then

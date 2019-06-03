@@ -7,8 +7,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-utils \
     curl \
     git \
+    gpg-agent \
     python3-dev \
     python3-pip \
+    python3-wheel \
+    python3-setuptools \
     python3-psycopg2 \
   && rm -rf /var/lib/apt/lists/*
 
