@@ -1,7 +1,7 @@
 # Use the official Docker Hub Ubuntu 18.04 base image
 FROM ubuntu:18.04
 
-RUN apt-get update && apt-get install -y
+RUN apt-get update && apt-get install -y \
     software-properties-common \
     apt-transport-https \
     apt-utils \

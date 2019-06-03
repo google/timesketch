@@ -1,5 +1,5 @@
 # Use the latest Timesketch development base image
-FROM timesketch/timesketch-dev-base:latest
+FROM timesketch/timesketch-dev-base:20190603
 
 # Copy the entrypoint script into the container
 COPY docker/development/docker-entrypoint.sh /docker-entrypoint.sh
