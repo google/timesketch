@@ -1,7 +1,7 @@
 # Use the official Docker Hub Ubuntu 18.04 base image
 FROM ubuntu:18.04
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common \
     apt-transport-https \
     apt-utils \
@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install Plaso
 RUN add-apt-repository -y ppa:gift/stable
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python-plaso \
     plaso-tools \
   && rm -rf /var/lib/apt/lists/*
@@ -26,7 +26,7 @@ RUN VERSION=node_8.x && \
     echo "deb https://deb.nodesource.com/$VERSION $DISTRO main" > /etc/apt/sources.list.d/nodesource.list
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     nodejs \
     yarn \
   && rm -rf /var/lib/apt/lists/*
