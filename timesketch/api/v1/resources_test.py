@@ -239,7 +239,7 @@ class AggregationExploreResourceTest(BaseTest):
     @mock.patch('timesketch.api.v1.resources.ElasticsearchDataStore',
                 MockDataStore)
     def test_heatmap_aggregation(self):
-        """Authenticated request to get heatmap aggregation."""
+        """Authenticated request to get aggregation requests."""
         self.login()
         data = dict(aggregation_dsl='test')
         response = self.client.post(
