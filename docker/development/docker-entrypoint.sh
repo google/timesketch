@@ -3,41 +3,14 @@
 # Run the container the default way
 if [ "$1" = 'timesketch' ]; then
 
-  # Update the base image
-  apt-get update && apt-get -y upgrade
-
-  # Setup install environment and Timesketch dependencies
-  apt-get -y install apt-transport-https\
-                       curl\
-                       git\
-                       libffi-dev\
-                       lsb-release\
-                       python-dev\
-                       python-pip\
-                       python-psycopg2
-
-  curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -
-  VERSION=node_8.x
-  DISTRO="$(lsb_release -s -c)"
-  echo "deb https://deb.nodesource.com/$VERSION $DISTRO main" > /etc/apt/sources.list.d/nodesource.list
-  curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-  echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list
-
-  # Install Plaso and Yarn
-  apt-get -y install software-properties-common
-  add-apt-repository ppa:gift/stable && apt-get update
-  apt-get update && apt-get -y install python-plaso plaso-tools nodejs yarn
-
   # Install Timesketch from volume
   cd /usr/local/src/timesketch && yarn install && yarn run build
-  pip install -e /usr/local/src/timesketch/
+  pip3 install -e /usr/local/src/timesketch/
 
-  # Copy the Timesketch configuration file into /etc
-  cp /usr/local/src/timesketch/timesketch.conf /etc
-
-  # Copy config files in /etc/timesketch
+  # Copy config files
   mkdir /etc/timesketch
-  cp /usr/local/src/timesketch/config/* /etc/timesketch/
+  cp /usr/local/src/timesketch/timesketch.conf /etc
+  cp /usr/local/src/timesketch/config/features.yaml /etc/timesketch/
 
   # Set SECRET_KEY in /etc/timesketch.conf if it isn't already set
   if grep -q "SECRET_KEY = '<KEY_GOES_HERE>'" /etc/timesketch.conf; then

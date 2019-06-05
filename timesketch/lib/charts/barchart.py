@@ -32,8 +32,9 @@ class BarChart(interface.BaseChart):
         Returns:
             Instance of altair.Chart
         """
-        chart = alt.Chart(self.values).mark_bar()
-        chart.encoding = alt.Encoding.from_dict(self.encoding)
+        chart = alt.Chart().mark_bar()
+        chart.encoding = alt.FacetedEncoding.from_dict(self.encoding)
+        chart.data = self.values
         return chart
 
 
@@ -53,7 +54,7 @@ class HorizontalBarChart(interface.BaseChart):
         encoding['y'] = self.encoding['x']
 
         bars = alt.Chart(self.values).mark_bar()
-        bars.encoding = alt.Encoding.from_dict(encoding)
+        bars.encoding = alt.FacetedEncoding.from_dict(encoding)
 
         text = bars.mark_text(align='left', baseline='middle', dx=3).encode(
             text='{0:s}:{1:s}'.format(

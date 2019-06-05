@@ -50,10 +50,10 @@ from .resources import SearchIndexResource
 API_ROUTES = [
     (SketchListResource, '/sketches/'),
     (SketchResource, '/sketches/<int:sketch_id>/'),
-    (AggregationListResource, '/sketches/<int:sketch_id>/aggregation/list/'),
+    (AggregationListResource, '/sketches/<int:sketch_id>/aggregation/'),
     (AggregationLegacyResource, '/sketches/<int:sketch_id>/aggregation/legacy/'),
     (AggregationExploreResource, '/sketches/<int:sketch_id>/aggregation/explore/'),
-    (AggregationResource, '/sketches/<int:sketch_id>/aggregation/<int:aggregation_id>'),
+    (AggregationResource, '/sketches/<int:sketch_id>/aggregation/<int:aggregation_id>/'),
     (ExploreResource, '/sketches/<int:sketch_id>/explore/'),
     (EventResource, '/sketches/<int:sketch_id>/event/'),
     (EventAnnotationResource, '/sketches/<int:sketch_id>/event/annotate/'),
