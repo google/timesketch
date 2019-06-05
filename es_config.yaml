@@ -1,0 +1,23 @@
+title: Timesketch config
+order: 20
+backends:
+  - es-dsl
+  - es-qs
+logsources:
+  sshd:
+    service: sshd
+    conditions:
+      data_type: "syslog/sshd"
+  auth:
+    service: auth
+    conditions:
+      data_type: "syslog"
+  apache:
+    product: apache
+    conditions:
+      data_type: "apache:access"
+  webserver:
+    category: webserver
+    conditions:
+      data_type: "apache:access"
+      # data_type: "iis:log:line"
