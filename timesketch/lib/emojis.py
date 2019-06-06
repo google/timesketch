@@ -25,18 +25,46 @@ emoji = collections.namedtuple('emoji', 'code help')
 
 
 EMOJI_MAP = {
+    '8BALL': emoji('&#1F3B1', 'N/A'),
     'CAMERA': emoji('&#x1F4F7', 'Screenshot activity'),
+    'CLAPPING_HANDS': emoji('&#1F44F', 'Successful login'),
+    'CLOUD': emoji('&#1F389', 'N/A'),
+    'CROISSANT': emoji('&#1F950', 'N/A'),
+    'ELF': emoji('&#1F9DD', 'N/A'),
+    'EXPLODING_HEAD': emoji('&#1F92F', 'N/A'),
+    'EYES': emoji('&#1F440', 'N/A'),
     'FISHING_POLE': emoji('&#x1F3A3', 'Phishing'),
+    'HAMMER': emoji('&#1F528', 'Brute force activity'),
+    'ICE_CREAM_CONE': emoji('&#1F366', 'N/A'),
     'ID_BUTTON': emoji('&#x1F194', 'Account ID'),
+    'LIT': emoji('&#1F525', 'N/A'),
     'LOCK': emoji('&#x1F512', 'Logon activity'),
     'LOCOMOTIVE': emoji('&#x1F682', 'Execution activity'),
     'MAGNIFYING_GLASS': emoji('&#x1F50E', 'Search related activity'),
+    'MAN_GESTURING_NO': emoji('&#1F645', 'N/A'),
+    'MERPERSON': emoji('&#1F9DC', 'N/A'),
+    'MONEYBAG': emoji('&#1F4B0', 'Coin mining activity'),
+    'PENGUIN': emoji('&#1F427', 'N/A'),
+    'PERSON_CARTWHEELING': emoji('&#1F938', 'N/A'),
+    'PERSON_MEDITATING': emoji('&#1F9D8', 'N/A'),
+    'PILE_OF_POO': emoji('&#1F4A9', 'N/A'),
+    'PIZZA': emoji('&#1F355', 'N/A'),
+    'POLICE_CAR_LIGHT': emoji('&#1F6A8', 'N/A'),
+    'RADIOACTIVE': emoji('&#1FE0F', 'N/A'),
+    'ROCKET': emoji('&#1F680', 'N/A'),
     'SATELLITE': emoji('&#x1F4E1', 'Domain activity'),
     'SCREEN': emoji('&#x1F5B5', 'Screensaver activity'),
+    'SEE_NO_EVIL_MONKEY': emoji('&#1F648', 'N/A'),
+    'SHRUGGING_PERSON': emoji('&#1F937', 'N/A'),
     'SKULL_CROSSBONE': emoji('&#x2620', 'Suspicious entry'),
     'SLEEPING_FACE': emoji('&#x1F634', 'Activity outside of regular hours'),
+    'STUFFED_FLATBREAD': emoji('&#1F959', 'N/A'),
+    'SWEDEN': emoji('&#1F1EA', 'Sverige!'),
+    'TABLE_FLIPPING': emoji('(╯°□°）╯︵ ┻━┻', 'N/A'),
     'UNLOCK': emoji('&#x1F513', 'Logoff activity'),
-    'WASTEBASKET': emoji('&#x1F5D1', 'Deletion activity')
+    'WASTEBASKET': emoji('&#x1F5D1', 'Deletion activity'),
+    'WTF': emoji('¯\(°_o)/¯', 'N/A'),
+    'ZOMBIE': emoji('&#1F9DF', 'N/A')
 }
 
 
