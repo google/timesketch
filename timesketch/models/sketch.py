@@ -70,8 +70,10 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 
         Get named aggregations, i.e. only aggregations that have a name.
         """
-        # TODO: Implement a storage for aggregations.
-        return []
+        return  [
+            agg for agg in self.aggregations
+            if agg.name != ''
+        ]
 
     @property
     def get_named_views(self):

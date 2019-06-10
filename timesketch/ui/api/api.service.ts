@@ -323,7 +323,7 @@ export const timesketchApiImplementation = function ($http) {
          * @param aggtype - Type of aggregation.
          * @returns A $http promise with two methods, success and error.
          */
-        const resource_url = SKETCH_BASE_URL + sketch_id + '/aggregation/';
+        const resource_url = SKETCH_BASE_URL + sketch_id + '/aggregation/legacy/';
         const params = {
             query: query,
             filter: filter,

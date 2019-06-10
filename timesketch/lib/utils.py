@@ -58,8 +58,8 @@ def read_and_validate_csv(path, delimiter=','):
     # Columns that must be present in the CSV file
     mandatory_fields = ['message', 'datetime', 'timestamp_desc']
 
-    with open(path, 'rb') as fh:
-        reader = csv.DictReader(fh, delimiter=delimiter.decode('string_escape'))
+    with open(path, 'r') as fh:
+        reader = csv.DictReader(fh, delimiter=delimiter)
         csv_header = reader.fieldnames
         missing_fields = []
         # Validate the CSV header
@@ -68,7 +68,8 @@ def read_and_validate_csv(path, delimiter=','):
                 missing_fields.append(field)
         if missing_fields:
             raise RuntimeError(
-                'Missing fields in CSV header: {0:s}'.format(missing_fields))
+                'Missing fields in CSV header: {0:s}'.format(
+                    ','.join(missing_fields)))
         for row in reader:
             try:
                 # normalize datetime to ISO 8601 format if it's not the case.

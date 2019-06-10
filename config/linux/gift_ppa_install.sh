@@ -74,7 +74,8 @@ TEST_DEPENDENCIES="python-coverage
                    python-funcsigs
                    python-mock
                    python-nose
-                   python-pbr";
+                   python-pbr
+                   python-setuptools";
 
 
 sudo add-apt-repository ppa:gift/dev -y

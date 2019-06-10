@@ -16,6 +16,7 @@
 from __future__ import unicode_literals
 
 import altair as alt
+import pandas as pd
 
 
 class BaseChart(object):
@@ -36,11 +37,14 @@ class BaseChart(object):
         _values = data.get('values')
         _encoding = data.get('encoding')
 
-        if not _values or not _encoding:
+        if _values is None or not _encoding:
             raise RuntimeError('Values and/or Encoding missing from data')
 
         self.name = self.NAME
-        self.values = alt.Data(values=_values)
+        if isinstance(_values, pd.DataFrame):
+            self.values = _values
+        else:
+            self.values = alt.Data(values=_values)
         self.encoding = _encoding
 
     def generate(self):

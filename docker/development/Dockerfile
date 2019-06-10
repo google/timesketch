@@ -1,8 +1,8 @@
-# Use the official Docker Hub Ubuntu 14.04 base image
-FROM ubuntu:18.04
+# Use the latest Timesketch development base image
+FROM timesketch/timesketch-dev-base:20190603
 
 # Copy the entrypoint script into the container
-COPY docker/timesketch-dev-entrypoint.sh /docker-entrypoint.sh
+COPY docker/development/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod a+x /docker-entrypoint.sh
 
 # Load the entrypoint script to be run later
