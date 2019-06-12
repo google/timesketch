@@ -1344,7 +1344,7 @@ class UploadFileResource(ResourceMixin, Resource):
             from timesketch.lib import tasks
             pipeline = tasks.build_index_pipeline(
                 file_path, timeline_name, index_name, file_extension, sketch_id)
-            pipeline.apply_async(task_id=index_name)
+            pipeline.apply_async()
 
             # Return Timeline if it was created.
             # pylint: disable=no-else-return

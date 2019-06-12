@@ -155,10 +155,11 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
     index_task_class = _get_index_task_class(file_extension)
     index_analyzer_chain = _get_index_analyzers()
     sketch_analyzer_chain = None
+    searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
     if sketch_id:
         sketch_analyzer_chain = build_sketch_analysis_pipeline(
-            sketch_id, user_id=None)
+            sketch_id, searchindex.id, user_id=None)
 
     index_task = index_task_class.s(
         file_path, timeline_name, index_name, file_extension)
@@ -209,7 +210,11 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
     if not analyzer_names:
         analyzer_names = auto_analyzers
 
-    user = User.query.get(user_id)
+    if user_id:
+        user = User.query.get(user_id)
+    else:
+        user = None
+
     sketch = Sketch.query.get(sketch_id)
     analysis_session = AnalysisSession(user, sketch)
 
@@ -242,6 +247,10 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
 
         tasks.append(run_sketch_analyzer.s(
             sketch_id, analysis.id, analyzer_name, **kwargs))
+
+    # Commit the analysis session to the database.
+    db_session.add(analysis_session)
+    db_session.commit()
 
     if current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS'):
         tasks.append(run_email_result_task.s(sketch_id))
