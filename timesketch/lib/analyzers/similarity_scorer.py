@@ -15,8 +15,6 @@
 
 from __future__ import unicode_literals
 
-from flask import current_app
-
 from timesketch.lib import similarity
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
