@@ -98,7 +98,14 @@ class TestAnalysisManager(BaseTest):
         self.assertIn('mockanalyzer', analyzer_list)
 
         # pylint: disable=protected-access
-        dependency_tree = manager.AnalysisManager._build_dependencies()
+        analyzers_to_run = [
+            'mockanalyzer',
+            'mockanalyzer2',
+            'mockanalyzer3',
+            'mockanalyzer4'
+        ]
+        dependency_tree = manager.AnalysisManager._build_dependencies(
+            analyzers_to_run)
         self.assertEqual(len(dependency_tree), 3)
         self.assertIn('mockanalyzer', dependency_tree[0])
         self.assertIn('mockanalyzer3', dependency_tree[0])
