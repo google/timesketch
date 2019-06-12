@@ -378,11 +378,11 @@ def timelines(sketch_id):
                 # Import here to avoid circular imports.
                 from timesketch.lib import tasks
                 sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
-                    sketch_id, current_user.id)
+                    sketch_id, searchindex.id, current_user.id)
                 if sketch_analyzer_group:
                     pipeline = (tasks.run_sketch_init.s(
                         [searchindex.index_name]) | sketch_analyzer_group)
-                    pipeline.apply_async(task_id=searchindex.index_name)
+                    pipeline.apply_async()
 
         return redirect(
             url_for('sketch_views.timelines', sketch_id=sketch.id))
