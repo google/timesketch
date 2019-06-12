@@ -29,6 +29,7 @@ from timesketch.models.sketch import Event as SQLEvent
 from timesketch.models.sketch import Sketch as SQLSketch
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import View
+from timesketch.models.sketch import Analysis
 
 
 def _flush_datastore_decorator(func):
@@ -307,7 +308,7 @@ class Sketch(object):
         return indices
 
 
-class BaseAnalyzer(object):
+class BaseIndexAnalyzer(object):
     """Base class for analyzers.
 
     Attributes:
@@ -391,7 +392,7 @@ class BaseAnalyzer(object):
             yield Event(event, self.datastore, sketch=self.sketch)
 
     @_flush_datastore_decorator
-    def run_wrapper(self):
+    def run_wrapper(self, analysis_id):
         """A wrapper method to run the analyzer.
 
         This method is decorated to flush the bulk insert operation on the
@@ -400,52 +401,26 @@ class BaseAnalyzer(object):
         Returns:
             Return value of the run method.
         """
+        analysis = Analysis.query.get(analysis_id)
+        analysis.set_status('STARTED')
+
+        # Run the analyzer
         result = self.run()
 
-        # Update the searchindex description with analyzer result.
-        # TODO: Don't overload the description field.
-        searchindex = SearchIndex.query.filter_by(
-            index_name=self.index_name).first()
-
-        # Some code paths set the description equals to the name. Remove that
-        # here to get a clean description with only analyzer results.
-        if searchindex.description == searchindex.name:
-            searchindex.description = ''
-
-        # Append the analyzer result.
-        if result:
-            searchindex.description = '{0:s}\n{1:s}'.format(
-                searchindex.description, result)
-        db_session.add(searchindex)
+        # Update database analysis object with result and status
+        analysis.result = '{0:s}'.format(result)
+        analysis.set_status('DONE')
+        db_session.add(analysis)
         db_session.commit()
 
         return result
-
-    @classmethod
-    def get_kwargs(cls):
-        """Get keyword arguments needed to instantiate the class.
-
-        Every analyzer gets the index_name as its first argument from Celery.
-        By default this is the only argument. If your analyzer need more
-        arguments you can override this method and return as a dictionary.
-
-        If you want more than one instance to be created for your analyzer you
-        can return a list of dictionaries with kwargs and each one will be
-        instantiated and registered in Celery. This is neat if you want to run
-        your analyzer with different arguments in parallel.
-
-        Returns:
-            List of keyword argument dicts or None if no extra arguments are
-            needed.
-        """
-        return None
 
     def run(self):
         """Entry point for the analyzer."""
         raise NotImplementedError
 
 
-class BaseSketchAnalyzer(BaseAnalyzer):
+class BaseSketchAnalyzer(BaseIndexAnalyzer):
     """Base class for sketch analyzers.
 
     Attributes:

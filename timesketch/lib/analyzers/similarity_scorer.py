@@ -81,48 +81,22 @@ class SimilarityScorerConfig(object):
         return config_dict
 
 
-class SimilarityScorer(interface.BaseAnalyzer):
+class SimilarityScorer(interface.BaseSketchAnalyzer):
     """Score events based on Jaccard distance."""
 
-    NAME = 'SimilarityScorer'
+    NAME = 'similarity_scorer'
 
     DEPENDENCIES = frozenset()
 
-    def __init__(self, index_name, data_type=None):
+    def __init__(self, index_name, sketch_id, data_type):
         """Initializes a similarity scorer.
 
         Args:
             index_name: Elasticsearch index name.
             data_type: Name of the data_type.
         """
-        if data_type:
-            self._config = SimilarityScorerConfig(index_name, data_type)
-        else:
-            self._config = None
-        super(SimilarityScorer, self).__init__(index_name)
-
-    @classmethod
-    def get_kwargs(cls):
-        """Keyword arguments needed to instantiate the class.
-
-        In addition to the index_name passed to the constructor by default we
-        need the data_type name as well. Furthermore we want to instantiate
-        one task per data_type in order to run the analyzer in parallel. To
-        achieve this we override this method and return a list of keyword
-        argument dictionaries.
-
-        Returns:
-            List of keyword arguments (dict), one per data_type.
-        """
-        kwargs_list = []
-        try:
-            data_types = current_app.config['SIMILARITY_DATA_TYPES']
-            if data_types:
-                for data_type in data_types:
-                    kwargs_list.append({'data_type': data_type})
-        except KeyError:
-            return None
-        return kwargs_list
+        self._config = SimilarityScorerConfig(index_name, data_type)
+        super(SimilarityScorer, self).__init__(index_name, sketch_id)
 
     def run(self):
         """Entry point for the SimilarityScorer.
@@ -131,10 +105,6 @@ class SimilarityScorer(interface.BaseAnalyzer):
             A dict with metadata about the processed data set or None if no
             data_types has been configured.
         """
-        # Exit early if there is no data_type to process.
-        if not self._config:
-            return None
-
         # Event generator for streaming results.
         events = self.event_stream(
             query_string=self._config.query,

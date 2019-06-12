@@ -1674,11 +1674,11 @@ class TimelineListResource(ResourceMixin, Resource):
             # circular imports.
             from timesketch.lib import tasks
             sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
-                sketch_id)
+                sketch_id, searchindex_id, current_user.id)
             if sketch_analyzer_group:
                 pipeline = (tasks.run_sketch_init.s(
                     [searchindex.index_name]) | sketch_analyzer_group)
-                pipeline.apply_async(task_id=searchindex.index_name)
+                pipeline.apply_async()
 
             return self.to_json(
                 timeline, meta=metadata, status_code=return_code)
