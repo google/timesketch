@@ -61,7 +61,7 @@ then
 	docker exec -e "DEBIAN_FRONTEND=noninteractive" ${CONTAINER_NAME} sh -c "apt-get install -y ${DPKG_PACKAGES}";
 
 	docker cp ../timesketch ${CONTAINER_NAME}:/
-	docker cp ./timesketch/data/timesketch.conf ${CONTAINER_NAME}:/etc/
+	docker cp ./data/timesketch.conf ${CONTAINER_NAME}:/etc/
 
 	docker exec ${CONTAINER_NAME} sh -c "cd timesketch && yarn install";
 
