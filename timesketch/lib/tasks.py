@@ -192,10 +192,10 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
 
     Args:
         sketch_id (int): The ID of the sketch to analyze.
-        searchindex_id (int): The ID of the searchhindex to analyze.
+        searchindex_id (int): The ID of the searchindex to analyze.
         user_id (int): The ID of the user who started the analyzer.
         analyzer_names (list): List of analyzers to run.
-        analyzer_kwargs (dict): Arguments to the analyzer.
+        analyzer_kwargs (dict): Arguments to the analyzers.
 
     Returns:
         Celery group with analysis tasks or None if no analyzers are enabled.
