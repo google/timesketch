@@ -256,7 +256,7 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
         tasks.append(run_email_result_task.s(sketch_id))
 
     if not tasks:
-        return
+        return None
 
     return chain(tasks)
 

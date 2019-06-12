@@ -451,8 +451,7 @@ class Analysis(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     searchindex_id = Column(Integer, ForeignKey('searchindex.id'))
 
     def __init__(self, name, description, analyzer_name, parameters, user,
-                 sketch, timeline=None, searchindex=None, result=None,
-                 log=None):
+                 sketch, timeline=None, searchindex=None, result=None):
         """Initialize the Analysis object.
 
         Args:
@@ -465,7 +464,6 @@ class Analysis(LabelMixin, StatusMixin, CommentMixin, BaseModel):
             timeline (Timeline): Timeline the analysis was run on
             searchindex (SearchIndex): SearchIndex the analysis was run on
             result (str): Result report of the analysis
-            log (str): Log of the analysis
         """
         super(Analysis, self).__init__()
         self.name = name
@@ -477,7 +475,7 @@ class Analysis(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.timeline = timeline
         self.searchindex = searchindex
         self.result = result
-        self.log = log
+        self.log = ''
 
 
 class AnalysisSession(LabelMixin, StatusMixin, CommentMixin, BaseModel):
