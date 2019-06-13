@@ -38,7 +38,7 @@ limitations under the License.
     </div>
 
     <div class="field is-grouped">
-      <p class="control">
+      <p class="control" v-if="meta.views.length">
         <ts-view-list-dropdown @setActiveView="searchView"></ts-view-list-dropdown>
       </p>
       <p class="control">
