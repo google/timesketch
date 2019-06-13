@@ -126,13 +126,7 @@ def _get_index_analyzers():
 
     for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers(
             index_analyzers):
-        kwarg_list = analyzer_cls.get_kwargs()
-
-        if kwarg_list:
-            for kwargs in kwarg_list:
-                tasks.append(run_index_analyzer.s(analyzer_name, **kwargs))
-        else:
-            tasks.append(run_index_analyzer.s(analyzer_name))
+        tasks.append(run_index_analyzer.s(analyzer_name))
 
     return chain(tasks)
 
@@ -190,6 +184,12 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
                                    analyzer_names=None, analyzer_kwargs=None):
     """Build a pipeline for sketch analysis.
 
+    If no analyzer_names is passed in then we assume auto analyzers should be
+    run and get this list from the configuration. Parameters to the analyzers
+    can be passed in to this function, otherwise they will be taken from the
+    configuration. Either default kwargs for auto analyzers or defaults for
+    manually run analyzers.
+
     Args:
         sketch_id (int): The ID of the sketch to analyze.
         searchindex_id (int): The ID of the searchindex to analyze.
@@ -201,14 +201,19 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
         Celery group with analysis tasks or None if no analyzers are enabled.
     """
     tasks = []
-    auto_analyzers = current_app.config.get('AUTO_SKETCH_ANALYZERS', None)
-
-    # Exit early if no sketch analyzers are configured to run.
-    if not (analyzer_names or auto_analyzers):
-        return None
 
     if not analyzer_names:
-        analyzer_names = auto_analyzers
+        analyzer_names = current_app.config.get('AUTO_SKETCH_ANALYZERS', [])
+        if not analyzer_kwargs:
+            analyzer_kwargs = current_app.config.get(
+                'AUTO_SKETCH_ANALYZERS_KWARGS', {})
+
+    # Exit early if no sketch analyzers are configured to run.
+    if not analyzer_names:
+        return None
+
+    if not analyzer_kwargs:
+        analyzer_kwargs = current_app.config.get('ANALYZERS_DEFAULT_KWARGS', {})
 
     if user_id:
         user = User.query.get(user_id)
@@ -223,11 +228,7 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
         if not analyzer_cls.IS_SKETCH_ANALYZER:
             continue
 
-        if analyzer_kwargs:
-            kwargs = analyzer_kwargs.get(analyzer_name, {})
-        else:
-            kwargs = {}
-
+        kwargs = analyzer_kwargs.get(analyzer_name, {})
         searchindex = SearchIndex.query.get(searchindex_id)
         timeline = Timeline.query.filter_by(
             sketch=sketch, searchindex=searchindex).first()
