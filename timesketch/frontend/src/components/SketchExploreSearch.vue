@@ -15,41 +15,64 @@ limitations under the License.
 -->
 <template>
   <div>
-    <form v-on:submit.prevent="search">
-      <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
-    </form>
-    <br>
-
-    <div class="modal" v-bind:class="{ 'is-active': showCreateViewModal }">>
-      <div class="modal-background"></div>
-      <div class="modal-content">
+    <section class="section">
+      <div class="container">
         <div class="card">
-          <header class="card-header">
-            <p class="card-header-title">Create new view</p>
-          </header>
           <div class="card-content">
-            <div class="content">
-              <ts-create-view-form @toggleCreateViewModal="toggleCreateViewModal" :sketchId="sketchId" :currentQueryString="currentQueryString" :currentQueryFilter="currentQueryFilter"></ts-create-view-form>
+
+            <form v-on:submit.prevent="search">
+              <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
+            </form>
+            <br>
+
+            <div class="modal" v-bind:class="{ 'is-active': showCreateViewModal }">>
+              <div class="modal-background"></div>
+              <div class="modal-content">
+                <div class="card">
+                  <header class="card-header">
+                    <p class="card-header-title">Create new view</p>
+                  </header>
+                  <div class="card-content">
+                    <div class="content">
+                      <ts-create-view-form @toggleCreateViewModal="toggleCreateViewModal" :sketchId="sketchId" :currentQueryString="currentQueryString" :currentQueryFilter="currentQueryFilter"></ts-create-view-form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button class="modal-close is-large" aria-label="close" v-on:click="showCreateViewModal = !showCreateViewModal"></button>
+            </div>
+
+            <div class="field is-grouped">
+              <p class="control">
+                <ts-view-list-dropdown @setActiveView="searchView"></ts-view-list-dropdown>
+              </p>
+              <p class="control">
+                <a class="button" v-on:click="showCreateViewModal = !showCreateViewModal">
+                  <span class="icon is-small">
+                    <i class="fas fa-save"></i>
+                  </span>
+                  <span>Save view</span>
+                </a>
+              </p>
             </div>
           </div>
         </div>
       </div>
-      <button class="modal-close is-large" aria-label="close" v-on:click="showCreateViewModal = !showCreateViewModal"></button>
-    </div>
+    </section>
 
-    <div class="field is-grouped">
-      <p class="control">
-        <ts-view-list-dropdown @setActiveView="searchView"></ts-view-list-dropdown>
-      </p>
-      <p class="control">
-        <a class="button" v-on:click="showCreateViewModal = !showCreateViewModal">
-          <span class="icon is-small">
-            <i class="fas fa-save"></i>
-          </span>
-          <span>Save view</span>
-        </a>
-      </p>
-    </div>
+    <section class="section">
+      <div class="container">
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title">Timelines</p>
+          </header>
+          <div class="card-content">
+            <ts-explore-timeline-picker @doSearch="search" v-if="sketch.active_timelines"></ts-explore-timeline-picker>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </div>
 </template>
 
@@ -57,12 +80,14 @@ limitations under the License.
 import ApiClient from '../utils/RestApiClient'
 import TsViewListDropdown from './SketchExploreViewListDropdown'
 import TsCreateViewForm from './SketchCreateViewForm'
+import TsExploreTimelinePicker from './SketchExploreTimelinePicker'
 
 export default {
   name: 'ts-sketch-explore-search',
   components: {
     TsViewListDropdown,
-    TsCreateViewForm
+    TsCreateViewForm,
+    TsExploreTimelinePicker
   },
   props: ['sketchId'],
   data () {
