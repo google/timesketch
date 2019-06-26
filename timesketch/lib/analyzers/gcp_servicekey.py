@@ -27,8 +27,10 @@ class GcpServiceKeySketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
-        query = ('event_subtype:compute.instances.insert AND user:*gserviceaccount*')
-        return_fields = ['message', 'event_subtype', 'event_type', 'user', 'name']
+        # query = ('event_subtype:compute.instances.insert AND user:*gserviceaccount*')
+        # return_fields = ['message', 'event_subtype', 'event_type', 'user', 'name']
+        query = ('principalEmail:*gserviceaccount*')
+        return_fields = ['message', 'principalEmail', 'methodName', 'project_name', 'service_account_display_name', 'resourceName']
 
         # Generator of events based on your query.
         events = self.event_stream(
@@ -39,16 +41,27 @@ class GcpServiceKeySketchPlugin(interface.BaseSketchAnalyzer):
         for event in events:
             # Fields to analyze.
             message = event.source.get('message')
-            event_subtype = event.source.get('event_subtype')
-            event_type = event.source.get('event_type')
-            user = event.source.get('user')
-            name = event.source.get('name')
+            principalEmail = event.source.get('principalEmail')
+            methodName = event.source.get('methodName')
+            project_name = event.source.get('project_name')
+            service_account_display_name = event.source.get('service_account_display_name')
 
-            if event_type == 'GCE_OPERATION_DONE':
+            if 'CreateServiceAccount' in methodName:
                 event.add_star()
-                event.add_tags('GCP Success Event')
-                event.add_label('vm_created')
+                event.add_label('New ServiceAccount Created')
 
+            if 'compute.instances.insert' in methodName:
+                event.add_star()
+                event.add_label('VM created')
+
+            if 'compute.firewalls.insert' in methodName:
+                event.add_star()
+                event.add_label('FW rule created')
+
+            if 'compute.networks.insert' in methodName:
+                event.add_star()
+                event.add_label('Network Insert Event')
+                
             # Commit the event to the datastore.
             event.commit()
             gcp_servicekey_counter += 1
