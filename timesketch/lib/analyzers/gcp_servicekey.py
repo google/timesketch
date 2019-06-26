@@ -36,7 +36,6 @@ class GcpServiceKeySketchPlugin(interface.BaseSketchAnalyzer):
 
         for event in events:
             # Fields to analyze.
-            message = event.source.get('message')
             methodName = event.source.get('methodName')
 
             if 'CreateServiceAccount' in methodName:
