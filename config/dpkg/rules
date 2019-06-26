@@ -1,0 +1,35 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --buildsystem=python_distutils --with=python2,python3,systemd
+
+.PHONY: override_dh_auto_clean
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf build timesketch.egg-info/SOURCES.txt timesketch.egg-info/PKG-INFO
+
+.PHONY: override_dh_auto_build
+override_dh_auto_build:
+	dh_auto_build
+	set -ex; for python in $(shell py3versions -r); do \
+		$$python setup.py build; \
+	done;
+
+.PHONY: override_dh_auto_install
+override_dh_auto_install:
+	dh_auto_install --destdir $(CURDIR)
+	set -ex; for python in $(shell py3versions -r); do \
+		$$python setup.py install --root=$(CURDIR) --install-layout=deb; \
+	done;
+
+.PHONY: override_dh_installinit
+override_dh_installinit:
+	dh_installinit --name=timesketch
+
+.PHONY: override_dh_python3
+override_dh_python3:
+	dh_python3 -p timesketch-server --shebang=/usr/bin/python3
+
+.PHONY: override_dh_systemd_enable
+override_dh_systemd_enable:
+	dh_systemd_enable --name=timesketch

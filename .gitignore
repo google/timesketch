@@ -1,22 +1,28 @@
-# Ignore frontend build related files
-node_modules
-timesketch/static/dist
+# Files to ignore by git
+
+# Back-up files
+*~
+*.swp
+
+# Generic auto-generated build files
+*.pyc
+*.pyo
 
 # Ignore back-up files.
 *~
 
-# Ignore compiled Python files.
-*.pyc
-*.pyo
-
-# Don't include build related files.
+# Specific auto-generated build files
+/.eggs
+/.tox
+/__pycache__
+/build/
 /dependencies/
 /dist/
-/build/
-*.egg-info
+/timesketch.egg-info
 
-# And don't care about the 'egg'.
-/Timesketch.egg-info
+# Ignore frontend build related files
+node_modules
+timesketch/static/dist
 
 # Test files
 .coverage

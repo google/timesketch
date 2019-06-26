@@ -9,8 +9,8 @@ if [ "$1" = 'timesketch' ]; then
 
   # Copy config files
   mkdir /etc/timesketch
-  cp /usr/local/src/timesketch/timesketch.conf /etc
-  cp /usr/local/src/timesketch/config/features.yaml /etc/timesketch/
+  cp /usr/local/src/timesketch/data/timesketch.conf /etc
+  cp /usr/local/src/timesketch/data/features.yaml /etc/timesketch/
 
   # Set SECRET_KEY in /etc/timesketch.conf if it isn't already set
   if grep -q "SECRET_KEY = '<KEY_GOES_HERE>'" /etc/timesketch.conf; then

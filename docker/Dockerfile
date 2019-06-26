@@ -35,10 +35,10 @@ RUN sed -i -e '/pyyaml/d' /tmp/timesketch/requirements.txt
 RUN pip3 install /tmp/timesketch/
 
 # Copy the Timesketch configuration file into /etc
-RUN cp /tmp/timesketch/timesketch.conf /etc
+RUN cp /tmp/timesketch/data/timesketch.conf /etc
 # Copy Timesketch config files into /etc/timesketch
 RUN mkdir /etc/timesketch
-RUN cp -r /tmp/timesketch/config/* /etc/timesketch/
+RUN cp -r /tmp/timesketch/data/* /etc/timesketch/
 
 # Copy the entrypoint script into the container
 COPY docker/docker-entrypoint.sh /

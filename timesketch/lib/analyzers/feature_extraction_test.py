@@ -53,7 +53,7 @@ class TestFeatureExtractionPlugin(BaseTest):
     # TODO: Add tests for the feature extraction.
     def test_config(self):
         """Tests that the config file is valid."""
-        config_file = os.path.join('config', 'features.yaml')
+        config_file = os.path.join('data', 'features.yaml')
         self.assertTrue(os.path.isfile(config_file))
 
         with open(config_file) as fh:

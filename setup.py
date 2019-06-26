@@ -20,8 +20,12 @@
 
 from __future__ import unicode_literals
 
+import glob
+import os
+
 from setuptools import find_packages
 from setuptools import setup
+
 try:  # for pip >= 10
     from pip._internal.download import PipSession
     from pip._internal.req import parse_requirements
@@ -29,7 +33,8 @@ except ImportError:  # for pip <= 9.0.3
     from pip.download import PipSession
     from pip.req import parse_requirements
 
-timesketch_version = '20190207'
+
+timesketch_version = '20190609'
 
 timesketch_description = (
     'Timesketch is a web based tool for collaborative forensic timeline '
@@ -53,7 +58,11 @@ setup(
         'Programming Language :: Python',
     ],
     data_files=[
-        ('share/timesketch', ['timesketch.conf', 'config/features.yaml'])],
+        ('share/timesketch', glob.glob(
+            os.path.join('data', '*'))),
+        ('share/doc/timesketch', [
+            'AUTHORS', 'LICENSE', 'README.md']),
+    ],
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
