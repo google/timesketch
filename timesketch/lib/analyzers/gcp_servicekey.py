@@ -27,12 +27,9 @@ class GcpServiceKeySketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
-        # query = ('event_subtype:compute.instances.insert AND user:*gserviceaccount*')
-        # return_fields = ['message', 'event_subtype', 'event_type', 'user', 'name']
         query = ('principalEmail:*gserviceaccount*')
         return_fields = ['message', 'principalEmail', 'methodName', 'project_name', 'service_account_display_name', 'resourceName']
 
-        # Generator of events based on your query.
         events = self.event_stream(
             query_string=query, return_fields=return_fields)
 
@@ -70,7 +67,7 @@ class GcpServiceKeySketchPlugin(interface.BaseSketchAnalyzer):
         if gcp_servicekey_counter:
             self.sketch.add_view('GCP ServiceKey activity', 'gcp_servicekey', query_string=query)
 
-        # TODO: Return a summary from the analyzer.
+        # Return a summary from the analyzer.
         return 'GCP ServiceKey analyzer completed, {0:d} service key marked'.format(gcp_servicekey_counter)
 
 
