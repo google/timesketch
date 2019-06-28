@@ -24,18 +24,30 @@ class TermsAggregation(interface.BaseAggregator):
 
     NAME = 'field_bucket'
 
-    SUPPORTED_CHARTS = frozenset(['barchart', 'horizontal_barchart'])
+    SUPPORTED_CHARTS = frozenset(['barchart', 'hbarchart'])
 
-    FORM_FIELDS = {
-        'field': {
-            'type': 'text',
-            'description': 'What field to aggregate.'
+    FORM_FIELDS = [
+        {
+            'type': 'ts-dynamic-form-radio-input',
+            'name': 'supported_charts',
+            'label': 'What chart type to render.',
+            'options': list(SUPPORTED_CHARTS)
         },
-        'limit': {
-            'type': 'number',
-            'description': 'Number of results to return.'
+        {
+            'type': 'ts-dynamic-form-text-input',
+            'name': 'field',
+            'label': 'What field to aggregate.',
+            'placeholder': 'Enter a field to aggregate',
+            'default_value': ''
+        },
+        {
+            'type': 'ts-dynamic-form-text-input',
+            'name': 'limit',
+            'label': 'Number of results to return.',
+            'placeholder': 'Enter number of results to return',
+            'default_value': '10'
         }
-    }
+    ]
 
     # pylint: disable=arguments-differ
     def run(self, field, limit=10):
@@ -48,10 +60,9 @@ class TermsAggregation(interface.BaseAggregator):
         Returns:
             Instance of interface.AggregationResult with aggregation result.
         """
-
         # Encoding information for Vega-Lite.
         encoding = {
-            'x': {'field': field, 'type': 'nominal'},
+            'x': {'field': field, 'type': 'nominal', "sort": {"op": "sum", "field": "count", "order": "descending"}},
             'y': {'field': 'count', 'type': 'quantitative'}
         }
 

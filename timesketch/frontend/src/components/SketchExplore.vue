@@ -32,6 +32,19 @@ limitations under the License.
       </div>
     </section>
 
+    <section class="section">
+      <div class="container">
+        <div class="card">
+          <div class="card-content">
+            <ts-sketch-explore-aggregator-list-dropdown @setActiveAggregator="updateAggregatorFormFields"></ts-sketch-explore-aggregator-list-dropdown>
+            <ts-dynamic-form :schema="schema" v-model="formData" @formSubmitted="getVegaSpec" :key="selectedAggregator" ref="vegaChart"></ts-dynamic-form>
+            <br>
+            <ts-vega-lite-chart :vegaSpec="vegaSpec" v-if="showChart"></ts-vega-lite-chart>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="section" v-if="searchInProgress">
       <div class="container">
         <div class="card">
@@ -61,15 +74,31 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../utils/RestApiClient'
 import TsSketchExploreSearch from './SketchExploreSearch'
 import TsSketchExploreEventList from './SketchExploreEventList'
+import TsVegaLiteChart from './VegaLiteChart'
+import TsDynamicForm from './DynamicForm'
+import TsSketchExploreAggregatorListDropdown from './SketchExploreAggregatorListDropdown'
 
 export default {
   name: 'ts-sketch-explore',
   props: ['sketchId'],
   components: {
     TsSketchExploreSearch,
-    TsSketchExploreEventList
+    TsSketchExploreEventList,
+    TsVegaLiteChart,
+    TsDynamicForm,
+    TsSketchExploreAggregatorListDropdown
+  },
+  data () {
+    return {
+      schema: {},
+      formData: {},
+      vegaSpec: {},
+      selectedAggregator: '',
+      showChart: false
+    }
   },
   computed: {
     sketch () {
@@ -89,6 +118,32 @@ export default {
     },
     totalTime () {
       return this.eventList.meta.es_time / 1000 || 0
+    }
+  },
+  methods: {
+    updateAggregatorFormFields: function (aggregator) {
+      this.showChart = false
+      let data = {}
+      this.schema = aggregator.form_fields
+      this.schema.forEach(function (field) {
+        data[field.name] = field.default_value
+      })
+      this.formData = data
+      this.selectedAggregator = aggregator.name
+    },
+    getVegaSpec: function () {
+      this.showChart = true
+      let d = {
+        'aggregator_name': this.selectedAggregator,
+        'aggregator_parameters': this.formData
+      }
+      ApiClient.runAggregator(this.sketchId, d).then((response) => {
+        let spec = response.data.meta.vega_spec
+        spec.config.view.width = this.$refs.vegaChart.$el.offsetWidth
+        spec.config.autosize = { type: 'fit', contains: 'padding' }
+        this.vegaSpec = JSON.stringify(spec)
+      }).catch((e) => {})
+      // this.vegaSpec = '{"config": {"view": {"width": 800, "height": 600}, "mark": {"tooltip": null}}, "layer": [{"mark": "bar", "encoding": {"x": {"type": "quantitative", "field": "count"}, "y": {"type": "nominal", "field": "filename"}}}, {"mark": {"type": "text", "align": "left", "baseline": "middle", "dx": 3}, "encoding": {"text": {"type": "quantitative", "field": "count"}, "x": {"type": "quantitative", "field": "count"}, "y": {"type": "nominal", "field": "filename"}}}], "data": {"values": [{"filename": "/Windows/System32/config/SOFTWARE", "count": 252568}, {"filename": "/Windows/System32/config/COMPONENTS", "count": 86634}, {"filename": "/Windows/System32/config/SYSTEM", "count": 29476}, {"filename": "/Windows/System32/winevt/Logs/Microsoft-Windows-Store%4Operational.evtx", "count": 27646}, {"filename": "/Windows/System32/config/DRIVERS", "count": 27240}, {"filename": "/Windows/System32/SMI/Store/Machine/SCHEMA.DAT", "count": 15856}, {"filename": "/Windows/System32/winevt/Logs/Security.evtx", "count": 14623}, {"filename": "TransportSecurity", "count": 12470}, {"filename": "/Windows/InfusedApps/Packages/Microsoft.MicrosoftOfficeHub_17.8918.5926.0_x64__8wekyb3d8bbwe/Registry.dat", "count": 11600}, {"filename": "/Windows/Provisioning/Microsoft-Desktop-Provisioning.dat", "count": 9419}]}, "$schema": "https://vega.github.io/schema/vega-lite/v3.3.0.json"}'
     }
   }
 }

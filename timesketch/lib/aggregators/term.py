@@ -81,22 +81,31 @@ class FilteredTermsAggregation(interface.BaseAggregator):
 
     SUPPORTED_CHARTS = frozenset(['barchart', 'horizontal_barchart'])
 
-    FORM_FIELDS = {
-        'query': {
-            'type': 'text',
-            'description': 'The filter query to narrow down the result set.'
+    FORM_FIELDS = [
+        {
+            'name': 'query_string',
+            'type': 'ts-dynamic-form-text-input',
+            'label': 'The filter query to narrow down the result set.',
+            'placeholder': 'Query',
+            'default_value': ''
         },
-        'query_dsl': {
-            'type': 'text',
-            'description': (
+        {
+            'name': 'query_dsl',
+            'type': 'ts-dynamic-form-text-input',
+            'label': (
                 'The filter query DSL to narrow down the result '
-                'set (optional).')
+                'set (optional).'),
+            'placeholder': 'Query DSL',
+            'default_value': ''
         },
-        'field': {
-            'type': 'text',
-            'description': 'The attribute or field to bucketize.'
-        },
-    }
+        {
+            'name': 'field',
+            'type': 'ts-dynamic-form-text-input',
+            'label': 'What field to aggregate.',
+            'placeholder': 'Enter a field to aggregate',
+            'default_value': ''
+        }
+    ]
 
     # pylint: disable=arguments-differ
     def run(self, field, query_string='', query_dsl=''):
