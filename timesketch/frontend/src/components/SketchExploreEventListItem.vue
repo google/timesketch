@@ -100,8 +100,8 @@ export default {
     deltaDays () {
       let timestamp = Math.floor(this.event._source.timestamp / 1000000)
       let prevTimestamp = Math.floor(this.prevEvent._source.timestamp / 1000000)
-      const delta = Math.floor(timestamp - prevTimestamp)
-      const deltaDays = delta / 60 / 60 / 24
+      let delta = Math.floor(timestamp - prevTimestamp)
+      let deltaDays = delta / 60 / 60 / 24
       return Math.floor(deltaDays)
     }
   }
