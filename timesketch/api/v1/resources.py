@@ -1074,7 +1074,7 @@ class EventCreateResource(ResourceMixin, Resource):
 
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
-            index_name = hashlib.md5(index_name_seed).hexdigest()
+            index_name = hashlib.md5(index_name_seed.encode()).hexdigest()
             if six.PY2:
                 index_name = codecs.decode(index_name, 'utf-8')
 
