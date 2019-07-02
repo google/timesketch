@@ -28,22 +28,22 @@ class TermsAggregation(interface.BaseAggregator):
 
     FORM_FIELDS = [
         {
-            'type': 'ts-dynamic-form-radio-input',
+            'type': 'ts-dynamic-form-select-input',
             'name': 'supported_charts',
-            'label': 'What chart type to render.',
+            'label': 'Chart type to render',
             'options': list(SUPPORTED_CHARTS)
         },
         {
             'type': 'ts-dynamic-form-text-input',
             'name': 'field',
-            'label': 'What field to aggregate.',
+            'label': 'What field to aggregate on',
             'placeholder': 'Enter a field to aggregate',
             'default_value': ''
         },
         {
             'type': 'ts-dynamic-form-text-input',
             'name': 'limit',
-            'label': 'Number of results to return.',
+            'label': 'Number of results to return',
             'placeholder': 'Enter number of results to return',
             'default_value': '10'
         }

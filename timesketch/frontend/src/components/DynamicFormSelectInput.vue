@@ -15,12 +15,12 @@ limitations under the License.
 -->
 <template>
   <div class="field">
+    <label class="label">{{ label }}</label>
     <div class="control">
       <div class="select">
         <select :value="value" @input="$emit('input', $event.target.value)">
-          <option v-for="option in options" :key="option">
-            {{ option }}
-          </option>
+          <option disabled value="">Please select one</option>
+          <option v-for="option in options" :key="option">{{ option }}</option>
         </select>
       </div>
     </div>

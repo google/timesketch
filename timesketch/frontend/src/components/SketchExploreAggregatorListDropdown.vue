@@ -15,10 +15,11 @@ limitations under the License.
 -->
 <template>
   <div class="field">
+    <label class="label">Choose an aggregator</label>
     <div class="control">
       <div class="select">
         <select v-model="selected" @change="setActiveAggregator()">
-          <option disabled>Choose aggregator</option>
+          <option disabled value="">Please select one</option>
           <option v-for="(aggregator, name) in meta.aggregators" :key="aggregator.id">
             {{ name }}
           </option>
@@ -34,7 +35,7 @@ export default {
   props: ['isRounded', 'title'],
   data () {
     return {
-      selected: 'Choose aggregator',
+      selected: '',
       selectedChart: ''
     }
   },

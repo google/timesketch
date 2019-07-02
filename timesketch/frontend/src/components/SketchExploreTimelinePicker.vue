@@ -64,7 +64,7 @@ export default {
     updateFilter: function (timeline) {
       let indexName = timeline.searchindex.index_name
       this.currentQueryFilter.indices = this.toggleIndex(indexName)
-      this.$emit('doSearch')
+      this.$store.commit('search', this.sketch.id)
     },
     timelineColor (timeline) {
       let indexName = timeline.searchindex.index_name

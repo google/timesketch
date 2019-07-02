@@ -839,8 +839,12 @@ class AggregationExploreResource(ResourceMixin, Resource):
         aggregator_name = form.aggregator_name.data
 
         if aggregator_name:
-            #aggregator_parameters = json.loads(form.aggregator_parameters.data)
-            aggregator_parameters = form.aggregator_parameters.data
+            if isinstance(form.aggregator_parameters.data, dict):
+                aggregator_parameters = form.aggregator_parameters.data
+            else:
+                aggregator_parameters = json.loads(
+                    form.aggregator_parameters.data)
+
             agg_class = aggregator_manager.AggregatorManager.get_aggregator(
                 aggregator_name)
             if not agg_class:
@@ -853,8 +857,6 @@ class AggregationExploreResource(ResourceMixin, Resource):
             result_obj = aggregator.run(**aggregator_parameters)
             time_after = time.time()
 
-            vega_spec = result_obj.to_chart(chart_name=chart_type)
-
             buckets = result_obj.to_dict()
             buckets['buckets'] = buckets.pop('values')
             result = {
@@ -865,9 +867,11 @@ class AggregationExploreResource(ResourceMixin, Resource):
             meta = {
                 'method': 'aggregator_run',
                 'name': aggregator_name,
-                'vega_spec': vega_spec,
                 'es_time': time_after - time_before,
             }
+
+            if chart_type:
+                meta['vega_spec'] = result_obj.to_chart(chart_name=chart_type)
 
         elif aggregation_dsl:
             # pylint: disable=unexpected-keyword-arg

@@ -57,7 +57,6 @@ def get_spec(field, query='', query_dsl=''):
     else:
         raise ValueError('Neiter query nor query DSL provided.')
 
-
     return {
         'aggregations': {
             'term_count': {
@@ -79,22 +78,26 @@ class FilteredTermsAggregation(interface.BaseAggregator):
 
     NAME = 'query_bucket'
 
-    SUPPORTED_CHARTS = frozenset(['barchart', 'horizontal_barchart'])
+    SUPPORTED_CHARTS = frozenset(['barchart', 'hbarchart'])
 
     FORM_FIELDS = [
         {
+            'type': 'ts-dynamic-form-select-input',
+            'name': 'supported_charts',
+            'label': 'Chart type to render',
+            'options': list(SUPPORTED_CHARTS)
+        },
+        {
             'name': 'query_string',
             'type': 'ts-dynamic-form-text-input',
-            'label': 'The filter query to narrow down the result set.',
+            'label': 'The filter query to narrow down the result set',
             'placeholder': 'Query',
             'default_value': ''
         },
         {
             'name': 'query_dsl',
             'type': 'ts-dynamic-form-text-input',
-            'label': (
-                'The filter query DSL to narrow down the result '
-                'set (optional).'),
+            'label': 'The filter query DSL to narrow down the result',
             'placeholder': 'Query DSL',
             'default_value': ''
         },
@@ -102,8 +105,6 @@ class FilteredTermsAggregation(interface.BaseAggregator):
             'name': 'field',
             'type': 'ts-dynamic-form-text-input',
             'label': 'What field to aggregate.',
-            'placeholder': 'Enter a field to aggregate',
-            'default_value': ''
         }
     ]
 
@@ -134,7 +135,7 @@ class FilteredTermsAggregation(interface.BaseAggregator):
 
         # Encoding information for Vega-Lite.
         encoding = {
-            'x': {'field': field, 'type': 'nominal'},
+            'x': {'field': field, 'type': 'nominal', "sort": {"op": "sum", "field": "count", "order": "descending"}},
             'y': {'field': 'count', 'type': 'quantitative'}
         }
 

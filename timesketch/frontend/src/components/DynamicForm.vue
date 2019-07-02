@@ -14,10 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <form v-on:submit.prevent="submitForm">
-  <div class="field is-horizontal" v-if="schema.length">
-    <div class="field-body">
-
+  <form v-if="schema.length" v-on:submit.prevent="submitForm">
       <component v-for="(field, index) in schema"
                  :key="index"
                  :is="field.type"
@@ -25,23 +22,20 @@ limitations under the License.
                  @input="updateForm(field.name, $event)"
                  v-bind="field">
       </component>
-
-      <p class="control">
-        <input class="button is-success" type="submit" value="Run">
-      </p>
-    </div>
-  </div>
+      <div class="control">
+        <input class="button is-info" type="submit" value="Run">
+      </div>
   </form>
 </template>
 
 <script>
 import TsDynamicFormTextInput from './DynamicFormTextInput'
-import TsDynamicFormRadioInput from './DynamicFormRadioInput'
+import TsDynamicFormSelectInput from './DynamicFormSelectInput'
 
 export default {
   name: 'ts-dynamic-form',
   props: ['schema', 'value'],
-  components: { TsDynamicFormTextInput, TsDynamicFormRadioInput },
+  components: { TsDynamicFormTextInput, TsDynamicFormSelectInput },
   data () {
     return {
       formData: this.value || {}

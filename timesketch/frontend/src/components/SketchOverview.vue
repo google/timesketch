@@ -17,7 +17,7 @@ limitations under the License.
   <div>
 
     <section class="section">
-      <div class="container">
+      <div class="container is-fluid">
         <ts-navbar-secondary currentAppContext="sketch" currentPage="overview">
           <a class="button is-link is-rounded" style="margin-right:10px;">
               <span class="icon is-small">
@@ -100,7 +100,7 @@ limitations under the License.
 
     <!-- Title and description -->
     <section class="section">
-      <div class="container">
+      <div class="container is-fluid">
         <div class="card" style="min-height: 200px;">
           <div class="card-content">
             <ts-sketch-summary :sketch="sketch"></ts-sketch-summary>
@@ -111,7 +111,7 @@ limitations under the License.
 
     <!-- Stats -->
     <section class="section" v-if="sketch.timelines.length">
-      <div class="container">
+      <div class="container is-fluid">
         <div class="card" style="min-height: 100px;">
           <div class="card-content">
             <ts-sketch-metrics :timelines="sketch.active_timelines" :views="meta.views" :stories="sketch.stories" :count="count"></ts-sketch-metrics>
@@ -122,7 +122,7 @@ limitations under the License.
 
     <!-- Timeline, Saved View and Stories lists-->
     <section class="section" v-if="sketch.timelines && sketch.timelines.length ? sketch.timelines.length: false">
-      <div class="container">
+      <div class="container is-fluid">
         <div class="columns">
 
           <!-- Timelines -->

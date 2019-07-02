@@ -15,20 +15,19 @@ limitations under the License.
 -->
 <template>
   <div class="field">
-    <p class="control">
-      <input class="input"
-        type="text"
-        :name="name"
-        :value="value"
-        :placeholder="placeholder"
-        @input="$emit('input', $event.target.value)">
-    </p>
+    <label class="label">{{ label }}</label>
+    <input class="input"
+           type="text"
+           :name="name"
+           :value="value"
+           :placeholder="placeholder"
+           @input="$emit('input', $event.target.value)">
   </div>
 </template>
 <script>
 export default {
   name: 'ts-dynamic-form-text-input',
-  props: ['placeholder', 'name', 'value']
+  props: ['placeholder', 'label', 'name', 'value']
 }
 </script>
 

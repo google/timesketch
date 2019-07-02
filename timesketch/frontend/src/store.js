@@ -60,6 +60,17 @@ export default new Vuex.Store({
         Vue.set(state, 'count', response.data.meta.count)
       }).catch((e) => {})
     },
+    search (state, sketchId) {
+      Vue.set(state, 'searchInProgress', true)
+      let formData = {
+        'query': this.state.currentQueryString,
+        'filter': this.state.currentQueryFilter
+      }
+      ApiClient.search(sketchId, formData).then((response) => {
+        Vue.set(state, 'eventList', response.data)
+        Vue.set(state, 'searchInProgress', false)
+      }).catch((e) => {})
+    },
     updateEventList (state, searchResult) {
       Vue.set(state, 'eventList', searchResult)
     },
