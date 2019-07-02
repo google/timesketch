@@ -177,6 +177,16 @@ DOMAIN_ANALYZER_WATCHED_DOMAINS_SCORE_THRESHOLD = 0.75
 DOMAIN_ANALYZER_WHITELISTED_DOMAINS = ['ytimg.com', 'gstatic.com', 'yimg.com', 'akamaized.net', 'akamaihd.net', 's-microsoft.com', 'images-amazon.com', 'ssl-images-amazon.com', 'wikimedia.org', 'redditmedia.com', 'googleusercontent.com', 'googleapis.com', 'wikipedia.org', 'github.io', 'github.com']
 
 
+# Threatintel analyzer-specific configuration
+# URI root to Yeti's API, e.g. 'https://localhost:8080/api'
+YETI_API_ROOT = ''
+
+# API key to authenticate requests
+YETI_API_KEY = ''
+
+# Labels to narrow down indicator selection
+YETI_INDICATOR_LABELS = ['domain']
+
 #-------------------------------------------------------------------------------
 # Enable experimental UI features.
 

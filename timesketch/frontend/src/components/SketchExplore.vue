@@ -22,15 +22,7 @@ limitations under the License.
       </div>
     </section>
 
-    <section class="section">
-      <div class="container">
-        <div class="card">
-          <div class="card-content">
-            <ts-sketch-explore-search :sketchId="sketchId"></ts-sketch-explore-search>
-          </div>
-        </div>
-      </div>
-    </section>
+    <ts-sketch-explore-search :sketchId="sketchId"></ts-sketch-explore-search>
 
     <section class="section" v-if="searchInProgress">
       <div class="container">
