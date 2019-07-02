@@ -26,7 +26,9 @@ class GcpServiceKeySketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
-        query = ('principalEmail:*gserviceaccount*')
+        # TODO: update dftimewolf stackdriver module to produce more detailed
+        # attributes
+        query = ('principalEmail:*gserviceaccount.com')
         return_fields = ['message', 'methodName']
 
         events = self.event_stream(
@@ -39,20 +41,16 @@ class GcpServiceKeySketchPlugin(interface.BaseSketchAnalyzer):
             methodName = event.source.get('methodName')
 
             if 'CreateServiceAccount' in methodName:
-                event.add_star()
-                event.add_label('New ServiceAccount Created')
+                event.add_tags(['New ServiceAccount Created'])
 
             if 'compute.instances.insert' in methodName:
-                event.add_star()
-                event.add_label('VM created')
+                event.add_tags(['VM created'])
 
             if 'compute.firewalls.insert' in methodName:
-                event.add_star()
-                event.add_label('FW rule created')
+                event.add_tags(['FW rule created'])
 
             if 'compute.networks.insert' in methodName:
-                event.add_star()
-                event.add_label('Network Insert Event')
+                event.add_tags(['Network Insert Event'])
 
             # Commit the event to the datastore.
             event.commit()
