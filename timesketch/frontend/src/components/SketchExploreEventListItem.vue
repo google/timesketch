@@ -15,6 +15,15 @@ limitations under the License.
 -->
 <template>
   <div>
+
+    <div v-if="deltaDays > 0">
+      <div class="time-bubble-vertical-line"></div>
+      <div class="time-bubble">
+        <h5><b>{{ deltaDays }}</b><br>days</h5>
+      </div>
+      <div class="time-bubble-vertical-line"></div>
+    </div>
+
     <table class="ts-event-list-table">
       <tbody>
         <tr>
@@ -53,7 +62,7 @@ import TsSketchExploreEventListItemDetail from './SketchExploreEventListItemDeta
 
 export default {
   name: 'ts-sketch-explore-event-list-item',
-  props: ['event'],
+  props: ['event', 'prevEvent'],
   components: {
     TsSketchExploreEventListItemDetail
   },
@@ -87,6 +96,13 @@ export default {
     },
     timelineName () {
       return this.timeline(this.event._index).name
+    },
+    deltaDays () {
+      let timestamp = Math.floor(this.event._source.timestamp / 1000000)
+      let prevTimestamp = Math.floor(this.prevEvent._source.timestamp / 1000000)
+      const delta = Math.floor(timestamp - prevTimestamp)
+      const deltaDays = delta / 60 / 60 / 24
+      return Math.floor(deltaDays)
     }
   }
 }
@@ -152,5 +168,31 @@ export default {
   border-collapse:separate;
   border-spacing:1px;
   table-layout: fixed;
+}
+
+.time-bubble {
+  width: 60px;
+  height: 60px;
+  background: #f5f5f5;
+  border-radius: 30px;
+  position: relative;
+  margin: 0 0 0 70px;
+  text-align: center;
+}
+
+.time-bubble h5 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  color: #666;
+}
+
+.time-bubble-vertical-line {
+  width: 2px;
+  height: 20px;
+  background: #f5f5f5;
+  margin: 0 0 0 100px;
 }
 </style>
