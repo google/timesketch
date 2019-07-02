@@ -26,6 +26,10 @@ then
 	# Note that exec options need to be defined before the container name.
 	docker exec ${CONTAINER_OPTIONS} ${CONTAINER_NAME} sh -c "cd timesketch && ${TEST_COMMAND}";
 
+elif test "${TARGET}" = "dockerfile";
+then
+	cd docker && docker build --build-arg PPA_TRACK="dev" -f Dockerfile .
+
 elif test "${TRAVIS_OS_NAME}" = "linux";
 then
 	python ./run_tests.py --full

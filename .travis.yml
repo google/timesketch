@@ -46,6 +46,12 @@ matrix:
     python: 3.6
     services:
     - docker
+  - name: "Dockerfile"
+    env: TARGET="dockerfile"
+    os: linux
+    dist: xenial
+    sudo: required
+    group: edge
 cache:
 - yarn
 - pip

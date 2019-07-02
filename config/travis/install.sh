@@ -64,7 +64,7 @@ then
 
 	docker exec ${CONTAINER_NAME} sh -c "cd timesketch && yarn install";
 
-elif test ${TRAVIS_OS_NAME} = "linux";
+elif test ${TRAVIS_OS_NAME} = "linux" && test ${TARGET} != "dockerfile";
 then
 	pip install -r requirements.txt;
 	pip install -r test_requirements.txt;

@@ -1,6 +1,12 @@
 # Use the official Docker Hub Ubuntu 18.04 base image
 FROM ubuntu:18.04
 
+# Create container with:
+# docker build --no-cache --build-arg PPA_TRACK="[dev|stable]" \
+#   --force-rm -t google/timesketch .
+
+ARG PPA_TRACK=stable
+
 # Update the base image
 RUN apt-get update && apt-get -y upgrade && apt-get -y dist-upgrade
 
@@ -23,7 +29,7 @@ RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.lis
 
 # Install Plaso, nodejs and yarn.
 RUN apt-get -y install software-properties-common
-RUN add-apt-repository ppa:gift/stable && apt-get update
+RUN add-apt-repository ppa:gift/${PPA_TRACK} && apt-get update
 RUN apt-get update && apt-get -y install plaso-tools nodejs yarn
 
 # Use Python 3 pip (pip3) to install Timesketch
