@@ -124,7 +124,7 @@ def _get_index_analyzers():
     if not index_analyzers:
         return None
 
-    for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers(
+    for analyzer_name, _ in manager.AnalysisManager.get_analyzers(
             index_analyzers):
         tasks.append(run_index_analyzer.s(analyzer_name))
 
