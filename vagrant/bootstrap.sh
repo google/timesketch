@@ -48,12 +48,12 @@ fi
 # Install apt dependencies
 apt-get update
 apt-get install -y --upgrade \
-  neo4j openjdk-8-jre-headless elasticsearch postgresql python3-psycopg2 \
-  python3-pip python-dev libffi-dev redis-server python-plaso plaso-tools jq
+  neo4j openjdk-8-jre-headless elasticsearch postgresql python-psycopg2 \
+  python-pip python-dev libffi-dev redis-server python-plaso plaso-tools jq
 
 # Install python dependencies
 # pip -v install --upgrade pip  # don't do this https://github.com/pypa/pip/issues/5221
-pip3 install -U gunicorn pylint nose flask-testing coverage mock BeautifulSoup4 pyopenssl
+pip install -U gunicorn pylint nose flask-testing coverage mock BeautifulSoup pyopenssl
 
 if [ "$VAGRANT" = true ]; then
   # Install yarn and nodejs
@@ -64,9 +64,9 @@ fi
 
 # Install Timesketch
 if [ "$VAGRANT" = true ]; then
-  pip3 install -e "${TIMESKETCH_PATH}"
+  pip install -e "${TIMESKETCH_PATH}"
 else
-  pip3 install "${TIMESKETCH_PATH}"
+  pip install "${TIMESKETCH_PATH}"
 fi
 
 # Generate random passwords for DB and session key
@@ -85,14 +85,14 @@ echo "create user timesketch with password '${PSQL_PW}';" | sudo -u postgres psq
 echo "create database timesketch owner timesketch;" | sudo -u postgres psql || true
 
 # Configure PostgreSQL
-sudo -u postgres sh -c 'echo "local all timesketch md5" >> /etc/postgresql/10/main/pg_hba.conf'
+sudo -u postgres sh -c 'echo "local all timesketch md5" >> /etc/postgresql/9.5/main/pg_hba.conf'
 
 # Initialize Timesketch
 mkdir -p /var/lib/timesketch/
 chown "${RUN_AS_USER}" /var/lib/timesketch
-cp "${TIMESKETCH_PATH}"/data/timesketch.conf /etc/
+cp "${TIMESKETCH_PATH}"/timesketch.conf /etc/
 mkdir /etc/timesketch
-cp -r "${TIMESKETCH_PATH}"/config/* /etc/timesketch
+cp "${TIMESKETCH_PATH}"/config/* /etc/timesketch
 
 # Set session key for Timesketch
 sed -i s/"SECRET_KEY = u'<KEY_GOES_HERE>'"/"SECRET_KEY = u'${SECRET_KEY}'"/ /etc/timesketch.conf
