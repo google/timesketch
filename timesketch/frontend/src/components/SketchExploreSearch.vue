@@ -83,7 +83,6 @@ limitations under the License.
         </div>
       </div>
     </section>
-
   </div>
 </template>
 

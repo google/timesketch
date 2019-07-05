@@ -82,7 +82,7 @@ limitations under the License.
                         + Text
                       </button>
                     </p>
-                    <p class="control">
+                    <p class="control" v-if="meta.views.length">
                       <ts-view-list-dropdown @setActiveView="addViewComponent($event, index)" :is-rounded="true" :title="'+ Saved view'"></ts-view-list-dropdown>
                     </p>
                   </div>
