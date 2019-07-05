@@ -396,6 +396,28 @@ class SketchResource(ResourceMixin, Resource):
         sketch.set_status(status='deleted')
         return HTTP_STATUS_CODE_OK
 
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+
+        Returns:
+            A sketch in JSON (instance of flask.wrappers.Response)
+        """
+        form = NameDescriptionForm.build(request)
+        sketch = Sketch.query.get_with_acl(sketch_id)
+
+        if not form.validate_on_submit():
+            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+        if not sketch.has_permission(current_user, 'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
+
+        sketch.name = form.name.data
+        sketch.description = form.description.data
+        db_session.add(sketch)
+        db_session.commit()
+        return self.to_json(sketch, status_code=HTTP_STATUS_CODE_CREATED)
+
 
 class ViewListResource(ResourceMixin, Resource):
     """Resource to create a View."""
