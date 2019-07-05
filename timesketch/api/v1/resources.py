@@ -1366,7 +1366,7 @@ class UploadFileResource(ResourceMixin, Resource):
             from timesketch.lib import tasks
             pipeline = tasks.build_index_pipeline(
                 file_path, timeline_name, index_name, file_extension, sketch_id)
-            pipeline.apply_async(task_id=index_name)
+            pipeline.apply_async()
 
             # Return Timeline if it was created.
             # pylint: disable=no-else-return
@@ -1692,16 +1692,16 @@ class TimelineListResource(ResourceMixin, Resource):
                 return_code = HTTP_STATUS_CODE_OK
                 timeline = Timeline.query.get(timeline_id)
 
-            # If enabled, run sketch analyzers when timeline is added.
-            # Import here to avoid circular imports.
-            if current_app.config.get('ENABLE_SKETCH_ANALYZERS'):
+            # Run sketch analyzers when timeline is added. Import here to avoid
+            # circular imports.
+            if current_app.config.get('AUTO_SKETCH_ANALYZERS'):
                 from timesketch.lib import tasks
                 sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
-                    sketch_id)
+                    sketch_id, searchindex_id, current_user.id)
                 if sketch_analyzer_group:
                     pipeline = (tasks.run_sketch_init.s(
                         [searchindex.index_name]) | sketch_analyzer_group)
-                    pipeline.apply_async(task_id=searchindex.index_name)
+                    pipeline.apply_async()
 
             return self.to_json(
                 timeline, meta=metadata, status_code=return_code)
