@@ -60,5 +60,7 @@ class TestSimilarityScorer(BaseTest):
     def test_scorer(self):
         """Test scorer object."""
         scorer = SimilarityScorer(
-            index_name=self.test_index, data_type=self.test_data_type)
+            index_name=self.test_index,
+            sketch_id=1,
+            data_type=self.test_data_type)
         self.assertIsInstance(scorer, SimilarityScorer)
