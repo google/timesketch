@@ -16,7 +16,7 @@ class SigmaPlugin(interface.BaseIndexAnalyzer):
 
     NAME = 'sigma'
 
-    CONFIG_FILE = 'sigma.yaml'
+    _CONFIG_FILE = 'sigma_config.yaml'
 
 
     def __init__(self, index_name):
@@ -26,8 +26,21 @@ class SigmaPlugin(interface.BaseIndexAnalyzer):
             index_name: Elasticsearch index name
         """
         super(SigmaPlugin, self).__init__(index_name)
+        sigma_config_path = os.path.join(os.path.dirname(__file__), self._CONFIG_FILE)
+        with open(sigma_config_path, 'r') as sigma_config_file:
+            sigma_config = sigma_config_file.read()
+        self.sigma_config = sigma_configuration.SigmaConfiguration(sigma_config)
 
     def run_sigma_rule(self, query, tag_name):
+        """Runs a sigma rule and applies the appropriate tags.
+
+        Args:
+            query: elastic search query for events to tag.
+            tag_name: tag to apply to matching events.
+
+        Returns:
+            int: number of events tagged.
+        """
         return_fields = []
         tagged_events = 0
         events = self.event_stream(
@@ -43,25 +56,28 @@ class SigmaPlugin(interface.BaseIndexAnalyzer):
         """Entry point for the analyzer.
 
         Returns:
-            String with summary of the analyzer result
+            String with summary of the analyzer result.
         """
-        with open('/Users/onager/code/timesketch/es_config.yaml', 'r') as sigma_config_file:
-            sigma_config = sigma_config_file.read()
-            sigma_config = sigma_configuration.SigmaConfiguration(sigma_config)
+        sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(self.sigma_config, {})
+        tags_applied = {}
 
-        sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(sigma_config, {})
-
-        rules_path = '/Users/onager/code/sigma/rules/linux'
+        rules_path = '/path/to/rules/'
         for rule_filename in os.listdir(rules_path):
             tag_name, _ = rule_filename.rsplit('.')
             full_path = os.path.join(rules_path, rule_filename)
             with open(full_path, 'r') as rule_file_content:
                 query = rule_file_content.read()
-                parser = sigma_collection.SigmaCollectionParser(query, sigma_config, None)
+                parser = sigma_collection.SigmaCollectionParser(query, self.sigma_config, None)
                 results = parser.generate(sigma_backend)
                 for result in results:
                     print(result)
-                # self.run_sigma_rule(query, tag_name)
+                number_of_tagged_events = self.run_sigma_rule(query, tag_name)
+                tags_applied[tag_name] = number_of_tagged_events
+        total_tagged_events = sum(tags_applied.values())
+        output_string = 'Applied {0:d} tags\n'.format(total_tagged_events)
+        for tag_name, number_of_tagged_events in tags_applied:
+            output_string += '* {0:s}: {0:d}'.format(tag_name, number_of_tagged_events)
+        return output_string
 
 
 manager.AnalysisManager.register_analyzer(SigmaPlugin)

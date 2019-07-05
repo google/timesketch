@@ -1,4 +1,4 @@
-title: Timesketch config
+title: Timesketch Sigma config
 order: 20
 backends:
   - es-dsl
@@ -19,5 +19,4 @@ logsources:
   webserver:
     category: webserver
     conditions:
-      data_type: "apache:access"
-      # data_type: "iis:log:line"
+      data_type: "apache:access OR iis:log:line"
