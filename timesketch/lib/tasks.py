@@ -19,6 +19,7 @@ import logging
 import subprocess
 import traceback
 
+import json
 import six
 
 from celery import chain
@@ -36,6 +37,9 @@ from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
+from timesketch.models.sketch import Analysis
+from timesketch.models.sketch import AnalysisSession
+from timesketch.models.user import User
 
 celery = create_celery_app()
 
@@ -115,21 +119,14 @@ def _get_index_analyzers():
         None if index analyzers are disabled in config.
     """
     tasks = []
+    index_analyzers = current_app.config.get('AUTO_INDEX_ANALYZERS')
 
-    # Exit early if index analyzers are disabled.
-    if not current_app.config.get('ENABLE_INDEX_ANALYZERS'):
+    if not index_analyzers:
         return None
 
-    for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
-        kwarg_list = analyzer_cls.get_kwargs()
-
-        if not analyzer_cls.IS_SKETCH_ANALYZER:
-            if kwarg_list:
-                for kwargs in kwarg_list:
-                    tasks.append(
-                        run_index_analyzer.s(analyzer_name, **kwargs))
-            else:
-                tasks.append(run_index_analyzer.s(analyzer_name))
+    for analyzer_name, _ in manager.AnalysisManager.get_analyzers(
+            index_analyzers):
+        tasks.append(run_index_analyzer.s(analyzer_name))
 
     return chain(tasks)
 
@@ -152,9 +149,11 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
     index_task_class = _get_index_task_class(file_extension)
     index_analyzer_chain = _get_index_analyzers()
     sketch_analyzer_chain = None
+    searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
-    if sketch_id and current_app.config.get('ENABLE_SKETCH_ANALYZERS'):
-        sketch_analyzer_chain = build_sketch_analysis_pipeline(sketch_id)
+    if sketch_id:
+        sketch_analyzer_chain = build_sketch_analysis_pipeline(
+            sketch_id, searchindex.id, user_id=None)
 
     index_task = index_task_class.s(
         file_path, timeline_name, index_name, file_extension)
@@ -181,36 +180,84 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
     return chain(index_task, index_analyzer_chain)
 
 
-def build_sketch_analysis_pipeline(sketch_id):
+def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
+                                   analyzer_names=None, analyzer_kwargs=None):
     """Build a pipeline for sketch analysis.
 
+    If no analyzer_names is passed in then we assume auto analyzers should be
+    run and get this list from the configuration. Parameters to the analyzers
+    can be passed in to this function, otherwise they will be taken from the
+    configuration. Either default kwargs for auto analyzers or defaults for
+    manually run analyzers.
+
     Args:
-        sketch_id: The ID of the sketch to analyze.
+        sketch_id (int): The ID of the sketch to analyze.
+        searchindex_id (int): The ID of the searchindex to analyze.
+        user_id (int): The ID of the user who started the analyzer.
+        analyzer_names (list): List of analyzers to run.
+        analyzer_kwargs (dict): Arguments to the analyzers.
 
     Returns:
         Celery group with analysis tasks or None if no analyzers are enabled.
     """
     tasks = []
 
-    # Exit early if sketch analyzers are disabled.
-    if not current_app.config.get('ENABLE_SKETCH_ANALYZERS', False):
+    if not analyzer_names:
+        analyzer_names = current_app.config.get('AUTO_SKETCH_ANALYZERS', [])
+        if not analyzer_kwargs:
+            analyzer_kwargs = current_app.config.get(
+                'AUTO_SKETCH_ANALYZERS_KWARGS', {})
+
+    # Exit early if no sketch analyzers are configured to run.
+    if not analyzer_names:
         return None
 
-    for analyzer_name, analyzer_cls in manager.AnalysisManager.get_analyzers():
-        kwarg_list = analyzer_cls.get_kwargs()
+    if not analyzer_kwargs:
+        analyzer_kwargs = current_app.config.get('ANALYZERS_DEFAULT_KWARGS', {})
 
+    if user_id:
+        user = User.query.get(user_id)
+    else:
+        user = None
+
+    sketch = Sketch.query.get(sketch_id)
+    analysis_session = AnalysisSession(user, sketch)
+
+    analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
+    for analyzer_name, analyzer_cls in analyzers:
         if not analyzer_cls.IS_SKETCH_ANALYZER:
             continue
 
-        if kwarg_list:
-            for kwargs in kwarg_list:
-                tasks.append(run_sketch_analyzer.s(
-                    sketch_id, analyzer_name, **kwargs))
-        else:
-            tasks.append(run_sketch_analyzer.s(sketch_id, analyzer_name))
+        kwargs = analyzer_kwargs.get(analyzer_name, {})
+        searchindex = SearchIndex.query.get(searchindex_id)
+        timeline = Timeline.query.filter_by(
+            sketch=sketch, searchindex=searchindex).first()
+
+        analysis = Analysis(
+            name=analyzer_name,
+            description=analyzer_name,
+            analyzer_name=analyzer_name,
+            parameters=json.dumps(kwargs),
+            user=user,
+            sketch=sketch,
+            timeline=timeline)
+        analysis.set_status('PENDING')
+        analysis_session.analyses.append(analysis)
+        db_session.add(analysis)
+        db_session.commit()
+
+        tasks.append(run_sketch_analyzer.s(
+            sketch_id, analysis.id, analyzer_name, **kwargs))
+
+    # Commit the analysis session to the database.
+    db_session.add(analysis_session)
+    db_session.commit()
 
     if current_app.config.get('ENABLE_EMAIL_NOTIFICATIONS'):
         tasks.append(run_email_result_task.s(sketch_id))
+
+    if not tasks:
+        return None
 
     return chain(tasks)
 
@@ -317,12 +364,14 @@ def run_index_analyzer(index_name, analyzer_name, **kwargs):
 
 
 @celery.task(track_started=True)
-def run_sketch_analyzer(index_name, sketch_id, analyzer_name, **kwargs):
+def run_sketch_analyzer(index_name, sketch_id, analysis_id, analyzer_name,
+                        **kwargs):
     """Create a Celery task for a sketch analyzer.
 
     Args:
         index_name: Name of the datastore index.
         sketch_id: ID of the sketch to analyze.
+        analysis_id: ID of the analysis.
         analyzer_name: Name of the analyzer.
 
     Returns:
@@ -331,7 +380,8 @@ def run_sketch_analyzer(index_name, sketch_id, analyzer_name, **kwargs):
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
     analyzer = analyzer_class(
         sketch_id=sketch_id, index_name=index_name, **kwargs)
-    result = analyzer.run_wrapper()
+
+    result = analyzer.run_wrapper(analysis_id)
     logging.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
     return index_name
 

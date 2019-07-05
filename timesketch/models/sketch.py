@@ -50,6 +50,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     events = relationship('Event', backref='sketch', lazy='select')
     stories = relationship('Story', backref='sketch', lazy='select')
     aggregations = relationship('Aggregation', backref='sketch', lazy='select')
+    analysis = relationship('Analysis', backref='sketch', lazy='select')
 
     def __init__(self, name, description, user):
         """Initialize the Sketch object.
@@ -162,6 +163,7 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     user_id = Column(Integer, ForeignKey('user.id'))
     searchindex_id = Column(Integer, ForeignKey('searchindex.id'))
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    analysis = relationship('Analysis', backref='timeline', lazy='select')
 
     def __init__(self,
                  name,
@@ -432,3 +434,64 @@ class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.user = user
         self.sketch = sketch
         self.view = view
+
+
+class Analysis(LabelMixin, StatusMixin, CommentMixin, BaseModel):
+    """Implements the analysis model."""
+    name = Column(Unicode(255))
+    description = Column(UnicodeText())
+    analyzer_name = Column(Unicode(255))
+    parameters = Column(UnicodeText())
+    result = Column(UnicodeText())
+    log = Column(UnicodeText())
+    analysissession_id = Column(Integer, ForeignKey('analysissession.id'))
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    timeline_id = Column(Integer, ForeignKey('timeline.id'))
+    searchindex_id = Column(Integer, ForeignKey('searchindex.id'))
+
+    def __init__(self, name, description, analyzer_name, parameters, user,
+                 sketch, timeline=None, searchindex=None, result=None):
+        """Initialize the Analysis object.
+
+        Args:
+            name (str): Name of the analysis
+            description (str): Description of the analysis
+            analyzer_name (str): Name of the analyzer
+            parameters (str): JSON serialized dict with analyser parameters
+            user (User): The user who created the aggregation
+            sketch (Sketch): The sketch that the aggregation is bound to
+            timeline (Timeline): Timeline the analysis was run on
+            searchindex (SearchIndex): SearchIndex the analysis was run on
+            result (str): Result report of the analysis
+        """
+        super(Analysis, self).__init__()
+        self.name = name
+        self.description = description
+        self.analyzer_name = analyzer_name
+        self.parameters = parameters
+        self.user = user
+        self.sketch = sketch
+        self.timeline = timeline
+        self.searchindex = searchindex
+        self.result = result
+        self.log = ''
+
+
+class AnalysisSession(LabelMixin, StatusMixin, CommentMixin, BaseModel):
+    """Implements the analysis session model."""
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    analyses = relationship(
+        'Analysis', backref='analysissession', lazy='select')
+
+    def __init__(self, user, sketch):
+        """Initialize the AnalysisSession object.
+
+        Args:
+            user (User): The user who created the aggregation
+            sketch (Sketch): The sketch that the aggregation is bound to
+        """
+        super(AnalysisSession, self).__init__()
+        self.user = user
+        self.sketch = sketch
