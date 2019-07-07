@@ -64,6 +64,19 @@ limitations under the License.
       <div class="container">
         <div class="card">
           <header class="card-header">
+            <p class="card-header-title">Filter</p>
+          </header>
+          <div class="card-content">
+            <ts-explore-filter-time></ts-explore-filter-time>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="card">
+          <header class="card-header">
             <p class="card-header-title">Timelines</p>
           </header>
           <div class="card-content">
@@ -81,13 +94,15 @@ import ApiClient from '../utils/RestApiClient'
 import TsViewListDropdown from './SketchExploreViewListDropdown'
 import TsCreateViewForm from './SketchCreateViewForm'
 import TsExploreTimelinePicker from './SketchExploreTimelinePicker'
+import TsExploreFilterTime from './SketchExploreFilterTime'
 
 export default {
   name: 'ts-sketch-explore-search',
   components: {
     TsViewListDropdown,
     TsCreateViewForm,
-    TsExploreTimelinePicker
+    TsExploreTimelinePicker,
+    TsExploreFilterTime
   },
   props: ['sketchId'],
   data () {
