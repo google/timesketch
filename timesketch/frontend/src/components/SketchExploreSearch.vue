@@ -64,7 +64,10 @@ limitations under the License.
       <div class="container">
         <div class="card">
           <header class="card-header">
-            <p class="card-header-title">Filter</p>
+            <span class="card-header-title">
+              <span class="icon is-small"><i class="fas fa-filter"></i></span>
+              <span style="margin-left:10px;">Filters</span>
+            </span>
           </header>
           <div class="card-content">
             <ts-explore-filter-time></ts-explore-filter-time>

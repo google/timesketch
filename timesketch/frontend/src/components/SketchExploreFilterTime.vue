@@ -15,8 +15,24 @@ limitations under the License.
 -->
 <template>
   <form v-on:submit.prevent="formatDateTime">
-    <input class="input" v-model="startDateTime" type="text" placeholder="Start">
-    <input class="input" v-model="endDateTime" type="text" placeholder="End">
+    <div class="field is-horizontal">
+      <div class="field-body">
+        <div class="field">
+          <label class="label">Start</label>
+          <p class="control is-expanded">
+            <input class="input" v-model="startDateTime" type="text"
+                   placeholder="2019-07-07T10:00:01">
+          </p>
+        </div>
+        <div class="field">
+          <label class="label">End</label>
+          <p class="control is-expanded">
+            <input class="input" v-model="endDateTime" type="text"
+                   placeholder="2019-07-07T10:00:01">
+          </p>
+        </div>
+      </div>
+    </div>
     <button class="button">Filter</button>
   </form>
 </template>
