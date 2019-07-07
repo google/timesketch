@@ -15,15 +15,39 @@ limitations under the License.
 -->
 <template>
   <div>
-    <h4 class="title is-4">{{ sketch.name }}</h4>
-    <p>{{ sketch.description }}</p>
+    <h4 class="title is-4" :contenteditable="meta.permissions.write" v-text="sketch.name" @blur="onEditTitle" @keydown.enter.prevent="onEditTitle"></h4>
+    <p :contenteditable="meta.permissions.write" v-text="sketch.description" @blur="onEditDescription" @keydown.enter.prevent="onEditDescription"></p>
   </div>
 </template>
 
 <script>
+import ApiClient from '../utils/RestApiClient'
+
 export default {
   name: 'ts-sketch-overview-summary',
-  props: ['sketch']
+  computed: {
+    sketch () {
+      return this.$store.state.sketch
+    },
+    meta () {
+      return this.$store.state.meta
+    }
+  },
+  methods: {
+    onEditTitle (e) {
+      this.sketch.name = e.target.innerText
+      this.saveSketchSummary()
+    },
+    onEditDescription (e) {
+      this.sketch.description = e.target.innerText
+      this.saveSketchSummary()
+    },
+    saveSketchSummary () {
+      ApiClient.saveSketchSummary(this.sketch.id, this.sketch.name, this.sketch.description).then((response) => {}).catch((e) => {
+        console.error(e)
+      })
+    }
+  }
 }
 </script>
 

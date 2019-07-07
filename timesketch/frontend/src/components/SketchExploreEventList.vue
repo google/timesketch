@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <div>
-    <ts-sketch-explore-event-list-item v-for="event in eventList.objects" :key="event._id" :event="event"></ts-sketch-explore-event-list-item>
+    <ts-sketch-explore-event-list-item v-for="(event, index) in eventList.objects" :key="event._id" :event="event" :prevEvent="eventList.objects[index - 1]"></ts-sketch-explore-event-list-item>
   </div>
 </template>
 
