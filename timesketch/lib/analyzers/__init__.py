@@ -22,3 +22,5 @@ from timesketch.lib.analyzers import feature_extraction
 from timesketch.lib.analyzers import login
 from timesketch.lib.analyzers import phishy_domains
 from timesketch.lib.analyzers import similarity_scorer
+from timesketch.lib.analyzers import gcp_servicekey
+from timesketch.lib.analyzers import yetiindicators

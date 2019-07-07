@@ -144,17 +144,16 @@ NEO4J_USERNAME = 'neo4j'
 NEO4J_PASSWORD = '<NEO4J_PASSWORD>'
 
 #-------------------------------------------------------------------------------
-# Auto analyzers.
+# Analyzers
 
-ENABLE_INDEX_ANALYZERS = False
-ENABLE_SKETCH_ANALYZERS = False
+# Which analyzers to run automatically when a timeline is imported or added to
+# a sketch.
+AUTO_INDEX_ANALYZERS = []
+AUTO_SKETCH_ANALYZERS = []
 
-# Configuration.
-
-#-------------------------------------------------------------------------------
 # Analyzers specific configuration.
 
-# What data_types to calculate a similarity score fore.
+# What data_types to calculate a similarity score for.
 SIMILARITY_DATA_TYPES = []
 
 # Add all domains that are relevant to your enterprise here.
@@ -178,6 +177,16 @@ DOMAIN_ANALYZER_WATCHED_DOMAINS_SCORE_THRESHOLD = 0.75
 DOMAIN_ANALYZER_WHITELISTED_DOMAINS = ['ytimg.com', 'gstatic.com', 'yimg.com', 'akamaized.net', 'akamaihd.net', 's-microsoft.com', 'images-amazon.com', 'ssl-images-amazon.com', 'wikimedia.org', 'redditmedia.com', 'googleusercontent.com', 'googleapis.com', 'wikipedia.org', 'github.io', 'github.com']
 
 
+# Threatintel analyzer-specific configuration
+# URI root to Yeti's API, e.g. 'https://localhost:8080/api'
+YETI_API_ROOT = ''
+
+# API key to authenticate requests
+YETI_API_KEY = ''
+
+# Labels to narrow down indicator selection
+YETI_INDICATOR_LABELS = ['domain']
+
 #-------------------------------------------------------------------------------
 # Enable experimental UI features.
 
@@ -196,3 +205,5 @@ EMAIL_USER_WHITELIST = []
 
 # Configuration to construct URLs for resources.
 EXTERNAL_HOST_URL = 'https://localhost'
+
+#-------------------------------------------------------------------------------

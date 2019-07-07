@@ -402,6 +402,28 @@ class SketchResource(ResourceMixin, Resource):
         sketch.set_status(status='deleted')
         return HTTP_STATUS_CODE_OK
 
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+
+        Returns:
+            A sketch in JSON (instance of flask.wrappers.Response)
+        """
+        form = NameDescriptionForm.build(request)
+        sketch = Sketch.query.get_with_acl(sketch_id)
+
+        if not form.validate_on_submit():
+            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+        if not sketch.has_permission(current_user, 'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN)
+
+        sketch.name = form.name.data
+        sketch.description = form.description.data
+        db_session.add(sketch)
+        db_session.commit()
+        return self.to_json(sketch, status_code=HTTP_STATUS_CODE_CREATED)
+
 
 class ViewListResource(ResourceMixin, Resource):
     """Resource to create a View."""
@@ -1067,7 +1089,7 @@ class EventCreateResource(ResourceMixin, Resource):
 
             # We do not need a human readable filename or
             # datastore index name, so we use UUIDs here.
-            index_name = hashlib.md5(index_name_seed).hexdigest()
+            index_name = hashlib.md5(index_name_seed.encode()).hexdigest()
             if six.PY2:
                 index_name = codecs.decode(index_name, 'utf-8')
 
@@ -1359,7 +1381,7 @@ class UploadFileResource(ResourceMixin, Resource):
             from timesketch.lib import tasks
             pipeline = tasks.build_index_pipeline(
                 file_path, timeline_name, index_name, file_extension, sketch_id)
-            pipeline.apply_async(task_id=index_name)
+            pipeline.apply_async()
 
             # Return Timeline if it was created.
             # pylint: disable=no-else-return
@@ -1685,16 +1707,16 @@ class TimelineListResource(ResourceMixin, Resource):
                 return_code = HTTP_STATUS_CODE_OK
                 timeline = Timeline.query.get(timeline_id)
 
-            # If enabled, run sketch analyzers when timeline is added.
-            # Import here to avoid circular imports.
-            if current_app.config.get('ENABLE_SKETCH_ANALYZERS'):
+            # Run sketch analyzers when timeline is added. Import here to avoid
+            # circular imports.
+            if current_app.config.get('AUTO_SKETCH_ANALYZERS'):
                 from timesketch.lib import tasks
                 sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
-                    sketch_id)
+                    sketch_id, searchindex_id, current_user.id)
                 if sketch_analyzer_group:
                     pipeline = (tasks.run_sketch_init.s(
                         [searchindex.index_name]) | sketch_analyzer_group)
-                    pipeline.apply_async(task_id=searchindex.index_name)
+                    pipeline.apply_async()
 
             return self.to_json(
                 timeline, meta=metadata, status_code=return_code)

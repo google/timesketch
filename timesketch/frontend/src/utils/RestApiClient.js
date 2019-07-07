@@ -53,6 +53,13 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + /timelines/ + timelineId + '/', formData)
   },
+  saveSketchSummary (sketchId, name, description) {
+    let formData = {
+      name: name,
+      description: description
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/', formData)
+  },
   deleteSketchTimeline (sketchId, timelineId) {
     return RestApiClient.delete('/sketches/' + sketchId + /timelines/ + timelineId + '/')
   },

@@ -22,8 +22,11 @@ class AnalysisManager(object):
     _class_registry = {}
 
     @classmethod
-    def _build_dependencies(cls):
+    def _build_dependencies(cls, analyzer_names):
         """Build a dependency list of analyzers.
+
+        Args:
+            analyzer_names (list): List of analyzer names.
 
         Returns:
             A list of sets of analyzer names. Each set represents
@@ -33,10 +36,11 @@ class AnalysisManager(object):
             KeyError: if class introduces circular dependencies.
         """
         dependency_tree = []
-
         dependencies = {}
-        for name, analyzer_class in iter(cls._class_registry.items()):
-            dependencies[name] = [
+
+        for analyzer_name in analyzer_names:
+            analyzer_class = cls.get_analyzer(analyzer_name)
+            dependencies[analyzer_name] = [
                 x.lower() for x in analyzer_class.DEPENDENCIES]
 
         while dependencies:
@@ -58,10 +62,10 @@ class AnalysisManager(object):
 
             # Let's remove the entries already in the tree and start again.
             new_dependencies = {}
-            for name, analyzer_dependencies in dependencies.items():
+            for analyzer_name, analyzer_dependencies in dependencies.items():
                 if not analyzer_dependencies:
                     continue
-                new_dependencies[name] = list(
+                new_dependencies[analyzer_name] = list(
                     set(analyzer_dependencies) - dependency_set)
             dependencies = new_dependencies
 
@@ -74,15 +78,22 @@ class AnalysisManager(object):
         cls._class_registry = {}
 
     @classmethod
-    def get_analyzers(cls):
+    def get_analyzers(cls, analyzer_names=None):
         """Retrieves the registered analyzers.
+
+        Args:
+            analyzer_names (list): List of analyzer names.
 
         Yields:
             tuple: containing:
                 str: the uniquely identifying name of the analyzer
                 type: the analyzer class.
         """
-        for cluster in cls._build_dependencies():
+        # Get all analyzers if no specific ones have been requested.
+        if not analyzer_names:
+            analyzer_names = cls._class_registry.keys()
+
+        for cluster in cls._build_dependencies(analyzer_names):
             for analyzer_name in cluster:
                 analyzer_class = cls.get_analyzer(analyzer_name)
                 yield analyzer_name, analyzer_class
