@@ -14,26 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <form v-on:submit.prevent="formatDateTime">
+  <form v-on:submit.prevent="formatDateTime" style="max-width: 500px;">
+    <div style="margin-bottom: 8px;"><b>Time range</b></div>
     <div class="field is-horizontal">
       <div class="field-body">
         <div class="field">
-          <label class="label">Start</label>
-          <p class="control is-expanded">
+          <p class="control">
             <input class="input" v-model="startDateTime" type="text"
                    placeholder="2019-07-07T10:00:01">
           </p>
         </div>
         <div class="field">
-          <label class="label">End</label>
-          <p class="control is-expanded">
+          <p class="control">
             <input class="input" v-model="endDateTime" type="text"
                    placeholder="2019-07-07T10:00:01">
           </p>
         </div>
       </div>
     </div>
-    <button class="button">Filter</button>
+    <button class="button">Filtered search</button>
   </form>
 </template>
 
@@ -65,7 +64,7 @@ export default {
   methods: {
     formatDateTime: function () {
       const startDateTimeString = this.startDateTime
-      const endDateTimeString = this.endDateTime
+      let endDateTimeString = this.endDateTime
       const dateTimeTemplate = 'YYYY-MM-DDTHH:mm:ss'
 
       // Exit early if start time is missing
@@ -101,6 +100,10 @@ export default {
         return
       }
 
+      if (!endDateTimeString) {
+        endDateTimeString = startDateTimeString
+      }
+
       // Fall back to user input
       let startDateTimeMoment = this.$moment.utc(startDateTimeString)
       let endDateTimeMoment = this.$moment.utc(endDateTimeString)
@@ -109,6 +112,8 @@ export default {
 
       this.startDateTime = this.currentQueryFilter.time_start
       this.endDateTime = this.currentQueryFilter.time_end
+
+      this.$store.commit('search', this.sketch.id)
     }
   }
 }

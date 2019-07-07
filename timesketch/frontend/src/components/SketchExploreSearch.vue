@@ -71,18 +71,8 @@ limitations under the License.
           </header>
           <div class="card-content">
             <ts-explore-filter-time></ts-explore-filter-time>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="container">
-        <div class="card">
-          <header class="card-header">
-            <p class="card-header-title">Timelines</p>
-          </header>
-          <div class="card-content">
+            <br>
+            <div style="margin-bottom: 8px;"><b>Timelines</b></div>
             <ts-explore-timeline-picker @doSearch="search" v-if="sketch.active_timelines"></ts-explore-timeline-picker>
           </div>
         </div>
