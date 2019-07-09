@@ -18,11 +18,12 @@ limitations under the License.
     <div class="navbar-brand">
       <router-link class="navbar-item" to="/">
         <div class="logo">
-          <img src="/dist/timesketch-logo-white.svg">
+          <img src="/dist/timesketch-color.png">
         </div>
+        <span style="color: #fff; margin-left: 7px; margin-top: -4px;">time<b>sketch</b></span>
       </router-link>
     </div>
-    <div class="navbar-end">+
+    <div class="navbar-end">
       <div class="navbar-item"></div>
     </div>
   </nav>
@@ -37,7 +38,7 @@ export default {
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
   .navbar {
-      background: #34495e;
+      background: #333;
       padding-left: 32px;
       padding-right: 32px;
   }
@@ -47,7 +48,7 @@ export default {
   }
 
   .logo img {
-      width: 110px;
+      width: 19px;
       height: 19px;
   }
 </style>
