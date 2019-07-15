@@ -112,11 +112,11 @@ Parameters:
 
 #### Removing groups
 
-Not yet implemented
+Not yet implemented.
 
 #### Managing group membership
 
-Add or remove a user to a group
+Add or remove a user to a group.
 
 Command:
 ```
@@ -214,7 +214,7 @@ tsctl similarity_score
 
 ## Concepts
 
-Timesketch is built on multiple sketches, where one sketch is ussually one case.
+Timesketch is built on multiple sketches, where one sketch is usually one case.
 Every sketch can consist of multiple timelines with multiple views.
 
 ### Sketches
