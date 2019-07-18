@@ -43,7 +43,6 @@ services:
     image: redis
     restart: always
 
-
   neo4j:
     image: neo4j
     environment:
