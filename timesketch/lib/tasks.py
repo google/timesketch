@@ -514,8 +514,8 @@ def run_mans(source_file_path, timeline_name, index_name, source_type):
     elastic_port = current_app.config['ELASTIC_PORT']
 
     cmd = [
-        mans_to_es_path, '--filename', source_file_path, 
-        '--name', timeline_name, '--index', index_name, 
+        mans_to_es_path, '--filename', source_file_path,
+        '--name', timeline_name, '--index', index_name,
         '--es_host', str(elastic_path), '--es_port', str(elastic_port)
     ]
 
@@ -535,4 +535,3 @@ def run_mans(source_file_path, timeline_name, index_name, source_type):
     _set_timeline_status(index_name, status='ready')
 
     return index_name
-
