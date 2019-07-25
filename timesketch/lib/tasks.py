@@ -104,6 +104,8 @@ def _get_index_task_class(file_extension):
     """
     if file_extension == 'plaso':
         index_class = run_plaso
+    elif file_extension == 'mans':
+        index_class = run_mans
     elif file_extension in ['csv', 'jsonl']:
         index_class = run_csv_jsonl
     else:
@@ -484,3 +486,53 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
     _set_timeline_status(index_name, status='ready')
 
     return index_name
+
+
+@celery.task(track_started=True, base=SqlAlchemyTask)
+def run_mans(source_file_path, timeline_name, index_name, source_type):
+    """Create a Celery task for processing mans file.
+
+    Args:
+        source_file_path: Path to mans file.
+        timeline_name: Name of the Timesketch timeline.
+        index_name: Name of the datastore index.
+        source_type: Type of file, csv or jsonl.
+
+    Returns:
+        Name (str) of the index.
+    """
+    # Log information to Celery
+    message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
+    logging.info(message.format(timeline_name, index_name, source_type))
+
+    try:
+        mans_to_es_path = current_app.config['MANS_TO_ES_PATH']
+    except KeyError:
+        mans_to_es_path = 'mans_to_es.py'
+
+    elastic_path = current_app.config['ELASTIC_HOST']
+    elastic_port = current_app.config['ELASTIC_PORT']
+
+    cmd = [
+        mans_to_es_path, '--filename',  source_file_path, 
+        '--name', timeline_name, '--index', index_name, 
+        '--es_host', str(elastic_path), '--es_port', str(elastic_port)
+    ]
+
+    # Run mans_to_es.py
+    try:
+        if six.PY3:
+            subprocess.check_output(
+                cmd, stderr=subprocess.STDOUT, encoding='utf-8')
+        else:
+            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        # Mark the searchindex and timelines as failed and exit the task
+        _set_timeline_status(index_name, status='fail', error_msg=e.output)
+        return e.output
+
+    # Mark the searchindex and timelines as ready
+    _set_timeline_status(index_name, status='ready')
+
+    return index_name
+

@@ -1,4 +1,4 @@
-# Enable Plaso upload via HTTP
+# Enable Plaso and MANS upload via HTTP
 
 To enable uploading and processing of Plaso storage files, there are a couple of things to do.
 
@@ -17,6 +17,10 @@ https://github.com/log2timeline/plaso/wiki/Ubuntu-Packaged-Release
 **Install Redis**
 
     $ sudo apt-get install redis-server
+
+**Install mans_to_es**
+
+    $ pip install mans-to-es
 
 **Configure Timesketch** (/etc/timesketch.conf)
 
