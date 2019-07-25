@@ -243,9 +243,12 @@ class UploadFileForm(BaseForm):
         'file',
         validators=[
             FileRequired(),
-            FileAllowed(['plaso', 'mans', 'csv', 'jsonl'],
-                        'Allowed file extensions: .plaso, .mans, .csv, or .jsonl')
-        ])
+            FileAllowed(
+                ['plaso', 'mans', 'csv', 'jsonl'],
+                'Allowed file extensions: .plaso, .mans, .csv, or .jsonl'
+            )
+        ]
+    )
     name = StringField('Timeline name', validators=[Optional()])
     sketch_id = IntegerField('Sketch ID', validators=[Optional()])
 
