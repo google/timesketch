@@ -20,9 +20,11 @@ import json
 import six
 
 from flask_testing import TestCase
+from flask import abort
 
 from timesketch import create_app
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import init_db
 from timesketch.models import drop_all
 from timesketch.models import db_session
@@ -79,6 +81,10 @@ class MockElasticClient(object):
 
 class MockDataStore(object):
     """A mock implementation of a Datastore."""
+
+    #List containing event dictionaries
+    event_store = []
+
     event_dict = {
         '_index': [],
         '_id': 'adc123',
