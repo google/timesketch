@@ -60,7 +60,8 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
         except StopIteration:
             pass
 
-        return 'Sessionizing completed, number of session created: {0:d}'.format(
-            session_num)
+        return ('Sessionizing completed, number of session created:'
+                ' {0:d}'.format(session_num))
+
 
 manager.AnalysisManager.register_analyzer(SessionizerSketchPlugin)
