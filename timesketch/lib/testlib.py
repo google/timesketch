@@ -192,6 +192,7 @@ class MockDataStore(object):
                 return event
 
         abort(HTTP_STATUS_CODE_NOT_FOUND)
+        return None
 
 
     def set_label(self,
