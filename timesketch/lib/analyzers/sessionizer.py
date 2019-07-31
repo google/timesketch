@@ -7,10 +7,13 @@ from timesketch.lib.analyzers import manager
 
 
 class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sessionizing sketch analyser."""
+    """Sessionizing sketch analyser. All events in sketch with id sketch_id
+    are grouped in sessions based on the time difference between them. Two
+    consecutive events are in the same session if the time difference between
+    them is less or equal then max_time_diff_micros"""
 
     NAME = 'sessionizer'
-    max_time_diff = 300000000
+    max_time_diff_micros = 300000000
 
     def __init__(self, index_name, sketch_id):
         """Initialize the sessionizing Sketch Analyzer.
@@ -29,7 +32,7 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String containing the number of sessions created.
         """
-        query = ('*')
+        query = '*'
         return_fields = ['timestamp']
 
         # event_stream returns an ordered generator of events (by time)
@@ -40,23 +43,21 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
 
         try:
             first_event = next(events)
-            last_time_stamp = first_event.source.get('timestamp')
+            last_timestamp = first_event.source.get('timestamp')
             session_num = 1
             first_event.add_attributes({'session_number': session_num})
             first_event.commit()
 
             for event in events:
-                curr_time_stamp = event.source.get('timestamp')
-                if curr_time_stamp - last_time_stamp > self.max_time_diff:
+                curr_timestamp = event.source.get('timestamp')
+                if curr_timestamp - last_timestamp > self.max_time_diff_micros:
                     session_num += 1
                 event.add_attributes({'session_number': session_num})
                 event.commit()
 
-                last_time_stamp = curr_time_stamp
+                last_timestamp = curr_timestamp
 
-            self.sketch.add_view('Session view',
-                                 'sessionizer',
-                                 query_string=query)
+            self.sketch.add_view('Session view', 'sessionizer')
         except StopIteration:
             pass
 
