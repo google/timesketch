@@ -18,8 +18,7 @@ from timesketch.models.sketch import Sketch
 
 class TestSessionizerPlugin(BaseTest):
     """Tests the functionality of the sessionizing sketch analyzer."""
-
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_analyzer(self):
         """Test basic analyzer functionality."""
@@ -30,7 +29,7 @@ class TestSessionizerPlugin(BaseTest):
         self.assertEqual(index, analyser.index_name)
         self.assertEqual(sketch_id, analyser.sketch.id)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_same_session(self):
         """Test multiple events in the same session are allocated correctly."""
@@ -49,10 +48,12 @@ class TestSessionizerPlugin(BaseTest):
             ds = MockDataStore("test", 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
             self.assertEqual(event1['_source']['session_number'], 1)
-            event2 = (ds.get_event('test_index', '1', stored_events=True))
+            # checking event with id '101' as 100 events have been inserted
+            # as 'padding' (see _create_mock_event())
+            event2 = (ds.get_event('test_index', '101', stored_events=True))
             self.assertEqual(event2['_source']['session_number'], 1)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_diff_session(self):
         """Test multiple events in different sessions are allocated
@@ -72,10 +73,12 @@ class TestSessionizerPlugin(BaseTest):
             ds = MockDataStore("test", 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
             self.assertEqual(event1['_source']['session_number'], 1)
-            event2 = (ds.get_event('test_index', '1', stored_events=True))
-            self.assertEqual(event2['_source']['session_number'], 2)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+            event2 = (ds.get_event('test_index', '101', stored_events=True))
+            self.assertEqual(event2['_source']['session_number'], 2)
+            self.check_surrounding_events([101])
+
+    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_multiple_sessions(self):
         """Test multiple events, two of which are in the same session and
@@ -95,12 +98,13 @@ class TestSessionizerPlugin(BaseTest):
             ds = MockDataStore("test", 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
             self.assertEqual(event1['_source']['session_number'], 1)
-            event2 = (ds.get_event('test_index', '1', stored_events=True))
+            event2 = (ds.get_event('test_index', '101', stored_events=True))
             self.assertEqual(event2['_source']['session_number'], 1)
-            event3 = (ds.get_event('test_index', '2', stored_events=True))
+            event3 = (ds.get_event('test_index', '202', stored_events=True))
             self.assertEqual(event3['_source']['session_number'], 2)
+            self.check_surrounding_events([202])
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_edge_time_diff(self):
         """Test events with the edge time difference between them are
@@ -120,10 +124,10 @@ class TestSessionizerPlugin(BaseTest):
             ds = MockDataStore("test", 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
             self.assertEqual(event1['_source']['session_number'], 1)
-            event2 = (ds.get_event('test_index', '1', stored_events=True))
+            event2 = (ds.get_event('test_index', '101', stored_events=True))
             self.assertEqual(event2['_source']['session_number'], 1)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_zero_time_diff(self):
         """Test events with no time difference between them are allocated
@@ -143,10 +147,12 @@ class TestSessionizerPlugin(BaseTest):
             ds = MockDataStore("test", 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
             self.assertEqual(event1['_source']['session_number'], 1)
-            event2 = (ds.get_event('test_index', '1', stored_events=True))
+            event1 = (ds.get_event('test_index', '100', stored_events=True))
+            self.assertEqual(event1['_source']['session_number'], 1)
+            event2 = (ds.get_event('test_index', '101', stored_events=True))
             self.assertEqual(event2['_source']['session_number'], 1)
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_zero_events(self):
         """Test the behaviour of the sessionizer when given zero events."""
@@ -161,7 +167,7 @@ class TestSessionizerPlugin(BaseTest):
                 message,
                 'Sessionizing completed, number of session created: 0')
 
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_one_event(self):
         """Test the behaviour of the sessionizer when given one event."""
@@ -178,6 +184,34 @@ class TestSessionizerPlugin(BaseTest):
             ds = MockDataStore("test", 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
             self.assertEqual(event1['_source']['session_number'], 1)
+
+    def check_surrounding_events(self, threshold_ids):
+        """Checks that the events surrounding the first event in a new session
+        are allocated correctly.
+
+        Args:
+            threshold_ids: a list of IDs of the first events in the sessions.
+        """
+        ds = MockDataStore("test", 0)
+        session_no = 1
+        last_id = threshold_ids[-1]
+
+        for threshold_id in threshold_ids:
+            if threshold_id != 0:
+                # check previous event is in the previous session
+                event = (ds.get_event('test_index', str(threshold_id - 1),
+                                      stored_events=True))
+                self.assertEqual(event['_source']['session_number'],
+                                 session_no)
+
+            if threshold_id != last_id:
+                # check next event is in the same session (as the event with
+                # threshold id)
+                session_no += 1
+                event = (ds.get_event('test_index', str(threshold_id + 1),
+                                      stored_events=True))
+                self.assertEqual(event['_source']['session_number'],
+                                 session_no)
 
 
 def _create_mock_event(event_id, quantity, time_diffs=None):
@@ -221,30 +255,32 @@ def _create_mock_event(event_id, quantity, time_diffs=None):
         event['_id'] = str(event_id)
         event['_source']['timestamp'] = ts
         event_id += 1
-        ts += abs(time_diffs[i])
 
         eventObj = Event(copy.deepcopy(event), ds, sketch)
         ds.import_event(eventObj.index_name,
                         eventObj.event_type,
                         event_id=eventObj.event_id,
                         event=eventObj.source)
+
+        yield eventObj
+
         # adding extra events after every requested event for better simulation
-        # of real timeline data
+        # of real timeline data i.e. working with a larger dataset
         for _ in range(100):
+            ts += 1
             event = event_template
             event['_id'] = str(event_id)
             event['_source']['timestamp'] = ts
             event_id += 1
-            ts += 1
 
             eventObj = Event(copy.deepcopy(event), ds, sketch)
             ds.import_event(eventObj.index_name,
                             eventObj.event_type,
                             event_id=eventObj.event_id,
                             event=eventObj.source)
+            yield eventObj
 
-
-        yield eventObj
+        ts += abs(time_diffs[i])
 
 
 if __name__ == '__main__':
