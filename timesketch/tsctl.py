@@ -63,7 +63,7 @@ class DropDataBaseTables(Command):
 class AddUser(Command):
     """Create a new Timesketch user."""
     option_list = (
-        Option('--username', '-', dest='username', required=True),
+        Option('--username', '-u', dest='username', required=True),
         Option('--password', '-p', dest='password', required=False), )
 
     def get_password_from_prompt(self):
@@ -117,7 +117,7 @@ class GroupManager(Command):
             required=False,
             default=False),
         Option('--group', '-g', dest='group_name', required=True),
-        Option('--user', '-', dest='user_name', required=True), )
+        Option('--user', '-u', dest='user_name', required=True), )
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, remove, group_name, user_name):
@@ -157,7 +157,7 @@ class AddSearchIndex(Command):
     option_list = (
         Option('--name', '-n', dest='name', required=True),
         Option('--index', '-i', dest='index', required=True),
-        Option('--user', '-', dest='username', required=True), )
+        Option('--user', '-u', dest='username', required=True), )
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, name, index, username):
@@ -308,7 +308,7 @@ class ImportTimeline(Command):
     option_list = (
         Option('--file', '-f', dest='file_path', required=True),
         Option('--sketch_id', '-s', dest='sketch_id', required=False),
-        Option('--username', '-', dest='username', required=False),
+        Option('--username', '-u', dest='username', required=False),
         Option('--timeline_name', '-n', dest='timeline_name',
                required=False),
     )

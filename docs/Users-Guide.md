@@ -16,6 +16,7 @@
    - [Import JSON to timesketch](#import-json-to-timesketch)
    - [Purge](#purge)
    - [Search template](#search_template)
+   - [Import](#import)
    - [similarity_score](#similarity_score)
 3. [Concepts](#concepts)
    - [Adding Timelines](#adding-timelines)
@@ -83,13 +84,13 @@ tsctl add_user
 
 Parameters:
 ```
---name / -n
+--username / -u
 --password / -p (optional)
 ```
 
 Example
 ```
-tsctl add_user --name foo
+tsctl add_user --username foo
 ```
 
 #### Removing users
@@ -112,11 +113,12 @@ Parameters:
 
 #### Removing groups
 
-Not yet implemented
+Not yet implemented.
 
 #### Managing group membership
 
-Add or remove a user to a group
+Add or remove a user to a group. To add a user, specify the group and user. To
+remove a user, include the -r option.
 
 Command:
 ```
@@ -125,15 +127,14 @@ tsctl manage_group
 
 Parameters:
 ```
---add / -a
---remove / -r
+--remove / -r (optional)
 --group / -g
 --user / -u
 ```
 
 Example:
 ```
-tsctl manage_group -a -u user_foo -g group_bar
+tsctl manage_group -u user_foo -g group_bar
 ```
 
 ### add_index
@@ -205,6 +206,26 @@ Parameters:
 import_location: Path to the yaml file to import templates.
 export_location: Path to the yaml file to export templates.
 
+### import
+
+Creates a new Timesketch timeline from a file. Supported file formats are: plaso, csv and jsonl.
+
+Command:
+```
+tsctl import
+```
+
+Parameters:
+```
+--file / -f
+--sketch_id / -s      (optional)
+--username / -f       (optional)
+--timeline_name / -n  (optional)
+```
+
+The sketch id is inferred from the filename if it starts with a number. The timeline name can also be generated from the filename if not specified.
+
+
 ### similarity_score
 
 Command:
@@ -214,7 +235,7 @@ tsctl similarity_score
 
 ## Concepts
 
-Timesketch is built on multiple sketches, where one sketch is ussually one case.
+Timesketch is built on multiple sketches, where one sketch is usually one case.
 Every sketch can consist of multiple timelines with multiple views.
 
 ### Sketches
