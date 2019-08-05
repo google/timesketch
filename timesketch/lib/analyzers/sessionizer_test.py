@@ -45,7 +45,7 @@ class TestSessionizerPlugin(BaseTest):
                 message,
                 'Sessionizing completed, number of session created: 1')
 
-            ds = MockDataStore("test", 0)
+            ds = MockDataStore('test', 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
             self.assertEqual(event1['_source']['session_number'], 1)
             # checking event with id '101' as 100 events have been inserted
@@ -70,7 +70,7 @@ class TestSessionizerPlugin(BaseTest):
                 message,
                 'Sessionizing completed, number of session created: 2')
 
-            ds = MockDataStore("test", 0)
+            ds = MockDataStore('test', 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
             self.assertEqual(event1['_source']['session_number'], 1)
 
@@ -95,7 +95,7 @@ class TestSessionizerPlugin(BaseTest):
                 message,
                 'Sessionizing completed, number of session created: 2')
 
-            ds = MockDataStore("test", 0)
+            ds = MockDataStore('test', 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
             self.assertEqual(event1['_source']['session_number'], 1)
             event2 = (ds.get_event('test_index', '101', stored_events=True))
@@ -121,7 +121,7 @@ class TestSessionizerPlugin(BaseTest):
                 message,
                 'Sessionizing completed, number of session created: 1')
 
-            ds = MockDataStore("test", 0)
+            ds = MockDataStore('test', 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
             self.assertEqual(event1['_source']['session_number'], 1)
             event2 = (ds.get_event('test_index', '101', stored_events=True))
@@ -144,7 +144,7 @@ class TestSessionizerPlugin(BaseTest):
                 message,
                 'Sessionizing completed, number of session created: 1')
 
-            ds = MockDataStore("test", 0)
+            ds = MockDataStore('test', 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
             self.assertEqual(event1['_source']['session_number'], 1)
             event1 = (ds.get_event('test_index', '100', stored_events=True))
@@ -181,7 +181,7 @@ class TestSessionizerPlugin(BaseTest):
             self.assertEqual(
                 message,
                 'Sessionizing completed, number of session created: 1')
-            ds = MockDataStore("test", 0)
+            ds = MockDataStore('test', 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
             self.assertEqual(event1['_source']['session_number'], 1)
 
@@ -192,7 +192,7 @@ class TestSessionizerPlugin(BaseTest):
         Args:
             threshold_ids: a list of IDs of the first events in the sessions.
         """
-        ds = MockDataStore("test", 0)
+        ds = MockDataStore('test', 0)
         session_no = 1
         last_id = threshold_ids[-1]
 
@@ -241,46 +241,45 @@ def _create_mock_event(event_id, quantity, time_diffs=None):
                           (quantity - len(time_diffs)))
 
     # Setup for Event object initialisation
-    ds = MockDataStore("test", 0)
+    ds = MockDataStore('test', 0)
     user = User('test_user')
     sketch = Sketch('test_sketch', 'description', user)
     label = sketch.Label(label='Test label', user=user)
     sketch.labels.append(label)
 
-    ts = 1410895419859714
+    event_timestamp = 1410895419859714
     event_template = ds.get_event('test', 'test')
 
     for i in range(quantity):
-        event = event_template
-        event['_id'] = str(event_id)
-        event['_source']['timestamp'] = ts
-        event_id += 1
-
-        eventObj = Event(copy.deepcopy(event), ds, sketch)
-        ds.import_event(eventObj.index_name,
-                        eventObj.event_type,
-                        event_id=eventObj.event_id,
-                        event=eventObj.source)
-
+        eventObj = create_eventObj(ds, sketch, event_template, event_id,
+                                   event_timestamp)
         yield eventObj
 
         # adding extra events after every requested event for better simulation
         # of real timeline data i.e. working with a larger dataset
         for _ in range(100):
-            ts += 1
-            event = event_template
-            event['_id'] = str(event_id)
-            event['_source']['timestamp'] = ts
+            event_timestamp += 1
             event_id += 1
+            eventObj = create_eventObj(ds, sketch, event_template, event_id,
+                                       event_timestamp)
 
-            eventObj = Event(copy.deepcopy(event), ds, sketch)
-            ds.import_event(eventObj.index_name,
-                            eventObj.event_type,
-                            event_id=eventObj.event_id,
-                            event=eventObj.source)
             yield eventObj
 
-        ts += abs(time_diffs[i])
+        event_timestamp += abs(time_diffs[i])
+        event_id += 1
+
+
+def create_eventObj(ds, sketch, event_template, event_id, ts):
+    event = event_template
+    event['_id'] = str(event_id)
+    event['_source']['timestamp'] = ts
+
+    eventObj = Event(copy.deepcopy(event), ds, sketch)
+    ds.import_event(eventObj.index_name,
+                    eventObj.event_type,
+                    event_id=eventObj.event_id,
+                    event=eventObj.source)
+    return eventObj
 
 
 if __name__ == '__main__':
