@@ -5,7 +5,8 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 class FileInfo(object):
-    def __init__(self, si_events=None, si_timestamps=None, fn_events=None, fn_timestamps=None):
+    def __init__(self, si_events=None, si_timestamps=None,
+                 fn_events=None, fn_timestamps=None):
         if si_events:
             self.si_events = si_events
         else:
@@ -52,7 +53,7 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
 
         """
         if (len(set(file_info.si_timestamps)) != 1
-                or len(file_info.fn_timestamps) < 1):
+                or not file_info.fn_timestamps):
             return False
 
         suspicious = True
@@ -105,7 +106,7 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
             if not attribute_type or not timestamp_type:
                 continue
 
-            if not (attribute_type == 16 or attribute_type == 48):
+            if not attribute_type in (16, 48):
                 continue
 
             key = timestamp_type + "&" + str(file_ref)
