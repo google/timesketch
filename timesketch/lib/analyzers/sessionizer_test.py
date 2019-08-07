@@ -47,11 +47,11 @@ class TestSessionizerPlugin(BaseTest):
 
             ds = MockDataStore('test', 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
-            self.assertEqual(event1['_source']['session_number'], 1)
+            self.assertEqual(event1['_source']['session_id'], {'all_events':1})
             # checking event with id '101' as 100 events have been inserted
             # as 'padding' (see _create_mock_event())
             event2 = (ds.get_event('test_index', '101', stored_events=True))
-            self.assertEqual(event2['_source']['session_number'], 1)
+            self.assertEqual(event2['_source']['session_id'], {'all_events':1})
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -72,10 +72,12 @@ class TestSessionizerPlugin(BaseTest):
 
             ds = MockDataStore('test', 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
-            self.assertEqual(event1['_source']['session_number'], 1)
+            self.assertEqual(event1['_source']['session_id'],
+                             {'all_events':1})
 
             event2 = (ds.get_event('test_index', '101', stored_events=True))
-            self.assertEqual(event2['_source']['session_number'], 2)
+            self.assertEqual(event2['_source']['session_id'],
+                             {'all_events':2})
             self.check_surrounding_events([101])
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -97,11 +99,11 @@ class TestSessionizerPlugin(BaseTest):
 
             ds = MockDataStore('test', 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
-            self.assertEqual(event1['_source']['session_number'], 1)
+            self.assertEqual(event1['_source']['session_id'], {'all_events':1})
             event2 = (ds.get_event('test_index', '101', stored_events=True))
-            self.assertEqual(event2['_source']['session_number'], 1)
+            self.assertEqual(event2['_source']['session_id'], {'all_events':1})
             event3 = (ds.get_event('test_index', '202', stored_events=True))
-            self.assertEqual(event3['_source']['session_number'], 2)
+            self.assertEqual(event3['_source']['session_id'], {'all_events':2})
             self.check_surrounding_events([202])
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -123,9 +125,9 @@ class TestSessionizerPlugin(BaseTest):
 
             ds = MockDataStore('test', 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
-            self.assertEqual(event1['_source']['session_number'], 1)
+            self.assertEqual(event1['_source']['session_id'], {'all_events':1})
             event2 = (ds.get_event('test_index', '101', stored_events=True))
-            self.assertEqual(event2['_source']['session_number'], 1)
+            self.assertEqual(event2['_source']['session_id'], {'all_events':1})
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -146,11 +148,11 @@ class TestSessionizerPlugin(BaseTest):
 
             ds = MockDataStore('test', 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
-            self.assertEqual(event1['_source']['session_number'], 1)
+            self.assertEqual(event1['_source']['session_id'], {'all_events':1})
             event1 = (ds.get_event('test_index', '100', stored_events=True))
-            self.assertEqual(event1['_source']['session_number'], 1)
+            self.assertEqual(event1['_source']['session_id'], {'all_events':1})
             event2 = (ds.get_event('test_index', '101', stored_events=True))
-            self.assertEqual(event2['_source']['session_number'], 1)
+            self.assertEqual(event2['_source']['session_id'], {'all_events':1})
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -183,7 +185,7 @@ class TestSessionizerPlugin(BaseTest):
                 'Sessionizing completed, number of session created: 1')
             ds = MockDataStore('test', 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
-            self.assertEqual(event1['_source']['session_number'], 1)
+            self.assertEqual(event1['_source']['session_id'], {'all_events':1})
 
     def check_surrounding_events(self, threshold_ids):
         """Checks that the events surrounding the first event in a new session
@@ -201,8 +203,8 @@ class TestSessionizerPlugin(BaseTest):
                 # check previous event is in the previous session
                 event = (ds.get_event('test_index', str(threshold_id - 1),
                                       stored_events=True))
-                self.assertEqual(event['_source']['session_number'],
-                                 session_no)
+                self.assertEqual(event['_source']['session_id'],
+                                 {'all_events':session_no})
 
             if threshold_id != last_id:
                 # check next event is in the same session (as the event with
@@ -210,8 +212,8 @@ class TestSessionizerPlugin(BaseTest):
                 session_no += 1
                 event = (ds.get_event('test_index', str(threshold_id + 1),
                                       stored_events=True))
-                self.assertEqual(event['_source']['session_number'],
-                                 session_no)
+                self.assertEqual(event['_source']['session_id'],
+                                 {'all_events':session_no})
 
 
 def _create_mock_event(event_id, quantity, time_diffs=None):

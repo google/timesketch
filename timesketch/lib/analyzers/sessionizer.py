@@ -18,7 +18,7 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
     query = '*'
 
     def run(self):
-        """Entry point for the analyzer. Allocates each event a session_number
+        """Entry point for the analyzer. Allocates each event a session_id
         attribute.
 
         Returns:

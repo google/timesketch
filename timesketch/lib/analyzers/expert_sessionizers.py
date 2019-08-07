@@ -14,7 +14,7 @@ class BaseExpertSessionizerSketchPlugin(SessionizerSketchPlugin):
 
 class WebActivitySessionizerSketchPlugin(BaseExpertSessionizerSketchPlugin):
     NAME = 'web_activity_sessionizer'
-    max_time_diff_micros = 600000000
+    max_time_diff_micros = 600000000 # 10 minutes
     query = 'source_short:"WEBHIST"'
     session_type = 'web_activity'
 
