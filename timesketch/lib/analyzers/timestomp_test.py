@@ -27,8 +27,8 @@ class MockEvent(object):
 class TestTimestompPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
-    def __init__(self, *args, **kwargs):
-        super(TestTimestompPlugin, self).__init__(*args, **kwargs)
+    #def __init__(self, *args, **kwargs):
+    #    super(TestTimestompPlugin, self).__init__(*args, **kwargs)
 
     # TODO: like in timestomp.py, find better name and replace.
     # Mock the Elasticsearch datastore.
@@ -36,13 +36,15 @@ class TestTimestompPlugin(BaseTest):
         u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
     def test_handle_timestomp(self):
-        analyzer = ts.TimestompSketchPlugin('timestomp_test_handle_timestomp', 1)
+        analyzer = ts.TimestompSketchPlugin('test_handle_timestomp', 1)
         test_cases = [
-            (ts.FileInfo(si_events=[MockEvent()],si_timestamps=[6000000001],fn_events=[MockEvent()],fn_timestamps=[0]), True)
+            (ts.FileInfo(si_events=[MockEvent()], si_timestamps=[6000000001],
+                         fn_events=[MockEvent()], fn_timestamps=[0]), True)
         ]
 
         for test_case in test_cases:
-          self.assertEqual(analyzer.handle_timestomp(test_case[0]), test_case[1])
+            self.assertEqual(analyzer.handle_timestomp(test_case[0]),
+                             test_case[1])
 
 
     # Mock the Elasticsearch datastore.
