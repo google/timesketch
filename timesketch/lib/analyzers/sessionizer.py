@@ -13,6 +13,7 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
     them is less or equal then max_time_diff_micros"""
 
     NAME = 'sessionizer'
+    # TODO max_time_diff_micros should be configurable
     max_time_diff_micros = 300000000
     query = '*'
 
