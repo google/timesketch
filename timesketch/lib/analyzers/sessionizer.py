@@ -14,16 +14,7 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
 
     NAME = 'sessionizer'
     max_time_diff_micros = 300000000
-
-    def __init__(self, index_name, sketch_id):
-        """Initialize the sessionizing Sketch Analyzer.
-
-        Args:
-            index_name: Elasticsearch index name
-            sketch_id: Sketch ID
-        """
-        self.index_name = index_name
-        super(SessionizerSketchPlugin, self).__init__(index_name, sketch_id)
+    query = '*'
 
     def run(self):
         """Entry point for the analyzer. Allocates each event a session_number
@@ -32,12 +23,11 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String containing the number of sessions created.
         """
-        query = '*'
         return_fields = ['timestamp']
 
         # event_stream returns an ordered generator of events (by time)
         # therefore no further sorting is needed.
-        events = self.event_stream(query_string=query,
+        events = self.event_stream(query_string=self.query,
                                    return_fields=return_fields)
         session_num = 0
 
@@ -45,25 +35,25 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
             first_event = next(events)
             last_timestamp = first_event.source.get('timestamp')
             session_num = 1
-            first_event.add_attributes({'session_number': session_num})
-            first_event.commit()
+            self.annotateEvent(first_event, session_num)
 
             for event in events:
                 curr_timestamp = event.source.get('timestamp')
                 if curr_timestamp - last_timestamp > self.max_time_diff_micros:
                     session_num += 1
-                event.add_attributes({'session_number': session_num})
-                event.commit()
-
+                self.annotateEvent(event, session_num)
                 last_timestamp = curr_timestamp
 
             self.sketch.add_view('Session view',
-                                 'sessionizer', query_string=query)
+                                 self.NAME, query_string=self.query)
         except StopIteration:
             pass
 
         return ('Sessionizing completed, number of session created:'
                 ' {0:d}'.format(session_num))
 
+    def annotateEvent(self, event, session_num):
+        event.add_attributes({'session_id': {'all_events':session_num}})
+        event.commit()
 
 manager.AnalysisManager.register_analyzer(SessionizerSketchPlugin)
