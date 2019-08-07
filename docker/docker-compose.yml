@@ -55,6 +55,7 @@ services:
 
   redis:
     image: redis
+    restart: always
     volumes:
       - /var/lib/redis:/data
 
