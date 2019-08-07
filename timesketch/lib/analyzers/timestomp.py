@@ -1,6 +1,8 @@
 """Sketch analyzer plugin for timestomp."""
 from __future__ import unicode_literals
 
+from flask import current_app
+
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
@@ -24,11 +26,13 @@ class FileInfo(object):
         else:
             self.fn_timestamps = []
 
+        self.file_reference = None
+        self.timestamp_desc = None
+
 class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Timestomp."""
 
     NAME = 'timestomp'
-    MARGIN = 6000000000
 
     def __init__(self, index_name, sketch_id):
         """Initialize The Sketch Analyzer.
@@ -38,6 +42,8 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
             sketch_id: Sketch ID
         """
         self.index_name = index_name
+        self.threshold = current_app.config.get(
+            'TIMESTOMP_ANALYZER_THRESHOLD', 10) * 60000000
         super(TimestompSketchPlugin, self).__init__(index_name, sketch_id)
 
 
@@ -61,10 +67,8 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
             diff = abs(file_info.fn_timestamps[i]
                        - file_info.si_timestamps[0])
             file_info.fn_events[i].add_attributes({'time_delta': diff})
-            file_info.fn_events[i].add_label("timestomped")
-            if diff <= self.MARGIN:
+            if diff <= self.threshold:
                 suspicious = False
-                file_info.diff = 0
                 break
 
         if suspicious:
@@ -106,7 +110,7 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
             if not attribute_type or not timestamp_type:
                 continue
 
-            if not attribute_type in (16, 48):
+            if not attribute_type in [16, 48]:
                 continue
 
             key = timestamp_type + "&" + str(file_ref)
@@ -114,7 +118,9 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
             if not key in file_infos:
                 file_infos[key] = FileInfo()
 
-                file_info = file_infos[key]
+            file_info = file_infos[key]
+            file_info.file_reference = file_ref
+            file_info.timestamp_desc = timestamp_type
 
             if attribute_type == 16:
                 file_info.si_events.append(event)
