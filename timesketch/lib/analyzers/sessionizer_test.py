@@ -18,7 +18,7 @@ from timesketch.models.sketch import Sketch
 
 class TestSessionizerPlugin(BaseTest):
     """Tests the functionality of the sessionizing sketch analyzer."""
-    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_analyzer(self):
         """Test basic analyzer functionality."""
@@ -29,7 +29,7 @@ class TestSessionizerPlugin(BaseTest):
         self.assertEqual(index, analyser.index_name)
         self.assertEqual(sketch_id, analyser.sketch.id)
 
-    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_same_session(self):
         """Test multiple events in the same session are allocated correctly."""
@@ -53,7 +53,7 @@ class TestSessionizerPlugin(BaseTest):
             event2 = (ds.get_event('test_index', '101', stored_events=True))
             self.assertEqual(event2['_source']['session_number'], 1)
 
-    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_diff_session(self):
         """Test multiple events in different sessions are allocated
@@ -78,7 +78,7 @@ class TestSessionizerPlugin(BaseTest):
             self.assertEqual(event2['_source']['session_number'], 2)
             self.check_surrounding_events([101])
 
-    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_multiple_sessions(self):
         """Test multiple events, two of which are in the same session and
@@ -104,7 +104,7 @@ class TestSessionizerPlugin(BaseTest):
             self.assertEqual(event3['_source']['session_number'], 2)
             self.check_surrounding_events([202])
 
-    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_edge_time_diff(self):
         """Test events with the edge time difference between them are
@@ -127,7 +127,7 @@ class TestSessionizerPlugin(BaseTest):
             event2 = (ds.get_event('test_index', '101', stored_events=True))
             self.assertEqual(event2['_source']['session_number'], 1)
 
-    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_zero_time_diff(self):
         """Test events with no time difference between them are allocated
@@ -152,7 +152,7 @@ class TestSessionizerPlugin(BaseTest):
             event2 = (ds.get_event('test_index', '101', stored_events=True))
             self.assertEqual(event2['_source']['session_number'], 1)
 
-    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_zero_events(self):
         """Test the behaviour of the sessionizer when given zero events."""
@@ -167,7 +167,7 @@ class TestSessionizerPlugin(BaseTest):
                 message,
                 'Sessionizing completed, number of session created: 0')
 
-    @mock.patch(u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_one_event(self):
         """Test the behaviour of the sessionizer when given one event."""

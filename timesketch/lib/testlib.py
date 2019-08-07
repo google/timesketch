@@ -225,9 +225,9 @@ class MockDataStore(object):
             event_id: Event Elasticsearch ID
         """
 
-        for e in self.event_store:
-            if e['_id'] == event_id:
-                e['_source'].update(event)
+        for stored_event in self.event_store:
+            if stored_event['_id'] == event_id:
+                stored_event['_source'].update(event)
                 return
 
         new_event = {
