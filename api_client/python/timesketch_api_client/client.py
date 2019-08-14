@@ -572,7 +572,7 @@ class Sketch(BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         if response.status_code != 200:
             raise ValueError(
-                'Unable to query results, with error: [{0:d}] {1:s}'.format(
+                'Unable to query results, with error: [{0:d}] {1!s}'.format(
                     response.status_code, response.reason))
 
         response_json = response.json()
