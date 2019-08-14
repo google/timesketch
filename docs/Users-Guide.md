@@ -183,6 +183,11 @@ tsctl json2ts
 
 ### Purge
 
+Delete timeline permanently from Timesketch and Elasticsearch. It will alert if a timeline is still in use in a sketch and promt for confirmation before deletion.
+
+	Args:
+		index_name: The name of the index in Elasticsearch
+
 Comand:
 ```
 tsctl purge
