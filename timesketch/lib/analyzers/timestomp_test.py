@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import mock
 
-from timesketch.lib.analyzers import timestomp as ts
+from timesketch.lib.analyzers import timestomp
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
@@ -24,27 +24,48 @@ class MockEvent(object):
     def commit(self):
         pass
 
+class FileInfoTestCase(object):
+    def __init__(self, name, std_info_timestamp, fn_timestamps,
+                 expected_si_diffs, expected_fn_diffs, is_timestomp):
+        self.name = name
+        ref = 7357
+        ts_desc = "TEST"
+        std_event = MockEvent()
+        file_names = [(MockEvent(), ts) for ts in fn_timestamps]
+
+        self.file_info = timestomp.FileInfo(ref, ts_desc, std_event,
+                                            std_info_timestamp, file_names)
+        self.expected_fn_diffs = expected_fn_diffs
+        self.expected_si_diffs = expected_si_diffs
+
+        self.is_timestomp = is_timestomp
+
 class TestTimestompPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
     #def __init__(self, *args, **kwargs):
     #    super(TestTimestompPlugin, self).__init__(*args, **kwargs)
 
-    # TODO: like in timestomp.py, find better name and replace.
-    # Mock the Elasticsearch datastore.
     @mock.patch(
         u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
     def test_handle_timestomp(self):
-        analyzer = ts.TimestompSketchPlugin('test_handle_timestomp', 1)
+        analyzer = timestomp.TimestompSketchPlugin('test_handle_timestomp', 1)
+
         test_cases = [
-            (ts.FileInfo(si_events=[MockEvent()], si_timestamps=[6000000001],
-                         fn_events=[MockEvent()], fn_timestamps=[0]), True)
+            FileInfoTestCase("0", 1000000000000, [1000000000000],None, [None], False)
         ]
 
-        for test_case in test_cases:
-            self.assertEqual(analyzer.handle_timestomp(test_case[0]),
-                             test_case[1])
+        for tc in test_cases:
+            ret = analyzer.handle_timestomp(tc.file_info)
+
+            std_diffs = tc.file_info.std_info_event.source.get('time_deltas')
+            fn_diffs = [event.source.get('time_delta') for event, _ in
+                        tc.file_info.file_names]
+
+            self.assertEqual(ret, tc.is_timestomp)
+            self.assertEqual(std_diffs, tc.expected_si_diffs)
+            self.assertEqual(fn_diffs, tc.expected_fn_diffs)
 
 
     # Mock the Elasticsearch datastore.

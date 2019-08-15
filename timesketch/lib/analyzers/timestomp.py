@@ -7,27 +7,16 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 class FileInfo(object):
-    def __init__(self, si_events=None, si_timestamps=None,
-                 fn_events=None, fn_timestamps=None):
-        if si_events:
-            self.si_events = si_events
+    def __init__(self, file_reference=None, timestamp_desc=None,
+                 std_info_event=None, std_info_timestamp=None, file_names=None):
+        self.file_reference = file_reference
+        self.timestamp_desc = timestamp_desc
+        self.std_info_event = std_info_event
+        self.std_info_timestamp = std_info_timestamp
+        if file_names:
+            self.file_names = file_names
         else:
-            self.si_events = []
-        if si_timestamps:
-            self.si_timestamps = si_timestamps
-        else:
-            self.si_timestamps = []
-        if fn_events:
-            self.fn_events = fn_events
-        else:
-            self.fn_events = []
-        if fn_timestamps:
-            self.fn_timestamps = fn_timestamps
-        else:
-            self.fn_timestamps = []
-
-        self.file_reference = None
-        self.timestamp_desc = None
+            self.file_names = []
 
 class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Timestomp."""
@@ -46,8 +35,6 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
             'TIMESTOMP_ANALYZER_THRESHOLD', 10) * 60000000
         super(TimestompSketchPlugin, self).__init__(index_name, sketch_id)
 
-
-# TODO: Find better name for this method.
     def handle_timestomp(self, file_info):
         """Compares timestamps and adds diffs to events.
 
@@ -58,27 +45,28 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
             Boolean, true if timestomping was detected.
 
         """
-        if (len(set(file_info.si_timestamps)) != 1
-                or not file_info.fn_timestamps):
+        if not file_info.std_info_event or not file_info.file_names:
             return False
 
         suspicious = True
-        for i in range(len(file_info.fn_timestamps)):
-            diff = abs(file_info.fn_timestamps[i]
-                       - file_info.si_timestamps[0])
-            file_info.fn_events[i].add_attributes({'time_delta': diff})
-            if diff <= self.threshold:
+        diffs = []
+
+        for fn in file_info.file_names:
+            diff = fn[1] - file_info.std_info_timestamp
+            diffs.append(diff)
+
+            if abs(diff) > self.threshold:
+                fn[0].add_attributes({'time_delta': diff})
+            else:
                 suspicious = False
                 break
 
         if suspicious:
-            for fn_event in file_info.fn_events:
-                fn_event.commit()
+            for fn in file_info.file_names:
+                fn[0].commit()
 
-            # TODO: Decide if we want to flag std_info events
-            for si_event in file_info.si_events:
-                si_event.add_attributes({'timestomped': True})
-                si_event.commit()
+            file_info.std_info_event.add_attributes({'time_deltas': diffs})
+            file_info.std_info_event.commit()
 
         return suspicious
 
@@ -88,18 +76,19 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
+
         query = 'attribute_type:48 OR attribute_type:16'
 
         return_fields = ['attribute_type', 'timestamp_desc',
                          'file_reference', 'timestamp']
 
-        # Dict timstamp_type + "&" + file_ref -> FileInfo
-        file_infos = dict()
-        # Margin of deviation allowed between.
 
         # Generator of events based on your query.
         events = self.event_stream(
             query_string=query, return_fields=return_fields)
+
+        # Dict timstamp_type + "&" + file_ref -> FileInfo
+        file_infos = dict()
 
         for event in events:
             attribute_type = event.source.get('attribute_type')
@@ -123,12 +112,12 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
             file_info.timestamp_desc = timestamp_type
 
             if attribute_type == 16:
-                file_info.si_events.append(event)
-                file_info.si_timestamps.append(timestamp)
+                # TODO: Check if std_info is already set (should be one at max)
+                file_info.std_info_timestamp = timestamp
+                file_info.std_info_event = event
 
             if attribute_type == 48:
-                file_info.fn_events.append(event)
-                file_info.fn_timestamps.append(timestamp)
+                file_info.file_names.append((event, timestamp))
 
         timestomps = 0
         for file_info in file_infos.values():
@@ -139,7 +128,7 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
         if timestomps > 0:
             self.sketch.add_view(
                 view_name='Timestomp', analyzer_name=self.NAME,
-                query_string='_exists_:time_delta')
+                query_string='_exists_:time_delta or _exists:time_deltas')
 
 
         return ('Timestomp Analyzer completed, found {0:d} timestomped events'
