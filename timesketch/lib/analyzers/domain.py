@@ -74,18 +74,20 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
 
         domain_count_array = numpy.array(list(domain_counter.values()))
         try:
-            domain_20th_percentile = int(numpy.percentile(domain_count_array, 20))
+            domain_20th_percentile = int(numpy.percentile(
+                domain_count_array, 20))
         except IndexError:
             logging.warning('Unable to calculate the 20th percentile.')
             domain_20th_percentile = 0
 
         try:
-            domain_85th_percentile = int(numpy.percentile(domain_count_array, 85))
+            domain_85th_percentile = int(numpy.percentile(
+                domain_count_array, 85))
         except IndexError:
             logging.warning('Unable to calculate the 85th percentile.')
-            high = domain_counter.most_common(1)
-            if high:
-                _, highest_count = high[0]
+            highest_count_domain = domain_counter.most_common(1)
+            if highest_count_domain:
+                _, highest_count = highest_count_domain[0]
                 domain_85th_percentile = highest_count + 10
             else:
                 domain_85th_percentile = 100
