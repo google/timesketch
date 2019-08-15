@@ -19,9 +19,14 @@
    - [Import](#import)
    - [similarity_score](#similarity_score)
 3. [Concepts](#concepts)
+   - [Sketches](#sketches)
    - [Adding Timelines](#adding-timelines)
    - [Using Stories](#stories)
    - [Adding event](#adding-event)
+   - [Views](#views)
+       - [Hiding events from a view](#hiding-events-from-a-view)
+       - [Heatmap](#heatmap)
+       - [Stories](#stories)
 4. [Searching](#searching)
 
 
@@ -183,6 +188,11 @@ tsctl json2ts
 
 ### Purge
 
+Delete timeline permanently from Timesketch and Elasticsearch. It will alert if a timeline is still in use in a sketch and promt for confirmation before deletion.
+
+	Args:
+		index_name: The name of the index in Elasticsearch
+
 Comand:
 ```
 tsctl purge
@@ -240,6 +250,8 @@ Every sketch can consist of multiple timelines with multiple views.
 
 ### Sketches
 
+There is a dedicated document to walk you through [Sketches](/docs/SketchOverview.md)
+
 ### Adding Timelines
 
 * [Create timeline from JSON/JSONL/CSV file](/docs/CreateTimelineFromJSONorCSV.md)
@@ -252,7 +264,6 @@ To manually adding an event, visit the sketch view. Within that screen, there is
 This event will have the previously selected time pre-filled but can be changed.
 
 ![Add event screenshot](/docs/add_event.png)
-
 
 ### Views
 
@@ -279,6 +290,8 @@ Just hit enter to start a new paragraph and choose the saved search from the dro
 See [Medium article](https://medium.com/timesketch/timesketch-2016-7-db3083e78156)
 
 ## Searching
+
+There is a dedicated document called [SearchQueryGuide](/docs/SearchQueryGuide.md) to help you create custom searches.
 
 All data within Timesketch is stored in elasticsearch. So the search works similar to ES.
 
