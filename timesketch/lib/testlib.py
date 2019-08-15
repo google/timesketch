@@ -20,9 +20,11 @@ import json
 import six
 
 from flask_testing import TestCase
+from flask import abort
 
 from timesketch import create_app
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import init_db
 from timesketch.models import drop_all
 from timesketch.models import db_session
@@ -79,6 +81,10 @@ class MockElasticClient(object):
 
 class MockDataStore(object):
     """A mock implementation of a Datastore."""
+
+    #List containing event dictionaries
+    event_store = []
+
     event_dict = {
         '_index': [],
         '_id': 'adc123',
@@ -166,14 +172,28 @@ class MockDataStore(object):
             return 4711
         return self.search_result_dict
 
-    # pylint: disable=arguments-differ,unused-argument
-    def get_event(self, *args, **kwargs):
+    def get_event(self, searchindex_id, event_id, stored_events=False):
         """Mock returning a single event from the datastore.
+
+        Args:
+            searchindex_id: String of ElasticSearch index id
+            event_id: String of ElasticSearch event id
+            stored_events: Determines whether the event to return will be
+            retrieved from event_store, or the default event_dict.
 
         Returns:
             A dictionary with event data.
         """
-        return self.event_dict
+        if not stored_events:
+            return self.event_dict
+
+        for event in self.event_store:
+            if event['_id'] == event_id:
+                return event
+
+        abort(HTTP_STATUS_CODE_NOT_FOUND)
+        return None
+
 
     def set_label(self,
                   searchindex_id,
@@ -190,6 +210,34 @@ class MockDataStore(object):
     def create_index(self, *args, **kwargs):
         """Mock creating an index."""
         return
+
+    def import_event(self, index_name, event_type, event=None,
+                     event_id=None, flush_interval=None):
+        """Mock adding the event to Elasticsearch, instead add the event
+        to event_store.
+
+        Args:
+            flush_interval: Number of events to queue up before indexing. (This
+            functionality is not supported.)
+            index_name: Name of the index in Elasticsearch
+            event_type: Type of event (e.g. plaso_event)
+            event: Event dictionary
+            event_id: Event Elasticsearch ID
+        """
+
+        for stored_event in self.event_store:
+            if stored_event['_id'] == event_id:
+                stored_event['_source'].update(event)
+                return
+
+        new_event = {
+            '_index': index_name,
+            '_id': event_id,
+            '_type': event_type,
+            '_source': event
+        }
+
+        self.event_store.append(new_event)
 
     @property
     def version(self):
