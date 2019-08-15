@@ -50,10 +50,19 @@ class TestTimestompPlugin(BaseTest):
         u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
     def test_handle_timestomp(self):
+        """Test handle_timestomp method."""
         analyzer = timestomp.TimestompSketchPlugin('test_handle_timestomp', 1)
 
         test_cases = [
-            FileInfoTestCase("0", 1000000000000, [1000000000000],None, [None], False)
+            FileInfoTestCase(
+                "0",
+                1000000000000,
+                [1000000000000],
+                None,
+                [None],
+                False
+            )
+            # TODO: more testcases
         ]
 
         for tc in test_cases:
