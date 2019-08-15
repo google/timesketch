@@ -280,7 +280,7 @@ class Sketch(object):
 
         Returns: An instance of a SQLAlchemy View object.
         """
-        if not query_string or query_dsl:
+        if not (query_string or query_dsl):
             raise ValueError('Both query_string and query_dsl are missing.')
 
         if not query_filter:
