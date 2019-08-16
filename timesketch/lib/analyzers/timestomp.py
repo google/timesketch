@@ -1,4 +1,4 @@
-"""Sketch analyzer plugin for timestomp."""
+"""Sketch analyzer plugin for timestomping."""
 from __future__ import unicode_literals
 
 from flask import current_app
@@ -7,6 +7,7 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 class FileInfo(object):
+    """Datastructure to track all timestamps for a file and timestamp type."""
     def __init__(self, file_reference=None, timestamp_desc=None,
                  std_info_event=None, std_info_timestamp=None, file_names=None):
         self.file_reference = file_reference
@@ -36,7 +37,8 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
         super(TimestompSketchPlugin, self).__init__(index_name, sketch_id)
 
     def handle_timestomp(self, file_info):
-        """Compares timestamps and adds diffs to events.
+        """Compares timestamps and adds diffs to events if timestomping was
+        detected.
 
         Args:
             file_info: FileInfo object for event to look at.
@@ -74,7 +76,7 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
         """Entry point for the analyzer.
 
         Returns:
-            String with summary of the analyzer result
+            String with summary of the analyzer result.
         """
 
         query = 'attribute_type:48 OR attribute_type:16'
@@ -112,7 +114,6 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
             file_info.timestamp_desc = timestamp_type
 
             if attribute_type == 16:
-                # TODO: Check if std_info is already set (should be one at max)
                 file_info.std_info_timestamp = timestamp
                 file_info.std_info_event = event
 
