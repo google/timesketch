@@ -17,6 +17,7 @@ from timesketch.models.sketch import Sketch
 
 class ManyEventsSequenceSessionizer(SequenceSessionizerSketchPlugin):
     event_seq_name = 'mock_seq_sessionizer'
+    max_time_diff_micros = 100
     return_fields = ['hostname', 'source_short', 'timestamp']
     event_seq = [{
         'hostname': 'host',
@@ -28,12 +29,43 @@ class ManyEventsSequenceSessionizer(SequenceSessionizerSketchPlugin):
 
 
 class OneEventSequenceSessionizer(SequenceSessionizerSketchPlugin):
+    max_time_diff_micros = 100
     event_seq_name = 'one_event_seq_sessionizer'
-    return_fields = ['hostname', 'source_short', 'timestamp']
     event_seq = [{'hostname': 'host', 'source_short': 'FILE'}]
+    return_fields = ['hostname', 'source_short', 'timestamp']
 
 
-#list of dictionaries with attributes for mock events
+# Invalid sequence sessionizers.
+class NoneSeqNameSequenceSessionizer(SequenceSessionizerSketchPlugin):
+    event_seq_name = 'name'
+    event_seq = [{'hostname': 'host', 'source_short': 'FILE'}]
+    return_fields = ['timestamp', 'source_short']
+
+
+class NoneSeqSequenceSessionizer(SequenceSessionizerSketchPlugin):
+    event_seq_name = 'valid_name'
+    return_fields = ['timestamp', 'source_short']
+
+
+class EmptySeqSequenceSessionizer(SequenceSessionizerSketchPlugin):
+    event_seq = []
+    event_seq_name = 'valid_name'
+    return_fields = ['timestamp', 'source_short']
+
+
+class NoTimestampSequenceSessionizer(SequenceSessionizerSketchPlugin):
+    event_seq_name = 'valid_name'
+    event_seq = [{'hostname': 'host', 'source_short': 'FILE'}]
+    return_fields = ['source_short']
+
+
+class NoReturnAttrSequenceSessionizer(SequenceSessionizerSketchPlugin):
+    event_seq_name = 'valid_name'
+    event_seq = [{'hostname': 'host', 'source_short': 'FILE'}]
+    return_fields = ['timestamp']
+
+
+# List of dictionaries with attributes for mock events.
 one_session_args = [{
     'hostname': 'host',
     'source_short': 'FILE'
@@ -56,14 +88,56 @@ two_sessions_args = [{
     'source_short': 'WEBHIST'
 }]
 
-one_event_args = [{'hostname': 'host', 'source_short': 'FILE'}]
-
-#max_time_diff_micros has the same value in the mock sequence sessionizers
-max_allowed = SequenceSessionizerSketchPlugin.max_time_diff_micros
+one_event_seq_args = [{'hostname': 'host', 'source_short': 'FILE'}]
 
 
 class TestSequenceSessionizerPlugin(BaseTest):
     """Tests the functionality of the sequence sessionizing sketch analyzer."""
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def test_event_seq_name_none(self):
+        """Test event_seq_name is not None."""
+        index = 'test_index'
+        sketch_id = 1
+        self.assertRaises(RuntimeError, sessionizer=\
+            NoneSeqNameSequenceSessionizer(index, sketch_id))
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def test_event_seq_none(self):
+        """Test event_seq is not None."""
+        index = 'test_index'
+        sketch_id = 1
+        self.assertRaises(RuntimeError, sessionizer=\
+            NoneSeqSequenceSessionizer(index, sketch_id))
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def test_event_seq_empty(self):
+        """Test event_seq is not empty."""
+        index = 'test_index'
+        sketch_id = 1
+        self.assertRaises(RuntimeError, sessionizer=\
+            EmptySeqSequenceSessionizer(index, sketch_id))
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def test_no_timestamp(self):
+        """Test return_fields includes timestamp."""
+        index = 'test_index'
+        sketch_id = 1
+        self.assertRaises(RuntimeError, sessionizer=\
+            NoTimestampSequenceSessionizer(index, sketch_id))
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def test_no_return_attr(self):
+        """Test in return_fields are specified attributes."""
+        index = 'test_index'
+        sketch_id = 1
+        self.assertRaises(RuntimeError, sessionizer=\
+            NoReturnAttrSequenceSessionizer(index, sketch_id))
+
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_sessionizer(self):
@@ -78,93 +152,58 @@ class TestSequenceSessionizerPlugin(BaseTest):
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_one_session(self):
-        """Test one sequence of events is finded and allocated as a
-        session."""
+        """Test one sequence of events is finded and allocated as a session."""
         with mock.patch.object(SequenceSessionizerSketchPlugin,
                                'event_stream',
                                return_value=_create_mock_event(
-                                   0,
-                                   2,
-                                   one_session_args,
-                                   time_diffs=[max_allowed])):
+                                   0, 2, one_session_args, time_diffs=[1])):
             index = 'test_index'
             sketch_id = 1
             sessionizer = ManyEventsSequenceSessionizer(index, sketch_id)
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0} session created: 1'.
+                'Sessionizing completed, number of {0:s} session created: 1'.
                 format(sessionizer.event_seq_name))
 
             ds = MockDataStore('test', 0)
-            event1 = (ds.get_event('test_index', '0', stored_events=True))
-            self.assertEqual(event1['_source'][sessionizer.event_seq_name], 1)
-            event2 = (ds.get_event('test_index', '101', stored_events=True))
-            self.assertEqual(event2['_source'][sessionizer.event_seq_name], 1)
-
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
-                MockDataStore)
-    def test_one_session_middle(self):
-        """Test events that are not part of the sequence but are between
-        significant events from the event sequence considered as a session are
-        part of the significant events' session."""
-        with mock.patch.object(SequenceSessionizerSketchPlugin,
-                               'event_stream',
-                               return_value=_create_mock_event(
-                                   0,
-                                   2,
-                                   one_session_args,
-                                   time_diffs=[max_allowed])):
-            index = 'test_index'
-            sketch_id = 1
-            sessionizer = ManyEventsSequenceSessionizer(index, sketch_id)
-            message = sessionizer.run()
-            self.assertEqual(
-                message,
-                'Sessionizing completed, number of {0} session created: 1'.
-                format(sessionizer.event_seq_name))
-
-            ds = MockDataStore('test', 0)
-            #events with id 0 and id 101 are part of the event sequence
-            for i in range(1, 100):
-                mid_event = (ds.get_event('test_index',
-                                          str(i),
-                                          stored_events=True))
-                self.assertEqual(
-                    mid_event['_source'][sessionizer.event_seq_name], 1)
+            # Events that are not part of the sequence but are between
+            # significant events from the event sequence considered as a session
+            # are part of the significant events' session.
+            for i in range(0, 101):
+                event = ds.get_event('test_index', str(i), stored_events=True)
+                self.assertEqual(event['_source'][sessionizer.event_seq_name],
+                                 1)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_multiple_sessions(self):
         """Test multiple sessions are finded and allocated correctly."""
-        with mock.patch.object(
-            SequenceSessionizerSketchPlugin,
-            'event_stream',
-            return_value=_create_mock_event(
-                0,
-                4,
-                two_sessions_args,
-                time_diffs=[max_allowed, max_allowed, max_allowed])):
+        with mock.patch.object(SequenceSessionizerSketchPlugin,
+                               'event_stream',
+                               return_value=_create_mock_event(
+                                   0,
+                                   4,
+                                   two_sessions_args,
+                                   time_diffs=[1, 1, 1])):
             index = 'test_index'
             sketch_id = 1
             sessionizer = ManyEventsSequenceSessionizer(index, sketch_id)
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0} session created: 2'.
+                'Sessionizing completed, number of {0:s} session created: 2'.
                 format(sessionizer.event_seq_name))
 
             ds = MockDataStore('test', 0)
             for i in range(0, 100):
-                event = (ds.get_event('test_index', str(i),
-                                      stored_events=True))
+                event = ds.get_event('test_index', str(i), stored_events=True)
                 self.assertEqual(event['_source'][sessionizer.event_seq_name],
                                  1)
-            #events with id in the range of 101 to 201 are not part of any
-            #session
+            # Events with id in the range of 101 to 201 are not part of any
+            # session.
             for i in range(202, 302):
-                event = (ds.get_event('test_index', str(i),
-                                      stored_events=True))
+                event = ds.get_event('test_index', str(i), stored_events=True)
                 self.assertEqual(event['_source'][sessionizer.event_seq_name],
                                  2)
 
@@ -173,13 +212,13 @@ class TestSequenceSessionizerPlugin(BaseTest):
     def test_after_session(self):
         """Test events after the last event of a sequence are not allocated with
         a session number if they are not part from another session."""
-        with mock.patch.object(SequenceSessionizerSketchPlugin,
-                               'event_stream',
-                               return_value=_create_mock_event(
-                                   0,
-                                   4,
-                                   two_sessions_args,
-                                   time_diffs=[max_allowed, max_allowed])):
+        with mock.patch.object(
+            SequenceSessionizerSketchPlugin,
+            'event_stream',
+            return_value=_create_mock_event(0,
+                                            4,
+                                            two_sessions_args,
+                                            time_diffs=[1, 1])):
             index = 'test_index'
             sketch_id = 1
             sessionizer = ManyEventsSequenceSessionizer(index, sketch_id)
@@ -188,13 +227,12 @@ class TestSequenceSessionizerPlugin(BaseTest):
 
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0} session created: 2'.
+                'Sessionizing completed, number of {0:s} session created: 2'.
                 format(sessionizer.event_seq_name))
-            # session 1: events with id from 0 to 101,
-            # session 2: events with id from 202 to 303
+            # Session 1: events with id from 0 to 101,
+            # session 2: events with id from 202 to 303.
             for i in range(102, 201):
-                event = (ds.get_event('test_index', str(i),
-                                      stored_events=True))
+                event = ds.get_event('test_index', str(i), stored_events=True)
                 self.assertNotIn(sessionizer.event_seq_name, event)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -202,26 +240,28 @@ class TestSequenceSessionizerPlugin(BaseTest):
     def test_edge_time_diff(self):
         """Test events with the edge time difference between them are
         allocated correctly."""
-        with mock.patch.object(SequenceSessionizerSketchPlugin,
-                               'event_stream',
-                               return_value=_create_mock_event(
-                                   0,
-                                   2,
-                                   one_session_args,
-                                   time_diffs=[max_allowed])):
+        with mock.patch.object(
+            SequenceSessionizerSketchPlugin,
+            'event_stream',
+            return_value=_create_mock_event(
+                0,
+                2,
+                one_session_args,
+                time_diffs=[
+                    ManyEventsSequenceSessionizer.max_time_diff_micros
+                ])):
             index = 'test_index'
             sketch_id = 1
             sessionizer = ManyEventsSequenceSessionizer(index, sketch_id)
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0} session created: 1'.
+                'Sessionizing completed, number of {0:s} session created: 1'.
                 format(sessionizer.event_seq_name))
 
             ds = MockDataStore('test', 0)
             for i in range(0, 101):
-                event = (ds.get_event('test_index', str(i),
-                                      stored_events=True))
+                event = ds.get_event('test_index', str(i), stored_events=True)
                 self.assertEqual(event['_source'][sessionizer.event_seq_name],
                                  1)
 
@@ -230,28 +270,32 @@ class TestSequenceSessionizerPlugin(BaseTest):
     def test_above_max_time_diff(self):
         """Test events with max time difference + 1 between them are allocated
         correctly."""
-        with mock.patch.object(SequenceSessionizerSketchPlugin,
-                               'event_stream',
-                               return_value=_create_mock_event(
-                                   0,
-                                   2,
-                                   one_session_args,
-                                   time_diffs=[max_allowed + 1])):
+        with mock.patch.object(
+            SequenceSessionizerSketchPlugin,
+            'event_stream',
+            return_value=_create_mock_event(
+                0,
+                2,
+                one_session_args,
+                time_diffs=[
+                    SequenceSessionizerSketchPlugin.max_time_diff_micros +
+                    1
+                ])):
             index = 'test_index'
             sketch_id = 1
             sessionizer = ManyEventsSequenceSessionizer(index, sketch_id)
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0} session created: 0'.
+                'Sessionizing completed, number of {0:s} session created: 0'.
                 format(sessionizer.event_seq_name))
 
             ds = MockDataStore('test', 0)
-            #events with id 0 and id 101 form the requested sequence, but events
-            #with id 100 and 101 have max_time_diff_micros + 1 bewtween them
+            # Events with id 0 and id 101 form the requested sequence, but
+            # event with id 100 and 101 have max_time_diff_micros + 1 bewtween
+            # them
             for i in range(0, 201):
-                event = (ds.get_event('test_index', str(i),
-                                      stored_events=True))
+                event = ds.get_event('test_index', str(i), stored_events=True)
                 self.assertNotIn(sessionizer.event_seq_name, event)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -268,7 +312,7 @@ class TestSequenceSessionizerPlugin(BaseTest):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0} session created: 0'.
+                'Sessionizing completed, number of {0:s} session created: 0'.
                 format(sessionizer.event_seq_name))
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -279,36 +323,35 @@ class TestSequenceSessionizerPlugin(BaseTest):
         with mock.patch.object(SequenceSessionizerSketchPlugin,
                                'event_stream',
                                return_value=_create_mock_event(
-                                   0, 1, one_event_args, [max_allowed])):
+                                   0, 1, one_event_seq_args, [1])):
             index = 'test_index'
             sketch_id = 1
             sessionizer = OneEventSequenceSessionizer(index, sketch_id)
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0} session created: 1'.
+                'Sessionizing completed, number of {0:s} session created: 1'.
                 format(sessionizer.event_seq_name))
 
             ds = MockDataStore('test', 0)
-            event = (ds.get_event('test_index', '0', stored_events=True))
+            event = ds.get_event('test_index', '0', stored_events=True)
             self.assertEqual(event['_source'][sessionizer.event_seq_name], 1)
 
             for i in range(1, 100):
-                event = (ds.get_event('test_index', str(i),
-                                      stored_events=True))
+                event = ds.get_event('test_index', str(i), stored_events=True)
                 self.assertNotIn(sessionizer.event_seq_name, event)
 
 
 def _create_mock_event(event_id, quantity, attributes, time_diffs=None):
     """
-    Returns an instance of Event, based on the MockDataStore event_dict
-    example and the given attributes and the time differences.
+    Generates list of Event objects, based on the MockDataStore event_dict
+    example, the given attributes and the time differences.
 
     Args:
         event_id: Desired ID for the Event.
-        quantity: The number of Events to be generated
+        quantity: The number of Events to be generated.
         attributes: A list of dictionaries with attributes for the generated
-        events.
+            events.
         time_diffs: A list of time differences between the generated Events.
 
     Returns:
@@ -327,7 +370,7 @@ def _create_mock_event(event_id, quantity, attributes, time_diffs=None):
         time_diffs.extend([time_diffs[len(time_diffs) - 1]] *
                           (quantity - len(time_diffs)))
 
-    # Setup for Event object initialisation
+    # Setup for Event object initialisation.
     ds = MockDataStore('test', 0)
     user = User('test_user')
     sketch = Sketch('test_sketch', 'description', user)
@@ -342,10 +385,10 @@ def _create_mock_event(event_id, quantity, attributes, time_diffs=None):
                                    event_timestamp, attributes[i]['hostname'],
                                    attributes[i]['source_short'])
         yield eventObj
-        # adding extra events after every requested event for better simulation
-        # of real timeline data i.e. working with a larger dataset
+        # Adding extra events after every requested event for better simulation
+        # of real timeline data i.e. working with a larger dataset.
         for _ in range(100):
-            event_timestamp += max_allowed
+            event_timestamp += 1
             event_id += 1
             eventObj = create_eventObj(ds, sketch, event_template, event_id,
                                        event_timestamp)

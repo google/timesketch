@@ -2,7 +2,6 @@
 
 from __future__ import unicode_literals
 
-#from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import sessionizer
 
 
@@ -13,14 +12,14 @@ class SequenceSessionizerSketchPlugin(
 
     Attributes:
         event_seq_name: The name of the event sequence.
-        event_seq: List of dictionaries of attributes describing the events
+        event_seq: List of dictionaries of attributes describing the events.
         event_storage: List of events.
         num_event_to_find: Number that shows which event from the sequence
-        should be matched.
+            should be matched.
         recording: Shows if currently are finded and stored events that match
-        the specified sequence of events.
-        return_fields: List of name of event attributes, should be specified
-        in the inheriting sessionizers. It's mandatory to contains 'timestamp'.
+            the specified sequence of events.
+        return_fields: List of name of event attributes, should be specified in
+            the inheriting sessionizers. It must contains 'timestamp'.
         session_num: Counter for the number of sessions.
     """
     event_seq_name = None
@@ -32,9 +31,11 @@ class SequenceSessionizerSketchPlugin(
     session_num = 0
 
     def run(self):
-        """Entry point for the analyzer. Allocates each event between the
-        first event of the event_seq and the last event of the event_seq
-        an event_seq_name attribute and a session_num.
+        """Entry point for the analyzer.
+
+        Allocates each event between the first event of the event_seq and the
+        last event of the event_seq an event_seq_name attribute and a
+        session_num.
 
         Returns:
             String containing the name of the event sequence and the
@@ -45,7 +46,7 @@ class SequenceSessionizerSketchPlugin(
         if self.event_seq is None or self.event_seq == []:
             raise RuntimeError('No event_seq provided.')
         if 'timestamp' not in self.return_fields:
-            raise RuntimeError('No \'timestamp\' in return_fields.')
+            raise RuntimeError('No "timestamp" in return_fields.')
         if len(self.return_fields) <= 1:
             raise RuntimeError('No return_fields provided.')
 
@@ -75,7 +76,7 @@ class SequenceSessionizerSketchPlugin(
 
         self.sketch.add_view('Session view', self.NAME, query_string=self.query)
 
-        return ('Sessionizing completed, number of {0} session created:'
+        return ('Sessionizing completed, number of {0:s} session created:'
                 ' {1:d}'.format(self.event_seq_name, self.session_num))
 
     def annotateEvent(self, event, session_num):
@@ -90,7 +91,9 @@ class SequenceSessionizerSketchPlugin(
 
     def process_event(self, event):
         """Process event depending on if the event is significant for the
-        searched event sequence. Event is significant if it matches the current
+        searched event sequence.
+
+        Event is significant if it matches the current
         event in the event_seq or if in the timeline it is between two
         consistent events from the event_seq.
 
@@ -110,7 +113,8 @@ class SequenceSessionizerSketchPlugin(
             self.event_storage.append(event)
 
     def flush_events(self, drop=False):
-        """Flush the events in the event_storage.
+        """Annotates or clears events in event_storage according to the flag
+        drop and resets session recording state.
 
         Args:
             drop: Indicator if the stored events should not be commited.
@@ -130,7 +134,8 @@ class SequenceSessionizerSketchPlugin(
         Args:
             event: Event to compare with the one in the event sequence.
 
-        Returns: If event matches the event to search for in the event
+        Returns:
+            If event matches the event to search for in the event
         sequence.
         """
         event_to_match = self.event_seq[self.num_event_to_find]
@@ -146,7 +151,8 @@ class SequenceSessionizerSketchPlugin(
         """Generate query string for all events allocated with event_seq_name
         attribute.
 
-        Returns: Query string for Elasticsearch.
+        Returns:
+            Query string for Elasticsearch.
         """
         query_string = self.event_seq_name + ':*'
         return query_string
