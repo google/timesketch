@@ -3,8 +3,7 @@
 # Run the container the default way
 if [ "$1" = 'timesketch' ]; then
 
-  # Install Timesketch from volume
-  cd /usr/local/src/timesketch && yarn install && yarn run build
+  # Install Timesketch in editable mode from volume
   pip3 install -e /usr/local/src/timesketch/
 
   # Copy config files
