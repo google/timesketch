@@ -27,7 +27,6 @@ class ManyEventsSequenceSessionizer(SequenceSessionizerSketchPlugin):
         'source_short': 'WEBHIST'
     }]
 
-
 class OneEventSequenceSessionizer(SequenceSessionizerSketchPlugin):
     max_time_diff_micros = 100
     event_seq_name = 'one_event_seq_sessionizer'
@@ -382,8 +381,7 @@ def _create_mock_event(event_id, quantity, attributes, time_diffs=None):
 
     for i in range(quantity):
         eventObj = create_eventObj(ds, sketch, event_template, event_id,
-                                   event_timestamp, attributes[i]['hostname'],
-                                   attributes[i]['source_short'])
+                                   event_timestamp, attributes[i])
         yield eventObj
         # Adding extra events after every requested event for better simulation
         # of real timeline data i.e. working with a larger dataset.
@@ -403,8 +401,7 @@ def create_eventObj(ds,
                     event_template,
                     event_id,
                     ts,
-                    hostname='other',
-                    source_short='OTHER'):
+                    attributes_dict=None):
     """
     Creates Event object based on the given arguments and returns it.
 
@@ -414,17 +411,19 @@ def create_eventObj(ds,
         event_template: An event source dictionary.
         event_id: An event id number.
         ts: A timestamp for an event.
-        hostname: A value for the hostname attribute.
-        source_short: A value for the source_short attribute.
+        attributes_dict: A dictionary with attributes and theirs values.
 
     Returns:
         An Event object.
     """
-    event = event_template
+    event = copy.deepcopy(event_template)
     event['_id'] = str(event_id)
     event['_source']['timestamp'] = ts
-    event['_source']['hostname'] = hostname
-    event['_source']['source_short'] = source_short
+    # If attributes_dict is None, Event object is created based on
+    # event_template with no addictional changes.
+    if attributes_dict is not None:
+        for attribute, value in attributes_dict.items():
+            event['_source'][attribute] = value
 
     eventObj = Event(copy.deepcopy(event), ds, sketch)
     ds.import_event(eventObj.index_name,
