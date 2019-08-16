@@ -45,10 +45,12 @@ class SequenceSessionizerSketchPlugin(
             raise RuntimeError('No event_seq_name provided.')
         if self.event_seq is None or self.event_seq == []:
             raise RuntimeError('No event_seq provided.')
-        if 'timestamp' not in self.return_fields:
-            raise RuntimeError('No "timestamp" in return_fields.')
-        if len(self.return_fields) <= 1:
-            raise RuntimeError('No return_fields provided.')
+        # If return_fields in none, then all attributes are provided.
+        if self.return_fields is not None:
+            if 'timestamp' not in self.return_fields:
+                raise RuntimeError('No "timestamp" in return_fields.')
+            if len(self.return_fields) <= 1:
+                raise RuntimeError('No return_fields provided.')
 
         # event_stream returns an ordered generator of events (by time)
         # therefore no further sorting is needed.
@@ -141,8 +143,6 @@ class SequenceSessionizerSketchPlugin(
         event_to_match = self.event_seq[self.num_event_to_find]
 
         for key, value in event_to_match.items():
-            if value == 'timestamp':
-                continue
             if value != event.source.get(key):
                 return False
         return True
