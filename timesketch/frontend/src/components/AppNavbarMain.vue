@@ -17,10 +17,10 @@ limitations under the License.
   <nav class="navbar" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
       <router-link class="navbar-item" to="/">
-        <div class="logo">
+        <div class="logo" style="margin-top:7px;">
           <img src="/dist/timesketch-white.png">
         </div>
-        <span style="color: #fff; margin-left: 7px; margin-top: -4px;">time<b>sketch</b></span>
+        <span style="color: #fff; margin-left: 7px; margin-top: 1px; font-size: 1.2em;">time<b>sketch</b></span>
       </router-link>
     </div>
     <div class="navbar-end">
