@@ -22,8 +22,10 @@ limitations under the License.
         </div>
       </router-link>
     </div>
-    <div class="navbar-end">+
-      <div class="navbar-item"></div>
+    <div class="navbar-end">
+      <div class="navbar-item">
+        <a href="/logout" style="color:#fff;">Logout</a>
+      </div>
     </div>
   </nav>
 </template>
