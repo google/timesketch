@@ -62,10 +62,16 @@ limitations under the License.
       <div class="container is-fluid">
         <div class="card">
           <header class="card-header">
-            <p class="card-header-title">Timelines</p>
+            <span class="card-header-title">
+              <span class="icon is-small"><i class="fas fa-filter"></i></span>
+              <span style="margin-left:10px;">Filters</span>
+            </span>
           </header>
           <div class="card-content">
-            <ts-explore-timeline-picker v-if="sketch.active_timelines"></ts-explore-timeline-picker>
+            <ts-explore-filter-time></ts-explore-filter-time>
+            <br>
+            <div style="margin-bottom: 8px;"><b>Timelines</b></div>
+            <ts-explore-timeline-picker @doSearch="search" v-if="sketch.active_timelines"></ts-explore-timeline-picker>
           </div>
         </div>
       </div>
@@ -92,6 +98,7 @@ import TsViewListDropdown from './SketchExploreViewListDropdown'
 import TsCreateViewForm from './SketchCreateViewForm'
 import TsSketchExploreEventList from './SketchExploreEventList'
 import TsExploreTimelinePicker from './SketchExploreTimelinePicker'
+import TsExploreFilterTime from './SketchExploreFilterTime'
 
 export default {
   name: 'ts-sketch-explore-search',
@@ -99,7 +106,8 @@ export default {
     TsViewListDropdown,
     TsCreateViewForm,
     TsSketchExploreEventList,
-    TsExploreTimelinePicker
+    TsExploreTimelinePicker,
+    TsExploreFilterTime
   },
   props: ['sketchId'],
   data () {
