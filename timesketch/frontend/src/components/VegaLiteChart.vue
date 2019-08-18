@@ -26,7 +26,6 @@ export default {
   components: {},
   watch: {
     vegaSpec: function (newVal, oldVal) {
-      console.log(newVal)
       vegaEmbed('#vega', JSON.parse(this.vegaSpec), { actions: false })
     }
   }
