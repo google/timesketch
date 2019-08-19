@@ -62,7 +62,15 @@ class TermsAggregation(interface.BaseAggregator):
         """
         # Encoding information for Vega-Lite.
         encoding = {
-            'x': {'field': field, 'type': 'nominal', "sort": {"op": "sum", "field": "count", "order": "descending"}},
+            'x': {
+                'field': field,
+                'type': 'nominal',
+                'sort': {
+                    'op': 'sum',
+                    'field': 'count',
+                    'order': 'descending'
+                }
+            },
             'y': {'field': 'count', 'type': 'quantitative'}
         }
 
