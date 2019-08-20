@@ -23,12 +23,12 @@ class TestWebActivitySessionizerPlugin(BaseTest, BaseSessionizerTest):
         """Test the mocking of events returns an event stream that matches the
         query for the analyzer."""
         with mock.patch.object(
-            self.analyzer_class,
-            'event_stream',
-            return_value=_create_mock_event(
-                0,
-                2,
-                source_attrs={'source_short': 'WEBHIST'})):
+                self.analyzer_class,
+                'event_stream',
+                return_value=_create_mock_event(
+                    0,
+                    2,
+                    source_attrs={'source_short': 'WEBHIST'})):
             index = 'test_index'
             sketch_id = 1
             analyzer = self.analyzer_class(index, sketch_id)
