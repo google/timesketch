@@ -64,7 +64,8 @@ class LogonSessionizerSketchPlugin(SessionizerSketchPlugin):
 
             for event in events:
                 curr_record_id = event.source.get('record_number')
-                if curr_record_id != None and curr_record_id == prev_record_id:
+                if (curr_record_id is not None and curr_record_id ==
+                        prev_record_id):
                     #skip if duplicate event
                     continue
                 prev_record_id = curr_record_id
