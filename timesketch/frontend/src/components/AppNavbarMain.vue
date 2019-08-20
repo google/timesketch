@@ -38,7 +38,7 @@ export default {
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
   .navbar {
-      background: #3273dc;
+      background: #0070bd;
       padding-left: 32px;
       padding-right: 32px;
   }

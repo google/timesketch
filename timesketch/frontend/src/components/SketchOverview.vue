@@ -19,7 +19,7 @@ limitations under the License.
     <section class="section">
       <div class="container">
         <ts-navbar-secondary currentAppContext="sketch" currentPage="overview">
-          <a class="button is-link is-rounded" style="margin-right:10px;">
+          <a class="button is-info is-rounded" style="margin-right:10px;">
               <span class="icon is-small">
                 <i class="fas fa-users"></i>
               </span>
