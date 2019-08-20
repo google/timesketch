@@ -28,12 +28,13 @@ class BaseSessionizerTest(object):
     def test_same_session(self):
         """Test multiple events in the same session are allocated correctly."""
         with mock.patch.object(
-            self.analyzer_class,
-            'event_stream',
-            return_value=_create_mock_event(
-                0,
-                2,
-                time_diffs=[self.analyzer_class.max_time_diff_micros / 2])):
+                self.analyzer_class,
+                'event_stream',
+                return_value=_create_mock_event(
+                    0,
+                    2,
+                    time_diffs=[self.analyzer_class.max_time_diff_micros /
+                                2])):
             index = 'test_index'
             sketch_id = 1
             analyzer = self.analyzer_class(index, sketch_id)
