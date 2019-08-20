@@ -35,15 +35,15 @@ class TestLogonSessionizerPlugin(BaseTest):
         """Test the behaviour of the analyzer given one login and one logout
         event."""
         with mock.patch.object(
-            self.analyzer_class,
-            'event_stream',
-            return_value=_create_mock_event(
-                0,
-                2,
-                source_attrs=[{'xml_string': xml_string1, 'event_identifier':
-                               4624},
-                              {'xml_string': xml_string1, 'event_identifier':
-                               4634}])):
+                self.analyzer_class,
+                'event_stream',
+                return_value=_create_mock_event(
+                    0,
+                    2,
+                    source_attrs=[{'xml_string': xml_string1,
+                                   'event_identifier': 4624},
+                                  {'xml_string': xml_string1,
+                                   'event_identifier': 4634}])):
             index = 'test_index'
             sketch_id = 1
             analyzer = self.analyzer_class(index, sketch_id)
@@ -66,23 +66,23 @@ class TestLogonSessionizerPlugin(BaseTest):
         """Test multiple sessions are allocated correctly, with some login /
         logout events nested."""
         with mock.patch.object(
-            self.analyzer_class,
-            'event_stream',
-            return_value=_create_mock_event(
-                2,
-                6,
-                source_attrs=[{'xml_string': xml_string1,
-                               'event_identifier':4624},
-                              {'xml_string': xml_string1,
-                               'event_identifier':4634},
-                              {'xml_string': xml_string2,
-                               'event_identifier':4624},
-                              {'xml_string': xml_string3,
-                               'event_identifier':4624},
-                              {'xml_string': xml_string2,
-                               'event_identifier':4634},
-                              {'xml_string': xml_string3,
-                               'event_identifier':4634}])):
+                self.analyzer_class,
+                'event_stream',
+                return_value=_create_mock_event(
+                    2,
+                    6,
+                    source_attrs=[{'xml_string': xml_string1,
+                                   'event_identifier':4624},
+                                  {'xml_string': xml_string1,
+                                   'event_identifier':4634},
+                                  {'xml_string': xml_string2,
+                                   'event_identifier':4624},
+                                  {'xml_string': xml_string3,
+                                   'event_identifier':4624},
+                                  {'xml_string': xml_string2,
+                                   'event_identifier':4634},
+                                  {'xml_string': xml_string3,
+                                   'event_identifier':4634}])):
             index = 'test_index'
             sketch_id = 1
             analyzer = self.analyzer_class(index, sketch_id)
@@ -123,18 +123,18 @@ class TestLogonSessionizerPlugin(BaseTest):
         """Test the behaviour of the analyzer with an event stream containing
         a startup event."""
         with mock.patch.object(
-            self.analyzer_class,
-            'event_stream',
-            return_value=_create_mock_event(
-                8,
-                4,
-                source_attrs=[{'xml_string': xml_string1, 'event_identifier':
-                               4624},
-                              {'xml_string': xml_string2, 'event_identifier':
-                               4624},
-                              {'event_identifier': 6005},
-                              {'xml_string': xml_string1, 'event_identifier':
-                               4634}])):
+                self.analyzer_class,
+                'event_stream',
+                return_value=_create_mock_event(
+                    8,
+                    4,
+                    source_attrs=[{'xml_string': xml_string1,
+                                   'event_identifier': 4624},
+                                  {'xml_string': xml_string2,
+                                   'event_identifier': 4624},
+                                  {'event_identifier': 6005},
+                                  {'xml_string': xml_string1,
+                                   'event_identifier': 4634}])):
             index = 'test_index'
             sketch_id = 1
             analyzer = self.analyzer_class(index, sketch_id)
@@ -166,15 +166,15 @@ class TestLogonSessionizerPlugin(BaseTest):
         corresponding logout event. The login event is allocated its own
         session. Non-corresponding logout events are ignored."""
         with mock.patch.object(
-            self.analyzer_class,
-            'event_stream',
-            return_value=_create_mock_event(
-                12,
-                2,
-                source_attrs=[{'xml_string': xml_string1,
-                               'event_identifier':4624},
-                              {'xml_string': xml_string2,
-                               'event_identifier':4634}])):
+                self.analyzer_class,
+                'event_stream',
+                return_value=_create_mock_event(
+                    12,
+                    2,
+                    source_attrs=[{'xml_string': xml_string1,
+                                   'event_identifier':4624},
+                                  {'xml_string': xml_string2,
+                                   'event_identifier':4634}])):
             index = 'test_index'
             sketch_id = 1
             analyzer = self.analyzer_class(index, sketch_id)
@@ -200,17 +200,17 @@ class TestLogonSessionizerPlugin(BaseTest):
         logons). The logout event is ignored, and the remaining event stream
         processed normally."""
         with mock.patch.object(
-            self.analyzer_class,
-            'event_stream',
-            return_value=_create_mock_event(
-                14,
-                3,
-                source_attrs=[{'xml_string': xml_string1,
-                               'event_identifier':4634},
-                              {'xml_string': xml_string1,
-                               'event_identifier':4624},
-                              {'xml_string': xml_string1,
-                               'event_identifier':4634}])):
+                self.analyzer_class,
+                'event_stream',
+                return_value=_create_mock_event(
+                    14,
+                    3,
+                    source_attrs=[{'xml_string': xml_string1,
+                                   'event_identifier':4634},
+                                  {'xml_string': xml_string1,
+                                   'event_identifier':4624},
+                                  {'xml_string': xml_string1,
+                                   'event_identifier':4634}])):
             index = 'test_index'
             sketch_id = 1
             analyzer = self.analyzer_class(index, sketch_id)
@@ -238,17 +238,17 @@ class TestLogonSessionizerPlugin(BaseTest):
         same logon ID before a corresponding logout. Each login is allocated
         its own session, with the logout allocated to the most recent login."""
         with mock.patch.object(
-            self.analyzer_class,
-            'event_stream',
-            return_value=_create_mock_event(
-                17,
-                3,
-                source_attrs=[{'xml_string': xml_string1,
-                               'event_identifier':4624},
-                              {'xml_string': xml_string1,
-                               'event_identifier':4624},
-                              {'xml_string': xml_string1,
-                               'event_identifier':4634}])):
+                self.analyzer_class,
+                'event_stream',
+                return_value=_create_mock_event(
+                    17,
+                    3,
+                    source_attrs=[{'xml_string': xml_string1,
+                                   'event_identifier':4624},
+                                  {'xml_string': xml_string1,
+                                   'event_identifier':4624},
+                                  {'xml_string': xml_string1,
+                                   'event_identifier':4634}])):
             index = 'test_index'
             sketch_id = 1
             analyzer = self.analyzer_class(index, sketch_id)
@@ -275,17 +275,17 @@ class TestLogonSessionizerPlugin(BaseTest):
         same logon ID after a corresponding login. The first logout is
         allocated to the session, and the other(s) ignored."""
         with mock.patch.object(
-            self.analyzer_class,
-            'event_stream',
-            return_value=_create_mock_event(
-                20,
-                3,
-                source_attrs=[{'xml_string': xml_string1,
-                               'event_identifier':4624},
-                              {'xml_string': xml_string1,
-                               'event_identifier':4634},
-                              {'xml_string': xml_string1,
-                               'event_identifier':4634}])):
+                self.analyzer_class,
+                'event_stream',
+                return_value=_create_mock_event(
+                    20,
+                    3,
+                    source_attrs=[{'xml_string': xml_string1,
+                                   'event_identifier':4624},
+                                  {'xml_string': xml_string1,
+                                   'event_identifier':4634},
+                                  {'xml_string': xml_string1,
+                                   'event_identifier':4634}])):
             index = 'test_index'
             sketch_id = 1
             analyzer = self.analyzer_class(index, sketch_id)

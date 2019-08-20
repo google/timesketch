@@ -1,7 +1,6 @@
 """Sessionizing sketch analyzer plugin for logon sessions."""
 
 from __future__ import unicode_literals
-import xml.etree.ElementTree as ET
 import re
 import elasticsearch.exceptions
 
@@ -75,14 +74,12 @@ class LogonSessionizerSketchPlugin(SessionizerSketchPlugin):
                 if event_id in [4624, 4778]:
                     #login event
                     if event_id == 4624:
-                        account_name = self.getXmlEventData(event,
-                                                            'TargetUserName')
-                        logon_id = self.getXmlEventData(event,
-                                                        'TargetLogonId')
+                        account_name = self.getEventData(event,
+                                                         'TargetUserName')
+                        logon_id = self.getEventData(event, 'TargetLogonId')
                     else:
-                        account_name = self.getXmlEventData(event,
-                                                            'AccountName')
-                        logon_id = self.getXmlEventData(event, 'LogonID')
+                        account_name = self.getEventData(event, 'AccountName')
+                        logon_id = self.getEventData(event, 'LogonID')
 
                     session_id = '%i (%s)' % (session_num, account_name)
                     self.addSessionId(event, [session_id])
@@ -97,9 +94,9 @@ class LogonSessionizerSketchPlugin(SessionizerSketchPlugin):
                 elif event_id in [4634, 4647, 4779]:
                     #logout event
                     if event_id == 4779:
-                        logon_id = self.getXmlEventData(event, 'LogonID')
+                        logon_id = self.getEventData(event, 'LogonID')
                     else:
-                        logon_id = self.getXmlEventData(event, 'TargetLogonId')
+                        logon_id = self.getEventData(event, 'TargetLogonId')
 
                     session_id = login_events.get(logon_id)
                     if session_id:
@@ -121,18 +118,18 @@ class LogonSessionizerSketchPlugin(SessionizerSketchPlugin):
                 elasticsearch.exceptions.ConnectionTimeout) as _:
             return (login_time, session_num, login_events, False)
 
-    def getXmlEventData(self, event, name):
+    def getEventData(self, event, name):
         """Retrieves the desired value from the EventData section of a Windows
-        EVTX record, represented in xml.
+        EVTX record.
         Args:
             event: The event to retrieve the attribute for.
         Returns:
             The value contained in the attribute.
         """
-        xml = event.source.get('xml_string')
-        xml = re.sub(' xmlns="[^"]+"', '', xml, count=1)  #strip namespace
-        root = ET.fromstring(xml)
-        node = root.find('./EventData/Data/[@Name=\'%s\']' % name)
-        return node.text
+        event_data = (re.search(r'<EventData>[\s\S]+<\/EventData>',
+                                event.source.get('xml_string'))).group()
+        text = (re.search(r'<Data Name="%s">([^<>]+)<\/Data>' % name,
+                          event_data)).group(1)
+        return text
 
 manager.AnalysisManager.register_analyzer(LogonSessionizerSketchPlugin)
