@@ -32,7 +32,9 @@ limitations under the License.
             justify-content: center;
         }
         .card.is-wide {
-            width: 550px;
+            width: 520px;
+            height: 350px;
+            padding-top:30px;
         }
         .card.has-text-centered,
         .card-content {
@@ -53,22 +55,22 @@ limitations under the License.
                         <div style="color: #333; font-size: 1.5em;">time<b>sketch</b></div>
                     </div>
                     <br>
-                    <form method="post">
+                    <form method="post" style="width:50%;margin-left: auto; margin-right: auto;">
                         <div class="field">
                             <div class="control">
                                 <input type="text" class="input" name="username"
-                                       placeholder="Username">
+                                       placeholder="Username" style="text-align:center;">
                             </div>
                         </div>
                         <div class="field">
                             <div class="control">
                                 <input type="password" class="input"
-                                       name="password" placeholder="Password">
+                                       name="password" placeholder="Password" style="text-align:center;">
                             </div>
                         </div>
                         <div class="field">
-                            <div class="control">
-                                <button type="submit" class="button is-outlined">
+                            <div class="control has-text-centered">
+                                <button type="submit" class="button is-rounded is-wide is-info" style="width:100%;">
                                     Sign in
                                 </button>
                             </div>
