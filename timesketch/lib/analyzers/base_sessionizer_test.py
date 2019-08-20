@@ -59,14 +59,14 @@ class BaseSessionizerTest(object):
         """Test multiple events in different sessions are allocated
         correctly."""
         with mock.patch.object(
-            self.analyzer_class,
-            'event_stream',
-            return_value=_create_mock_event(
-                0,
-                2,
-                time_diffs=[
-                    self.analyzer_class.max_time_diff_micros +
-                    (self.analyzer_class.max_time_diff_micros / 2)])):
+                self.analyzer_class,
+                'event_stream',
+                return_value=_create_mock_event(
+                    0,
+                    2,
+                    time_diffs=[
+                        self.analyzer_class.max_time_diff_micros +
+                        (self.analyzer_class.max_time_diff_micros / 2)])):
             index = 'test_index'
             sketch_id = 1
             analyzer = self.analyzer_class(index, sketch_id)
@@ -91,12 +91,12 @@ class BaseSessionizerTest(object):
         """Test events with the edge time difference between them are
         allocated correctly."""
         with mock.patch.object(
-            self.analyzer_class,
-            'event_stream',
-            return_value=_create_mock_event(
-                0,
-                2,
-                time_diffs=[self.analyzer_class.max_time_diff_micros])):
+                self.analyzer_class,
+                'event_stream',
+                return_value=_create_mock_event(
+                    0,
+                    2,
+                    time_diffs=[self.analyzer_class.max_time_diff_micros])):
             index = 'test_index'
             sketch_id = 1
             analyzer = self.analyzer_class(index, sketch_id)
