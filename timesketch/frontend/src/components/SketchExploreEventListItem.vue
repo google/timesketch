@@ -98,6 +98,9 @@ export default {
       return this.timeline(this.event._index).name
     },
     deltaDays () {
+      if (!this.prevEvent) {
+        return 0
+      }
       let timestamp = Math.floor(this.event._source.timestamp / 1000000)
       let prevTimestamp = Math.floor(this.prevEvent._source.timestamp / 1000000)
       let delta = Math.floor(timestamp - prevTimestamp)
