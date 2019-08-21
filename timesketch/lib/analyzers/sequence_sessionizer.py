@@ -5,8 +5,7 @@ from __future__ import unicode_literals
 from timesketch.lib.analyzers import sessionizer
 
 
-class SequenceSessionizerSketchPlugin(
-        sessionizer.SessionizerSketchPlugin):
+class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
     """Base class for specialized sequenced activity sessionizings
     sketch plugins.
 
@@ -75,7 +74,9 @@ class SequenceSessionizerSketchPlugin(
 
         self.query = self.get_query_string()
 
-        self.sketch.add_view('Session view', self.NAME, query_string=self.query)
+        self.sketch.add_view('Session view',
+                             self.NAME,
+                             query_string=self.query)
 
         return ('Sessionizing completed, number of {0:s} session created:'
                 ' {1:d}'.format(self.session_type, self.session_num))
