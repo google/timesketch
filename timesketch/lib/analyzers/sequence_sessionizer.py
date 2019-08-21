@@ -11,7 +11,6 @@ class SequenceSessionizerSketchPlugin(
     sketch plugins.
 
     Attributes:
-        event_seq_name: The name of the event sequence.
         event_seq: List of dictionaries of attributes describing the events.
         event_storage: List of events.
         num_event_to_find: Number that shows which event from the sequence
@@ -21,28 +20,28 @@ class SequenceSessionizerSketchPlugin(
         return_fields: List of name of event attributes, should be specified in
             the inheriting sessionizers. It must contains 'timestamp'.
         session_num: Counter for the number of sessions.
+        session_type: The name of the event sequence.
     """
-    event_seq_name = None
     event_seq = None
     event_storage = []
     num_event_to_find = 0
     recording = False
     return_fields = ['timestamp']
     session_num = 0
+    session_type = None
 
     def run(self):
         """Entry point for the analyzer.
 
         Allocates each event between the first event of the event_seq and the
-        last event of the event_seq an event_seq_name attribute and a
-        session_num.
+        last event of the event_seq an session_type attribute and a session_num.
 
         Returns:
             String containing the name of the event sequence and the
             number of sessions created.
         """
-        if self.event_seq_name is None:
-            raise RuntimeError('No event_seq_name provided.')
+        if self.session_type is None:
+            raise RuntimeError('No session_type provided.')
         if self.event_seq is None or self.event_seq == []:
             raise RuntimeError('No event_seq provided.')
         # If return_fields in none, then all attributes are provided.
@@ -79,16 +78,16 @@ class SequenceSessionizerSketchPlugin(
         self.sketch.add_view('Session view', self.NAME, query_string=self.query)
 
         return ('Sessionizing completed, number of {0:s} session created:'
-                ' {1:d}'.format(self.event_seq_name, self.session_num))
+                ' {1:d}'.format(self.session_type, self.session_num))
 
     def annotateEvent(self, event, session_num):
-        """Add an event_seq_name attribute with a session_num to event.
+        """Add an session_type attribute with a session_num to event.
 
         Args:
             event: Event to annotate.
             session_num: Session number for the event.
         """
-        event.add_attributes({self.event_seq_name: session_num})
+        event.add_attributes({self.session_type: session_num})
         event.commit()
 
     def process_event(self, event):
@@ -148,11 +147,11 @@ class SequenceSessionizerSketchPlugin(
         return True
 
     def get_query_string(self):
-        """Generate query string for all events allocated with event_seq_name
+        """Generate query string for all events allocated with session_type
         attribute.
 
         Returns:
             Query string for Elasticsearch.
         """
-        query_string = self.event_seq_name + ':*'
+        query_string = self.session_type + ':*'
         return query_string
