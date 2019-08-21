@@ -115,8 +115,11 @@ export default {
     return RestApiClient.delete('/sketches/' + sketchId + '/views/' + viewId + '/')
   },
   // Search
-  search (id, formData) {
-    return RestApiClient.post('/sketches/' + id + '/explore/', formData)
+  search (sketchId, formData) {
+    return RestApiClient.post('/sketches/' + sketchId + '/explore/', formData)
+  },
+  runAggregator (sketchId, formData) {
+    return RestApiClient.post('/sketches/' + sketchId + '/aggregation/explore/', formData)
   },
   // Misc resources
   countSketchEvents (sketchId) {
