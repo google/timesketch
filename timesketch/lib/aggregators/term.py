@@ -57,7 +57,6 @@ def get_spec(field, query='', query_dsl=''):
     else:
         raise ValueError('Neiter query nor query DSL provided.')
 
-
     return {
         'aggregations': {
             'term_count': {
@@ -79,24 +78,35 @@ class FilteredTermsAggregation(interface.BaseAggregator):
 
     NAME = 'query_bucket'
 
-    SUPPORTED_CHARTS = frozenset(['barchart', 'horizontal_barchart'])
+    SUPPORTED_CHARTS = frozenset(['barchart', 'hbarchart'])
 
-    FORM_FIELDS = {
-        'query': {
-            'type': 'text',
-            'description': 'The filter query to narrow down the result set.'
+    FORM_FIELDS = [
+        {
+            'type': 'ts-dynamic-form-select-input',
+            'name': 'supported_charts',
+            'label': 'Chart type to render',
+            'options': list(SUPPORTED_CHARTS)
         },
-        'query_dsl': {
-            'type': 'text',
-            'description': (
-                'The filter query DSL to narrow down the result '
-                'set (optional).')
+        {
+            'name': 'query_string',
+            'type': 'ts-dynamic-form-text-input',
+            'label': 'The filter query to narrow down the result set',
+            'placeholder': 'Query',
+            'default_value': ''
         },
-        'field': {
-            'type': 'text',
-            'description': 'The attribute or field to bucketize.'
+        {
+            'name': 'query_dsl',
+            'type': 'ts-dynamic-form-text-input',
+            'label': 'The filter query DSL to narrow down the result',
+            'placeholder': 'Query DSL',
+            'default_value': ''
         },
-    }
+        {
+            'name': 'field',
+            'type': 'ts-dynamic-form-text-input',
+            'label': 'What field to aggregate.',
+        }
+    ]
 
     # pylint: disable=arguments-differ
     def run(self, field, query_string='', query_dsl=''):
@@ -125,7 +135,15 @@ class FilteredTermsAggregation(interface.BaseAggregator):
 
         # Encoding information for Vega-Lite.
         encoding = {
-            'x': {'field': field, 'type': 'nominal'},
+            'x': {
+                'field': field,
+                'type': 'nominal',
+                'sort': {
+                    'op': 'sum',
+                    'field': 'count',
+                    'order': 'descending'
+                }
+            },
             'y': {'field': 'count', 'type': 'quantitative'}
         }
 
