@@ -378,6 +378,7 @@ class SketchResource(ResourceMixin, Resource):
             views=[{
                 'name': view.name,
                 'id': view.id,
+                'query': view.query_string,
                 'created_at': view.created_at,
                 'updated_at': view.updated_at
             } for view in sketch.get_named_views],

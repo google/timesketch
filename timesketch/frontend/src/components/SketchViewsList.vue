@@ -16,21 +16,50 @@ limitations under the License.
 <template>
   <div>
     <ul class="content-list">
-      <li style="padding:10px;border-bottom:none;" v-for="view in views" :key="view.id">
+      <li style="padding:10px;border-bottom:none;" v-for="(view, index) in views" :key="view.id">
         <router-link :to="{ name: 'SketchExplore', query: {view: view.id}}"><strong>{{ view.name }}</strong></router-link>
         <br>
-        <span class="is-size-7">
+        <span v-if="!controls" class="is-size-7">
           Created {{ view.created_at | moment("YYYY-MM-DD HH:mm") }}
         </span>
+        <span v-if="controls" class="is-size-7">
+          <b>Query:</b> {{ view.query }}
+        </span>
+        <div v-if="controls" class="field is-grouped is-pulled-right" style="margin-top: -15px;">
+          <p class="control">
+            <button v-on:click="remove(view, index)" class="button is-small is-rounded is-danger is-outlined">Remove</button>
+          </p>
+        </div>
       </li>
     </ul>
   </div>
 </template>
 
 <script>
+import Vue from 'vue'
+import ApiClient from '../utils/RestApiClient'
+
 export default {
   name: 'ts-sketch-overview-view-list',
-  props: ['views']
+  props: ['views', 'controls'],
+  computed: {
+    sketch () {
+      return this.$store.state.sketch
+    },
+    meta () {
+      return this.$store.state.meta
+    }
+  },
+  methods: {
+    remove (view, index) {
+      Vue.delete(this.views, index)
+      ApiClient.deleteView(this.sketch.id, view.id).then((response) => {
+      }).catch((e) => {
+        console.error(e)
+      })
+    }
+  }
+
 }
 </script>
 

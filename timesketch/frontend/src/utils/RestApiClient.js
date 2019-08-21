@@ -111,6 +111,9 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + /views/, formData)
   },
+  deleteView (sketchId, viewId) {
+    return RestApiClient.delete('/sketches/' + sketchId + '/views/' + viewId + '/')
+  },
   // Search
   search (sketchId, formData) {
     return RestApiClient.post('/sketches/' + sketchId + '/explore/', formData)

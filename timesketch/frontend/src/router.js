@@ -26,6 +26,7 @@ import SketchStory from './components/SketchStory'
 import SketchStoryOverview from './components/SketchStoryOverview'
 import SketchStoryContent from './components/SketchStoryContent'
 import SketchTimelines from './components/SketchTimelines'
+import SketchViews from './components/SketchViews'
 
 Vue.use(VueRouter)
 
@@ -68,6 +69,12 @@ const routes = [
         path: 'timelines',
         name: 'SketchTimelines',
         component: SketchTimelines,
+        props: true
+      },
+      {
+        path: 'views',
+        name: 'SketchViews',
+        component: SketchViews,
         props: true
       },
       {
