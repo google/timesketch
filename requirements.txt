@@ -1,5 +1,5 @@
 alembic==0.9.5            # via flask-migrate
-altair==2.4.1
+altair==3.1.0
 amqp==2.2.1               # via kombu
 aniso8601==1.2.1          # via flask-restful
 asn1crypto==0.24.0        # via cryptography
