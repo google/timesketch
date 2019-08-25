@@ -17,7 +17,7 @@ limitations under the License.
   <div>
 
     <section class="section">
-      <div class="container">
+      <div class="container is-fluid">
         <ts-navbar-secondary currentAppContext="sketch" currentPage="stories">
           <a class="button is-success is-rounded" style="margin-right:7px;" v-on:click="showCreateStoryModal = !showCreateStoryModal">
               <span class="icon is-small">
@@ -47,7 +47,7 @@ limitations under the License.
     </div>
 
     <section class="section">
-      <div class="container">
+      <div class="container is-fluid">
         <div class="card">
           <div class="card-content">
             <ts-sketch-story-list></ts-sketch-story-list>
