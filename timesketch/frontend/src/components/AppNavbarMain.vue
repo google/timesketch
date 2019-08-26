@@ -17,9 +17,10 @@ limitations under the License.
   <nav class="navbar" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
       <router-link class="navbar-item" to="/">
-        <div class="logo">
-          <img src="/dist/timesketch-logo-white.svg">
+        <div class="logo" style="margin-top:7px;">
+          <img src="/dist/timesketch-white.png">
         </div>
+        <span style="color: #fff; margin-left: 7px; margin-top: 1px; font-size: 1.2em;">time<b>sketch</b></span>
       </router-link>
     </div>
     <div class="navbar-end">
@@ -39,7 +40,7 @@ export default {
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
   .navbar {
-      background: #34495e;
+      background: #0070bd;
       padding-left: 32px;
       padding-right: 32px;
   }
@@ -49,7 +50,7 @@ export default {
   }
 
   .logo img {
-      width: 110px;
-      height: 19px;
+      width: 15px;
+      height: 17px;
   }
 </style>
