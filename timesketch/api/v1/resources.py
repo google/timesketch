@@ -362,8 +362,14 @@ class SketchResource(ResourceMixin, Resource):
             A sketch in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        aggregators = {}
+        for _, cls in aggregator_manager.AggregatorManager.get_aggregators():
+            aggregators[cls.NAME] = {
+                'form_fields': cls.FORM_FIELDS
+            }
         meta = dict(
-            aggregations=[{
+            aggregators=aggregators,
+            saved_aggregations=[{
                 'name': aggregation.name,
                 'id': aggregation.id,
                 'created_at': aggregation.created_at,
@@ -372,6 +378,7 @@ class SketchResource(ResourceMixin, Resource):
             views=[{
                 'name': view.name,
                 'id': view.id,
+                'query': view.query_string,
                 'created_at': view.created_at,
                 'updated_at': view.updated_at
             } for view in sketch.get_named_views],
@@ -855,7 +862,12 @@ class AggregationExploreResource(ResourceMixin, Resource):
         aggregator_name = form.aggregator_name.data
 
         if aggregator_name:
-            aggregator_parameters = json.loads(form.aggregator_parameters.data)
+            if isinstance(form.aggregator_parameters.data, dict):
+                aggregator_parameters = form.aggregator_parameters.data
+            else:
+                aggregator_parameters = json.loads(
+                    form.aggregator_parameters.data)
+
             agg_class = aggregator_manager.AggregatorManager.get_aggregator(
                 aggregator_name)
             if not agg_class:
@@ -863,6 +875,7 @@ class AggregationExploreResource(ResourceMixin, Resource):
             if not aggregator_parameters:
                 aggregator_parameters = {}
             aggregator = agg_class(sketch_id=sketch_id)
+            chart_type = aggregator_parameters.pop('supported_charts', None)
             time_before = time.time()
             result_obj = aggregator.run(**aggregator_parameters)
             time_after = time.time()
@@ -879,6 +892,9 @@ class AggregationExploreResource(ResourceMixin, Resource):
                 'name': aggregator_name,
                 'es_time': time_after - time_before,
             }
+
+            if chart_type:
+                meta['vega_spec'] = result_obj.to_chart(chart_name=chart_type)
 
         elif aggregation_dsl:
             # pylint: disable=unexpected-keyword-arg

@@ -22,6 +22,8 @@ from timesketch.lib.aggregators import manager
 class MockAggregator(object):
     """Mock aggregator class."""
     NAME = 'MockAggregator'
+    FORM_FIELDS = {}
+    SUPPORTED_CHARTS = frozenset()
 
 
 class TestAggregatorManager(BaseTest):
