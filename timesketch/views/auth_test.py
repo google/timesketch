@@ -29,7 +29,7 @@ class AuthViewTest(BaseTest):
         """Test the login view handler with an unauthenticated session."""
         response = self.client.get('/login/')
         self.assert200(response)
-        self.assert_template_used('user/login.html')
+        self.assert_template_used('login.html')
 
     def test_login_view_form_authenticated(self):
         """Test the login view handler with an authenticated session."""
