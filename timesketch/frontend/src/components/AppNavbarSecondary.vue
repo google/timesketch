@@ -39,6 +39,22 @@ limitations under the License.
         </ul>
       </div>
     </div>
+    <div class="navbar-item" v-if="currentAppContext === 'explore'">
+      <div class="tabs">
+        <ul>
+          <li v-bind:class="{'is-active': currentPage === 'search'}">
+            <router-link :to="{ name: 'SketchExplore' }">
+              <span>Search</span>
+            </router-link>
+          </li>
+          <li v-bind:class="{'is-active': currentPage === 'aggregation'}">
+            <router-link :to="{ name: 'SketchExploreAggregation' }">
+              <span>Aggregations</span>
+            </router-link>
+          </li>
+        </ul>
+      </div>
+    </div>
     <div class="navbar-end">
       <div class="navbar-item">
         <slot></slot>
