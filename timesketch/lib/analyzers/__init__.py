@@ -18,6 +18,7 @@ from timesketch.lib.analyzers import account_finder
 from timesketch.lib.analyzers import browser_search
 from timesketch.lib.analyzers import browser_timeframe
 from timesketch.lib.analyzers import domain
+from timesketch.lib.analyzers import expert_sessionizers
 from timesketch.lib.analyzers import feature_extraction
 from timesketch.lib.analyzers import login
 from timesketch.lib.analyzers import phishy_domains
