@@ -78,10 +78,14 @@ class TestSSHBruteforceSessionizerPlugin(BaseTest, BaseSessionizerTest):
             event1 = (ds.get_event('test_index', '0', stored_events=True))
             self.assertEqual(event1['_source']['reporter'], 'sshd')
             self.assertEqual(event1['_source']['message'], test_message)
+            self.assertEqual(event1['_source']['session_id'],
+                             {analyzer.session_type: 1})
 
             event2 = (ds.get_event('test_index', '101', stored_events=True))
             self.assertEqual(event2['_source']['reporter'], 'sshd')
             self.assertEqual(event2['_source']['message'], test_message)
+            self.assertEqual(event2['_source']['session_id'],
+                             {analyzer.session_type: 1})
 
 if __name__ == '__main__':
     unittest.main()
