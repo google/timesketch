@@ -111,6 +111,7 @@ def create_app(config=None):
     # http://flask.pocoo.org/docs/latest/blueprints/
     if USE_NEW_FRONTEND:
         app.register_blueprint(spa_views)
+        app.register_blueprint(auth_views)
     else:
         app.register_blueprint(auth_views)
         app.register_blueprint(home_views)
