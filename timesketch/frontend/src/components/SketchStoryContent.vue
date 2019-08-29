@@ -17,13 +17,13 @@ limitations under the License.
   <div>
 
     <section class="section">
-      <div class="container">
+      <div class="container is-fluid">
         <ts-navbar-secondary currentAppContext="sketch" currentPage="stories"></ts-navbar-secondary>
       </div>
     </section>
 
     <section class="section" v-if="blocks">
-      <div class="container">
+      <div class="container is-fluid">
         <div class="card">
           <div class="card-content" style="padding:50px;">
 
