@@ -42,8 +42,12 @@ class TestWebActivitySessionizerPlugin(BaseTest, BaseSessionizerTest):
             ds = MockDataStore('test', 0)
             event1 = (ds.get_event('test_index', '0', stored_events=True))
             self.assertEqual(event1['_source']['source_short'], 'WEBHIST')
+            self.assertEqual(event1['_source']['session_id'],
+                             {analyzer.session_type: 1})
             event2 = (ds.get_event('test_index', '101', stored_events=True))
             self.assertEqual(event2['_source']['source_short'], 'WEBHIST')
+            self.assertEqual(event2['_source']['session_id'],
+                             {analyzer.session_type: 1})
 
 class TestSSHBruteforceSessionizerPlugin(BaseTest, BaseSessionizerTest):
     """Tests the functionality of the SSH bruteforce attack sessionizing sketch
