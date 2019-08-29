@@ -55,14 +55,45 @@ class TestTimestompPlugin(BaseTest):
 
         test_cases = [
             FileInfoTestCase(
-                "0",
+                "no timestomp",
                 1000000000000,
                 [1000000000000],
                 None,
                 [None],
                 False
+            ),
+            FileInfoTestCase(
+                "multiple file_names and all of them are timestomped",
+                0,
+                [6000000000, 7000000000, 8000000000],
+                [6000000000, 7000000000, 8000000000],
+                [6000000000, 7000000000, 8000000000],
+                True
+            ),
+            FileInfoTestCase(
+                "one of the file_names matches exactly",
+                0,
+                [0, 7000000000, 8000000000],
+                None,
+                [None, None, None],
+                False
+            ),
+            FileInfoTestCase(
+                "file_name is within threshold",
+                0,
+                [analyzer.threshold, 7000000000, 8000000000],
+                None,
+                [None, None, None],
+                False
+            ),
+            FileInfoTestCase(
+                "file_name is within threshold",
+                0,
+                [600000000, 7000000000, 8000000000],
+                None,
+                [None, None, None],
+                False
             )
-            # TODO: more testcases
         ]
 
         for tc in test_cases:
