@@ -153,8 +153,9 @@ def _create_mock_event(event_id, quantity, time_diffs=None,
         event_id: Desired ID for the Event.
         quantity: The number of Events to be generated.
         time_diffs: A list of time differences between the generated
-        Events.
-
+            Events.
+        source_attrs: Dictionary of attributes to add to the source of the
+            generated events.
     Returns:
         A generator of Event objects.
     """
