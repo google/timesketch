@@ -142,7 +142,7 @@ def login():
     if current_user.is_authenticated:
         return redirect(request.args.get('next') or '/')
 
-    return render_template('user/login.html', form=form)
+    return render_template('login.html', form=form)
 
 
 @auth_views.route('/logout/', methods=['GET'])

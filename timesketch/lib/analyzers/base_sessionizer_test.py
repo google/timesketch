@@ -33,8 +33,7 @@ class BaseSessionizerTest(object):
                 return_value=_create_mock_event(
                     0,
                     2,
-                    time_diffs=[self.analyzer_class.max_time_diff_micros /
-                                2])):
+                    time_diffs=[self.analyzer_class.max_time_diff_micros / 2])):
             index = 'test_index'
             sketch_id = 1
             analyzer = self.analyzer_class(index, sketch_id)
@@ -155,7 +154,8 @@ def _create_mock_event(event_id, quantity, time_diffs=None,
         quantity: The number of Events to be generated.
         time_diffs: A list of time differences between the generated
         Events.
-
+        source_attrs: Dictionary of attributes to add to the source of the
+        generated events.
     Returns:
         A generator of Event objects.
     """

@@ -88,6 +88,8 @@ class YetiIndicators(interface.BaseSketchAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
+        if not self.yeti_api_root or not self.yeti_api_key:
+            return 'No Yeti configuration settings found, aborting.'
 
         self.get_intrusion_sets()
         actors_found = []

@@ -53,7 +53,7 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
 
         return ('Sessionizing completed, number of session created:'
                 ' {0:d}'.format(session_num))
-
+      
     def addSessionId(self, event, session_num):
         """Annotate an event with a session ID. Store IDs as dictionary entries
         corresponding to the type of session.
@@ -69,6 +69,7 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
         else:
             current_attr[self.session_type] = session_num
             event.add_attributes({'session_id': current_attr})
+
         event.commit()
 
 manager.AnalysisManager.register_analyzer(SessionizerSketchPlugin)
