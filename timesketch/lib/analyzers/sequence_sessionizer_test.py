@@ -176,7 +176,7 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
         self.assertEqual(cm.exception.message, expected_message)
 
 
-class TestBaseManyEventsSequenceSessionizerPlugin(object):
+class BaseManyEventsSequenceSessionizerPlugin(object):
     """Tests base functionality of sequence sessionizing sketch analyzer with
     many events in the even_seq."""
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -357,7 +357,7 @@ class TestBaseManyEventsSequenceSessionizerPlugin(object):
                 format(sessionizer.session_type))
 
 
-class TestBaseOneEventSequenceSessionizerPlugin(object):
+class BaseOneEventSequenceSessionizerPlugin(object):
     """Tests base functionality of sequence sessionizing sketch analyzer with
     one event in the even_seq."""
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -471,13 +471,13 @@ class TestBaseOneEventSequenceSessionizerPlugin(object):
 
 
 class TestManyEventsSequenceSessionizerPlugin(
-        BaseTest, TestBaseManyEventsSequenceSessionizerPlugin):
+        BaseTest, BaseManyEventsSequenceSessionizerPlugin):
     """Tests the functionality of the sequence sessionizing sketch analyzer."""
     seq_sessionizer_class = ManyEventsSequenceSessionizer
 
 
 class TestOneEventSequenceSessionizerPlugin(
-        BaseTest, TestBaseOneEventSequenceSessionizerPlugin):
+        BaseTest, BaseOneEventSequenceSessionizerPlugin):
     """Tests the functionality of the sequence sessionizing sketch analyzer."""
     seq_sessionizer_class = OneEventSequenceSessionizer
 
