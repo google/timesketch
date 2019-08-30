@@ -16,7 +16,8 @@ from timesketch.models.sketch import Sketch
 
 
 class ManyEventsSequenceSessionizer(SequenceSessionizerSketchPlugin):
-    session_type = 'mock_seq_sessionizer'
+    """Sequence sessionizer class with many events in the event_seq."""
+    session_type = 'many_events_seq_sessionizer'
     max_time_diff_micros = 100
     return_fields = ['hostname', 'source_short', 'timestamp']
     event_seq = [{
@@ -29,6 +30,7 @@ class ManyEventsSequenceSessionizer(SequenceSessionizerSketchPlugin):
 
 
 class OneEventSequenceSessionizer(SequenceSessionizerSketchPlugin):
+    """Sequence sessionizer class with one event in the event_seq."""
     max_time_diff_micros = 100
     session_type = 'one_event_seq_sessionizer'
     event_seq = [{'hostname': 'host', 'source_short': 'FILE'}]
@@ -36,80 +38,69 @@ class OneEventSequenceSessionizer(SequenceSessionizerSketchPlugin):
 
 
 # Invalid sequence sessionizers.
-class NoneSessionTypeSequenceSessionizer(SequenceSessionizerSketchPlugin):
-    session_type = 'name'
-    event_seq = [{'hostname': 'host', 'source_short': 'FILE'}]
-    return_fields = ['timestamp', 'source_short']
-
-
 class NoneSeqSequenceSessionizer(SequenceSessionizerSketchPlugin):
+    """Invalid sequence sessionizer. event_seq should not be None, everything
+    else is valid."""
+    event_seq = None
     session_type = 'valid_name'
-    return_fields = ['timestamp', 'source_short']
+    return_fields = ['timestamp', 'hostname', 'source_short']
 
 
 class EmptySeqSequenceSessionizer(SequenceSessionizerSketchPlugin):
+    """Invalid sequence sessionizer. event_seq should not be [], everything else
+    is valid."""
     event_seq = []
     session_type = 'valid_name'
-    return_fields = ['timestamp', 'source_short']
+    return_fields = ['timestamp', 'hostname', 'source_short']
 
 
 class NoTimestampSequenceSessionizer(SequenceSessionizerSketchPlugin):
+    """Invalid sequence sessionizer. return_fields should include 'timestamp',
+    everything else is valid."""
     session_type = 'valid_name'
     event_seq = [{'hostname': 'host', 'source_short': 'FILE'}]
-    return_fields = ['source_short']
+    return_fields = ['hostname', 'source_short']
 
 
-class NoReturnAttrSequenceSessionizer(SequenceSessionizerSketchPlugin):
+class MissingAttrSequenceSessionizer(SequenceSessionizerSketchPlugin):
+    """Invalid sequence sessionizer. return_fields doesn't includes all needed
+    attributes, everything else is valid."""
     session_type = 'valid_name'
     event_seq = [{'hostname': 'host', 'source_short': 'FILE'}]
     return_fields = ['timestamp']
 
 
-# List of dictionaries with attributes for mock events.
-one_session_args = [{
-    'hostname': 'host',
-    'source_short': 'FILE'
-}, {
-    'hostname': 'host',
-    'source_short': 'WEBHIST'
-}]
-
-two_sessions_args = [{
-    'hostname': 'host',
-    'source_short': 'FILE'
-}, {
-    'hostname': 'host',
-    'source_short': 'WEBHIST'
-}, {
-    'hostname': 'host',
-    'source_short': 'FILE'
-}, {
-    'hostname': 'host',
-    'source_short': 'WEBHIST'
-}]
-
-one_event_seq_args = [{'hostname': 'host', 'source_short': 'FILE'}]
+class NoneSessionTypeSequenceSessionizer(SequenceSessionizerSketchPlugin):
+    """Invalid sequence sessionizer. session_type should not be None, everything
+    else is valid."""
+    session_type = None
+    event_seq = [{'hostname': 'host', 'source_short': 'FILE'}]
+    return_fields = ['timestamp', 'hostname', 'source_short']
 
 
-class TestSequenceSessionizerPlugin(BaseTest):
-    """Tests the functionality of the sequence sessionizing sketch analyzer."""
-    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
-                MockDataStore)
-    def test_session_type_none(self):
-        """Test session_type is not None."""
-        index = 'test_index'
-        sketch_id = 1
-        self.assertRaises(RuntimeError, sessionizer=\
-            NoneSessionTypeSequenceSessionizer(index, sketch_id))
+class EmptyStrSessionTypeSequenceSessionizer(SequenceSessionizerSketchPlugin):
+    """Invalid sequence sessionizer. session_type should not be empty string,
+    everything else is valid."""
+    session_type = ''
+    event_seq = [{'hostname': 'host', 'source_short': 'FILE'}]
+    return_fields = ['timestamp', 'hostname', 'source_short']
 
+
+class TestValidSequenceSessionizerPlugin(BaseTest):
+    """Tests the validation functionality of the sequence sessionizing sketch
+    analyzer."""
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_event_seq_none(self):
         """Test event_seq is not None."""
         index = 'test_index'
         sketch_id = 1
-        self.assertRaises(RuntimeError, sessionizer=\
-            NoneSeqSequenceSessionizer(index, sketch_id))
+
+        expected_message = 'No event_seq provided.'
+        with self.assertRaises(RuntimeError) as cm:
+            sessionizer = NoneSeqSequenceSessionizer(index, sketch_id)
+            sessionizer.run()
+        self.assertEqual(cm.exception.message, expected_message)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -117,35 +108,85 @@ class TestSequenceSessionizerPlugin(BaseTest):
         """Test event_seq is not empty."""
         index = 'test_index'
         sketch_id = 1
-        self.assertRaises(RuntimeError, sessionizer=\
-            EmptySeqSequenceSessionizer(index, sketch_id))
+
+        expected_message = 'No event_seq provided.'
+        with self.assertRaises(RuntimeError) as cm:
+            sessionizer = EmptySeqSequenceSessionizer(index, sketch_id)
+            sessionizer.run()
+        self.assertEqual(cm.exception.message, expected_message)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_no_timestamp(self):
-        """Test return_fields includes timestamp."""
-        index = 'test_index'
-        sketch_id = 1
-        self.assertRaises(RuntimeError, sessionizer=\
-            NoTimestampSequenceSessionizer(index, sketch_id))
+        """Test missing timestamp attribute is added in return_fields."""
+        with mock.patch.object(NoTimestampSequenceSessionizer,
+                               'event_stream',
+                               return_value=_create_mock_event(0, 0, [], [0])):
+            index = 'test_index'
+            sketch_id = 1
+
+            sessionizer = NoTimestampSequenceSessionizer(index, sketch_id)
+            self.assertNotIn('timestamp', sessionizer.return_fields)
+            sessionizer.run()
+            self.assertIn('timestamp', sessionizer.return_fields)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
-    def test_no_return_attr(self):
-        """Test in return_fields are specified attributes."""
+    def test_missing_attr(self):
+        """Test missing attributes added in return_fields."""
+        with mock.patch.object(MissingAttrSequenceSessionizer,
+                               'event_stream',
+                               return_value=_create_mock_event(0, 0, [], [0])):
+            index = 'test_index'
+            sketch_id = 1
+
+            sessionizer = MissingAttrSequenceSessionizer(index, sketch_id)
+            for event in sessionizer.event_seq:
+                for attr in event:
+                    self.assertNotIn(attr, sessionizer.return_fields)
+            sessionizer.run()
+            for event in sessionizer.event_seq:
+                for attr in event:
+                    self.assertIn(attr, sessionizer.return_fields)
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def test_session_type_none(self):
+        """Test session_type is not None."""
         index = 'test_index'
         sketch_id = 1
-        self.assertRaises(RuntimeError, sessionizer=\
-            NoReturnAttrSequenceSessionizer(index, sketch_id))
+        expected_message = 'No session_type provided.'
+        with self.assertRaises(RuntimeError) as cm:
+            sessionizer = NoneSessionTypeSequenceSessionizer(index, sketch_id)
+            sessionizer.run()
+        self.assertEqual(cm.exception.message, expected_message)
 
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def test_session_type_empty_str(self):
+        """Test session_type is not empty string."""
+        index = 'test_index'
+        sketch_id = 1
+
+        expected_message = 'No session_type provided.'
+        with self.assertRaises(RuntimeError) as cm:
+            sessionizer = \
+                EmptyStrSessionTypeSequenceSessionizer(index, sketch_id)
+            sessionizer.run()
+        self.assertEqual(cm.exception.message, expected_message)
+
+
+class TestBaseManyEventsSequenceSessionizerPlugin(object):
+    """Tests base functionality of sequence sessionizing sketch analyzer with
+    many events in the even_seq."""
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_sessionizer(self):
         """Test basic sequence sessionizer functionality."""
         index = 'test_index'
         sketch_id = 1
-        sessionizer = ManyEventsSequenceSessionizer(index, sketch_id)
-        self.assertIsInstance(sessionizer, SequenceSessionizerSketchPlugin)
+        sessionizer = self.seq_sessionizer_class(index, sketch_id)
+        self.assertIsInstance(sessionizer, self.seq_sessionizer_class)
         self.assertEqual(index, sessionizer.index_name)
         self.assertEqual(sketch_id, sessionizer.sketch.id)
 
@@ -153,13 +194,16 @@ class TestSequenceSessionizerPlugin(BaseTest):
                 MockDataStore)
     def test_one_session(self):
         """Test one sequence of events is finded and allocated as a session."""
-        with mock.patch.object(SequenceSessionizerSketchPlugin,
+        with mock.patch.object(self.seq_sessionizer_class,
                                'event_stream',
                                return_value=_create_mock_event(
-                                   0, 2, one_session_args, time_diffs=[1])):
+                                   0,
+                                   2,
+                                   self.seq_sessionizer_class.event_seq,
+                                   time_diffs=[1])):
             index = 'test_index'
             sketch_id = 1
-            sessionizer = ManyEventsSequenceSessionizer(index, sketch_id)
+            sessionizer = self.seq_sessionizer_class(index, sketch_id)
             message = sessionizer.run()
             self.assertEqual(
                 message,
@@ -178,16 +222,17 @@ class TestSequenceSessionizerPlugin(BaseTest):
                 MockDataStore)
     def test_multiple_sessions(self):
         """Test multiple sessions are finded and allocated correctly."""
-        with mock.patch.object(SequenceSessionizerSketchPlugin,
+        with mock.patch.object(self.seq_sessionizer_class,
                                'event_stream',
                                return_value=_create_mock_event(
                                    0,
                                    4,
-                                   two_sessions_args,
+                                   self.seq_sessionizer_class.event_seq +
+                                   self.seq_sessionizer_class.event_seq,
                                    time_diffs=[1, 1, 1])):
             index = 'test_index'
             sketch_id = 1
-            sessionizer = ManyEventsSequenceSessionizer(index, sketch_id)
+            sessionizer = self.seq_sessionizer_class(index, sketch_id)
             message = sessionizer.run()
             self.assertEqual(
                 message,
@@ -209,16 +254,17 @@ class TestSequenceSessionizerPlugin(BaseTest):
     def test_after_session(self):
         """Test events after the last event of a sequence are not allocated with
         a session number if they are not part from another session."""
-        with mock.patch.object(
-                SequenceSessionizerSketchPlugin,
-                'event_stream',
-                return_value=_create_mock_event(0,
-                                                4,
-                                                two_sessions_args,
-                                                time_diffs=[1, 1])):
+        with mock.patch.object(self.seq_sessionizer_class,
+                               'event_stream',
+                               return_value=_create_mock_event(
+                                   0,
+                                   4,
+                                   self.seq_sessionizer_class.event_seq +
+                                   self.seq_sessionizer_class.event_seq,
+                                   time_diffs=[1, 1])):
             index = 'test_index'
             sketch_id = 1
-            sessionizer = ManyEventsSequenceSessionizer(index, sketch_id)
+            sessionizer = self.seq_sessionizer_class(index, sketch_id)
             message = sessionizer.run()
             ds = MockDataStore('test', 0)
 
@@ -230,7 +276,7 @@ class TestSequenceSessionizerPlugin(BaseTest):
             # session 2: events with id from 202 to 303.
             for i in range(102, 201):
                 event = ds.get_event('test_index', str(i), stored_events=True)
-                self.assertNotIn(sessionizer.session_type, event)
+                self.assertNotIn(sessionizer.session_type, event['_source'])
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -243,13 +289,13 @@ class TestSequenceSessionizerPlugin(BaseTest):
                 return_value=_create_mock_event(
                     0,
                     2,
-                    one_session_args,
+                    self.seq_sessionizer_class.event_seq,
                     time_diffs=[
-                        ManyEventsSequenceSessionizer.max_time_diff_micros
+                        self.seq_sessionizer_class.max_time_diff_micros
                     ])):
             index = 'test_index'
             sketch_id = 1
-            sessionizer = ManyEventsSequenceSessionizer(index, sketch_id)
+            sessionizer = self.seq_sessionizer_class(index, sketch_id)
             message = sessionizer.run()
             self.assertEqual(
                 message,
@@ -272,14 +318,13 @@ class TestSequenceSessionizerPlugin(BaseTest):
                 return_value=_create_mock_event(
                     0,
                     2,
-                    one_session_args,
+                    self.seq_sessionizer_class.event_seq,
                     time_diffs=[
-                        SequenceSessionizerSketchPlugin.max_time_diff_micros +
-                        1
+                        self.seq_sessionizer_class.max_time_diff_micros + 1
                     ])):
             index = 'test_index'
             sketch_id = 1
-            sessionizer = ManyEventsSequenceSessionizer(index, sketch_id)
+            sessionizer = self.seq_sessionizer_class(index, sketch_id)
             message = sessionizer.run()
             self.assertEqual(
                 message,
@@ -292,37 +337,52 @@ class TestSequenceSessionizerPlugin(BaseTest):
             # them
             for i in range(0, 201):
                 event = ds.get_event('test_index', str(i), stored_events=True)
-                self.assertNotIn(sessionizer.session_type, event)
+                self.assertNotIn(sessionizer.session_type, event['_source'])
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_zero_events(self):
         """Test the behaviour of the sequence sessionizer when given zero
         events."""
-        with mock.patch.object(SequenceSessionizerSketchPlugin,
+        with mock.patch.object(self.seq_sessionizer_class,
                                'event_stream',
                                return_value=_create_mock_event(0, 0, [], [0])):
             index = 'test_index'
             sketch_id = 1
-            sessionizer = ManyEventsSequenceSessionizer(index, sketch_id)
+            sessionizer = self.seq_sessionizer_class(index, sketch_id)
             message = sessionizer.run()
             self.assertEqual(
                 message,
                 'Sessionizing completed, number of {0:s} session created: 0'.
                 format(sessionizer.session_type))
 
+
+class TestBaseOneEventSequenceSessionizerPlugin(object):
+    """Tests base functionality of sequence sessionizing sketch analyzer with
+    one event in the even_seq."""
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
-    def test_one_event_seq(self):
-        """Test the behaviour of the seqeunce sessionizer when given a sequence
-        of one event."""
-        with mock.patch.object(SequenceSessionizerSketchPlugin,
+    def test_sessionizer(self):
+        """Test basic sequence sessionizer functionality."""
+        index = 'test_index'
+        sketch_id = 1
+        sessionizer = self.seq_sessionizer_class(index, sketch_id)
+        self.assertIsInstance(sessionizer, self.seq_sessionizer_class)
+        self.assertEqual(index, sessionizer.index_name)
+        self.assertEqual(sketch_id, sessionizer.sketch.id)
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def test_one_session(self):
+        """Test one sequence of events is finded and allocated as a session."""
+        with mock.patch.object(self.seq_sessionizer_class,
                                'event_stream',
                                return_value=_create_mock_event(
-                                   0, 1, one_event_seq_args, [1])):
+                                   0, 1,
+                                   self.seq_sessionizer_class.event_seq)):
             index = 'test_index'
             sketch_id = 1
-            sessionizer = OneEventSequenceSessionizer(index, sketch_id)
+            sessionizer = self.seq_sessionizer_class(index, sketch_id)
             message = sessionizer.run()
             self.assertEqual(
                 message,
@@ -330,12 +390,96 @@ class TestSequenceSessionizerPlugin(BaseTest):
                 format(sessionizer.session_type))
 
             ds = MockDataStore('test', 0)
-            event = ds.get_event('test_index', '0', stored_events=True)
+            # Event with id 0 is the significant for the event_seq event.
+            event = ds.get_event('test_index', str(0), stored_events=True)
             self.assertEqual(event['_source'][sessionizer.session_type], 1)
 
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def test_multiple_sessions(self):
+        """Test multiple sessions are finded and allocated correctly."""
+        with mock.patch.object(self.seq_sessionizer_class,
+                               'event_stream',
+                               return_value=_create_mock_event(
+                                   0,
+                                   2,
+                                   self.seq_sessionizer_class.event_seq +
+                                   self.seq_sessionizer_class.event_seq,
+                                   time_diffs=[1, 1, 1])):
+            index = 'test_index'
+            sketch_id = 1
+            sessionizer = self.seq_sessionizer_class(index, sketch_id)
+            message = sessionizer.run()
+            self.assertEqual(
+                message,
+                'Sessionizing completed, number of {0:s} session created: 2'.
+                format(sessionizer.session_type))
+
+            ds = MockDataStore('test', 0)
+            # Session 1: events with id 0.
+            event = ds.get_event('test_index', str(0), stored_events=True)
+            self.assertEqual(event['_source'][sessionizer.session_type], 1)
+            # Session 2: events with id 101.
+            event = ds.get_event('test_index', str(101), stored_events=True)
+            self.assertEqual(event['_source'][sessionizer.session_type], 2)
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def test_after_session(self):
+        """Test events after the last event of a sequence are not allocated with
+        a session number if they are not part from another session."""
+        with mock.patch.object(self.seq_sessionizer_class,
+                               'event_stream',
+                               return_value=_create_mock_event(
+                                   0,
+                                   2,
+                                   self.seq_sessionizer_class.event_seq +
+                                   self.seq_sessionizer_class.event_seq,
+                                   time_diffs=[1, 1])):
+            index = 'test_index'
+            sketch_id = 1
+            sessionizer = self.seq_sessionizer_class(index, sketch_id)
+            message = sessionizer.run()
+            ds = MockDataStore('test', 0)
+
+            self.assertEqual(
+                message,
+                'Sessionizing completed, number of {0:s} session created: 2'.
+                format(sessionizer.session_type))
+            # Session 1: events with id 0.
+            # Session 1: events with id 101.
             for i in range(1, 100):
                 event = ds.get_event('test_index', str(i), stored_events=True)
-                self.assertNotIn(sessionizer.session_type, event)
+                self.assertNotIn(sessionizer.session_type, event['_source'])
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def test_zero_events(self):
+        """Test the behaviour of the sequence sessionizer when given zero
+        events."""
+        with mock.patch.object(self.seq_sessionizer_class,
+                               'event_stream',
+                               return_value=_create_mock_event(0, 0, [], [0])):
+            index = 'test_index'
+            sketch_id = 1
+            sessionizer = self.seq_sessionizer_class(index, sketch_id)
+            message = sessionizer.run()
+            self.assertEqual(
+                message,
+                'Sessionizing completed, number of {0:s} session created: 0'.
+                format(sessionizer.session_type))
+
+
+class TestManyEventsSequenceSessionizerPlugin(
+        BaseTest, TestBaseManyEventsSequenceSessionizerPlugin):
+    """Tests the functionality of the sequence sessionizing sketch analyzer."""
+    seq_sessionizer_class = ManyEventsSequenceSessionizer
+
+
+class TestOneEventSequenceSessionizerPlugin(
+        BaseTest, TestBaseOneEventSequenceSessionizerPlugin):
+    """Tests the functionality of the sequence sessionizing sketch analyzer."""
+    seq_sessionizer_class = OneEventSequenceSessionizer
 
 
 def _create_mock_event(event_id, quantity, attributes, time_diffs=None):

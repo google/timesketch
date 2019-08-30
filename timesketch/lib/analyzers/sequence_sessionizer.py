@@ -21,7 +21,7 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
         session_num: Counter for the number of sessions.
         session_type: The name of the event sequence.
     """
-    event_seq = None
+    event_seq = []
     event_storage = []
     num_event_to_find = 0
     recording = False
@@ -39,16 +39,13 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
             String containing the name of the event sequence and the
             number of sessions created.
         """
-        if self.session_type is None:
+        if self.session_type is None or self.session_type == '':
             raise RuntimeError('No session_type provided.')
         if self.event_seq is None or self.event_seq == []:
             raise RuntimeError('No event_seq provided.')
         # If return_fields in none, then all attributes are provided.
         if self.return_fields is not None:
-            if 'timestamp' not in self.return_fields:
-                raise RuntimeError('No "timestamp" in return_fields.')
-            if len(self.return_fields) <= 1:
-                raise RuntimeError('No return_fields provided.')
+            self.validate_return_fields()
 
         # event_stream returns an ordered generator of events (by time)
         # therefore no further sorting is needed.
@@ -143,7 +140,9 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
         event_to_match = self.event_seq[self.num_event_to_find]
 
         for key, value in event_to_match.items():
-            if value != event.source.get(key):
+            if key not in event.source.keys():
+                return False
+            if value not in event.source.get(key):
                 return False
         return True
 
@@ -156,3 +155,11 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
         """
         query_string = self.session_type + ':*'
         return query_string
+
+    def validate_return_fields(self):
+        if 'timestamp' not in self.return_fields:
+            self.return_fields.append('timestamp')
+        for event in self.event_seq:
+            for attr in event:
+                if attr not in self.return_fields:
+                    self.return_fields.append(attr)
