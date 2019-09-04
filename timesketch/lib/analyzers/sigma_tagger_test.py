@@ -18,7 +18,7 @@ class TestSigmaPlugin(BaseTest):
 
     # Mock the Elasticsearch datastore.
     @mock.patch(
-        u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
     def test_analyzer(self):
         """Test analyzer."""

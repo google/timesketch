@@ -51,7 +51,6 @@ class SigmaPlugin(interface.BaseIndexAnalyzer):
             tagged_events += 1
         return tagged_events
 
-
     def run(self):
         """Entry point for the analyzer.
 
@@ -73,6 +72,7 @@ class SigmaPlugin(interface.BaseIndexAnalyzer):
                     print(result)
                 number_of_tagged_events = self.run_sigma_rule(query, tag_name)
                 tags_applied[tag_name] = number_of_tagged_events
+
         total_tagged_events = sum(tags_applied.values())
         output_string = 'Applied {0:d} tags\n'.format(total_tagged_events)
         for tag_name, number_of_tagged_events in tags_applied:
