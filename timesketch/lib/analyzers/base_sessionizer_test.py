@@ -29,10 +29,10 @@ class BaseSessionizerTest(object):
         sketch_id = 1
         analyzer = self.analyzer_class(index, sketch_id)
         analyzer.datastore.client = mock.Mock()
-        ds = analyzer.datastore
+        datastore = analyzer.datastore
 
         _create_mock_event(
-            ds,
+            datastore,
             0,
             2,
             time_diffs=[self.analyzer_class.max_time_diff_micros / 2])
@@ -41,12 +41,12 @@ class BaseSessionizerTest(object):
         self.assertEqual(
             message, 'Sessionizing completed, number of session created: 1')
 
-        event1 = (ds.get_event('test_index', '0', stored_events=True))
+        event1 = datastore.get_event('test_index', '0', stored_events=True)
         self.assertEqual(event1['_source']['session_id'],
                          {analyzer.session_type: 1})
         # checking event with id '101' as 100 events have been inserted
         # as 'padding' (see _create_mock_event())
-        event2 = (ds.get_event('test_index', '101', stored_events=True))
+        event2 = datastore.get_event('test_index', '101', stored_events=True)
         self.assertEqual(event2['_source']['session_id'],
                          {analyzer.session_type: 1})
 
@@ -59,9 +59,9 @@ class BaseSessionizerTest(object):
         sketch_id = 1
         analyzer = self.analyzer_class(index, sketch_id)
         analyzer.datastore.client = mock.Mock()
-        ds = analyzer.datastore
+        datastore = analyzer.datastore
 
-        _create_mock_event(ds,
+        _create_mock_event(datastore,
                            0,
                            2,
                            time_diffs=[
@@ -73,14 +73,14 @@ class BaseSessionizerTest(object):
         self.assertEqual(
             message, 'Sessionizing completed, number of session created: 2')
 
-        event1 = (ds.get_event('test_index', '0', stored_events=True))
+        event1 = datastore.get_event('test_index', '0', stored_events=True)
         self.assertEqual(event1['_source']['session_id'],
                          {analyzer.session_type: 1})
 
-        event2 = (ds.get_event('test_index', '101', stored_events=True))
+        event2 = datastore.get_event('test_index', '101', stored_events=True)
         self.assertEqual(event2['_source']['session_id'],
                          {analyzer.session_type: 2})
-        self._check_surrounding_events(ds, [101], analyzer.session_type)
+        self._check_surrounding_events(datastore, [101], analyzer.session_type)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -91,23 +91,27 @@ class BaseSessionizerTest(object):
         sketch_id = 1
         analyzer = self.analyzer_class(index, sketch_id)
         analyzer.datastore.client = mock.Mock()
-        ds = analyzer.datastore
+        datastore = analyzer.datastore
 
         _create_mock_event(
-            ds, 0, 2, time_diffs=[self.analyzer_class.max_time_diff_micros])
+            datastore,
+            0,
+            2,
+            time_diffs=[self.analyzer_class.max_time_diff_micros])
 
         message = analyzer.run()
         self.assertEqual(
             message, 'Sessionizing completed, number of session created: 1')
 
-        event1 = (ds.get_event('test_index', '0', stored_events=True))
+        event1 = datastore.get_event('test_index', '0', stored_events=True)
         self.assertEqual(event1['_source']['session_id'],
                          {analyzer.session_type: 1})
-        event2 = (ds.get_event('test_index', '101', stored_events=True))
+        event2 = datastore.get_event('test_index', '101', stored_events=True)
         self.assertEqual(event2['_source']['session_id'],
                          {analyzer.session_type: 1})
 
-    def _check_surrounding_events(self, ds, threshold_ids, session_type):
+    def _check_surrounding_events(self, datastore, threshold_ids,
+                                  session_type):
         """Checks that the events surrounding the first event in a new session
         are allocated correctly.
 
@@ -121,9 +125,9 @@ class BaseSessionizerTest(object):
         for threshold_id in threshold_ids:
             if threshold_id != 0:
                 # check previous event is in the previous session
-                event = (ds.get_event('test_index',
-                                      str(threshold_id - 1),
-                                      stored_events=True))
+                event = datastore.get_event('test_index',
+                                            str(threshold_id - 1),
+                                            stored_events=True)
                 self.assertEqual(event['_source']['session_id'],
                                  {session_type: session_no})
 
@@ -131,23 +135,23 @@ class BaseSessionizerTest(object):
                 # check next event is in the same session (as the event with
                 # threshold id)
                 session_no += 1
-                event = (ds.get_event('test_index',
-                                      str(threshold_id + 1),
-                                      stored_events=True))
+                event = datastore.get_event('test_index',
+                                            str(threshold_id + 1),
+                                            stored_events=True)
                 self.assertEqual(event['_source']['session_id'],
                                  {session_type: session_no})
 
 
-def _create_mock_event(ds,
+def _create_mock_event(datastore,
                        event_id,
                        quantity,
                        time_diffs=None,
                        source_attrs=None):
     """
-    Loads in the datastore ds mock events that based on the given arguments.
+    Loads in the datastore mock events that based on the given arguments.
 
     Args:
-        ds: An instance of MockDataStore.
+        datastore: An instance of MockDataStore.
         event_id: Desired ID for the Event.
         quantity: The number of Events to be generated.
         time_diffs: A list of time differences between the generated
@@ -171,25 +175,26 @@ def _create_mock_event(ds,
     event_timestamp = 1410895419859714
 
     for i in range(quantity):
-        _create_eventObj(ds, event_id, event_timestamp, source_attrs)
+        _create_eventObj(datastore, event_id, event_timestamp, source_attrs)
         # adding extra events after every requested event for better
         # simulation of real timeline data i.e. working with a larger
         # dataset
         for _ in range(100):
             event_timestamp += 1
             event_id += 1
-            _create_eventObj(ds, event_id, event_timestamp, source_attrs)
+            _create_eventObj(datastore, event_id, event_timestamp,
+                             source_attrs)
 
         event_timestamp += abs(time_diffs[i])
         event_id += 1
 
 
-def _create_eventObj(ds, event_id, ts, source_attrs):
+def _create_eventObj(datastore, event_id, ts, source_attrs):
     """Changes MockDataStore.event_dict based on the given arguments and commits
-    it to the database ds.
+    it to the datastore.
 
     Args:
-        ds: An instance of MockDataStore.
+        datastore: An instance of MockDataStore.
         event_id: An event id number.
         ts: A timestamp for an event.
         source_attrs: A dictionary with attributes and theirs values.
@@ -200,5 +205,5 @@ def _create_eventObj(ds, event_id, ts, source_attrs):
     if source_attrs:
         event['_source'].update(source_attrs)
 
-    ds.import_event(event['_index'], event['_type'], event['_source'],
-                    str(event_id))
+    datastore.import_event(event['_index'], event['_type'], event['_source'],
+                           str(event_id))

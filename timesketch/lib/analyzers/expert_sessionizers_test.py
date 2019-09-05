@@ -27,20 +27,23 @@ class TestWebActivitySessionizerPlugin(BaseTest, BaseSessionizerTest):
         sketch_id = 1
         analyzer = self.analyzer_class(index, sketch_id)
         analyzer.datastore.client = mock.Mock()
-        ds = analyzer.datastore
+        datastore = analyzer.datastore
 
-        _create_mock_event(ds, 0, 2, source_attrs={'source_short': 'WEBHIST'})
+        _create_mock_event(datastore,
+                           0,
+                           2,
+                           source_attrs={'source_short': 'WEBHIST'})
 
         message = analyzer.run()
         self.assertEqual(
             message, 'Sessionizing completed, number of session created: 1')
 
         # pylint: disable=unexpected-keyword-arg
-        event1 = (ds.get_event('test_index', '0', stored_events=True))
+        event1 = datastore.get_event('test_index', '0', stored_events=True)
         self.assertEqual(event1['_source']['source_short'], 'WEBHIST')
         self.assertEqual(event1['_source']['session_id'],
                          {analyzer.session_type: 1})
-        event2 = (ds.get_event('test_index', '101', stored_events=True))
+        event2 = datastore.get_event('test_index', '101', stored_events=True)
         self.assertEqual(event2['_source']['source_short'], 'WEBHIST')
         self.assertEqual(event2['_source']['session_id'],
                          {analyzer.session_type: 1})
