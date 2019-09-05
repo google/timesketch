@@ -51,6 +51,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     stories = relationship('Story', backref='sketch', lazy='select')
     aggregations = relationship('Aggregation', backref='sketch', lazy='select')
     analysis = relationship('Analysis', backref='sketch', lazy='select')
+    sessions = relationship('Session', backref='sketch', lazy='select')
 
     def __init__(self, name, description, user):
         """Initialize the Sketch object.
@@ -87,6 +88,11 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             if view.get_status.status != 'deleted' and view.name != ''
         ]
         return views
+
+    @property
+    def get_sessions(self):
+        """Get sessions for the sketch."""
+        return self.sessions
 
     @property
     def external_url(self):
@@ -494,4 +500,39 @@ class AnalysisSession(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         """
         super(AnalysisSession, self).__init__()
         self.user = user
+        self.sketch = sketch
+
+
+class Session(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
+              BaseModel):
+    """Implements the Session model."""
+    session_type = Column(Unicode(255))
+    session_id = Column(Unicode(255))
+    start_timestamp = Column(Unicode(255))
+    end_timestamp = Column(Unicode(255))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+
+    def __init__(self,
+                 session_type,
+                 session_id,
+                 start_timestamp,
+                 end_timestamp,
+                 sketch):
+        """Initialize the Session object.
+
+        Args:
+            session_type (str): The type of session as defined by the analyzer
+            session_id (str): The ID of the session
+            start_timestamp (str): The timestamp of the first event in the
+            session
+            end_timestamp (str): The timestamp of the last event in the
+            session
+            sketch (Sketch): The sketch the sessions belong to
+        """
+        super(Session, self).__init__()
+
+        self.session_type = session_type
+        self.session_id = session_id
+        self.start_timestamp = start_timestamp
+        self.end_timestamp = end_timestamp
         self.sketch = sketch

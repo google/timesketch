@@ -30,6 +30,7 @@ from timesketch.models.sketch import Sketch as SQLSketch
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Analysis
+from timesketch.models.sketch import Session
 
 
 def _flush_datastore_decorator(func):
@@ -296,6 +297,20 @@ class Sketch(object):
         db_session.add(view)
         db_session.commit()
         return view
+
+    def add_session(self, session_type, session_id, start_timestamp,
+                    end_timestamp=None):
+        if end_timestamp is None:
+            end_timestamp = start_timestamp
+
+        session = Session.get_or_create(session_type=session_type,
+                                        session_id=str(session_id),
+                                        start_timestamp=str(start_timestamp),
+                                        end_timestamp=str(end_timestamp),
+                                        sketch=self.sql_sketch)
+        db_session.add(session)
+        db_session.commit()
+        return session
 
     def get_all_indices(self):
         """List all indices in the Sketch.
