@@ -116,8 +116,9 @@ class BaseSessionizerTest(object):
         are allocated correctly.
 
         Args:
-            threshold_ids: a list of IDs of the first events in the sessions.
-            session_type: a list of IDs of the first events in the sessions.
+            datastore: An instance of MockDataStore.
+            threshold_ids: A list of IDs of the first events in the sessions.
+            session_type: A string naming the session type.
         """
         session_no = 1
         last_id = threshold_ids[-1]
