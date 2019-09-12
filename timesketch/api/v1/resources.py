@@ -1993,7 +1993,7 @@ class SessionResource(ResourceMixin, Resource):
             A list of objects representing sessions.
         """
         MAX_SIZE = 10000 #more than the number of sessions we expect to return
-        session_types = ['all_events_session', 'web_activity_session', 'logon_session',
+        session_types = ['all_events', 'web_activity', 'logon_session',
                          'ssh_bruteforce_session', 'ssh_session']
         sessions = []
 
@@ -2044,7 +2044,7 @@ class SessionResource(ResourceMixin, Resource):
 
         for session_type in session_types:
             id_agg_spec['aggregations']['term_count']['terms']['field'] =\
-                '%s.keyword' % session_type
+                'session_id.%s.keyword' % session_type
             # pylint: disable=unexpected-keyword-arg
             id_agg = self.datastore.client.search(index=list(sketch_indices),
                                                   body=id_agg_spec,
@@ -2055,7 +2055,7 @@ class SessionResource(ResourceMixin, Resource):
                 session_id = bucket['key']
                 timestamp_agg_spec['aggregations']['timestamp_range'] \
                     ['filter']['bool']['must'][0]['query_string']['query'] \
-                    = '%s:%s' % (session_type, session_id)
+                    = 'session_id.%s:%s' % (session_type, session_id)
                 timestamp_agg = self.datastore.client.search(
                     index=list(sketch_indices),
                     body=timestamp_agg_spec,
@@ -2073,4 +2073,3 @@ class SessionResource(ResourceMixin, Resource):
                                  'end_timestamp': end_timestamp})
 
         return sessions
-
