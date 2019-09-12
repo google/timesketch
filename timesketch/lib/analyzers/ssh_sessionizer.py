@@ -7,6 +7,21 @@ import re
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import sessionizer
 
+# Pattern for SSH events message:
+# '[sshd] [{process_id}]: {message}'
+SSH_PATTERN = re.compile(r'^\[sshd\] \[(?P<process_id>\d+)\]:')
+
+# pylint: disable=line-too-long
+# Pattern for message of SSH events for successful connection to port:
+# '[sshd] [{process_id}]: Connection from {client_ip} port {client_port} on {host_ip} port {host_port}'
+#
+# The SSH_CONNECTION_PATTERN is compatible with IPv4
+# TODO Change the pattern to be compatible also with IPv6
+SSH_CONNECTION_PATTERN = \
+    re.compile(r'^\[sshd\] \[(?P<process_id>\d+)\]: Connection from ' + \
+    r'(?P<client_ip>(\d{1,3}\.){3}\d{1,3}) port (?P<client_port>\d+) on ' + \
+    r'(?P<host_ip>(\d{1,3}\.){3}\d{1,3}) port (?P<host_port>\d+)$')
+
 
 class SSHSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
     """SSH sessionizing sketch analyser.
@@ -14,7 +29,7 @@ class SSHSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
     The SSH sessionizer is labeling all events from a SSH connection with
     the client's IP address and port.
     Two SSH event are part of the same SSH connection if they have the same
-    connection id, which can be find in the message of a SSH event.
+    process id, which can be find in the message of a SSH event.
     """
 
     NAME = 'ssh_sessionizer'
@@ -43,91 +58,30 @@ class SSHSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
 
         for event in events:
             event_message = event.source.get('message')
-            connection_match = is_connection_event(event_message)
+            connection_match = SSH_CONNECTION_PATTERN.match(event_message)
 
             if connection_match:
-                connection_id = connection_match.group('connection_id')
+                process_id = connection_match.group('process_id')
                 client_ip = connection_match.group('client_ip')
                 client_port = connection_match.group('client_port')
 
-                started_sessions_ids[
-                    connection_id] = client_ip + '_' + client_port
+                session_id = '{0:s}_{1:s}'.format(client_ip, client_port)
+                started_sessions_ids[process_id] = session_id
                 sessions_created += 1
 
-            connection_id = get_connection_id(event_message)
-            if connection_id and connection_id in started_sessions_ids.keys():
-                self.annotateEvent(event, started_sessions_ids[connection_id])
+            ssh_match = SSH_PATTERN.match(event_message)
+            if ssh_match:
+                process_id = ssh_match.group('process_id')
+                if process_id in started_sessions_ids.keys():
+                    self.annotateEvent(event, started_sessions_ids[process_id])
 
-        self.sketch.add_view('SSH session view',
-                             self.NAME,
-                             query_string=self.get_query_string())
+        self.sketch.add_view(
+            'SSH session view',
+            self.NAME,
+            query_string='session_id.{0:s}:*'.format(self.session_type))
+
         return ('Sessionizing completed, number of session created:'
                 ' {0:d}'.format(sessions_created))
-
-    def get_query_string(self):
-        """Generate query string for all events allocated with session_type
-        attribute.
-
-        Returns:
-            Query string for Elasticsearch.
-        """
-
-        query_string = 'session_id' + '.' + self.session_type + ':*'
-        return query_string
-
-
-def is_connection_event(event_message):
-    """Checks if event is a SSH connection event depending on if the message of
-    the event matches the pattern for SSH connection events.
-
-    Pattern for the massage of SSH connection events:
-    '[sshd] [{connection_id}]: Connection from {source_ip} port {source_port} on
-    {dest_ip} port {dest_ip}'
-
-    Named groups for the corresponging regex are: <connection_id>, <client_ip>,
-    <client_port>, <host_ip>, <host_port>.
-
-    Args:
-        event_message: String representing the value of the message attribute of
-        an event.
-
-    Returns:
-        Match object, presenting the result of re.match() for the SSH connection
-        message pattern and the given message.
-    """
-
-    pattern = r'^\[sshd\] \[(?P<connection_id>[0-9]+)\]: Connection from ' + \
-    r'(?P<client_ip>([0-9]{0,3}\.*){4,6}) port (?P<client_port>[0-9]+) on ' + \
-    r'(?P<host_ip>([0-9]{0,3}\.*){4,6}) port (?P<host_port>[0-9]+)$'
-
-    return re.match(pattern, event_message)
-
-
-def get_connection_id(event_message):
-    """Extracts the connection_id from the message of a SSH event.
-
-    Pattern for the massage of SSH events:
-    '[sshd] [{connection_id}]: {message}'
-
-    Named groups for the corresponging regex are: <connection_id>.
-
-    Args:
-        event_message: String representing the value of the message attribute of
-            an event.
-
-    Returns:
-        connection_id number if the event_message matched the SSH event message
-            pattern and None otherwise.
-    """
-
-    pattern = r'^\[sshd\] \[(?P<connection_id>[0-9]+)\]: .*'
-
-    match = re.match(pattern, event_message)
-
-    if match:
-        return match.group('connection_id')
-
-    return None
 
 
 manager.AnalysisManager.register_analyzer(SSHSessionizerSketchPlugin)
