@@ -92,7 +92,7 @@ export default {
             var session_type = item.datum.session_type
             var session_id = item.datum.session_id
             if (session_type != undefined && session_id != undefined) {
-                var queryString = session_type + ':' + session_id
+                var queryString = 'session_id.' + session_type + ':' + session_id
                 store.commit('updateCurrentQueryString', queryString)
                 store.commit('search', sketchId)
             }
@@ -174,7 +174,7 @@ export default {
             var session = selectedSessionsCopy[i]
             if (this.selectedType === session.session_type && this.selectedID === session.session_id) {
                 session['selected'] = true
-                queryString = session['session_type'] + ':' + session['session_id']
+                queryString = 'session_id.' + session['session_type'] + ':' + session['session_id']
                 selection = [session['start_timestamp'] - (this.barSize * 5), session['end_timestamp'] + (this.barSize * 5)]
             }
             else {
