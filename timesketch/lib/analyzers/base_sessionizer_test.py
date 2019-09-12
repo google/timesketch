@@ -190,7 +190,7 @@ def _create_mock_event(datastore,
         event_id += 1
 
 
-def _create_eventObj(datastore, event_id, ts, source_attrs):
+def _create_eventObj(datastore, event_id, ts, source_attrs=None):
     """Changes MockDataStore.event_dict based on the given arguments and commits
     it to the datastore.
 

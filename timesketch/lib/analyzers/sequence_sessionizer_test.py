@@ -91,10 +91,10 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
         """Test event_seq is not None."""
         index = 'test_index'
         sketch_id = 1
+        sessionizer = NoneSeqSequenceSessionizer(index, sketch_id)
 
         expected_message = 'No event_seq provided.'
         with self.assertRaises(RuntimeError) as cm:
-            sessionizer = NoneSeqSequenceSessionizer(index, sketch_id)
             sessionizer.run()
         self.assertEqual(cm.exception.message, expected_message)
 
@@ -104,10 +104,10 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
         """Test event_seq is not empty."""
         index = 'test_index'
         sketch_id = 1
+        sessionizer = EmptySeqSequenceSessionizer(index, sketch_id)
 
         expected_message = 'No event_seq provided.'
         with self.assertRaises(RuntimeError) as cm:
-            sessionizer = EmptySeqSequenceSessionizer(index, sketch_id)
             sessionizer.run()
         self.assertEqual(cm.exception.message, expected_message)
 
@@ -115,35 +115,37 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
                 MockDataStore)
     def test_no_timestamp(self):
         """Test missing timestamp attribute is added in return_fields."""
-        with mock.patch.object(NoTimestampSequenceSessionizer,
-                               'event_stream',
-                               return_value=_create_mock_event(0, 0, [], [0])):
-            index = 'test_index'
-            sketch_id = 1
+        index = 'test_index'
+        sketch_id = 1
+        sessionizer = NoTimestampSequenceSessionizer(index, sketch_id)
+        sessionizer.datastore.client = mock.Mock()
+        datastore = sessionizer.datastore
 
-            sessionizer = NoTimestampSequenceSessionizer(index, sketch_id)
-            self.assertNotIn('timestamp', sessionizer.return_fields)
-            sessionizer.run()
-            self.assertIn('timestamp', sessionizer.return_fields)
+        _create_mock_event(datastore, 0, 0, [], [0])
+
+        self.assertNotIn('timestamp', sessionizer.return_fields)
+        sessionizer.run()
+        self.assertIn('timestamp', sessionizer.return_fields)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_missing_attr(self):
         """Test missing attributes added in return_fields."""
-        with mock.patch.object(MissingAttrSequenceSessionizer,
-                               'event_stream',
-                               return_value=_create_mock_event(0, 0, [], [0])):
-            index = 'test_index'
-            sketch_id = 1
+        index = 'test_index'
+        sketch_id = 1
+        sessionizer = MissingAttrSequenceSessionizer(index, sketch_id)
+        sessionizer.datastore.client = mock.Mock()
+        datastore = sessionizer.datastore
 
-            sessionizer = MissingAttrSequenceSessionizer(index, sketch_id)
-            for event in sessionizer.event_seq:
-                for attr in event:
-                    self.assertNotIn(attr, sessionizer.return_fields)
-            sessionizer.run()
-            for event in sessionizer.event_seq:
-                for attr in event:
-                    self.assertIn(attr, sessionizer.return_fields)
+        _create_mock_event(datastore, 0, 0, [], [0])
+
+        for event in sessionizer.event_seq:
+            for attr in event:
+                self.assertNotIn(attr, sessionizer.return_fields)
+        sessionizer.run()
+        for event in sessionizer.event_seq:
+            for attr in event:
+                self.assertIn(attr, sessionizer.return_fields)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -151,9 +153,10 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
         """Test session_type is not None."""
         index = 'test_index'
         sketch_id = 1
+        sessionizer = NoneSessionTypeSequenceSessionizer(index, sketch_id)
+
         expected_message = 'No session_type provided.'
         with self.assertRaises(RuntimeError) as cm:
-            sessionizer = NoneSessionTypeSequenceSessionizer(index, sketch_id)
             sessionizer.run()
         self.assertEqual(cm.exception.message, expected_message)
 
@@ -163,11 +166,10 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
         """Test session_type is not empty string."""
         index = 'test_index'
         sketch_id = 1
+        sessionizer = EmptyStrSessionTypeSequenceSessionizer(index, sketch_id)
 
         expected_message = 'No session_type provided.'
         with self.assertRaises(RuntimeError) as cm:
-            sessionizer = \
-                EmptyStrSessionTypeSequenceSessionizer(index, sketch_id)
             sessionizer.run()
         self.assertEqual(cm.exception.message, expected_message)
 
@@ -211,12 +213,12 @@ class BaseManyEventsSequenceSessionizerPlugin(object):
         # Events that are not part of the sequence but are between
         # significant events from the event sequence considered as a session
         # are part of the significant events' session.
-        # pylint: disable=unexpected-keyword-arg
         for i in range(0, 101):
             event = datastore.get_event('test_index',
                                         str(i),
                                         stored_events=True)
-            self.assertEqual(event['_source'][sessionizer.session_type], 1)
+            self.assertEqual(
+                event['_source']['session_id'][sessionizer.session_type], 1)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -241,19 +243,20 @@ class BaseManyEventsSequenceSessionizerPlugin(object):
             'Sessionizing completed, number of {0:s} sessions created: 2'.
             format(sessionizer.session_type))
 
-        # pylint: disable=unexpected-keyword-arg
         for i in range(0, 100):
             event = datastore.get_event('test_index',
                                         str(i),
                                         stored_events=True)
-            self.assertEqual(event['_source'][sessionizer.session_type], 1)
+            self.assertEqual(
+                event['_source']['session_id'][sessionizer.session_type], 1)
         # Events with id in the range of 101 to 201 are not part of any
         # session.
         for i in range(202, 302):
             event = datastore.get_event('test_index',
                                         str(i),
                                         stored_events=True)
-            self.assertEqual(event['_source'][sessionizer.session_type], 2)
+            self.assertEqual(
+                event['_source']['session_id'][sessionizer.session_type], 2)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -281,12 +284,11 @@ class BaseManyEventsSequenceSessionizerPlugin(object):
 
         # Session 1: events with id from 0 to 101,
         # session 2: events with id from 202 to 303.
-        # pylint: disable=unexpected-keyword-arg
         for i in range(102, 201):
             event = datastore.get_event('test_index',
                                         str(i),
                                         stored_events=True)
-            self.assertNotIn(sessionizer.session_type, event['_source'])
+            self.assertNotIn('session_id', event['_source'])
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -312,12 +314,12 @@ class BaseManyEventsSequenceSessionizerPlugin(object):
             'Sessionizing completed, number of {0:s} sessions created: 1'.
             format(sessionizer.session_type))
 
-        # pylint: disable=unexpected-keyword-arg
         for i in range(0, 101):
             event = datastore.get_event('test_index',
                                         str(i),
                                         stored_events=True)
-            self.assertEqual(event['_source'][sessionizer.session_type], 1)
+            self.assertEqual(
+                event['_source']['session_id'][sessionizer.session_type], 1)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -346,12 +348,11 @@ class BaseManyEventsSequenceSessionizerPlugin(object):
         # Events with id 0 and id 101 form the requested sequence, but
         # event with id 100 and 101 have max_time_diff_micros + 1 bewtween
         # them
-        # pylint: disable=unexpected-keyword-arg
         for i in range(0, 201):
             event = datastore.get_event('test_index',
                                         str(i),
                                         stored_events=True)
-            self.assertNotIn(sessionizer.session_type, event['_source'])
+            self.assertNotIn('session_id', event['_source'])
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -407,9 +408,9 @@ class BaseOneEventSequenceSessionizerPlugin(object):
             format(sessionizer.session_type))
 
         # Event with id 0 is the significant for the event_seq event.
-        # pylint: disable=unexpected-keyword-arg
         event = datastore.get_event('test_index', str(0), stored_events=True)
-        self.assertEqual(event['_source'][sessionizer.session_type], 1)
+        self.assertEqual(
+            event['_source']['session_id'][sessionizer.session_type], 1)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -435,12 +436,13 @@ class BaseOneEventSequenceSessionizerPlugin(object):
             format(sessionizer.session_type))
 
         # Session 1: events with id 0.
-        # pylint: disable=unexpected-keyword-arg
         event = datastore.get_event('test_index', str(0), stored_events=True)
-        self.assertEqual(event['_source'][sessionizer.session_type], 1)
+        self.assertEqual(
+            event['_source']['session_id'][sessionizer.session_type], 1)
         # Session 2: events with id 101.
         event = datastore.get_event('test_index', str(101), stored_events=True)
-        self.assertEqual(event['_source'][sessionizer.session_type], 2)
+        self.assertEqual(
+            event['_source']['session_id'][sessionizer.session_type], 2)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -468,12 +470,11 @@ class BaseOneEventSequenceSessionizerPlugin(object):
 
         # Session 1: events with id 0.
         # Session 1: events with id 101.
-        # pylint: disable=unexpected-keyword-arg
         for i in range(1, 100):
             event = datastore.get_event('test_index',
                                         str(i),
                                         stored_events=True)
-            self.assertNotIn(sessionizer.session_type, event['_source'])
+            self.assertNotIn('session_id', event['_source'])
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
