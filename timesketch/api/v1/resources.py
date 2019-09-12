@@ -1999,9 +1999,8 @@ class SessionResource(ResourceMixin, Resource):
 
         #check the timeline belongs to the sketch
         sketch = Sketch.query.get_with_acl(sketch_id)
-        sketch_indices = set([t.searchindex.index_name for t in
-                              sketch.timelines if t.searchindex.index_name ==
-                              timeline_index])
+        sketch_indices = {t.searchindex.index_name for t in sketch.timelines
+                          if t.searchindex.index_name == timeline_index}
 
         id_agg_spec = {
             'aggregations': {
