@@ -92,7 +92,7 @@ export default {
             var session_type = item.datum.session_type
             var session_id = item.datum.session_id
             if (session_type != undefined && session_id != undefined) {
-                var queryString = 'session_id.' + session_type + ':' + session_id
+                var queryString = session_type + ':' + session_id
                 store.commit('updateCurrentQueryString', queryString)
                 store.commit('search', sketchId)
             }
@@ -174,7 +174,7 @@ export default {
             var session = selectedSessionsCopy[i]
             if (this.selectedType === session.session_type && this.selectedID === session.session_id) {
                 session['selected'] = true
-                queryString = 'session_id.' + session['session_type'] + ':' + session['session_id']
+                queryString = session['session_type'] + ':' + session['session_id']
                 selection = [session['start_timestamp'] - (this.barSize * 5), session['end_timestamp'] + (this.barSize * 5)]
             }
             else {
@@ -225,6 +225,9 @@ export default {
     },
 
     getVegaSpec: function () {
+        const WIDTH = 900
+        const HEIGHT = 400
+
         this.getRoundedSessions(this.startTimeRange, this.endTimeRange)
         if (this.roundedSessions === undefined || this.roundedSessions.length == 0) {
             this.timeRangeMessage = 'There are no sessions in this time range.'
@@ -235,8 +238,8 @@ export default {
                 "values": this.roundedSessions
             },
             "vconcat": [{
-                "width": 900,
-                "height": 400,
+                "width": WIDTH,
+                "height": HEIGHT,
                 "padding": 5,
 
                 "mark": "bar",
@@ -259,8 +262,8 @@ export default {
                     }
                 }
             }, {
-                "width": 900,
-                "height": 100,
+                "width": WIDTH,
+                "height": HEIGHT / 4,
                 "padding": 5,
 
                 "selection": {
@@ -271,11 +274,12 @@ export default {
                     }
                 },
 
-                "mark": {"type": "point", "size": 200},
+                "mark": {"type": "bar", "x2Offset": WIDTH / 100, "clip": true},
 
                 "encoding": {
                     "y": {"field": "session_type", "type": "ordinal", "axis": {"title": "Session Type"}},
                     "x": {"field": "start_timestamp", "type": "temporal", "axis": {"title": "Timestamp", "tickCount": 5}},
+                    "x2": {"field": "end_timestamp", "type": "temporal", "axis": {"title": "End Timestamp"}},
                     "color": {
                         "field": "session_id", "type": "nominal",
                         "scale": {"scheme": "tableau20"},
