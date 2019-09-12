@@ -21,6 +21,7 @@ GET /sketches/:sketch_id/explore/
 GET /sketches/:sketch_id/event/
 GET /sketches/:sketch_id/views/
 GET /sketches/:sketch_id/views/:view_id/
+GET /sketches/:sketch_id/explore/sessions/:timeline_index/
 
 POST /sketches/:sketch_id/event/
 POST /sketches/:sketch_id/event/annotate/
@@ -1979,3 +1980,97 @@ class SearchIndexResource(ResourceMixin, Resource):
         """
         searchindex = SearchIndex.query.get_with_acl(searchindex_id)
         return self.to_json(searchindex)
+
+
+class SessionResource(ResourceMixin, Resource):
+    """Resource to get sessions."""
+
+    @login_required
+    def get(self, sketch_id, timeline_index):
+        """Handles GET request to the resource.
+
+        Returns:
+            A list of objects representing sessions.
+        """
+        MAX_SIZE = 10000 #more than the number of sessions we expect to return
+        session_types = ['all_events_session', 'web_activity_session', 'logon_session',
+                         'ssh_bruteforce_session', 'ssh_session']
+        sessions = []
+
+        #check the timeline belongs to the sketch
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch_indices = set([t.searchindex.index_name for t in
+                              sketch.timelines if t.searchindex.index_name ==
+                              timeline_index])
+
+        id_agg_spec = {
+            'aggregations': {
+                'term_count': {
+                    'terms': {
+                        'field': '',
+                        'size': MAX_SIZE
+                    }
+                }
+            }
+        }
+
+        timestamp_agg_spec = {
+            'aggregations': {
+                'timestamp_range': {
+                    'filter': {
+                        'bool': {
+                            'must': [{
+                                'query_string': {
+                                    'query': ''
+                                }
+                            }]
+                        }
+                    },
+                    'aggregations': {
+                        'min_timestamp': {
+                            'min': {
+                                'field': 'timestamp'
+                            }
+                        },
+                        'max_timestamp': {
+                            'max': {
+                                'field': 'timestamp'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for session_type in session_types:
+            id_agg_spec['aggregations']['term_count']['terms']['field'] =\
+                '%s.keyword' % session_type
+            # pylint: disable=unexpected-keyword-arg
+            id_agg = self.datastore.client.search(index=list(sketch_indices),
+                                                  body=id_agg_spec,
+                                                  size=0)
+            buckets = id_agg['aggregations']['term_count']['buckets']
+
+            for bucket in buckets:
+                session_id = bucket['key']
+                timestamp_agg_spec['aggregations']['timestamp_range'] \
+                    ['filter']['bool']['must'][0]['query_string']['query'] \
+                    = '%s:%s' % (session_type, session_id)
+                timestamp_agg = self.datastore.client.search(
+                    index=list(sketch_indices),
+                    body=timestamp_agg_spec,
+                    size=0)
+                start_timestamp = int(timestamp_agg['aggregations']
+                                      ['timestamp_range']['min_timestamp']
+                                      ['value']) / 1000
+                end_timestamp = int(timestamp_agg['aggregations']
+                                    ['timestamp_range']['max_timestamp']
+                                    ['value']) / 1000
+
+                sessions.append({'session_type': session_type,
+                                 'session_id': session_id,
+                                 'start_timestamp': start_timestamp,
+                                 'end_timestamp': end_timestamp})
+
+        return sessions
+
