@@ -45,56 +45,36 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
             raise RuntimeError('No event_seq provided.')
         # If return_fields in none, then all attributes are provided.
         if self.return_fields is not None:
-            self.validate_return_fields()
+            self.build_return_fields()
 
         # event_stream returns an ordered generator of events (by time)
         # therefore no further sorting is needed.
         events = self.event_stream(query_string=self.query,
                                    return_fields=self.return_fields)
 
-        last_timestamp = 0
-
-        try:
-            first_event = next(events)
-            last_timestamp = first_event.source.get('timestamp')
-            self.process_event(first_event)
-
-            for event in events:
-                curr_timestamp = event.source.get('timestamp')
-                if curr_timestamp - last_timestamp > self.max_time_diff_micros:
-                    self.flush_events(drop=True)
-
-                self.process_event(event)
-                last_timestamp = curr_timestamp
-        except StopIteration:
-            pass
-
-        self.query = self.get_query_string()
+        last_timestamp = None
+        for event in events:
+            curr_timestamp = event.source.get('timestamp')
+            if last_timestamp and \
+                (curr_timestamp - last_timestamp > self.max_time_diff_micros):
+                self.flush_events(drop=True)
+            self.process_event(event)
+            last_timestamp = curr_timestamp
 
         self.sketch.add_view('Session view',
                              self.NAME,
-                             query_string=self.query)
+                             query_string='{0:s}:*'.format(self.session_type))
 
-        return ('Sessionizing completed, number of {0:s} session created:'
+        return ('Sessionizing completed, number of {0:s} sessions created:'
                 ' {1:d}'.format(self.session_type, self.session_num))
-
-    def annotateEvent(self, event, session_num):
-        """Add an session_type attribute with a session_num to event.
-
-        Args:
-            event: Event to annotate.
-            session_num: Session number for the event.
-        """
-        event.add_attributes({self.session_type: session_num})
-        event.commit()
 
     def process_event(self, event):
         """Process event depending on if the event is significant for the
         searched event sequence.
 
-        Event is significant if it matches the current
-        event in the event_seq or if in the timeline it is between two
-        consistent events from the event_seq.
+        Event is significant if it matches the current event in the event_seq
+        or if in the timeline it is between two consistent events from the
+        event_seq.
 
         Args:
             event: Event to process.
@@ -116,7 +96,8 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
         drop and resets session recording state.
 
         Args:
-            drop: Indicator if the stored events should not be commited.
+            drop: If True, the stored events will not be committed to the
+                database.
         """
         if not drop:
             self.session_num += 1
@@ -134,8 +115,7 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
             event: Event to compare with the one in the event sequence.
 
         Returns:
-            If event matches the event to search for in the event
-        sequence.
+            If event matches the event to search for in the event sequence.
         """
         event_to_match = self.event_seq[self.num_event_to_find]
 
@@ -146,20 +126,9 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
                 return False
         return True
 
-    def get_query_string(self):
-        """Generate query string for all events allocated with session_type
-        attribute.
-
-        Returns:
-            Query string for Elasticsearch.
-        """
-        query_string = self.session_type + ':*'
-        return query_string
-
-    def validate_return_fields(self):
+    def build_return_fields(self):
         if 'timestamp' not in self.return_fields:
             self.return_fields.append('timestamp')
         for event in self.event_seq:
-            for attr in event:
-                if attr not in self.return_fields:
-                    self.return_fields.append(attr)
+            self.return_fields.extend(event)
+        self.return_fields = list(set(self.return_fields))

@@ -207,7 +207,7 @@ class BaseManyEventsSequenceSessionizerPlugin(object):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0:s} session created: 1'.
+                'Sessionizing completed, number of {0:s} sessions created: 1'.
                 format(sessionizer.session_type))
 
             ds = MockDataStore('test', 0)
@@ -221,7 +221,7 @@ class BaseManyEventsSequenceSessionizerPlugin(object):
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_multiple_sessions(self):
-        """Test multiple sessions are finded and allocated correctly."""
+        """Test multiple sessions are found and allocated correctly."""
         with mock.patch.object(self.seq_sessionizer_class,
                                'event_stream',
                                return_value=_create_mock_event(
@@ -236,7 +236,7 @@ class BaseManyEventsSequenceSessionizerPlugin(object):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0:s} session created: 2'.
+                'Sessionizing completed, number of {0:s} sessions created: 2'.
                 format(sessionizer.session_type))
 
             ds = MockDataStore('test', 0)
@@ -270,7 +270,7 @@ class BaseManyEventsSequenceSessionizerPlugin(object):
 
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0:s} session created: 2'.
+                'Sessionizing completed, number of {0:s} sessions created: 2'.
                 format(sessionizer.session_type))
             # Session 1: events with id from 0 to 101,
             # session 2: events with id from 202 to 303.
@@ -299,7 +299,7 @@ class BaseManyEventsSequenceSessionizerPlugin(object):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0:s} session created: 1'.
+                'Sessionizing completed, number of {0:s} sessions created: 1'.
                 format(sessionizer.session_type))
 
             ds = MockDataStore('test', 0)
@@ -328,7 +328,7 @@ class BaseManyEventsSequenceSessionizerPlugin(object):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0:s} session created: 0'.
+                'Sessionizing completed, number of {0:s} sessions created: 0'.
                 format(sessionizer.session_type))
 
             ds = MockDataStore('test', 0)
@@ -353,7 +353,7 @@ class BaseManyEventsSequenceSessionizerPlugin(object):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0:s} session created: 0'.
+                'Sessionizing completed, number of {0:s} sessions created: 0'.
                 format(sessionizer.session_type))
 
 
@@ -386,7 +386,7 @@ class BaseOneEventSequenceSessionizerPlugin(object):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0:s} session created: 1'.
+                'Sessionizing completed, number of {0:s} sessions created: 1'.
                 format(sessionizer.session_type))
 
             ds = MockDataStore('test', 0)
@@ -412,7 +412,7 @@ class BaseOneEventSequenceSessionizerPlugin(object):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0:s} session created: 2'.
+                'Sessionizing completed, number of {0:s} sessions created: 2'.
                 format(sessionizer.session_type))
 
             ds = MockDataStore('test', 0)
@@ -444,7 +444,7 @@ class BaseOneEventSequenceSessionizerPlugin(object):
 
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0:s} session created: 2'.
+                'Sessionizing completed, number of {0:s} sessions created: 2'.
                 format(sessionizer.session_type))
             # Session 1: events with id 0.
             # Session 1: events with id 101.
@@ -466,7 +466,7 @@ class BaseOneEventSequenceSessionizerPlugin(object):
             message = sessionizer.run()
             self.assertEqual(
                 message,
-                'Sessionizing completed, number of {0:s} session created: 0'.
+                'Sessionizing completed, number of {0:s} sessions created: 0'.
                 format(sessionizer.session_type))
 
 
