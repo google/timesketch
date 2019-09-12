@@ -296,6 +296,15 @@ class Sketch(object):
         db_session.commit()
         return view
 
+    def get_all_indices(self):
+        """List all indices in the Sketch.
+        Returns:
+            List of index names.
+        """
+        active_timelines = self.sql_sketch.active_timelines
+        indices = [t.searchindex.index_name for t in active_timelines]
+        return indices
+
 
 class BaseIndexAnalyzer(object):
     """Base class for analyzers.
