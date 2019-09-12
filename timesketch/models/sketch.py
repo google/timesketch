@@ -495,4 +495,3 @@ class AnalysisSession(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         super(AnalysisSession, self).__init__()
         self.user = user
         self.sketch = sketch
-
