@@ -40,9 +40,9 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
             number of sessions created.
         """
         if self.session_type is None or self.session_type == '':
-            raise RuntimeError('No session_type provided.')
+            raise ValueError('No session_type provided.')
         if self.event_seq is None or self.event_seq == []:
-            raise RuntimeError('No event_seq provided.')
+            raise ValueError('No event_seq provided.')
         # If return_fields in none, then all attributes are provided.
         if self.return_fields is not None:
             self.build_return_fields()

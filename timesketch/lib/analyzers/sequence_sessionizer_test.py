@@ -93,10 +93,8 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
         sketch_id = 1
         sessionizer = NoneSeqSequenceSessionizer(index, sketch_id)
 
-        expected_message = 'No event_seq provided.'
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(ValueError):
             sessionizer.run()
-        self.assertEqual(cm.exception.message, expected_message)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -106,10 +104,8 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
         sketch_id = 1
         sessionizer = EmptySeqSequenceSessionizer(index, sketch_id)
 
-        expected_message = 'No event_seq provided.'
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(ValueError):
             sessionizer.run()
-        self.assertEqual(cm.exception.message, expected_message)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -155,10 +151,8 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
         sketch_id = 1
         sessionizer = NoneSessionTypeSequenceSessionizer(index, sketch_id)
 
-        expected_message = 'No session_type provided.'
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(ValueError):
             sessionizer.run()
-        self.assertEqual(cm.exception.message, expected_message)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -168,10 +162,8 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
         sketch_id = 1
         sessionizer = EmptyStrSessionTypeSequenceSessionizer(index, sketch_id)
 
-        expected_message = 'No session_type provided.'
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(ValueError):
             sessionizer.run()
-        self.assertEqual(cm.exception.message, expected_message)
 
 
 class BaseManyEventsSequenceSessionizerPlugin(object):
