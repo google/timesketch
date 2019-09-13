@@ -29,7 +29,12 @@ class SSHSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
     The SSH sessionizer is labeling all events from a SSH connection with
     the client's IP address and port.
     Two SSH event are part of the same SSH connection if they have the same
-    process id, which can be find in the message of a SSH event.
+    process ID, which can be find in the message of a SSH event.
+
+    TODO Some SSH events that are a part of a SSH connection are not labelled
+    because they have different process ID. This can be fixed by adding the new
+    process ID to started_sessions_ids with the value as the session id of the
+    process from which the new process was created.
     """
 
     NAME = 'ssh_sessionizer'
