@@ -58,7 +58,7 @@ export default {
 
   data () {
       return {
-            roundedSessions: [],
+            processedSessions: [],
             message: 'Show Session Chart',
             showChart: false,
             showTimeRange: false,
@@ -157,10 +157,10 @@ export default {
         var dictSpec = JSON.parse(this.spec)
         if (this.selectedType === 'all') {
             this.selectedSessions = []
-            dictSpec['data']['values'] = this.roundedSessions
+            dictSpec['data']['values'] = this.processedSessions
         }
         else {
-            this.selectedSessions = this.roundedSessions.filter(session => session['session_type'] === this.selectedType)
+            this.selectedSessions = this.processedSessions.filter(session => session['session_type'] === this.selectedType)
             dictSpec['data']['values'] = this.selectedSessions
         }
         dictSpec['vconcat'][1]['selection']['brush']['init']['x'] = [this.smallestTimestamp, this.smallestTimestamp + (this.barSize * 50)]
@@ -193,22 +193,22 @@ export default {
         this.$store.commit('search', this.sketch.id)
     },
 
-    getRoundedSessions: function (first_timestamp, last_timestamp) {
+    getProcessedSessions: function (first_timestamp, last_timestamp) {
         //increases the visibility of sessions when plotted
-        var roundedSessions = JSON.parse(JSON.stringify(this.sessions))
+        var processedSessions = JSON.parse(JSON.stringify(this.sessions))
         this.isTruncated = processedSessions.pop()['truncated']
         
-        roundedSessions = roundedSessions.filter(session => session.start_timestamp >= first_timestamp && session.start_timestamp <= last_timestamp);
+        processedSessions = processedSessions.filter(session => session.start_timestamp >= first_timestamp && session.start_timestamp <= last_timestamp);
 
-        if (roundedSessions.length > 0) {
-            var smallestTimestamp = roundedSessions[0].start_timestamp
-            var largest_timestamp = roundedSessions[0].end_timestamp
-            for (var i = 1; i < roundedSessions.length; i++) {
-                if (roundedSessions[i].start_timestamp < smallestTimestamp) {
-                    smallestTimestamp = roundedSessions[i].start_timestamp
+        if (processedSessions.length > 0) {
+            var smallestTimestamp = processedSessions[0].start_timestamp
+            var largest_timestamp = processedSessions[0].end_timestamp
+            for (var i = 1; i < processedSessions.length; i++) {
+                if (processedSessions[i].start_timestamp < smallestTimestamp) {
+                    smallestTimestamp = processedSessions[i].start_timestamp
                 }
-                if (roundedSessions[i].end_timestamp > largest_timestamp) {
-                    largest_timestamp = roundedSessions[i].end_timestamp
+                if (processedSessions[i].end_timestamp > largest_timestamp) {
+                    largest_timestamp = processedSessions[i].end_timestamp
                 }
             }
             var timeRange = (largest_timestamp - smallestTimestamp)
@@ -217,29 +217,29 @@ export default {
             this.barSize = Math.round(timeRange / 1000)
             this.smallestTimestamp = smallestTimestamp
 
-            for (var i = 0; i < roundedSessions.length; i++) {
-                var session = roundedSessions[i]
+            for (var i = 0; i < processedSessions.length; i++) {
+                var session = processedSessions[i]
                 var extended_end = session.start_timestamp + this.barSize
                 if (session.end_timestamp < extended_end) {
                     session.end_timestamp = extended_end
                 }
             }
         }
-        this.roundedSessions = roundedSessions
+        this.processedSessions = processedSessions
     },
 
     getVegaSpec: function () {
         const WIDTH = 900
         const HEIGHT = 400
 
-        this.getRoundedSessions(this.startTimeRange, this.endTimeRange)
-        if (this.roundedSessions === undefined || this.roundedSessions.length == 0) {
+        this.getProcessedSessions(this.startTimeRange, this.endTimeRange)
+        if (this.processedSessions === undefined || this.processedSessions.length == 0) {
             this.timeRangeMessage = 'There are no sessions in this time range.'
         }
 
         var dictSpec = { "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
             "data": {
-                "values": this.roundedSessions
+                "values": this.processedSessions
             },
             "vconcat": [{
                 "width": WIDTH,
