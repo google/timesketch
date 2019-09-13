@@ -1,6 +1,7 @@
 <template>
     <div>
         <div v-if="this.spec === '{}' && this.showChart === true"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Loading..</div>
+        <p v-if="isTruncated && showChart">Warning: only retrieved 100 sessions for each session type.</p>
         <ts-vega-lite-chart :vegaSpec="spec" @viewCreated="registerClickListener"></ts-vega-lite-chart>
         <div class="field">
             <button class="button" @click="toggleChart" :disabled="indices.length > 1">{{message}}</button>
@@ -71,7 +72,8 @@ export default {
             sessions: [],
             startTimeRange: Date.now() - 31556952000,
             endTimeRange: Date.now(),
-            timeRangeMessage: ''
+            timeRangeMessage: '',
+            isTruncated: false
       }
   },
 
@@ -194,6 +196,8 @@ export default {
     getRoundedSessions: function (first_timestamp, last_timestamp) {
         //increases the visibility of sessions when plotted
         var roundedSessions = JSON.parse(JSON.stringify(this.sessions))
+        this.isTruncated = processedSessions.pop()['truncated']
+        
         roundedSessions = roundedSessions.filter(session => session.start_timestamp >= first_timestamp && session.start_timestamp <= last_timestamp);
 
         if (roundedSessions.length > 0) {
