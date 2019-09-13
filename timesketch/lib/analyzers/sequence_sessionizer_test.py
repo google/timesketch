@@ -12,7 +12,7 @@ from timesketch.lib.analyzers.base_sessionizer_test import _create_eventObj
 
 
 class ManyEventsSequenceSessionizer(SequenceSessionizerSketchPlugin):
-    """Sequence sessionizer class with many events in the event_seq."""
+    """Mock sequence sessionizer class with many events in the event_seq."""
     session_type = 'many_events_seq_sessionizer'
     max_time_diff_micros = 100
     return_fields = ['hostname', 'source_short', 'timestamp']
@@ -26,9 +26,9 @@ class ManyEventsSequenceSessionizer(SequenceSessionizerSketchPlugin):
 
 
 class OneEventSequenceSessionizer(SequenceSessionizerSketchPlugin):
-    """Sequence sessionizer class with one event in the event_seq."""
-    max_time_diff_micros = 100
+    """Mock sequence sessionizer class with one event in the event_seq."""
     session_type = 'one_event_seq_sessionizer'
+    max_time_diff_micros = 100
     event_seq = [{'hostname': 'host', 'source_short': 'FILE'}]
     return_fields = ['hostname', 'source_short', 'timestamp']
 
@@ -37,17 +37,17 @@ class OneEventSequenceSessionizer(SequenceSessionizerSketchPlugin):
 class NoneSeqSequenceSessionizer(SequenceSessionizerSketchPlugin):
     """Invalid sequence sessionizer. event_seq should not be None, everything
     else is valid."""
-    event_seq = None
     session_type = 'valid_name'
-    return_fields = ['timestamp', 'hostname', 'source_short']
+    event_seq = None
+    return_fields = ['timestamp']
 
 
 class EmptySeqSequenceSessionizer(SequenceSessionizerSketchPlugin):
     """Invalid sequence sessionizer. event_seq should not be [], everything else
     is valid."""
-    event_seq = []
     session_type = 'valid_name'
-    return_fields = ['timestamp', 'hostname', 'source_short']
+    event_seq = []
+    return_fields = ['timestamp']
 
 
 class NoTimestampSequenceSessionizer(SequenceSessionizerSketchPlugin):
@@ -110,7 +110,9 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_no_timestamp(self):
-        """Test missing timestamp attribute is added in return_fields."""
+        """Test missing timestamp attribute is added in return_fields.
+        The sessionizer should be validated automatically when calling
+        sessionizer.run()."""
         index = 'test_index'
         sketch_id = 1
         sessionizer = NoTimestampSequenceSessionizer(index, sketch_id)
@@ -126,7 +128,9 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_missing_attr(self):
-        """Test missing attributes added in return_fields."""
+        """Test missing attributes added in return_fields.
+        The sessionizer should be validated automatically when calling
+        sessionizer.run()."""
         index = 'test_index'
         sketch_id = 1
         sessionizer = MissingAttrSequenceSessionizer(index, sketch_id)

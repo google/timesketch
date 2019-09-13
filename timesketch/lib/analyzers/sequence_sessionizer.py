@@ -16,10 +16,7 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
             should be matched.
         recording: Shows if currently are finded and stored events that match
             the specified sequence of events.
-        return_fields: List of name of event attributes, should be specified in
-            the inheriting sessionizers. It must contains 'timestamp'.
         session_num: Counter for the number of sessions.
-        session_type: The name of the event sequence.
     """
     event_seq = []
     event_storage = []
@@ -33,7 +30,8 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
         """Entry point for the analyzer.
 
         Allocates each event between the first event of the event_seq and the
-        last event of the event_seq an session_type attribute and a session_num.
+        last event of the event_seq an session_type attribute with a value
+        session_num.
 
         Returns:
             String containing the name of the event sequence and the
@@ -43,7 +41,7 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
             raise ValueError('No session_type provided.')
         if self.event_seq is None or self.event_seq == []:
             raise ValueError('No event_seq provided.')
-        # If return_fields in none, then all attributes are provided.
+        # If return_fields in None, then all attributes are provided.
         if self.return_fields is not None:
             self.build_return_fields()
 
@@ -63,7 +61,8 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
 
         self.sketch.add_view('Session view',
                              self.NAME,
-                             query_string='{0:s}:*'.format(self.session_type))
+                             query_string='session_id.{0:s}:*'.format(
+                                 self.session_type))
 
         return ('Sessionizing completed, number of {0:s} sessions created:'
                 ' {1:d}'.format(self.session_type, self.session_num))
@@ -127,6 +126,8 @@ class SequenceSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
         return True
 
     def build_return_fields(self):
+        """Add missing fields to return_fields. Additional fields are not
+        removed."""
         if 'timestamp' not in self.return_fields:
             self.return_fields.append('timestamp')
         for event in self.event_seq:
