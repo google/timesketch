@@ -11,7 +11,7 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
     are grouped in sessions based on the time difference between them. Two
     consecutive events are in the same session if the time difference between
     them is less or equal then max_time_diff_micros.
-    
+
     Attributes:
         NAME (str): The name of the sessionizer.
         max_time_diff_micros (int): The maximum time difference between two
