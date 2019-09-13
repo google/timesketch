@@ -39,6 +39,7 @@ class SSHSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
 
     NAME = 'ssh_sessionizer'
     query = 'reporter:"sshd"'
+    session_num = 0
     session_type = 'ssh_session'
 
     def run(self):
@@ -59,8 +60,6 @@ class SSHSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
         # Dictionary storing the session IDs about the started SSH sessions.
         started_sessions_ids = {}
 
-        sessions_created = 0
-
         for event in events:
             event_message = event.source.get('message')
             connection_match = SSH_CONNECTION_PATTERN.match(event_message)
@@ -72,7 +71,7 @@ class SSHSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
 
                 session_id = '{0:s}_{1:s}'.format(client_ip, client_port)
                 started_sessions_ids[process_id] = session_id
-                sessions_created += 1
+                self.session_num += 1
 
             ssh_match = SSH_PATTERN.match(event_message)
             if ssh_match:
@@ -85,8 +84,8 @@ class SSHSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
             self.NAME,
             query_string='session_id.{0:s}:*'.format(self.session_type))
 
-        return ('Sessionizing completed, number of session created:'
-                ' {0:d}'.format(sessions_created))
+        return ('Sessionizing completed, number of {0:s} sessions created:'
+                ' {1:d}'.format(self.session_type, self.session_num))
 
 
 manager.AnalysisManager.register_analyzer(SSHSessionizerSketchPlugin)
