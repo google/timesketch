@@ -1992,10 +1992,13 @@ class SessionResource(ResourceMixin, Resource):
         Returns:
             A list of objects representing sessions.
         """
-        MAX_SIZE = 10000 #more than the number of sessions we expect to return
+        MAX_IDS = 10000 #more than the number of sessions we expect to return
+        MAX_SESSIONS = 100
+
         session_types = ['all_events', 'web_activity', 'logon_session',
                          'ssh_bruteforce_session', 'ssh_session']
         sessions = []
+        isTruncated = False
 
         #check the timeline belongs to the sketch
         sketch = Sketch.query.get_with_acl(sketch_id)
@@ -2007,7 +2010,7 @@ class SessionResource(ResourceMixin, Resource):
                 'term_count': {
                     'terms': {
                         'field': '',
-                        'size': MAX_SIZE
+                        'size': MAX_IDS
                     }
                 }
             }
@@ -2049,8 +2052,14 @@ class SessionResource(ResourceMixin, Resource):
                                                   body=id_agg_spec,
                                                   size=0)
             buckets = id_agg['aggregations']['term_count']['buckets']
+            session_count = 0
 
             for bucket in buckets:
+                if session_count == MAX_SESSIONS:
+                    isTruncated = True
+                    break
+                session_count += 1
+
                 session_id = bucket['key']
                 timestamp_agg_spec['aggregations']['timestamp_range'] \
                     ['filter']['bool']['must'][0]['query_string']['query'] \
@@ -2071,4 +2080,5 @@ class SessionResource(ResourceMixin, Resource):
                                  'start_timestamp': start_timestamp,
                                  'end_timestamp': end_timestamp})
 
+        sessions.append({'truncated': isTruncated})
         return sessions
