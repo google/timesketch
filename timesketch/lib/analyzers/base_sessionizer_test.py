@@ -156,9 +156,9 @@ def _create_mock_event(datastore,
         event_id: Desired ID for the Event.
         quantity: The number of Events to be generated.
         time_diffs: A list of time differences between the generated
-        Events.
+            Events.
         source_attrs: Dictionary of attributes to add to the source of the
-        generated events.
+            generated events.
     """
 
     if not time_diffs:
@@ -190,7 +190,7 @@ def _create_mock_event(datastore,
         event_id += 1
 
 
-def _create_eventObj(datastore, event_id, ts, source_attrs):
+def _create_eventObj(datastore, event_id, ts, source_attrs=None):
     """Changes MockDataStore.event_dict based on the given arguments and commits
     it to the datastore.
 
