@@ -67,7 +67,8 @@ class TestSSHBruteforceSessionizerPlugin(BaseTest, BaseSessionizerTest):
         analyzer.datastore.client = mock.Mock()
         datastore = analyzer.datastore
 
-        _create_mock_event(datastore,
+        _create_mock_event(
+            datastore,
             0,
             2,
             source_attrs={'reporter': 'sshd',
@@ -79,7 +80,6 @@ class TestSSHBruteforceSessionizerPlugin(BaseTest, BaseSessionizerTest):
             message,
             'Sessionizing completed, number of session created: 1')
 
-        ds = MockDataStore('test', 0)
         test_message = '[sshd] [0]: Invalid user NoSuchUser from 0.0.0.0 ' \
             'port 0'
         event1 = (datastore.get_event('test_index', '0', stored_events=True))
