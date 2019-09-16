@@ -12,7 +12,6 @@ from timesketch.lib.analyzers.evtx_sessionizers import \
 from timesketch.lib.analyzers.evtx_sessionizers import \
     UnlockSessionizerSketchPlugin
 
-#from timesketch.lib.analyzers.base_sessionizer_test import _create_eventObj
 from timesketch.lib.analyzers.interface import Event
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
@@ -38,7 +37,6 @@ class TestWinEXTXSessionizerPlugin(object):
                 MockDataStore)
     def test_get_event_data(self):
         """Test getEventData returns the correct values."""
-        # ds = MockDataStore('test', 0)
         user = User('test_user')
         sketch = Sketch('test_sketch', 'description', user)
         label = sketch.Label(label='Test label', user=user)
