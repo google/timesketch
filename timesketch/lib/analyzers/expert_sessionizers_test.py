@@ -61,37 +61,38 @@ class TestSSHBruteforceSessionizerPlugin(BaseTest, BaseSessionizerTest):
     def test_event_type(self):
         """Test the mocking of events returns an event stream that matches the
         query for the analyzer."""
-        with mock.patch.object(
-                self.analyzer_class,
-                'event_stream',
-                return_value=_create_mock_event(
-                    0,
-                    2,
-                    source_attrs={'reporter': 'sshd',
-                                  'message': '[sshd] [0]: Invalid user ' \
-                                      'NoSuchUser from 0.0.0.0 port 0'})):
-            index = 'test_index'
-            sketch_id = 1
-            analyzer = self.analyzer_class(index, sketch_id)
-            message = analyzer.run()
-            self.assertEqual(
-                message,
-                'Sessionizing completed, number of session created: 1')
+        index = 'test_index'
+        sketch_id = 1
+        analyzer = self.analyzer_class(index, sketch_id)
+        analyzer.datastore.client = mock.Mock()
+        datastore = analyzer.datastore
 
-            ds = MockDataStore('test', 0)
-            test_message = '[sshd] [0]: Invalid user NoSuchUser from 0.0.0.0' \
-                ' port 0'
-            event1 = (ds.get_event('test_index', '0', stored_events=True))
-            self.assertEqual(event1['_source']['reporter'], 'sshd')
-            self.assertEqual(event1['_source']['message'], test_message)
-            self.assertEqual(event1['_source']['session_id'],
-                             {analyzer.session_type: 1})
+        _create_mock_event(datastore,
+            0,
+            2,
+            source_attrs={'reporter': 'sshd',
+                          'message': '[sshd] [0]: Invalid user ' \
+                          'NoSuchUser from 0.0.0.0 port 0'})
 
-            event2 = (ds.get_event('test_index', '101', stored_events=True))
-            self.assertEqual(event2['_source']['reporter'], 'sshd')
-            self.assertEqual(event2['_source']['message'], test_message)
-            self.assertEqual(event2['_source']['session_id'],
-                             {analyzer.session_type: 1})
+        message = analyzer.run()
+        self.assertEqual(
+            message,
+            'Sessionizing completed, number of session created: 1')
+
+        ds = MockDataStore('test', 0)
+        test_message = '[sshd] [0]: Invalid user NoSuchUser from 0.0.0.0 ' \
+            'port 0'
+        event1 = (datastore.get_event('test_index', '0', stored_events=True))
+        self.assertEqual(event1['_source']['reporter'], 'sshd')
+        self.assertEqual(event1['_source']['message'], test_message)
+        self.assertEqual(event1['_source']['session_id'],
+                         {analyzer.session_type: 1})
+
+        event2 = (datastore.get_event('test_index', '101', stored_events=True))
+        self.assertEqual(event2['_source']['reporter'], 'sshd')
+        self.assertEqual(event2['_source']['message'], test_message)
+        self.assertEqual(event2['_source']['session_id'],
+                         {analyzer.session_type: 1})
 
 if __name__ == '__main__':
     unittest.main()
