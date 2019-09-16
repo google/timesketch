@@ -82,9 +82,6 @@ class MockElasticClient(object):
 class MockDataStore(object):
     """A mock implementation of a Datastore."""
 
-    #List containing event dictionaries
-    event_store = []
-
     event_dict = {
         '_index': [],
         '_id': 'adc123',
@@ -156,6 +153,8 @@ class MockDataStore(object):
         self.client = MockElasticClient()
         self.host = host
         self.port = port
+        #List containing event dictionaries
+        self.event_store = []
 
     # pylint: disable=arguments-differ,unused-argument
     def search(self, *args, **kwargs):
@@ -247,6 +246,12 @@ class MockDataStore(object):
           Version number as a string.
         """
         return '6.0'
+
+    # pylint: disable=unused-argument
+    def search_stream(self, query_string, query_filter, query_dsl,
+                      indices, return_fields):
+        for event in self.event_store:
+            yield event
 
 
 class MockGraphDatabase(object):
