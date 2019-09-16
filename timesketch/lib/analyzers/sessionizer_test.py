@@ -6,17 +6,16 @@ import unittest
 import mock
 
 from timesketch.lib.analyzers.sessionizer import SessionizerSketchPlugin
-from timesketch.lib.analyzers.base_sessionizer_test import BaseSessionizerTest
 from timesketch.lib.analyzers.base_sessionizer_test import _create_mock_event
+from timesketch.lib.analyzers.base_sessionizer_test \
+    import check_surrounding_events
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
 
-class TestSessionizerPlugin(BaseTest, BaseSessionizerTest):
+class TestSessionizerPlugin(BaseTest):
     """Tests the functionality of the sessionizing sketch analyzer, focusing
     on edge cases."""
-    analyzer_class = SessionizerSketchPlugin
-
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_multiple_sessions(self):
@@ -42,7 +41,7 @@ class TestSessionizerPlugin(BaseTest, BaseSessionizerTest):
         self.assertEqual(event2['_source']['session_id'], {'all_events': 1})
         event3 = datastore.get_event('test_index', '202', stored_events=True)
         self.assertEqual(event3['_source']['session_id'], {'all_events': 2})
-        self._check_surrounding_events(datastore, [202], 'all_events')
+        check_surrounding_events(self, datastore, [202], 'all_events')
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
