@@ -256,6 +256,7 @@ export default {
     },
 
     getVegaSpec: function () {
+        //TODO: make the size of the chart responsive
         const WIDTH = 900
         const HEIGHT = 400
 
