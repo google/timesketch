@@ -20,11 +20,9 @@ import json
 import six
 
 from flask_testing import TestCase
-from flask import abort
 
 from timesketch import create_app
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
-from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import init_db
 from timesketch.models import drop_all
 from timesketch.models import db_session
@@ -153,8 +151,8 @@ class MockDataStore(object):
         self.client = MockElasticClient()
         self.host = host
         self.port = port
-        #List containing event dictionaries
-        self.event_store = []
+        # Dictionary containing event dictionaries.
+        self.event_store = {}
 
     # pylint: disable=arguments-differ,unused-argument
     def search(self, *args, **kwargs):
@@ -171,7 +169,7 @@ class MockDataStore(object):
             return 4711
         return self.search_result_dict
 
-    def get_event(self, searchindex_id, event_id, stored_events=False):
+    def get_event(self, searchindex_id, event_id):
         """Mock returning a single event from the datastore.
 
         Args:
@@ -183,15 +181,7 @@ class MockDataStore(object):
         Returns:
             A dictionary with event data.
         """
-        if not stored_events:
-            return self.event_dict
-
-        for event in self.event_store:
-            if event['_id'] == event_id:
-                return event
-
-        abort(HTTP_STATUS_CODE_NOT_FOUND)
-        return None
+        return self.event_dict
 
 
     def set_label(self,
@@ -224,10 +214,9 @@ class MockDataStore(object):
             event_id: Event Elasticsearch ID
         """
 
-        for stored_event in self.event_store:
-            if stored_event['_id'] == event_id:
-                stored_event['_source'].update(event)
-                return
+        if event_id in self.event_store:
+            self.event_store[event_id]['_source'].update(event)
+            return
 
         new_event = {
             '_index': index_name,
@@ -235,8 +224,7 @@ class MockDataStore(object):
             '_type': event_type,
             '_source': event
         }
-
-        self.event_store.append(new_event)
+        self.event_store[event_id] = new_event
 
     @property
     def version(self):
@@ -250,8 +238,8 @@ class MockDataStore(object):
     # pylint: disable=unused-argument
     def search_stream(self, query_string, query_filter, query_dsl,
                       indices, return_fields):
-        for event in self.event_store:
-            yield event
+        for i in range(0, len(self.event_store) - 1):
+            yield self.event_store[str(i)]
 
 
 class MockGraphDatabase(object):

@@ -58,15 +58,12 @@ class BaseSessionizerTest(BaseTest):
                 message,
                 'Sessionizing completed, number of session created: 1')
 
-            # pylint: disable=unexpected-keyword-arg
-            event1 = datastore.get_event('test_index', '0', stored_events=True)
+            event1 = datastore.event_store['0']
             self.assertEqual(event1['_source']['session_id'],
                              {analyzer.session_type: 1})
             # checking event with id '101' as 100 events have been inserted
             # as 'padding' (see _create_mock_event())
-            event2 = datastore.get_event('test_index',
-                                         '101',
-                                         stored_events=True)
+            event2 = datastore.event_store['101']
             self.assertEqual(event2['_source']['session_id'],
                              {analyzer.session_type: 1})
 
@@ -95,14 +92,11 @@ class BaseSessionizerTest(BaseTest):
                 message,
                 'Sessionizing completed, number of session created: 2')
 
-            # pylint: disable=unexpected-keyword-arg
-            event1 = datastore.get_event('test_index', '0', stored_events=True)
+            event1 = datastore.event_store['0']
             self.assertEqual(event1['_source']['session_id'],
                              {analyzer.session_type: 1})
 
-            event2 = datastore.get_event('test_index',
-                                         '101',
-                                         stored_events=True)
+            event2 = datastore.event_store['101']
             self.assertEqual(event2['_source']['session_id'],
                              {analyzer.session_type: 2})
             check_surrounding_events(self, datastore, [101],
@@ -131,13 +125,10 @@ class BaseSessionizerTest(BaseTest):
                 message,
                 'Sessionizing completed, number of session created: 1')
 
-            # pylint: disable=unexpected-keyword-arg
-            event1 = datastore.get_event('test_index', '0', stored_events=True)
+            event1 = datastore.event_store['0']
             self.assertEqual(event1['_source']['session_id'],
                              {analyzer.session_type: 1})
-            event2 = datastore.get_event('test_index',
-                                         '101',
-                                         stored_events=True)
+            event2 = datastore.event_store['101']
             self.assertEqual(event2['_source']['session_id'],
                              {analyzer.session_type: 1})
 
@@ -223,17 +214,13 @@ def check_surrounding_events(TestClass, datastore, threshold_ids,
     for threshold_id in threshold_ids:
         if threshold_id != 0:
             # check previous event is in the previous session
-            event = datastore.get_event('test_index',
-                                        str(threshold_id - 1),
-                                        stored_events=True)
+            event = datastore.event_store[str(threshold_id - 1)]
             TestClass.assertEqual(event['_source']['session_id'],
                                   {session_type: session_no})
         if threshold_id != last_id:
             # check next event is in the same session (as the event with
             # threshold id)
             session_no += 1
-            event = datastore.get_event('test_index',
-                                        str(threshold_id + 1),
-                                        stored_events=True)
+            event = datastore.event_store[str(threshold_id + 1)]
             TestClass.assertEqual(event['_source']['session_id'],
                                   {session_type: session_no})
