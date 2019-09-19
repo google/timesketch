@@ -170,7 +170,7 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
             sessionizer.run()
 
 
-class BaseManyEventsSequenceSessionizerPlugin(object):
+class TestManyEventsSequenceSessionizerPlugin(BaseTest):
     """Tests base functionality of sequence sessionizing sketch analyzers with
     many events in the even_seq which are listed in seq_sessionizer_classes.
 
@@ -393,7 +393,7 @@ class BaseManyEventsSequenceSessionizerPlugin(object):
                 format(sessionizer.session_type))
 
 
-class BaseOneEventSequenceSessionizerPlugin(object):
+class TestOneEventSequenceSessionizerPlugin(BaseTest):
     """Tests base functionality of sequence sessionizing sketch analyzers with
     one event in the even_seq which are listed in seq_sessionizer_classes.
 
