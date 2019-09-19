@@ -132,5 +132,8 @@ export default {
       }
     }
     return RestApiClient.post('/upload/', formData, config)
+  },
+  getSessions (sketchId, timelineIndex) {
+    return RestApiClient.get('/sketches/' + sketchId + '/explore/sessions/' + timelineIndex)
   }
 }
