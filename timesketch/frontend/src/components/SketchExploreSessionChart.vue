@@ -66,12 +66,12 @@ export default {
             spec: '{}',
             sessionTypes: ['all'],
             barSize: 0,
-            smallestTimestamp: 0,
+            smallest_timestamp: 0,
             selectedType: '',
             selectedID: '',
             sessions: [],
-            startTimeRange: Date.now() - 31556952000,
-            endTimeRange: Date.now(),
+            startTimeRange: null,
+            endTimeRange: null,
             timeRangeMessage: '',
             isTruncated: false
       }
@@ -134,7 +134,8 @@ export default {
     },
     
     updateTimeRange: function (event) {
-        if(/\d{1,2}\/\d{1,2}\/\d{4}/.test(event.target.value)) {
+        const DATE_REGEX = /\d{1,2}\/\d{1,2}\/\d{4}/
+        if(DATE_REGEX.test(event.target.value)) {
             this.timeRangeMessage = ''
             this.selectedSessions = []
             this.selectedType = ''
@@ -163,7 +164,7 @@ export default {
             this.selectedSessions = this.processedSessions.filter(session => session['session_type'] === this.selectedType)
             dictSpec['data']['values'] = this.selectedSessions
         }
-        dictSpec['vconcat'][1]['selection']['brush']['init']['x'] = [this.smallestTimestamp, this.smallestTimestamp + (this.barSize * 50)]
+        dictSpec['vconcat'][1]['selection']['brush']['init']['x'] = [this.smallest_timestamp, this.smallest_timestamp + (this.barSize * 50)]
         this.spec = JSON.stringify(dictSpec)
     },
 
@@ -193,29 +194,55 @@ export default {
         this.$store.commit('search', this.sketch.id)
     },
 
-    getProcessedSessions: function (first_timestamp, last_timestamp) {
+    getProcessedSessions: function () {
         //increases the visibility of sessions when plotted
+        const YEAR_IN_MS = 31556952000
+
         var processedSessions = JSON.parse(JSON.stringify(this.sessions))
         this.isTruncated = processedSessions.pop()['truncated']
-        
-        processedSessions = processedSessions.filter(session => session.start_timestamp >= first_timestamp && session.start_timestamp <= last_timestamp);
 
         if (processedSessions.length > 0) {
-            var smallestTimestamp = processedSessions[0].start_timestamp
             var largest_timestamp = processedSessions[0].end_timestamp
-            for (var i = 1; i < processedSessions.length; i++) {
-                if (processedSessions[i].start_timestamp < smallestTimestamp) {
-                    smallestTimestamp = processedSessions[i].start_timestamp
+            var smallest_timestamp = processedSessions[0].start_timestamp
+
+            if (this.endTimeRange == null) {
+                for (var i = 1; i < processedSessions.length; i++) {
+                    if (processedSessions[i].end_timestamp > largest_timestamp) {
+                        largest_timestamp = processedSessions[i].end_timestamp
+                    }
                 }
-                if (processedSessions[i].end_timestamp > largest_timestamp) {
-                    largest_timestamp = processedSessions[i].end_timestamp
+                this.endTimeRange = largest_timestamp
+                this.startTimeRange = this.endTimeRange - YEAR_IN_MS
+                processedSessions = processedSessions.filter(session => session.start_timestamp >= this.startTimeRange && session.start_timestamp <= this.endTimeRange)
+
+                smallest_timestamp = processedSessions[0].start_timestamp
+                for (var i = 1; i < processedSessions.length; i++) {
+                    if (processedSessions[i].start_timestamp < smallest_timestamp) {
+                        smallest_timestamp = processedSessions[i].start_timestamp
+                    }
                 }
             }
-            var timeRange = (largest_timestamp - smallestTimestamp)
+
+            else {
+                processedSessions = processedSessions.filter(session => session.start_timestamp >= this.startTimeRange && session.start_timestamp <= this.endTimeRange)
+
+                smallest_timestamp = processedSessions[0].start_timestamp
+                largest_timestamp = processedSessions[0].end_timestamp
+                for (var i = 1; i < processedSessions.length; i++) {
+                    if (processedSessions[i].start_timestamp < smallest_timestamp) {
+                        smallest_timestamp = processedSessions[i].start_timestamp
+                    }
+                    if (processedSessions[i].end_timestamp > largest_timestamp) {
+                        largest_timestamp = processedSessions[i].end_timestamp
+                    }
+                }
+            }
+            
+            var timeRange = (largest_timestamp - smallest_timestamp)
 
             //session bars will take up 1/1000th of the chart if they would otherwise be smaller
             this.barSize = Math.round(timeRange / 1000)
-            this.smallestTimestamp = smallestTimestamp
+            this.smallest_timestamp = smallest_timestamp
 
             for (var i = 0; i < processedSessions.length; i++) {
                 var session = processedSessions[i]
@@ -232,7 +259,7 @@ export default {
         const WIDTH = 900
         const HEIGHT = 400
 
-        this.getProcessedSessions(this.startTimeRange, this.endTimeRange)
+        this.getProcessedSessions()
         if (this.processedSessions === undefined || this.processedSessions.length == 0) {
             this.timeRangeMessage = 'There are no sessions in this time range.'
         }
@@ -274,7 +301,7 @@ export default {
                     "brush": {
                         "type": "interval",
                         "encodings": ["x"],
-                        "init": {"x": [this.smallestTimestamp, this.smallestTimestamp + (this.barSize * 50)]}
+                        "init": {"x": [this.smallest_timestamp, this.smallest_timestamp + (this.barSize * 50)]}
                     }
                 },
 
