@@ -2016,7 +2016,7 @@ class SessionResource(ResourceMixin, Resource):
             }
         }
 
-        timestamp_agg_spec = {
+        ts_agg_spec = {
             'aggregations': {
                 'timestamp_range': {
                     'filter': {
@@ -2044,9 +2044,12 @@ class SessionResource(ResourceMixin, Resource):
             }
         }
 
+        id_terms = id_agg_spec['aggregations']['term_count']['terms']
+        ts_filter = ts_agg_spec['aggregations']['timestamp_range']['filter']
+        ts_query_string = ts_filter['bool']['must'][0]['query_string']
+
         for session_type in session_types:
-            id_agg_spec['aggregations']['term_count']['terms']['field'] =\
-                'session_id.%s.keyword' % session_type
+            id_terms['field'] = 'session_id.{}.keyword'.format(session_type)
             # pylint: disable=unexpected-keyword-arg
             id_agg = self.datastore.client.search(index=list(sketch_indices),
                                                   body=id_agg_spec,
@@ -2061,17 +2064,17 @@ class SessionResource(ResourceMixin, Resource):
                 session_count += 1
 
                 session_id = bucket['key']
-                timestamp_agg_spec['aggregations']['timestamp_range'] \
-                    ['filter']['bool']['must'][0]['query_string']['query'] \
-                    = 'session_id.%s:%s' % (session_type, session_id)
-                timestamp_agg = self.datastore.client.search(
+                ts_query_string['query'] = 'session_id.{}:{}'.format(
+                    session_type,
+                    session_id)
+                ts_agg = self.datastore.client.search(
                     index=list(sketch_indices),
-                    body=timestamp_agg_spec,
+                    body=ts_agg_spec,
                     size=0)
-                start_timestamp = int(timestamp_agg['aggregations']
+                start_timestamp = int(ts_agg['aggregations']
                                       ['timestamp_range']['min_timestamp']
                                       ['value']) / 1000
-                end_timestamp = int(timestamp_agg['aggregations']
+                end_timestamp = int(ts_agg['aggregations']
                                     ['timestamp_range']['max_timestamp']
                                     ['value']) / 1000
 
