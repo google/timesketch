@@ -54,8 +54,6 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
                 self.annotateEvent(event, session_num)
                 last_timestamp = curr_timestamp
 
-            self.sketch.add_view('Session view',
-                                 self.NAME, query_string=self.query)
         except StopIteration:
             pass
 
