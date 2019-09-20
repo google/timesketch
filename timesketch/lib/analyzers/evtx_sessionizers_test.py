@@ -103,14 +103,10 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
                 'Sessionizing completed, number of sessions created: 1')
 
             # pylint: disable=unexpected-keyword-arg
-            event1 = (datastore.get_event('test_index',
-                                          '0',
-                                          stored_events=True))
+            event1 = datastore.event_store['0']
             self.assertEqual(event1['_source']['session_id']
                              [analyzer.session_type], ['0 (USER_1)'])
-            event2 = (datastore.get_event('test_index',
-                                          '1',
-                                          stored_events=True))
+            event2 = datastore.event_store['1']
             self.assertEqual(event2['_source']['session_id']
                              [analyzer.session_type], ['0 (USER_1)'])
 
@@ -128,7 +124,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
 
             _create_mock_event(
                 datastore,
-                2,
+                0,
                 6,
                 source_attrs=[{'xml_string': xml_string1,
                                'event_identifier':
@@ -157,38 +153,26 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
             # pylint: disable=unexpected-keyword-arg
 
             #session 0
-            event1 = (datastore.get_event('test_index',
-                                          '2',
-                                          stored_events=True))
+            event1 = datastore.event_store['0']
             self.assertEqual(event1['_source']['session_id']
                              [analyzer.session_type], ['0 (USER_1)'])
-            event2 = (datastore.get_event('test_index',
-                                          '3',
-                                          stored_events=True))
+            event2 = datastore.event_store['1']
             self.assertEqual(event2['_source']['session_id']
                              [analyzer.session_type], ['0 (USER_1)'])
 
             #session 1
-            event3 = (datastore.get_event('test_index',
-                                          '4',
-                                          stored_events=True))
+            event3 = datastore.event_store['2']
             self.assertEqual(event3['_source']['session_id']
                              [analyzer.session_type], ['1 (USER_2)'])
-            event5 = (datastore.get_event('test_index',
-                                          '6',
-                                          stored_events=True))
+            event5 = datastore.event_store['4']
             self.assertEqual(event5['_source']['session_id']
                              [analyzer.session_type], ['1 (USER_2)'])
 
             #session 2
-            event4 = (datastore.get_event('test_index',
-                                          '5',
-                                          stored_events=True))
+            event4 = datastore.event_store['3']
             self.assertEqual(event4['_source']['session_id']
                              [analyzer.session_type], ['2 (USER_3)'])
-            event6 = (datastore.get_event('test_index',
-                                          '7',
-                                          stored_events=True))
+            event6 = datastore.event_store['5']
             self.assertEqual(event6['_source']['session_id']
                              [analyzer.session_type], ['2 (USER_3)'])
 
@@ -207,7 +191,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
 
             _create_mock_event(
                 datastore,
-                8,
+                0,
                 4,
                 source_attrs=[{'xml_string': xml_string1,
                                'event_identifier':
@@ -226,25 +210,17 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
                 'Sessionizing completed, number of sessions created: 2')
 
             # pylint: disable=unexpected-keyword-arg
-            event1 = (datastore.get_event('test_index',
-                                          '8',
-                                          stored_events=True))
+            event1 = datastore.event_store['0']
             self.assertEqual(event1['_source']['session_id']
                              [analyzer.session_type], ['0 (USER_1)'])
-            event2 = (datastore.get_event('test_index',
-                                          '9',
-                                          stored_events=True))
+            event2 = datastore.event_store['1']
             self.assertEqual(event2['_source']['session_id']
                              [analyzer.session_type], ['1 (USER_2)'])
-            event3 = (datastore.get_event('test_index',
-                                          '10',
-                                          stored_events=True))
+            event3 = datastore.event_store['2']
             self.assertEqual(set(event3['_source']['session_id']
                                  [analyzer.session_type]),
                              set(['0 (USER_1)', '1 (USER_2)']))
-            event4 = (datastore.get_event('test_index',
-                                          '11',
-                                          stored_events=True))
+            event4 = datastore.event_store['3']
             self.assertTrue(event4['_source'].get('session_id') is None or
                             event4['_source']['session_id'].get(
                                 analyzer.session_type) is None)
@@ -265,7 +241,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
 
             _create_mock_event(
                 datastore,
-                12,
+                0,
                 2,
                 source_attrs=[{'xml_string': xml_string1,
                                'event_identifier':
@@ -280,14 +256,10 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
                 'Sessionizing completed, number of sessions created: 1')
 
             # pylint: disable=unexpected-keyword-arg
-            event1 = (datastore.get_event('test_index',
-                                          '12',
-                                          stored_events=True))
+            event1 = datastore.event_store['0']
             self.assertEqual(event1['_source']['session_id']
                              [analyzer.session_type], ['0 (USER_1)'])
-            event2 = (datastore.get_event('test_index',
-                                          '13',
-                                          stored_events=True))
+            event2 = datastore.event_store['1']
             self.assertTrue(event2['_source'].get('session_id') is None or
                             event2['_source']['session_id'].get(
                                 analyzer.session_type) is None)
@@ -308,7 +280,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
 
             _create_mock_event(
                 datastore,
-                14,
+                0,
                 3,
                 source_attrs=[{'xml_string': xml_string1,
                                'event_identifier':
@@ -326,20 +298,14 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
                 'Sessionizing completed, number of sessions created: 1')
 
             # pylint: disable=unexpected-keyword-arg
-            event1 = (datastore.get_event('test_index',
-                                          '14',
-                                          stored_events=True))
+            event1 = datastore.event_store['0']
             self.assertTrue(event1['_source'].get('session_id') is None or
                             event1['_source']['session_id'].get(
                                 analyzer.session_type) is None)
-            event2 = (datastore.get_event('test_index',
-                                          '15',
-                                          stored_events=True))
+            event2 = datastore.event_store['1']
             self.assertEqual(event2['_source']['session_id']
                              [analyzer.session_type], ['0 (USER_1)'])
-            event3 = (datastore.get_event('test_index',
-                                          '16',
-                                          stored_events=True))
+            event3 = datastore.event_store['2']
             self.assertEqual(event3['_source']['session_id']
                              [analyzer.session_type], ['0 (USER_1)'])
 
@@ -360,7 +326,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
 
             _create_mock_event(
                 datastore,
-                17,
+                0,
                 3,
                 source_attrs=[{'xml_string': xml_string1,
                                'event_identifier':
@@ -378,19 +344,13 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
                 'Sessionizing completed, number of sessions created: 2')
 
             # pylint: disable=unexpected-keyword-arg
-            event1 = (datastore.get_event('test_index',
-                                          '17',
-                                          stored_events=True))
+            event1 = datastore.event_store['0']
             self.assertEqual(event1['_source']['session_id']
                              [analyzer.session_type], ['0 (USER_1)'])
-            event2 = (datastore.get_event('test_index',
-                                          '18',
-                                          stored_events=True))
+            event2 = datastore.event_store['1']
             self.assertEqual(event2['_source']['session_id']
                              [analyzer.session_type], ['1 (USER_1)'])
-            event3 = (datastore.get_event('test_index',
-                                          '19',
-                                          stored_events=True))
+            event3 = datastore.event_store['2']
             self.assertEqual(event3['_source']['session_id']
                              [analyzer.session_type], ['1 (USER_1)'])
 
@@ -410,7 +370,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
 
             _create_mock_event(
                 datastore,
-                20,
+                0,
                 3,
                 source_attrs=[{'xml_string': xml_string1,
                                'event_identifier':
@@ -428,19 +388,13 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
                 'Sessionizing completed, number of sessions created: 1')
 
             # pylint: disable=unexpected-keyword-arg
-            event1 = (datastore.get_event('test_index',
-                                          '20',
-                                          stored_events=True))
+            event1 = datastore.event_store['0']
             self.assertEqual(event1['_source']['session_id']
                              [analyzer.session_type], ['0 (USER_1)'])
-            event2 = (datastore.get_event('test_index',
-                                          '21',
-                                          stored_events=True))
+            event2 = datastore.event_store['1']
             self.assertEqual(event2['_source']['session_id']
                              [analyzer.session_type], ['0 (USER_1)'])
-            event3 = (datastore.get_event('test_index',
-                                          '22',
-                                          stored_events=True))
+            event3 = datastore.event_store['2']
             self.assertTrue(event3['_source'].get('session_id') is None or
                             event3['_source']['session_id'].get(
                                 analyzer.session_type) is None)
@@ -457,7 +411,7 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
             analyzer.datastore.client = mock.Mock()
             datastore = analyzer.datastore
 
-            _create_mock_event(datastore, 23, 0)
+            _create_mock_event(datastore, 0, 0)
 
             message = analyzer.run()
             self.assertEqual(
