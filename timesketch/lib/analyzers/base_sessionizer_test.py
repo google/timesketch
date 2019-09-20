@@ -5,21 +5,38 @@ from __future__ import unicode_literals
 import copy
 import mock
 
+from timesketch.lib.analyzers.sessionizer import SessionizerSketchPlugin
+from timesketch.lib.analyzers.expert_sessionizers import \
+    WebActivitySessionizerSketchPlugin
+from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
 
-class BaseSessionizerTest(object):
-    """Base class for tests for sessionizers."""
+class BaseSessionizerTest(BaseTest):
+    """Tests the base functionality of session analyzers listed in
+    analyzer_classes.
+
+    New sessionizer classes should be added in analyzer_classes, if applicable.
+
+    Attributes:
+        analyzer_classes: A list of analyzer classes to test.
+    """
+    analyzer_classes = [
+        SessionizerSketchPlugin,
+        WebActivitySessionizerSketchPlugin
+    ]
+
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_analyzer(self):
         """Test basic analyzer functionality."""
         index = 'test_index'
         sketch_id = 1
-        analyzer = self.analyzer_class(index, sketch_id)
-        self.assertIsInstance(analyzer, self.analyzer_class)
-        self.assertEqual(index, analyzer.index_name)
-        self.assertEqual(sketch_id, analyzer.sketch.id)
+        for analyzer_class in self.analyzer_classes:
+            analyzer = analyzer_class(index, sketch_id)
+            self.assertIsInstance(analyzer, analyzer_class)
+            self.assertEqual(index, analyzer.index_name)
+            self.assertEqual(sketch_id, analyzer.sketch.id)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -27,28 +44,33 @@ class BaseSessionizerTest(object):
         """Test multiple events in the same session are allocated correctly."""
         index = 'test_index'
         sketch_id = 1
-        analyzer = self.analyzer_class(index, sketch_id)
-        analyzer.datastore.client = mock.Mock()
-        datastore = analyzer.datastore
+        for analyzer_class in self.analyzer_classes:
+            analyzer = analyzer_class(index, sketch_id)
+            analyzer.datastore.client = mock.Mock()
+            datastore = analyzer.datastore
 
-        _create_mock_event(
-            datastore,
-            0,
-            2,
-            time_diffs=[self.analyzer_class.max_time_diff_micros / 2])
+            _create_mock_event(
+                datastore,
+                0,
+                2,
+                time_diffs=[analyzer_class.max_time_diff_micros / 2])
 
-        message = analyzer.run()
-        self.assertEqual(
-            message, 'Sessionizing completed, number of session created: 1')
+            message = analyzer.run()
+            self.assertEqual(
+                message,
+                'Sessionizing completed, number of session created: 1')
 
-        event1 = datastore.get_event('test_index', '0', stored_events=True)
-        self.assertEqual(event1['_source']['session_id'],
-                         {analyzer.session_type: 1})
-        # checking event with id '101' as 100 events have been inserted
-        # as 'padding' (see _create_mock_event())
-        event2 = datastore.get_event('test_index', '101', stored_events=True)
-        self.assertEqual(event2['_source']['session_id'],
-                         {analyzer.session_type: 1})
+            # pylint: disable=unexpected-keyword-arg
+            event1 = datastore.get_event('test_index', '0', stored_events=True)
+            self.assertEqual(event1['_source']['session_id'],
+                             {analyzer.session_type: 1})
+            # checking event with id '101' as 100 events have been inserted
+            # as 'padding' (see _create_mock_event())
+            event2 = datastore.get_event('test_index',
+                                         '101',
+                                         stored_events=True)
+            self.assertEqual(event2['_source']['session_id'],
+                             {analyzer.session_type: 1})
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -57,30 +79,36 @@ class BaseSessionizerTest(object):
         correctly."""
         index = 'test_index'
         sketch_id = 1
-        analyzer = self.analyzer_class(index, sketch_id)
-        analyzer.datastore.client = mock.Mock()
-        datastore = analyzer.datastore
+        for analyzer_class in self.analyzer_classes:
+            analyzer = analyzer_class(index, sketch_id)
+            analyzer.datastore.client = mock.Mock()
+            datastore = analyzer.datastore
 
-        _create_mock_event(datastore,
-                           0,
-                           2,
-                           time_diffs=[
-                               self.analyzer_class.max_time_diff_micros +
-                               (self.analyzer_class.max_time_diff_micros / 2)
-                           ])
+            _create_mock_event(datastore,
+                               0,
+                               2,
+                               time_diffs=[
+                                   analyzer_class.max_time_diff_micros +
+                                   (analyzer_class.max_time_diff_micros / 2)
+                               ])
 
-        message = analyzer.run()
-        self.assertEqual(
-            message, 'Sessionizing completed, number of session created: 2')
+            message = analyzer.run()
+            self.assertEqual(
+                message,
+                'Sessionizing completed, number of session created: 2')
 
-        event1 = datastore.get_event('test_index', '0', stored_events=True)
-        self.assertEqual(event1['_source']['session_id'],
-                         {analyzer.session_type: 1})
+            # pylint: disable=unexpected-keyword-arg
+            event1 = datastore.get_event('test_index', '0', stored_events=True)
+            self.assertEqual(event1['_source']['session_id'],
+                             {analyzer.session_type: 1})
 
-        event2 = datastore.get_event('test_index', '101', stored_events=True)
-        self.assertEqual(event2['_source']['session_id'],
-                         {analyzer.session_type: 2})
-        self._check_surrounding_events(datastore, [101], analyzer.session_type)
+            event2 = datastore.get_event('test_index',
+                                         '101',
+                                         stored_events=True)
+            self.assertEqual(event2['_source']['session_id'],
+                             {analyzer.session_type: 2})
+            check_surrounding_events(self, datastore, [101],
+                                     analyzer.session_type)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -89,58 +117,31 @@ class BaseSessionizerTest(object):
         allocated correctly."""
         index = 'test_index'
         sketch_id = 1
-        analyzer = self.analyzer_class(index, sketch_id)
-        analyzer.datastore.client = mock.Mock()
-        datastore = analyzer.datastore
+        for analyzer_class in self.analyzer_classes:
+            analyzer = analyzer_class(index, sketch_id)
+            analyzer.datastore.client = mock.Mock()
+            datastore = analyzer.datastore
 
-        _create_mock_event(
-            datastore,
-            0,
-            2,
-            time_diffs=[self.analyzer_class.max_time_diff_micros])
+            _create_mock_event(
+                datastore,
+                0,
+                2,
+                time_diffs=[analyzer_class.max_time_diff_micros])
 
-        message = analyzer.run()
-        self.assertEqual(
-            message, 'Sessionizing completed, number of session created: 1')
+            message = analyzer.run()
+            self.assertEqual(
+                message,
+                'Sessionizing completed, number of session created: 1')
 
-        event1 = datastore.get_event('test_index', '0', stored_events=True)
-        self.assertEqual(event1['_source']['session_id'],
-                         {analyzer.session_type: 1})
-        event2 = datastore.get_event('test_index', '101', stored_events=True)
-        self.assertEqual(event2['_source']['session_id'],
-                         {analyzer.session_type: 1})
-
-    def _check_surrounding_events(self, datastore, threshold_ids,
-                                  session_type):
-        """Checks that the events surrounding the first event in a new session
-        are allocated correctly.
-
-        Args:
-            datastore: An instance of MockDataStore.
-            threshold_ids: A list of IDs of the first events in the sessions.
-            session_type: A string naming the session type.
-        """
-        session_no = 1
-        last_id = threshold_ids[-1]
-
-        for threshold_id in threshold_ids:
-            if threshold_id != 0:
-                # check previous event is in the previous session
-                event = datastore.get_event('test_index',
-                                            str(threshold_id - 1),
-                                            stored_events=True)
-                self.assertEqual(event['_source']['session_id'],
-                                 {session_type: session_no})
-
-            if threshold_id != last_id:
-                # check next event is in the same session (as the event with
-                # threshold id)
-                session_no += 1
-                event = datastore.get_event('test_index',
-                                            str(threshold_id + 1),
-                                            stored_events=True)
-                self.assertEqual(event['_source']['session_id'],
-                                 {session_type: session_no})
+            # pylint: disable=unexpected-keyword-arg
+            event1 = datastore.get_event('test_index', '0', stored_events=True)
+            self.assertEqual(event1['_source']['session_id'],
+                             {analyzer.session_type: 1})
+            event2 = datastore.get_event('test_index',
+                                         '101',
+                                         stored_events=True)
+            self.assertEqual(event2['_source']['session_id'],
+                             {analyzer.session_type: 1})
 
 
 def _create_mock_event(datastore,
@@ -208,3 +209,33 @@ def _create_eventObj(datastore, event_id, ts, source_attrs=None):
 
     datastore.import_event(event['_index'], event['_type'], event['_source'],
                            str(event_id))
+
+
+def check_surrounding_events(test_instance, datastore, threshold_ids,
+                             session_type):
+    """Checks that the events surrounding the first event in a new session
+    are allocated correctly.
+    Args:
+        datastore: An instance of MockDataStore.
+        threshold_ids: A list of IDs of the first events in the sessions.
+        session_type: A string naming the session type.
+    """
+    session_no = 1
+    last_id = threshold_ids[-1]
+    for threshold_id in threshold_ids:
+        if threshold_id != 0:
+            # check previous event is in the previous session
+            event = datastore.get_event('test_index',
+                                        str(threshold_id - 1),
+                                        stored_events=True)
+            test_instance.assertEqual(event['_source']['session_id'],
+                                      {session_type: session_no})
+        if threshold_id != last_id:
+            # check next event is in the same session (as the event with
+            # threshold id)
+            session_no += 1
+            event = datastore.get_event('test_index',
+                                        str(threshold_id + 1),
+                                        stored_events=True)
+            test_instance.assertEqual(event['_source']['session_id'],
+                                      {session_type: session_no})

@@ -7,16 +7,13 @@ import mock
 
 from timesketch.lib.analyzers.expert_sessionizers import \
     WebActivitySessionizerSketchPlugin
-from timesketch.lib.analyzers.base_sessionizer_test import BaseSessionizerTest
 from timesketch.lib.analyzers.base_sessionizer_test import _create_mock_event
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
-
-class TestWebActivitySessionizerPlugin(BaseTest, BaseSessionizerTest):
+class TestWebActivitySessionizerPlugin(BaseTest):
     """Tests the functionality of the web activity sessionizing sketch
     analyzer."""
-    analyzer_class = WebActivitySessionizerSketchPlugin
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -25,7 +22,7 @@ class TestWebActivitySessionizerPlugin(BaseTest, BaseSessionizerTest):
         query for the analyzer."""
         index = 'test_index'
         sketch_id = 1
-        analyzer = self.analyzer_class(index, sketch_id)
+        analyzer = WebActivitySessionizerSketchPlugin(index, sketch_id)
         analyzer.datastore.client = mock.Mock()
         datastore = analyzer.datastore
 
