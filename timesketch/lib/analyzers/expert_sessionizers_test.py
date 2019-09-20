@@ -13,7 +13,6 @@ from timesketch.lib.analyzers.base_sessionizer_test import _create_mock_event
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
-
 class TestWebActivitySessionizerPlugin(BaseTest):
     """Tests the functionality of the web activity sessionizing sketch
     analyzer."""

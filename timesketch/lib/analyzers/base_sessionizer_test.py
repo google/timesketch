@@ -17,8 +17,11 @@ from timesketch.lib.testlib import MockDataStore
 class BaseSessionizerTest(BaseTest):
     """Tests the base functionality of session analyzers listed in
     analyzer_classes.
-        Attributes:
-            analyzer_classes: A list of analyzer classes to test.
+
+    New sessionizer classes should be added in analyzer_classes, if applicable.
+
+    Attributes:
+        analyzer_classes: A list of analyzer classes to test.
     """
     analyzer_classes = [
         SessionizerSketchPlugin,
@@ -65,6 +68,7 @@ class BaseSessionizerTest(BaseTest):
                              {analyzer.session_type: 1})
             # checking event with id '101' as 100 events have been inserted
             # as 'padding' (see _create_mock_event())
+
             event2 = datastore.event_store['101']
             self.assertEqual(event2['_source']['session_id'],
                              {analyzer.session_type: 1})
@@ -199,7 +203,8 @@ def _create_eventObj(datastore, event_id, ts, source_attrs=None):
     datastore.import_event(event['_index'], event['_type'], event['_source'],
                            str(event_id))
 
-def check_surrounding_events(TestClass, datastore, threshold_ids,
+
+def check_surrounding_events(test_instance, datastore, threshold_ids,
                              session_type):
     """Checks that the events surrounding the first event in a new session
     are allocated correctly.
@@ -213,13 +218,17 @@ def check_surrounding_events(TestClass, datastore, threshold_ids,
     for threshold_id in threshold_ids:
         if threshold_id != 0:
             # check previous event is in the previous session
-            event = datastore.event_store[str(threshold_id - 1)]
-            TestClass.assertEqual(event['_source']['session_id'],
-                                  {session_type: session_no})
+            event = datastore.get_event('test_index',
+                                        str(threshold_id - 1),
+                                        stored_events=True)
+            test_instance.assertEqual(event['_source']['session_id'],
+                                      {session_type: session_no})
         if threshold_id != last_id:
             # check next event is in the same session (as the event with
             # threshold id)
             session_no += 1
-            event = datastore.event_store[str(threshold_id + 1)]
-            TestClass.assertEqual(event['_source']['session_id'],
-                                  {session_type: session_no})
+            event = datastore.get_event('test_index',
+                                        str(threshold_id + 1),
+                                        stored_events=True)
+            test_instance.assertEqual(event['_source']['session_id'],
+                                      {session_type: session_no})

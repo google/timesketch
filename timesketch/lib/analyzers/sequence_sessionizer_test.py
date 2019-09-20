@@ -173,9 +173,12 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
 class TestManyEventsSequenceSessionizerPlugin(BaseTest):
     """Tests base functionality of sequence sessionizing sketch analyzers with
     many events in the even_seq which are listed in seq_sessionizer_classes.
-        Attributes:
-            seq_sessionizer_classes: A list of sequence sessionizer classes to
-                test.
+
+    New sequence sessionizer classes with many events in the event_seq should be
+    added in seq_sessionizer_classes, if applicable.
+
+    Attributes:
+        seq_sessionizer_classes: A list of sequence sessionizer classes to test.
     """
     seq_sessionizer_classes = [ManyEventsSequenceSessionizer]
 
@@ -374,6 +377,18 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
                 'Sessionizing completed, number of {0:s} sessions created: 0'.
                 format(sessionizer.session_type))
 
+
+class TestOneEventSequenceSessionizerPlugin(BaseTest):
+    """Tests base functionality of sequence sessionizing sketch analyzers with
+    one event in the even_seq which are listed in seq_sessionizer_classes.
+
+    New sequence sessionizer classes with one event in the event_seq should be
+    added in seq_sessionizer_classes, if applicable.
+
+    Attributes:
+        seq_sessionizer_classes: A list of sequence sessionizer classes to test.
+    """
+    seq_sessionizer_classes = [OneEventSequenceSessionizer]
 
 class TestOneEventSequenceSessionizerPlugin(BaseTest):
     """Tests base functionality of sequence sessionizing sketch analyzers with
