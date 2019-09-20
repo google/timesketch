@@ -45,13 +45,13 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
             first_event = next(events)
             last_timestamp = first_event.source.get('timestamp')
             session_num = 1
-            self.addSessionId(first_event, session_num)
+            self.annotateEvent(first_event, session_num)
 
             for event in events:
                 curr_timestamp = event.source.get('timestamp')
                 if curr_timestamp - last_timestamp > self.max_time_diff_micros:
                     session_num += 1
-                self.addSessionId(event, session_num)
+                self.annotateEvent(event, session_num)
                 last_timestamp = curr_timestamp
 
             self.sketch.add_view('Session view',
@@ -62,7 +62,7 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
         return ('Sessionizing completed, number of session created:'
                 ' {0:d}'.format(session_num))
 
-    def addSessionId(self, event, session_num):
+    def annotateEvent(self, event, session_num):
         """Annotate an event with a session ID. Store IDs as dictionary entries
         corresponding to the type of session.
         Args:

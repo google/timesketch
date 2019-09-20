@@ -75,7 +75,7 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
                 if event_id in self.start_events:
                     logon_id = self.getLogonId(event, event_id)
                     session_id = self.getSessionId(event, session_num)
-                    self.addSessionId(event, [session_id])
+                    self.annotateEvent(event, [session_id])
                     start_events[logon_id] = session_id
 
                     view_query = 'session_id.%s:"%s"' % (self.session_type,
@@ -88,7 +88,7 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
                     logon_id = self.getLogonId(event, event_id)
                     session_id = start_events.get(logon_id)
                     if session_id:
-                        self.addSessionId(event, [session_id])
+                        self.annotateEvent(event, [session_id])
                         del start_events[logon_id]
 
                 else:
@@ -97,7 +97,7 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
                         new_id = []
                         for session_id in start_events.values():
                             new_id.append(session_id)
-                        self.addSessionId(event, new_id)
+                        self.annotateEvent(event, new_id)
                         start_events = {}
 
             return (start_time, session_num, start_events, True)
