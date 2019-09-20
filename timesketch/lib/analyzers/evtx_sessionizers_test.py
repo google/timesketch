@@ -30,8 +30,23 @@ xml_string3 = '<Event xmlns="http://schemas.microsoft.com/win/2004/08/events' \
     '/event"><EventData><Data Name="TargetUserName">USER_3</Data>' \
     '<Data Name="TargetLogonId">0x0000000000000003</Data></EventData></Event>'
 
-class TestWinEXTXSessionizerPlugin(object):
-    """Tests for Windows EVTX log sessionizers"""
+class TestWinEXTXSessionizerPlugin(BaseTest):
+    """Tests for Windows EVTX log sessionizers listed in analyzer_classes. New
+    sessionizer classes should be added in analyzer_classes, if applicable.
+
+     Attributes:
+        analyzer_classes: A list of dictionaries representing analyzer classes
+        to test.
+    """
+    analyzer_classes = [
+        {"class": LogonSessionizerSketchPlugin,
+         "start_event_id": 4624,
+         "end_event_id": 4634},
+
+        {"class": UnlockSessionizerSketchPlugin,
+         "start_event_id": 4801,
+         "end_event_id": 4800}
+    ]
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -44,17 +59,19 @@ class TestWinEXTXSessionizerPlugin(object):
 
         index = 'test_index'
         sketch_id = 1
-        analyzer = self.analyzer_class(index, sketch_id)
-        datastore = analyzer.datastore
-        event_dict = copy.deepcopy(MockDataStore.event_dict)
-        event_dict['_source'].update({'xml_string': xml_string1})
-        event_obj = Event(event_dict, datastore, sketch)
 
-        username = analyzer.getEventData(event_obj, 'TargetUserName')
-        logon_id = analyzer.getEventData(event_obj, 'TargetLogonId')
+        for analyzer_class in self.analyzer_classes:
+            analyzer = analyzer_class['class'](index, sketch_id)
+            datastore = analyzer.datastore
+            event_dict = copy.deepcopy(MockDataStore.event_dict)
+            event_dict['_source'].update({'xml_string': xml_string1})
+            event_obj = Event(event_dict, datastore, sketch)
 
-        self.assertEqual(username, 'USER_1')
-        self.assertEqual(logon_id, '0x0000000000000001')
+            username = analyzer.getEventData(event_obj, 'TargetUserName')
+            logon_id = analyzer.getEventData(event_obj, 'TargetLogonId')
+
+            self.assertEqual(username, 'USER_1')
+            self.assertEqual(logon_id, '0x0000000000000001')
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -63,30 +80,39 @@ class TestWinEXTXSessionizerPlugin(object):
         event."""
         index = 'test_index'
         sketch_id = 1
-        analyzer = self.analyzer_class(index, sketch_id)
-        analyzer.datastore.client = mock.Mock()
-        datastore = analyzer.datastore
 
-        _create_mock_event(
-            datastore,
-            0,
-            2,
-            source_attrs=[{'xml_string': xml_string1,
-                           'event_identifier': self.start_event_id},
-                          {'xml_string': xml_string1,
-                           'event_identifier': self.end_event_id}])
+        for analyzer_class in self.analyzer_classes:
+            analyzer = analyzer_class['class'](index, sketch_id)
+            analyzer.datastore.client = mock.Mock()
+            datastore = analyzer.datastore
 
-        message = analyzer.run()
-        self.assertEqual(
-            message,
-            'Sessionizing completed, number of sessions created: 1')
+            _create_mock_event(
+                datastore,
+                0,
+                2,
+                source_attrs=[{'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['start_event_id']},
+                              {'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['end_event_id']}])
 
-        event1 = (datastore.get_event('test_index', '0', stored_events=True))
-        self.assertEqual(event1['_source']['session_id']
-                         [analyzer.session_type], ['0 (USER_1)'])
-        event2 = (datastore.get_event('test_index', '1', stored_events=True))
-        self.assertEqual(event2['_source']['session_id']
-                         [analyzer.session_type], ['0 (USER_1)'])
+            message = analyzer.run()
+            self.assertEqual(
+                message,
+                'Sessionizing completed, number of sessions created: 1')
+
+            # pylint: disable=unexpected-keyword-arg
+            event1 = (datastore.get_event('test_index',
+                                          '0',
+                                          stored_events=True))
+            self.assertEqual(event1['_source']['session_id']
+                             [analyzer.session_type], ['0 (USER_1)'])
+            event2 = (datastore.get_event('test_index',
+                                          '1',
+                                          stored_events=True))
+            self.assertEqual(event2['_source']['session_id']
+                             [analyzer.session_type], ['0 (USER_1)'])
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -94,55 +120,77 @@ class TestWinEXTXSessionizerPlugin(object):
         """Test multiple sessions are allocated correctly."""
         index = 'test_index'
         sketch_id = 1
-        analyzer = self.analyzer_class(index, sketch_id)
-        analyzer.datastore.client = mock.Mock()
-        datastore = analyzer.datastore
 
-        _create_mock_event(
-            datastore,
-            2,
-            6,
-            source_attrs=[{'xml_string': xml_string1,
-                           'event_identifier':self.start_event_id},
-                          {'xml_string': xml_string1,
-                           'event_identifier':self.end_event_id},
-                          {'xml_string': xml_string2,
-                           'event_identifier':self.start_event_id},
-                          {'xml_string': xml_string3,
-                           'event_identifier':self.start_event_id},
-                          {'xml_string': xml_string2,
-                           'event_identifier':self.end_event_id},
-                          {'xml_string': xml_string3,
-                           'event_identifier':self.end_event_id}])
+        for analyzer_class in self.analyzer_classes:
+            analyzer = analyzer_class['class'](index, sketch_id)
+            analyzer.datastore.client = mock.Mock()
+            datastore = analyzer.datastore
 
-        message = analyzer.run()
-        self.assertEqual(
-            message,
-            'Sessionizing completed, number of sessions created: 3')
+            _create_mock_event(
+                datastore,
+                2,
+                6,
+                source_attrs=[{'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['start_event_id']},
+                              {'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['end_event_id']},
+                              {'xml_string': xml_string2,
+                               'event_identifier':
+                               analyzer_class['start_event_id']},
+                              {'xml_string': xml_string3,
+                               'event_identifier':
+                               analyzer_class['start_event_id']},
+                              {'xml_string': xml_string2,
+                               'event_identifier':
+                               analyzer_class['end_event_id']},
+                              {'xml_string': xml_string3,
+                               'event_identifier':
+                               analyzer_class['end_event_id']}])
 
-        #session 0
-        event1 = (datastore.get_event('test_index', '2', stored_events=True))
-        self.assertEqual(event1['_source']['session_id']
-                         [analyzer.session_type], ['0 (USER_1)'])
-        event2 = (datastore.get_event('test_index', '3', stored_events=True))
-        self.assertEqual(event2['_source']['session_id']
-                         [analyzer.session_type], ['0 (USER_1)'])
+            message = analyzer.run()
+            self.assertEqual(
+                message,
+                'Sessionizing completed, number of sessions created: 3')
 
-        #session 1
-        event3 = (datastore.get_event('test_index', '4', stored_events=True))
-        self.assertEqual(event3['_source']['session_id']
-                         [analyzer.session_type], ['1 (USER_2)'])
-        event5 = (datastore.get_event('test_index', '6', stored_events=True))
-        self.assertEqual(event5['_source']['session_id']
-                         [analyzer.session_type], ['1 (USER_2)'])
+            # pylint: disable=unexpected-keyword-arg
 
-        #session 2
-        event4 = (datastore.get_event('test_index', '5', stored_events=True))
-        self.assertEqual(event4['_source']['session_id']
-                         [analyzer.session_type], ['2 (USER_3)'])
-        event6 = (datastore.get_event('test_index', '7', stored_events=True))
-        self.assertEqual(event6['_source']['session_id']
-                         [analyzer.session_type], ['2 (USER_3)'])
+            #session 0
+            event1 = (datastore.get_event('test_index',
+                                          '2',
+                                          stored_events=True))
+            self.assertEqual(event1['_source']['session_id']
+                             [analyzer.session_type], ['0 (USER_1)'])
+            event2 = (datastore.get_event('test_index',
+                                          '3',
+                                          stored_events=True))
+            self.assertEqual(event2['_source']['session_id']
+                             [analyzer.session_type], ['0 (USER_1)'])
+
+            #session 1
+            event3 = (datastore.get_event('test_index',
+                                          '4',
+                                          stored_events=True))
+            self.assertEqual(event3['_source']['session_id']
+                             [analyzer.session_type], ['1 (USER_2)'])
+            event5 = (datastore.get_event('test_index',
+                                          '6',
+                                          stored_events=True))
+            self.assertEqual(event5['_source']['session_id']
+                             [analyzer.session_type], ['1 (USER_2)'])
+
+            #session 2
+            event4 = (datastore.get_event('test_index',
+                                          '5',
+                                          stored_events=True))
+            self.assertEqual(event4['_source']['session_id']
+                             [analyzer.session_type], ['2 (USER_3)'])
+            event6 = (datastore.get_event('test_index',
+                                          '7',
+                                          stored_events=True))
+            self.assertEqual(event6['_source']['session_id']
+                             [analyzer.session_type], ['2 (USER_3)'])
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -151,41 +199,55 @@ class TestWinEXTXSessionizerPlugin(object):
         a startup event."""
         index = 'test_index'
         sketch_id = 1
-        analyzer = self.analyzer_class(index, sketch_id)
-        analyzer.datastore.client = mock.Mock()
-        datastore = analyzer.datastore
 
-        _create_mock_event(
-            datastore,
-            8,
-            4,
-            source_attrs=[{'xml_string': xml_string1,
-                           'event_identifier': self.start_event_id},
-                          {'xml_string': xml_string2,
-                           'event_identifier': self.start_event_id},
-                          {'event_identifier': 6005},
-                          {'xml_string': xml_string1,
-                           'event_identifier': self.end_event_id}])
+        for analyzer_class in self.analyzer_classes:
+            analyzer = analyzer_class['class'](index, sketch_id)
+            analyzer.datastore.client = mock.Mock()
+            datastore = analyzer.datastore
 
-        message = analyzer.run()
-        self.assertEqual(
-            message,
-            'Sessionizing completed, number of sessions created: 2')
+            _create_mock_event(
+                datastore,
+                8,
+                4,
+                source_attrs=[{'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['start_event_id']},
+                              {'xml_string': xml_string2,
+                               'event_identifier':
+                               analyzer_class['start_event_id']},
+                              {'event_identifier': 6005},
+                              {'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['end_event_id']}])
 
-        event1 = (datastore.get_event('test_index', '8', stored_events=True))
-        self.assertEqual(event1['_source']['session_id']
-                         [analyzer.session_type], ['0 (USER_1)'])
-        event2 = (datastore.get_event('test_index', '9', stored_events=True))
-        self.assertEqual(event2['_source']['session_id']
-                         [analyzer.session_type], ['1 (USER_2)'])
-        event3 = (datastore.get_event('test_index', '10', stored_events=True))
-        self.assertEqual(set(event3['_source']['session_id']
-                             [analyzer.session_type]),
-                         set(['0 (USER_1)', '1 (USER_2)']))
-        event4 = (datastore.get_event('test_index', '11', stored_events=True))
-        self.assertTrue(event4['_source'].get('session_id') is None or
-                        event4['_source']['session_id'].get(
-                            analyzer.session_type) is None)
+            message = analyzer.run()
+            self.assertEqual(
+                message,
+                'Sessionizing completed, number of sessions created: 2')
+
+            # pylint: disable=unexpected-keyword-arg
+            event1 = (datastore.get_event('test_index',
+                                          '8',
+                                          stored_events=True))
+            self.assertEqual(event1['_source']['session_id']
+                             [analyzer.session_type], ['0 (USER_1)'])
+            event2 = (datastore.get_event('test_index',
+                                          '9',
+                                          stored_events=True))
+            self.assertEqual(event2['_source']['session_id']
+                             [analyzer.session_type], ['1 (USER_2)'])
+            event3 = (datastore.get_event('test_index',
+                                          '10',
+                                          stored_events=True))
+            self.assertEqual(set(event3['_source']['session_id']
+                                 [analyzer.session_type]),
+                             set(['0 (USER_1)', '1 (USER_2)']))
+            event4 = (datastore.get_event('test_index',
+                                          '11',
+                                          stored_events=True))
+            self.assertTrue(event4['_source'].get('session_id') is None or
+                            event4['_source']['session_id'].get(
+                                analyzer.session_type) is None)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -195,31 +257,40 @@ class TestWinEXTXSessionizerPlugin(object):
         Non-corresponding end events are ignored."""
         index = 'test_index'
         sketch_id = 1
-        analyzer = self.analyzer_class(index, sketch_id)
-        analyzer.datastore.client = mock.Mock()
-        datastore = analyzer.datastore
 
-        _create_mock_event(
-            datastore,
-            12,
-            2,
-            source_attrs=[{'xml_string': xml_string1,
-                           'event_identifier':self.start_event_id},
-                          {'xml_string': xml_string2,
-                           'event_identifier':self.end_event_id}])
+        for analyzer_class in self.analyzer_classes:
+            analyzer = analyzer_class['class'](index, sketch_id)
+            analyzer.datastore.client = mock.Mock()
+            datastore = analyzer.datastore
 
-        message = analyzer.run()
-        self.assertEqual(
-            message,
-            'Sessionizing completed, number of sessions created: 1')
+            _create_mock_event(
+                datastore,
+                12,
+                2,
+                source_attrs=[{'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['start_event_id']},
+                              {'xml_string': xml_string2,
+                               'event_identifier':
+                               analyzer_class['end_event_id']}])
 
-        event1 = (datastore.get_event('test_index', '12', stored_events=True))
-        self.assertEqual(event1['_source']['session_id']
-                         [analyzer.session_type], ['0 (USER_1)'])
-        event2 = (datastore.get_event('test_index', '13', stored_events=True))
-        self.assertTrue(event2['_source'].get('session_id') is None or
-                        event2['_source']['session_id'].get(
-                            analyzer.session_type) is None)
+            message = analyzer.run()
+            self.assertEqual(
+                message,
+                'Sessionizing completed, number of sessions created: 1')
+
+            # pylint: disable=unexpected-keyword-arg
+            event1 = (datastore.get_event('test_index',
+                                          '12',
+                                          stored_events=True))
+            self.assertEqual(event1['_source']['session_id']
+                             [analyzer.session_type], ['0 (USER_1)'])
+            event2 = (datastore.get_event('test_index',
+                                          '13',
+                                          stored_events=True))
+            self.assertTrue(event2['_source'].get('session_id') is None or
+                            event2['_source']['session_id'].get(
+                                analyzer.session_type) is None)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -229,36 +300,48 @@ class TestWinEXTXSessionizerPlugin(object):
         and the remaining event stream processed normally."""
         index = 'test_index'
         sketch_id = 1
-        analyzer = self.analyzer_class(index, sketch_id)
-        analyzer.datastore.client = mock.Mock()
-        datastore = analyzer.datastore
 
-        _create_mock_event(
-            datastore,
-            14,
-            3,
-            source_attrs=[{'xml_string': xml_string1,
-                           'event_identifier': self.end_event_id},
-                          {'xml_string': xml_string1,
-                           'event_identifier': self.start_event_id},
-                          {'xml_string': xml_string1,
-                           'event_identifier': self.end_event_id}])
+        for analyzer_class in self.analyzer_classes:
+            analyzer = analyzer_class['class'](index, sketch_id)
+            analyzer.datastore.client = mock.Mock()
+            datastore = analyzer.datastore
 
-        message = analyzer.run()
-        self.assertEqual(
-            message,
-            'Sessionizing completed, number of sessions created: 1')
+            _create_mock_event(
+                datastore,
+                14,
+                3,
+                source_attrs=[{'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['end_event_id']},
+                              {'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['start_event_id']},
+                              {'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['end_event_id']}])
 
-        event1 = (datastore.get_event('test_index', '14', stored_events=True))
-        self.assertTrue(event1['_source'].get('session_id') is None or
-                        event1['_source']['session_id'].get(
-                            analyzer.session_type) is None)
-        event2 = (datastore.get_event('test_index', '15', stored_events=True))
-        self.assertEqual(event2['_source']['session_id']
-                         [analyzer.session_type], ['0 (USER_1)'])
-        event3 = (datastore.get_event('test_index', '16', stored_events=True))
-        self.assertEqual(event3['_source']['session_id']
-                         [analyzer.session_type], ['0 (USER_1)'])
+            message = analyzer.run()
+            self.assertEqual(
+                message,
+                'Sessionizing completed, number of sessions created: 1')
+
+            # pylint: disable=unexpected-keyword-arg
+            event1 = (datastore.get_event('test_index',
+                                          '14',
+                                          stored_events=True))
+            self.assertTrue(event1['_source'].get('session_id') is None or
+                            event1['_source']['session_id'].get(
+                                analyzer.session_type) is None)
+            event2 = (datastore.get_event('test_index',
+                                          '15',
+                                          stored_events=True))
+            self.assertEqual(event2['_source']['session_id']
+                             [analyzer.session_type], ['0 (USER_1)'])
+            event3 = (datastore.get_event('test_index',
+                                          '16',
+                                          stored_events=True))
+            self.assertEqual(event3['_source']['session_id']
+                             [analyzer.session_type], ['0 (USER_1)'])
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -269,35 +352,47 @@ class TestWinEXTXSessionizerPlugin(object):
         recent start event."""
         index = 'test_index'
         sketch_id = 1
-        analyzer = self.analyzer_class(index, sketch_id)
-        analyzer.datastore.client = mock.Mock()
-        datastore = analyzer.datastore
 
-        _create_mock_event(
-            datastore,
-            17,
-            3,
-            source_attrs=[{'xml_string': xml_string1,
-                           'event_identifier':self.start_event_id},
-                          {'xml_string': xml_string1,
-                           'event_identifier':self.start_event_id},
-                          {'xml_string': xml_string1,
-                           'event_identifier':self.end_event_id}])
+        for analyzer_class in self.analyzer_classes:
+            analyzer = analyzer_class['class'](index, sketch_id)
+            analyzer.datastore.client = mock.Mock()
+            datastore = analyzer.datastore
 
-        message = analyzer.run()
-        self.assertEqual(
-            message,
-            'Sessionizing completed, number of sessions created: 2')
+            _create_mock_event(
+                datastore,
+                17,
+                3,
+                source_attrs=[{'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['start_event_id']},
+                              {'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['start_event_id']},
+                              {'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['end_event_id']}])
 
-        event1 = (datastore.get_event('test_index', '17', stored_events=True))
-        self.assertEqual(event1['_source']['session_id']
-                         [analyzer.session_type], ['0 (USER_1)'])
-        event2 = (datastore.get_event('test_index', '18', stored_events=True))
-        self.assertEqual(event2['_source']['session_id']
-                         [analyzer.session_type], ['1 (USER_1)'])
-        event3 = (datastore.get_event('test_index', '19', stored_events=True))
-        self.assertEqual(event3['_source']['session_id']
-                         [analyzer.session_type], ['1 (USER_1)'])
+            message = analyzer.run()
+            self.assertEqual(
+                message,
+                'Sessionizing completed, number of sessions created: 2')
+
+            # pylint: disable=unexpected-keyword-arg
+            event1 = (datastore.get_event('test_index',
+                                          '17',
+                                          stored_events=True))
+            self.assertEqual(event1['_source']['session_id']
+                             [analyzer.session_type], ['0 (USER_1)'])
+            event2 = (datastore.get_event('test_index',
+                                          '18',
+                                          stored_events=True))
+            self.assertEqual(event2['_source']['session_id']
+                             [analyzer.session_type], ['1 (USER_1)'])
+            event3 = (datastore.get_event('test_index',
+                                          '19',
+                                          stored_events=True))
+            self.assertEqual(event3['_source']['session_id']
+                             [analyzer.session_type], ['1 (USER_1)'])
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -307,36 +402,48 @@ class TestWinEXTXSessionizerPlugin(object):
         event is allocated to the session, and the other(s) ignored."""
         index = 'test_index'
         sketch_id = 1
-        analyzer = self.analyzer_class(index, sketch_id)
-        analyzer.datastore.client = mock.Mock()
-        datastore = analyzer.datastore
 
-        _create_mock_event(
-            datastore,
-            20,
-            3,
-            source_attrs=[{'xml_string': xml_string1,
-                           'event_identifier':self.start_event_id},
-                          {'xml_string': xml_string1,
-                           'event_identifier':self.end_event_id},
-                          {'xml_string': xml_string1,
-                           'event_identifier':self.end_event_id}])
+        for analyzer_class in self.analyzer_classes:
+            analyzer = analyzer_class['class'](index, sketch_id)
+            analyzer.datastore.client = mock.Mock()
+            datastore = analyzer.datastore
 
-        message = analyzer.run()
-        self.assertEqual(
-            message,
-            'Sessionizing completed, number of sessions created: 1')
+            _create_mock_event(
+                datastore,
+                20,
+                3,
+                source_attrs=[{'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['start_event_id']},
+                              {'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['end_event_id']},
+                              {'xml_string': xml_string1,
+                               'event_identifier':
+                               analyzer_class['end_event_id']}])
 
-        event1 = (datastore.get_event('test_index', '20', stored_events=True))
-        self.assertEqual(event1['_source']['session_id']
-                         [analyzer.session_type], ['0 (USER_1)'])
-        event2 = (datastore.get_event('test_index', '21', stored_events=True))
-        self.assertEqual(event2['_source']['session_id']
-                         [analyzer.session_type], ['0 (USER_1)'])
-        event3 = (datastore.get_event('test_index', '22', stored_events=True))
-        self.assertTrue(event3['_source'].get('session_id') is None or
-                        event3['_source']['session_id'].get(
-                            analyzer.session_type) is None)
+            message = analyzer.run()
+            self.assertEqual(
+                message,
+                'Sessionizing completed, number of sessions created: 1')
+
+            # pylint: disable=unexpected-keyword-arg
+            event1 = (datastore.get_event('test_index',
+                                          '20',
+                                          stored_events=True))
+            self.assertEqual(event1['_source']['session_id']
+                             [analyzer.session_type], ['0 (USER_1)'])
+            event2 = (datastore.get_event('test_index',
+                                          '21',
+                                          stored_events=True))
+            self.assertEqual(event2['_source']['session_id']
+                             [analyzer.session_type], ['0 (USER_1)'])
+            event3 = (datastore.get_event('test_index',
+                                          '22',
+                                          stored_events=True))
+            self.assertTrue(event3['_source'].get('session_id') is None or
+                            event3['_source']['session_id'].get(
+                                analyzer.session_type) is None)
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -344,16 +451,18 @@ class TestWinEXTXSessionizerPlugin(object):
         """Test the behaviour of the analyzer given an empty event stream."""
         index = 'test_index'
         sketch_id = 1
-        analyzer = self.analyzer_class(index, sketch_id)
-        analyzer.datastore.client = mock.Mock()
-        datastore = analyzer.datastore
 
-        _create_mock_event(datastore, 23, 0)
+        for analyzer_class in self.analyzer_classes:
+            analyzer = analyzer_class['class'](index, sketch_id)
+            analyzer.datastore.client = mock.Mock()
+            datastore = analyzer.datastore
 
-        message = analyzer.run()
-        self.assertEqual(
-            message,
-            'Sessionizing completed, number of sessions created: 0')
+            _create_mock_event(datastore, 23, 0)
+
+            message = analyzer.run()
+            self.assertEqual(
+                message,
+                'Sessionizing completed, number of sessions created: 0')
 
 def _create_mock_event(datastore, event_id, quantity, time_diffs=None,
                        source_attrs=None):
@@ -413,21 +522,6 @@ def _create_eventObj(datastore, event_id, ts, source_attrs):
 
     datastore.import_event(event['_index'], event['_type'], event['_source'],
                            str(event_id))
-
-
-class TestLogonSessionizerPlugin(BaseTest, TestWinEXTXSessionizerPlugin):
-    """Tests for the logon sessionizer analyzer."""
-    analyzer_class = LogonSessionizerSketchPlugin
-    start_event_id = 4624
-    end_event_id = 4634
-
-
-class TestUnlockSessionizerPlugin(BaseTest, TestWinEXTXSessionizerPlugin):
-    """Tests for the lock / unlock sessionizer analyzer."""
-    analyzer_class = UnlockSessionizerSketchPlugin
-    start_event_id = 4801
-    end_event_id = 4800
-
 
 if __name__ == '__main__':
     unittest.main()
