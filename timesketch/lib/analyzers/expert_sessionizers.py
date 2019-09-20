@@ -7,6 +7,7 @@ from timesketch.lib.analyzers.sessionizer import SessionizerSketchPlugin
 
 
 class WebActivitySessionizerSketchPlugin(SessionizerSketchPlugin):
+    """Sessionizer for web activity events"""
     NAME = 'web_activity_sessionizer'
     max_time_diff_micros = 600000000 # 10 minutes
     query = 'source_short:"WEBHIST"'
