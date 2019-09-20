@@ -59,11 +59,13 @@ class BaseSessionizerTest(BaseTest):
                 'Sessionizing completed, number of session created: 1')
 
             event1 = datastore.event_store['0']
+
             self.assertEqual(event1['_source']['session_id'],
                              {analyzer.session_type: 1})
             # checking event with id '101' as 100 events have been inserted
             # as 'padding' (see _create_mock_event())
             event2 = datastore.event_store['101']
+
             self.assertEqual(event2['_source']['session_id'],
                              {analyzer.session_type: 1})
 
@@ -95,7 +97,6 @@ class BaseSessionizerTest(BaseTest):
             event1 = datastore.event_store['0']
             self.assertEqual(event1['_source']['session_id'],
                              {analyzer.session_type: 1})
-
             event2 = datastore.event_store['101']
             self.assertEqual(event2['_source']['session_id'],
                              {analyzer.session_type: 2})
@@ -201,7 +202,6 @@ def _create_eventObj(datastore, event_id, ts, source_attrs=None):
 
 
 def check_surrounding_events(TestClass, datastore, threshold_ids,
-                             session_type):
     """Checks that the events surrounding the first event in a new session
     are allocated correctly.
     Args:
