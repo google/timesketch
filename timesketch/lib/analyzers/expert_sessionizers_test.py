@@ -38,15 +38,15 @@ class TestWebActivitySessionizerPlugin(BaseTest):
         self.assertEqual(
             message, 'Sessionizing completed, number of session created: 1')
 
-        # pylint: disable=unexpected-keyword-arg
-        event1 = datastore.get_event('test_index', '0', stored_events=True)
+        event1 = datastore.event_store['0']
         self.assertEqual(event1['_source']['source_short'], 'WEBHIST')
         self.assertEqual(event1['_source']['session_id'],
                          {analyzer.session_type: 1})
-        event2 = datastore.get_event('test_index', '101', stored_events=True)
+        event2 = datastore.event_store['101']
         self.assertEqual(event2['_source']['source_short'], 'WEBHIST')
         self.assertEqual(event2['_source']['session_id'],
                          {analyzer.session_type: 1})
+
 
 
 class TestSSHBruteforceSessionizerPlugin(BaseTest):
@@ -80,13 +80,13 @@ class TestSSHBruteforceSessionizerPlugin(BaseTest):
         test_message = '[sshd] [0]: Invalid user NoSuchUser from 0.0.0.0 ' \
             'port 0'
         # pylint: disable=unexpected-keyword-arg
-        event1 = (datastore.get_event('test_index', '0', stored_events=True))
+        event1 = datastore.event_store['0']
         self.assertEqual(event1['_source']['reporter'], 'sshd')
         self.assertEqual(event1['_source']['message'], test_message)
         self.assertEqual(event1['_source']['session_id'],
                          {analyzer.session_type: 1})
 
-        event2 = (datastore.get_event('test_index', '101', stored_events=True))
+        event2 = datastore.event_store['1']
         self.assertEqual(event2['_source']['reporter'], 'sshd')
         self.assertEqual(event2['_source']['message'], test_message)
         self.assertEqual(event2['_source']['session_id'],
