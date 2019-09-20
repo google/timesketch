@@ -31,7 +31,6 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Analysis
 
-
 def _flush_datastore_decorator(func):
     """Decorator that flushes the bulk insert queue in the datastore."""
     def wrapper(self, *args, **kwargs):
@@ -299,7 +298,6 @@ class Sketch(object):
 
     def get_all_indices(self):
         """List all indices in the Sketch.
-
         Returns:
             List of index names.
         """
