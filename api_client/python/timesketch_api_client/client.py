@@ -23,7 +23,6 @@ import requests
 
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
-from timesketch.lib.charts import manager as chart_manager
 import altair
 import pandas
 import numpy
@@ -400,8 +399,7 @@ class Sketch(BaseResource):
             List of aggregations (instances of Aggregation objects)
         """
         sketch = self.lazyload_data()
-        aggregations = []
-        for aggregation in sketch['meta']['aggregations']:
+        for aggregation in sketch['meta']['saved_aggregations']:
             aggregation_obj = Aggregation(
                 aggregation_id=aggregation['id'],
                 aggregation_name=aggregation['name'],
@@ -874,32 +872,23 @@ class Aggregation(BaseResource):
 
     def generate_chart(self):
         """Returns an altair Vega-lite chart."""
-        chart_class = chart_manager.ChartManager.get_chart(self.chart_type)
-
-        if not chart_class:
+        if not self.chart_type:
             return altair.Chart(pandas.DataFrame()).mark_point()
 
-        data = self.run(as_pandas=True)
-        x_value = ''
-        y_value = ''
-        for name, obj_type in data.dtypes.items():
-            if name == self.name:
-                continue
-            if numpy.issubdtype(obj_type, numpy.integer):
-                y_value = name
-            else:
-                x_value = name
+        if not self.parameters.get('supported_charts'):
+            self.parameters['supported_charts'] = self.chart_type
 
-        encoding = {
-            'x': {'field': x_value, 'type': 'ordinal'},
-            'y': {'field': y_value, 'type': 'quantitative'},
-        }
-        chart_obj = chart_class({
-            'values': data,
-            'encoding': encoding,
-        })
+        data = self._sketch.run_aggregator(
+            self.name, self.parameters, as_pandas=False)
 
-        return chart_obj.generate()
+        meta = data.get('meta', {})
+        vega_spec = meta.get('vega_spec')
+
+        if vega_spec:
+            return vega_spec
+
+        return altair.Chart(pandas.DataFrame()).mark_point()
+
 
     def run(self, as_pandas=False):
         """Returns the results from an aggregator run."""
