@@ -770,7 +770,7 @@ class AggregationResource(ResourceMixin, Resource):
 
     @login_required
     def get(self, sketch_id, aggregation_id):  # pylint: disable=unused-argument
-        """Handles POST request to the resource.
+        """Handles GET request to the resource.
 
         Handler for /api/v1/sketches/:sketch_id/aggregation/:aggregation_id
 

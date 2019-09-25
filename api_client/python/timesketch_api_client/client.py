@@ -23,10 +23,8 @@ import requests
 
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
-from timesketch.lib.charts import manager as chart_manager
 import altair
 import pandas
-import numpy
 from .definitions import HTTP_STATUS_CODE_20X
 
 
@@ -401,7 +399,7 @@ class Sketch(BaseResource):
         """
         sketch = self.lazyload_data()
         aggregations = []
-        for aggregation in sketch['meta']['aggregations']:
+        for aggregation in sketch['meta']['saved_aggregations']:
             aggregation_obj = Aggregation(
                 aggregation_id=aggregation['id'],
                 aggregation_name=aggregation['name'],
@@ -410,6 +408,28 @@ class Sketch(BaseResource):
                 api=self.api)
             aggregations.append(aggregation_obj)
         return aggregations
+
+    def get_aggregation(self, aggregation_id):
+        """Return a stored aggregation.
+
+        Args:
+            aggregation_id: id of the stored aggregation.
+
+        Returns:
+            An aggregation object, if stored (instance of Aggregation),
+            otherwise None object.
+        """
+        sketch = self.lazyload_data()
+        for aggregation in sketch['meta']['saved_aggregations']:
+            if aggregation['id'] != aggregation_id:
+                continue
+            aggregation_obj = Aggregation(
+                aggregation_id=aggregation['id'],
+                aggregation_name=aggregation['name'],
+                sketch=self,
+                sketch_id=self.id,
+                api=self.api)
+            return aggregation_obj
 
     def list_views(self):
         """List all saved views for this sketch.
@@ -688,6 +708,43 @@ class Sketch(BaseResource):
 
         return response_json
 
+    def store_aggregation(
+            self, name, description, aggregator_name, aggregator_parameters,
+            chart_type=''):
+        """Store an aggregation in the sketch.
+
+        Args:
+            name: a name that will be associated with the aggregation.
+            description: description of the aggregation, visible in the UI.
+            aggregator_name: name of the aggregator class.
+            aggregator_parameters: parameters of the aggregator.
+            chart_type: string representing the chart type.
+
+        Returns:
+          A stored aggregation object or None if not stored.
+        """
+        resource_url = '{0:s}/sketches/{1:d}/aggregation/'.format(
+            self.api.api_root, self.id)
+
+        form_data = {
+            'name': name,
+            'description': description,
+            'agg_type': aggregator_name,
+            'chart_type': chart_type,
+            'sketch': self.id,
+            'parameters': aggregator_parameters
+        }
+
+        response = self.api.session.post(resource_url, json=form_data)
+        response_dict = response.json()
+
+        objects = response_dict.get('objects', [])
+        if not objects:
+            return None
+
+        _ = self.lazyload_data(refresh_cache=True)
+        return self.get_aggregation(objects[0].get('id'))
+
     def label_events(self, events, label_name):
         """Labels one or more events with label_name.
 
@@ -874,32 +931,23 @@ class Aggregation(BaseResource):
 
     def generate_chart(self):
         """Returns an altair Vega-lite chart."""
-        chart_class = chart_manager.ChartManager.get_chart(self.chart_type)
-
-        if not chart_class:
+        if not self.chart_type:
             return altair.Chart(pandas.DataFrame()).mark_point()
 
-        data = self.run(as_pandas=True)
-        x_value = ''
-        y_value = ''
-        for name, obj_type in data.dtypes.items():
-            if name == self.name:
-                continue
-            if numpy.issubdtype(obj_type, numpy.integer):
-                y_value = name
-            else:
-                x_value = name
+        if not self.parameters.get('supported_charts'):
+            self.parameters['supported_charts'] = self.chart_type
 
-        encoding = {
-            'x': {'field': x_value, 'type': 'ordinal'},
-            'y': {'field': y_value, 'type': 'quantitative'},
-        }
-        chart_obj = chart_class({
-            'values': data,
-            'encoding': encoding,
-        })
+        data = self._sketch.run_aggregator(
+            self.name, self.parameters, as_pandas=False)
 
-        return chart_obj.generate()
+        meta = data.get('meta', {})
+        vega_spec = meta.get('vega_spec')
+
+        if not vega_spec:
+            return altair.Chart(pandas.DataFrame()).mark_point()
+
+        vega_spec_string = json.dumps(vega_spec)
+        return altair.Chart.from_json(vega_spec_string)
 
     def run(self, as_pandas=False):
         """Returns the results from an aggregator run."""
