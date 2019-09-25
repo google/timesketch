@@ -25,7 +25,6 @@ import requests
 from requests.exceptions import ConnectionError
 import altair
 import pandas
-import numpy
 from .definitions import HTTP_STATUS_CODE_20X
 
 
@@ -728,7 +727,7 @@ class Sketch(BaseResource):
             self.api.api_root, self.id)
 
         form_data = {
-            'name': aggregator_name,
+            'name': name,
             'description': description,
             'agg_type': aggregator_name,
             'chart_type': chart_type,
@@ -741,7 +740,7 @@ class Sketch(BaseResource):
 
         objects = response_dict.get('objects', [])
         if not objects:
-          return
+            return
 
         _ = self.lazyload_data(refresh_cache=True)
         return self.get_aggregation(objects[0].get('id'))
@@ -948,7 +947,7 @@ class Aggregation(BaseResource):
             return altair.Chart(pandas.DataFrame()).mark_point()
 
         vega_spec_string = json.dumps(vega_spec)
-        return alt.Chart.from_json(vega_spec_string)
+        return altair.Chart.from_json(vega_spec_string)
 
     def run(self, as_pandas=False):
         """Returns the results from an aggregator run."""
