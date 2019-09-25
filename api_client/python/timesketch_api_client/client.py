@@ -710,8 +710,8 @@ class Sketch(BaseResource):
         return response_json
 
     def store_aggregation(
-        self, name, description, aggregator_name, aggregator_parameters,
-        chart_type=''):
+            self, name, description, aggregator_name, aggregator_parameters,
+            chart_type=''):
         """Store an aggregation in the sketch.
 
         Args:
