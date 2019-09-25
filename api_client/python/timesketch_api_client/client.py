@@ -947,8 +947,8 @@ class Aggregation(BaseResource):
         if not vega_spec:
             return altair.Chart(pandas.DataFrame()).mark_point()
 
-        vega_string = json.dumps(vega_spec)
-        return alt.Chart.from_json(vega_string)
+        vega_spec_string = json.dumps(vega_spec)
+        return alt.Chart.from_json(vega_spec_string)
 
     def run(self, as_pandas=False):
         """Returns the results from an aggregator run."""
