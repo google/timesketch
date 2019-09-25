@@ -740,7 +740,7 @@ class Sketch(BaseResource):
 
         objects = response_dict.get('objects', [])
         if not objects:
-            return
+            return None
 
         _ = self.lazyload_data(refresh_cache=True)
         return self.get_aggregation(objects[0].get('id'))
