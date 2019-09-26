@@ -1020,9 +1020,25 @@ class Aggregation(BaseResource):
         return self.aggregator_name
 
     @property
+    def dict(self):
+        """Property that returns back a Dict with the results."""
+        return self.to_dict()
+
+    @property
     def table(self):
         """Property that returns a pandas DataFrame."""
         return self.to_pandas()
+
+    def to_dict(self):
+        """Returns a dict."""
+        entries = {}
+        entry_index = 1
+        data = self.lazyload_data()
+        for entry in data.get('objects', []):
+            for bucket in self._get_aggregation_buckets(entry):
+                entries['entry_{0:d}'.format(entry_index)] = bucket
+                entry_index += 1
+        return entries
 
     def to_pandas(self):
         """Returns a pandas DataFrame."""
