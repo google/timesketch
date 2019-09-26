@@ -877,6 +877,7 @@ class Aggregation(BaseResource):
         """
         resource_url = '{0:s}/sketches/{1:d}/aggregation/explore/'.format(
             self.api.api_root, self._sketch.id)
+
         if chart_type is None and parameters.get('supported_charts'):
             chart_type = parameters.get('supported_charts')
             if isinstance(chart_type, (list, tuple)):
@@ -924,7 +925,6 @@ class Aggregation(BaseResource):
         self.type = 'stored'
 
         chart_type = data.get('chart_type')
-        agg_name = data.get('name')
         param_string = data.get('parameters', '')
         if param_string:
             parameters = json.loads(param_string)
@@ -933,7 +933,7 @@ class Aggregation(BaseResource):
 
         self._parameters = parameters
         self.resource_data = self._run_aggregator(
-            aggregator_name=agg_name, parameters=parameters,
+            aggregator_name=self.aggregator_name, parameters=parameters,
             chart_type=chart_type)
 
     def from_explore(self, aggregate_dsl):
