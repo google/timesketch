@@ -378,9 +378,7 @@ class Sketch(BaseResource):
         for aggregation in data['meta']['saved_aggregations']:
             aggregation_obj = Aggregation(
                 sketch=self, api=self.api)
-            aggregation_obj.from_store(
-                aggregation_id=aggregation['id'],
-                aggregation_name=aggregation['name'])
+            aggregation_obj.from_store(aggregation_id=aggregation['id'])
             aggregations.append(aggregation_obj)
         return aggregations
 
@@ -399,9 +397,7 @@ class Sketch(BaseResource):
             if aggregation['id'] != aggregation_id:
                 continue
             aggregation_obj = Aggregation(sketch=self, api=self.api)
-            aggregation_obj.from_store(
-                aggregation_id=aggregation['id'],
-                aggregation_name=aggregation['name'])
+            aggregation_obj.from_store(aggregation_id=aggregation['id'])
             return aggregation_obj
 
     def list_views(self):
@@ -909,12 +905,12 @@ class Aggregation(BaseResource):
 
         return response.json()
 
-    def from_store(self, aggregation_id, aggregation_name):
+    def from_store(self, aggregation_id):
         """Initialize the aggregation object from a stored aggregation.
 
         Args:
-            aggregation_id: integer value for the stored aggregation (primary key).
-            aggregation_name: the name of the aggregation.
+            aggregation_id: integer value for the stored
+                aggregation (primary key).
         """
         resource_uri = 'sketches/{0:d}/aggregation/{1:d}/'.format(
             self._sketch.id, aggregation_id)
@@ -937,7 +933,8 @@ class Aggregation(BaseResource):
 
         self._parameters = parameters
         self.resource_data = self._run_aggregator(
-            aggregator_name=agg_name, parameters=parameters, chart_type=chart_type)
+            aggregator_name=agg_name, parameters=parameters,
+            chart_type=chart_type)
 
     def from_explore(self, aggregate_dsl):
         """Initialize the aggregation object by running an aggregation DSL.
@@ -990,7 +987,7 @@ class Aggregation(BaseResource):
             Dictionary with resource data.
         """
         if self.resource_data and not refresh_cache:
-          return self.resource_data
+            return self.resource_data
 
         # TODO: Implement a method to refresh cache.
         return self.resource_data
