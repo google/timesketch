@@ -615,9 +615,8 @@ class Sketch(BaseResource):
 
         return aggregation_obj
 
-    # TODO : Add a way to list all available aggregators
     def list_available_aggregators(self):
-        """TODO"""
+        """Return a list of all available aggregators in the sketch."""
         data = self.lazyload_data()
         meta = data.get('meta', {})
         entries = []
@@ -626,10 +625,11 @@ class Sketch(BaseResource):
                 entry = {
                     'aggregator_name': name,
                     'parameter': field.get('name'),
-                    'label': field.get('label')
+                    'notes': field.get('label')
                 }
                 if field.get('type') == 'ts-dynamic-form-select-input':
                     entry['value'] = '|'.join(field.get('options', []))
+                    entry['type'] = 'selection'
                 else:
                     _, _, entry['type'] = field.get('type').partition(
                         'ts-dynamic-form-')
