@@ -839,7 +839,7 @@ class Aggregation(BaseResource):
         super(Aggregation, self).__init__(api, resource_uri)
 
     def _get_aggregation_buckets(self, entry, name=''):
-        """Yields all buckets from a aggregation result object.
+        """Yields all buckets from an aggregation result object.
 
         Args:
             entry: result dict from an aggregation request.
