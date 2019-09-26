@@ -1055,7 +1055,7 @@ class Aggregation(BaseResource):
             raise TypeError('Unable to generate chart, missing a chart type.')
 
         if not self._parameters.get('supported_charts'):
-            self.parameters['supported_charts'] = self.chart_type
+            self._parameters['supported_charts'] = self.chart_type
 
         data = self.lazyload_data()
         meta = data.get('meta', {})
