@@ -25,6 +25,7 @@ limitations under the License.
     </div>
     <div class="dropdown-menu" id="dropdown-menu" role="menu">
       <div class="dropdown-content">
+        <span class="dropdown-item" v-if="!meta.views.length"><strong>No saved views</strong></span>
         <a class="dropdown-item" v-on:click="setActiveView(view)" v-for="view in meta.views" :key="view.id">
           <span>{{ view.name }}</span>
         </a>
