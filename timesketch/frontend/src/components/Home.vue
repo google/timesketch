@@ -20,7 +20,7 @@ limitations under the License.
     <section class="section">
       <div class="container">
         <ts-navbar-secondary>
-          <button class="button is-success is-rounded" v-on:click="showSketchCreateModal = !showSketchCreateModal"><strong>+ Sketch</strong></button>
+          <button v-if="sketches" class="button is-success is-rounded" v-on:click="showSketchCreateModal = !showSketchCreateModal"><strong>+ Sketch</strong></button>
         </ts-navbar-secondary>
       </div>
     </section>
@@ -46,9 +46,12 @@ limitations under the License.
       <div class="container">
         <div class="card">
           <div class="card-content">
-            <div>
-              <ts-home-sketch-list></ts-home-sketch-list>
+            <div v-if="!sketches" class="has-text-centered">
+              <p>You have no sketches.</p>
+              <br><br>
+              <button class="button is-success is-rounded" v-on:click="showSketchCreateModal = !showSketchCreateModal"><strong>Create your first sketch</strong></button>
             </div>
+            <ts-home-sketch-list :sketches="sketches"></ts-home-sketch-list>
           </div>
         </div>
       </div>
@@ -59,6 +62,7 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../utils/RestApiClient'
 import TsHomeSketchList from './HomeSketchList'
 import TsHomeSketchCreateForm from './HomeSketchCreateForm'
 
@@ -70,8 +74,17 @@ export default {
   },
   data () {
     return {
-      showSketchCreateModal: false
+      showSketchCreateModal: false,
+      sketches: []
     }
+  },
+  created: function () {
+    ApiClient.getSketchList().then((response) => {
+      this.$store.commit('resetState')
+      this.sketches = response.data.objects[0]
+    }).catch((e) => {
+      console.error(e)
+    })
   }
 }
 </script>
