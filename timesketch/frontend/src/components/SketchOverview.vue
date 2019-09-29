@@ -18,7 +18,7 @@ limitations under the License.
 
     <section class="section">
       <div class="container is-fluid">
-        <ts-navbar-secondary currentAppContext="sketch" currentPage="overview">
+        <ts-navbar-secondary v-if="sketch.active_timelines.length" currentAppContext="sketch" currentPage="overview">
           <a class="button is-info is-rounded" style="margin-right:10px;">
               <span class="icon is-small">
                 <i class="fas fa-users"></i>
