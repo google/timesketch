@@ -18,7 +18,7 @@ limitations under the License.
 
     <!-- Active Timelines -->
     <section class="section" v-if="sketch.timelines.length">
-      <div class="container">
+      <div class="container is-fluid">
         <div class="card" style="min-height:160px;">
           <header class="card-header">
             <p class="card-header-title">Active Timelines</p>
@@ -33,7 +33,7 @@ limitations under the License.
 
     <!-- Timelines to add -->
     <section class="section">
-      <div class="container">
+      <div class="container is-fluid">
         <div class="card" style="min-height:160px;">
           <header class="card-header">
             <p class="card-header-title">Add Timelines</p>

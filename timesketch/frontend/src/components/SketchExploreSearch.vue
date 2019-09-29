@@ -17,7 +17,7 @@ limitations under the License.
   <div>
     <section class="section">
       <div class="container is-fluid">
-        <ts-navbar-secondary style="margin-bottom: 10px;" currentAppContext="explore" currentPage="search"></ts-navbar-secondary>
+        <!--<ts-navbar-secondary style="margin-bottom: 10px;" currentAppContext="explore" currentPage="search"></ts-navbar-secondary>-->
         <div class="card">
           <div class="card-content">
             <form v-on:submit.prevent="search">
@@ -77,6 +77,7 @@ limitations under the License.
       </div>
     </section>
 
+    <!--
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
@@ -86,7 +87,8 @@ limitations under the License.
         </div>
       </div>
     </section>
-    
+    -->
+
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
