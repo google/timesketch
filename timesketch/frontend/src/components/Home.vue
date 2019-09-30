@@ -47,9 +47,8 @@ limitations under the License.
         <div class="card">
           <div class="card-content">
             <div v-if="!sketches" class="has-text-centered">
-              <p>You have no sketches.</p>
-              <br><br>
-              <button class="button is-success is-rounded" v-on:click="showSketchCreateModal = !showSketchCreateModal"><strong>Create your first sketch</strong></button>
+              <h1 class="title">Welcome to Timesketch</h1>
+              <button class="button is-success is-rounded" v-on:click="showSketchCreateModal = !showSketchCreateModal"><strong>Create sketch</strong></button>
             </div>
             <ts-home-sketch-list :sketches="sketches"></ts-home-sketch-list>
           </div>

@@ -50,17 +50,13 @@ limitations under the License.
       <div class="container is-fluid">
         <div class="card">
           <div class="card-content">
-            <div v-if="!sketch.stories.length" class="has-text-centered">
-              <p>
-                There are no stories in this sketch yet.
-                <br>
-                Be the first to create one!
-              </p>
+            <div v-if="!sketch.stories.length">
+              There are no stories in this sketch yet.
               <br><br>
               <a class="button is-success is-rounded" style="margin-right:7px;" v-on:click="showCreateStoryModal = !showCreateStoryModal">
-                  <span class="icon is-small">
-                    <i class="fas fa-plus"></i>
-                  </span>
+                <span class="icon is-small">
+                  <i class="fas fa-plus"></i>
+                </span>
                 <span>Create a new story</span>
               </a>
             </div>
