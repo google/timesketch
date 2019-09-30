@@ -9,10 +9,9 @@
 set -e;
 
 pylint --version
-
-for FILE in `find run_tests.py setup.py api_client config timesketch -name \*.py`;
+echo "BRANCH: $TRAVIS_BRANCH"
+for FILE in `git diff --name-only $TRAVIS_BRANCH | grep \.py$`;
 do
 	echo "Checking: ${FILE}";
-
 	pylint --rcfile=.pylintrc ${FILE};
 done

@@ -28,7 +28,7 @@ class AccountFinderSketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String with summary of the analyzer result.
         """
-        return_fields = ['found_account', 'tag']
+        return_field = ['found_account', 'tag']
 
         accounts_found = {}
 
