@@ -15,24 +15,11 @@ limitations under the License.
 -->
 <template>
   <div>
-    <section class="section">
-      <div class="container is-fluid">
-        <ts-navbar-secondary style="margin-bottom: 10px;" currentAppContext="explore" currentPage="aggregation"></ts-navbar-secondary>
-        <div class="card">
-          <div class="card-content">
-            <ts-sketch-explore-aggregator-list-dropdown @setActiveAggregator="updateAggregatorFormFields"></ts-sketch-explore-aggregator-list-dropdown>
-            <br>
-            <ts-dynamic-form :schema="schema" v-model="formData" @formSubmitted="getVegaSpec" :key="selectedAggregator" ref="vegaChart"></ts-dynamic-form>
-            <br>
-          </div>
-          <div class="card">
-            <div class="card-content">
-              <ts-vega-lite-chart :vegaSpec="vegaSpec" v-if="showChart"></ts-vega-lite-chart>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <ts-sketch-explore-aggregator-list-dropdown @setActiveAggregator="updateAggregatorFormFields"></ts-sketch-explore-aggregator-list-dropdown>
+    <br>
+    <ts-dynamic-form :schema="schema" v-model="formData" @formSubmitted="getVegaSpec" :key="selectedAggregator" ref="vegaChart"></ts-dynamic-form>
+    <br>
+    <ts-vega-lite-chart :vegaSpec="vegaSpec" v-if="showChart"></ts-vega-lite-chart>
   </div>
 </template>
 

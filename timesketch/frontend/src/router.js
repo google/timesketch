@@ -56,12 +56,6 @@ const routes = [
             name: 'SketchExplore',
             component: SketchExploreSearch,
             props: true
-          },
-          {
-            path: 'aggregation',
-            name: 'SketchExploreAggregation',
-            component: SketchExploreAggregation,
-            props: true
           }
         ]
       },

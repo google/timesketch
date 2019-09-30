@@ -17,7 +17,6 @@ limitations under the License.
   <div>
     <section class="section">
       <div class="container is-fluid">
-        <ts-navbar-secondary style="margin-bottom: 10px;" currentAppContext="explore" currentPage="search"></ts-navbar-secondary>
         <div class="card">
           <div class="card-content">
             <form v-on:submit.prevent="search">
@@ -61,13 +60,19 @@ limitations under the License.
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
-          <header class="card-header">
+          <header class="card-header" v-on:click="showFilters = !showFilters" style="cursor: pointer">
             <span class="card-header-title">
               <span class="icon is-small"><i class="fas fa-filter"></i></span>
               <span style="margin-left:10px;">Filters</span>
             </span>
+            <span class="card-header-icon">
+              <span class="icon">
+                <i class="fas fa-angle-down" v-if="!showFilters" aria-hidden="true"></i>
+                <i class="fas fa-angle-up" v-if="showFilters" aria-hidden="true"></i>
+              </span>
+            </span>
           </header>
-          <div class="card-content">
+          <div class="card-content" v-show="showFilters">
             <ts-explore-filter-time></ts-explore-filter-time>
             <br>
             <div style="margin-bottom: 8px;"><b>Timelines</b></div>
@@ -80,13 +85,25 @@ limitations under the License.
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
-          <div class="card-content">
-            <ts-explore-session-chart></ts-explore-session-chart>
+          <header class="card-header" v-on:click="showAggregations = !showAggregations" style="cursor: pointer">
+            <span class="card-header-title">
+              <span class="icon is-small"><i class="fas fa-th"></i></span>
+              <span style="margin-left:10px;">Aggregations</span>
+            </span>
+            <span class="card-header-icon">
+              <span class="icon">
+                <i class="fas fa-angle-down" v-if="!showAggregations" aria-hidden="true"></i>
+                <i class="fas fa-angle-up" v-if="showAggregations" aria-hidden="true"></i>
+              </span>
+            </span>
+          </header>
+          <div class="card-content" v-show="showAggregations">
+            <ts-sketch-explore-aggregation></ts-sketch-explore-aggregation>
           </div>
         </div>
       </div>
     </section>
-    
+
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
@@ -110,10 +127,12 @@ import TsSketchExploreEventList from './SketchExploreEventList'
 import TsExploreTimelinePicker from './SketchExploreTimelinePicker'
 import TsExploreFilterTime from './SketchExploreFilterTime'
 import TsExploreSessionChart from './SketchExploreSessionChart'
+import TsSketchExploreAggregation from "./SketchExploreAggregation"
 
 export default {
   name: 'ts-sketch-explore-search',
   components: {
+      TsSketchExploreAggregation,
     TsViewListDropdown,
     TsCreateViewForm,
     TsSketchExploreEventList,
@@ -125,7 +144,9 @@ export default {
   data () {
     return {
       params: {},
-      showCreateViewModal: false
+      showCreateViewModal: false,
+      showFilters: false,
+      showAggregations: false
     }
   },
   computed: {

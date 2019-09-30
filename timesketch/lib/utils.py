@@ -58,7 +58,7 @@ def read_and_validate_csv(path, delimiter=','):
     # Columns that must be present in the CSV file
     mandatory_fields = ['message', 'datetime', 'timestamp_desc']
 
-    with open(path, 'r') as fh:
+    with open(path, 'r', encoding='utf-8') as fh:
         reader = csv.DictReader(fh, delimiter=delimiter)
         csv_header = reader.fieldnames
         missing_fields = []

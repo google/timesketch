@@ -35,20 +35,7 @@ import ApiClient from '../utils/RestApiClient'
 
 export default {
   name: 'ts-home-sketch-list',
-  data () {
-    return {
-      sketches: []
-    }
-  },
-  created: function () {
-    ApiClient.getSketchList().then((response) => {
-      this.$store.commit('resetState')
-      this.sketches = response.data.objects[0]
-    }).catch((e) => {
-      console.error(e)
-    })
-  }
-
+  props: ['sketches'],
 }
 </script>
 
