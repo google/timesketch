@@ -6,8 +6,6 @@
 set -e;
 
 pylint --version
-echo "BRANCH: $TRAVIS_BRANCH"
-env
 for FILE in `git diff --name-only master | grep \.py$`;
 do
 	echo "Checking: ${FILE}";
