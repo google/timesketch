@@ -40,9 +40,18 @@ limitations under the License.
               <button class="modal-close is-large" aria-label="close" v-on:click="showCreateViewModal = !showCreateViewModal"></button>
             </div>
             <div class="field is-grouped">
+
+              <p class="control">
+                <a class="button" v-on:click="searchStarred">
+                  <span class="icon is-small"><i class="fas fa-star"></i></span>
+                  <span>Starred</span>
+                </a>
+              </p>
+
               <p class="control">
                 <ts-view-list-dropdown @setActiveView="searchView"></ts-view-list-dropdown>
               </p>
+
               <p class="control">
                 <a class="button" v-on:click="showCreateViewModal = !showCreateViewModal">
                           <span class="icon is-small">
@@ -51,6 +60,7 @@ limitations under the License.
                   <span>Save view</span>
                 </a>
               </p>
+
             </div>
           </div>
         </div>
@@ -178,6 +188,9 @@ export default {
         return this.$store.state.currentQueryString
       },
       set: function (queryString) {
+        if (queryString) {
+          delete this.currentQueryFilter.star
+        }
         this.$store.commit('updateCurrentQueryString', queryString)
       }
     },
@@ -193,6 +206,11 @@ export default {
   methods: {
     search: function () {
       this.$store.commit('search', this.sketchId)
+    },
+    searchStarred: function () {
+      this.currentQueryFilter.star = true
+      this.currentQueryString = ''
+      this.search()
     },
     searchView: function (viewId) {
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
