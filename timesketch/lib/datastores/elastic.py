@@ -81,7 +81,7 @@ class ElasticsearchDataStore(object):
         self.import_events = []
 
     @staticmethod
-    def _build_label_query(sketch_id, label_name):
+    def _build_label_query(sketch_id, labels):
         """Build Elasticsearch query for Timesketch labels.
 
         Args:
@@ -91,14 +91,21 @@ class ElasticsearchDataStore(object):
         Returns:
             Elasticsearch query as a dictionary.
         """
-        query_dict = {
-            'query': {
+        label_dict = {
+            'bool': {
+                'should': [],
+                "minimum_should_match": 1
+            }
+        }
+
+        for label in labels:
+            query_dict = {
                 'nested': {
                     'query': {
                         'bool': {
                             'must': [{
                                 'term': {
-                                    'timesketch_label.name': label_name
+                                    'timesketch_label.name': label
                                 }
                             }, {
                                 'term': {
@@ -110,8 +117,8 @@ class ElasticsearchDataStore(object):
                     'path': 'timesketch_label'
                 }
             }
-        }
-        return query_dict
+            label_dict['bool']['should'].append(query_dict)
+        return label_dict
 
     @staticmethod
     def _build_events_query(events):
@@ -127,30 +134,7 @@ class ElasticsearchDataStore(object):
         query_dict = {'query': {'ids': {'values': events_list}}}
         return query_dict
 
-    @staticmethod
-    def _build_field_aggregator(field_name):
-        """Build Elasticsearch query for aggregation based on field.
-
-        Args:
-            field_name: Field to aggregate.
-
-        Returns:
-            Elasticsearch aggregation as a dictionary.
-        """
-        field_aggregation = {
-            'field_aggregation': {
-                'terms': {
-                    'field': '{0:s}.keyword'.format(field_name)
-                }
-            }
-        }
-        return field_aggregation
-
-    def build_query(self,
-                    sketch_id,
-                    query_string,
-                    query_filter,
-                    query_dsl,
+    def build_query(self, sketch_id, query_string, query_filter, query_dsl=None,
                     aggregations=None):
         """Build Elasticsearch DSL query.
 
@@ -164,68 +148,83 @@ class ElasticsearchDataStore(object):
         Returns:
             Elasticsearch DSL query as a dictionary
         """
-        if not query_dsl:
-            if query_filter.get('star', None):
-                query_dsl = self._build_label_query(sketch_id, '__ts_star')
 
-            if query_filter.get('events', None):
-                events = query_filter['events']
-                query_dsl = self._build_events_query(events)
-
-            if not query_dsl:
-                query_dsl = {
-                    'query': {
-                        'bool': {
-                            'must': [{
-                                'query_string': {
-                                    'query': query_string
-                                }
-                            }]
-                        }
-                    }
-                }
-            if query_filter.get('time_start', None):
-                # TODO(jberggren): Add support for multiple time ranges.
-                query_dsl['query']['bool']['filter'] = {
-                    'bool': {
-                        'should': [{
-                            'range': {
-                                'datetime': {
-                                    'gte': query_filter['time_start'],
-                                    'lte': query_filter['time_end']
-                                }
-                            }
-                        }]
-                    }
-                }
-            if query_filter.get('from', None):
-                query_dsl['from'] = query_filter['from']
-            if query_filter.get('size', None):
-                query_dsl['size'] = query_filter['size']
-            if query_filter.get('exclude', None):
-                query_dsl['post_filter'] = {
-                    'bool': {
-                        'must_not': {
-                            'terms': {
-                                'data_type': query_filter['exclude']
-                            }
-                        }
-                    }
-                }
-        else:
+        if query_dsl:
             query_dsl = json.loads(query_dsl)
+            # Remove any aggregation coming from user supplied Query DSL.
+            # We have no way to display this data in a good way today.
+            if query_dsl.get('aggregations', None):
+                del query_dsl['aggregations']
+            return query_dsl
+
+        #print(json.dumps(query_filter, indent=2))
+
+        if query_filter.get('events', None):
+            events = query_filter['events']
+            return self._build_events_query(events)
+
+        query_dsl = {
+            'query': {
+                'bool': {
+                    'must': [],
+                    'filter': []
+                }
+            }
+        }
+
+        # TODO: Remove when old UI has been removed.
+        if query_filter.get('star', None):
+            label_query = self._build_label_query(sketch_id, ['__ts_star'])
+            query_string = '*'
+            query_dsl['query']['bool']['must'].append(label_query)
+
+        query_dsl['query']['bool']['must'].append(
+            {'query_string': {'query': query_string}})
+
+        if query_filter.get('time_start', None):
+            # TODO: Add support for multiple time ranges.
+            query_dsl['query']['bool']['filter'] = [{
+                'bool': {
+                    'should': [{
+                        'range': {
+                            'datetime': {
+                                'gte': query_filter['time_start'],
+                                'lte': query_filter['time_end']
+                            }
+                        }
+                    }]
+                }
+            }]
+
+        labels = []
+        for chip in query_filter['chips']:
+            if chip['field'] == 'ts_label':
+                labels.append(chip['value'])
+            else:
+                q = {
+                    "match_phrase": {
+                        "{}".format(chip['field']): {
+                            "query": "{}".format(chip['value'])
+                        }
+                    }
+                }
+                query_dsl['query']['bool']['must'].append(q)
+        label_query = self._build_label_query(sketch_id, labels)
+        query_dsl['query']['bool']['must'].append(label_query)
+
+        # Used for pagination
+        # TODO: Remove when old UI has been removed.
+        if query_filter.get('from', None):
+            query_dsl['from'] = query_filter['from']
+
+        if query_filter.get('size', None):
+            query_dsl['size'] = query_filter['size']
 
         # Make sure we are sorting.
         if not query_dsl.get('sort', None):
             query_dsl['sort'] = {
                 'datetime': query_filter.get('order', 'asc')
             }
-
-        # Remove any aggregation coming from user supplied Query DSL. We have
-        # no way to display this data in a good way today.
-        # TODO: Revisit this and figure out if we can display the data.
-        if query_dsl.get('aggregations', None):
-            del query_dsl['aggregations']
 
         # Add any pre defined aggregations
         if aggregations:
@@ -236,6 +235,8 @@ class ElasticsearchDataStore(object):
                     'post_filter']
                 query_dsl.pop('post_filter', None)
             query_dsl['aggregations'] = aggregations
+
+        print(json.dumps(query_dsl, indent=2))
         return query_dsl
 
     def search(self,

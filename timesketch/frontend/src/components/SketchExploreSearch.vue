@@ -15,6 +15,24 @@ limitations under the License.
 -->
 <template>
   <div>
+
+    <div class="modal" v-bind:class="{ 'is-active': showCreateViewModal }">>
+      <div class="modal-background"></div>
+      <div class="modal-content">
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title">Create new view</p>
+          </header>
+          <div class="card-content">
+            <div class="content">
+              <ts-create-view-form @toggleCreateViewModal="toggleCreateViewModal" :sketchId="sketchId" :currentQueryString="currentQueryString" :currentQueryFilter="currentQueryFilter"></ts-create-view-form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="modal-close is-large" aria-label="close" v-on:click="showCreateViewModal = !showCreateViewModal"></button>
+    </div>
+
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
@@ -23,22 +41,8 @@ limitations under the License.
               <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
             </form>
             <br>
-            <div class="modal" v-bind:class="{ 'is-active': showCreateViewModal }">>
-              <div class="modal-background"></div>
-              <div class="modal-content">
-                <div class="card">
-                  <header class="card-header">
-                    <p class="card-header-title">Create new view</p>
-                  </header>
-                  <div class="card-content">
-                    <div class="content">
-                      <ts-create-view-form @toggleCreateViewModal="toggleCreateViewModal" :sketchId="sketchId" :currentQueryString="currentQueryString" :currentQueryFilter="currentQueryFilter"></ts-create-view-form>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <button class="modal-close is-large" aria-label="close" v-on:click="showCreateViewModal = !showCreateViewModal"></button>
-            </div>
+
+            <!--
             <div class="field is-grouped">
               <p class="control">
                 <ts-view-list-dropdown @setActiveView="searchView"></ts-view-list-dropdown>
@@ -52,31 +56,35 @@ limitations under the License.
                 </a>
               </p>
             </div>
-          </div>
-        </div>
-      </div>
-    </section>
+            -->
 
-    <section class="section">
-      <div class="container is-fluid">
-        <div class="card">
-          <header class="card-header" v-on:click="showFilters = !showFilters" style="cursor: pointer">
-            <span class="card-header-title">
-              <span class="icon is-small"><i class="fas fa-filter"></i></span>
-              <span style="margin-left:10px;">Filters</span>
-            </span>
-            <span class="card-header-icon">
-              <span class="icon">
-                <i class="fas fa-angle-down" v-if="!showFilters" aria-hidden="true"></i>
-                <i class="fas fa-angle-up" v-if="showFilters" aria-hidden="true"></i>
-              </span>
-            </span>
-          </header>
-          <div class="card-content" v-show="showFilters">
-            <ts-explore-filter-time></ts-explore-filter-time>
-            <br>
-            <div style="margin-bottom: 8px;"><b>Timelines</b></div>
+            <div class="field is-grouped">
+
+              <p class="control" v-for="chip in currentQueryFilter.chips" :key="chip">
+                <span class="tag is-light is-rounded is-medium">
+                  <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
+                  <span v-else-if="chip.field === 'ts_label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
+
+                  <span v-if="chip.operator === 'datetime_range'">
+                    <span class="icon is-small" style="margin-right:7px;"><i class="fas fa-clock"></i></span> {{ chip.value.split(',')[0] }} &rarr; {{ chip.value.split(',')[1] }}
+                  </span>
+                  <span v-else>
+                    {{ chip | filterChip }}
+                  </span>
+                  <button style="margin-left:7px" class="delete is-small"></button>
+                </span>
+              </p>
+              <button class="button is-text" v-on:click="showFilters = !showFilters">+ Add filter</button>
+            </div>
+
+            <div v-show="showFilters">
+              <br>
+              <ts-explore-filter-time></ts-explore-filter-time>
+              <br>
+            </div>
+
             <ts-explore-timeline-picker @doSearch="search" v-if="sketch.active_timelines"></ts-explore-timeline-picker>
+
           </div>
         </div>
       </div>
@@ -132,7 +140,7 @@ import TsSketchExploreAggregation from "./SketchExploreAggregation"
 export default {
   name: 'ts-sketch-explore-search',
   components: {
-      TsSketchExploreAggregation,
+    TsSketchExploreAggregation,
     TsViewListDropdown,
     TsCreateViewForm,
     TsSketchExploreEventList,

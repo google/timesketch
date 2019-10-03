@@ -15,24 +15,21 @@ limitations under the License.
 -->
 <template>
   <form v-on:submit.prevent="formatDateTime" style="max-width: 500px;">
-    <div style="margin-bottom: 8px;"><b>Time range</b></div>
     <div class="field is-horizontal">
       <div class="field-body">
         <div class="field">
           <p class="control">
-            <input class="input" v-model="startDateTime" type="text"
-                   placeholder="2019-07-07T10:00:01">
+            <input class="input" v-model="startDateTime" type="text" placeholder="2019-07-07T10:00:01">
           </p>
         </div>
+        <span style="margin-right:10px;padding-top:5px;">&rarr;</span>
         <div class="field">
           <p class="control">
-            <input class="input" v-model="endDateTime" type="text"
-                   placeholder="2019-07-07T10:00:01">
+            <input class="input" v-model="endDateTime" type="text" placeholder="2019-07-07T10:00:01">
           </p>
         </div>
       </div>
     </div>
-    <button class="button">Filtered search</button>
   </form>
 </template>
 
