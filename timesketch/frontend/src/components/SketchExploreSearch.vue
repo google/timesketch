@@ -58,28 +58,26 @@ limitations under the License.
             </div>
             -->
 
-            <div class="field is-grouped">
+            <div class="tags">
 
-              <p class="control" v-for="chip in currentQueryFilter.chips" :key="chip">
-                <span class="tag is-light is-rounded is-medium">
+              <span class="tag is-light is-rounded is-medium" v-for="(chip, index) in currentQueryFilter.chips" :key="index">
                   <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
                   <span v-else-if="chip.type === 'label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
 
                   <span v-if="chip.type === 'datetime_range'">
-                    <span class="icon is-small" style="margin-right:7px;"><i class="fas fa-clock"></i></span> {{ chip.value.split(',')[0] }} &rarr; {{ chip.value.split(',')[1] }}
+                    <span class="icon is-small" style="margin-right:7px;"><i class="fas fa-clock"></i></span> <span>{{ chip.value.split(',')[0] }}</span> <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]">&rarr; {{ chip.value.split(',')[1] }}</span>
                   </span>
                   <span v-else>
                     {{ chip | filterChip }}
                   </span>
-                  <button style="margin-left:7px" class="delete is-small"></button>
-                </span>
-              </p>
-              <button class="button is-text" v-on:click="showFilters = !showFilters">+ Add filter</button>
+                  <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
+              </span>
+
+              <span class="tag is-white is-rounded is-medium" style="cursor:pointer;" v-on:click="showFilters = !showFilters">+ Add filter</span>
             </div>
 
             <div v-show="showFilters">
-              <br>
-              <ts-explore-filter-time></ts-explore-filter-time>
+              <ts-explore-filter-time @addChip="addChip($event)"></ts-explore-filter-time>
               <br>
             </div>
 
@@ -216,6 +214,14 @@ export default {
     },
     toggleCreateViewModal: function () {
       this.showCreateViewModal = !this.showCreateViewModal
+    },
+    removeChip: function (chipIndex) {
+      this.currentQueryFilter.chips.splice(chipIndex, 1)
+      this.search()
+    },
+    addChip: function (chip) {
+      this.currentQueryFilter.chips.push(chip)
+      this.search()
     }
   },
   created: function () {

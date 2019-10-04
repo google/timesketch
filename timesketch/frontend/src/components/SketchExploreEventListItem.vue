@@ -37,7 +37,8 @@ limitations under the License.
             <span class="ts-event-message-container">
               <span class="ts-event-message-ellipsis" v-bind:title="event._source.message">
                 <span v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji">{{ emoji }}</span>
-                <span v-for="tag in event._source.tag" :key="tag" class="tag is-info" style="margin-right:5px;">{{ tag }}</span>
+                <span style="margin-left:10px;"></span>
+                <span v-for="tag in event._source.tag" :key="tag" class="tag is-rounded" style="margin-right:5px;background:#d1d1d1;">{{ tag }}</span>
                 {{ event._source.message }}
               </span>
             </span>

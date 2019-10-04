@@ -23,10 +23,6 @@ export default {
         return 'Starred'
       }
       return input.value
-    } else if (input.type === 'datetime_range') {
-        let start = input.value.split(',')[0]
-        let end = input.value.split(',')[1]
-        return start + 'U+27f6' + end
     }
     return input.field + ':' + input.value
   }

@@ -39,11 +39,9 @@ const defaultState = () => {
       'indices': ['_all'],
       'order': 'asc',
       'chips': [
-        {'field': 'domain', 'value': 'grendale.xyz', 'type': 'term', 'operator': 'must_not'},
+        {'field': 'domain', 'value': 'grendale.xyz', 'type': 'term', 'operator': 'must'},
         // {'field': 'ts_label', 'value': '__ts_star', 'type': 'label', 'operator': 'must'},
         // {'field': '', 'value': 'testus', 'type': 'label', 'operator': ''},
-        {'field': '', 'value': '2015-08-22,2015-08-22', 'type': 'datetime_range', 'operator': 'must'},
-        {'field': '', 'value': '2015-08-24,2015-08-24', 'type': 'datetime_range', 'operator': 'must'},
         // {'field': '', 'value': '2019-01-01,2019-01-02', 'type': 'datetime_range', 'operator': 'must'},
       ]
     }

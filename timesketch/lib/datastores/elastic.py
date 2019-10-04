@@ -157,8 +157,6 @@ class ElasticsearchDataStore(object):
                 del query_dsl['aggregations']
             return query_dsl
 
-        print(json.dumps(query_filter, indent=2))
-
         if query_filter.get('events', None):
             events = query_filter['events']
             return self._build_events_query(events)
@@ -269,7 +267,6 @@ class ElasticsearchDataStore(object):
                 query_dsl.pop('post_filter', None)
             query_dsl['aggregations'] = aggregations
 
-        print(json.dumps(query_dsl, indent=2))
         return query_dsl
 
     def search(self,
