@@ -39,7 +39,7 @@ services:
       - "9300:9300"
     restart: always
     volumes:
-      - /var/lib/elasticsearch:/usr/share/elasticsearch/data/elasticsearch
+      - /var/lib/elasticsearch:/usr/share/elasticsearch/data
 
   postgres:
     image: postgres
