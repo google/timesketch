@@ -16,14 +16,14 @@ limitations under the License.
 export default {
   name: 'filterChip',
   filter: function (input) {
-    if (input.operator === 'must') {
+    if (input.operator === 'must_not') {
       return 'NOT ' + input.field + ':' + input.value
-    } else if (input.field === 'ts_label') {
+    } else if (input.type === 'label') {
       if (input.value === '__ts_star') {
         return 'Starred'
       }
       return input.value
-    } else if (input.operator === 'datetime_range') {
+    } else if (input.type === 'datetime_range') {
         let start = input.value.split(',')[0]
         let end = input.value.split(',')[1]
         return start + 'U+27f6' + end

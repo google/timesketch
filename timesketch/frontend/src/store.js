@@ -35,14 +35,16 @@ const defaultState = () => {
       'time_start': null,
       'time_end': null,
       'terminate_after': 40,
-      'size': '40',
+      'size': 40,
       'indices': ['_all'],
       'order': 'asc',
       'chips': [
-        {'field': 'domain', 'value': 'grendale.xyz', 'operator': 'must'},
-        {'field': 'ts_label', 'value': '__ts_star', 'operator': ''},
-        {'field': 'ts_label', 'value': 'testus', 'operator': ''},
-        {'field': '', 'value': '2019-01-01,2019-01-02', 'operator': 'datetime_range'},
+        {'field': 'domain', 'value': 'grendale.xyz', 'type': 'term', 'operator': 'must_not'},
+        // {'field': 'ts_label', 'value': '__ts_star', 'type': 'label', 'operator': 'must'},
+        // {'field': '', 'value': 'testus', 'type': 'label', 'operator': ''},
+        {'field': '', 'value': '2015-08-22,2015-08-22', 'type': 'datetime_range', 'operator': 'must'},
+        {'field': '', 'value': '2015-08-24,2015-08-24', 'type': 'datetime_range', 'operator': 'must'},
+        // {'field': '', 'value': '2019-01-01,2019-01-02', 'type': 'datetime_range', 'operator': 'must'},
       ]
     }
   }

@@ -157,7 +157,7 @@ class ElasticsearchDataStore(object):
                 del query_dsl['aggregations']
             return query_dsl
 
-        #print(json.dumps(query_filter, indent=2))
+        print(json.dumps(query_filter, indent=2))
 
         if query_filter.get('events', None):
             events = query_filter['events']
@@ -167,6 +167,7 @@ class ElasticsearchDataStore(object):
             'query': {
                 'bool': {
                     'must': [],
+                    'must_not': [],
                     'filter': []
                 }
             }
@@ -178,11 +179,8 @@ class ElasticsearchDataStore(object):
             query_string = '*'
             query_dsl['query']['bool']['must'].append(label_query)
 
-        query_dsl['query']['bool']['must'].append(
-            {'query_string': {'query': query_string}})
-
+        # TODO: Remove when old UI has been removed.
         if query_filter.get('time_start', None):
-            # TODO: Add support for multiple time ranges.
             query_dsl['query']['bool']['filter'] = [{
                 'bool': {
                     'should': [{
@@ -196,21 +194,56 @@ class ElasticsearchDataStore(object):
                 }
             }]
 
-        labels = []
-        for chip in query_filter['chips']:
-            if chip['field'] == 'ts_label':
-                labels.append(chip['value'])
-            else:
-                q = {
-                    "match_phrase": {
-                        "{}".format(chip['field']): {
-                            "query": "{}".format(chip['value'])
+        if query_string:
+            query_dsl['query']['bool']['must'].append(
+                {'query_string': {'query': query_string}})
+
+        # New UI filters
+        if query_filter.get('chips', None):
+            labels = []
+            must_filters = query_dsl['query']['bool']['must']
+            must_not_filters = query_dsl['query']['bool']['must_not']
+
+            datetime_range_collection = {
+                'bool': {
+                    'should': [],
+                    "minimum_should_match": 1
+                }
+            }
+
+            for chip in query_filter['chips']:
+                if chip['type'] == 'label':
+                    labels.append(chip['value'])
+
+                elif chip['type'] == 'term':
+                    term_filter = {
+                        "match_phrase": {
+                            "{}".format(chip['field']): {
+                                "query": "{}".format(chip['value'])
+                            }
                         }
                     }
-                }
-                query_dsl['query']['bool']['must'].append(q)
-        label_query = self._build_label_query(sketch_id, labels)
-        query_dsl['query']['bool']['must'].append(label_query)
+                    if chip['operator'] == 'must':
+                        must_filters.append(term_filter)
+                    elif chip['operator'] == 'must_not':
+                        must_not_filters.append(term_filter)
+                elif chip['type'] == 'datetime_range':
+                    start = chip['value'].split(',')[0]
+                    end = chip['value'].split(',')[1]
+                    range_filter = {
+                        "range": {
+                            "datetime": {
+                                "gte": start,
+                                "lte": end
+                            }
+                        }
+                    }
+                    datetime_range_collection['bool']['should'].append(
+                        range_filter)
+
+            label_filter = self._build_label_query(sketch_id, labels)
+            must_filters.append(label_filter)
+            must_filters.append(datetime_range_collection)
 
         # Used for pagination
         # TODO: Remove when old UI has been removed.

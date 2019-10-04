@@ -63,9 +63,9 @@ limitations under the License.
               <p class="control" v-for="chip in currentQueryFilter.chips" :key="chip">
                 <span class="tag is-light is-rounded is-medium">
                   <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
-                  <span v-else-if="chip.field === 'ts_label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
+                  <span v-else-if="chip.type === 'label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
 
-                  <span v-if="chip.operator === 'datetime_range'">
+                  <span v-if="chip.type === 'datetime_range'">
                     <span class="icon is-small" style="margin-right:7px;"><i class="fas fa-clock"></i></span> {{ chip.value.split(',')[0] }} &rarr; {{ chip.value.split(',')[1] }}
                   </span>
                   <span v-else>
@@ -95,8 +95,8 @@ limitations under the License.
         <div class="card">
           <header class="card-header" v-on:click="showAggregations = !showAggregations" style="cursor: pointer">
             <span class="card-header-title">
-              <span class="icon is-small"><i class="fas fa-th"></i></span>
-              <span style="margin-left:10px;">Aggregations</span>
+              <span class="icon is-small"><i class="fas fa-chart-bar"></i></span>
+              <span style="margin-left:10px;">Insights</span>
             </span>
             <span class="card-header-icon">
               <span class="icon">
