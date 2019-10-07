@@ -23,10 +23,8 @@ import requests
 
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
-from timesketch.lib.charts import manager as chart_manager
 import altair
 import pandas
-import numpy
 from .definitions import HTTP_STATUS_CODE_20X
 
 
@@ -369,47 +367,38 @@ class Sketch(BaseResource):
 
         return data_frame
 
-    def _get_aggregation_buckets(self, entry, name=''):
-        """Yields all buckets from a aggregation result object.
-
-        Args:
-            entry: result dict from an aggregation request.
-            name: name of aggregation results that contains
-                all aggregation buckets.
-
-        Yields:
-            A dict with each aggregation bucket as well as
-            the bucket_name.
-        """
-        if 'buckets' in entry:
-            for bucket in entry.get('buckets', []):
-                bucket['bucket_name'] = name
-                yield bucket
-        else:
-            for key, value in iter(entry.items()):
-                if not isinstance(value, dict):
-                    continue
-                for bucket in self._get_aggregation_buckets(
-                        value, name=key):
-                    yield bucket
-
     def list_aggregations(self):
         """List all saved aggregations for this sketch.
 
         Returns:
             List of aggregations (instances of Aggregation objects)
         """
-        sketch = self.lazyload_data()
+        data = self.lazyload_data()
         aggregations = []
-        for aggregation in sketch['meta']['aggregations']:
+        for aggregation in data['meta']['saved_aggregations']:
             aggregation_obj = Aggregation(
-                aggregation_id=aggregation['id'],
-                aggregation_name=aggregation['name'],
-                sketch=self,
-                sketch_id=self.id,
-                api=self.api)
+                sketch=self, api=self.api)
+            aggregation_obj.from_store(aggregation_id=aggregation['id'])
             aggregations.append(aggregation_obj)
         return aggregations
+
+    def get_aggregation(self, aggregation_id):
+        """Return a stored aggregation.
+
+        Args:
+            aggregation_id: id of the stored aggregation.
+
+        Returns:
+            An aggregation object, if stored (instance of Aggregation),
+            otherwise None object.
+        """
+        sketch = self.lazyload_data()
+        for aggregation in sketch['meta']['saved_aggregations']:
+            if aggregation['id'] != aggregation_id:
+                continue
+            aggregation_obj = Aggregation(sketch=self, api=self.api)
+            aggregation_obj.from_store(aggregation_id=aggregation['id'])
+            return aggregation_obj
 
     def list_views(self):
         """List all saved views for this sketch.
@@ -605,17 +594,14 @@ class Sketch(BaseResource):
         return response_json
 
 
-    def aggregate(self, aggregate_dsl, as_pandas=False):
+    def aggregate(self, aggregate_dsl):
         """Run an aggregation request on the sketch.
 
         Args:
             aggregate_dsl: Elasticsearch aggregation query DSL string.
-            as_pandas: Optional bool that determines if the results should
-                be returned back as a dictionary or a Pandas DataFrame.
 
         Returns:
-            Dictionary with query results or a pandas DataFrame if as_pandas
-            is set to True.
+            An aggregation object (instance of Aggregation).
 
         Raises:
             ValueError: if unable to query for the results.
@@ -624,69 +610,90 @@ class Sketch(BaseResource):
             raise RuntimeError(
                 'You need to supply an aggregation query DSL string.')
 
-        resource_url = '{0:s}/sketches/{1:d}/aggregation/explore/'.format(
-            self.api.api_root, self.id)
+        aggregation_obj = Aggregation(sketch=self, api=self.api)
+        aggregation_obj.from_explore(aggregate_dsl)
 
-        form_data = {
-            'aggregation_dsl': aggregate_dsl,
-        }
+        return aggregation_obj
 
-        response = self.api.session.post(resource_url, json=form_data)
-        if response.status_code != 200:
-            raise ValueError(
-                'Unable to query results, with error: [{0:d}] {1:s}'.format(
-                    response.status_code, response.reason))
-
-        response_json = response.json()
-
-        if as_pandas:
-            panda_list = []
-            for entry in response_json.get('objects', []):
-                for bucket in self._get_aggregation_buckets(entry):
-                    panda_list.append(bucket)
-            return pandas.DataFrame(panda_list)
-
-        return response_json
+    def list_available_aggregators(self):
+        """Return a list of all available aggregators in the sketch."""
+        data = self.lazyload_data()
+        meta = data.get('meta', {})
+        entries = []
+        for name, options in iter(meta.get('aggregators', {}).items()):
+            for field in options.get('form_fields', []):
+                entry = {
+                    'aggregator_name': name,
+                    'parameter': field.get('name'),
+                    'notes': field.get('label')
+                }
+                if field.get('type') == 'ts-dynamic-form-select-input':
+                    entry['value'] = '|'.join(field.get('options', []))
+                    entry['type'] = 'selection'
+                else:
+                    _, _, entry['type'] = field.get('type').partition(
+                        'ts-dynamic-form-')
+                entries.append(entry)
+        return pandas.DataFrame(entries)
 
     def run_aggregator(
-            self, aggregator_name, aggregator_parameters, as_pandas=False):
+            self, aggregator_name, aggregator_parameters):
         """Run an aggregator class.
 
         Args:
             aggregator_name: Name of the aggregator to run.
             aggregator_parameters: A dict with key/value pairs of parameters
                 the aggregator needs to run.
-            as_pandas: Optional bool that determines if the results should
-                be returned back as a dictionary or a Pandas DataFrame.
 
         Returns:
-            Dictionary with query results or a pandas DataFrame if as_pandas
-            is set to True.
+            An aggregation object (instance of Aggregator).
         """
-        resource_url = '{0:s}/sketches/{1:d}/aggregation/explore/'.format(
+        aggregation_obj = Aggregation(
+            sketch=self,
+            api=self.api)
+        aggregation_obj.from_aggregator_run(
+            aggregator_name=aggregator_name,
+            aggregator_parameters=aggregator_parameters
+        )
+
+        return aggregation_obj
+
+    def store_aggregation(
+            self, name, description, aggregator_name, aggregator_parameters,
+            chart_type=''):
+        """Store an aggregation in the sketch.
+
+        Args:
+            name: a name that will be associated with the aggregation.
+            description: description of the aggregation, visible in the UI.
+            aggregator_name: name of the aggregator class.
+            aggregator_parameters: parameters of the aggregator.
+            chart_type: string representing the chart type.
+
+        Returns:
+          A stored aggregation object or None if not stored.
+        """
+        resource_url = '{0:s}/sketches/{1:d}/aggregation/'.format(
             self.api.api_root, self.id)
 
         form_data = {
-            'aggregator_name': aggregator_name,
-            'aggregator_parameters': aggregator_parameters,
+            'name': name,
+            'description': description,
+            'agg_type': aggregator_name,
+            'chart_type': chart_type,
+            'sketch': self.id,
+            'parameters': aggregator_parameters
         }
 
         response = self.api.session.post(resource_url, json=form_data)
-        if response.status_code != 200:
-            raise ValueError(
-                'Unable to query results, with error: [{0:d}] {1:s}'.format(
-                    response.status_code, response.reason))
+        response_dict = response.json()
 
-        response_json = response.json()
+        objects = response_dict.get('objects', [])
+        if not objects:
+            return None
 
-        if as_pandas:
-            panda_list = []
-            for entry in response_json.get('objects', []):
-                for bucket in self._get_aggregation_buckets(entry):
-                    panda_list.append(bucket)
-            return pandas.DataFrame(panda_list)
-
-        return response_json
+        _ = self.lazyload_data(refresh_cache=True)
+        return self.get_aggregation(objects[0].get('id'))
 
     def label_events(self, events, label_name):
         """Labels one or more events with label_name.
@@ -808,32 +815,182 @@ class SearchIndex(BaseResource):
 
 
 class Aggregation(BaseResource):
-    """Saved aggregation object.
+    """Aggregation object.
 
     Attributes:
-        id: Primary key of the aggregation.
-        name: Name of the aggregation.
+        aggregator_name: name of the aggregator class used to
+            generate the aggregation.
+        chart_type: the type of chart that will be generated
+            from this aggregation object.
+        type: the type of aggregation object.
+        view: a view ID if the aggregation is tied to a specific view.
     """
 
     def __init__(
-            self, aggregation_id, aggregation_name, sketch, sketch_id, api):
-        self.id = aggregation_id
-        self.name = aggregation_name
+            self, sketch, api):
         self._sketch = sketch
-        resource_uri = 'sketches/{0:d}/aggregation/{1:d}/'.format(
-            sketch_id, aggregation_id)
+        self._aggregator_data = {}
+        self._parameters = {}
+        self.aggregator_name = ''
+        self.chart_type = ''
+        self.view = None
+        self.type = None
+        resource_uri = 'sketches/{0:d}/aggregation/explore/'.format(sketch.id)
         super(Aggregation, self).__init__(api, resource_uri)
 
-    def _aggregation(self):
-        """Return the aggregation object."""
-        data = self.lazyload_data()
-        return data.get('objects', [])[0]
+    def _get_aggregation_buckets(self, entry, name=''):
+        """Yields all buckets from an aggregation result object.
 
-    @property
-    def agg_type(self):
-        """Property that returns the agg_type string."""
-        aggregation = self._aggregation()
-        return aggregation.get('agg_type', '')
+        Args:
+            entry: result dict from an aggregation request.
+            name: name of aggregation results that contains
+                all aggregation buckets.
+
+        Yields:
+            A dict with each aggregation bucket as well as
+            the bucket_name.
+        """
+        if 'buckets' in entry:
+            for bucket in entry.get('buckets', []):
+                bucket['bucket_name'] = name
+                yield bucket
+        else:
+            for key, value in iter(entry.items()):
+                if not isinstance(value, dict):
+                    continue
+                for bucket in self._get_aggregation_buckets(
+                        value, name=key):
+                    yield bucket
+
+    def _run_aggregator(
+            self, aggregator_name, parameters, view_id=None, chart_type=None):
+        """Run an aggregator class.
+
+        Args:
+            aggregator_name: the name of the aggregator class.
+            parameters: a dict with the parameters for the aggregation class.
+            view_id: an optional integer value with a primary key to a view.
+            chart_type: string with the chart type.
+
+        Returns:
+            A dict with the aggregation results.
+        """
+        resource_url = '{0:s}/sketches/{1:d}/aggregation/explore/'.format(
+            self.api.api_root, self._sketch.id)
+
+        if chart_type is None and parameters.get('supported_charts'):
+            chart_type = parameters.get('supported_charts')
+            if isinstance(chart_type, (list, tuple)):
+                chart_type = chart_type[0]
+
+        if chart_type:
+            self.chart_type = chart_type
+
+        if view_id:
+            self.view = view_id
+
+        self.aggregator_name = aggregator_name
+
+        form_data = {
+            'aggregator_name': aggregator_name,
+            'aggregator_parameters': parameters,
+            'chart_type': chart_type,
+            'view_id': view_id,
+        }
+
+        response = self.api.session.post(resource_url, json=form_data)
+        if response.status_code != 200:
+            raise ValueError(
+                'Unable to query results, with error: [{0:d}] {1:s}'.format(
+                    response.status_code, response.reason))
+
+        return response.json()
+
+    def from_store(self, aggregation_id):
+        """Initialize the aggregation object from a stored aggregation.
+
+        Args:
+            aggregation_id: integer value for the stored
+                aggregation (primary key).
+        """
+        resource_uri = 'sketches/{0:d}/aggregation/{1:d}/'.format(
+            self._sketch.id, aggregation_id)
+        resource_data = self.api.fetch_resource_data(resource_uri)
+        data = resource_data.get('objects', [None])[0]
+        if not data:
+            return
+
+        self._aggregator_data = data
+        self.aggregator_name = data.get('agg_type')
+        self.type = 'stored'
+
+        chart_type = data.get('chart_type')
+        param_string = data.get('parameters', '')
+        if param_string:
+            parameters = json.loads(param_string)
+        else:
+            parameters = {}
+
+        self._parameters = parameters
+        self.resource_data = self._run_aggregator(
+            aggregator_name=self.aggregator_name, parameters=parameters,
+            chart_type=chart_type)
+
+    def from_explore(self, aggregate_dsl):
+        """Initialize the aggregation object by running an aggregation DSL.
+
+        Args:
+            aggregate_dsl: Elasticsearch aggregation query DSL string.
+        """
+        resource_url = '{0:s}/sketches/{1:d}/aggregation/explore/'.format(
+            self.api.api_root, self._sketch.id)
+
+        self.aggregator_name = 'DSL'
+        self.type = 'DSL'
+
+        form_data = {
+            'aggregation_dsl': aggregate_dsl,
+        }
+
+        response = self.api.session.post(resource_url, json=form_data)
+        if response.status_code != 200:
+            raise ValueError(
+                'Unable to query results, with error: [{0:d}] {1:s}'.format(
+                    response.status_code, response.reason))
+
+        self.resource_data = response.json()
+
+    def from_aggregator_run(
+            self, aggregator_name, aggregator_parameters,
+            view_id=None, chart_type=None):
+        """Initialize the aggregation object by running an aggregator class.
+
+        Args:
+            aggregator_name: name of the aggregator class to run.
+            aggregator_parameters: a dict with the parameters of the aggregator
+                class.
+            view_id: an optional integer value with a primary key to a view.
+            chart_type: optional string with the chart type.
+        """
+        self.type = 'aggregator_run'
+        self._parameters = aggregator_parameters
+        self.resource_data = self._run_aggregator(
+            aggregator_name, aggregator_parameters, view_id, chart_type)
+
+    def lazyload_data(self, refresh_cache=False):
+        """Load resource data once and cache the result.
+
+        Args:
+            refresh_cache: Boolean indicating if to update cache.
+
+        Returns:
+            Dictionary with resource data.
+        """
+        if self.resource_data and not refresh_cache:
+            return self.resource_data
+
+        # TODO: Implement a method to refresh cache.
+        return self.resource_data
 
     @property
     def chart(self):
@@ -841,70 +998,74 @@ class Aggregation(BaseResource):
         return self.generate_chart()
 
     @property
-    def chart_type(self):
-        """Property that returns the chart_type string."""
-        aggregation = self._aggregation()
-        return aggregation.get('chart_type', '')
-
-    @property
     def description(self):
         """Property that returns the description string."""
-        aggregation = self._aggregation()
-        return aggregation.get('description', '')
+        return self._aggregator_data.get('description', '')
 
     @property
-    def view(self):
-        """Property that returns the view_id integer."""
-        aggregation = self._aggregation()
-        return aggregation.get('view_id', 0)
+    def id(self):
+        """Property that returns the ID of the aggregator, if possible."""
+        agg_id = self._aggregator_data.get('id')
+        if agg_id:
+            return agg_id
+
+        return -1
 
     @property
-    def parameters(self):
-        """Property that returns the parameter dict."""
-        aggregation = self._aggregation()
-        param_string = aggregation.get('parameters', '')
-        if not param_string:
-            return {}
-        return json.loads(param_string)
+    def name(self):
+        """Property that returns the name of the aggregation."""
+        name = self._aggregator_data.get('name')
+        if name:
+            return name
+        return self.aggregator_name
+
+    @property
+    def dict(self):
+        """Property that returns back a Dict with the results."""
+        return self.to_dict()
 
     @property
     def table(self):
         """Property that returns a pandas DataFrame."""
-        return self.run(as_pandas=True)
+        return self.to_pandas()
+
+    def to_dict(self):
+        """Returns a dict."""
+        entries = {}
+        entry_index = 1
+        data = self.lazyload_data()
+        for entry in data.get('objects', []):
+            for bucket in self._get_aggregation_buckets(entry):
+                entries['entry_{0:d}'.format(entry_index)] = bucket
+                entry_index += 1
+        return entries
+
+    def to_pandas(self):
+        """Returns a pandas DataFrame."""
+        panda_list = []
+        data = self.lazyload_data()
+        for entry in data.get('objects', []):
+            for bucket in self._get_aggregation_buckets(entry):
+                panda_list.append(bucket)
+        return pandas.DataFrame(panda_list)
 
     def generate_chart(self):
         """Returns an altair Vega-lite chart."""
-        chart_class = chart_manager.ChartManager.get_chart(self.chart_type)
+        if not self.chart_type:
+            raise TypeError('Unable to generate chart, missing a chart type.')
 
-        if not chart_class:
+        if not self._parameters.get('supported_charts'):
+            self._parameters['supported_charts'] = self.chart_type
+
+        data = self.lazyload_data()
+        meta = data.get('meta', {})
+        vega_spec = meta.get('vega_spec')
+
+        if not vega_spec:
             return altair.Chart(pandas.DataFrame()).mark_point()
 
-        data = self.run(as_pandas=True)
-        x_value = ''
-        y_value = ''
-        for name, obj_type in data.dtypes.items():
-            if name == self.name:
-                continue
-            if numpy.issubdtype(obj_type, numpy.integer):
-                y_value = name
-            else:
-                x_value = name
-
-        encoding = {
-            'x': {'field': x_value, 'type': 'ordinal'},
-            'y': {'field': y_value, 'type': 'quantitative'},
-        }
-        chart_obj = chart_class({
-            'values': data,
-            'encoding': encoding,
-        })
-
-        return chart_obj.generate()
-
-    def run(self, as_pandas=False):
-        """Returns the results from an aggregator run."""
-        return self._sketch.run_aggregator(
-            self.name, self.parameters, as_pandas=as_pandas)
+        vega_spec_string = json.dumps(vega_spec)
+        return altair.Chart.from_json(vega_spec_string)
 
 
 class View(BaseResource):

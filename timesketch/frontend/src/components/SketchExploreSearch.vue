@@ -16,15 +16,13 @@ limitations under the License.
 <template>
   <div>
     <section class="section">
-      <div class="container">
+      <div class="container is-fluid">
         <div class="card">
           <div class="card-content">
-
             <form v-on:submit.prevent="search">
               <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
             </form>
             <br>
-
             <div class="modal" v-bind:class="{ 'is-active': showCreateViewModal }">>
               <div class="modal-background"></div>
               <div class="modal-content">
@@ -41,16 +39,15 @@ limitations under the License.
               </div>
               <button class="modal-close is-large" aria-label="close" v-on:click="showCreateViewModal = !showCreateViewModal"></button>
             </div>
-
             <div class="field is-grouped">
               <p class="control">
                 <ts-view-list-dropdown @setActiveView="searchView"></ts-view-list-dropdown>
               </p>
               <p class="control">
                 <a class="button" v-on:click="showCreateViewModal = !showCreateViewModal">
-                  <span class="icon is-small">
-                    <i class="fas fa-save"></i>
-                  </span>
+                          <span class="icon is-small">
+                            <i class="fas fa-save"></i>
+                          </span>
                   <span>Save view</span>
                 </a>
               </p>
@@ -61,13 +58,60 @@ limitations under the License.
     </section>
 
     <section class="section">
-      <div class="container">
+      <div class="container is-fluid">
         <div class="card">
-          <header class="card-header">
-            <p class="card-header-title">Timelines</p>
+          <header class="card-header" v-on:click="showFilters = !showFilters" style="cursor: pointer">
+            <span class="card-header-title">
+              <span class="icon is-small"><i class="fas fa-filter"></i></span>
+              <span style="margin-left:10px;">Filters</span>
+            </span>
+            <span class="card-header-icon">
+              <span class="icon">
+                <i class="fas fa-angle-down" v-if="!showFilters" aria-hidden="true"></i>
+                <i class="fas fa-angle-up" v-if="showFilters" aria-hidden="true"></i>
+              </span>
+            </span>
           </header>
-          <div class="card-content">
+          <div class="card-content" v-show="showFilters">
+            <ts-explore-filter-time></ts-explore-filter-time>
+            <br>
+            <div style="margin-bottom: 8px;"><b>Timelines</b></div>
             <ts-explore-timeline-picker @doSearch="search" v-if="sketch.active_timelines"></ts-explore-timeline-picker>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container is-fluid">
+        <div class="card">
+          <header class="card-header" v-on:click="showAggregations = !showAggregations" style="cursor: pointer">
+            <span class="card-header-title">
+              <span class="icon is-small"><i class="fas fa-th"></i></span>
+              <span style="margin-left:10px;">Aggregations</span>
+            </span>
+            <span class="card-header-icon">
+              <span class="icon">
+                <i class="fas fa-angle-down" v-if="!showAggregations" aria-hidden="true"></i>
+                <i class="fas fa-angle-up" v-if="showAggregations" aria-hidden="true"></i>
+              </span>
+            </span>
+          </header>
+          <div class="card-content" v-show="showAggregations">
+            <ts-sketch-explore-aggregation></ts-sketch-explore-aggregation>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container is-fluid">
+        <div class="card">
+          <div class="card-content">
+            <div v-if="!searchInProgress">{{ totalHits }} events ({{ totalTime }}s)</div>
+            <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
+            <div v-if="totalHits > 0" style="margin-top:20px;"></div>
+            <ts-sketch-explore-event-list></ts-sketch-explore-event-list>
           </div>
         </div>
       </div>
@@ -79,20 +123,30 @@ limitations under the License.
 import ApiClient from '../utils/RestApiClient'
 import TsViewListDropdown from './SketchExploreViewListDropdown'
 import TsCreateViewForm from './SketchCreateViewForm'
+import TsSketchExploreEventList from './SketchExploreEventList'
 import TsExploreTimelinePicker from './SketchExploreTimelinePicker'
+import TsExploreFilterTime from './SketchExploreFilterTime'
+import TsExploreSessionChart from './SketchExploreSessionChart'
+import TsSketchExploreAggregation from "./SketchExploreAggregation"
 
 export default {
   name: 'ts-sketch-explore-search',
   components: {
+      TsSketchExploreAggregation,
     TsViewListDropdown,
     TsCreateViewForm,
-    TsExploreTimelinePicker
+    TsSketchExploreEventList,
+    TsExploreTimelinePicker,
+    TsExploreFilterTime,
+    TsExploreSessionChart
   },
   props: ['sketchId'],
   data () {
     return {
       params: {},
-      showCreateViewModal: false
+      showCreateViewModal: false,
+      showFilters: false,
+      showAggregations: false
     }
   },
   computed: {
@@ -101,6 +155,15 @@ export default {
     },
     meta () {
       return this.$store.state.meta
+    },
+    eventList () {
+      return this.$store.state.eventList
+    },
+    totalHits () {
+      return this.eventList.meta.es_total_count || 0
+    },
+    totalTime () {
+      return this.eventList.meta.es_time / 1000 || 0
     },
     searchInProgress: {
       get: function () {
@@ -129,21 +192,13 @@ export default {
   },
   methods: {
     search: function () {
-      this.searchInProgress = true
-      let formData = {
-        'query': this.currentQueryString,
-        'filter': this.currentQueryFilter
-      }
-      ApiClient.search(this.sketchId, formData).then((response) => {
-        this.$store.commit('updateEventList', response.data)
-        this.searchInProgress = false
-      }).catch((e) => {})
+      this.$store.commit('search', this.sketchId)
     },
     searchView: function (viewId) {
-      if (viewId !== parseInt(viewId, 10)) {
+      if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
         viewId = viewId.id
+        this.$router.push({ name: 'SketchExplore', query: { view: viewId } })
       }
-      this.$router.push({ name: 'SketchExplore', query: { view: viewId } })
       ApiClient.getView(this.sketchId, viewId).then((response) => {
         let view = response.data.objects[0]
         this.currentQueryString = view.query_string

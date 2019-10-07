@@ -37,6 +37,7 @@ limitations under the License.
             <span class="ts-event-message-container">
               <span class="ts-event-message-ellipsis" v-bind:title="event._source.message">
                 <span v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji">{{ emoji }}</span>
+                <span v-for="tag in event._source.tag" :key="tag" class="tag is-info" style="margin-right:5px;">{{ tag }}</span>
                 {{ event._source.message }}
               </span>
             </span>
@@ -98,6 +99,9 @@ export default {
       return this.timeline(this.event._index).name
     },
     deltaDays () {
+      if (!this.prevEvent) {
+        return 0
+      }
       let timestamp = Math.floor(this.event._source.timestamp / 1000000)
       let prevTimestamp = Math.floor(this.prevEvent._source.timestamp / 1000000)
       let delta = Math.floor(timestamp - prevTimestamp)

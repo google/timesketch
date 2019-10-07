@@ -20,10 +20,13 @@ import Home from './components/Home'
 import Sketch from './components/Sketch'
 import SketchOverview from './components/SketchOverview'
 import SketchExplore from './components/SketchExplore'
+import SketchExploreSearch from './components/SketchExploreSearch'
+import SketchExploreAggregation from './components/SketchExploreAggregation'
 import SketchStory from './components/SketchStory'
 import SketchStoryOverview from './components/SketchStoryOverview'
 import SketchStoryContent from './components/SketchStoryContent'
 import SketchTimelines from './components/SketchTimelines'
+import SketchViews from './components/SketchViews'
 
 Vue.use(VueRouter)
 
@@ -45,14 +48,27 @@ const routes = [
       },
       {
         path: 'explore',
-        name: 'SketchExplore',
         component: SketchExplore,
-        props: true
+        props: true,
+        children: [
+          {
+            path: '',
+            name: 'SketchExplore',
+            component: SketchExploreSearch,
+            props: true
+          }
+        ]
       },
       {
         path: 'timelines',
         name: 'SketchTimelines',
         component: SketchTimelines,
+        props: true
+      },
+      {
+        path: 'views',
+        name: 'SketchViews',
+        component: SketchViews,
         props: true
       },
       {

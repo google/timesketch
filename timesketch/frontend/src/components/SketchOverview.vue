@@ -17,9 +17,9 @@ limitations under the License.
   <div>
 
     <section class="section">
-      <div class="container">
-        <ts-navbar-secondary currentAppContext="sketch" currentPage="overview">
-          <a class="button is-link is-rounded" style="margin-right:10px;">
+      <div class="container is-fluid">
+        <ts-navbar-secondary v-if="sketch.active_timelines.length" currentAppContext="sketch" currentPage="overview">
+          <a class="button is-info is-rounded" style="margin-right:10px;">
               <span class="icon is-small">
                 <i class="fas fa-users"></i>
               </span>
@@ -100,7 +100,7 @@ limitations under the License.
 
     <!-- Title and description -->
     <section class="section">
-      <div class="container">
+      <div class="container is-fluid">
         <div class="card" style="min-height: 200px;">
           <div class="card-content">
             <ts-sketch-summary :sketch="sketch"></ts-sketch-summary>
@@ -111,7 +111,7 @@ limitations under the License.
 
     <!-- Stats -->
     <section class="section" v-if="sketch.timelines.length">
-      <div class="container">
+      <div class="container is-fluid">
         <div class="card" style="min-height: 100px;">
           <div class="card-content">
             <ts-sketch-metrics :timelines="sketch.active_timelines" :views="meta.views" :stories="sketch.stories" :count="count"></ts-sketch-metrics>
@@ -122,7 +122,7 @@ limitations under the License.
 
     <!-- Timeline, Saved View and Stories lists-->
     <section class="section" v-if="sketch.timelines && sketch.timelines.length ? sketch.timelines.length: false">
-      <div class="container">
+      <div class="container is-fluid">
         <div class="columns">
 
           <!-- Timelines -->
@@ -132,20 +132,20 @@ limitations under the License.
                 <p class="card-header-title">Timelines</p>
                 <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
                   <p class="control">
-                    <router-link class="button is-rounded is-small" :to="{ name: 'SketchTimelines' }">
-                      <span class="icon is-small">
-                        <i class="fas fa-cog"></i>
-                      </span>
-                      <span>Manage</span>
-                    </router-link>
-                  </p>
-                  <p class="control">
                     <button class="button is-success is-rounded is-small" v-on:click="showUploadTimelineModal = !showUploadTimelineModal">
                         <span class="icon is-small">
                           <i class="fas fa-plus"></i>
                         </span>
                       <span>Timeline</span>
                     </button>
+                  </p>
+                  <p class="control">
+                    <router-link class="button is-rounded is-small" :to="{ name: 'SketchTimelines' }">
+                      <span class="icon is-small">
+                        <i class="fas fa-cog"></i>
+                      </span>
+                      <span>Manage</span>
+                    </router-link>
                   </p>
                 </div>
               </header>
@@ -160,6 +160,16 @@ limitations under the License.
             <div class="card has-min-height">
               <header class="card-header">
                 <p class="card-header-title">Views</p>
+                <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
+                  <p class="control">
+                    <router-link class="button is-rounded is-small" :to="{ name: 'SketchViews' }">
+                      <span class="icon is-small">
+                        <i class="fas fa-cog"></i>
+                      </span>
+                      <span>Manage</span>
+                    </router-link>
+                  </p>
+                </div>
               </header>
               <div class="card-content" style="padding:5px;">
                 <ts-saved-view-list :views="meta.views"></ts-saved-view-list>
@@ -192,7 +202,7 @@ import ApiClient from '../utils/RestApiClient'
 import TsSketchSummary from './SketchOverviewSummary'
 import TsSketchMetrics from './SketchOverviewMetrics'
 import TsTimelineList from './SketchTimelineList'
-import TsSavedViewList from './SketchOverviewViewList'
+import TsSavedViewList from './SketchViewsList'
 import TsSketchStoryList from './SketchStoryList'
 import TsUploadTimelineForm from './SketchUploadTimelineForm'
 import TsSketchTimelinesManage from './SketchTimelinesManage'
