@@ -38,24 +38,10 @@ const defaultState = () => {
       'size': 40,
       'indices': ['_all'],
       'order': 'asc',
-      'chips': [
-        {'field': 'domain', 'value': 'grendale.xyz', 'type': 'term', 'operator': 'must'},
-        // {'field': 'ts_label', 'value': '__ts_star', 'type': 'label', 'operator': 'must'},
-        // {'field': '', 'value': 'testus', 'type': 'label', 'operator': ''},
-        // {'field': '', 'value': '2019-01-01,2019-01-02', 'type': 'datetime_range', 'operator': 'must'},
-      ]
+      'chips': []
     }
   }
 }
-
-/*
-{
-  'field': '',
-  'value': '',
-  'operator': ''
-}
-
- */
 
 // Initial state
 const state = defaultState()

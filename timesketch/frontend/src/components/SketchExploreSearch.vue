@@ -209,6 +209,13 @@ export default {
         let view = response.data.objects[0]
         this.currentQueryString = view.query_string
         this.currentQueryFilter = JSON.parse(view.query_filter)
+        if (this.currentQueryFilter.indices === '_all') {
+          let allIndices = []
+          this.sketch.active_timelines.forEach(function (timeline) {
+            allIndices.push(timeline.searchindex.index_name)
+          })
+          this.currentQueryFilter.indices = allIndices
+        }
         this.search()
       }).catch((e) => {})
     },
