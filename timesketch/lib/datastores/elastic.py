@@ -81,17 +81,17 @@ class ElasticsearchDataStore(object):
         self.import_events = []
 
     @staticmethod
-    def _build_label_query(sketch_id, labels):
+    def _build_labels_query(sketch_id, labels):
         """Build Elasticsearch query for Timesketch labels.
 
         Args:
             sketch_id: Integer of sketch primary key.
-            label_name: Name of the label to search for.
+            labels: List of label names.
 
         Returns:
             Elasticsearch query as a dictionary.
         """
-        label_dict = {
+        label_query = {
             'bool': {
                 'should': [],
                 "minimum_should_match": 1
@@ -99,7 +99,7 @@ class ElasticsearchDataStore(object):
         }
 
         for label in labels:
-            query_dict = {
+            nested_query = {
                 'nested': {
                     'query': {
                         'bool': {
@@ -117,8 +117,8 @@ class ElasticsearchDataStore(object):
                     'path': 'timesketch_label'
                 }
             }
-            label_dict['bool']['should'].append(query_dict)
-        return label_dict
+            label_query['bool']['should'].append(nested_query)
+        return label_query
 
     @staticmethod
     def _build_events_query(events):
@@ -171,13 +171,13 @@ class ElasticsearchDataStore(object):
             }
         }
 
-        # TODO: Remove when old UI has been removed.
+        # TODO: Remove when old UI has been deprecated.
         if query_filter.get('star', None):
-            label_query = self._build_label_query(sketch_id, ['__ts_star'])
+            label_query = self._build_labels_query(sketch_id, ['__ts_star'])
             query_string = '*'
             query_dsl['query']['bool']['must'].append(label_query)
 
-        # TODO: Remove when old UI has been removed.
+        # TODO: Remove when old UI has been deprecated.
         if query_filter.get('time_start', None):
             query_dsl['query']['bool']['filter'] = [{
                 'bool': {
@@ -201,7 +201,6 @@ class ElasticsearchDataStore(object):
             labels = []
             must_filters = query_dsl['query']['bool']['must']
             must_not_filters = query_dsl['query']['bool']['must_not']
-
             datetime_range_collection = {
                 'bool': {
                     'should': [],
@@ -215,9 +214,9 @@ class ElasticsearchDataStore(object):
 
                 elif chip['type'] == 'term':
                     term_filter = {
-                        "match_phrase": {
-                            "{}".format(chip['field']): {
-                                "query": "{}".format(chip['value'])
+                        'match_phrase': {
+                            '{}'.format(chip['field']): {
+                                'query': "{}".format(chip['value'])
                             }
                         }
                     }
@@ -225,29 +224,30 @@ class ElasticsearchDataStore(object):
                         must_filters.append(term_filter)
                     elif chip['operator'] == 'must_not':
                         must_not_filters.append(term_filter)
+
                 elif chip['type'] == 'datetime_range':
                     start = chip['value'].split(',')[0]
                     end = chip['value'].split(',')[1]
                     range_filter = {
-                        "range": {
-                            "datetime": {
-                                "gte": start,
-                                "lte": end
+                        'range': {
+                            'datetime': {
+                                'gte': start,
+                                'lte': end
                             }
                         }
                     }
                     datetime_range_collection['bool']['should'].append(
                         range_filter)
 
-            label_filter = self._build_label_query(sketch_id, labels)
+            label_filter = self._build_labels_query(sketch_id, labels)
             must_filters.append(label_filter)
             must_filters.append(datetime_range_collection)
 
-        # Used for pagination
-        # TODO: Remove when old UI has been removed.
+        # Pagination
         if query_filter.get('from', None):
             query_dsl['from'] = query_filter['from']
 
+        # Number of events to return
         if query_filter.get('size', None):
             query_dsl['size'] = query_filter['size']
 
@@ -269,15 +269,8 @@ class ElasticsearchDataStore(object):
 
         return query_dsl
 
-    def search(self,
-               sketch_id,
-               query_string,
-               query_filter,
-               query_dsl,
-               indices,
-               count=False,
-               aggregations=None,
-               return_fields=None,
+    def search(self, sketch_id, query_string, query_filter, query_dsl, indices,
+               count=False, aggregations=None, return_fields=None,
                enable_scroll=False):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
@@ -347,9 +340,9 @@ class ElasticsearchDataStore(object):
             _source_include=return_fields,
             scroll=scroll_timeout)
 
-    def search_stream(
-            self, sketch_id=None, query_string=None, query_filter=None,
-            query_dsl=None, indices=None, return_fields=None):
+    def search_stream(self, sketch_id=None, query_string=None,
+                      query_filter=None, query_dsl=None, indices=None,
+                      return_fields=None):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -545,9 +538,8 @@ class ElasticsearchDataStore(object):
                     'Unable to connect to Timesketch backend: {}'.format(e)
                 )
 
-    def import_event(
-            self, index_name, event_type, event=None,
-            event_id=None, flush_interval=DEFAULT_FLUSH_INTERVAL):
+    def import_event(self, index_name, event_type, event=None, event_id=None,
+                     flush_interval=DEFAULT_FLUSH_INTERVAL):
         """Add event to Elasticsearch.
 
         Args:
