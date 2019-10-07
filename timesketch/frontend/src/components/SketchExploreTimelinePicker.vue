@@ -21,7 +21,8 @@ limitations under the License.
       :timeline="timeline"
       style="margin-right:7px;">
     </ts-sketch-explore-timeline-picker-item>
-    <button class="button" v-on:click="enableAllIndices">Enable all</button>
+    <button class="button is-text" v-on:click="enableAllIndices">Enable all</button>
+    <button class="button is-text" v-on:click="disableAllIndices">Disable all</button>
   </div>
 </template>
 
@@ -54,6 +55,11 @@ export default {
         allIndices.push(timeline.searchindex.index_name)
       })
       this.currentQueryFilter.indices = allIndices
+      this.$store.commit('search', this.sketch.id)
+    },
+    disableAllIndices: function () {
+      this.currentQueryFilter.indices = []
+      this.$store.commit('search', this.sketch.id)
     }
   },
   created: function () {
