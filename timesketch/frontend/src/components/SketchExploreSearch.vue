@@ -227,6 +227,12 @@ export default {
       this.search()
     },
     addChip: function (chip) {
+      // Legacy views don't support chips so we need to add an array in order
+      // to upgrade the view to the new filter system.
+      if (!this.currentQueryFilter.chips) {
+        this.currentQueryFilter.chips = []
+      }
+
       this.currentQueryFilter.chips.push(chip)
       this.search()
     }
