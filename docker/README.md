@@ -19,13 +19,6 @@ cd timesketch
 ### Verify the Kernel Settings
 Follow the official instructions [here](https://www.elastic.co/guide/en/elasticsearch/reference/6.4/docker.html#docker-cli-run-prod-mode)
 
-### Create elasticsearch directory
-
-```
-mkdir /var/lib/elasticsearch
-chown 1000:1000 /var/lib/elasticsearch
-```
-
 ### Build and Start Containers
 
 ```shell
