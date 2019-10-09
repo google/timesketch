@@ -108,7 +108,27 @@ limitations under the License.
       <div class="container is-fluid">
         <div class="card">
           <div class="card-content">
-            <div v-if="!searchInProgress">{{ totalHits }} events ({{ totalTime }}s)</div>
+            <div v-if="!searchInProgress">{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)
+              <div style="float:right; margin-left:7px;" class="select is-small">
+                <select v-model="sortOrder">
+                  <option v-bind:value="sortOrder">{{ sortOrder }}</option>
+                  <option value="desc">desc</option>
+                  <option value="asc">asc</option>
+                </select>
+              </div>
+              <div style="float:right;" class="select is-small">
+                <select v-model="numEvents">
+                  <option v-bind:value="numEvents">{{ numEvents }}</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="40">40</option>
+                  <option value="80">80</option>
+                  <option value="100">100</option>
+                  <option value="200">200</option>
+                  <option value="500">500</option>
+                </select>
+              </div>
+            </div>
             <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
             <div v-if="totalHits > 0" style="margin-top:20px;"></div>
             <ts-sketch-explore-event-list></ts-sketch-explore-event-list>
@@ -146,7 +166,9 @@ export default {
       params: {},
       showCreateViewModal: false,
       showFilters: false,
-      showAggregations: false
+      showAggregations: false,
+      numEvents: 40,
+      sortOrder: "asc"
     }
   },
   computed: {
@@ -164,6 +186,12 @@ export default {
     },
     totalTime () {
       return this.eventList.meta.es_time / 1000 || 0
+    },
+    fromEvent () {
+      return this.currentQueryFilter.from || 1
+    },
+    toEvent () {
+      return parseInt(this.currentQueryFilter.from) + parseInt(this.numEvents)
     },
     searchInProgress: {
       get: function () {
@@ -208,6 +236,12 @@ export default {
     },
     toggleCreateViewModal: function () {
       this.showCreateViewModal = !this.showCreateViewModal
+    }
+  },
+  watch: {
+    numEvents: function (newVal) {
+      this.currentQueryFilter.size = newVal
+      this.search()
     }
   },
   created: function () {
