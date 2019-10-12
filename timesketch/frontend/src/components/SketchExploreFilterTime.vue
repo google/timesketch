@@ -41,7 +41,7 @@ limitations under the License.
             </a>
           </p>
           <p class="control">
-            <button :disabled="!(startDateTime && endDateTime)" class="button is-success is-outlined" v-on:click="submit">+ Add to filter</button>
+            <button :disabled="!(startDateTime && endDateTime)" class="button is-success is-outlined" v-on:click="submit">+ Add time range</button>
           </p>
         </div>
 

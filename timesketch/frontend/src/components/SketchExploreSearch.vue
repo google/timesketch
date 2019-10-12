@@ -36,49 +36,62 @@ limitations under the License.
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
-          <div class="card-content">
-            <form v-on:submit.prevent="search">
-              <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
-            </form>
-            <br>
+          <header class="card-header" v-on:click="showSearch = !showSearch" style="cursor: pointer">
+            <span class="card-header-title">
+              <span class="icon is-small"><i class="fas fa-search"></i></span>
+              <span style="margin-left:10px;">Search</span>
+            </span>
 
-            <!--
-            <div class="field is-grouped">
-              <p class="control">
+            <a style="margin-top:10px;" class="button is-rounded is-small" v-on:click="showCreateViewModal = !showCreateViewModal">
+              <span class="icon is-small">
+                <i class="fas fa-save"></i>
+              </span>
+              <span>Save</span>
+            </a>
+
+            <span class="card-header-icon">
+              <span class="icon">
+                <i class="fas fa-angle-down" v-if="!showSearch" aria-hidden="true"></i>
+                <i class="fas fa-angle-up" v-if="showSearch" aria-hidden="true"></i>
+              </span>
+            </span>
+
+          </header>
+
+          <div class="card-content" v-if="showSearch">
+
+              <div class="field is-grouped">
                 <ts-view-list-dropdown @setActiveView="searchView"></ts-view-list-dropdown>
-              </p>
-              <p class="control">
-                <a class="button" v-on:click="showCreateViewModal = !showCreateViewModal">
-                          <span class="icon is-small">
-                            <i class="fas fa-save"></i>
-                          </span>
-                  <span>Save view</span>
-                </a>
-              </p>
-            </div>
-            -->
+                <form v-on:submit.prevent="search" style="width:100%;">
+                  <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
+                </form>
+              </div>
+              <br>
 
             <div class="tags">
-
-              <span class="tag is-light is-rounded is-medium" v-for="(chip, index) in currentQueryFilter.chips" :key="index">
-                  <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
-                  <span v-else-if="chip.type === 'label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
-
-                  <span v-if="chip.type === 'datetime_range'">
-                    <span class="icon is-small" style="margin-right:7px;"><i class="fas fa-clock"></i></span> <span>{{ chip.value.split(',')[0] }}</span> <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]">&rarr; {{ chip.value.split(',')[1] }}</span>
-                  </span>
-                  <span v-else>
-                    {{ chip | filterChip }}
-                  </span>
+              <span v-for="(chip, index) in currentQueryFilter.chips" :key="index" style="margin-right:7px;">
+                <span v-if="chip.type === 'datetime_range'" class="tag is-light is-rounded is-medium">
+                  <span class="icon is-small" style="margin-right:7px;"><i class="fas fa-clock"></i></span> <span>{{ chip.value.split(',')[0] }}</span> <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]">&rarr; {{ chip.value.split(',')[1] }}</span>
                   <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
+                </span>
               </span>
-
-              <span class="tag is-white is-rounded is-medium" style="cursor:pointer;" v-on:click="showFilters = !showFilters">+ Add filter</span>
+              <span class="tag is-white is-rounded is-medium" style="cursor:pointer;" v-on:click="showFilters = !showFilters">+ Add time range</span>
             </div>
 
             <div v-show="showFilters">
               <ts-explore-filter-time @addChip="addChip($event)"></ts-explore-filter-time>
               <br>
+            </div>
+
+            <div class="tags">
+              <span v-for="(chip, index) in currentQueryFilter.chips" :key="index">
+                <span v-if="chip.type !== 'datetime_range'" class="tag is-light is-rounded is-medium" style="margin-right:7px;">
+                  <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
+                  <span v-else-if="chip.type === 'label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
+                  <span style="margin-right:7px;">{{ chip | filterChip }}</span>
+                  <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
+                </span>
+              </span>
             </div>
 
             <ts-explore-timeline-picker @doSearch="search" v-if="sketch.active_timelines"></ts-explore-timeline-picker>
@@ -152,7 +165,8 @@ export default {
       params: {},
       showCreateViewModal: false,
       showFilters: false,
-      showAggregations: false
+      showAggregations: false,
+      showSearch: true
     }
   },
   computed: {
@@ -232,8 +246,8 @@ export default {
       if (!this.currentQueryFilter.chips) {
         this.currentQueryFilter.chips = []
       }
-
       this.currentQueryFilter.chips.push(chip)
+      this.showFilters = false
       this.search()
     }
   },
