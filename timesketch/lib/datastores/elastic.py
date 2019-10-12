@@ -201,7 +201,7 @@ class ElasticsearchDataStore(object):
             labels = []
             must_filters = query_dsl['query']['bool']['must']
             must_not_filters = query_dsl['query']['bool']['must_not']
-            datetime_range_collection = {
+            datetime_ranges = {
                 'bool': {
                     'should': [],
                     "minimum_should_match": 1
@@ -220,8 +220,10 @@ class ElasticsearchDataStore(object):
                             }
                         }
                     }
+
                     if chip['operator'] == 'must':
                         must_filters.append(term_filter)
+
                     elif chip['operator'] == 'must_not':
                         must_not_filters.append(term_filter)
 
@@ -236,12 +238,11 @@ class ElasticsearchDataStore(object):
                             }
                         }
                     }
-                    datetime_range_collection['bool']['should'].append(
-                        range_filter)
+                    datetime_ranges['bool']['should'].append(range_filter)
 
             label_filter = self._build_labels_query(sketch_id, labels)
             must_filters.append(label_filter)
-            must_filters.append(datetime_range_collection)
+            must_filters.append(datetime_ranges)
 
         # Pagination
         if query_filter.get('from', None):
