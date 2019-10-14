@@ -29,6 +29,11 @@ class BaseChainPlugin(object):
 
     _EMOJIS = [emojis.get_emoji('LINK')]
 
+    def __init__(self, analyzer_object):
+        """Initialize the plugin."""
+        super(BaseChainPlugin, self).__init__()
+        self.analyzer_object = analyzer_object
+
     def ProcessChain(self, base_event):
         """Determine if the extracted event fits the criteria of the plugin.
 

@@ -26,7 +26,7 @@ class WinPrefetchChainPlugin(interface.BaseChainPlugin):
             boolean to determine whether a chain should be generated from
             the event or not. By default this returns True.
         """
-        target = event.source.get('executable', '')
+        target = base_event.source.get('executable', '')
         return target.lower().endswith('.exe')
 
     def GetChainedEvents(self, base_event):
@@ -48,7 +48,8 @@ class WinPrefetchChainPlugin(interface.BaseChainPlugin):
         search_query = 'url:"*{0:s}"'.format(target)
         return_fields = ['url']
 
-        events = self.event_stream(search_query, return_fields=return_fields)
+        events = self.analyzer_object.event_stream(
+                search_query, return_fields=return_fields)
         for event in events:
             url = event.source.get('url', '')
             if target.lower() in url.lower():
@@ -57,7 +58,8 @@ class WinPrefetchChainPlugin(interface.BaseChainPlugin):
         lnk_query = 'parser:lnk'
         return_fields = ['link_target']
 
-        events = self.event_stream(lnk_query, return_fields=return_fields)
+        events = self.analyzer_object.event_stream(
+                lnk_query, return_fields=return_fields)
         for event in events:
             link_target = event.source.get('link_target', '')
             if target.lower() in link_target.lower():

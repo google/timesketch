@@ -26,13 +26,16 @@ class ChainPluginsManager(object):
         del cls._plugin_classes[plugin_name]
 
     @classmethod
-    def GetPlugins(cls):
+    def GetPlugins(cls, analyzer_object):
         """Retrieves the chain plugins.
+
+        Args:
+            analyzer_object: an instance of Sketch object.
 
         Returns:
             list[type]: list of all chain plugin objects.
         """
-        return [plugin_class() for plugin_class in iter(
+        return [plugin_class(analyzer_object) for plugin_class in iter(
             cls._plugin_classes.values())]
 
     @classmethod

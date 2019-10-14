@@ -28,7 +28,7 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
         """
         self.index_name = index_name
         self._chain_plugins = (
-            chain_manager.ChainPluginsManager.GetPlugins())
+            chain_manager.ChainPluginsManager.GetPlugins(self))
         super(ChainSketchPlugin, self).__init__(index_name, sketch_id)
 
 
