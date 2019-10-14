@@ -50,7 +50,11 @@ class BaseChainPlugin(object):
             base_event: the base event of the chain, used to construct further
                 queries (instance of Event).
             chain_uuid: a string with the chain UUID value.
+
+        Returns:
+            An integer with the total number of discovered events.
         """
+        total_events = 0
         for event in self.GetChainedEvent(base_event):
             attributes = {
                 'chain_uuid': chain_uuid,
@@ -59,6 +63,8 @@ class BaseChainPlugin(object):
             event.add_attributes(attributes)
             event.add_emojis([link_emoji])
             event.commit()
+            total_events += 1
+        return total_events
 
     @abc.abstractmethod
     def GetChainedEvents(self, base_event):

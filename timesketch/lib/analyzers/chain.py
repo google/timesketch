@@ -1,6 +1,7 @@
-"""Base ."""
+"""The sketch analyzer for chained events."""
 from __future__ import unicode_literals
 
+import collections
 import uuid
 
 from timesketch.lib import emojis
@@ -40,6 +41,8 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
         link_emoji = emojis.get_emoji('LINK')
 
         numer_of_base_events = 0
+        counter = collections.Counter()
+
         for chain_plugin in self._chain_plugins:
             if chain_plugin.SEARCH_QUERY_DSL:
                 search_dsl = chain_plugin.SEARCH_QUERY_DSL
@@ -58,7 +61,10 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
                 number_of_base_events += 1
                 chain_uuid = uuid.uuid4().hex
 
-                chain_plugin.BuildChain(base_event=event, chain_uuid=chain_uuid)
+                number_chained_events = chain_plugin.BuildChain(
+                    base_event=event, chain_uuid=chain_uuid)
+                counter[chain_uuid] = number_chained_events
+                counter['total'] += number_chained_events
 
                 attributes = {
                     'chain_uuid': chain_uuid,
@@ -67,9 +73,12 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
                 event.add_emojis([link_emoji])
                 event.commit()
 
+        number_of_chains = len(counter.keys()) - 1
         return (
-            '{0:d} base events tagged with a chain UUID.'.format(
-                number_of_base_events))
+            '{0:d} base events tagged with a chain UUID for {1:d} '
+            'chains for a total of {2:d} events.'.format(
+                number_of_base_events, number_of_chains,
+                counter['total']))
 
 
 manager.AnalysisManager.register_analyzer(ChainSketchPlugin)
