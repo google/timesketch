@@ -14,35 +14,49 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <form v-on:submit.prevent="formatDateTime" style="max-width: 500px;">
-    <div style="margin-bottom: 8px;"><b>Time range</b></div>
-    <div class="field is-horizontal">
+    <div class="field is-horizontal" style="max-width: 700px">
       <div class="field-body">
+
         <div class="field">
           <p class="control">
-            <input class="input" v-model="startDateTime" type="text"
-                   placeholder="2019-07-07T10:00:01">
+            <input v-on:keyup.enter="formatDateTime" class="input" v-model="startDateTime" type="text" placeholder="2019-07-07T10:00:01">
           </p>
         </div>
+
+        <span style="margin-right:10px;padding-top:5px;">&rarr;</span>
+
         <div class="field">
           <p class="control">
-            <input class="input" v-model="endDateTime" type="text"
-                   placeholder="2019-07-07T10:00:01">
+            <input class="input" v-model="endDateTime" type="text" placeholder="2019-07-07T10:00:01">
           </p>
         </div>
+
+        <div class="field is-grouped">
+          <p class="control">
+            <a :disabled="!startDateTime" class="button is-light" v-on:click="formatDateTime">
+              <span class="icon is-small">
+                <i class="fas fa-magic"></i>
+              </span>
+              <span>Format</span>
+            </a>
+          </p>
+          <p class="control">
+            <button :disabled="!(startDateTime && endDateTime)" class="button is-success is-outlined" v-on:click="submit">+ Add time range</button>
+          </p>
+        </div>
+
       </div>
     </div>
-    <button class="button">Filtered search</button>
-  </form>
 </template>
 
 <script>
 export default {
-  name: 'ts-sketch-explore-filter-time',
+  name: 'ts-explore-filter-time',
   data () {
     return {
       startDateTime: '',
-      endDateTime: ''
+      endDateTime: '',
+      chip: null
     }
   },
   computed: {
@@ -64,8 +78,8 @@ export default {
   methods: {
     formatDateTime: function () {
       const startDateTimeString = this.startDateTime
-      let endDateTimeString = this.endDateTime
-      const dateTimeTemplate = 'YYYY-MM-DDTHH:mm:ss'
+      let endDateTimeString = ''
+      let dateTimeTemplate = 'YYYY-MM-DDTHH:mm:ss'
 
       // Exit early if start time is missing
       if (startDateTimeString == null || startDateTimeString === '') {
@@ -84,19 +98,17 @@ export default {
 
         // Calculate time range
         if (startDateTimeOffset === '+') {
-          this.currentQueryFilter.time_start = startDateTimeMoment.format(dateTimeTemplate)
-          this.currentQueryFilter.time_end = startDateTimeMoment.add(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
+          this.startDateTime = startDateTimeMoment.format(dateTimeTemplate)
+          this.endDateTime = startDateTimeMoment.add(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
         }
         if (startDateTimeOffset === '-') {
-          this.currentQueryFilter.time_start = startDateTimeMoment.subtract(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
-          this.currentQueryFilter.time_end = startDateTimeMoment.format(dateTimeTemplate)
+          this.startDateTime = startDateTimeMoment.subtract(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
+          this.endDateTime = startDateTimeMoment.format(dateTimeTemplate)
         }
         if (startDateTimeOffset === '-+' || startDateTimeOffset === '+-') {
-          this.currentQueryFilter.time_start = startDateTimeMoment.subtract(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
-          this.currentQueryFilter.time_end = startDateTimeMoment.add(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
+          this.startDateTime = startDateTimeMoment.subtract(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
+          this.endDateTime = startDateTimeMoment.add(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
         }
-        this.startDateTime = this.currentQueryFilter.time_start
-        this.endDateTime = this.currentQueryFilter.time_end
         return
       }
 
@@ -107,13 +119,28 @@ export default {
       // Fall back to user input
       let startDateTimeMoment = this.$moment.utc(startDateTimeString)
       let endDateTimeMoment = this.$moment.utc(endDateTimeString)
-      this.currentQueryFilter.time_start = startDateTimeMoment.format(dateTimeTemplate)
-      this.currentQueryFilter.time_end = endDateTimeMoment.format(dateTimeTemplate)
 
-      this.startDateTime = this.currentQueryFilter.time_start
-      this.endDateTime = this.currentQueryFilter.time_end
+      if (!startDateTimeMoment.hour() && !startDateTimeMoment.minute() && !startDateTimeMoment.second()) {
+          dateTimeTemplate = 'YYYY-MM-DD'
+      }
 
-      this.$store.commit('search', this.sketch.id)
+      this.startDateTime = startDateTimeMoment.format(dateTimeTemplate)
+      this.endDateTime = endDateTimeMoment.format(dateTimeTemplate)
+
+    },
+    submit: function () {
+      if (!(this.startDateTime && this.endDateTime)) {
+        return
+      }
+      this.chip = {
+          'field': '',
+          'value': this.startDateTime + ',' + this.endDateTime,
+          'type': 'datetime_range',
+          'operator': 'must'
+        }
+      this.$emit('addChip', this.chip)
+      this.startDateTime = ''
+      this.endDateTime = ''
     }
   }
 }
