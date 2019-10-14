@@ -85,13 +85,16 @@ limitations under the License.
 
             <div class="tags">
               <span v-for="(chip, index) in currentQueryFilter.chips" :key="index">
-                <span v-if="chip.type !== 'datetime_range'" class="tag is-light is-rounded is-medium" style="margin-right:7px;">
+                <span v-if="chip.type !== 'datetime_range'" class="tag is-light is-rounded is-small" style="margin-right:7px;">
                   <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
                   <span v-else-if="chip.type === 'label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
                   <span style="margin-right:7px;">{{ chip | filterChip }}</span>
                   <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
                 </span>
               </span>
+
+              <button class="tag is-small is-rounded" v-on:click="filterStarred"><span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Starred </button>
+
             </div>
 
             <ts-explore-timeline-picker @doSearch="search" v-if="sketch.active_timelines"></ts-explore-timeline-picker>
@@ -217,10 +220,14 @@ export default {
     search: function () {
       this.$store.commit('search', this.sketchId)
     },
-    searchStarred: function () {
-      this.currentQueryFilter.star = true
-      this.currentQueryString = ''
-      this.search()
+    filterStarred: function () {
+      let chip = {
+          'field': '',
+          'value': '__ts_star',
+          'type': 'label',
+          'operator': 'must'
+        }
+      this.addChip(chip)
     },
     searchView: function (viewId) {
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
