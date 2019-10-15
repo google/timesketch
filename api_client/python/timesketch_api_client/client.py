@@ -759,11 +759,13 @@ class Sketch(BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
 
-    def search_by_label(self, label_name):
+    def search_by_label(self, label_name, as_pandas=False):
         """Searches for all events containing a given label.
 
         Args:
             label_name: A string representing the label to search for.
+            as_pandas: Optional bool that determines if the results should
+                be returned back as a dictionary or a Pandas DataFrame.
 
         Returns:
             A dictionary with query results.
@@ -789,7 +791,8 @@ class Sketch(BaseResource):
                 }
             }
         }
-        return self.explore(query_dsl=json.dumps({'query': query}))
+        return self.explore(
+            query_dsl=json.dumps({'query': query}), as_pandas=as_pandas)
 
     def add_event(self, message, timestamp, timestamp_desc):
         """Adds an event to the sketch specific timeline.
