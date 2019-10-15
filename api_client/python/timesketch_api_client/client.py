@@ -335,11 +335,13 @@ class Sketch(BaseResource):
         sketch = self.lazyload_data()
         return sketch['objects'][0]['status'][0]['status']
 
-    def _build_pandas_dataframe(self, search_response):
+    def _build_pandas_dataframe(self, search_response, return_fields=None):
         """Return a Pandas DataFrame from a query result dict.
 
         Args:
             search_response: dictionary with query results.
+            return_fields: List of fields that should be included in the
+                response. Optional and defaults to None.
 
         Returns:
             pandas DataFrame with the results.
@@ -349,12 +351,24 @@ class Sketch(BaseResource):
         for timeline in self.list_timelines():
             timelines[timeline.index] = timeline.name
 
+        return_field_list = []
+        if return_fields:
+            if return_fields.startswith('\''):
+                return_fields = return_fields[1:]
+            if return_fields.endswith('\''):
+                return_fields = return_fields[:-1]
+            return_field_list = return_fields.split(',')
+
         for result in search_response.get('objects', []):
             source = result.get('_source', {})
-            source['_id'] = result.get('_id')
-            source['_type'] = result.get('_type')
-            source['_index'] = result.get('_index')
-            source['_source'] = timelines.get(result.get('_index'))
+            if not return_fields or '_id' in return_field_list:
+                source['_id'] = result.get('_id')
+            if not return_fields or '_type' in return_field_list:
+                source['_type'] = result.get('_type')
+            if not return_fields or '_index' in return_field_list:
+                source['_index'] = result.get('_index')
+            if not return_fields or '_source' in return_field_list:
+                source['_source'] = timelines.get(result.get('_index'))
 
             return_list.append(source)
 
@@ -531,7 +545,7 @@ class Sketch(BaseResource):
             query_filter: Filter for the query as JSON string.
             view: View object instance (optional).
             return_fields: List of fields that should be included in the
-                response.
+                response. Optional and defaults to None.
             as_pandas: Optional bool that determines if the results should
                 be returned back as a dictionary or a Pandas DataFrame.
             max_entries: Optional integer denoting a best effort to limit
@@ -618,7 +632,7 @@ class Sketch(BaseResource):
             response_json['meta']['es_time'] += added_time
 
         if as_pandas:
-            return self._build_pandas_dataframe(response_json)
+            return self._build_pandas_dataframe(response_json, return_fields)
 
         return response_json
 
