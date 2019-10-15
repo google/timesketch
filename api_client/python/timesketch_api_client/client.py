@@ -435,13 +435,14 @@ class Sketch(BaseResource):
             the view does not exist.
         """
         if view_id is None and view_name is None:
-            return
+            return None
 
         for view in self.list_views():
             if view_id and view_id == view.id:
                 return view
             if view_name and view_name.lower() == view.name.lower():
                 return view
+        return None
 
     def list_views(self):
         """List all saved views for this sketch.
