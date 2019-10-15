@@ -360,10 +360,16 @@ class Sketch(BaseResource):
 
         data_frame = pandas.DataFrame(return_list)
         if 'datetime' in data_frame:
-            data_frame['datetime'] = pandas.to_datetime(data_frame.datetime)
+            try:
+                data_frame['datetime'] = pandas.to_datetime(data_frame.datetime)
+            except pandas.errors.OutOfBoundsDatetime:
+                pass
         elif 'timestamp' in data_frame:
-            data_frame['datetime'] = pandas.to_datetime(
-                data_frame.timestamp / 1e6, utc=True, unit='s')
+            try:
+                data_frame['datetime'] = pandas.to_datetime(
+                    data_frame.timestamp / 1e6, utc=True, unit='s')
+            except pandas.errors.OutOfBoundsDatetime:
+                pass
 
         return data_frame
 
