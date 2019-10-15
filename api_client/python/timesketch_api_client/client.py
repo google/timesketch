@@ -400,6 +400,29 @@ class Sketch(BaseResource):
             aggregation_obj.from_store(aggregation_id=aggregation['id'])
             return aggregation_obj
 
+    def get_view(self, view_id=None, view_name=None):
+        """Returns a view object that is stored in the sketch.
+
+        Args:
+            view_name: a string with the name of the view. Optional
+                and defaults to None.
+            view_id: an integer indicating the ID of the view to
+                be fetched. Defaults to None.
+
+        Returns:
+            A view object (instance of View) if one is found. Returns
+            a None if neiter view_id or view_name is defined or if
+            the view does not exist.
+        """
+        if view_id is None and view_name is None:
+            return
+
+        for view in self.list_views():
+            if view_id and view_id == view.id:
+                return view
+            if view_name and view_name.lower() == view.name.lower():
+                return view
+
     def list_views(self):
         """List all saved views for this sketch.
 
@@ -751,7 +774,7 @@ class Sketch(BaseResource):
         """Adds an event to the sketch specific timeline.
 
         Args:
-            message: Array of JSON objects representing events.
+            message: A string that will be used as the message string.
             timestamp: Micro seconds since 1970-01-01 00:00:00.
             timestamp_desc : Description of the timestamp.
 
