@@ -28,10 +28,11 @@ services:
       - ../:/usr/local/src/timesketch/
 
   elasticsearch:
+
+    environment:
+      - TAKE_FILE_OWNERSHIP=1
     # uncomment the following lines to control JVM memory utilization
     # in smaller deployments with minimal resources
-
-    #environment:
     #  - ES_JAVA_OPTS= -Xms1g -Xmx1g # 1G min/1G max
     image: elasticsearch:6.4.2
     ports:
@@ -39,7 +40,7 @@ services:
       - "9300:9300"
     restart: always
     volumes:
-      - /var/lib/elasticsearch:/usr/share/elasticsearch/data/elasticsearch
+      - /var/lib/elasticsearch:/usr/share/elasticsearch/data
 
   postgres:
     image: postgres
