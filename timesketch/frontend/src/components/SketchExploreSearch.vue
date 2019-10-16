@@ -76,12 +76,13 @@ limitations under the License.
                 </span>
               </span>
               <span class="tag is-white is-rounded is-medium" style="cursor:pointer;" v-on:click="showFilters = !showFilters">+ Add time range</span>
+              <div v-show="showFilters">
+                <br>
+                <br>
+                <ts-explore-filter-time @addChip="addChip($event)"></ts-explore-filter-time>
+              </div>
             </div>
 
-            <div v-show="showFilters">
-              <ts-explore-filter-time @addChip="addChip($event)"></ts-explore-filter-time>
-              <br>
-            </div>
 
             <div class="tags">
               <span v-for="(chip, index) in currentQueryFilter.chips" :key="index">
@@ -93,7 +94,7 @@ limitations under the License.
                 </span>
               </span>
 
-              <button class="tag is-small is-rounded" v-on:click="filterStarred"><span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Starred </button>
+              <button class="button is-small" v-on:click="filterStarred"><span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Starred </button>
 
             </div>
 
