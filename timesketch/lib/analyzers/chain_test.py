@@ -30,7 +30,8 @@ class FakeEvent(object):
 class FakeAnalyzer(chain.ChainSketchPlugin):
     """Fake analyzer object used for "finding events"."""
 
-    def event_stream(self, search_query, return_fields):
+    def event_stream(self, query_string=None, query_filter=None, query_dsl=None,
+                     indices=None, return_fields=None):
         """Yields few test events."""
         event_one = FakeEvent({
             'url': 'http://minsida.biz',
@@ -103,8 +104,7 @@ class TestChainAnalyzer(BaseTest):
         plugins = manager.ChainPluginsManager.GetPlugins(analyzer)
         self.assertEqual(len(plugins), 1)
 
-        plugin = plugins[0]
+        #plugin = plugins[0]
 
         #message = analyzer.run()
         #self.assertText(message, 'not right')
-

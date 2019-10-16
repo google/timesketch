@@ -66,7 +66,7 @@ class BaseChainPlugin(object):
                 'chain_plugin': self.NAME}
 
             event.add_attributes(attributes)
-            event.add_emojis([link_emoji])
+            event.add_emojis(self._EMOJIS)
             event.commit()
             total_events += 1
         return total_events

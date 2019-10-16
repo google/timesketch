@@ -43,13 +43,13 @@ class WinPrefetchChainPlugin(interface.BaseChainPlugin):
         target = base_event.source.get('executable', '')
         if not target:
             return
-            yield
+            yield  # pylint: disable=W0101
 
         search_query = 'url:"*{0:s}"'.format(target)
         return_fields = ['url']
 
         events = self.analyzer_object.event_stream(
-                search_query, return_fields=return_fields)
+            search_query, return_fields=return_fields)
         for event in events:
             url = event.source.get('url', '')
             if target.lower() in url.lower():
@@ -59,7 +59,7 @@ class WinPrefetchChainPlugin(interface.BaseChainPlugin):
         return_fields = ['link_target']
 
         events = self.analyzer_object.event_stream(
-                lnk_query, return_fields=return_fields)
+            lnk_query, return_fields=return_fields)
         for event in events:
             link_target = event.source.get('link_target', '')
             if target.lower() in link_target.lower():

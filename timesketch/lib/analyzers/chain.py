@@ -7,7 +7,6 @@ import uuid
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
-from timesketch.lib.analyzers import utils
 from timesketch.lib.analyzers import chain_plugins  # pylint: disable=unused-import
 from timesketch.lib.analyzers.chain_plugins import manager as chain_manager
 
@@ -40,7 +39,7 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
         """
         link_emoji = emojis.get_emoji('LINK')
 
-        numer_of_base_events = 0
+        number_of_base_events = 0
         counter = collections.Counter()
 
         for chain_plugin in self._chain_plugins:
