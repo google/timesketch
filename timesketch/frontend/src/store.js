@@ -32,13 +32,13 @@ const defaultState = () => {
     currentQueryString: '',
     currentQueryFilter: {
       'from': 0,
+      'time_start': null,
       'time_end': null,
       'terminate_after': 40,
-      'exclude': [],
+      'size': 40,
       'indices': ['_all'],
-      'time_start': null,
       'order': 'asc',
-      'size': '40'
+      'chips': []
     }
   }
 }

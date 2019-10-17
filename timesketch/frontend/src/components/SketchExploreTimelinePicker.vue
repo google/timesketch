@@ -14,19 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div class="tags">
-      <span class="tag is-medium" style="cursor: pointer;"
-            v-bind:style="timelineColor(timeline)"
-            v-on:click="updateFilter(timeline)"
-            v-for="timeline in sketch.active_timelines" :key="timeline.id">
-        {{ timeline.name }}
-      </span>
+  <div>
+    <ts-sketch-explore-timeline-picker-item
+      v-for="timeline in sketch.active_timelines"
+      :key="timeline.id"
+      :timeline="timeline"
+      style="margin-right:7px;">
+    </ts-sketch-explore-timeline-picker-item>
+    <button class="button is-text" v-on:click="enableAllIndices">Enable all</button>
+    <button class="button is-text" v-on:click="disableAllIndices">Disable all</button>
   </div>
 </template>
 
 <script>
+import TsSketchExploreTimelinePickerItem from './SketchExploreTimelinePickerItem'
+
 export default {
   name: 'ts-sketch-explore-timeline-picker',
+  components: {TsSketchExploreTimelinePickerItem},
   computed: {
     sketch () {
       return this.$store.state.sketch
@@ -41,44 +46,20 @@ export default {
       set: function (queryFilter) {
         this.$store.commit('updateCurrentQueryFilter', queryFilter)
       }
-    }
+    },
   },
   methods: {
-    toggleIndex: function (indexName) {
-      let newArray = this.currentQueryFilter.indices.slice()
-      let index = newArray.indexOf(indexName)
-      if (index === -1) {
-        newArray.push(indexName)
-      } else {
-        newArray.splice(index, 1)
-      }
-      return newArray
-    },
     enableAllIndices: function () {
       let allIndices = []
       this.sketch.active_timelines.forEach(function (timeline) {
         allIndices.push(timeline.searchindex.index_name)
       })
       this.currentQueryFilter.indices = allIndices
-    },
-    updateFilter: function (timeline) {
-      let indexName = timeline.searchindex.index_name
-      this.currentQueryFilter.indices = this.toggleIndex(indexName)
       this.$store.commit('search', this.sketch.id)
     },
-    timelineColor (timeline) {
-      let indexName = timeline.searchindex.index_name
-      let color = timeline.color
-      if (!color.startsWith('#')) {
-        color = '#' + color
-      }
-      // Grey out the index if it is not selected.
-      if (!this.currentQueryFilter.indices.includes(indexName)) {
-        color = '#f5f5f5'
-      }
-      return {
-        'background-color': color
-      }
+    disableAllIndices: function () {
+      this.currentQueryFilter.indices = []
+      this.$store.commit('search', this.sketch.id)
     }
   },
   created: function () {

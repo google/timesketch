@@ -26,6 +26,12 @@ limitations under the License.
                 <td>
                   <span style="white-space:pre-wrap;word-wrap: break-word">{{ item }}</span>
                 </td>
+                <td style="width:40px;">
+                  <span class="icon is-small" style="cursor:pointer;" v-on:click="addFilter(key, item, 'must')"><i class="fas fa-search-plus"></i></span>
+                </td>
+                <td style="width:40px;">
+                  <span class="icon is-small" style="cursor:pointer;" v-on:click="addFilter(key, item, 'must_not')"><i class="fas fa-search-minus"></i></span>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -64,6 +70,14 @@ export default {
         }
       })
       return this.fullEvent
+    },
+    currentQueryFilter: {
+        get: function () {
+            return this.$store.state.currentQueryFilter
+        },
+        set: function (queryFilter) {
+            this.$store.commit('updateCurrentQueryFilter', queryFilter)
+        }
     }
   },
   data () {
@@ -78,6 +92,19 @@ export default {
       ApiClient.getEvent(this.sketch.id, searchindexId, eventId).then((response) => {
         this.fullEvent = response.data.objects
       }).catch((e) => {})
+    },
+    addFilter: function (field, value, operator) {
+      let chip = {
+          'field': field,
+          'value': value,
+          'type': 'term',
+          'operator': operator
+        }
+      if (!this.currentQueryFilter.chips) {
+        this.currentQueryFilter.chips = []
+      }
+      this.currentQueryFilter.chips.push(chip)
+      this.$store.commit('search', this.sketch.id)
     }
   },
   created: function () {

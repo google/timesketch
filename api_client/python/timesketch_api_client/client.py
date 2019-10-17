@@ -335,11 +335,13 @@ class Sketch(BaseResource):
         sketch = self.lazyload_data()
         return sketch['objects'][0]['status'][0]['status']
 
-    def _build_pandas_dataframe(self, search_response):
+    def _build_pandas_dataframe(self, search_response, return_fields=None):
         """Return a Pandas DataFrame from a query result dict.
 
         Args:
             search_response: dictionary with query results.
+            return_fields: List of fields that should be included in the
+                response. Optional and defaults to None.
 
         Returns:
             pandas DataFrame with the results.
@@ -349,21 +351,39 @@ class Sketch(BaseResource):
         for timeline in self.list_timelines():
             timelines[timeline.index] = timeline.name
 
+        return_field_list = []
+        if return_fields:
+            if return_fields.startswith('\''):
+                return_fields = return_fields[1:]
+            if return_fields.endswith('\''):
+                return_fields = return_fields[:-1]
+            return_field_list = return_fields.split(',')
+
         for result in search_response.get('objects', []):
             source = result.get('_source', {})
-            source['_id'] = result.get('_id')
-            source['_type'] = result.get('_type')
-            source['_index'] = result.get('_index')
-            source['_source'] = timelines.get(result.get('_index'))
+            if not return_fields or '_id' in return_field_list:
+                source['_id'] = result.get('_id')
+            if not return_fields or '_type' in return_field_list:
+                source['_type'] = result.get('_type')
+            if not return_fields or '_index' in return_field_list:
+                source['_index'] = result.get('_index')
+            if not return_fields or '_source' in return_field_list:
+                source['_source'] = timelines.get(result.get('_index'))
 
             return_list.append(source)
 
         data_frame = pandas.DataFrame(return_list)
         if 'datetime' in data_frame:
-            data_frame['datetime'] = pandas.to_datetime(data_frame.datetime)
+            try:
+                data_frame['datetime'] = pandas.to_datetime(data_frame.datetime)
+            except pandas.errors.OutOfBoundsDatetime:
+                pass
         elif 'timestamp' in data_frame:
-            data_frame['datetime'] = pandas.to_datetime(
-                data_frame.timestamp / 1e6, utc=True, unit='s')
+            try:
+                data_frame['datetime'] = pandas.to_datetime(
+                    data_frame.timestamp / 1e6, utc=True, unit='s')
+            except pandas.errors.OutOfBoundsDatetime:
+                pass
 
         return data_frame
 
@@ -399,6 +419,30 @@ class Sketch(BaseResource):
             aggregation_obj = Aggregation(sketch=self, api=self.api)
             aggregation_obj.from_store(aggregation_id=aggregation['id'])
             return aggregation_obj
+
+    def get_view(self, view_id=None, view_name=None):
+        """Returns a view object that is stored in the sketch.
+
+        Args:
+            view_name: a string with the name of the view. Optional
+                and defaults to None.
+            view_id: an integer indicating the ID of the view to
+                be fetched. Defaults to None.
+
+        Returns:
+            A view object (instance of View) if one is found. Returns
+            a None if neiter view_id or view_name is defined or if
+            the view does not exist.
+        """
+        if view_id is None and view_name is None:
+            return None
+
+        for view in self.list_views():
+            if view_id and view_id == view.id:
+                return view
+            if view_name and view_name.lower() == view.name.lower():
+                return view
+        return None
 
     def list_views(self):
         """List all saved views for this sketch.
@@ -502,7 +546,7 @@ class Sketch(BaseResource):
             query_filter: Filter for the query as JSON string.
             view: View object instance (optional).
             return_fields: List of fields that should be included in the
-                response.
+                response. Optional and defaults to None.
             as_pandas: Optional bool that determines if the results should
                 be returned back as a dictionary or a Pandas DataFrame.
             max_entries: Optional integer denoting a best effort to limit
@@ -589,7 +633,7 @@ class Sketch(BaseResource):
             response_json['meta']['es_time'] += added_time
 
         if as_pandas:
-            return self._build_pandas_dataframe(response_json)
+            return self._build_pandas_dataframe(response_json, return_fields)
 
         return response_json
 
@@ -715,11 +759,13 @@ class Sketch(BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
 
-    def search_by_label(self, label_name):
+    def search_by_label(self, label_name, as_pandas=False):
         """Searches for all events containing a given label.
 
         Args:
             label_name: A string representing the label to search for.
+            as_pandas: Optional bool that determines if the results should
+                be returned back as a dictionary or a Pandas DataFrame.
 
         Returns:
             A dictionary with query results.
@@ -745,13 +791,14 @@ class Sketch(BaseResource):
                 }
             }
         }
-        return self.explore(query_dsl=json.dumps({'query': query}))
+        return self.explore(
+            query_dsl=json.dumps({'query': query}), as_pandas=as_pandas)
 
     def add_event(self, message, timestamp, timestamp_desc):
         """Adds an event to the sketch specific timeline.
 
         Args:
-            message: Array of JSON objects representing events.
+            message: A string that will be used as the message string.
             timestamp: Micro seconds since 1970-01-01 00:00:00.
             timestamp_desc : Description of the timestamp.
 
