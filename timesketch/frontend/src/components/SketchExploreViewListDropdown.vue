@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <div class="dropdown" v-bind:class="{'is-active': viewListDropdownActive}">
     <div class="dropdown-trigger">
-      <a class="button ts-view-button" v-bind:class="{'is-rounded': isRounded}" aria-haspopup="true" aria-controls="dropdown-menu" v-on:click="viewListDropdownActive = !viewListDropdownActive">
+      <a class="button is-small" v-bind:class="{'is-rounded': isRounded}" aria-haspopup="true" aria-controls="dropdown-menu" v-on:click="viewListDropdownActive = !viewListDropdownActive">
         <span>{{ title || 'Views' }}</span>
         <span class="icon is-small">
           <i class="fas fa-angle-down" aria-hidden="true"></i>
@@ -61,14 +61,4 @@ export default {
 </script>
 
 <!-- CSS scoped to this component only -->
-<style scoped lang="scss">
-    .ts-view-button {
-    outline: none;
-    border: none;
-    border-radius: 5px;
-    padding: 25px;
-    background: #f9f9f9;
-      margin-right: 7px;
-      margin-top:1px;
-  }
-</style>
+<style scoped lang="scss"></style>

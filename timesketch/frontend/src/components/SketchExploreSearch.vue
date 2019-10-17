@@ -60,13 +60,21 @@ limitations under the License.
 
           <div class="card-content" v-if="showSearch">
 
-              <div class="field is-grouped">
+            <form v-on:submit.prevent="search" style="width:100%;">
+              <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
+            </form>
+
+            <div class="field is-grouped" style="margin-top:7px;">
+              <p class="control">
                 <ts-view-list-dropdown @setActiveView="searchView"></ts-view-list-dropdown>
-                <form v-on:submit.prevent="search" style="width:100%;">
-                  <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
-                </form>
-              </div>
-              <br>
+              </p>
+              <p class="control">
+                <button class="button is-small" v-on:click="showTimeranges = !showTimeranges">+ Time range</button>
+              </p>
+              <p class="control">
+                <button class="button is-small" v-on:click="showFilters = !showFilters">+ Filter</button>
+              </p>
+            </div>
 
             <div class="tags">
               <span v-for="(chip, index) in currentQueryFilter.chips" :key="index" style="margin-right:7px;">
@@ -75,14 +83,12 @@ limitations under the License.
                   <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
                 </span>
               </span>
-              <span class="tag is-white is-rounded is-medium" style="cursor:pointer;" v-on:click="showFilters = !showFilters">+ Add time range</span>
-              <div v-show="showFilters">
-                <br>
-                <br>
+
+              <div v-show="showTimeranges">
                 <ts-explore-filter-time @addChip="addChip($event)"></ts-explore-filter-time>
               </div>
-            </div>
 
+            </div>
 
             <div class="tags">
               <span v-for="(chip, index) in currentQueryFilter.chips" :key="index">
@@ -93,9 +99,10 @@ limitations under the License.
                   <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
                 </span>
               </span>
+            </div>
 
+            <div v-show="showFilters">
               <button class="button is-small" v-on:click="filterStarred"><span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Starred </button>
-
             </div>
 
             <ts-explore-timeline-picker @doSearch="search" v-if="sketch.active_timelines"></ts-explore-timeline-picker>
@@ -169,6 +176,7 @@ export default {
       params: {},
       showCreateViewModal: false,
       showFilters: false,
+      showTimeranges: false,
       showAggregations: false,
       showSearch: true
     }
@@ -215,6 +223,9 @@ export default {
       set: function (queryFilter) {
         this.$store.commit('updateCurrentQueryFilter', queryFilter)
       }
+    },
+    hasFilter: {
+
     }
   },
   methods: {
