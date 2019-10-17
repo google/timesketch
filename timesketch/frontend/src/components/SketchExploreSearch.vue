@@ -223,9 +223,6 @@ export default {
       set: function (queryFilter) {
         this.$store.commit('updateCurrentQueryFilter', queryFilter)
       }
-    },
-    hasFilter: {
-
     }
   },
   methods: {
