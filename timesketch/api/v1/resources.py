@@ -1672,61 +1672,51 @@ class AnalyzerRunResource(ResourceMixin, Resource):
         sketch = Sketch.query.get_with_acl(sketch_id)
         form = RunAnalyzerForm.build(request)
 
-        analyzer_name = form.analyzer_name.data
-        analyzer_kwargs = form.analyzer_kwargs.data
+        if not form.validate_on_submit():
+            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+
+        if not sketch.has_permission(current_user, 'write'):
+            return abort(HTTP_STATUS_CODE_FORBIDDEN)
 
         timeline_name = form.timeline_name.data
         timeline_id = form.timeline_id.data
 
-        """
-        if timeline_id:
-            searchindex = SearchIndex.query.get_with_acl(timeline_id)
-        else:
-        timeline_id = [
-            t.searchindex.id for t in sketch.timelines
-            if t.searchindex.id == searchindex_id
-        ]
+        search_index = None
+        if timeline_name:
+            for timeline in sketch.timelines:
+                if timeline.name.lower() == timeline_name.lower():
+                    search_index = SearchIndex.query.get_with_acl(
+                        timeline.searchindex_id)
+                    break
+        elif timeline_id:
+            for timeline in sketch.timelines:
+                index = SearchIndex.query.get_with_acl(
+                    timeline.searchindex_id)
 
-        if form.validate_on_submit():
-            if not sketch.has_permission(current_user, 'write'):
-                abort(HTTP_STATUS_CODE_FORBIDDEN)
+                if index.index_name.lower() == timeline_id:
+                    search_index = index
+                    break
 
-            if not timeline_id:
-                return_code = HTTP_STATUS_CODE_CREATED
-                timeline = Timeline(
-                    name=searchindex.name,
-                    description=searchindex.description,
-                    sketch=sketch,
-                    user=current_user,
-                    searchindex=searchindex)
-                sketch.timelines.append(timeline)
-                db_session.add(timeline)
-                db_session.commit()
-            else:
-                metadata['created'] = False
-                return_code = HTTP_STATUS_CODE_OK
-                timeline = Timeline.query.get(timeline_id)
+        if not search_index:
+            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
-            # Run sketch analyzers when timeline is added. Import here to avoid
-            # circular imports.
-            if current_app.config.get('AUTO_SKETCH_ANALYZERS'):
-                from timesketch.lib import tasks
-                sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
-                    sketch_id, searchindex_id, current_user.id)
-                if sketch_analyzer_group:
-                    pipeline = (tasks.run_sketch_init.s(
-                        [searchindex.index_name]) | sketch_analyzer_group)
-                    pipeline.apply_async()
+        analyzer_name = form.analyzer_name.data
+        analyzer_kwargs = form.analyzer_kwargs.data
 
-            return self.to_json(
-                timeline, meta=metadata, status_code=return_code)
+        # Import here to avoid circular imports.
+        from timesketch.lib import tasks
+        sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+            sketch_id=sketch_id, searchindex_id=search_index.id,
+            user_id=current_user.id, analyzer_names=[analyzer_name],
+            analyzer_kwargs=analyzer_kwargs)
 
-        """
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        if sketch_analyzer_group:
+            pipeline = (tasks.run_sketch_init.s(
+                [search_index.index_name]) | sketch_analyzer_group)
+            pipeline.apply_async()
 
-
-    ## KOMINN
-
+        return 'Analyzer has been started on timeline: [{0:s}] {1:s}'.format(
+            search_index.index_name, search_index.name)
 
 
 class TimelineListResource(ResourceMixin, Resource):

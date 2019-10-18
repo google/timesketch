@@ -19,6 +19,7 @@ from .resources import AggregationListResource
 from .resources import AggregationLegacyResource
 from .resources import AggregationExploreResource
 from .resources import AggregationResource
+from .resources import AnalyzerRunResource
 from .resources import ExploreResource
 from .resources import EventResource
 from .resources import EventAnnotationResource
