@@ -638,8 +638,8 @@ class Sketch(BaseResource):
         return response_json
 
     def run_analyzer(
-        self, analyzer_name, analyzer_kwargs=None, timeline_id=None,
-        timeline_name=None):
+            self, analyzer_name, analyzer_kwargs=None, timeline_id=None,
+            timeline_name=None):
         """Run an analyzer on a timeline.
 
         Args:
