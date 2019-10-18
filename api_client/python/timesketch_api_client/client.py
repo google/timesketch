@@ -637,6 +637,42 @@ class Sketch(BaseResource):
 
         return response_json
 
+    def run_analyzer(
+        self, analyzer_name, analyzer_kwargs=None, timeline_id=None,
+        timeline_name=None):
+        """Run an analyzer on a timeline.
+
+        Args:
+            analyzer_name: the name of the analyzer class to run against the
+                timeline.
+            analyzer_kwargs: optional dict with parameters for the analyzer.
+                This is optional and just for those analyzers that can accept
+                further parameters.
+            timeline_id: the data store index for the timeline. This is optional
+                and only required if timeline_name is not set.
+            timeline_name: the name of the timeline in the timesketch UI. This
+                is optional and only required if timeline_id is not set.
+
+        Returns:
+            A string with the results of the API call to run the analyzer.
+        """
+        if not timeline_id and not timeline_name:
+            return (
+                'Unable to run analyzer, need to define either '
+                'timeline ID or name')
+
+        resource_url = '{0:s}/sketches/{1:d}/analyzer/'.format(
+            self.api.api_root, self.id)
+
+        data = {
+            'timeline_name': timeline_name,
+            'timeline_id': timeline_id,
+            'analyzer_name': analyzer_name,
+            'analyzer_kwargs': analyzer_kwargs,
+        }
+
+        response = self.api.session.post(resource_url, json=data)
+        response.json()
 
     def aggregate(self, aggregate_dsl):
         """Run an aggregation request on the sketch.

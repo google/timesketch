@@ -54,6 +54,7 @@ from flask_restful import Resource
 from sqlalchemy import desc
 from sqlalchemy import not_
 
+from timesketch.lib.analyzers import manager as analyzer_manager
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.aggregators_old import heatmap
 from timesketch.lib.aggregators_old import histogram
@@ -1663,11 +1664,24 @@ class AnalyzerRunResource(ResourceMixin, Resource):
     """Resource to get all timelines for sketch."""
 
     @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            A list of all available analyzer names.
+        """
+        _ = sketch_id
+        analyzers = [
+            x for x, y  in analyzer_manager.AnalysisManager.get_analyzers()]
+
+        return analyzers
+
+    @login_required
     def post(self, sketch_id):
         """Handles POST request to the resource.
 
         Returns:
-            A sketch in JSON (instance of flask.wrappers.Response)
+            A string with the response from running the analyzer.
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         form = RunAnalyzerForm.build(request)
