@@ -42,6 +42,9 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
         number_of_base_events = 0
         counter = collections.Counter()
 
+        # TODO: Have each plugin run in a separate task.
+        # TODO: Add a time limit for each plugins run to prevent it from
+        #       holding everything up.
         for chain_plugin in self._chain_plugins:
             if chain_plugin.SEARCH_QUERY_DSL:
                 search_dsl = chain_plugin.SEARCH_QUERY_DSL
