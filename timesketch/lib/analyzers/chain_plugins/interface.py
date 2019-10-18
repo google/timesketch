@@ -60,7 +60,7 @@ class BaseChainPlugin(object):
             An integer with the total number of discovered events.
         """
         total_events = 0
-        for event in self.GetChainedEvent(base_event):
+        for event in self.GetChainedEvents(base_event):
             attributes = {
                 'chain_uuid': chain_uuid,
                 'chain_plugin': self.NAME}
