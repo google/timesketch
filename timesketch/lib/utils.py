@@ -24,8 +24,8 @@ import random
 import smtplib
 import sys
 import time
-import six
 import codecs
+import six
 
 from dateutil import parser
 from flask import current_app
