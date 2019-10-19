@@ -1687,10 +1687,13 @@ class AnalyzerRunResource(ResourceMixin, Resource):
         form = RunAnalyzerForm.build(request)
 
         if not form.validate_on_submit():
-            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate input data.')
 
         if not sketch.has_permission(current_user, 'write'):
-            return abort(HTTP_STATUS_CODE_FORBIDDEN)
+            return abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have write permission on the sketch.')
 
         timeline_name = form.timeline_name.data
         timeline_id = form.timeline_id.data
@@ -1712,7 +1715,10 @@ class AnalyzerRunResource(ResourceMixin, Resource):
                     break
 
         if not search_index:
-            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, (
+                    'No timeline was found, make sure you\'ve got the correct '
+                    'timeline ID or timeline name.'))
 
         analyzer_name = form.analyzer_name.data
         analyzer_kwargs = form.analyzer_kwargs.data

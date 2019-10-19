@@ -672,7 +672,12 @@ class Sketch(BaseResource):
         }
 
         response = self.api.session.post(resource_url, json=data)
-        response.json()
+
+        if response.status_code == 200:
+            return response.json()
+
+        return '[{0:d}] {1:s} {2:s}'.format(
+            response.status_code, response.reason, response.text)
 
     def aggregate(self, aggregate_dsl):
         """Run an aggregation request on the sketch.
