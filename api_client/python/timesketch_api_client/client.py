@@ -672,7 +672,7 @@ class Sketch(BaseResource):
                     index = timeline.get('searchindex', {})
                     timelines.append(index.get('index_name', ''))
 
-            if len(timelines) == 0:
+            if not timelines:
                 return 'No timelines with the name: {0:s} were found'.format(
                     timeline_name)
 
