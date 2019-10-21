@@ -1445,7 +1445,7 @@ class UploadFileResource(ResourceMixin, Resource):
 
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
-        from timesketch.lib import tasks  # pylint: disable=import-outside-toplevel
+        from timesketch.lib import tasks
         pipeline = tasks.build_index_pipeline(
             file_path, timeline_name, index_name, file_extension, sketch_id)
         pipeline.apply_async()
@@ -1465,7 +1465,6 @@ class TaskResource(ResourceMixin, Resource):
 
     def __init__(self):
         super(TaskResource, self).__init__()
-        # pylint: disable=import-outside-toplevel
         from timesketch import create_celery_app
         self.celery = create_celery_app()
 
@@ -1794,7 +1793,7 @@ class TimelineListResource(ResourceMixin, Resource):
         # Run sketch analyzers when timeline is added. Import here to avoid
         # circular imports.
         if current_app.config.get('AUTO_SKETCH_ANALYZERS'):
-            from timesketch.lib import tasks  # pylint: disable=import-outside-toplevel
+            from timesketch.lib import tasks
             sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
                 sketch_id, searchindex_id, current_user.id)
             if sketch_analyzer_group:
