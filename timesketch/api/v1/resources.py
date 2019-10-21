@@ -345,6 +345,7 @@ class SketchListResource(ResourceMixin, Resource):
         sketch.status.append(sketch.Status(user=None, status='new'))
         db_session.add(sketch)
         db_session.commit()
+
         # Give the requesting user permissions on the new sketch.
         sketch.grant_permission(permission='read', user=current_user)
         sketch.grant_permission(permission='write', user=current_user)
@@ -419,7 +420,9 @@ class SketchResource(ResourceMixin, Resource):
 
         if not form.validate_on_submit():
             abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data')
+                HTTP_STATUS_CODE_BAD_REQUEST, (
+                    'Unable to rename sketch, '
+                    'unable to validate form data'))
 
         if not sketch.has_permission(current_user, 'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
@@ -533,7 +536,8 @@ class ViewListResource(ResourceMixin, Resource):
         form = SaveViewForm.build(request)
         if not form.validate_on_submit():
             abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to save view, not able to validate form data.')
         sketch = Sketch.query.get_with_acl(sketch_id)
         view = self.create_view_from_form(sketch, form)
         return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
@@ -625,7 +629,8 @@ class ViewResource(ResourceMixin, Resource):
         form = SaveViewForm.build(request)
         if not form.validate_on_submit():
             abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data')
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to update view, not able to validate form data')
         sketch = Sketch.query.get_with_acl(sketch_id)
         view = View.query.get(view_id)
         view.query_string = form.query.data
@@ -693,7 +698,8 @@ class ExploreResource(ResourceMixin, Resource):
 
         if not form.validate_on_submit():
             abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data')
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to explore data, unable to validate form data')
 
         query_dsl = form.dsl.data
         query_filter = form.filter.data
@@ -882,7 +888,8 @@ class AggregationExploreResource(ResourceMixin, Resource):
         form = AggregationExploreForm.build(request)
         if not form.validate_on_submit():
             abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Not able to run aggregation, unable to validate form data.')
 
         sketch = Sketch.query.get_with_acl(sketch_id)
         sketch_indices = {
@@ -1623,12 +1630,14 @@ class QueryResource(ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
         sketch = Sketch.query.get_with_acl(sketch_id)
-        schema = {'objects': [], 'meta': {}}
+        schema = {
+            'objects': [],
+            'meta': {}}
         query_string = form.query.data
         query_filter = form.filter.data
         query_dsl = form.dsl.data
-        query = self.datastore.build_query(sketch.id, query_string,
-                                           query_filter, query_dsl)
+        query = self.datastore.build_query(
+            sketch.id, query_string, query_filter, query_dsl)
         schema['objects'].append(query)
         return jsonify(schema)
 
