@@ -1044,7 +1044,7 @@ class AggregationLegacyResource(ResourceMixin, Resource):
         sketch = Sketch.query.get_with_acl(sketch_id)
         form = AggregationLegacyForm.build(request)
 
-        if form.validate_on_submit():
+        if not form.validate_on_submit():
             return abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
@@ -1210,7 +1210,6 @@ class EventResource(ResourceMixin, Resource):
         searchindex_id: The datastore searchindex id as string
         event_id: The datastore event id as string
     """
-
     def __init__(self):
         super(EventResource, self).__init__()
         self.parser = reqparse.RequestParser()
@@ -1916,40 +1915,41 @@ class GraphResource(ResourceMixin, Resource):
         Sketch.query.get_with_acl(sketch_id)
 
         form = GraphExploreForm.build(request)
-        if form.validate_on_submit():
-            graph_view_id = form.graph_view_id.data
-            parameters = form.parameters.data
-            output_format = form.output_format.data
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
-            graph_view = GRAPH_VIEWS[graph_view_id]
-            query = graph_view['query']
+        graph_view_id = form.graph_view_id.data
+        parameters = form.parameters.data
+        output_format = form.output_format.data
 
-            parameters['sketch_id'] = str(sketch_id)
+        graph_view = GRAPH_VIEWS[graph_view_id]
+        query = graph_view['query']
 
-            result = self.graph_datastore.query(
-                query, params=parameters, output_format=output_format)
+        parameters['sketch_id'] = str(sketch_id)
 
-            for edge in result['graph']['edges']:
-                edge_data = edge['data']
-                timestamps = edge_data.get('timestamps', [])
-                edge_data['count'] = str(len(timestamps))
+        result = self.graph_datastore.query(
+            query, params=parameters, output_format=output_format)
 
-                if edge_data.get('timestamps_incomplete'):
-                    edge_data['count'] += '+'
-                if edge_data['count'] == '0+':
-                    edge_data['count'] = '???'
+        for edge in result['graph']['edges']:
+            edge_data = edge['data']
+            timestamps = edge_data.get('timestamps', [])
+            edge_data['count'] = str(len(timestamps))
 
-            schema = {
-                'meta': {
-                    'schema': neo4j_schema
-                },
-                'objects': [{
-                    'graph': result['graph'],
-                }]
-            }
-            return jsonify(schema)
+            if edge_data.get('timestamps_incomplete'):
+                edge_data['count'] += '+'
+            if edge_data['count'] == '0+':
+                edge_data['count'] = '???'
 
-        return None
+        schema = {
+            'meta': {
+                'schema': neo4j_schema
+            },
+            'objects': [{
+                'graph': result['graph'],
+            }]
+        }
+        return jsonify(schema)
 
 
 class GraphViewListResource(ResourceMixin, Resource):
@@ -2030,8 +2030,8 @@ class SearchIndexListResource(ResourceMixin, Resource):
         es_index_name = form.es_index_name.data
         public = form.public.data
 
-        if form.validate_on_submit():
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to valide form data.')
+        if not form.validate_on_submit():
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data')
 
         searchindex = SearchIndex.query.filter_by(
             index_name=es_index_name).first()
