@@ -669,7 +669,8 @@ class Sketch(BaseResource):
             timelines = []
             for timeline in sketch['objects'][0]['timelines']:
                 if timeline_name.lower() == timeline.get('name', '').lower():
-                    timelines.append(timeline.get('id', ''))
+                    index = timeline.get('searchindex', {})
+                    timelines.append(index.get('index_name', ''))
 
             if len(timelines) == 0:
                 return 'No timelines with the name: {0:s} were found'.format(
