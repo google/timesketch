@@ -66,7 +66,6 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.datastores.neo4j import Neo4jDataStore
 from timesketch.lib.datastores.neo4j import SCHEMA as neo4j_schema
-from timesketch.lib.errors import ApiHTTPError
 from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.lib.forms import AddTimelineSimpleForm
 from timesketch.lib.forms import AggregationExploreForm
@@ -1197,7 +1196,7 @@ class EventCreateResource(ResourceMixin, Resource):
 
         # TODO: Can this be narrowed down, both in terms of the scope it
         # applies to, as well as not to catch a generic exception.
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-except
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Failed to add event ({0!s})'.format(e))
@@ -1374,9 +1373,6 @@ class UploadFileResource(ResourceMixin, Resource):
 
         Returns:
             A view in JSON (instance of flask.wrappers.Response)
-
-        Raises:
-            ApiHTTPError
         """
         upload_enabled = current_app.config['UPLOAD_ENABLED']
         if not upload_enabled:
@@ -1667,9 +1663,6 @@ class TimelineCreateResource(ResourceMixin, Resource):
 
         Returns:
             A view in JSON (instance of flask.wrappers.Response)
-
-        Raises:
-            ApiHTTPError
         """
         upload_enabled = current_app.config['UPLOAD_ENABLED']
         if not upload_enabled:
