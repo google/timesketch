@@ -336,20 +336,21 @@ class SketchListResource(ResourceMixin, Resource):
             A sketch in JSON (instance of flask.wrappers.Response)
         """
         form = NameDescriptionForm.build(request)
-        if form.validate_on_submit():
-            sketch = Sketch(
-                name=form.name.data,
-                description=form.description.data,
-                user=current_user)
-            sketch.status.append(sketch.Status(user=None, status='new'))
-            db_session.add(sketch)
-            db_session.commit()
-            # Give the requesting user permissions on the new sketch.
-            sketch.grant_permission(permission='read', user=current_user)
-            sketch.grant_permission(permission='write', user=current_user)
-            sketch.grant_permission(permission='delete', user=current_user)
-            return self.to_json(sketch, status_code=HTTP_STATUS_CODE_CREATED)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        if not form.validate_on_submit():
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+        sketch = Sketch(
+            name=form.name.data,
+            description=form.description.data,
+            user=current_user)
+        sketch.status.append(sketch.Status(user=None, status='new'))
+        db_session.add(sketch)
+        db_session.commit()
+        # Give the requesting user permissions on the new sketch.
+        sketch.grant_permission(permission='read', user=current_user)
+        sketch.grant_permission(permission='write', user=current_user)
+        sketch.grant_permission(permission='delete', user=current_user)
+        return self.to_json(sketch, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class SketchResource(ResourceMixin, Resource):
@@ -400,7 +401,10 @@ class SketchResource(ResourceMixin, Resource):
         """Handles DELETE request to the resource."""
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch.has_permission(current_user, 'delete'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, (
+                    'User does not have sufficient access rights to '
+                    'delete a sketch.'))
         sketch.set_status(status='deleted')
         return HTTP_STATUS_CODE_OK
 
@@ -415,10 +419,12 @@ class SketchResource(ResourceMixin, Resource):
         sketch = Sketch.query.get_with_acl(sketch_id)
 
         if not form.validate_on_submit():
-            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data')
 
         if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN)
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have write access controls on sketch.')
 
         sketch.name = form.name.data
         sketch.description = form.description.data
@@ -526,11 +532,12 @@ class ViewListResource(ResourceMixin, Resource):
             A view in JSON (instance of flask.wrappers.Response)
         """
         form = SaveViewForm.build(request)
-        if form.validate_on_submit():
-            sketch = Sketch.query.get_with_acl(sketch_id)
-            view = self.create_view_from_form(sketch, form)
-            return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        if not form.validate_on_submit():
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        view = self.create_view_from_form(sketch, form)
+        return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class ViewResource(ResourceMixin, Resource):
@@ -552,12 +559,19 @@ class ViewResource(ResourceMixin, Resource):
 
         # Check that this view belongs to the sketch
         if view.sketch_id != sketch.id:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'Sketch ID ({0:d}) does not match with the sketch ID '
+                'that is defined in the view ({1:d})'.format(
+                    view.sketch_id, sketch.id))
 
         # If this is a user state view, check that it
         # belongs to the current_user
         if view.name == '' and view.user != current_user:
-            abort(HTTP_STATUS_CODE_FORBIDDEN)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'Unable to view a state view that belongs to a '
+                'different user.')
 
         # Check if view has been deleted
         if view.get_status.status == 'deleted':
@@ -585,10 +599,15 @@ class ViewResource(ResourceMixin, Resource):
 
         # Check that this view belongs to the sketch
         if view.sketch_id != sketch.id:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'The view does not belong to the sketch ({0:d} vs '
+                '{1:d})'.format(view.sketch_id, sketch.id))
 
         if not sketch.has_permission(user=current_user, permission='write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have write permission on sketch.')
 
         view.set_status(status='deleted')
         return HTTP_STATUS_CODE_OK
@@ -605,22 +624,23 @@ class ViewResource(ResourceMixin, Resource):
             A view in JSON (instance of flask.wrappers.Response)
         """
         form = SaveViewForm.build(request)
-        if form.validate_on_submit():
-            sketch = Sketch.query.get_with_acl(sketch_id)
-            view = View.query.get(view_id)
-            view.query_string = form.query.data
-            view.query_filter = json.dumps(form.filter.data, ensure_ascii=False)
-            view.query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
-            view.user = current_user
-            view.sketch = sketch
+        if not form.validate_on_submit():
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data')
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        view = View.query.get(view_id)
+        view.query_string = form.query.data
+        view.query_filter = json.dumps(form.filter.data, ensure_ascii=False)
+        view.query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
+        view.user = current_user
+        view.sketch = sketch
 
-            if form.dsl.data:
-                view.query_string = ''
+        if form.dsl.data:
+            view.query_string = ''
 
-            db_session.add(view)
-            db_session.commit()
-            return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        db_session.add(view)
+        db_session.commit()
+        return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class SearchTemplateResource(ResourceMixin, Resource):
@@ -638,7 +658,7 @@ class SearchTemplateResource(ResourceMixin, Resource):
         """
         searchtemplate = SearchTemplate.query.get(searchtemplate_id)
         if not searchtemplate:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
+            abort(HTTP_STATUS_CODE_NOT_FOUND, 'Search template was not found')
         return self.to_json(searchtemplate)
 
 
@@ -673,7 +693,8 @@ class ExploreResource(ResourceMixin, Resource):
         form = ExploreForm.build(request)
 
         if not form.validate_on_submit():
-            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data')
 
         query_dsl = form.dsl.data
         query_filter = form.filter.data
@@ -704,7 +725,9 @@ class ExploreResource(ResourceMixin, Resource):
         # Make sure we have a query string or star filter
         if not (form.query.data, query_filter.get('star'),
                 query_filter.get('events'), query_dsl):
-            abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'The request needs a query string/DSL and or a star filter.')
 
         if scroll_id:
             # pylint: disable=unexpected-keyword-arg
@@ -786,12 +809,19 @@ class AggregationResource(ResourceMixin, Resource):
 
         # Check that this aggregation belongs to the sketch
         if aggregation.sketch_id != sketch.id:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'The sketch ID ({0:d}) does not match with the defined '
+                'sketch in the aggregation ({1:d})'.format(
+                    aggregation.sketch_id, sketch.id)
 
         # If this is a user state view, check that it
         # belongs to the current_user
         if aggregation.name == '' and aggregation.user != current_user:
-            abort(HTTP_STATUS_CODE_FORBIDDEN)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'A user state view can only be viewed by the user it '
+                'belongs to.')
 
         return self.to_json(aggregation)
 
@@ -808,7 +838,8 @@ class AggregationResource(ResourceMixin, Resource):
         """
         form = SaveAggregationForm.build(request)
         if not form.validate_on_submit():
-            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
         sketch = Sketch.query.get_with_acl(sketch_id)
         aggregation = Aggregation.query.get(aggregation_id)
@@ -851,7 +882,8 @@ class AggregationExploreResource(ResourceMixin, Resource):
         """
         form = AggregationExploreForm.build(request)
         if not form.validate_on_submit():
-            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
         sketch = Sketch.query.get_with_acl(sketch_id)
         sketch_indices = {
@@ -910,7 +942,10 @@ class AggregationExploreResource(ResourceMixin, Resource):
                 'max_score': result.get('hits', {}).get('max_score', 0.0)
             }
         else:
-            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'An aggregation DSL or a name for an aggregator name needs '
+                'to be provided!')
 
         result_keys = set(result.keys()) - self.REMOVE_FIELDS
         objects = [result[key] for key in result_keys]
@@ -984,7 +1019,8 @@ class AggregationListResource(ResourceMixin, Resource):
         """
         form = SaveAggregationForm.build(request)
         if not form.validate_on_submit():
-            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to verify form data.')
 
         sketch = Sketch.query.get_with_acl(sketch_id)
         aggregation = self.create_aggregation_from_form(sketch, form)
@@ -1009,50 +1045,57 @@ class AggregationLegacyResource(ResourceMixin, Resource):
         form = AggregationLegacyForm.build(request)
 
         if form.validate_on_submit():
-            query_filter = form.filter.data
-            query_dsl = form.dsl.data
-            sketch_indices = [
-                t.searchindex.index_name for t in sketch.timelines
-            ]
-            indices = query_filter.get('indices', sketch_indices)
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
-            # If _all in indices then execute the query on all indices
-            if '_all' in indices:
-                indices = sketch_indices
+        query_filter = form.filter.data
+        query_dsl = form.dsl.data
+        sketch_indices = [
+            t.searchindex.index_name for t in sketch.timelines
+        ]
+        indices = query_filter.get('indices', sketch_indices)
 
-            # Make sure that the indices in the filter are part of the sketch.
-            # This will also remove any deleted timeline from the search result.
-            indices = get_validated_indices(indices, sketch_indices)
+        # If _all in indices then execute the query on all indices
+        if '_all' in indices:
+            indices = sketch_indices
 
-            # Make sure we have a query string or star filter
-            if not (form.query.data, query_filter.get('star'),
-                    query_filter.get('events')):
-                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        # Make sure that the indices in the filter are part of the sketch.
+        # This will also remove any deleted timeline from the search result.
+        indices = get_validated_indices(indices, sketch_indices)
 
-            result = []
-            if form.aggtype.data == 'heatmap':
-                result = heatmap(
-                    es_client=self.datastore,
-                    sketch_id=sketch_id,
-                    query_string=form.query.data,
-                    query_filter=query_filter,
-                    query_dsl=query_dsl,
-                    indices=indices)
-            elif form.aggtype.data == 'histogram':
-                result = histogram(
-                    es_client=self.datastore,
-                    sketch_id=sketch_id,
-                    query_string=form.query.data,
-                    query_filter=query_filter,
-                    query_dsl=query_dsl,
-                    indices=indices)
+        # Make sure we have a query string or star filter
+        if not (form.query.data, query_filter.get('star'),
+                query_filter.get('events')):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'The query needs to contain either a query string/DSL '
+                'or a star filter.')
 
-            else:
-                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        result = []
+        if form.aggtype.data == 'heatmap':
+            result = heatmap(
+                es_client=self.datastore,
+                sketch_id=sketch_id,
+                query_string=form.query.data,
+                query_filter=query_filter,
+                query_dsl=query_dsl,
+                indices=indices)
+        elif form.aggtype.data == 'histogram':
+            result = histogram(
+                es_client=self.datastore,
+                sketch_id=sketch_id,
+                query_string=form.query.data,
+                query_filter=query_filter,
+                query_dsl=query_dsl,
+                indices=indices)
 
-            schema = {'objects': result}
-            return jsonify(schema)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        else:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Aggregation type needs to be either heatmap or histogram')
+
+        schema = {'objects': result}
+        return jsonify(schema)
 
 
 class EventCreateResource(ResourceMixin, Resource):
@@ -1196,7 +1239,10 @@ class EventResource(ResourceMixin, Resource):
 
         # Check if the requested searchindex is part of the sketch
         if searchindex_id not in indices:
-            abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Search index ID ({0!s}) does not belong to the list '
+                'of indices'.format(searchindex_id))
 
         result = self.datastore.get_event(searchindex_id, event_id)
 
@@ -1244,70 +1290,79 @@ class EventAnnotationResource(ResourceMixin, Resource):
             An annotation in JSON (instance of flask.wrappers.Response)
         """
         form = EventAnnotationForm.build(request)
-        if form.validate_on_submit():
-            annotations = []
-            sketch = Sketch.query.get_with_acl(sketch_id)
-            indices = [t.searchindex.index_name for t in sketch.timelines]
-            annotation_type = form.annotation_type.data
-            events = form.events.raw_data
+        if not form.validate_on_submit():
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
-            for _event in events:
-                searchindex_id = _event['_index']
-                searchindex = SearchIndex.query.filter_by(
-                    index_name=searchindex_id).first()
-                event_id = _event['_id']
-                event_type = _event['_type']
+        annotations = []
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        indices = [t.searchindex.index_name for t in sketch.timelines]
+        annotation_type = form.annotation_type.data
+        events = form.events.raw_data
 
-                if searchindex_id not in indices:
-                    abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        for _event in events:
+            searchindex_id = _event['_index']
+            searchindex = SearchIndex.query.filter_by(
+                index_name=searchindex_id).first()
+            event_id = _event['_id']
+            event_type = _event['_type']
 
-                # Get or create an event in the SQL database to have something
-                # to attach the annotation to.
-                event = Event.get_or_create(
-                    sketch=sketch,
-                    searchindex=searchindex,
-                    document_id=event_id)
+            if searchindex_id not in indices:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Search index ID ({0!s}) does not belong to the list '
+                    'of indices'.format(searchindex_id))
 
-                # Add the annotation to the event object.
-                if 'comment' in annotation_type:
-                    annotation = Event.Comment(
-                        comment=form.annotation.data, user=current_user)
-                    event.comments.append(annotation)
-                    self.datastore.set_label(
-                        searchindex_id,
-                        event_id,
-                        event_type,
-                        sketch.id,
-                        current_user.id,
-                        '__ts_comment',
-                        toggle=False)
+            # Get or create an event in the SQL database to have something
+            # to attach the annotation to.
+            event = Event.get_or_create(
+                sketch=sketch,
+                searchindex=searchindex,
+                document_id=event_id)
 
-                elif 'label' in annotation_type:
-                    annotation = Event.Label.get_or_create(
-                        label=form.annotation.data, user=current_user)
-                    if annotation not in event.labels:
-                        event.labels.append(annotation)
-                    toggle = False
-                    if '__ts_star' or '__ts_hidden' in form.annotation.data:
-                        toggle = True
-                    self.datastore.set_label(
-                        searchindex_id,
-                        event_id,
-                        event_type,
-                        sketch.id,
-                        current_user.id,
-                        form.annotation.data,
-                        toggle=toggle)
-                else:
-                    abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            # Add the annotation to the event object.
+            if 'comment' in annotation_type:
+                annotation = Event.Comment(
+                    comment=form.annotation.data, user=current_user)
+                event.comments.append(annotation)
+                self.datastore.set_label(
+                    searchindex_id,
+                    event_id,
+                    event_type,
+                    sketch.id,
+                    current_user.id,
+                    '__ts_comment',
+                    toggle=False)
 
-                annotations.append(annotation)
-                # Save the event to the database
-                db_session.add(event)
-                db_session.commit()
+            elif 'label' in annotation_type:
+                annotation = Event.Label.get_or_create(
+                    label=form.annotation.data, user=current_user)
+                if annotation not in event.labels:
+                    event.labels.append(annotation)
+                toggle = False
+                if '__ts_star' or '__ts_hidden' in form.annotation.data:
+                    toggle = True
+                self.datastore.set_label(
+                    searchindex_id,
+                    event_id,
+                    event_type,
+                    sketch.id,
+                    current_user.id,
+                    form.annotation.data,
+                    toggle=toggle)
+            else:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Annotation type needs to be either label or comment, '
+                    'not {0!s}'.format(annotation_type))
+
+            annotations.append(annotation)
+            # Save the event to the database
+            db_session.add(event)
+            db_session.commit()
+
             return self.to_json(
                 annotations, status_code=HTTP_STATUS_CODE_CREATED)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
 
 class UploadFileResource(ResourceMixin, Resource):
@@ -1471,17 +1526,19 @@ class StoryListResource(ResourceMixin, Resource):
             A view in JSON (instance of flask.wrappers.Response)
         """
         form = StoryForm.build(request)
-        if form.validate_on_submit():
-            title = ''
-            if form.title.data:
-                title = form.title.data
-            sketch = Sketch.query.get_with_acl(sketch_id)
-            story = Story(
-                title=title, content='', sketch=sketch, user=current_user)
-            db_session.add(story)
-            db_session.commit()
-            return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        if not form.validate_on_submit():
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+
+        title = ''
+        if form.title.data:
+            title = form.title.data
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        story = Story(
+            title=title, content='', sketch=sketch, user=current_user)
+        db_session.add(story)
+        db_session.commit()
+        return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class StoryResource(ResourceMixin, Resource):
