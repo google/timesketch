@@ -813,7 +813,7 @@ class AggregationResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'The sketch ID ({0:d}) does not match with the defined '
                 'sketch in the aggregation ({1:d})'.format(
-                    aggregation.sketch_id, sketch.id)
+                    aggregation.sketch_id, sketch.id))
 
         # If this is a user state view, check that it
         # belongs to the current_user
