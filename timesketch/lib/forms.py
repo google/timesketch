@@ -184,7 +184,6 @@ class GraphExploreForm(BaseForm):
 
 class RunAnalyzerForm(BaseForm):
     """Form used to run an analyzer on a timeline."""
-    timeline_name = StringField('Timeline name', validators=[Optional()])
     timeline_id = StringField('Timeline Index ID', validators=[Optional()])
     analyzer_name = StringField('Analyzer name')
     analyzer_kwargs = StringField(

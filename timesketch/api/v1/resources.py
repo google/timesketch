@@ -1670,7 +1670,11 @@ class AnalyzerRunResource(ResourceMixin, Resource):
         Returns:
             A list of all available analyzer names.
         """
-        _ = sketch_id
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch.has_permission(current_user, 'read'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have read access to sketch')
         analyzers = [
             x for x, y  in analyzer_manager.AnalysisManager.get_analyzers()]
 
@@ -1684,35 +1688,25 @@ class AnalyzerRunResource(ResourceMixin, Resource):
             A string with the response from running the analyzer.
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-        form = RunAnalyzerForm.build(request)
-
-        if not form.validate_on_submit():
-            return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate input data.')
-
         if not sketch.has_permission(current_user, 'write'):
             return abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'User does not have write permission on the sketch.')
 
-        timeline_name = form.timeline_name.data
-        timeline_id = form.timeline_id.data
+        form = RunAnalyzerForm.build(request)
+        if not form.validate_on_submit():
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate input data.')
 
         search_index = None
-        if timeline_name:
-            for timeline in sketch.timelines:
-                if timeline.name.lower() == timeline_name.lower():
-                    search_index = SearchIndex.query.get_with_acl(
-                        timeline.searchindex_id)
-                    break
-        elif timeline_id:
-            for timeline in sketch.timelines:
-                index = SearchIndex.query.get_with_acl(
-                    timeline.searchindex_id)
+        timeline_id = form.timeline_id.data
+        for timeline in sketch.timelines:
+            index = SearchIndex.query.get_with_acl(
+                timeline.searchindex_id)
 
-                if index.index_name.lower() == timeline_id:
-                    search_index = index
-                    break
+            if index.index_name.lower() == timeline_id:
+                search_index = index
+                break
 
         if not search_index:
             return abort(

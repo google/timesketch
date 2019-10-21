@@ -664,8 +664,26 @@ class Sketch(BaseResource):
         resource_url = '{0:s}/sketches/{1:d}/analyzer/'.format(
             self.api.api_root, self.id)
 
+        if timeline_name:
+            sketch = self.lazyload_data()
+            timelines = []
+            for timeline in sketch['objects'][0]['timelines']:
+                if timeline_name.lower() == timeline.get('name', '').lower():
+                    timelines.append(timeline.get('id', ''))
+
+            if len(timelines) == 0:
+                return 'No timelines with the name: {0:s} were found'.format(
+                    timeline_name)
+
+            if len(timelines) != 1:
+                return (
+                    'There are {0:d} timelines defined in the sketch with '
+                    'this name, please use a unique name or a '
+                    'timeline ID').format(len(timelines))
+
+            timeline_id = timelines[0]
+
         data = {
-            'timeline_name': timeline_name,
             'timeline_id': timeline_id,
             'analyzer_name': analyzer_name,
             'analyzer_kwargs': analyzer_kwargs,
