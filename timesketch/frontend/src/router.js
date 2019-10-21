@@ -18,15 +18,14 @@ import VueRouter from 'vue-router'
 
 import Home from './components/Home'
 import Sketch from './components/Sketch'
-import SketchOverview from './components/SketchOverview'
-import SketchExplore from './components/SketchExplore'
-import SketchExploreSearch from './components/SketchExploreSearch'
-import SketchExploreAggregation from './components/SketchExploreAggregation'
-import SketchStory from './components/SketchStory'
-import SketchStoryOverview from './components/SketchStoryOverview'
-import SketchStoryContent from './components/SketchStoryContent'
-import SketchTimelines from './components/SketchTimelines'
-import SketchViews from './components/SketchViews'
+import Overview from './components/Sketch/Overview'
+import Manage from './components/Sketch/Manage'
+import ManageViews from "./components/Sketch/Manage/ManageViews"
+import ManageTimelines from "./components/Sketch/Manage/ManageTimelines"
+import Explore from './components/Sketch/Explore'
+import Story from './components/Sketch/Story'
+import StoryOverview from './components/Sketch/Story/StoryOverview'
+import StoryContent from './components/Sketch/Story/StoryContent'
 
 Vue.use(VueRouter)
 
@@ -37,55 +36,53 @@ const routes = [
     component: Home
   },
   {
+    // Sketch
     path: '/sketch/:sketchId',
     component: Sketch,
     props: true,
     children: [
       {
         path: '',
-        name: 'SketchOverview',
-        component: SketchOverview
+        name: 'Overview',
+        component: Overview
       },
       {
         path: 'explore',
-        component: SketchExplore,
-        props: true,
-        children: [
-          {
-            path: '',
-            name: 'SketchExplore',
-            component: SketchExploreSearch,
-            props: true
-          }
-        ]
-      },
-      {
-        path: 'timelines',
-        name: 'SketchTimelines',
-        component: SketchTimelines,
-        props: true
-      },
-      {
-        path: 'views',
-        name: 'SketchViews',
-        component: SketchViews,
+        name: 'Explore',
+        component: Explore,
         props: true
       },
       {
         path: 'story',
-        component: SketchStory,
+        component: Story,
         props: true,
         children: [
           {
             path: '',
-            name: 'SketchStory',
-            component: SketchStoryOverview
+            name: 'StoryOverview',
+            component: StoryOverview
           },
           {
             path: ':storyId',
-            name: 'SketchStoryContent',
-            component: SketchStoryContent,
+            name: 'StoryContent',
+            component: StoryContent,
             props: true
+          }]
+      },
+      {
+        path: 'manage',
+        component: Manage,
+        props: true,
+        children: [
+          {
+            path: 'views',
+            name: 'ViewsPage',
+            component: ManageViews
+          },
+          {
+            path: 'timelines',
+            name: 'TimelinesPage',
+            component: ManageTimelines
           }]
       }
     ]

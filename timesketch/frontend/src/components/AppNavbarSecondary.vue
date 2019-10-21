@@ -19,37 +19,21 @@ limitations under the License.
       <div class="tabs is-left">
         <ul>
           <li v-bind:class="{'is-active': currentPage === 'overview'}">
-            <router-link :to="{ name: 'SketchOverview' }">
+            <router-link :to="{ name: 'Overview' }">
               <span class="icon is-small"><i class="fas fa-cubes" aria-hidden="true"></i></span>
               <span>Overview</span>
             </router-link>
           </li>
           <li v-bind:class="{'is-active': currentPage === 'explore'}">
-            <router-link :to="{ name: 'SketchExplore' }">
+            <router-link :to="{ name: 'Explore' }">
               <span class="icon is-small"><i class="fas fa-search" aria-hidden="true"></i></span>
               <span>Explore</span>
             </router-link>
           </li>
           <li v-bind:class="{'is-active': currentPage === 'stories'}">
-            <router-link :to="{ name: 'SketchStory' }">
+            <router-link :to="{ name: 'StoryOverview' }">
               <span class="icon is-small"><i class="fas fa-book" aria-hidden="true"></i></span>
               <span>Stories</span>
-            </router-link>
-          </li>
-        </ul>
-      </div>
-    </div>
-    <div class="navbar-item" v-if="currentAppContext === 'explore'">
-      <div class="tabs">
-        <ul>
-          <li v-bind:class="{'is-active': currentPage === 'search'}">
-            <router-link :to="{ name: 'SketchExplore' }">
-              <span>Search</span>
-            </router-link>
-          </li>
-          <li v-bind:class="{'is-active': currentPage === 'aggregation'}">
-            <router-link :to="{ name: 'SketchExploreAggregation' }">
-              <span>Aggregations</span>
             </router-link>
           </li>
         </ul>
