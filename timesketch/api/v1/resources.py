@@ -337,7 +337,7 @@ class SketchListResource(ResourceMixin, Resource):
         """
         form = NameDescriptionForm.build(request)
         if not form.validate_on_submit():
-            return abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
         sketch = Sketch(
             name=form.name.data,
@@ -419,7 +419,7 @@ class SketchResource(ResourceMixin, Resource):
         sketch = Sketch.query.get_with_acl(sketch_id)
 
         if not form.validate_on_submit():
-            return abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data')
 
         if not sketch.has_permission(current_user, 'write'):
@@ -533,7 +533,7 @@ class ViewListResource(ResourceMixin, Resource):
         """
         form = SaveViewForm.build(request)
         if not form.validate_on_submit():
-            return abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
         sketch = Sketch.query.get_with_acl(sketch_id)
         view = self.create_view_from_form(sketch, form)
@@ -625,7 +625,7 @@ class ViewResource(ResourceMixin, Resource):
         """
         form = SaveViewForm.build(request)
         if not form.validate_on_submit():
-            return abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data')
         sketch = Sketch.query.get_with_acl(sketch_id)
         view = View.query.get(view_id)
@@ -693,7 +693,7 @@ class ExploreResource(ResourceMixin, Resource):
         form = ExploreForm.build(request)
 
         if not form.validate_on_submit():
-            return abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data')
 
         query_dsl = form.dsl.data
@@ -838,7 +838,7 @@ class AggregationResource(ResourceMixin, Resource):
         """
         form = SaveAggregationForm.build(request)
         if not form.validate_on_submit():
-            return abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
         sketch = Sketch.query.get_with_acl(sketch_id)
@@ -882,7 +882,7 @@ class AggregationExploreResource(ResourceMixin, Resource):
         """
         form = AggregationExploreForm.build(request)
         if not form.validate_on_submit():
-            return abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
         sketch = Sketch.query.get_with_acl(sketch_id)
@@ -942,7 +942,7 @@ class AggregationExploreResource(ResourceMixin, Resource):
                 'max_score': result.get('hits', {}).get('max_score', 0.0)
             }
         else:
-            return abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'An aggregation DSL or a name for an aggregator name needs '
                 'to be provided!')
@@ -1019,7 +1019,7 @@ class AggregationListResource(ResourceMixin, Resource):
         """
         form = SaveAggregationForm.build(request)
         if not form.validate_on_submit():
-            return abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to verify form data.')
 
         sketch = Sketch.query.get_with_acl(sketch_id)
@@ -1045,7 +1045,7 @@ class AggregationLegacyResource(ResourceMixin, Resource):
         form = AggregationLegacyForm.build(request)
 
         if not form.validate_on_submit():
-            return abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
         query_filter = form.filter.data
@@ -1114,9 +1114,9 @@ class EventCreateResource(ResourceMixin, Resource):
         """
         form = EventCreateForm.build(request)
         if not form.validate_on_submit():
-            raise ApiHTTPError(
-                message='failed to add event, form data not validated',
-                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Failed to add event, form data not validated')
 
         sketch = Sketch.query.get_with_acl(sketch_id)
         timeline_name = 'sketch specific timeline'
@@ -1198,9 +1198,9 @@ class EventCreateResource(ResourceMixin, Resource):
         # TODO: Can this be narrowed down, both in terms of the scope it
         # applies to, as well as not to catch a generic exception.
         except Exception as e:
-            raise ApiHTTPError(
-                message='failed to add event ({0!s})'.format(e),
-                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Failed to add event ({0!s})'.format(e))
 
 
 class EventResource(ResourceMixin, Resource):
@@ -1291,7 +1291,7 @@ class EventAnnotationResource(ResourceMixin, Resource):
         """
         form = EventAnnotationForm.build(request)
         if not form.validate_on_submit():
-            return abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
         annotations = []
@@ -1380,18 +1380,16 @@ class UploadFileResource(ResourceMixin, Resource):
         """
         upload_enabled = current_app.config['UPLOAD_ENABLED']
         if not upload_enabled:
-            raise ApiHTTPError(
-                message='Upload not enabled',
-                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Upload not enabled')
 
         upload_folder = current_app.config['UPLOAD_FOLDER']
 
         form = UploadFileForm()
         if not form.validate_on_submit():
-            raise ApiHTTPError(
-                message='Form data not validated: {0:s}'.format(
-                    form.errors['file'][0]),
-                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Upload validation failed: {0:s}'.format(
+                    form.errors['file'][0]))
 
         sketch_id = form.sketch_id.data or None
         file_storage = form.file.data
@@ -1533,7 +1531,7 @@ class StoryListResource(ResourceMixin, Resource):
         """
         form = StoryForm.build(request)
         if not form.validate_on_submit():
-            return abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
         title = ''
@@ -1593,7 +1591,7 @@ class StoryResource(ResourceMixin, Resource):
         """
         form = StoryForm.build(request)
         if not form.validate_on_submit():
-            return abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
         sketch = Sketch.query.get_with_acl(sketch_id)
         story = Story.query.get(story_id)
@@ -1626,7 +1624,7 @@ class QueryResource(ResourceMixin, Resource):
         """
         form = ExploreForm.build(request)
         if not form.validate_on_submit():
-            return abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
         sketch = Sketch.query.get_with_acl(sketch_id)
         schema = {'objects': [], 'meta': {}}
@@ -1675,15 +1673,15 @@ class TimelineCreateResource(ResourceMixin, Resource):
         """
         upload_enabled = current_app.config['UPLOAD_ENABLED']
         if not upload_enabled:
-            raise ApiHTTPError(
-                message='Failed to create timeline, upload not enabled',
-                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Failed to create timeline, upload not enabled')
 
         form = CreateTimelineForm()
         if not form.validate_on_submit():
-            raise ApiHTTPError(
-                message='Failed to create timeline, form data not validated',
-                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Failed to create timeline, form data not validated')
 
         sketch_id = form.sketch_id.data
         timeline_name = form.name.data
@@ -1766,7 +1764,7 @@ class TimelineListResource(ResourceMixin, Resource):
         ]
 
         if not form.validate_on_submit():
-            return abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
         if not sketch.has_permission(current_user, 'write'):
@@ -1995,7 +1993,7 @@ class GraphViewResource(ResourceMixin, Resource):
         view = get_graph_view(view_id)
 
         if not view:
-            return abort(HTTP_STATUS_CODE_NOT_FOUND, 'No view found')
+            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No view found')
 
         schema = {
             'objects': [{
