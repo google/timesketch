@@ -819,9 +819,9 @@ class AggregationResource(ResourceMixin, Resource):
         # belongs to the current_user
         if aggregation.name == '' and aggregation.user != current_user:
             abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                'A user state view can only be viewed by the user it '
-                'belongs to.')
+                HTTP_STATUS_CODE_FORBIDDEN, (
+                    'A user state view can only be viewed by the user it '
+                    'belongs to.'))
 
         return self.to_json(aggregation)
 
