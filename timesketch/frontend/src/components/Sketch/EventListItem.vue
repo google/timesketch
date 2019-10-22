@@ -53,7 +53,7 @@ limitations under the License.
     <!-- Detailed view -->
     <div v-if="showDetail">
       <div style="margin:10px 0 10px 0;background:#f9f9f9; border:none;border-radius:5px;padding:15px">
-        <ts-sketch-explore-event-list-item-detail :event="event"></ts-sketch-explore-event-list-item-detail>
+        <ts-sketch-explore-event-list-item-detail :event="event" @addChip="$emit('addChip', $event)"></ts-sketch-explore-event-list-item-detail>
       </div>
     </div>
   </div>
@@ -72,19 +72,9 @@ export default {
       showDetail: false
     }
   },
-  methods: {
-    timeline (indexName) {
-      return this.sketch.timelines.find(function (timeline) {
-        return timeline.searchindex.index_name === indexName
-      })
-    }
-  },
   computed: {
     sketch () {
       return this.$store.state.sketch
-    },
-    meta () {
-      return this.$store.state.meta
     },
     timelineColor () {
       let hexColor = this.timeline(this.event._index).color
@@ -108,7 +98,14 @@ export default {
       let deltaDays = delta / 60 / 60 / 24
       return Math.floor(deltaDays)
     }
-  }
+  },
+  methods: {
+    timeline (indexName) {
+      return this.sketch.timelines.find(function (timeline) {
+        return timeline.searchindex.index_name === indexName
+      })
+    }
+  },
 }
 </script>
 

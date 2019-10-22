@@ -52,7 +52,7 @@ export default {
         let newView = response.data.objects[0]
         this.$store.state.meta.views.push(newView)
         this.clearFormData()
-        this.$router.push({ name: 'SearchPage', query: { view: newView.id } })
+        this.$router.push({ name: 'SketchExplore', query: { view: newView.id } })
       }).catch((e) => {})
     },
     toggleCreateViewModal: function () {

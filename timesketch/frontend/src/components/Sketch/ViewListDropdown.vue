@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <div class="dropdown" v-bind:class="{'is-active': viewListDropdownActive}">
     <div class="dropdown-trigger">
-      <a class="button ts-view-button" v-bind:class="{'is-rounded': isRounded}" aria-haspopup="true" aria-controls="dropdown-menu" v-on:click="viewListDropdownActive = !viewListDropdownActive">
+      <a class="button" v-bind:class="{'is-rounded': isRounded, 'ts-view-button': inExplore}" aria-haspopup="true" aria-controls="dropdown-menu" v-on:click="viewListDropdownActive = !viewListDropdownActive">
         <span>{{ title || 'Views' }}</span>
         <span class="icon is-small">
           <i class="fas fa-angle-down" aria-hidden="true"></i>
@@ -25,7 +25,7 @@ limitations under the License.
     </div>
     <div class="dropdown-menu" id="dropdown-menu" role="menu">
       <div class="dropdown-content">
-        <span class="dropdown-item" v-if="!meta.views.length"><strong>No saved views</strong></span>
+        <span class="dropdown-item" v-if="!meta.views && meta.views.length ? meta.views.length: true">No saved views</span>
         <a class="dropdown-item" v-on:click="setActiveView(view)" v-for="view in meta.views" :key="view.id">
           <span>{{ view.name }}</span>
         </a>
@@ -36,7 +36,7 @@ limitations under the License.
 
 <script>
 export default {
-  props: ['isRounded', 'title'],
+  props: ['isRounded', 'inExplore', 'title'],
   data () {
     return {
       viewListDropdownActive: false
@@ -49,9 +49,6 @@ export default {
     }
   },
   computed: {
-    sketch () {
-      return this.$store.state.sketch
-    },
     meta () {
       return this.$store.state.meta
     }

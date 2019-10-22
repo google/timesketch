@@ -62,7 +62,8 @@ limitations under the License.
           <div class="card-content" v-if="showSearch">
 
               <div class="field is-grouped">
-                <ts-view-list-dropdown @setActiveView="searchView"></ts-view-list-dropdown>
+                <ts-view-list-dropdown @setActiveView="searchView" in-explore="true"></ts-view-list-dropdown>
+
                 <form v-on:submit.prevent="search" style="width:100%;">
                   <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
                 </form>
@@ -95,7 +96,7 @@ limitations under the License.
               </span>
             </div>
 
-            <ts-explore-timeline-picker @doSearch="search" v-if="sketch.active_timelines"></ts-explore-timeline-picker>
+            <ts-explore-timeline-picker @updateQueryFilter="updateQueryFilter($event)" :current-query-filter="currentQueryFilter" v-if="sketch.active_timelines"></ts-explore-timeline-picker>
 
           </div>
         </div>
@@ -131,7 +132,7 @@ limitations under the License.
             <div v-if="!searchInProgress">{{ totalHits }} events ({{ totalTime }}s)</div>
             <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
             <div v-if="totalHits > 0" style="margin-top:20px;"></div>
-            <ts-sketch-explore-event-list></ts-sketch-explore-event-list>
+            <ts-sketch-explore-event-list :event-list="eventList.objects" @addChip="addChip($event)"></ts-sketch-explore-event-list>
           </div>
         </div>
       </div>
@@ -166,53 +167,48 @@ export default {
       showCreateViewModal: false,
       showFilters: false,
       showAggregations: false,
-      showSearch: true
+      showSearch: true,
+      searchInProgress: false,
+      eventList: {
+        meta: {},
+        objects: []
+      },
+      currentQueryString: "",
+      currentQueryFilter: {
+        'from': 0,
+        'time_start': null,
+        'time_end': null,
+        'terminate_after': 40,
+        'size': 40,
+        'indices': ['_all'],
+        'order': 'asc',
+        'chips': []
+      }
     }
   },
   computed: {
     sketch () {
       return this.$store.state.sketch
     },
-    meta () {
-      return this.$store.state.meta
-    },
-    eventList () {
-      return this.$store.state.eventList
-    },
     totalHits () {
       return this.eventList.meta.es_total_count || 0
     },
     totalTime () {
       return this.eventList.meta.es_time / 1000 || 0
-    },
-    searchInProgress: {
-      get: function () {
-        return this.$store.state.searchInProgress
-      },
-      set: function (isSearching) {
-        this.$store.commit('updateSearchInProgress', isSearching)
-      }
-    },
-    currentQueryString: {
-      get: function () {
-        return this.$store.state.currentQueryString
-      },
-      set: function (queryString) {
-        this.$store.commit('updateCurrentQueryString', queryString)
-      }
-    },
-    currentQueryFilter: {
-      get: function () {
-        return this.$store.state.currentQueryFilter
-      },
-      set: function (queryFilter) {
-        this.$store.commit('updateCurrentQueryFilter', queryFilter)
-      }
     }
   },
   methods: {
     search: function () {
-      this.$store.commit('search', this.sketchId)
+      this.searchInProgress = true
+      let formData = {
+        'query': this.currentQueryString,
+        'filter': this.currentQueryFilter
+      }
+      ApiClient.search(this.sketch.id, formData).then((response) => {
+        this.eventList.objects = response.data.objects
+        this.eventList.meta = response.data.meta
+        this.searchInProgress = false
+      }).catch((e) => {})
     },
     searchView: function (viewId) {
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
@@ -232,6 +228,10 @@ export default {
         }
         this.search()
       }).catch((e) => {})
+    },
+    updateQueryFilter: function (filter) {
+      this.currentQueryFilter = filter
+      this.search()
     },
     toggleCreateViewModal: function () {
       this.showCreateViewModal = !this.showCreateViewModal

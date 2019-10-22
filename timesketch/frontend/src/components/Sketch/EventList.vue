@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <div>
-    <ts-sketch-explore-event-list-item v-for="(event, index) in eventList.objects" :key="event._id" :event="event" :prevEvent="eventList.objects[index - 1]"></ts-sketch-explore-event-list-item>
+    <ts-sketch-explore-event-list-item v-for="(event, index) in eventList" :key="event._id" :event="event" :prevEvent="eventList[index - 1]" @addChip="$emit('addChip', $event)"></ts-sketch-explore-event-list-item>
   </div>
 </template>
 
@@ -23,19 +23,7 @@ limitations under the License.
 import TsSketchExploreEventListItem from './EventListItem'
 
 export default {
-  components: {
-    TsSketchExploreEventListItem
-  },
-  computed: {
-    sketch () {
-      return this.$store.state.sketch
-    },
-    meta () {
-      return this.$store.state.meta
-    },
-    eventList () {
-      return this.$store.state.eventList
-    }
-  }
+  components: { TsSketchExploreEventListItem },
+  props: ['eventList']
 }
 </script>

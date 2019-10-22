@@ -58,22 +58,6 @@ export default {
       chip: null
     }
   },
-  computed: {
-    sketch () {
-      return this.$store.state.sketch
-    },
-    meta () {
-      return this.$store.state.meta
-    },
-    currentQueryFilter: {
-      get: function () {
-        return this.$store.state.currentQueryFilter
-      },
-      set: function (queryFilter) {
-        this.$store.commit('updateCurrentQueryFilter', queryFilter)
-      }
-    }
-  },
   methods: {
     formatDateTime: function () {
       const startDateTimeString = this.startDateTime

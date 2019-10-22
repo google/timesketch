@@ -201,6 +201,7 @@ class ResourceMixin(object):
         'user': fields.Nested(user_fields),
         'timelines': fields.List(fields.Nested(timeline_fields)),
         'stories': fields.List(fields.Nested(story_fields)),
+        'aggregations': fields.Nested(aggregation_fields),
         'active_timelines': fields.List(fields.Nested(timeline_fields)),
         'status': fields.Nested(status_fields),
         'created_at': fields.DateTime,
@@ -370,12 +371,6 @@ class SketchResource(ResourceMixin, Resource):
             }
         meta = dict(
             aggregators=aggregators,
-            saved_aggregations=[{
-                'name': aggregation.name,
-                'id': aggregation.id,
-                'created_at': aggregation.created_at,
-                'updated_at': aggregation.updated_at
-            } for aggregation in sketch.get_named_aggregations],
             views=[{
                 'name': view.name,
                 'id': view.id,

@@ -73,7 +73,7 @@ export default {
   },
   created: function () {
     ApiClient.getSketchList().then((response) => {
-      this.$store.commit('resetState')
+      this.$store.dispatch('resetState')
       this.sketches = response.data.objects[0]
     }).catch((e) => {
       console.error(e)

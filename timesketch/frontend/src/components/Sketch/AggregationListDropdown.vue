@@ -38,6 +38,11 @@ export default {
       selectedChart: ''
     }
   },
+  computed: {
+    meta () {
+      return this.$store.state.meta
+    }
+  },
   methods: {
     setActiveAggregator: function () {
       let aggregatorClone = JSON.parse(JSON.stringify(this.meta.aggregators[this.selected]))
@@ -45,13 +50,5 @@ export default {
       this.$emit('setActiveAggregator', aggregatorClone)
     }
   },
-  computed: {
-    sketch () {
-      return this.$store.state.sketch
-    },
-    meta () {
-      return this.$store.state.meta
-    }
-  }
 }
 </script>

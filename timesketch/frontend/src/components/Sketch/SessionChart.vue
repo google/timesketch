@@ -91,8 +91,8 @@ export default {
             var session_id = item.datum.session_id
             if (session_type != undefined && session_id != undefined) {
                 var queryString = 'session_id.' + session_type + ':' + session_id
-                store.commit('updateCurrentQueryString', queryString)
-                store.commit('search', sketchId)
+                store.dispatch('updateCurrentQueryString', queryString)
+                store.dispatch('search', sketchId)
             }
         })
     },
@@ -181,8 +181,8 @@ export default {
         dictSpec['vconcat'][1]['selection']['brush']['init']['x'] = selection
         this.spec = JSON.stringify(dictSpec)
 
-        this.$store.commit('updateCurrentQueryString', queryString)
-        this.$store.commit('search', this.sketch.id)
+        this.$store.dispatch('updateCurrentQueryString', queryString)
+        this.$store.dispatch('search', this.sketch.id)
     },
     getProcessedSessions: function () {
         //increases the visibility of sessions when plotted

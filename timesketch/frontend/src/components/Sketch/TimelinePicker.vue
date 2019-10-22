@@ -15,55 +15,68 @@ limitations under the License.
 -->
 <template>
   <div>
-    <ts-sketch-explore-timeline-picker-item
-      v-for="timeline in sketch.active_timelines"
-      :key="timeline.id"
-      :timeline="timeline"
-      style="margin-right:7px;">
-    </ts-sketch-explore-timeline-picker-item>
+    <span v-for="timeline in sketch.active_timelines" :key="timeline.id" class="tag is-medium" style="cursor: pointer; margin-right: 7px;" v-bind:style="timelineColor(timeline)" v-on:click="toggleIndex(timeline.searchindex.index_name)">
+      {{ timeline.name }}
+    </span>
     <button class="button is-text" v-on:click="enableAllIndices">Enable all</button>
     <button class="button is-text" v-on:click="disableAllIndices">Disable all</button>
   </div>
 </template>
 
 <script>
-import TsSketchExploreTimelinePickerItem from './TimelinePickerItem'
-
 export default {
-  components: {TsSketchExploreTimelinePickerItem},
+  props: ['currentQueryFilter'],
   computed: {
     sketch () {
       return this.$store.state.sketch
-    },
-    meta () {
-      return this.$store.state.meta
-    },
-    currentQueryFilter: {
-      get: function () {
-        return this.$store.state.currentQueryFilter
-      },
-      set: function (queryFilter) {
-        this.$store.commit('updateCurrentQueryFilter', queryFilter)
-      }
-    },
+    }
   },
   methods: {
+    timelineColor (timeline) {
+      let indexName = timeline.searchindex.index_name
+      let color = timeline.color
+      if (!color.startsWith('#')) {
+        color = '#' + color
+      }
+      // Grey out the index if it is not selected.
+      if (!this.currentQueryFilter.indices.includes(indexName)) {
+        color = '#f5f5f5'
+      }
+      return {
+        'background-color': color
+      }
+    },
+    toggleIndex: function (indexName) {
+      let newArray = this.currentQueryFilter.indices.slice()
+      let index = newArray.indexOf(indexName)
+      if (index === -1) {
+        newArray.push(indexName)
+      } else {
+        newArray.splice(index, 1)
+      }
+      this.currentQueryFilter.indices = newArray
+      this.$emit('updateQueryFilter', this.currentQueryFilter)
+    },
     enableAllIndices: function () {
       let allIndices = []
       this.sketch.active_timelines.forEach(function (timeline) {
         allIndices.push(timeline.searchindex.index_name)
       })
       this.currentQueryFilter.indices = allIndices
-      this.$store.commit('search', this.sketch.id)
+      this.$emit('updateQueryFilter', this.currentQueryFilter)
     },
     disableAllIndices: function () {
       this.currentQueryFilter.indices = []
-      this.$store.commit('search', this.sketch.id)
+      this.$emit('updateQueryFilter', this.currentQueryFilter)
     }
   },
   created: function () {
     if (this.currentQueryFilter.indices.includes('_all')) {
-      this.enableAllIndices()
+      let allIndices = []
+      this.sketch.active_timelines.forEach(function (timeline) {
+        allIndices.push(timeline.searchindex.index_name)
+      })
+      this.currentQueryFilter.indices = allIndices
     }
   }
 }

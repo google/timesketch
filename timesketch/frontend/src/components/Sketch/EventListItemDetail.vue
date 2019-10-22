@@ -63,9 +63,6 @@ export default {
     sketch () {
       return this.$store.state.sketch
     },
-    meta () {
-      return this.$store.state.meta
-    },
     fullEventFiltered () {
       Object.getOwnPropertyNames(this.fullEvent).forEach(key => {
         // Remove internal properties from the UI
@@ -74,14 +71,6 @@ export default {
         }
       })
       return this.fullEvent
-    },
-    currentQueryFilter: {
-        get: function () {
-            return this.$store.state.currentQueryFilter
-        },
-        set: function (queryFilter) {
-            this.$store.commit('updateCurrentQueryFilter', queryFilter)
-        }
     }
   },
   methods: {
@@ -99,11 +88,7 @@ export default {
           'type': 'term',
           'operator': operator
         }
-      if (!this.currentQueryFilter.chips) {
-        this.currentQueryFilter.chips = []
-      }
-      this.currentQueryFilter.chips.push(chip)
-      this.$store.commit('search', this.sketch.id)
+      this.$emit('addChip', chip)
     }
   },
   created: function () {

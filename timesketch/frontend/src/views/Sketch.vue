@@ -21,7 +21,7 @@ limitations under the License.
 export default {
   props: ['sketchId'],
   created: function () {
-    this.$store.commit('updateSketch', this.sketchId)
+    this.$store.dispatch('updateSketch', this.sketchId)
   }
 }
 </script>
