@@ -63,11 +63,10 @@ limitations under the License.
 import TsSketchExploreEventListItemDetail from './EventListItemDetail'
 
 export default {
-  name: 'ts-sketch-explore-event-list-item',
-  props: ['event', 'prevEvent'],
   components: {
     TsSketchExploreEventListItemDetail
   },
+  props: ['event', 'prevEvent'],
   data () {
     return {
       showDetail: false

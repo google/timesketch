@@ -23,7 +23,6 @@ limitations under the License.
 import TsSketchExploreEventListItem from './EventListItem'
 
 export default {
-  name: 'ts-sketch-explore-event-list',
   components: {
     TsSketchExploreEventListItem
   },
@@ -40,5 +39,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss"></style>

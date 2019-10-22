@@ -33,7 +33,6 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  name: 'ts-create-story-form',
   data () {
     return {
       title: ''
@@ -49,7 +48,7 @@ export default {
         let newStoryId = response.data.objects[0].id
         this.clearFormData()
         this.$store.commit('updateSketch', this.sketch.id)
-        this.$router.push({ name: 'StoryContent', params: { storyId: newStoryId } })
+        this.$router.push({ name: 'SketchStoryContent', params: { storyId: newStoryId } })
       }).catch((e) => {})
     }
   },
@@ -63,6 +62,3 @@ export default {
   }
 }
 </script>
-
-<!-- CSS scoped to this component only -->
-<style scoped lang="scss"></style>

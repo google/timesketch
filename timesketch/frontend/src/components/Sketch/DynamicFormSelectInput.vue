@@ -29,9 +29,6 @@ limitations under the License.
 
 <script>
 export default {
-  name: 'ts-dynamic-form-radio-input',
   props: ['options', 'label', 'value']
 }
 </script>
-
-<style lang="scss"></style>

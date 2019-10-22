@@ -53,8 +53,12 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  name: 'ts-explore-event-list-item-detail',
   props: ['event'],
+  data () {
+    return {
+      fullEvent: {}
+    }
+  },
   computed: {
     sketch () {
       return this.$store.state.sketch
@@ -78,11 +82,6 @@ export default {
         set: function (queryFilter) {
             this.$store.commit('updateCurrentQueryFilter', queryFilter)
         }
-    }
-  },
-  data () {
-    return {
-      fullEvent: {}
     }
   },
   methods: {
@@ -112,5 +111,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss"></style>

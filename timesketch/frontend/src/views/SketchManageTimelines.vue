@@ -86,12 +86,11 @@ import TsTimelineList from '../components/Sketch/TimelineList'
 import TsUploadTimelineForm from '../components/Sketch/UploadForm'
 
 export default {
-  name: 'ts-sketch-manage-timelines',
-  props: ['hideNavigation'],
   components: {
     TsTimelineList,
     TsUploadTimelineForm
   },
+  props: ['hideNavigation'],
   data () {
     return {
       availableSearchIndices: []

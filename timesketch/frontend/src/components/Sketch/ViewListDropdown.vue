@@ -36,7 +36,6 @@ limitations under the License.
 
 <script>
 export default {
-  name: 'ts-sketch-explore-view-list-dropdown',
   props: ['isRounded', 'title'],
   data () {
     return {

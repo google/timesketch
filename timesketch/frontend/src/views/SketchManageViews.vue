@@ -40,7 +40,6 @@ limitations under the License.
 import TsViewList from '../components/Sketch/ViewList'
 
 export default {
-  name: 'ts-sketch-views-manage',
   components: { TsViewList },
   computed: {
     sketch () {
@@ -52,5 +51,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss"></style>

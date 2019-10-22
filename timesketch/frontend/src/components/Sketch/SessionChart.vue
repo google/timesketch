@@ -47,36 +47,33 @@
 </template>
 
 <script>
-import TsVegaLiteChart from '../AppVegaLiteChart'
+import TsVegaLiteChart from './VegaLiteChart'
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  name: 'ts-explore-session-chart',
   components: {
         TsVegaLiteChart
   },
-
   data () {
       return {
-            processedSessions: [],
-            message: 'Show Session Chart',
-            showChart: false,
-            showTimeRange: false,
-            selectedSessions: [],
-            spec: '{}',
-            sessionTypes: ['all'],
-            barSize: 0,
-            smallest_timestamp: 0,
-            selectedType: '',
-            selectedID: '',
-            sessions: [],
-            startTimeRange: null,
-            endTimeRange: null,
-            timeRangeMessage: '',
-            isTruncated: false
+        processedSessions: [],
+        message: 'Show Session Chart',
+        showChart: false,
+        showTimeRange: false,
+        selectedSessions: [],
+        spec: '{}',
+        sessionTypes: ['all'],
+        barSize: 0,
+        smallest_timestamp: 0,
+        selectedType: '',
+        selectedID: '',
+        sessions: [],
+        startTimeRange: null,
+        endTimeRange: null,
+        timeRangeMessage: '',
+        isTruncated: false
       }
   },
-
   computed: {
     sketch () {
         return this.$store.state.sketch
@@ -85,7 +82,6 @@ export default {
         return this.$store.state.currentQueryFilter.indices
     }
   },
-
   methods: {
     registerClickListener: function (view) {
         var store = this.$store
@@ -100,7 +96,6 @@ export default {
             }
         })
     },
-
     toggleChart: function () {
         this.showChart = !this.showChart
         if (this.showChart) {
@@ -128,11 +123,9 @@ export default {
             this.timeRangeMessage = ''
         }
     },
-
     toggleTimeRange: function () {
         this.showTimeRange = !this.showTimeRange
     },
-
     updateTimeRange: function (event) {
         const DATE_REGEX = /\d{1,2}\/\d{1,2}\/\d{4}/
         if(DATE_REGEX.test(event.target.value)) {
@@ -152,7 +145,6 @@ export default {
             this.timeRangeMessage = 'Please enter a valid date.'
         }
     },
-
     selectSessionType: function (event) {
         this.selectedID = ''
         var dictSpec = JSON.parse(this.spec)
@@ -167,7 +159,6 @@ export default {
         dictSpec['vconcat'][1]['selection']['brush']['init']['x'] = [this.smallest_timestamp, this.smallest_timestamp + (this.barSize * 50)]
         this.spec = JSON.stringify(dictSpec)
     },
-
     selectSessionID: function (event) {
         var queryString = ''
         var selection = []
@@ -193,7 +184,6 @@ export default {
         this.$store.commit('updateCurrentQueryString', queryString)
         this.$store.commit('search', this.sketch.id)
     },
-
     getProcessedSessions: function () {
         //increases the visibility of sessions when plotted
         const YEAR_IN_MS = 31556952000
@@ -254,7 +244,6 @@ export default {
         }
         this.processedSessions = processedSessions
     },
-
     getVegaSpec: function () {
         //TODO: make the size of the chart responsive
         const WIDTH = 900
@@ -332,5 +321,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss"></style>

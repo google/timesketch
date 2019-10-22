@@ -31,7 +31,6 @@ limitations under the License.
 
 <script>
 export default {
-  name: 'ts-sketch-explore-aggregator-list-dropdown',
   props: ['isRounded', 'title'],
   data () {
     return {
@@ -56,6 +55,3 @@ export default {
   }
 }
 </script>
-
-<!-- CSS scoped to this component only -->
-<style scoped lang="scss"></style>

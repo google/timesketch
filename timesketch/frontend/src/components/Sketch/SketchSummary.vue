@@ -24,7 +24,6 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  name: 'ts-sketch-summary',
   computed: {
     sketch () {
       return this.$store.state.sketch
@@ -50,6 +49,3 @@ export default {
   }
 }
 </script>
-
-<!-- CSS scoped to this component only -->
-<style scoped lang="scss"></style>

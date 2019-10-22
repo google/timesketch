@@ -30,7 +30,6 @@ limitations under the License.
 import TsSketchExploreTimelinePickerItem from './TimelinePickerItem'
 
 export default {
-  name: 'ts-sketch-explore-timeline-picker',
   components: {TsSketchExploreTimelinePickerItem},
   computed: {
     sketch () {
@@ -69,5 +68,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss"></style>

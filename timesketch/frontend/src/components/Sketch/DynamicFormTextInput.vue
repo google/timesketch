@@ -26,9 +26,6 @@ limitations under the License.
 </template>
 <script>
 export default {
-  name: 'ts-dynamic-form-text-input',
   props: ['placeholder', 'label', 'name', 'value']
 }
 </script>
-
-<style lang="scss"></style>

@@ -21,22 +21,18 @@ limitations under the License.
         </div>
     </section>
 
-    <div class="modal" v-bind:class="{ 'is-active': showCreateViewModal }">>
-      <div class="modal-background"></div>
-      <div class="modal-content">
-        <div class="card">
-          <header class="card-header">
-            <p class="card-header-title">Create new view</p>
-          </header>
-          <div class="card-content">
-            <div class="content">
-              <ts-create-view-form @toggleCreateViewModal="toggleCreateViewModal" :sketchId="sketchId" :currentQueryString="currentQueryString" :currentQueryFilter="currentQueryFilter"></ts-create-view-form>
-            </div>
+    <b-modal :active.sync="showCreateViewModal" :width="640" scroll="keep">
+      <div class="card">
+        <header class="card-header">
+          <p class="card-header-title">Create new view</p>
+        </header>
+        <div class="card-content">
+          <div class="content">
+            <ts-create-view-form @toggleCreateViewModal="toggleCreateViewModal" :sketchId="sketchId" :currentQueryString="currentQueryString" :currentQueryFilter="currentQueryFilter"></ts-create-view-form>
           </div>
         </div>
       </div>
-      <button class="modal-close is-large" aria-label="close" v-on:click="showCreateViewModal = !showCreateViewModal"></button>
-    </div>
+    </b-modal>
 
     <section class="section">
       <div class="container is-fluid">
@@ -154,7 +150,6 @@ import TsExploreSessionChart from '../components/Sketch/SessionChart'
 import TsSketchExploreAggregation from "../components/Sketch/Aggregation"
 
 export default {
-  name: 'ts-sketch-explore-search',
   components: {
     TsSketchExploreAggregation,
     TsViewListDropdown,

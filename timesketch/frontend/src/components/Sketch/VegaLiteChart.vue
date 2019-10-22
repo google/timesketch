@@ -21,9 +21,7 @@ limitations under the License.
 import { default as vegaEmbed } from 'vega-embed'
 
 export default {
-  name: 'vega-lite-chart',
   props: ['vegaSpec'],
-  components: {},
   watch: {
     vegaSpec: function (newVal, oldVal) {
       vegaEmbed('#vega', JSON.parse(this.vegaSpec), { actions: false })
@@ -31,5 +29,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss"></style>

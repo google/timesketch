@@ -40,7 +40,6 @@ import Vue from 'vue'
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  name: 'ts-sketch-overview-view-list',
   props: ['views', 'controls'],
   computed: {
     sketch () {
@@ -62,6 +61,3 @@ export default {
 
 }
 </script>
-
-<!-- CSS scoped to this component only -->
-<style scoped lang="scss"></style>

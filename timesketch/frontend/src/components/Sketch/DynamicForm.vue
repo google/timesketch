@@ -33,9 +33,8 @@ import TsDynamicFormTextInput from './DynamicFormTextInput'
 import TsDynamicFormSelectInput from './DynamicFormSelectInput'
 
 export default {
-  name: 'ts-dynamic-form',
-  props: ['schema', 'value'],
   components: { TsDynamicFormTextInput, TsDynamicFormSelectInput },
+  props: ['schema', 'value'],
   data () {
     return {
       formData: this.value || {}
@@ -52,5 +51,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss"></style>

@@ -19,7 +19,6 @@ limitations under the License.
 
 <script>
 export default {
-  name: 'ts-sketch',
   props: ['sketchId'],
   created: function () {
     this.$store.commit('updateSketch', this.sketchId)

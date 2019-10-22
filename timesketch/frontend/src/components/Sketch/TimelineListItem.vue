@@ -117,7 +117,6 @@ import { Chrome } from 'vue-color'
 import _ from 'lodash'
 
 export default {
-  name: 'ts-sketch-timeline-list-item',
   components: {
     'color-picker': Chrome
   },

@@ -19,7 +19,6 @@ limitations under the License.
 
 <script>
 export default {
-  name: 'ts-sketch-explore-timeline-picker-item',
   props: ['timeline'],
   computed: {
     sketch () {
@@ -67,5 +66,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss"></style>

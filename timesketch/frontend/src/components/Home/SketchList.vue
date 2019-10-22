@@ -32,8 +32,7 @@ limitations under the License.
 
 <script>
 export default {
-  name: 'ts-sketch-list',
-  props: ['sketches'],
+  props: ['sketches']
 }
 </script>
 

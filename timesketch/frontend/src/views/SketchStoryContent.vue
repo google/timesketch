@@ -117,9 +117,8 @@ const defaultBlock = () => {
 }
 
 export default {
-  name: 'ts-story-content',
-  props: ['sketchId', 'storyId'],
   components: { TsViewListDropdown, TsViewEventList },
+  props: ['sketchId', 'storyId'],
   data () {
     return {
       blocks: [],

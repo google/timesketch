@@ -51,7 +51,6 @@ limitations under the License.
 
 <script>
 export default {
-  name: 'ts-explore-filter-time',
   data () {
     return {
       startDateTime: '',
@@ -145,5 +144,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss"></style>

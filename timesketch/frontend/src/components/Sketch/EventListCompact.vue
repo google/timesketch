@@ -24,7 +24,6 @@ import ApiClient from '../../utils/RestApiClient'
 import TsSketchExploreEventListItem from './EventListItem'
 
 export default {
-  name: 'ts-sketch-explore-view-event-list',
   components: {
     TsSketchExploreEventListItem
   },
@@ -68,5 +67,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss"></style>

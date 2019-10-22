@@ -44,10 +44,6 @@ limitations under the License.
 
 <script>
 export default {
-  name: 'ts-sketch-metrics',
   props: ['timelines', 'views', 'stories', 'count']
 }
 </script>
-
-<!-- CSS scoped to this component only -->
-<style scoped lang="scss"></style>

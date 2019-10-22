@@ -47,56 +47,48 @@ limitations under the License.
       </div>
     </section>
 
-    <div class="modal" v-bind:class="{ 'is-active': showUploadTimelineModal }">
-      <div class="modal-background"></div>
-      <div class="modal-content">
-        <div class="card">
-          <header class="card-header">
-            <p class="card-header-title">Upload new timeline</p>
-          </header>
-          <div class="card-content">
-            <div class="content">
-              <p>
-                Supported formats are Plaso storage file, JSONL, or a CSV file.
-                If you are uploading a CSV or JSONL file make sure to read the <a href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines" rel="noreferrer" target="_blank">documentation</a> to learn what columns are needed.
-              </p>
-              <ts-upload-timeline-form @toggleModal="showUploadTimelineModal = !showUploadTimelineModal"></ts-upload-timeline-form>
-            </div>
+    <b-modal :active.sync="showUploadTimelineModal" :width="640" scroll="keep">
+      <div class="card">
+        <header class="card-header">
+          <p class="card-header-title">Upload new timeline</p>
+        </header>
+        <div class="card-content">
+          <div class="content">
+            <p>
+              Supported formats are Plaso storage file, JSONL, or a CSV file.
+              If you are uploading a CSV or JSONL file make sure to read the <a href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines" rel="noreferrer" target="_blank">documentation</a> to learn what columns are needed.
+            </p>
+            <ts-upload-timeline-form @toggleModal="showUploadTimelineModal = !showUploadTimelineModal"></ts-upload-timeline-form>
           </div>
         </div>
       </div>
-      <button class="modal-close is-large" aria-label="close" v-on:click="showUploadTimelineModal = !showUploadTimelineModal"></button>
-    </div>
+    </b-modal>
 
-    <div class="modal" v-bind:class="{ 'is-active': showDeleteSketchModal }">
-      <div class="modal-background"></div>
-      <div class="modal-content">
-        <div class="card">
-          <header class="card-header">
-            <p class="card-header-title">Delete sketch</p>
-          </header>
-          <div class="card-content">
-            <div class="content">
-              <p>Are you sure you want to delete this sketch?</p>
-              <div class="field is-grouped">
-                <p class="control">
-                  <button class="button is-danger" v-on:click="deleteSketch">
-                    <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-trash"></i></span>
-                    <span>Delete</span>
-                  </button>
-                </p>
-                <p class="control">
-                  <button class="button" v-on:click="showDeleteSketchModal = !showDeleteSketchModal">
-                    <span>I changed my mind, keep the sketch!</span>
-                  </button>
-                </p>
-              </div>
+    <b-modal :active.sync="showDeleteSketchModal" :width="640" scroll="keep">
+      <div class="card">
+        <header class="card-header">
+          <p class="card-header-title">Delete sketch</p>
+        </header>
+        <div class="card-content">
+          <div class="content">
+            <p>Are you sure you want to delete this sketch?</p>
+            <div class="field is-grouped">
+              <p class="control">
+                <button class="button is-danger" v-on:click="deleteSketch">
+                  <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-trash"></i></span>
+                  <span>Delete</span>
+                </button>
+              </p>
+              <p class="control">
+                <button class="button" v-on:click="showDeleteSketchModal = !showDeleteSketchModal">
+                  <span>I changed my mind, keep the sketch!</span>
+                </button>
+              </p>
             </div>
           </div>
         </div>
       </div>
-      <button class="modal-close is-large" aria-label="close" v-on:click="showDeleteSketchModal = !showDeleteSketchModal"></button>
-    </div>
+    </b-modal>
 
     <!-- Title and description -->
     <section class="section">
@@ -208,7 +200,6 @@ import TsUploadTimelineForm from '../components/Sketch/UploadForm'
 import TsSketchTimelinesManage from './SketchManageTimelines'
 
 export default {
-  name: 'ts-sketch-overview',
   components: {
     TsSketchMetrics,
     TsSketchSummary,

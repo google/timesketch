@@ -28,7 +28,6 @@ import ApiClient from '../../utils/RestApiClient'
 import TsTimelineListItem from './TimelineListItem'
 
 export default {
-  name: 'ts-sketch-overview-timeline-list',
   components: { TsTimelineListItem },
   props: ['timelines', 'controls'],
   computed: {
@@ -58,6 +57,3 @@ export default {
   }
 }
 </script>
-
-<!-- CSS scoped to this component only -->
-<style scoped lang="scss"></style>

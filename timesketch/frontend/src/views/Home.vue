@@ -61,7 +61,6 @@ import TsSketchList from '../components/Home/SketchList'
 import TsCreateSketchForm from '../components/Home/CreateSketchForm'
 
 export default {
-  name: 'ts-home',
   components: {
     TsSketchList,
     TsCreateSketchForm
@@ -82,5 +81,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss"></style>

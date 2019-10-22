@@ -39,7 +39,6 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  name: 'ts-create-sketch-form',
   data () {
     return {
       form: {
@@ -68,5 +67,3 @@ export default {
 }
 </script>
 
-<!-- CSS scoped to this component only -->
-<style scoped lang="scss"></style>

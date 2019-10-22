@@ -18,7 +18,7 @@ limitations under the License.
     <ul class="content-list">
       <li style="padding:10px;border-bottom:none;" v-for="story in sketch.stories" :key="story.id">
         <div>
-          <router-link :to="{ name: 'StoryContent', params: {sketchId: sketch.id, storyId: story.id}}"><strong>{{ story.title }}</strong></router-link>
+          <router-link :to="{ name: 'SketchStoryContent', params: {sketchId: sketch.id, storyId: story.id}}"><strong>{{ story.title }}</strong></router-link>
           <br>
           <span class="is-size-7">Last activity {{ story.updated_at | moment("YYYY-MM-DD HH:mm") }}</span>
         </div>
@@ -29,7 +29,6 @@ limitations under the License.
 
 <script>
 export default {
-  name: 'ts-story-list',
   data () {
     return {
       stories: []

@@ -29,22 +29,18 @@ limitations under the License.
       </div>
     </section>
 
-    <div class="modal" v-bind:class="{ 'is-active': showCreateStoryModal }">>
-      <div class="modal-background"></div>
-      <div class="modal-content">
-        <div class="card">
-          <header class="card-header">
-            <p class="card-header-title">Create a new story</p>
-          </header>
-          <div class="card-content">
-            <div class="content">
-              <ts-story-create-form @toggleModal="showCreateStoryModal = !showCreateStoryModal"></ts-story-create-form>
-            </div>
+    <b-modal :active.sync="showCreateStoryModal" :width="640" scroll="keep">
+      <div class="card">
+        <header class="card-header">
+          <p class="card-header-title">Create a new story</p>
+        </header>
+        <div class="card-content">
+          <div class="content">
+            <ts-story-create-form @toggleModal="showCreateStoryModal = !showCreateStoryModal"></ts-story-create-form>
           </div>
         </div>
       </div>
-      <button class="modal-close is-large" aria-label="close" v-on:click="showCreateStoryModal = !showCreateStoryModal"></button>
-    </div>
+    </b-modal>
 
     <section class="section">
       <div class="container is-fluid">
@@ -74,7 +70,6 @@ import TsStoryList from '../components/Sketch/StoryList'
 import TsStoryCreateForm from '../components/Sketch/CreateStoryForm'
 
 export default {
-  name: 'ts-story-overview',
   components: {
     TsStoryList,
     TsStoryCreateForm
@@ -94,5 +89,3 @@ export default {
   }
 }
 </script>
-
-<style lang="scss"></style>
