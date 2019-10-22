@@ -39,7 +39,7 @@ from timesketch.views.auth import auth_views
 from timesketch.views.spa import spa_views
 
 # Set to true to use the new Vue.js based frontend.
-USE_NEW_FRONTEND = True
+USE_NEW_FRONTEND = False
 
 
 def create_app(config=None):
