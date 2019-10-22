@@ -23,23 +23,7 @@ const defaultState = () => {
   return {
     sketch: {},
     meta: {},
-    count: 0,
-    eventList: {
-      meta: {},
-      objects: []
-    },
-    searchInProgress: false,
-    currentQueryString: '',
-    currentQueryFilter: {
-      'from': 0,
-      'time_start': null,
-      'time_end': null,
-      'terminate_after': 40,
-      'size': 40,
-      'indices': ['_all'],
-      'order': 'asc',
-      'chips': []
-    }
+    count: 0
   }
 }
 
@@ -49,53 +33,31 @@ const state = defaultState()
 export default new Vuex.Store({
   state,
   mutations: {
-    updateSketch (state, sketchId) {
-      ApiClient.getSketch(sketchId).then((response) => {
-        Vue.set(state, 'sketch', response.data.objects[0])
-        Vue.set(state, 'meta', response.data.meta)
-      }).catch((e) => {})
-
-      // Count events for all timelines in the sketch
-      ApiClient.countSketchEvents(sketchId).then((response) => {
-        Vue.set(state, 'count', response.data.meta.count)
-      }).catch((e) => {})
+    SET_SKETCH (state, payload) {
+      Vue.set(state, 'sketch', payload.objects[0])
+      Vue.set(state, 'meta', payload.meta)
     },
-    search (state, sketchId) {
-      Vue.set(state, 'searchInProgress', true)
-      let formData = {
-        'query': this.state.currentQueryString,
-        'filter': this.state.currentQueryFilter
-      }
-      ApiClient.search(sketchId, formData).then((response) => {
-        Vue.set(state, 'eventList', response.data)
-        Vue.set(state, 'searchInProgress', false)
-      }).catch((e) => {})
+    SET_COUNT (state, payload) {
+      Vue.set(state, 'count', payload)
     },
-    updateEventList (state, searchResult) {
-      Vue.set(state, 'eventList', searchResult)
-    },
-    updateCurrentQueryString (state, queryString) {
-      Vue.set(state, 'currentQueryString', queryString)
-    },
-    updateCurrentQueryFilter (state, queryFilter) {
-      Vue.set(state, 'currentQueryFilter', queryFilter)
-    },
-    updateSearchInProgress (state, isSearching) {
-      Vue.set(state, 'searchInProgress', isSearching)
-    },
-    resetState (state) {
+    RESET_STATE (state) {
       Object.assign(state, defaultState())
     }
   },
   actions: {
     updateSketch (context, sketchId) {
-      context.commit('updateSketch', sketchId)
-    },
-    updateEventList (context, searchResult) {
-      context.commit('updateEventList', searchResult)
+      ApiClient.getSketch(sketchId).then((response) => {
+        context.commit('SET_SKETCH', response.data)
+      }).catch((e) => {})
+
+      // Count events for all timelines in the sketch
+      ApiClient.countSketchEvents(sketchId).then((response) => {
+        context.commit('SET_COUNT', response.data.meta.count)
+      }).catch((e) => {})
+
     },
     resetState (context) {
-      context.commit('resetState')
+      context.commit('RESET_STATE')
     }
   }
 })
