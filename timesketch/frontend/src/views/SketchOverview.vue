@@ -140,7 +140,7 @@ limitations under the License.
                     </button>
                   </p>
                   <p class="control">
-                    <router-link class="button is-rounded is-small" :to="{ name: 'TimelinesPage' }">
+                    <router-link class="button is-rounded is-small" :to="{ name: 'SketchManageTimelines' }">
                       <span class="icon is-small">
                         <i class="fas fa-cog"></i>
                       </span>
@@ -162,7 +162,7 @@ limitations under the License.
                 <p class="card-header-title">Views</p>
                 <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
                   <p class="control">
-                    <router-link class="button is-rounded is-small" :to="{ name: 'ViewsPage' }">
+                    <router-link class="button is-rounded is-small" :to="{ name: 'SketchManageViews' }">
                       <span class="icon is-small">
                         <i class="fas fa-cog"></i>
                       </span>
@@ -192,20 +192,20 @@ limitations under the License.
       </div>
     </section>
 
-    <ts-sketch-timelines-manage v-if="!sketch.timelines.length"></ts-sketch-timelines-manage>
+    <ts-sketch-timelines-manage v-if="!sketch.timelines.length" :hide-navigation="true"></ts-sketch-timelines-manage>
 
   </div>
 </template>
 
 <script>
-import ApiClient from '../../../utils/RestApiClient'
-import TsSketchSummary from './SketchSummary'
-import TsSketchMetrics from './SketchMetrics'
-import TsTimelineList from '../Manage/TimelineList'
-import TsSavedViewList from '../Manage/ViewList'
-import TsSketchStoryList from '../Story/StoryList'
-import TsUploadTimelineForm from '../Manage/UploadForm'
-import TsSketchTimelinesManage from '../Manage/TimelinesManage'
+import ApiClient from '../utils/RestApiClient'
+import TsSketchSummary from '../components/Sketch/SketchSummary'
+import TsSketchMetrics from '../components/Sketch/SketchMetrics'
+import TsTimelineList from '../components/Sketch/TimelineList'
+import TsSavedViewList from '../components/Sketch/ViewList'
+import TsSketchStoryList from '../components/Sketch/StoryList'
+import TsUploadTimelineForm from '../components/Sketch/UploadForm'
+import TsSketchTimelinesManage from './SketchManageTimelines'
 
 export default {
   name: 'ts-sketch-overview',

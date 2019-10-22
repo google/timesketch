@@ -25,22 +25,18 @@ limitations under the License.
       </div>
     </section>
 
-    <div class="modal" v-bind:class="{ 'is-active': showSketchCreateModal }">>
-      <div class="modal-background"></div>
-      <div class="modal-content">
-        <div class="card">
-          <header class="card-header">
-            <p class="card-header-title">Create new sketch</p>
-          </header>
-          <div class="card-content">
-            <div class="content">
-              <ts-create-sketch-form></ts-create-sketch-form>
-            </div>
+    <b-modal :active.sync="showSketchCreateModal" :width="640" scroll="keep">
+      <div class="card">
+        <header class="card-header">
+          <p class="card-header-title">Create new sketch</p>
+        </header>
+        <div class="card-content">
+          <div class="content">
+            <ts-create-sketch-form></ts-create-sketch-form>
           </div>
         </div>
       </div>
-      <button class="modal-close is-large" aria-label="close" v-on:click="showSketchCreateModal = !showSketchCreateModal"></button>
-    </div>
+    </b-modal>
 
     <div class="section">
       <div class="container">
@@ -57,13 +53,12 @@ limitations under the License.
     </div>
 
   </div>
-
 </template>
 
 <script>
-import ApiClient from '../../utils/RestApiClient'
-import TsSketchList from './SketchList'
-import TsCreateSketchForm from './CreateSketchForm'
+import ApiClient from '../utils/RestApiClient'
+import TsSketchList from '../components/Home/SketchList'
+import TsCreateSketchForm from '../components/Home/CreateSketchForm'
 
 export default {
   name: 'ts-home',

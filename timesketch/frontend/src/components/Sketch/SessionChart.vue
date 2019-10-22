@@ -47,8 +47,8 @@
 </template>
 
 <script>
-import TsVegaLiteChart from '../../AppVegaLiteChart'
-import ApiClient from '../../../utils/RestApiClient'
+import TsVegaLiteChart from '../AppVegaLiteChart'
+import ApiClient from '../../utils/RestApiClient'
 
 export default {
   name: 'ts-explore-session-chart',

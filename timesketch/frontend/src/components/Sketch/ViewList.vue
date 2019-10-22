@@ -17,7 +17,7 @@ limitations under the License.
   <div>
     <ul class="content-list">
       <li style="padding:10px;border-bottom:none;" v-for="(view, index) in views" :key="view.id">
-        <router-link :to="{ name: 'Explore', query: {view: view.id}}"><strong>{{ view.name }}</strong></router-link>
+        <router-link :to="{ name: 'SketchExplore', query: {view: view.id}}"><strong>{{ view.name }}</strong></router-link>
         <br>
         <span v-if="!controls" class="is-size-7">
           Created {{ view.created_at | moment("YYYY-MM-DD HH:mm") }}
@@ -37,7 +37,7 @@ limitations under the License.
 
 <script>
 import Vue from 'vue'
-import ApiClient from '../../../utils/RestApiClient'
+import ApiClient from '../../utils/RestApiClient'
 
 export default {
   name: 'ts-sketch-overview-view-list',

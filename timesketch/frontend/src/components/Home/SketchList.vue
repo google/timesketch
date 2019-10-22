@@ -21,7 +21,7 @@ limitations under the License.
           <span class="is-size-7">{{ sketch.user.username }}</span>
         </div>
         <div>
-          <router-link :to="{ name: 'Overview', params: {sketchId: sketch.id } }"><strong>{{ sketch.name }}</strong></router-link>
+          <router-link :to="{ name: 'SketchOverview', params: {sketchId: sketch.id } }"><strong>{{ sketch.name }}</strong></router-link>
           <br>
           <span class="is-size-7">Last activity {{ sketch.updated_at }}</span>
         </div>

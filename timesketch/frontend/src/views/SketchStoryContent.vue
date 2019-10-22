@@ -98,11 +98,11 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../../utils/RestApiClient'
+import ApiClient from '../utils/RestApiClient'
 import marked from 'marked'
 import _ from 'lodash'
-import TsViewListDropdown from '../Explore/ViewListDropdown'
-import TsViewEventList from '../Explore/EventListCompact'
+import TsViewListDropdown from '../components/Sketch/ViewListDropdown'
+import TsViewEventList from '../components/Sketch/EventListCompact'
 
 const defaultBlock = () => {
   return {

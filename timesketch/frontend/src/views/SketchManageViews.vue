@@ -37,7 +37,7 @@ limitations under the License.
 </template>
 
 <script>
-import TsViewList from './ViewList'
+import TsViewList from '../components/Sketch/ViewList'
 
 export default {
   name: 'ts-sketch-views-manage',

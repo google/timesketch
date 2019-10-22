@@ -16,49 +16,48 @@ limitations under the License.
 <template>
   <form v-on:submit.prevent="submitForm">
     <div class="field">
-      <label class="label">Title</label>
+      <label class="label">Name</label>
       <div class="control">
-        <input v-model="title" class="input" type="text" required placeholder="Title of your story" autofocus>
+        <input v-model="viewName" class="input" type="text" required placeholder="Name your view" autofocus>
       </div>
     </div>
     <div class="field">
       <div class="control">
-        <input class="button is-success" type="submit" value="Create">
+        <input class="button is-success" type="submit" value="Save" v-on:click="toggleCreateViewModal">
       </div>
     </div>
   </form>
 </template>
 
 <script>
-import ApiClient from '../../../utils/RestApiClient'
+import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  name: 'ts-create-story-form',
+  name: 'ts-home-sketch-create-form',
+  props: [
+    'sketchId',
+    'currentQueryString',
+    'currentQueryFilter'
+  ],
   data () {
     return {
-      title: ''
+      viewName: ''
     }
   },
   methods: {
     clearFormData: function () {
-      this.title = ''
+      this.viewName = ''
     },
     submitForm: function () {
-      let content = ''
-      ApiClient.createStory(this.title, content, this.sketch.id).then((response) => {
-        let newStoryId = response.data.objects[0].id
+      ApiClient.createView(this.sketchId, this.viewName, this.currentQueryString, this.currentQueryFilter).then((response) => {
+        let newView = response.data.objects[0]
+        this.$store.state.meta.views.push(newView)
         this.clearFormData()
-        this.$store.commit('updateSketch', this.sketch.id)
-        this.$router.push({ name: 'StoryContent', params: { storyId: newStoryId } })
+        this.$router.push({ name: 'SearchPage', query: { view: newView.id } })
       }).catch((e) => {})
-    }
-  },
-  computed: {
-    sketch () {
-      return this.$store.state.sketch
     },
-    meta () {
-      return this.$store.state.meta
+    toggleCreateViewModal: function () {
+      this.$emit('toggleCreateViewModal')
     }
   }
 }

@@ -24,7 +24,7 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../../utils/RestApiClient'
+import ApiClient from '../../utils/RestApiClient'
 import TsTimelineListItem from './TimelineListItem'
 
 export default {

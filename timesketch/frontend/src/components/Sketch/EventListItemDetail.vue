@@ -50,7 +50,7 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../../utils/RestApiClient'
+import ApiClient from '../../utils/RestApiClient'
 
 export default {
   name: 'ts-explore-event-list-item-detail',

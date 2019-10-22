@@ -144,14 +144,14 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../../utils/RestApiClient'
-import TsViewListDropdown from './ViewListDropdown'
-import TsCreateViewForm from './CreateViewForm'
-import TsSketchExploreEventList from './EventList'
-import TsExploreTimelinePicker from './TimelinePicker'
-import TsExploreFilterTime from './TimeFilter'
-import TsExploreSessionChart from './SessionChart'
-import TsSketchExploreAggregation from "./Aggregation"
+import ApiClient from '../utils/RestApiClient'
+import TsViewListDropdown from '../components/Sketch/ViewListDropdown'
+import TsCreateViewForm from '../components/Sketch/CreateViewForm'
+import TsSketchExploreEventList from '../components/Sketch/EventList'
+import TsExploreTimelinePicker from '../components/Sketch/TimelinePicker'
+import TsExploreFilterTime from '../components/Sketch/TimeFilter'
+import TsExploreSessionChart from '../components/Sketch/SessionChart'
+import TsSketchExploreAggregation from "../components/Sketch/Aggregation"
 
 export default {
   name: 'ts-sketch-explore-search',
@@ -222,7 +222,7 @@ export default {
     searchView: function (viewId) {
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
         viewId = viewId.id
-        this.$router.push({ name: 'Explore', query: { view: viewId } })
+        this.$router.push({ name: 'SketchExplore', query: { view: viewId } })
       }
       ApiClient.getView(this.sketchId, viewId).then((response) => {
         let view = response.data.objects[0]

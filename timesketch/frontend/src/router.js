@@ -16,16 +16,16 @@ limitations under the License.
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 
-import Home from './components/Home'
-import Sketch from './components/Sketch'
-import Overview from './components/Sketch/Overview'
-import Manage from './components/Sketch/Manage'
-import ManageViews from "./components/Sketch/Manage/ManageViews"
-import ManageTimelines from "./components/Sketch/Manage/ManageTimelines"
-import Explore from './components/Sketch/Explore'
-import Story from './components/Sketch/Story'
-import StoryOverview from './components/Sketch/Story/StoryOverview'
-import StoryContent from './components/Sketch/Story/StoryContent'
+import Home from './views/Home'
+import Sketch from './views/Sketch'
+import SketchOverview from './views/SketchOverview'
+import SketchManage from './views/SketchManage'
+import SketchManageViews from "./views/SketchManageViews"
+import SketchManageTimelines from "./views/SketchManageTimelines"
+import SketchExplore from './views/SketchExplore'
+import SketchStory from './views/SketchStory'
+import SketchStoryOverview from './views/SketchStoryOverview'
+import SketchStoryContent from './views/SketchStoryContent'
 
 Vue.use(VueRouter)
 
@@ -43,46 +43,46 @@ const routes = [
     children: [
       {
         path: '',
-        name: 'Overview',
-        component: Overview
+        name: 'SketchOverview',
+        component: SketchOverview
       },
       {
         path: 'explore',
-        name: 'Explore',
-        component: Explore,
+        name: 'SketchExplore',
+        component: SketchExplore,
         props: true
       },
       {
         path: 'story',
-        component: Story,
+        component: SketchStory,
         props: true,
         children: [
           {
             path: '',
-            name: 'StoryOverview',
-            component: StoryOverview
+            name: 'SketchStoryOverview',
+            component: SketchStoryOverview
           },
           {
             path: ':storyId',
-            name: 'StoryContent',
-            component: StoryContent,
+            name: 'SketchStoryContent',
+            component: SketchStoryContent,
             props: true
           }]
       },
       {
         path: 'manage',
-        component: Manage,
+        component: SketchManage,
         props: true,
         children: [
           {
             path: 'views',
-            name: 'ViewsPage',
-            component: ManageViews
+            name: 'SketchManageViews',
+            component: SketchManageViews
           },
           {
             path: 'timelines',
-            name: 'TimelinesPage',
-            component: ManageTimelines
+            name: 'SketchManageTimelines',
+            component: SketchManageTimelines
           }]
       }
     ]

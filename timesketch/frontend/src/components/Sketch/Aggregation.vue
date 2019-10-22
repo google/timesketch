@@ -24,10 +24,10 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../../utils/RestApiClient'
-import TsVegaLiteChart from '../../AppVegaLiteChart'
+import ApiClient from '../../utils/RestApiClient'
+import TsVegaLiteChart from '../AppVegaLiteChart'
 import TsDynamicForm from './DynamicForm'
-import TsSketchExploreAggregatorListDropdown from './AggregatorListDropdown'
+import TsSketchExploreAggregatorListDropdown from './AggregationListDropdown'
 
 export default {
   name: 'ts-sketch-explore-aggregation',

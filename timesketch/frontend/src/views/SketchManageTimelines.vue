@@ -15,6 +15,11 @@ limitations under the License.
 -->
 <template>
   <div>
+    <section class="section" v-if="!hideNavigation">
+      <div class="container is-fluid">
+        <ts-navbar-secondary currentAppContext="sketch" currentPage=""></ts-navbar-secondary>
+      </div>
+    </section>
 
     <!-- Active Timelines -->
     <section class="section" v-if="sketch.timelines.length">
@@ -76,12 +81,13 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../../../utils/RestApiClient'
-import TsTimelineList from './TimelineList'
-import TsUploadTimelineForm from './UploadForm'
+import ApiClient from '../utils/RestApiClient'
+import TsTimelineList from '../components/Sketch/TimelineList'
+import TsUploadTimelineForm from '../components/Sketch/UploadForm'
 
 export default {
-  name: 'ts-sketch-overview',
+  name: 'ts-sketch-manage-timelines',
+  props: ['hideNavigation'],
   components: {
     TsTimelineList,
     TsUploadTimelineForm

@@ -19,19 +19,19 @@ limitations under the License.
       <div class="tabs is-left">
         <ul>
           <li v-bind:class="{'is-active': currentPage === 'overview'}">
-            <router-link :to="{ name: 'Overview' }">
+            <router-link :to="{ name: 'SketchOverview' }">
               <span class="icon is-small"><i class="fas fa-cubes" aria-hidden="true"></i></span>
               <span>Overview</span>
             </router-link>
           </li>
           <li v-bind:class="{'is-active': currentPage === 'explore'}">
-            <router-link :to="{ name: 'Explore' }">
+            <router-link :to="{ name: 'SketchExplore' }">
               <span class="icon is-small"><i class="fas fa-search" aria-hidden="true"></i></span>
               <span>Explore</span>
             </router-link>
           </li>
           <li v-bind:class="{'is-active': currentPage === 'stories'}">
-            <router-link :to="{ name: 'StoryOverview' }">
+            <router-link :to="{ name: 'SketchStoryOverview' }">
               <span class="icon is-small"><i class="fas fa-book" aria-hidden="true"></i></span>
               <span>Stories</span>
             </router-link>

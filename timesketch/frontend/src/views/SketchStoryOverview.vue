@@ -70,8 +70,8 @@ limitations under the License.
 </template>
 
 <script>
-import TsStoryList from './StoryList'
-import TsStoryCreateForm from './CreateStoryForm'
+import TsStoryList from '../components/Sketch/StoryList'
+import TsStoryCreateForm from '../components/Sketch/CreateStoryForm'
 
 export default {
   name: 'ts-story-overview',
