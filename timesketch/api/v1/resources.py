@@ -82,7 +82,6 @@ from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
-from timesketch.lib.forms import RunAnalyzerForm
 from timesketch.lib.forms import TimelineForm
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.experimental.utils import GRAPH_VIEWS
@@ -1657,76 +1656,6 @@ class TimelineCreateResource(ResourceMixin, Resource):
         raise ApiHTTPError(
             message="failed to create timeline",
             status_code=HTTP_STATUS_CODE_BAD_REQUEST)
-
-
-class AnalyzerRunResource(ResourceMixin, Resource):
-    """Resource to get all timelines for sketch."""
-
-    @login_required
-    def post(self, sketch_id):
-        """Handles POST request to the resource.
-
-        Returns:
-            A sketch in JSON (instance of flask.wrappers.Response)
-        """
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        form = RunAnalyzerForm.build(request)
-
-        analyzer_name = form.analyzer_name.data
-        analyzer_kwargs = form.analyzer_kwargs.data
-
-        timeline_name = form.timeline_name.data
-        timeline_id = form.timeline_id.data
-
-        """
-        if timeline_id:
-            searchindex = SearchIndex.query.get_with_acl(timeline_id)
-        else:
-        timeline_id = [
-            t.searchindex.id for t in sketch.timelines
-            if t.searchindex.id == searchindex_id
-        ]
-
-        if form.validate_on_submit():
-            if not sketch.has_permission(current_user, 'write'):
-                abort(HTTP_STATUS_CODE_FORBIDDEN)
-
-            if not timeline_id:
-                return_code = HTTP_STATUS_CODE_CREATED
-                timeline = Timeline(
-                    name=searchindex.name,
-                    description=searchindex.description,
-                    sketch=sketch,
-                    user=current_user,
-                    searchindex=searchindex)
-                sketch.timelines.append(timeline)
-                db_session.add(timeline)
-                db_session.commit()
-            else:
-                metadata['created'] = False
-                return_code = HTTP_STATUS_CODE_OK
-                timeline = Timeline.query.get(timeline_id)
-
-            # Run sketch analyzers when timeline is added. Import here to avoid
-            # circular imports.
-            if current_app.config.get('AUTO_SKETCH_ANALYZERS'):
-                from timesketch.lib import tasks
-                sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
-                    sketch_id, searchindex_id, current_user.id)
-                if sketch_analyzer_group:
-                    pipeline = (tasks.run_sketch_init.s(
-                        [searchindex.index_name]) | sketch_analyzer_group)
-                    pipeline.apply_async()
-
-            return self.to_json(
-                timeline, meta=metadata, status_code=return_code)
-
-        """
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
-
-
-    ## KOMINN
-
 
 
 class TimelineListResource(ResourceMixin, Resource):

@@ -182,15 +182,6 @@ class GraphExploreForm(BaseForm):
     output_format = StringField('Output format')
 
 
-class RunAnalyzerForm(BaseForm):
-    """Form used to run an analyzer on a timeline."""
-    timeline_name = StringField('Timeline name', validators=[Optional()])
-    timeline_id = StringField('Timeline Index ID', validators=[Optional()])
-    analyzer_name = StringField('Analyzer name')
-    analyzer_kwargs = StringField(
-        'Parameters for the analyzer', validators=[Optional()])
-
-
 class SaveAggregationForm(BaseForm):
     """Form used to save an aggregation."""
     name = StringField('Name')
