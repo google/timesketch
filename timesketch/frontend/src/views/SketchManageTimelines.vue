@@ -100,9 +100,6 @@ export default {
     sketch () {
       return this.$store.state.sketch
     },
-    meta () {
-      return this.$store.state.meta
-    },
     count () {
       return this.$store.state.count
     }
@@ -112,7 +109,7 @@ export default {
       ApiClient.createSketchTimeline(this.sketch.id, searchIndex.id).then((response) => {
         const idx = this.availableSearchIndices.indexOf(searchIndex)
         this.availableSearchIndices.splice(idx, 1)
-        this.$store.commit('updateSketch', this.sketch.id)
+        this.$store.dispatch('updateSketch', this.sketch.id)
       }).catch((e) => {
         console.error(e)
       })

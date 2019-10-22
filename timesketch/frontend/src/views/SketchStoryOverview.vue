@@ -82,9 +82,6 @@ export default {
   computed: {
     sketch () {
       return this.$store.state.sketch
-    },
-    meta () {
-      return this.$store.state.meta
     }
   }
 }

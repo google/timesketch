@@ -42,14 +42,14 @@ export default {
     remove (timeline) {
       ApiClient.deleteSketchTimeline(this.sketch.id, timeline.id).then((response) => {
         this.$emit('remove-timeline', timeline)
-        this.$store.commit('updateSketch', this.sketch.id)
+        this.$store.dispatch('updateSketch', this.sketch.id)
       }).catch((e) => {
         console.error(e)
       })
     },
     save (timeline) {
       ApiClient.saveSketchTimeline(this.sketch.id, timeline.id, timeline.name, timeline.description, timeline.color).then((response) => {
-        this.$store.commit('updateSketch', this.sketch.id)
+        this.$store.dispatch('updateSketch', this.sketch.id)
       }).catch((e) => {
         console.error(e)
       })

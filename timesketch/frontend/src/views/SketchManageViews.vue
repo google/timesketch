@@ -42,9 +42,6 @@ import TsViewList from '../components/Sketch/ViewList'
 export default {
   components: { TsViewList },
   computed: {
-    sketch () {
-      return this.$store.state.sketch
-    },
     meta () {
       return this.$store.state.meta
     }
