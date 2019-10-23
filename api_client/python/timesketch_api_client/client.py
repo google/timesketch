@@ -651,7 +651,9 @@ class Sketch(BaseResource):
             timeline_id: the data store index for the timeline. This is optional
                 and only required if timeline_name is not set.
             timeline_name: the name of the timeline in the timesketch UI. This
-                is optional and only required if timeline_id is not set.
+                is optional and only required if timeline_id is not set. If there
+                are more than a single timeline with the same name a timeline_id
+                is required.
 
         Returns:
             A string with the results of the API call to run the analyzer.
