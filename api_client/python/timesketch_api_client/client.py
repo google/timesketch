@@ -15,6 +15,7 @@
 from __future__ import unicode_literals
 
 import json
+import tempfile
 import uuid
 
 # pylint: disable=wrong-import-order
@@ -26,6 +27,11 @@ from requests.exceptions import ConnectionError
 import altair
 import pandas
 from .definitions import HTTP_STATUS_CODE_20X
+
+
+def format_data_frame_row(row, format_message_string):
+    """Return a formatted data frame using a format string."""
+    return format_message_string.format(**row)
 
 
 class TimesketchApi(object):
@@ -502,6 +508,100 @@ class Sketch(BaseResource):
             name=timeline['name'],
             searchindex=timeline['searchindex']['index_name'])
         return timeline_obj
+
+    def upload_data_frame(
+            self, data_frame, timeline_name, format_message_string=''):
+        """Upload a data frame to the server for indexing.
+
+        In order for a data frame to be uploaded to Timesketch it requires the
+        following columns:
+            + message
+            + datetime
+            + timestamp_desc
+
+        See more details here: https://github.com/google/timesketch/blob/\
+            master/docs/CreateTimelineFromJSONorCSV.md
+
+        Args:
+            data_frame: the pandas dataframe object containing the data to
+                upload.
+            timeline_name: the name of the timeline in Timesketch.
+            format_message_string: optional format string that will be used
+                to generate a message column to the data frame. An example
+                would be: '{src_ip:s} to {dst_ip:s}, {bytes:d} bytes
+                transferred'. Each variable name in the format strings maps
+                to column names in the data frame.
+
+        Returns:
+            A string with the upload status.
+
+        Raises:
+            ValueError: if the dataframe cannot be uploaded to Timesketch.
+        """
+        if 'timestamp_desc' not in data_frame:
+            data_frame['timestamp_desc'] = timeline_name
+
+        if 'message' not in data_frame:
+            if not format_message_string:
+                string_items = []
+                for column in data_frame.columns:
+                    if 'time' in column:
+                        continue
+                    elif 'timestamp_desc' in column:
+                        continue
+                    string_items.append('{0:s} = {{0!s}}'.format(column))
+                format_message_string = ' '.join(string_items)
+
+            data_frame['message'] = data_frame.apply(
+                lambda row: format_data_frame_row(
+                    row, format_message_string), axis=1)
+
+        if 'datetime' not in data_frame:
+            for column in data_frame.columns[
+                    data_frame.columns.str.contains('time')]:
+                if column == 'timestamp_desc':
+                    continue
+                data_frame['timestamp'] = pandas.to_datetime(
+                    data_frame[column], utc=True)
+                data_frame['datetime'] = data_frame['timestamp'].dt.strftime(
+                    '%Y-%m-%dT%H:%M:%S%z')
+
+        if not 'datetime' in data_frame:
+            raise ValueError(
+                'Need a field called datetime in the data frame that is '
+                'formatted according using this format string: '
+                '%Y-%m-%dT%H:%M:%S%z. If that is not provided the data frame '
+                'needs to have a column that has the word "time" in it, '
+                'that can be used to conver to a datetime field.')
+
+        if not 'message' in data_frame:
+            raise ValueError(
+                'Need a field called message in the data frame, use the '
+                'formatting string to generate one automatically.')
+
+        if not 'timestamp_desc' in data_frame:
+            raise ValueError(
+                'Need a field called timestamp_desc in the data frame.')
+
+        # We don't want to include any columns that start with an underscore.
+        columns = list(
+            data_frame.columns[~data_frame.columns.str.contains('^_')])
+        data_frame_use = data_frame[columns]
+
+        csv_file = tempfile.NamedTemporaryFile(suffix='.csv')
+        data_frame_use.to_csv(csv_file.name, index=False, encoding='utf-8')
+        result = self.upload(
+            timeline_name=timeline_name, file_path=csv_file.name)
+
+        return_lines = []
+        for timesketch_object in result.data.get('objects', []):
+            return_lines.append('Timeline: {0:s}\nStatus: {1:s}'.format(
+                timesketch_object.get('description'),
+                ','.join([x.get(
+                    'status') for x in timesketch_object.get('status')])))
+        return_lines.append('CSV file saved as: {0:s}'.format(csv_file.name))
+
+        return '\n'.join(return_lines)
 
     def add_timeline(self, searchindex):
         """Add timeline to sketch.
@@ -1279,3 +1379,174 @@ class Timeline(BaseResource):
             index_name = timeline['objects'][0]['searchindex']['index_name']
             self._searchindex = index_name
         return self._searchindex
+
+
+class UploadStreamer(object):
+    """Upload object used to stream results to Timesketch."""
+
+    # The number of entries before automatically flushing
+    # the streamer.
+    ENTRY_THRESHOLD = 10000
+
+    def __init__(self, entry_threshold=None):
+        """Initialize the upload streamer."""
+        self._count = 0
+        self._data_lines = []
+        self._format_string = None
+        self._index = uuid.uuid4().hex
+        self._resource_url = ''
+        self._sketch = None
+        self._timeline_id = None
+        self._timeline_name = None
+        self._timestamp_desc = None
+
+        if entry_threshold:
+            self._threshold = entry_threshold
+        else:
+            self._threshold = self.ENTRY_THRESHOLD
+
+    def _ready(self):
+        """Check whether all variables have been set."""
+        if self._format_string is None:
+            return False
+
+        if self._sketch is None:
+            return False
+
+        if self._timestamp_desc is None:
+            return False
+
+        return True
+
+    def _reset(self):
+        """Reset the buffer."""
+        self._count = 0
+        self._data_lines = []
+
+    def add(self, entry):
+        """Add an entry into the buffer.
+
+        Args:
+            entry: a dict object to add to the buffer.
+
+        Raises:
+            TypeError: if the entry is not a dict.
+        """
+        if not isinstance(entry, dict):
+            raise TypeError('Entry object needs to be a dict.')
+
+        if self._count >= self._threshold:
+            self.flush(end_stream=False)
+            self._reset()
+
+        self._data_lines.append(entry)
+        self._count += 1
+
+    def flush(self, end_stream=True):
+        """Flushes the buffer and uploads to timesketch.
+
+        Args:
+            end_stream: boolean that determines whether this is the final
+                data to be flushed or whether there is more to come.
+
+        Raises:
+            ValueError: if the stream object is not fully configured.
+            RuntimeError: if the stream was not uploaded.
+        """
+        if not self._ready():
+            raise ValueError(
+                'Need to fully configure object before uploading.')
+
+        data_frame = pandas.DataFrame(self._data_lines)
+
+        if 'message' not in data_frame:
+            data_frame['message'] = data_frame.apply(
+                lambda row: format_data_frame_row(
+                    row, self._format_string), axis=1)
+        if 'timestamp_desc' not in data_frame:
+            data_frame['timestamp_desc'] = self._timestamp_desc
+
+        if 'datetime' not in data_frame:
+            for column in data_frame.columns[
+                    data_frame.columns.str.contains('time')]:
+                if column == 'timestamp_desc':
+                    continue
+                try:
+                    data_frame['timestamp'] = pandas.to_datetime(
+                        data_frame[column], utc=True)
+                    # We want the first successful timestamp value.
+                    break
+                except ValueError:
+                    pass
+            data_frame['datetime'] = data_frame['timestamp'].dt.strftime(
+                '%Y-%m-%dT%H:%M:%S%z')
+
+        # We don't want to include any columns that start with an underscore.
+        columns = list(
+            data_frame.columns[~data_frame.columns.str.contains('^_')])
+        data_frame_use = data_frame[columns]
+
+        csv_file = tempfile.NamedTemporaryFile(suffix='.csv')
+        data_frame_use.to_csv(csv_file.name, index=False, encoding='utf-8')
+
+        files = {'file': open(csv_file.name, 'rb')}
+        data = {
+            'name': self._timeline_name,
+            'sketch_id': self._sketch.id,
+            'enable_stream': not end_stream,
+            'index_name': self._index,
+        }
+
+        response = self._sketch.api.session.post(
+            self._resource_url, files=files, data=data)
+
+        if response.status_code not in HTTP_STATUS_CODE_20X:
+            raise RuntimeError(
+                'Error uploading data: {0:s}, file: {1:s}, index {2:s}'.format(
+                    response.reason, csv_file.name, self._index))
+
+        response_dict = response.json()
+        self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
+
+    def set_sketch(self, sketch):
+        """Set a client for the streamer.
+
+        Args:
+            sketch: an instance of Sketch that is used to communicate
+                with the API to upload data.
+        """
+        self._sketch = sketch
+        self._resource_url = '{0:s}/upload/'.format(sketch.api.api_root)
+
+    def set_format_string(self, format_string):
+        """Set the message format string."""
+        self._format_string = format_string
+
+    def set_timeline_name(self, name):
+        """Set the timeline name."""
+        self._timeline_name = name
+
+    def set_timestamp_description(self, description):
+        """Set the timestamp description field."""
+        self._timestamp_desc = description
+
+    @property
+    def timeline(self):
+        """Returns a timeline object."""
+        timeline_obj = Timeline(
+            timeline_id=self._timeline_id,
+            sketch_id=self._sketch.id,
+            api=self._sketch.api,
+            name=self._timeline_name,
+            searchindex=self._index_name)
+        return timeline_obj
+
+    def __enter__(self):
+        """Make it possible to use "with" statement."""
+        self._reset()
+        return self
+
+    # pylint: disable=unused-argument
+    def __exit__(self, exception_type, exception_value, traceback):
+        """Make it possible to use "with" statement."""
+        self.flush(end_stream=True)

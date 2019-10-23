@@ -1407,7 +1407,7 @@ class UploadFileResource(ResourceMixin, Resource):
         if not isinstance(filename, six.text_type):
             filename = codecs.decode(filename, 'utf-8')
 
-        index_name = uuid.uuid4().hex
+        index_name = form.index_name.data or uuid.uuid4().hex
         if not isinstance(index_name, six.text_type):
             index_name = codecs.decode(index_name, 'utf-8')
 
@@ -1441,11 +1441,13 @@ class UploadFileResource(ResourceMixin, Resource):
             db_session.add(timeline)
             db_session.commit()
 
+        stream = form.enable_stream.data
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
         from timesketch.lib import tasks
         pipeline = tasks.build_index_pipeline(
-            file_path, timeline_name, index_name, file_extension, sketch_id)
+            file_path, timeline_name, index_name, file_extension, sketch_id,
+            only_index=stream)
         pipeline.apply_async()
 
         # Return Timeline if it was created.

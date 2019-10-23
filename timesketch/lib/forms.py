@@ -256,6 +256,9 @@ class UploadFileForm(BaseForm):
         ])
     name = StringField('Timeline name', validators=[Optional()])
     sketch_id = IntegerField('Sketch ID', validators=[Optional()])
+    index_name = StringField('Index Name', validators=[Optional()])
+    enable_stream = BooleanField(
+        'Enable stream', false_values={False, 'false', ''}, default=False)
 
 
 class StoryForm(BaseForm):
