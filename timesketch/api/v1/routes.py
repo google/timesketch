@@ -19,6 +19,7 @@ from .resources import AggregationListResource
 from .resources import AggregationLegacyResource
 from .resources import AggregationExploreResource
 from .resources import AggregationResource
+from .resources import AnalyzerRunResource
 from .resources import ExploreResource
 from .resources import EventResource
 from .resources import EventAnnotationResource
@@ -51,6 +52,7 @@ from .resources import SessionResource
 API_ROUTES = [
     (SketchListResource, '/sketches/'),
     (SketchResource, '/sketches/<int:sketch_id>/'),
+    (AnalyzerRunResource, '/sketches/<int:sketch_id>/analyzer/'),
     (AggregationListResource, '/sketches/<int:sketch_id>/aggregation/'),
     (AggregationLegacyResource, '/sketches/<int:sketch_id>/aggregation/legacy/'),
     (AggregationExploreResource, '/sketches/<int:sketch_id>/aggregation/explore/'),
