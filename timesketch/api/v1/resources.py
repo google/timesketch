@@ -1451,13 +1451,15 @@ class UploadFileResource(ResourceMixin, Resource):
         file_storage.save(file_path)
 
         # Check if search index already exists.
-        instance = SearchIndex.query.filter_by(
+        searchindex = SearchIndex.query.filter_by(
             name=timeline_name,
             description=timeline_name,
             user=current_user,
             index_name=index_name).first()
 
-        if instance:
+        timeline = None
+
+        if searchindex:
             print('INDEX ALREADY EXISTS, NOT CREATING A NEW ONE')
         else:
             print('NEED TO CREATE AN INDEX...')
@@ -1475,7 +1477,6 @@ class UploadFileResource(ResourceMixin, Resource):
             db_session.add(searchindex)
             db_session.commit()
 
-            timeline = None
             if sketch and sketch.has_permission(current_user, 'write'):
                 timeline = Timeline(
                     name=searchindex.name,

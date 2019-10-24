@@ -1598,7 +1598,7 @@ class UploadStreamer(object):
             sketch_id=self._sketch.id,
             api=self._sketch.api,
             name=self._timeline_name,
-            searchindex=self._index_name)
+            searchindex=self._index)
         return timeline_obj
 
     def __enter__(self):
@@ -1620,6 +1620,6 @@ class UploadStreamer(object):
             self._sketch.api.api_root, self._sketch.id)
         data = {
             'sketch_id': self._sketch.id,
-            'index_name': self._index_name
+            'index_name': self._index
         }
         _ = self._sketch.api.session.post(pipe_resource, data=data)

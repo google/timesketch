@@ -150,6 +150,7 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
         Celery chain with indexing task (or single indexing task) and analyzer
         task group.
     """
+    print('INDEX PIPELINE')
     index_task_class = _get_index_task_class(file_extension)
     index_analyzer_chain = _get_index_analyzers()
     sketch_analyzer_chain = None
