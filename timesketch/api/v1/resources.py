@@ -54,6 +54,7 @@ from flask_restful import Resource
 from sqlalchemy import desc
 from sqlalchemy import not_
 
+from timesketch.lib.analyzers import manager as analyzer_manager
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.aggregators_old import heatmap
 from timesketch.lib.aggregators_old import histogram
@@ -81,6 +82,7 @@ from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
+from timesketch.lib.forms import RunAnalyzerForm
 from timesketch.lib.forms import TimelineForm
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.experimental.utils import GRAPH_VIEWS
@@ -1727,6 +1729,79 @@ class TimelineCreateResource(ResourceMixin, Resource):
 
         return self.to_json(
             searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+
+
+class AnalyzerRunResource(ResourceMixin, Resource):
+    """Resource to get all timelines for sketch."""
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            A list of all available analyzer names.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch.has_permission(current_user, 'read'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have read access to sketch')
+        analyzers = [
+            x for x, y  in analyzer_manager.AnalysisManager.get_analyzers()]
+
+        return analyzers
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+
+        Returns:
+            A string with the response from running the analyzer.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch.has_permission(current_user, 'write'):
+            return abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have write permission on the sketch.')
+
+        form = RunAnalyzerForm.build(request)
+        if not form.validate_on_submit():
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate input data.')
+
+        search_index = None
+        timeline_id = form.timeline_id.data
+        for timeline in sketch.timelines:
+            index = SearchIndex.query.get_with_acl(
+                timeline.searchindex_id)
+
+            if index.index_name.lower() == timeline_id:
+                search_index = index
+                break
+
+        if not search_index:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, (
+                    'No timeline was found, make sure you\'ve got the correct '
+                    'timeline ID or timeline name.'))
+
+        analyzer_name = form.analyzer_name.data
+        analyzer_kwargs = form.analyzer_kwargs.data
+
+        # Import here to avoid circular imports.
+        from timesketch.lib import tasks
+        sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+            sketch_id=sketch_id, searchindex_id=search_index.id,
+            user_id=current_user.id, analyzer_names=[analyzer_name],
+            analyzer_kwargs=analyzer_kwargs)
+
+        if sketch_analyzer_group:
+            pipeline = (tasks.run_sketch_init.s(
+                [search_index.index_name]) | sketch_analyzer_group)
+            pipeline.apply_async()
+
+        return 'Analyzer has been started on timeline: [{0:s}] {1:s}'.format(
+            search_index.index_name, search_index.name)
 
 
 class TimelineListResource(ResourceMixin, Resource):
