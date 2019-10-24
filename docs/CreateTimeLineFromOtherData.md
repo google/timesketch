@@ -2,6 +2,8 @@
 
 At a certain point during an investigation, data will be generated that would add value to a timeline but are not formated or covered in [Create timeline from JSON/JSONL/CSV file](docs/CreateTimelineFromJSONorCSV.md).
 
+For such a case, assume all your data is in a file called `raw_data` and it is not a CSV or a JSON that matches the timesketch format and is not a plaso output file that could be uploaded according to the [documentation](/docs/CreateTimelineFromPlaso.md).
+
 In first place you might be triggered to look for:
 
     raw_data --> timesketch
@@ -20,4 +22,4 @@ Of course the following could work as well
 
     raw_data --> proprietary_raw_data2csv_parser --> timesketch
     
-Where proprietary_raw_data2csv_parser would not end up in timesketch repository.
+Where `proprietary_raw_data2csv_parser` would not end up in timesketch repository.
