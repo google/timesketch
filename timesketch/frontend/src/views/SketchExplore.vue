@@ -155,17 +155,19 @@ limitations under the License.
       <div class="container is-fluid">
         <div class="card">
           <div class="card-content">
-            <div v-if="!searchInProgress">{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)
+            <div v-if="!searchInProgress">
+              <span v-if="toEvent">{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</span>
+              <span v-if="!toEvent">{{ totalHits }} events ({{ totalTime }}s)</span>
               <div style="float:right; margin-left:7px;" class="select is-small">
-                <select v-model="sortOrder">
-                  <option v-bind:value="sortOrder">{{ sortOrder }}</option>
+                <select v-model="currentQueryFilter.order" @change="search">
+                  <option v-bind:value="currentQueryFilter.order">{{ currentQueryFilter.order }}</option>
                   <option value="desc">desc</option>
                   <option value="asc">asc</option>
                 </select>
               </div>
               <div style="float:right;" class="select is-small">
-                <select v-model="numEvents">
-                  <option v-bind:value="numEvents">{{ numEvents }}</option>
+                <select v-model="currentQueryFilter.size" @change="search">
+                  <option v-bind:value="currentQueryFilter.size">{{ currentQueryFilter.size }}</option>
                   <option value="10">10</option>
                   <option value="20">20</option>
                   <option value="40">40</option>
@@ -178,7 +180,7 @@ limitations under the License.
             </div>
             <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
             <div v-if="totalHits > 0" style="margin-top:20px;"></div>
-            <ts-sketch-explore-event-list :event-list="eventList.objects" @addChip="addChip($event)"></ts-sketch-explore-event-list>
+            <ts-sketch-explore-event-list :event-list="eventList.objects" @addChip="addChip($event)" :order="currentQueryFilter.order"></ts-sketch-explore-event-list>
           </div>
         </div>
       </div>
@@ -246,7 +248,10 @@ export default {
       return this.currentQueryFilter.from || 1
     },
     toEvent () {
-      return parseInt(this.currentQueryFilter.from) + parseInt(this.numEvents)
+      if (this.totalHits < this.currentQueryFilter.size) {
+        return
+      }
+      return parseInt(this.currentQueryFilter.from) + parseInt(this.currentQueryFilter.size)
     },
   },
   methods: {

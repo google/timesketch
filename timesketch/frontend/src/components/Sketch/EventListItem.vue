@@ -70,7 +70,7 @@ export default {
   components: {
     TsSketchExploreEventListItemDetail
   },
-  props: ['event', 'prevEvent'],
+  props: ['event', 'prevEvent', 'order'],
   data () {
     return {
       showDetail: false,
@@ -109,6 +109,9 @@ export default {
       let timestamp = Math.floor(this.event._source.timestamp / 1000000)
       let prevTimestamp = Math.floor(this.prevEvent._source.timestamp / 1000000)
       let delta = Math.floor(timestamp - prevTimestamp)
+      if (this.order === 'desc') {
+        delta = Math.floor(prevTimestamp - timestamp)
+      }
       let deltaDays = delta / 60 / 60 / 24
       return Math.floor(deltaDays)
     }
