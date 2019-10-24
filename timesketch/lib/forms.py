@@ -245,6 +245,12 @@ class EventAnnotationForm(BaseForm):
     events = StringField('Events', validators=[DataRequired()])
 
 
+class AnalyzerPipelineForm(BaseForm):
+    """Form to start analyzer pipeline."""
+    sketch_id = IntegerField('Sketch ID', validators=[Optional()])
+    index_name = StringField('Index Name', validators=[Optional()])
+
+
 class UploadFileForm(BaseForm):
     """Form to handle file uploads."""
     file = FileField(

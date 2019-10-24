@@ -159,7 +159,9 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
         file_path, timeline_name, index_name, file_extension)
 
     if only_index:
+        print('ONLY INDEXING, NO ANALYZERS')
         return index_task
+    print('We are about to get to the analyzers...')
 
     if sketch_id:
         sketch_analyzer_chain = build_sketch_analysis_pipeline(

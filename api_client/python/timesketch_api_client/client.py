@@ -1610,3 +1610,16 @@ class UploadStreamer(object):
     def __exit__(self, exception_type, exception_value, traceback):
         """Make it possible to use "with" statement."""
         self.flush(end_stream=True)
+
+        try:
+            self._ready()
+        except ValueError:
+            return
+
+        pipe_resource = '{0:s}/sketches/{1:d}/analyzer/auto_run/'.format(
+            self._sketch.api.api_root, self._sketch.id)
+        data = {
+            'sketch_id': self._sketch.id,
+            'index_name': self._index_name
+        }
+        _ = self._sketch.api.session.post(pipe_resource, data=data)

@@ -71,6 +71,7 @@ from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.lib.forms import AddTimelineSimpleForm
 from timesketch.lib.forms import AggregationExploreForm
 from timesketch.lib.forms import AggregationLegacyForm
+from timesketch.lib.forms import AnalyzerPipelineForm
 from timesketch.lib.forms import CreateTimelineForm
 from timesketch.lib.forms import SaveAggregationForm
 from timesketch.lib.forms import SaveViewForm
@@ -1368,6 +1369,40 @@ class EventAnnotationResource(ResourceMixin, Resource):
                 annotations, status_code=HTTP_STATUS_CODE_CREATED)
 
 
+class AnalyzerPipelineResource(ResourceMixin, Resource):
+    """Resource to start analyzer pipeline."""
+
+    @login_required
+    def post(self):
+        """Handles POST request to the resource.
+
+        Returns:
+            A string with information on pipeline.
+        """
+        print('RUNNING ANALYZERS')
+        form = AnalyzerPipelineForm()
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to validate the input form.')
+
+        sketch_id = form.sketch_id.data
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch.has_permission(current_user, 'write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have write access to sketch')
+
+        index_name = form.index_name.data
+
+        # Start Celery pipeline for indexing and analysis.
+        # Import here to avoid circular imports.
+        from timesketch.lib import tasks
+        pipeline = tasks.build_sketch_analysis_pipeline(
+            sketch_id, index_name, user_id=None)
+        pipeline.apply_async()
+
+
 class UploadFileResource(ResourceMixin, Resource):
     """Resource that processes uploaded files."""
 
@@ -1408,40 +1443,53 @@ class UploadFileResource(ResourceMixin, Resource):
             filename = codecs.decode(filename, 'utf-8')
 
         index_name = form.index_name.data or uuid.uuid4().hex
+        print('Index name is: {} [{}]'.format(index_name, form.index_name.data))
         if not isinstance(index_name, six.text_type):
             index_name = codecs.decode(index_name, 'utf-8')
 
         file_path = os.path.join(upload_folder, filename)
         file_storage.save(file_path)
 
-        # Create the search index in the Timesketch database
-        searchindex = SearchIndex.get_or_create(
+        # Check if search index already exists.
+        instance = SearchIndex.query.filter_by(
             name=timeline_name,
             description=timeline_name,
             user=current_user,
-            index_name=index_name)
-        searchindex.grant_permission(permission='read', user=current_user)
-        searchindex.grant_permission(permission='write', user=current_user)
-        searchindex.grant_permission(
-            permission='delete', user=current_user)
-        searchindex.set_status('processing')
-        db_session.add(searchindex)
-        db_session.commit()
+            index_name=index_name).first()
 
-        timeline = None
-        if sketch and sketch.has_permission(current_user, 'write'):
-            timeline = Timeline(
-                name=searchindex.name,
-                description=searchindex.description,
-                sketch=sketch,
+        if instance:
+            print('INDEX ALREADY EXISTS, NOT CREATING A NEW ONE')
+        else:
+            print('NEED TO CREATE AN INDEX...')
+            # Create the search index in the Timesketch database
+            searchindex = SearchIndex.get_or_create(
+                name=timeline_name,
+                description=timeline_name,
                 user=current_user,
-                searchindex=searchindex)
-            timeline.set_status('processing')
-            sketch.timelines.append(timeline)
-            db_session.add(timeline)
+                index_name=index_name)
+            searchindex.grant_permission(permission='read', user=current_user)
+            searchindex.grant_permission(permission='write', user=current_user)
+            searchindex.grant_permission(
+                permission='delete', user=current_user)
+            searchindex.set_status('processing')
+            db_session.add(searchindex)
             db_session.commit()
 
+            timeline = None
+            if sketch and sketch.has_permission(current_user, 'write'):
+                timeline = Timeline(
+                    name=searchindex.name,
+                    description=searchindex.description,
+                    sketch=sketch,
+                    user=current_user,
+                    searchindex=searchindex)
+                timeline.set_status('processing')
+                sketch.timelines.append(timeline)
+                db_session.add(timeline)
+                db_session.commit()
+
         stream = form.enable_stream.data
+        print('Stream data: {}'.format(stream))
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
         from timesketch.lib import tasks

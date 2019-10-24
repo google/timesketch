@@ -54,8 +54,72 @@ def action():
     streamer.set_timestamp_description('Web Log')
     streamer.set_timeline_name('excel_import')
     streamer.set_message_format_string(
-    '{What:s} resulted in {Results:s}, pointed from {URL:s}')
+        '{What:s} resulted in {Results:s}, pointed from {URL:s}')
 
     streamer.add_data_frame(frame)
 ```
 
+Let's go over the functionality of the streamer a bit. A streamer is opened
+using the `with` statement in Python, which returns back an object. Before you
+can use the streamer you'll have to configure it:
+
+ + Add a sketch object to it, this will be the sketch used to upload the data
+   to.
+ + Set the `timestamp_desc` field using the
+   `streamer.set_timestamp_description`. The content of this string will be used
+   for the `timestamp_desc` field, if it doesn't already exist.
+ + Set the name of the imported timeline.
+ + Set a format message string. Timesketch expects one field, called `message`
+   to exist. If it does not exist, a format message string needs to be defined
+   that can be used to generate the messsage field. This is basically a python
+   [formatting string](https://pyformat.info/) that uses the name of each column
+   as a variable name, eg. `"{src_ip:s} connected to {dst_ip:s}"` means that the
+   content in the column name `src_ip` will be formatted as a string and
+   replaces the `{src_ip:s}` in the format string. So if you have a row that
+   contains the variables: `src_ip = "10.10.10.10", dst_ip = "8.8.8.8"` then the
+   message string will look like: `10.10.10.10 connected to 8.8.8.8`.
+ + Call any of the `streamer.add_` functions to add data.
+
+ The data that can be added to the streamer are:
+
+ + Pandas DataFrame.
+ + A CSV, JSONL or a Plaso file.
+ + A dictionary, one for each row in the dataset.
+
+Let's take another example of how the streamer is used to add content using the
+dictionary approach.
+
+```
+...
+from scapy import all as scapy_all
+...
+
+packets = scapy_all.rdpcap(fh)
+
+with client.UploadStreamer() as streamer:
+  streamer.set_sketch(my_sketch)
+  streamer.set_timestamp_description('Network Log')
+  streamer.set_timeline_name('pcap_test_log')
+  streamer.set_message_format_string(
+      '{src_ip:s}:{src_port:d}->{dst_ip:s}:{dst_port:d} =
+      {url:s}')
+
+  for packet in packets:
+    # do something here
+    ...
+    timestamp = datetime.datetime.utcfromtimestamp(packet.time)
+    for k, v in iter(data.fields.items()):
+      for url in URL_RE.findall(str(v)):
+        url = url.strip()
+        streamer.add_dict({
+            'time': timestamp,
+            'src_ip': packet.getlayer('IP').src,
+            'dst_ip': packet.getlayer('IP').dst,
+            'src_port': layer.sport,
+            'dst_port': layer.dport,
+            'url': url})
+```
+
+The streamer will take as an input to `add_dict` a dictionary that can contain
+arbitrary field names. These will then later be transformed into a DataFrame and
+then uploaded to Timesketch.
