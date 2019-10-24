@@ -24,16 +24,19 @@ limitations under the License.
       <div class="time-bubble-vertical-line"></div>
     </div>
 
-    <table class="ts-event-list-table">
+    <table class="ts-event-list-table" style="background-color: #F5F5F5">
       <tbody>
         <tr>
           <td style="width:215px;" class="ts-event-table-column" v-bind:style="timelineColor">
             {{ event._source.datetime }}
           </td>
-          <!-- TODO: Add options here.
-          <td style="width:200px;" class="ts-event-table-column ts-event-message-column"></td>
-          -->
-          <td style="width:100%;" class="ts-event-table-column ts-event-message-column" v-on:click="showDetail = !showDetail" >
+          <td style="width:50px;" class="ts-event-table-column">
+            <span class="icon" v-on:click="toggleStar">
+              <i class="fas fa-star" v-if="isStarred" style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"></i>
+              <i class="fas fa-star" v-if="!isStarred" style="color: #d3d3d3;"></i>
+            </span>
+          </td>
+          <td style="width:100%;" class="ts-event-table-column ts-event-message-column" v-bind:style="messageFieldColor" v-on:click="showDetail = !showDetail" >
             <span class="ts-event-message-container">
               <span class="ts-event-message-ellipsis" v-bind:title="event._source.message">
                 <span v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji">{{ emoji }}</span>
@@ -60,6 +63,7 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../../utils/RestApiClient'
 import TsSketchExploreEventListItemDetail from './EventListItemDetail'
 
 export default {
@@ -69,7 +73,8 @@ export default {
   props: ['event', 'prevEvent'],
   data () {
     return {
-      showDetail: false
+      showDetail: false,
+      isStarred: false
     }
   },
   computed: {
@@ -80,6 +85,15 @@ export default {
       let hexColor = this.timeline(this.event._index).color
       if (!hexColor.startsWith('#')) {
         hexColor = '#' + hexColor
+      }
+      return {
+        'background-color': hexColor
+      }
+    },
+    messageFieldColor () {
+      let hexColor = '#f5f5f5'
+      if (this.isStarred) {
+          hexColor = '#fff4b3'
       }
       return {
         'background-color': hexColor
@@ -104,8 +118,20 @@ export default {
       return this.sketch.timelines.find(function (timeline) {
         return timeline.searchindex.index_name === indexName
       })
+    },
+    toggleStar () {
+      this.isStarred =! this.isStarred
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.event).then((response) => {
+      }).catch((e) => {
+        console.error(e)
+      })
     }
   },
+  created () {
+    if (this.event._source.label.indexOf('__ts_star') > -1) {
+        this.isStarred = true
+    }
+  }
 }
 </script>
 

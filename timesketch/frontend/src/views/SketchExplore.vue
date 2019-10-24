@@ -61,33 +61,60 @@ limitations under the License.
 
           <div class="card-content" v-if="showSearch">
 
-              <div class="field is-grouped">
-                <ts-view-list-dropdown @setActiveView="searchView" in-explore="true"></ts-view-list-dropdown>
+            <form v-on:submit.prevent="search" style="width:100%;">
+              <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
+            </form>
 
-                <form v-on:submit.prevent="search" style="width:100%;">
-                  <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
-                </form>
-              </div>
-              <br>
+            <div class="field is-grouped" style="margin-top:15px; margin-bottom: 25px;">
 
-            <div class="tags">
-              <span v-for="(chip, index) in currentQueryFilter.chips" :key="index" style="margin-right:7px;">
-                <span v-if="chip.type === 'datetime_range'" class="tag is-light is-rounded is-medium">
+              <p class="control">
+                <ts-view-list-dropdown @setActiveView="searchView" is-rounded="true"></ts-view-list-dropdown>
+              </p>
+
+              <p class="control">
+                <b-dropdown trap-focus aria-role="menu">
+                  <a class="button is-text" slot="trigger" role="button">
+                    <span>+ Time range</span>
+                  </a>
+                  <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
+                    <strong>Add time range</strong>
+                    <br>
+                    <br>
+                    <ts-explore-filter-time @addChip="addChip($event)"></ts-explore-filter-time>
+                  </b-dropdown-item>
+                </b-dropdown>
+              </p>
+
+              <p class="control">
+                <b-dropdown trap-focus aria-role="menu">
+                  <a class="button is-text" slot="trigger" role="button">
+                    <span>+ Filter</span>
+                  </a>
+                  <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
+                    <strong>Add filter</strong>
+                    <br>
+                    <br>
+                    <b-switch type="is-info" v-model="activeStarFilter" v-on:input="toggleLabelChip('__ts_star')">
+                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Show only starred events
+                    </b-switch>
+                  </b-dropdown-item>
+                </b-dropdown>
+              </p>
+
+            </div>
+
+            <div class="tags" style="margin-bottom: 5px;">
+              <span v-for="(chip, index) in currentQueryFilter.chips" :key="index">
+                <span v-if="chip.type === 'datetime_range'" class="tag is-light is-rounded" style="margin-right:7px;">
                   <span class="icon is-small" style="margin-right:7px;"><i class="fas fa-clock"></i></span> <span>{{ chip.value.split(',')[0] }}</span> <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]">&rarr; {{ chip.value.split(',')[1] }}</span>
                   <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
                 </span>
               </span>
-              <span class="tag is-white is-rounded is-medium" style="cursor:pointer;" v-on:click="showFilters = !showFilters">+ Add time range</span>
-            </div>
-
-            <div v-show="showFilters">
-              <ts-explore-filter-time @addChip="addChip($event)"></ts-explore-filter-time>
-              <br>
             </div>
 
             <div class="tags">
               <span v-for="(chip, index) in currentQueryFilter.chips" :key="index">
-                <span v-if="chip.type !== 'datetime_range'" class="tag is-light is-rounded is-medium" style="margin-right:7px;">
+                <span v-if="chip.type !== 'datetime_range'" class="tag is-light is-rounded" style="margin-right:7px;">
                   <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
                   <span v-else-if="chip.type === 'label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
                   <span style="margin-right:7px;">{{ chip | filterChip }}</span>
@@ -96,8 +123,7 @@ limitations under the License.
               </span>
             </div>
 
-            <ts-explore-timeline-picker @updateQueryFilter="updateQueryFilter($event)" :current-query-filter="currentQueryFilter" v-if="sketch.active_timelines"></ts-explore-timeline-picker>
-
+            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateQueryFilter="updateQueryFilter($event)" :current-query-filter="currentQueryFilter"></ts-explore-timeline-picker>
           </div>
         </div>
       </div>
@@ -165,10 +191,10 @@ export default {
     return {
       params: {},
       showCreateViewModal: false,
-      showFilters: false,
       showAggregations: false,
       showSearch: true,
       searchInProgress: false,
+      activeStarFilter: false,
       eventList: {
         meta: {},
         objects: []
@@ -226,6 +252,15 @@ export default {
           })
           this.currentQueryFilter.indices = allIndices
         }
+        this.activeStarFilter = false
+        let chips = this.currentQueryFilter.chips
+        if (chips) {
+          for (let i = 0; i < chips.length; i++) {
+            if (chips[i].value === '__ts_star') {
+              this.activeStarFilter = true
+            }
+          }
+        }
         this.search()
       }).catch((e) => {})
     },
@@ -237,6 +272,10 @@ export default {
       this.showCreateViewModal = !this.showCreateViewModal
     },
     removeChip: function (chipIndex) {
+      let chip = this.currentQueryFilter.chips[chipIndex]
+      if (chip.value === '__ts_star') {
+        this.activeStarFilter = false
+      }
       this.currentQueryFilter.chips.splice(chipIndex, 1)
       this.search()
     },
@@ -249,7 +288,25 @@ export default {
       this.currentQueryFilter.chips.push(chip)
       this.showFilters = false
       this.search()
-    }
+    },
+    toggleLabelChip: function (labelName) {
+      let chip = {
+        'field': '',
+        'value': labelName,
+        'type': 'label',
+        'operator': 'must'
+      }
+      let chips = this.currentQueryFilter.chips
+      if (chips) {
+        for (let i = 0; i < chips.length; i++) {
+          if (chips[i].value === labelName) {
+            this.removeChip(i)
+            return
+          }
+        }
+      }
+      this.addChip(chip)
+    },
   },
   created: function () {
     let doSearch = false
@@ -294,5 +351,8 @@ export default {
     padding: 15px;
     background: #f9f9f9;
     width: 100%;
+  }
+  .dropdown-menu {
+    box-shadow: 0 30px 30px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
   }
 </style>
