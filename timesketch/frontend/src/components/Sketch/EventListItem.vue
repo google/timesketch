@@ -55,7 +55,7 @@ limitations under the License.
       </tbody>
     </table>
 
-    <div v-if="comments.length" style="padding-top: 10px; padding-bottom: 20px;">
+    <div v-if="comments.length" style="padding-top: 10px; padding-bottom: 20px; margin-left:5px;">
       <article class="media" v-for="comment in comments" :key="comment.created_at">
         <div class="media-content">
           <div class="content">
