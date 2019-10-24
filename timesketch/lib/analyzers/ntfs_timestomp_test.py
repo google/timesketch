@@ -34,7 +34,7 @@ class FileInfoTestCase(object):
         file_names = [(MockEvent(), ts) for ts in fn_timestamps]
 
         self.file_info = ntfs_timestomp.FileInfo(ref, ts_desc, std_event,
-                                            std_info_timestamp, file_names)
+                                                 std_info_timestamp, file_names)
         self.expected_fn_diffs = expected_fn_diffs
         self.expected_si_diffs = expected_si_diffs
 
