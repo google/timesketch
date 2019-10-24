@@ -1393,8 +1393,8 @@ class UploadStreamer(object):
 
         if 'datetime' not in data_frame:
             for column in data_frame.columns[
-                    data_frame.columns.str.contains('time')]:
-                if column == 'timestamp_desc':
+                    data_frame.columns.str.contains('time', case=False)]:
+                if column.lower() == 'timestamp_desc':
                     continue
                 try:
                     data_frame['timestamp'] = pandas.to_datetime(
@@ -1403,8 +1403,9 @@ class UploadStreamer(object):
                     break
                 except ValueError:
                     pass
-            data_frame['datetime'] = data_frame['timestamp'].dt.strftime(
-                '%Y-%m-%dT%H:%M:%S%z')
+            if 'timestamp' in data_frame:
+                data_frame['datetime'] = data_frame['timestamp'].dt.strftime(
+                    '%Y-%m-%dT%H:%M:%S%z')
 
         # We don't want to include any columns that start with an underscore.
         columns = list(
