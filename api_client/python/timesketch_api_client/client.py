@@ -14,6 +14,7 @@
 """Timesketch API client."""
 from __future__ import unicode_literals
 
+import os
 import json
 import tempfile
 import uuid
@@ -509,6 +510,7 @@ class Sketch(BaseResource):
             searchindex=timeline['searchindex']['index_name'])
         return timeline_obj
 
+    # TODO: Change this function to use the upload streamer...
     def upload_data_frame(
             self, data_frame, timeline_name, format_message_string=''):
         """Upload a data frame to the server for indexing.
@@ -1405,25 +1407,123 @@ class UploadStreamer(object):
         else:
             self._threshold = self.ENTRY_THRESHOLD
 
+    def _fix_data_frame(self, data_frame):
+        """Returns a data frame with added columns for Timesketch upload.
+
+        Args:
+            data_frame: a pandas data frame.
+
+        Returns:
+            A pandas data frame with added columns needed for Timesketch.
+        """
+        if 'message' not in data_frame:
+            data_frame['message'] = data_frame.apply(
+                lambda row: format_data_frame_row(
+                    row, self._format_string), axis=1)
+
+        if 'timestamp_desc' not in data_frame:
+            data_frame['timestamp_desc'] = self._timestamp_desc
+
+        if 'datetime' not in data_frame:
+            for column in data_frame.columns[
+                    data_frame.columns.str.contains('time')]:
+                if column == 'timestamp_desc':
+                    continue
+                try:
+                    data_frame['timestamp'] = pandas.to_datetime(
+                        data_frame[column], utc=True)
+                    # We want the first successful timestamp value.
+                    break
+                except ValueError:
+                    pass
+            data_frame['datetime'] = data_frame['timestamp'].dt.strftime(
+                '%Y-%m-%dT%H:%M:%S%z')
+
+        # We don't want to include any columns that start with an underscore.
+        columns = list(
+            data_frame.columns[~data_frame.columns.str.contains('^_')])
+        return data_frame[columns]
+
     def _ready(self):
-        """Check whether all variables have been set."""
+        """Check whether all variables have been set.
+
+        Raises:
+            ValueError: if the streamer has not yet been fully configured.
+        """
         if self._format_string is None:
-            return False
+            raise ValueError('Format string has not yet been set.')
 
         if self._sketch is None:
-            return False
+            raise ValueError('Sketch has not yet been set.')
 
         if self._timestamp_desc is None:
-            return False
-
-        return True
+            raise ValueError('Timestamp description has not yet been set.')
 
     def _reset(self):
         """Reset the buffer."""
         self._count = 0
         self._data_lines = []
 
-    def add(self, entry):
+    def _upload_data(self, file_name, end_stream):
+        """Upload data TODO ADD DOCSTRING."""
+        files = {
+            'file': open(file_name, 'rb')
+        }
+        data = {
+            'name': self._timeline_name,
+            'sketch_id': self._sketch.id,
+            'enable_stream': not end_stream,
+            'index_name': self._index,
+        }
+
+        response = self._sketch.api.session.post(
+            self._resource_url, files=files, data=data)
+
+        if response.status_code not in HTTP_STATUS_CODE_20X:
+            raise RuntimeError(
+                'Error uploading data: {0:s}, file: {1:s}, index {2:s}'.format(
+                    response.reason, file_name, self._index))
+
+        response_dict = response.json()
+        self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
+
+    def add_dataframe(self, data_frame):
+        """Add a data frame into the buffer."""
+        self._ready()
+
+        if not isinstance(data_frame, pandas.DataFrame):
+            raise TypeError('Entry object needs to be a DataFrame')
+
+        size = data_frame.shape[0]
+        data_frame_use = self._fix_data_frame(data_frame)
+
+        if size < self._threshold:
+            csv_file = tempfile.NamedTemporaryFile(suffix='.csv')
+            data_frame_use.to_csv(csv_file.name, index=False, encoding='utf-8')
+            self._upload_data(csv_file.name, end_stream=True)
+            return
+
+        chunks = int(size / self._threshold)
+        for index in range(0, chunks):
+            chunk_start = index * chunks
+            data_chunk = data_frame_use[
+                chunk_start:chunk_start + self._threshold]
+
+            csv_file = tempfile.NamedTemporaryFile(suffix='.csv')
+            data_chunk.to_csv(csv_file.name, index=False, encoding='utf-8')
+
+            end_stream = bool(index == chunks - 1)
+            self._upload_data(csv_file.name, end_stream=end_stream)
+
+    def add_file(self, filepath):
+        """Add a CSV, JSONL or a PLASO file to the buffer."""
+        self._ready()
+
+        if not os.path.isfile(filepath):
+            raise TypeError('Entry object needs to be a file that exists.')
+        # TODO: implement.
+
+    def add_dict(self, entry):
         """Add an entry into the buffer.
 
         Args:
@@ -1432,6 +1532,7 @@ class UploadStreamer(object):
         Raises:
             TypeError: if the entry is not a dict.
         """
+        self._ready()
         if not isinstance(entry, dict):
             raise TypeError('Entry object needs to be a dict.')
 
@@ -1457,56 +1558,15 @@ class UploadStreamer(object):
             raise ValueError(
                 'Need to fully configure object before uploading.')
 
+        if not self._data_lines:
+            return
         data_frame = pandas.DataFrame(self._data_lines)
-
-        if 'message' not in data_frame:
-            data_frame['message'] = data_frame.apply(
-                lambda row: format_data_frame_row(
-                    row, self._format_string), axis=1)
-        if 'timestamp_desc' not in data_frame:
-            data_frame['timestamp_desc'] = self._timestamp_desc
-
-        if 'datetime' not in data_frame:
-            for column in data_frame.columns[
-                    data_frame.columns.str.contains('time')]:
-                if column == 'timestamp_desc':
-                    continue
-                try:
-                    data_frame['timestamp'] = pandas.to_datetime(
-                        data_frame[column], utc=True)
-                    # We want the first successful timestamp value.
-                    break
-                except ValueError:
-                    pass
-            data_frame['datetime'] = data_frame['timestamp'].dt.strftime(
-                '%Y-%m-%dT%H:%M:%S%z')
-
-        # We don't want to include any columns that start with an underscore.
-        columns = list(
-            data_frame.columns[~data_frame.columns.str.contains('^_')])
-        data_frame_use = data_frame[columns]
+        data_frame_use = self._fix_data_frame(data_frame)
 
         csv_file = tempfile.NamedTemporaryFile(suffix='.csv')
         data_frame_use.to_csv(csv_file.name, index=False, encoding='utf-8')
 
-        files = {'file': open(csv_file.name, 'rb')}
-        data = {
-            'name': self._timeline_name,
-            'sketch_id': self._sketch.id,
-            'enable_stream': not end_stream,
-            'index_name': self._index,
-        }
-
-        response = self._sketch.api.session.post(
-            self._resource_url, files=files, data=data)
-
-        if response.status_code not in HTTP_STATUS_CODE_20X:
-            raise RuntimeError(
-                'Error uploading data: {0:s}, file: {1:s}, index {2:s}'.format(
-                    response.reason, csv_file.name, self._index))
-
-        response_dict = response.json()
-        self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
+        self._upload_data(csv_file.name, end_stream=end_stream)
 
     def set_sketch(self, sketch):
         """Set a client for the streamer.
