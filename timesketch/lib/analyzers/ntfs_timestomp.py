@@ -1,4 +1,4 @@
-"""Sketch analyzer plugin for timestomping."""
+"""Sketch analyzer plugin for ntfs timestomping detection."""
 from __future__ import unicode_literals
 
 from flask import current_app
@@ -14,15 +14,14 @@ class FileInfo(object):
         self.timestamp_desc = timestamp_desc
         self.std_info_event = std_info_event
         self.std_info_timestamp = std_info_timestamp
-        if file_names:
-            self.file_names = file_names
-        else:
-            self.file_names = []
+        self.file_names = file_names or []
 
-class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
+class NtfsTimestompSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Timestomp."""
 
-    NAME = 'timestomp'
+    NAME = 'ntfs_timestomp'
+    STD_INFO = 16
+    FILE_NAME = 48
 
     def __init__(self, index_name, sketch_id):
         """Initialize The Sketch Analyzer.
@@ -33,10 +32,10 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
         """
         self.index_name = index_name
         self.threshold = current_app.config.get(
-            'TIMESTOMP_ANALYZER_THRESHOLD', 10) * 60000000
-        super(TimestompSketchPlugin, self).__init__(index_name, sketch_id)
+            'NTFS_TIMESTOMP_ANALYZER_THRESHOLD', 10) * 60000000
+        super(NtfsTimestompSketchPlugin, self).__init__(index_name, sketch_id)
 
-    def handle_timestomp(self, file_info):
+    def is_suspicious(self, file_info):
         """Compares timestamps and adds diffs to events if timestomping was
         detected.
 
@@ -101,23 +100,23 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
             if not attribute_type or not timestamp_type:
                 continue
 
-            if not attribute_type in [16, 48]:
+            if not attribute_type in [self.FILE_NAME, self.STD_INFO]:
                 continue
 
-            key = timestamp_type + "&" + str(file_ref)
+            key = '{0:s}&{1:s}'.format(timestamp_type, str(file_ref))
 
-            if not key in file_infos:
+            if key not in file_infos:
                 file_infos[key] = FileInfo()
 
             file_info = file_infos[key]
             file_info.file_reference = file_ref
             file_info.timestamp_desc = timestamp_type
 
-            if attribute_type == 16:
+            if attribute_type == self.STD_INFO:
                 file_info.std_info_timestamp = timestamp
                 file_info.std_info_event = event
 
-            if attribute_type == 48:
+            if attribute_type == self.FILE_NAME:
                 file_info.file_names.append((event, timestamp))
 
         timestomps = 0
@@ -128,12 +127,12 @@ class TimestompSketchPlugin(interface.BaseSketchAnalyzer):
 
         if timestomps > 0:
             self.sketch.add_view(
-                view_name='Timestomp', analyzer_name=self.NAME,
+                view_name='NtfsTimestomp', analyzer_name=self.NAME,
                 query_string='_exists_:time_delta or _exists:time_deltas')
 
 
-        return ('Timestomp Analyzer completed, found {0:d} timestomped events'
+        return ('NtfsTimestomp Analyzer completed, found {0:d} timestomped events'
                 .format(timestomps))
 
 
-manager.AnalysisManager.register_analyzer(TimestompSketchPlugin)
+manager.AnalysisManager.register_analyzer(NtfsTimestompSketchPlugin)

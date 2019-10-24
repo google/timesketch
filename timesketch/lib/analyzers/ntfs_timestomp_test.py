@@ -1,9 +1,9 @@
-"""Tests for TimestompPlugin."""
+"""Tests for NtfsTimestompPlugin."""
 from __future__ import unicode_literals
 
 import mock
 
-from timesketch.lib.analyzers import timestomp
+from timesketch.lib.analyzers import ntfs_timestomp
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
@@ -33,25 +33,25 @@ class FileInfoTestCase(object):
         std_event = MockEvent()
         file_names = [(MockEvent(), ts) for ts in fn_timestamps]
 
-        self.file_info = timestomp.FileInfo(ref, ts_desc, std_event,
+        self.file_info = ntfs_timestomp.FileInfo(ref, ts_desc, std_event,
                                             std_info_timestamp, file_names)
         self.expected_fn_diffs = expected_fn_diffs
         self.expected_si_diffs = expected_si_diffs
 
         self.is_timestomp = is_timestomp
 
-class TestTimestompPlugin(BaseTest):
+class TestNtfsTimestompPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
     #def __init__(self, *args, **kwargs):
-    #    super(TestTimestompPlugin, self).__init__(*args, **kwargs)
+    #    super(TestNtfsTimestompPlugin, self).__init__(*args, **kwargs)
 
     @mock.patch(
         u'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
         MockDataStore)
-    def test_handle_timestomp(self):
-        """Test handle_timestomp method."""
-        analyzer = timestomp.TimestompSketchPlugin('test_handle_timestomp', 1)
+    def test_is_suspicious(self):
+        """Test is_suspicious method."""
+        analyzer = ntfs_timestomp.NtfsTimestompSketchPlugin('is_suspicious', 1)
 
         test_cases = [
             FileInfoTestCase(
@@ -97,7 +97,7 @@ class TestTimestompPlugin(BaseTest):
         ]
 
         for tc in test_cases:
-            ret = analyzer.handle_timestomp(tc.file_info)
+            ret = analyzer.is_suspicious(tc.file_info)
 
             std_diffs = tc.file_info.std_info_event.source.get('time_deltas')
             fn_diffs = [event.source.get('time_delta') for event, _ in

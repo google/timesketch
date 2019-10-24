@@ -24,5 +24,5 @@ from timesketch.lib.analyzers import phishy_domains
 from timesketch.lib.analyzers import sessionizer
 from timesketch.lib.analyzers import similarity_scorer
 from timesketch.lib.analyzers import gcp_servicekey
-from timesketch.lib.analyzers import timestomp
+from timesketch.lib.analyzers import ntfs_timestomp
 from timesketch.lib.analyzers import yetiindicators
