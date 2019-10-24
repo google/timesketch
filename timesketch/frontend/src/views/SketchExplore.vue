@@ -77,7 +77,7 @@ limitations under the License.
                     <span>+ Time range</span>
                   </a>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                    <strong>Add time range to the filter</strong>
+                    <strong>Add time range</strong>
                     <br>
                     <br>
                     <ts-explore-filter-time @addChip="addChip($event)"></ts-explore-filter-time>
@@ -91,8 +91,11 @@ limitations under the License.
                     <span>+ Filter</span>
                   </a>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
+                    <strong>Add filter</strong>
+                    <br>
+                    <br>
                     <b-switch type="is-info" v-model="activeStarFilter" v-on:input="toggleLabelChip('__ts_star')">
-                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Starred
+                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Show only starred events
                     </b-switch>
                   </b-dropdown-item>
                 </b-dropdown>
