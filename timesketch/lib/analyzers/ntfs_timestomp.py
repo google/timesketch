@@ -131,7 +131,7 @@ class NtfsTimestompSketchPlugin(interface.BaseSketchAnalyzer):
                 query_string='_exists_:time_delta or _exists:time_deltas')
 
 
-        return ('NtfsTimestomp Analyzer completed, found {0:d} timestomped events'
+        return ('NtfsTimestomp Analyzer done, found {0:d} timestomped events'
                 .format(timestomps))
 
 
