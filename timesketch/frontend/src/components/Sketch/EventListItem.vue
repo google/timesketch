@@ -16,6 +16,7 @@ limitations under the License.
 <template>
   <div>
 
+
     <div v-if="deltaDays > 0">
       <div class="time-bubble-vertical-line"></div>
       <div class="time-bubble">
@@ -26,17 +27,17 @@ limitations under the License.
 
     <table class="ts-event-list-table" style="background-color: #F5F5F5">
       <tbody>
-        <tr>
-          <td style="width:215px;" class="ts-event-table-column" v-bind:style="timelineColor">
-            {{ event._source.datetime }}
-          </td>
-          <td style="width:50px;" class="ts-event-table-column">
+      <tr>
+        <td style="width:215px;" class="ts-event-table-column" v-bind:style="timelineColor">
+          {{ event._source.datetime }}
+        </td>
+        <td style="width:50px;" class="ts-event-table-column">
             <span class="icon" v-on:click="toggleStar">
               <i class="fas fa-star" v-if="isStarred" style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"></i>
               <i class="fas fa-star" v-if="!isStarred" style="color: #d3d3d3;"></i>
             </span>
-          </td>
-          <td style="width:100%;" class="ts-event-table-column ts-event-message-column" v-bind:style="messageFieldColor" v-on:click="showDetail = !showDetail" >
+        </td>
+        <td style="width:100%;" class="ts-event-table-column ts-event-message-column" v-bind:style="messageFieldColor" v-on:click="showDetail = !showDetail" >
             <span class="ts-event-message-container">
               <span class="ts-event-message-ellipsis" v-bind:title="event._source.message">
                 <span v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji">{{ emoji }}</span>
@@ -45,28 +46,53 @@ limitations under the License.
                 {{ event._source.message }}
               </span>
             </span>
-          </td>
-          <td style="width:150px;" class="ts-event-table-column ts-timeline-name-column">
-            {{ timelineName }}
-          </td>
-        </tr>
+        </td>
+        <td style="width:150px;" class="ts-event-table-column ts-timeline-name-column">
+          {{ timelineName }}
+        </td>
+      </tr>
+
       </tbody>
     </table>
 
-    <!-- Detailed view -->
-    <div v-if="showDetail">
-      <div style="margin:10px 0 10px 0;background:#f9f9f9; border:none;border-radius:5px;padding:15px">
-        <ts-sketch-explore-event-list-item-detail :event="event" @addChip="$emit('addChip', $event)"></ts-sketch-explore-event-list-item-detail>
+    <div v-if="comments.length" style="padding-top: 10px; padding-bottom: 20px; margin-left:5px;">
+      <article class="media" v-for="comment in comments" :key="comment.created_at">
+        <div class="media-content">
+          <div class="content">
+            <p>
+              <strong>{{ comment.user.username }}</strong>
+              {{ comment.comment }}
+            </p>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div v-if="showDetail" style="padding-top:10px;">
+      <div  class="field">
+        <p class="control">
+          <textarea v-model="comment" required autofocus class="textarea" rows="3" placeholder="Add a comment..."></textarea>
+        </p>
       </div>
+      <div class="field">
+        <p class="control">
+          <button class="button" v-on:click="postComment(comment)">Post comment</button>
+        </p>
+      </div>
+    </div>
+
+    <!-- Detailed view -->
+    <div v-if="showDetail" style="padding-top:10px; padding-bottom: 20px;">
+      <ts-sketch-explore-event-list-item-detail :event="event" @addChip="$emit('addChip', $event)"></ts-sketch-explore-event-list-item-detail>
     </div>
   </div>
 </template>
 
 <script>
-import ApiClient from '../../utils/RestApiClient'
-import TsSketchExploreEventListItemDetail from './EventListItemDetail'
+  import ApiClient from '../../utils/RestApiClient'
+  import TsSketchExploreEventListItemDetail from './EventListItemDetail'
 
-export default {
+  export default {
   components: {
     TsSketchExploreEventListItemDetail
   },
@@ -74,7 +100,9 @@ export default {
   data () {
     return {
       showDetail: false,
-      isStarred: false
+      isStarred: false,
+      comment: '',
+      comments: []
     }
   },
   computed: {
@@ -128,11 +156,24 @@ export default {
       }).catch((e) => {
         console.error(e)
       })
+    },
+    postComment: function (comment) {
+      ApiClient.saveEventAnnotation(this.sketch.id, 'comment', comment, [this.event]).then((response) => {
+        this.comments.push(response.data.objects[0][0])
+        this.comment = ''
+      }).catch((e) => {})
     }
   },
   created () {
     if (this.event._source.label.indexOf('__ts_star') > -1) {
         this.isStarred = true
+    }
+    if (this.event._source.label.indexOf('__ts_comment') > -1) {
+        let searchindexId = this.event._index
+        let eventId = this.event._id
+        ApiClient.getEvent(this.sketch.id, searchindexId, eventId).then((response) => {
+          this.comments = response.data.meta.comments
+        }).catch((e) => {})
     }
   }
 }
@@ -225,4 +266,5 @@ export default {
   background: #f5f5f5;
   margin: 0 0 0 100px;
 }
+
 </style>
