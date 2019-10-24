@@ -563,7 +563,7 @@ class Sketch(BaseResource):
             return 'No return value.'
 
         return_lines = []
-        for timesketch_object in response.data.get('objects', []):
+        for timesketch_object in response.get('objects', []):
             return_lines.append('Timeline: {0:s}\nStatus: {1:s}'.format(
                 timesketch_object.get('description'),
                 ','.join([x.get(
