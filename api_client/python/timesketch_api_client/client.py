@@ -395,7 +395,7 @@ class Sketch(BaseResource):
         """
         data = self.lazyload_data()
         aggregations = []
-        for aggregation in data['meta']['saved_aggregations']:
+        for aggregation in data['aggregations']:
             aggregation_obj = Aggregation(
                 sketch=self, api=self.api)
             aggregation_obj.from_store(aggregation_id=aggregation['id'])
@@ -413,7 +413,7 @@ class Sketch(BaseResource):
             otherwise None object.
         """
         sketch = self.lazyload_data()
-        for aggregation in sketch['meta']['saved_aggregations']:
+        for aggregation in sketch['aggregations']:
             if aggregation['id'] != aggregation_id:
                 continue
             aggregation_obj = Aggregation(sketch=self, api=self.api)

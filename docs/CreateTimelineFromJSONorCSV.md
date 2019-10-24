@@ -27,7 +27,42 @@ Unlike JSON files, imports in JSONL format can be streamed from disk, making the
     {"message": "Another message","timestamp": 123456790,"datetime": "2015-07-24T19:01:02+00:00","timestamp_desc": "Write time","extra_field_1": "bar"}
     {"message": "Yet more messages","timestamp": 123456791,"datetime": "2015-07-24T19:01:03+00:00","timestamp_desc": "Write time","extra_field_1": "baz"}
 
-Then you can create a new Timesketch timeline from the file:
+## Using tsctl To Import Files
 
-    $ tsctl csv2ts --name my_timeline --file timeline.csv
-    $ tsctl jsonl2ts --name my_timeline --file timeline.jsonl
+The command line tool `tsctl` can be used to import timelines from files. To get access to the help file for the tool use:
+
+```
+$ tsctl import -?
+usage: tsctl import [-?] --file FILE_PATH [--sketch_id SKETCH_ID]
+                    [--username USERNAME] [--timeline_name TIMELINE_NAME]
+
+Create a new Timesketch timeline from a file.
+
+optional arguments:
+  -?, --help            show this help message and exit
+  --file FILE_PATH, -f FILE_PATH
+  --sketch_id SKETCH_ID, -s SKETCH_ID
+  --username USERNAME, -u USERNAME
+  --timeline_name TIMELINE_NAME, -n TIMELINE_NAME
+```
+
+An example command line to import a JSON lines file is:
+
+```
+$ tsctl import --sketch_id <SKETCH_ID> --file <FILENAME>.jsonl --timeline_name <NAME_FOR_TIMELINE> --username <USER>
+
+Imported /PATH/FILENAME.jsonl to sketch: SKETCH_ID (<SKETCH_DESCRIPTION>)
+```
+
+or an example:
+
+```
+$ tsctl import --sketch_id 1 --file foo.jsonl --timeline_name testing --username dev
+Imported /tmp/foo.jsonl to sketch: 1 (My very first sketch)
+```
+
+or:
+```
+$ tsctl import --sketch_id 1 --file foo.csv --timeline_name testing_csv --username dev
+Imported /tmp/foo.csv to sketch: 1 (My very first sketch)
+```
