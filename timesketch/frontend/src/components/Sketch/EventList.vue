@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
   <div>
-    <ts-sketch-explore-event-list-item v-for="(event, index) in eventList" :key="event._id" :event="event" :prevEvent="eventList[index - 1]" @addChip="$emit('addChip', $event)"></ts-sketch-explore-event-list-item>
+    <ts-sketch-explore-event-list-item v-for="(event, index) in eventList" :key="event._id" :event="event" :prevEvent="eventList[index - 1]" @addChip="$emit('addChip', $event)" :order="order"></ts-sketch-explore-event-list-item>
   </div>
 </template>
 
@@ -24,6 +24,6 @@ import TsSketchExploreEventListItem from './EventListItem'
 
 export default {
   components: { TsSketchExploreEventListItem },
-  props: ['eventList']
+  props: ['eventList', 'order']
 }
 </script>
