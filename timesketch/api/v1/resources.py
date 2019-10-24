@@ -1373,7 +1373,7 @@ class AnalyzerPipelineResource(ResourceMixin, Resource):
     """Resource to start analyzer pipeline."""
 
     @login_required
-    def post(self):
+    def post(self, sketch_id):
         """Handles POST request to the resource.
 
         Returns:
@@ -1386,7 +1386,6 @@ class AnalyzerPipelineResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to validate the input form.')
 
-        sketch_id = form.sketch_id.data
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch.has_permission(current_user, 'write'):
             abort(

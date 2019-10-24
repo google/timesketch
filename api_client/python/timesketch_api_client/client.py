@@ -1619,7 +1619,6 @@ class UploadStreamer(object):
         pipe_resource = '{0:s}/sketches/{1:d}/analyzer/auto_run/'.format(
             self._sketch.api.api_root, self._sketch.id)
         data = {
-            'sketch_id': self._sketch.id,
             'index_name': self._index
         }
         _ = self._sketch.api.session.post(pipe_resource, data=data)

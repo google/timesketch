@@ -247,7 +247,6 @@ class EventAnnotationForm(BaseForm):
 
 class AnalyzerPipelineForm(BaseForm):
     """Form to start analyzer pipeline."""
-    sketch_id = IntegerField('Sketch ID', validators=[Optional()])
     index_name = StringField('Index Name', validators=[Optional()])
 
 
