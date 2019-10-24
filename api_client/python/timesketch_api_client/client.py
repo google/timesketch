@@ -510,7 +510,6 @@ class Sketch(BaseResource):
             searchindex=timeline['searchindex']['index_name'])
         return timeline_obj
 
-    # TODO: Change this function to use the upload streamer...
     def upload_data_frame(
             self, data_frame, timeline_name, format_message_string=''):
         """Upload a data frame to the server for indexing.
@@ -540,68 +539,35 @@ class Sketch(BaseResource):
         Raises:
             ValueError: if the dataframe cannot be uploaded to Timesketch.
         """
-        if 'timestamp_desc' not in data_frame:
-            data_frame['timestamp_desc'] = timeline_name
-
-        if 'message' not in data_frame:
-            if not format_message_string:
-                string_items = []
-                for column in data_frame.columns:
-                    if 'time' in column:
-                        continue
-                    elif 'timestamp_desc' in column:
-                        continue
-                    string_items.append('{0:s} = {{0!s}}'.format(column))
-                format_message_string = ' '.join(string_items)
-
-            data_frame['message'] = data_frame.apply(
-                lambda row: format_data_frame_row(
-                    row, format_message_string), axis=1)
-
-        if 'datetime' not in data_frame:
-            for column in data_frame.columns[
-                    data_frame.columns.str.contains('time')]:
-                if column == 'timestamp_desc':
+        if not format_message_string:
+            string_items = []
+            for column in data_frame.columns:
+                if 'time' in column:
                     continue
-                data_frame['timestamp'] = pandas.to_datetime(
-                    data_frame[column], utc=True)
-                data_frame['datetime'] = data_frame['timestamp'].dt.strftime(
-                    '%Y-%m-%dT%H:%M:%S%z')
+                elif 'timestamp_desc' in column:
+                    continue
+                string_items.append('{0:s} = {{0!s}}'.format(column))
+            format_message_string = ' '.join(string_items)
 
-        if not 'datetime' in data_frame:
-            raise ValueError(
-                'Need a field called datetime in the data frame that is '
-                'formatted according using this format string: '
-                '%Y-%m-%dT%H:%M:%S%z. If that is not provided the data frame '
-                'needs to have a column that has the word "time" in it, '
-                'that can be used to conver to a datetime field.')
+        response = None
+        with UploadStreamer() as streamer:
+            streamer.set_sketch(self)
+            streamer.set_timeline_name(timeline_name)
+            streamer.set_timestamp_description('LOG')
+            streamer.set_format_string(format_message_string)
 
-        if not 'message' in data_frame:
-            raise ValueError(
-                'Need a field called message in the data frame, use the '
-                'formatting string to generate one automatically.')
+            streamer.add_data_frame(data_frame)
+            response = streamer.response
 
-        if not 'timestamp_desc' in data_frame:
-            raise ValueError(
-                'Need a field called timestamp_desc in the data frame.')
-
-        # We don't want to include any columns that start with an underscore.
-        columns = list(
-            data_frame.columns[~data_frame.columns.str.contains('^_')])
-        data_frame_use = data_frame[columns]
-
-        csv_file = tempfile.NamedTemporaryFile(suffix='.csv')
-        data_frame_use.to_csv(csv_file.name, index=False, encoding='utf-8')
-        result = self.upload(
-            timeline_name=timeline_name, file_path=csv_file.name)
+        if not response:
+            return 'No return value.'
 
         return_lines = []
-        for timesketch_object in result.data.get('objects', []):
+        for timesketch_object in response.data.get('objects', []):
             return_lines.append('Timeline: {0:s}\nStatus: {1:s}'.format(
                 timesketch_object.get('description'),
                 ','.join([x.get(
                     'status') for x in timesketch_object.get('status')])))
-        return_lines.append('CSV file saved as: {0:s}'.format(csv_file.name))
 
         return '\n'.join(return_lines)
 
@@ -1396,6 +1362,7 @@ class UploadStreamer(object):
         self._data_lines = []
         self._format_string = None
         self._index = uuid.uuid4().hex
+        self._last_response = None
         self._resource_url = ''
         self._sketch = None
         self._timeline_id = None
@@ -1486,9 +1453,18 @@ class UploadStreamer(object):
 
         response_dict = response.json()
         self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
+        self._last_response = response_dict
 
-    def add_dataframe(self, data_frame):
-        """Add a data frame into the buffer."""
+    def add_data_frame(self, data_frame):
+        """Add a data frame into the buffer.
+
+        Args:
+              data_frame: a pandas data frame object to add to the buffer.
+
+        Raises:
+              ValueError: if the data frame does not contain the correct
+                  columns for Timesketch upload.
+        """
         self._ready()
 
         if not isinstance(data_frame, pandas.DataFrame):
@@ -1496,6 +1472,23 @@ class UploadStreamer(object):
 
         size = data_frame.shape[0]
         data_frame_use = self._fix_data_frame(data_frame)
+
+        if not 'datetime' in data_frame_use:
+            raise ValueError(
+                'Need a field called datetime in the data frame that is '
+                'formatted according using this format string: '
+                '%Y-%m-%dT%H:%M:%S%z. If that is not provided the data frame '
+                'needs to have a column that has the word "time" in it, '
+                'that can be used to conver to a datetime field.')
+
+        if not 'message' in data_frame_use:
+            raise ValueError(
+                'Need a field called message in the data frame, use the '
+                'formatting string to generate one automatically.')
+
+        if not 'timestamp_desc' in data_frame_use:
+            raise ValueError(
+                'Need a field called timestamp_desc in the data frame.')
 
         if size < self._threshold:
             csv_file = tempfile.NamedTemporaryFile(suffix='.csv')
@@ -1554,12 +1547,11 @@ class UploadStreamer(object):
             ValueError: if the stream object is not fully configured.
             RuntimeError: if the stream was not uploaded.
         """
-        if not self._ready():
-            raise ValueError(
-                'Need to fully configure object before uploading.')
-
         if not self._data_lines:
             return
+
+        self._ready()
+
         data_frame = pandas.DataFrame(self._data_lines)
         data_frame_use = self._fix_data_frame(data_frame)
 
@@ -1567,6 +1559,11 @@ class UploadStreamer(object):
         data_frame_use.to_csv(csv_file.name, index=False, encoding='utf-8')
 
         self._upload_data(csv_file.name, end_stream=end_stream)
+
+    @property
+    def response(self):
+        """Returns the last response from an upload."""
+        return self._last_response
 
     def set_sketch(self, sketch):
         """Set a client for the streamer.
@@ -1610,3 +1607,5 @@ class UploadStreamer(object):
     def __exit__(self, exception_type, exception_value, traceback):
         """Make it possible to use "with" statement."""
         self.flush(end_stream=True)
+        if exception_type:
+            print('TYPE {}'.format(exception_type))
