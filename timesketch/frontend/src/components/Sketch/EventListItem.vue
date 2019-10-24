@@ -63,7 +63,7 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from '../utils/RestApiClient'
+import ApiClient from '../../utils/RestApiClient'
 import TsSketchExploreEventListItemDetail from './EventListItemDetail'
 
 export default {
@@ -75,20 +75,6 @@ export default {
     return {
       showDetail: false,
       isStarred: false
-    }
-  },
-  methods: {
-    timeline (indexName) {
-      return this.sketch.timelines.find(function (timeline) {
-        return timeline.searchindex.index_name === indexName
-      })
-    },
-    toggleStar () {
-      this.isStarred =! this.isStarred
-      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.event).then((response) => {
-      }).catch((e) => {
-        console.error(e)
-      })
     }
   },
   computed: {
@@ -125,6 +111,20 @@ export default {
       let delta = Math.floor(timestamp - prevTimestamp)
       let deltaDays = delta / 60 / 60 / 24
       return Math.floor(deltaDays)
+    }
+  },
+  methods: {
+    timeline (indexName) {
+      return this.sketch.timelines.find(function (timeline) {
+        return timeline.searchindex.index_name === indexName
+      })
+    },
+    toggleStar () {
+      this.isStarred =! this.isStarred
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.event).then((response) => {
+      }).catch((e) => {
+        console.error(e)
+      })
     }
   },
   created () {

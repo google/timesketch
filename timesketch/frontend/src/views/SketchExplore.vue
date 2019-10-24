@@ -65,35 +65,53 @@ limitations under the License.
               <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
             </form>
 
-            <div class="field is-grouped" style="margin-top:7px;">
+            <div class="field is-grouped" style="margin-top:15px; margin-bottom: 25px;">
+
               <p class="control">
-                <ts-view-list-dropdown @setActiveView="searchView"></ts-view-list-dropdown>
+                <ts-view-list-dropdown @setActiveView="searchView" is-rounded="true"></ts-view-list-dropdown>
               </p>
+
               <p class="control">
-                <button class="button is-small" v-on:click="showTimeranges = !showTimeranges">+ Time range</button>
+                <b-dropdown trap-focus aria-role="menu">
+                  <a class="button is-text" slot="trigger" role="button">
+                    <span>+ Time range</span>
+                  </a>
+                  <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
+                    <strong>Add time range to the filter</strong>
+                    <br>
+                    <br>
+                    <ts-explore-filter-time @addChip="addChip($event)"></ts-explore-filter-time>
+                  </b-dropdown-item>
+                </b-dropdown>
               </p>
+
               <p class="control">
-                <button class="button is-small" v-on:click="showFilters = !showFilters">+ Filter</button>
+                <b-dropdown trap-focus aria-role="menu">
+                  <a class="button is-text" slot="trigger" role="button">
+                    <span>+ Filter</span>
+                  </a>
+                  <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
+                    <b-switch type="is-info" v-model="activeStarFilter" v-on:input="toggleLabelChip('__ts_star')">
+                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Starred
+                    </b-switch>
+                  </b-dropdown-item>
+                </b-dropdown>
               </p>
+
             </div>
 
-            <div class="tags">
-              <span v-for="(chip, index) in currentQueryFilter.chips" :key="index" style="margin-right:7px;">
-                <span v-if="chip.type === 'datetime_range'" class="tag is-light is-rounded is-medium">
+            <div class="tags" style="margin-bottom: 5px;">
+              <span v-for="(chip, index) in currentQueryFilter.chips" :key="index">
+                <span v-if="chip.type === 'datetime_range'" class="tag is-light is-rounded" style="margin-right:7px;">
                   <span class="icon is-small" style="margin-right:7px;"><i class="fas fa-clock"></i></span> <span>{{ chip.value.split(',')[0] }}</span> <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]">&rarr; {{ chip.value.split(',')[1] }}</span>
                   <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
                 </span>
               </span>
-
-              <div v-show="showTimeranges">
-                <ts-explore-filter-time @addChip="addChip($event)"></ts-explore-filter-time>
-              </div>
-
             </div>
 
             <div class="tags">
               <span v-for="(chip, index) in currentQueryFilter.chips" :key="index">
-                <span v-if="chip.type !== 'datetime_range'" class="tag is-light is-rounded is-small" style="margin-right:7px;">
+                <span v-if="chip.type !== 'datetime_range'" class="tag is-light is-rounded" style="margin-right:7px;">
                   <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
                   <span v-else-if="chip.type === 'label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
                   <span style="margin-right:7px;">{{ chip | filterChip }}</span>
@@ -102,12 +120,7 @@ limitations under the License.
               </span>
             </div>
 
-            <div v-show="showFilters">
-              <button class="button is-small" v-on:click="filterStarred"><span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Starred </button>
-            </div>
-
-            <ts-explore-timeline-picker @doSearch="search" v-if="sketch.active_timelines"></ts-explore-timeline-picker>
-
+            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateQueryFilter="updateQueryFilter($event)" :current-query-filter="currentQueryFilter"></ts-explore-timeline-picker>
           </div>
         </div>
       </div>
@@ -175,11 +188,10 @@ export default {
     return {
       params: {},
       showCreateViewModal: false,
-      showFilters: false,
-      showTimeranges: false,
       showAggregations: false,
       showSearch: true,
       searchInProgress: false,
+      activeStarFilter: false,
       eventList: {
         meta: {},
         objects: []
@@ -221,15 +233,6 @@ export default {
         this.searchInProgress = false
       }).catch((e) => {})
     },
-    filterStarred: function () {
-      let chip = {
-          'field': '',
-          'value': '__ts_star',
-          'type': 'label',
-          'operator': 'must'
-        }
-      this.addChip(chip)
-    },
     searchView: function (viewId) {
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
         viewId = viewId.id
@@ -246,6 +249,15 @@ export default {
           })
           this.currentQueryFilter.indices = allIndices
         }
+        this.activeStarFilter = false
+        let chips = this.currentQueryFilter.chips
+        if (chips) {
+          for (let i = 0; i < chips.length; i++) {
+            if (chips[i].value === '__ts_star') {
+              this.activeStarFilter = true
+            }
+          }
+        }
         this.search()
       }).catch((e) => {})
     },
@@ -257,6 +269,10 @@ export default {
       this.showCreateViewModal = !this.showCreateViewModal
     },
     removeChip: function (chipIndex) {
+      let chip = this.currentQueryFilter.chips[chipIndex]
+      if (chip.value === '__ts_star') {
+        this.activeStarFilter = false
+      }
       this.currentQueryFilter.chips.splice(chipIndex, 1)
       this.search()
     },
@@ -269,7 +285,25 @@ export default {
       this.currentQueryFilter.chips.push(chip)
       this.showFilters = false
       this.search()
-    }
+    },
+    toggleLabelChip: function (labelName) {
+      let chip = {
+        'field': '',
+        'value': labelName,
+        'type': 'label',
+        'operator': 'must'
+      }
+      let chips = this.currentQueryFilter.chips
+      if (chips) {
+        for (let i = 0; i < chips.length; i++) {
+          if (chips[i].value === labelName) {
+            this.removeChip(i)
+            return
+          }
+        }
+      }
+      this.addChip(chip)
+    },
   },
   created: function () {
     let doSearch = false
@@ -314,5 +348,8 @@ export default {
     padding: 15px;
     background: #f9f9f9;
     width: 100%;
+  }
+  .dropdown-menu {
+    box-shadow: 0 30px 30px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
   }
 </style>
