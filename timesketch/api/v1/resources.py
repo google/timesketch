@@ -21,6 +21,7 @@ GET /sketches/:sketch_id/explore/
 GET /sketches/:sketch_id/event/
 GET /sketches/:sketch_id/views/
 GET /sketches/:sketch_id/views/:view_id/
+GET /sketches/:sketch_id/explore/sessions/:timeline_index/
 
 POST /sketches/:sketch_id/event/
 POST /sketches/:sketch_id/event/annotate/
@@ -53,6 +54,7 @@ from flask_restful import Resource
 from sqlalchemy import desc
 from sqlalchemy import not_
 
+from timesketch.lib.analyzers import manager as analyzer_manager
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.aggregators_old import heatmap
 from timesketch.lib.aggregators_old import histogram
@@ -65,7 +67,6 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.datastores.neo4j import Neo4jDataStore
 from timesketch.lib.datastores.neo4j import SCHEMA as neo4j_schema
-from timesketch.lib.errors import ApiHTTPError
 from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.lib.forms import AddTimelineSimpleForm
 from timesketch.lib.forms import AggregationExploreForm
@@ -81,6 +82,7 @@ from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
+from timesketch.lib.forms import RunAnalyzerForm
 from timesketch.lib.forms import TimelineForm
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.experimental.utils import GRAPH_VIEWS
@@ -200,6 +202,7 @@ class ResourceMixin(object):
         'user': fields.Nested(user_fields),
         'timelines': fields.List(fields.Nested(timeline_fields)),
         'stories': fields.List(fields.Nested(story_fields)),
+        'aggregations': fields.Nested(aggregation_fields),
         'active_timelines': fields.List(fields.Nested(timeline_fields)),
         'status': fields.Nested(status_fields),
         'created_at': fields.DateTime,
@@ -335,20 +338,22 @@ class SketchListResource(ResourceMixin, Resource):
             A sketch in JSON (instance of flask.wrappers.Response)
         """
         form = NameDescriptionForm.build(request)
-        if form.validate_on_submit():
-            sketch = Sketch(
-                name=form.name.data,
-                description=form.description.data,
-                user=current_user)
-            sketch.status.append(sketch.Status(user=None, status='new'))
-            db_session.add(sketch)
-            db_session.commit()
-            # Give the requesting user permissions on the new sketch.
-            sketch.grant_permission(permission='read', user=current_user)
-            sketch.grant_permission(permission='write', user=current_user)
-            sketch.grant_permission(permission='delete', user=current_user)
-            return self.to_json(sketch, status_code=HTTP_STATUS_CODE_CREATED)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+        sketch = Sketch(
+            name=form.name.data,
+            description=form.description.data,
+            user=current_user)
+        sketch.status.append(sketch.Status(user=None, status='new'))
+        db_session.add(sketch)
+        db_session.commit()
+
+        # Give the requesting user permissions on the new sketch.
+        sketch.grant_permission(permission='read', user=current_user)
+        sketch.grant_permission(permission='write', user=current_user)
+        sketch.grant_permission(permission='delete', user=current_user)
+        return self.to_json(sketch, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class SketchResource(ResourceMixin, Resource):
@@ -369,12 +374,6 @@ class SketchResource(ResourceMixin, Resource):
             }
         meta = dict(
             aggregators=aggregators,
-            saved_aggregations=[{
-                'name': aggregation.name,
-                'id': aggregation.id,
-                'created_at': aggregation.created_at,
-                'updated_at': aggregation.updated_at
-            } for aggregation in sketch.get_named_aggregations],
             views=[{
                 'name': view.name,
                 'id': view.id,
@@ -399,7 +398,10 @@ class SketchResource(ResourceMixin, Resource):
         """Handles DELETE request to the resource."""
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch.has_permission(current_user, 'delete'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, (
+                    'User does not have sufficient access rights to '
+                    'delete a sketch.'))
         sketch.set_status(status='deleted')
         return HTTP_STATUS_CODE_OK
 
@@ -414,10 +416,14 @@ class SketchResource(ResourceMixin, Resource):
         sketch = Sketch.query.get_with_acl(sketch_id)
 
         if not form.validate_on_submit():
-            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, (
+                    'Unable to rename sketch, '
+                    'unable to validate form data'))
 
         if not sketch.has_permission(current_user, 'write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN)
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have write access controls on sketch.')
 
         sketch.name = form.name.data
         sketch.description = form.description.data
@@ -525,11 +531,13 @@ class ViewListResource(ResourceMixin, Resource):
             A view in JSON (instance of flask.wrappers.Response)
         """
         form = SaveViewForm.build(request)
-        if form.validate_on_submit():
-            sketch = Sketch.query.get_with_acl(sketch_id)
-            view = self.create_view_from_form(sketch, form)
-            return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to save view, not able to validate form data.')
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        view = self.create_view_from_form(sketch, form)
+        return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class ViewResource(ResourceMixin, Resource):
@@ -551,12 +559,19 @@ class ViewResource(ResourceMixin, Resource):
 
         # Check that this view belongs to the sketch
         if view.sketch_id != sketch.id:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'Sketch ID ({0:d}) does not match with the sketch ID '
+                'that is defined in the view ({1:d})'.format(
+                    view.sketch_id, sketch.id))
 
         # If this is a user state view, check that it
         # belongs to the current_user
         if view.name == '' and view.user != current_user:
-            abort(HTTP_STATUS_CODE_FORBIDDEN)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'Unable to view a state view that belongs to a '
+                'different user.')
 
         # Check if view has been deleted
         if view.get_status.status == 'deleted':
@@ -584,10 +599,15 @@ class ViewResource(ResourceMixin, Resource):
 
         # Check that this view belongs to the sketch
         if view.sketch_id != sketch.id:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'The view does not belong to the sketch ({0:d} vs '
+                '{1:d})'.format(view.sketch_id, sketch.id))
 
         if not sketch.has_permission(user=current_user, permission='write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have write permission on sketch.')
 
         view.set_status(status='deleted')
         return HTTP_STATUS_CODE_OK
@@ -604,22 +624,24 @@ class ViewResource(ResourceMixin, Resource):
             A view in JSON (instance of flask.wrappers.Response)
         """
         form = SaveViewForm.build(request)
-        if form.validate_on_submit():
-            sketch = Sketch.query.get_with_acl(sketch_id)
-            view = View.query.get(view_id)
-            view.query_string = form.query.data
-            view.query_filter = json.dumps(form.filter.data, ensure_ascii=False)
-            view.query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
-            view.user = current_user
-            view.sketch = sketch
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to update view, not able to validate form data')
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        view = View.query.get(view_id)
+        view.query_string = form.query.data
+        view.query_filter = json.dumps(form.filter.data, ensure_ascii=False)
+        view.query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
+        view.user = current_user
+        view.sketch = sketch
 
-            if form.dsl.data:
-                view.query_string = ''
+        if form.dsl.data:
+            view.query_string = ''
 
-            db_session.add(view)
-            db_session.commit()
-            return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        db_session.add(view)
+        db_session.commit()
+        return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class SearchTemplateResource(ResourceMixin, Resource):
@@ -637,7 +659,7 @@ class SearchTemplateResource(ResourceMixin, Resource):
         """
         searchtemplate = SearchTemplate.query.get(searchtemplate_id)
         if not searchtemplate:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
+            abort(HTTP_STATUS_CODE_NOT_FOUND, 'Search template was not found')
         return self.to_json(searchtemplate)
 
 
@@ -672,7 +694,9 @@ class ExploreResource(ResourceMixin, Resource):
         form = ExploreForm.build(request)
 
         if not form.validate_on_submit():
-            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to explore data, unable to validate form data')
 
         query_dsl = form.dsl.data
         query_filter = form.filter.data
@@ -703,7 +727,9 @@ class ExploreResource(ResourceMixin, Resource):
         # Make sure we have a query string or star filter
         if not (form.query.data, query_filter.get('star'),
                 query_filter.get('events'), query_dsl):
-            abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'The request needs a query string/DSL and or a star filter.')
 
         if scroll_id:
             # pylint: disable=unexpected-keyword-arg
@@ -769,7 +795,7 @@ class AggregationResource(ResourceMixin, Resource):
 
     @login_required
     def get(self, sketch_id, aggregation_id):  # pylint: disable=unused-argument
-        """Handles POST request to the resource.
+        """Handles GET request to the resource.
 
         Handler for /api/v1/sketches/:sketch_id/aggregation/:aggregation_id
 
@@ -785,12 +811,19 @@ class AggregationResource(ResourceMixin, Resource):
 
         # Check that this aggregation belongs to the sketch
         if aggregation.sketch_id != sketch.id:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'The sketch ID ({0:d}) does not match with the defined '
+                'sketch in the aggregation ({1:d})'.format(
+                    aggregation.sketch_id, sketch.id))
 
         # If this is a user state view, check that it
         # belongs to the current_user
         if aggregation.name == '' and aggregation.user != current_user:
-            abort(HTTP_STATUS_CODE_FORBIDDEN)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, (
+                    'A user state view can only be viewed by the user it '
+                    'belongs to.'))
 
         return self.to_json(aggregation)
 
@@ -807,7 +840,8 @@ class AggregationResource(ResourceMixin, Resource):
         """
         form = SaveAggregationForm.build(request)
         if not form.validate_on_submit():
-            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
         sketch = Sketch.query.get_with_acl(sketch_id)
         aggregation = Aggregation.query.get(aggregation_id)
@@ -850,7 +884,9 @@ class AggregationExploreResource(ResourceMixin, Resource):
         """
         form = AggregationExploreForm.build(request)
         if not form.validate_on_submit():
-            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Not able to run aggregation, unable to validate form data.')
 
         sketch = Sketch.query.get_with_acl(sketch_id)
         sketch_indices = {
@@ -909,7 +945,10 @@ class AggregationExploreResource(ResourceMixin, Resource):
                 'max_score': result.get('hits', {}).get('max_score', 0.0)
             }
         else:
-            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'An aggregation DSL or a name for an aggregator name needs '
+                'to be provided!')
 
         result_keys = set(result.keys()) - self.REMOVE_FIELDS
         objects = [result[key] for key in result_keys]
@@ -983,7 +1022,8 @@ class AggregationListResource(ResourceMixin, Resource):
         """
         form = SaveAggregationForm.build(request)
         if not form.validate_on_submit():
-            return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to verify form data.')
 
         sketch = Sketch.query.get_with_acl(sketch_id)
         aggregation = self.create_aggregation_from_form(sketch, form)
@@ -1007,51 +1047,58 @@ class AggregationLegacyResource(ResourceMixin, Resource):
         sketch = Sketch.query.get_with_acl(sketch_id)
         form = AggregationLegacyForm.build(request)
 
-        if form.validate_on_submit():
-            query_filter = form.filter.data
-            query_dsl = form.dsl.data
-            sketch_indices = [
-                t.searchindex.index_name for t in sketch.timelines
-            ]
-            indices = query_filter.get('indices', sketch_indices)
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
-            # If _all in indices then execute the query on all indices
-            if '_all' in indices:
-                indices = sketch_indices
+        query_filter = form.filter.data
+        query_dsl = form.dsl.data
+        sketch_indices = [
+            t.searchindex.index_name for t in sketch.timelines
+        ]
+        indices = query_filter.get('indices', sketch_indices)
 
-            # Make sure that the indices in the filter are part of the sketch.
-            # This will also remove any deleted timeline from the search result.
-            indices = get_validated_indices(indices, sketch_indices)
+        # If _all in indices then execute the query on all indices
+        if '_all' in indices:
+            indices = sketch_indices
 
-            # Make sure we have a query string or star filter
-            if not (form.query.data, query_filter.get('star'),
-                    query_filter.get('events')):
-                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        # Make sure that the indices in the filter are part of the sketch.
+        # This will also remove any deleted timeline from the search result.
+        indices = get_validated_indices(indices, sketch_indices)
 
-            result = []
-            if form.aggtype.data == 'heatmap':
-                result = heatmap(
-                    es_client=self.datastore,
-                    sketch_id=sketch_id,
-                    query_string=form.query.data,
-                    query_filter=query_filter,
-                    query_dsl=query_dsl,
-                    indices=indices)
-            elif form.aggtype.data == 'histogram':
-                result = histogram(
-                    es_client=self.datastore,
-                    sketch_id=sketch_id,
-                    query_string=form.query.data,
-                    query_filter=query_filter,
-                    query_dsl=query_dsl,
-                    indices=indices)
+        # Make sure we have a query string or star filter
+        if not (form.query.data, query_filter.get('star'),
+                query_filter.get('events')):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'The query needs to contain either a query string/DSL '
+                'or a star filter.')
 
-            else:
-                abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        result = []
+        if form.aggtype.data == 'heatmap':
+            result = heatmap(
+                es_client=self.datastore,
+                sketch_id=sketch_id,
+                query_string=form.query.data,
+                query_filter=query_filter,
+                query_dsl=query_dsl,
+                indices=indices)
+        elif form.aggtype.data == 'histogram':
+            result = histogram(
+                es_client=self.datastore,
+                sketch_id=sketch_id,
+                query_string=form.query.data,
+                query_filter=query_filter,
+                query_dsl=query_dsl,
+                indices=indices)
 
-            schema = {'objects': result}
-            return jsonify(schema)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        else:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Aggregation type needs to be either heatmap or histogram')
+
+        schema = {'objects': result}
+        return jsonify(schema)
 
 
 class EventCreateResource(ResourceMixin, Resource):
@@ -1069,93 +1116,94 @@ class EventCreateResource(ResourceMixin, Resource):
             An annotation in JSON (instance of flask.wrappers.Response)
         """
         form = EventCreateForm.build(request)
-        if form.validate_on_submit():
-            sketch = Sketch.query.get_with_acl(sketch_id)
-            timeline_name = 'sketch specific timeline'
-            index_name_seed = 'timesketch' + str(sketch_id)
-            event_type = 'user_created_event'
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Failed to add event, form data not validated')
 
-            # derive datetime from timestamp:
-            parsed_datetime = parser.parse(form.timestamp.data)
-            timestamp = int(
-                time.mktime(parsed_datetime.utctimetuple())) * 1000000
-            timestamp += parsed_datetime.microsecond
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        timeline_name = 'sketch specific timeline'
+        index_name_seed = 'timesketch' + str(sketch_id)
+        event_type = 'user_created_event'
 
-            event = {
-                "datetime": form.timestamp.data,
-                "timestamp": timestamp,
-                "timestamp_desc": form.timestamp_desc.data,
-                "message": form.message.data,
-            }
+        # derive datetime from timestamp:
+        parsed_datetime = parser.parse(form.timestamp.data)
+        timestamp = int(
+            time.mktime(parsed_datetime.utctimetuple())) * 1000000
+        timestamp += parsed_datetime.microsecond
 
-            # We do not need a human readable filename or
-            # datastore index name, so we use UUIDs here.
-            index_name = hashlib.md5(index_name_seed.encode()).hexdigest()
-            if six.PY2:
-                index_name = codecs.decode(index_name, 'utf-8')
+        event = {
+            'datetime': form.timestamp.data,
+            'timestamp': timestamp,
+            'timestamp_desc': form.timestamp_desc.data,
+            'message': form.message.data,
+        }
 
-            # Try to create index
-            try:
-                # Create the index in Elasticsearch (unless it already exists)
-                self.datastore.create_index(
-                    index_name=index_name,
-                    doc_type=event_type)
+        # We do not need a human readable filename or
+        # datastore index name, so we use UUIDs here.
+        index_name = hashlib.md5(index_name_seed.encode()).hexdigest()
+        if six.PY2:
+            index_name = codecs.decode(index_name, 'utf-8')
 
-                # Create the search index in the Timesketch database
-                searchindex = SearchIndex.get_or_create(
-                    name=timeline_name,
-                    description='internal timeline for user-created events',
+        # Try to create index
+        try:
+            # Create the index in Elasticsearch (unless it already exists)
+            self.datastore.create_index(
+                index_name=index_name,
+                doc_type=event_type)
+
+            # Create the search index in the Timesketch database
+            searchindex = SearchIndex.get_or_create(
+                name=timeline_name,
+                description='internal timeline for user-created events',
+                user=current_user,
+                index_name=index_name)
+            searchindex.grant_permission(
+                permission='read', user=current_user)
+            searchindex.grant_permission(
+                permission='write', user=current_user)
+            searchindex.grant_permission(
+                permission='delete', user=current_user)
+            searchindex.set_status('ready')
+            db_session.add(searchindex)
+            db_session.commit()
+
+            timeline = None
+            if sketch and sketch.has_permission(current_user, 'write'):
+                self.datastore.import_event(
+                    index_name,
+                    event_type,
+                    event,
+                    flush_interval=1)
+
+                timeline = Timeline.get_or_create(
+                    name=searchindex.name,
+                    description=searchindex.description,
+                    sketch=sketch,
                     user=current_user,
-                    index_name=index_name)
-                searchindex.grant_permission(
-                    permission='read', user=current_user)
-                searchindex.grant_permission(
-                    permission='write', user=current_user)
-                searchindex.grant_permission(
-                    permission='delete', user=current_user)
-                searchindex.set_status('ready')
-                db_session.add(searchindex)
+                    searchindex=searchindex)
+
+                if timeline not in sketch.timelines:
+                    sketch.timelines.append(timeline)
+
+                db_session.add(timeline)
                 db_session.commit()
 
-                timeline = None
-                if sketch and sketch.has_permission(current_user, 'write'):
-                    self.datastore.import_event(
-                        index_name,
-                        event_type,
-                        event,
-                        flush_interval=1)
+            # Return Timeline if it was created.
+            # pylint: disable=no-else-return
+            if timeline:
+                return self.to_json(
+                    timeline, status_code=HTTP_STATUS_CODE_CREATED)
+            else:
+                return self.to_json(
+                    searchindex, status_code=HTTP_STATUS_CODE_CREATED)
 
-                    timeline = Timeline.get_or_create(
-                        name=searchindex.name,
-                        description=searchindex.description,
-                        sketch=sketch,
-                        user=current_user,
-                        searchindex=searchindex)
-
-                    if timeline not in sketch.timelines:
-                        sketch.timelines.append(timeline)
-
-                    db_session.add(timeline)
-                    db_session.commit()
-
-                # Return Timeline if it was created.
-                # pylint: disable=no-else-return
-                if timeline:
-                    return self.to_json(
-                        timeline, status_code=HTTP_STATUS_CODE_CREATED)
-                else:
-                    return self.to_json(
-                        searchindex, status_code=HTTP_STATUS_CODE_CREATED)
-
-            except Exception:
-                raise ApiHTTPError(
-                    message="failed to add event",
-                    status_code=HTTP_STATUS_CODE_BAD_REQUEST)
-
-        else:
-            raise ApiHTTPError(
-                message="failed to add event",
-                status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+        # TODO: Can this be narrowed down, both in terms of the scope it
+        # applies to, as well as not to catch a generic exception.
+        except Exception as e:  # pylint: disable=broad-except
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Failed to add event ({0!s})'.format(e))
 
 
 class EventResource(ResourceMixin, Resource):
@@ -1165,7 +1213,6 @@ class EventResource(ResourceMixin, Resource):
         searchindex_id: The datastore searchindex id as string
         event_id: The datastore event id as string
     """
-
     def __init__(self):
         super(EventResource, self).__init__()
         self.parser = reqparse.RequestParser()
@@ -1195,7 +1242,10 @@ class EventResource(ResourceMixin, Resource):
 
         # Check if the requested searchindex is part of the sketch
         if searchindex_id not in indices:
-            abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Search index ID ({0!s}) does not belong to the list '
+                'of indices'.format(searchindex_id))
 
         result = self.datastore.get_event(searchindex_id, event_id)
 
@@ -1243,70 +1293,79 @@ class EventAnnotationResource(ResourceMixin, Resource):
             An annotation in JSON (instance of flask.wrappers.Response)
         """
         form = EventAnnotationForm.build(request)
-        if form.validate_on_submit():
-            annotations = []
-            sketch = Sketch.query.get_with_acl(sketch_id)
-            indices = [t.searchindex.index_name for t in sketch.timelines]
-            annotation_type = form.annotation_type.data
-            events = form.events.raw_data
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
-            for _event in events:
-                searchindex_id = _event['_index']
-                searchindex = SearchIndex.query.filter_by(
-                    index_name=searchindex_id).first()
-                event_id = _event['_id']
-                event_type = _event['_type']
+        annotations = []
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        indices = [t.searchindex.index_name for t in sketch.timelines]
+        annotation_type = form.annotation_type.data
+        events = form.events.raw_data
 
-                if searchindex_id not in indices:
-                    abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        for _event in events:
+            searchindex_id = _event['_index']
+            searchindex = SearchIndex.query.filter_by(
+                index_name=searchindex_id).first()
+            event_id = _event['_id']
+            event_type = _event['_type']
 
-                # Get or create an event in the SQL database to have something
-                # to attach the annotation to.
-                event = Event.get_or_create(
-                    sketch=sketch,
-                    searchindex=searchindex,
-                    document_id=event_id)
+            if searchindex_id not in indices:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Search index ID ({0!s}) does not belong to the list '
+                    'of indices'.format(searchindex_id))
 
-                # Add the annotation to the event object.
-                if 'comment' in annotation_type:
-                    annotation = Event.Comment(
-                        comment=form.annotation.data, user=current_user)
-                    event.comments.append(annotation)
-                    self.datastore.set_label(
-                        searchindex_id,
-                        event_id,
-                        event_type,
-                        sketch.id,
-                        current_user.id,
-                        '__ts_comment',
-                        toggle=False)
+            # Get or create an event in the SQL database to have something
+            # to attach the annotation to.
+            event = Event.get_or_create(
+                sketch=sketch,
+                searchindex=searchindex,
+                document_id=event_id)
 
-                elif 'label' in annotation_type:
-                    annotation = Event.Label.get_or_create(
-                        label=form.annotation.data, user=current_user)
-                    if annotation not in event.labels:
-                        event.labels.append(annotation)
-                    toggle = False
-                    if '__ts_star' or '__ts_hidden' in form.annotation.data:
-                        toggle = True
-                    self.datastore.set_label(
-                        searchindex_id,
-                        event_id,
-                        event_type,
-                        sketch.id,
-                        current_user.id,
-                        form.annotation.data,
-                        toggle=toggle)
-                else:
-                    abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            # Add the annotation to the event object.
+            if 'comment' in annotation_type:
+                annotation = Event.Comment(
+                    comment=form.annotation.data, user=current_user)
+                event.comments.append(annotation)
+                self.datastore.set_label(
+                    searchindex_id,
+                    event_id,
+                    event_type,
+                    sketch.id,
+                    current_user.id,
+                    '__ts_comment',
+                    toggle=False)
 
-                annotations.append(annotation)
-                # Save the event to the database
-                db_session.add(event)
-                db_session.commit()
+            elif 'label' in annotation_type:
+                annotation = Event.Label.get_or_create(
+                    label=form.annotation.data, user=current_user)
+                if annotation not in event.labels:
+                    event.labels.append(annotation)
+                toggle = False
+                if '__ts_star' or '__ts_hidden' in form.annotation.data:
+                    toggle = True
+                self.datastore.set_label(
+                    searchindex_id,
+                    event_id,
+                    event_type,
+                    sketch.id,
+                    current_user.id,
+                    form.annotation.data,
+                    toggle=toggle)
+            else:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Annotation type needs to be either label or comment, '
+                    'not {0!s}'.format(annotation_type))
+
+            annotations.append(annotation)
+            # Save the event to the database
+            db_session.add(event)
+            db_session.commit()
+
             return self.to_json(
                 annotations, status_code=HTTP_STATUS_CODE_CREATED)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
 
 
 class UploadFileResource(ResourceMixin, Resource):
@@ -1318,84 +1377,85 @@ class UploadFileResource(ResourceMixin, Resource):
 
         Returns:
             A view in JSON (instance of flask.wrappers.Response)
-
-        Raises:
-            ApiHTTPError
         """
         upload_enabled = current_app.config['UPLOAD_ENABLED']
+        if not upload_enabled:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Upload not enabled')
+
         upload_folder = current_app.config['UPLOAD_FOLDER']
 
         form = UploadFileForm()
-        if form.validate_on_submit() and upload_enabled:
-            sketch_id = form.sketch_id.data or None
-            file_storage = form.file.data
-            _filename, _extension = os.path.splitext(file_storage.filename)
-            file_extension = _extension.lstrip('.')
-            timeline_name = form.name.data or _filename.rstrip('.')
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Upload validation failed: {0:s}'.format(
+                    form.errors['file'][0]))
 
-            sketch = None
-            if sketch_id:
-                sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch_id = form.sketch_id.data or None
+        file_storage = form.file.data
+        _filename, _extension = os.path.splitext(file_storage.filename)
+        file_extension = _extension.lstrip('.')
+        timeline_name = form.name.data or _filename.rstrip('.')
 
-            # We do not need a human readable filename or
-            # datastore index name, so we use UUIDs here.
-            filename = uuid.uuid4().hex
-            if not isinstance(filename, six.text_type):
-                filename = codecs.decode(filename, 'utf-8')
+        sketch = None
+        if sketch_id:
+            sketch = Sketch.query.get_with_acl(sketch_id)
 
-            index_name = uuid.uuid4().hex
-            if not isinstance(index_name, six.text_type):
-                index_name = codecs.decode(index_name, 'utf-8')
+        # We do not need a human readable filename or
+        # datastore index name, so we use UUIDs here.
+        filename = uuid.uuid4().hex
+        if not isinstance(filename, six.text_type):
+            filename = codecs.decode(filename, 'utf-8')
 
-            file_path = os.path.join(upload_folder, filename)
-            file_storage.save(file_path)
+        index_name = uuid.uuid4().hex
+        if not isinstance(index_name, six.text_type):
+            index_name = codecs.decode(index_name, 'utf-8')
 
-            # Create the search index in the Timesketch database
-            searchindex = SearchIndex.get_or_create(
-                name=timeline_name,
-                description=timeline_name,
+        file_path = os.path.join(upload_folder, filename)
+        file_storage.save(file_path)
+
+        # Create the search index in the Timesketch database
+        searchindex = SearchIndex.get_or_create(
+            name=timeline_name,
+            description=timeline_name,
+            user=current_user,
+            index_name=index_name)
+        searchindex.grant_permission(permission='read', user=current_user)
+        searchindex.grant_permission(permission='write', user=current_user)
+        searchindex.grant_permission(
+            permission='delete', user=current_user)
+        searchindex.set_status('processing')
+        db_session.add(searchindex)
+        db_session.commit()
+
+        timeline = None
+        if sketch and sketch.has_permission(current_user, 'write'):
+            timeline = Timeline(
+                name=searchindex.name,
+                description=searchindex.description,
+                sketch=sketch,
                 user=current_user,
-                index_name=index_name)
-            searchindex.grant_permission(permission='read', user=current_user)
-            searchindex.grant_permission(permission='write', user=current_user)
-            searchindex.grant_permission(
-                permission='delete', user=current_user)
-            searchindex.set_status('processing')
-            db_session.add(searchindex)
+                searchindex=searchindex)
+            timeline.set_status('processing')
+            sketch.timelines.append(timeline)
+            db_session.add(timeline)
             db_session.commit()
 
-            timeline = None
-            if sketch and sketch.has_permission(current_user, 'write'):
-                timeline = Timeline(
-                    name=searchindex.name,
-                    description=searchindex.description,
-                    sketch=sketch,
-                    user=current_user,
-                    searchindex=searchindex)
-                timeline.set_status('processing')
-                sketch.timelines.append(timeline)
-                db_session.add(timeline)
-                db_session.commit()
+        # Start Celery pipeline for indexing and analysis.
+        # Import here to avoid circular imports.
+        from timesketch.lib import tasks
+        pipeline = tasks.build_index_pipeline(
+            file_path, timeline_name, index_name, file_extension, sketch_id)
+        pipeline.apply_async()
 
-            # Start Celery pipeline for indexing and analysis.
-            # Import here to avoid circular imports.
-            from timesketch.lib import tasks
-            pipeline = tasks.build_index_pipeline(
-                file_path, timeline_name, index_name, file_extension, sketch_id)
-            pipeline.apply_async()
-
-            # Return Timeline if it was created.
-            # pylint: disable=no-else-return
-            if timeline:
-                return self.to_json(
-                    timeline, status_code=HTTP_STATUS_CODE_CREATED)
-
+        # Return Timeline if it was created.
+        # pylint: disable=no-else-return
+        if timeline:
             return self.to_json(
-                searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+                timeline, status_code=HTTP_STATUS_CODE_CREATED)
 
-        raise ApiHTTPError(
-            message=form.errors['file'][0],
-            status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+        return self.to_json(
+            searchindex, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class TaskResource(ResourceMixin, Resource):
@@ -1470,17 +1530,19 @@ class StoryListResource(ResourceMixin, Resource):
             A view in JSON (instance of flask.wrappers.Response)
         """
         form = StoryForm.build(request)
-        if form.validate_on_submit():
-            title = ''
-            if form.title.data:
-                title = form.title.data
-            sketch = Sketch.query.get_with_acl(sketch_id)
-            story = Story(
-                title=title, content='', sketch=sketch, user=current_user)
-            db_session.add(story)
-            db_session.commit()
-            return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+
+        title = ''
+        if form.title.data:
+            title = form.title.data
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        story = Story(
+            title=title, content='', sketch=sketch, user=current_user)
+        db_session.add(story)
+        db_session.commit()
+        return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class StoryResource(ResourceMixin, Resource):
@@ -1502,7 +1564,10 @@ class StoryResource(ResourceMixin, Resource):
 
         # Check that this story belongs to the sketch
         if story.sketch_id != sketch.id:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'Sketch ID ({0:d}) does not match with the ID in '
+                'the story ({1:d})'.format(sketch.id, story.sketch_id))
 
         # Only allow editing if the current user is the author.
         # This is needed until we have proper collaborative editing and
@@ -1525,19 +1590,23 @@ class StoryResource(ResourceMixin, Resource):
             A view in JSON (instance of flask.wrappers.Response)
         """
         form = StoryForm.build(request)
-        if form.validate_on_submit():
-            sketch = Sketch.query.get_with_acl(sketch_id)
-            story = Story.query.get(story_id)
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        story = Story.query.get(story_id)
 
-            if story.sketch_id != sketch.id:
-                abort(HTTP_STATUS_CODE_NOT_FOUND)
+        if story.sketch_id != sketch.id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'Sketch ID ({0:d}) does not match with the ID in '
+                'the story ({1:d})'.format(sketch.id, story.sketch_id))
 
-            story.title = form.title.data
-            story.content = form.content.data
-            db_session.add(story)
-            db_session.commit()
-            return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        story.title = form.title.data
+        story.content = form.content.data
+        db_session.add(story)
+        db_session.commit()
+        return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class QueryResource(ResourceMixin, Resource):
@@ -1554,17 +1623,20 @@ class QueryResource(ResourceMixin, Resource):
             A story in JSON (instance of flask.wrappers.Response)
         """
         form = ExploreForm.build(request)
-        if form.validate_on_submit():
-            sketch = Sketch.query.get_with_acl(sketch_id)
-            schema = {'objects': [], 'meta': {}}
-            query_string = form.query.data
-            query_filter = form.filter.data
-            query_dsl = form.dsl.data
-            query = self.datastore.build_query(sketch.id, query_string,
-                                               query_filter, query_dsl)
-            schema['objects'].append(query)
-            return jsonify(schema)
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        schema = {
+            'objects': [],
+            'meta': {}}
+        query_string = form.query.data
+        query_filter = form.filter.data
+        query_dsl = form.dsl.data
+        query = self.datastore.build_query(
+            sketch.id, query_string, query_filter, query_dsl)
+        schema['objects'].append(query)
+        return jsonify(schema)
 
 
 class CountEventsResource(ResourceMixin, Resource):
@@ -1597,64 +1669,139 @@ class TimelineCreateResource(ResourceMixin, Resource):
 
         Returns:
             A view in JSON (instance of flask.wrappers.Response)
-
-        Raises:
-            ApiHTTPError
         """
         upload_enabled = current_app.config['UPLOAD_ENABLED']
+        if not upload_enabled:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Failed to create timeline, upload not enabled')
+
         form = CreateTimelineForm()
-        if form.validate_on_submit() and upload_enabled:
-            sketch_id = form.sketch_id.data
-            timeline_name = form.name.data
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Failed to create timeline, form data not validated')
 
-            sketch = None
-            if sketch_id:
-                sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch_id = form.sketch_id.data
+        timeline_name = form.name.data
 
-            # We do not need a human readable filename or
-            # datastore index name, so we use UUIDs here.
-            index_name = uuid.uuid4().hex
-            if not isinstance(index_name, six.text_type):
-                index_name = codecs.decode(index_name, 'utf-8')
+        sketch = None
+        if sketch_id:
+            sketch = Sketch.query.get_with_acl(sketch_id)
 
-            # Create the search index in the Timesketch database
-            searchindex = SearchIndex.get_or_create(
-                name=timeline_name,
-                description=timeline_name,
+        # We do not need a human readable filename or
+        # datastore index name, so we use UUIDs here.
+        index_name = uuid.uuid4().hex
+        if not isinstance(index_name, six.text_type):
+            index_name = codecs.decode(index_name, 'utf-8')
+
+        # Create the search index in the Timesketch database
+        searchindex = SearchIndex.get_or_create(
+            name=timeline_name,
+            description=timeline_name,
+            user=current_user,
+            index_name=index_name)
+        searchindex.grant_permission(permission='read', user=current_user)
+        searchindex.grant_permission(permission='write', user=current_user)
+        searchindex.grant_permission(
+            permission='delete', user=current_user)
+        searchindex.set_status('processing')
+        db_session.add(searchindex)
+        db_session.commit()
+
+        timeline = None
+        if sketch and sketch.has_permission(current_user, 'write'):
+            timeline = Timeline(
+                name=searchindex.name,
+                description=searchindex.description,
+                sketch=sketch,
                 user=current_user,
-                index_name=index_name)
-            searchindex.grant_permission(permission='read', user=current_user)
-            searchindex.grant_permission(permission='write', user=current_user)
-            searchindex.grant_permission(
-                permission='delete', user=current_user)
-            searchindex.set_status('processing')
-            db_session.add(searchindex)
+                searchindex=searchindex)
+            sketch.timelines.append(timeline)
+            db_session.add(timeline)
             db_session.commit()
 
-            timeline = None
-            if sketch and sketch.has_permission(current_user, 'write'):
-                timeline = Timeline(
-                    name=searchindex.name,
-                    description=searchindex.description,
-                    sketch=sketch,
-                    user=current_user,
-                    searchindex=searchindex)
-                sketch.timelines.append(timeline)
-                db_session.add(timeline)
-                db_session.commit()
-
-            # Return Timeline if it was created.
-            # pylint: disable=no-else-return
-            if timeline:
-                return self.to_json(
-                    timeline, status_code=HTTP_STATUS_CODE_CREATED)
-
+        # Return Timeline if it was created.
+        # pylint: disable=no-else-return
+        if timeline:
             return self.to_json(
-                searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+                timeline, status_code=HTTP_STATUS_CODE_CREATED)
 
-        raise ApiHTTPError(
-            message="failed to create timeline",
-            status_code=HTTP_STATUS_CODE_BAD_REQUEST)
+        return self.to_json(
+            searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+
+
+class AnalyzerRunResource(ResourceMixin, Resource):
+    """Resource to get all timelines for sketch."""
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            A list of all available analyzer names.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch.has_permission(current_user, 'read'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have read access to sketch')
+        analyzers = [
+            x for x, y  in analyzer_manager.AnalysisManager.get_analyzers()]
+
+        return analyzers
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+
+        Returns:
+            A string with the response from running the analyzer.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch.has_permission(current_user, 'write'):
+            return abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have write permission on the sketch.')
+
+        form = RunAnalyzerForm.build(request)
+        if not form.validate_on_submit():
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate input data.')
+
+        search_index = None
+        timeline_id = form.timeline_id.data
+        for timeline in sketch.timelines:
+            index = SearchIndex.query.get_with_acl(
+                timeline.searchindex_id)
+
+            if index.index_name.lower() == timeline_id:
+                search_index = index
+                break
+
+        if not search_index:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, (
+                    'No timeline was found, make sure you\'ve got the correct '
+                    'timeline ID or timeline name.'))
+
+        analyzer_name = form.analyzer_name.data
+        analyzer_kwargs = form.analyzer_kwargs.data
+
+        # Import here to avoid circular imports.
+        from timesketch.lib import tasks
+        sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+            sketch_id=sketch_id, searchindex_id=search_index.id,
+            user_id=current_user.id, analyzer_names=[analyzer_name],
+            analyzer_kwargs=analyzer_kwargs)
+
+        if sketch_analyzer_group:
+            pipeline = (tasks.run_sketch_init.s(
+                [search_index.index_name]) | sketch_analyzer_group)
+            pipeline.apply_async()
+
+        return 'Analyzer has been started on timeline: [{0:s}] {1:s}'.format(
+            search_index.index_name, search_index.name)
 
 
 class TimelineListResource(ResourceMixin, Resource):
@@ -1688,41 +1835,44 @@ class TimelineListResource(ResourceMixin, Resource):
             if t.searchindex.id == searchindex_id
         ]
 
-        if form.validate_on_submit():
-            if not sketch.has_permission(current_user, 'write'):
-                abort(HTTP_STATUS_CODE_FORBIDDEN)
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
-            if not timeline_id:
-                return_code = HTTP_STATUS_CODE_CREATED
-                timeline = Timeline(
-                    name=searchindex.name,
-                    description=searchindex.description,
-                    sketch=sketch,
-                    user=current_user,
-                    searchindex=searchindex)
-                sketch.timelines.append(timeline)
-                db_session.add(timeline)
-                db_session.commit()
-            else:
-                metadata['created'] = False
-                return_code = HTTP_STATUS_CODE_OK
-                timeline = Timeline.query.get(timeline_id)
+        if not sketch.has_permission(current_user, 'write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have write access to the sketch.')
 
-            # Run sketch analyzers when timeline is added. Import here to avoid
-            # circular imports.
-            if current_app.config.get('AUTO_SKETCH_ANALYZERS'):
-                from timesketch.lib import tasks
-                sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
-                    sketch_id, searchindex_id, current_user.id)
-                if sketch_analyzer_group:
-                    pipeline = (tasks.run_sketch_init.s(
-                        [searchindex.index_name]) | sketch_analyzer_group)
-                    pipeline.apply_async()
+        if not timeline_id:
+            return_code = HTTP_STATUS_CODE_CREATED
+            timeline = Timeline(
+                name=searchindex.name,
+                description=searchindex.description,
+                sketch=sketch,
+                user=current_user,
+                searchindex=searchindex)
+            sketch.timelines.append(timeline)
+            db_session.add(timeline)
+            db_session.commit()
+        else:
+            metadata['created'] = False
+            return_code = HTTP_STATUS_CODE_OK
+            timeline = Timeline.query.get(timeline_id)
 
-            return self.to_json(
-                timeline, meta=metadata, status_code=return_code)
+        # Run sketch analyzers when timeline is added. Import here to avoid
+        # circular imports.
+        if current_app.config.get('AUTO_SKETCH_ANALYZERS'):
+            from timesketch.lib import tasks
+            sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+                sketch_id, searchindex_id, current_user.id)
+            if sketch_analyzer_group:
+                pipeline = (tasks.run_sketch_init.s(
+                    [searchindex.index_name]) | sketch_analyzer_group)
+                pipeline.apply_async()
 
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        return self.to_json(
+            timeline, meta=metadata, status_code=return_code)
 
 
 class TimelineResource(ResourceMixin, Resource):
@@ -1741,10 +1891,15 @@ class TimelineResource(ResourceMixin, Resource):
 
         # Check that this timeline belongs to the sketch
         if timeline.sketch_id != sketch.id:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'The sketch ID ({0:d}) does not match with the timeline '
+                'sketch ID ({1:d})'.format(sketch.id, timeline.sketch_id))
 
         if not sketch.has_permission(user=current_user, permission='read'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have read permission on the sketch.')
 
         return self.to_json(timeline)
 
@@ -1762,13 +1917,19 @@ class TimelineResource(ResourceMixin, Resource):
 
         # Check that this timeline belongs to the sketch
         if timeline.sketch_id != sketch.id:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'The sketch ID ({0:d}) does not match with the timeline '
+                'sketch ID ({1:d})'.format(sketch.id, timeline.sketch_id))
 
         if not sketch.has_permission(user=current_user, permission='write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have write permission on the sketch.')
 
         if not form.validate_on_submit():
-            abort(HTTP_STATUS_CODE_BAD_REQUEST)
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
         timeline.name = form.name.data
         timeline.description = form.description.data
@@ -1791,10 +1952,15 @@ class TimelineResource(ResourceMixin, Resource):
 
         # Check that this timeline belongs to the sketch
         if timeline.sketch_id != sketch.id:
-            abort(HTTP_STATUS_CODE_NOT_FOUND)
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'The sketch ID ({0:d}) does not match with the timeline '
+                'sketch ID ({1:d})'.format(sketch.id, timeline.sketch_id))
 
         if not sketch.has_permission(user=current_user, permission='write'):
-            abort(HTTP_STATUS_CODE_FORBIDDEN)
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have write permission on the sketch.')
 
         sketch.timelines.remove(timeline)
         db_session.commit()
@@ -1819,40 +1985,41 @@ class GraphResource(ResourceMixin, Resource):
         Sketch.query.get_with_acl(sketch_id)
 
         form = GraphExploreForm.build(request)
-        if form.validate_on_submit():
-            graph_view_id = form.graph_view_id.data
-            parameters = form.parameters.data
-            output_format = form.output_format.data
+        if not form.validate_on_submit():
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
-            graph_view = GRAPH_VIEWS[graph_view_id]
-            query = graph_view['query']
+        graph_view_id = form.graph_view_id.data
+        parameters = form.parameters.data
+        output_format = form.output_format.data
 
-            parameters['sketch_id'] = str(sketch_id)
+        graph_view = GRAPH_VIEWS[graph_view_id]
+        query = graph_view['query']
 
-            result = self.graph_datastore.query(
-                query, params=parameters, output_format=output_format)
+        parameters['sketch_id'] = str(sketch_id)
 
-            for edge in result['graph']['edges']:
-                edge_data = edge['data']
-                timestamps = edge_data.get('timestamps', [])
-                edge_data['count'] = str(len(timestamps))
+        result = self.graph_datastore.query(
+            query, params=parameters, output_format=output_format)
 
-                if edge_data.get('timestamps_incomplete'):
-                    edge_data['count'] += '+'
-                if edge_data['count'] == '0+':
-                    edge_data['count'] = '???'
+        for edge in result['graph']['edges']:
+            edge_data = edge['data']
+            timestamps = edge_data.get('timestamps', [])
+            edge_data['count'] = str(len(timestamps))
 
-            schema = {
-                'meta': {
-                    'schema': neo4j_schema
-                },
-                'objects': [{
-                    'graph': result['graph'],
-                }]
-            }
-            return jsonify(schema)
+            if edge_data.get('timestamps_incomplete'):
+                edge_data['count'] += '+'
+            if edge_data['count'] == '0+':
+                edge_data['count'] = '???'
 
-        return None
+        schema = {
+            'meta': {
+                'schema': neo4j_schema
+            },
+            'objects': [{
+                'graph': result['graph'],
+            }]
+        }
+        return jsonify(schema)
 
 
 class GraphViewListResource(ResourceMixin, Resource):
@@ -1898,7 +2065,7 @@ class GraphViewResource(ResourceMixin, Resource):
         view = get_graph_view(view_id)
 
         if not view:
-            return abort(HTTP_STATUS_CODE_NOT_FOUND)
+            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No view found')
 
         schema = {
             'objects': [{
@@ -1933,38 +2100,38 @@ class SearchIndexListResource(ResourceMixin, Resource):
         es_index_name = form.es_index_name.data
         public = form.public.data
 
-        if form.validate_on_submit():
-            searchindex = SearchIndex.query.filter_by(
-                index_name=es_index_name).first()
-            metadata = {'created': True}
+        if not form.validate_on_submit():
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data')
 
-            if searchindex:
-                metadata['created'] = False
-                status_code = HTTP_STATUS_CODE_OK
-            else:
-                searchindex = SearchIndex.get_or_create(
-                    name=searchindex_name,
-                    description=searchindex_name,
-                    user=current_user,
-                    index_name=es_index_name)
-                searchindex.grant_permission(
-                    permission='read', user=current_user)
+        searchindex = SearchIndex.query.filter_by(
+            index_name=es_index_name).first()
+        metadata = {'created': True}
 
-                if public:
-                    searchindex.grant_permission(permission='read', user=None)
+        if searchindex:
+            metadata['created'] = False
+            status_code = HTTP_STATUS_CODE_OK
+        else:
+            searchindex = SearchIndex.get_or_create(
+                name=searchindex_name,
+                description=searchindex_name,
+                user=current_user,
+                index_name=es_index_name)
+            searchindex.grant_permission(
+                permission='read', user=current_user)
 
-                # Create the index in Elasticsearch
-                self.datastore.create_index(
-                    index_name=es_index_name, doc_type='generic_event')
+            if public:
+                searchindex.grant_permission(permission='read', user=None)
 
-                db_session.add(searchindex)
-                db_session.commit()
-                status_code = HTTP_STATUS_CODE_CREATED
+            # Create the index in Elasticsearch
+            self.datastore.create_index(
+                index_name=es_index_name, doc_type='generic_event')
 
-            return self.to_json(
-                searchindex, meta=metadata, status_code=status_code)
+            db_session.add(searchindex)
+            db_session.commit()
+            status_code = HTTP_STATUS_CODE_CREATED
 
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        return self.to_json(
+            searchindex, meta=metadata, status_code=status_code)
 
 
 class SearchIndexResource(ResourceMixin, Resource):
@@ -1979,3 +2146,108 @@ class SearchIndexResource(ResourceMixin, Resource):
         """
         searchindex = SearchIndex.query.get_with_acl(searchindex_id)
         return self.to_json(searchindex)
+
+
+class SessionResource(ResourceMixin, Resource):
+    """Resource to get sessions."""
+
+    @login_required
+    def get(self, sketch_id, timeline_index):
+        """Handles GET request to the resource.
+
+        Returns:
+            A list of objects representing sessions.
+        """
+        MAX_IDS = 10000 #more than the number of sessions we expect to return
+        MAX_SESSIONS = 100
+
+        session_types = ['all_events', 'web_activity', 'logon_session',
+                         'ssh_bruteforce_session', 'ssh_session']
+        sessions = []
+        isTruncated = False
+
+        #check the timeline belongs to the sketch
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        sketch_indices = {t.searchindex.index_name for t in sketch.timelines
+                          if t.searchindex.index_name == timeline_index}
+
+        id_agg_spec = {
+            'aggregations': {
+                'term_count': {
+                    'terms': {
+                        'field': '',
+                        'size': MAX_IDS
+                    }
+                }
+            }
+        }
+
+        ts_agg_spec = {
+            'aggregations': {
+                'timestamp_range': {
+                    'filter': {
+                        'bool': {
+                            'must': [{
+                                'query_string': {
+                                    'query': ''
+                                }
+                            }]
+                        }
+                    },
+                    'aggregations': {
+                        'min_timestamp': {
+                            'min': {
+                                'field': 'timestamp'
+                            }
+                        },
+                        'max_timestamp': {
+                            'max': {
+                                'field': 'timestamp'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        id_terms = id_agg_spec['aggregations']['term_count']['terms']
+        ts_filter = ts_agg_spec['aggregations']['timestamp_range']['filter']
+        ts_query_string = ts_filter['bool']['must'][0]['query_string']
+
+        for session_type in session_types:
+            id_terms['field'] = 'session_id.{}.keyword'.format(session_type)
+            # pylint: disable=unexpected-keyword-arg
+            id_agg = self.datastore.client.search(index=list(sketch_indices),
+                                                  body=id_agg_spec,
+                                                  size=0)
+            buckets = id_agg['aggregations']['term_count']['buckets']
+            session_count = 0
+
+            for bucket in buckets:
+                if session_count == MAX_SESSIONS:
+                    isTruncated = True
+                    break
+                session_count += 1
+
+                session_id = bucket['key']
+                ts_query_string['query'] = 'session_id.{}:{}'.format(
+                    session_type,
+                    session_id)
+                ts_agg = self.datastore.client.search(
+                    index=list(sketch_indices),
+                    body=ts_agg_spec,
+                    size=0)
+                start_timestamp = int(ts_agg['aggregations']
+                                      ['timestamp_range']['min_timestamp']
+                                      ['value']) / 1000
+                end_timestamp = int(ts_agg['aggregations']
+                                    ['timestamp_range']['max_timestamp']
+                                    ['value']) / 1000
+
+                sessions.append({'session_type': session_type,
+                                 'session_id': session_id,
+                                 'start_timestamp': start_timestamp,
+                                 'end_timestamp': end_timestamp})
+
+        sessions.append({'truncated': isTruncated})
+        return sessions

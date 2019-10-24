@@ -77,6 +77,14 @@ export default {
     }
     return RestApiClient.get('/sketches/' + sketchId + '/event/', params)
   },
+  saveEventAnnotation (sketchId, annotationType, annotation, events) {
+    let formData = {
+      annotation: annotation,
+      annotation_type: annotationType,
+      events: events,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/event/annotate/', formData)
+  },
   // Stories
   getStoryList (sketchId) {
     return RestApiClient.get('sketches/' + sketchId + '/stories/')
@@ -132,5 +140,8 @@ export default {
       }
     }
     return RestApiClient.post('/upload/', formData, config)
+  },
+  getSessions (sketchId, timelineIndex) {
+    return RestApiClient.get('/sketches/' + sketchId + '/explore/sessions/' + timelineIndex)
   }
 }

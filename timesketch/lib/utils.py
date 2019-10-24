@@ -24,6 +24,8 @@ import random
 import smtplib
 import sys
 import time
+import codecs
+import six
 
 from dateutil import parser
 from flask import current_app
@@ -58,7 +60,11 @@ def read_and_validate_csv(path, delimiter=','):
     # Columns that must be present in the CSV file
     mandatory_fields = ['message', 'datetime', 'timestamp_desc']
 
-    with open(path, 'r') as fh:
+    # Ensures delimiter is a string
+    if not isinstance(delimiter, six.text_type):
+        delimiter = codecs.decode(delimiter, 'utf8')
+
+    with open(path, 'r', encoding='utf-8') as fh:
         reader = csv.DictReader(fh, delimiter=delimiter)
         csv_header = reader.fieldnames
         missing_fields = []

@@ -19,6 +19,7 @@ from .resources import AggregationListResource
 from .resources import AggregationLegacyResource
 from .resources import AggregationExploreResource
 from .resources import AggregationResource
+from .resources import AnalyzerRunResource
 from .resources import ExploreResource
 from .resources import EventResource
 from .resources import EventAnnotationResource
@@ -42,6 +43,7 @@ from .resources import TimelineResource
 from .resources import TimelineListResource
 from .resources import SearchIndexListResource
 from .resources import SearchIndexResource
+from .resources import SessionResource
 
 
 # Disable error for long line. Readability is more important than line
@@ -50,6 +52,7 @@ from .resources import SearchIndexResource
 API_ROUTES = [
     (SketchListResource, '/sketches/'),
     (SketchResource, '/sketches/<int:sketch_id>/'),
+    (AnalyzerRunResource, '/sketches/<int:sketch_id>/analyzer/'),
     (AggregationListResource, '/sketches/<int:sketch_id>/aggregation/'),
     (AggregationLegacyResource, '/sketches/<int:sketch_id>/aggregation/legacy/'),
     (AggregationExploreResource, '/sketches/<int:sketch_id>/aggregation/explore/'),
@@ -75,4 +78,5 @@ API_ROUTES = [
     (GraphResource, '/sketches/<int:sketch_id>/explore/graph/'),
     (GraphViewListResource, '/sketches/<int:sketch_id>/explore/graph/views/'),
     (GraphViewResource, '/sketches/<int:sketch_id>/explore/graph/views/<int:view_id>/'),
+    (SessionResource, '/sketches/<int:sketch_id>/explore/sessions/<string:timeline_index>')
 ]
