@@ -554,7 +554,7 @@ class Sketch(BaseResource):
             streamer.set_sketch(self)
             streamer.set_timeline_name(timeline_name)
             streamer.set_timestamp_description('LOG')
-            streamer.set_format_string(format_message_string)
+            streamer.set_message_format_string(format_message_string)
 
             streamer.add_data_frame(data_frame)
             response = streamer.response
@@ -1448,8 +1448,10 @@ class UploadStreamer(object):
 
         if response.status_code not in HTTP_STATUS_CODE_20X:
             raise RuntimeError(
-                'Error uploading data: {0:s}, file: {1:s}, index {2:s}'.format(
-                    response.reason, file_name, self._index))
+                'Error uploading data: [{0:d}] {1:s} {2:s}, file: {3:s}, '
+                'index {4:s}'.format(
+                    response.status_code, response.reason, response.text,
+                    file_name, self._index))
 
         response_dict = response.json()
         self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
@@ -1575,7 +1577,7 @@ class UploadStreamer(object):
         self._sketch = sketch
         self._resource_url = '{0:s}/upload/'.format(sketch.api.api_root)
 
-    def set_format_string(self, format_string):
+    def set_message_format_string(self, format_string):
         """Set the message format string."""
         self._format_string = format_string
 
@@ -1607,5 +1609,3 @@ class UploadStreamer(object):
     def __exit__(self, exception_type, exception_value, traceback):
         """Make it possible to use "with" statement."""
         self.flush(end_stream=True)
-        if exception_type:
-            print('TYPE {}'.format(exception_type))
