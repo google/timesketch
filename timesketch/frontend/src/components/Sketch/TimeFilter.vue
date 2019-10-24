@@ -14,7 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-    <div class="field is-horizontal" style="max-width: 700px">
+
+  <div>
+
+    <div class="field is-horizontal">
       <div class="field-body">
 
         <div class="field">
@@ -30,7 +33,10 @@ limitations under the License.
             <input class="input" v-model="endDateTime" type="text" placeholder="2019-07-07T10:00:01">
           </p>
         </div>
+      </div>
+    </div>
 
+    <div class="field is-horizontal">
         <div class="field is-grouped">
           <p class="control">
             <a :disabled="!startDateTime" class="button is-light" v-on:click="formatDateTime">
@@ -44,9 +50,9 @@ limitations under the License.
             <button :disabled="!(startDateTime && endDateTime)" class="button is-success is-outlined" v-on:click="submit">+ Add time range</button>
           </p>
         </div>
-
-      </div>
     </div>
+
+  </div>
 </template>
 
 <script>

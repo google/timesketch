@@ -14,11 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div class="tile is-ancestor">
-    <div class="tile is-parent">
-      <div class="tile is-child card">
-        <div class="card-content">
-          <div class="table-container">
           <table class="table is-bordered" style="width:100%;table-layout: fixed;">
             <tbody>
               <tr v-for="(item, key) in fullEventFiltered" :key="key">
@@ -35,18 +30,6 @@ limitations under the License.
               </tr>
             </tbody>
           </table>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="tile is-parent is-4">
-      <div class="tile is-child card">
-        <div class="card-content">
-          Comment
-        </div>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script>
