@@ -294,7 +294,9 @@ export default {
           'type': 'datetime_range',
           'operator': 'must'
         }
+        // TODO: Use chips instead
         this.currentQueryString = '* OR ' + '_id:' + this.contextEvent._id
+
         this.currentQueryFilter.chips = [startChip, endChip]
         this.currentQueryFilter.indices = [this.contextEvent._index]
         this.currentQueryFilter.size = numContextEvents
