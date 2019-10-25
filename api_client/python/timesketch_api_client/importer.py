@@ -107,7 +107,13 @@ class ImportStreamer(object):
         self._data_lines = []
 
     def _upload_data(self, file_name, end_stream):
-        """Upload data TODO ADD DOCSTRING."""
+        """Upload data to Timesketch.
+
+        Args:
+            file_name: a full path to the file that is about to be uploaded.
+            end_stream: boolean indicating whether this is the last chunk of
+                the stream.
+        """
         files = {
             'file': open(file_name, 'rb')
         }
@@ -205,17 +211,41 @@ class ImportStreamer(object):
         self._data_lines.append(entry)
         self._count += 1
 
-    def add_file(self, filepath):
-        """Add a CSV, JSONL or a PLASO file to the buffer."""
+    def add_file(self, filepath, delimiter=','):
+        """Add a CSV, JSONL or a PLASO file to the buffer.
+
+        Args:
+            filepath: the path to the file to add.
+            delimiter: if this is a CSV file then a delimiter can be defined.
+
+        Raises:
+            TypeError: if the entry does not fulfill requirements.
+        """
         self._ready()
 
         if not os.path.isfile(filepath):
             raise TypeError('Entry object needs to be a file that exists.')
 
-        # TODO: Implement a buffer and split file up in chunks if it is larger
-        # than the threshold.
-        # TODO: Add a fix to files, to add fields.
-        self._sketch.upload(self._timeline_name, filepath)
+        file_ending = filepath.lower().split('.')[-1]
+        if file_ending == 'csv':
+            data_frame = pandas.read_csv(filepath, delimiter=delimiter)
+            self.add_data_frame(data_frame)
+        elif file_ending == 'plaso':
+            self._sketch.upload(self._timeline_name, filepath)
+        elif file_ending == 'jsonl':
+            data_frame = None
+            with open(filepath, 'r') as fh:
+                lines = [json.loads(x) for x in fh]
+                data_frame= pandas.DataFrame(lines)
+            if data_frame is None:
+                raise TypeError('Unable to parse the JSON file.')
+            if data_frame.empty:
+                raise TypeError('Is the JSON file empty?')
+
+            self.add_data_frame(data_frame)
+
+        raise TypeError(
+            'File needs to have a file extension of: .csv, .jsonl or .plaso')
 
     def add_json(self, json_entry, column_names=None):
         """Add an entry that is in a JSON format.
