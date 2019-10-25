@@ -150,7 +150,6 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
         Celery chain with indexing task (or single indexing task) and analyzer
         task group.
     """
-    print('INDEX PIPELINE')
     index_task_class = _get_index_task_class(file_extension)
     index_analyzer_chain = _get_index_analyzers()
     sketch_analyzer_chain = None
@@ -160,10 +159,7 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
         file_path, timeline_name, index_name, file_extension)
 
     if only_index:
-        print('ONLY INDEXING, NO ANALYZERS')
         return index_task
-    print('We are about to get to the analyzers...')
-    print('INDEX: {} - ID {}'.format(index_name, searchindex.id))
 
     if sketch_id:
         sketch_analyzer_chain = build_sketch_analysis_pipeline(
@@ -211,7 +207,6 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
     Returns:
         Celery group with analysis tasks or None if no analyzers are enabled.
     """
-    print('BUILDING SKETCH PIPELINE FROM INDEX: {}'.format(searchindex_id))
     tasks = []
 
     if not analyzer_names:
@@ -475,7 +470,7 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
     # Reason for the broad exception catch is that we want to capture
     # all possible errors and exit the task.
     try:
-        es.create_index(index_name=index_name, doc_type=event_type)
+        items = es.create_index(index_name=index_name, doc_type=event_type)
         for event in read_and_validate(source_file_path):
             es.import_event(index_name, event_type, event)
         # Import the remaining events

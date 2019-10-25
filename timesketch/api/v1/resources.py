@@ -1379,7 +1379,6 @@ class AnalyzerPipelineResource(ResourceMixin, Resource):
         Returns:
             A string with information on pipeline.
         """
-        print('RUNNING ANALYZERS')
         form = AnalyzerPipelineForm()
         if not form.validate_on_submit():
             abort(
@@ -1408,7 +1407,7 @@ class AnalyzerPipelineResource(ResourceMixin, Resource):
         pipeline = tasks.build_sketch_analysis_pipeline(
             sketch_id, searchindex.id, user_id=None)
 
-        if sketch_analyzer_group:
+        if pipeline:
             pipeline = (tasks.run_sketch_init.s(
                 [index_name]) | pipeline)
             pipeline.apply_async()
@@ -1447,7 +1446,6 @@ class UploadFileResource(ResourceMixin, Resource):
         if sketch_id:
             sketch = Sketch.query.get_with_acl(sketch_id)
 
-        print('WE BE DOING HTE UPLOADS')
         # We do not need a human readable filename or
         # datastore index name, so we use UUIDs here.
         filename = uuid.uuid4().hex
@@ -1455,7 +1453,6 @@ class UploadFileResource(ResourceMixin, Resource):
             filename = codecs.decode(filename, 'utf-8')
 
         index_name = form.index_name.data or uuid.uuid4().hex
-        print('Index name is: {} [{}]'.format(index_name, form.index_name.data))
         if not isinstance(index_name, six.text_type):
             index_name = codecs.decode(index_name, 'utf-8')
 
@@ -1472,9 +1469,8 @@ class UploadFileResource(ResourceMixin, Resource):
         timeline = None
 
         if searchindex:
-            print('INDEX ALREADY EXISTS, NOT CREATING A NEW ONE')
+            searchindex.set_status('processing')
         else:
-            print('NEED TO CREATE AN INDEX...')
             # Create the search index in the Timesketch database
             searchindex = SearchIndex.get_or_create(
                 name=timeline_name,
@@ -1502,7 +1498,6 @@ class UploadFileResource(ResourceMixin, Resource):
                 db_session.commit()
 
         stream = form.enable_stream.data
-        print('Stream data: {}'.format(stream))
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
         from timesketch.lib import tasks
@@ -2015,10 +2010,15 @@ class TimelineResource(ResourceMixin, Resource):
 
         # Check that this timeline belongs to the sketch
         if timeline.sketch_id != sketch.id:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                'The sketch ID ({0:d}) does not match with the timeline '
-                'sketch ID ({1:d})'.format(sketch.id, timeline.sketch_id))
+            if not timeline:
+                msg = 'No timeline found with this ID.'
+            elif not sketch:
+                msg = 'No sketch found with this ID.'
+            else:
+                msg = (
+                    'The sketch ID ({0:d}) does not match with the timeline '
+                    'sketch ID ({1:d})'.format(sketch.id, timeline.sketch_id))
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
         if not sketch.has_permission(user=current_user, permission='write'):
             abort(
