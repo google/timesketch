@@ -19,6 +19,7 @@ import tempfile
 import uuid
 
 import pandas
+from . import client
 from .definitions import HTTP_STATUS_CODE_20X
 
 
@@ -27,7 +28,7 @@ def format_data_frame_row(row, format_message_string):
     return format_message_string.format(**row)
 
 
-class UploadStreamer(object):
+class ImportStreamer(object):
     """Upload object used to stream results to Timesketch."""
 
     # The number of entries before automatically flushing
@@ -96,14 +97,8 @@ class UploadStreamer(object):
         Raises:
             ValueError: if the streamer has not yet been fully configured.
         """
-        if self._format_string is None:
-            raise ValueError('Format string has not yet been set.')
-
         if self._sketch is None:
             raise ValueError('Sketch has not yet been set.')
-
-        if self._timestamp_desc is None:
-            raise ValueError('Timestamp description has not yet been set.')
 
     def _reset(self):
         """Reset the buffer."""
@@ -195,7 +190,11 @@ class UploadStreamer(object):
 
         if not os.path.isfile(filepath):
             raise TypeError('Entry object needs to be a file that exists.')
-        # TODO: implement.
+
+        # TODO: Implement a buffer and split file up in chunks if it is larger
+        # than the threshold.
+        # TODO: Add a fix to files, to add fields.
+        self._sketch.upload(self._timeline_name, filepath)
 
     def add_dict(self, entry):
         """Add an entry into the buffer.
@@ -216,6 +215,20 @@ class UploadStreamer(object):
 
         self._data_lines.append(entry)
         self._count += 1
+
+    def close(self):
+        """Close the streamer."""
+        try:
+            self._ready()
+        except ValueError:
+            return
+
+        pipe_resource = '{0:s}/sketches/{1:d}/analyzer/auto_run/'.format(
+            self._sketch.api.api_root, self._sketch.id)
+        data = {
+            'index_name': self._index
+        }
+        _ = self._sketch.api.session.post(pipe_resource, data=data)
 
     def flush(self, end_stream=True):
         """Flushes the buffer and uploads to timesketch.
@@ -271,7 +284,7 @@ class UploadStreamer(object):
     @property
     def timeline(self):
         """Returns a timeline object."""
-        timeline_obj = Timeline(
+        timeline_obj = client.Timeline(
             timeline_id=self._timeline_id,
             sketch_id=self._sketch.id,
             api=self._sketch.api,
@@ -288,15 +301,4 @@ class UploadStreamer(object):
     def __exit__(self, exception_type, exception_value, traceback):
         """Make it possible to use "with" statement."""
         self.flush(end_stream=True)
-
-        try:
-            self._ready()
-        except ValueError:
-            return
-
-        pipe_resource = '{0:s}/sketches/{1:d}/analyzer/auto_run/'.format(
-            self._sketch.api.api_root, self._sketch.id)
-        data = {
-            'index_name': self._index
-        }
-        _ = self._sketch.api.session.post(pipe_resource, data=data)
+        self.close()

@@ -1402,7 +1402,6 @@ class AnalyzerPipelineResource(ResourceMixin, Resource):
                 'There is no searchindex for index name: {0:s}'.format(
                     index_name))
 
-
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
         from timesketch.lib import tasks
@@ -1448,6 +1447,7 @@ class UploadFileResource(ResourceMixin, Resource):
         if sketch_id:
             sketch = Sketch.query.get_with_acl(sketch_id)
 
+        print('WE BE DOING HTE UPLOADS')
         # We do not need a human readable filename or
         # datastore index name, so we use UUIDs here.
         filename = uuid.uuid4().hex

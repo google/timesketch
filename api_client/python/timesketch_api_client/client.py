@@ -14,9 +14,7 @@
 """Timesketch API client."""
 from __future__ import unicode_literals
 
-import os
 import json
-import tempfile
 import uuid
 
 # pylint: disable=wrong-import-order
@@ -28,6 +26,7 @@ from requests.exceptions import ConnectionError
 import altair
 import pandas
 from .definitions import HTTP_STATUS_CODE_20X
+from . import importer
 
 
 class TimesketchApi(object):
@@ -545,7 +544,7 @@ class Sketch(BaseResource):
             format_message_string = ' '.join(string_items)
 
         response = None
-        with UploadStreamer() as streamer:
+        with importer.ImportStreamer() as streamer:
             streamer.set_sketch(self)
             streamer.set_timeline_name(timeline_name)
             streamer.set_timestamp_description('LOG')
