@@ -211,6 +211,34 @@ class ImportStreamer(object):
         self._data_lines.append(entry)
         self._count += 1
 
+    def add_excel_file(self, filepath, sheet_name=0):
+        """Add a Microsoft Excel sheet to importer.
+
+        Args:
+            filepath: full file path to a XLS or XLSX file to add to the
+                importer.
+            sheet_name: str, int, list, or None, default 0.  Strings are used
+                for sheet names. Integers are used in zero-indexed sheet
+                positions. Lists of strings/integers are used to request
+                multiple sheets. Specify None to get all sheets.
+
+        Raises:
+            TypeError: if the entry is not an Excel sheet.
+        """
+        self._ready()
+        if not os.path.isfile(filepath):
+            raise TypeError('File path is not a real file.')
+
+        file_ending = filepath.lower().split('.')[-1]
+        if file_ending not in ['xls', 'xlsx']:
+            raise TypeError('File name needs to end with xls or xlsx')
+
+        data_frame = pandas.read_excel(filepath, sheet_name=sheet_name)
+        if data_frame.empty:
+            raise TypeError('Not able to read any rows from sheet.')
+
+        self.add_data_frame(data_frame)
+
     def add_file(self, filepath, delimiter=','):
         """Add a CSV, JSONL or a PLASO file to the buffer.
 

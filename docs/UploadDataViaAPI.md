@@ -32,6 +32,7 @@ The importer will take as an input either:
  + CSV or JSONL.
  + JSON (one JSON per entry)
  + Python dict
+ + Microsoft Excel spreadsheet (XLS or XLSX file).
 
 The best way to use the streamer is to by using the the `with` statement in
 Python, which returns back an object. Before you can use the streamer you'll
@@ -174,4 +175,27 @@ Let's look at an example:
 
 ```
 #TODO: Add an example here.
+```
+
+
+## Excel Sheet
+
+```
+from timesketch_api_client import client
+from timesketch_api_client import importer
+
+...
+def action():
+
+  ts = client.TimesketchApi(SERVER_LOCATION, USERNAME, PASSWORD)
+  my_sketch = ts.get_sketch(SKETCH_ID)
+
+  with importer.ImportStreamer() as streamer:
+    streamer.set_sketch(my_sketch)
+    streamer.set_timestamp_description('Web Log')
+    streamer.set_timeline_name('excel_import')
+    streamer.set_message_format_string(
+        '{What:s} resulted in {Results:s}, pointed from {URL:s}')
+
+    streamer.add_excel('~/Downloads/SomeRandomDocument.xlsx')
 ```
