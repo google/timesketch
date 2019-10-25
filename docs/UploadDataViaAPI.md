@@ -197,5 +197,5 @@ def action():
     streamer.set_message_format_string(
         '{What:s} resulted in {Results:s}, pointed from {URL:s}')
 
-    streamer.add_excel('~/Downloads/SomeRandomDocument.xlsx')
+    streamer.add_excel_file('~/Downloads/SomeRandomDocument.xlsx')
 ```
