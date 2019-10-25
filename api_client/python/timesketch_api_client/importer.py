@@ -14,6 +14,7 @@
 """Timesketch data importer."""
 from __future__ import unicode_literals
 
+import json
 import os
 import tempfile
 import uuid
@@ -184,18 +185,6 @@ class ImportStreamer(object):
             end_stream = bool(index == chunks - 1)
             self._upload_data(csv_file.name, end_stream=end_stream)
 
-    def add_file(self, filepath):
-        """Add a CSV, JSONL or a PLASO file to the buffer."""
-        self._ready()
-
-        if not os.path.isfile(filepath):
-            raise TypeError('Entry object needs to be a file that exists.')
-
-        # TODO: Implement a buffer and split file up in chunks if it is larger
-        # than the threshold.
-        # TODO: Add a fix to files, to add fields.
-        self._sketch.upload(self._timeline_name, filepath)
-
     def add_dict(self, entry):
         """Add an entry into the buffer.
 
@@ -215,6 +204,54 @@ class ImportStreamer(object):
 
         self._data_lines.append(entry)
         self._count += 1
+
+    def add_file(self, filepath):
+        """Add a CSV, JSONL or a PLASO file to the buffer."""
+        self._ready()
+
+        if not os.path.isfile(filepath):
+            raise TypeError('Entry object needs to be a file that exists.')
+
+        # TODO: Implement a buffer and split file up in chunks if it is larger
+        # than the threshold.
+        # TODO: Add a fix to files, to add fields.
+        self._sketch.upload(self._timeline_name, filepath)
+
+    def add_json(self, json_entry, column_names=None):
+        """Add an entry that is in a JSON format.
+
+        Args:
+            json_entry: a single entry encoded in JSON.
+            column_names: a list of column names if the JSON object
+                is a list as an opposed to a dict.
+
+        Raises:
+            TypeError: if the entry is not JSON or in the wrong JSON format.
+        """
+        try:
+            json_obj = json.loads(json_entry)
+        except json.JSONDecodeError as e:
+            raise TypeError('Data not as JSON, error: {0!s}'.format(e))
+
+        json_dict = {}
+        if isinstance(json_obj, (list, tuple)):
+            if not column_names:
+                raise TypeError(
+                    'Data is a list, but there are no defined column names.')
+            if not len(json_obj) != len(column_names):
+                raise TypeError(
+                    'The number of columns ({0:d}) does not match the number '
+                    'of columns in the JSON list ({1:d})'.format(
+                        len(column_names), len(json_obj)))
+            json_dict = dict(zip(column_names, json_obj))
+        elif isinstance(json_obj, dict):
+            json_dict = json_obj
+        else:
+            raise TypeError(
+                'The JSON object needs to be either a dict or a list with '
+                'defined column names.')
+
+        self.add_dict(json_dict)
 
     def close(self):
         """Close the streamer."""
