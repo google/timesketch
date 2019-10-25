@@ -1393,13 +1393,26 @@ class AnalyzerPipelineResource(ResourceMixin, Resource):
                 'User does not have write access to sketch')
 
         index_name = form.index_name.data
+        searchindex = SearchIndex.query.filter_by(
+            user=current_user,
+            index_name=index_name).first()
+        if not searchindex:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'There is no searchindex for index name: {0:s}'.format(
+                    index_name))
+
 
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
         from timesketch.lib import tasks
         pipeline = tasks.build_sketch_analysis_pipeline(
-            sketch_id, index_name, user_id=None)
-        pipeline.apply_async()
+            sketch_id, searchindex.id, user_id=None)
+
+        if sketch_analyzer_group:
+            pipeline = (tasks.run_sketch_init.s(
+                [index_name]) | pipeline)
+            pipeline.apply_async()
 
 
 class UploadFileResource(ResourceMixin, Resource):
