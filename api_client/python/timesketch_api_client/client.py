@@ -813,14 +813,14 @@ class Sketch(BaseResource):
              a json data of the query.
         """
         form_data = {
-            u'annotation': comment_text,
-            u'annotation_type': 'comment',
-            u'events': {
+            'annotation': comment_text,
+            'annotation_type': 'comment',
+            'events': {
                 '_id': event_id,
                 '_index': index,
                 '_type': 'generic_event'}
         }
-        resource_url = u'{0:s}/sketches/{1:d}/event/annotate/'.format(
+        resource_url = '{0:s}/sketches/{1:d}/event/annotate/'.format(
             self.api.api_root, self.id)
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
@@ -1269,8 +1269,8 @@ class Timeline(BaseResource):
             timeline_id: The primary key ID of the timeline.
             sketch_id: ID of a sketch.
             api: Instance of a TimesketchApi object.
-            name: Name of the timelne (optional)
-            searchindex: The Elasticsearch index name (optional)i
+            name: Name of the timeline (optional)
+            searchindex: The Elasticsearch index name (optional)
         """
         self.id = timeline_id
         self._name = name
