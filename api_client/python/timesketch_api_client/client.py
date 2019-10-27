@@ -395,7 +395,7 @@ class Sketch(BaseResource):
         """
         data = self.lazyload_data()
         aggregations = []
-        for aggregation in data['meta']['saved_aggregations']:
+        for aggregation in data['aggregations']:
             aggregation_obj = Aggregation(
                 sketch=self, api=self.api)
             aggregation_obj.from_store(aggregation_id=aggregation['id'])
@@ -413,7 +413,7 @@ class Sketch(BaseResource):
             otherwise None object.
         """
         sketch = self.lazyload_data()
-        for aggregation in sketch['meta']['saved_aggregations']:
+        for aggregation in sketch['aggregations']:
             if aggregation['id'] != aggregation_id:
                 continue
             aggregation_obj = Aggregation(sketch=self, api=self.api)
@@ -637,6 +637,68 @@ class Sketch(BaseResource):
 
         return response_json
 
+    def run_analyzer(
+            self, analyzer_name, analyzer_kwargs=None, timeline_id=None,
+            timeline_name=None):
+        """Run an analyzer on a timeline.
+
+        Args:
+            analyzer_name: the name of the analyzer class to run against the
+                timeline.
+            analyzer_kwargs: optional dict with parameters for the analyzer.
+                This is optional and just for those analyzers that can accept
+                further parameters.
+            timeline_id: the data store index for the timeline. This is optional
+                and only required if timeline_name is not set.
+            timeline_name: the name of the timeline in the timesketch UI. This
+                is optional and only required if timeline_id is not set. If
+                there are more than a single timeline with the same name a
+                timeline_id is required.
+
+        Returns:
+            A string with the results of the API call to run the analyzer.
+        """
+        if not timeline_id and not timeline_name:
+            return (
+                'Unable to run analyzer, need to define either '
+                'timeline ID or name')
+
+        resource_url = '{0:s}/sketches/{1:d}/analyzer/'.format(
+            self.api.api_root, self.id)
+
+        if timeline_name:
+            sketch = self.lazyload_data()
+            timelines = []
+            for timeline in sketch['objects'][0]['timelines']:
+                if timeline_name.lower() == timeline.get('name', '').lower():
+                    index = timeline.get('searchindex', {})
+                    timelines.append(index.get('index_name', ''))
+
+            if not timelines:
+                return 'No timelines with the name: {0:s} were found'.format(
+                    timeline_name)
+
+            if len(timelines) != 1:
+                return (
+                    'There are {0:d} timelines defined in the sketch with '
+                    'this name, please use a unique name or a '
+                    'timeline ID').format(len(timelines))
+
+            timeline_id = timelines[0]
+
+        data = {
+            'timeline_id': timeline_id,
+            'analyzer_name': analyzer_name,
+            'analyzer_kwargs': analyzer_kwargs,
+        }
+
+        response = self.api.session.post(resource_url, json=data)
+
+        if response.status_code == 200:
+            return response.json()
+
+        return '[{0:d}] {1:s} {2:s}'.format(
+            response.status_code, response.reason, response.text)
 
     def aggregate(self, aggregate_dsl):
         """Run an aggregation request on the sketch.
