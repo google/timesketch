@@ -13,6 +13,8 @@
 # limitations under the License.
 """Tests for the Neo4j datastore."""
 
+from __future__ import unicode_literals
+
 import mock
 
 from timesketch.lib.datastores.neo4j import Neo4jDataStore
@@ -20,96 +22,96 @@ from timesketch.lib.testlib import MockGraphDatabase
 from timesketch.lib.testlib import BaseTest
 
 
-@mock.patch(u'timesketch.lib.datastores.neo4j.GraphDatabase', MockGraphDatabase)
+@mock.patch('timesketch.lib.datastores.neo4j.GraphDatabase', MockGraphDatabase)
 class Neo4jTest(BaseTest):
     """Test Neo4j datastore."""
 
     def test_neo4j_output(self):
         """Test Neo4j output format."""
         expected_output = {
-            u'graph': [{
-                u'nodes': [{
-                    u'id': u'1',
-                    u'labels': [u'User'],
-                    u'properties': {
-                        u'username': u'test',
-                        u'uid': u'123456'
+            'graph': [{
+                'nodes': [{
+                    'id': '1',
+                    'labels': ['User'],
+                    'properties': {
+                        'username': 'test',
+                        'uid': '123456'
                     }
                 }, {
-                    u'id': u'2',
-                    u'labels': [u'Machine'],
-                    u'properties': {
-                        u'hostname': u'test'
+                    'id': '2',
+                    'labels': ['Machine'],
+                    'properties': {
+                        'hostname': 'test'
                     }
                 }],
-                u'relationships': [{
-                    u'endNode': u'2',
-                    u'id': u'3',
-                    u'startNode': u'1',
-                    u'properties': {
-                        u'method': u'Network'
+                'relationships': [{
+                    'endNode': '2',
+                    'id': '3',
+                    'startNode': '1',
+                    'properties': {
+                        'method': 'Network'
                     },
-                    u'type': u'ACCESS'
+                    'type': 'ACCESS'
                 }]
             }],
-            u'rows':
+            'rows':
             None,
-            u'stats': {}
+            'stats': {}
         }
-        datastore = Neo4jDataStore(username=u'test', password=u'test')
-        formatted_response = datastore.query(query=u'')
+        datastore = Neo4jDataStore(username='test', password='test')
+        formatted_response = datastore.query(query='')
         self.assertIsInstance(formatted_response, dict)
         self.assertDictEqual(formatted_response, expected_output)
 
     def test_cytoscape_output(self):
         """Test Cytoscape output format."""
         expected_output = {
-            u'graph': {
-                u'nodes': [{
-                    u'data': {
-                        u'username': u'test',
-                        u'type': u'User',
-                        u'id': u'node1',
-                        u'uid': u'123456',
+            'graph': {
+                'nodes': [{
+                    'data': {
+                        'username': 'test',
+                        'type': 'User',
+                        'id': 'node1',
+                        'uid': '123456',
                     }
                 }, {
-                    u'data': {
-                        u'hostname': u'test',
-                        u'type': u'Machine',
-                        u'id': u'node2',
+                    'data': {
+                        'hostname': 'test',
+                        'type': 'Machine',
+                        'id': 'node2',
                     }
                 }],
-                u'edges': [{
-                    u'data': {
-                        u'target': u'node2',
-                        u'method': u'Network',
-                        u'source': u'node1',
-                        u'type': u'ACCESS',
-                        u'id': u'edge3',
+                'edges': [{
+                    'data': {
+                        'target': 'node2',
+                        'method': 'Network',
+                        'source': 'node1',
+                        'type': 'ACCESS',
+                        'id': 'edge3',
                     }
                 }],
             },
-            u'rows': None,
-            u'stats': {},
+            'rows': None,
+            'stats': {},
         }
-        datastore = Neo4jDataStore(username=u'test', password=u'test')
+        datastore = Neo4jDataStore(username='test', password='test')
         formatted_response = datastore.query(
-            query=u'', output_format=u'cytoscape')
+            query='', output_format='cytoscape')
         self.assertIsInstance(formatted_response, dict)
         self.assertDictEqual(formatted_response, expected_output)
 
     def test_cytoscape_output_empty_graph(self):
         """Test Cytoscape output format for and empty graph."""
         expected_output = {
-            u'graph': {
-                u'nodes': [],
-                u'edges': [],
+            'graph': {
+                'nodes': [],
+                'edges': [],
             },
-            u'rows': None,
-            u'stats': {},
+            'rows': None,
+            'stats': {},
         }
-        datastore = Neo4jDataStore(username=u'test', password=u'test')
+        datastore = Neo4jDataStore(username='test', password='test')
         formatted_response = datastore.query(
-            query=u'empty', output_format=u'cytoscape')
+            query='empty', output_format='cytoscape')
         self.assertIsInstance(formatted_response, dict)
         self.assertDictEqual(formatted_response, expected_output)

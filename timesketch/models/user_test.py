@@ -13,6 +13,8 @@
 # limitations under the License.
 """Tests for the user model."""
 
+from __future__ import unicode_literals
+
 from timesketch.lib.testlib import ModelBaseTest
 from timesketch.models.user import Group
 from timesketch.models.user import User
@@ -26,21 +28,20 @@ class UserModelTest(ModelBaseTest):
         Test that the test user has the expected data stored in the
         database.
         """
-        expected_result = frozenset([(u'name', u'test1'), (u'username',
-                                                           u'test1')])
+        expected_result = frozenset([('name', 'test1'), ('username', 'test1')])
         self._test_db_object(expected_result=expected_result, model_cls=User)
 
     def test_set_password(self):
         """Test setting a password for the user."""
-        self.assertIsNone(self.user1.set_password(u'test', rounds=4))
+        self.assertIsNone(self.user1.set_password('test', rounds=4))
 
     def test_valid_password(self):
         """Test checking a valid password."""
-        self.assertTrue(self.user1.check_password(u'test'))
+        self.assertTrue(self.user1.check_password('test'))
 
     def test_invalid_password(self):
         """Test checking a invalid password."""
-        self.assertFalse(self.user1.check_password(u'invalid password'))
+        self.assertFalse(self.user1.check_password('invalid password'))
 
 
 class GroupModelTest(ModelBaseTest):
@@ -51,9 +52,9 @@ class GroupModelTest(ModelBaseTest):
         Test that the test group has the expected data stored in the
         database.
         """
-        expected_result = frozenset([(u'name', u'test_group1'),
-                                     (u'display_name', u'test_group1'),
-                                     (u'description', u'test_group1')])
+        expected_result = frozenset([('name', 'test_group1'),
+                                     ('display_name', 'test_group1'),
+                                     ('description', 'test_group1')])
         self._test_db_object(expected_result=expected_result, model_cls=Group)
 
     def test_group_membership(self):

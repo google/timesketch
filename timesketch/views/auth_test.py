@@ -13,6 +13,8 @@
 # limitations under the License.
 """Tests for the auth views."""
 
+from __future__ import unicode_literals
+
 from flask import current_app
 from flask_login import current_user
 
@@ -25,36 +27,36 @@ class AuthViewTest(BaseTest):
 
     def test_login_view_unauthenticated(self):
         """Test the login view handler with an unauthenticated session."""
-        response = self.client.get(u'/login/')
+        response = self.client.get('/login/')
         self.assert200(response)
-        self.assert_template_used(u'user/login.html')
+        self.assert_template_used('login.html')
 
     def test_login_view_form_authenticated(self):
         """Test the login view handler with an authenticated session."""
         self.login()
-        response = self.client.get(u'/login/')
-        self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        response = self.client.get('/login/')
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
     def test_login_view_sso_authenticated(self):
         """Test the login view handler with an SSO authenticated session."""
-        current_app.config[u'SSO_ENABLED'] = True
-        current_app.config[u'SSO_GROUP_ENV_VARIABLE'] = u'SSO_GROUP'
-        current_app.config[u'SSO_GROUP_SEPARATOR'] = u';'
-        current_app.config[u'SSO_GROUP_NOT_MEMBER_SIGN'] = u'-'
+        current_app.config['SSO_ENABLED'] = True
+        current_app.config['SSO_GROUP_ENV_VARIABLE'] = 'SSO_GROUP'
+        current_app.config['SSO_GROUP_SEPARATOR'] = ';'
+        current_app.config['SSO_GROUP_NOT_MEMBER_SIGN'] = '-'
         with self.client:
             response = self.client.get(
-                u'/login/',
+                '/login/',
                 environ_base={
-                    u'REMOTE_USER': u'test1',
-                    u'SSO_GROUP': u'test_group1;-test_group2'
+                    'REMOTE_USER': 'test1',
+                    'SSO_GROUP': 'test_group1;-test_group2'
                 })
-            self.assertEqual(current_user.username, u'test1')
+            self.assertEqual(current_user.username, 'test1')
             self.assertIn(self.group1, current_user.groups)
             self.assertNotIn(self.group2, current_user.groups)
-            self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
     def test_logout_view(self):
         """Test the logout view handler."""
         self.login()
-        response = self.client.get(u'/logout/')
-        self.assertEquals(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        response = self.client.get('/logout/')
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)

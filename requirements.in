@@ -1,5 +1,8 @@
+# !!!DEPRECATED!!!
+# TODO: Remove this when we have a plan for how to handle deps.
+
 # requirements:
-Flask
+Flask>=0.12.3
 Flask-Login
 Flask-script
 Flask-SQLAlchemy
@@ -15,21 +18,21 @@ elasticsearch
 neo4jrestclient
 python-dateutil
 gunicorn
-pycypher
 parameterized
 datasketch
 PyJWT
-requests
-cryptography
-PyYAML
+requests>=2.20.0
+cryptography>=2.3
+pyyaml>=4.2b1
+urllib3>=1.23
+pandas>=0.23
+altair>=2.4.1
 
 # dev-requirements:
 Flask-Testing
 nose
 mock
-pylint
 coverage
-BeautifulSoup
 
 # Remove the following when pip-sync finally stops deleting pkg_resources.
 # This is a hack that forces reinstall of setuptools and thus brings

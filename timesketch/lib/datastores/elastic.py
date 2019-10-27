@@ -13,31 +13,43 @@
 # limitations under the License.
 """Elasticsearch datastore."""
 
+from __future__ import unicode_literals
+
 from collections import Counter
+import codecs
 import json
 import logging
 
 from uuid import uuid4
 
+import six
+
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
+# pylint: disable=redefined-builtin
 from elasticsearch.exceptions import ConnectionError
 from flask import abort
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
 # Setup logging
-es_logger = logging.getLogger(u'elasticsearch')
+es_logger = logging.getLogger('elasticsearch')
 es_logger.addHandler(logging.NullHandler())
 es_logger.setLevel(logging.WARNING)
 
 ADD_LABEL_SCRIPT = """
+if (ctx._source.timesketch_label == null) {
+    ctx._source.timesketch_label = new ArrayList()
+}
 if( ! ctx._source.timesketch_label.contains (params.timesketch_label)) {
     ctx._source.timesketch_label.add(params.timesketch_label)
 }
 """
 
 TOGGLE_LABEL_SCRIPT = """
+if (ctx._source.timesketch_label == null) {
+    ctx._source.timesketch_label = new ArrayList()
+}
 if(ctx._source.timesketch_label.contains(params.timesketch_label)) {
     for (int i = 0; i < ctx._source.timesketch_label.size(); i++) {
       if (ctx._source.timesketch_label[i] == params.timesketch_label) {
@@ -59,47 +71,54 @@ class ElasticsearchDataStore(object):
     DEFAULT_SIZE = 100
     DEFAULT_LIMIT = DEFAULT_SIZE  # Max events to return
     DEFAULT_FROM = 0
-    DEFAULT_STREAM_LIMIT = 10000  # Max events to return when streaming results
+    DEFAULT_STREAM_LIMIT = 5000 # Max events to return when streaming results
 
-    def __init__(self, host=u'127.0.0.1', port=9200):
+    def __init__(self, host='127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
         super(ElasticsearchDataStore, self).__init__()
-        self.client = Elasticsearch([{u'host': host, u'port': port}])
+        self.client = Elasticsearch([{'host': host, 'port': port}])
         self.import_counter = Counter()
         self.import_events = []
 
     @staticmethod
-    def _build_label_query(sketch_id, label_name):
+    def _build_labels_query(sketch_id, labels):
         """Build Elasticsearch query for Timesketch labels.
 
         Args:
             sketch_id: Integer of sketch primary key.
-            label_name: Name of the label to search for.
+            labels: List of label names.
 
         Returns:
             Elasticsearch query as a dictionary.
         """
-        query_dict = {
-            u'query': {
-                u'nested': {
-                    u'query': {
-                        u'bool': {
-                            u'must': [{
-                                u'term': {
-                                    u'timesketch_label.name': label_name
+        label_query = {
+            'bool': {
+                'should': [],
+                "minimum_should_match": 1
+            }
+        }
+
+        for label in labels:
+            nested_query = {
+                'nested': {
+                    'query': {
+                        'bool': {
+                            'must': [{
+                                'term': {
+                                    'timesketch_label.name': label
                                 }
                             }, {
-                                u'term': {
-                                    u'timesketch_label.sketch_id': sketch_id
+                                'term': {
+                                    'timesketch_label.sketch_id': sketch_id
                                 }
                             }]
                         }
                     },
-                    u'path': u'timesketch_label'
+                    'path': 'timesketch_label'
                 }
             }
-        }
-        return query_dict
+            label_query['bool']['should'].append(nested_query)
+        return label_query
 
     @staticmethod
     def _build_events_query(events):
@@ -111,34 +130,11 @@ class ElasticsearchDataStore(object):
         Returns:
             Elasticsearch query as a dictionary.
         """
-        events_list = [event[u'event_id'] for event in events]
-        query_dict = {u'query': {u'ids': {u'values': events_list}}}
+        events_list = [event['event_id'] for event in events]
+        query_dict = {'query': {'ids': {'values': events_list}}}
         return query_dict
 
-    @staticmethod
-    def _build_field_aggregator(field_name):
-        """Build Elasticsearch query for aggregation based on field.
-
-        Args:
-            field_name: Field to aggregate.
-
-        Returns:
-            Elasticsearch aggregation as a dictionary.
-        """
-        field_aggregation = {
-            u'field_aggregation': {
-                u'terms': {
-                    u'field': u'{0:s}.keyword'.format(field_name)
-                }
-            }
-        }
-        return field_aggregation
-
-    def build_query(self,
-                    sketch_id,
-                    query_string,
-                    query_filter,
-                    query_dsl,
+    def build_query(self, sketch_id, query_string, query_filter, query_dsl=None,
                     aggregations=None):
         """Build Elasticsearch DSL query.
 
@@ -152,89 +148,130 @@ class ElasticsearchDataStore(object):
         Returns:
             Elasticsearch DSL query as a dictionary
         """
-        if not query_dsl:
-            if query_filter.get(u'star', None):
-                query_dsl = self._build_label_query(sketch_id, u'__ts_star')
 
-            if query_filter.get(u'events', None):
-                events = query_filter[u'events']
-                query_dsl = self._build_events_query(events)
-
-            if not query_dsl:
-                query_dsl = {
-                    u'query': {
-                        u'bool': {
-                            u'must': [{
-                                u'query_string': {
-                                    u'query': query_string
-                                }
-                            }]
-                        }
-                    }
-                }
-            if query_filter.get(u'time_start', None):
-                # TODO(jberggren): Add support for multiple time ranges.
-                query_dsl[u'query'][u'bool'][u'filter'] = {
-                    u'bool': {
-                        u'should': [{
-                            u'range': {
-                                u'datetime': {
-                                    u'gte': query_filter[u'time_start'],
-                                    u'lte': query_filter[u'time_end']
-                                }
-                            }
-                        }]
-                    }
-                }
-            if query_filter.get(u'from', None):
-                query_dsl[u'from'] = query_filter[u'from']
-            if query_filter.get(u'size', None):
-                query_dsl[u'size'] = query_filter[u'size']
-            if query_filter.get(u'exclude', None):
-                query_dsl[u'post_filter'] = {
-                    u'bool': {
-                        u'must_not': {
-                            u'terms': {
-                                u'data_type': query_filter[u'exclude']
-                            }
-                        }
-                    }
-                }
-        else:
+        if query_dsl:
             query_dsl = json.loads(query_dsl)
+            # Remove any aggregation coming from user supplied Query DSL.
+            # We have no way to display this data in a good way today.
+            if query_dsl.get('aggregations', None):
+                del query_dsl['aggregations']
+            return query_dsl
 
-        # Make sure we are sorting.
-        if not query_dsl.get(u'sort', None):
-            query_dsl[u'sort'] = {
-                u'datetime': query_filter.get(u'order', u'asc')
+        if query_filter.get('events', None):
+            events = query_filter['events']
+            return self._build_events_query(events)
+
+        query_dsl = {
+            'query': {
+                'bool': {
+                    'must': [],
+                    'must_not': [],
+                    'filter': []
+                }
+            }
+        }
+
+        # TODO: Remove when old UI has been deprecated.
+        if query_filter.get('star', None):
+            label_query = self._build_labels_query(sketch_id, ['__ts_star'])
+            query_string = '*'
+            query_dsl['query']['bool']['must'].append(label_query)
+
+        # TODO: Remove when old UI has been deprecated.
+        if query_filter.get('time_start', None):
+            query_dsl['query']['bool']['filter'] = [{
+                'bool': {
+                    'should': [{
+                        'range': {
+                            'datetime': {
+                                'gte': query_filter['time_start'],
+                                'lte': query_filter['time_end']
+                            }
+                        }
+                    }]
+                }
+            }]
+
+        if query_string:
+            query_dsl['query']['bool']['must'].append(
+                {'query_string': {'query': query_string}})
+
+        # New UI filters
+        if query_filter.get('chips', None):
+            labels = []
+            must_filters = query_dsl['query']['bool']['must']
+            must_not_filters = query_dsl['query']['bool']['must_not']
+            datetime_ranges = {
+                'bool': {
+                    'should': [],
+                    "minimum_should_match": 1
+                }
             }
 
-        # Remove any aggregation coming from user supplied Query DSL. We have
-        # no way to display this data in a good way today.
-        # TODO: Revisit this and figure out if we can display the data.
-        if query_dsl.get(u'aggregations', None):
-            del query_dsl[u'aggregations']
+            for chip in query_filter['chips']:
+                if chip['type'] == 'label':
+                    labels.append(chip['value'])
+
+                elif chip['type'] == 'term':
+                    term_filter = {
+                        'match_phrase': {
+                            '{}'.format(chip['field']): {
+                                'query': "{}".format(chip['value'])
+                            }
+                        }
+                    }
+
+                    if chip['operator'] == 'must':
+                        must_filters.append(term_filter)
+
+                    elif chip['operator'] == 'must_not':
+                        must_not_filters.append(term_filter)
+
+                elif chip['type'] == 'datetime_range':
+                    start = chip['value'].split(',')[0]
+                    end = chip['value'].split(',')[1]
+                    range_filter = {
+                        'range': {
+                            'datetime': {
+                                'gte': start,
+                                'lte': end
+                            }
+                        }
+                    }
+                    datetime_ranges['bool']['should'].append(range_filter)
+
+            label_filter = self._build_labels_query(sketch_id, labels)
+            must_filters.append(label_filter)
+            must_filters.append(datetime_ranges)
+
+        # Pagination
+        if query_filter.get('from', None):
+            query_dsl['from'] = query_filter['from']
+
+        # Number of events to return
+        if query_filter.get('size', None):
+            query_dsl['size'] = query_filter['size']
+
+        # Make sure we are sorting.
+        if not query_dsl.get('sort', None):
+            query_dsl['sort'] = {
+                'datetime': query_filter.get('order', 'asc')
+            }
 
         # Add any pre defined aggregations
         if aggregations:
             # post_filter happens after aggregation so we need to move the
             # filter to the query instead.
-            if query_dsl.get(u'post_filter', None):
-                query_dsl[u'query'][u'bool'][u'filter'] = query_dsl[
-                    u'post_filter']
-                query_dsl.pop(u'post_filter', None)
-            query_dsl[u'aggregations'] = aggregations
+            if query_dsl.get('post_filter', None):
+                query_dsl['query']['bool']['filter'] = query_dsl[
+                    'post_filter']
+                query_dsl.pop('post_filter', None)
+            query_dsl['aggregations'] = aggregations
+
         return query_dsl
 
-    def search(self,
-               sketch_id,
-               query_string,
-               query_filter,
-               query_dsl,
-               indices,
-               count=False,
-               aggregations=None,
-               return_fields=None,
+    def search(self, sketch_id, query_string, query_filter, query_dsl, indices,
+               count=False, aggregations=None, return_fields=None,
                enable_scroll=False):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
@@ -257,40 +294,42 @@ class ElasticsearchDataStore(object):
 
         scroll_timeout = None
         if enable_scroll:
-            scroll_timeout = u'1m'  # Default to 1 minute scroll timeout
-
-        # Use default fields if none is provided
-        default_fields = [
-            u'datetime', u'timestamp', u'message', u'timestamp_desc',
-            u'timesketch_label', u'tag', u'similarity_score'
-        ]
-        if not return_fields:
-            return_fields = default_fields
+            scroll_timeout = '1m'  # Default to 1 minute scroll timeout
 
         # Exit early if we have no indices to query
         if not indices:
-            return {u'hits': {u'hits': [], u'total': 0}, u'took': 0}
+            return {'hits': {'hits': [], 'total': 0}, 'took': 0}
 
         # Check if we have specific events to fetch and get indices.
-        if query_filter.get(u'events', None):
+        if query_filter.get('events', None):
             indices = {
-                event[u'index']
-                for event in query_filter[u'events']
-                if event[u'index'] in indices
+                event['index']
+                for event in query_filter['events']
+                if event['index'] in indices
             }
 
         query_dsl = self.build_query(sketch_id, query_string, query_filter,
                                      query_dsl, aggregations)
 
         # Default search type for elasticsearch is query_then_fetch.
-        search_type = u'query_then_fetch'
+        search_type = 'query_then_fetch'
 
         # Only return how many documents matches the query.
         if count:
-            del query_dsl[u'sort']
+            del query_dsl['sort']
             count_result = self.client.count(
                 body=query_dsl, index=list(indices))
-            return count_result.get(u'count', 0)
+            return count_result.get('count', 0)
+
+        if not return_fields:
+            # Suppress the lint error because elasticsearch-py adds parameters
+            # to the function with a decorator and this makes pylint sad.
+            # pylint: disable=unexpected-keyword-arg
+            return self.client.search(
+                body=query_dsl,
+                index=list(indices),
+                search_type=search_type,
+                scroll=scroll_timeout)
 
         # Suppress the lint error because elasticsearch-py adds parameters
         # to the function with a decorator and this makes pylint sad.
@@ -302,9 +341,9 @@ class ElasticsearchDataStore(object):
             _source_include=return_fields,
             scroll=scroll_timeout)
 
-    def search_stream(
-            self, sketch_id=None, query_string=None, query_filter=None,
-            query_dsl=None, indices=None, return_fields=None):
+    def search_stream(self, sketch_id=None, query_string=None,
+                      query_filter=None, query_dsl=None, indices=None,
+                      return_fields=None):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -321,8 +360,11 @@ class ElasticsearchDataStore(object):
             Generator of event documents in JSON format
         """
 
-        if not query_filter.get(u'limit'):
-            query_filter[u'limit'] = self.DEFAULT_STREAM_LIMIT
+        if not query_filter.get('size'):
+            query_filter['size'] = self.DEFAULT_STREAM_LIMIT
+
+        if not query_filter.get('terminate_after'):
+            query_filter['terminate_after'] = self.DEFAULT_STREAM_LIMIT
 
         result = self.search(
             sketch_id=sketch_id,
@@ -333,18 +375,18 @@ class ElasticsearchDataStore(object):
             return_fields=return_fields,
             enable_scroll=True)
 
-        scroll_id = result[u'_scroll_id']
-        scroll_size = result[u'hits'][u'total']
+        scroll_id = result['_scroll_id']
+        scroll_size = result['hits']['total']
 
-        for event in result[u'hits'][u'hits']:
+        for event in result['hits']['hits']:
             yield event
 
         while scroll_size > 0:
             # pylint: disable=unexpected-keyword-arg
-            result = self.client.scroll(scroll_id=scroll_id, scroll=u'1m')
-            scroll_id = result[u'_scroll_id']
-            scroll_size = len(result[u'hits'][u'hits'])
-            for event in result[u'hits'][u'hits']:
+            result = self.client.scroll(scroll_id=scroll_id, scroll='5m')
+            scroll_id = result['_scroll_id']
+            scroll_size = len(result['hits']['hits'])
+            for event in result['hits']['hits']:
                 yield event
 
     def get_event(self, searchindex_id, event_id):
@@ -364,7 +406,8 @@ class ElasticsearchDataStore(object):
             return self.client.get(
                 index=searchindex_id,
                 id=event_id,
-                _source_exclude=[u'timesketch_label'])
+                doc_type='_all',
+                _source_exclude=['timesketch_label'])
         except NotFoundError:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
 
@@ -380,16 +423,10 @@ class ElasticsearchDataStore(object):
         if not indices:
             return 0
         result = self.client.count(index=indices)
-        return result.get(u'count', 0)
+        return result.get('count', 0)
 
-    def set_label(self,
-                  searchindex_id,
-                  event_id,
-                  event_type,
-                  sketch_id,
-                  user_id,
-                  label,
-                  toggle=False):
+    def set_label(self, searchindex_id, event_id, event_type, sketch_id,
+                  user_id, label, toggle=False, single_update=True):
         """Set label on event in the datastore.
 
         Args:
@@ -400,43 +437,58 @@ class ElasticsearchDataStore(object):
             user_id: Integer of user primary key
             label: String with the name of the label
             toggle: Optional boolean value if the label should be toggled
+            single_update: Boolean if the label should be indexed immediately.
             (add/remove). The default is False.
+
+        Returns:
+            Dict with updated document body, or None if this is a single update.
         """
-        doc = self.client.get(index=searchindex_id, id=event_id)
+        # Elasticsearch painless script.
+        update_body = {
+            'script': {
+                'lang': 'painless',
+                'source': ADD_LABEL_SCRIPT,
+                'params': {
+                    'timesketch_label': {
+                        'name': str(label),
+                        'user_id': user_id,
+                        'sketch_id': sketch_id
+                    }
+                }
+            }
+        }
+
+        if toggle:
+            update_body['script']['source'] = TOGGLE_LABEL_SCRIPT
+
+        if not single_update:
+            script = update_body['script']
+            return dict(
+                source=script['source'], lang=script['lang'],
+                params=script['params']
+            )
+
+        doc = self.client.get(
+            index=searchindex_id, id=event_id, doc_type='_all')
         try:
-            doc[u'_source'][u'timesketch_label']
+            doc['_source']['timesketch_label']
         except KeyError:
-            doc = {u'doc': {u'timesketch_label': []}}
+            doc = {'doc': {'timesketch_label': []}}
             self.client.update(
                 index=searchindex_id,
                 doc_type=event_type,
                 id=event_id,
                 body=doc)
 
-        # Elasticsearch painless script.
-        script = {
-            u'script': {
-                u'lang': u'painless',
-                u'source': ADD_LABEL_SCRIPT,
-                u'params': {
-                    u'timesketch_label': {
-                        u'name': str(label),
-                        u'user_id': user_id,
-                        u'sketch_id': sketch_id
-                    }
-                }
-            }
-        }
-        if toggle:
-            script[u'script'][u'source'] = TOGGLE_LABEL_SCRIPT
-
         self.client.update(
             index=searchindex_id,
             id=event_id,
             doc_type=event_type,
-            body=script)
+            body=update_body)
 
-    def create_index(self, index_name=uuid4().hex, doc_type=u'generic_event'):
+        return None
+
+    def create_index(self, index_name=uuid4().hex, doc_type='generic_event'):
         """Create index with Timesketch settings.
 
         Args:
@@ -449,9 +501,9 @@ class ElasticsearchDataStore(object):
         """
         _document_mapping = {
             doc_type: {
-                u'properties': {
-                    u'timesketch_label': {
-                        u'type': u'nested'
+                'properties': {
+                    'timesketch_label': {
+                        'type': 'nested'
                     }
                 }
             }
@@ -460,12 +512,17 @@ class ElasticsearchDataStore(object):
         if not self.client.indices.exists(index_name):
             try:
                 self.client.indices.create(
-                    index=index_name, body={u'mappings': _document_mapping})
+                    index=index_name, body={'mappings': _document_mapping})
             except ConnectionError:
-                raise RuntimeError(u'Unable to connect to Timesketch backend.')
+                raise RuntimeError('Unable to connect to Timesketch backend.')
         # We want to return unicode here to keep SQLalchemy happy.
-        index_name = unicode(index_name.decode(encoding=u'utf-8'))
-        doc_type = unicode(doc_type.decode(encoding=u'utf-8'))
+        if six.PY2:
+            if not isinstance(index_name, six.text_type):
+                index_name = codecs.decode(index_name, 'utf-8')
+
+            if not isinstance(doc_type, six.text_type):
+                doc_type = codecs.decode(doc_type, 'utf-8')
+
         return index_name, doc_type
 
     def delete_index(self, index_name):
@@ -479,12 +536,11 @@ class ElasticsearchDataStore(object):
                 self.client.indices.delete(index=index_name)
             except ConnectionError as e:
                 raise RuntimeError(
-                    u'Unable to connect to Timesketch backend: {}'.format(e)
+                    'Unable to connect to Timesketch backend: {}'.format(e)
                 )
 
-    def import_event(
-            self, index_name, event_type, event=None,
-            event_id=None, flush_interval=DEFAULT_FLUSH_INTERVAL):
+    def import_event(self, index_name, event_type, event=None, event_id=None,
+                     flush_interval=DEFAULT_FLUSH_INTERVAL):
         """Add event to Elasticsearch.
 
         Args:
@@ -495,50 +551,56 @@ class ElasticsearchDataStore(object):
             event_id: Event Elasticsearch ID
         """
         if event:
-            # Make sure we have decoded strings in the event dict.
-            event = {
-                k.decode(u'utf8'): (v.decode(u'utf8')
-                                    if isinstance(v, basestring) else v)
-                for k, v in event.items()
-            }
+            for k, v in event.items():
+                if not isinstance(k, six.text_type):
+                    k = codecs.decode(k, 'utf8')
+
+                # Make sure we have decoded strings in the event dict.
+                if isinstance(v, six.binary_type):
+                    v = codecs.decode(v, 'utf8')
+
+                event[k] = v
 
             # Header needed by Elasticsearch when bulk inserting.
             header = {
-                u'index': {
-                    u'_index': index_name,
-                    u'_type': event_type
+                'index': {
+                    '_index': index_name,
+                    '_type': event_type
                 }
             }
             update_header = {
-                u'update': {
-                    u'_index': index_name,
-                    u'_type': event_type,
-                    u'_id': event_id
+                'update': {
+                    '_index': index_name,
+                    '_type': event_type,
+                    '_id': event_id
                 }
             }
 
             if event_id:
+                # Event has "lang" defined if there is a script used for import.
+                if event.get('lang'):
+                    event = {'script': event}
+                else:
+                    event = {'doc': event}
                 header = update_header
-                event = {u'doc': event}
 
             self.import_events.append(header)
             self.import_events.append(event)
-            self.import_counter[u'events'] += 1
-            if self.import_counter[u'events'] % int(flush_interval) == 0:
-                self.client.bulk(
-                    index=index_name,
-                    doc_type=event_type,
-                    body=self.import_events)
+            self.import_counter['events'] += 1
+
+            if self.import_counter['events'] % int(flush_interval) == 0:
+                self.client.bulk(body=self.import_events)
                 self.import_events = []
         else:
+            # Import the remaining events in the queue.
             if self.import_events:
-                self.client.bulk(
-                    index=index_name,
-                    doc_type=event_type,
-                    body=self.import_events
-                )
+                self.client.bulk(body=self.import_events)
 
-        return self.import_counter[u'events']
+        return self.import_counter['events']
+
+    def flush_queued_events(self):
+        if self.import_events:
+            self.client.bulk(body=self.import_events)
 
     @property
     def version(self):
@@ -547,5 +609,5 @@ class ElasticsearchDataStore(object):
         Returns:
           Version number as a string.
         """
-        version_info = self.client.info().get(u'version')
-        return version_info.get(u'number')
+        version_info = self.client.info().get('version')
+        return version_info.get('number')

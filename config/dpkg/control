@@ -1,0 +1,46 @@
+Source: timesketch
+Section: python
+Priority: extra
+Maintainer: Timesketch development team <timesketch-dev@googlegroups.com>
+Build-Depends: debhelper (>= 9), dh-python, dh-systemd (>= 1.5), python-all (>= 2.7~), python-setuptools, python-pip, python3-all (>= 3.4~), python3-setuptools, python3-pip
+Standards-Version: 3.9.5
+X-Python-Version: >= 2.7
+X-Python3-Version: >= 3.4
+Homepage: http://timesketch.org
+
+Package: timesketch-data
+Architecture: all
+Depends: ${misc:Depends}
+Description: Data files for Timesketch
+ Timesketch is a web based tool for collaborative forensic
+ timeline analysis. Using sketches you and your collaborators can easily
+ organize timelines and analyze them all at the same time.  Add meaning
+ to your raw data with rich annotations, comments, tags and stars.
+
+Package: python-timesketch
+Architecture: all
+Depends: timesketch-data (>= ${binary:Version}), python-alembic (>= 0.9.5), python-altair (>= 2.4.1), python-amqp (>= 2.2.1), python-aniso8601 (>= 1.2.1), python-asn1crypto (>= 0.24.0), python-attr (>= 19.1.0), python-bcrypt (>= 3.1.3), python-billiard (>= 3.5.0.3), python-blinker (>= 1.4), python-bs4 (>= 4.6.3), python-celery (>= 4.1.0), python-certifi (>= 2017.7.27.1), python-cffi (>= 1.10.0), python-chardet (>= 3.0.4), python-click (>= 6.7), python-configparser (>= 3.5.0), python-cryptography (>= 2.4.1), python-datasketch (>= 1.2.5), python-dateutil (>= 2.6.1), python-editor (>= 1.0.3), python-elasticsearch (>= 6.0), python-entrypoints (>= 0.2.3), python-enum34 (>= 1.1.6), python-flask (>= 1.0.2), python-flask-bcrypt (>= 0.7.1), python-flask-login (>= 0.4.0), python-flask-migrate (>= 2.1.1), python-flask-restful (>= 0.3.6), python-flask-script (>= 2.0.5), python-flask-sqlalchemy (>= 2.2), python-flaskext.wtf (>= 0.14.2), python-gunicorn (>= 19.7.1), python-idna (>= 2.6), python-ipaddress (>= 1.0.22), python-itsdangerous (>= 0.24), python-jinja2 (>= 2.10), python-jsonschema (>= 2.6.0), python-jwt (>= 1.6.4), python-kombu (>= 4.1.0), python-mako (>= 1.0.7), python-markupsafe (>= 1.0), python-neo4jrestclient (>= 2.1.1), python-numpy (>= 1.13.3), python-pandas (>= 0.22.0), python-parameterized (>= 0.6.1), python-pycparser (>= 2.18), python-pyrsistent (>= 0.14.11), python-redis (>= 2.10.6), python-requests (>= 2.20.1), python-six (>= 1.10.0), python-sqlalchemy (>= 1.1.13), python-toolz (>= 0.8.2), python-typing (>= 3.6.2), python-tz, python-urllib3 (>= 1.24.1), python-vine (>= 1.1.4), python-werkzeug (>= 0.14.1), python-wtforms (>= 2.1), python-yaml (>= 3.10), ${python:Depends}, ${misc:Depends}
+Description: Python 2 module of Timesketch
+ Timesketch is a web based tool for collaborative forensic
+ timeline analysis. Using sketches you and your collaborators can easily
+ organize timelines and analyze them all at the same time.  Add meaning
+ to your raw data with rich annotations, comments, tags and stars.
+
+Package: python3-timesketch
+Architecture: all
+Depends: timesketch-data (>= ${binary:Version}), python3-alembic (>= 0.9.5), python3-altair (>= 2.4.1), python3-amqp (>= 2.2.1), python3-aniso8601 (>= 1.2.1), python3-asn1crypto (>= 0.24.0), python3-attr (>= 19.1.0), python3-bcrypt (>= 3.1.3), python3-billiard (>= 3.5.0.3), python3-blinker (>= 1.4), python3-bs4 (>= 4.6.3), python3-celery (>= 4.1.0), python3-certifi (>= 2017.7.27.1), python3-cffi (>= 1.10.0), python3-chardet (>= 3.0.4), python3-click (>= 6.7), python3-cryptography (>= 2.4.1), python3-datasketch (>= 1.2.5), python3-dateutil (>= 2.6.1), python3-editor (>= 1.0.3), python3-elasticsearch (>= 6.0), python3-entrypoints (>= 0.2.3), python3-flask (>= 1.0.2), python3-flask-bcrypt (>= 0.7.1), python3-flask-login (>= 0.4.0), python3-flask-migrate (>= 2.1.1), python3-flask-restful (>= 0.3.6), python3-flask-script (>= 2.0.5), python3-flask-sqlalchemy (>= 2.2), python3-flaskext.wtf (>= 0.14.2), python3-gunicorn (>= 19.7.1), python3-idna (>= 2.6), python3-ipaddress (>= 1.0.22), python3-itsdangerous (>= 0.24), python3-jinja2 (>= 2.10), python3-jsonschema (>= 2.6.0), python3-jwt (>= 1.6.4), python3-kombu (>= 4.1.0), python3-mako (>= 1.0.7), python3-markupsafe (>= 1.0), python3-neo4jrestclient (>= 2.1.1), python3-numpy (>= 1.13.3), python3-pandas (>= 0.22.0), python3-parameterized (>= 0.6.1), python3-pycparser (>= 2.18), python3-pyrsistent (>= 0.14.11), python3-redis (>= 2.10.6), python3-requests (>= 2.20.1), python3-six (>= 1.10.0), python3-sqlalchemy (>= 1.1.13), python3-toolz (>= 0.8.2), python3-tz, python3-urllib3 (>= 1.24.1), python3-vine (>= 1.1.4), python3-werkzeug (>= 0.14.1), python3-wtforms (>= 2.1), python3-yaml (>= 3.10), ${python3:Depends}, ${misc:Depends}
+Description: Python 3 module of Timesketch
+ Timesketch is a web based tool for collaborative forensic
+ timeline analysis. Using sketches you and your collaborators can easily
+ organize timelines and analyze them all at the same time.  Add meaning
+ to your raw data with rich annotations, comments, tags and stars.
+
+Package: timesketch-server
+Architecture: all
+Depends: apt-transport-https, gunicorn3, python3-psycopg2, python3-timesketch (>= ${binary:Version}), ${python3:Depends}, ${misc:Depends}
+Recommends: elasticsearch, openjdk-8-jre-headless, postgresql, redis-server
+Description: Timesketch server
+ Timesketch is a web based tool for collaborative forensic
+ timeline analysis. Using sketches you and your collaborators can easily
+ organize timelines and analyze them all at the same time.  Add meaning
+ to your raw data with rich annotations, comments, tags and stars.

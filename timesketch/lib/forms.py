@@ -13,6 +13,8 @@
 # limitations under the License.
 """Form definitions and validators for the forms used in the application."""
 
+from __future__ import unicode_literals
+
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed
 from flask_wtf.file import FileField
@@ -77,7 +79,7 @@ class BaseForm(FlaskForm):
             A filled out WTForm form. Instance of timesketch.lib.forms.
         """
         form_dict = MultiDict(request.json)
-        form_dict[u'csrf_token'] = request.headers.get(u'X-CSRFToken')
+        form_dict['csrf_token'] = request.headers.get('X-CSRFToken')
         return cls(form_dict)
 
 
@@ -89,24 +91,24 @@ class MultiCheckboxField(SelectMultipleField):
 
 class AddTimelineForm(BaseForm):
     """Form using multiple checkbox fields to add timelines to a sketch."""
-    timelines = MultiCheckboxField(u'Timelines', coerce=int)
+    timelines = MultiCheckboxField('Timelines', coerce=int)
 
 
 class AddTimelineSimpleForm(BaseForm):
     """Form to add timelines to a sketch."""
-    timeline = IntegerField(u'Timeline', validators=[DataRequired()])
+    timeline = IntegerField('Timeline', validators=[DataRequired()])
 
 
 class UsernamePasswordForm(BaseForm):
     """Form with username and password fields. Use in the login form."""
-    username = StringField(u'Email', validators=[DataRequired()])
-    password = PasswordField(u'Password', validators=[DataRequired()])
+    username = StringField('Email', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
 
 
 class NameDescriptionForm(BaseForm):
     """Generic form for name and description forms. Used in multiple places."""
-    name = StringField(u'Name', validators=[DataRequired()])
-    description = StringField(u'Description', widget=widgets.TextArea())
+    name = StringField('Name', validators=[DataRequired()])
+    description = StringField('Description', widget=widgets.TextArea())
 
 
 class HiddenNameDescriptionForm(BaseForm):
@@ -115,125 +117,156 @@ class HiddenNameDescriptionForm(BaseForm):
     creating a new sketch.
     """
     name = HiddenField(
-        u'Name', default=u'Untitled sketch', validators=[DataRequired()])
-    description = HiddenField(u'Description')
+        'Name', default='Untitled sketch', validators=[DataRequired()])
+    description = HiddenField('Description')
 
 
 class CreateTimelineForm(BaseForm):
     """Form to handle ad-hoc timeline creation."""
-    name = StringField(u'Timeline name', validators=[Optional()])
-    sketch_id = IntegerField(u'Sketch ID', validators=[Optional()])
+    name = StringField('Timeline name', validators=[Optional()])
+    sketch_id = IntegerField('Sketch ID', validators=[Optional()])
 
 
 class TimelineForm(NameDescriptionForm):
     """Form to edit a timeline."""
     color = StringField(
-        u'Color',
+        'Color',
         validators=[DataRequired(),
-                    Regexp(u'^[0-9a-fA-F]{6}$'),
+                    Regexp('^[0-9a-fA-F]{6}$'),
                     Length(6, 6)])
 
 
 class TogglePublic(BaseForm):
     """Form to toggle the public ACL permission."""
     permission = RadioField(
-        u'Permission',
-        choices=[(u'public', u'Public'), (u'private', u'Private')],
+        'Permission',
+        choices=[('public', 'Public'), ('private', 'Private')],
         validators=[DataRequired()])
-    username = StringField(u'User')
+    username = StringField('User')
     groups = SelectField(
-        u'Groups', choices=[], coerce=int, validators=[Optional()])
+        'Groups', choices=[], coerce=int, validators=[Optional()])
     remove_groups = MultiCheckboxField(
-        u'Remove groups', coerce=int, validators=[Optional()])
+        'Remove groups', coerce=int, validators=[Optional()])
     remove_users = MultiCheckboxField(
-        u'Remove users', coerce=int, validators=[Optional()])
+        'Remove users', coerce=int, validators=[Optional()])
 
 
 class SaveViewForm(BaseForm):
     """Form used to save a view."""
-    name = StringField(u'Name')
-    query = StringField(u'Query')
-    filter = StringField(u'Filter')
-    dsl = StringField(u'DSL')
+    name = StringField('Name')
+    query = StringField('Query')
+    filter = StringField('Filter')
+    dsl = StringField('DSL')
     new_searchtemplate = BooleanField(
-        u'Create search template',
-        false_values={False, u'false', u''},
+        'Create search template',
+        false_values={False, 'false', ''},
         default=False)
-    from_searchtemplate_id = IntegerField(u'Create from search template')
+    from_searchtemplate_id = IntegerField('Create from search template')
 
 
 class ExploreForm(BaseForm):
     """Form used to search the datastore."""
-    query = StringField(u'Query')
-    filter = StringField(u'Filter')
-    dsl = StringField(u'DSL')
+    query = StringField('Query')
+    filter = StringField('Filter')
+    dsl = StringField('DSL')
+    fields = StringField('Fields', default='')
+    enable_scroll = BooleanField(
+        'Enable scroll', false_values={False, 'false', ''}, default=False)
+    scroll_id = StringField('Scroll ID', default='')
 
 
 class GraphExploreForm(BaseForm):
     """Form used to search the graph datastore."""
-    query = StringField(u'Query')
-    output_format = StringField(u'Output format')
+    graph_view_id = IntegerField('Query ID')
+    parameters = StringField('Parameters')
+    output_format = StringField('Output format')
 
 
-class AggregationForm(ExploreForm):
+class RunAnalyzerForm(BaseForm):
+    """Form used to run an analyzer on a timeline."""
+    timeline_id = StringField('Timeline Index ID', validators=[Optional()])
+    analyzer_name = StringField('Analyzer name')
+    analyzer_kwargs = StringField(
+        'Parameters for the analyzer', validators=[Optional()])
+
+
+class SaveAggregationForm(BaseForm):
+    """Form used to save an aggregation."""
+    name = StringField('Name')
+    description = StringField('Description')
+    agg_type = StringField('Aggregation Type')
+    parameters = StringField('Aggregation parameters')
+    chart_type = StringField('Chart plugin type')
+    view_id = IntegerField('Attach to View')
+
+
+class AggregationExploreForm(BaseForm):
+    """Form used to send aggregation requests to the datastore."""
+    aggregation_dsl = StringField('Aggregation DSL', validators=[Optional()])
+    aggregator_name = StringField('Aggregator Name', validators=[Optional()])
+    aggregator_parameters = StringField(
+        'Aggregator Parameters', validators=[Optional()])
+
+
+class AggregationLegacyForm(ExploreForm):
     """Form used to search the datastore."""
-    aggtype = StringField(u'Aggregation type')
+    aggtype = StringField('Aggregation type')
 
 
 class StatusForm(BaseForm):
     """Form to handle status annotation."""
     status = SelectField(
-        u'Status',
-        choices=[(u'new', u'New'), (u'open', u'Open'), (u'closed', u'Closed')],
+        'Status',
+        choices=[('new', 'New'), ('open', 'Open'), ('closed', 'Closed')],
         validators=[DataRequired()])
 
 
 class TrashForm(BaseForm):
     """Form to handle thrash confirmation."""
-    confirm = BooleanField(u'Trash', validators=[DataRequired()])
+    confirm = BooleanField('Trash', validators=[DataRequired()])
 
 
 class TrashViewForm(BaseForm):
     """Form to handle thrash view confirmation."""
-    view_id = IntegerField(u'View ID', validators=[DataRequired()])
+    view_id = IntegerField('View ID', validators=[DataRequired()])
 
 
 class EventCreateForm(BaseForm):
     """Generic form to handle event addition. E.g. message and timestamp."""
-    timestamp = StringField(u'timestamp', validators=[DataRequired()])
-    timestamp_desc = StringField(u'timestamp_desc', validators=[DataRequired()])
-    message = StringField(u'message', validators=[DataRequired()])
+    timestamp = StringField('timestamp', validators=[DataRequired()])
+    timestamp_desc = StringField('timestamp_desc', validators=[DataRequired()])
+    message = StringField('message', validators=[DataRequired()])
 
 
 class EventAnnotationForm(BaseForm):
     """Generic form to handle event annotation. E.g. comment and labels."""
-    annotation = StringField(u'Annotation', validators=[DataRequired()])
-    annotation_type = StringField(u'Type', validators=[DataRequired()])
-    events = StringField(u'Events', validators=[DataRequired()])
+    annotation = StringField('Annotation', validators=[DataRequired()])
+    annotation_type = StringField('Type', validators=[DataRequired()])
+    events = StringField('Events', validators=[DataRequired()])
 
 
 class UploadFileForm(BaseForm):
     """Form to handle file uploads."""
     file = FileField(
-        u'file',
+        'file',
         validators=[
             FileRequired(),
-            FileAllowed([u'plaso', u'csv', u'jsonl'],
-                        u'Allowed file extensions: .plaso, .csv, or .jsonl')
+            FileAllowed(['plaso', 'csv', 'jsonl'],
+                        'Allowed file extensions: .plaso, .csv, or .jsonl')
         ])
-    name = StringField(u'Timeline name', validators=[Optional()])
-    sketch_id = IntegerField(u'Sketch ID', validators=[Optional()])
+    name = StringField('Timeline name', validators=[Optional()])
+    sketch_id = IntegerField('Sketch ID', validators=[Optional()])
 
 
 class StoryForm(BaseForm):
     """Form to handle stories."""
-    title = StringField(u'Title', validators=[])
-    content = StringField(u'Content', validators=[], widget=widgets.TextArea())
+    title = StringField('Title', validators=[])
+    content = StringField('Content', validators=[], widget=widgets.TextArea())
 
 
 class SearchIndexForm(BaseForm):
     """Form to create a searchindex."""
-    searchindex_name = StringField(u'name', validators=[DataRequired()])
-    es_index_name = StringField(u'Index', validators=[DataRequired()])
+    searchindex_name = StringField('name', validators=[DataRequired()])
+    es_index_name = StringField('Index', validators=[DataRequired()])
     public = BooleanField(
-        u'Public', false_values={False, u'false', u''}, default=False)
+        'Public', false_values={False, 'false', ''}, default=False)

@@ -1,6 +1,11 @@
+include AUTHORS LICENSE README.md
+include requirements.in requirements.txt
+exclude .gitignore
+exclude *.pyc
+recursive-include config *
+recursive-include data *
+recursive-include timesketch/frontend/dist *
+recursive-include timesketch/lib/experimental *.cql
 recursive-include timesketch/static *
 recursive-include timesketch/templates *
-recursive-include timesketch/lib/experimental *.cql
-include timesketch.conf
-include requirements.txt
-include requirements.in
+recursive-exclude timesketch *.pyc

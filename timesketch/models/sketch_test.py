@@ -13,6 +13,8 @@
 # limitations under the License.
 """Tests for the sketch models."""
 
+from __future__ import unicode_literals
+
 import json
 
 from timesketch.models.sketch import Sketch
@@ -33,9 +35,10 @@ class SketchModelTest(ModelBaseTest):
         Test that the test sketch has the expected data stored in the
         database.
         """
-        expected_result = frozenset([(u'name', u'Test 1'), (u'description',
-                                                            u'Test 1'),
-                                     (u'user', self.user1)])
+        expected_result = frozenset([
+            ('name', 'Test 1'),
+            ('description', 'Test 1'),
+            ('user', self.user1)])
         self._test_db_object(expected_result=expected_result, model_cls=Sketch)
 
     def test_searchindex_model(self):
@@ -44,8 +47,8 @@ class SketchModelTest(ModelBaseTest):
         database.
         """
         expected_result = frozenset(
-            [(u'name', u'test'), (u'description', u'test'),
-             (u'index_name', u'test'), (u'user', self.user1)])
+            [('name', 'test'), ('description', 'test'),
+             ('index_name', 'test'), ('user', self.user1)])
         self._test_db_object(
             expected_result=expected_result, model_cls=SearchIndex)
 
@@ -54,10 +57,12 @@ class SketchModelTest(ModelBaseTest):
         Test that the test timeline has the expected data stored in the
         database.
         """
-        expected_result = frozenset(
-            [(u'name', u'Timeline 1'), (u'description',
-                                        u'Timeline 1'), (u'user', self.user1),
-             (u'sketch', self.sketch1), (u'searchindex', self.searchindex)])
+        expected_result = frozenset([
+            ('name', 'Timeline 1'),
+            ('description', 'Timeline 1'),
+            ('user', self.user1),
+            ('sketch', self.sketch1),
+            ('searchindex', self.searchindex)])
         self._test_db_object(
             expected_result=expected_result, model_cls=Timeline)
 
@@ -66,8 +71,8 @@ class SketchModelTest(ModelBaseTest):
         Test that the test view has the expected data stored in the database.
         """
         expected_result = frozenset(
-            [(u'name', u'View 1'), (u'query_string', u'View 1'),
-             (u'user', self.user1), (u'sketch', self.sketch1)])
+            [('name', 'View 1'), ('query_string', 'View 1'),
+             ('user', self.user1), ('sketch', self.sketch1)])
         self._test_db_object(expected_result=expected_result, model_cls=View)
 
     def test_searchtemplate_model(self):
@@ -76,8 +81,8 @@ class SketchModelTest(ModelBaseTest):
         database.
         """
         expected_result = frozenset([
-            (u'name', u'template'),
-            (u'user', self.user1),
+            ('name', 'template'),
+            ('user', self.user1),
         ])
         self._test_db_object(
             expected_result=expected_result, model_cls=SearchTemplate)
@@ -86,9 +91,9 @@ class SketchModelTest(ModelBaseTest):
         """
         Test that the test event has the expected data stored in the database.
         """
-        expected_result = frozenset([(u'searchindex', self.searchindex),
-                                     (u'sketch', self.sketch1),
-                                     (u'document_id', u'test')])
+        expected_result = frozenset([('searchindex', self.searchindex),
+                                     ('sketch', self.sketch1),
+                                     ('document_id', 'test')])
         self._test_db_object(expected_result=expected_result, model_cls=Event)
 
     def test_validate_filter(self):
@@ -97,14 +102,14 @@ class SketchModelTest(ModelBaseTest):
          """
         DEFAULT_LIMIT = 40
         default_values = {
-            u'from': 0,
-            u'size': 40,
-            u'time_start': None,
-            u'time_end': None,
-            u'limit': DEFAULT_LIMIT,
-            u'indices': [],
-            u'exclude': [],
-            u'order': u'asc'
+            'from': 0,
+            'time_start': None,
+            'time_end': None,
+            'size': DEFAULT_LIMIT,
+            'terminate_after': DEFAULT_LIMIT,
+            'indices': [],
+            'exclude': [],
+            'order': 'asc'
         }
         test_filter = dict(indices=[])
         test_filter_json = json.dumps(test_filter)
@@ -123,6 +128,6 @@ class StoryModelTest(ModelBaseTest):
         database.
         """
         expected_result = frozenset(
-            [(u'title', u'Test'), (u'content', u'Test'), (u'user', self.user1),
-             (u'sketch', self.sketch1)])
+            [('title', 'Test'), ('content', 'Test'), ('user', self.user1),
+             ('sketch', self.sketch1)])
         self._test_db_object(expected_result=expected_result, model_cls=Story)

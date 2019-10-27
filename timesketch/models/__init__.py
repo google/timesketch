@@ -13,7 +13,8 @@
 # limitations under the License.
 """This package handles setting up and providing the database connection."""
 
-import traceback
+from __future__ import unicode_literals
+
 from flask import abort
 from flask_login import current_user
 from flask_sqlalchemy import BaseQuery
@@ -38,11 +39,10 @@ db_session = scoped_session(session_maker)
 def configure_engine(url):
     """Configure and setup the database session."""
     # These needs to be global because of the way Flask works.
-    # pylint: disable=global-variable-not-assigned
+    # pylint: disable=global-statement,global-variable-not-assigned
     # TODO: Can we wrap this in a class?
     global engine, session_maker, db_session
     engine = create_engine(url)
-    db_session.remove()
     # Set the query class to our own AclBaseQuery
     session_maker.configure(
         autocommit=False, autoflush=False, bind=engine, query_cls=AclBaseQuery)
@@ -68,11 +68,12 @@ class AclBaseQuery(BaseQuery):
     as well.
     """
 
-    def get_with_acl(self, model_id):
+    def get_with_acl(self, model_id, user=current_user):
         """Get a database object with permission check enforced.
 
         Args:
             model_id: The integer ID of the model to get.
+            user: User (instance of timesketch.models.user.User)
 
         Returns:
             A BaseQuery instance.
@@ -81,14 +82,13 @@ class AclBaseQuery(BaseQuery):
         if not result_obj:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
         try:
-            if result_obj.get_status.status == u'deleted':
+            if result_obj.get_status.status == 'deleted':
                 abort(HTTP_STATUS_CODE_NOT_FOUND)
         except AttributeError:
             pass
         if result_obj.is_public:
             return result_obj
-        if not result_obj.has_permission(
-                user=current_user, permission=u'read'):
+        if not result_obj.has_permission(user=user, permission='read'):
             abort(HTTP_STATUS_CODE_FORBIDDEN)
         return result_obj
 

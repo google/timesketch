@@ -19,13 +19,14 @@ import time
 import mock
 import jwt
 
+from cryptography.hazmat.backends.openssl.rsa import _RSAPublicKey
+
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.google_auth import validate_jwt
 from timesketch.lib.google_auth import get_public_key_for_jwt
 from timesketch.lib.google_auth import JwtValidationError
 from timesketch.lib.google_auth import JwtKeyError
 
-from cryptography.hazmat.backends.openssl.rsa import _RSAPublicKey
 
 # openssl ecparam -genkey -name prime256v1 -noout -out ec_private.pem
 MOCK_EC_PRIVATE_KEY = """

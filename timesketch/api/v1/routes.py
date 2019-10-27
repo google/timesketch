@@ -15,12 +15,18 @@
 
 from __future__ import unicode_literals
 
+from .resources import AggregationListResource
+from .resources import AggregationLegacyResource
+from .resources import AggregationExploreResource
 from .resources import AggregationResource
+from .resources import AnalyzerRunResource
 from .resources import ExploreResource
 from .resources import EventResource
 from .resources import EventAnnotationResource
 from .resources import EventCreateResource
 from .resources import GraphResource
+from .resources import GraphViewListResource
+from .resources import GraphViewResource
 from .resources import SketchResource
 from .resources import SketchListResource
 from .resources import ViewResource
@@ -37,6 +43,7 @@ from .resources import TimelineResource
 from .resources import TimelineListResource
 from .resources import SearchIndexListResource
 from .resources import SearchIndexResource
+from .resources import SessionResource
 
 
 # Disable error for long line. Readability is more important than line
@@ -45,11 +52,15 @@ from .resources import SearchIndexResource
 API_ROUTES = [
     (SketchListResource, '/sketches/'),
     (SketchResource, '/sketches/<int:sketch_id>/'),
-    (AggregationResource, '/sketches/<int:sketch_id>/aggregation/'),
+    (AnalyzerRunResource, '/sketches/<int:sketch_id>/analyzer/'),
+    (AggregationListResource, '/sketches/<int:sketch_id>/aggregation/'),
+    (AggregationLegacyResource, '/sketches/<int:sketch_id>/aggregation/legacy/'),
+    (AggregationExploreResource, '/sketches/<int:sketch_id>/aggregation/explore/'),
+    (AggregationResource, '/sketches/<int:sketch_id>/aggregation/<int:aggregation_id>/'),
     (ExploreResource, '/sketches/<int:sketch_id>/explore/'),
     (EventResource, '/sketches/<int:sketch_id>/event/'),
     (EventAnnotationResource, '/sketches/<int:sketch_id>/event/annotate/'),
-    (EventCreateResource, u'/sketches/<int:sketch_id>/event/create/'),
+    (EventCreateResource, '/sketches/<int:sketch_id>/event/create/'),
     (ViewListResource, '/sketches/<int:sketch_id>/views/'),
     (ViewResource, '/sketches/<int:sketch_id>/views/<int:view_id>/'),
     (SearchTemplateListResource, '/searchtemplate/'),
@@ -64,5 +75,8 @@ API_ROUTES = [
     (TimelineResource, '/sketches/<int:sketch_id>/timelines/<int:timeline_id>/'),
     (SearchIndexListResource, '/searchindices/'),
     (SearchIndexResource, '/searchindices/<int:searchindex_id>/'),
-    (GraphResource, '/sketches/<int:sketch_id>/explore/graph/')
+    (GraphResource, '/sketches/<int:sketch_id>/explore/graph/'),
+    (GraphViewListResource, '/sketches/<int:sketch_id>/explore/graph/views/'),
+    (GraphViewResource, '/sketches/<int:sketch_id>/explore/graph/views/<int:view_id>/'),
+    (SessionResource, '/sketches/<int:sketch_id>/explore/sessions/<string:timeline_index>')
 ]

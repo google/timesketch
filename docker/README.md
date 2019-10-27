@@ -16,6 +16,9 @@ Follow the official instructions [here](https://docs.docker.com/compose/install/
 git clone https://github.com/google/timesketch.git
 cd timesketch
 ```
+### Verify the Kernel Settings
+Follow the official instructions [here](https://www.elastic.co/guide/en/elasticsearch/reference/6.4/docker.html#docker-cli-run-prod-mode)
+
 ### Build and Start Containers
 
 ```shell
@@ -42,3 +45,7 @@ The timesketch docker config is set to write all data to the host filesystem, no
 - redis: /var/lib/redis
 
 These locations on the host filesystem can be backed with any storage mechanism to persist sketch data beyond the container lifetimes.
+
+
+
+

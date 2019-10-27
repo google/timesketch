@@ -43,6 +43,8 @@ import {tsExploreModule} from './explore/explore.module';
 import {tsSketchModule, SketchModule} from './sketch/sketch.module';
 import {tsStoryModule} from './story/story.module';
 import {tsGraphModule, GraphModule} from './graph/graph.module';
+import {SketchService} from './api/sketch.service';
+import {GraphService} from './api/graph.service';
 
 export const tsAppModule = angular.module('timesketch', [
     tsApiModule.name,
@@ -59,6 +61,7 @@ export const tsAppModule = angular.module('timesketch', [
       const excludeURLs = [
         '/api/v1/tasks/',
         '/api/v1/sketches/[0-9]+/stories/[0-9]+/',
+        '/api/v1/sketches/[0-9]+/timelines/',
       ];
       const re = new RegExp(excludeURLs.join('|'), 'i');
       return url.match(re) != null;
@@ -85,18 +88,28 @@ export const tsAppModule = angular.module('timesketch', [
     });
     const csrftoken = document.getElementsByTagName('meta')[0]['content'];
     $httpProvider.defaults.headers.common['X-CSRFToken'] = csrftoken;
+})
+
+.filter('unsafe', function ($sce) {
+    return function (val) {
+        return $sce.trustAsHtml(val);
+    };
 });
 
 @NgModule({
-  imports: [
-    BrowserModule, FormsModule, HttpClientModule,
-    SketchModule, GraphModule,
-  ],
-  providers: [{
-    provide: HTTP_INTERCEPTORS,
-    useClass: AttachCsrfTokenInterceptor,
-    multi: true,
-  }],
+
+    imports: [
+        BrowserModule,
+        FormsModule,
+        HttpClientModule,
+        SketchModule,
+        GraphModule,
+    ],
+    providers: [{
+        provide: HTTP_INTERCEPTORS,
+        useClass: AttachCsrfTokenInterceptor,
+        multi: true,
+    }, SketchService, GraphService],
 })
 
 export class AppModule {
