@@ -24,16 +24,24 @@ limitations under the License.
       <div class="time-bubble-vertical-line"></div>
     </div>
 
-    <table class="ts-event-list-table">
+    <table class="ts-event-list-table" style="background-color: #F5F5F5">
       <tbody>
-        <tr>
-          <td style="width:215px;" class="ts-event-table-column" v-bind:style="timelineColor">
-            {{ event._source.datetime }}
-          </td>
-          <!-- TODO: Add options here.
-          <td style="width:200px;" class="ts-event-table-column ts-event-message-column"></td>
-          -->
-          <td style="width:100%;" class="ts-event-table-column ts-event-message-column" v-on:click="showDetail = !showDetail" >
+      <tr style="border:0">
+        <td style="width:215px;" class="ts-event-table-column" v-bind:style="timelineColor">
+          {{ event._source.datetime }}
+        </td>
+
+        <td style="width:70px; background-color: #fdfdfd" class="ts-event-table-column">
+          <div class="field is-grouped">
+            <span class="icon control" v-on:click="toggleStar" style="margin-right: 3px; cursor: pointer;">
+              <i class="fas fa-star" v-if="isStarred" style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"></i>
+              <i class="fas fa-star" v-if="!isStarred" style="color: #d3d3d3;"></i>
+            </span>
+            <span class="icon control" style="cursor: pointer;" v-on:click="searchContext"><i class="fas fa-search" style="color: #d3d3d3;"></i></span>
+          </div>
+        </td>
+
+        <td style="width:100%;" class="ts-event-table-column ts-event-message-column" v-bind:style="messageFieldColor" v-on:click="showDetail = !showDetail" >
             <span class="ts-event-message-container">
               <span class="ts-event-message-ellipsis" v-bind:title="event._source.message">
                 <span v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji">{{ emoji }}</span>
@@ -42,34 +50,63 @@ limitations under the License.
                 {{ event._source.message }}
               </span>
             </span>
-          </td>
-          <td style="width:150px;" class="ts-event-table-column ts-timeline-name-column">
-            {{ timelineName }}
-          </td>
-        </tr>
+        </td>
+        <td style="width:150px;" class="ts-event-table-column ts-timeline-name-column">
+          {{ timelineName }}
+        </td>
+      </tr>
+
       </tbody>
     </table>
 
-    <!-- Detailed view -->
-    <div v-if="showDetail">
-      <div style="margin:10px 0 10px 0;background:#f9f9f9; border:none;border-radius:5px;padding:15px">
-        <ts-sketch-explore-event-list-item-detail :event="event" @addChip="$emit('addChip', $event)"></ts-sketch-explore-event-list-item-detail>
+    <div v-if="comments.length" style="padding-top: 10px; padding-bottom: 20px; margin-left:5px;">
+      <article class="media" v-for="comment in comments" :key="comment.created_at">
+        <div class="media-content">
+          <div class="content">
+            <p>
+              <strong>{{ comment.user.username }}</strong>
+              {{ comment.comment }}
+            </p>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div v-if="showDetail" style="padding-top:10px;">
+      <div  class="field">
+        <p class="control">
+          <textarea v-model="comment" required autofocus class="textarea" rows="3" placeholder="Add a comment..."></textarea>
+        </p>
       </div>
+      <div class="field">
+        <p class="control">
+          <button class="button" v-on:click="postComment(comment)">Post comment</button>
+        </p>
+      </div>
+    </div>
+
+    <!-- Detailed view -->
+    <div v-if="showDetail" style="padding-top:10px; padding-bottom: 20px;">
+      <ts-sketch-explore-event-list-item-detail :event="event" @addChip="$emit('addChip', $event)"></ts-sketch-explore-event-list-item-detail>
     </div>
   </div>
 </template>
 
 <script>
-import TsSketchExploreEventListItemDetail from './EventListItemDetail'
+  import ApiClient from '../../utils/RestApiClient'
+  import TsSketchExploreEventListItemDetail from './EventListItemDetail'
 
-export default {
+  export default {
   components: {
     TsSketchExploreEventListItemDetail
   },
-  props: ['event', 'prevEvent'],
+  props: ['event', 'prevEvent', 'order'],
   data () {
     return {
-      showDetail: false
+      showDetail: false,
+      isStarred: false,
+      comment: '',
+      comments: []
     }
   },
   computed: {
@@ -85,6 +122,15 @@ export default {
         'background-color': hexColor
       }
     },
+    messageFieldColor () {
+      let hexColor = '#f5f5f5'
+      if (this.isStarred) {
+          hexColor = '#fff4b3'
+      }
+      return {
+        'background-color': hexColor
+      }
+    },
     timelineName () {
       return this.timeline(this.event._index).name
     },
@@ -95,6 +141,9 @@ export default {
       let timestamp = Math.floor(this.event._source.timestamp / 1000000)
       let prevTimestamp = Math.floor(this.prevEvent._source.timestamp / 1000000)
       let delta = Math.floor(timestamp - prevTimestamp)
+      if (this.order === 'desc') {
+        delta = Math.floor(prevTimestamp - timestamp)
+      }
       let deltaDays = delta / 60 / 60 / 24
       return Math.floor(deltaDays)
     }
@@ -104,8 +153,36 @@ export default {
       return this.sketch.timelines.find(function (timeline) {
         return timeline.searchindex.index_name === indexName
       })
+    },
+    toggleStar () {
+      this.isStarred =! this.isStarred
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.event).then((response) => {
+      }).catch((e) => {
+        console.error(e)
+      })
+    },
+    postComment: function (comment) {
+      ApiClient.saveEventAnnotation(this.sketch.id, 'comment', comment, [this.event]).then((response) => {
+        this.comments.push(response.data.objects[0][0])
+        this.comment = ''
+      }).catch((e) => {})
+    },
+    searchContext: function () {
+      this.$emit('searchContext', this.event)
     }
   },
+  created () {
+    if (this.event._source.label.indexOf('__ts_star') > -1) {
+        this.isStarred = true
+    }
+    if (this.event._source.label.indexOf('__ts_comment') > -1) {
+        let searchindexId = this.event._index
+        let eventId = this.event._id
+        ApiClient.getEvent(this.sketch.id, searchindexId, eventId).then((response) => {
+          this.comments = response.data.meta.comments
+        }).catch((e) => {})
+    }
+  }
 }
 </script>
 
