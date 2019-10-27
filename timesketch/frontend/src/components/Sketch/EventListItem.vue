@@ -16,7 +16,6 @@ limitations under the License.
 <template>
   <div>
 
-
     <div v-if="deltaDays > 0">
       <div class="time-bubble-vertical-line"></div>
       <div class="time-bubble">
@@ -27,16 +26,21 @@ limitations under the License.
 
     <table class="ts-event-list-table" style="background-color: #F5F5F5">
       <tbody>
-      <tr>
+      <tr style="border:0">
         <td style="width:215px;" class="ts-event-table-column" v-bind:style="timelineColor">
           {{ event._source.datetime }}
         </td>
-        <td style="width:50px;" class="ts-event-table-column">
-            <span class="icon" v-on:click="toggleStar">
+
+        <td style="width:70px; background-color: #fdfdfd" class="ts-event-table-column">
+          <div class="field is-grouped">
+            <span class="icon control" v-on:click="toggleStar" style="margin-right: 3px; cursor: pointer;">
               <i class="fas fa-star" v-if="isStarred" style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"></i>
               <i class="fas fa-star" v-if="!isStarred" style="color: #d3d3d3;"></i>
             </span>
+            <span class="icon control" style="cursor: pointer;" v-on:click="searchContext"><i class="fas fa-search" style="color: #d3d3d3;"></i></span>
+          </div>
         </td>
+
         <td style="width:100%;" class="ts-event-table-column ts-event-message-column" v-bind:style="messageFieldColor" v-on:click="showDetail = !showDetail" >
             <span class="ts-event-message-container">
               <span class="ts-event-message-ellipsis" v-bind:title="event._source.message">
@@ -162,6 +166,9 @@ limitations under the License.
         this.comments.push(response.data.objects[0][0])
         this.comment = ''
       }).catch((e) => {})
+    },
+    searchContext: function () {
+      this.$emit('searchContext', this.event)
     }
   },
   created () {
@@ -266,5 +273,4 @@ limitations under the License.
   background: #f5f5f5;
   margin: 0 0 0 100px;
 }
-
 </style>
