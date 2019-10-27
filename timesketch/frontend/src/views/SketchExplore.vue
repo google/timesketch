@@ -151,6 +151,19 @@ limitations under the License.
       </div>
     </section>
 
+    <section class="section" id="context" v-show="contextEvent">
+      <div class="container is-fluid">
+        <b-message type="is-warning" aria-close-label="Close message">
+          <strong>Context query</strong>
+          <br><br>
+          <div class="buttons">
+              <button class="button" v-on:click="removeContext">&larr; Go back to original query</button>
+              <button class="button" v-on:click="scrollToContextEvent">Help me find my event</button>
+          </div>
+        </b-message>
+      </div>
+    </section>
+
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
@@ -180,7 +193,7 @@ limitations under the License.
             </div>
             <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
             <div v-if="totalHits > 0" style="margin-top:20px;"></div>
-            <ts-sketch-explore-event-list :event-list="eventList.objects" @addChip="addChip($event)" :order="currentQueryFilter.order"></ts-sketch-explore-event-list>
+            <ts-sketch-explore-event-list :event-list="eventList.objects" @addChip="addChip($event)" @searchContext="searchContext($event)" :order="currentQueryFilter.order"></ts-sketch-explore-event-list>
           </div>
         </div>
       </div>
@@ -217,6 +230,8 @@ export default {
       showSearch: true,
       searchInProgress: false,
       activeStarFilter: false,
+      contextEvent: false,
+      originalContext: false,
       eventList: {
         meta: {},
         objects: []
@@ -257,10 +272,44 @@ export default {
   methods: {
     search: function () {
       this.searchInProgress = true
+
+      if (this.contextEvent) {
+        // TODO: Make this selectable in the UI
+        const contextTime = 300
+        const numContextEvents = 500
+
+        const dateTimeTemplate = 'YYYY-MM-DDTHH:mm:ss'
+        let startDateTimeMoment = this.$moment.utc(this.contextEvent._source.datetime)
+        let newStartDate = startDateTimeMoment.clone().subtract(contextTime, 's').format(dateTimeTemplate)
+        let newEndDate = startDateTimeMoment.clone().add(contextTime, 's').format(dateTimeTemplate)
+        let startChip = {
+          'field': '',
+          'value': newStartDate + ',' + startDateTimeMoment.format(dateTimeTemplate),
+          'type': 'datetime_range',
+          'operator': 'must'
+        }
+        let endChip = {
+          'field': '',
+          'value': startDateTimeMoment.format(dateTimeTemplate) + ',' + newEndDate,
+          'type': 'datetime_range',
+          'operator': 'must'
+        }
+        // TODO: Use chips instead
+        this.currentQueryString = '* OR ' + '_id:' + this.contextEvent._id
+
+        this.currentQueryFilter.chips = [startChip, endChip]
+        this.currentQueryFilter.indices = [this.contextEvent._index]
+        this.currentQueryFilter.size = numContextEvents
+
+        // Scroll to the context box in the UI
+        this.$scrollTo('#context', 200, {offset: -300})
+      }
+
       let formData = {
         'query': this.currentQueryString,
         'filter': this.currentQueryFilter
       }
+
       ApiClient.search(this.sketch.id, formData).then((response) => {
         this.eventList.objects = response.data.objects
         this.eventList.meta = response.data.meta
@@ -292,8 +341,27 @@ export default {
             }
           }
         }
+        this.contextEvent = false
         this.search()
       }).catch((e) => {})
+    },
+    searchContext: function (event) {
+      this.contextEvent = event
+      if (!this.originalContext){
+        let currentQueryStringCopy = JSON.parse(JSON.stringify(this.currentQueryString))
+        let currentQueryFilterCopy = JSON.parse(JSON.stringify(this.currentQueryFilter))
+        this.originalContext = {'queryString': currentQueryStringCopy, 'queryFilter': currentQueryFilterCopy}
+      }
+      this.search()
+    },
+    removeContext: function () {
+      this.contextEvent = false
+      this.currentQueryString = JSON.parse(JSON.stringify(this.originalContext.queryString))
+      this.currentQueryFilter = JSON.parse(JSON.stringify(this.originalContext.queryFilter))
+      this.search()
+    },
+    scrollToContextEvent: function () {
+      this.$scrollTo('#' + this.contextEvent._id, 200, {offset: -300})
     },
     updateQueryFilter: function (filter) {
       this.currentQueryFilter = filter
