@@ -801,6 +801,30 @@ class Sketch(BaseResource):
         _ = self.lazyload_data(refresh_cache=True)
         return self.get_aggregation(objects[0].get('id'))
 
+    def comment_event(self, event_id, index, comment_text):
+        """
+        Adds a comment to a single event.
+
+        Args:
+            event_id: id of the event
+            index: The Elasticsearch index name
+            comment_text: text to add as a comment
+        Returns:
+             a json data of the query.
+        """
+        form_data = {
+            'annotation': comment_text,
+            'annotation_type': 'comment',
+            'events': {
+                '_id': event_id,
+                '_index': index,
+                '_type': 'generic_event'}
+        }
+        resource_url = '{0:s}/sketches/{1:d}/event/annotate/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.post(resource_url, json=form_data)
+        return response.json()
+
     def label_events(self, events, label_name):
         """Labels one or more events with label_name.
 
