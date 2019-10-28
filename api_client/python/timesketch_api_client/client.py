@@ -396,7 +396,7 @@ class Sketch(BaseResource):
         """
         data = self.lazyload_data()
         aggregations = []
-        for aggregation in data['aggregations']:
+        for aggregation in data.get('aggregations', []):
             aggregation_obj = Aggregation(
                 sketch=self, api=self.api)
             aggregation_obj.from_store(aggregation_id=aggregation['id'])
@@ -414,7 +414,7 @@ class Sketch(BaseResource):
             otherwise None object.
         """
         sketch = self.lazyload_data()
-        for aggregation in sketch['aggregations']:
+        for aggregation in sketch.get('aggregations', []):
             if aggregation['id'] != aggregation_id:
                 continue
             aggregation_obj = Aggregation(sketch=self, api=self.api)
@@ -851,6 +851,9 @@ class Sketch(BaseResource):
             aggregator_parameters: parameters of the aggregator.
             chart_type: string representing the chart type.
 
+        Raises:
+            RuntimeError: if the client is unable to store the aggregation.
+
         Returns:
           A stored aggregation object or None if not stored.
         """
@@ -867,6 +870,12 @@ class Sketch(BaseResource):
         }
 
         response = self.api.session.post(resource_url, json=form_data)
+        if response.status_code not in HTTP_STATUS_CODE_20X:
+            raise RuntimeError(
+                'Error storing the aggregation, Error message: '
+                '[{0:d}] {1:s} {2:s}'.format(
+                    response.status_code, response.reason, response.text))
+
         response_dict = response.json()
 
         objects = response_dict.get('objects', [])
