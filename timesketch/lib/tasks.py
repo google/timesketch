@@ -470,7 +470,7 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
     # Reason for the broad exception catch is that we want to capture
     # all possible errors and exit the task.
     try:
-        items = es.create_index(index_name=index_name, doc_type=event_type)
+        es.create_index(index_name=index_name, doc_type=event_type)
         for event in read_and_validate(source_file_path):
             es.import_event(index_name, event_type, event)
         # Import the remaining events

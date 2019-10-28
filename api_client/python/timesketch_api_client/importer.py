@@ -1,4 +1,4 @@
-# Copyright 2017 Google Inc. All rights reserved.
+# Copyright 2019 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
 from __future__ import unicode_literals
 
 import json
+import math
+import logging
 import os
 import tempfile
 import uuid
@@ -81,8 +83,11 @@ class ImportStreamer(object):
                         data_frame[column], utc=True)
                     # We want the first successful timestamp value.
                     break
-                except ValueError:
-                    pass
+                except ValueError as e:
+                    logging.info(
+                        'Unable to convert timestamp in column: %s, error %s',
+                        column, e)
+
             if 'timestamp' in data_frame:
                 data_frame['datetime'] = data_frame['timestamp'].dt.strftime(
                     '%Y-%m-%dT%H:%M:%S%z')
@@ -179,9 +184,9 @@ class ImportStreamer(object):
             self._upload_data(csv_file.name, end_stream=True)
             return
 
-        chunks = int(size / self._threshold)
+        chunks = int(math.ceil(float(size) / self._threshold))
         for index in range(0, chunks):
-            chunk_start = index * chunks
+            chunk_start = index * self._threshold
             data_chunk = data_frame_use[
                 chunk_start:chunk_start + self._threshold]
 
@@ -264,7 +269,7 @@ class ImportStreamer(object):
             data_frame = None
             with open(filepath, 'r') as fh:
                 lines = [json.loads(x) for x in fh]
-                data_frame= pandas.DataFrame(lines)
+                data_frame = pandas.DataFrame(lines)
             if data_frame is None:
                 raise TypeError('Unable to parse the JSON file.')
             if data_frame.empty:
