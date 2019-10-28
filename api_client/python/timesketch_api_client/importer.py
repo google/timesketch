@@ -216,16 +216,34 @@ class ImportStreamer(object):
         self._data_lines.append(entry)
         self._count += 1
 
-    def add_excel_file(self, filepath, sheet_name=0):
+    def add_excel_file(self, filepath, **kwargs):
         """Add a Microsoft Excel sheet to importer.
 
         Args:
             filepath: full file path to a XLS or XLSX file to add to the
                 importer.
-            sheet_name: str, int, list, or None, default 0.  Strings are used
-                for sheet names. Integers are used in zero-indexed sheet
-                positions. Lists of strings/integers are used to request
-                multiple sheets. Specify None to get all sheets.
+            kwargs:
+                Other parameters can be passed in that match the
+                pandas.read_excel parameters. Including:
+
+                sheet_name: str, int, list, or None, default 0. Strings are
+                    used for sheet names. Integers are used in zero-indexed
+                    sheet positions. Lists of strings/integers are used to
+                    request multiple sheets. Specify None to get all sheets.
+                header : int, list of int, default 0
+                    Row (0-indexed) to use for the column labels of the
+                    parsed DataFrame. If a list of integers is passed those
+                    row positions wil be combined into a ``MultiIndex``. Use
+                    None if there is no header.
+                names : array-like, default None
+                    List of column names to use. If file contains no header
+                    row then you should explicitly pass header=None.
+                index_col : int, list of int, default None
+                    Column (0-indexed) to use as the row labels of the
+                    DataFrame. Pass None if there is no such column. If a list
+                    is passed, those columns will be combined into a
+                    ``MultiIndex``. If a subset of data is selected with
+                    ``usecols``, index_col is based on the subset.
 
         Raises:
             TypeError: if the entry is not an Excel sheet.
@@ -238,7 +256,7 @@ class ImportStreamer(object):
         if file_ending not in ['xls', 'xlsx']:
             raise TypeError('File name needs to end with xls or xlsx')
 
-        data_frame = pandas.read_excel(filepath, sheet_name=sheet_name)
+        data_frame = pandas.read_excel(filepath, **kwargs)
         if data_frame.empty:
             raise TypeError('Not able to read any rows from sheet.')
 
