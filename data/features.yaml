@@ -1,0 +1,88 @@
+# Config file for the feature extraction analyzer.
+# A feature extraction definition looks like this:
+# name:
+#       # Define either a query_string or query_dsl.
+#       query_string: *
+#       query_dsl:
+#       # Mandatory fields.
+#       attribute:
+#       store_as:
+#       re:
+#       # Optional fields.
+#       re_flags: []
+#       emojis: []
+#       tags: []
+#       create_view: False
+#       aggregate: False
+#
+# Each definition needs to define either a query_string or a query_dsl.
+#
+# re_flags is a list of flags as strings from the re module. These include:
+# - DEBUG
+# - DOTALL
+# - IGNORECASE
+# - LOCALE
+# - MULTILINE
+# - TEMPLATE
+# - UNICODE
+# - VERBOSE
+#
+# The fields tags and emojis are optional.
+#
+# The field store_as defines the name of the attribute the feature is
+# stored as.
+#
+# The create_view is an optional boolean that determines whether a view
+# should be created if there are hits.
+#
+# The aggregate is an optional boolean that determines if we want to
+# create an aggregation of the results and store it (ATM this does
+# nothing, but once aggregations are supported it will).
+#
+# The feature extraction works in the way that the query is run, and
+# the regular expression is run against the attribute to extract a value.
+# The first value extracted is then stored inside the "store_as" attribute.
+# If there are emojis or tags defined they are also applied to that event.
+# In the end, if a view is supposed to be created a view searching for
+# the added tag is added (only if there are results).
+# ------------------------------------------------------------------------
+
+email_addresses:
+        query_string: 'source_short:"WEBHIST"'
+        attribute: 'message'
+        store_as: 'email_address'
+        re: '([a-zA-Z0-9_\.+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-\.]+)'
+        re_flags: []
+        aggregate: True
+
+gmail_accounts:
+        query_string: 'source_short:"WEBHIST" AND url:"mail.google.com"'
+        attribute: 'title'
+        store_as: 'found_account'
+        re: '.* - (.*?@.*?) - .*?$'
+        re_flags: []
+        aggregate: True
+        tags: ['Gmail Account']
+        emojis: ['ID_BUTTON']
+
+github_accounts:
+        query_string: 'source_short:"WEBHIST" AND
+          url:"https://github.com/users" AND title:"Your Profile"'
+        attribute: 'url'
+        store_as: 'found_account'
+        re: 'https://github.com/users/([A-z-\d]{1,39})'
+        re_flags: []
+        aggregate: True
+        tags: ['Github Account']
+        emojis: ['ID_BUTTON']
+
+# Linkedin account extraction from profile edit url
+linkedin_accounts:
+        query_string: 'source_short:"WEBHIST" AND
+          url:"https://www.linkedin.com/in/" AND url:"/edit/"'
+        attribute: 'url'
+        store_as: 'found_account'
+        re: 'https://www.linkedin.com/in/([A-z-\d]{5,32})/edit/'
+        aggregate: True
+        tags: ['linkedin-account']
+        emojis: ['ID_BUTTON']

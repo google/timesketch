@@ -1,0 +1,17 @@
+[Unit]
+Description=Timesketch server
+Requires=timesketch.socket
+After=network.target
+
+[Service]
+PIDFile=/run/timesketch/pid
+User=www-data
+Group=www-data
+RuntimeDirectory=timesketch
+ExecStart=/usr/bin/env gunicorn3 --pid /run/timesketch/timesketch.pid --timeout 120 --workers 1 --bind unix:/run/timesketch/socket --access-logfile /var/log/timesketch/access.log --error-logfile /var/log/timesketch/error.log --log-level INFO timesketch.wsgi
+ExecReload=/bin/kill -s HUP \$MAINPID
+ExecStop=/bin/kill -s TERM \$MAINPID
+PrivateTmp=false
+
+[Install]
+WantedBy=multi-user.target

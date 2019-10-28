@@ -50,9 +50,6 @@ from timesketch.models.sketch import Timeline
 class DropDataBaseTables(Command):
     """Drop all database tables."""
 
-    def __init__(self):
-        super(DropDataBaseTables, self).__init__()
-
     # pylint: disable=method-hidden
     def run(self):
         """Drop all tables after user ha verified."""
@@ -66,11 +63,8 @@ class DropDataBaseTables(Command):
 class AddUser(Command):
     """Create a new Timesketch user."""
     option_list = (
-        Option('--username', '-', dest='username', required=True),
+        Option('--username', '-u', dest='username', required=True),
         Option('--password', '-p', dest='password', required=False), )
-
-    def __init__(self):
-        super(AddUser, self).__init__()
 
     def get_password_from_prompt(self):
         """Get password from the command line prompt."""
@@ -101,9 +95,6 @@ class AddGroup(Command):
     """Create a new Timesketch group."""
     option_list = (Option('--name', '-n', dest='name', required=True), )
 
-    def __init__(self):
-        super(AddGroup, self).__init__()
-
     # pylint: disable=arguments-differ, method-hidden
     def run(self, name):
         """Creates the group."""
@@ -126,10 +117,7 @@ class GroupManager(Command):
             required=False,
             default=False),
         Option('--group', '-g', dest='group_name', required=True),
-        Option('--user', '-', dest='user_name', required=True), )
-
-    def __init__(self):
-        super(GroupManager, self).__init__()
+        Option('--user', '-u', dest='user_name', required=True), )
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, remove, group_name, user_name):
@@ -169,10 +157,7 @@ class AddSearchIndex(Command):
     option_list = (
         Option('--name', '-n', dest='name', required=True),
         Option('--index', '-i', dest='index', required=True),
-        Option('--user', '-', dest='username', required=True), )
-
-    def __init__(self):
-        super(AddSearchIndex, self).__init__()
+        Option('--user', '-u', dest='username', required=True), )
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, name, index, username):
@@ -203,9 +188,6 @@ class PurgeTimeline(Command):
     """Delete timeline permanently from Timesketch and Elasticsearch."""
     option_list = (Option(
         '--index', '-i', dest='index_name', required=True), )
-
-    def __init__(self):
-        super(PurgeTimeline, self).__init__()
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, index_name):
@@ -321,18 +303,43 @@ class SearchTemplateManager(Command):
                 db_session.commit()
 
 
+class ListSketches(Command):
+    """List all available sketches."""
+
+    # pylint: disable=arguments-differ, method-hidden
+    def run(self):
+        """The run method for the command."""
+        sketches = Sketch.query.all()
+
+        name_len = max([len(x.name) for x in sketches])
+        desc_len = max([len(x.description) for x in sketches])
+
+        if not name_len:
+            name_len = 5
+        if not desc_len:
+            desc_len = 10
+
+        fmt_string = '{{0:^3d}} | {{1:{0:d}s}} | {{2:{1:d}s}}'.format(
+            name_len, desc_len)
+
+        print('+-'*40)
+        print(' ID | Name {0:s} | Description'.format(' '*(name_len-5)))
+        print('+-'*40)
+        for sketch in sketches:
+            print(fmt_string.format(
+                sketch.id, sketch.name, sketch.description))
+            print('-'*80)
+
+
 class ImportTimeline(Command):
     """Create a new Timesketch timeline from a file."""
     option_list = (
         Option('--file', '-f', dest='file_path', required=True),
         Option('--sketch_id', '-s', dest='sketch_id', required=False),
-        Option('--username', '-', dest='username', required=False),
+        Option('--username', '-u', dest='username', required=False),
         Option('--timeline_name', '-n', dest='timeline_name',
                required=False),
     )
-
-    def __init__(self):
-        super(ImportTimeline, self).__init__()
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, file_path, sketch_id, username, timeline_name):
@@ -452,6 +459,7 @@ def main():
     shell_manager.add_command('add_index', AddSearchIndex())
     shell_manager.add_command('db', MigrateCommand)
     shell_manager.add_command('drop_db', DropDataBaseTables())
+    shell_manager.add_command('list_sketches', ListSketches())
     shell_manager.add_command('purge', PurgeTimeline())
     shell_manager.add_command('search_template', SearchTemplateManager())
     shell_manager.add_command('import', ImportTimeline())

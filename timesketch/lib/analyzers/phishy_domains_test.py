@@ -14,9 +14,6 @@ from timesketch.lib.testlib import MockDataStore
 class TestDomainsPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
 
-    def __init__(self, *args, **kwargs):
-        super(TestDomainsPlugin, self).__init__(*args, **kwargs)
-
     def setUp(self):
         """Set up the tests."""
         super(TestDomainsPlugin, self).setUp()

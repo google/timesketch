@@ -25,9 +25,6 @@ def mock_session():
     class MockHeaders(object):
         """Mock requests HTTP headers."""
 
-        def __init__(self):
-            super(MockHeaders, self).__init__()
-
         # pylint: disable=unused-argument
         @staticmethod
         def update(*args, **kwargs):

@@ -214,9 +214,9 @@ class ExploreResourceTest(BaseTest):
         self.assert200(response)
 
 
-class AggregationResourceTest(BaseTest):
-    """Test ExploreResource."""
-    resource_url = '/api/v1/sketches/1/aggregation/'
+class AggregationLegacyResourceTest(BaseTest):
+    """Test AggregationLegacyResource."""
+    resource_url = '/api/v1/sketches/1/aggregation/legacy/'
 
     @mock.patch('timesketch.api.v1.resources.ElasticsearchDataStore',
                 MockDataStore)
@@ -224,6 +224,24 @@ class AggregationResourceTest(BaseTest):
         """Authenticated request to get heatmap aggregation."""
         self.login()
         data = dict(query='test', filter={}, aggtype='heatmap')
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type='application/json')
+        self.assert200(response)
+
+
+class AggregationExploreResourceTest(BaseTest):
+    """Test AggregationExploreResource."""
+
+    resource_url = '/api/v1/sketches/1/aggregation/explore/'
+
+    @mock.patch('timesketch.api.v1.resources.ElasticsearchDataStore',
+                MockDataStore)
+    def test_heatmap_aggregation(self):
+        """Authenticated request to get aggregation requests."""
+        self.login()
+        data = dict(aggregation_dsl='test')
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),

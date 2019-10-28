@@ -20,9 +20,11 @@ import json
 import six
 
 from flask_testing import TestCase
+from flask import abort
 
 from timesketch import create_app
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import init_db
 from timesketch.models import drop_all
 from timesketch.models import db_session
@@ -47,13 +49,39 @@ class TestConfig(object):
     ELASTIC_PORT = None
     UPLOAD_ENABLED = False
     GRAPH_BACKEND_ENABLED = False
-    ENABLE_INDEX_ANALYZERS = False
-    ENABLE_SKETCH_ANALYZERS = False
+    AUTO_INDEX_ANALYZERS = []
+    AUTO_SKETCH_ANALYZERS = []
     SIMILARITY_DATA_TYPES = []
+
+
+class MockElasticClient(object):
+    """A mock implementation of a ElasticSearch client."""
+
+    def search(self, index, body, size):  # pylint: disable=unused-argument
+        """Mock a client search, used for aggregations."""
+        meta = {
+            'es_time': 23,
+            'es_total_count': 5621,
+            'timed_out': False,
+            'max_score': 0.0
+        }
+
+        objects = [{
+            'my_aggregation': {'buckets': [
+                {'foobar': 1, 'second': 'foobar'},
+                {'foobar': 4, 'second': 'more stuff'},
+                {'foobar': 532, 'second': 'hvernig hefurdu thad'}]},
+            'my_second_aggregation': {'buckets': [
+                {'foobar': 54, 'second': 'faranlegt', 'third': 'other text'},
+                {'foobar': 42, 'second': 'asnalegt'}]}
+
+        }]
+        return {'meta': meta, 'objects': objects}
 
 
 class MockDataStore(object):
     """A mock implementation of a Datastore."""
+
     event_dict = {
         '_index': [],
         '_id': 'adc123',
@@ -122,8 +150,11 @@ class MockDataStore(object):
             host: Hostname or IP address to the datastore
             port: The port used by the datastore
         """
+        self.client = MockElasticClient()
         self.host = host
         self.port = port
+        #List containing event dictionaries
+        self.event_store = []
 
     # pylint: disable=arguments-differ,unused-argument
     def search(self, *args, **kwargs):
@@ -140,14 +171,28 @@ class MockDataStore(object):
             return 4711
         return self.search_result_dict
 
-    # pylint: disable=arguments-differ,unused-argument
-    def get_event(self, *args, **kwargs):
+    def get_event(self, searchindex_id, event_id, stored_events=False):
         """Mock returning a single event from the datastore.
+
+        Args:
+            searchindex_id: String of ElasticSearch index id
+            event_id: String of ElasticSearch event id
+            stored_events: Determines whether the event to return will be
+            retrieved from event_store, or the default event_dict.
 
         Returns:
             A dictionary with event data.
         """
-        return self.event_dict
+        if not stored_events:
+            return self.event_dict
+
+        for event in self.event_store:
+            if event['_id'] == event_id:
+                return event
+
+        abort(HTTP_STATUS_CODE_NOT_FOUND)
+        return None
+
 
     def set_label(self,
                   searchindex_id,
@@ -165,6 +210,34 @@ class MockDataStore(object):
         """Mock creating an index."""
         return
 
+    def import_event(self, index_name, event_type, event=None,
+                     event_id=None, flush_interval=None):
+        """Mock adding the event to Elasticsearch, instead add the event
+        to event_store.
+
+        Args:
+            flush_interval: Number of events to queue up before indexing. (This
+            functionality is not supported.)
+            index_name: Name of the index in Elasticsearch
+            event_type: Type of event (e.g. plaso_event)
+            event: Event dictionary
+            event_id: Event Elasticsearch ID
+        """
+
+        for stored_event in self.event_store:
+            if stored_event['_id'] == event_id:
+                stored_event['_source'].update(event)
+                return
+
+        new_event = {
+            '_index': index_name,
+            '_id': event_id,
+            '_type': event_type,
+            '_source': event
+        }
+
+        self.event_store.append(new_event)
+
     @property
     def version(self):
         """Get Elasticsearch version.
@@ -173,6 +246,12 @@ class MockDataStore(object):
           Version number as a string.
         """
         return '6.0'
+
+    # pylint: disable=unused-argument
+    def search_stream(self, query_string, query_filter, query_dsl,
+                      indices, return_fields):
+        for event in self.event_store:
+            yield event
 
 
 class MockGraphDatabase(object):
@@ -276,7 +355,7 @@ class BaseTest(TestCase):
         Returns:
             A user (instance of timesketch.models.user.User)
         """
-        user = User(username=username)
+        user = User.get_or_create(username=username)
         if set_password:
             user.set_password(plaintext='test', rounds=4)
         self._commit_to_database(user)
@@ -291,7 +370,7 @@ class BaseTest(TestCase):
         Returns:
             A group (instance of timesketch.models.user.Group)
         """
-        group = Group(name=name)
+        group = Group.get_or_create(name=name)
         user.groups.append(group)
         self._commit_to_database(group)
         return group
@@ -307,7 +386,7 @@ class BaseTest(TestCase):
         Returns:
             A sketch (instance of timesketch.models.sketch.Sketch)
         """
-        sketch = Sketch(name=name, description=name, user=user)
+        sketch = Sketch.get_or_create(name=name, description=name, user=user)
         if acl:
             for permission in ['read', 'write', 'delete']:
                 sketch.grant_permission(permission=permission, user=user)
@@ -329,7 +408,7 @@ class BaseTest(TestCase):
         Returns:
             A searchindex (instance of timesketch.models.sketch.SearchIndex)
         """
-        searchindex = SearchIndex(
+        searchindex = SearchIndex.get_or_create(
             name=name, description=name, index_name=name, user=user)
         if acl:
             for permission in ['read', 'write', 'delete']:
@@ -349,7 +428,7 @@ class BaseTest(TestCase):
         Returns:
             An event (instance of timesketch.models.sketch.Event)
         """
-        event = Event(
+        event = Event.get_or_create(
             sketch=sketch, searchindex=searchindex, document_id='test')
         comment = event.Comment(comment='test', user=user)
         event.comments.append(comment)
@@ -366,7 +445,8 @@ class BaseTest(TestCase):
         Returns:
             A story (instance of timesketch.models.story.Story)
         """
-        story = Story(title='Test', content='Test', sketch=sketch, user=user)
+        story = Story.get_or_create(
+            title='Test', content='Test', sketch=sketch, user=user)
         self._commit_to_database(story)
         return story
 

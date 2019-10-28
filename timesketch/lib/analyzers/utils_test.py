@@ -26,9 +26,6 @@ from timesketch.lib.analyzers import utils
 class TestAnalyzerUtils(BaseTest):
     """Tests the functionality of the utilities."""
 
-    def __init__(self, *args, **kwargs):
-        super(TestAnalyzerUtils, self).__init__(*args, **kwargs)
-
     def test_get_domain_from_url(self):
         """Test get_domain_from_url function."""
         url = 'http://www.example.com/?foo=bar'

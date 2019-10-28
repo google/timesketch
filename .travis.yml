@@ -1,16 +1,39 @@
-language: python
-python:
-  - '2.7'
-  - '3.6'
-node_js: '8'
+matrix:
+  include:
+  - name: "Ubuntu Bionic (18.04) (Docker) Pylint with Python 3.6"
+    env: [TARGET="pylint", UBUNTU_VERSION="18.04"]
+    os: linux
+    dist: xenial
+    sudo: required
+    group: edge
+    language: python
+    python: 3.6
+    services:
+    - docker
+  - name: "Ubuntu Bionic (18.04) (Docker) with Python 2.7"
+    env: UBUNTU_VERSION="18.04"
+    os: linux
+    dist: xenial
+    sudo: required
+    group: edge
+    language: python
+    python: 2.7
+    services:
+    - docker
+  - name: "Ubuntu Bionic (18.04) (Docker) with Python 3.6"
+    env: UBUNTU_VERSION="18.04"
+    os: linux
+    dist: xenial
+    sudo: required
+    group: edge
+    language: python
+    python: 3.6
+    services:
+    - docker
 cache:
-  - yarn
-  - pip
-
+- yarn
+- pip
 install:
-  - pip install .
-  - yarn install
-
+- ./config/travis/install.sh
 script:
-  - ./run_tests.py --full
-  - yarn run build
+- ./config/travis/run_with_timeout.sh 30 ./config/travis/runtests.sh

@@ -2,6 +2,8 @@
 from __future__ import unicode_literals
 
 import collections
+import logging
+import numpy
 
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
@@ -66,22 +68,57 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
             tld = '.'.join(domain.split('.')[-2:])
             tld_counter[tld] += 1
 
+        # Exit early if there are no domains in the data set to analyze.
+        if not domain_counter:
+            return 'No domains to analyze.'
+
+        domain_count_array = numpy.array(list(domain_counter.values()))
+        try:
+            domain_20th_percentile = int(numpy.percentile(
+                domain_count_array, 20))
+        except IndexError:
+            logging.warning('Unable to calculate the 20th percentile.')
+            domain_20th_percentile = 0
+
+        try:
+            domain_85th_percentile = int(numpy.percentile(
+                domain_count_array, 85))
+        except IndexError:
+            logging.warning('Unable to calculate the 85th percentile.')
+            highest_count_domain = domain_counter.most_common(1)
+            if highest_count_domain:
+                _, highest_count = highest_count_domain[0]
+                domain_85th_percentile = highest_count + 10
+            else:
+                domain_85th_percentile = 100
+
+        common_domains = [
+            x for x, y in domain_counter.most_common()
+            if y >= domain_85th_percentile]
+        rare_domains = [
+            x for x, y in domain_counter.most_common()
+            if y <= domain_20th_percentile]
+
         satellite_emoji = emojis.get_emoji('SATELLITE')
         for domain, count in iter(domain_counter.items()):
             emojis_to_add = [satellite_emoji]
             tags_to_add = []
-            text = '{0:s} seen {1:d} times'.format(domain, count)
 
             cdn_provider = utils.get_cdn_provider(domain)
             if cdn_provider:
                 tags_to_add.append('known-cdn')
                 cdn_counter[cdn_provider] += 1
 
+            if domain in common_domains:
+                tags_to_add.append('common_domain')
+
+            if domain in rare_domains:
+                tags_to_add.append('rare_domain')
+
             for event in domains.get(domain, []):
                 event.add_tags(tags_to_add)
                 event.add_emojis(emojis_to_add)
 
-                event.add_human_readable(text, self.NAME, append=False)
                 new_attributes = {'domain': domain, 'domain_count': count}
                 if cdn_provider:
                     new_attributes['cdn_provider'] = cdn_provider

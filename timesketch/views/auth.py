@@ -87,7 +87,11 @@ def login():
                 if email:
                     user = User.get_or_create(username=email, name=email)
                     login_user(user)
-            except (JwtValidationError, JwtKeyError, Exception) as e:
+
+            except (ImportError, NameError, UnboundLocalError):  # pylint: disable=try-except-raise
+                raise
+
+            except (JwtValidationError, JwtKeyError, Exception) as e:  # pylint: disable=broad-except
                 current_app.logger.error('{}'.format(e))
 
     # SSO login based on environment variable, e.g. REMOTE_USER.
@@ -138,7 +142,7 @@ def login():
     if current_user.is_authenticated:
         return redirect(request.args.get('next') or '/')
 
-    return render_template('user/login.html', form=form)
+    return render_template('login.html', form=form)
 
 
 @auth_views.route('/logout/', methods=['GET'])
