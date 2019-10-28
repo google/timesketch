@@ -1848,10 +1848,16 @@ class AnalyzerRunResource(ResourceMixin, Resource):
 
         # Import here to avoid circular imports.
         from timesketch.lib import tasks
-        sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
-            sketch_id=sketch_id, searchindex_id=search_index.id,
-            user_id=current_user.id, analyzer_names=[analyzer_name],
-            analyzer_kwargs=analyzer_kwargs)
+        try:
+            sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+                sketch_id=sketch_id, searchindex_id=search_index.id,
+                user_id=current_user.id, analyzer_names=[analyzer_name],
+                analyzer_kwargs=analyzer_kwargs)
+        except KeyError as e:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to build analyzer pipeline, analyzer does not exist. '
+                'Error message: {0!s}'.format(e))
 
         if sketch_analyzer_group:
             pipeline = (tasks.run_sketch_init.s(

@@ -699,6 +699,19 @@ class Sketch(BaseResource):
 
         return response_json
 
+    def list_available_analyzers(self):
+        """Returns a list of available analyzers."""
+        resource_url = '{0:s}/sketches/{1:d}/analyzer/'.format(
+            self.api.api_root, self.id)
+
+        response = self.api.session.get(resource_url)
+
+        if response.status_code == 200:
+            return response.json()
+
+        return '[{0:d}] {1:s} {2:s}'.format(
+            response.status_code, response.reason, response.text)
+
     def run_analyzer(
             self, analyzer_name, analyzer_kwargs=None, timeline_id=None,
             timeline_name=None):

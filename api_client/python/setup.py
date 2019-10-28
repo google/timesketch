@@ -39,5 +39,6 @@ setup(
     install_requires=frozenset([
         'pandas',
         'requests',
+        'xlrd',
         'beautifulsoup4']),
     )
