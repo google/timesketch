@@ -97,6 +97,8 @@ from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import Story
+from timesketch.models.user import User
+from timesketch.models.user import Group
 
 
 def bad_request(message):
@@ -117,6 +119,7 @@ class ResourceMixin(object):
     """Mixin for API resources."""
     # Schemas for database model resources
     user_fields = {'username': fields.String}
+    group_fields = {'name': fields.String}
 
     aggregation_fields = {
         'id': fields.Integer,
@@ -230,6 +233,7 @@ class ResourceMixin(object):
         'searchtemplate': searchtemplate_fields,
         'view': view_fields,
         'user': user_fields,
+        'group': group_fields,
         'sketch': sketch_fields,
         'story': story_fields,
         'event_comment': comment_fields,
@@ -387,10 +391,16 @@ class SketchResource(ResourceMixin, Resource):
             } for searchtemplate in SearchTemplate.query.all()],
             emojis=get_emojis_as_dict(),
             permissions={
+                'public': bool(sketch.is_public),
                 'read': bool(sketch.has_permission(current_user, 'read')),
                 'write': bool(sketch.has_permission(current_user, 'write')),
                 'delete': bool(sketch.has_permission(current_user, 'delete')),
-            })
+            },
+            collaborators={
+                'users': [user.username for user in sketch.collaborators],
+                'groups': [group.name for group in sketch.groups],
+            }
+        )
         return self.to_json(sketch, meta=meta)
 
     @login_required
@@ -2146,6 +2156,87 @@ class SearchIndexResource(ResourceMixin, Resource):
         """
         searchindex = SearchIndex.query.get_with_acl(searchindex_id)
         return self.to_json(searchindex)
+
+
+class UserListResource(ResourceMixin, Resource):
+    """Resource to get list of users."""
+
+    @login_required
+    def get(self):
+        """Handles GET request to the resource.
+
+        Returns:
+            List of usernames
+        """
+        return self.to_json(User.query.all())
+
+
+class GroupListResource(ResourceMixin, Resource):
+    """Resource to get list of groups."""
+
+    @login_required
+    def get(self):
+        """Handles GET request to the resource.
+
+        Returns:
+            List of group names
+        """
+        return self.to_json(Group.query.all())
+
+
+class CollaboratorResource(ResourceMixin, Resource):
+    """Resource to update sketch collaborators."""
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        form = request.json
+
+        # TODO: Add granular ACL controls.
+        # https://github.com/google/timesketch/issues/1016
+
+        if not sketch.has_permission(user=current_user, permission='write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have write permission on the sketch.')
+
+        for username in form.get('users', []):
+            base_username = username.split('@')[0]
+            base_username = base_username.strip()
+            user = User.query.filter_by(username=base_username).first()
+            if user:
+                sketch.grant_permission(permission='read', user=user)
+                sketch.grant_permission(permission='write', user=user)
+
+        for group in form.get('groups', []):
+            group = Group.query.filter_by(name=group).first()
+            # Only add groups publicly visible or owned by the current user
+            if not group.user or group.user == current_user:
+                sketch.grant_permission(permission='read', group=group)
+                sketch.grant_permission(permission='write', group=group)
+
+        for username in form.get('remove_users', []):
+            user = User.query.filter_by(username=username).first()
+            sketch.revoke_permission(permission='read', user=user)
+            sketch.revoke_permission(permission='write', user=user)
+
+        for group in form.get('remove_groups', []):
+            group = Group.query.filter_by(name=group).first()
+            sketch.revoke_permission(permission='read', group=group)
+            sketch.revoke_permission(permission='write', group=group)
+
+        public = form.get('public')
+        if public == 'true':
+            sketch.grant_permission(permission='read')
+        else:
+            sketch.revoke_permission(permission='read')
+
+        return HTTP_STATUS_CODE_OK
 
 
 class SessionResource(ResourceMixin, Resource):
