@@ -1777,18 +1777,26 @@ class AnalyzerRunResource(ResourceMixin, Resource):
                 'User does not have write permission on the sketch.')
 
         form = request.json
+        if not form:
+            form = request.data
 
-        timeline_id = form.get('timeline_id')
-        if not timeline_id:
+        if not form:
             return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Need to provide a timeline ID.')
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'Unable to run an analyzer without any data submitted.')
+
+        index_name = form.get('index_name')
+        if not index_name:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Need to provide a timeline index ID.')
 
         search_index = None
         for timeline in sketch.timelines:
             index = SearchIndex.query.get_with_acl(
                 timeline.searchindex_id)
 
-            if index.index_name.lower() == timeline_id.lower():
+            if index.index_name.lower() == index_name.lower():
                 search_index = index
                 break
 
@@ -1808,7 +1816,7 @@ class AnalyzerRunResource(ResourceMixin, Resource):
             if not isinstance(analyzer_kwargs, dict):
                 return abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
-                    'KWargs needs to be a dictionary of parameters.')
+                    'Kwargs needs to be a dictionary of parameters.')
 
         # Import here to avoid circular imports.
         from timesketch.lib import tasks

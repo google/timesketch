@@ -350,7 +350,7 @@ class ImportStreamer(object):
         data = {
             'index_name': self._index
         }
-        _ = self._sketch.api.session.post(pipe_resource, data=data)
+        _ = self._sketch.api.session.post(pipe_resource, json=data)
 
     def flush(self, end_stream=True):
         """Flushes the buffer and uploads to timesketch.
