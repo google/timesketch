@@ -143,5 +143,21 @@ export default {
   },
   getSessions (sketchId, timelineIndex) {
     return RestApiClient.get('/sketches/' + sketchId + '/explore/sessions/' + timelineIndex)
+  },
+  getUsers () {
+    return RestApiClient.get('/users/')
+  },
+  getGroups () {
+    return RestApiClient.get('/groups/')
+  },
+  editCollaborators (sketchId, isPublic, usersToAdd, groupsToAdd, usersToRemove, groupsToRemove) {
+    let formData = {
+      public: isPublic,
+      users: usersToAdd.map(user => user.username),
+      groups: groupsToAdd.map(group => group.name),
+      remove_users: usersToRemove,
+      remove_groups: groupsToRemove
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
   }
 }
