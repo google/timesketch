@@ -168,9 +168,10 @@ limitations under the License.
       <div class="container is-fluid">
         <div class="card">
           <div class="card-content">
-            <div v-if="!searchInProgress">
-              <span v-if="toEvent">{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</span>
-              <span v-if="!toEvent">{{ totalHits }} events ({{ totalTime }}s)</span>
+              <span v-if="toEvent && !searchInProgress">{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</span>
+              <span v-if="!toEvent && !searchInProgress">{{ totalHits }} events ({{ totalTime }}s)</span>
+
+
               <div style="float:right; margin-left:7px;" class="select is-small">
                 <select v-model="currentQueryFilter.order" @change="search">
                   <option v-bind:value="currentQueryFilter.order">{{ currentQueryFilter.order }}</option>
@@ -190,7 +191,20 @@ limitations under the License.
                   <option value="500">500</option>
                 </select>
               </div>
-            </div>
+
+              <div style="float:right; margin-right:14px;">
+                <b-pagination @change="paginate($event)"
+                  :total="totalHitsForPagination"
+                  :per-page="currentQueryFilter.size"
+                  :current.sync="currentPage"
+                  :simple=true
+                  size="is-small"
+                  icon-pack="fas"
+                  icon-prev="chevron-left"
+                  icon-next="chevron-right">
+                </b-pagination>
+              </div>
+
             <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
             <div v-if="totalHits > 0" style="margin-top:20px;"></div>
             <ts-sketch-explore-event-list :event-list="eventList.objects" @addChip="addChip($event)" @searchContext="searchContext($event)" :order="currentQueryFilter.order"></ts-sketch-explore-event-list>
@@ -230,6 +244,7 @@ export default {
       showSearch: true,
       searchInProgress: false,
       activeStarFilter: false,
+      currentPage: 1,
       contextEvent: false,
       originalContext: false,
       eventList: {
@@ -255,6 +270,14 @@ export default {
     },
     totalHits () {
       return this.eventList.meta.es_total_count || 0
+    },
+    totalHitsForPagination () {
+      let total = this.eventList.meta.es_total_count || 0
+      // Elasticsearch only support pagination for the first 10k events.
+      if (total > 9999) {
+        total = 10000
+      }
+      return total
     },
     totalTime () {
       return this.eventList.meta.es_time / 1000 || 0
@@ -406,6 +429,10 @@ export default {
       }
       this.addChip(chip)
     },
+    paginate: function (pageNum) {
+      this.currentQueryFilter.from  = (pageNum * this.currentQueryFilter.size) - this.currentQueryFilter.size
+      this.search()
+    }
   },
   watch: {
     numEvents: function (newVal) {
