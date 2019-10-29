@@ -62,3 +62,4 @@ urllib3==1.24.2
 vine==1.1.4               # via amqp
 werkzeug==0.15.3          # via flask
 wtforms==2.1              # via flask-wtf
+xlrd==1.2.0
