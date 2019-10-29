@@ -132,7 +132,7 @@ def _get_index_analyzers():
 
 
 def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
-                         sketch_id=None):
+                         sketch_id=None, only_index=False):
     """Build a pipeline for index and analysis.
 
     Args:
@@ -141,6 +141,10 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
         index_name: Name of the index to index to.
         file_extension: The file extension of the file.
         sketch_id: The ID of the sketch to analyze.
+        only_index: If set to true then only indexing tasks are run, not
+            analyzers. This is to be used when uploading data in chunks,
+            we don't want to run the analyzers until all chunks have been
+            uploaded.
 
     Returns:
         Celery chain with indexing task (or single indexing task) and analyzer
@@ -151,12 +155,15 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
     sketch_analyzer_chain = None
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
+    index_task = index_task_class.s(
+        file_path, timeline_name, index_name, file_extension)
+
+    if only_index:
+        return index_task
+
     if sketch_id:
         sketch_analyzer_chain = build_sketch_analysis_pipeline(
             sketch_id, searchindex.id, user_id=None)
-
-    index_task = index_task_class.s(
-        file_path, timeline_name, index_name, file_extension)
 
     # If there are no analyzers just run the indexer.
     if not index_analyzer_chain and not sketch_analyzer_chain:
