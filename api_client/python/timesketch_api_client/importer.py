@@ -341,7 +341,11 @@ class ImportStreamer(object):
         except ValueError:
             return
 
-        pipe_resource = '{0:s}/sketches/{1:d}/analyzer/auto_run/'.format(
+        if self._data_lines:
+            self.flush(end_stream=True)
+
+        # Trigger auto analyzer pipeline to kick in.
+        pipe_resource = '{0:s}/sketches/{1:d}/analyzer/'.format(
             self._sketch.api.api_root, self._sketch.id)
         data = {
             'index_name': self._index
@@ -418,5 +422,4 @@ class ImportStreamer(object):
     # pylint: disable=unused-argument
     def __exit__(self, exception_type, exception_value, traceback):
         """Make it possible to use "with" statement."""
-        self.flush(end_stream=True)
         self.close()

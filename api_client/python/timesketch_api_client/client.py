@@ -533,6 +533,9 @@ class Sketch(BaseResource):
         Raises:
             ValueError: if the dataframe cannot be uploaded to Timesketch.
         """
+        # TODO: Explore the option of supporting YAML files for loading
+        # configs for formatting strings. (this would be implemented
+        # in the streamer itself, but accepted here as a parameter).
         if not format_message_string:
             string_items = []
             for column in data_frame.columns:
@@ -543,7 +546,7 @@ class Sketch(BaseResource):
                 string_items.append('{0:s} = {{0!s}}'.format(column))
             format_message_string = ' '.join(string_items)
 
-        response = None
+        streamer_response = None
         with importer.ImportStreamer() as streamer:
             streamer.set_sketch(self)
             streamer.set_timeline_name(timeline_name)
@@ -551,17 +554,17 @@ class Sketch(BaseResource):
             streamer.set_message_format_string(format_message_string)
 
             streamer.add_data_frame(data_frame)
-            response = streamer.response
+            streamer_response = streamer.response
 
-        if not response:
+        if not streamer_response:
             return 'No return value.'
 
         return_lines = []
-        for timesketch_object in response.get('objects', []):
+        for sketch_object in streamer_response.get('objects', []):
             return_lines.append('Timeline: {0:s}\nStatus: {1:s}'.format(
-                timesketch_object.get('description'),
+                sketch_object.get('description'),
                 ','.join([x.get(
-                    'status') for x in timesketch_object.get('status')])))
+                    'status') for x in sketch_object.get('status')])))
 
         return '\n'.join(return_lines)
 

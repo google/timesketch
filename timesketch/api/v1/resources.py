@@ -71,7 +71,6 @@ from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.lib.forms import AddTimelineSimpleForm
 from timesketch.lib.forms import AggregationExploreForm
 from timesketch.lib.forms import AggregationLegacyForm
-from timesketch.lib.forms import AnalyzerPipelineForm
 from timesketch.lib.forms import CreateTimelineForm
 from timesketch.lib.forms import SaveAggregationForm
 from timesketch.lib.forms import SaveViewForm
@@ -83,7 +82,6 @@ from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
-from timesketch.lib.forms import RunAnalyzerForm
 from timesketch.lib.forms import TimelineForm
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.experimental.utils import GRAPH_VIEWS
@@ -1369,50 +1367,6 @@ class EventAnnotationResource(ResourceMixin, Resource):
                 annotations, status_code=HTTP_STATUS_CODE_CREATED)
 
 
-class AnalyzerPipelineResource(ResourceMixin, Resource):
-    """Resource to start analyzer pipeline."""
-
-    @login_required
-    def post(self, sketch_id):
-        """Handles POST request to the resource.
-
-        Returns:
-            A string with information on pipeline.
-        """
-        form = AnalyzerPipelineForm()
-        if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to validate the input form.')
-
-        sketch = Sketch.query.get_with_acl(sketch_id)
-        if not sketch.has_permission(current_user, 'write'):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                'User does not have write access to sketch')
-
-        index_name = form.index_name.data
-        searchindex = SearchIndex.query.filter_by(
-            user=current_user,
-            index_name=index_name).first()
-        if not searchindex:
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'There is no searchindex for index name: {0:s}'.format(
-                    index_name))
-
-        # Start Celery pipeline for indexing and analysis.
-        # Import here to avoid circular imports.
-        from timesketch.lib import tasks
-        pipeline = tasks.build_sketch_analysis_pipeline(
-            sketch_id, searchindex.id, user_id=None)
-
-        if pipeline:
-            pipeline = (tasks.run_sketch_init.s(
-                [index_name]) | pipeline)
-            pipeline.apply_async()
-
-
 class UploadFileResource(ResourceMixin, Resource):
     """Resource that processes uploaded files."""
 
@@ -1822,18 +1776,19 @@ class AnalyzerRunResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'User does not have write permission on the sketch.')
 
-        form = RunAnalyzerForm.build(request)
-        if not form.validate_on_submit():
+        form = request.json
+
+        timeline_id = form.get('timeline_id')
+        if not timeline_id:
             return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate input data.')
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Need to provide a timeline ID.')
 
         search_index = None
-        timeline_id = form.timeline_id.data
         for timeline in sketch.timelines:
             index = SearchIndex.query.get_with_acl(
                 timeline.searchindex_id)
 
-            if index.index_name.lower() == timeline_id:
+            if index.index_name.lower() == timeline_id.lower():
                 search_index = index
                 break
 
@@ -1843,15 +1798,24 @@ class AnalyzerRunResource(ResourceMixin, Resource):
                     'No timeline was found, make sure you\'ve got the correct '
                     'timeline ID or timeline name.'))
 
-        analyzer_name = form.analyzer_name.data
-        analyzer_kwargs = form.analyzer_kwargs.data
+        analyzer_name = form.get('analyzer_name')
+        if analyzer_name:
+            if not isinstance(analyzer_name, (tuple, list)):
+                analyzer_name = [analyzer_name]
+
+        analyzer_kwargs = form.get('analyzer_kwargs')
+        if analyzer_kwargs:
+            if not isinstance(analyzer_kwargs, dict):
+                return abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'KWargs needs to be a dictionary of parameters.')
 
         # Import here to avoid circular imports.
         from timesketch.lib import tasks
         try:
             sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
                 sketch_id=sketch_id, searchindex_id=search_index.id,
-                user_id=current_user.id, analyzer_names=[analyzer_name],
+                user_id=current_user.id, analyzer_names=analyzer_name,
                 analyzer_kwargs=analyzer_kwargs)
         except KeyError as e:
             return abort(
