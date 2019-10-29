@@ -1816,10 +1816,12 @@ class AnalyzerRunResource(ResourceMixin, Resource):
                     'No timeline was found, make sure you\'ve got the correct '
                     'timeline ID or timeline name.'))
 
-        analyzer_name = form.get('analyzer_name')
-        if analyzer_name:
-            if not isinstance(analyzer_name, (tuple, list)):
-                analyzer_name = [analyzer_name]
+        analyzer_names = form.get('analyzer_names')
+        if analyzer_names:
+            if not isinstance(analyzer_names, (tuple, list)):
+                return abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Analyzer names needs to be a list of analyzers.')
 
         analyzer_kwargs = form.get('analyzer_kwargs')
         if analyzer_kwargs:
@@ -1833,7 +1835,7 @@ class AnalyzerRunResource(ResourceMixin, Resource):
         try:
             sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
                 sketch_id=sketch_id, searchindex_id=search_index.id,
-                user_id=current_user.id, analyzer_names=analyzer_name,
+                user_id=current_user.id, analyzer_names=analyzer_names,
                 analyzer_kwargs=analyzer_kwargs)
         except KeyError as e:
             return abort(

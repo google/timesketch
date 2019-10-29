@@ -766,7 +766,7 @@ class Sketch(BaseResource):
 
         data = {
             'index_name': timeline_id,
-            'analyzer_name': analyzer_name,
+            'analyzer_names': [analyzer_name],
             'analyzer_kwargs': analyzer_kwargs,
         }
 
