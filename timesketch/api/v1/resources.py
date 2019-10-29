@@ -1451,13 +1451,13 @@ class UploadFileResource(ResourceMixin, Resource):
                 db_session.add(timeline)
                 db_session.commit()
 
-        stream = form.enable_stream.data
+        enable_stream = form.enable_stream.data
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
         from timesketch.lib import tasks
         pipeline = tasks.build_index_pipeline(
             file_path, timeline_name, index_name, file_extension, sketch_id,
-            only_index=stream)
+            only_index=enable_stream)
         pipeline.apply_async()
 
         # Return Timeline if it was created.
