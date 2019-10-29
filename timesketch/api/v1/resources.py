@@ -2197,6 +2197,9 @@ class CollaboratorResource(ResourceMixin, Resource):
         sketch = Sketch.query.get_with_acl(sketch_id)
         form = request.json
 
+        # TODO: Add granular ACL controls.
+        # https://github.com/google/timesketch/issues/1016
+
         if not sketch.has_permission(user=current_user, permission='write'):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
