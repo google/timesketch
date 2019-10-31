@@ -294,9 +294,10 @@ class ImportStreamer(object):
                 raise TypeError('Is the JSON file empty?')
 
             self.add_data_frame(data_frame)
-
-        raise TypeError(
-            'File needs to have a file extension of: .csv, .jsonl or .plaso')
+        else:
+            raise TypeError(
+                'File needs to have a file extension of: .csv, .jsonl or '
+                '.plaso')
 
     def add_json(self, json_entry, column_names=None):
         """Add an entry that is in a JSON format.
