@@ -19,6 +19,7 @@ import colorsys
 import csv
 import datetime
 import email
+import io
 import json
 import random
 import smtplib
@@ -64,7 +65,7 @@ def read_and_validate_csv(path, delimiter=','):
     if not isinstance(delimiter, six.text_type):
         delimiter = codecs.decode(delimiter, 'utf8')
 
-    with open(path, 'r', encoding='utf-8') as fh:
+    with io.open(path, mode='r', encoding='utf-8') as fh:
         reader = csv.DictReader(fh, delimiter=delimiter)
         csv_header = reader.fieldnames
         missing_fields = []
