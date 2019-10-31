@@ -66,6 +66,7 @@ def read_and_validate_csv(path, delimiter=','):
 
     # Due to issues with python2.
     if six.PY2:
+        delimiter = str(delimiter)
         open_function = open(path, 'r')
     else:
         open_function = open(path, mode='r', encoding='utf-8')
