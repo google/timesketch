@@ -12,7 +12,21 @@ from timesketch.lib.analyzers.chain_plugins import manager as chain_manager
 
 
 class ChainSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sketch analyzer for chained events."""
+    """Sketch analyzer for chained events.
+
+    The purpose of the chain analyzer is to chain together events that can
+    be described as linked, either by sharing some common entitites, or
+    one event being a derivative of another event. An example of this
+    would be that a browser downloads an executable, which then later gets
+    executed. The signs of execution could lie in multiple events, from
+    different sources, but they are all linked or chained together. This
+    could help an analyst see the connection between these separate but
+    chained events. Another example could be a document written and then
+    compressed into a ZIP file, which would then be exfilled through some
+    means. If the document and the ZIP file are chained together it could be
+    easier for the analyst to track the meaning of an exfil event involving the
+    compressed file.
+    """
 
     NAME = 'chain'
 
@@ -27,7 +41,7 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
         """
         self.index_name = index_name
         self._chain_plugins = (
-            chain_manager.ChainPluginsManager.GetPlugins(self))
+            chain_manager.ChainPluginsManager.get_plugins(self))
         super(ChainSketchPlugin, self).__init__(index_name, sketch_id)
 
 
@@ -53,24 +67,30 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
                 search_dsl = None
                 search_string = chain_plugin.SEARCH_QUERY
 
+            return_fields = chain_plugin.EVENT_FIELDS
+            return_fields.extend(['chain_id_list', 'chain_plugins'])
             events = self.event_stream(
                 query_string=search_string, query_dsl=search_dsl,
-                return_fields=chain_plugin.EVENT_FIELDS)
+                return_fields=return_fields)
 
             for event in events:
-                if not chain_plugin.ProcessChain(event):
+                if not chain_plugin.process_chain(event):
                     continue
                 number_of_base_events += 1
-                chain_uuid = uuid.uuid4().hex
+                chain_id = uuid.uuid4().hex
 
-                number_chained_events = chain_plugin.BuildChain(
-                    base_event=event, chain_uuid=chain_uuid)
-                counter[chain_uuid] = number_chained_events
+                number_chained_events = chain_plugin.build_chain(
+                    base_event=event, chain_id=chain_id)
+                counter[chain_id] = number_chained_events
                 counter['total'] += number_chained_events
 
+                chain_id_list = event.source.get('chain_id_list', [])
+                chain_id_list.append(chain_id)
+                chain_plugins = event.source.get('chain_plugins', [])
+                chain_plugins.append(chain_plugin.NAME)
                 attributes = {
-                    'chain_uuid': chain_uuid,
-                    'chain_plugin': chain_plugin.NAME}
+                    'chain_id_list': chain_id_list,
+                    'chain_plugins': chain_plugins}
                 event.add_attributes(attributes)
                 event.add_emojis([link_emoji])
                 event.commit()

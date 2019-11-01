@@ -16,7 +16,7 @@ class WinPrefetchChainPlugin(interface.BaseChainPlugin):
     SEARCH_QUERY = 'data_type:"windows:prefetch:execution"'
     EVENT_FIELDS = ['executable']
 
-    def ProcessChain(self, base_event):
+    def process_chain(self, base_event):
         """Determine if the extracted event fits the criteria of the plugin.
 
         Args:
@@ -29,7 +29,7 @@ class WinPrefetchChainPlugin(interface.BaseChainPlugin):
         target = base_event.source.get('executable', '')
         return target.lower().endswith('.exe')
 
-    def GetChainedEvents(self, base_event):
+    def get_chained_events(self, base_event):
         """Yields an event that is chained or linked to the base event.
 
         Args:
@@ -66,4 +66,4 @@ class WinPrefetchChainPlugin(interface.BaseChainPlugin):
                 yield event
 
 
-manager.ChainPluginsManager.RegisterPlugin(WinPrefetchChainPlugin)
+manager.ChainPluginsManager.register_plugin(WinPrefetchChainPlugin)

@@ -7,7 +7,7 @@ class ChainPluginsManager(object):
     _plugin_classes = {}
 
     @classmethod
-    def DeregisterPlugin(cls, plugin_class):
+    def deregister_plugin(cls, plugin_class):
         """Deregisters a plugin class.
 
         The plugin classes are identified based on their lower case name.
@@ -26,7 +26,7 @@ class ChainPluginsManager(object):
         del cls._plugin_classes[plugin_name]
 
     @classmethod
-    def GetPlugins(cls, analyzer_object):
+    def get_plugins(cls, analyzer_object):
         """Retrieves the chain plugins.
 
         Args:
@@ -39,7 +39,7 @@ class ChainPluginsManager(object):
             cls._plugin_classes.values())]
 
     @classmethod
-    def RegisterPlugin(cls, plugin_class):
+    def register_plugin(cls, plugin_class):
         """Registers a plugin class.
 
         The plugin classes are identified based on their lower case name.
@@ -59,7 +59,7 @@ class ChainPluginsManager(object):
         cls._plugin_classes[plugin_name] = plugin_class
 
     @classmethod
-    def RegisterPlugins(cls, plugin_classes):
+    def register_plugins(cls, plugin_classes):
         """Registers plugin classes.
 
         The plugin classes are identified based on their lower case name.
@@ -73,4 +73,4 @@ class ChainPluginsManager(object):
             name.
         """
         for plugin_class in plugin_classes:
-            cls.RegisterPlugin(plugin_class)
+            cls.register_plugin(plugin_class)
