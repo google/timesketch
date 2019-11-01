@@ -409,7 +409,7 @@ class BaseIndexAnalyzer(object):
         try:
             result = self.run()
             analysis.set_status('DONE')
-        except Exception as e:
+        except Exception:  # pylint: disable=broad-except
             analysis.set_status('ERROR')
             result = traceback.format_exc()
 

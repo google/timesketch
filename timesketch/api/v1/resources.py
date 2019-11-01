@@ -1793,15 +1793,16 @@ class AnalysisResource(ResourceMixin, Resource):
             An analysis in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-        timeline = Timeline.query.get(timeline_id)
-        analyses = Analysis.query.filter_by(timeline=timeline).all()
 
         if not sketch.has_permission(current_user, 'read'):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'User does not have read access to sketch')
 
-        return self.to_json(analyses)
+        timeline = Timeline.query.get(timeline_id)
+        analysis_history = Analysis.query.filter_by(timeline=timeline).all()
+
+        return self.to_json(analysis_history)
 
 
 class AnalyzerSessionResource(ResourceMixin, Resource):
@@ -1815,14 +1816,15 @@ class AnalyzerSessionResource(ResourceMixin, Resource):
             A analyzer session in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-        session = AnalysisSession.query.get(session_id)
 
         if not sketch.has_permission(current_user, 'read'):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'User does not have read access to sketch')
 
-        return self.to_json(session)
+        analysis_session = AnalysisSession.query.get(session_id)
+
+        return self.to_json(analysis_session)
 
 
 class AnalyzerRunResource(ResourceMixin, Resource):
