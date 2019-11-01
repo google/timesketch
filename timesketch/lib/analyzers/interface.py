@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 import logging
 import os
 import yaml
+import traceback
 
 import pandas
 
@@ -402,12 +403,17 @@ class BaseIndexAnalyzer(object):
         analysis = Analysis.query.get(analysis_id)
         analysis.set_status('STARTED')
 
-        # Run the analyzer
-        result = self.run()
+        # Run the analyzer. Broad Exception catch to catch any error and store
+        # the error in the DB for display in the UI.
+        try:
+            result = self.run()
+            analysis.set_status('DONE')
+        except Exception as e:
+            analysis.set_status('ERROR')
+            result = traceback.format_exc()
 
         # Update database analysis object with result and status
         analysis.result = '{0:s}'.format(result)
-        analysis.set_status('DONE')
         db_session.add(analysis)
         db_session.commit()
 

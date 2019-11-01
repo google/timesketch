@@ -38,6 +38,9 @@ export default {
   deleteSketch (sketchId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/')
   },
+  getSketchTimelineAnalysis (sketchId, timelineId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/analysis/')
+  },
   // Add or remove timeline to sketch
   createSketchTimeline (sketchId, searchIndexId) {
     let formData = {
@@ -159,5 +162,15 @@ export default {
       remove_groups: groupsToRemove
     }
     return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
+  },
+  runAnalyzers (sketchId, indexName, analyzers) {
+    let formData = {
+      index_name: indexName,
+      analyzer_names: analyzers
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /analyzer/, formData)
+  },
+  getAnalyzerSession (sketchId, sessionId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/' + sessionId + '/')
   }
 }
