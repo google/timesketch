@@ -110,7 +110,7 @@ class TestChainAnalyzer(testlib.BaseTest):
         """Test the chain."""
 
         for plugin in manager.ChainPluginsManager.get_plugins(None):
-            manager.ChainPluginsManager.DeregisterPlugin(plugin)
+            manager.ChainPluginsManager.deregister_plugin(plugin)
 
         manager.ChainPluginsManager.register_plugin(FakeChainPlugin)
 
