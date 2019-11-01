@@ -14,10 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
+
   <div>
 
     <!-- Timeline detail modal -->
-    <div class="modal" v-bind:class="{ 'is-active': showInfoModal }">
+    <b-modal :active.sync="showInfoModal" :width="640" scroll="keep">
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -39,10 +40,10 @@ limitations under the License.
         </div>
       </div>
       <button class="modal-close is-large" aria-label="close" v-on:click="showInfoModal = !showInfoModal"></button>
-    </div>
+    </b-modal>
 
     <!-- Timeline edit modal -->
-    <div class="modal" v-bind:class="{ 'is-active': showEditModal }">
+    <b-modal :active.sync="showEditModal" :width="640" scroll="keep">
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -68,7 +69,7 @@ limitations under the License.
         </div>
       </div>
       <button class="modal-close is-large" aria-label="close" v-on:click="showEditModal = !showEditModal"></button>
-    </div>
+    </b-modal>
 
     <div class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
       <div class="dropdown-trigger">

@@ -218,7 +218,7 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
 
     # Exit early if no sketch analyzers are configured to run.
     if not analyzer_names:
-        return None
+        return None, None
 
     if not analyzer_kwargs:
         analyzer_kwargs = current_app.config.get('ANALYZERS_DEFAULT_KWARGS', {})

@@ -22,6 +22,7 @@ limitations under the License.
     </header>
     <div class="card-content">
       <b-table
+        v-if="analyses"
         :data="analyses"
         :current-page.sync="currentPage"
         :per-page="perPage"
@@ -54,6 +55,9 @@ limitations under the License.
           </b-table-column>
         </template>
       </b-table>
+
+      <span v-if="!analyses">No analysis available.</span>
+
     </div>
   </div>
 </template>

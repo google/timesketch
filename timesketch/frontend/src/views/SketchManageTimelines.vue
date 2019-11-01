@@ -43,16 +43,19 @@ limitations under the License.
           <header class="card-header">
             <p class="card-header-title">Add Timelines</p>
           </header>
-          <div class="card-content" style="background-color:rgba(44,255,0,0.08);">
-            <p>
-              Upload a new timeline or choose an existing one from the list below. You can upload either a Plaso storage file, JSONL, or a CSV file.
-              <br>
-              If you are uploading a CSV or JSONL file make sure to read the <a href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines" rel="noreferrer" target="_blank">documentation</a> to learn what columns are needed.
-            </p>
-            <br>
-            <ts-upload-timeline-form></ts-upload-timeline-form>
-          </div>
+
           <div class="card-content" v-if="availableSearchIndices.length">
+
+            <b-message type="is-success">
+              <p>
+                Upload a new timeline or choose an existing one from the list below. You can upload either a Plaso storage file, JSONL, or a CSV file.
+                <br>
+                If you are uploading a CSV or JSONL file make sure to read the <a href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines" rel="noreferrer" target="_blank">documentation</a> to learn what columns are needed.
+              </p>
+              <br>
+              <ts-upload-timeline-form></ts-upload-timeline-form>
+            </b-message>
+
             <ul class="content-list">
               <transition-group name="list" tag="p">
                 <li style="padding:10px;" v-for="searchindex in availableSearchIndices" :key="searchindex.id">
