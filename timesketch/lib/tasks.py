@@ -162,7 +162,7 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
         return index_task
 
     if sketch_id:
-        sketch_analyzer_chain = build_sketch_analysis_pipeline(
+        sketch_analyzer_chain, _ = build_sketch_analysis_pipeline(
             sketch_id, searchindex.id, user_id=None)
 
     # If there are no analyzers just run the indexer.
@@ -205,7 +205,8 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
         analyzer_kwargs (dict): Arguments to the analyzers.
 
     Returns:
-        Celery group with analysis tasks or None if no analyzers are enabled.
+        A tuple with a Celery group with analysis tasks or None if no analyzers
+        are enabled and an analyzer session ID.
     """
     tasks = []
 
@@ -217,7 +218,7 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
 
     # Exit early if no sketch analyzers are configured to run.
     if not analyzer_names:
-        return None
+        return None, None
 
     if not analyzer_kwargs:
         analyzer_kwargs = current_app.config.get('ANALYZERS_DEFAULT_KWARGS', {})
@@ -264,9 +265,9 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
         tasks.append(run_email_result_task.s(sketch_id))
 
     if not tasks:
-        return None
+        return None, None
 
-    return chain(tasks)
+    return chain(tasks), analysis_session.id
 
 
 @celery.task(track_started=True)

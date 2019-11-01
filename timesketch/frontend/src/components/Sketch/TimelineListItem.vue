@@ -14,10 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
+
   <div>
 
     <!-- Timeline detail modal -->
-    <div class="modal" v-bind:class="{ 'is-active': showInfoModal }">>
+    <b-modal :active.sync="showInfoModal" :width="640" scroll="keep">
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -39,10 +40,10 @@ limitations under the License.
         </div>
       </div>
       <button class="modal-close is-large" aria-label="close" v-on:click="showInfoModal = !showInfoModal"></button>
-    </div>
+    </b-modal>
 
     <!-- Timeline edit modal -->
-    <div class="modal" v-bind:class="{ 'is-active': showEditModal }">
+    <b-modal :active.sync="showEditModal" :width="640" scroll="keep">
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -68,7 +69,7 @@ limitations under the License.
         </div>
       </div>
       <button class="modal-close is-large" aria-label="close" v-on:click="showEditModal = !showEditModal"></button>
-    </div>
+    </b-modal>
 
     <div class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
       <div class="dropdown-trigger">
@@ -99,6 +100,20 @@ limitations under the License.
           <span>Rename</span>
         </button>
       </p>
+
+      <p class="control">
+        <ts-analyzer-list-dropdown :timeline="timeline" @newAnalysisSession="setAnalysisSession($event)"></ts-analyzer-list-dropdown>
+      </p>
+
+      <p class="control">
+        <button class="button is-small is-rounded is-outlined" @click="showAnalysisHistory = !showAnalysisHistory">
+          <span class="icon is-small">
+            <i class="fas fa-history"></i>
+          </span>
+          <span>History</span>
+        </button>
+      </p>
+
       <p class="control">
         <button v-on:click="remove(timeline)" class="button is-small is-rounded is-danger is-outlined">Remove</button>
       </p>
@@ -108,6 +123,17 @@ limitations under the License.
     <span class="is-size-7">
       Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
     </span>
+
+    <br>
+
+    <div v-show="analysisSessionId">
+      <ts-analyzer-session-detail :timeline="timeline" :session-id="analysisSessionId" @sessionDone="analysisSessionId = false"></ts-analyzer-session-detail>
+    </div>
+
+    <div v-if="showAnalysisHistory">
+      <ts-analyzer-history :timeline="timeline"></ts-analyzer-history>
+    </div>
+
   </div>
 </template>
 
@@ -116,9 +142,16 @@ import Vue from 'vue'
 import { Chrome } from 'vue-color'
 import _ from 'lodash'
 
+import TsAnalyzerListDropdown from './AnalyzerListDropdown'
+import TsAnalyzerSessionDetail from './AnalyzerSessionDetail'
+import TsAnalyzerHistory from './AnalyzerHistory'
+
 export default {
   components: {
-    'color-picker': Chrome
+    'color-picker': Chrome,
+    TsAnalyzerListDropdown,
+    TsAnalyzerSessionDetail,
+    TsAnalyzerHistory
   },
   props: ['timeline', 'controls'],
   data () {
@@ -128,7 +161,10 @@ export default {
       newTimelineName: '',
       colorPickerActive: false,
       showInfoModal: false,
-      showEditModal: false
+      showEditModal: false,
+      analysisSessionId: false,
+      showAnalysisDetail: false,
+      showAnalysisHistory: false
     }
   },
   computed: {
@@ -155,10 +191,12 @@ export default {
       this.$emit('save', this.timeline)
     }, 300),
     saveTimeline () {
-      // Vue.set(this.timeline, 'name', this.newTimelineName)
-      // Vue.set(this.timeline, 'description', description)
       this.showEditModal = false
       this.$emit('save', this.timeline)
+    },
+    setAnalysisSession (sessionId) {
+      this.analysisSessionId = sessionId
+      this.showAnalysisDetail = true
     }
   },
   mounted () {

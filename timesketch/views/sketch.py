@@ -377,7 +377,7 @@ def timelines(sketch_id):
                 # If enabled, run sketch analyzers when timeline is added.
                 # Import here to avoid circular imports.
                 from timesketch.lib import tasks
-                sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+                sketch_analyzer_group, _ = tasks.build_sketch_analysis_pipeline(
                     sketch_id, searchindex.id, current_user.id)
                 if sketch_analyzer_group:
                     pipeline = (tasks.run_sketch_init.s(

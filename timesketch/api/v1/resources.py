@@ -89,6 +89,8 @@ from timesketch.lib.experimental.utils import get_graph_views
 from timesketch.lib.experimental.utils import get_graph_view
 from timesketch.models import db_session
 from timesketch.models.sketch import Aggregation
+from timesketch.models.sketch import Analysis
+from timesketch.models.sketch import AnalysisSession
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
@@ -164,6 +166,29 @@ class ResourceMixin(object):
         'updated_at': fields.DateTime
     }
 
+    analysis_fields = {
+        'id': fields.Integer,
+        'name': fields.String,
+        'description': fields.String,
+        'analyzer_name': fields.String,
+        'parameters': fields.String,
+        'result': fields.String,
+        'log': fields.String,
+        'user': fields.Nested(user_fields),
+        'timeline': fields.Nested(timeline_fields),
+        'status': fields.Nested(status_fields),
+        'created_at': fields.DateTime,
+        'updated_at': fields.DateTime
+    }
+
+    analysis_session_fields = {
+        'id': fields.Integer,
+        'user': fields.Nested(user_fields),
+        'analyses': fields.Nested(analysis_fields),
+        'created_at': fields.DateTime,
+        'updated_at': fields.DateTime
+    }
+
     searchtemplate_fields = {
         'id': fields.Integer,
         'name': fields.String,
@@ -228,6 +253,8 @@ class ResourceMixin(object):
     fields_registry = {
         'aggregation': aggregation_fields,
         'searchindex': searchindex_fields,
+        'analysis': analysis_fields,
+        'analysissession': analysis_session_fields,
         'timeline': timeline_fields,
         'searchtemplate': searchtemplate_fields,
         'view': view_fields,
@@ -398,7 +425,9 @@ class SketchResource(ResourceMixin, Resource):
             collaborators={
                 'users': [user.username for user in sketch.collaborators],
                 'groups': [group.name for group in sketch.groups],
-            }
+            },
+            analyzers=[
+                x for x, y in analyzer_manager.AnalysisManager.get_analyzers()]
         )
         return self.to_json(sketch, meta=meta)
 
@@ -1753,8 +1782,53 @@ class TimelineCreateResource(ResourceMixin, Resource):
             searchindex, status_code=HTTP_STATUS_CODE_CREATED)
 
 
+class AnalysisResource(ResourceMixin, Resource):
+    """Resource to get analyzer session."""
+
+    @login_required
+    def get(self, sketch_id, timeline_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            An analysis in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+
+        if not sketch.has_permission(current_user, 'read'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have read access to sketch')
+
+        timeline = Timeline.query.get(timeline_id)
+        analysis_history = Analysis.query.filter_by(timeline=timeline).all()
+
+        return self.to_json(analysis_history)
+
+
+class AnalyzerSessionResource(ResourceMixin, Resource):
+    """Resource to get analyzer session."""
+
+    @login_required
+    def get(self, sketch_id, session_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            A analyzer session in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+
+        if not sketch.has_permission(current_user, 'read'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have read access to sketch')
+
+        analysis_session = AnalysisSession.query.get(session_id)
+
+        return self.to_json(analysis_session)
+
+
 class AnalyzerRunResource(ResourceMixin, Resource):
-    """Resource to get all timelines for sketch."""
+    """Resource to list or run analyzers for sketch."""
 
     @login_required
     def get(self, sketch_id):
@@ -1833,7 +1907,7 @@ class AnalyzerRunResource(ResourceMixin, Resource):
         # Import here to avoid circular imports.
         from timesketch.lib import tasks
         try:
-            sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+            analyzer_group, session_id = tasks.build_sketch_analysis_pipeline(
                 sketch_id=sketch_id, searchindex_id=search_index.id,
                 user_id=current_user.id, analyzer_names=analyzer_names,
                 analyzer_kwargs=analyzer_kwargs)
@@ -1843,13 +1917,17 @@ class AnalyzerRunResource(ResourceMixin, Resource):
                 'Unable to build analyzer pipeline, analyzer does not exist. '
                 'Error message: {0!s}'.format(e))
 
-        if sketch_analyzer_group:
+        if analyzer_group:
             pipeline = (tasks.run_sketch_init.s(
-                [search_index.index_name]) | sketch_analyzer_group)
+                [search_index.index_name]) | analyzer_group)
             pipeline.apply_async()
 
-        return 'Analyzer has been started on timeline: [{0:s}] {1:s}'.format(
-            search_index.index_name, search_index.name)
+        schema = {
+            'objects': [{
+                'analysis_session': session_id
+            }]
+        }
+        return jsonify(schema)
 
 
 class TimelineListResource(ResourceMixin, Resource):
@@ -1912,7 +1990,7 @@ class TimelineListResource(ResourceMixin, Resource):
         # circular imports.
         if current_app.config.get('AUTO_SKETCH_ANALYZERS'):
             from timesketch.lib import tasks
-            sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+            sketch_analyzer_group, _ = tasks.build_sketch_analysis_pipeline(
                 sketch_id, searchindex_id, current_user.id)
             if sketch_analyzer_group:
                 pipeline = (tasks.run_sketch_init.s(
