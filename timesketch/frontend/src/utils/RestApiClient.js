@@ -136,12 +136,7 @@ export default {
   countSketchEvents (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/count/')
   },
-  uploadTimeline (formData) {
-    let config = {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    }
+  uploadTimeline (formData, config) {
     return RestApiClient.post('/upload/', formData, config)
   },
   getSessions (sketchId, timelineIndex) {
