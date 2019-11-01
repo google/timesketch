@@ -17,8 +17,8 @@ from __future__ import unicode_literals
 
 import logging
 import os
-import yaml
 import traceback
+import yaml
 
 import pandas
 
@@ -31,6 +31,7 @@ from timesketch.models.sketch import Sketch as SQLSketch
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Analysis
+
 
 def _flush_datastore_decorator(func):
     """Decorator that flushes the bulk insert queue in the datastore."""
