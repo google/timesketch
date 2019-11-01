@@ -1905,7 +1905,7 @@ class AnalyzerRunResource(ResourceMixin, Resource):
         # Import here to avoid circular imports.
         from timesketch.lib import tasks
         try:
-            sketch_analyzer_group, session_id = tasks.build_sketch_analysis_pipeline(
+            analyzer_group, session_id = tasks.build_sketch_analysis_pipeline(
                 sketch_id=sketch_id, searchindex_id=search_index.id,
                 user_id=current_user.id, analyzer_names=analyzer_names,
                 analyzer_kwargs=analyzer_kwargs)
@@ -1915,9 +1915,9 @@ class AnalyzerRunResource(ResourceMixin, Resource):
                 'Unable to build analyzer pipeline, analyzer does not exist. '
                 'Error message: {0!s}'.format(e))
 
-        if sketch_analyzer_group:
+        if analyzer_group:
             pipeline = (tasks.run_sketch_init.s(
-                [search_index.index_name]) | sketch_analyzer_group)
+                [search_index.index_name]) | analyzer_group)
             pipeline.apply_async()
 
         schema = {
