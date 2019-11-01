@@ -57,14 +57,21 @@ def read_and_validate_csv(path, delimiter=','):
         path: Path to the CSV file
         delimiter: character used as a field separator, default: ','
     """
-    # Columns that must be present in the CSV file
+    # Columns that must be present in the CSV file.
     mandatory_fields = ['message', 'datetime', 'timestamp_desc']
 
-    # Ensures delimiter is a string
+    # Ensures delimiter is a string.
     if not isinstance(delimiter, six.text_type):
         delimiter = codecs.decode(delimiter, 'utf8')
 
-    with open(path, 'r', encoding='utf-8') as fh:
+    # Due to issues with python2.
+    if six.PY2:
+        delimiter = str(delimiter)
+        open_function = open(path, 'r')
+    else:
+        open_function = open(path, mode='r', encoding='utf-8')
+
+    with open_function as fh:
         reader = csv.DictReader(fh, delimiter=delimiter)
         csv_header = reader.fieldnames
         missing_fields = []
