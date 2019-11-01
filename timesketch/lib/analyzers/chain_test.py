@@ -67,10 +67,10 @@ class FakeChainPlugin(interface.BaseChainPlugin):
     EVENT_FIELDS = ['kedjur']
     ALL_EVENTS = []
 
-    def ProcessChain(self, base_event):
+    def process_chain(self, base_event):
         return True
 
-    def GetChainedEvents(self, base_event):
+    def get_chained_events(self, base_event):
         """Implementation of the chained events."""
         url = base_event.source.get('url', '')
         tenging = base_event.source.get('tenging', '')
@@ -109,10 +109,10 @@ class TestChainAnalyzer(testlib.BaseTest):
     def test_get_chains(self):
         """Test the chain."""
 
-        for plugin in manager.ChainPluginsManager.GetPlugins(None):
+        for plugin in manager.ChainPluginsManager.get_plugins(None):
             manager.ChainPluginsManager.DeregisterPlugin(plugin)
 
-        manager.ChainPluginsManager.RegisterPlugin(FakeChainPlugin)
+        manager.ChainPluginsManager.register_plugin(FakeChainPlugin)
 
         analyzer = FakeAnalyzer('test_index', sketch_id=1)
         analyzer.datastore.client = mock.Mock()

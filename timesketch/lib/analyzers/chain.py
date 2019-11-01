@@ -86,11 +86,11 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
 
                 chain_id_list = event.source.get('chain_id_list', [])
                 chain_id_list.append(chain_id)
-                chain_plugins = event.source.get('chain_plugins', [])
-                chain_plugins.append(chain_plugin.NAME)
+                chain_plugins_list = event.source.get('chain_plugins', [])
+                chain_plugins_list.append(chain_plugin.NAME)
                 attributes = {
                     'chain_id_list': chain_id_list,
-                    'chain_plugins': chain_plugins}
+                    'chain_plugins': chain_plugins_list}
                 event.add_attributes(attributes)
                 event.add_emojis([link_emoji])
                 event.commit()
