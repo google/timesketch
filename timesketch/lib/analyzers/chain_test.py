@@ -132,7 +132,8 @@ class TestChainAnalyzer(testlib.BaseTest):
         link_emoji = emojis.get_emoji('LINK')
         for event in plugin.ALL_EVENTS:
             attributes = event.attributes
-            self.assertEqual(attributes.get('chain_plugin', ''), 'fake_chain')
+            self.assertEqual(
+                attributes.get('chain_plugins', []), ['fake_chain'])
 
             event_emojis = event.emojis
             self.assertEqual(len(event_emojis), 1)
