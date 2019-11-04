@@ -44,7 +44,7 @@ limitations under the License.
             <p class="card-header-title">Add Timelines</p>
           </header>
 
-          <div class="card-content" v-if="availableSearchIndices.length">
+          <div class="card-content">
 
             <b-message type="is-success">
               <p>
@@ -56,7 +56,7 @@ limitations under the License.
               <ts-upload-timeline-form></ts-upload-timeline-form>
             </b-message>
 
-            <ul class="content-list">
+            <ul class="content-list" v-if="availableSearchIndices.length">
               <transition-group name="list" tag="p">
                 <li style="padding:10px;" v-for="searchindex in availableSearchIndices" :key="searchindex.id">
                   <div class="ts-timeline-color-box is-pulled-left has-text-centered" style="background-color:#f5f5f5;cursor:pointer;" v-on:click="addTimelineToSketch(searchindex)">

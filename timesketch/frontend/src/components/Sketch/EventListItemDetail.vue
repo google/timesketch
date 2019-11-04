@@ -17,7 +17,7 @@ limitations under the License.
           <table class="table is-bordered" style="width:100%;table-layout: fixed;">
             <tbody>
               <tr v-for="(item, key) in fullEventFiltered" :key="key">
-                <td style="width:150px;">{{ key }}</td>
+                <td style="white-space:pre-wrap;word-wrap: break-word; width: 150px;">{{ key }}</td>
                 <td>
                   <span style="white-space:pre-wrap;word-wrap: break-word">{{ item }}</span>
                 </td>

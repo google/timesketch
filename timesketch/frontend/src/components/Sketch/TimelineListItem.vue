@@ -71,7 +71,9 @@ limitations under the License.
       <button class="modal-close is-large" aria-label="close" v-on:click="showEditModal = !showEditModal"></button>
     </b-modal>
 
-    <div class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
+    <div v-if="timelineStatus === 'processing'" class="ts-timeline-color-box is-pulled-left" style="background-color: #f5f5f5;"></div>
+
+    <div v-if="timelineStatus === 'ready'" class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
       <div class="dropdown-trigger">
         <div class="ts-timeline-color-box" v-bind:style="timelineColorStyle" v-on:click="colorPickerActive = !colorPickerActive"></div>
       </div>
@@ -83,6 +85,7 @@ limitations under the License.
         </div>
       </div>
     </div>
+
     <div v-if="controls" class="field is-grouped is-pulled-right" style="margin-top:10px;">
       <p class="control">
         <button class="button is-rounded is-small is-outlined" v-on:click="showInfoModal = !showInfoModal">
@@ -100,11 +103,9 @@ limitations under the License.
           <span>Rename</span>
         </button>
       </p>
-
       <p class="control">
         <ts-analyzer-list-dropdown :timeline="timeline" @newAnalysisSession="setAnalysisSession($event)"></ts-analyzer-list-dropdown>
       </p>
-
       <p class="control">
         <button class="button is-small is-rounded is-outlined" @click="showAnalysisHistory = !showAnalysisHistory">
           <span class="icon is-small">
@@ -113,16 +114,23 @@ limitations under the License.
           <span>History</span>
         </button>
       </p>
-
       <p class="control">
         <button v-on:click="remove(timeline)" class="button is-small is-rounded is-danger is-outlined">Remove</button>
       </p>
     </div>
-    <router-link :to="{ name: 'SketchExplore', query: {index: timeline.searchindex.index_name}}"><strong>{{ timeline.name }}</strong></router-link>
+
+    <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: {index: timeline.searchindex.index_name}}"><strong>{{ timeline.name }}</strong></router-link>
+    <strong v-if="timelineStatus !== 'ready'">{{ timeline.name }}</strong>
     <br>
-    <span class="is-size-7">
+
+    <span v-if="timelineStatus === 'ready'" class="is-size-7">
       Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
     </span>
+    <span v-if="timelineStatus !== 'ready'" class="is-size-7">
+      Indexing in progress <span class="blink">...</span>
+    </span>
+
+
 
     <br>
 
@@ -141,6 +149,8 @@ limitations under the License.
 import Vue from 'vue'
 import { Chrome } from 'vue-color'
 import _ from 'lodash'
+
+import ApiClient from '../../utils/RestApiClient'
 
 import TsAnalyzerListDropdown from './AnalyzerListDropdown'
 import TsAnalyzerSessionDetail from './AnalyzerSessionDetail'
@@ -164,10 +174,15 @@ export default {
       showEditModal: false,
       analysisSessionId: false,
       showAnalysisDetail: false,
-      showAnalysisHistory: false
+      showAnalysisHistory: false,
+      timelineStatus: null,
+      autoRefresh: false
     }
   },
   computed: {
+    sketch () {
+      return this.$store.state.sketch
+    },
     timelineColorStyle () {
       let hexColor = this.newColor || this.timeline.color
       if (!hexColor.startsWith('#')) {
@@ -197,6 +212,14 @@ export default {
     setAnalysisSession (sessionId) {
       this.analysisSessionId = sessionId
       this.showAnalysisDetail = true
+    },
+    fetchData () {
+      ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id).then((response) => {
+        this.timelineStatus = response.data.objects[0].searchindex.status[0].status
+        if (this.timelineStatus !== 'ready') {
+          this.autoRefresh = true
+        }
+      }).catch((e) => {})
     }
   },
   mounted () {
@@ -211,6 +234,29 @@ export default {
   created () {
     this.initialColor = {
       hex: this.timeline.color
+    }
+    this.timelineStatus = this.timeline.searchindex.status[0].status
+    if (this.timelineStatus !== 'ready') {
+      this.autoRefresh = true
+    }
+  },
+  beforeDestroy() {
+    clearInterval(this.t)
+    this.t = false
+  },
+  watch: {
+    autoRefresh (val) {
+      if (val && !this.t) {
+        this.t = setInterval(function () {
+          this.fetchData()
+          if (this.timelineStatus === 'ready') {
+            this.autoRefresh = false
+          }
+        }.bind(this), 5000)}
+      else {
+        clearInterval(this.t)
+        this.t = false
+      }
     }
   }
 }
@@ -231,5 +277,15 @@ export default {
 }
 .vc-sketch {
   box-shadow: none;
+}
+
+.blink {
+  animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
 }
 </style>

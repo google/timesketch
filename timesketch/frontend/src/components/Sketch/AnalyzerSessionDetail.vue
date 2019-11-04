@@ -108,7 +108,7 @@ export default {
             this.autoRefresh = false
             this.$emit('sessionDone')
           }
-        }.bind(this), 3000)}
+        }.bind(this), 5000)}
       else {
         clearInterval(this.t)
         this.t = false
