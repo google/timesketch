@@ -161,7 +161,7 @@ class ImportStreamer(object):
         size = data_frame.shape[0]
         data_frame_use = self._fix_data_frame(data_frame)
 
-        if not 'datetime' in data_frame_use:
+        if 'datetime' not in data_frame_use:
             raise ValueError(
                 'Need a field called datetime in the data frame that is '
                 'formatted according using this format string: '
@@ -169,12 +169,12 @@ class ImportStreamer(object):
                 'needs to have a column that has the word "time" in it, '
                 'that can be used to conver to a datetime field.')
 
-        if not 'message' in data_frame_use:
+        if 'message' not in data_frame_use:
             raise ValueError(
                 'Need a field called message in the data frame, use the '
                 'formatting string to generate one automatically.')
 
-        if not 'timestamp_desc' in data_frame_use:
+        if 'timestamp_desc' not in data_frame_use:
             raise ValueError(
                 'Need a field called timestamp_desc in the data frame.')
 
