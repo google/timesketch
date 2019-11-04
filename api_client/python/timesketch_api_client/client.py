@@ -394,9 +394,21 @@ class Sketch(BaseResource):
         Returns:
             List of aggregations (instances of Aggregation objects)
         """
-        data = self.lazyload_data()
         aggregations = []
-        for aggregation in data.get('aggregations', []):
+        data = self.lazyload_data()
+
+        objects = data.get('objects')
+        if not objects:
+            return aggregations
+
+        if not isinstance(objects, (list, tuple)):
+            return aggregations
+
+        first_object = objects[0]
+        if not isinstance(first_object, dict):
+            return aggregations
+
+        for aggregation in first_object.get('aggregations', []):
             aggregation_obj = Aggregation(
                 sketch=self, api=self.api)
             aggregation_obj.from_store(aggregation_id=aggregation['id'])
@@ -414,12 +426,10 @@ class Sketch(BaseResource):
             otherwise None object.
         """
         sketch = self.lazyload_data()
-        for aggregation in sketch.get('aggregations', []):
-            if aggregation['id'] != aggregation_id:
+        for aggregation in self.list_aggregations():
+            if aggregation.id != aggregation_id:
                 continue
-            aggregation_obj = Aggregation(sketch=self, api=self.api)
-            aggregation_obj.from_store(aggregation_id=aggregation['id'])
-            return aggregation_obj
+            return aggregation
 
     def get_view(self, view_id=None, view_name=None):
         """Returns a view object that is stored in the sketch.
