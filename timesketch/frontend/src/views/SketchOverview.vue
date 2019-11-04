@@ -281,7 +281,6 @@ export default {
       this.$store.dispatch('updateSketch', this.sketch.id)
     }
   }
-
 }
 </script>
 

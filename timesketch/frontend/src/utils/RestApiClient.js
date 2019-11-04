@@ -38,6 +38,12 @@ export default {
   deleteSketch (sketchId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/')
   },
+  getSketchTimelines (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/timelines/')
+  },
+  getSketchTimeline (sketchId, timelineId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/')
+  },
   getSketchTimelineAnalysis (sketchId, timelineId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/analysis/')
   },
