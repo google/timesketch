@@ -428,6 +428,7 @@ class Sketch(BaseResource):
         for aggregation in self.list_aggregations():
             if aggregation.id == aggregation_id:
                 return aggregation
+        return None
 
     def get_view(self, view_id=None, view_name=None):
         """Returns a view object that is stored in the sketch.
