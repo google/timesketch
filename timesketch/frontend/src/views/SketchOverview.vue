@@ -29,7 +29,7 @@ limitations under the License.
               <span>Share</span>
             </a>
           </b-tooltip>
-          <div class="dropdown is-hoverable is-right" v-bind:class="{'is-active': settingsDropdownActive}">
+          <div v-if="meta.permissions.write" class="dropdown is-hoverable is-right" v-bind:class="{'is-active': settingsDropdownActive}">
             <div class="dropdown-trigger">
               <a class="button" style="background:transparent;border:none;" aria-haspopup="true" aria-controls="dropdown-menu" v-on:click="settingsDropdownActive = !settingsDropdownActive">
                 <span>More</span>
