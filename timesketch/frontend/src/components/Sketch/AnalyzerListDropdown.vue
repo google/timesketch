@@ -52,7 +52,7 @@ export default {
   },
   methods: {
     runAnalyzers: function () {
-      ApiClient.runAnalyzers(this.sketch.id, this.timeline.searchindex.index_name, this.selectedAnalyzers).then((response) => {
+      ApiClient.runAnalyzers(this.sketch.id, this.timeline.id, this.selectedAnalyzers).then((response) => {
         this.$emit('newAnalysisSession', response.data.objects[0].analysis_session)
       }).catch((e) => {})
       this.selectedAnalyzers = []

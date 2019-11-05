@@ -37,7 +37,7 @@ limitations under the License.
     </section>
 
     <!-- Timelines to add -->
-    <section class="section">
+    <section v-if="meta.permissions.write" class="section">
       <div class="container is-fluid">
         <div class="card" style="min-height:160px;">
           <header class="card-header">
@@ -102,6 +102,9 @@ export default {
   computed: {
     sketch () {
       return this.$store.state.sketch
+    },
+    meta () {
+      return this.$store.state.meta
     },
     count () {
       return this.$store.state.count

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import axios from 'axios'
+import { ToastProgrammatic as Toast } from 'buefy'
 
 const RestApiClient = axios.create({
   baseURL: '/api/v1',
@@ -23,6 +24,14 @@ const RestApiClient = axios.create({
     }
   }
 })
+
+// Show message on errors.
+RestApiClient.interceptors.response.use(function (response) {
+    return response;
+  }, function (error) {
+    Toast.open(error.response.data.message)
+    return Promise.reject(error);
+  });
 
 export default {
   // Sketch
@@ -164,9 +173,9 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
   },
-  runAnalyzers (sketchId, indexName, analyzers) {
+  runAnalyzers (sketchId, timelineId, analyzers) {
     let formData = {
-      index_name: indexName,
+      timeline_id: timelineId,
       analyzer_names: analyzers
     }
     return RestApiClient.post('/sketches/' + sketchId + /analyzer/, formData)
