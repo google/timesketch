@@ -1855,10 +1855,10 @@ class AnalyzerRunResource(ResourceMixin, Resource):
             A string with the response from running the analyzer.
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-        if not sketch.has_permission(current_user, 'write'):
+        if not sketch.has_permission(current_user, 'read'):
             return abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                'User does not have write permission on the sketch.')
+                'User does not have read permission on the sketch.')
 
         form = request.json
         if not form:
