@@ -1869,20 +1869,19 @@ class AnalyzerRunResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'Unable to run an analyzer without any data submitted.')
 
-        index_name = form.get('index_name')
-        if not index_name:
+        timeline_id = form.get('timeline_id')
+        if not timeline_id:
             return abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Need to provide a timeline index ID.')
+                'Need to provide a timeline ID')
 
-        search_index = None
-        for timeline in sketch.timelines:
-            index = SearchIndex.query.get_with_acl(
-                timeline.searchindex_id)
+        timeline = Timeline.query.get(timeline_id)
+        if timeline not in sketch.timelines:
+            return abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'Timeline is not part of this sketch')
 
-            if index.index_name.lower() == index_name.lower():
-                search_index = index
-                break
+        search_index = timeline.searchindex
 
         if not search_index:
             return abort(

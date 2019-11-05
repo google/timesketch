@@ -140,7 +140,7 @@ limitations under the License.
               <header class="card-header">
                 <p class="card-header-title">Timelines</p>
                 <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
-                  <p class="control">
+                  <p v-if="meta.permissions.write" class="control">
                     <button class="button is-success is-rounded is-small" v-on:click="showUploadTimelineModal = !showUploadTimelineModal">
                         <span class="icon is-small">
                           <i class="fas fa-plus"></i>
