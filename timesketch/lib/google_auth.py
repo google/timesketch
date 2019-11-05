@@ -22,7 +22,11 @@ import time
 import json
 import hashlib
 import os
-import urllib
+
+# six.moves is a dynamically-created namespace that doesn't actually
+# exist and therefore pylint can't statically analyze it.
+# pylint: disable-msg=import-error
+from six.moves.urllib import parse as urlparse
 
 import jwt
 import requests
@@ -136,7 +140,7 @@ def get_oauth2_authorize_url(hosted_domain=None):
     if hosted_domain:
         params['hd'] = hosted_domain
 
-    urlencoded_params = urllib.urlencode(params)
+    urlencoded_params = urlparse.urlencode(params)
     google_authorization_url = '{}?{}'.format(AUTH_URI, urlencoded_params)
     return google_authorization_url
 
