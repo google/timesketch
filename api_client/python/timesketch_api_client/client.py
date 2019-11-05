@@ -735,8 +735,8 @@ class Sketch(BaseResource):
             analyzer_kwargs: optional dict with parameters for the analyzer.
                 This is optional and just for those analyzers that can accept
                 further parameters.
-            timeline_id: the data store index for the timeline. This is optional
-                and only required if timeline_name is not set.
+            timeline_id: the ID of the timeline. This is optional and only
+                required if timeline_name is not set.
             timeline_name: the name of the timeline in the timesketch UI. This
                 is optional and only required if timeline_id is not set. If
                 there are more than a single timeline with the same name a
@@ -758,8 +758,7 @@ class Sketch(BaseResource):
             timelines = []
             for timeline in sketch['objects'][0]['timelines']:
                 if timeline_name.lower() == timeline.get('name', '').lower():
-                    index = timeline.get('searchindex', {})
-                    timelines.append(index.get('index_name', ''))
+                    timelines.append(timeline.get('id'))
 
             if not timelines:
                 return 'No timelines with the name: {0:s} were found'.format(
@@ -774,7 +773,7 @@ class Sketch(BaseResource):
             timeline_id = timelines[0]
 
         data = {
-            'index_name': timeline_id,
+            'timeline_id': timeline_id,
             'analyzer_names': [analyzer_name],
             'analyzer_kwargs': analyzer_kwargs,
         }

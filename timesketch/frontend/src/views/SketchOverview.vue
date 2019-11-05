@@ -29,7 +29,7 @@ limitations under the License.
               <span>Share</span>
             </a>
           </b-tooltip>
-          <div class="dropdown is-hoverable is-right" v-bind:class="{'is-active': settingsDropdownActive}">
+          <div v-if="meta.permissions.write" class="dropdown is-hoverable is-right" v-bind:class="{'is-active': settingsDropdownActive}">
             <div class="dropdown-trigger">
               <a class="button" style="background:transparent;border:none;" aria-haspopup="true" aria-controls="dropdown-menu" v-on:click="settingsDropdownActive = !settingsDropdownActive">
                 <span>More</span>
@@ -140,7 +140,7 @@ limitations under the License.
               <header class="card-header">
                 <p class="card-header-title">Timelines</p>
                 <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
-                  <p class="control">
+                  <p v-if="meta.permissions.write" class="control">
                     <button class="button is-success is-rounded is-small" v-on:click="showUploadTimelineModal = !showUploadTimelineModal">
                         <span class="icon is-small">
                           <i class="fas fa-plus"></i>

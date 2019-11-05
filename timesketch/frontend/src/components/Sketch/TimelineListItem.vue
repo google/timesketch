@@ -95,7 +95,7 @@ limitations under the License.
           <span>Info</span>
         </button>
       </p>
-      <p class="control">
+      <p v-if="meta.permissions.write" class="control">
         <button class="button is-rounded is-small is-outlined" v-on:click="showEditModal = !showEditModal">
           <span class="icon is-small">
             <i class="fas fa-edit"></i>
@@ -114,7 +114,7 @@ limitations under the License.
           <span>History</span>
         </button>
       </p>
-      <p class="control">
+      <p v-if="meta.permissions.write" class="control">
         <button v-on:click="remove(timeline)" class="button is-small is-rounded is-danger is-outlined">Remove</button>
       </p>
     </div>
@@ -182,6 +182,9 @@ export default {
   computed: {
     sketch () {
       return this.$store.state.sketch
+    },
+    meta () {
+      return this.$store.state.meta
     },
     timelineColorStyle () {
       let hexColor = this.newColor || this.timeline.color

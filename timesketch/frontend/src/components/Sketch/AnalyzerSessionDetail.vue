@@ -23,7 +23,7 @@ limitations under the License.
       </colgroup>
       <tbody>
       <tr v-for="row in tableData">
-        <td>{{row.status}}</td>
+        <td><div style="width:10px; height: 10px; border-radius: 100%; margin-top:6px; margin-left:3px;" v-bind:class="{ pending: row.status === 'PENDING',  done: row.status === 'DONE', started: row.status === 'STARTED', error: row.status === 'ERROR'}"></div></td>
         <td>{{row.analyzer}}</td>
         <td>{{row.result}}</td>
       </tr>
@@ -122,3 +122,27 @@ export default {
   }
 }
 </script>
+
+<!-- CSS scoped to this component only -->
+<style scoped lang="scss">
+.pending {
+  background-color: orange;
+}
+.started {
+  background-color: green;
+  animation: blinker 1s linear infinite;
+}
+.done {
+  background-color: green;
+}
+.error {
+  background-color: red;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}
+
+</style>
