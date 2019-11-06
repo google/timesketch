@@ -16,10 +16,14 @@ from __future__ import unicode_literals
 
 import json
 import uuid
+import six
 
 # pylint: disable=wrong-import-order
 import bs4
 import requests
+import webbrowser
+
+from google_auth_oauthlib import flow as googleauth_flow
 
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
@@ -37,11 +41,23 @@ class TimesketchApi(object):
         session: Authenticated HTTP session.
     """
 
+    DEFAULT_OAUTH_SCOPE = [
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/userinfo.profile'
+    ]
+
+    DEFAULT_OAUTH_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
+    DEFAULT_OAUTH_TOKEN_URL = 'https://oauth2.googleapis.com/token'
+    DEFAULT_OAUTH_PROVIDER_URL = 'https://www.googleapis.com/oauth2/v1/certs'
+    DEFAULT_OAUTH_URN_URL = 'urn:ietf:wg:oauth:2.0:oob'
+
     def __init__(self,
                  host_uri,
                  username,
-                 password,
+                 password='',
                  verify=True,
+                 client_id='',
+                 client_secret='',
                  auth_mode='timesketch'):
         """Initializes the TimesketchApi object.
 
@@ -50,15 +66,20 @@ class TimesketchApi(object):
             username: User username.
             password: User password.
             verify: Verify server SSL certificate.
+            client_id: The client ID if OAUTH auth is used.
+            client_secret: The OAUTH client secret if OAUTH is used.
             auth_mode: The authentication mode to use. Defaults to 'timesketch'
-                Supported values are 'timesketch' (Timesketch login form) and
-                'http-basic' (HTTP Basic authentication).
+                Supported values are 'timesketch' (Timesketch login form),
+                'http-basic' (HTTP Basic authentication) and oauth.
         """
         self._host_uri = host_uri
         self.api_root = '{0:s}/api/v1'.format(host_uri)
+        self._redirect_uri = '{0:s}/login/google_openid_connect/'.format(
+            host_uri)
         try:
             self.session = self._create_session(
-                username, password, verify=verify, auth_mode=auth_mode)
+                username, password, verify=verify, client_id=client_id,
+                client_secret=client_secret, auth_mode=auth_mode)
         except ConnectionError:
             raise ConnectionError('Timesketch server unreachable')
 
@@ -90,25 +111,75 @@ class TimesketchApi(object):
             'referer': self._host_uri
         })
 
-    def _create_session(self, username, password, verify, auth_mode):
+    def _create_oauth_session(self, client_id, client_secret):
+        """Return an OAuth session.
+
+        Args:
+            client_id: The client ID if OAUTH auth is used.
+            client_secret: The OAUTH client secret if OAUTH is used.
+
+        Return:
+            session: Instance of requests.Session.
+        """
+
+        client_config = {
+            'installed': {
+                'client_id': client_id,
+                'client_secret': client_secret,
+                'auth_uri': self.DEFAULT_OAUTH_AUTH_URL,
+                'token_uri': self.DEFAULT_OAUTH_TOKEN_URL,
+                'auth_provider_x509_cert_url': self.DEFAULT_OAUTH_PROVIDER_URL,
+                'redirect_uris': [self.DEFAULT_OAUTH_URN_URL],
+            },
+        }
+
+        flow = googleauth_flow.InstalledAppFlow.from_client_config(
+            client_config, self.DEFAULT_OAUTH_SCOPE)
+        flow.redirect_uri = self.DEFAULT_OAUTH_URN_URL
+        auth_url, _ = flow.authorization_url(prompt='select_account')
+        open_browser = raw_input('Open the URL in a browser window? [y/N]')
+        open_browser = six.text_type(open_browser)
+
+        if open_browser.lower() == 'y' or open_browser.lower() == 'yes':
+            webbrowser.open(auth_url)
+        else:
+            print('Need to manually visit to copy string: {0:s}'.format(
+                auth_url))
+
+        code = raw_input('Enter the token code: ')
+        code = six.text_type(code)
+
+        _ = flow.fetch_token(code=code)
+        return flow.authorized_session()
+
+    def _create_session(
+            self, username, password, verify, client_id, client_secret,
+            auth_mode):
         """Create authenticated HTTP session for server communication.
 
         Args:
             username: User to authenticate as.
             password: User password.
             verify: Verify server SSL certificate.
+            client_id: The client ID if OAUTH auth is used.
+            client_secret: The OAUTH client secret if OAUTH is used.
             auth_mode: The authentication mode to use. Supported values are
-                'timesketch' (Timesketch login form) and 'http-basic'
-                (HTTP Basic authentication).
+                'timesketch' (Timesketch login form), 'http-basic'
+                (HTTP Basic authentication) and oauth.
 
         Returns:
             Instance of requests.Session.
         """
+        if auth_mode == 'oauth':
+            return self._create_oauth_session(client_id, client_secret)
+
         session = requests.Session()
-        session.verify = verify  # Depending if SSL cert is verifiable
+
         # If using HTTP Basic auth, add the user/pass to the session
         if auth_mode == 'http-basic':
             session.auth = (username, password)
+
+        session.verify = verify  # Depending if SSL cert is verifiable
 
         # Get and set CSRF token and authenticate the session if appropriate.
         self._set_csrf_token(session)

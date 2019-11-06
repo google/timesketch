@@ -40,5 +40,6 @@ setup(
         'pandas',
         'requests',
         'xlrd',
+        'webbrowser',
         'beautifulsoup4']),
     )

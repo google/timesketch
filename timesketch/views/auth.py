@@ -156,6 +156,7 @@ def logout():
     return redirect(url_for('user_views.login'))
 
 
+
 @auth_views.route('/login/google_openid_connect/', methods=['GET'])
 def google_openid_connect():
     """Handler for the Google OpenID Connect callback.
@@ -170,27 +171,35 @@ def google_openid_connect():
 
     if error:
         current_app.logger.error('OAuth2 flow error: {}'.format(error))
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        return abort(
+            HTTP_STATUS_CODE_BAD_REQUEST,
+            'OAuth2 flow error: {0!s}'.format(error))
 
     try:
         code = request.args['code']
         client_csrf_token = request.args.get('state')
-        server_csrf_token = session[CSRF_KEY]
-    except KeyError:
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+        #server_csrf_token = session[CSRF_KEY]
+    except KeyError as e:
+        return abort(
+            HTTP_STATUS_CODE_BAD_REQUEST,
+            'Client CSRF error, no CSRF key stored')
 
     if client_csrf_token != server_csrf_token:
         return abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Invalid CSRF token')
 
     try:
         encoded_jwt = get_encoded_jwt_over_https(code)
-    except JwtFetchError:
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+    except JwtFetchError as e:
+        return abort(
+            HTTP_STATUS_CODE_BAD_REQUEST,
+            'Jwt Fetch error, {0!s}'.format(e))
 
     try:
         discovery_document = get_oauth2_discovery_document()
-    except DiscoveryDocumentError:
-        return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+    except DiscoveryDocumentError as e:
+        return abort(
+            HTTP_STATUS_CODE_BAD_REQUEST,
+            'Unable to discover document, with error: {0!s}'.format(e))
 
     algorithm = discovery_document['id_token_signing_alg_values_supported'][0]
     expected_audience = current_app.config.get('GOOGLE_OIDC_CLIENT_ID')
@@ -206,7 +215,9 @@ def google_openid_connect():
             expected_issuer, expected_domain)
     except (JwtValidationError, JwtKeyError) as e:
         current_app.logger.error('{}'.format(e))
-        return abort(HTTP_STATUS_CODE_UNAUTHORIZED)
+        return abort(
+            HTTP_STATUS_CODE_UNAUTHORIZED,
+            'Unable to validate request, with error: {0!s}'.format(e))
 
     validated_email = validated_jwt.get('email')
     user_whitelist = current_app.config.get('GOOGLE_OIDC_USER_WHITELIST')
@@ -214,7 +225,9 @@ def google_openid_connect():
     # Check if the authenticating user is on the whitelist.
     if user_whitelist:
         if validated_email not in user_whitelist:
-            return abort(HTTP_STATUS_CODE_UNAUTHORIZED)
+            return abort(
+                HTTP_STATUS_CODE_UNAUTHORIZED,
+                'Unauthorized request, user not in whitelist')
 
     user = User.get_or_create(username=validated_email, name=validated_email)
     login_user(user)
@@ -223,4 +236,5 @@ def google_openid_connect():
     if current_user.is_authenticated:
         return redirect(request.args.get('next') or '/')
 
-    return abort(HTTP_STATUS_CODE_BAD_REQUEST)
+    return abort(
+        HTTP_STATUS_CODE_BAD_REQUEST, 'User is not authenticated.')
