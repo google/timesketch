@@ -40,6 +40,6 @@ setup(
         'pandas',
         'requests',
         'xlrd',
-        'webbrowser',
+        'google_auth_oauthlib',
         'beautifulsoup4']),
     )

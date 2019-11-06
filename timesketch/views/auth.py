@@ -178,7 +178,7 @@ def google_openid_connect():
     try:
         code = request.args['code']
         client_csrf_token = request.args.get('state')
-        #server_csrf_token = session[CSRF_KEY]
+        server_csrf_token = session[CSRF_KEY]
     except KeyError as e:
         return abort(
             HTTP_STATUS_CODE_BAD_REQUEST,

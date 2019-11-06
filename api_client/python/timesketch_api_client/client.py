@@ -16,18 +16,16 @@ from __future__ import unicode_literals
 
 import json
 import uuid
-import six
 
 # pylint: disable=wrong-import-order
 import bs4
 import requests
-import webbrowser
-
-from google_auth_oauthlib import flow as googleauth_flow
-
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
+import webbrowser
+
 import altair
+from google_auth_oauthlib import flow as googleauth_flow
 import pandas
 from .definitions import HTTP_STATUS_CODE_20X
 from . import importer
@@ -137,17 +135,15 @@ class TimesketchApi(object):
             client_config, self.DEFAULT_OAUTH_SCOPE)
         flow.redirect_uri = self.DEFAULT_OAUTH_URN_URL
         auth_url, _ = flow.authorization_url(prompt='select_account')
-        open_browser = raw_input('Open the URL in a browser window? [y/N]')
-        open_browser = six.text_type(open_browser)
 
+        open_browser = input('Open the URL in a browser window? [y/N]')
         if open_browser.lower() == 'y' or open_browser.lower() == 'yes':
             webbrowser.open(auth_url)
         else:
             print('Need to manually visit to copy string: {0:s}'.format(
                 auth_url))
 
-        code = raw_input('Enter the token code: ')
-        code = six.text_type(code)
+        code = input('Enter the token code: ')
 
         _ = flow.fetch_token(code=code)
         return flow.authorized_session()
