@@ -33,6 +33,18 @@ from .definitions import HTTP_STATUS_CODE_20X
 from . import importer
 
 
+def _error_message(response, message=None, error=RuntimeError):
+    """Raise an error using error message extracted from response."""
+    if not message:
+        message = 'Unknown error, with error: '
+    soup = bs4.BeautifulSoup(response.text, features='html.parser')
+    text = ''
+    if soup.p:
+        text = soup.p.string
+    raise error('{0:s}, with error [{1:d}] {2:s} {3:s}'.format(
+        message, response.status_code, response.reason, text))
+
+
 class TimesketchApi(object):
     """Timesketch API object
 
@@ -133,17 +145,6 @@ class TimesketchApi(object):
             'referer': self._host_uri
         })
 
-    def _error_message(self, response, message=None, error=RuntimeError):
-        """Raise an error using error message extracted from response."""
-        if not message:
-            message = 'Unknown error, with error: '
-        soup = bs4.BeautifulSoup(response.text, features='html.parser')
-        text = ''
-        if soup.p:
-            text = soup.p.string
-        raise error('{0:s}, with error [{1:d}] {2:s} {3:s}'.format(
-            message, response.status_code, response.reason, text))
-
     def _create_oauth_session(self, client_id, client_secret):
         """Return an OAuth session.
 
@@ -192,7 +193,7 @@ class TimesketchApi(object):
         response = session.get(login_callback_url)
 
         if response.status_code not in HTTP_STATUS_CODE_20X:
-            self._error_message(
+            _error_message(
                 response, message='Unable to authenticate', error=RuntimeError)
 
         self._set_csrf_token(session)
@@ -344,7 +345,7 @@ class TimesketchApi(object):
         response = self.session.post(resource_url, json=form_data)
 
         if response.status_code not in HTTP_STATUS_CODE_20X:
-            self._error_message(
+            _error_message(
                 response, message='Error creating searchindex',
                 error=RuntimeError)
 
@@ -729,7 +730,7 @@ class Sketch(BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
 
         if response.status_code not in HTTP_STATUS_CODE_20X:
-            self._error_message(
+            _error_message(
                 response, message='Failed adding timeline',
                 error=RuntimeError)
 
@@ -817,7 +818,7 @@ class Sketch(BaseResource):
 
         response = self.api.session.post(resource_url, json=form_data)
         if response.status_code != 200:
-            self._error_message(
+            _error_message(
                 response, message='Unable to query results',
                 error=ValueError)
 
@@ -833,7 +834,7 @@ class Sketch(BaseResource):
                 break
             more_response = self.api.session.post(resource_url, json=form_data)
             if more_response.status_code != 200:
-                self._error_message(
+                _error_message(
                     response, message='Unable to query results',
                     error=ValueError)
             more_response_json = more_response.json()
@@ -1020,7 +1021,7 @@ class Sketch(BaseResource):
 
         response = self.api.session.post(resource_url, json=form_data)
         if response.status_code not in HTTP_STATUS_CODE_20X:
-            self._error_message(
+            _error_message(
                 response, message='Error storing the aggregation',
                 error=RuntimeError)
 
@@ -1265,7 +1266,7 @@ class Aggregation(BaseResource):
 
         response = self.api.session.post(resource_url, json=form_data)
         if response.status_code != 200:
-            self._error_message(
+            _error_message(
                 response, message='Unable to query results', error=ValueError)
 
         return response.json()
@@ -1318,7 +1319,7 @@ class Aggregation(BaseResource):
 
         response = self.api.session.post(resource_url, json=form_data)
         if response.status_code != 200:
-            self._error_message(
+            _error_message(
                 response, message='Unable to query results', error=ValueError)
 
         self.resource_data = response.json()
