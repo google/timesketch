@@ -96,6 +96,7 @@ class TimesketchApi(object):
         self._redirect_uri = '{0:s}/login/google_openid_connect/'.format(
             host_uri)
         self._credentials = None
+        self._flow = None
         try:
             self.session = self._create_session(
                 username, password, verify=verify, client_id=client_id,
@@ -185,6 +186,7 @@ class TimesketchApi(object):
 
         _ = flow.fetch_token(code=code)
         session = flow.authorized_session()
+        self._flow = flow
         self._credentials = flow.credentials
 
         # Authenticate to the Timesketch backend.
