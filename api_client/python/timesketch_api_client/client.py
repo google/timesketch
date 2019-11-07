@@ -114,7 +114,18 @@ class TimesketchApi(object):
         # Scrape the CSRF token from the response
         response = session.get(self._host_uri)
         soup = bs4.BeautifulSoup(response.text, features='html.parser')
-        csrf_token = soup.find(id='csrf_token').get('value')
+
+        tag = soup.find(id='csrf_token')
+        csrf_token = None
+        if tag:
+            csrf_token = tag.get('value')
+        else:
+            tag = soup.find('meta', attrs={'name': 'csrf-token'})
+            if tag:
+                csrf_token = tag.attrs.get('content')
+
+        if not csrf_token:
+            return
 
         session.headers.update({
             'x-csrftoken': csrf_token,
