@@ -98,7 +98,7 @@ def login():
                     user = User.get_or_create(username=email, name=email)
                     login_user(user)
 
-            except (ImportError, NameError, UnboundLocalError):  # pylint: disable=try-except-raise
+            except (ImportError, NameError, UnboundLocalError):
                 raise
 
             except (JwtValidationError, JwtKeyError, Exception) as e:  # pylint: disable=broad-except
@@ -220,7 +220,6 @@ def validate_api_token():
 
     # Check if the authenticating user is part of the allowed domains.
     domain_whitelist = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
-    print('HERE: {}'.format(domain_whitelist))
     if domain_whitelist:
         _, _, domain = validated_email.partition('@')
         if domain.lower() != domain_whitelist.lower():
