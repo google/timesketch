@@ -153,13 +153,13 @@ class TimesketchApi(object):
         session = flow.authorized_session()
 
         login_callback_url = '{0:s}{1:s}'.format(
-            self.api_root, self.DEFAULT_OAUTH_API_CALLBACK)
-        response = requests.get(login_callback_url)
+            self._host_uri, self.DEFAULT_OAUTH_API_CALLBACK)
+        response = session.get(login_callback_url)
         if response.status_code in HTTP_STATUS_CODE_20X:
             return session
 
         raise RuntimeError(
-            'Unable to authenticate, error [{0:s}] {1:s}'.format(
+            'Unable to authenticate, error [{0:d}] {1:s}'.format(
                 response.status_code, response.reason))
 
     def _create_session(

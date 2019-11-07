@@ -70,7 +70,6 @@ def login():
     """
     # Google OpenID Connect authentication.
     if current_app.config.get('GOOGLE_OIDC_ENABLED', False):
-        print(session.keys())
         hosted_domain = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
         print('[login resource] WE HAVE OAUTH SET UP')
         return redirect(get_oauth2_authorize_url(hosted_domain))
@@ -169,7 +168,12 @@ def validate_api_token():
     Returns:
         A simple page indicating the user is authenticated.
     """
-    token = oauth2.rfc6749.tokens.get_token_from_header(request)
+    print('Getting here - > Validating the API login.')
+    try:
+        token = oauth2.rfc6749.tokens.get_token_from_header(request)
+    except AttributeError:
+        token = None
+
     if not token:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED, 'Request not authenticated.')
@@ -228,8 +232,10 @@ def validate_api_token():
     user = User.get_or_create(username=validated_email, name=validated_email)
     login_user(user)
 
+    print('We did it... user is logged in.')
     # Log the user in and setup the session.
     if current_user.is_authenticated:
+        print('And user is truly authenticated...')
         return """
 <h1>Authenticated</h1>
         """
