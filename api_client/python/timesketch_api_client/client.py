@@ -159,11 +159,8 @@ class TimesketchApi(object):
 
         code = input('Enter the token code: ')
 
-        # Get and set CSRF token and authenticate the session..
         _ = flow.fetch_token(code=code)
         session = flow.authorized_session()
-        self._set_csrf_token(session)
-
         self._credentials = flow.credentials
 
         # Authenticate to the Timesketch backend.
@@ -171,12 +168,13 @@ class TimesketchApi(object):
             self._host_uri, self.DEFAULT_OAUTH_API_CALLBACK)
         response = session.get(login_callback_url)
 
-        if response.status_code in HTTP_STATUS_CODE_20X:
-            return session
+        if response.status_code not in HTTP_STATUS_CODE_20X:
+            raise RuntimeError(
+                'Unable to authenticate, error [{0:d}] {1:s}'.format(
+                    response.status_code, response.reason))
+        self._set_csrf_token(session)
+        return session
 
-        raise RuntimeError(
-            'Unable to authenticate, error [{0:d}] {1:s}'.format(
-                response.status_code, response.reason))
 
     def _create_session(
             self, username, password, verify, client_id, client_secret,
