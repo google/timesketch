@@ -181,8 +181,8 @@ class TimesketchApi(object):
 
         if response.status_code not in HTTP_STATUS_CODE_20X:
             raise RuntimeError(
-                'Unable to authenticate, error [{0:d}] {1:s}'.format(
-                    response.status_code, response.reason))
+                'Unable to authenticate, error [{0:d}] {1:s} {2:s}'.format(
+                    response.status_code, response.reason, response.text))
         self._set_csrf_token(session)
         return session
 

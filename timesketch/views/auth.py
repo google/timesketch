@@ -173,14 +173,6 @@ def validate_api_token():
     Returns:
         A simple page indicating the user is authenticated.
     """
-    client_csrf_token = request.args.get('state')
-    print('CLIENT {}'.format(client_csrf_token))
-    try:
-        server_csrf_token = session[CSRF_KEY]
-    except KeyError:
-        server_csrf_token = 'N/A'
-    print('SERVER {}'.format(server_csrf_token))
-
     try:
         token = oauth2.rfc6749.tokens.get_token_from_header(request)
     except AttributeError:
@@ -225,6 +217,17 @@ def validate_api_token():
 
     user_whitelist = current_app.config.get('GOOGLE_OIDC_USER_WHITELIST')
     validated_email = token_json.get('email')
+
+    # Check if the authenticating user is part of the allowed domains.
+    domain_whitelist = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
+    print('HERE: {}'.format(domain_whitelist))
+    if domain_whitelist:
+        _, _, domain = validated_email.partition('@')
+        if domain.lower() != domain_whitelist.lower():
+            return abort(
+                HTTP_STATUS_CODE_UNAUTHORIZED,
+                'Domain {0:s} is not allowed to authenticate against this '
+                'instance.'.format(domain))
 
     # Check if the authenticating user is on the whitelist.
     if user_whitelist:
