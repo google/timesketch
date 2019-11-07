@@ -26,6 +26,7 @@ import webbrowser
 
 import altair
 from google_auth_oauthlib import flow as googleauth_flow
+import google.auth.transport.requests
 import pandas
 from .definitions import HTTP_STATUS_CODE_20X
 from . import importer
@@ -71,17 +72,26 @@ class TimesketchApi(object):
             auth_mode: The authentication mode to use. Defaults to 'timesketch'
                 Supported values are 'timesketch' (Timesketch login form),
                 'http-basic' (HTTP Basic authentication) and oauth.
+
+        Raises:
+            ConnectionError: If the Timesketch server is unreachable.
+            RuntimeError: If the client is unable to authenticate to the
+                backend.
         """
         self._host_uri = host_uri
         self.api_root = '{0:s}/api/v1'.format(host_uri)
         self._redirect_uri = '{0:s}/login/google_openid_connect/'.format(
             host_uri)
+        self._credentials = None
         try:
             self.session = self._create_session(
                 username, password, verify=verify, client_id=client_id,
                 client_secret=client_secret, auth_mode=auth_mode)
         except ConnectionError:
             raise ConnectionError('Timesketch server unreachable')
+        except RuntimeError as e:
+            raise RuntimeError(
+                'Unable to connect to server, with error: {0!s}'.format(e))
 
     def _authenticate_session(self, session, username, password):
         """Post username/password to authenticate the HTTP seesion.
@@ -140,7 +150,7 @@ class TimesketchApi(object):
         flow.redirect_uri = self.DEFAULT_OAUTH_OOB_URL
         auth_url, _ = flow.authorization_url(prompt='select_account')
 
-        open_browser = input('Open the URL in a browser window? [y/N]')
+        open_browser = input('Open the URL in a browser window? [y/N] ')
         if open_browser.lower() == 'y' or open_browser.lower() == 'yes':
             webbrowser.open(auth_url)
         else:
@@ -149,12 +159,18 @@ class TimesketchApi(object):
 
         code = input('Enter the token code: ')
 
+        # Get and set CSRF token and authenticate the session..
         _ = flow.fetch_token(code=code)
         session = flow.authorized_session()
+        self._set_csrf_token(session)
 
+        self._credentials = flow.credentials
+
+        # Authenticate to the Timesketch backend.
         login_callback_url = '{0:s}{1:s}'.format(
             self._host_uri, self.DEFAULT_OAUTH_API_CALLBACK)
         response = session.get(login_callback_url)
+
         if response.status_code in HTTP_STATUS_CODE_20X:
             return session
 
@@ -231,6 +247,16 @@ class TimesketchApi(object):
         response_dict = response.json()
         sketch_id = response_dict['objects'][0]['id']
         return self.get_sketch(sketch_id)
+
+    def get_oauth_token_status(self):
+        """Return a dict with OAuth token status, if one exists."""
+        if not self._credentials:
+            return {
+                'status': 'No stored credentials.'}
+        return {
+            'expired': self._credentials.expired,
+            'expiry_time': self._credentials.expiry.isoformat(),
+        }
 
     def get_sketch(self, sketch_id):
         """Get a sketch.
@@ -320,6 +346,13 @@ class TimesketchApi(object):
                 searchindex_id=index_id, api=self, searchindex_name=index_name)
             indices.append(index_obj)
         return indices
+
+    def refresh_oauth_token(self):
+        """Refresh an OAUTH token if one is defined."""
+        if not self._credentials:
+            return
+        request = google.auth.transport.requests.Request()
+        self._credentials.refresh(request)
 
 
 class BaseResource(object):

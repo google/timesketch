@@ -51,6 +51,12 @@ from timesketch.models.user import User
 # Register flask blueprint
 auth_views = Blueprint('user_views', __name__)
 
+TOKEN_URI = 'https://www.googleapis.com/oauth2/v1/tokeninfo'
+SCOPES = [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'openid',
+    'https://www.googleapis.com/auth/userinfo.profile']
+
 
 @auth_views.route('/login/', methods=['GET', 'POST'])
 def login():
@@ -71,7 +77,6 @@ def login():
     # Google OpenID Connect authentication.
     if current_app.config.get('GOOGLE_OIDC_ENABLED', False):
         hosted_domain = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
-        print('[login resource] WE HAVE OAUTH SET UP')
         return redirect(get_oauth2_authorize_url(hosted_domain))
 
     # Google Identity-Aware Proxy authentication (using JSON Web Tokens)
@@ -168,7 +173,14 @@ def validate_api_token():
     Returns:
         A simple page indicating the user is authenticated.
     """
-    print('Getting here - > Validating the API login.')
+    client_csrf_token = request.args.get('state')
+    print('CLIENT {}'.format(client_csrf_token))
+    try:
+        server_csrf_token = session[CSRF_KEY]
+    except KeyError:
+        server_csrf_token = 'N/A'
+    print('SERVER {}'.format(server_csrf_token))
+
     try:
         token = oauth2.rfc6749.tokens.get_token_from_header(request)
     except AttributeError:
@@ -178,17 +190,14 @@ def validate_api_token():
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED, 'Request not authenticated.')
 
-    client_id = current_app.config.get('GOOGLE_OIDC_API_CLIENT_ID', '')
+    client_id = current_app.config.get('GOOGLE_OIDC_API_CLIENT_ID')
     if not client_id:
         return abort(
             HTTP_STATUS_CODE_BAD_REQUEST,
             'No OIDC API client ID defined in the configuration file.')
 
-    TOKEN_URI = 'https://www.googleapis.com/oauth2/v1/tokeninfo'
-
     token_check_url = '{0:s}?access_token={1:s}'.format(TOKEN_URI, token)
     token_response = requests.get(token_check_url)
-
     if token_response.status_code != HTTP_STATUS_CODE_OK:
         return abort(
             HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate access token.')
@@ -206,11 +215,6 @@ def validate_api_token():
             HTTP_STATUS_CODE_UNAUTHORIZED,
             'Client ID {0:s} does not match server configuration for '
             'client'.format(read_client_id))
-
-    SCOPES = [
-        'https://www.googleapis.com/auth/userinfo.email',
-        'openid',
-        'https://www.googleapis.com/auth/userinfo.profile']
 
     read_scopes = token_json.get('scope', '').split()
     if not set(read_scopes) == set(SCOPES):
@@ -232,10 +236,8 @@ def validate_api_token():
     user = User.get_or_create(username=validated_email, name=validated_email)
     login_user(user)
 
-    print('We did it... user is logged in.')
     # Log the user in and setup the session.
     if current_user.is_authenticated:
-        print('And user is truly authenticated...')
         return """
 <h1>Authenticated</h1>
         """
@@ -254,7 +256,6 @@ def google_openid_connect():
     Returns:
         Redirect response.
     """
-    print('[openid connect resource] we are here in the callback')
     error = request.args.get('error', None)
 
     if error:
