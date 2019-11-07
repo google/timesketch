@@ -15,6 +15,9 @@
 
 from __future__ import unicode_literals
 
+import requests
+from oauthlib import oauth2
+
 from flask import abort
 from flask import Blueprint
 from flask import current_app
@@ -29,6 +32,7 @@ from flask_login import logout_user
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_UNAUTHORIZED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.forms import UsernamePasswordForm
 from timesketch.lib.google_auth import get_public_key_for_jwt
 from timesketch.lib.google_auth import get_oauth2_discovery_document
@@ -66,7 +70,9 @@ def login():
     """
     # Google OpenID Connect authentication.
     if current_app.config.get('GOOGLE_OIDC_ENABLED', False):
+        print(session.keys())
         hosted_domain = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
+        print('[login resource] WE HAVE OAUTH SET UP')
         return redirect(get_oauth2_authorize_url(hosted_domain))
 
     # Google Identity-Aware Proxy authentication (using JSON Web Tokens)
@@ -156,6 +162,81 @@ def logout():
     return redirect(url_for('user_views.login'))
 
 
+@auth_views.route('/login/api_callback/', methods=['GET'])
+def validate_api_token():
+    """Handler for logging in using an authenticated session for the API.
+
+    Returns:
+        A simple page indicating the user is authenticated.
+    """
+    token = oauth2.rfc6749.tokens.get_token_from_header(request)
+    if not token:
+        return abort(
+            HTTP_STATUS_CODE_UNAUTHORIZED, 'Request not authenticated.')
+
+    client_id = current_app.config.get('GOOGLE_OIDC_API_CLIENT_ID', '')
+    if not client_id:
+        return abort(
+            HTTP_STATUS_CODE_BAD_REQUEST,
+            'No OIDC API client ID defined in the configuration file.')
+
+    TOKEN_URI = 'https://www.googleapis.com/oauth2/v1/tokeninfo'
+
+    token_check_url = '{0:s}?access_token={1:s}'.format(TOKEN_URI, token)
+    token_response = requests.get(token_check_url)
+
+    if token_response.status_code != HTTP_STATUS_CODE_OK:
+        return abort(
+            HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate access token.')
+    token_json = token_response.json()
+
+    verified = token_json.get('verified_email', False)
+    if not verified:
+        return abort(
+            HTTP_STATUS_CODE_UNAUTHORIZED,
+            'Session not authenticated or account not verified')
+
+    read_client_id = token_json.get('issued_to', '')
+    if read_client_id != client_id:
+        return abort(
+            HTTP_STATUS_CODE_UNAUTHORIZED,
+            'Client ID {0:s} does not match server configuration for '
+            'client'.format(read_client_id))
+
+    SCOPES = [
+        'https://www.googleapis.com/auth/userinfo.email',
+        'openid',
+        'https://www.googleapis.com/auth/userinfo.profile']
+
+    read_scopes = token_json.get('scope', '').split()
+    if not set(read_scopes) == set(SCOPES):
+        return abort(
+            HTTP_STATUS_CODE_UNAUTHORIZED,
+            'Client scopes differ from what they should be (email, openid, '
+            'profile) = {} VS {}'.format(SCOPES, read_scopes))
+
+    user_whitelist = current_app.config.get('GOOGLE_OIDC_USER_WHITELIST')
+    validated_email = token_json.get('email')
+
+    # Check if the authenticating user is on the whitelist.
+    if user_whitelist:
+        if validated_email not in user_whitelist:
+            return abort(
+                HTTP_STATUS_CODE_UNAUTHORIZED,
+                'Unauthorized request, user not in whitelist')
+
+    user = User.get_or_create(username=validated_email, name=validated_email)
+    login_user(user)
+
+    # Log the user in and setup the session.
+    if current_user.is_authenticated:
+        return """
+<h1>Authenticated</h1>
+        """
+
+    return abort(
+        HTTP_STATUS_CODE_BAD_REQUEST, 'User is not authenticated.')
+
 
 @auth_views.route('/login/google_openid_connect/', methods=['GET'])
 def google_openid_connect():
@@ -167,6 +248,7 @@ def google_openid_connect():
     Returns:
         Redirect response.
     """
+    print('[openid connect resource] we are here in the callback')
     error = request.args.get('error', None)
 
     if error:

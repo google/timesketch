@@ -41,13 +41,15 @@ class TimesketchApi(object):
 
     DEFAULT_OAUTH_SCOPE = [
         'https://www.googleapis.com/auth/userinfo.email',
+        'openid',
         'https://www.googleapis.com/auth/userinfo.profile'
     ]
 
     DEFAULT_OAUTH_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
     DEFAULT_OAUTH_TOKEN_URL = 'https://oauth2.googleapis.com/token'
     DEFAULT_OAUTH_PROVIDER_URL = 'https://www.googleapis.com/oauth2/v1/certs'
-    DEFAULT_OAUTH_URN_URL = 'urn:ietf:wg:oauth:2.0:oob'
+    DEFAULT_OAUTH_OOB_URL = 'urn:ietf:wg:oauth:2.0:oob'
+    DEFAULT_OAUTH_API_CALLBACK = '/login/api_callback/'
 
     def __init__(self,
                  host_uri,
@@ -118,8 +120,10 @@ class TimesketchApi(object):
 
         Return:
             session: Instance of requests.Session.
-        """
 
+        Raises:
+            RuntimeError: if unable to log in to the application.
+        """
         client_config = {
             'installed': {
                 'client_id': client_id,
@@ -127,26 +131,36 @@ class TimesketchApi(object):
                 'auth_uri': self.DEFAULT_OAUTH_AUTH_URL,
                 'token_uri': self.DEFAULT_OAUTH_TOKEN_URL,
                 'auth_provider_x509_cert_url': self.DEFAULT_OAUTH_PROVIDER_URL,
-                'redirect_uris': [self.DEFAULT_OAUTH_URN_URL],
+                'redirect_uris': [self.DEFAULT_OAUTH_OOB_URL],
             },
         }
 
         flow = googleauth_flow.InstalledAppFlow.from_client_config(
             client_config, self.DEFAULT_OAUTH_SCOPE)
-        flow.redirect_uri = self.DEFAULT_OAUTH_URN_URL
+        flow.redirect_uri = self.DEFAULT_OAUTH_OOB_URL
         auth_url, _ = flow.authorization_url(prompt='select_account')
 
         open_browser = input('Open the URL in a browser window? [y/N]')
         if open_browser.lower() == 'y' or open_browser.lower() == 'yes':
             webbrowser.open(auth_url)
         else:
-            print('Need to manually visit to copy string: {0:s}'.format(
+            print('Need to manually URL to authenticate: {0:s}'.format(
                 auth_url))
 
         code = input('Enter the token code: ')
 
         _ = flow.fetch_token(code=code)
-        return flow.authorized_session()
+        session = flow.authorized_session()
+
+        login_callback_url = '{0:s}{1:s}'.format(
+            self.api_root, self.DEFAULT_OAUTH_API_CALLBACK)
+        response = requests.get(login_callback_url)
+        if response.status_code in HTTP_STATUS_CODE_20X:
+            return session
+
+        raise RuntimeError(
+            'Unable to authenticate, error [{0:s}] {1:s}'.format(
+                response.status_code, response.reason))
 
     def _create_session(
             self, username, password, verify, client_id, client_secret,
