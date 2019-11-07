@@ -201,7 +201,6 @@ class TimesketchApi(object):
         self._set_csrf_token(session)
         return session
 
-
     def _create_session(
             self, username, password, verify, client_id, client_secret,
             auth_mode):
