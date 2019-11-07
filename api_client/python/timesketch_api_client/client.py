@@ -180,9 +180,13 @@ class TimesketchApi(object):
         response = session.get(login_callback_url)
 
         if response.status_code not in HTTP_STATUS_CODE_20X:
+            soup = bs4.BeautifulSoup(response.text, features='html.parser')
+            text = ''
+            if soup.p:
+                text = soup.p.string
             raise RuntimeError(
                 'Unable to authenticate, error [{0:d}] {1:s} {2:s}'.format(
-                    response.status_code, response.reason, response.text))
+                    response.status_code, response.reason, text))
         self._set_csrf_token(session)
         return session
 
