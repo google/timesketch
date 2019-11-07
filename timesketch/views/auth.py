@@ -16,7 +16,6 @@
 from __future__ import unicode_literals
 
 import requests
-from oauthlib import oauth2
 
 from flask import abort
 from flask import Blueprint
@@ -29,6 +28,8 @@ from flask import url_for
 from flask_login import current_user
 from flask_login import login_user
 from flask_login import logout_user
+
+from oauthlib import oauth2
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_UNAUTHORIZED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
