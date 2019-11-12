@@ -17,6 +17,7 @@ from __future__ import unicode_literals
 
 import logging
 import os
+import traceback
 import yaml
 
 import pandas
@@ -30,6 +31,7 @@ from timesketch.models.sketch import Sketch as SQLSketch
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Analysis
+
 
 def _flush_datastore_decorator(func):
     """Decorator that flushes the bulk insert queue in the datastore."""
@@ -402,12 +404,17 @@ class BaseIndexAnalyzer(object):
         analysis = Analysis.query.get(analysis_id)
         analysis.set_status('STARTED')
 
-        # Run the analyzer
-        result = self.run()
+        # Run the analyzer. Broad Exception catch to catch any error and store
+        # the error in the DB for display in the UI.
+        try:
+            result = self.run()
+            analysis.set_status('DONE')
+        except Exception:  # pylint: disable=broad-except
+            analysis.set_status('ERROR')
+            result = traceback.format_exc()
 
         # Update database analysis object with result and status
         analysis.result = '{0:s}'.format(result)
-        analysis.set_status('DONE')
         db_session.add(analysis)
         db_session.commit()
 

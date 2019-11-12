@@ -37,23 +37,26 @@ limitations under the License.
     </section>
 
     <!-- Timelines to add -->
-    <section class="section">
+    <section v-if="meta.permissions.write" class="section">
       <div class="container is-fluid">
         <div class="card" style="min-height:160px;">
           <header class="card-header">
             <p class="card-header-title">Add Timelines</p>
           </header>
-          <div class="card-content" style="background-color:rgba(44,255,0,0.08);">
-            <p>
-              Upload a new timeline or choose an existing one from the list below. You can upload either a Plaso storage file, JSONL, or a CSV file.
+
+          <div class="card-content">
+
+            <b-message type="is-success">
+              <p>
+                Upload a new timeline or choose an existing one from the list below. You can upload either a Plaso storage file, JSONL, or a CSV file.
+                <br>
+                If you are uploading a CSV or JSONL file make sure to read the <a href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines" rel="noreferrer" target="_blank">documentation</a> to learn what columns are needed.
+              </p>
               <br>
-              If you are uploading a CSV or JSONL file make sure to read the <a href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines" rel="noreferrer" target="_blank">documentation</a> to learn what columns are needed.
-            </p>
-            <br>
-            <ts-upload-timeline-form></ts-upload-timeline-form>
-          </div>
-          <div class="card-content" v-if="availableSearchIndices.length">
-            <ul class="content-list">
+              <ts-upload-timeline-form></ts-upload-timeline-form>
+            </b-message>
+
+            <ul class="content-list" v-if="availableSearchIndices.length">
               <transition-group name="list" tag="p">
                 <li style="padding:10px;" v-for="searchindex in availableSearchIndices" :key="searchindex.id">
                   <div class="ts-timeline-color-box is-pulled-left has-text-centered" style="background-color:#f5f5f5;cursor:pointer;" v-on:click="addTimelineToSketch(searchindex)">
@@ -99,6 +102,9 @@ export default {
   computed: {
     sketch () {
       return this.$store.state.sketch
+    },
+    meta () {
+      return this.$store.state.meta
     },
     count () {
       return this.$store.state.count

@@ -54,6 +54,9 @@ export default {
         console.error(e)
       })
     },
+  },
+  created() {
+    this.$store.dispatch('updateSketch', this.sketch.id)
   }
 }
 </script>

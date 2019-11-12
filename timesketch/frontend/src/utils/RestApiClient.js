@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import axios from 'axios'
+import { ToastProgrammatic as Toast } from 'buefy'
 
 const RestApiClient = axios.create({
   baseURL: '/api/v1',
@@ -23,6 +24,14 @@ const RestApiClient = axios.create({
     }
   }
 })
+
+// Show message on errors.
+RestApiClient.interceptors.response.use(function (response) {
+    return response;
+  }, function (error) {
+    Toast.open(error.response.data.message)
+    return Promise.reject(error);
+  });
 
 export default {
   // Sketch
@@ -37,6 +46,15 @@ export default {
   },
   deleteSketch (sketchId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/')
+  },
+  getSketchTimelines (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/timelines/')
+  },
+  getSketchTimeline (sketchId, timelineId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/')
+  },
+  getSketchTimelineAnalysis (sketchId, timelineId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/analysis/')
   },
   // Add or remove timeline to sketch
   createSketchTimeline (sketchId, searchIndexId) {
@@ -133,15 +151,36 @@ export default {
   countSketchEvents (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/count/')
   },
-  uploadTimeline (formData) {
-    let config = {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    }
+  uploadTimeline (formData, config) {
     return RestApiClient.post('/upload/', formData, config)
   },
   getSessions (sketchId, timelineIndex) {
     return RestApiClient.get('/sketches/' + sketchId + '/explore/sessions/' + timelineIndex)
+  },
+  getUsers () {
+    return RestApiClient.get('/users/')
+  },
+  getGroups () {
+    return RestApiClient.get('/groups/')
+  },
+  editCollaborators (sketchId, isPublic, usersToAdd, groupsToAdd, usersToRemove, groupsToRemove) {
+    let formData = {
+      public: isPublic,
+      users: usersToAdd.map(user => user.username),
+      groups: groupsToAdd.map(group => group.name),
+      remove_users: usersToRemove,
+      remove_groups: groupsToRemove
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
+  },
+  runAnalyzers (sketchId, timelineId, analyzers) {
+    let formData = {
+      timeline_id: timelineId,
+      analyzer_names: analyzers
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /analyzer/, formData)
+  },
+  getAnalyzerSession (sketchId, sessionId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/' + sessionId + '/')
   }
 }

@@ -19,7 +19,9 @@ from .resources import AggregationListResource
 from .resources import AggregationLegacyResource
 from .resources import AggregationExploreResource
 from .resources import AggregationResource
+from .resources import AnalysisResource
 from .resources import AnalyzerRunResource
+from .resources import AnalyzerSessionResource
 from .resources import ExploreResource
 from .resources import EventResource
 from .resources import EventAnnotationResource
@@ -44,6 +46,9 @@ from .resources import TimelineListResource
 from .resources import SearchIndexListResource
 from .resources import SearchIndexResource
 from .resources import SessionResource
+from .resources import UserListResource
+from .resources import GroupListResource
+from .resources import CollaboratorResource
 
 
 # Disable error for long line. Readability is more important than line
@@ -52,7 +57,9 @@ from .resources import SessionResource
 API_ROUTES = [
     (SketchListResource, '/sketches/'),
     (SketchResource, '/sketches/<int:sketch_id>/'),
+    (AnalysisResource, '/sketches/<int:sketch_id>/timelines/<int:timeline_id>/analysis/'),
     (AnalyzerRunResource, '/sketches/<int:sketch_id>/analyzer/'),
+    (AnalyzerSessionResource, '/sketches/<int:sketch_id>/analyzer/sessions/<int:session_id>/'),
     (AggregationListResource, '/sketches/<int:sketch_id>/aggregation/'),
     (AggregationLegacyResource, '/sketches/<int:sketch_id>/aggregation/legacy/'),
     (AggregationExploreResource, '/sketches/<int:sketch_id>/aggregation/explore/'),
@@ -78,5 +85,8 @@ API_ROUTES = [
     (GraphResource, '/sketches/<int:sketch_id>/explore/graph/'),
     (GraphViewListResource, '/sketches/<int:sketch_id>/explore/graph/views/'),
     (GraphViewResource, '/sketches/<int:sketch_id>/explore/graph/views/<int:view_id>/'),
-    (SessionResource, '/sketches/<int:sketch_id>/explore/sessions/<string:timeline_index>')
+    (SessionResource, '/sketches/<int:sketch_id>/explore/sessions/<string:timeline_index>'),
+    (UserListResource, '/users/'),
+    (GroupListResource, '/groups/'),
+    (CollaboratorResource, '/sketches/<int:sketch_id>/collaborators/')
 ]

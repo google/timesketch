@@ -182,14 +182,6 @@ class GraphExploreForm(BaseForm):
     output_format = StringField('Output format')
 
 
-class RunAnalyzerForm(BaseForm):
-    """Form used to run an analyzer on a timeline."""
-    timeline_id = StringField('Timeline Index ID', validators=[Optional()])
-    analyzer_name = StringField('Analyzer name')
-    analyzer_kwargs = StringField(
-        'Parameters for the analyzer', validators=[Optional()])
-
-
 class SaveAggregationForm(BaseForm):
     """Form used to save an aggregation."""
     name = StringField('Name')
@@ -256,6 +248,9 @@ class UploadFileForm(BaseForm):
         ])
     name = StringField('Timeline name', validators=[Optional()])
     sketch_id = IntegerField('Sketch ID', validators=[Optional()])
+    index_name = StringField('Index Name', validators=[Optional()])
+    enable_stream = BooleanField(
+        'Enable stream', false_values={False, 'false', ''}, default=False)
 
 
 class StoryForm(BaseForm):

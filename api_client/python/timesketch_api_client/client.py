@@ -26,6 +26,7 @@ from requests.exceptions import ConnectionError
 import altair
 import pandas
 from .definitions import HTTP_STATUS_CODE_20X
+from . import importer
 
 
 class TimesketchApi(object):
@@ -393,9 +394,21 @@ class Sketch(BaseResource):
         Returns:
             List of aggregations (instances of Aggregation objects)
         """
-        data = self.lazyload_data()
         aggregations = []
-        for aggregation in data['aggregations']:
+        data = self.lazyload_data()
+
+        objects = data.get('objects')
+        if not objects:
+            return aggregations
+
+        if not isinstance(objects, (list, tuple)):
+            return aggregations
+
+        first_object = objects[0]
+        if not isinstance(first_object, dict):
+            return aggregations
+
+        for aggregation in first_object.get('aggregations', []):
             aggregation_obj = Aggregation(
                 sketch=self, api=self.api)
             aggregation_obj.from_store(aggregation_id=aggregation['id'])
@@ -412,13 +425,10 @@ class Sketch(BaseResource):
             An aggregation object, if stored (instance of Aggregation),
             otherwise None object.
         """
-        sketch = self.lazyload_data()
-        for aggregation in sketch['aggregations']:
-            if aggregation['id'] != aggregation_id:
-                continue
-            aggregation_obj = Aggregation(sketch=self, api=self.api)
-            aggregation_obj.from_store(aggregation_id=aggregation['id'])
-            return aggregation_obj
+        for aggregation in self.list_aggregations():
+            if aggregation.id == aggregation_id:
+                return aggregation
+        return None
 
     def get_view(self, view_id=None, view_name=None):
         """Returns a view object that is stored in the sketch.
@@ -502,6 +512,70 @@ class Sketch(BaseResource):
             name=timeline['name'],
             searchindex=timeline['searchindex']['index_name'])
         return timeline_obj
+
+    def upload_data_frame(
+            self, data_frame, timeline_name, format_message_string=''):
+        """Upload a data frame to the server for indexing.
+
+        In order for a data frame to be uploaded to Timesketch it requires the
+        following columns:
+            + message
+            + datetime
+            + timestamp_desc
+
+        See more details here: https://github.com/google/timesketch/blob/\
+            master/docs/CreateTimelineFromJSONorCSV.md
+
+        Args:
+            data_frame: the pandas dataframe object containing the data to
+                upload.
+            timeline_name: the name of the timeline in Timesketch.
+            format_message_string: optional format string that will be used
+                to generate a message column to the data frame. An example
+                would be: '{src_ip:s} to {dst_ip:s}, {bytes:d} bytes
+                transferred'. Each variable name in the format strings maps
+                to column names in the data frame.
+
+        Returns:
+            A string with the upload status.
+
+        Raises:
+            ValueError: if the dataframe cannot be uploaded to Timesketch.
+        """
+        # TODO: Explore the option of supporting YAML files for loading
+        # configs for formatting strings. (this would be implemented
+        # in the streamer itself, but accepted here as a parameter).
+        if not format_message_string:
+            string_items = []
+            for column in data_frame.columns:
+                if 'time' in column:
+                    continue
+                elif 'timestamp_desc' in column:
+                    continue
+                string_items.append('{0:s} = {{0!s}}'.format(column))
+            format_message_string = ' '.join(string_items)
+
+        streamer_response = None
+        with importer.ImportStreamer() as streamer:
+            streamer.set_sketch(self)
+            streamer.set_timeline_name(timeline_name)
+            streamer.set_timestamp_description('LOG')
+            streamer.set_message_format_string(format_message_string)
+
+            streamer.add_data_frame(data_frame)
+            streamer_response = streamer.response
+
+        if not streamer_response:
+            return 'No return value.'
+
+        return_lines = []
+        for sketch_object in streamer_response.get('objects', []):
+            return_lines.append('Timeline: {0:s}\nStatus: {1:s}'.format(
+                sketch_object.get('description'),
+                ','.join([x.get(
+                    'status') for x in sketch_object.get('status')])))
+
+        return '\n'.join(return_lines)
 
     def add_timeline(self, searchindex):
         """Add timeline to sketch.
@@ -637,6 +711,19 @@ class Sketch(BaseResource):
 
         return response_json
 
+    def list_available_analyzers(self):
+        """Returns a list of available analyzers."""
+        resource_url = '{0:s}/sketches/{1:d}/analyzer/'.format(
+            self.api.api_root, self.id)
+
+        response = self.api.session.get(resource_url)
+
+        if response.status_code == 200:
+            return response.json()
+
+        return '[{0:d}] {1:s} {2:s}'.format(
+            response.status_code, response.reason, response.text)
+
     def run_analyzer(
             self, analyzer_name, analyzer_kwargs=None, timeline_id=None,
             timeline_name=None):
@@ -648,8 +735,8 @@ class Sketch(BaseResource):
             analyzer_kwargs: optional dict with parameters for the analyzer.
                 This is optional and just for those analyzers that can accept
                 further parameters.
-            timeline_id: the data store index for the timeline. This is optional
-                and only required if timeline_name is not set.
+            timeline_id: the ID of the timeline. This is optional and only
+                required if timeline_name is not set.
             timeline_name: the name of the timeline in the timesketch UI. This
                 is optional and only required if timeline_id is not set. If
                 there are more than a single timeline with the same name a
@@ -671,8 +758,7 @@ class Sketch(BaseResource):
             timelines = []
             for timeline in sketch['objects'][0]['timelines']:
                 if timeline_name.lower() == timeline.get('name', '').lower():
-                    index = timeline.get('searchindex', {})
-                    timelines.append(index.get('index_name', ''))
+                    timelines.append(timeline.get('id'))
 
             if not timelines:
                 return 'No timelines with the name: {0:s} were found'.format(
@@ -688,7 +774,7 @@ class Sketch(BaseResource):
 
         data = {
             'timeline_id': timeline_id,
-            'analyzer_name': analyzer_name,
+            'analyzer_names': [analyzer_name],
             'analyzer_kwargs': analyzer_kwargs,
         }
 
@@ -776,6 +862,9 @@ class Sketch(BaseResource):
             aggregator_parameters: parameters of the aggregator.
             chart_type: string representing the chart type.
 
+        Raises:
+            RuntimeError: if the client is unable to store the aggregation.
+
         Returns:
           A stored aggregation object or None if not stored.
         """
@@ -792,6 +881,12 @@ class Sketch(BaseResource):
         }
 
         response = self.api.session.post(resource_url, json=form_data)
+        if response.status_code not in HTTP_STATUS_CODE_20X:
+            raise RuntimeError(
+                'Error storing the aggregation, Error message: '
+                '[{0:d}] {1:s} {2:s}'.format(
+                    response.status_code, response.reason, response.text))
+
         response_dict = response.json()
 
         objects = response_dict.get('objects', [])
@@ -800,6 +895,30 @@ class Sketch(BaseResource):
 
         _ = self.lazyload_data(refresh_cache=True)
         return self.get_aggregation(objects[0].get('id'))
+
+    def comment_event(self, event_id, index, comment_text):
+        """
+        Adds a comment to a single event.
+
+        Args:
+            event_id: id of the event
+            index: The Elasticsearch index name
+            comment_text: text to add as a comment
+        Returns:
+             a json data of the query.
+        """
+        form_data = {
+            'annotation': comment_text,
+            'annotation_type': 'comment',
+            'events': {
+                '_id': event_id,
+                '_index': index,
+                '_type': 'generic_event'}
+        }
+        resource_url = '{0:s}/sketches/{1:d}/event/annotate/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.post(resource_url, json=form_data)
+        return response.json()
 
     def label_events(self, events, label_name):
         """Labels one or more events with label_name.
