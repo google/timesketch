@@ -211,11 +211,10 @@ class TestGoogleCloudIAP(BaseTest):
             audience=IAP_VALID_AUDIENCE, issuer=IAP_VALID_ISSUER,
             payload=payload)
         public_key = get_public_key_for_jwt(test_jwt, IAP_PUBLIC_KEY_URL)
-        test_decoded_jwt = decode_jwt(
-            test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE)
-        self.assertRaises(
-            JwtValidationError, validate_jwt, test_decoded_jwt,
-            IAP_VALID_ISSUER, domain)
+        with self.assertRaises(JwtValidationError):
+            test_decoded_jwt = decode_jwt(
+                test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE)
+            validate_jwt(test_decoded_jwt, IAP_VALID_ISSUER, domain)
 
     def _test_header_raises_jwt_validation_error(self, header):
         """Test JWT with supplied header."""
@@ -224,11 +223,10 @@ class TestGoogleCloudIAP(BaseTest):
             audience=IAP_VALID_AUDIENCE, issuer=IAP_VALID_ISSUER, header=header)
         public_key = get_public_key_for_jwt(test_jwt, IAP_PUBLIC_KEY_URL)
 
-        test_decoded_jwt = decode_jwt(
-            test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE)
-        self.assertRaises(
-            JwtValidationError, validate_jwt, test_decoded_jwt,
-            IAP_VALID_ISSUER)
+        with self.assertRaises(JwtValidationError):
+            test_decoded_jwt = decode_jwt(
+                test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE)
+            validate_jwt(test_decoded_jwt, IAP_VALID_ISSUER)
 
     def test_valid_jwt(self):
         """Test to validate a valid JWT."""
@@ -248,11 +246,9 @@ class TestGoogleCloudIAP(BaseTest):
             MOCK_EC_PRIVATE_KEY, algorithm=IAP_JWT_ALGORITHM, key_id='iap_1234',
             audience=IAP_VALID_AUDIENCE, issuer=IAP_VALID_ISSUER)
         public_key = get_public_key_for_jwt(test_jwt, IAP_PUBLIC_KEY_URL)
-        test_decoded_jwt = decode_jwt(
-            test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_INVALID_AUDIENCE)
         self.assertRaises(
-            JwtValidationError, validate_jwt, test_decoded_jwt,
-            IAP_VALID_ISSUER)
+            JwtValidationError, decode_jwt, test_jwt, public_key,
+            IAP_JWT_ALGORITHM, IAP_INVALID_AUDIENCE)
 
     def test_invalid_algorithm_raises_jwt_validation_error(self):
         """Test to validate a JWT with invalid algorithm."""
@@ -350,8 +346,8 @@ class TestGoogleCloudOpenIdConnect(BaseTest):
             issuer=OIDC_VALID_ISSUER)
         public_key = get_public_key_for_jwt(test_jwt, OIDC_PUBLIC_KEY_URL)
         test_decoded_jwt = decode_jwt(
-            test_jwt, public_key, OIDC_JWT_ALGORITHM, IAP_VALID_AUDIENCE)
-        validate_jwt(test_decoded_jwt, IAP_VALID_ISSUER)
+            test_jwt, public_key, OIDC_JWT_ALGORITHM, OIDC_VALID_AUDIENCE)
+        validate_jwt(test_decoded_jwt, OIDC_VALID_ISSUER)
 
         self.assertIsInstance(test_decoded_jwt, dict)
         self.assertEqual(test_decoded_jwt.get('email'), 'test@example.com')
