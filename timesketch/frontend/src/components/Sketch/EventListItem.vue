@@ -27,8 +27,8 @@ limitations under the License.
     <table class="ts-event-list-table" style="background-color: #F5F5F5">
       <tbody>
       <tr style="border:0">
-        <td style="width:215px;" class="ts-event-table-column" v-bind:style="timelineColor">
-          {{ event._source.datetime }}
+        <td style="width:218px;" class="ts-event-table-column" v-bind:style="timelineColor">
+          {{ event._source.datetime | moment("YYYY-MM-DDTHH:mm:ss.SSSSSS") }}
         </td>
 
         <td style="width:70px; background-color: #fdfdfd" class="ts-event-table-column">

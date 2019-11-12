@@ -171,6 +171,38 @@ limitations under the License.
               <span v-if="toEvent && !searchInProgress">{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</span>
               <span v-if="!toEvent && !searchInProgress">{{ totalHits }} events ({{ totalTime }}s)</span>
 
+              <div style="float:right; margin-left:7px;">
+
+                <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus :can-close="false">
+                  <button class="button is-outlined is-small" style="border-radius: 4px;" slot="trigger">
+                    <span class="icon is-small">
+                      <i class="fas fa-table"></i>
+                    </span>
+                    <span>Fields ({{ selectedFields.length }})</span>
+                  </button>
+                  <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
+                    <div v-bind:class="{ tsdropdown: expandFieldDropdown }" style="width:300px;">
+                      <multiselect style="display: block" v-if="meta.mappings" :options="meta.mappings" :value="selectedFieldsProxy" @open="expandFieldDropdown = true" @close="expandFieldDropdown = false" @input="updateSelectedFields" :multiple="true" :searchable="true" :close-on-select="false" label="field" track-by="field" placeholder="Add more fields ..."></multiselect>
+                    </div>
+                  </b-dropdown-item>
+                  <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
+                    <span v-if="selectedFields.length">
+                      <br>
+                      <strong>Selected fields</strong>
+                      <br><br>
+                    </span>
+                    <div class="tags">
+                      <span v-for="(field, index) in selectedFields" :key="index">
+                        <span class="tag is-light is-rounded" style="margin-right:7px;">
+                          <span style="margin-right:7px;">{{ field.field }}</span>
+                          <button style="margin-left:7px" class="delete is-small" v-on:click="removeField(index)"></button>
+                        </span>
+                      </span>
+                    </div>
+                  </b-dropdown-item>
+                </b-dropdown>
+
+              </div>
 
               <div style="float:right; margin-left:7px;" class="select is-small">
                 <select v-model="currentQueryFilter.order" @change="search">
@@ -207,7 +239,7 @@ limitations under the License.
 
             <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
             <div v-if="totalHits > 0" style="margin-top:20px;"></div>
-            <ts-sketch-explore-event-list :event-list="eventList.objects" @addChip="addChip($event)" @searchContext="searchContext($event)" :order="currentQueryFilter.order"></ts-sketch-explore-event-list>
+            <ts-sketch-explore-event-list :event-list="eventList.objects" @addChip="addChip($event)" @searchContext="searchContext($event)" :order="currentQueryFilter.order" :selected-fields="selectedFields"></ts-sketch-explore-event-list>
           </div>
         </div>
       </div>
@@ -260,13 +292,21 @@ export default {
         'size': 40,
         'indices': ['_all'],
         'order': 'asc',
-        'chips': []
-      }
+        'chips': [],
+        'fields': []
+      },
+      selectedFields: [{field: 'message', type: 'text'}],
+      selectedFieldsProxy: [],
+      mappings: [],
+      expandFieldDropdown: false
     }
   },
   computed: {
     sketch () {
       return this.$store.state.sketch
+    },
+    meta () {
+      return this.$store.state.meta
     },
     totalHits () {
       return this.eventList.meta.es_total_count || 0
@@ -290,11 +330,11 @@ export default {
         return
       }
       return parseInt(this.currentQueryFilter.from) + parseInt(this.currentQueryFilter.size)
-    },
+    }
   },
   methods: {
     search: function () {
-      this.searchInProgress = true
+      //this.searchInProgress = true
 
       if (this.contextEvent) {
         // TODO: Make this selectable in the UI
@@ -336,7 +376,7 @@ export default {
       ApiClient.search(this.sketch.id, formData).then((response) => {
         this.eventList.objects = response.data.objects
         this.eventList.meta = response.data.meta
-        this.searchInProgress = false
+        //this.searchInProgress = false
       }).catch((e) => {})
     },
     searchView: function (viewId) {
@@ -348,6 +388,10 @@ export default {
         let view = response.data.objects[0]
         this.currentQueryString = view.query_string
         this.currentQueryFilter = JSON.parse(view.query_filter)
+        if (!this.currentQueryFilter.fields) {
+          this.currentQueryFilter.fields = [{field: 'message', type: 'text'}]
+        }
+        this.selectedFields = this.currentQueryFilter.fields
         if (this.currentQueryFilter.indices === '_all') {
           let allIndices = []
           this.sketch.active_timelines.forEach(function (timeline) {
@@ -432,11 +476,26 @@ export default {
     paginate: function (pageNum) {
       this.currentQueryFilter.from  = (pageNum * this.currentQueryFilter.size) - this.currentQueryFilter.size
       this.search()
+    },
+    updateSelectedFields: function (value) {
+      value.forEach((field) => {
+        this.selectedFields.push(field)
+      })
+    // Prevents tags from being displayed
+    this.selectedFieldsProxy = []
+    },
+    removeField: function (index) {
+      this.selectedFields.splice(index, 1)
+      console.log(this.selectedFields)
     }
   },
   watch: {
     numEvents: function (newVal) {
       this.currentQueryFilter.size = newVal
+      this.search()
+    },
+    selectedFields: function (newVal) {
+      this.currentQueryFilter.fields = newVal
       this.search()
     }
   },
@@ -470,6 +529,7 @@ export default {
     if (doSearch) {
       this.search()
     }
+
   }
 }
 </script>
@@ -487,4 +547,25 @@ export default {
   .dropdown-menu {
     box-shadow: 0 30px 30px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
   }
+
+.multiselect,
+.multiselect__input,
+.multiselect__single {
+  font-size: inherit;
+}
+
+.multiselect__option--highlight {
+  background: #f5f5f5;
+  color:#333;
+}
+
+.multiselect__option--highlight:after {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.tsdropdown {
+  min-height: 330px;
+}
+
 </style>

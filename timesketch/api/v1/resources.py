@@ -402,6 +402,40 @@ class SketchResource(ResourceMixin, Resource):
             aggregators[cls.NAME] = {
                 'form_fields': cls.FORM_FIELDS
             }
+
+        # Get mappings for all indices in the sketch. This is used to set
+        # columns shown in the event list.
+        sketch_indices = [
+            t.searchindex.index_name
+            for t in sketch.active_timelines
+        ]
+
+        if not sketch_indices:
+            mappings_settings = {}
+        else:
+            mappings_settings = self.datastore.client.indices.get_mapping(
+                index=sketch_indices)
+
+        mappings = []
+        for index_name, value in mappings_settings.items():
+            for k, v in value['mappings'].items():
+                for attribute, value_dict in v['properties'].items():
+                    m = {}
+                    # Exclude internal attributes
+                    if attribute.startswith('__'):
+                        continue
+                    if attribute == 'timesketch_label':
+                        continue
+                    m['field'] = attribute
+                    m['type'] = value_dict.get('type', 'n/a')
+                    mappings.append(m)
+                    #if mappings.get(attribute):
+                    #    continue
+                    #mappings[attribute] = value_dict.get('type', 'n/a')
+
+        # Make the list of dicts unique
+        mappings = {v['field']: v for v in mappings}.values()
+
         meta = dict(
             aggregators=aggregators,
             views=[{
@@ -427,7 +461,9 @@ class SketchResource(ResourceMixin, Resource):
                 'groups': [group.name for group in sketch.groups],
             },
             analyzers=[
-                x for x, y in analyzer_manager.AnalysisManager.get_analyzers()]
+                x for x, y in analyzer_manager.AnalysisManager.get_analyzers()
+            ],
+            mappings=list(mappings)
         )
         return self.to_json(sketch, meta=meta)
 
@@ -738,12 +774,17 @@ class ExploreResource(ResourceMixin, Resource):
 
         query_dsl = form.dsl.data
         query_filter = form.filter.data
-        return_fields = form.fields.data
+        #return_fields = form.fields.data
         enable_scroll = form.enable_scroll.data
         scroll_id = form.scroll_id.data
 
-        if not return_fields:
-            return_fields = DEFAULT_SOURCE_FIELDS
+        return_fields = request.json['filter'].get('fields', [])
+        return_fields = [field['field'] for field in return_fields]
+        print(return_fields)
+        return_fields.extend(DEFAULT_SOURCE_FIELDS)
+
+        #if not return_fields:
+        #    return_fields = DEFAULT_SOURCE_FIELDS
 
         sketch_indices = {
             t.searchindex.index_name

@@ -20,6 +20,7 @@ import Buefy from 'buefy'
 import 'buefy/dist/buefy.css'
 
 import VueScrollTo from 'vue-scrollto'
+import Multiselect from 'vue-multiselect'
 
 import router from './router'
 import store from './store'
@@ -31,6 +32,7 @@ require('./utils/RegisterAppFilters')
 Vue.use(require('vue-moment'))
 Vue.use(Buefy)
 Vue.use(VueScrollTo)
+Vue.component('multiselect', Multiselect)
 
 // Disable warning during development
 Vue.config.productionTip = false
