@@ -22,6 +22,7 @@ import jwt
 from cryptography.hazmat.backends.openssl.rsa import _RSAPublicKey
 
 from timesketch.lib.testlib import BaseTest
+from timesketch.lib.google_auth import decode_jwt
 from timesketch.lib.google_auth import validate_jwt
 from timesketch.lib.google_auth import get_public_key_for_jwt
 from timesketch.lib.google_auth import JwtValidationError
@@ -230,11 +231,11 @@ class TestGoogleCloudIAP(BaseTest):
             MOCK_EC_PRIVATE_KEY, algorithm=IAP_JWT_ALGORITHM, key_id='iap_1234',
             audience=IAP_VALID_AUDIENCE, issuer=IAP_VALID_ISSUER)
         public_key = get_public_key_for_jwt(test_jwt, IAP_PUBLIC_KEY_URL)
-        valid_jwt = validate_jwt(
-            test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE,
-            IAP_VALID_ISSUER)
-        self.assertIsInstance(valid_jwt, dict)
-        self.assertEqual(valid_jwt.get('email'), 'test@example.com')
+        test_decoded_jwt = decode_jwt(
+            test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE)
+        validate_jwt(test_decoded_jwt, IAP_VALID_ISSUER)
+        self.assertIsInstance(test_decoded_jwt, dict)
+        self.assertEqual(test_decoded_jwt.get('email'), 'test@example.com')
 
     def test_invalid_audience_raises_jwt_validation_error(self):
         """Test to validate a JWT with wrong audience."""
@@ -298,11 +299,11 @@ class TestGoogleCloudIAP(BaseTest):
             MOCK_EC_PRIVATE_KEY, algorithm=IAP_JWT_ALGORITHM, key_id='iap_1234',
             audience=IAP_VALID_AUDIENCE, issuer=IAP_VALID_ISSUER)
         public_key = get_public_key_for_jwt(test_jwt, IAP_PUBLIC_KEY_URL)
-        valid_jwt = validate_jwt(
-            test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE,
-            IAP_VALID_ISSUER, valid_domain)
-        self.assertIsInstance(valid_jwt, dict)
-        self.assertEqual(valid_jwt.get('hd'), 'example.com')
+        test_decoded_jwt = decode_jwt(
+            test_jwt, public_key, IAP_JWT_ALGORITHM, IAP_VALID_AUDIENCE)
+        validate_jwt(test_decoded_jwt, IAP_VALID_ISSUER, valid_domain)
+        self.assertIsInstance(test_decoded_jwt, dict)
+        self.assertEqual(test_decoded_jwt.get('hd'), 'example.com')
 
     def test_invalid_domain_raises_jwt_validation_error(self):
         """Test to validate a JWT with an invalid domain."""
@@ -342,8 +343,9 @@ class TestGoogleCloudOpenIdConnect(BaseTest):
             key_id='oidc_1234', audience=OIDC_VALID_AUDIENCE,
             issuer=OIDC_VALID_ISSUER)
         public_key = get_public_key_for_jwt(test_jwt, OIDC_PUBLIC_KEY_URL)
-        valid_jwt = validate_jwt(
-            test_jwt, public_key, OIDC_JWT_ALGORITHM, OIDC_VALID_AUDIENCE,
-            OIDC_VALID_ISSUER)
-        self.assertIsInstance(valid_jwt, dict)
-        self.assertEqual(valid_jwt.get('email'), 'test@example.com')
+        test_decoded_jwt = decode_jwt(
+            test_jwt, public_key, OIDC_JWT_ALGORITHM, IAP_VALID_AUDIENCE)
+        validate_jwt(test_decoded_jwt, IAP_VALID_ISSUER)
+
+        self.assertIsInstance(test_decoded_jwt, dict)
+        self.assertEqual(test_decoded_jwt.get('email'), 'test@example.com')

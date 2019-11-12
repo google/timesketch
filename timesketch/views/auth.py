@@ -39,6 +39,7 @@ from timesketch.lib.google_auth import get_public_key_for_jwt
 from timesketch.lib.google_auth import get_oauth2_discovery_document
 from timesketch.lib.google_auth import get_oauth2_authorize_url
 from timesketch.lib.google_auth import get_encoded_jwt_over_https
+from timesketch.lib.google_auth import decode_jwt
 from timesketch.lib.google_auth import validate_jwt
 from timesketch.lib.google_auth import JwtValidationError
 from timesketch.lib.google_auth import JwtKeyError
@@ -52,7 +53,8 @@ from timesketch.models.user import User
 # Register flask blueprint
 auth_views = Blueprint('user_views', __name__)
 
-TOKEN_URI = 'https://www.googleapis.com/oauth2/v1/tokeninfo'
+PROFILE_URI = 'https://www.googleapis.com/oauth2/v3/userinfo'
+TOKEN_URI = 'https://www.googleapis.com/oauth2/v3/tokeninfo'
 SCOPES = [
     'https://www.googleapis.com/auth/userinfo.email',
     'openid',
@@ -91,10 +93,10 @@ def login():
             url = current_app.config.get('GOOGLE_IAP_PUBLIC_KEY_URL')
             try:
                 public_key = get_public_key_for_jwt(encoded_jwt, url)
-                validated_jwt = validate_jwt(
-                    encoded_jwt, public_key, algorithm, expected_audience,
-                    expected_issuer)
-                email = validated_jwt.get('email')
+                decoded_jwt = decode_jwt(
+                    encoded_jwt, public_key, algorithm, expected_audience)
+                validate_jwt(decoded_jwt, expected_issuer)
+                email = decoded_jwt.get('email')
                 if email:
                     user = User.get_or_create(username=email, name=email)
                     login_user(user)
@@ -189,20 +191,56 @@ def validate_api_token():
             HTTP_STATUS_CODE_BAD_REQUEST,
             'No OIDC API client ID defined in the configuration file.')
 
-    token_check_url = '{0:s}?access_token={1:s}'.format(TOKEN_URI, token)
-    token_response = requests.get(token_check_url)
+    # Authenticating session, see more details here:
+    # https://www.oauth.com/oauth2-servers/signing-in-with-google/\
+    #     verifying-the-user-info/
+    # Sending a request to Google to verify that the access token
+    # is valid, to be able to validate the session.
+    data = {
+        'access_token': token}
+    token_response = requests.post(TOKEN_URI, data=data)
     if token_response.status_code != HTTP_STATUS_CODE_OK:
         return abort(
             HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate access token.')
     token_json = token_response.json()
 
-    verified = token_json.get('verified_email', False)
+    verified = token_json.get('email_verified', False)
     if not verified:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
             'Session not authenticated or account not verified')
 
-    read_client_id = token_json.get('issued_to', '')
+    # Get additional information, see more details here:
+    # https://www.oauth.com/oauth2-servers/signing-in-with-google/\
+    #     verifying-the-user-info/
+    # Getting user information, since JWT session using access token
+    # lacks some of the fields available if credential token is
+    # used (which is not available for use here).
+    authorization_header = request.headers.get('Authorization')
+    if authorization_header:
+        header = {'Authorization': authorization_header}
+    else:
+        header = {}
+
+    profile_response = requests.get(PROFILE_URI, headers=header)
+    if profile_response.status_code != HTTP_STATUS_CODE_OK:
+        return abort(
+            HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate profile.')
+
+    profile = profile_response.json()
+    token_json['hd'] = profile.get('hd', '')
+
+    expected_issuer = current_app.config.get('GOOGLE_IAP_ISSUER')
+    try:
+        validate_jwt(token_json, expected_issuer)
+    except (ImportError, NameError, UnboundLocalError):
+        raise
+    except (JwtValidationError, JwtKeyError, Exception) as e:  # pylint: disable=broad-except
+        return abort(
+            HTTP_STATUS_CODE_UNAUTHORIZED,
+            'Unable to validate the JWT token, with error: {0!s}.'.format(e))
+
+    read_client_id = token_json.get('aud', '')
     if read_client_id != client_id:
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
@@ -302,16 +340,17 @@ def google_openid_connect():
     try:
         public_key = get_public_key_for_jwt(
             encoded_jwt, discovery_document['jwks_uri'])
-        validated_jwt = validate_jwt(
-            encoded_jwt, public_key, algorithm, expected_audience,
-            expected_issuer, expected_domain)
+        decoded_jwt = decode_jwt(
+            encoded_jwt, public_key, algorithm, expected_audience)
+        validate_jwt(
+            decoded_jwt, expected_issuer, expected_domain)
     except (JwtValidationError, JwtKeyError) as e:
         current_app.logger.error('{}'.format(e))
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED,
             'Unable to validate request, with error: {0!s}'.format(e))
 
-    validated_email = validated_jwt.get('email')
+    validated_email = decoded_jwt.get('email')
     user_whitelist = current_app.config.get('GOOGLE_OIDC_USER_WHITELIST')
 
     # Check if the authenticating user is on the whitelist.
