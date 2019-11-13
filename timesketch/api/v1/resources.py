@@ -772,12 +772,13 @@ class ExploreResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to explore data, unable to validate form data')
 
+        # TODO: Remove form and use json instead.
         query_dsl = form.dsl.data
-        query_filter = form.filter.data
         enable_scroll = form.enable_scroll.data
         scroll_id = form.scroll_id.data
 
-        return_fields = request.json['filter'].get('fields', [])
+        query_filter = request.json.get('filter', [])
+        return_fields = query_filter.get('fields', [])
         return_fields = [field['field'] for field in return_fields]
         return_fields.extend(DEFAULT_SOURCE_FIELDS)
 

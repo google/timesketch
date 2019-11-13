@@ -171,8 +171,7 @@ limitations under the License.
               <span v-if="toEvent && !searchInProgress">{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</span>
               <span v-if="!toEvent && !searchInProgress">{{ totalHits }} events ({{ totalTime }}s)</span>
 
-              <div style="float:right; margin-left:7px;">
-
+              <div v-if="eventList.objects.length" style="float:right; margin-left:7px;">
                 <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus :can-close="false">
                   <button class="button is-outlined is-small" style="border-radius: 4px;" slot="trigger">
                     <span class="icon is-small">
@@ -201,17 +200,17 @@ limitations under the License.
                     </div>
                   </b-dropdown-item>
                 </b-dropdown>
-
               </div>
 
-              <div style="float:right; margin-left:7px;" class="select is-small">
+              <div v-if="eventList.objects.length" style="float:right; margin-left:7px;" class="select is-small">
                 <select v-model="currentQueryFilter.order" @change="search">
                   <option v-bind:value="currentQueryFilter.order">{{ currentQueryFilter.order }}</option>
                   <option value="desc">desc</option>
                   <option value="asc">asc</option>
                 </select>
               </div>
-              <div style="float:right;" class="select is-small">
+
+              <div v-if="eventList.objects.length" style="float:right;" class="select is-small">
                 <select v-model="currentQueryFilter.size" @change="search">
                   <option v-bind:value="currentQueryFilter.size">{{ currentQueryFilter.size }}</option>
                   <option value="10">10</option>
@@ -224,7 +223,7 @@ limitations under the License.
                 </select>
               </div>
 
-              <div style="float:right; margin-right:14px;">
+              <div v-if="eventList.objects.length" style="float:right; margin-right:14px;">
                 <b-pagination @change="paginate($event)"
                   :total="totalHitsForPagination"
                   :per-page="currentQueryFilter.size"
@@ -239,7 +238,7 @@ limitations under the License.
 
             <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
             <div v-if="totalHits > 0" style="margin-top:20px;"></div>
-            <ts-sketch-explore-event-list :event-list="eventList.objects" @addChip="addChip($event)" @searchContext="searchContext($event)" :order="currentQueryFilter.order" :selected-fields="selectedFields"></ts-sketch-explore-event-list>
+            <ts-sketch-explore-event-list v-if="eventList.objects.length" :event-list="eventList.objects" @addChip="addChip($event)" @searchContext="searchContext($event)" :order="currentQueryFilter.order" :selected-fields="selectedFields"></ts-sketch-explore-event-list>
           </div>
         </div>
       </div>
@@ -297,7 +296,6 @@ export default {
       },
       selectedFields: [{field: 'message', type: 'text'}],
       selectedFieldsProxy: [],
-      mappings: [],
       expandFieldDropdown: false
     }
   },
