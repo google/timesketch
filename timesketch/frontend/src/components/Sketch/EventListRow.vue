@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-
     <tbody>
 
       <tr v-if="deltaDays > 0">
@@ -26,14 +25,13 @@ limitations under the License.
           <div class="time-bubble-vertical-line"></div>
         </td>
       </tr>
-
-      <tr>
+      <tr class="shadow-on-hover">
         <td v-bind:style="timelineColor">
           {{ event._source.datetime | moment("YYYY-MM-DDTHH:mm:ss.SSSSSS") }}
         </td>
-
         <td>
           <div class="field is-grouped">
+            <span class="control"><input type="checkbox"></span>
             <span class="icon control" v-on:click="toggleStar" style="margin-right: 3px; cursor: pointer;">
               <i class="fas fa-star" v-if="isStarred" style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"></i>
               <i class="fas fa-star" v-if="!isStarred" style="color: #d3d3d3;"></i>
@@ -41,46 +39,41 @@ limitations under the License.
             <span class="icon control" style="cursor: pointer;" v-on:click="searchContext"><i class="fas fa-search" style="color: #d3d3d3;"></i></span>
           </div>
         </td>
-
-        <!--
-        <td v-bind:style="messageFieldColor" v-on:click="showDetail = !showDetail" style="cursor: pointer;">
-          <span class="ts-event-message-container" v-bind:title="event._source.message">
-            <span class="ts-event-message-ellipsis">
-              <span v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji">{{ emoji }}</span>
-              <span style="margin-left:10px;"></span>
-              <span v-for="tag in event._source.tag" :key="tag" class="tag is-rounded" style="margin-right:5px;background:#d1d1d1;">{{ tag }}</span>
-              {{ event._source.message }}
-            </span>
-          </span>
-        </td>
-        -->
-
         <td v-bind:style="messageFieldColor" v-on:click="showDetail = !showDetail" style="cursor: pointer;" v-for="(field, index) in selectedFields" :key="index">
           <span class="ts-event-message-container" v-bind:title="getEventField(field)">
             <span class="ts-event-message-ellipsis">
+              <span v-if="index === 0">
+                <span v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji">{{ emoji }}</span>
+                <span style="margin-left:10px;"></span>
+                <span v-for="tag in event._source.tag" :key="tag" class="tag is-rounded" style="margin-right:5px;background:#d1d1d1;">{{ tag }}</span>
+              </span>
               {{ getEventField(field.field) }}
             </span>
           </span>
         </td>
-
         <td class="ts-timeline-name-column">
           {{ timelineName }}
         </td>
-
       </tr>
 
       <tr v-if="comments.length">
-        <td colspan="5" style="padding-top: 10px; padding-bottom: 20px; margin-left:5px;">
-          <article class="media" v-for="comment in comments" :key="comment.created_at">
-            <div class="media-content">
-              <div class="content">
-                <p>
-                  <strong>{{ comment.user.username }}</strong>
-                  {{ comment.comment }}
-                </p>
+        <td colspan="5">
+          <div style="max-width: 600px; border:1px solid #f5f5f5; border-radius: 4px; padding:10px; margin-bottom: 20px;">
+            <article  class="media" v-for="comment in comments" :key="comment.created_at">
+              <figure class="media-left">
+                <div class="avatar-circle"></div>
+              </figure>
+              <div class="media-content">
+                <div class="content">
+                  <p>
+                    <strong>{{ comment.user.username }}</strong> <small style="margin-left: 10px;">{{ comment.created_at | moment("ll") }}</small>
+                    <br>
+                    {{ comment.comment }}
+                  </p>
+                </div>
               </div>
-            </div>
-          </article>
+            </article>
+          </div>
         </td>
       </tr>
 
@@ -98,22 +91,21 @@ limitations under the License.
                 <button class="button" v-on:click="postComment(comment)">Post comment</button>
               </p>
             </div>
-            <ts-sketch-explore-event-list-item-detail :event="event" @addChip="$emit('addChip', $event)"></ts-sketch-explore-event-list-item-detail>
+            <ts-sketch-explore-event-list-row-detail :event="event" @addChip="$emit('addChip', $event)"></ts-sketch-explore-event-list-row-detail>
           </div>
         </td>
       </tr>
 
   </tbody>
-
 </template>
 
 <script>
   import ApiClient from '../../utils/RestApiClient'
-  import TsSketchExploreEventListItemDetail from './EventListItemDetail'
+  import TsSketchExploreEventListRowDetail from './EventListRowDetail'
 
   export default {
   components: {
-    TsSketchExploreEventListItemDetail
+    TsSketchExploreEventListRowDetail
   },
   props: ['event', 'prevEvent', 'order', 'selectedFields'],
   data () {
@@ -204,9 +196,9 @@ limitations under the License.
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 
-  .ts-event-message-container {
+.ts-event-message-container {
   position: relative;
   max-width: 100%;
   padding: 0 !important;
@@ -280,4 +272,20 @@ limitations under the License.
   background: #f5f5f5;
   margin: 0 0 0 100px;
 }
+
+.shadow-on-hover:hover {
+  opacity:0.999999;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.24);
+}
+
+.avatar-circle {
+  width: 48px;
+  height: 48px;
+  background-color: #f5f5f5;
+  text-align: center;
+  border-radius: 50%;
+  -webkit-border-radius: 50%;
+  -moz-border-radius: 50%;
+}
+
 </style>

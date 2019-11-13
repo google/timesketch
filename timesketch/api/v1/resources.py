@@ -774,17 +774,12 @@ class ExploreResource(ResourceMixin, Resource):
 
         query_dsl = form.dsl.data
         query_filter = form.filter.data
-        #return_fields = form.fields.data
         enable_scroll = form.enable_scroll.data
         scroll_id = form.scroll_id.data
 
         return_fields = request.json['filter'].get('fields', [])
         return_fields = [field['field'] for field in return_fields]
-        print(return_fields)
         return_fields.extend(DEFAULT_SOURCE_FIELDS)
-
-        #if not return_fields:
-        #    return_fields = DEFAULT_SOURCE_FIELDS
 
         sketch_indices = {
             t.searchindex.index_name

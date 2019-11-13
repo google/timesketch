@@ -368,6 +368,11 @@ export default {
         this.$scrollTo('#context', 200, {offset: -300})
       }
 
+      this.eventList = {
+        meta: {},
+        objects: []
+      }
+
       let formData = {
         'query': this.currentQueryString,
         'filter': this.currentQueryFilter
@@ -478,6 +483,12 @@ export default {
       this.search()
     },
     updateSelectedFields: function (value) {
+      // If we haven't fetched the field before, do an new search.
+      value.forEach((field) => {
+        if (!this.selectedFields.filter(e => e.field === field.field).length > 0) {
+          this.search()
+        }
+      })
       value.forEach((field) => {
         this.selectedFields.push(field)
       })
@@ -486,16 +497,11 @@ export default {
     },
     removeField: function (index) {
       this.selectedFields.splice(index, 1)
-      console.log(this.selectedFields)
     }
   },
   watch: {
     numEvents: function (newVal) {
       this.currentQueryFilter.size = newVal
-      this.search()
-    },
-    selectedFields: function (newVal) {
-      this.currentQueryFilter.fields = newVal
       this.search()
     }
   },
