@@ -18,6 +18,10 @@ class SigmaPlugin(interface.BaseIndexAnalyzer):
 
     _CONFIG_FILE = 'sigma_config.yaml'
 
+    # Path to the directory containing the Sigma Rules to run, relative to
+    # this file.
+    _RULES_PATH = ''
+
 
     def __init__(self, index_name):
         """Initialize the Index Analyzer.
@@ -26,7 +30,7 @@ class SigmaPlugin(interface.BaseIndexAnalyzer):
             index_name: Elasticsearch index name
         """
         super(SigmaPlugin, self).__init__(index_name)
-        sigma_config_path = os.path.join(os.path.dirname(__file__), self._CONFIG_FILE)
+        sigma_config_path = interface.get_config_path(self._CONFIG_FILE)
         with open(sigma_config_path, 'r') as sigma_config_file:
             sigma_config = sigma_config_file.read()
         self.sigma_config = sigma_configuration.SigmaConfiguration(sigma_config)
@@ -57,16 +61,18 @@ class SigmaPlugin(interface.BaseIndexAnalyzer):
         Returns:
             String with summary of the analyzer result.
         """
-        sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(self.sigma_config, {})
+        sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(
+            self.sigma_config, {})
         tags_applied = {}
 
-        rules_path = '/path/to/rules/'
+        rules_path = os.path.join(os.path.dirname(__file__), self._RULES_PATH)
         for rule_filename in os.listdir(rules_path):
             tag_name, _ = rule_filename.rsplit('.')
             full_path = os.path.join(rules_path, rule_filename)
             with open(full_path, 'r') as rule_file_content:
                 query = rule_file_content.read()
-                parser = sigma_collection.SigmaCollectionParser(query, self.sigma_config, None)
+                parser = sigma_collection.SigmaCollectionParser(
+                    query, self.sigma_config, None)
                 results = parser.generate(sigma_backend)
                 for result in results:
                     print(result)
@@ -76,8 +82,15 @@ class SigmaPlugin(interface.BaseIndexAnalyzer):
         total_tagged_events = sum(tags_applied.values())
         output_string = 'Applied {0:d} tags\n'.format(total_tagged_events)
         for tag_name, number_of_tagged_events in tags_applied:
-            output_string += '* {0:s}: {0:d}'.format(tag_name, number_of_tagged_events)
+            output_string += '* {0:s}: {1:d}'.format(
+                tag_name, number_of_tagged_events)
         return output_string
 
 
-manager.AnalysisManager.register_analyzer(SigmaPlugin)
+class LinuxRulesSigmaPlugin(SigmaPlugin):
+    """Sigma plugin to run Linux rules."""
+
+    _RULES_PATH = '../../../data/linux'
+
+
+manager.AnalysisManager.register_analyzer(LinuxRulesSigmaPlugin)

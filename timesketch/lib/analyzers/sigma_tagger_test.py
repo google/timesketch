@@ -22,9 +22,6 @@ class TestSigmaPlugin(BaseTest):
         MockDataStore)
     def test_analyzer(self):
         """Test analyzer."""
-        # TODO: Write actual tests here.
+        # TODO: Add more tests
 
-        plugin = sigma_tagger.SigmaPlugin(index_name=self.test_index)
-        plugin.run()
-
-        self.assertIsEqual(True, False)
+        _ = sigma_tagger.LinuxRulesSigmaPlugin(index_name=self.test_index)

@@ -16,7 +16,15 @@ logsources:
     product: apache
     conditions:
       data_type: "apache:access"
+  vsftp:
+    service: vsftp
+    conditions:
+      data_type: "vsftpd:log"
   webserver:
     category: webserver
     conditions:
       data_type: "apache:access OR iis:log:line"
+  shell:
+    service: shell
+    conditions:
+      data_type: "shell:zsh:history OR bash:history:command"
