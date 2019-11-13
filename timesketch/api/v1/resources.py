@@ -419,19 +419,16 @@ class SketchResource(ResourceMixin, Resource):
         mappings = []
         for index_name, value in mappings_settings.items():
             for k, v in value['mappings'].items():
-                for attribute, value_dict in v['properties'].items():
-                    m = {}
-                    # Exclude internal attributes
-                    if attribute.startswith('__'):
+                for field, value_dict in v['properties'].items():
+                    mapping_dict = {}
+                    # Exclude internal fields
+                    if field.startswith('__'):
                         continue
-                    if attribute == 'timesketch_label':
+                    if field == 'timesketch_label':
                         continue
-                    m['field'] = attribute
-                    m['type'] = value_dict.get('type', 'n/a')
-                    mappings.append(m)
-                    #if mappings.get(attribute):
-                    #    continue
-                    #mappings[attribute] = value_dict.get('type', 'n/a')
+                    mapping_dict['field'] = field
+                    mapping_dict['type'] = value_dict.get('type', 'n/a')
+                    mappings.append(mapping_dict)
 
         # Make the list of dicts unique
         mappings = {v['field']: v for v in mappings}.values()
