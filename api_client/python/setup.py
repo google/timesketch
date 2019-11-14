@@ -21,7 +21,7 @@ from setuptools import setup
 
 setup(
     name='timesketch-api-client',
-    version='20191110',
+    version='20191114',
     description='Timesketch API client',
     license='Apache License, Version 2.0',
     url='http://www.timesketch.org/',

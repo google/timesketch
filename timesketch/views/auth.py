@@ -53,7 +53,6 @@ from timesketch.models.user import User
 # Register flask blueprint
 auth_views = Blueprint('user_views', __name__)
 
-PROFILE_URI = 'https://www.googleapis.com/oauth2/v3/userinfo'
 TOKEN_URI = 'https://www.googleapis.com/oauth2/v3/tokeninfo'
 SCOPES = [
     'https://www.googleapis.com/auth/userinfo.email',
@@ -185,6 +184,12 @@ def validate_api_token():
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED, 'Request not authenticated.')
 
+    data = request.data
+    id_token = data.get('id_token')
+    if not id_token:
+        return abort(
+            HTTP_STATUS_CODE_UNAUTHORIZED, 'No ID token supplied.')
+
     client_id = current_app.config.get('GOOGLE_OIDC_API_CLIENT_ID')
     if not client_id:
         return abort(
@@ -198,10 +203,16 @@ def validate_api_token():
     # is valid, to be able to validate the session.
     data = {
         'access_token': token}
-    token_response = requests.post(TOKEN_URI, data=data)
-    if token_response.status_code != HTTP_STATUS_CODE_OK:
+    bearer_token_response = requests.post(TOKEN_URI, data=data)
+    if bearer_token_response.status_code != HTTP_STATUS_CODE_OK:
         return abort(
             HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate access token.')
+    bearer_token_json = bearer_token_response.json()
+
+    data = {
+        'id_token': id_token
+    }
+    token_response = requests.post(TOKEN_URI, data=data)
     token_json = token_response.json()
 
     verified = token_json.get('email_verified', False)
@@ -210,25 +221,15 @@ def validate_api_token():
             HTTP_STATUS_CODE_UNAUTHORIZED,
             'Session not authenticated or account not verified')
 
-    # Get additional information, see more details here:
-    # https://www.oauth.com/oauth2-servers/signing-in-with-google/\
-    #     verifying-the-user-info/
-    # Getting user information, since JWT session using access token
-    # lacks some of the fields available if credential token is
-    # used (which is not available for use here).
-    authorization_header = request.headers.get('Authorization')
-    if authorization_header:
-        header = {'Authorization': authorization_header}
-    else:
-        header = {}
-
-    profile_response = requests.get(PROFILE_URI, headers=header)
-    if profile_response.status_code != HTTP_STATUS_CODE_OK:
+    if bearer_token_json.get('azp', 'a') != token_json.get('azp', 'x'):
         return abort(
-            HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate profile.')
+            HTTP_STATUS_CODE_UNAUTHORIZED,
+            'Auth token and client tokens don\'t match, azp differs.')
 
-    profile = profile_response.json()
-    token_json['hd'] = profile.get('hd', '')
+    if bearer_token_json.get('email', 'a') != token_json.get('email', 'b'):
+        return abort(
+            HTTP_STATUS_CODE_UNAUTHORIZED,
+            'Auth token and client tokens don\'t match, email differs.')
 
     expected_issuer = current_app.config.get('GOOGLE_IAP_ISSUER')
     try:
@@ -254,7 +255,6 @@ def validate_api_token():
             'Client scopes differ from what they should be (email, openid, '
             'profile) = {} VS {}'.format(SCOPES, read_scopes))
 
-    user_whitelist = current_app.config.get('GOOGLE_OIDC_USER_WHITELIST')
     validated_email = token_json.get('email')
 
     # Check if the authenticating user is part of the allowed domains.
@@ -267,6 +267,7 @@ def validate_api_token():
                 'Domain {0:s} is not allowed to authenticate against this '
                 'instance.'.format(domain))
 
+    user_whitelist = current_app.config.get('GOOGLE_OIDC_USER_WHITELIST')
     # Check if the authenticating user is on the whitelist.
     if user_whitelist:
         if validated_email not in user_whitelist:
