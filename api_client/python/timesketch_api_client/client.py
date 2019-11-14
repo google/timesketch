@@ -41,7 +41,7 @@ def _error_message(response, message=None, error=RuntimeError):
     text = ''
     if soup.p:
         text = soup.p.string
-    raise error('{0:s}, with error [{1:d}] {2:s} {3:s}'.format(
+    raise error('{0:s}, with error [{1:d}] {2!s} {3:s}'.format(
         message, response.status_code, response.reason, text))
 
 
@@ -93,8 +93,6 @@ class TimesketchApi(object):
         """
         self._host_uri = host_uri
         self.api_root = '{0:s}/api/v1'.format(host_uri)
-        self._redirect_uri = '{0:s}/login/google_openid_connect/'.format(
-            host_uri)
         self._credentials = None
         self._flow = None
         try:
@@ -146,12 +144,14 @@ class TimesketchApi(object):
             'referer': self._host_uri
         })
 
-    def _create_oauth_session(self, client_id, client_secret):
+    def _create_oauth_session(self, client_id, client_secret, skip_open=False):
         """Return an OAuth session.
 
         Args:
             client_id: The client ID if OAUTH auth is used.
             client_secret: The OAUTH client secret if OAUTH is used.
+            skip_open: If set to True then an auth URL will be printed, instead
+                of presenting an option to open a browser window.
 
         Return:
             session: Instance of requests.Session.
@@ -175,12 +175,17 @@ class TimesketchApi(object):
         flow.redirect_uri = self.DEFAULT_OAUTH_OOB_URL
         auth_url, _ = flow.authorization_url(prompt='select_account')
 
-        open_browser = input('Open the URL in a browser window? [y/N] ')
-        if open_browser.lower() == 'y' or open_browser.lower() == 'yes':
-            webbrowser.open(auth_url)
-        else:
-            print('Need to manually URL to authenticate: {0:s}'.format(
+        if skip_open:
+            print('Visit the following URL to authenticate: {0:s}'.format(
                 auth_url))
+        else:
+            open_browser = input('Open the URL in a browser window? [y/N] ')
+            if open_browser.lower() == 'y' or open_browser.lower() == 'yes':
+                webbrowser.open(auth_url)
+            else:
+                print(
+                    'Need to manually visit URL to authenticate: {0:s}'.format(
+                        auth_url))
 
         code = input('Enter the token code: ')
 
@@ -192,8 +197,10 @@ class TimesketchApi(object):
         # Authenticate to the Timesketch backend.
         login_callback_url = '{0:s}{1:s}'.format(
             self._host_uri, self.DEFAULT_OAUTH_API_CALLBACK)
-        response = session.get(login_callback_url)
-
+        params = {
+            'id_token': session.credentials.id_token,
+        }
+        response = session.get(login_callback_url, params=params)
         if response.status_code not in HTTP_STATUS_CODE_20X:
             _error_message(
                 response, message='Unable to authenticate', error=RuntimeError)
@@ -689,7 +696,7 @@ class Sketch(BaseResource):
             for column in data_frame.columns:
                 if 'time' in column:
                     continue
-                elif 'timestamp_desc' in column:
+                if 'timestamp_desc' in column:
                     continue
                 string_items.append('{0:s} = {{0!s}}'.format(column))
             format_message_string = ' '.join(string_items)
