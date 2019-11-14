@@ -168,13 +168,32 @@ def logout():
     return redirect(url_for('user_views.login'))
 
 
-@auth_views.route('/login/api_callback/', methods=['GET'])
+@auth_views.route('/login/api_callback/', methods=['GET', 'POST'])
 def validate_api_token():
     """Handler for logging in using an authenticated session for the API.
 
     Returns:
         A simple page indicating the user is authenticated.
     """
+    print('IN THE API CALLBACK')
+    if request.method == 'GET':
+        print('WE GOT A GET, LET FETCH OURSELVES THE CSRF TOKEN')
+        hosted_domain = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
+        url = get_oauth2_authorize_url(hosted_domain)
+        print(url)
+        return (
+            '<html lang="en">\n'
+            '<head>\n'
+            '<title>Timesketch</title>\n'
+            '<meta name="csrf-token" content="{0:s}">\n'
+            '<link rel="shortcut icon" href="/static/img/favicon.ico">\n'
+            '<link rel="stylesheet" href="/static/dist/bundle.css">\n'
+            '<script type="text/javascript" language="javascript" src="/static/dist/bundle.js"></script>\n'
+            '</head>\n'
+            '<body><h1>Successful GET request made</h1></body>\n'
+            '</html>\n'.format(session[CSRF_KEY]))
+
+    print('Got past GET')
     try:
         token = oauth2.rfc6749.tokens.get_token_from_header(request)
     except AttributeError:
@@ -184,9 +203,15 @@ def validate_api_token():
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED, 'Request not authenticated.')
 
-    data = request.data
-    id_token = data.get('id_token')
+    id_token = None
+    data = request.form
+    if data:
+        id_token = data.get('id_token')
+
     if not id_token:
+        print(data)
+        print(request.args)
+        print(request.__dict__)
         return abort(
             HTTP_STATUS_CODE_UNAUTHORIZED, 'No ID token supplied.')
 

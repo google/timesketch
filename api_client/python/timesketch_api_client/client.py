@@ -117,14 +117,18 @@ class TimesketchApi(object):
         data = {'username': username, 'password': password}
         session.post('{0:s}/login/'.format(self._host_uri), data=data)
 
-    def _set_csrf_token(self, session):
+    def _set_csrf_token(self, session, url=None):
         """Retrieve CSRF token from the server and append to HTTP headers.
 
         Args:
             session: Instance of requests.Session.
+            url: Optional URL to fetch the token from, if not used the host
+                URI will be visited.
         """
         # Scrape the CSRF token from the response
-        response = session.get(self._host_uri)
+        if not url:
+            url = self._host_uri
+        response = session.get(url)
         soup = bs4.BeautifulSoup(response.text, features='html.parser')
 
         tag = soup.find(id='csrf_token')
@@ -200,13 +204,14 @@ class TimesketchApi(object):
         data = {
             'id_token': session.credentials.id_token,
         }
-        response = session.post(login_callback_url, data=data)
+        # Do a callback to get the CSRF token before we authenticate.
+        self._set_csrf_token(session, login_callback_url)
 
+        response = session.post(login_callback_url, data=data)
         if response.status_code not in HTTP_STATUS_CODE_20X:
             _error_message(
                 response, message='Unable to authenticate', error=RuntimeError)
 
-        self._set_csrf_token(session)
         return session
 
     def _create_session(
