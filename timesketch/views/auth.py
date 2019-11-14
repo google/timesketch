@@ -230,7 +230,14 @@ def validate_api_token():
             HTTP_STATUS_CODE_UNAUTHORIZED,
             'Auth token and client tokens don\'t match, email differs.')
 
-    expected_issuer = current_app.config.get('GOOGLE_IAP_ISSUER')
+    try:
+        discovery_document = get_oauth2_discovery_document()
+    except DiscoveryDocumentError as e:
+        return abort(
+            HTTP_STATUS_CODE_BAD_REQUEST,
+            'Unable to discover document, with error: {0!s}'.format(e))
+
+    expected_issuer = discovery_document['issuer']
     try:
         validate_jwt(token_json, expected_issuer)
     except (ImportError, NameError, UnboundLocalError):

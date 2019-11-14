@@ -229,7 +229,6 @@ def validate_jwt(decoded_jwt, expected_issuer, expected_domain=None):
     Raises:
         JwtValidationError: If unable to validate the JWT.
     """
-    expected_issuers = expected_issuer.split(',')
     # Make sure the token is not created in the future or has expired.
     try:
         now = int(time.time())
@@ -251,7 +250,7 @@ def validate_jwt(decoded_jwt, expected_issuer, expected_domain=None):
     # Check that the issuer of the token is correct.
     try:
         issuer = decoded_jwt['iss']
-        if issuer not in expected_issuers:
+        if issuer != expected_issuer:
             raise JwtValidationError('Wrong issuer: {}'.format(issuer))
     except KeyError:
         raise JwtValidationError('Missing issuer')
