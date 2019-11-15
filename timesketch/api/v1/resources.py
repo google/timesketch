@@ -1436,8 +1436,8 @@ class EventAnnotationResource(ResourceMixin, Resource):
             db_session.add(event)
             db_session.commit()
 
-            return self.to_json(
-                annotations, status_code=HTTP_STATUS_CODE_CREATED)
+        return self.to_json(
+            annotations, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class UploadFileResource(ResourceMixin, Resource):

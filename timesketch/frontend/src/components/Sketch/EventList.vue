@@ -17,7 +17,11 @@ limitations under the License.
   <table class="table is-fullwidth">
     <thead>
       <th width="220"></th>
-      <th width="80"><span class="control"><input type="checkbox"></span></th>
+      <th width="80">
+        <span class="control">
+          <input type="checkbox" v-on:click="toggleSelectAll">
+        </span>
+      </th>
       <th v-for="(field, index) in selectedFields" :key="index">{{ field.field }}</th>
       <th width="150">Timeline name</th>
     </thead>
@@ -36,9 +40,34 @@ limitations under the License.
 
 <script>
 import TsSketchExploreEventListRow from './EventListRow'
+import EventBus from "../../main"
 
 export default {
   components: { TsSketchExploreEventListRow },
-  props: ['eventList', 'order', 'selectedFields']
+  props: ['eventList', 'order', 'selectedFields'],
+  data () {
+    return {
+      selectAll: false
+    }
+  },
+  methods: {
+    toggleSelectAll: function () {
+      if (this.selectAll) {
+        EventBus.$emit('clearSelectedEvents')
+        this.selectAll = false
+      } else {
+        EventBus.$emit('selectEvent')
+        this.selectAll = true
+      }
+    }
+  }
 }
 </script>
+
+<style lang="scss" scoped>
+
+.table thead th {
+  border:0;
+}
+
+</style>

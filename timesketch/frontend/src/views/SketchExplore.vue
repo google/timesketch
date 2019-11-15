@@ -168,77 +168,111 @@ limitations under the License.
       <div class="container is-fluid">
         <div class="card">
           <div class="card-content">
-              <span v-if="toEvent && !searchInProgress">{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</span>
-              <span v-if="!toEvent && !searchInProgress">{{ totalHits }} events ({{ totalTime }}s)</span>
 
-              <div v-if="eventList.objects.length" style="float:right; margin-left:7px;">
-                <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus :can-close="false">
-                  <button class="button is-outlined is-small" style="border-radius: 4px;" slot="trigger">
+            <nav class="level">
+              <!-- Left side -->
+              <div class="level-left">
+                <div class="level-item">
+                  <span v-if="toEvent && !searchInProgress">{{ fromEvent }}-{{ toEvent }} of {{ totalHits }} events ({{ totalTime }}s)</span>
+                </div>
+                <div class="level-item">
+                  <span v-if="!toEvent && !searchInProgress">{{ totalHits }} events ({{ totalTime }}s)</span>
+                </div>
+                <div class="level-item" v-if="numSelectedEvents" style="margin-right:50px;">
+                  <button class="button is-small is-outlined" style="border-radius: 4px;" v-on:click="toggleStar">
+                    <span class="icon">
+                      <i class="fas fa-star"></i>
+                    </span>
+                    <span>Toggle star ({{ numSelectedEvents }})</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Right side -->
+              <div class="level-right">
+
+                <div class="level-item">
+                  <div v-if="eventList.objects.length">
+                    <b-pagination @change="paginate($event)"
+                                  :total="totalHitsForPagination"
+                                  :per-page="currentQueryFilter.size"
+                                  :current.sync="currentPage"
+                                  :simple=true
+                                  size="is-small"
+                                  icon-pack="fas"
+                                  icon-prev="chevron-left"
+                                  icon-next="chevron-right">
+                    </b-pagination>
+                  </div>
+                </div>
+                <div class="level-item">
+                  <div v-if="eventList.objects.length" class="select is-small">
+                    <select v-model="currentQueryFilter.size" @change="search">
+                      <option v-bind:value="currentQueryFilter.size">{{ currentQueryFilter.size }}</option>
+                      <option value="10">10</option>
+                      <option value="20">20</option>
+                      <option value="40">40</option>
+                      <option value="80">80</option>
+                      <option value="100">100</option>
+                      <option value="200">200</option>
+                      <option value="500">500</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="level-item">
+                  <div v-if="eventList.objects.length" class="select is-small">
+                    <select v-model="currentQueryFilter.order" @change="search">
+                      <option v-bind:value="currentQueryFilter.order">{{ currentQueryFilter.order }}</option>
+                      <option value="desc">desc</option>
+                      <option value="asc">asc</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="level-item">
+                  <div v-if="eventList.objects.length">
+                    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus :can-close="false">
+                      <button class="button is-outlined is-small" style="border-radius: 4px;" slot="trigger">
                     <span class="icon is-small">
                       <i class="fas fa-table"></i>
                     </span>
-                    <span>Fields ({{ selectedFields.length }})</span>
-                  </button>
-                  <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
-                    <div v-bind:class="{ tsdropdown: expandFieldDropdown }" style="width:300px;">
-                      <multiselect style="display: block" v-if="meta.mappings" :options="meta.mappings" :value="selectedFieldsProxy" @open="expandFieldDropdown = true" @close="expandFieldDropdown = false" @input="updateSelectedFields" :multiple="true" :searchable="true" :close-on-select="false" label="field" track-by="field" placeholder="Add more fields ..."></multiselect>
-                    </div>
-                  </b-dropdown-item>
-                  <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
+                        <span>Fields ({{ selectedFields.length }})</span>
+                      </button>
+                      <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
+                        <div v-bind:class="{ tsdropdown: expandFieldDropdown }" style="width:300px;">
+                          <multiselect style="display: block" v-if="meta.mappings" :options="meta.mappings" :value="selectedFieldsProxy" @open="expandFieldDropdown = true" @close="expandFieldDropdown = false" @input="updateSelectedFields" :multiple="true" :searchable="true" :close-on-select="false" label="field" track-by="field" placeholder="Add more fields ..."></multiselect>
+                        </div>
+                      </b-dropdown-item>
+                      <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
                     <span v-if="selectedFields.length">
                       <br>
                       <strong>Selected fields</strong>
                       <br><br>
                     </span>
-                    <div class="tags">
+                        <div class="tags">
                       <span v-for="(field, index) in selectedFields" :key="index">
                         <span class="tag is-light is-rounded" style="margin-right:7px;">
                           <span style="margin-right:7px;">{{ field.field }}</span>
                           <button style="margin-left:7px" class="delete is-small" v-on:click="removeField(index)"></button>
                         </span>
                       </span>
-                    </div>
-                  </b-dropdown-item>
-                </b-dropdown>
+                        </div>
+                      </b-dropdown-item>
+                    </b-dropdown>
+                  </div>
+                </div>
               </div>
-
-              <div v-if="eventList.objects.length" style="float:right; margin-left:7px;" class="select is-small">
-                <select v-model="currentQueryFilter.order" @change="search">
-                  <option v-bind:value="currentQueryFilter.order">{{ currentQueryFilter.order }}</option>
-                  <option value="desc">desc</option>
-                  <option value="asc">asc</option>
-                </select>
-              </div>
-
-              <div v-if="eventList.objects.length" style="float:right;" class="select is-small">
-                <select v-model="currentQueryFilter.size" @change="search">
-                  <option v-bind:value="currentQueryFilter.size">{{ currentQueryFilter.size }}</option>
-                  <option value="10">10</option>
-                  <option value="20">20</option>
-                  <option value="40">40</option>
-                  <option value="80">80</option>
-                  <option value="100">100</option>
-                  <option value="200">200</option>
-                  <option value="500">500</option>
-                </select>
-              </div>
-
-              <div v-if="eventList.objects.length" style="float:right; margin-right:14px;">
-                <b-pagination @change="paginate($event)"
-                  :total="totalHitsForPagination"
-                  :per-page="currentQueryFilter.size"
-                  :current.sync="currentPage"
-                  :simple=true
-                  size="is-small"
-                  icon-pack="fas"
-                  icon-prev="chevron-left"
-                  icon-next="chevron-right">
-                </b-pagination>
-              </div>
+            </nav>
 
             <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
             <div v-if="totalHits > 0" style="margin-top:20px;"></div>
-            <ts-sketch-explore-event-list v-if="eventList.objects.length" :event-list="eventList.objects" @addChip="addChip($event)" @searchContext="searchContext($event)" :order="currentQueryFilter.order" :selected-fields="selectedFields"></ts-sketch-explore-event-list>
+
+            <ts-sketch-explore-event-list v-if="eventList.objects.length"
+                                          :event-list="eventList.objects"
+                                          :order="currentQueryFilter.order"
+                                          :selected-fields="selectedFields"
+                                          @addChip="addChip($event)"
+                                          @searchContext="searchContext($event)">
+            </ts-sketch-explore-event-list>
           </div>
         </div>
       </div>
@@ -255,6 +289,7 @@ import TsExploreTimelinePicker from '../components/Sketch/TimelinePicker'
 import TsExploreFilterTime from '../components/Sketch/TimeFilter'
 import TsExploreSessionChart from '../components/Sketch/SessionChart'
 import TsSketchExploreAggregation from "../components/Sketch/Aggregation"
+import EventBus from "../main"
 
 export default {
   components: {
@@ -296,7 +331,9 @@ export default {
       },
       selectedFields: [{field: 'message', type: 'text'}],
       selectedFieldsProxy: [],
-      expandFieldDropdown: false
+      expandFieldDropdown: false,
+
+      selectedEvents: {}
     }
   },
   computed: {
@@ -328,12 +365,13 @@ export default {
         return
       }
       return parseInt(this.currentQueryFilter.from) + parseInt(this.currentQueryFilter.size)
+    },
+    numSelectedEvents () {
+      return Object.keys(this.selectedEvents).length
     }
   },
   methods: {
     search: function () {
-      //this.searchInProgress = true
-
       if (this.contextEvent) {
         // TODO: Make this selectable in the UI
         const contextTime = 300
@@ -366,6 +404,9 @@ export default {
         this.$scrollTo('#context', 200, {offset: -300})
       }
 
+      // Reset selected events.
+      this.selectedEvents = {}
+
       this.eventList = {
         meta: {},
         objects: []
@@ -379,10 +420,12 @@ export default {
       ApiClient.search(this.sketch.id, formData).then((response) => {
         this.eventList.objects = response.data.objects
         this.eventList.meta = response.data.meta
-        //this.searchInProgress = false
       }).catch((e) => {})
     },
     searchView: function (viewId) {
+      // Reset selected events.
+      this.selectedEvents = {}
+
       if (viewId !== parseInt(viewId, 10) && typeof viewId !== 'string') {
         viewId = viewId.id
         this.$router.push({ name: 'SketchExplore', query: { view: viewId } })
@@ -495,6 +538,25 @@ export default {
     },
     removeField: function (index) {
       this.selectedFields.splice(index, 1)
+    },
+    updateSelectedEvents: function (event) {
+      let key = event._index + ':' + event._id
+      if (event.isSelected) {
+        this.$set(this.selectedEvents, key, event)
+      } else {
+        this.$delete(this.selectedEvents, key)
+      }
+    },
+    toggleStar: function () {
+      let eventsToToggle = []
+      Object.keys(this.selectedEvents).forEach((key, index) => {
+        eventsToToggle.push(this.selectedEvents[key])
+      })
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', eventsToToggle).then((response) => {
+      }).catch((e) => {})
+
+      EventBus.$emit('toggleStar', this.selectedEvents)
+
     }
   },
   watch: {
@@ -502,6 +564,14 @@ export default {
       this.currentQueryFilter.size = newVal
       this.search()
     }
+  },
+  mounted () {
+    EventBus.$on('eventSelected', (eventData) => {
+      this.updateSelectedEvents(eventData)
+    })
+    EventBus.$on('clearSelectedEvents', () => {
+      this.selectedEvents = {}
+    })
   },
   created: function () {
     let doSearch = false
