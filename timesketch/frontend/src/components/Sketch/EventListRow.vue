@@ -52,7 +52,7 @@ limitations under the License.
         </td>
 
         <!-- Dynamic columns based on selected fields -->
-        <td v-bind:style="messageFieldColor" v-on:click="showDetail = !showDetail" style="cursor: pointer;" v-for="(field, index) in selectedFields" :key="index">
+        <td v-bind:style="fieldColumnColor" v-on:click="showDetail = !showDetail" style="cursor: pointer;" v-for="(field, index) in selectedFields" :key="index">
           <span v-bind:class="{ 'ts-event-field-container': selectedFields.length === 1 }">
             <span v-bind:class="{ 'ts-event-field-ellipsis': selectedFields.length === 1 }">
               <span v-if="index === 0">
@@ -155,7 +155,7 @@ limitations under the License.
         'background-color': hexColor
       }
     },
-    messageFieldColor () {
+    fieldColumnColor () {
       let hexColor = '#f5f5f5'
       if (this.isStarred) {
         hexColor = '#fff4b3'
