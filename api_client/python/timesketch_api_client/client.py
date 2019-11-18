@@ -172,7 +172,8 @@ class TimesketchApi(object):
                 raise RuntimeError(
                     'Unable to log in, client secret files does not exist.')
             flow = googleauth_flow.InstalledAppFlow.from_client_secrets_file(
-                client_secrets_file, scopes=self.DEFAULT_OAUTH_SCOPE)
+                client_secrets_file, scopes=self.DEFAULT_OAUTH_SCOPE,
+                autogenerate_code_verifier=True)
         else:
             provider_url = self.DEFAULT_OAUTH_PROVIDER_URL
             client_config = {
@@ -187,7 +188,8 @@ class TimesketchApi(object):
             }
 
             flow = googleauth_flow.InstalledAppFlow.from_client_config(
-                client_config, self.DEFAULT_OAUTH_SCOPE)
+                client_config, self.DEFAULT_OAUTH_SCOPE,
+                autogenerate_code_verifier=True)
 
             flow.redirect_uri = self.DEFAULT_OAUTH_OOB_URL
 
