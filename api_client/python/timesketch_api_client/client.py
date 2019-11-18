@@ -144,14 +144,21 @@ class TimesketchApi(object):
             'referer': self._host_uri
         })
 
-    def _create_oauth_session(self, client_id, client_secret, skip_open=False):
+    def _create_oauth_session(
+            self, client_id='', client_secret='', client_secrets_file=None,
+            run_server=True, skip_open=False):
         """Return an OAuth session.
 
         Args:
             client_id: The client ID if OAUTH auth is used.
             client_secret: The OAUTH client secret if OAUTH is used.
-            skip_open: If set to True then an auth URL will be printed, instead
-                of presenting an option to open a browser window.
+            client_secrets_file: Path to the JSON file that contains the client
+                secrets, in the client_secrets format.
+            run_server: A boolean, if set to true (default) a web server is
+                run to catch the OAUTH request and response.
+            skip_open: A booelan, if set to True (defaults to False) an
+                authorization URL is printed on the screen to visit. This is
+                only valid if run_server is set to False.
 
         Return:
             session: Instance of requests.Session.
@@ -159,37 +166,50 @@ class TimesketchApi(object):
         Raises:
             RuntimeError: if unable to log in to the application.
         """
-        client_config = {
-            'installed': {
-                'client_id': client_id,
-                'client_secret': client_secret,
-                'auth_uri': self.DEFAULT_OAUTH_AUTH_URL,
-                'token_uri': self.DEFAULT_OAUTH_TOKEN_URL,
-                'auth_provider_x509_cert_url': self.DEFAULT_OAUTH_PROVIDER_URL,
-                'redirect_uris': [self.DEFAULT_OAUTH_OOB_URL],
-            },
-        }
-
-        flow = googleauth_flow.InstalledAppFlow.from_client_config(
-            client_config, self.DEFAULT_OAUTH_SCOPE)
-        flow.redirect_uri = self.DEFAULT_OAUTH_OOB_URL
-        auth_url, _ = flow.authorization_url(prompt='select_account')
-
-        if skip_open:
-            print('Visit the following URL to authenticate: {0:s}'.format(
-                auth_url))
+        if client_secrets_file:
+            if not os.path.isfile(client_secrets_file):
+                raise RuntimeError(
+                    'Unable to log in, client secret files does not exist.')
+            flow = googleauth_flow.InstalledAppFlow.from_client_secrets_file(
+                client_secrets_file, scopes=self.DEFAULT_OAUTH_SCOPE)
         else:
-            open_browser = input('Open the URL in a browser window? [y/N] ')
-            if open_browser.lower() == 'y' or open_browser.lower() == 'yes':
-                webbrowser.open(auth_url)
+            provider_url = self.DEFAULT_OAUTH_PROVIDER_URL
+            client_config = {
+                'installed': {
+                    'client_id': client_id,
+                    'client_secret': client_secret,
+                    'auth_uri': self.DEFAULT_OAUTH_AUTH_URL,
+                    'token_uri': self.DEFAULT_OAUTH_TOKEN_URL,
+                    'auth_provider_x509_cert_url': provider_url,
+                    'redirect_uris': [self.DEFAULT_OAUTH_OOB_URL],
+                },
+            }
+
+            flow = googleauth_flow.InstalledAppFlow.from_client_config(
+                client_config, self.DEFAULT_OAUTH_SCOPE)
+
+            flow.redirect_uri = self.DEFAULT_OAUTH_OOB_URL
+
+        if run_server:
+            _ = flow.run_local_server()
+        else:
+            auth_url, _ = flow.authorization_url(prompt='select_account')
+
+            if skip_open:
+                print('Visit the following URL to authenticate: {0:s}'.format(
+                    auth_url))
             else:
-                print(
-                    'Need to manually visit URL to authenticate: {0:s}'.format(
-                        auth_url))
+                open_browser = input('Open the URL in a browser window? [y/N] ')
+                if open_browser.lower() == 'y' or open_browser.lower() == 'yes':
+                    webbrowser.open(auth_url)
+                else:
+                    print(
+                        'Need to manually visit URL to authenticate: '
+                        '{0:s}'.format(auth_url))
 
-        code = input('Enter the token code: ')
+            code = input('Enter the token code: ')
+            _ = flow.fetch_token(code=code)
 
-        _ = flow.fetch_token(code=code)
         session = flow.authorized_session()
         self._flow = flow
         self._credentials = flow.credentials
