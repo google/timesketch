@@ -417,8 +417,8 @@ class SketchResource(ResourceMixin, Resource):
                 index=sketch_indices)
 
         mappings = []
-        for index_name, value in mappings_settings.items():
-            for k, v in value['mappings'].items():
+        for _, value in mappings_settings.items():
+            for _, v in value['mappings'].items():
                 for field, value_dict in v['properties'].items():
                     mapping_dict = {}
                     # Exclude internal fields
