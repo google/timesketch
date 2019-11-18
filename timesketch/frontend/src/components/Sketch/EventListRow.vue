@@ -56,9 +56,9 @@ limitations under the License.
           <span class="ts-event-field-container">
             <span class="ts-event-field-ellipsis">
               <span v-if="index === 0">
-                <span v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji" :title="meta.emojis[emoji]">{{ emoji }}</span>
+                <span v-if="displayOptions.showEmojis" v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji" :title="meta.emojis[emoji]">{{ emoji }}</span>
                 <span style="margin-left:10px;"></span>
-                <span v-if="displayOptions.showTags"  v-for="tag in event._source.tag" :key="tag" class="tag is-rounded" style="margin-right:5px;background:#d1d1d1;">{{ tag }}</span>
+                <span v-if="displayOptions.showTags" v-for="tag in event._source.tag" :key="tag" class="tag is-rounded" style="margin-right:5px;background:#d1d1d1;">{{ tag }}</span>
               </span>
               <span :title="event._source[field.field]">
                 {{ event._source[field.field] }}

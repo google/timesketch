@@ -261,6 +261,10 @@ limitations under the License.
                         <b-switch type="is-info" v-model="displayOptions.showTags">
                           <span>Show tags</span>
                         </b-switch>
+                        <br>
+                        <b-switch type="is-info" v-model="displayOptions.showEmojis">
+                          <span>Show emojis</span>
+                        </b-switch>
 
                       </b-dropdown-item>
                     </b-dropdown>
@@ -341,7 +345,8 @@ export default {
       expandFieldDropdown: false,
       selectedEvents: {},
       displayOptions: {
-        showTags: true
+        showTags: true,
+        showEmojis: true
       }
     }
   },
