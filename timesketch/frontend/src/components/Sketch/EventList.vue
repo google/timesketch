@@ -31,6 +31,7 @@ limitations under the License.
                                       :prevEvent="eventList[index - 1]"
                                       :order="order"
                                       :selected-fields="selectedFields"
+                                      :display-options="displayOptions"
                                       v-bind:id="event._id"
                                       @addChip="$emit('addChip', $event)"
                                       @searchContext="$emit('searchContext', $event)">
@@ -44,7 +45,7 @@ import EventBus from "../../main"
 
 export default {
   components: { TsSketchExploreEventListRow },
-  props: ['eventList', 'order', 'selectedFields'],
+  props: ['eventList', 'order', 'selectedFields', 'displayOptions'],
   data () {
     return {
       selectAll: false

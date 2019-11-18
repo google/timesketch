@@ -230,7 +230,7 @@ limitations under the License.
                 </div>
                 <div class="level-item">
                   <div v-if="eventList.objects.length">
-                    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus :can-close="false">
+                    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus :can-close="true">
                       <button class="button is-outlined is-small" style="border-radius: 4px;" slot="trigger">
                     <span class="icon is-small">
                       <i class="fas fa-table"></i>
@@ -249,13 +249,19 @@ limitations under the License.
                       <br><br>
                     </span>
                         <div class="tags">
-                      <span v-for="(field, index) in selectedFields" :key="index">
-                        <span class="tag is-light is-rounded" style="margin-right:7px;">
-                          <span style="margin-right:7px;">{{ field.field }}</span>
-                          <button style="margin-left:7px" class="delete is-small" v-on:click="removeField(index)"></button>
-                        </span>
-                      </span>
+                          <span v-for="(field, index) in selectedFields" :key="index">
+                            <span class="tag is-light is-rounded" style="margin-right:7px;">
+                              <span style="margin-right:7px;">{{ field.field }}</span>
+                              <button style="margin-left:7px" class="delete is-small" v-on:click="removeField(index)"></button>
+                            </span>
+                          </span>
                         </div>
+
+                        <hr>
+                        <b-switch type="is-info" v-model="displayOptions.showTags">
+                          <span>Show tags</span>
+                        </b-switch>
+
                       </b-dropdown-item>
                     </b-dropdown>
                   </div>
@@ -270,6 +276,7 @@ limitations under the License.
                                           :event-list="eventList.objects"
                                           :order="currentQueryFilter.order"
                                           :selected-fields="selectedFields"
+                                          :display-options="displayOptions"
                                           @addChip="addChip($event)"
                                           @searchContext="searchContext($event)">
             </ts-sketch-explore-event-list>
@@ -332,8 +339,10 @@ export default {
       selectedFields: [{field: 'message', type: 'text'}],
       selectedFieldsProxy: [],
       expandFieldDropdown: false,
-
-      selectedEvents: {}
+      selectedEvents: {},
+      displayOptions: {
+        showTags: true
+      }
     }
   },
   computed: {
