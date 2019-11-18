@@ -53,8 +53,8 @@ limitations under the License.
 
         <!-- Dynamic columns based on selected fields -->
         <td v-bind:style="messageFieldColor" v-on:click="showDetail = !showDetail" style="cursor: pointer;" v-for="(field, index) in selectedFields" :key="index">
-          <span class="ts-event-field-container">
-            <span class="ts-event-field-ellipsis">
+          <span v-bind:class="{ 'ts-event-field-container': selectedFields.length === 1 }">
+            <span v-bind:class="{ 'ts-event-field-ellipsis': selectedFields.length === 1 }">
               <span v-if="index === 0">
                 <span v-if="displayOptions.showEmojis" v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji" :title="meta.emojis[emoji]">{{ emoji }}</span>
                 <span style="margin-left:10px;"></span>
