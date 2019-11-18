@@ -22,6 +22,7 @@ import time
 import json
 import hashlib
 import os
+import six
 
 # six.moves is a dynamically-created namespace that doesn't actually
 # exist and therefore pylint can't statically analyze it.
@@ -184,8 +185,34 @@ def get_encoded_jwt_over_https(code):
     return encoded_jwt
 
 
-def validate_jwt(encoded_jwt, public_key, algorithm, expected_audience,
-                 expected_issuer, expected_domain=None):
+def decode_jwt(encoded_jwt, public_key, algorithm, expected_audience):
+    """Decode a JSON Web Token (JWT).
+
+    Args:
+        encoded_jwt: The contents of the X-Goog-IAP-JWT-Assertion header.
+        public_key: Key to verify signature of the JWT.
+        algorithm: Algorithm used for the key. E.g. ES256, RS256
+        expected_audience: Expected audience in the JWT.
+
+    Returns:
+        Decoded JWT as a dict object.
+
+    Raises:
+        JwtValidationError: if the JWT token cannot be decoded.
+    """
+    try:
+        decoded_jwt = jwt.decode(
+            encoded_jwt, public_key, algorithm=algorithm,
+            audience=expected_audience)
+        return decoded_jwt
+    except (jwt.exceptions.InvalidTokenError,
+            jwt.exceptions.InvalidKeyError) as e:
+        raise JwtValidationError('JWT validation error: {}'.format(e))
+
+    return None
+
+
+def validate_jwt(decoded_jwt, expected_issuer, expected_domain=None):
     """Decode and validate a JSON Web token (JWT).
 
     Cloud IAP:
@@ -195,30 +222,24 @@ def validate_jwt(encoded_jwt, public_key, algorithm, expected_audience,
     https://developers.google.com/identity/protocols/OpenIDConnect
 
     Args:
-        encoded_jwt: The contents of the X-Goog-IAP-JWT-Assertion header.
-        public_key: Key to verify signature of the JWT.
-        algorithm: Algorithm used for the key. E.g. ES256, RS256
-        expected_audience: Expected audience in the JWT.
+        decoded_jwt: A dict object containing the decoded JWT token.
         expected_issuer: Expected issuer of the JWT.
         expected_domain: Expected GSuite domain in the JWT (optional).
 
-    Returns:
-        Decoded JWT on successful validation.
+    Raises:
+        JwtValidationError: If unable to validate the JWT.
     """
-    # Decode the token and verify its payload.
-    try:
-        decoded_jwt = jwt.decode(
-            encoded_jwt, public_key, algorithm=algorithm,
-            audience=expected_audience)
-    except (jwt.exceptions.InvalidTokenError,
-            jwt.exceptions.InvalidKeyError) as e:
-        raise JwtValidationError('JWT validation error: {}'.format(e))
-
     # Make sure the token is not created in the future or has expired.
     try:
         now = int(time.time())
         issued_at = decoded_jwt['iat']
+        if isinstance(issued_at, six.string_types):
+            issued_at = int(issued_at, 10)
+
         expires_at = decoded_jwt['exp']
+        if isinstance(expires_at, six.string_types):
+            expires_at = int(expires_at, 10)
+
         if issued_at > now:
             raise JwtValidationError('Token was issued in the future')
         elif expires_at < now:
@@ -244,9 +265,6 @@ def validate_jwt(encoded_jwt, public_key, algorithm, expected_audience,
                 raise JwtValidationError('Wrong domain: {}'.format(domain))
         except KeyError as e:
             raise JwtValidationError('Missing domain: {}'.format(e))
-
-    # If everything checks out, return the decoded token.
-    return decoded_jwt
 
 
 def get_public_key_for_jwt(encoded_jwt, url):

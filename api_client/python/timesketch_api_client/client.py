@@ -20,13 +20,29 @@ import uuid
 # pylint: disable=wrong-import-order
 import bs4
 import requests
-
 # pylint: disable=redefined-builtin
 from requests.exceptions import ConnectionError
+import webbrowser
+
 import altair
+# pylint: disable-msg=import-error
+from google_auth_oauthlib import flow as googleauth_flow
+import google.auth.transport.requests
 import pandas
 from .definitions import HTTP_STATUS_CODE_20X
 from . import importer
+
+
+def _error_message(response, message=None, error=RuntimeError):
+    """Raise an error using error message extracted from response."""
+    if not message:
+        message = 'Unknown error, with error: '
+    soup = bs4.BeautifulSoup(response.text, features='html.parser')
+    text = ''
+    if soup.p:
+        text = soup.p.string
+    raise error('{0:s}, with error [{1:d}] {2!s} {3:s}'.format(
+        message, response.status_code, response.reason, text))
 
 
 class TimesketchApi(object):
@@ -37,11 +53,25 @@ class TimesketchApi(object):
         session: Authenticated HTTP session.
     """
 
+    DEFAULT_OAUTH_SCOPE = [
+        'https://www.googleapis.com/auth/userinfo.email',
+        'openid',
+        'https://www.googleapis.com/auth/userinfo.profile'
+    ]
+
+    DEFAULT_OAUTH_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
+    DEFAULT_OAUTH_TOKEN_URL = 'https://oauth2.googleapis.com/token'
+    DEFAULT_OAUTH_PROVIDER_URL = 'https://www.googleapis.com/oauth2/v1/certs'
+    DEFAULT_OAUTH_OOB_URL = 'urn:ietf:wg:oauth:2.0:oob'
+    DEFAULT_OAUTH_API_CALLBACK = '/login/api_callback/'
+
     def __init__(self,
                  host_uri,
                  username,
-                 password,
+                 password='',
                  verify=True,
+                 client_id='',
+                 client_secret='',
                  auth_mode='timesketch'):
         """Initializes the TimesketchApi object.
 
@@ -50,17 +80,30 @@ class TimesketchApi(object):
             username: User username.
             password: User password.
             verify: Verify server SSL certificate.
+            client_id: The client ID if OAUTH auth is used.
+            client_secret: The OAUTH client secret if OAUTH is used.
             auth_mode: The authentication mode to use. Defaults to 'timesketch'
-                Supported values are 'timesketch' (Timesketch login form) and
-                'http-basic' (HTTP Basic authentication).
+                Supported values are 'timesketch' (Timesketch login form),
+                'http-basic' (HTTP Basic authentication) and oauth.
+
+        Raises:
+            ConnectionError: If the Timesketch server is unreachable.
+            RuntimeError: If the client is unable to authenticate to the
+                backend.
         """
         self._host_uri = host_uri
         self.api_root = '{0:s}/api/v1'.format(host_uri)
+        self._credentials = None
+        self._flow = None
         try:
             self.session = self._create_session(
-                username, password, verify=verify, auth_mode=auth_mode)
+                username, password, verify=verify, client_id=client_id,
+                client_secret=client_secret, auth_mode=auth_mode)
         except ConnectionError:
             raise ConnectionError('Timesketch server unreachable')
+        except RuntimeError as e:
+            raise RuntimeError(
+                'Unable to connect to server, with error: {0!s}'.format(e))
 
     def _authenticate_session(self, session, username, password):
         """Post username/password to authenticate the HTTP seesion.
@@ -83,32 +126,116 @@ class TimesketchApi(object):
         # Scrape the CSRF token from the response
         response = session.get(self._host_uri)
         soup = bs4.BeautifulSoup(response.text, features='html.parser')
-        csrf_token = soup.find(id='csrf_token').get('value')
+
+        tag = soup.find(id='csrf_token')
+        csrf_token = None
+        if tag:
+            csrf_token = tag.get('value')
+        else:
+            tag = soup.find('meta', attrs={'name': 'csrf-token'})
+            if tag:
+                csrf_token = tag.attrs.get('content')
+
+        if not csrf_token:
+            return
 
         session.headers.update({
             'x-csrftoken': csrf_token,
             'referer': self._host_uri
         })
 
-    def _create_session(self, username, password, verify, auth_mode):
+    def _create_oauth_session(self, client_id, client_secret, skip_open=False):
+        """Return an OAuth session.
+
+        Args:
+            client_id: The client ID if OAUTH auth is used.
+            client_secret: The OAUTH client secret if OAUTH is used.
+            skip_open: If set to True then an auth URL will be printed, instead
+                of presenting an option to open a browser window.
+
+        Return:
+            session: Instance of requests.Session.
+
+        Raises:
+            RuntimeError: if unable to log in to the application.
+        """
+        client_config = {
+            'installed': {
+                'client_id': client_id,
+                'client_secret': client_secret,
+                'auth_uri': self.DEFAULT_OAUTH_AUTH_URL,
+                'token_uri': self.DEFAULT_OAUTH_TOKEN_URL,
+                'auth_provider_x509_cert_url': self.DEFAULT_OAUTH_PROVIDER_URL,
+                'redirect_uris': [self.DEFAULT_OAUTH_OOB_URL],
+            },
+        }
+
+        flow = googleauth_flow.InstalledAppFlow.from_client_config(
+            client_config, self.DEFAULT_OAUTH_SCOPE)
+        flow.redirect_uri = self.DEFAULT_OAUTH_OOB_URL
+        auth_url, _ = flow.authorization_url(prompt='select_account')
+
+        if skip_open:
+            print('Visit the following URL to authenticate: {0:s}'.format(
+                auth_url))
+        else:
+            open_browser = input('Open the URL in a browser window? [y/N] ')
+            if open_browser.lower() == 'y' or open_browser.lower() == 'yes':
+                webbrowser.open(auth_url)
+            else:
+                print(
+                    'Need to manually visit URL to authenticate: {0:s}'.format(
+                        auth_url))
+
+        code = input('Enter the token code: ')
+
+        _ = flow.fetch_token(code=code)
+        session = flow.authorized_session()
+        self._flow = flow
+        self._credentials = flow.credentials
+
+        # Authenticate to the Timesketch backend.
+        login_callback_url = '{0:s}{1:s}'.format(
+            self._host_uri, self.DEFAULT_OAUTH_API_CALLBACK)
+        params = {
+            'id_token': session.credentials.id_token,
+        }
+        response = session.get(login_callback_url, params=params)
+        if response.status_code not in HTTP_STATUS_CODE_20X:
+            _error_message(
+                response, message='Unable to authenticate', error=RuntimeError)
+
+        self._set_csrf_token(session)
+        return session
+
+    def _create_session(
+            self, username, password, verify, client_id, client_secret,
+            auth_mode):
         """Create authenticated HTTP session for server communication.
 
         Args:
             username: User to authenticate as.
             password: User password.
             verify: Verify server SSL certificate.
+            client_id: The client ID if OAUTH auth is used.
+            client_secret: The OAUTH client secret if OAUTH is used.
             auth_mode: The authentication mode to use. Supported values are
-                'timesketch' (Timesketch login form) and 'http-basic'
-                (HTTP Basic authentication).
+                'timesketch' (Timesketch login form), 'http-basic'
+                (HTTP Basic authentication) and oauth.
 
         Returns:
             Instance of requests.Session.
         """
+        if auth_mode == 'oauth':
+            return self._create_oauth_session(client_id, client_secret)
+
         session = requests.Session()
-        session.verify = verify  # Depending if SSL cert is verifiable
+
         # If using HTTP Basic auth, add the user/pass to the session
         if auth_mode == 'http-basic':
             session.auth = (username, password)
+
+        session.verify = verify  # Depending if SSL cert is verifiable
 
         # Get and set CSRF token and authenticate the session if appropriate.
         self._set_csrf_token(session)
@@ -150,6 +277,16 @@ class TimesketchApi(object):
         response_dict = response.json()
         sketch_id = response_dict['objects'][0]['id']
         return self.get_sketch(sketch_id)
+
+    def get_oauth_token_status(self):
+        """Return a dict with OAuth token status, if one exists."""
+        if not self._credentials:
+            return {
+                'status': 'No stored credentials.'}
+        return {
+            'expired': self._credentials.expired,
+            'expiry_time': self._credentials.expiry.isoformat(),
+        }
 
     def get_sketch(self, sketch_id):
         """Get a sketch.
@@ -216,7 +353,9 @@ class TimesketchApi(object):
         response = self.session.post(resource_url, json=form_data)
 
         if response.status_code not in HTTP_STATUS_CODE_20X:
-            raise RuntimeError('Error creating searchindex')
+            _error_message(
+                response, message='Error creating searchindex',
+                error=RuntimeError)
 
         response_dict = response.json()
         metadata_dict = response_dict['meta']
@@ -239,6 +378,13 @@ class TimesketchApi(object):
                 searchindex_id=index_id, api=self, searchindex_name=index_name)
             indices.append(index_obj)
         return indices
+
+    def refresh_oauth_token(self):
+        """Refresh an OAUTH token if one is defined."""
+        if not self._credentials:
+            return
+        request = google.auth.transport.requests.Request()
+        self._credentials.refresh(request)
 
 
 class BaseResource(object):
@@ -550,7 +696,7 @@ class Sketch(BaseResource):
             for column in data_frame.columns:
                 if 'time' in column:
                     continue
-                elif 'timestamp_desc' in column:
+                if 'timestamp_desc' in column:
                     continue
                 string_items.append('{0:s} = {{0!s}}'.format(column))
             format_message_string = ' '.join(string_items)
@@ -592,7 +738,9 @@ class Sketch(BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
 
         if response.status_code not in HTTP_STATUS_CODE_20X:
-            raise RuntimeError('Failed adding timeline')
+            _error_message(
+                response, message='Failed adding timeline',
+                error=RuntimeError)
 
         response_dict = response.json()
         timeline = response_dict['objects'][0]
@@ -678,9 +826,9 @@ class Sketch(BaseResource):
 
         response = self.api.session.post(resource_url, json=form_data)
         if response.status_code != 200:
-            raise ValueError(
-                'Unable to query results, with error: [{0:d}] {1!s}'.format(
-                    response.status_code, response.reason))
+            _error_message(
+                response, message='Unable to query results',
+                error=ValueError)
 
         response_json = response.json()
 
@@ -694,10 +842,9 @@ class Sketch(BaseResource):
                 break
             more_response = self.api.session.post(resource_url, json=form_data)
             if more_response.status_code != 200:
-                raise ValueError((
-                    'Unable to query results, with error: '
-                    '[{0:d}] {1:s}').format(
-                        response.status_code, response.reason))
+                _error_message(
+                    response, message='Unable to query results',
+                    error=ValueError)
             more_response_json = more_response.json()
             count = len(more_response_json.get('objects', []))
             total_count += count
@@ -882,10 +1029,9 @@ class Sketch(BaseResource):
 
         response = self.api.session.post(resource_url, json=form_data)
         if response.status_code not in HTTP_STATUS_CODE_20X:
-            raise RuntimeError(
-                'Error storing the aggregation, Error message: '
-                '[{0:d}] {1:s} {2:s}'.format(
-                    response.status_code, response.reason, response.text))
+            _error_message(
+                response, message='Error storing the aggregation',
+                error=RuntimeError)
 
         response_dict = response.json()
 
@@ -1128,9 +1274,8 @@ class Aggregation(BaseResource):
 
         response = self.api.session.post(resource_url, json=form_data)
         if response.status_code != 200:
-            raise ValueError(
-                'Unable to query results, with error: [{0:d}] {1:s}'.format(
-                    response.status_code, response.reason))
+            _error_message(
+                response, message='Unable to query results', error=ValueError)
 
         return response.json()
 
@@ -1182,9 +1327,8 @@ class Aggregation(BaseResource):
 
         response = self.api.session.post(resource_url, json=form_data)
         if response.status_code != 200:
-            raise ValueError(
-                'Unable to query results, with error: [{0:d}] {1:s}'.format(
-                    response.status_code, response.reason))
+            _error_message(
+                response, message='Unable to query results', error=ValueError)
 
         self.resource_data = response.json()
 
