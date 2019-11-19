@@ -938,6 +938,67 @@ class AggregationResource(ResourceMixin, Resource):
         return self.to_json(aggregation, status_code=HTTP_STATUS_CODE_CREATED)
 
 
+class AggregationInfoResource(ResourceMixin, Resource):
+    """Resource to get information about an aggregation class."""
+
+    REMOVE_FIELDS = frozenset(['_shards', 'hits', 'timed_out', 'took'])
+
+    def _get_info(self, aggregator_name):
+        """Returns a dict with information about an aggregation."""
+        agg_class = aggregator_manager.AggregatorManager.get_aggregator(
+            aggregator_name)
+
+        field_lines = []
+        for form_field in agg_class.FORM_FIELDS:
+            field = {
+                'name': form_field.get('name', 'N/A'),
+                'description': form_field.get('label', 'N/A')
+            }
+            field_lines.append(field)
+
+        return {
+            'name': agg_class.NAME,
+            'description': agg_class.DESCRIPTION,
+            'fields': field_lines,
+        }
+
+    @login_required
+    def get(self):
+        """Handles GET request to the resource.
+
+        Handler for /api/v1/aggregation/info/
+
+        Returns:
+            JSON with information about every aggregator.
+        """
+        agg_list = []
+        for name, _ in aggregator_manager.AggregatorManager.get_aggregators():
+            agg_list.append(self._get_info(name))
+        return jsonify(agg_list)
+
+    @login_required
+    def post(self):
+        """Handles POST request to the resource.
+
+        Handler for /api/v1/aggregation/info/
+
+        Returns:
+            JSON with aggregation information for a single aggregator.
+        """
+        form = request.json
+        if not form:
+            form = request.data
+
+        aggregator_name = form.get('aggregator')
+        if not aggregator_name:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Not able to gather information about an aggregator, '
+                'missing the aggregator name.')
+
+        return jsonify(self._get_info(aggregator_name))
+
+
 class AggregationExploreResource(ResourceMixin, Resource):
     """Resource to send an aggregation request."""
 
