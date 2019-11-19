@@ -84,7 +84,7 @@ class MockElasticClient(object):
 
 
 class MockElasticIndices(object):
-    # pylint: unused-argument
+    # pylint: disable=unused-argument
     def get_mapping(self, *args, **kwargs):
         """Mock get mapping call."""
         return {}
