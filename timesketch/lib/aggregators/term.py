@@ -77,6 +77,7 @@ class FilteredTermsAggregation(interface.BaseAggregator):
     """Query Filter Term Aggregation."""
 
     NAME = 'query_bucket'
+    DESCRIPTION = 'Aggregating values of a field after applying a filter'
 
     SUPPORTED_CHARTS = frozenset(['barchart', 'hbarchart'])
 
@@ -108,6 +109,24 @@ class FilteredTermsAggregation(interface.BaseAggregator):
         }
     ]
 
+    def __init__(self, sketch_id=None, index=None):
+        """Initialize the aggregator object.
+
+        Args:
+            sketch_id: Sketch ID.
+            index: List of elasticsearch index names.
+        """
+        super(FilteredTermsAggregation, self).__init__(
+            sketch_id=sketch_id, index=index)
+        self.field = ''
+
+    @property
+    def chart_title(self):
+        """Returns a title for the chart."""
+        if self.field:
+            return 'Top filtered results for "{0:s}"'.format(self.field)
+        return 'Top results for an unknown field after filtering'
+
     # pylint: disable=arguments-differ
     def run(self, field, query_string='', query_dsl=''):
         """Run the aggregation.
@@ -130,6 +149,7 @@ class FilteredTermsAggregation(interface.BaseAggregator):
         if not (query_string or query_dsl):
             raise ValueError('Both query_string and query_dsl are missing')
 
+        self.field = field
         aggregation_spec = get_spec(
             field=field, query=query_string, query_dsl=query_dsl)
 

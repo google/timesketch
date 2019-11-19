@@ -64,11 +64,14 @@ class AggregationResult(object):
         """
         return pandas.DataFrame(self.values)
 
-    def to_chart(self, chart_name, as_html=False, interactive=False):
+    def to_chart(
+            self, chart_name, chart_title='', as_html=False,
+            interactive=False):
         """Encode aggregation result as Vega-Lite chart.
 
         Args:
             chart_name: Name of chart as string.
+            chart_title: The title of the chart.
             as_html: Boolean indicating if chart should be returned in HTML.
             interactive: Boolean indicating if chart should be interactive.
 
@@ -84,7 +87,7 @@ class AggregationResult(object):
             raise RuntimeError('No such chart type: {0:s}'.format(chart_name))
 
         chart_data = self.to_dict(encoding=True)
-        chart_object = chart_class(chart_data)
+        chart_object = chart_class(chart_data, title=chart_title)
         chart = chart_object.generate()
 
         if interactive:
@@ -100,6 +103,10 @@ class BaseAggregator(object):
 
     # Name that the aggregator will be registered as.
     NAME = 'name'
+
+    # Describe what the aggregator does, this will be visible in the UI
+    # among other places.
+    DESCRIPTION = ''
 
     # Used as hints to the frontend UI in order to render input forms.
     FORM_FIELDS = {}
@@ -126,6 +133,19 @@ class BaseAggregator(object):
         if not self.index:
             active_timelines = self.sketch.active_timelines
             self.index = [t.searchindex.index_name for t in active_timelines]
+
+    @property
+    def chart_title(self):
+        """Returns a title for the chart."""
+        raise NotImplementedError
+
+    @property
+    def describe(self):
+        """Returns dict with name as well as a description of aggregator."""
+        return {
+            'name': self.NAME,
+            'description': self.DESCRIPTION,
+        }
 
     def elastic_aggregation(self, aggregation_spec):
         """Helper method to execute aggregation in Elasticsearch.
