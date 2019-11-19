@@ -448,7 +448,7 @@ export default {
         let view = response.data.objects[0]
         this.currentQueryString = view.query_string
         this.currentQueryFilter = JSON.parse(view.query_filter)
-        if (!this.currentQueryFilter.fields) {
+        if (!this.currentQueryFilter.fields.length) {
           this.currentQueryFilter.fields = [{field: 'message', type: 'text'}]
         }
         this.selectedFields = this.currentQueryFilter.fields

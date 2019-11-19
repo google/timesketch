@@ -60,7 +60,7 @@ limitations under the License.
                 <span style="margin-left:10px;"></span>
                 <span v-if="displayOptions.showTags" v-for="tag in event._source.tag" :key="tag" class="tag is-rounded" style="margin-right:5px;background:#d1d1d1;">{{ tag }}</span>
               </span>
-              <span :title="event._source[field.field]">
+              <span style="word-break: break-word;" :title="event._source[field.field]">
                 {{ event._source[field.field] }}
               </span>
             </span>
@@ -276,11 +276,6 @@ limitations under the License.
     display: inline;
     visibility: hidden;
     width: 0;
-}
-
-.ts-event-field-column {
-  background-color: #F5F5F5;
-  cursor: pointer;
 }
 
 .ts-event-field-ellipsis {
