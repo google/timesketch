@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 from .resources import AggregationListResource
 from .resources import AggregationLegacyResource
 from .resources import AggregationExploreResource
+from .resources import AggregationInfoResource
 from .resources import AggregationResource
 from .resources import AnalysisResource
 from .resources import AnalyzerRunResource
@@ -63,6 +64,7 @@ API_ROUTES = [
     (AggregationListResource, '/sketches/<int:sketch_id>/aggregation/'),
     (AggregationLegacyResource, '/sketches/<int:sketch_id>/aggregation/legacy/'),
     (AggregationExploreResource, '/sketches/<int:sketch_id>/aggregation/explore/'),
+    (AggregationInfoResource, '/aggregation/info/'),
     (AggregationResource, '/sketches/<int:sketch_id>/aggregation/<int:aggregation_id>/'),
     (ExploreResource, '/sketches/<int:sketch_id>/explore/'),
     (EventResource, '/sketches/<int:sketch_id>/event/'),
