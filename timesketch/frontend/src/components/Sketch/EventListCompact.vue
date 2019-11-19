@@ -17,7 +17,7 @@ limitations under the License.
   <table class="table is-fullwidth">
     <thead>
       <th width="220"></th>
-      <th width="80"></th>
+      <th width="1"></th>
       <th v-for="(field, index) in selectedFields" :key="index">{{ field.field }}</th>
       <th width="150">Timeline name</th>
     </thead>
@@ -25,7 +25,9 @@ limitations under the License.
                                       :key="index"
                                       :event="event"
                                       :prevEvent="eventList.objects[index - 1]"
-                                      :selected-fields="selectedFields">
+                                      :selected-fields="selectedFields"
+                                      :display-options="displayOptions"
+                                      :display-controls="false">
     </ts-sketch-explore-event-list-row>
   </table>
 </template>
@@ -44,7 +46,11 @@ export default {
       queryString: '',
       queryFilter: {},
       eventList: [],
-      selectedFields: []
+      selectedFields: [],
+      displayOptions: {
+        showTags: true,
+        showEmojis: true
+      }
     }
   },
   computed: {
@@ -70,6 +76,9 @@ export default {
         let view = response.data.objects[0]
         this.queryString = view.query_string
         this.queryFilter = JSON.parse(view.query_filter)
+        if (!this.queryFilter.fields) {
+          this.queryFilter.fields = [{field: 'message', type: 'text'}]
+        }
         this.selectedFields = this.queryFilter.fields
         this.search()
       }).catch((e) => {})

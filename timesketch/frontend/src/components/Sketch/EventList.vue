@@ -17,7 +17,7 @@ limitations under the License.
   <table class="table is-fullwidth">
     <thead>
       <th width="220"></th>
-      <th width="80">
+      <th width="1">
         <span class="control">
           <input type="checkbox" v-on:click="toggleSelectAll">
         </span>
@@ -32,6 +32,7 @@ limitations under the License.
                                       :order="order"
                                       :selected-fields="selectedFields"
                                       :display-options="displayOptions"
+                                      :display-controls="true"
                                       v-bind:id="event._id"
                                       @addChip="$emit('addChip', $event)"
                                       @searchContext="$emit('searchContext', $event)">

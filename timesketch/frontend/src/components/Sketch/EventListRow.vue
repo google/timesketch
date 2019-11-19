@@ -38,14 +38,14 @@ limitations under the License.
         <!-- Action column -->
         <td>
           <div class="field is-grouped">
-            <span class="control">
+            <span v-if="displayControls" class="control">
               <input type="checkbox" :checked="isSelected" v-on:click="toggleSelect">
             </span>
             <span class="icon control" v-on:click="toggleStar" style="margin-right: 3px; cursor: pointer;">
               <i class="fas fa-star" v-if="isStarred" style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"></i>
               <i class="fas fa-star" v-if="!isStarred" style="color: #d3d3d3;"></i>
             </span>
-            <span class="icon control" style="cursor: pointer;" v-on:click="searchContext">
+            <span v-if="displayControls" class="icon control" style="cursor: pointer;" v-on:click="searchContext">
               <i class="fas fa-search" style="color: #d3d3d3;"></i>
             </span>
           </div>
@@ -129,7 +129,7 @@ limitations under the License.
   components: {
     TsSketchExploreEventListRowDetail
   },
-  props: ['event', 'prevEvent', 'order', 'selectedFields', 'isRemoteSelected', 'displayOptions'],
+  props: ['event', 'prevEvent', 'order', 'selectedFields', 'isRemoteSelected', 'displayOptions', 'displayControls'],
   data () {
     return {
       showDetail: false,
