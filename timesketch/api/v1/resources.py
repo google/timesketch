@@ -947,18 +947,18 @@ class AggregationInfoResource(ResourceMixin, Resource):
         agg_class = aggregator_manager.AggregatorManager.get_aggregator(
             aggregator_name)
 
-        fields = []
+        field_lines = []
         for form_field in agg_class.FORM_FIELDS:
             field = {
                 'name': form_field.get('name', 'N/A'),
                 'description': form_field.get('label', 'N/A')
             }
-            fields.append(field)
+            field_lines.append(field)
 
         return {
             'name': agg_class.NAME,
             'description': agg_class.DESCRIPTION,
-            'fields': fields,
+            'fields': field_lines,
         }
 
     @login_required
