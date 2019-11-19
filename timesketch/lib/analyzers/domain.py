@@ -110,10 +110,10 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
                 cdn_counter[cdn_provider] += 1
 
             if domain in common_domains:
-                tags_to_add.append('common_domain')
+                tags_to_add.append('common-domain')
 
             if domain in rare_domains:
-                tags_to_add.append('rare_domain')
+                tags_to_add.append('rare-domain')
 
             for event in domains.get(domain, []):
                 event.add_tags(tags_to_add)

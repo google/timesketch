@@ -62,7 +62,7 @@ gmail_accounts:
         re: '.* - (.*?@.*?) - .*?$'
         re_flags: []
         aggregate: True
-        tags: ['Gmail Account']
+        tags: ['gmail-account']
         emojis: ['ID_BUTTON']
 
 github_accounts:
@@ -73,7 +73,7 @@ github_accounts:
         re: 'https://github.com/users/([A-z-\d]{1,39})'
         re_flags: []
         aggregate: True
-        tags: ['Github Account']
+        tags: ['github-account']
         emojis: ['ID_BUTTON']
 
 # Linkedin account extraction from profile edit url

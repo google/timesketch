@@ -6,6 +6,7 @@ from flask import current_app
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
+
 class FileInfo(object):
     """Datastructure to track all timestamps for a file and timestamp type."""
     def __init__(self, file_reference=None, timestamp_desc=None,
@@ -15,6 +16,7 @@ class FileInfo(object):
         self.std_info_event = std_info_event
         self.std_info_timestamp = std_info_timestamp
         self.file_names = file_names or []
+
 
 class NtfsTimestompSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Timestomp."""
@@ -83,8 +85,6 @@ class NtfsTimestompSketchPlugin(interface.BaseSketchAnalyzer):
         return_fields = ['attribute_type', 'timestamp_desc',
                          'file_reference', 'timestamp']
 
-
-        # Generator of events based on your query.
         events = self.event_stream(
             query_string=query, return_fields=return_fields)
 
@@ -100,7 +100,7 @@ class NtfsTimestompSketchPlugin(interface.BaseSketchAnalyzer):
             if not attribute_type or not timestamp_type:
                 continue
 
-            if not attribute_type in [self.FILE_NAME, self.STD_INFO]:
+            if attribute_type not in [self.FILE_NAME, self.STD_INFO]:
                 continue
 
             key = '{0:s}&{1:s}'.format(timestamp_type, str(file_ref))
@@ -121,15 +121,13 @@ class NtfsTimestompSketchPlugin(interface.BaseSketchAnalyzer):
 
         timestomps = 0
         for file_info in file_infos.values():
-            if self.handle_timestomp(file_info):
+            if self.is_suspicious(file_info):
                 timestomps = timestomps + 1
-
 
         if timestomps > 0:
             self.sketch.add_view(
                 view_name='NtfsTimestomp', analyzer_name=self.NAME,
                 query_string='_exists_:time_delta or _exists:time_deltas')
-
 
         return ('NtfsTimestomp Analyzer done, found {0:d} timestomped events'
                 .format(timestomps))
