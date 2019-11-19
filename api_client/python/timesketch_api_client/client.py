@@ -322,7 +322,7 @@ class TimesketchApi(object):
         """
         return Sketch(sketch_id, api=self)
 
-    def get_aggregator_information(self, name='', as_pandas=False):
+    def get_aggregator_info(self, name='', as_pandas=False):
         """Returns information about available aggregators.
 
         Args:
