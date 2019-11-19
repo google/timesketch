@@ -322,6 +322,51 @@ class TimesketchApi(object):
         """
         return Sketch(sketch_id, api=self)
 
+    def get_aggregator_information(self, name='', as_pandas=False):
+        """Returns information about available aggregators.
+
+        Args:
+            name: String with the name of an aggregator. If the name is not
+                provided, a list with all aggregators is returned.
+            as_pandas: Boolean indicating that the results will be returned
+                as a Pandas DataFrame instead of a list of dicts.
+
+        Returns:
+            A list with dict objects with the information about aggregators,
+            unless as_pandas is set, then the function returns a DataFrame
+            object.
+        """
+        resource_uri = 'aggregation/info/'
+
+        if name:
+            data = {'aggregator': name}
+            resource_url = '{0:s}/{1:s}'.format(self.api_root, resource_uri)
+            response = self.session.post(resource_url, json=data)
+            response_json = response.json()
+        else:
+            response_json = self.fetch_resource_data(resource_uri)
+
+        if not as_pandas:
+            return response_json
+
+        lines = []
+        if isinstance(response_json, dict):
+            response_json = [response_json]
+
+        for line in response_json:
+            line_dict = {
+                'name': line.get('name', 'N/A'),
+                'description': line.get('description', 'N/A'),
+            }
+            for field_index, field in enumerate(line.get('fields', [])):
+                line_dict['field_{0:d}_name'.format(
+                    field_index + 1)] = field.get('name')
+                line_dict['field_{0:d}_description'.format(
+                    field_index + 1)] = field.get('description')
+            lines.append(line_dict)
+
+        return pandas.DataFrame(lines)
+
     def list_sketches(self):
         """Get list of all open sketches that the user has access to.
 
