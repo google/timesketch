@@ -988,6 +988,8 @@ class AggregationExploreResource(ResourceMixin, Resource):
             result_obj = aggregator.run(**aggregator_parameters)
             time_after = time.time()
 
+            aggregator_description = aggregator.describe
+
             buckets = result_obj.to_dict()
             buckets['buckets'] = buckets.pop('values')
             result = {
@@ -997,12 +999,14 @@ class AggregationExploreResource(ResourceMixin, Resource):
             }
             meta = {
                 'method': 'aggregator_run',
-                'name': aggregator_name,
+                'name': aggregator_description.get('name'),
+                'description': aggregator_description.get('description'),
                 'es_time': time_after - time_before,
             }
 
             if chart_type:
-                meta['vega_spec'] = result_obj.to_chart(chart_name=chart_type)
+                meta['vega_spec'] = result_obj.to_chart(
+                    chart_name=chart_type, chart_title=aggregator.chart_title)
 
         elif aggregation_dsl:
             # pylint: disable=unexpected-keyword-arg
