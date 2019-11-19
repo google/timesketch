@@ -14,25 +14,37 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
-    <ts-sketch-explore-event-list-item v-for="event in eventList.objects" :key="event._id" :event="event"></ts-sketch-explore-event-list-item>
-  </div>
+  <table class="table is-fullwidth">
+    <thead>
+      <th width="220"></th>
+      <th width="80"></th>
+      <th v-for="(field, index) in selectedFields" :key="index">{{ field.field }}</th>
+      <th width="150">Timeline name</th>
+    </thead>
+    <ts-sketch-explore-event-list-row v-for="(event, index) in eventList.objects"
+                                      :key="index"
+                                      :event="event"
+                                      :prevEvent="eventList.objects[index - 1]"
+                                      :selected-fields="selectedFields">
+    </ts-sketch-explore-event-list-row>
+  </table>
 </template>
 
 <script>
 import ApiClient from '../../utils/RestApiClient'
-import TsSketchExploreEventListItem from './EventListItem'
+import TsSketchExploreEventListRow from './EventListRow'
 
 export default {
   components: {
-    TsSketchExploreEventListItem
+    TsSketchExploreEventListRow
   },
   props: ['view'],
   data () {
     return {
       queryString: '',
       queryFilter: {},
-      eventList: []
+      eventList: [],
+      selectedFields: []
     }
   },
   computed: {
@@ -58,6 +70,7 @@ export default {
         let view = response.data.objects[0]
         this.queryString = view.query_string
         this.queryFilter = JSON.parse(view.query_filter)
+        this.selectedFields = this.queryFilter.fields
         this.search()
       }).catch((e) => {})
     }

@@ -67,6 +67,8 @@ class SketchResourceTest(BaseTest):
     """Test SketchResource."""
     resource_url = '/api/v1/sketches/1/'
 
+    @mock.patch(
+        'timesketch.api.v1.resources.ElasticsearchDataStore', MockDataStore)
     def test_sketch_resource(self):
         """Authenticated request to get a sketch."""
         self.login()
