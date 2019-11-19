@@ -426,12 +426,15 @@ export default {
         objects: []
       }
 
+      // Update with selected fields
+      this.currentQueryFilter.fields = this.selectedFields
+
       let formData = {
         'query': this.currentQueryString,
         'filter': this.currentQueryFilter
       }
 
-      ApiClient.search(this.sketch.id, formData).then((response) => {
+      ApiClient.search(this.sketchId, formData).then((response) => {
         this.eventList.objects = response.data.objects
         this.eventList.meta = response.data.meta
       }).catch((e) => {})
@@ -448,7 +451,7 @@ export default {
         let view = response.data.objects[0]
         this.currentQueryString = view.query_string
         this.currentQueryFilter = JSON.parse(view.query_filter)
-        if (!this.currentQueryFilter.fields.length) {
+        if (!this.currentQueryFilter.fields || !this.currentQueryFilter.fields.length) {
           this.currentQueryFilter.fields = [{field: 'message', type: 'text'}]
         }
         this.selectedFields = this.currentQueryFilter.fields
