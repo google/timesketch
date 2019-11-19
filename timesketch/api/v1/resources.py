@@ -400,7 +400,8 @@ class SketchResource(ResourceMixin, Resource):
         aggregators = {}
         for _, cls in aggregator_manager.AggregatorManager.get_aggregators():
             aggregators[cls.NAME] = {
-                'form_fields': cls.FORM_FIELDS
+                'form_fields': cls.FORM_FIELDS,
+                'description': cls.DESCRIPTION
             }
 
         # Get mappings for all indices in the sketch. This is used to set
