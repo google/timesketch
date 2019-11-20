@@ -34,36 +34,36 @@ class GcpServiceKeySketchPlugin(interface.BaseSketchAnalyzer):
         events = self.event_stream(
             query_string=query, return_fields=return_fields)
 
-        gcp_servicekey_counter = 0
+        simple_counter = 0
 
         for event in events:
             # Fields to analyze.
-            methodName = event.source.get('methodName')
+            method_name = event.source.get('methodName')
 
-            if 'CreateServiceAccount' in methodName:
-                event.add_tags(['New ServiceAccount Created'])
+            if 'CreateServiceAccount' in method_name:
+                event.add_tags(['service-account-created'])
 
-            if 'compute.instances.insert' in methodName:
-                event.add_tags(['VM created'])
+            if 'compute.instances.insert' in method_name:
+                event.add_tags(['gce-instance-created'])
 
-            if 'compute.firewalls.insert' in methodName:
-                event.add_tags(['FW rule created'])
+            if 'compute.firewalls.insert' in method_name:
+                event.add_tags(['fw-rule-created'])
 
-            if 'compute.networks.insert' in methodName:
-                event.add_tags(['Network Insert Event'])
+            if 'compute.networks.insert' in method_name:
+                event.add_tags(['network-created'])
 
             # Commit the event to the datastore.
             event.commit()
-            gcp_servicekey_counter += 1
+            simple_counter += 1
 
         # Create a saved view with our query.
-        if gcp_servicekey_counter:
-            self.sketch.add_view('GCP ServiceKey activity', \
-            'gcp_servicekey', query_string=query)
+        if simple_counter:
+            self.sketch.add_view(
+                view_name='GCP ServiceKey activity', analyzer_name=self.NAME,
+                query_string=query)
 
-        # Return a summary from the analyzer.
-        return 'GCP ServiceKey analyzer completed, \
-        {0:d} service key marked'.format(gcp_servicekey_counter)
+        return ('GCP ServiceKey analyzer completed',
+                '{0:d} service key marked'.format(simple_counter))
 
 
 manager.AnalysisManager.register_analyzer(GcpServiceKeySketchPlugin)
