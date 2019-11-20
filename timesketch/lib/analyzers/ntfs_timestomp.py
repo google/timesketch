@@ -38,8 +38,7 @@ class NtfsTimestompSketchPlugin(interface.BaseSketchAnalyzer):
         super(NtfsTimestompSketchPlugin, self).__init__(index_name, sketch_id)
 
     def is_suspicious(self, file_info):
-        """Compares timestamps and adds diffs to events if timestomping was
-        detected.
+        """Compares timestamps to detect timestomping.
 
         Args:
             file_info: FileInfo object for event to look at.
@@ -88,7 +87,7 @@ class NtfsTimestompSketchPlugin(interface.BaseSketchAnalyzer):
         events = self.event_stream(
             query_string=query, return_fields=return_fields)
 
-        # Dict timstamp_type + "&" + file_ref -> FileInfo
+        # Dict timestamp_type + "&" + file_ref -> FileInfo
         file_infos = dict()
 
         for event in events:
