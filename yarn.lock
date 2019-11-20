@@ -151,9 +151,9 @@ angular2-template-loader@^0.6.2:
   dependencies:
     loader-utils "^0.2.15"
 
-angular@1.3.5:
-  version "1.3.5"
-  resolved "https://registry.yarnpkg.com/angular/-/angular-1.3.5.tgz#ca4ab439dd200b1a1675431d5809151d9ccd225a"
+angular@1.7.9:
+  version "1.7.9"
+  resolved "https://registry.yarnpkg.com/angular/-/angular-1.7.9.tgz#e52616e8701c17724c3c238cfe4f9446fd570bc4"
 
 ansi-regex@^2.0.0:
   version "2.1.1"
@@ -2480,9 +2480,9 @@ jasmine@^2.8.0:
     glob "^7.0.6"
     jasmine-core "~2.8.0"
 
-jquery@3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.0.0.tgz#95a2a9541291a9f819e016f85ba247116d03e4ab"
+jquery@3.4.0:
+  version "3.4.0"
+  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.4.0.tgz#8de513fa0fa4b2c7d2e48a530e26f0596936efdf"
 
 js-base64@^2.1.8, js-base64@^2.1.9:
   version "2.3.1"
