@@ -125,7 +125,7 @@ class TestChainAnalyzer(testlib.BaseTest):
 
         analyzer_result = analyzer.run()
         expected_result = (
-            '3 base events tagged with a chain UUID for 3 chains '
+            '3 base events annotated with a chain UUID for 3 chains '
             'for a total of 9 events.')
         self.assertEqual(analyzer_result, expected_result)
 
