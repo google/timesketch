@@ -166,8 +166,8 @@ export default {
   editCollaborators (sketchId, isPublic, usersToAdd, groupsToAdd, usersToRemove, groupsToRemove) {
     let formData = {
       public: isPublic,
-      users: usersToAdd.map(user => user.username),
-      groups: groupsToAdd.map(group => group.name),
+      users: usersToAdd,
+      groups: groupsToAdd,
       remove_users: usersToRemove,
       remove_groups: groupsToRemove
     }
