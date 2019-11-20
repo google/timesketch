@@ -109,7 +109,7 @@ class BaseAggregator(object):
     DESCRIPTION = ''
 
     # Used as hints to the frontend UI in order to render input forms.
-    FORM_FIELDS = {}
+    FORM_FIELDS = []
 
     # List of supported chart types.
     SUPPORTED_CHARTS = frozenset()
