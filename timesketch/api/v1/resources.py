@@ -2426,14 +2426,14 @@ class CollaboratorResource(ResourceMixin, Resource):
                 'The user does not have write permission on the sketch.')
 
         for username in form.get('users', []):
-            # Remove this once the old UI is deprecated.
-            base_username = username.split('@')[0]
-            base_username = base_username.strip()
-            user = User.query.filter_by(username=base_username).first()
-
             # Try the username with any potential @domain preserved.
+            user = User.query.filter_by(username=username).first()
+
+            # If no hit, then try to strip the domain.
             if not user:
-                user = User.query.filter_by(username=username).first()
+                base_username = username.split('@')[0]
+                base_username = base_username.strip()
+                user = User.query.filter_by(username=base_username).first()
 
             if user:
                 sketch.grant_permission(permission='read', user=user)
