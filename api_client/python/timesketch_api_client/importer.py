@@ -281,7 +281,7 @@ class ImportStreamer(object):
         file_ending = filepath.lower().split('.')[-1]
         if file_ending == 'csv':
             for chunk_frame in pandas.read_csv(
-                filepath, delimiter=delimiter, chunksize=self._threshold):
+                    filepath, delimiter=delimiter, chunksize=self._threshold):
                 self.add_data_frame(chunk_frame, part_of_iter=True)
         elif file_ending == 'plaso':
             self._sketch.upload(self._timeline_name, filepath)
