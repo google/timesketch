@@ -36,7 +36,7 @@ class ImportStreamer(object):
 
     # The number of entries before automatically flushing
     # the streamer.
-    ENTRY_THRESHOLD = 10000
+    ENTRY_THRESHOLD = 100000
 
     def __init__(self, entry_threshold=None):
         """Initialize the upload streamer."""
