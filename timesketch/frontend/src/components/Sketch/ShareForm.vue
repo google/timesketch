@@ -15,7 +15,7 @@ limitations under the License.
 -->
 <template>
 
-  <form v-on:submit.prevent="submitForm">
+  <form v-on:submit.prevent="">
     <div class="field">
       <div class="control">
 
@@ -55,7 +55,7 @@ limitations under the License.
           <b-autocomplete
             clear-on-select
             v-model="userNameInput"
-            :data="filteredUserArray"
+            :data="systemUsers"
             field="username"
             placeholder="Username .."
             icon="magnify"
@@ -73,7 +73,7 @@ limitations under the License.
             clear-on-select
             open-on-focus
             v-model="groupNameInput"
-            :data="filteredGroupArray"
+            :data="systemGroups"
             field="name"
             placeholder="Group name .."
             icon="magnify"
@@ -90,10 +90,10 @@ limitations under the License.
       <br><br>
       <b-field grouped group-multiline>
         <div class="control" v-for="(user, index) in usersToAdd" :key="user.name">
-          <b-tag attached closable aria-close-label="Close tag" size="is-medium" @close="usersToAdd.splice(index, 1)">{{ user.username }}</b-tag>
+          <b-tag attached closable aria-close-label="Close tag" size="is-medium" @close="usersToAdd.splice(index, 1)">{{ user }}</b-tag>
         </div>
         <div class="control" v-for="(group, index) in groupsToAdd" :key="group.name">
-          <b-tag attached closable aria-close-label="Close tag" size="is-medium" @close="groupsToAdd.splice(index, 1)">{{ group.name }}</b-tag>
+          <b-tag attached closable aria-close-label="Close tag" size="is-medium" @close="groupsToAdd.splice(index, 1)">{{ group }}</b-tag>
         </div>
       </b-field>
     </div>
@@ -133,22 +133,6 @@ export default {
     meta () {
       return this.$store.state.meta
     },
-    filteredUserArray() {
-      return this.systemUsers.filter((option) => {
-        return option.username
-          .toString()
-          .toLowerCase()
-          .indexOf(this.userNameInput.toLowerCase()) >= 0
-      })
-    },
-    filteredGroupArray() {
-      return this.systemGroups.filter((option) => {
-        return option.name
-          .toString()
-          .toLowerCase()
-          .indexOf(this.groupNameInput.toLowerCase()) >= 0
-      })
-    },
     currentUsers() {
       return this.meta.collaborators.users.filter(f => !this.usersToRemove.includes(f));
     },
@@ -185,10 +169,14 @@ export default {
       this.isPublic = true
     }
     ApiClient.getUsers().then((response) => {
-      this.systemUsers = response.data.objects[0]
+      response.data.objects[0].forEach((user => {
+        this.systemUsers.push(user.username)
+      }))
     }).catch((e) => {})
     ApiClient.getGroups().then((response) => {
-      this.systemGroups = response.data.objects[0]
+      response.data.objects[0].forEach((group => {
+        this.systemGroups.push(group.name)
+      }))
     }).catch((e) => {})
   }
 }
