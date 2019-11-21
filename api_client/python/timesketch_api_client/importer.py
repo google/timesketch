@@ -36,7 +36,7 @@ class ImportStreamer(object):
 
     # The number of entries before automatically flushing
     # the streamer.
-    ENTRY_THRESHOLD = 10000
+    ENTRY_THRESHOLD = 100000
 
     def __init__(self, entry_threshold=None):
         """Initialize the upload streamer."""
@@ -51,10 +51,7 @@ class ImportStreamer(object):
         self._timeline_name = None
         self._timestamp_desc = None
 
-        if entry_threshold:
-            self._threshold = entry_threshold
-        else:
-            self._threshold = self.ENTRY_THRESHOLD
+        self._threshold = entry_threshold or self.ENTRY_THRESHOLD
 
     def _fix_data_frame(self, data_frame):
         """Returns a data frame with added columns for Timesketch upload.
@@ -143,11 +140,14 @@ class ImportStreamer(object):
         self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
         self._last_response = response_dict
 
-    def add_data_frame(self, data_frame):
+    def add_data_frame(self, data_frame, part_of_iter=False):
         """Add a data frame into the buffer.
 
         Args:
               data_frame: a pandas data frame object to add to the buffer.
+              part_of_iter: if it is expected that this function is called
+                  as part of an iterator, or that many data frames may be
+                  added to the importer set to True, defaults to False.
 
         Raises:
               ValueError: if the data frame does not contain the correct
@@ -178,10 +178,11 @@ class ImportStreamer(object):
             raise ValueError(
                 'Need a field called timestamp_desc in the data frame.')
 
-        if size < self._threshold:
+        if size <= self._threshold:
             csv_file = tempfile.NamedTemporaryFile(suffix='.csv')
             data_frame_use.to_csv(csv_file.name, index=False, encoding='utf-8')
-            self._upload_data(csv_file.name, end_stream=True)
+            end_stream = not part_of_iter
+            self._upload_data(csv_file.name, end_stream=end_stream)
             return
 
         chunks = int(math.ceil(float(size) / self._threshold))
@@ -279,8 +280,9 @@ class ImportStreamer(object):
 
         file_ending = filepath.lower().split('.')[-1]
         if file_ending == 'csv':
-            data_frame = pandas.read_csv(filepath, delimiter=delimiter)
-            self.add_data_frame(data_frame)
+            for chunk_frame in pandas.read_csv(
+                    filepath, delimiter=delimiter, chunksize=self._threshold):
+                self.add_data_frame(chunk_frame, part_of_iter=True)
         elif file_ending == 'plaso':
             self._sketch.upload(self._timeline_name, filepath)
         elif file_ending == 'jsonl':
