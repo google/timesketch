@@ -22,8 +22,8 @@ import tempfile
 import uuid
 
 import pandas
-from . import client
-from .definitions import HTTP_STATUS_CODE_20X
+from . import timeline
+from . import definitions
 
 
 def format_data_frame_row(row, format_message_string):
@@ -129,7 +129,7 @@ class ImportStreamer(object):
         response = self._sketch.api.session.post(
             self._resource_url, files=files, data=data)
 
-        if response.status_code not in HTTP_STATUS_CODE_20X:
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             raise RuntimeError(
                 'Error uploading data: [{0:d}] {1:s} {2:s}, file: {3:s}, '
                 'index {4:s}'.format(
@@ -409,7 +409,7 @@ class ImportStreamer(object):
     @property
     def timeline(self):
         """Returns a timeline object."""
-        timeline_obj = client.Timeline(
+        timeline_obj = timeline.Timeline(
             timeline_id=self._timeline_id,
             sketch_id=self._sketch.id,
             api=self._sketch.api,
