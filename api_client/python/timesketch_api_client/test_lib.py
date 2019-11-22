@@ -47,8 +47,7 @@ def mock_session():
             """Mock POST request handler."""
             if self._post_done:
                 return mock_response(*args, empty=True)
-            else:
-                return mock_response(*args, **kwargs)
+            return mock_response(*args, **kwargs)
 
     return MockSession()
 
