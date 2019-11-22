@@ -51,7 +51,6 @@ class SketchTest(unittest.TestCase):
 
     def test_explore(self):
         """Tests to explore a timeline."""
-        print('EXPL')
         results = self.sketch.explore(query_string='description:test')
         self.assertEqual(len(results['objects']), 1)
         self.assertIsInstance(results['objects'], list)
