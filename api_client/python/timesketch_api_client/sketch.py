@@ -233,7 +233,7 @@ class Sketch(resource.BaseResource):
                 sketch_id=self.id,
                 api=self.api,
                 name=timeline_dict['name'],
-                searchindex=timeline['searchindex']['index_name'])
+                searchindex=timeline_dict['searchindex']['index_name'])
             timelines.append(timeline_obj)
         return timelines
 
@@ -388,7 +388,8 @@ class Sketch(resource.BaseResource):
             total_count += count
             response_json['objects'].extend(
                 more_response_json.get('objects', []))
-            added_time = more_response_json['meta']['es_time']
+            more_meta = more_response_json.get('meta', {})
+            added_time = more_meta.get('es_time', 0)
             response_json['meta']['es_time'] += added_time
 
         if as_pandas:

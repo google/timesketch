@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for the Timesketch API client"""
+from __future__ import unicode_literals
 
 
 def mock_session():
@@ -33,6 +34,7 @@ def mock_session():
             """Initializes the mock Session object."""
             self.verify = False
             self.headers = MockHeaders()
+            self._post_done = False
 
         # pylint: disable=unused-argument
         @staticmethod
@@ -41,10 +43,12 @@ def mock_session():
             return mock_response(*args, **kwargs)
 
         # pylint: disable=unused-argument
-        @staticmethod
-        def post(*args, **kwargs):
+        def post(self, *args, **kwargs):
             """Mock POST request handler."""
-            return mock_response(*args, **kwargs)
+            if self._post_done:
+                return mock_response(*args, empty=True)
+            else:
+                return mock_response(*args, **kwargs)
 
     return MockSession()
 
@@ -66,61 +70,75 @@ def mock_response(*args, **kwargs):
             """Mock JSON response."""
             return self.json_data
 
-    auth_text_data = u'<input id="csrf_token" name="csrf_token" value="test">'
+    auth_text_data = '<input id="csrf_token" name="csrf_token" value="test">'
     sketch_data = {
-        u'meta': {
-            u'views': [{
-                u'id': 1,
-                u'name': u'test'
+        'meta': {
+            'views': [{
+                'id': 1,
+                'name': 'test'
             }, {
-                u'id': 2,
-                u'name': u'test'
-            }]
+                'id': 2,
+                'name': 'test'
+            }],
+            'es_time': 41444,
         },
-        u'objects': [{
-            u'id':
+        'objects': [{
+            'id':
             1,
-            u'name': u'test',
-            u'description': u'test',
-            u'timelines': [{
-                u'id': 1,
-                u'name': u'test',
-                u'searchindex': {
-                    u'index_name': u'test'
+            'name': 'test',
+            'description': 'test',
+            'timelines': [{
+                'id': 1,
+                'name': 'test',
+                'searchindex': {
+                    'index_name': 'test'
                 }
             }, {
-                u'id': 2,
-                u'name': u'test',
-                u'searchindex': {
-                    u'index_name': u'test'
+                'id': 2,
+                'name': 'test',
+                'searchindex': {
+                    'index_name': 'test'
                 }
             }]
         }]
     }
 
-    sketch_list_data = {u'objects': [sketch_data[u'objects']]}
+    sketch_list_data = {
+        'meta': {'es_time': 324},
+        'objects': [sketch_data['objects']]}
 
     timeline_data = {
-        u'objects': [{
-            u'id': 1,
-            u'name': u'test',
-            u'searchindex': {
-                u'index_name': u'test'
+        'meta': {
+            'es_time': 12,
+        },
+        'objects': [{
+            'id': 1,
+            'name': 'test',
+            'searchindex': {
+                'index_name': 'test'
             }
         }]
     }
 
+    empty_data = {
+        'meta': {'es_time': 0},
+        'objects': []
+    }
+
     # Register API endpoints to the correct mock response data.
     url_router = {
-        u'http://127.0.0.1':
+        'http://127.0.0.1':
         MockResponse(text_data=auth_text_data),
-        u'http://127.0.0.1/api/v1/sketches/':
+        'http://127.0.0.1/api/v1/sketches/':
         MockResponse(json_data=sketch_list_data),
-        u'http://127.0.0.1/api/v1/sketches/1':
+        'http://127.0.0.1/api/v1/sketches/1':
         MockResponse(json_data=sketch_data),
-        u'http://127.0.0.1/api/v1/sketches/1/timelines/1':
+        'http://127.0.0.1/api/v1/sketches/1/timelines/1':
         MockResponse(json_data=timeline_data),
-        u'http://127.0.0.1/api/v1/sketches/1/explore/':
+        'http://127.0.0.1/api/v1/sketches/1/explore/':
         MockResponse(json_data=timeline_data),
     }
+
+    if kwargs.get('empty', False):
+        return MockResponse(text_data=empty_data)
     return url_router.get(args[0], MockResponse(None, 404))

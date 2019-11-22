@@ -51,4 +51,4 @@ class TimesketchApiTest(unittest.TestCase):
         sketches = self.api_client.list_sketches()
         self.assertIsInstance(sketches, list)
         self.assertEqual(len(sketches), 1)
-        self.assertIsInstance(sketches[0], client.Sketch)
+        self.assertIsInstance(sketches[0], sketch_lib.Sketch)
