@@ -138,16 +138,28 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             # Commit the event to the datastore.
             event.commit()
 
+        aggregate_results = config.get('aggregate', False)
         create_view = config.get('create_view', False)
+        if not create_view and aggregate_results:
+            create_view = True
+
         if create_view and event_counter:
             if query:
                 query_string = query
             else:
                 query_string = query_dsl
-            self.sketch.add_view(name, query_string)
+            view = self.sketch.add_view(name, query_string)
 
-        # TODO: Add aggregation check when that is exposed in the UI.
-        # aggregate_results = config.get('aggregate', False)
+            if aggregate_results:
+                params = {
+                    'field': store_as,
+                    'limit': 20,
+                }
+                self.sketch.add_aggregation(
+                    name='Top 20 for: {0:s} [{1:s}]'.format(store_as, name),
+                    agg_name='field_bucket', agg_params=params,
+                    description='Created by the feature extraction analyzer',
+                    view_id=view.id, chart_type='hbarchart')
 
         return 'Feature extraction [{0:s}] extracted {1:d} features.'.format(
             name, event_counter)
