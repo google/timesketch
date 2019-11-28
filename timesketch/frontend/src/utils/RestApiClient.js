@@ -15,6 +15,7 @@ limitations under the License.
 */
 import axios from 'axios'
 import { ToastProgrammatic as Toast } from 'buefy'
+import { SnackbarProgrammatic as Snackbar } from 'buefy'
 
 const RestApiClient = axios.create({
   baseURL: '/api/v1',
@@ -27,11 +28,24 @@ const RestApiClient = axios.create({
 
 // Show message on errors.
 RestApiClient.interceptors.response.use(function (response) {
-    return response;
-  }, function (error) {
+  return response;
+}, function (error) {
+  if (error.response.data.message === 'The CSRF token has expired.') {
+    Snackbar.open({
+      message: error.response.data.message,
+      type: 'is-white',
+      position: 'is-top',
+      actionText: 'Refresh',
+      indefinite: true,
+      onAction: () => {
+        location.reload()
+      }}
+    )
+  } else {
     Toast.open(error.response.data.message)
-    return Promise.reject(error);
-  });
+  }
+  return Promise.reject(error);
+});
 
 export default {
   // Sketch
@@ -166,8 +180,8 @@ export default {
   editCollaborators (sketchId, isPublic, usersToAdd, groupsToAdd, usersToRemove, groupsToRemove) {
     let formData = {
       public: isPublic,
-      users: usersToAdd.map(user => user.username),
-      groups: groupsToAdd.map(group => group.name),
+      users: usersToAdd,
+      groups: groupsToAdd,
       remove_users: usersToRemove,
       remove_groups: groupsToRemove
     }

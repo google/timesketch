@@ -97,7 +97,7 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
 
         number_of_chains = len(counter.keys()) - 1
         return (
-            '{0:d} base events tagged with a chain UUID for {1:d} '
+            '{0:d} base events annotated with a chain UUID for {1:d} '
             'chains for a total of {2:d} events.'.format(
                 number_of_base_events, number_of_chains,
                 counter['total']))

@@ -22,6 +22,7 @@ import time
 import json
 import hashlib
 import os
+import six
 
 # six.moves is a dynamically-created namespace that doesn't actually
 # exist and therefore pylint can't statically analyze it.
@@ -232,7 +233,13 @@ def validate_jwt(decoded_jwt, expected_issuer, expected_domain=None):
     try:
         now = int(time.time())
         issued_at = decoded_jwt['iat']
+        if isinstance(issued_at, six.string_types):
+            issued_at = int(issued_at, 10)
+
         expires_at = decoded_jwt['exp']
+        if isinstance(expires_at, six.string_types):
+            expires_at = int(expires_at, 10)
+
         if issued_at > now:
             raise JwtValidationError('Token was issued in the future')
         elif expires_at < now:

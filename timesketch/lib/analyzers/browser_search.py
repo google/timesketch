@@ -204,7 +204,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 event.add_human_readable('{0:s} search query: {1:s}'.format(
                     engine, search_query), self.NAME)
                 event.add_emojis([search_emoji])
-                event.add_tags(['browser_search'])
+                event.add_tags(['browser-search'])
                 # We break at the first hit of a successful search engine.
                 break
 
@@ -214,7 +214,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
         if simple_counter > 0:
             self.sketch.add_view(
                 view_name='Browser Search', analyzer_name=self.NAME,
-                query_string='tag:"browser_search"')
+                query_string='tag:"browser-search"')
 
         return (
             'Browser Search completed with {0:d} search results '

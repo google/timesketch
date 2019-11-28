@@ -400,8 +400,40 @@ class SketchResource(ResourceMixin, Resource):
         aggregators = {}
         for _, cls in aggregator_manager.AggregatorManager.get_aggregators():
             aggregators[cls.NAME] = {
-                'form_fields': cls.FORM_FIELDS
+                'form_fields': cls.FORM_FIELDS,
+                'description': cls.DESCRIPTION
             }
+
+        # Get mappings for all indices in the sketch. This is used to set
+        # columns shown in the event list.
+        sketch_indices = [
+            t.searchindex.index_name
+            for t in sketch.active_timelines
+        ]
+
+        if not sketch_indices:
+            mappings_settings = {}
+        else:
+            mappings_settings = self.datastore.client.indices.get_mapping(
+                index=sketch_indices)
+
+        mappings = []
+        for _, value in mappings_settings.items():
+            for _, v in value['mappings'].items():
+                for field, value_dict in v['properties'].items():
+                    mapping_dict = {}
+                    # Exclude internal fields
+                    if field.startswith('__'):
+                        continue
+                    if field == 'timesketch_label':
+                        continue
+                    mapping_dict['field'] = field
+                    mapping_dict['type'] = value_dict.get('type', 'n/a')
+                    mappings.append(mapping_dict)
+
+        # Make the list of dicts unique
+        mappings = {v['field']: v for v in mappings}.values()
+
         meta = dict(
             aggregators=aggregators,
             views=[{
@@ -427,7 +459,9 @@ class SketchResource(ResourceMixin, Resource):
                 'groups': [group.name for group in sketch.groups],
             },
             analyzers=[
-                x for x, y in analyzer_manager.AnalysisManager.get_analyzers()]
+                x for x, y in analyzer_manager.AnalysisManager.get_analyzers()
+            ],
+            mappings=list(mappings)
         )
         return self.to_json(sketch, meta=meta)
 
@@ -736,14 +770,15 @@ class ExploreResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to explore data, unable to validate form data')
 
+        # TODO: Remove form and use json instead.
         query_dsl = form.dsl.data
-        query_filter = form.filter.data
-        return_fields = form.fields.data
         enable_scroll = form.enable_scroll.data
         scroll_id = form.scroll_id.data
 
-        if not return_fields:
-            return_fields = DEFAULT_SOURCE_FIELDS
+        query_filter = request.json.get('filter', [])
+        return_fields = query_filter.get('fields', [])
+        return_fields = [field['field'] for field in return_fields]
+        return_fields.extend(DEFAULT_SOURCE_FIELDS)
 
         sketch_indices = {
             t.searchindex.index_name
@@ -903,6 +938,67 @@ class AggregationResource(ResourceMixin, Resource):
         return self.to_json(aggregation, status_code=HTTP_STATUS_CODE_CREATED)
 
 
+class AggregationInfoResource(ResourceMixin, Resource):
+    """Resource to get information about an aggregation class."""
+
+    REMOVE_FIELDS = frozenset(['_shards', 'hits', 'timed_out', 'took'])
+
+    def _get_info(self, aggregator_name):
+        """Returns a dict with information about an aggregation."""
+        agg_class = aggregator_manager.AggregatorManager.get_aggregator(
+            aggregator_name)
+
+        field_lines = []
+        for form_field in agg_class.FORM_FIELDS:
+            field = {
+                'name': form_field.get('name', 'N/A'),
+                'description': form_field.get('label', 'N/A')
+            }
+            field_lines.append(field)
+
+        return {
+            'name': agg_class.NAME,
+            'description': agg_class.DESCRIPTION,
+            'fields': field_lines,
+        }
+
+    @login_required
+    def get(self):
+        """Handles GET request to the resource.
+
+        Handler for /api/v1/aggregation/info/
+
+        Returns:
+            JSON with information about every aggregator.
+        """
+        agg_list = []
+        for name, _ in aggregator_manager.AggregatorManager.get_aggregators():
+            agg_list.append(self._get_info(name))
+        return jsonify(agg_list)
+
+    @login_required
+    def post(self):
+        """Handles POST request to the resource.
+
+        Handler for /api/v1/aggregation/info/
+
+        Returns:
+            JSON with aggregation information for a single aggregator.
+        """
+        form = request.json
+        if not form:
+            form = request.data
+
+        aggregator_name = form.get('aggregator')
+        if not aggregator_name:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Not able to gather information about an aggregator, '
+                'missing the aggregator name.')
+
+        return jsonify(self._get_info(aggregator_name))
+
+
 class AggregationExploreResource(ResourceMixin, Resource):
     """Resource to send an aggregation request."""
 
@@ -954,6 +1050,8 @@ class AggregationExploreResource(ResourceMixin, Resource):
             result_obj = aggregator.run(**aggregator_parameters)
             time_after = time.time()
 
+            aggregator_description = aggregator.describe
+
             buckets = result_obj.to_dict()
             buckets['buckets'] = buckets.pop('values')
             result = {
@@ -963,12 +1061,14 @@ class AggregationExploreResource(ResourceMixin, Resource):
             }
             meta = {
                 'method': 'aggregator_run',
-                'name': aggregator_name,
+                'name': aggregator_description.get('name'),
+                'description': aggregator_description.get('description'),
                 'es_time': time_after - time_before,
             }
 
             if chart_type:
-                meta['vega_spec'] = result_obj.to_chart(chart_name=chart_type)
+                meta['vega_spec'] = result_obj.to_chart(
+                    chart_name=chart_type, chart_title=aggregator.chart_title)
 
         elif aggregation_dsl:
             # pylint: disable=unexpected-keyword-arg
@@ -1402,8 +1502,8 @@ class EventAnnotationResource(ResourceMixin, Resource):
             db_session.add(event)
             db_session.commit()
 
-            return self.to_json(
-                annotations, status_code=HTTP_STATUS_CODE_CREATED)
+        return self.to_json(
+            annotations, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class UploadFileResource(ResourceMixin, Resource):
@@ -2326,9 +2426,15 @@ class CollaboratorResource(ResourceMixin, Resource):
                 'The user does not have write permission on the sketch.')
 
         for username in form.get('users', []):
-            base_username = username.split('@')[0]
-            base_username = base_username.strip()
-            user = User.query.filter_by(username=base_username).first()
+            # Try the username with any potential @domain preserved.
+            user = User.query.filter_by(username=username).first()
+
+            # If no hit, then try to strip the domain.
+            if not user:
+                base_username = username.split('@')[0]
+                base_username = base_username.strip()
+                user = User.query.filter_by(username=base_username).first()
+
             if user:
                 sketch.grant_permission(permission='read', user=user)
                 sketch.grant_permission(permission='write', user=user)
