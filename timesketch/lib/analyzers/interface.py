@@ -56,6 +56,7 @@ def get_config_path(file_name):
 
     path = os.path.join(
         os.path.dirname(__file__), '..', '..', '..', 'data', file_name)
+    path = os.path.abspath(path)
     if os.path.isfile(path):
         return path
 

@@ -1,5 +1,7 @@
 """Index analyzer plugin for sigma."""
 from __future__ import unicode_literals
+
+import logging
 import os
 
 from sigma.backends import elasticsearch as sigma_elasticsearch
@@ -11,7 +13,7 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
-class SigmaPlugin(interface.BaseIndexAnalyzer):
+class SigmaPlugin(interface.BaseSketchAnalyzer):
     """Index analyzer for Sigma."""
 
     NAME = 'sigma'
@@ -23,14 +25,17 @@ class SigmaPlugin(interface.BaseIndexAnalyzer):
     _RULES_PATH = ''
 
 
-    def __init__(self, index_name):
+    def __init__(self, index_name, sketch_id):
         """Initialize the Index Analyzer.
 
         Args:
-            index_name: Elasticsearch index name
+            index_name: Elasticsearch index name.
+            sketch_id: Sketch ID.
         """
-        super(SigmaPlugin, self).__init__(index_name)
+        super(SigmaPlugin, self).__init__(index_name, sketch_id)
         sigma_config_path = interface.get_config_path(self._CONFIG_FILE)
+        logging.debug('[sigma] Loading config from {0!s}'.format(
+            sigma_config_path))
         with open(sigma_config_path, 'r') as sigma_config_file:
             sigma_config = sigma_config_file.read()
         self.sigma_config = sigma_configuration.SigmaConfiguration(sigma_config)
@@ -68,20 +73,33 @@ class SigmaPlugin(interface.BaseIndexAnalyzer):
         rules_path = os.path.join(os.path.dirname(__file__), self._RULES_PATH)
         for rule_filename in os.listdir(rules_path):
             tag_name, _ = rule_filename.rsplit('.')
-            full_path = os.path.join(rules_path, rule_filename)
-            with open(full_path, 'r') as rule_file_content:
-                query = rule_file_content.read()
+            tags_applied[tag_name] = 0
+            rule_file_path = os.path.join(rules_path, rule_filename)
+            rule_file_path = os.path.abspath(rule_file_path)
+            logging.info('[sigma] Reading rules from {0!s}'.format(
+                rule_file_path))
+            with open(rule_file_path, 'r') as rule_file:
+                rule_file_content = rule_file.read()
                 parser = sigma_collection.SigmaCollectionParser(
-                    query, self.sigma_config, None)
-                results = parser.generate(sigma_backend)
+                    rule_file_content, self.sigma_config, None)
+                try:
+                    results = parser.generate(sigma_backend)
+                except NotImplementedError as exception:
+                    logging.error(
+                        'Error generating rule in file {0:s}: {1!s}'.format(
+                            rule_file_path, exception))
+                    continue
+
                 for result in results:
-                    print(result)
-                number_of_tagged_events = self.run_sigma_rule(query, tag_name)
-                tags_applied[tag_name] = number_of_tagged_events
+                    logging.info(
+                        '[sigma] Generated query {0:s}'.format(result))
+                    number_of_tagged_events = self.run_sigma_rule(
+                        result, tag_name)
+                    tags_applied[tag_name] += number_of_tagged_events
 
         total_tagged_events = sum(tags_applied.values())
         output_string = 'Applied {0:d} tags\n'.format(total_tagged_events)
-        for tag_name, number_of_tagged_events in tags_applied:
+        for tag_name, number_of_tagged_events in tags_applied.items():
             output_string += '* {0:s}: {1:d}'.format(
                 tag_name, number_of_tagged_events)
         return output_string
@@ -91,6 +109,8 @@ class LinuxRulesSigmaPlugin(SigmaPlugin):
     """Sigma plugin to run Linux rules."""
 
     _RULES_PATH = '../../../data/linux'
+
+    NAME = 'sigma_linux'
 
 
 manager.AnalysisManager.register_analyzer(LinuxRulesSigmaPlugin)
