@@ -144,11 +144,8 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             create_view = True
 
         if create_view and event_counter:
-            if query:
-                query_string = query
-            else:
-                query_string = query_dsl
-            view = self.sketch.add_view(name, query_string)
+            view = self.sketch.add_view(
+                name, self.NAME, query_string=query, query_dsl=query_dsl)
 
             if aggregate_results:
                 params = {

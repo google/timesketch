@@ -15,6 +15,7 @@
 
 from __future__ import unicode_literals
 
+import json
 import logging
 import os
 import traceback
@@ -290,9 +291,10 @@ class Sketch(object):
         else:
             view = None
 
-        aggregation = SQLSketch.get_or_create(
+        agg_json = json.dumps(agg_params)
+        aggregation = Aggregation.get_or_create(
             name=name, description=description, agg_type=agg_name,
-            parameters=agg_params, chart_type=chart_type, user=None,
+            parameters=agg_json, chart_type=chart_type, user=None,
             sketch=self.sql_sketch, view=view)
         db_session.add(aggregation)
         db_session.commit()
