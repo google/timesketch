@@ -140,7 +140,9 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
 
         aggregate_results = config.get('aggregate', False)
         create_view = config.get('create_view', False)
-        if not create_view and aggregate_results:
+
+        # If aggregation is turned on, we automatically create an aggregation.
+        if aggregate_results:
             create_view = True
 
         if create_view and event_counter:
