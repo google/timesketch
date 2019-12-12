@@ -143,7 +143,7 @@ class Sketch(resource.BaseResource):
             List of aggregations (instances of Aggregation objects)
         """
         aggregations = []
-        data = self.lazyload_data()
+        data = self.lazyload_data(refresh_cache=True)
 
         objects = data.get('objects')
         if not objects:

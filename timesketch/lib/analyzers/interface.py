@@ -15,6 +15,7 @@
 
 from __future__ import unicode_literals
 
+import json
 import logging
 import os
 import traceback
@@ -26,6 +27,7 @@ from flask import current_app
 from timesketch.lib import definitions
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models import db_session
+from timesketch.models.sketch import Aggregation
 from timesketch.models.sketch import Event as SQLEvent
 from timesketch.models.sketch import Sketch as SQLSketch
 from timesketch.models.sketch import SearchIndex
@@ -264,6 +266,39 @@ class Sketch(object):
 
         if not self.sql_sketch:
             raise RuntimeError('No such sketch')
+
+    def add_aggregation(
+            self, name, agg_name, agg_params, description='', view_id=None,
+            chart_type=None):
+        """Add aggregation to the sketch.
+
+        Args:
+            name: the name of the aggregation run.
+            agg_name: the name of the aggregation class to run.
+            agg_params: a dictionary of the parameters for the aggregation.
+            description: description of the aggregation, visible in the UI,
+                this is optional.
+            view_id: optional ID of the view to attach the aggregation to.
+            chart_type: string representing the chart type.
+        """
+        if not agg_name:
+            raise ValueError('Aggregator name needs to be defined.')
+        if not agg_params:
+            raise ValueError('Aggregator parameters have to be defined.')
+
+        if view_id:
+            view = View.query.get(view_id)
+        else:
+            view = None
+
+        agg_json = json.dumps(agg_params)
+        aggregation = Aggregation.get_or_create(
+            name=name, description=description, agg_type=agg_name,
+            parameters=agg_json, chart_type=chart_type, user=None,
+            sketch=self.sql_sketch, view=view)
+        db_session.add(aggregation)
+        db_session.commit()
+        return aggregation
 
     def add_view(self, view_name, analyzer_name, query_string=None,
                  query_dsl=None, query_filter=None):
