@@ -11,6 +11,16 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
+RE_FLAGS = [
+    're.ASCII',
+    're.IGNORECASE',
+    're.LOCALE',
+    're.MULTILINE',
+    're.DOTALL',
+    're.VERBOSE',
+]
+
+
 class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for FeatureExtraction."""
 
@@ -56,26 +66,31 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         },
         {
             'name': 're_flags',
-            'type': 'ts-dynamic-form-list-of-text-input',
+            'type': 'ts-dynamic-form-multi-select-input',
             'label': 'List of flags to pass to the regular expression',
             'placeholder': 'Regular Expression flags',
             'default_value': [],
+            'options': RE_FLAGS,
             'optional': True,
         },
         {
             'name': 'emojis',
-            'type': 'ts-dynamic-form-list-of-text-input',
+            'type': 'ts-dynamic-form-multi-select-input',
             'label': 'List of emojis to add to events with matches',
             'placeholder': 'Emojis to add to events',
             'default_value': [],
+            'options': [x.code for x in emojis.EMOJI_MAP.values()],
+            'options-label': [
+                '{0:s} - {1:s}'.format(
+                    x, y.help) for x,y in emojis.EMOJI_MAP.items()],
             'optional': True,
         },
         {
             'name': 'tags',
-            'type': 'ts-dynamic-form-list-of-text-input',
-            'label': 'List of tags to add to events with matches',
-            'placeholder': 'Tags to add to events',
-            'default_value': [],
+            'type': 'ts-dynamic-form-text-input',
+            'label': 'Tag to add to events with matches',
+            'placeholder': 'Tag to add to events',
+            'default_value': '',
             'optional': True,
         },
         {
