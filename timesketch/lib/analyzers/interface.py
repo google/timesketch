@@ -361,6 +361,9 @@ class BaseIndexAnalyzer(object):
     # the indexer names.
     DEPENDENCIES = frozenset()
 
+    # Used as hints to the frontend UI in order to render input forms.
+    FORM_FIELDS = []
+
     def __init__(self, index_name):
         """Initialize the analyzer object.
 

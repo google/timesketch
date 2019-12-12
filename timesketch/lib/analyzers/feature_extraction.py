@@ -18,16 +18,99 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
 
     CONFIG_FILE = 'features.yaml'
 
-    def __init__(self, index_name, sketch_id):
+    FORM_FIELDS = [
+        {
+            'name': 'query_string',
+            'type': 'ts-dynamic-form-text-input',
+            'label': 'The filter query to narrow down the result set',
+            'placeholder': 'Query',
+            'default_value': ''
+        },
+        {
+            'name': 'query_dsl',
+            'type': 'ts-dynamic-form-text-input',
+            'label': 'The filter query DSL to narrow down the result',
+            'placeholder': 'Query DSL',
+            'default_value': ''
+        },
+        {
+            'name': 'attribute',
+            'type': 'ts-dynamic-form-text-input',
+            'label': 'Name of the field to apply regular expression against',
+            'placeholder': 'Field Name',
+            'default_value': ''
+        },
+        {
+            'name': 'store_as',
+            'type': 'ts-dynamic-form-text-input',
+            'label': 'Name of the field to store the extracted results in',
+            'placeholder': 'Store results as field name',
+            'default_value': ''
+        },
+        {
+            'name': 're',
+            'type': 'ts-dynamic-form-text-input',
+            'label': 'The regular expression to extract data from field',
+            'placeholder': 'Regular Expression',
+            'default_value': ''
+        },
+        {
+            'name': 're_flags',
+            'type': 'ts-dynamic-form-list-of-text-input',
+            'label': 'List of flags to pass to the regular expression',
+            'placeholder': 'Regular Expression flags',
+            'default_value': [],
+            'optional': True,
+        },
+        {
+            'name': 'emojis',
+            'type': 'ts-dynamic-form-list-of-text-input',
+            'label': 'List of emojis to add to events with matches',
+            'placeholder': 'Emojis to add to events',
+            'default_value': [],
+            'optional': True,
+        },
+        {
+            'name': 'tags',
+            'type': 'ts-dynamic-form-list-of-text-input',
+            'label': 'List of tags to add to events with matches',
+            'placeholder': 'Tags to add to events',
+            'default_value': [],
+            'optional': True,
+        },
+        {
+            'name': 'create_view',
+            'type': 'ts-dynamic-form-boolean',
+            'label': 'Should a view be created if there is a match',
+            'placeholder': 'Create a view',
+            'default_value': False,
+            'optional': True,
+        },
+        {
+            'name': 'aggregate',
+            'type': 'ts-dynamic-form-boolean',
+            'label': 'Should results be aggregated if there is a match',
+            'placeholder': 'Aggregate results',
+            'default_value': False,
+            'optional': True,
+        },
+    ]
+
+
+    def __init__(self, index_name, sketch_id, config=None):
         """Initialize The Sketch Analyzer.
 
         Args:
             index_name: Elasticsearch index name
             sketch_id: Sketch ID
+            config: Optional dict that contains the configuration for the
+                analyzer. If not provided, the default YAML file will be
+                loaded up.
         """
         self.index_name = index_name
         super(FeatureExtractionSketchPlugin, self).__init__(
             index_name, sketch_id)
+        self._config = config
 
     def run(self):
         """Entry point for the analyzer.
@@ -35,8 +118,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String with summary of the analyzer result.
         """
-        config = interface.get_yaml_config(self.CONFIG_FILE)
-
+        config = self._config or interface.get_yaml_config(self.CONFIG_FILE)
         if not config:
             return 'Unable to parse the config file.'
 
