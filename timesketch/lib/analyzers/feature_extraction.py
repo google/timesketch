@@ -82,7 +82,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             'options': [x.code for x in emojis.EMOJI_MAP.values()],
             'options-label': [
                 '{0:s} - {1:s}'.format(
-                    x, y.help) for x,y in emojis.EMOJI_MAP.items()],
+                    x, y.help) for x, y in emojis.EMOJI_MAP.items()],
             'optional': True,
         },
         {
