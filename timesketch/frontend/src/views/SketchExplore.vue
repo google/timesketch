@@ -222,7 +222,6 @@ limitations under the License.
                 <div class="level-item">
                   <div v-if="eventList.objects.length" class="select is-small">
                     <select v-model="currentQueryFilter.order" @change="search">
-                      <option v-bind:value="currentQueryFilter.order">{{ currentQueryFilter.order }}</option>
                       <option value="desc">desc</option>
                       <option value="asc">asc</option>
                     </select>
