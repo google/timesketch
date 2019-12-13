@@ -212,9 +212,17 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
             event.commit()
 
         if simple_counter > 0:
-            self.sketch.add_view(
+            view = self.sketch.add_view(
                 view_name='Browser Search', analyzer_name=self.NAME,
                 query_string='tag:"browser-search"')
+            params = {
+                'field': 'search_string',
+                'limit': 20,
+            }
+            self.sketch.add_aggregation(
+                name='Top 20 browser search queries.', agg_name='field_bucket',
+                agg_params=params, view_id=view.id, chart_type='hbarchart',
+                description='Created by the browser search analyzer')
 
         return (
             'Browser Search completed with {0:d} search results '
