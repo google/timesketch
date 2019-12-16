@@ -1,6 +1,6 @@
 # Create timeline from Plaso file
 
-You need to run version >= 1.5.0 Plaso on your Timesketch server. See the [official Plaso documentation](https://github.com/log2timeline/plaso/wiki/Ubuntu-Packaged-Release) for installing Plaso and it's dependencies. If you haven't installed Timesketch yet, take a look at the [installation instructions](Installation.md).
+You need to run version >= 1.5.0 Plaso on your Timesketch server. See the [official Plaso documentation](https://plaso.readthedocs.io/en/latest/sources/user/Users-Guide.html#installing-the-packaged-release) for installing Plaso and it's dependencies. If you haven't installed Timesketch yet, take a look at the [installation instructions](Installation.md).
 
 When you have working installations of Timesketch and Plaso you can, from the command line, do:
 

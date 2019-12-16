@@ -23,6 +23,7 @@ class TermsAggregation(interface.BaseAggregator):
     """Terms Bucket Aggregation."""
 
     NAME = 'field_bucket'
+    DESCRIPTION = 'Aggregating values of a particular field'
 
     SUPPORTED_CHARTS = frozenset(['barchart', 'hbarchart'])
 
@@ -49,6 +50,24 @@ class TermsAggregation(interface.BaseAggregator):
         }
     ]
 
+    def __init__(self, sketch_id=None, index=None):
+        """Initialize the aggregator object.
+
+        Args:
+            sketch_id: Sketch ID.
+            index: List of elasticsearch index names.
+        """
+        super(TermsAggregation, self).__init__(
+            sketch_id=sketch_id, index=index)
+        self.field = ''
+
+    @property
+    def chart_title(self):
+        """Returns a title for the chart."""
+        if self.field:
+            return 'Top results for "{0:s}"'.format(self.field)
+        return 'Top results for an unknown field'
+
     # pylint: disable=arguments-differ
     def run(self, field, limit=10):
         """Run the aggregation.
@@ -60,6 +79,7 @@ class TermsAggregation(interface.BaseAggregator):
         Returns:
             Instance of interface.AggregationResult with aggregation result.
         """
+        self.field = field
         # Encoding information for Vega-Lite.
         encoding = {
             'x': {

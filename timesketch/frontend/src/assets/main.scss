@@ -26,6 +26,13 @@ $message-header-background-color: rgba(229, 229, 229, 0.84);
 $message-header-color: #333333;
 $message-background-color: #f9f9f9;
 
+// Button colors
+$info: #0070bd;
+$success: #41ad49;
+
+$table-cell-border: 1px solid #f5f5f5;
+$table-cell-padding: 10px;
+
 // Font Awesome
 $fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
 @import "../../node_modules/@fortawesome/fontawesome-free/scss/fontawesome";
@@ -42,6 +49,10 @@ html, body {
 
 body {
     background: linear-gradient(90deg, rgba(249,249,249,1) 11%, rgba(241,241,241,1) 100%);
+}
+
+.login-page {
+    background: #0070bd;
 }
 
 .card {

@@ -86,14 +86,16 @@ class SimilarityScorer(interface.BaseSketchAnalyzer):
 
     DEPENDENCIES = frozenset()
 
-    def __init__(self, index_name, sketch_id, data_type):
+    def __init__(self, index_name, sketch_id, data_type=None):
         """Initializes a similarity scorer.
 
         Args:
             index_name: Elasticsearch index name.
             data_type: Name of the data_type.
         """
-        self._config = SimilarityScorerConfig(index_name, data_type)
+        self._config = None
+        if data_type:
+            self._config = SimilarityScorerConfig(index_name, data_type)
         super(SimilarityScorer, self).__init__(index_name, sketch_id)
 
     def run(self):
@@ -103,6 +105,9 @@ class SimilarityScorer(interface.BaseSketchAnalyzer):
             A dict with metadata about the processed data set or None if no
             data_types has been configured.
         """
+        if not self._config:
+            return 'No data_type specified.'
+
         # Event generator for streaming results.
         events = self.event_stream(
             query_string=self._config.query,

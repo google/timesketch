@@ -28,7 +28,6 @@ class SketchViewTest(BaseTest):
         self.login()
         response = self.client.get(self.resource_url)
         self.assert200(response)
-        self.assert_template_used('sketch/overview.html')
 
 
 class TimelinesViewTest(BaseTest):
@@ -41,7 +40,6 @@ class TimelinesViewTest(BaseTest):
         self.login()
         response = self.client.get(self.resource_url)
         self.assert200(response)
-        self.assert_template_used('sketch/timelines.html')
 
 
 class TimelineViewTest(BaseTest):
@@ -53,7 +51,6 @@ class TimelineViewTest(BaseTest):
         self.login()
         response = self.client.get(self.resource_url)
         self.assert200(response)
-        self.assert_template_used('sketch/timeline.html')
 
 
 class ViewTest(BaseTest):
@@ -66,7 +63,6 @@ class ViewTest(BaseTest):
         self.login()
         response = self.client.get(self.resource_url)
         self.assert200(response)
-        self.assert_template_used('sketch/views.html')
 
 
 class StoryViewTest(BaseTest):
@@ -78,4 +74,3 @@ class StoryViewTest(BaseTest):
         self.login()
         response = self.client.get(self.resource_url)
         self.assert200(response)
-        self.assert_template_used('sketch/stories.html')

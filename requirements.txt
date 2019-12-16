@@ -60,3 +60,7 @@ vine==1.1.4               # via amqp
 werkzeug==0.14.1          # via flask
 wrapt==1.10.11            # via astroid
 wtforms==2.1              # via flask-wtf
+xlrd==1.2.0
+google_auth_oauthlib==0.4.1
+oauthlib==3.1.0
+google-auth==1.7.0

@@ -57,6 +57,10 @@ class TestConfig(object):
 class MockElasticClient(object):
     """A mock implementation of a ElasticSearch client."""
 
+    def __init__(self):
+        """Initialize the client."""
+        self.indices = MockElasticIndices()
+
     def search(self, index, body, size):  # pylint: disable=unused-argument
         """Mock a client search, used for aggregations."""
         meta = {
@@ -79,11 +83,15 @@ class MockElasticClient(object):
         return {'meta': meta, 'objects': objects}
 
 
+class MockElasticIndices(object):
+    # pylint: disable=unused-argument
+    def get_mapping(self, *args, **kwargs):
+        """Mock get mapping call."""
+        return {}
+
+
 class MockDataStore(object):
     """A mock implementation of a Datastore."""
-
-    #List containing event dictionaries
-    event_store = []
 
     event_dict = {
         '_index': [],
@@ -156,6 +164,8 @@ class MockDataStore(object):
         self.client = MockElasticClient()
         self.host = host
         self.port = port
+        #List containing event dictionaries
+        self.event_store = []
 
     # pylint: disable=arguments-differ,unused-argument
     def search(self, *args, **kwargs):
@@ -193,7 +203,6 @@ class MockDataStore(object):
 
         abort(HTTP_STATUS_CODE_NOT_FOUND)
         return None
-
 
     def set_label(self,
                   searchindex_id,
@@ -247,6 +256,12 @@ class MockDataStore(object):
           Version number as a string.
         """
         return '6.0'
+
+    # pylint: disable=unused-argument
+    def search_stream(self, query_string, query_filter, query_dsl,
+                      indices, return_fields):
+        for event in self.event_store:
+            yield event
 
 
 class MockGraphDatabase(object):

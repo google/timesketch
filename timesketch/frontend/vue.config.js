@@ -13,13 +13,33 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
 module.exports = {
   lintOnSave: false,
   publicPath: '/dist/',
   configureWebpack: config => {
     config.watchOptions = {
       aggregateTimeout: 500,
+      poll: 1000,
       ignored: /node_modules/
+    }
+  },
+  pages: {
+    index: {
+      // entry for the page
+      entry: 'src/main.js',
+      // the source template
+      template: 'public/index.html',
+      // output as dist/index.html
+      filename: 'index.html'
+    },
+    login: {
+      // entry for the page
+      entry: 'src/main.js',
+      // the source template
+      template: 'public/login.html',
+      // output as dist/index.html
+      filename: 'login.html'
     }
   }
 }
