@@ -439,6 +439,17 @@ class Sketch(resource.BaseResource):
         resource_url = '{0:s}/sketches/{1:d}/analyzer/'.format(
             self.api.api_root, self.id)
 
+        # The analyzer_kwargs is expected to be a dict with the key
+        # being the analyzer name, and the value being the key/value dict
+        # with parameters for the analyzer.
+        if analyzer_kwargs:
+            if not isinstance(analyzer_kwargs, dict):
+                return (
+                    'Unable to run analyzer, analyzer kwargs needs to be a '
+                    'dict')
+            if analyzer_name not in analyzer_kwargs:
+                analyzer_kwargs = {analyzer_name: analyzer_kwargs}
+
         if timeline_name:
             sketch = self.lazyload_data()
             timelines = []
