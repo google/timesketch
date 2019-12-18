@@ -67,12 +67,13 @@ Then install Timesketch itself:
 
 **Configure Timesketch**
 
-Copy the configuration file to `/etc` and configure it. The file is well commented and it should be pretty straight forward.
+Copy the configuration file to `/etc/timesketch/` and configure it. The file is well commented and it should be pretty straight forward.
 
-    $ sudo cp /usr/local/share/timesketch/timesketch.conf /etc/
-    $ sudo chmod 600 /etc/timesketch.conf
+    $ mkdir /etc/timesketch
+    $ sudo cp /usr/local/share/timesketch/timesketch.conf /etc/timesketch/
+    $ sudo chmod 600 /etc/timesketch/timesketch.conf
 
-Generate a secret key and configure `SECRET_KEY` in `/etc/timesketch.conf`
+Generate a secret key and configure `SECRET_KEY` in `/etc/timesketch/timesketch.conf`
 
     $ openssl rand -base64 32
 

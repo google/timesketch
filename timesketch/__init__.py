@@ -67,7 +67,14 @@ def create_app(config=None):
     )
 
     if not config:
-        config = '/etc/timesketch.conf'
+        # Where to find the config file
+        default_path = '/etc/timesketch/timesketch.conf'
+        # Fall back to legacy location of the config file
+        legacy_path = '/etc/timesketch.conf'
+        if os.path.isfile(default_path):
+            config = default_path
+        else:
+            config = legacy_path
 
     if isinstance(config, six.text_type):
         os.environ['TIMESKETCH_SETTINGS'] = config

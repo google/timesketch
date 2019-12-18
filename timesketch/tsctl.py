@@ -469,7 +469,7 @@ def main():
         '-c',
         '--config',
         dest='config',
-        default='/etc/timesketch.conf',
+        default='/etc/timesketch/timesketch.conf',
         required=False)
     shell_manager.run()
 

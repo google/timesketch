@@ -1,6 +1,6 @@
 # Timesketch configuration
 #
-# The default location for this configuration file is in /etc/timesketch.conf
+# The default location for this configuration file is in /etc/timesketch/timesketch.conf
 # If you put it somewhere else you can pass the path to tsctl
 # Example:
 #
