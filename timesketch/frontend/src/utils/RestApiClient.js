@@ -30,7 +30,7 @@ const RestApiClient = axios.create({
 RestApiClient.interceptors.response.use(function (response) {
   return response;
 }, function (error) {
-  if (error.response.data.message === 'The CSRF token has expired.') {
+  if (error.response.data.message === 'The CSRF token has expired') {
     Snackbar.open({
       message: error.response.data.message,
       type: 'is-white',
@@ -122,7 +122,7 @@ export default {
     return RestApiClient.get('sketches/' + sketchId + '/stories/')
   },
   getStory (sketchId, storyId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/stories/' + storyId)
+    return RestApiClient.get('/sketches/' + sketchId + '/stories/' + storyId + '/')
   },
   createStory (title, content, sketchId) {
     let formData = {
@@ -140,7 +140,7 @@ export default {
   },
   // Saved views
   getView (sketchId, viewId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/views/' + viewId)
+    return RestApiClient.get('/sketches/' + sketchId + '/views/' + viewId + '/')
   },
   createView (sketchId, viewName, queryString, queryFilter) {
     let formData = {
@@ -169,7 +169,7 @@ export default {
     return RestApiClient.post('/upload/', formData, config)
   },
   getSessions (sketchId, timelineIndex) {
-    return RestApiClient.get('/sketches/' + sketchId + '/explore/sessions/' + timelineIndex)
+    return RestApiClient.get('/sketches/' + sketchId + '/explore/sessions/' + timelineIndex + '/')
   },
   getUsers () {
     return RestApiClient.get('/users/')
