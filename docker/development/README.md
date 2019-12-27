@@ -15,6 +15,15 @@ $ CONTAINER_ID="$(sudo docker container list -f name=development_timesketch -q)"
 ```
 In the output look for CONTAINER ID for the timesketch container
 
+To write the ID to a variable, use:
+```
+export CONTAINER_ID="$(sudo docker container list -f name=development_timesketch -q)"
+```
+and test with
+```
+echo $CONTAINER_ID
+```
+
 ### Start a celery container shell
 ```
 $ sudo docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel info
