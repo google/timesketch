@@ -34,10 +34,9 @@ RUN cd /tmp/timesketch && yarn install && yarn run build
 RUN sed -i -e '/pyyaml/d' /tmp/timesketch/requirements.txt
 RUN pip3 install /tmp/timesketch/
 
-# Copy the Timesketch configuration file into /etc
-RUN cp /tmp/timesketch/data/timesketch.conf /etc
 # Copy Timesketch config files into /etc/timesketch
 RUN mkdir /etc/timesketch
+RUN cp /tmp/timesketch/data/timesketch.conf /etc/timesketch/
 RUN cp /tmp/timesketch/data/features.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
 

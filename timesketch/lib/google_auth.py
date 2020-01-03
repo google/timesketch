@@ -122,7 +122,11 @@ def get_oauth2_authorize_url(hosted_domain=None):
     """
     csrf_token = _generate_random_token()
     nonce = _generate_random_token()
-    redirect_uri = url_for('user_views.google_openid_connect', _external=True)
+    redirect_uri = url_for(
+        'user_views.google_openid_connect',
+        _scheme='https',
+        _external=True
+    )
     scopes = ('openid', 'email', 'profile')
 
     # Add the generated CSRF token to the client session for later validation.
@@ -160,7 +164,11 @@ def get_encoded_jwt_over_https(code):
     """
 
     discovery_document = get_oauth2_discovery_document()
-    redirect_uri = url_for('user_views.google_openid_connect', _external=True)
+    redirect_uri = url_for(
+        'user_views.google_openid_connect',
+        _scheme='https',
+        _external=True
+    )
     post_data = {
         'code': code,
         'client_id': current_app.config.get('GOOGLE_OIDC_CLIENT_ID'),
