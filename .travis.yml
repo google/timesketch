@@ -1,15 +1,5 @@
 matrix:
   include:
-  - name: "Ubuntu Bionic (18.04) (Docker) Pylint with Python 3.6"
-    env: [TARGET="pylint", UBUNTU_VERSION="18.04"]
-    os: linux
-    dist: xenial
-    sudo: required
-    group: edge
-    language: python
-    python: 3.6
-    services:
-    - docker
   - name: "Ubuntu Bionic (18.04) (Docker) with Python 2.7"
     env: [MODE="pypi", UBUNTU_VERSION="18.04"]
     os: linux
