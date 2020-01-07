@@ -18,7 +18,7 @@ gunicorn==19.10.0
 neo4jrestclient==2.1.1
 numpy==1.16.6
 oauthlib==3.1.0
-pandas==0.25.3
+pandas==0.24.2
 PyJWT==1.7.1
 python_dateutil==2.8.1
 PyYAML==5.3
