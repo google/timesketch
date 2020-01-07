@@ -14,7 +14,7 @@ flask_sqlalchemy==2.4.1
 flask_wtf==0.14.2
 google-auth==1.7.0
 google_auth_oauthlib==0.4.1
-gunicorn==20.0.4
+gunicorn==19.10.0
 neo4jrestclient==2.1.1
 numpy==1.18.1
 oauthlib==3.1.0
