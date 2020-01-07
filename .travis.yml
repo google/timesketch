@@ -11,7 +11,7 @@ matrix:
     services:
     - docker
   - name: "Ubuntu Bionic (18.04) (Docker) with Python 2.7"
-    env: UBUNTU_VERSION="18.04"
+    env: [MODE="pypi", UBUNTU_VERSION="18.04"]
     os: linux
     dist: xenial
     sudo: required
@@ -21,7 +21,7 @@ matrix:
     services:
     - docker
   - name: "Ubuntu Bionic (18.04) (Docker) with Python 3.6"
-    env: UBUNTU_VERSION="18.04"
+    env: [MODE="pypi", UBUNTU_VERSION="18.04"]
     os: linux
     dist: xenial
     sudo: required

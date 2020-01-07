@@ -11,8 +11,8 @@ DPKG_PYTHON3_TEST_DEPENDENCIES="python3-distutils python3-flask-testing python3-
 # Exit on error.
 set -e;
 
-if test -n "${UBUNTU_VERSION}";
-then
+#if test -n "${UBUNTU_VERSION}";
+if test ${MODE} = "dpkg"; then
 	CONTAINER_NAME="ubuntu${UBUNTU_VERSION}";
 	docker pull ubuntu:${UBUNTU_VERSION};
 	docker run --name=${CONTAINER_NAME} --detach -i ubuntu:${UBUNTU_VERSION};
@@ -49,6 +49,10 @@ then
 
 	docker exec -e "DEBIAN_FRONTEND=noninteractive" ${CONTAINER_NAME} sh -c "apt-get install -y ${DPKG_PACKAGES}";
 	docker cp ../timesketch ${CONTAINER_NAME}:/
+
+elif test ${MODE} = "pypi"; then
+	pip install -r requirements.txt;
+	pip install -r test_requirements.txt;
 
 elif test ${TRAVIS_OS_NAME} = "linux"; then
 	pip install -r requirements.txt;
