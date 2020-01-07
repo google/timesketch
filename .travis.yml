@@ -31,7 +31,6 @@ matrix:
     services:
     - docker
 cache:
-- yarn
 - pip
 install:
 - ./config/travis/install.sh
