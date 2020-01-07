@@ -1,5 +1,5 @@
 alembic==1.3.2
-altair==4.0.0
+altair==3.3.0
 celery==4.4.0
 cryptography==2.1.4
 datasketch==1.5.0
