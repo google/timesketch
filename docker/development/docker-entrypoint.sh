@@ -6,6 +6,9 @@ if [ "$1" = 'timesketch' ]; then
   # Install Timesketch in editable mode from volume
   pip3 install -e /usr/local/src/timesketch/
 
+  # Install test dependencies
+  pip3 install -r /usr/local/src/timesketch/test_requirements.txt
+
   # Copy config files
   mkdir /etc/timesketch
   cp /usr/local/src/timesketch/data/timesketch.conf /etc/timesketch/
