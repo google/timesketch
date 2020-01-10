@@ -1,7 +1,7 @@
 alembic==1.3.2
 altair==3.3.0  # Note: Last version to support py2
 celery==4.4.0
-cryptography==2.1.4
+cryptography==2.3
 datasketch==1.5.0
 elasticsearch==6.3.1
 Flask==1.1.1
