@@ -1,0 +1,24 @@
+title: Linux reconnaissance commands
+description: Commands that are run by attackers after compromising a system
+logsource:
+  service: shell
+references:
+  - https://github.com/mubix/post-exploitation/wiki/Linux-Post-Exploitation-Command-List
+detection:
+  keywords:
+    - 'uname -a'
+    - 'cat /proc/version'
+    - 'grep pass'
+    - 'getent group'
+    - 'getent passwd'
+    - 'cat /home/*/.ssh/authorized_keys'
+    - 'cat /etc/sudoers'
+    - 'cat /etc/passwd'
+    - 'cat /etc/resolv.conf'
+    - 'ps aux'
+    - 'who -a'
+    - 'hostname -f'
+    - 'netstat -nltupw'
+    - 'cat /proc/net/*'
+timeframe: 30m
+conditions: count > 3
