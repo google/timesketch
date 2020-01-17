@@ -11,8 +11,6 @@ if test ${MODE} = "dpkg"; then
 
 	if test "${TARGET}" = "pylint"; then
 		TEST_COMMAND="./config/travis/run_pylint.sh";
-	elif test ${TRAVIS_PYTHON_VERSION} = "2.7"; then
-		TEST_COMMAND="./config/travis/run_python2.sh";
 	else
 		TEST_COMMAND="./config/travis/run_python3.sh";
 	fi

@@ -59,7 +59,7 @@ setup(
     ],
     data_files=[
         ('share/timesketch', glob.glob(
-            os.path.join('data', '*'))),
+            os.path.join('data', '*'), recursive=True)),
         ('share/doc/timesketch', [
             'AUTHORS', 'LICENSE', 'README.md']),
     ],
