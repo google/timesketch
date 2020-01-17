@@ -10,13 +10,13 @@ First you should backup your current database in case something goes wrong in th
 
 ## Upgrade timesketch
 
-    $ pip install timesketch --upgrade
+    $ pip3 install timesketch --upgrade
 
 Or, if you are installing from the master branch:
 
     $ git clone https://github.com/google/timesketch.git
     $ cd timesketch
-    $ pip install . --upgrade
+    $ pip3 install . --upgrade
 
 ## Upgrade the database schema
 Have you backed up your database..? good. Let's upgrade the schema:
