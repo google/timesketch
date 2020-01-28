@@ -24,4 +24,7 @@ elif test ${MODE} = "pypi"; then
 elif test "${TRAVIS_OS_NAME}" = "linux"; then
 	python3 ./run_tests.py
 
+elif test "${TARGET}" = "dockerfile"; then
+	docker build -f docker/Dockerfile .
+
 fi

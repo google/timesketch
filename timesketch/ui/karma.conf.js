@@ -1,7 +1,7 @@
 const path = require('path')
 
 const webpack_test_config = {
-  entry: './timesketch/ui/main.spec.ts',
+  entry: './main.spec.ts',
   module: {
     rules: [
       {
@@ -21,7 +21,7 @@ const webpack_test_config = {
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
-    modules: [path.resolve(__dirname, 'timesketch/ui/'), 'node_modules'],
+    modules: [path.resolve(__dirname, '/'), 'node_modules'],
   },
 }
 
@@ -30,9 +30,9 @@ module.exports = function(config) {
 
     files: [
       './node_modules/babel-polyfill/dist/polyfill.js',
-      'timesketch/ui/main.spec.ts',
+      './main.spec.ts',
     ],
-    preprocessors: {'timesketch/ui/main.spec.ts': ['webpack']},
+    preprocessors: {'/main.spec.ts': ['webpack']},
     webpack: webpack_test_config,
     webpackMiddleware: {
       noInfo: true,

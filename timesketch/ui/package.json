@@ -13,7 +13,7 @@
     "test:watch": "karma start",
     "test:coverage": "karma start karma-coverage.conf.js --single-run --no-auto-watch && rm -rf ./coverage",
     "lint": "tslint --project . && echo 'TSLint: No errors!'",
-    "lint:watch": "chokidar timesketch/ui/**/*.ts timesketch/ui/*.ts -c 'yarn run lint' --initial --verbose"
+    "lint:watch": "chokidar ./**/*.ts ./*.ts -c 'yarn run lint' --initial --verbose"
   },
   "dependencies": {
     "@angular/common": "5.0.0-beta.5",

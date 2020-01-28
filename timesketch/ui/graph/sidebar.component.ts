@@ -21,7 +21,7 @@ export class SidebarComponent {
     return this.element.scratch().es_query;
   }
 
-  get data_rows(): Array<{key: string, value: string}> {
+  get data_rows(): ({  key: string; value: {}; })[] {
     return Object
       .entries(this.element.data())
       .map(([key, value]) => ({key, value}))

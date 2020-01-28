@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Main entry point for running tests and linters."""
 from __future__ import print_function
 from __future__ import unicode_literals

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "rootDir": "./timesketch/ui/",
-    "baseUrl": "./timesketch/ui/",
+    "rootDir": ".",
+    "baseUrl": ".",
     "sourceMap": true,
     "noImplicitAny": false,
     "strictNullChecks": false,

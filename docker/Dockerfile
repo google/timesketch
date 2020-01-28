@@ -29,7 +29,7 @@ RUN apt-get update && apt-get -y install plaso-tools nodejs yarn
 # Use Python 3 pip (pip3) to install Timesketch
 RUN pip3 install --upgrade pip
 ADD . /tmp/timesketch
-RUN cd /tmp/timesketch && yarn install && yarn run build
+RUN cd /tmp/timesketch/timesketch/ui && yarn install && yarn run build
 # Remove pyyaml from requirements.txt to avoid conflicts with python-yaml Ubuntu package
 RUN sed -i -e '/pyyaml/d' /tmp/timesketch/requirements.txt
 RUN pip3 install /tmp/timesketch/
@@ -39,7 +39,6 @@ RUN mkdir /etc/timesketch
 RUN cp /tmp/timesketch/data/timesketch.conf /etc/timesketch/
 RUN cp /tmp/timesketch/data/features.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
-
 
 # Copy the entrypoint script into the container
 COPY docker/docker-entrypoint.sh /

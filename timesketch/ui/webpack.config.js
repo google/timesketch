@@ -12,7 +12,7 @@ const aotPlugin = new AotPlugin({
   tsConfigPath: 'tsconfig.json',
   // entryModule path must be absolute, otherwise it generates really obscure
   // error message: https://github.com/angular/angular-cli/issues/4913
-  entryModule: path.resolve(__dirname, 'timesketch/ui/app.module#AppModule'),
+  entryModule: path.resolve(__dirname, 'app.module#AppModule'),
 })
 
 const minimizePlugin = new webpack.optimize.UglifyJsPlugin({
@@ -27,7 +27,7 @@ const jqueryLoader = new webpack.ProvidePlugin({
 })
 
 module.exports = {
-  entry: './timesketch/ui/main.ts',
+  entry: './main.ts',
   module: {
     rules: [
       {
@@ -61,7 +61,7 @@ module.exports = {
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
-    modules: [path.resolve(__dirname, 'timesketch/ui/'), 'node_modules'],
+    modules: [path.resolve(__dirname, '/'), 'node_modules'],
   },
   output: {
     filename: 'bundle.js',
