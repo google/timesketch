@@ -156,6 +156,7 @@ class Event(object):
     """Event object with helper methods.
 
     Attributes:
+        datastore: Instance of ElasticsearchDatastore (mocked as None).
         sketch: Sketch ID or None if not provided.
         event_id: ID of the Event.
         event_type: Document type in Elasticsearch.
@@ -164,16 +165,17 @@ class Event(object):
         updates: A list of all changes made to an event, with each change
             stored as a EVENT_CHANGE named tuple.
     """
-    def __init__(self, event, index, sketch=None, context=None):
+    def __init__(self, event, datastore=None, sketch=None, context=None):
         """Initialize Event object.
 
         Args:
             event: Dictionary of event from Elasticsearch.
-            index: The name of the mocked Elasticsearch index.
+            datastore: Defaults to none, should be None as this is mocked.
             sketch: Optional instance of a Sketch object.
             context: Optional context object (instance of Context).
 
         """
+        self.datastore = datastore
         self.sketch = sketch
         self._context = context
 
@@ -182,7 +184,7 @@ class Event(object):
 
         self.event_id = uuid.uuid4().hex
         self.event_type = 'mocked_event'
-        self.index_name = index
+        self.index_name = 'mocked_index'
         self.source = event
 
     def _update_change(self, change=None):
@@ -437,6 +439,7 @@ class BaseIndexAnalyzer(object):
         Args:
             file_name: the file path to the test event file.
         """
+        self.datastore = None
         self.name = self.NAME
         if not os.path.isfile(file_name):
             raise IOError(
@@ -492,9 +495,7 @@ class BaseIndexAnalyzer(object):
         with open(self._file_name) as csv_fh:
             reader = csv.DictReader(csv_fh)
             for row in reader:
-                event = Event(
-                    row, 'mocked_index_', sketch=self.sketch,
-                    context=self._context)
+                event = Event(row, sketch=self.sketch, context=self._context)
                 if self._context:
                     self._context.add_event(event)
                 yield event
@@ -530,6 +531,11 @@ class BaseIndexAnalyzer(object):
             context: Context object (instance of AnalyzerContext).
         """
         self._context = context
+        # In some cases we need the context to be provided yet the analyzers
+        # will not have a chance to provide it, and thus we mock it by
+        # replacing the datastore with a context, since the datstore is not
+        # used in the mocked scenario.
+        self.datastore = context
 
 
 class BaseSketchAnalyzer(BaseIndexAnalyzer):
@@ -600,7 +606,12 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             query_string=query_string, query_dsl=query_dsl, indices=indices,
             fields=return_fields)
 
-        return pandas.read_csv(self.file_name)
+        data_frame = pandas.read_csv(self.file_name)
+        data_frame = data_frame.assign(_id=lambda x: uuid.uuid4().hex)
+        data_frame['_type'] = 'mocked_event'
+        data_frame['_index'] = 'mocked_index'
+
+        return data_frame
 
     def run(self):
         """Entry point for the analyzer."""
