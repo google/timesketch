@@ -48,20 +48,23 @@ class AnalyzerContext(object):
         """Returns a string describing the changes made by the analyzer."""
         return_strings = ['-'*80]
         return_strings.append(
-            'Analyzer name: {0:s}'.format(self.analyzer_name))
+            '{0:^80s}'.format(self.analyzer_name))
+        return_strings.append('-'*80)
         return_strings.append('Total number of events: {0:d}'.format(
             len(self.event_cache)))
         return_strings.append('Total number of queries: {0:d}'.format(
             len(self.queries)))
 
         return_strings.append('')
+        return_strings.append('+'*80)
         for qid, query in enumerate(self.queries):
             return_strings.append('  -- Query #{0:02d} --'.format(qid+1))
             for key, value in query.items():
                 return_strings.append('{0:>20s}: {1!s}'.format(key, value))
 
-        if self.sketch:
+        if self.sketch and self.sketch.updates:
             return_strings.append('')
+            return_strings.append('+'*80)
             return_strings.append('Sketch updates:')
             for update in self.sketch.updates:
                 return_strings.append('  {0:s} {1:s}'.format(
@@ -69,6 +72,7 @@ class AnalyzerContext(object):
                 return_strings.append('\t{0!s}'.format(update.what))
 
         return_strings.append('')
+        return_strings.append('+'*80)
         return_strings.append('Event Updates:')
         event_container = {}
         for event in self.event_cache.values():
@@ -82,10 +86,12 @@ class AnalyzerContext(object):
         for key, counter in event_container.items():
             return_strings.append('  {0:s}'.format(key))
             for value, count in counter.most_common():
-                return_strings.append('\t[{0:d}] {1:s}'.format(count, value))
+                return_strings.append('\t[{0:d}] {1:s}\n'.format(count, value))
         return_strings.append('')
+        return_strings.append('+'*80)
         return_strings.append('Result from analyzer run:')
         return_strings.append('  {0:s}'.format(self.analyzer_result))
+        return_strings.append('=-'*40)
 
         if self.error:
             return_strings.append('Error occurred:\n{0:s}'.format(self.error))
