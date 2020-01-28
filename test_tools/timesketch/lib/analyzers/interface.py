@@ -86,6 +86,9 @@ class AnalyzerContext(object):
         return_strings.append('')
         return_strings.append('Result from analyzer run:')
         return_strings.append('  {0:s}'.format(self.analyzer_result))
+
+        if self.error:
+            return_strings.append('Error occurred:\n{0:s}'.format(self.error))
         return '\n'.join(return_strings)
 
     def add_event(self, event):
@@ -606,7 +609,7 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             query_string=query_string, query_dsl=query_dsl, indices=indices,
             fields=return_fields)
 
-        data_frame = pandas.read_csv(self.file_name)
+        data_frame = pandas.read_csv(self._file_name)
         data_frame = data_frame.assign(_id=lambda x: uuid.uuid4().hex)
         data_frame['_type'] = 'mocked_event'
         data_frame['_index'] = 'mocked_index'
