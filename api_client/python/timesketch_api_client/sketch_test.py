@@ -34,6 +34,7 @@ class SketchTest(unittest.TestCase):
         self.sketch = self.api_client.get_sketch(1)
 
     # TODO: Add test for upload()
+    # TODO: Add test for explore()
 
     def test_get_views(self):
         """Test to get a view."""
@@ -48,9 +49,3 @@ class SketchTest(unittest.TestCase):
         self.assertIsInstance(timelines, list)
         self.assertEqual(len(timelines), 2)
         self.assertIsInstance(timelines[0], timeline_lib.Timeline)
-
-    def test_explore(self):
-        """Tests to explore a timeline."""
-        results = self.sketch.explore(query_string='description:test')
-        self.assertEqual(len(results['objects']), 1)
-        self.assertIsInstance(results['objects'], list)

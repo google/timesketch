@@ -1,66 +1,32 @@
-alembic==0.9.5            # via flask-migrate
-altair==3.1.0
-amqp==2.2.1               # via kombu
-aniso8601==1.2.1          # via flask-restful
-asn1crypto==0.24.0        # via cryptography
-attrs==18.2.0             # via jsonschema
-bcrypt==3.1.3             # via flask-bcrypt
-billiard==3.5.0.3         # via celery
-blinker==1.4
-celery==4.1.0
-certifi==2017.7.27.1      # via requests
-cffi==1.10.0              # via bcrypt, cryptography
-chardet==3.0.4            # via requests
-click==6.7                # via flask
-configparser==3.5.0       # via entrypoints
-coverage==4.4.1
-cryptography==2.4.1
-datasketch==1.2.5
-elasticsearch==5.4.0
-entrypoints==0.3          # via altair
-enum34==1.1.6             # via astroid, cryptography
-flask-bcrypt==0.7.1
-flask-login==0.4.0
-flask-migrate==2.1.1
-flask-restful==0.3.6
-flask-script==2.0.5
-flask-sqlalchemy==2.2
-flask-testing==0.6.2
-flask-wtf==0.14.2
-flask==1.0.2
-gunicorn==19.7.1
-idna==2.6                 # via cryptography, requests
-ipaddress==1.0.22         # via cryptography
-itsdangerous==0.24        # via flask
-jinja2==2.10.1            # via altair, flask
-jsonschema==3.0.0         # via altair
-kombu==4.1.0              # via celery
-lazy-object-proxy==1.3.1  # via astroid
-mako==1.0.7               # via alembic
-markupsafe==1.0           # via jinja2, mako
-neo4jrestclient==2.1.1
-numpy==1.13.3             # via altair, datasketch, pandas
-pandas==0.24.1
-parameterized==0.6.1
-pycparser==2.18           # via cffi
-pyjwt==1.6.4
-pyrsistent==0.14.11       # via jsonschema
-python-dateutil==2.6.1
-python-editor==1.0.3      # via alembic
-pytz==2017.2              # via celery, flask-restful, pandas
-pyyaml==4.2b4
-redis==2.10.6
-requests==2.20.1
-six==1.12.0               # via altair, bcrypt, cryptography, flask-restful, jsonschema, pyrsistent, python-dateutil
-sqlalchemy==1.3.2
-toolz==0.9.0              # via altair
-typing==3.6.6             # via altair
-urllib3==1.24.2
-vine==1.1.4               # via amqp
-werkzeug==0.14.1          # via flask
-wrapt==1.10.11            # via astroid
-wtforms==2.1              # via flask-wtf
-xlrd==1.2.0
-google_auth_oauthlib==0.4.1
-oauthlib==3.1.0
+alembic==1.3.2
+altair==3.3.0  # Note: Last version to support py2
+celery==4.4.0
+cryptography==2.3
+datasketch==1.5.0
+elasticsearch==6.3.1
+Flask==1.1.1
+flask_bcrypt==0.7.1
+flask_login==0.4.1
+flask_migrate==2.5.2
+flask_restful==0.3.7
+flask_script==2.0.6
+flask_sqlalchemy==2.4.1
+flask_wtf==0.14.2
 google-auth==1.7.0
+google_auth_oauthlib==0.4.1
+gunicorn==19.10.0  # Note: Last version to support py2
+neo4jrestclient==2.1.1
+numpy==1.16.6  # Note: Last version to support py2
+oauthlib==3.1.0
+pandas==0.24.2  # Note: Last version to support py2
+PyJWT==1.7.1
+python_dateutil==2.8.1
+PyYAML==5.3
+redis==3.3.11
+requests==2.21.0
+sigmatools==0.14 ; python_version > '3.4'
+six==1.12.0
+SQLAlchemy==1.3.12
+Werkzeug==0.16.0
+WTForms==2.2.1
+xlrd==1.2.0

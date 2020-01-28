@@ -24,6 +24,7 @@ from timesketch.lib.analyzers import feature_extraction
 from timesketch.lib.analyzers import login
 from timesketch.lib.analyzers import phishy_domains
 from timesketch.lib.analyzers import sessionizer
+from timesketch.lib.analyzers import sigma_tagger
 from timesketch.lib.analyzers import similarity_scorer
 from timesketch.lib.analyzers import ssh_sessionizer
 from timesketch.lib.analyzers import gcp_servicekey

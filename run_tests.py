@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import subprocess
 import argparse
-import time
+
 
 def run_python_tests(coverage=False):
     try:
@@ -21,28 +21,14 @@ def run_python_tests(coverage=False):
     finally:
         subprocess.check_call(['rm', '-f', '.coverage'])
 
+
 def run_python(args):
     if not args.no_tests:
         run_python_tests(coverage=args.coverage)
 
-def run_javascript_tests(coverage=False):
-    if coverage:
-        subprocess.check_call(['yarn', 'run', 'test:coverage'])
-    else:
-        subprocess.check_call(['yarn', 'run', 'test'])
-
-def run_javascript_linter():
-    subprocess.check_call(['yarn', 'run', 'lint'])
-
-def run_javascript(args):
-    if not args.no_tests:
-        run_javascript_tests(coverage=args.coverage)
     if not args.no_lint:
-        run_javascript_linter()
+        subprocess.check_call(['./config/travis/run_pylint.sh', '--coverage'])
 
-def run_selenium(args):
-    # pylint: disable=unused-argument
-    return NotImplemented
 
 def parse_cli_args(args=None):
     """Parse command-line arguments to this script.
@@ -58,24 +44,7 @@ def parse_cli_args(args=None):
         SystemExit if arguments are invalid or --help is present.
     """
     p = argparse.ArgumentParser(
-        description="Run Python and JS unit tests and linters."
-        + " Skip selenium tests by default."
-    )
-    p.add_argument(
-        '--py', action='store_true',
-        help='Run Python tests and linters only.'
-    )
-    p.add_argument(
-        '--js', action='store_true',
-        help='Run Javascript tests and linters only.'
-    )
-    p.add_argument(
-        '--selenium', action='store_true',
-        help='Run end-to-end selenium tests only.'
-    )
-    p.add_argument(
-        '--full', action='store_true',
-        help='Run everything, including selenium.'
+        description="Run Python unit tests and linters."
     )
     p.add_argument(
         '--no-lint', action='store_true',
@@ -91,24 +60,10 @@ def parse_cli_args(args=None):
     )
     return p.parse_args(args)
 
+
 def main():
-    start_time = time.time()
     args = parse_cli_args()
+    run_python(args)
 
-    if args.py:
-        run_python(args)
-    elif args.js:
-        run_javascript(args)
-    elif args.selenium:
-        run_selenium(args)
-    elif args.full:
-        run_python(args)
-        run_javascript(args)
-        run_selenium(args)
-    else:
-        run_python(args)
-        run_javascript(args)
-
-    print('Done in %.2fs' % (time.time() - start_time))
 
 main()
