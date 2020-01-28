@@ -29,8 +29,6 @@ import importlib.util
 import os
 import sys
 
-import pandas
-
 from timesketch.lib.analyzers import interface
 
 
@@ -117,7 +115,7 @@ if __name__ == '__main__':
         description=description, allow_abbrev=True)
     arguments.add_argument(
         '--test_file', '--file', dest='test_file_path', action='store',
-        default='', type=str, metavar='PATH_TO_TEST_FILE',  help=(
+        default='', type=str, metavar='PATH_TO_TEST_FILE', help=(
             'Path to the file containing the test data to feed to the '
             'analyzer.'))
     arguments.add_argument(

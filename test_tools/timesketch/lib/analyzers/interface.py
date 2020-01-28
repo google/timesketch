@@ -98,14 +98,14 @@ class AnalyzerContext(object):
             self.event_cache[event.event_id] = event
 
     def add_query(
-        self, query_string=None, query_dsl=None, indices=None, fields=None):
+            self, query_string=None, query_dsl=None, indices=None, fields=None):
         """Add a query string or DSL to the context.
 
         Args:
-            query_string: 
-            query_dsl: 
-            indices: 
-            fields: 
+            query_string: Query string.
+            query_dsl: Dictionary containing Elasticsearch DSL query.
+            indices: List of indices to query.
+            fields: List of fields to return.
         """
         query = {
             'string': query_string,
@@ -137,7 +137,7 @@ class AnalyzerContext(object):
         self.event_cache[event.event_id] = event
 
 
-def get_yaml_config(unusued_file_name):
+def get_yaml_config(unusued_file_name):  # pylint: disable-msg=unused-argument
     """Return an empty dict.
 
     This is only implemented to make sure that analyzers attempting
@@ -329,6 +329,7 @@ class Sketch(object):
         """
         self.id = sketch_id
         self.updates = []
+        self._context = None
 
     def add_aggregation(
             self, name, agg_name, agg_params, description='', view_id=None,
