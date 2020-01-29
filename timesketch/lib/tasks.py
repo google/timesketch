@@ -410,7 +410,7 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
     # Log information to Celery
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
     logging.info(message.format(timeline_name, index_name, source_type))
-
+    path_tmp = current_app.config.get('UPLOAD_FOLDER')
     try:
         psort_path = current_app.config['PSORT_PATH']
     except KeyError:
@@ -425,9 +425,9 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
     try:
         if six.PY3:
             subprocess.check_output(
-                cmd, stderr=subprocess.STDOUT, encoding='utf-8')
+                cmd, cwd=path_tmp, stderr=subprocess.STDOUT, encoding='utf-8')
         else:
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+            subprocess.check_output(cmd, cwd=path_tmp, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
         _set_timeline_status(index_name, status='fail', error_msg=e.output)
