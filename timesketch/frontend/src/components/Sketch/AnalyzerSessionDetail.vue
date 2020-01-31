@@ -14,22 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <b-message :title="messageTitle" :closable="false" style="margin-top:15px;">
-    <table class="table is-fullwidth">
-      <colgroup>
-        <col span="1" style="width: 5%;">
-        <col span="1" style="width: 15%;">
-        <col span="1" style="width: 80%;">
-      </colgroup>
-      <tbody>
-      <tr v-for="row in tableData">
-        <td><div style="width:10px; height: 10px; border-radius: 100%; margin-top:6px; margin-left:3px;" v-bind:class="{ pending: row.status === 'PENDING',  done: row.status === 'DONE', started: row.status === 'STARTED', error: row.status === 'ERROR'}"></div></td>
-        <td>{{row.analyzer}}</td>
-        <td>{{row.result}}</td>
-      </tr>
-      </tbody>
-    </table>
-  </b-message>
+  <div class="card" style="margin-top:15px;">
+    <header class="card-header" style="background-color: #eaeaea;">
+      <p class="card-header-title">
+        {{ messageTitle }}
+      </p>
+      <span class="card-header-icon" aria-label="close">
+        <span class="delete" v-on:click="$emit('closeDetail')"></span>
+      </span>
+    </header>
+    <div class="card-content" style="background-color: #f7f7f7;">
+      <table class="table is-fullwidth">
+        <colgroup>
+          <col span="1" style="width: 5%;">
+          <col span="1" style="width: 15%;">
+          <col span="1" style="width: 80%;">
+        </colgroup>
+        <tbody>
+        <tr v-for="row in tableData">
+          <td><div style="width:10px; height: 10px; border-radius: 100%; margin-top:6px; margin-left:3px;" v-bind:class="{ pending: row.status === 'PENDING',  done: row.status === 'DONE', started: row.status === 'STARTED', error: row.status === 'ERROR'}"></div></td>
+          <td>{{row.analyzer}}</td>
+          <td>{{row.result}}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -106,7 +116,6 @@ export default {
           this.fetchData()
           if (this.finishedAnalyzers === this.totalAnalyzers) {
             this.autoRefresh = false
-            this.$emit('sessionDone')
           }
         }.bind(this), 5000)}
       else {
