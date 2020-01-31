@@ -283,8 +283,23 @@ limitations under the License.
                                           @addChip="addChip($event)"
                                           @searchContext="searchContext($event)">
             </ts-sketch-explore-event-list>
+
+            <div v-if="eventList.objects.length" style="float:right;">
+              <b-pagination @change="paginate($event)"
+                            :total="totalHitsForPagination"
+                            :per-page="currentQueryFilter.size"
+                            :current.sync="currentPage"
+                            :simple=true
+                            size="is-small"
+                            icon-pack="fas"
+                            icon-prev="chevron-left"
+                            icon-next="chevron-right">
+              </b-pagination>
+            </div>
+            <br>
           </div>
         </div>
+        <br>
       </div>
     </section>
   </div>
