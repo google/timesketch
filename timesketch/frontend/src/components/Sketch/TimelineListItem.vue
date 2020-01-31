@@ -130,16 +130,14 @@ limitations under the License.
       Indexing in progress <span class="blink">...</span>
     </span>
 
-
-
     <br>
 
-    <div v-show="analysisSessionId">
-      <ts-analyzer-session-detail :timeline="timeline" :session-id="analysisSessionId" @sessionDone="analysisSessionId = false"></ts-analyzer-session-detail>
+    <div v-show="showAnalysisDetail">
+      <ts-analyzer-session-detail :timeline="timeline" :session-id="analysisSessionId" @closeDetail="showAnalysisDetail = false"></ts-analyzer-session-detail>
     </div>
 
     <div v-if="showAnalysisHistory">
-      <ts-analyzer-history :timeline="timeline"></ts-analyzer-history>
+      <ts-analyzer-history :timeline="timeline" @closeHistory="showAnalysisHistory = false"></ts-analyzer-history>
     </div>
 
   </div>
@@ -222,6 +220,7 @@ export default {
         if (this.timelineStatus !== 'ready') {
           this.autoRefresh = true
         }
+        this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
       }).catch((e) => {})
     }
   },
