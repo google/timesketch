@@ -7,10 +7,19 @@ from timesketch.lib.analyzers import manager
 
 
 class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
-    """Sessionizing sketch analyser. All events in sketch with id sketch_id
+    """Sessionizing sketch analyzer. All events in sketch with id sketch_id
     are grouped in sessions based on the time difference between them. Two
     consecutive events are in the same session if the time difference between
-    them is less or equal then max_time_diff_micros"""
+    them is less or equal then max_time_diff_micros.
+
+    Attributes:
+        NAME (str): The name of the sessionizer.
+        max_time_diff_micros (int): The maximum time difference between two
+            events in the same session, in microseconds.
+        query (str): The Elasticsearch query string query identifying the
+            events to be sessionized.
+        session_type (str): Used to label the events that are sessionized.
+    """
 
     NAME = 'sessionizer'
     # TODO max_time_diff_micros should be configurable
@@ -21,7 +30,6 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
     def run(self):
         """Entry point for the analyzer. Allocates each event a session_id
         attribute.
-
         Returns:
             String containing the number of sessions created.
         """
@@ -46,8 +54,6 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
                 self.annotateEvent(event, session_num)
                 last_timestamp = curr_timestamp
 
-            self.sketch.add_view('Session view',
-                                 self.NAME, query_string=self.query)
         except StopIteration:
             pass
 

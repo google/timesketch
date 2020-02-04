@@ -22,7 +22,12 @@ import time
 import json
 import hashlib
 import os
-import urllib
+import six
+
+# six.moves is a dynamically-created namespace that doesn't actually
+# exist and therefore pylint can't statically analyze it.
+# pylint: disable-msg=import-error
+from six.moves.urllib import parse as urlparse
 
 import jwt
 import requests
@@ -117,7 +122,11 @@ def get_oauth2_authorize_url(hosted_domain=None):
     """
     csrf_token = _generate_random_token()
     nonce = _generate_random_token()
-    redirect_uri = url_for('user_views.google_openid_connect', _external=True)
+    redirect_uri = url_for(
+        'user_views.google_openid_connect',
+        _scheme='https',
+        _external=True
+    )
     scopes = ('openid', 'email', 'profile')
 
     # Add the generated CSRF token to the client session for later validation.
@@ -136,7 +145,7 @@ def get_oauth2_authorize_url(hosted_domain=None):
     if hosted_domain:
         params['hd'] = hosted_domain
 
-    urlencoded_params = urllib.urlencode(params)
+    urlencoded_params = urlparse.urlencode(params)
     google_authorization_url = '{}?{}'.format(AUTH_URI, urlencoded_params)
     return google_authorization_url
 
@@ -155,7 +164,11 @@ def get_encoded_jwt_over_https(code):
     """
 
     discovery_document = get_oauth2_discovery_document()
-    redirect_uri = url_for('user_views.google_openid_connect', _external=True)
+    redirect_uri = url_for(
+        'user_views.google_openid_connect',
+        _scheme='https',
+        _external=True
+    )
     post_data = {
         'code': code,
         'client_id': current_app.config.get('GOOGLE_OIDC_CLIENT_ID'),
@@ -180,8 +193,34 @@ def get_encoded_jwt_over_https(code):
     return encoded_jwt
 
 
-def validate_jwt(encoded_jwt, public_key, algorithm, expected_audience,
-                 expected_issuer, expected_domain=None):
+def decode_jwt(encoded_jwt, public_key, algorithm, expected_audience):
+    """Decode a JSON Web Token (JWT).
+
+    Args:
+        encoded_jwt: The contents of the X-Goog-IAP-JWT-Assertion header.
+        public_key: Key to verify signature of the JWT.
+        algorithm: Algorithm used for the key. E.g. ES256, RS256
+        expected_audience: Expected audience in the JWT.
+
+    Returns:
+        Decoded JWT as a dict object.
+
+    Raises:
+        JwtValidationError: if the JWT token cannot be decoded.
+    """
+    try:
+        decoded_jwt = jwt.decode(
+            encoded_jwt, public_key, algorithm=algorithm,
+            audience=expected_audience)
+        return decoded_jwt
+    except (jwt.exceptions.InvalidTokenError,
+            jwt.exceptions.InvalidKeyError) as e:
+        raise JwtValidationError('JWT validation error: {}'.format(e))
+
+    return None
+
+
+def validate_jwt(decoded_jwt, expected_issuer, expected_domain=None):
     """Decode and validate a JSON Web token (JWT).
 
     Cloud IAP:
@@ -191,30 +230,24 @@ def validate_jwt(encoded_jwt, public_key, algorithm, expected_audience,
     https://developers.google.com/identity/protocols/OpenIDConnect
 
     Args:
-        encoded_jwt: The contents of the X-Goog-IAP-JWT-Assertion header.
-        public_key: Key to verify signature of the JWT.
-        algorithm: Algorithm used for the key. E.g. ES256, RS256
-        expected_audience: Expected audience in the JWT.
+        decoded_jwt: A dict object containing the decoded JWT token.
         expected_issuer: Expected issuer of the JWT.
         expected_domain: Expected GSuite domain in the JWT (optional).
 
-    Returns:
-        Decoded JWT on successful validation.
+    Raises:
+        JwtValidationError: If unable to validate the JWT.
     """
-    # Decode the token and verify its payload.
-    try:
-        decoded_jwt = jwt.decode(
-            encoded_jwt, public_key, algorithm=algorithm,
-            audience=expected_audience)
-    except (jwt.exceptions.InvalidTokenError,
-            jwt.exceptions.InvalidKeyError) as e:
-        raise JwtValidationError('JWT validation error: {}'.format(e))
-
     # Make sure the token is not created in the future or has expired.
     try:
         now = int(time.time())
         issued_at = decoded_jwt['iat']
+        if isinstance(issued_at, six.string_types):
+            issued_at = int(issued_at, 10)
+
         expires_at = decoded_jwt['exp']
+        if isinstance(expires_at, six.string_types):
+            expires_at = int(expires_at, 10)
+
         if issued_at > now:
             raise JwtValidationError('Token was issued in the future')
         elif expires_at < now:
@@ -240,9 +273,6 @@ def validate_jwt(encoded_jwt, public_key, algorithm, expected_audience,
                 raise JwtValidationError('Wrong domain: {}'.format(domain))
         except KeyError as e:
             raise JwtValidationError('Missing domain: {}'.format(e))
-
-    # If everything checks out, return the decoded token.
-    return decoded_jwt
 
 
 def get_public_key_for_jwt(encoded_jwt, url):

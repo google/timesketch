@@ -303,6 +303,34 @@ class SearchTemplateManager(Command):
                 db_session.commit()
 
 
+class ListSketches(Command):
+    """List all available sketches."""
+
+    # pylint: disable=arguments-differ, method-hidden
+    def run(self):
+        """The run method for the command."""
+        sketches = Sketch.query.all()
+
+        name_len = max([len(x.name) for x in sketches])
+        desc_len = max([len(x.description) for x in sketches])
+
+        if not name_len:
+            name_len = 5
+        if not desc_len:
+            desc_len = 10
+
+        fmt_string = '{{0:^3d}} | {{1:{0:d}s}} | {{2:{1:d}s}}'.format(
+            name_len, desc_len)
+
+        print('+-'*40)
+        print(' ID | Name {0:s} | Description'.format(' '*(name_len-5)))
+        print('+-'*40)
+        for sketch in sketches:
+            print(fmt_string.format(
+                sketch.id, sketch.name, sketch.description))
+            print('-'*80)
+
+
 class ImportTimeline(Command):
     """Create a new Timesketch timeline from a file."""
     option_list = (
@@ -431,6 +459,7 @@ def main():
     shell_manager.add_command('add_index', AddSearchIndex())
     shell_manager.add_command('db', MigrateCommand)
     shell_manager.add_command('drop_db', DropDataBaseTables())
+    shell_manager.add_command('list_sketches', ListSketches())
     shell_manager.add_command('purge', PurgeTimeline())
     shell_manager.add_command('search_template', SearchTemplateManager())
     shell_manager.add_command('import', ImportTimeline())
@@ -440,7 +469,7 @@ def main():
         '-c',
         '--config',
         dest='config',
-        default='/etc/timesketch.conf',
+        default='/etc/timesketch/timesketch.conf',
         required=False)
     shell_manager.run()
 

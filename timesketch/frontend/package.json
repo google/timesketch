@@ -12,6 +12,7 @@
     "@fortawesome/fontawesome-free": "^5.7.2",
     "@fortawesome/free-solid-svg-icons": "^5.7.2",
     "axios": "^0.18.0",
+    "buefy": "^0.8.5",
     "bulma": "^0.7.4",
     "lodash": "^4.17.11",
     "marked": "^0.6.1",
@@ -22,7 +23,9 @@
     "vue": "^2.6.6",
     "vue-color": "^2.7.0",
     "vue-moment": "^4.0.0",
+    "vue-multiselect": "^2.1.6",
     "vue-router": "^3.0.2",
+    "vue-scrollto": "^2.17.1",
     "vuex": "^3.1.0"
   },
   "devDependencies": {

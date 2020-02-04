@@ -20,7 +20,6 @@ Timesketch is an open source tool for collaborative forensic timeline analysis. 
 
 #### Installation
 * [Install Timesketch manually](docs/Installation.md)
-* [Use Vagrant](vagrant)
 * [Use Docker](docker)
 * [Upgrade from existing installation](docs/Upgrading.md)
 
@@ -28,6 +27,8 @@ Timesketch is an open source tool for collaborative forensic timeline analysis. 
 * [Create timeline from JSON/JSONL/CSV file](docs/CreateTimelineFromJSONorCSV.md)
 * [Create timeline from Plaso file](docs/CreateTimelineFromPlaso.md)
 * [Enable Plaso upload via HTTP](docs/EnablePlasoUpload.md)
+* [Use the API client to upload data](docs/UploadDataViaAPI.md)
+* [Import other data](docs/CreateTimeLineFromOtherData.md)
 
 #### Using Timesketch
 

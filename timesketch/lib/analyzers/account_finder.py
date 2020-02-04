@@ -41,7 +41,7 @@ class AccountFinderSketchPlugin(interface.BaseSketchAnalyzer):
             for account_tag in event_tags:
                 # There could be other tags on these events; only get the ones
                 # related to accounts
-                if ' Account' not in account_tag:
+                if '-account' not in account_tag:
                     continue
 
                 found_account = event.source.get('found_account')
