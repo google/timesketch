@@ -18,7 +18,7 @@ https://github.com/log2timeline/plaso/wiki/Ubuntu-Packaged-Release
 
     $ sudo apt-get install redis-server
 
-**Configure Timesketch** (/etc/timesketch.conf)
+**Configure Timesketch** (/etc/timesketch/timesketch.conf)
 
     UPLOAD_ENABLED = True
     UPLOAD_FOLDER = u'/path/to/where/timesketch/can/write/files'

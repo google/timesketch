@@ -55,6 +55,10 @@ class TestConfig(object):
 class MockElasticClient(object):
     """A mock implementation of a ElasticSearch client."""
 
+    def __init__(self):
+        """Initialize the client."""
+        self.indices = MockElasticIndices()
+
     def search(self, index, body, size):  # pylint: disable=unused-argument
         """Mock a client search, used for aggregations."""
         meta = {
@@ -75,6 +79,13 @@ class MockElasticClient(object):
 
         }]
         return {'meta': meta, 'objects': objects}
+
+
+class MockElasticIndices(object):
+    # pylint: disable=unused-argument
+    def get_mapping(self, *args, **kwargs):
+        """Mock get mapping call."""
+        return {}
 
 
 class MockDataStore(object):
@@ -182,7 +193,6 @@ class MockDataStore(object):
             A dictionary with event data.
         """
         return self.event_dict
-
 
     def set_label(self,
                   searchindex_id,

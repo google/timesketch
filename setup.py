@@ -34,7 +34,7 @@ except ImportError:  # for pip <= 9.0.3
     from pip.req import parse_requirements
 
 
-timesketch_version = '20190609'
+timesketch_version = '20200131'
 
 timesketch_description = (
     'Timesketch is a web based tool for collaborative forensic timeline '
@@ -59,7 +59,7 @@ setup(
     ],
     data_files=[
         ('share/timesketch', glob.glob(
-            os.path.join('data', '*'))),
+            os.path.join('data', '*'), recursive=True)),
         ('share/doc/timesketch', [
             'AUTHORS', 'LICENSE', 'README.md']),
     ],

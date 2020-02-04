@@ -27,4 +27,3 @@ class HomeViewTest(BaseTest):
         self.login()
         response = self.client.get(self.resource_url)
         self.assert200(response)
-        self.assert_template_used('home/home.html')

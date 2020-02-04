@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 
 import mock
 
+from timesketch.lib.analyzers.psexec_sessionizers \
+    import DestPsexecSessionizerSketchPlugin
 from timesketch.lib.analyzers.sequence_sessionizer \
     import SequenceSessionizerSketchPlugin
 from timesketch.lib.testlib import BaseTest
@@ -178,7 +180,10 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
             seq_sessionizer_classes: A list of sequence sessionizer classes to
                 test.
     """
-    seq_sessionizer_classes = [ManyEventsSequenceSessionizer]
+    seq_sessionizer_classes = [
+        ManyEventsSequenceSessionizer,
+        DestPsexecSessionizerSketchPlugin
+    ]
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)

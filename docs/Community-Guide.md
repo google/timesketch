@@ -7,7 +7,7 @@ We have a Timesketch channel (#timesketch) on the Freenode network.
 Use your favorite IRC client or try the [Freenode web based IRC client](http://webchat.freenode.net/).
 
 ### Slack community
-Join the [Timesketch Slack community](https://timesketch.slack.com/) by sending an email to get-slack-invite@timesketch.org.  
+Join the [DFIR Timesketch Slack community](https://open-source-dfir.slack.com/) by sending an email to get-slack-invite@timesketch.org.  
 You will get an invite in your inbox as soon as possible.
 
 **Why do I need to email you to get access to the Slack community?**  
