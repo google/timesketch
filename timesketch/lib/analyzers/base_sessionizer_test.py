@@ -201,7 +201,7 @@ def _create_eventObj(datastore, event_id, ts, source_attrs=None):
                            str(event_id))
 
 
-def check_surrounding_events(TestClass, datastore, threshold_ids,
+def check_surrounding_events(TestClass, datastore, threshold_ids, session_type):
     """Checks that the events surrounding the first event in a new session
     are allocated correctly.
     Args:
@@ -209,6 +209,7 @@ def check_surrounding_events(TestClass, datastore, threshold_ids,
         threshold_ids: A list of IDs of the first events in the sessions.
         session_type: A string naming the session type.
     """
+
     session_no = 1
     last_id = threshold_ids[-1]
     for threshold_id in threshold_ids:
