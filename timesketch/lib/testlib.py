@@ -186,8 +186,6 @@ class MockDataStore(object):
         Args:
             searchindex_id: String of ElasticSearch index id
             event_id: String of ElasticSearch event id
-            stored_events: Determines whether the event to return will be
-            retrieved from event_store, or the default event_dict.
 
         Returns:
             A dictionary with event data.

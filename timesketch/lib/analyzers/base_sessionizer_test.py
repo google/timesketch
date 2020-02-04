@@ -16,8 +16,8 @@ class BaseSessionizerTest(BaseTest):
     """Tests the base functionality of session analyzers listed in
     analyzer_classes.
 
-        Attributes:
-            analyzer_classes: A list of analyzer classes to test.
+    Attributes:
+        analyzer_classes: A list of analyzer classes to test.
     """
     analyzer_classes = [
         SessionizerSketchPlugin,
@@ -204,6 +204,7 @@ def _create_eventObj(datastore, event_id, ts, source_attrs=None):
 def check_surrounding_events(TestClass, datastore, threshold_ids, session_type):
     """Checks that the events surrounding the first event in a new session
     are allocated correctly.
+
     Args:
         datastore: An instance of MockDataStore.
         threshold_ids: A list of IDs of the first events in the sessions.
