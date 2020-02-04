@@ -142,6 +142,7 @@ def _create_mock_event(datastore,
                        source_attrs=None):
     """
     Loads in the datastore mock events that based on the given arguments.
+
     Args:
         datastore: An instance of MockDataStore.
         event_id: Desired ID for the Event.
@@ -184,6 +185,7 @@ def _create_mock_event(datastore,
 def _create_eventObj(datastore, event_id, ts, source_attrs=None):
     """Changes MockDataStore.event_dict based on the given arguments and commits
     it to the datastore.
+
     Args:
         datastore: An instance of MockDataStore.
         event_id: An event id number.
