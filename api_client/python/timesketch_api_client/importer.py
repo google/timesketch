@@ -284,7 +284,7 @@ class ImportStreamer(object):
                     filepath, delimiter=delimiter, chunksize=self._threshold):
                 self.add_data_frame(chunk_frame, part_of_iter=True)
         elif file_ending == 'plaso':
-            self._sketch.upload(self._timeline_name, filepath)
+            self._sketch.upload(self._timeline_name, filepath, self._index)
         elif file_ending == 'jsonl':
             data_frame = None
             with open(filepath, 'r') as fh:
@@ -401,6 +401,10 @@ class ImportStreamer(object):
     def set_timeline_name(self, name):
         """Set the timeline name."""
         self._timeline_name = name
+
+    def set_index_name(self, index):
+        """Set the index name."""
+        self._index = index
 
     def set_timestamp_description(self, description):
         """Set the timestamp description field."""
