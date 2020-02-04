@@ -16,17 +16,16 @@ limitations under the License.
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 
-import Home from './components/Home'
-import Sketch from './components/Sketch'
-import SketchOverview from './components/SketchOverview'
-import SketchExplore from './components/SketchExplore'
-import SketchExploreSearch from './components/SketchExploreSearch'
-import SketchExploreAggregation from './components/SketchExploreAggregation'
-import SketchStory from './components/SketchStory'
-import SketchStoryOverview from './components/SketchStoryOverview'
-import SketchStoryContent from './components/SketchStoryContent'
-import SketchTimelines from './components/SketchTimelines'
-import SketchViews from './components/SketchViews'
+import Home from './views/Home'
+import Sketch from './views/Sketch'
+import SketchOverview from './views/SketchOverview'
+import SketchManage from './views/SketchManage'
+import SketchManageViews from "./views/SketchManageViews"
+import SketchManageTimelines from "./views/SketchManageTimelines"
+import SketchExplore from './views/SketchExplore'
+import SketchStory from './views/SketchStory'
+import SketchStoryOverview from './views/SketchStoryOverview'
+import SketchStoryContent from './views/SketchStoryContent'
 
 Vue.use(VueRouter)
 
@@ -37,6 +36,7 @@ const routes = [
     component: Home
   },
   {
+    // Sketch
     path: '/sketch/:sketchId',
     component: Sketch,
     props: true,
@@ -48,33 +48,8 @@ const routes = [
       },
       {
         path: 'explore',
+        name: 'SketchExplore',
         component: SketchExplore,
-        props: true,
-        children: [
-          {
-            path: '',
-            name: 'SketchExplore',
-            component: SketchExploreSearch,
-            props: true
-          },
-          {
-            path: 'aggregation',
-            name: 'SketchExploreAggregation',
-            component: SketchExploreAggregation,
-            props: true
-          }
-        ]
-      },
-      {
-        path: 'timelines',
-        name: 'SketchTimelines',
-        component: SketchTimelines,
-        props: true
-      },
-      {
-        path: 'views',
-        name: 'SketchViews',
-        component: SketchViews,
         props: true
       },
       {
@@ -84,7 +59,7 @@ const routes = [
         children: [
           {
             path: '',
-            name: 'SketchStory',
+            name: 'SketchStoryOverview',
             component: SketchStoryOverview
           },
           {
@@ -92,6 +67,22 @@ const routes = [
             name: 'SketchStoryContent',
             component: SketchStoryContent,
             props: true
+          }]
+      },
+      {
+        path: 'manage',
+        component: SketchManage,
+        props: true,
+        children: [
+          {
+            path: 'views',
+            name: 'SketchManageViews',
+            component: SketchManageViews
+          },
+          {
+            path: 'timelines',
+            name: 'SketchManageTimelines',
+            component: SketchManageTimelines
           }]
       }
     ]

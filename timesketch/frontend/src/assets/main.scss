@@ -30,6 +30,9 @@ $message-background-color: #f9f9f9;
 $info: #0070bd;
 $success: #41ad49;
 
+$table-cell-border: 1px solid #f5f5f5;
+$table-cell-padding: 10px;
+
 // Font Awesome
 $fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
 @import "../../node_modules/@fortawesome/fontawesome-free/scss/fontawesome";

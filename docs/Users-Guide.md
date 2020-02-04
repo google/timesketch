@@ -45,7 +45,7 @@ Parameters:
 
 Example
 ```
-tsctl runserver -c /etc/timesketch.conf
+tsctl runserver -c /etc/timesketch/timesketch.conf
 ```
 
 

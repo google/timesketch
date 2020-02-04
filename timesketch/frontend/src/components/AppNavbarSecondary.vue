@@ -31,25 +31,9 @@ limitations under the License.
             </router-link>
           </li>
           <li v-bind:class="{'is-active': currentPage === 'stories'}">
-            <router-link :to="{ name: 'SketchStory' }">
+            <router-link :to="{ name: 'SketchStoryOverview' }">
               <span class="icon is-small"><i class="fas fa-book" aria-hidden="true"></i></span>
               <span>Stories</span>
-            </router-link>
-          </li>
-        </ul>
-      </div>
-    </div>
-    <div class="navbar-item" v-if="currentAppContext === 'explore'">
-      <div class="tabs">
-        <ul>
-          <li v-bind:class="{'is-active': currentPage === 'search'}">
-            <router-link :to="{ name: 'SketchExplore' }">
-              <span>Search</span>
-            </router-link>
-          </li>
-          <li v-bind:class="{'is-active': currentPage === 'aggregation'}">
-            <router-link :to="{ name: 'SketchExploreAggregation' }">
-              <span>Aggregations</span>
             </router-link>
           </li>
         </ul>

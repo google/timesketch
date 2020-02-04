@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 
 import mock
 
+from timesketch.lib.analyzers.psexec_sessionizers \
+    import DestPsexecSessionizerSketchPlugin
 from timesketch.lib.analyzers.sequence_sessionizer \
     import SequenceSessionizerSketchPlugin
 from timesketch.lib.testlib import BaseTest
@@ -173,11 +175,15 @@ class TestValidSequenceSessionizerPlugin(BaseTest):
 class TestManyEventsSequenceSessionizerPlugin(BaseTest):
     """Tests base functionality of sequence sessionizing sketch analyzers with
     many events in the even_seq which are listed in seq_sessionizer_classes.
-        Attributes:
-            seq_sessionizer_classes: A list of sequence sessionizer classes to
-                test.
+
+    Attributes:
+        seq_sessionizer_classes: A list of sequence sessionizer classes to
+            test.
     """
-    seq_sessionizer_classes = [ManyEventsSequenceSessionizer]
+    seq_sessionizer_classes = [
+        ManyEventsSequenceSessionizer,
+        DestPsexecSessionizerSketchPlugin
+    ]
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -367,7 +373,6 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
             datastore = sessionizer.datastore
 
             _create_mock_event(datastore, 0, 0, [], [0])
-
             message = sessionizer.run()
             self.assertEqual(
                 message,
@@ -378,9 +383,10 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
 class TestOneEventSequenceSessionizerPlugin(BaseTest):
     """Tests base functionality of sequence sessionizing sketch analyzers with
     one event in the even_seq which are listed in seq_sessionizer_classes.
-        Attributes:
-            seq_sessionizer_classes: A list of sequence sessionizer classes to
-                test.
+
+    Attributes:
+        seq_sessionizer_classes: A list of sequence sessionizer classes to
+            test.
     """
     seq_sessionizer_classes = [OneEventSequenceSessionizer]
 

@@ -15,8 +15,9 @@ from timesketch.lib.testlib import MockDataStore
 class BaseSessionizerTest(BaseTest):
     """Tests the base functionality of session analyzers listed in
     analyzer_classes.
-        Attributes:
-            analyzer_classes: A list of analyzer classes to test.
+
+    Attributes:
+        analyzer_classes: A list of analyzer classes to test.
     """
     analyzer_classes = [
         SessionizerSketchPlugin,
@@ -58,11 +59,13 @@ class BaseSessionizerTest(BaseTest):
                 'Sessionizing completed, number of session created: 1')
 
             event1 = datastore.event_store['0']
+
             self.assertEqual(event1['_source']['session_id'],
                              {analyzer.session_type: 1})
             # checking event with id '101' as 100 events have been inserted
             # as 'padding' (see _create_mock_event())
             event2 = datastore.event_store['101']
+
             self.assertEqual(event2['_source']['session_id'],
                              {analyzer.session_type: 1})
 
@@ -197,15 +200,16 @@ def _create_eventObj(datastore, event_id, ts, source_attrs=None):
                            str(event_id))
 
 
-def check_surrounding_events(TestClass, datastore, threshold_ids,
-                             session_type):
+def check_surrounding_events(TestClass, datastore, threshold_ids, session_type):
     """Checks that the events surrounding the first event in a new session
     are allocated correctly.
+
     Args:
         datastore: An instance of MockDataStore.
         threshold_ids: A list of IDs of the first events in the sessions.
         session_type: A string naming the session type.
     """
+
     session_no = 1
     last_id = threshold_ids[-1]
     for threshold_id in threshold_ids:
