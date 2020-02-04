@@ -162,7 +162,7 @@ class MockDataStore(object):
         self.client = MockElasticClient()
         self.host = host
         self.port = port
-        # Dictionary containing event dictionaries
+        # Dictionary containing event dictionaries.
         self.event_store = {}
 
     # pylint: disable=arguments-differ,unused-argument
@@ -232,7 +232,6 @@ class MockDataStore(object):
             '_type': event_type,
             '_source': event
         }
-
         self.event_store[event_id] = new_event
 
     @property
