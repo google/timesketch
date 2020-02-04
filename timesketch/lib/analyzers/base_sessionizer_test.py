@@ -97,7 +97,6 @@ class BaseSessionizerTest(BaseTest):
             event1 = datastore.event_store['0']
             self.assertEqual(event1['_source']['session_id'],
                              {analyzer.session_type: 1})
-
             event2 = datastore.event_store['101']
             self.assertEqual(event2['_source']['session_id'],
                              {analyzer.session_type: 2})
