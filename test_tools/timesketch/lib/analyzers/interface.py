@@ -428,6 +428,7 @@ class BaseIndexAnalyzer(object):
 
     Attributes:
         name: Analyzer name.
+        index_name: Mocked index name.
         sketch: Instance of Sketch object.
     """
 
@@ -449,6 +450,7 @@ class BaseIndexAnalyzer(object):
             file_name: the file path to the test event file.
         """
         self.datastore = None
+        self.index_name = 'mocked_index'
         self.name = self.NAME
         if not os.path.isfile(file_name):
             raise IOError(
