@@ -103,7 +103,7 @@ class AnalyzerContext(object):
         Args:
               event: instance of Event.
         """
-        if not event.event_id in self.event_cache:
+        if event.event_id not in self.event_cache:
             self.event_cache[event.event_id] = event
 
     def add_query(
@@ -130,7 +130,7 @@ class AnalyzerContext(object):
         Args:
               event: instance of Event.
         """
-        if not event.event_id in self.event_cache:
+        if event.event_id not in self.event_cache:
             raise ValueError('Event {0:s} not in cache.'.format(event.event_id))
         del self.event_cache[event.event_id]
 
@@ -140,7 +140,7 @@ class AnalyzerContext(object):
         Args:
               event: instance of Event.
         """
-        if not event.event_id in self.event_cache:
+        if event.event_id not in self.event_cache:
             self.add_event(event)
             return
         self.event_cache[event.event_id] = event
