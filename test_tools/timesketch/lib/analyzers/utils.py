@@ -229,12 +229,13 @@ def get_events_from_data_frame(frame, datastore):
     """
     context = datastore if isinstance(
         datastore, interface.AnalyzerContext) else None
+    sketch = context.sketch if context else None
 
     for row in frame.iterrows():
         _, entry = row
         # pylint: disable-msg=unexpected-keyword-arg
         event = interface.Event(
-            entry, sketch=context.sketch, context=context, datastore=None)
+            entry, sketch=sketch, context=context, datastore=None)
         if context:
             context.add_event(event)
         yield event
