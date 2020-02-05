@@ -180,7 +180,7 @@ class MockDataStore(object):
 
     def get_event(self, searchindex_id, event_id):
         """Mock returning a single event from the datastore.
-        
+
         Args:
             searchindex_id: String of ElasticSearch index id
             event_id: String of ElasticSearch event id
@@ -234,6 +234,7 @@ class MockDataStore(object):
     @property
     def version(self):
         """Get Elasticsearch version.
+
         Returns:
           Version number as a string.
         """
