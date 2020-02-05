@@ -8,6 +8,8 @@ import mock
 from timesketch.lib.analyzers.sessionizer import SessionizerSketchPlugin
 from timesketch.lib.analyzers.expert_sessionizers import \
     WebActivitySessionizerSketchPlugin
+from timesketch.lib.analyzers.expert_sessionizers import \
+    SSHBruteforceSessionizerSketchPlugin
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
@@ -21,7 +23,8 @@ class BaseSessionizerTest(BaseTest):
     """
     analyzer_classes = [
         SessionizerSketchPlugin,
-        WebActivitySessionizerSketchPlugin
+        WebActivitySessionizerSketchPlugin,
+        SSHBruteforceSessionizerSketchPlugin
     ]
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -65,7 +68,6 @@ class BaseSessionizerTest(BaseTest):
             # checking event with id '101' as 100 events have been inserted
             # as 'padding' (see _create_mock_event())
             event2 = datastore.event_store['101']
-
             self.assertEqual(event2['_source']['session_id'],
                              {analyzer.session_type: 1})
 
@@ -97,6 +99,7 @@ class BaseSessionizerTest(BaseTest):
             event1 = datastore.event_store['0']
             self.assertEqual(event1['_source']['session_id'],
                              {analyzer.session_type: 1})
+
             event2 = datastore.event_store['101']
             self.assertEqual(event2['_source']['session_id'],
                              {analyzer.session_type: 2})
@@ -141,7 +144,6 @@ def _create_mock_event(datastore,
                        source_attrs=None):
     """
     Loads in the datastore mock events that based on the given arguments.
-
     Args:
         datastore: An instance of MockDataStore.
         event_id: Desired ID for the Event.
@@ -184,7 +186,6 @@ def _create_mock_event(datastore,
 def _create_eventObj(datastore, event_id, ts, source_attrs=None):
     """Changes MockDataStore.event_dict based on the given arguments and commits
     it to the datastore.
-
     Args:
         datastore: An instance of MockDataStore.
         event_id: An event id number.
