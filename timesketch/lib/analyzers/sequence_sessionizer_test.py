@@ -176,11 +176,9 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
     """Tests base functionality of sequence sessionizing sketch analyzers with
     many events in the even_seq which are listed in seq_sessionizer_classes.
 
-    New sequence sessionizer classes with many events in the event_seq should be
-    added in seq_sessionizer_classes, if applicable.
-
     Attributes:
-        seq_sessionizer_classes: A list of sequence sessionizer classes to test.
+        seq_sessionizer_classes: A list of sequence sessionizer classes to
+            test.
     """
     seq_sessionizer_classes = [
         ManyEventsSequenceSessionizer,
@@ -225,11 +223,8 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
             # Events that are not part of the sequence but are between
             # significant events from the event sequence considered as a session
             # are part of the significant events' session.
-            # pylint: disable=unexpected-keyword-arg
             for i in range(0, 101):
-                event = datastore.get_event('test_index',
-                                            str(i),
-                                            stored_events=True)
+                event = datastore.event_store[str(i)]
                 self.assertEqual(
                     event['_source']['session_id'][sessionizer.session_type],
                     1)
@@ -258,20 +253,15 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
                 'Sessionizing completed, number of {0:s} sessions created: 2'.
                 format(sessionizer.session_type))
 
-            # pylint: disable=unexpected-keyword-arg
             for i in range(0, 100):
-                event = datastore.get_event('test_index',
-                                            str(i),
-                                            stored_events=True)
+                event = datastore.event_store[str(i)]
                 self.assertEqual(
                     event['_source']['session_id'][sessionizer.session_type],
                     1)
             # Events with id in the range of 101 to 201 are not part of any
             # session.
             for i in range(202, 302):
-                event = datastore.get_event('test_index',
-                                            str(i),
-                                            stored_events=True)
+                event = datastore.event_store[str(i)]
                 self.assertEqual(
                     event['_source']['session_id'][sessionizer.session_type],
                     2)
@@ -303,11 +293,8 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
 
             # Session 1: events with id from 0 to 101,
             # session 2: events with id from 202 to 303.
-            # pylint: disable=unexpected-keyword-arg
             for i in range(102, 201):
-                event = datastore.get_event('test_index',
-                                            str(i),
-                                            stored_events=True)
+                event = datastore.event_store[str(i)]
                 self.assertNotIn('session_id', event['_source'])
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -335,11 +322,8 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
                 'Sessionizing completed, number of {0:s} sessions created: 1'.
                 format(sessionizer.session_type))
 
-            # pylint: disable=unexpected-keyword-arg
             for i in range(0, 101):
-                event = datastore.get_event('test_index',
-                                            str(i),
-                                            stored_events=True)
+                event = datastore.event_store[str(i)]
                 self.assertEqual(
                     event['_source']['session_id'][sessionizer.session_type],
                     1)
@@ -372,11 +356,8 @@ class TestManyEventsSequenceSessionizerPlugin(BaseTest):
             # Events with id 0 and id 101 form the requested sequence, but
             # event with id 100 and 101 have max_time_diff_micros + 1 bewtween
             # them
-            # pylint: disable=unexpected-keyword-arg
             for i in range(0, 201):
-                event = datastore.get_event('test_index',
-                                            str(i),
-                                            stored_events=True)
+                event = datastore.event_store[str(i)]
                 self.assertNotIn('session_id', event['_source'])
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -404,11 +385,9 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
     """Tests base functionality of sequence sessionizing sketch analyzers with
     one event in the even_seq which are listed in seq_sessionizer_classes.
 
-    New sequence sessionizer classes with one event in the event_seq should be
-    added in seq_sessionizer_classes, if applicable.
-
     Attributes:
-        seq_sessionizer_classes: A list of sequence sessionizer classes to test.
+        seq_sessionizer_classes: A list of sequence sessionizer classes to
+            test.
     """
     seq_sessionizer_classes = [OneEventSequenceSessionizer]
 
@@ -445,10 +424,7 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
                 format(sessionizer.session_type))
 
             # Event with id 0 is the significant for the event_seq event.
-            # pylint: disable=unexpected-keyword-arg
-            event = datastore.get_event('test_index',
-                                        str(0),
-                                        stored_events=True)
+            event = datastore.event_store['0']
             self.assertEqual(
                 event['_source']['session_id'][sessionizer.session_type], 1)
 
@@ -477,16 +453,11 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
                 format(sessionizer.session_type))
 
             # Session 1: events with id 0.
-            # # pylint: disable=unexpected-keyword-arg
-            event = datastore.get_event('test_index',
-                                        str(0),
-                                        stored_events=True)
+            event = datastore.event_store['0']
             self.assertEqual(
                 event['_source']['session_id'][sessionizer.session_type], 1)
             # Session 2: events with id 101.
-            event = datastore.get_event('test_index',
-                                        str(101),
-                                        stored_events=True)
+            event = datastore.event_store['101']
             self.assertEqual(
                 event['_source']['session_id'][sessionizer.session_type], 2)
 
@@ -517,11 +488,8 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
 
             # Session 1: events with id 0.
             # Session 1: events with id 101.
-            # pylint: disable=unexpected-keyword-arg
             for i in range(1, 100):
-                event = datastore.get_event('test_index',
-                                            str(i),
-                                            stored_events=True)
+                event = datastore.event_store[str(i)]
                 self.assertNotIn('session_id', event['_source'])
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',

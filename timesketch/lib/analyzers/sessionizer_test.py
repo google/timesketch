@@ -34,12 +34,11 @@ class TestSessionizerPlugin(BaseTest):
         self.assertEqual(
             message, 'Sessionizing completed, number of session created: 2')
 
-        # pylint: disable=unexpected-keyword-arg
-        event1 = datastore.get_event('test_index', '0', stored_events=True)
+        event1 = datastore.event_store['0']
         self.assertEqual(event1['_source']['session_id'], {'all_events': 1})
-        event2 = datastore.get_event('test_index', '101', stored_events=True)
+        event2 = datastore.event_store['101']
         self.assertEqual(event2['_source']['session_id'], {'all_events': 1})
-        event3 = datastore.get_event('test_index', '202', stored_events=True)
+        event3 = datastore.event_store['202']
         self.assertEqual(event3['_source']['session_id'], {'all_events': 2})
         check_surrounding_events(self, datastore, [202], 'all_events')
 
@@ -60,13 +59,12 @@ class TestSessionizerPlugin(BaseTest):
         self.assertEqual(
             message, 'Sessionizing completed, number of session created: 1')
 
-        # pylint: disable=unexpected-keyword-arg
-        event1 = datastore.get_event('test_index', '0', stored_events=True)
+        event1 = datastore.event_store['0']
         self.assertEqual(event1['_source']['session_id'], {'all_events': 1})
-        event1 = datastore.get_event('test_index', '100', stored_events=True)
-        self.assertEqual(event1['_source']['session_id'], {'all_events': 1})
-        event2 = datastore.get_event('test_index', '101', stored_events=True)
+        event2 = datastore.event_store['100']
         self.assertEqual(event2['_source']['session_id'], {'all_events': 1})
+        event3 = datastore.event_store['101']
+        self.assertEqual(event3['_source']['session_id'], {'all_events': 1})
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
@@ -100,8 +98,7 @@ class TestSessionizerPlugin(BaseTest):
         self.assertEqual(
             message, 'Sessionizing completed, number of session created: 1')
 
-        # pylint: disable=unexpected-keyword-arg
-        event1 = datastore.get_event('test_index', '0', stored_events=True)
+        event1 = datastore.event_store['0']
         self.assertEqual(event1['_source']['session_id'], {'all_events': 1})
 
 
