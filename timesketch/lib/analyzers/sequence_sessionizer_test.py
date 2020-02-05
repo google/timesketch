@@ -391,15 +391,6 @@ class TestOneEventSequenceSessionizerPlugin(BaseTest):
     """
     seq_sessionizer_classes = [OneEventSequenceSessionizer]
 
-class TestOneEventSequenceSessionizerPlugin(BaseTest):
-    """Tests base functionality of sequence sessionizing sketch analyzers with
-    one event in the even_seq which are listed in seq_sessionizer_classes.
-        Attributes:
-            seq_sessionizer_classes: A list of sequence sessionizer classes to
-                test.
-    """
-    seq_sessionizer_classes = [OneEventSequenceSessionizer]
-
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
     def test_sessionizer(self):
