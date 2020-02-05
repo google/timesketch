@@ -385,6 +385,9 @@ class ImportTimeline(Command):
                 pass
 
         if not timeline_name:
+            if timeline_name is None:
+                timeline_name = '{0:s}_timeline'.format(filename)
+
             if not isinstance(timeline_name, six.text_type):
                 timeline_name = codecs.decode(timeline_name, 'utf-8')
 
