@@ -10,6 +10,7 @@ from timesketch.lib.analyzers.sessionizer import SessionizerSketchPlugin
 
 #number of event record ids to keep when checking for duplicates
 EVENT_HISTORY_LENGTH = 5
+EVENT_DATA_RE = re.compile(r'<EventData>[\s\S]+<\/EventData>')
 
 class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
     """Base class for sessionizing sketch analyzers for user sessions based on
@@ -31,14 +32,14 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
         processed = False
 
         while not processed:
-            events = self.event_stream(query_string=(self.query_template %
-                                                     last_login_time),
+            query_string = self.query_template.format(last_login_time)
+            events = self.event_stream(query_string=query_string,
                                        return_fields=return_fields)
             last_login_time, session_num, login_events, processed = \
                 self.processSessions(events, session_num, login_events)
 
-        return 'Sessionizing completed, number of sessions created: %d' \
-                % session_num
+        msg = 'Sessionizing completed, number of sessions created: {0:d}'
+        return msg.format(session_num)
 
     def processSessions(self, events, session_num, start_events):
         """Iterate over the event stream, checking the event ID to find the
@@ -49,8 +50,9 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
             events: The event stream to process.
             session_num: The number of sessions created so far.
             start_events: A dictionary representing the current start events -
-            with the keys as login IDs, and values as the corresponding session
-            IDs.
+                with the keys as login IDs, and values as the corresponding
+                session IDs.
+
         Returns:
             Tuple containing the timestamp of the last start event, the number
             of sessions created so far, a dictionary representing the current
@@ -78,10 +80,10 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
                     self.annotateEvent(event, [session_id])
                     start_events[logon_id] = session_id
 
-                    view_query = 'session_id.%s:"%s"' % (self.session_type,
-                                                         session_id)
-                    self.sketch.add_view(session_id, self.NAME, query_string=
-                                         view_query)
+                    view_query = 'session_id.{0:s}:"{1:s}"'.format(
+                        self.session_type, session_id)
+                    self.sketch.add_view(
+                        session_id, self.NAME, query_string=view_query)
                     session_num += 1
 
                 elif event_id in self.end_events:
@@ -91,14 +93,10 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
                         self.annotateEvent(event, [session_id])
                         del start_events[logon_id]
 
-                else:
-                    #startup event clears current sessions
-                    if start_events:
-                        new_id = []
-                        for session_id in start_events.values():
-                            new_id.append(session_id)
-                        self.annotateEvent(event, new_id)
-                        start_events = {}
+                elif start_events:
+                    # startup event clears current sessions
+                    self.annotateEvent(event, start_events.values())
+                    start_events = {}
 
             return (start_time, session_num, start_events, True)
 
@@ -109,15 +107,17 @@ class WinEVTXSessionizerSketchPlugin(SessionizerSketchPlugin):
     def getEventData(self, event, name):
         """Retrieves the desired value from the EventData section of a Windows
         EVTX record.
+
         Args:
             event: The event to retrieve the attribute for.
+
         Returns:
             The value contained in the attribute.
         """
-        event_data = (re.search(r'<EventData>[\s\S]+<\/EventData>',
-                                event.source.get('xml_string'))).group()
-        text = (re.search(r'<Data Name="%s">([^<>]+)<\/Data>' % name,
-                          event_data)).group(1)
+        event_data = EVENT_DATA_RE.search(
+            event.source.get('xml_string')).group()
+        data_name_re = re.compile(r'<Data Name="%s">([^<>]+)<\/Data>' % name)
+        text = data_name_re.search(event_data).group(1)
         return text
 
 

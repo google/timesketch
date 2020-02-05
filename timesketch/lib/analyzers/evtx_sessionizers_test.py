@@ -435,8 +435,7 @@ def _create_mock_event(datastore, event_id, quantity, time_diffs=None,
 
     if not time_diffs:
         time_diffs = [0]
-    if quantity < 0:
-        quantity = abs(quantity)
+    quantity = abs(quantity)
 
     # If the list of time differences is too small to be compatible
     # with the quantity of events, then extend the list with the last
