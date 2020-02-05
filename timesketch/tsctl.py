@@ -444,7 +444,7 @@ class ImportTimeline(Command):
 
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
-        from timesketch.lib import tasks
+        from timesketch.lib import tasks  # pylint: disable=import-outside-toplevel
         pipeline = tasks.build_index_pipeline(
             file_path, timeline_name, index_name, extension, sketch.id)
         pipeline.apply_async(task_id=index_name)
