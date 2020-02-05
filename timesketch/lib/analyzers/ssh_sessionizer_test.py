@@ -70,8 +70,7 @@ class TestSSHSessionizerPlugin(BaseTest):
             'Sessionizing completed, number of ssh_session sessions created: 1'
         )
         session_id = '1.1.1.1_1'
-        #pylint: disable=unexpected-keyword-arg
-        event = datastore.get_event('test_index', '0', stored_events=True)
+        event = datastore.event_store['0']
         self.assertEqual(event['_source']['session_id']['ssh_session'],
                          session_id)
 
@@ -94,11 +93,10 @@ class TestSSHSessionizerPlugin(BaseTest):
         )
 
         session_id = '1.1.1.1_1'
-        #pylint: disable=unexpected-keyword-arg
-        event = datastore.get_event('test_index', '0', stored_events=True)
+        event = datastore.event_store['0']
         self.assertEqual(event['_source']['session_id']['ssh_session'],
                          session_id)
-        event = datastore.get_event('test_index', '101', stored_events=True)
+        event = datastore.event_store['101']
         self.assertEqual(event['_source']['session_id']['ssh_session'],
                          session_id)
 
@@ -121,8 +119,7 @@ class TestSSHSessionizerPlugin(BaseTest):
             'Sessionizing completed, number of ssh_session sessions created: 0'
         )
 
-        #pylint: disable=unexpected-keyword-arg
-        event = datastore.get_event('test_index', '0', stored_events=True)
+        event = datastore.event_store['0']
         self.assertNotIn('session_id', event['_source'])
 
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
@@ -150,19 +147,15 @@ class TestSSHSessionizerPlugin(BaseTest):
         session_id_1 = '1.1.1.1_1'
         session_id_2 = '2.2.2.2_2'
 
-        #pylint: disable=unexpected-keyword-arg
-        event = datastore.get_event('test_index', '0', stored_events=True)
+        event = datastore.event_store['0']
         self.assertEqual(event['_source']['session_id']['ssh_session'],
                          session_id_1)
-
-        event = datastore.get_event('test_index', '101', stored_events=True)
+        event = datastore.event_store['101']
         self.assertEqual(event['_source']['session_id']['ssh_session'],
                          session_id_1)
-
-        event = datastore.get_event('test_index', '202', stored_events=True)
+        event = datastore.event_store['202']
         self.assertEqual(event['_source']['session_id']['ssh_session'],
                          session_id_2)
-
-        event = datastore.get_event('test_index', '303', stored_events=True)
+        event = datastore.event_store['303']
         self.assertEqual(event['_source']['session_id']['ssh_session'],
                          session_id_2)
