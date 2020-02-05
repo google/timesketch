@@ -9,9 +9,10 @@ from timesketch.lib.analyzers.sessionizer import SessionizerSketchPlugin
 class WebActivitySessionizerSketchPlugin(SessionizerSketchPlugin):
     """Sessionizer for web activity events"""
     NAME = 'web_activity_sessionizer'
-    max_time_diff_micros = 600000000 # 10 minutes
+    max_time_diff_micros = 600000000  # 10 minutes
     query = 'source_short:"WEBHIST"'
     session_type = 'web_activity'
+
 
 class SSHBruteforceSessionizerSketchPlugin(SessionizerSketchPlugin):
     """Sessionizer for SSH bruteforce attacks, where the events that form an
@@ -23,6 +24,7 @@ class SSHBruteforceSessionizerSketchPlugin(SessionizerSketchPlugin):
         '("keyboard-interactive" OR "connection closed")) OR message:(' \
         '"message repeated" AND "failed password for"))'
     session_type = 'ssh_bruteforce'
+
 
 manager.AnalysisManager.register_analyzer(WebActivitySessionizerSketchPlugin)
 manager.AnalysisManager.register_analyzer(SSHBruteforceSessionizerSketchPlugin)

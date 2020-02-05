@@ -1,0 +1,30 @@
+title: Timesketch Sigma config
+order: 20
+backends:
+  - es-dsl
+  - es-qs
+logsources:
+  sshd:
+    service: sshd
+    conditions:
+      data_type: "syslog/sshd"
+  auth:
+    service: auth
+    conditions:
+      data_type: "syslog"
+  apache:
+    product: apache
+    conditions:
+      data_type: "apache:access"
+  vsftp:
+    service: vsftp
+    conditions:
+      data_type: "vsftpd:log"
+  webserver:
+    category: webserver
+    conditions:
+      data_type: "apache:access OR iis:log:line"
+  shell:
+    service: shell
+    conditions:
+      data_type: "shell:zsh:history OR bash:history:command"

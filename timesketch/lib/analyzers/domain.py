@@ -5,7 +5,6 @@ import collections
 import logging
 import numpy
 
-from timesketch.lib import emojis
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import utils
@@ -99,9 +98,7 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
             x for x, y in domain_counter.most_common()
             if y <= domain_20th_percentile]
 
-        satellite_emoji = emojis.get_emoji('SATELLITE')
         for domain, count in iter(domain_counter.items()):
-            emojis_to_add = [satellite_emoji]
             tags_to_add = []
 
             cdn_provider = utils.get_cdn_provider(domain)
@@ -109,17 +106,15 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
                 tags_to_add.append('known-cdn')
                 cdn_counter[cdn_provider] += 1
 
-            if domain in common_domains:
-                tags_to_add.append('common_domain')
-
             if domain in rare_domains:
-                tags_to_add.append('rare_domain')
+                tags_to_add.append('rare-domain')
 
             for event in domains.get(domain, []):
                 event.add_tags(tags_to_add)
-                event.add_emojis(emojis_to_add)
 
                 new_attributes = {'domain': domain, 'domain_count': count}
+                if domain in common_domains:
+                    new_attributes['is_common_domain'] = True
                 if cdn_provider:
                     new_attributes['cdn_provider'] = cdn_provider
                 event.add_attributes(new_attributes)

@@ -55,6 +55,10 @@ class TestConfig(object):
 class MockElasticClient(object):
     """A mock implementation of a ElasticSearch client."""
 
+    def __init__(self):
+        """Initialize the client."""
+        self.indices = MockElasticIndices()
+
     def search(self, index, body, size):  # pylint: disable=unused-argument
         """Mock a client search, used for aggregations."""
         meta = {
@@ -75,6 +79,13 @@ class MockElasticClient(object):
 
         }]
         return {'meta': meta, 'objects': objects}
+
+
+class MockElasticIndices(object):
+    # pylint: disable=unused-argument
+    def get_mapping(self, *args, **kwargs):
+        """Mock get mapping call."""
+        return {}
 
 
 class MockDataStore(object):
@@ -169,16 +180,15 @@ class MockDataStore(object):
 
     def get_event(self, searchindex_id, event_id):
         """Mock returning a single event from the datastore.
+        
         Args:
             searchindex_id: String of ElasticSearch index id
             event_id: String of ElasticSearch event id
-            stored_events: Determines whether the event to return will be
-            retrieved from event_store, or the default event_dict.
+
         Returns:
             A dictionary with event data.
         """
         return self.event_dict
-
 
     def set_label(self,
                   searchindex_id,
@@ -232,7 +242,7 @@ class MockDataStore(object):
     # pylint: disable=unused-argument
     def search_stream(self, query_string, query_filter, query_dsl,
                       indices, return_fields):
-        for i in range(0, len(self.event_store) - 1):
+        for i in range(len(self.event_store)):
             yield self.event_store[str(i)]
 
 
