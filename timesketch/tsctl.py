@@ -178,9 +178,9 @@ class AddSearchIndex(Command):
             sys.exit(1)
         searchindex = SearchIndex(
             name=name, description=name, user=user, index_name=index)
-        searchindex.grant_permission('read')
         db_session.add(searchindex)
         db_session.commit()
+        searchindex.grant_permission('read')
         sys.stdout.write('Search index {0:s} created\n'.format(name))
 
 
