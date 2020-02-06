@@ -154,7 +154,6 @@ class MockDataStore(object):
 
     def __init__(self, host, port):
         """Initialize the datastore.
-
         Args:
             host: Hostname or IP address to the datastore
             port: The port used by the datastore
@@ -168,7 +167,6 @@ class MockDataStore(object):
     # pylint: disable=arguments-differ,unused-argument
     def search(self, *args, **kwargs):
         """Mock a search query.
-
         Returns:
             A dictionary with search result or integer if count is requested.
         """
@@ -212,7 +210,6 @@ class MockDataStore(object):
                      event_id=None, flush_interval=None):
         """Mock adding the event to Elasticsearch, instead add the event
         to event_store.
-
         Args:
             flush_interval: Number of events to queue up before indexing. (This
             functionality is not supported.)
@@ -246,7 +243,7 @@ class MockDataStore(object):
     # pylint: disable=unused-argument
     def search_stream(self, query_string, query_filter, query_dsl,
                       indices, return_fields):
-        for i in range(0, len(self.event_store) - 1):
+        for i in range(len(self.event_store)):
             yield self.event_store[str(i)]
 
 
@@ -255,7 +252,6 @@ class MockGraphDatabase(object):
 
     def __init__(self, host, username, password):
         """Initialize the datastore.
-
         Args:
             host: Neo4j host
             username: Neo4j username
@@ -309,7 +305,6 @@ class MockGraphDatabase(object):
     # pylint: disable=unused-argument
     def query(self, *args, **kwargs):
         """Mock a search query.
-
         Returns:
             A MockQuerySequence instance.
         """
@@ -326,7 +321,6 @@ class BaseTest(TestCase):
 
     def create_app(self):
         """Setup the Flask application.
-
         Returns:
             Flask application (instance of flask.app.Flask)
         """
@@ -335,7 +329,6 @@ class BaseTest(TestCase):
 
     def _commit_to_database(self, model):
         """Add object to the database session and commit.
-
         Args:
             model: Instance of timesketch.models.[model] object
         """
@@ -344,7 +337,6 @@ class BaseTest(TestCase):
 
     def _create_user(self, username, set_password=False):
         """Create a user in the database.
-
         Args:
             username: Username (string)
             set_password: Boolean value to decide if a password should be set
@@ -359,7 +351,6 @@ class BaseTest(TestCase):
 
     def _create_group(self, name, user):
         """Create a user in the database.
-
         Args:
             name: Group name
             user: A user (instance of timesketch.models.user.User)
@@ -373,12 +364,10 @@ class BaseTest(TestCase):
 
     def _create_sketch(self, name, user, acl=False):
         """Create a sketch in the database.
-
         Args:
             name: Name of the sketch (string)
             user: A user (instance of timesketch.models.user.User)
             acl: Boolean value to decide if ACL permissions should be set
-
         Returns:
             A sketch (instance of timesketch.models.sketch.Sketch)
         """
@@ -395,12 +384,10 @@ class BaseTest(TestCase):
 
     def _create_searchindex(self, name, user, acl=False):
         """Create a searchindex in the database.
-
         Args:
             name: Name of the searchindex (string)
             user: A user (instance of timesketch.models.user.User)
             acl: Boolean value to decide if ACL permissions should be set
-
         Returns:
             A searchindex (instance of timesketch.models.sketch.SearchIndex)
         """
@@ -414,13 +401,11 @@ class BaseTest(TestCase):
 
     def _create_event(self, sketch, searchindex, user):
         """Create an event in the database.
-
         Args:
             sketch: A sketch (instance of timesketch.models.sketch.Sketch)
             searchindex:
                 A searchindex (instance of timesketch.models.sketch.SearchIndex)
             user: A user (instance of timesketch.models.user.User)
-
         Returns:
             An event (instance of timesketch.models.sketch.Event)
         """
@@ -433,11 +418,9 @@ class BaseTest(TestCase):
 
     def _create_story(self, sketch, user):
         """Create a story in the database.
-
         Args:
             sketch: A sketch (instance of timesketch.models.sketch.Sketch)
             user: A user (instance of timesketch.models.user.User)
-
         Returns:
             A story (instance of timesketch.models.story.Story)
         """
@@ -448,14 +431,12 @@ class BaseTest(TestCase):
 
     def _create_timeline(self, name, sketch, searchindex, user):
         """Create a timeline in the database.
-
         Args:
             name: Name of the timeline (string)
             sketch: A sketch (instance of timesketch.models.sketch.Sketch)
             searchindex:
                 A searchindex (instance of timesketch.models.sketch.SearchIndex)
             user: A user (instance of timesketch.models.user.User)
-
         Returns:
             A timeline (instance of timesketch.models.sketch.Timeline)
         """
@@ -471,12 +452,10 @@ class BaseTest(TestCase):
 
     def _create_view(self, name, sketch, user):
         """Create a view in the database.
-
         Args:
             name: Name of the view (string)
             sketch: A sketch (instance of timesketch.models.sketch.Sketch)
             user: A user (instance of timesketch.models.user.User)
-
         Returns:
             A view (instance of timesketch.models.sketch.View)
         """
@@ -491,11 +470,9 @@ class BaseTest(TestCase):
 
     def _create_searchtemplate(self, name, user):
         """Create a search template in the database.
-
         Args:
             name: Name of the view (string)
             user: A user (instance of timesketch.models.user.User)
-
         Returns:
             A search template (timesketch.models.sketch.SearchTemplate)
         """
