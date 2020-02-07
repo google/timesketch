@@ -19,7 +19,7 @@ limitations under the License.
       <span class="icon is-small">
         <i class="fas fa-play-circle"></i>
       </span>
-      <span>Analyzers</span>
+      <span>Analyze</span>
     </button>
     <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
       <div class="modal-card" style="width:300px;">

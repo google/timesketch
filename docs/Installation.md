@@ -41,7 +41,7 @@ Make sure that Elasticsearch is running:
 #### Install PostgreSQL
 
     $ sudo apt-get install postgresql
-    $ sudo apt-get install python-psycopg2
+    $ sudo apt-get install python3-psycopg2
 
 **Configure PostgreSQL**
 
@@ -59,20 +59,21 @@ Then you need to restart PostgreSQL:
 
 Now it is time to install Timesketch. First we need to install some dependencies:
 
-    $ sudo apt-get install python-pip python-dev libffi-dev
+    $ sudo apt-get install python3-pip python3-dev libffi3-dev
 
 Then install Timesketch itself:
 
-    $ sudo pip install timesketch
+    $ sudo pip3 install timesketch
 
 **Configure Timesketch**
 
-Copy the configuration file to `/etc` and configure it. The file is well commented and it should be pretty straight forward.
+Copy the configuration file to `/etc/timesketch/` and configure it. The file is well commented and it should be pretty straight forward.
 
-    $ sudo cp /usr/local/share/timesketch/timesketch.conf /etc/
-    $ sudo chmod 600 /etc/timesketch.conf
+    $ mkdir /etc/timesketch
+    $ sudo cp /usr/local/share/timesketch/timesketch.conf /etc/timesketch/
+    $ sudo chmod 600 /etc/timesketch/timesketch.conf
 
-Generate a secret key and configure `SECRET_KEY` in `/etc/timesketch.conf`
+Generate a secret key and configure `SECRET_KEY` in `/etc/timesketch/timesketch.conf`
 
     $ openssl rand -base64 32
 

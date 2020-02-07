@@ -50,7 +50,9 @@ limitations under the License.
     </div>
   </form>
     <br>
-    <b-progress v-if="percentCompleted !== 0 && percentCompleted !== 100" :value="percentCompleted" show-value format="percent" type="is-info" size="is-medium"></b-progress>
+    <b-progress v-if="percentCompleted !== 0" :value="percentCompleted" show-value format="percent" type="is-info" size="is-medium">
+      <span v-if="percentCompleted === 100">Waiting for request to finish..</span>
+    </b-progress>
   </div>
 </template>
 

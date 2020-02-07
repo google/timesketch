@@ -62,8 +62,8 @@ class GcpServiceKeySketchPlugin(interface.BaseSketchAnalyzer):
                 view_name='GCP ServiceKey activity', analyzer_name=self.NAME,
                 query_string=query)
 
-        return ('GCP ServiceKey analyzer completed',
-                '{0:d} service key marked'.format(simple_counter))
+        return ('GCP ServiceKey analyzer completed with '
+                '{0:d} service key marked').format(simple_counter)
 
 
 manager.AnalysisManager.register_analyzer(GcpServiceKeySketchPlugin)

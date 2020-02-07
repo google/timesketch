@@ -283,8 +283,23 @@ limitations under the License.
                                           @addChip="addChip($event)"
                                           @searchContext="searchContext($event)">
             </ts-sketch-explore-event-list>
+
+            <div v-if="eventList.objects.length" style="float:right;">
+              <b-pagination @change="paginate($event)"
+                            :total="totalHitsForPagination"
+                            :per-page="currentQueryFilter.size"
+                            :current.sync="currentPage"
+                            :simple=true
+                            size="is-small"
+                            icon-pack="fas"
+                            icon-prev="chevron-left"
+                            icon-next="chevron-right">
+              </b-pagination>
+            </div>
+            <br>
           </div>
         </div>
+        <br>
       </div>
     </section>
   </div>
@@ -386,32 +401,6 @@ export default {
   methods: {
     search: function () {
       if (this.contextEvent) {
-        // TODO: Make this selectable in the UI
-        const contextTime = 300
-        const numContextEvents = 500
-
-        const dateTimeTemplate = 'YYYY-MM-DDTHH:mm:ss'
-        let startDateTimeMoment = this.$moment.utc(this.contextEvent._source.datetime)
-        let newStartDate = startDateTimeMoment.clone().subtract(contextTime, 's').format(dateTimeTemplate)
-        let newEndDate = startDateTimeMoment.clone().add(contextTime, 's').format(dateTimeTemplate)
-        let startChip = {
-          'field': '',
-          'value': newStartDate + ',' + startDateTimeMoment.format(dateTimeTemplate),
-          'type': 'datetime_range',
-          'operator': 'must'
-        }
-        let endChip = {
-          'field': '',
-          'value': startDateTimeMoment.format(dateTimeTemplate) + ',' + newEndDate,
-          'type': 'datetime_range',
-          'operator': 'must'
-        }
-        // TODO: Use chips instead
-        this.currentQueryString = '* OR ' + '_id:' + this.contextEvent._id
-
-        this.currentQueryFilter.chips = [startChip, endChip]
-        this.currentQueryFilter.indices = [this.contextEvent._index]
-        this.currentQueryFilter.size = numContextEvents
 
         // Scroll to the context box in the UI
         this.$scrollTo('#context', 200, {offset: -300})
@@ -475,12 +464,40 @@ export default {
       }).catch((e) => {})
     },
     searchContext: function (event) {
+      // TODO: Make this selectable in the UI
+      const contextTime = 300
+      const numContextEvents = 500
+
       this.contextEvent = event
       if (!this.originalContext){
         let currentQueryStringCopy = JSON.parse(JSON.stringify(this.currentQueryString))
         let currentQueryFilterCopy = JSON.parse(JSON.stringify(this.currentQueryFilter))
         this.originalContext = {'queryString': currentQueryStringCopy, 'queryFilter': currentQueryFilterCopy}
       }
+
+      const dateTimeTemplate = 'YYYY-MM-DDTHH:mm:ss'
+      let startDateTimeMoment = this.$moment.utc(this.contextEvent._source.datetime)
+      let newStartDate = startDateTimeMoment.clone().subtract(contextTime, 's').format(dateTimeTemplate)
+      let newEndDate = startDateTimeMoment.clone().add(contextTime, 's').format(dateTimeTemplate)
+      let startChip = {
+        'field': '',
+        'value': newStartDate + ',' + startDateTimeMoment.format(dateTimeTemplate),
+        'type': 'datetime_range',
+        'operator': 'must'
+      }
+      let endChip = {
+        'field': '',
+        'value': startDateTimeMoment.format(dateTimeTemplate) + ',' + newEndDate,
+        'type': 'datetime_range',
+        'operator': 'must'
+      }
+      // TODO: Use chips instead
+      this.currentQueryString = '* OR ' + '_id:' + this.contextEvent._id
+
+      this.currentQueryFilter.chips = [startChip, endChip]
+      this.currentQueryFilter.indices = [this.contextEvent._index]
+      this.currentQueryFilter.size = numContextEvents
+
       this.search()
     },
     removeContext: function () {

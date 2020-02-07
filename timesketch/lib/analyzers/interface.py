@@ -43,6 +43,27 @@ def _flush_datastore_decorator(func):
         return func_return
     return wrapper
 
+def get_config_path(file_name):
+    """Returns a path to a configuration file.
+
+    Args:
+        file_name: String that defines the config file name.
+
+    Returns:
+        The path to the configuration file or None if the file cannot be found.
+    """
+    path = os.path.join(os.path.sep, 'etc', 'timesketch', file_name)
+    if os.path.isfile(path):
+        return path
+
+    path = os.path.join(
+        os.path.dirname(__file__), '..', '..', '..', 'data', file_name)
+    path = os.path.abspath(path)
+    if os.path.isfile(path):
+        return path
+
+    return None
+
 
 def get_yaml_config(file_name):
     """Return a dict parsed from a YAML file within the config directory.
@@ -55,12 +76,8 @@ def get_yaml_config(file_name):
         an empty dict if the file is not found or YAML was unable
         to parse it.
     """
-    root_path = os.path.join(os.path.sep, 'etc', 'timesketch')
-    if not os.path.isdir(root_path):
-        return {}
-
-    path = os.path.join(root_path, file_name)
-    if not os.path.isfile(path):
+    path = get_config_path(file_name)
+    if not path:
         return {}
 
     with open(path, 'r') as fh:
@@ -360,6 +377,9 @@ class BaseIndexAnalyzer(object):
     # it needs to be included in this frozenset by using
     # the indexer names.
     DEPENDENCIES = frozenset()
+
+    # Used as hints to the frontend UI in order to render input forms.
+    FORM_FIELDS = []
 
     def __init__(self, index_name):
         """Initialize the analyzer object.

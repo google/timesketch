@@ -67,7 +67,14 @@ def create_app(config=None):
     )
 
     if not config:
-        config = '/etc/timesketch.conf'
+        # Where to find the config file
+        default_path = '/etc/timesketch/timesketch.conf'
+        # Fall back to legacy location of the config file
+        legacy_path = '/etc/timesketch.conf'
+        if os.path.isfile(default_path):
+            config = default_path
+        else:
+            config = legacy_path
 
     if isinstance(config, six.text_type):
         os.environ['TIMESKETCH_SETTINGS'] = config
@@ -92,10 +99,9 @@ def create_app(config=None):
     if app.config['UPLOAD_ENABLED']:
         try:
             from plaso import __version__ as plaso_version
+            app.config['PLASO_VERSION'] = plaso_version
         except ImportError:
             sys.stderr.write('Upload is enabled, but Plaso is not installed.')
-            sys.exit()
-        app.config['PLASO_VERSION'] = plaso_version
 
     # Setup the database.
     configure_engine(app.config['SQLALCHEMY_DATABASE_URI'])

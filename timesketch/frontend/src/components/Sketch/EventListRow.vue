@@ -32,7 +32,7 @@ limitations under the License.
 
         <!-- Timeline color (set the color for the timeline) -->
         <td v-bind:style="timelineColor">
-          {{ event._source.datetime | moment.utc("YYYY-MM-DDTHH:mm:ss.SSSSSS") }}
+          {{ event._source.datetime | moment("utc", "YYYY-MM-DDTHH:mm:ss.SSSSSS") }}
         </td>
 
         <!-- Action column -->

@@ -15,12 +15,15 @@ limitations under the License.
 -->
 <template>
   <div class="card" style="margin-top:15px;">
-    <header class="card-header">
+    <header class="card-header" style="background-color: #eaeaea;">
       <p class="card-header-title">
         Analysis history
       </p>
+      <span class="card-header-icon" aria-label="close">
+        <span class="delete" v-on:click="$emit('closeHistory')"></span>
+      </span>
     </header>
-    <div class="card-content">
+    <div class="card-content" style="background-color: #f7f7f7;">
       <b-table
         v-if="analyses"
         :data="analyses"
