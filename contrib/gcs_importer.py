@@ -122,7 +122,7 @@ def setup_sketch(timeline_name, index_name, username, sketch_id=None):
             name=searchindex.name, description=searchindex.description,
             sketch=sketch, user=user, searchindex=searchindex)
 
-        # If the user don't have write access to the sketch then create the
+        # If the user doesn't have write access to the sketch then create the
         # timeline but don't attach it to the sketch.
         if not sketch.has_permission(user, 'write'):
             timeline.sketch = None
