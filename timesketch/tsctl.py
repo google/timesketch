@@ -178,9 +178,9 @@ class AddSearchIndex(Command):
             sys.exit(1)
         searchindex = SearchIndex(
             name=name, description=name, user=user, index_name=index)
-        searchindex.grant_permission('read')
         db_session.add(searchindex)
         db_session.commit()
+        searchindex.grant_permission('read')
         sys.stdout.write('Search index {0:s} created\n'.format(name))
 
 
@@ -385,6 +385,9 @@ class ImportTimeline(Command):
                 pass
 
         if not timeline_name:
+            if timeline_name is None:
+                timeline_name = '{0:s}_timeline'.format(filename)
+
             if not isinstance(timeline_name, six.text_type):
                 timeline_name = codecs.decode(timeline_name, 'utf-8')
 
@@ -441,7 +444,7 @@ class ImportTimeline(Command):
 
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
-        from timesketch.lib import tasks
+        from timesketch.lib import tasks  # pylint: disable=import-outside-toplevel
         pipeline = tasks.build_index_pipeline(
             file_path, timeline_name, index_name, extension, sketch.id)
         pipeline.apply_async(task_id=index_name)
