@@ -103,7 +103,7 @@ class AnalyzerContext(object):
         Args:
               event: instance of Event.
         """
-        if not event.event_id in self.event_cache:
+        if event.event_id not in self.event_cache:
             self.event_cache[event.event_id] = event
 
     def add_query(
@@ -130,7 +130,7 @@ class AnalyzerContext(object):
         Args:
               event: instance of Event.
         """
-        if not event.event_id in self.event_cache:
+        if event.event_id not in self.event_cache:
             raise ValueError('Event {0:s} not in cache.'.format(event.event_id))
         del self.event_cache[event.event_id]
 
@@ -140,7 +140,7 @@ class AnalyzerContext(object):
         Args:
               event: instance of Event.
         """
-        if not event.event_id in self.event_cache:
+        if event.event_id not in self.event_cache:
             self.add_event(event)
             return
         self.event_cache[event.event_id] = event
@@ -428,6 +428,7 @@ class BaseIndexAnalyzer(object):
 
     Attributes:
         name: Analyzer name.
+        index_name: Mocked index name.
         sketch: Instance of Sketch object.
     """
 
@@ -449,6 +450,7 @@ class BaseIndexAnalyzer(object):
             file_name: the file path to the test event file.
         """
         self.datastore = None
+        self.index_name = 'mocked_index'
         self.name = self.NAME
         if not os.path.isfile(file_name):
             raise IOError(

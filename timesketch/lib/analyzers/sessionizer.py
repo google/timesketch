@@ -61,7 +61,20 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
                 ' {0:d}'.format(session_num))
 
     def annotateEvent(self, event, session_num):
-        event.add_attributes({'session_id': {self.session_type: session_num}})
+        """Annotate an event with a session ID. Store IDs as dictionary entries
+        corresponding to the type of session.
+        Args:
+            event: The event to annotate.
+            session_num: The session ID.
+        """
+        current_attr = event.source.get('session_id')
+        if current_attr is None:
+            event.add_attributes({'session_id': {self.session_type:
+                                                 session_num}})
+        else:
+            current_attr[self.session_type] = session_num
+            event.add_attributes({'session_id': current_attr})
+
         event.commit()
 
 manager.AnalysisManager.register_analyzer(SessionizerSketchPlugin)
