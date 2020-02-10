@@ -1,4 +1,4 @@
-# Copyright 2019 Google Inc. All rights reserved.
+# Copyright 2020 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from __future__ import unicode_literals
+"""Google Cloud Storage importer."""
 
 import argparse
 import time
@@ -19,6 +19,9 @@ import os
 import sys
 import uuid
 import json
+import logging
+
+from werkzeug.exceptions import Forbidden
 
 from timesketch import create_app
 from timesketch.lib import tasks
@@ -32,53 +35,81 @@ try:
     from google.cloud import pubsub_v1
     from google.cloud import storage
 except ImportError:
-    sys.exit('ERROR: You missing Google Cloud libraries.')
+    sys.exit('ERROR: You are missing Google Cloud libraries')
+
+# Create logger
+logger = logging.getLogger('gcs_importer')
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler()
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
-parser = argparse.ArgumentParser(description='GCS importer')
-parser.add_argument('--project', help='Google Cloud Project ID')
-parser.add_argument('--bucket', help='Google Cloud Storage bucket')
-parser.add_argument('--subscription', help='Google Cloud PubSub subscription ')
-parser.add_argument('--output', default='/tmp', help='Directory for downloads')
-args = parser.parse_args()
+def download_from_gcs(gcs_base_path, filename):
+    """Download file from Google Cloud Storage (GCS).
 
+    Args:
+        gcs_base_path: (str) GCS bucket path
+        filename: (str) Filename of the file to download
 
-# Flask app
-app = create_app()
-
-
-def get_gcs_bucket():
+    Returns:
+        (str) Path to downloaded file
+    """
     storage_client = storage.Client(args.project)
-    return storage_client.get_bucket(args.bucket)
-
-
-def download_from_gcs(bucket, gcs_base_path, filename):
+    bucket = storage_client.get_bucket(args.bucket)
     gcs_full_path = os.path.join(gcs_base_path, filename)
     local_path = os.path.join(args.output, filename)
     blob = bucket.blob(gcs_full_path)
     blob.download_to_filename(local_path)
-    print('Downloaded file from GCS: ', local_path)
+    logger.info('Downloaded file from GCS: {}'.format(local_path))
     return local_path
 
 
-def setup_sketch(name, description, username, sketch_id=None):
+def setup_sketch(timeline_name, index_name, username, sketch_id=None):
+    """Use existing sketch or create a new sketch.
+
+    Args:
+        timeline_name: (str) Name of the Timeline
+        index_name: (str) Name of the index
+        username: (str) Who should own the timeline
+        sketch_id: (str) Optional sketch_id to add timeline to
+
+    Returns:
+        (str) Sketch ID
+    """
     with app.app_context():
-        timeline_name = gcs_base_filename
-        index_name = uuid.uuid4().hex
         user = User.get_or_create(username=username)
+        sketch = None
 
         if sketch_id:
-            sketch = Sketch.query.get(sketch_id)
-        else:
-            sketch = Sketch.get_or_create(
-                name='Turbinia: {}'.format(gcs_base_filename),
-                description='Automatically created by Turbinia.',
-                user=user)
+            try:
+                sketch = Sketch.query.get_with_acl(sketch_id, user=user)
+                logger.info('Using existing sketch: {} ({})'.format(
+                    sketch.name, sketch.id))
+            except Forbidden:
+                pass
+
+        if not sketch:
+            # Create a new sketch.
+            sketch_name = 'Turbinia: {}'.format(timeline_name)
+            sketch = Sketch(
+                name=sketch_name, description=sketch_name, user=user)
+            # Need to commit here to be able to set permissions later.
+            db_session.add(sketch)
+            db_session.commit()
+            sketch.grant_permission(permission='read', user=user)
+            sketch.grant_permission(permission='write', user=user)
+            sketch.grant_permission(permission='delete', user=user)
+            sketch.status.append(sketch.Status(user=None, status='new'))
+            db_session.add(sketch)
+            db_session.commit()
+            logger.info('Created new sketch: {} ({})'.format(
+                sketch.name, sketch.id))
 
         searchindex = SearchIndex.get_or_create(
-            name=timeline_name,
-            description=timeline_name,
-            user=user,
+            name=timeline_name, description='Created by Turbinia.', user=user,
             index_name=index_name)
         searchindex.grant_permission(permission='read', user=user)
         searchindex.grant_permission(permission='write', user=user)
@@ -87,25 +118,31 @@ def setup_sketch(name, description, username, sketch_id=None):
         db_session.add(searchindex)
         db_session.commit()
 
-        if sketch and sketch.has_permission(user, 'write'):
+        if sketch.has_permission(user, 'write'):
             timeline = Timeline(
-                name=searchindex.name,
-                description=searchindex.description,
-                sketch=sketch,
-                user=user,
-                searchindex=searchindex)
-            timeline.set_status('processing')
+                name=searchindex.name, description=searchindex.description,
+                sketch=sketch, user=user, searchindex=searchindex)
             sketch.timelines.append(timeline)
             db_session.add(timeline)
             db_session.commit()
+            timeline.set_status('processing')
+
+        return sketch.id
 
 
 def callback(message):
+    """Google PubSub callback.
+
+    This function is called on all incoming messages on the configures topic.
+
+    Args:
+        message: (dict) PubSub message
+    """
     message.ack()
     gcs_full_path = message.attributes.get('objectId')
 
+    # Exit early if the file type is wrong.
     if not gcs_full_path.endswith('.plaso.metadata.json'):
-        #print('ERROR: Skipping unknown file format: ', gcs_full_path)
         return
 
     gcs_base_path = os.path.dirname(gcs_full_path)
@@ -113,37 +150,47 @@ def callback(message):
     gcs_base_filename = gcs_metadata_filename.replace('.metadata.json', '')
     gcs_plaso_filename = gcs_base_filename
 
-    #print('PubSub message parsed: ', gcs_full_path, gcs_plaso_path)
-
     # Download files from GCS
-    local_metadata_file = download_from_gcs(gcs_base_path, gcs_metadata_filename)
+    local_metadata_file = download_from_gcs(
+        gcs_base_path, gcs_metadata_filename)
     local_plaso_file = download_from_gcs(gcs_base_path, gcs_plaso_filename)
 
-    print('METADATA FILE: ', local_metadata_file)
     with open(local_metadata_file, 'r') as metadata_file:
         metadata = json.load(metadata_file)
         username = metadata.get('requester')
-        sketch_id = metadata.get('sketch_iud')
-        print('Parse metadata file: ', username, sketch_id)
+        sketch_id_from_metadata = metadata.get('sketch_id')
 
     if not username:
-        print('ERROR: Missing username')
+        logger.error('Missing username')
         return
 
+    timeline_name = os.path.splitext(gcs_plaso_filename)[0]
+    index_name = uuid.uuid4().hex
+    sketch_id = setup_sketch(timeline_name, index_name, 'admin',
+                             sketch_id_from_metadata)
 
-        # Celery
+    # Start indexing
+    with app.app_context():
         pipeline = tasks.build_index_pipeline(
-            file_path=local_plaso_file,
-            timeline_name=gcs_base_filename,
-            index_name=index_name,
-            file_extension='plaso',
-            sketch_id=sketch_id)
+            file_path=local_plaso_file, timeline_name=gcs_base_filename,
+            index_name=index_name, file_extension='plaso', sketch_id=sketch_id)
         pipeline.apply_async()
-
-
+        logger.info('File sent for indexing: {}'. format(gcs_base_filename))
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='GCS importer')
+    parser.add_argument('--project', help='Google Cloud Project ID')
+    parser.add_argument('--bucket',
+                        help='Google Cloud Storage bucket to monitor')
+    parser.add_argument('--subscription',
+                        help='Google Cloud PubSub subscription')
+    parser.add_argument('--output', default='/tmp',
+                        help='Directory for downloads')
+    args = parser.parse_args()
+
+    # Create flask app
+    app = create_app()
 
     # Setup Google Cloud Pub/Sub
     subscriber = pubsub_v1.SubscriberClient()
@@ -151,7 +198,6 @@ if __name__ == '__main__':
         args.project, args.subscription)
     subscriber.subscribe(subscription_path, callback=callback)
 
-    print('Listening on PubSub queue: {}'.format(args.subscription))
+    logger.info('Listening on PubSub queue: {}'.format(args.subscription))
     while True:
         time.sleep(10)
-    print("foo")
