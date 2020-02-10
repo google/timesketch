@@ -91,7 +91,7 @@ def setup_sketch(timeline_name, index_name, username, sketch_id=None):
             except Forbidden:
                 pass
 
-        if not sketch:
+        if not (sketch or sketch_id):
             # Create a new sketch.
             sketch_name = 'Turbinia: {}'.format(timeline_name)
             sketch = Sketch(
@@ -118,14 +118,20 @@ def setup_sketch(timeline_name, index_name, username, sketch_id=None):
         db_session.add(searchindex)
         db_session.commit()
 
-        if sketch.has_permission(user, 'write'):
-            timeline = Timeline(
-                name=searchindex.name, description=searchindex.description,
-                sketch=sketch, user=user, searchindex=searchindex)
+        timeline = Timeline(
+            name=searchindex.name, description=searchindex.description,
+            sketch=sketch, user=user, searchindex=searchindex)
+
+        # If the user don't have write access to the sketch then create the
+        # timeline but don't attach it to the sketch.
+        if not sketch.has_permission(user, 'write'):
+            timeline.sketch = None
+        else:
             sketch.timelines.append(timeline)
-            db_session.add(timeline)
-            db_session.commit()
-            timeline.set_status('processing')
+
+        db_session.add(timeline)
+        db_session.commit()
+        timeline.set_status('processing')
 
         return sketch.id
 
@@ -133,7 +139,7 @@ def setup_sketch(timeline_name, index_name, username, sketch_id=None):
 def callback(message):
     """Google PubSub callback.
 
-    This function is called on all incoming messages on the configures topic.
+    This function is called on all incoming messages on the configured topic.
 
     Args:
         message: (dict) PubSub message
