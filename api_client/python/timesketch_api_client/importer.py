@@ -14,6 +14,7 @@
 """Timesketch data importer."""
 from __future__ import unicode_literals
 
+import io
 import json
 import math
 import logging
@@ -37,6 +38,10 @@ class ImportStreamer(object):
     # The number of entries before automatically flushing
     # the streamer.
     ENTRY_THRESHOLD = 100000
+
+    # Number of bytes in a binary file before automatically
+    # chunking it up into smaller pieces.
+    SIZE_THRESHOLD = 10485760
 
     def __init__(self, entry_threshold=None):
         """Initialize the upload streamer."""
@@ -139,6 +144,49 @@ class ImportStreamer(object):
         response_dict = response.json()
         self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
         self._last_response = response_dict
+
+    def _upload_binary_file(self, file_path):
+        """Upload binary data to Timesketch, potentially chunking it up.
+
+        Args:
+            file_path: a full path to the file that is about to be uploaded.
+        """
+        resource_url = '{0:s}/upload/'.format(self._sketch.api.api_root)
+        file_size = os.path.getsize(file_path)
+        data = {
+            'name': timeline_name,
+            'sketch_id': self.id,
+            'total_file_size': file_size,
+        }
+        if file_size >= self.SIZE_THRESHOLD:
+            file_dict = {
+                'file': open(file_path, 'rb')}
+            response = self._sketch.api.session.post(
+                resource_url, files=file_dict, data=data)
+        else:
+            chunks = int(math.ceil(float(file_size) / self._threshold))
+            data['chunk_total_chunks'] = chunks
+            for index in range(0, chunks):
+                data['chunk_index'] = index
+                start = self.SIZE_THRESHOLD * index
+                data['chunk_byte_offset'] = start
+                fh = open(file_path, 'rb')
+                fh.seek(start)
+                data = fh.read(self.SIZE_TRESHOLD)
+                file_stream = io.BytesIO(data)
+                file_dict = {'file': file_stream}
+                response = self._sketch.api.session.post(
+                    resource_url, files=file_dict, data=data)
+
+        response_dict = response.json()
+        timeline_dict = response_dict['objects'][0]
+        timeline_obj = timeline.Timeline(
+            timeline_id=timeline_dict['id'],
+            sketch_id=self.id,
+            api=self.api,
+            name=timeline_dict['name'],
+            searchindex=timeline_dict['searchindex']['index_name'])
+        return timeline_obj
 
     def add_data_frame(self, data_frame, part_of_iter=False):
         """Add a data frame into the buffer.
@@ -284,7 +332,7 @@ class ImportStreamer(object):
                     filepath, delimiter=delimiter, chunksize=self._threshold):
                 self.add_data_frame(chunk_frame, part_of_iter=True)
         elif file_ending == 'plaso':
-            self._sketch.upload(self._timeline_name, filepath)
+            self._upload_binary_file(filepath)
         elif file_ending == 'jsonl':
             data_frame = None
             with open(filepath, 'r') as fh:

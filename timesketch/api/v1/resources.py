@@ -1550,8 +1550,74 @@ class UploadFileResource(ResourceMixin, Resource):
             index_name = codecs.decode(index_name, 'utf-8')
 
         file_path = os.path.join(upload_folder, filename)
-        file_storage.save(file_path)
 
+        chunk_index = form.chunk_index.data or None
+        chunk_byte_offset = form.chunk_byte_offset or None
+        chunk_total_chunks = form.chunk_total_chunks or None
+        file_size = form.total_file_size or None
+        enable_stream = form.enable_stream.data
+
+        if chunk_index is None:
+            file_storage.save(file_path)
+            return self._complete_upload(
+                file_path,
+                file_extension,
+                timeline_name,
+                index_name,
+                sketch,
+                sketch_id,
+                current_user,
+                enable_stream)
+        
+        try:
+            with open(file_path, 'ab') as fh:
+                fh.seek(chunk_byte_offset)
+                fh.write(file_storage.read())
+        except OSError as e:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to write data with error: {0!s}.'.format(e))
+
+        if (chunk_index + 1) != chunk_total_chunks:
+            schema = {
+                'meta': {
+                    'file_upload': True,
+                    'upload_complete': False,
+                    'total_chunks': chunk_total_chunks,
+                    'chunk_index': chunk_index,
+                    'file_size': file_size},
+                'objects': []}
+            response = jsonify(schema)
+            response.status_code = HTTP_STATUS_CODE_CREATED
+            return response
+
+        if os.path.getsize(file_path) != file_size:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to save file correctly, inconsistent file size '
+                '({0:d} but should have been {1:d})'.format(
+                    os.path.getsize(file_path), file_size))
+
+        meta = {
+            'file_upload': True,
+            'upload_complete': True,
+            'file_size': file_size,
+            'total_chunks': chunk_total_chunks,
+        }
+
+        return self._complete_upload(
+            file_path=file_path,
+            file_extension=file_extension,
+            timeline_name=timeline_name,
+            index_name=index_name,
+            sketch=sketch,
+            sketch_id=sketch_id,
+            current_user=current_user,
+            enable_stream=enable_stream,
+            meta=meta)
+
+    def _complete_upload(
+            file_path, file_extension, timeline_name, index_name, sketch, sketch_id, current_user, enable_stream, meta=None):
         # Check if search index already exists.
         searchindex = SearchIndex.query.filter_by(
             name=timeline_name,
@@ -1590,7 +1656,6 @@ class UploadFileResource(ResourceMixin, Resource):
                 db_session.add(timeline)
                 db_session.commit()
 
-        enable_stream = form.enable_stream.data
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
         from timesketch.lib import tasks
@@ -1603,10 +1668,10 @@ class UploadFileResource(ResourceMixin, Resource):
         # pylint: disable=no-else-return
         if timeline:
             return self.to_json(
-                timeline, status_code=HTTP_STATUS_CODE_CREATED)
+                timeline, status_code=HTTP_STATUS_CODE_CREATED, meta=meta)
 
         return self.to_json(
-            searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+            searchindex, status_code=HTTP_STATUS_CODE_CREATED, meta=meta)
 
 
 class TaskResource(ResourceMixin, Resource):
