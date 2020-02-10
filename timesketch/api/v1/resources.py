@@ -1551,24 +1551,27 @@ class UploadFileResource(ResourceMixin, Resource):
 
         file_path = os.path.join(upload_folder, filename)
 
-        chunk_index = form.chunk_index.data or None
-        chunk_byte_offset = form.chunk_byte_offset or None
-        chunk_total_chunks = form.chunk_total_chunks or None
-        file_size = form.total_file_size or None
+        chunk_index = form.chunk_index.data
+        chunk_byte_offset = form.chunk_byte_offset.data
+        chunk_total_chunks = form.chunk_total_chunks.data
+        file_size = form.total_file_size.data or None
         enable_stream = form.enable_stream.data
 
-        if chunk_index is None:
+        if chunk_total_chunks is None:
             file_storage.save(file_path)
             return self._complete_upload(
-                file_path,
-                file_extension,
-                timeline_name,
-                index_name,
-                sketch,
-                sketch_id,
-                current_user,
-                enable_stream)
-        
+                file_path=file_path,
+                file_extension=file_extension,
+                timeline_name=timeline_name,
+                index_name=index_name,
+                sketch=sketch,
+                sketch_id=sketch_id,
+                enable_stream=enable_stream)
+
+        # For file chunks we need the correct filepath, otherwise each chunk
+        # will get their own UUID as a filename.
+        file_path = os.path.join(
+            upload_folder, os.path.basename(file_storage.filename))
         try:
             with open(file_path, 'ab') as fh:
                 fh.seek(chunk_byte_offset)
@@ -1612,12 +1615,31 @@ class UploadFileResource(ResourceMixin, Resource):
             index_name=index_name,
             sketch=sketch,
             sketch_id=sketch_id,
-            current_user=current_user,
             enable_stream=enable_stream,
             meta=meta)
 
     def _complete_upload(
-            file_path, file_extension, timeline_name, index_name, sketch, sketch_id, current_user, enable_stream, meta=None):
+            self, file_path, file_extension, timeline_name, index_name, sketch,
+            sketch_id, enable_stream, meta=None):
+        """Creates a full pipeline for an uploaded file and returns the results.
+
+        Args:
+            file_path: full path to the file that was uploaded.
+            file_extension: the extension of the uploaded file.
+            timeline_name: name the timeline will be stored under in the
+                           datastore.
+            index_name: the index name for the file.
+            sketch: a Sketch model object.
+            sketch_id: integer with the sketch ID.
+            enable_stream: boolean indicating whether this is file is part of a
+                           stream or not.
+            meta: optional dict with additional meta fields that will be
+                  included in the return.
+
+        Returns:
+            A timeline if created otherwise a search index in JSON (instance
+            of flask.wrappers.Response)
+        """
         # Check if search index already exists.
         searchindex = SearchIndex.query.filter_by(
             name=timeline_name,
@@ -1658,6 +1680,7 @@ class UploadFileResource(ResourceMixin, Resource):
 
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
+        # pylint: disable=import-outside-toplevel
         from timesketch.lib import tasks
         pipeline = tasks.build_index_pipeline(
             file_path, timeline_name, index_name, file_extension, sketch_id,
@@ -1679,6 +1702,7 @@ class TaskResource(ResourceMixin, Resource):
 
     def __init__(self):
         super(TaskResource, self).__init__()
+        # pylint: disable=import-outside-toplevel
         from timesketch import create_celery_app
         self.celery = create_celery_app()
 
@@ -2069,6 +2093,7 @@ class AnalyzerRunResource(ResourceMixin, Resource):
                     'Kwargs needs to be a dictionary of parameters.')
 
         # Import here to avoid circular imports.
+        # pylint: disable=import-outside-toplevel
         from timesketch.lib import tasks
         try:
             analyzer_group, session_id = tasks.build_sketch_analysis_pipeline(
@@ -2153,6 +2178,7 @@ class TimelineListResource(ResourceMixin, Resource):
         # Run sketch analyzers when timeline is added. Import here to avoid
         # circular imports.
         if current_app.config.get('AUTO_SKETCH_ANALYZERS'):
+            # pylint: disable=import-outside-toplevel
             from timesketch.lib import tasks
             sketch_analyzer_group, _ = tasks.build_sketch_analysis_pipeline(
                 sketch_id, searchindex_id, current_user.id)

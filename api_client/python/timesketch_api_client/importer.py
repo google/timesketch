@@ -41,7 +41,7 @@ class ImportStreamer(object):
 
     # Number of bytes in a binary file before automatically
     # chunking it up into smaller pieces.
-    SIZE_THRESHOLD = 10485760
+    FILE_SIZE_THRESHOLD = 104857600  # 100 Mb.
 
     def __init__(self, entry_threshold=None):
         """Initialize the upload streamer."""
@@ -153,40 +153,58 @@ class ImportStreamer(object):
         """
         resource_url = '{0:s}/upload/'.format(self._sketch.api.api_root)
         file_size = os.path.getsize(file_path)
+
+        if self._timeline_name:
+            timeline_name = self._timeline_name
+        else:
+            file_name = os.basename(file_path)
+            file_name_no_ext, _, _ = file_name.rpartition('.')
+            timeline_name = file_name_no_ext
+
         data = {
             'name': timeline_name,
-            'sketch_id': self.id,
+            'sketch_id': self._sketch.id,
             'total_file_size': file_size,
         }
-        if file_size >= self.SIZE_THRESHOLD:
+        if file_size <= self.FILE_SIZE_THRESHOLD:
             file_dict = {
                 'file': open(file_path, 'rb')}
             response = self._sketch.api.session.post(
                 resource_url, files=file_dict, data=data)
         else:
-            chunks = int(math.ceil(float(file_size) / self._threshold))
+            chunks = int(math.ceil(float(file_size) / self.FILE_SIZE_THRESHOLD))
             data['chunk_total_chunks'] = chunks
             for index in range(0, chunks):
                 data['chunk_index'] = index
-                start = self.SIZE_THRESHOLD * index
+                start = self.FILE_SIZE_THRESHOLD * index
                 data['chunk_byte_offset'] = start
                 fh = open(file_path, 'rb')
                 fh.seek(start)
-                data = fh.read(self.SIZE_TRESHOLD)
-                file_stream = io.BytesIO(data)
+                binary_data = fh.read(self.FILE_SIZE_THRESHOLD)
+                file_stream = io.BytesIO(binary_data)
+                file_stream.name = file_path
                 file_dict = {'file': file_stream}
                 response = self._sketch.api.session.post(
                     resource_url, files=file_dict, data=data)
 
+                if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+                    # TODO (kiddi): Re-do this chunk.
+                    raise RuntimeError(
+                        'Error uploading data chunk: {0:d}/{1:d}. Status code: '
+                        '{2:d} - {3:s} {4:s}'.format(
+                            index, chunks, response.status_code,
+                            response.reason, response.text))
+
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            raise RuntimeError(
+                'Error uploading data: [{0:d}] {1:s} {2:s}, file: {3:s}, '
+                'index {4:s}'.format(
+                    response.status_code, response.reason, response.text,
+                    file_path, self._index))
+
         response_dict = response.json()
-        timeline_dict = response_dict['objects'][0]
-        timeline_obj = timeline.Timeline(
-            timeline_id=timeline_dict['id'],
-            sketch_id=self.id,
-            api=self.api,
-            name=timeline_dict['name'],
-            searchindex=timeline_dict['searchindex']['index_name'])
-        return timeline_obj
+        self._last_response = response_dict
+        self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
 
     def add_data_frame(self, data_frame, part_of_iter=False):
         """Add a data frame into the buffer.

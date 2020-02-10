@@ -253,9 +253,9 @@ class UploadFileForm(BaseForm):
         'Enable stream', false_values={False, 'false', ''}, default=False)
     chunk_index = IntegerField('Chunk Index', validators=[Optional()])
     chunk_byte_offset = IntegerField(
-            'Chunk Byte Offset', validators=[Optional()])
+        'Chunk Byte Offset', validators=[Optional()])
     chunk_total_chunks = IntegerField(
-            'Total Chunk Count', validators=[Optional()])
+        'Total Chunk Count', validators=[Optional()])
     total_file_size = IntegerField('Total File size', validators=[Optional()])
 
 
