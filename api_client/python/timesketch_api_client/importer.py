@@ -468,6 +468,10 @@ class ImportStreamer(object):
         """Set the timeline name."""
         self._timeline_name = name
 
+    def set_index_name(self, index):
+        """Set the index name."""
+        self._index = index
+
     def set_timestamp_description(self, description):
         """Set the timestamp description field."""
         self._timestamp_desc = description
