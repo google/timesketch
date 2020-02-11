@@ -145,12 +145,11 @@ class ImportStreamer(object):
         self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
         self._last_response = response_dict
 
-    def _upload_binary_file(self, file_path, index=None):
+    def _upload_binary_file(self, file_path):
         """Upload binary data to Timesketch, potentially chunking it up.
 
         Args:
             file_path: a full path to the file that is about to be uploaded.
-            index: optional string to specify the ES index to store the file in.
         """
         resource_url = '{0:s}/upload/'.format(self._sketch.api.api_root)
         file_size = os.path.getsize(file_path)
@@ -352,7 +351,7 @@ class ImportStreamer(object):
                     filepath, delimiter=delimiter, chunksize=self._threshold):
                 self.add_data_frame(chunk_frame, part_of_iter=True)
         elif file_ending == 'plaso':
-            self._upload_binary_file(filepath, index=self._index)
+            self._upload_binary_file(filepath)
         elif file_ending == 'jsonl':
             data_frame = None
             with open(filepath, 'r') as fh:

@@ -1570,8 +1570,7 @@ class UploadFileResource(ResourceMixin, Resource):
 
         # For file chunks we need the correct filepath, otherwise each chunk
         # will get their own UUID as a filename.
-        file_path = os.path.join(
-            upload_folder, os.path.basename(file_storage.filename))
+        file_path = os.path.join(upload_folder, index_name)
         try:
             with open(file_path, 'ab') as fh:
                 fh.seek(chunk_byte_offset)
