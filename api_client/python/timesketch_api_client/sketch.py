@@ -237,19 +237,21 @@ class Sketch(resource.BaseResource):
             timelines.append(timeline_obj)
         return timelines
 
-    def upload(self, timeline_name, file_path):
+    def upload(self, timeline_name, file_path, index=None):
         """Upload a CSV, JSONL, or Plaso file to the server for indexing.
 
         Args:
             timeline_name: Name of the resulting timeline.
             file_path: Path to the file to be uploaded.
+            index: Index name for the ES database
 
         Returns:
             Timeline object instance.
         """
         resource_url = '{0:s}/upload/'.format(self.api.api_root)
         files = {'file': open(file_path, 'rb')}
-        data = {'name': timeline_name, 'sketch_id': self.id}
+        data = {'name': timeline_name, 'sketch_id': self.id,
+                'index_name': index}
         response = self.api.session.post(resource_url, files=files, data=data)
         response_dict = response.json()
         timeline_dict = response_dict['objects'][0]
