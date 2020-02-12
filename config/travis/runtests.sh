@@ -24,4 +24,7 @@ elif test ${MODE} = "pypi"; then
 elif test "${TRAVIS_OS_NAME}" = "linux"; then
 	python3 ./run_tests.py
 
+	python3 ./setup.py bdist
+
+	python3 ./setup.py sdist
 fi
