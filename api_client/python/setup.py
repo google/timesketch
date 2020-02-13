@@ -15,6 +15,9 @@
 """This is the setup file for the project."""
 from __future__ import unicode_literals
 
+import os
+import glob
+
 from setuptools import find_packages
 from setuptools import setup
 
@@ -36,6 +39,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
+    scripts=glob.glob(os.path.join('tools', '[a-z]*.py')),
     install_requires=frozenset([
         'pandas',
         'requests',
@@ -43,5 +47,6 @@ setup(
         'xlrd',
         'google-auth',
         'google_auth_oauthlib',
+        'pyyaml',
         'beautifulsoup4']),
     )
