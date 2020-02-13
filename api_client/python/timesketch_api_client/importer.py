@@ -286,24 +286,12 @@ class ImportStreamer(object):
         elif file_ending == 'plaso':
             self._sketch.upload(self._timeline_name, filepath, self._index)
         elif file_ending == 'jsonl':
-            data_frame = None
             with open(filepath, 'r') as fh:
-                line_number = 0
-                lines = []
                 for line in fh:
-                    line_number += 1
-                    lines.append(json.loads(line.strip()))
-                    if line_number < self._threshold:
-                        continue
-
-                    data_frame = pandas.DataFrame(lines)
-                    lines = []
-                    line_number = 0
-                    if not data_frame.empty:
-                        self.add_data_frame(data_frame, part_of_iter=True)
-
-                data_frame = pandas.DataFrame(lines)
-                self.add_data_frame(data_frame)
+                    try:
+                        self.add_json(line.strip())
+                    except TypeError as e:
+                        logging.error('Unable to decode line: {0!s}'.format(e))
         else:
             raise TypeError(
                 'File needs to have a file extension of: .csv, .jsonl or '
