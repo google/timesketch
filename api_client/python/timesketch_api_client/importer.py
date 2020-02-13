@@ -288,14 +288,22 @@ class ImportStreamer(object):
         elif file_ending == 'jsonl':
             data_frame = None
             with open(filepath, 'r') as fh:
-                lines = [json.loads(x) for x in fh]
-                data_frame = pandas.DataFrame(lines)
-            if data_frame is None:
-                raise TypeError('Unable to parse the JSON file.')
-            if data_frame.empty:
-                raise TypeError('Is the JSON file empty?')
+                line_number = 0
+                lines = []
+                for line in fh:
+                    line_number += 1
+                    lines.append(json.loads(line.strip()))
+                    if line_number < self._threshold:
+                        continue
 
-            self.add_data_frame(data_frame)
+                    data_frame = pandas.DataFrame(lines)
+                    lines = []
+                    line_number = 0
+                    if not data_frame.empty:
+                        self.add_data_frame(data_frame, part_of_iter=True)
+
+                data_frame = pandas.DataFrame(lines)
+                self.add_data_frame(data_frame)
         else:
             raise TypeError(
                 'File needs to have a file extension of: .csv, .jsonl or '
