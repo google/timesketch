@@ -79,6 +79,21 @@ The configuration options that can be defined in the YAML file are:
 | timeline_name | string | Name that will be used for the timeline as it gets imported into Timesketch. |
 | index_name | string | If the data should be imported into a specific timeline the index needs to be defined, otherwise a new index will be generated. |
 
+An example config file would be:
+```
+$ cat importer.config
+username: dev
+pwd_prompt: True
+host: https://myinstance.goodcorp.com
+```
+
+And then run the tool:
+
+```
+$ timesketch_importer.py --config_file importer.config --timeline_name super_secret_timeline cases/secret_log.jsonl
+```
+
+For larger files the importer will split them up into pieces before uploading.
 
 ## SCP/File Transfer to an Upload Folder
 
