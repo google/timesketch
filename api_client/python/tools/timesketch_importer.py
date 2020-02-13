@@ -237,11 +237,13 @@ if __name__ == '__main__':
         logging.error('Unable to get sketch ID: {0:d}'.format(sketch_id))
         sys.exit(1)
 
+    timeline_name = options.timeline_name or config_options.get(
+        'timeline_name', 'unnamed_timeline_imported_from_importer')
+
     config = {
         'message_format_string': options.format_string or config_options.get(
             'format_string', ''),
-        'timeline_name': options.timeline_name or config_options.get(
-            'timeline_name', ''),
+        'timeline_name': timeline_name,
         'index_name': options.index_name or config_options.get(
             'index_name', ''),
         'timestamp_description': options.time_desc or config_options.get(
