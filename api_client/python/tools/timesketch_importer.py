@@ -34,6 +34,9 @@ from timesketch_api_client import importer
 from timesketch_api_client import sketch
 
 
+logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
+
+
 def get_client(
         host: str, username: str, password: str='', client_id: str='',
         client_secret: str='', run_local: bool=False) -> client.TimesketchApi:
@@ -116,6 +119,8 @@ def upload_file(
 
 
 if __name__ == '__main__':
+    logger = logging.getLogger('timesketch_importer')
+
     argument_parser = argparse.ArgumentParser(
         description='A tool to upload data to Timesketch, using the API.')
 
@@ -192,19 +197,19 @@ if __name__ == '__main__':
 
     if options.config_file:
         if not os.path.isfile(options.config_file):
-            logging.error('Config file does not exist ({0:s})'.format(
+            logger.error('Config file does not exist ({0:s})'.format(
                 options.config_file))
             sys.exit(1)
         with open(options.config_file, 'r') as fh:
             config_options = yaml.safe_load(fh)
 
     if not os.path.isfile(options.path):
-        logging.error('Path {0:s} is not valid, unable to continue.')
+        logger.error('Path {0:s} is not valid, unable to continue.')
         sys.exit(1)
 
     host = options.host or config_options.get('host', '')
     if not host:
-        logging.error('Hostname for Timesketch server must be set.')
+        logger.error('Hostname for Timesketch server must be set.')
         sys.exit(1)
 
     password = options.password or config_options.get('password', '')
@@ -219,14 +224,16 @@ if __name__ == '__main__':
     username = options.username or config_options.get('username', '')
     run_local = options.run_local or config_options.get('run_local', False)
 
+    logger.info('Creating a client.')
     ts_client = get_client(
         host=host, username=username, password=password, client_id=client_id,
         client_secret=client_secret, run_local=run_local)
 
     if not ts_client:
-        logging.error('Unable to create a Timesketch API client, exiting.')
+        logger.error('Unable to create a Timesketch API client, exiting.')
         sys.exit(1)
 
+    logger.info('Client created.')
     sketch_id = options.sketch_id or config_options.get('sketch_id', 0)
     if sketch_id:
         sketch = ts_client.get_sketch(sketch_id)
@@ -234,7 +241,7 @@ if __name__ == '__main__':
         sketch = ts_client.create_sketch('New Sketch From Importer CLI')
 
     if not sketch:
-        logging.error('Unable to get sketch ID: {0:d}'.format(sketch_id))
+        logger.error('Unable to get sketch ID: {0:d}'.format(sketch_id))
         sys.exit(1)
 
     timeline_name = options.timeline_name or config_options.get(
@@ -250,6 +257,7 @@ if __name__ == '__main__':
             'timestamp_description', ''),
     }
     
+    logger.info('Uploading file.')
     result = upload_file(sketch=sketch, config=config, file_path=options.path)
-    print(result)
+    logger.info(result)
 
