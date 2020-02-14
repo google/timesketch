@@ -240,7 +240,8 @@ class TimesketchApi(object):
         """
         if auth_mode == 'oauth':
             return self._create_oauth_session(client_id, client_secret)
-        elif auth_mode == 'oauth_local':
+
+        if auth_mode == 'oauth_local':
             return self._create_oauth_session(
                 client_id=client_id, client_secret=client_secret,
                 run_server=False, skip_open=True)

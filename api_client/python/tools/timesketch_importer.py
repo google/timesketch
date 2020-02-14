@@ -20,7 +20,6 @@ from __future__ import unicode_literals
 
 import argparse
 import getpass
-import json
 import logging
 import os
 import sys
@@ -38,8 +37,9 @@ logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
 
 
 def get_client(
-        host: str, username: str, password: str='', client_id: str='',
-        client_secret: str='', run_local: bool=False) -> client.TimesketchApi:
+        host: str, username: str, password: str = '', client_id: str = '',
+        client_secret: str = '', run_local: bool = False
+        ) -> client.TimesketchApi:
     """Returns a Timesketch API client.
 
     Args:
@@ -56,8 +56,11 @@ def get_client(
                           if the connection is over a SSH connection for
                           instance.
 
+    Raises:
+        TypeError: If a non supported authentication mode is passed in.
+
     Returns:
-        A Timesketch API client object or none if unable to authenticate.
+        A Timesketch API client object.
     """
     if run_local and client_secret:
         auth_mode = 'oauth_local'
@@ -66,10 +69,9 @@ def get_client(
     elif password:
         auth_mode = 'timesketch'
     else:
-        logging.error(
+        raise TypeError(
             'Neither password nor client secret provided, unable '
             'to authenticate')
-        return
 
     if not host.startswith('http'):
         host = 'https://{0:s}'.format(host)
@@ -82,40 +84,42 @@ def get_client(
 
 
 def upload_file(
-        sketch: sketch.Sketch, config:Dict[str, any], file_path:str) -> str:
+        my_sketch: sketch.Sketch, config_dict: Dict[str, any],
+        file_path: str) -> str:
     """Uploads a file to Timesketch.
 
     Args:
-        sketch (sketch.Sketch): a sketch object to point to the sketch the data
-                                will be imported to.
-        config (dict): dict with settings for the importer.
+        my_sketch (sketch.Sketch): a sketch object to point to the sketch the
+            data will be imported to.
+        config_dict (dict): dict with settings for the importer.
         file_path (str): the path to the file to upload.
 
     Returns:
         A string with results (whether successful or not).
     """
-    if not sketch or not hasattr(sketch, 'id'):
+    if not my_sketch or not hasattr(my_sketch, 'id'):
         return 'Sketch needs to be set'
 
     with importer.ImportStreamer() as streamer:
-        streamer.set_sketch(sketch)
+        streamer.set_sketch(my_sketch)
 
-        format_string = config.get('message_format_string')
+        format_string = config_dict.get('message_format_string')
         if format_string:
             streamer.set_message_format_string(format_string)
-        timeline_name = config.get('timeline_name')
+        timeline_name = config_dict.get('timeline_name')
         if timeline_name:
             streamer.set_timeline_name(timeline_name)
-        index_name = config.get('index_name')
+        index_name = config_dict.get('index_name')
         if index_name:
             streamer.set_index_name(index_name)
-        time_desc = config.get('timestamp_description')
+        time_desc = config_dict.get('timestamp_description')
         if time_desc:
             streamer.set_timestamp_description(time_desc)
 
         streamer.add_file(file_path)
 
-    return 'File got successfully uploaded to sketch: {0:d}'.format(sketch.id)
+    return 'File got successfully uploaded to sketch: {0:d}'.format(
+        my_sketch.id)
 
 
 if __name__ == '__main__':
@@ -131,9 +135,9 @@ if __name__ == '__main__':
     auth_group.add_argument(
         '-p', '--password', '--pwd', action='store', type=str, dest='password',
         help=(
-          'If authenticated with password, provide the password on the CLI. '
-          'If neither password is provided nor a password prompt an OAUTH '
-          'connection is assumed.'))
+            'If authenticated with password, provide the password on the CLI. '
+            'If neither password is provided nor a password prompt an OAUTH '
+            'connection is assumed.'))
     auth_group.add_argument(
         '--pwd-prompt', '--pwd_prompt', action='store_true', default=False,
         dest='pwd_prompt', help='Prompt for password.')
@@ -207,27 +211,29 @@ if __name__ == '__main__':
         logger.error('Path {0:s} is not valid, unable to continue.')
         sys.exit(1)
 
-    host = options.host or config_options.get('host', '')
-    if not host:
+    conf_host = options.host or config_options.get('host', '')
+    if not conf_host:
         logger.error('Hostname for Timesketch server must be set.')
         sys.exit(1)
 
-    password = options.password or config_options.get('password', '')
-    pwd_prompt = options.pwd_prompt or config_options.get(
+    conf_password = options.password or config_options.get('password', '')
+    conf_pwd_prompt = options.pwd_prompt or config_options.get(
         'pwd_prompt', False)
-    if not password and pwd_prompt:
-        password = getpass.getpass('Type in the password: ')
+    if not conf_password and conf_pwd_prompt:
+        conf_password = getpass.getpass('Type in the password: ')
 
-    client_id = options.client_id or config_options.get('client_id', '')
-    client_secret = options.client_secret or config_options.get(
+    conf_client_id = options.client_id or config_options.get('client_id', '')
+    conf_client_secret = options.client_secret or config_options.get(
         'client_secret', '')
-    username = options.username or config_options.get('username', '')
-    run_local = options.run_local or config_options.get('run_local', False)
+    conf_username = options.username or config_options.get('username', '')
+    conf_run_local = options.run_local or config_options.get(
+        'run_local', False)
 
     logger.info('Creating a client.')
     ts_client = get_client(
-        host=host, username=username, password=password, client_id=client_id,
-        client_secret=client_secret, run_local=run_local)
+        host=conf_host, username=conf_username, password=conf_password,
+        client_id=conf_client_id, client_secret=conf_client_secret,
+        run_local=conf_run_local)
 
     if not ts_client:
         logger.error('Unable to create a Timesketch API client, exiting.')
@@ -244,20 +250,20 @@ if __name__ == '__main__':
         logger.error('Unable to get sketch ID: {0:d}'.format(sketch_id))
         sys.exit(1)
 
-    timeline_name = options.timeline_name or config_options.get(
+    conf_timeline_name = options.timeline_name or config_options.get(
         'timeline_name', 'unnamed_timeline_imported_from_importer')
 
     config = {
         'message_format_string': options.format_string or config_options.get(
             'format_string', ''),
-        'timeline_name': timeline_name,
+        'timeline_name': conf_timeline_name,
         'index_name': options.index_name or config_options.get(
             'index_name', ''),
         'timestamp_description': options.time_desc or config_options.get(
             'timestamp_description', ''),
     }
-    
-    logger.info('Uploading file.')
-    result = upload_file(sketch=sketch, config=config, file_path=options.path)
-    logger.info(result)
 
+    logger.info('Uploading file.')
+    result = upload_file(
+        my_sketch=sketch, config_dict=config, file_path=options.path)
+    logger.info(result)
