@@ -14,16 +14,62 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
-    <ts-sketch-explore-event-list-item v-for="(event, index) in eventList" :key="event._id" :event="event" :prevEvent="eventList[index - 1]" @addChip="$emit('addChip', $event)" @searchContext="$emit('searchContext', $event)" :order="order" v-bind:id="event._id"></ts-sketch-explore-event-list-item>
-  </div>
+  <table class="table is-fullwidth">
+    <thead>
+      <th width="220"></th>
+      <th width="1">
+        <span class="control">
+          <input type="checkbox" v-on:click="toggleSelectAll">
+        </span>
+      </th>
+      <th v-for="(field, index) in selectedFields" :key="index">{{ field.field }}</th>
+      <th width="150">Timeline name</th>
+    </thead>
+    <ts-sketch-explore-event-list-row v-for="(event, index) in eventList"
+                                      :key="index"
+                                      :event="event"
+                                      :prevEvent="eventList[index - 1]"
+                                      :order="order"
+                                      :selected-fields="selectedFields"
+                                      :display-options="displayOptions"
+                                      :display-controls="true"
+                                      v-bind:id="event._id"
+                                      @addChip="$emit('addChip', $event)"
+                                      @searchContext="$emit('searchContext', $event)">
+    </ts-sketch-explore-event-list-row>
+  </table>
 </template>
 
 <script>
-import TsSketchExploreEventListItem from './EventListItem'
+import TsSketchExploreEventListRow from './EventListRow'
+import EventBus from "../../main"
 
 export default {
-  components: { TsSketchExploreEventListItem },
-  props: ['eventList', 'order']
+  components: { TsSketchExploreEventListRow },
+  props: ['eventList', 'order', 'selectedFields', 'displayOptions'],
+  data () {
+    return {
+      selectAll: false
+    }
+  },
+  methods: {
+    toggleSelectAll: function () {
+      if (this.selectAll) {
+        EventBus.$emit('clearSelectedEvents')
+        this.selectAll = false
+      } else {
+        EventBus.$emit('selectEvent')
+        this.selectAll = true
+      }
+    }
+  }
 }
 </script>
+
+<style lang="scss" scoped>
+
+.table thead th {
+  border:0;
+}
+
+</style>

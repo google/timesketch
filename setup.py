@@ -18,10 +18,12 @@
    sudo python setup.py install
 """
 
+from __future__ import print_function
 from __future__ import unicode_literals
 
 import glob
 import os
+import sys
 
 from setuptools import find_packages
 from setuptools import setup
@@ -33,8 +35,15 @@ except ImportError:  # for pip <= 9.0.3
     from pip.download import PipSession
     from pip.req import parse_requirements
 
+version_tuple = (sys.version_info[0], sys.version_info[1])
+if version_tuple < (3, 5):
+    print((
+        'Unsupported Python version: {0:s}, version 3.5 or higher '
+        'required.').format(sys.version))
+    sys.exit(1)
 
-timesketch_version = '20190609'
+
+timesketch_version = '20200131'
 
 timesketch_description = (
     'Timesketch is a web based tool for collaborative forensic timeline '
@@ -59,7 +68,9 @@ setup(
     ],
     data_files=[
         ('share/timesketch', glob.glob(
-            os.path.join('data', '*'))),
+            os.path.join('data', '*.*'))),
+        ('share/timesketch/linux', glob.glob(
+            os.path.join('data', 'linux', '*.*'))),
         ('share/doc/timesketch', [
             'AUTHORS', 'LICENSE', 'README.md']),
     ],

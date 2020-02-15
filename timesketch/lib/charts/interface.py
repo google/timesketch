@@ -25,11 +25,12 @@ class BaseChart(object):
     # Name that the chart will be registered as.
     NAME = 'name'
 
-    def __init__(self, data):
+    def __init__(self, data, title=''):
         """Initialize the chart object.
 
         Args:
             data: Dictionary with list of values and dict of encoding info.
+            title: String used for the chart title.
 
         Raises:
             RuntimeError if values or encoding is missing from data.
@@ -46,6 +47,7 @@ class BaseChart(object):
         else:
             self.values = alt.Data(values=_values)
         self.encoding = _encoding
+        self.chart_title = title
 
     def generate(self):
         """Entry point for the chart."""

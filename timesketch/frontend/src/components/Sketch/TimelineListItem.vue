@@ -14,10 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
+
   <div>
 
     <!-- Timeline detail modal -->
-    <div class="modal" v-bind:class="{ 'is-active': showInfoModal }">>
+    <b-modal :active.sync="showInfoModal" :width="640" scroll="keep">
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -39,10 +40,10 @@ limitations under the License.
         </div>
       </div>
       <button class="modal-close is-large" aria-label="close" v-on:click="showInfoModal = !showInfoModal"></button>
-    </div>
+    </b-modal>
 
     <!-- Timeline edit modal -->
-    <div class="modal" v-bind:class="{ 'is-active': showEditModal }">
+    <b-modal :active.sync="showEditModal" :width="640" scroll="keep">
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -68,9 +69,11 @@ limitations under the License.
         </div>
       </div>
       <button class="modal-close is-large" aria-label="close" v-on:click="showEditModal = !showEditModal"></button>
-    </div>
+    </b-modal>
 
-    <div class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
+    <div v-if="timelineStatus === 'processing'" class="ts-timeline-color-box is-pulled-left" style="background-color: #f5f5f5;"></div>
+
+    <div v-if="timelineStatus === 'ready'" class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
       <div class="dropdown-trigger">
         <div class="ts-timeline-color-box" v-bind:style="timelineColorStyle" v-on:click="colorPickerActive = !colorPickerActive"></div>
       </div>
@@ -82,6 +85,7 @@ limitations under the License.
         </div>
       </div>
     </div>
+
     <div v-if="controls" class="field is-grouped is-pulled-right" style="margin-top:10px;">
       <p class="control">
         <button class="button is-rounded is-small is-outlined" v-on:click="showInfoModal = !showInfoModal">
@@ -91,7 +95,7 @@ limitations under the License.
           <span>Info</span>
         </button>
       </p>
-      <p class="control">
+      <p v-if="meta.permissions.write" class="control">
         <button class="button is-rounded is-small is-outlined" v-on:click="showEditModal = !showEditModal">
           <span class="icon is-small">
             <i class="fas fa-edit"></i>
@@ -100,14 +104,42 @@ limitations under the License.
         </button>
       </p>
       <p class="control">
+        <ts-analyzer-list-dropdown :timeline="timeline" @newAnalysisSession="setAnalysisSession($event)"></ts-analyzer-list-dropdown>
+      </p>
+      <p class="control">
+        <button class="button is-small is-rounded is-outlined" @click="showAnalysisHistory = !showAnalysisHistory">
+          <span class="icon is-small">
+            <i class="fas fa-history"></i>
+          </span>
+          <span>History</span>
+        </button>
+      </p>
+      <p v-if="meta.permissions.write" class="control">
         <button v-on:click="remove(timeline)" class="button is-small is-rounded is-danger is-outlined">Remove</button>
       </p>
     </div>
-    <router-link :to="{ name: 'SketchExplore', query: {index: timeline.searchindex.index_name}}"><strong>{{ timeline.name }}</strong></router-link>
+
+    <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: {index: timeline.searchindex.index_name}}"><strong>{{ timeline.name }}</strong></router-link>
+    <strong v-if="timelineStatus !== 'ready'">{{ timeline.name }}</strong>
     <br>
-    <span class="is-size-7">
+
+    <span v-if="timelineStatus === 'ready'" class="is-size-7">
       Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
     </span>
+    <span v-if="timelineStatus !== 'ready'" class="is-size-7">
+      Indexing in progress <span class="blink">...</span>
+    </span>
+
+    <br>
+
+    <div v-show="showAnalysisDetail">
+      <ts-analyzer-session-detail :timeline="timeline" :session-id="analysisSessionId" @closeDetail="showAnalysisDetail = false"></ts-analyzer-session-detail>
+    </div>
+
+    <div v-if="showAnalysisHistory">
+      <ts-analyzer-history :timeline="timeline" @closeHistory="showAnalysisHistory = false"></ts-analyzer-history>
+    </div>
+
   </div>
 </template>
 
@@ -116,9 +148,18 @@ import Vue from 'vue'
 import { Chrome } from 'vue-color'
 import _ from 'lodash'
 
+import ApiClient from '../../utils/RestApiClient'
+
+import TsAnalyzerListDropdown from './AnalyzerListDropdown'
+import TsAnalyzerSessionDetail from './AnalyzerSessionDetail'
+import TsAnalyzerHistory from './AnalyzerHistory'
+
 export default {
   components: {
-    'color-picker': Chrome
+    'color-picker': Chrome,
+    TsAnalyzerListDropdown,
+    TsAnalyzerSessionDetail,
+    TsAnalyzerHistory
   },
   props: ['timeline', 'controls'],
   data () {
@@ -128,10 +169,21 @@ export default {
       newTimelineName: '',
       colorPickerActive: false,
       showInfoModal: false,
-      showEditModal: false
+      showEditModal: false,
+      analysisSessionId: false,
+      showAnalysisDetail: false,
+      showAnalysisHistory: false,
+      timelineStatus: null,
+      autoRefresh: false
     }
   },
   computed: {
+    sketch () {
+      return this.$store.state.sketch
+    },
+    meta () {
+      return this.$store.state.meta
+    },
     timelineColorStyle () {
       let hexColor = this.newColor || this.timeline.color
       if (!hexColor.startsWith('#')) {
@@ -155,10 +207,21 @@ export default {
       this.$emit('save', this.timeline)
     }, 300),
     saveTimeline () {
-      // Vue.set(this.timeline, 'name', this.newTimelineName)
-      // Vue.set(this.timeline, 'description', description)
       this.showEditModal = false
       this.$emit('save', this.timeline)
+    },
+    setAnalysisSession (sessionId) {
+      this.analysisSessionId = sessionId
+      this.showAnalysisDetail = true
+    },
+    fetchData () {
+      ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id).then((response) => {
+        this.timelineStatus = response.data.objects[0].searchindex.status[0].status
+        if (this.timelineStatus !== 'ready') {
+          this.autoRefresh = true
+        }
+        this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
+      }).catch((e) => {})
     }
   },
   mounted () {
@@ -173,6 +236,29 @@ export default {
   created () {
     this.initialColor = {
       hex: this.timeline.color
+    }
+    this.timelineStatus = this.timeline.searchindex.status[0].status
+    if (this.timelineStatus !== 'ready') {
+      this.autoRefresh = true
+    }
+  },
+  beforeDestroy() {
+    clearInterval(this.t)
+    this.t = false
+  },
+  watch: {
+    autoRefresh (val) {
+      if (val && !this.t) {
+        this.t = setInterval(function () {
+          this.fetchData()
+          if (this.timelineStatus === 'ready') {
+            this.autoRefresh = false
+          }
+        }.bind(this), 5000)}
+      else {
+        clearInterval(this.t)
+        this.t = false
+      }
     }
   }
 }
@@ -193,5 +279,15 @@ export default {
 }
 .vc-sketch {
   box-shadow: none;
+}
+
+.blink {
+  animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
 }
 </style>

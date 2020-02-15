@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import axios from 'axios'
+import { ToastProgrammatic as Toast } from 'buefy'
+import { SnackbarProgrammatic as Snackbar } from 'buefy'
 
 const RestApiClient = axios.create({
   baseURL: '/api/v1',
@@ -23,6 +25,27 @@ const RestApiClient = axios.create({
     }
   }
 })
+
+// Show message on errors.
+RestApiClient.interceptors.response.use(function (response) {
+  return response;
+}, function (error) {
+  if (error.response.data.message === 'The CSRF token has expired') {
+    Snackbar.open({
+      message: error.response.data.message,
+      type: 'is-white',
+      position: 'is-top',
+      actionText: 'Refresh',
+      indefinite: true,
+      onAction: () => {
+        location.reload()
+      }}
+    )
+  } else {
+    Toast.open(error.response.data.message)
+  }
+  return Promise.reject(error);
+});
 
 export default {
   // Sketch
@@ -37,6 +60,15 @@ export default {
   },
   deleteSketch (sketchId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/')
+  },
+  getSketchTimelines (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/timelines/')
+  },
+  getSketchTimeline (sketchId, timelineId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/')
+  },
+  getSketchTimelineAnalysis (sketchId, timelineId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/analysis/')
   },
   // Add or remove timeline to sketch
   createSketchTimeline (sketchId, searchIndexId) {
@@ -90,7 +122,7 @@ export default {
     return RestApiClient.get('sketches/' + sketchId + '/stories/')
   },
   getStory (sketchId, storyId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/stories/' + storyId)
+    return RestApiClient.get('/sketches/' + sketchId + '/stories/' + storyId + '/')
   },
   createStory (title, content, sketchId) {
     let formData = {
@@ -108,7 +140,7 @@ export default {
   },
   // Saved views
   getView (sketchId, viewId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/views/' + viewId)
+    return RestApiClient.get('/sketches/' + sketchId + '/views/' + viewId + '/')
   },
   createView (sketchId, viewName, queryString, queryFilter) {
     let formData = {
@@ -133,15 +165,36 @@ export default {
   countSketchEvents (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/count/')
   },
-  uploadTimeline (formData) {
-    let config = {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    }
+  uploadTimeline (formData, config) {
     return RestApiClient.post('/upload/', formData, config)
   },
   getSessions (sketchId, timelineIndex) {
-    return RestApiClient.get('/sketches/' + sketchId + '/explore/sessions/' + timelineIndex)
+    return RestApiClient.get('/sketches/' + sketchId + '/explore/sessions/' + timelineIndex + '/')
+  },
+  getUsers () {
+    return RestApiClient.get('/users/')
+  },
+  getGroups () {
+    return RestApiClient.get('/groups/')
+  },
+  editCollaborators (sketchId, isPublic, usersToAdd, groupsToAdd, usersToRemove, groupsToRemove) {
+    let formData = {
+      public: isPublic,
+      users: usersToAdd,
+      groups: groupsToAdd,
+      remove_users: usersToRemove,
+      remove_groups: groupsToRemove
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
+  },
+  runAnalyzers (sketchId, timelineId, analyzers) {
+    let formData = {
+      timeline_id: timelineId,
+      analyzer_names: analyzers
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /analyzer/, formData)
+  },
+  getAnalyzerSession (sketchId, sessionId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/' + sessionId + '/')
   }
 }

@@ -15,8 +15,10 @@
 
 from __future__ import unicode_literals
 
+import json
 import logging
 import os
+import traceback
 import yaml
 
 import pandas
@@ -25,11 +27,13 @@ from flask import current_app
 from timesketch.lib import definitions
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models import db_session
+from timesketch.models.sketch import Aggregation
 from timesketch.models.sketch import Event as SQLEvent
 from timesketch.models.sketch import Sketch as SQLSketch
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Analysis
+
 
 def _flush_datastore_decorator(func):
     """Decorator that flushes the bulk insert queue in the datastore."""
@@ -38,6 +42,27 @@ def _flush_datastore_decorator(func):
         self.datastore.flush_queued_events()
         return func_return
     return wrapper
+
+def get_config_path(file_name):
+    """Returns a path to a configuration file.
+
+    Args:
+        file_name: String that defines the config file name.
+
+    Returns:
+        The path to the configuration file or None if the file cannot be found.
+    """
+    path = os.path.join(os.path.sep, 'etc', 'timesketch', file_name)
+    if os.path.isfile(path):
+        return path
+
+    path = os.path.join(
+        os.path.dirname(__file__), '..', '..', '..', 'data', file_name)
+    path = os.path.abspath(path)
+    if os.path.isfile(path):
+        return path
+
+    return None
 
 
 def get_yaml_config(file_name):
@@ -51,12 +76,8 @@ def get_yaml_config(file_name):
         an empty dict if the file is not found or YAML was unable
         to parse it.
     """
-    root_path = os.path.join(os.path.sep, 'etc', 'timesketch')
-    if not os.path.isdir(root_path):
-        return {}
-
-    path = os.path.join(root_path, file_name)
-    if not os.path.isfile(path):
+    path = get_config_path(file_name)
+    if not path:
         return {}
 
     with open(path, 'r') as fh:
@@ -263,6 +284,39 @@ class Sketch(object):
         if not self.sql_sketch:
             raise RuntimeError('No such sketch')
 
+    def add_aggregation(
+            self, name, agg_name, agg_params, description='', view_id=None,
+            chart_type=None):
+        """Add aggregation to the sketch.
+
+        Args:
+            name: the name of the aggregation run.
+            agg_name: the name of the aggregation class to run.
+            agg_params: a dictionary of the parameters for the aggregation.
+            description: description of the aggregation, visible in the UI,
+                this is optional.
+            view_id: optional ID of the view to attach the aggregation to.
+            chart_type: string representing the chart type.
+        """
+        if not agg_name:
+            raise ValueError('Aggregator name needs to be defined.')
+        if not agg_params:
+            raise ValueError('Aggregator parameters have to be defined.')
+
+        if view_id:
+            view = View.query.get(view_id)
+        else:
+            view = None
+
+        agg_json = json.dumps(agg_params)
+        aggregation = Aggregation.get_or_create(
+            name=name, description=description, agg_type=agg_name,
+            parameters=agg_json, chart_type=chart_type, user=None,
+            sketch=self.sql_sketch, view=view)
+        db_session.add(aggregation)
+        db_session.commit()
+        return aggregation
+
     def add_view(self, view_name, analyzer_name, query_string=None,
                  query_dsl=None, query_filter=None):
         """Add saved view to the Sketch.
@@ -323,6 +377,9 @@ class BaseIndexAnalyzer(object):
     # it needs to be included in this frozenset by using
     # the indexer names.
     DEPENDENCIES = frozenset()
+
+    # Used as hints to the frontend UI in order to render input forms.
+    FORM_FIELDS = []
 
     def __init__(self, index_name):
         """Initialize the analyzer object.
@@ -402,12 +459,17 @@ class BaseIndexAnalyzer(object):
         analysis = Analysis.query.get(analysis_id)
         analysis.set_status('STARTED')
 
-        # Run the analyzer
-        result = self.run()
+        # Run the analyzer. Broad Exception catch to catch any error and store
+        # the error in the DB for display in the UI.
+        try:
+            result = self.run()
+            analysis.set_status('DONE')
+        except Exception:  # pylint: disable=broad-except
+            analysis.set_status('ERROR')
+            result = traceback.format_exc()
 
         # Update database analysis object with result and status
         analysis.result = '{0:s}'.format(result)
-        analysis.set_status('DONE')
         db_session.add(analysis)
         db_session.commit()
 

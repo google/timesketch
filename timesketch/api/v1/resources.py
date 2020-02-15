@@ -82,7 +82,6 @@ from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
-from timesketch.lib.forms import RunAnalyzerForm
 from timesketch.lib.forms import TimelineForm
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.experimental.utils import GRAPH_VIEWS
@@ -90,6 +89,8 @@ from timesketch.lib.experimental.utils import get_graph_views
 from timesketch.lib.experimental.utils import get_graph_view
 from timesketch.models import db_session
 from timesketch.models.sketch import Aggregation
+from timesketch.models.sketch import Analysis
+from timesketch.models.sketch import AnalysisSession
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
@@ -97,6 +98,8 @@ from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import View
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import Story
+from timesketch.models.user import User
+from timesketch.models.user import Group
 
 
 def bad_request(message):
@@ -117,6 +120,7 @@ class ResourceMixin(object):
     """Mixin for API resources."""
     # Schemas for database model resources
     user_fields = {'username': fields.String}
+    group_fields = {'name': fields.String}
 
     aggregation_fields = {
         'id': fields.Integer,
@@ -158,6 +162,29 @@ class ResourceMixin(object):
         'color': fields.String,
         'searchindex': fields.Nested(searchindex_fields),
         'deleted': fields.Boolean,
+        'created_at': fields.DateTime,
+        'updated_at': fields.DateTime
+    }
+
+    analysis_fields = {
+        'id': fields.Integer,
+        'name': fields.String,
+        'description': fields.String,
+        'analyzer_name': fields.String,
+        'parameters': fields.String,
+        'result': fields.String,
+        'log': fields.String,
+        'user': fields.Nested(user_fields),
+        'timeline': fields.Nested(timeline_fields),
+        'status': fields.Nested(status_fields),
+        'created_at': fields.DateTime,
+        'updated_at': fields.DateTime
+    }
+
+    analysis_session_fields = {
+        'id': fields.Integer,
+        'user': fields.Nested(user_fields),
+        'analyses': fields.Nested(analysis_fields),
         'created_at': fields.DateTime,
         'updated_at': fields.DateTime
     }
@@ -226,10 +253,13 @@ class ResourceMixin(object):
     fields_registry = {
         'aggregation': aggregation_fields,
         'searchindex': searchindex_fields,
+        'analysis': analysis_fields,
+        'analysissession': analysis_session_fields,
         'timeline': timeline_fields,
         'searchtemplate': searchtemplate_fields,
         'view': view_fields,
         'user': user_fields,
+        'group': group_fields,
         'sketch': sketch_fields,
         'story': story_fields,
         'event_comment': comment_fields,
@@ -370,8 +400,40 @@ class SketchResource(ResourceMixin, Resource):
         aggregators = {}
         for _, cls in aggregator_manager.AggregatorManager.get_aggregators():
             aggregators[cls.NAME] = {
-                'form_fields': cls.FORM_FIELDS
+                'form_fields': cls.FORM_FIELDS,
+                'description': cls.DESCRIPTION
             }
+
+        # Get mappings for all indices in the sketch. This is used to set
+        # columns shown in the event list.
+        sketch_indices = [
+            t.searchindex.index_name
+            for t in sketch.active_timelines
+        ]
+
+        if not sketch_indices:
+            mappings_settings = {}
+        else:
+            mappings_settings = self.datastore.client.indices.get_mapping(
+                index=sketch_indices)
+
+        mappings = []
+        for _, value in mappings_settings.items():
+            for _, v in value['mappings'].items():
+                for field, value_dict in v['properties'].items():
+                    mapping_dict = {}
+                    # Exclude internal fields
+                    if field.startswith('__'):
+                        continue
+                    if field == 'timesketch_label':
+                        continue
+                    mapping_dict['field'] = field
+                    mapping_dict['type'] = value_dict.get('type', 'n/a')
+                    mappings.append(mapping_dict)
+
+        # Make the list of dicts unique
+        mappings = {v['field']: v for v in mappings}.values()
+
         meta = dict(
             aggregators=aggregators,
             views=[{
@@ -387,10 +449,20 @@ class SketchResource(ResourceMixin, Resource):
             } for searchtemplate in SearchTemplate.query.all()],
             emojis=get_emojis_as_dict(),
             permissions={
+                'public': bool(sketch.is_public),
                 'read': bool(sketch.has_permission(current_user, 'read')),
                 'write': bool(sketch.has_permission(current_user, 'write')),
                 'delete': bool(sketch.has_permission(current_user, 'delete')),
-            })
+            },
+            collaborators={
+                'users': [user.username for user in sketch.collaborators],
+                'groups': [group.name for group in sketch.groups],
+            },
+            analyzers=[
+                x for x, y in analyzer_manager.AnalysisManager.get_analyzers()
+            ],
+            mappings=list(mappings)
+        )
         return self.to_json(sketch, meta=meta)
 
     @login_required
@@ -698,14 +770,15 @@ class ExploreResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to explore data, unable to validate form data')
 
+        # TODO: Remove form and use json instead.
         query_dsl = form.dsl.data
-        query_filter = form.filter.data
-        return_fields = form.fields.data
         enable_scroll = form.enable_scroll.data
         scroll_id = form.scroll_id.data
 
-        if not return_fields:
-            return_fields = DEFAULT_SOURCE_FIELDS
+        query_filter = request.json.get('filter', [])
+        return_fields = query_filter.get('fields', [])
+        return_fields = [field['field'] for field in return_fields]
+        return_fields.extend(DEFAULT_SOURCE_FIELDS)
 
         sketch_indices = {
             t.searchindex.index_name
@@ -865,6 +938,67 @@ class AggregationResource(ResourceMixin, Resource):
         return self.to_json(aggregation, status_code=HTTP_STATUS_CODE_CREATED)
 
 
+class AggregationInfoResource(ResourceMixin, Resource):
+    """Resource to get information about an aggregation class."""
+
+    REMOVE_FIELDS = frozenset(['_shards', 'hits', 'timed_out', 'took'])
+
+    def _get_info(self, aggregator_name):
+        """Returns a dict with information about an aggregation."""
+        agg_class = aggregator_manager.AggregatorManager.get_aggregator(
+            aggregator_name)
+
+        field_lines = []
+        for form_field in agg_class.FORM_FIELDS:
+            field = {
+                'name': form_field.get('name', 'N/A'),
+                'description': form_field.get('label', 'N/A')
+            }
+            field_lines.append(field)
+
+        return {
+            'name': agg_class.NAME,
+            'description': agg_class.DESCRIPTION,
+            'fields': field_lines,
+        }
+
+    @login_required
+    def get(self):
+        """Handles GET request to the resource.
+
+        Handler for /api/v1/aggregation/info/
+
+        Returns:
+            JSON with information about every aggregator.
+        """
+        agg_list = []
+        for name, _ in aggregator_manager.AggregatorManager.get_aggregators():
+            agg_list.append(self._get_info(name))
+        return jsonify(agg_list)
+
+    @login_required
+    def post(self):
+        """Handles POST request to the resource.
+
+        Handler for /api/v1/aggregation/info/
+
+        Returns:
+            JSON with aggregation information for a single aggregator.
+        """
+        form = request.json
+        if not form:
+            form = request.data
+
+        aggregator_name = form.get('aggregator')
+        if not aggregator_name:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Not able to gather information about an aggregator, '
+                'missing the aggregator name.')
+
+        return jsonify(self._get_info(aggregator_name))
+
+
 class AggregationExploreResource(ResourceMixin, Resource):
     """Resource to send an aggregation request."""
 
@@ -916,6 +1050,8 @@ class AggregationExploreResource(ResourceMixin, Resource):
             result_obj = aggregator.run(**aggregator_parameters)
             time_after = time.time()
 
+            aggregator_description = aggregator.describe
+
             buckets = result_obj.to_dict()
             buckets['buckets'] = buckets.pop('values')
             result = {
@@ -925,12 +1061,14 @@ class AggregationExploreResource(ResourceMixin, Resource):
             }
             meta = {
                 'method': 'aggregator_run',
-                'name': aggregator_name,
+                'name': aggregator_description.get('name'),
+                'description': aggregator_description.get('description'),
                 'es_time': time_after - time_before,
             }
 
             if chart_type:
-                meta['vega_spec'] = result_obj.to_chart(chart_name=chart_type)
+                meta['vega_spec'] = result_obj.to_chart(
+                    chart_name=chart_type, chart_title=aggregator.chart_title)
 
         elif aggregation_dsl:
             # pylint: disable=unexpected-keyword-arg
@@ -1364,8 +1502,8 @@ class EventAnnotationResource(ResourceMixin, Resource):
             db_session.add(event)
             db_session.commit()
 
-            return self.to_json(
-                annotations, status_code=HTTP_STATUS_CODE_CREATED)
+        return self.to_json(
+            annotations, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class UploadFileResource(ResourceMixin, Resource):
@@ -1407,45 +1545,58 @@ class UploadFileResource(ResourceMixin, Resource):
         if not isinstance(filename, six.text_type):
             filename = codecs.decode(filename, 'utf-8')
 
-        index_name = uuid.uuid4().hex
+        index_name = form.index_name.data or uuid.uuid4().hex
         if not isinstance(index_name, six.text_type):
             index_name = codecs.decode(index_name, 'utf-8')
 
         file_path = os.path.join(upload_folder, filename)
         file_storage.save(file_path)
 
-        # Create the search index in the Timesketch database
-        searchindex = SearchIndex.get_or_create(
+        # Check if search index already exists.
+        searchindex = SearchIndex.query.filter_by(
             name=timeline_name,
             description=timeline_name,
             user=current_user,
-            index_name=index_name)
-        searchindex.grant_permission(permission='read', user=current_user)
-        searchindex.grant_permission(permission='write', user=current_user)
-        searchindex.grant_permission(
-            permission='delete', user=current_user)
-        searchindex.set_status('processing')
-        db_session.add(searchindex)
-        db_session.commit()
+            index_name=index_name).first()
 
         timeline = None
-        if sketch and sketch.has_permission(current_user, 'write'):
-            timeline = Timeline(
-                name=searchindex.name,
-                description=searchindex.description,
-                sketch=sketch,
+
+        if searchindex:
+            searchindex.set_status('processing')
+        else:
+            # Create the search index in the Timesketch database
+            searchindex = SearchIndex.get_or_create(
+                name=timeline_name,
+                description=timeline_name,
                 user=current_user,
-                searchindex=searchindex)
-            timeline.set_status('processing')
-            sketch.timelines.append(timeline)
-            db_session.add(timeline)
+                index_name=index_name)
+            searchindex.grant_permission(permission='read', user=current_user)
+            searchindex.grant_permission(permission='write', user=current_user)
+            searchindex.grant_permission(
+                permission='delete', user=current_user)
+            searchindex.set_status('processing')
+            db_session.add(searchindex)
             db_session.commit()
 
+            if sketch and sketch.has_permission(current_user, 'write'):
+                timeline = Timeline(
+                    name=searchindex.name,
+                    description=searchindex.description,
+                    sketch=sketch,
+                    user=current_user,
+                    searchindex=searchindex)
+                timeline.set_status('processing')
+                sketch.timelines.append(timeline)
+                db_session.add(timeline)
+                db_session.commit()
+
+        enable_stream = form.enable_stream.data
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
         from timesketch.lib import tasks
         pipeline = tasks.build_index_pipeline(
-            file_path, timeline_name, index_name, file_extension, sketch_id)
+            file_path, timeline_name, index_name, file_extension, sketch_id,
+            only_index=enable_stream)
         pipeline.apply_async()
 
         # Return Timeline if it was created.
@@ -1731,8 +1882,53 @@ class TimelineCreateResource(ResourceMixin, Resource):
             searchindex, status_code=HTTP_STATUS_CODE_CREATED)
 
 
+class AnalysisResource(ResourceMixin, Resource):
+    """Resource to get analyzer session."""
+
+    @login_required
+    def get(self, sketch_id, timeline_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            An analysis in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+
+        if not sketch.has_permission(current_user, 'read'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have read access to sketch')
+
+        timeline = Timeline.query.get(timeline_id)
+        analysis_history = Analysis.query.filter_by(timeline=timeline).all()
+
+        return self.to_json(analysis_history)
+
+
+class AnalyzerSessionResource(ResourceMixin, Resource):
+    """Resource to get analyzer session."""
+
+    @login_required
+    def get(self, sketch_id, session_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            A analyzer session in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+
+        if not sketch.has_permission(current_user, 'read'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have read access to sketch')
+
+        analysis_session = AnalysisSession.query.get(session_id)
+
+        return self.to_json(analysis_session)
+
+
 class AnalyzerRunResource(ResourceMixin, Resource):
-    """Resource to get all timelines for sketch."""
+    """Resource to list or run analyzers for sketch."""
 
     @login_required
     def get(self, sketch_id):
@@ -1759,25 +1955,33 @@ class AnalyzerRunResource(ResourceMixin, Resource):
             A string with the response from running the analyzer.
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-        if not sketch.has_permission(current_user, 'write'):
+        if not sketch.has_permission(current_user, 'read'):
             return abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                'User does not have write permission on the sketch.')
+                'User does not have read permission on the sketch.')
 
-        form = RunAnalyzerForm.build(request)
-        if not form.validate_on_submit():
+        form = request.json
+        if not form:
+            form = request.data
+
+        if not form:
             return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate input data.')
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'Unable to run an analyzer without any data submitted.')
 
-        search_index = None
-        timeline_id = form.timeline_id.data
-        for timeline in sketch.timelines:
-            index = SearchIndex.query.get_with_acl(
-                timeline.searchindex_id)
+        timeline_id = form.get('timeline_id')
+        if not timeline_id:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Need to provide a timeline ID')
 
-            if index.index_name.lower() == timeline_id:
-                search_index = index
-                break
+        timeline = Timeline.query.get(timeline_id)
+        if timeline not in sketch.timelines:
+            return abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'Timeline is not part of this sketch')
+
+        search_index = timeline.searchindex
 
         if not search_index:
             return abort(
@@ -1785,23 +1989,44 @@ class AnalyzerRunResource(ResourceMixin, Resource):
                     'No timeline was found, make sure you\'ve got the correct '
                     'timeline ID or timeline name.'))
 
-        analyzer_name = form.analyzer_name.data
-        analyzer_kwargs = form.analyzer_kwargs.data
+        analyzer_names = form.get('analyzer_names')
+        if analyzer_names:
+            if not isinstance(analyzer_names, (tuple, list)):
+                return abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Analyzer names needs to be a list of analyzers.')
+
+        analyzer_kwargs = form.get('analyzer_kwargs')
+        if analyzer_kwargs:
+            if not isinstance(analyzer_kwargs, dict):
+                return abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Kwargs needs to be a dictionary of parameters.')
 
         # Import here to avoid circular imports.
         from timesketch.lib import tasks
-        sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
-            sketch_id=sketch_id, searchindex_id=search_index.id,
-            user_id=current_user.id, analyzer_names=[analyzer_name],
-            analyzer_kwargs=analyzer_kwargs)
+        try:
+            analyzer_group, session_id = tasks.build_sketch_analysis_pipeline(
+                sketch_id=sketch_id, searchindex_id=search_index.id,
+                user_id=current_user.id, analyzer_names=analyzer_names,
+                analyzer_kwargs=analyzer_kwargs)
+        except KeyError as e:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to build analyzer pipeline, analyzer does not exist. '
+                'Error message: {0!s}'.format(e))
 
-        if sketch_analyzer_group:
+        if analyzer_group:
             pipeline = (tasks.run_sketch_init.s(
-                [search_index.index_name]) | sketch_analyzer_group)
+                [search_index.index_name]) | analyzer_group)
             pipeline.apply_async()
 
-        return 'Analyzer has been started on timeline: [{0:s}] {1:s}'.format(
-            search_index.index_name, search_index.name)
+        schema = {
+            'objects': [{
+                'analysis_session': session_id
+            }]
+        }
+        return jsonify(schema)
 
 
 class TimelineListResource(ResourceMixin, Resource):
@@ -1864,7 +2089,7 @@ class TimelineListResource(ResourceMixin, Resource):
         # circular imports.
         if current_app.config.get('AUTO_SKETCH_ANALYZERS'):
             from timesketch.lib import tasks
-            sketch_analyzer_group = tasks.build_sketch_analysis_pipeline(
+            sketch_analyzer_group, _ = tasks.build_sketch_analysis_pipeline(
                 sketch_id, searchindex_id, current_user.id)
             if sketch_analyzer_group:
                 pipeline = (tasks.run_sketch_init.s(
@@ -1952,10 +2177,15 @@ class TimelineResource(ResourceMixin, Resource):
 
         # Check that this timeline belongs to the sketch
         if timeline.sketch_id != sketch.id:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                'The sketch ID ({0:d}) does not match with the timeline '
-                'sketch ID ({1:d})'.format(sketch.id, timeline.sketch_id))
+            if not timeline:
+                msg = 'No timeline found with this ID.'
+            elif not sketch:
+                msg = 'No sketch found with this ID.'
+            else:
+                msg = (
+                    'The sketch ID ({0:d}) does not match with the timeline '
+                    'sketch ID ({1:d})'.format(sketch.id, timeline.sketch_id))
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
         if not sketch.has_permission(user=current_user, permission='write'):
             abort(
@@ -2146,6 +2376,93 @@ class SearchIndexResource(ResourceMixin, Resource):
         """
         searchindex = SearchIndex.query.get_with_acl(searchindex_id)
         return self.to_json(searchindex)
+
+
+class UserListResource(ResourceMixin, Resource):
+    """Resource to get list of users."""
+
+    @login_required
+    def get(self):
+        """Handles GET request to the resource.
+
+        Returns:
+            List of usernames
+        """
+        return self.to_json(User.query.all())
+
+
+class GroupListResource(ResourceMixin, Resource):
+    """Resource to get list of groups."""
+
+    @login_required
+    def get(self):
+        """Handles GET request to the resource.
+
+        Returns:
+            List of group names
+        """
+        return self.to_json(Group.query.all())
+
+
+class CollaboratorResource(ResourceMixin, Resource):
+    """Resource to update sketch collaborators."""
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        form = request.json
+
+        # TODO: Add granular ACL controls.
+        # https://github.com/google/timesketch/issues/1016
+
+        if not sketch.has_permission(user=current_user, permission='write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have write permission on the sketch.')
+
+        for username in form.get('users', []):
+            # Try the username with any potential @domain preserved.
+            user = User.query.filter_by(username=username).first()
+
+            # If no hit, then try to strip the domain.
+            if not user:
+                base_username = username.split('@')[0]
+                base_username = base_username.strip()
+                user = User.query.filter_by(username=base_username).first()
+
+            if user:
+                sketch.grant_permission(permission='read', user=user)
+                sketch.grant_permission(permission='write', user=user)
+
+        for group in form.get('groups', []):
+            group = Group.query.filter_by(name=group).first()
+            # Only add groups publicly visible or owned by the current user
+            if not group.user or group.user == current_user:
+                sketch.grant_permission(permission='read', group=group)
+                sketch.grant_permission(permission='write', group=group)
+
+        for username in form.get('remove_users', []):
+            user = User.query.filter_by(username=username).first()
+            sketch.revoke_permission(permission='read', user=user)
+            sketch.revoke_permission(permission='write', user=user)
+
+        for group in form.get('remove_groups', []):
+            group = Group.query.filter_by(name=group).first()
+            sketch.revoke_permission(permission='read', group=group)
+            sketch.revoke_permission(permission='write', group=group)
+
+        public = form.get('public')
+        if public == 'true':
+            sketch.grant_permission(permission='read')
+        else:
+            sketch.revoke_permission(permission='read')
+
+        return HTTP_STATUS_CODE_OK
 
 
 class SessionResource(ResourceMixin, Resource):

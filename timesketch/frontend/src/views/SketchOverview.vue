@@ -19,13 +19,17 @@ limitations under the License.
     <section class="section">
       <div class="container is-fluid">
         <ts-navbar-secondary v-if="sketch.active_timelines.length" currentAppContext="sketch" currentPage="overview">
-          <a class="button is-info is-rounded" style="margin-right:10px;">
-              <span class="icon is-small">
-                <i class="fas fa-users"></i>
-              </span>
-            <span>Share</span>
-          </a>
-          <div class="dropdown is-hoverable is-right" v-bind:class="{'is-active': settingsDropdownActive}">
+          <b-tooltip :label="shareTooltip" position="is-bottom" type="is-white">
+            <a v-if="meta.permissions.write" class="button is-info is-rounded" style="margin-right:10px;" v-on:click="showShareModal = !showShareModal">
+                <span class="icon is-small">
+                  <i v-if="meta.permissions.public" class="fas fa-globe"></i>
+                  <i v-else-if="meta.collaborators.users.length ||  meta.collaborators.groups.length" class="fas fa-users"></i>
+                  <i v-else-if="!meta.permissions.public" class="fas fa-lock"></i>
+                </span>
+              <span>Share</span>
+            </a>
+          </b-tooltip>
+          <div v-if="meta.permissions.write" class="dropdown is-hoverable is-right" v-bind:class="{'is-active': settingsDropdownActive}">
             <div class="dropdown-trigger">
               <a class="button" style="background:transparent;border:none;" aria-haspopup="true" aria-controls="dropdown-menu" v-on:click="settingsDropdownActive = !settingsDropdownActive">
                 <span>More</span>
@@ -46,6 +50,19 @@ limitations under the License.
         </ts-navbar-secondary>
       </div>
     </section>
+
+    <b-modal :active.sync="showShareModal" :width="640" scroll="keep">
+      <div class="card">
+        <header class="card-header">
+          <p class="card-header-title">Share sketch</p>
+        </header>
+        <div class="card-content">
+          <div class="content">
+            <ts-share-form @closeShareModal="closeShareModal"></ts-share-form>
+          </div>
+        </div>
+      </div>
+    </b-modal>
 
     <b-modal :active.sync="showUploadTimelineModal" :width="640" scroll="keep">
       <div class="card">
@@ -102,7 +119,7 @@ limitations under the License.
     </section>
 
     <!-- Stats -->
-    <section class="section" v-if="sketch.timelines.length">
+    <section class="section" v-if="sketch.active_timelines.length">
       <div class="container is-fluid">
         <div class="card" style="min-height: 100px;">
           <div class="card-content">
@@ -123,7 +140,7 @@ limitations under the License.
               <header class="card-header">
                 <p class="card-header-title">Timelines</p>
                 <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
-                  <p class="control">
+                  <p v-if="meta.permissions.write" class="control">
                     <button class="button is-success is-rounded is-small" v-on:click="showUploadTimelineModal = !showUploadTimelineModal">
                         <span class="icon is-small">
                           <i class="fas fa-plus"></i>
@@ -198,6 +215,7 @@ import TsSavedViewList from '../components/Sketch/ViewList'
 import TsSketchStoryList from '../components/Sketch/StoryList'
 import TsUploadTimelineForm from '../components/Sketch/UploadForm'
 import TsSketchTimelinesManage from './SketchManageTimelines'
+import TsShareForm from '../components/Sketch/ShareForm'
 
 export default {
   components: {
@@ -207,13 +225,15 @@ export default {
     TsSavedViewList,
     TsUploadTimelineForm,
     TsSketchStoryList,
-    TsSketchTimelinesManage
+    TsSketchTimelinesManage,
+    TsShareForm
   },
   data () {
     return {
       settingsDropdownActive: false,
       showUploadTimelineModal: false,
-      showDeleteSketchModal: false
+      showDeleteSketchModal: false,
+      showShareModal: false
     }
   },
   computed: {
@@ -225,6 +245,20 @@ export default {
     },
     count () {
       return this.$store.state.count
+    },
+    shareTooltip () {
+      let msg = ''
+      let baseMsg = 'Shared with '
+      if (this.meta.collaborators.users.length) {
+        msg = baseMsg + this.meta.collaborators.users.length + ' users'
+        if (this.meta.collaborators.groups.length) {
+          msg = msg + ' and ' + this.meta.collaborators.groups.length + ' groups'
+        }
+      }
+      if (!msg && this.meta.collaborators.groups.length) {
+        msg = baseMsg + this.meta.collaborators.groups.length + ' groups'
+      }
+      return msg
     }
   },
   methods: {
@@ -234,9 +268,19 @@ export default {
       }).catch((e) => {
         console.error(e)
       })
+    },
+    closeShareModal: function () {
+      this.showShareModal = false
+      this.$buefy.snackbar.open({
+        duration: 3500,
+        message: 'Sharing settings have been saved',
+        type: 'is-white',
+        position: 'is-top',
+        queue: false
+      })
+      this.$store.dispatch('updateSketch', this.sketch.id)
     }
   }
-
 }
 </script>
 

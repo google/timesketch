@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
+  <div>
   <form v-on:submit.prevent="submitForm">
     <div class="field">
       <div class="file has-name">
@@ -42,12 +43,17 @@ limitations under the License.
       </div>
     </div>
 
-    <div class="field" v-if="fileName">
+    <div class="field" v-if="fileName && percentCompleted === 0">
       <div class="control">
         <input class="button is-success" type="submit" value="Upload">
       </div>
     </div>
   </form>
+    <br>
+    <b-progress v-if="percentCompleted !== 0" :value="percentCompleted" show-value format="percent" type="is-info" size="is-medium">
+      <span v-if="percentCompleted === 100">Waiting for request to finish..</span>
+    </b-progress>
+  </div>
 </template>
 
 <script>
@@ -60,23 +66,34 @@ export default {
         name: '',
         file: ''
       },
-      fileName: ''
+      fileName: '',
+      percentCompleted: 0
     }
   },
   methods: {
     clearFormData: function () {
       this.form.name = ''
       this.form.file = ''
+      this.fileName = ''
     },
     submitForm: function () {
       let formData = new FormData()
       formData.append('file', this.form.file)
       formData.append('name', this.form.name)
       formData.append('sketch_id', this.$store.state.sketch.id)
-      ApiClient.uploadTimeline(formData).then((response) => {
+      let config = {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: function(progressEvent) {
+          this.percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+        }.bind(this)
+      }
+      ApiClient.uploadTimeline(formData, config).then((response) => {
         this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
         this.$emit('toggleModal')
         this.clearFormData()
+        this.percentCompleted = 0
       }).catch((e) => {})
     },
     setFileName: function (fileList) {
