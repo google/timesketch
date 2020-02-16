@@ -106,7 +106,7 @@ def _get_index_task_class(file_extension):
     """
     if file_extension == 'plaso':
         index_class = run_plaso
-    elif file_extension in ['csv', 'jsonl', 'string']:
+    elif file_extension in ['csv', 'jsonl']:
         index_class = run_csv_jsonl
     else:
         raise KeyError('No task that supports {0:s}'.format(file_extension))
@@ -465,6 +465,12 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
     Returns:
         Name (str) of the index.
     """
+    if events:
+        file_handle = io.StringIO(events)
+        source_type = 'jsonl'
+    else:
+        file_handle = open(file_path, 'r', encoding='utf-8')
+
     event_type = 'generic_event'  # Document type for Elasticsearch
     validators = {
         'csv': read_and_validate_csv,
@@ -481,10 +487,6 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
         host=current_app.config['ELASTIC_HOST'],
         port=current_app.config['ELASTIC_PORT'])
 
-    if events:
-        file_handle = io.StringIO(events)
-    else:
-        file_handle = open(file_path, 'r', encoding='utf-8')
     # Reason for the broad exception catch is that we want to capture
     # all possible errors and exit the task.
     try:
