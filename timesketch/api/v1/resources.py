@@ -1640,9 +1640,17 @@ class UploadFileResource(ResourceMixin, Resource):
         file_path = os.path.join(upload_folder, filename)
 
         chunk_index = form.get('chunk_index')
+        if isinstance(chunk_index, six.string_types):
+            chunk_index = int(chunk_index)
         chunk_byte_offset = form.get('chunk_byte_offset')
+        if isinstance(chunk_byte_offset, six.string_types):
+            chunk_byte_offset = int(chunk_byte_offset)
         chunk_total_chunks = form.get('chunk_total_chunks')
+        if isinstance(chunk_total_chunks, six.string_types):
+            chunk_total_chunks = int(chunk_total_chunks)
         file_size = form.get('total_file_size')
+        if isinstance(file_size, six.string_types):
+            file_size = int(file_size)
         enable_stream = form.get('enable_stream', False)
 
         if chunk_total_chunks is None:
@@ -1736,7 +1744,7 @@ class UploadFileResource(ResourceMixin, Resource):
         if file_storage:
             return self._upload_file(file_storage, form, sketch, index_name)
 
-        events = form.get('events', [])
+        events = form.get('events')
         if not events:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
