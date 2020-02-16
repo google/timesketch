@@ -237,28 +237,6 @@ class EventAnnotationForm(BaseForm):
     events = StringField('Events', validators=[DataRequired()])
 
 
-class UploadFileForm(BaseForm):
-    """Form to handle file uploads."""
-    file = FileField(
-        'file',
-        validators=[
-            FileRequired(),
-            FileAllowed(['plaso', 'csv', 'jsonl'],
-                        'Allowed file extensions: .plaso, .csv, or .jsonl')
-        ])
-    name = StringField('Timeline name', validators=[Optional()])
-    sketch_id = IntegerField('Sketch ID', validators=[Optional()])
-    index_name = StringField('Index Name', validators=[Optional()])
-    enable_stream = BooleanField(
-        'Enable stream', false_values={False, 'false', ''}, default=False)
-    chunk_index = IntegerField('Chunk Index', validators=[Optional()])
-    chunk_byte_offset = IntegerField(
-        'Chunk Byte Offset', validators=[Optional()])
-    chunk_total_chunks = IntegerField(
-        'Total Chunk Count', validators=[Optional()])
-    total_file_size = IntegerField('Total File size', validators=[Optional()])
-
-
 class StoryForm(BaseForm):
     """Form to handle stories."""
     title = StringField('Title', validators=[])

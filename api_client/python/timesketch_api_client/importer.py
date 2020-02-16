@@ -113,33 +113,30 @@ class ImportStreamer(object):
         self._count = 0
         self._data_lines = []
 
-    def _upload_data(self, file_name, end_stream):
+    def _upload_data_frame(self, data_frame, end_stream):
         """Upload data to Timesketch.
 
         Args:
-            file_name: a full path to the file that is about to be uploaded.
+            data_frame: a pandas DataFrame with the content to upload.
             end_stream: boolean indicating whether this is the last chunk of
                 the stream.
         """
-        files = {
-            'file': open(file_name, 'rb')
-        }
         data = {
             'name': self._timeline_name,
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
             'index_name': self._index,
+            'events': data_frame.to_json(orient='records', lines=True)
         }
 
-        response = self._sketch.api.session.post(
-            self._resource_url, files=files, data=data)
-
+        response = self._sketch.api.session.post(self._resource_url, data=data)
+        # TODO: Add in the ability to re-upload failed file.
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             raise RuntimeError(
-                'Error uploading data: [{0:d}] {1:s} {2:s}, file: {3:s}, '
-                'index {4:s}'.format(
+                'Error uploading data: [{0:d}] {1:s} {2:s}, '
+                'index {3:s}'.format(
                     response.status_code, response.reason, response.text,
-                    file_name, self._index))
+                    self._index))
 
         response_dict = response.json()
         self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
@@ -151,7 +148,6 @@ class ImportStreamer(object):
         Args:
             file_path: a full path to the file that is about to be uploaded.
         """
-        resource_url = '{0:s}/upload/'.format(self._sketch.api.api_root)
         file_size = os.path.getsize(file_path)
 
         if self._timeline_name:
@@ -171,7 +167,7 @@ class ImportStreamer(object):
             file_dict = {
                 'file': open(file_path, 'rb')}
             response = self._sketch.api.session.post(
-                resource_url, files=file_dict, data=data)
+                self._resource_url, files=file_dict, data=data)
         else:
             chunks = int(math.ceil(float(file_size) / self.FILE_SIZE_THRESHOLD))
             data['chunk_total_chunks'] = chunks
@@ -186,7 +182,7 @@ class ImportStreamer(object):
                 file_stream.name = file_path
                 file_dict = {'file': file_stream}
                 response = self._sketch.api.session.post(
-                    resource_url, files=file_dict, data=data)
+                    self._resource_url, files=file_dict, data=data)
 
                 if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
                     # TODO (kiddi): Re-do this chunk.
@@ -246,10 +242,8 @@ class ImportStreamer(object):
                 'Need a field called timestamp_desc in the data frame.')
 
         if size <= self._threshold:
-            csv_file = tempfile.NamedTemporaryFile(suffix='.csv')
-            data_frame_use.to_csv(csv_file.name, index=False, encoding='utf-8')
             end_stream = not part_of_iter
-            self._upload_data(csv_file.name, end_stream=end_stream)
+            self._upload_data_frame(data_frame_use, end_stream=end_stream)
             return
 
         chunks = int(math.ceil(float(size) / self._threshold))
@@ -257,12 +251,8 @@ class ImportStreamer(object):
             chunk_start = index * self._threshold
             data_chunk = data_frame_use[
                 chunk_start:chunk_start + self._threshold]
-
-            csv_file = tempfile.NamedTemporaryFile(suffix='.csv')
-            data_chunk.to_csv(csv_file.name, index=False, encoding='utf-8')
-
             end_stream = bool(index == chunks - 1)
-            self._upload_data(csv_file.name, end_stream=end_stream)
+            self._upload_data_frame(data_chunk, end_stream=end_stream)
 
     def add_dict(self, entry):
         """Add an entry into the buffer.
@@ -440,11 +430,7 @@ class ImportStreamer(object):
 
         data_frame = pandas.DataFrame(self._data_lines)
         data_frame_use = self._fix_data_frame(data_frame)
-
-        csv_file = tempfile.NamedTemporaryFile(suffix='.csv')
-        data_frame_use.to_csv(csv_file.name, index=False, encoding='utf-8')
-
-        self._upload_data(csv_file.name, end_stream=end_stream)
+        self._upload_data_frame(data_frame_use, end_stream=end_stream)
 
     @property
     def response(self):
