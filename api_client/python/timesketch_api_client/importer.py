@@ -19,7 +19,6 @@ import json
 import math
 import logging
 import os
-import tempfile
 import uuid
 
 import pandas

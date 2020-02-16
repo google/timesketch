@@ -34,7 +34,6 @@ import codecs
 import datetime
 import json
 import hashlib
-import io
 import os
 import time
 import uuid
@@ -1576,7 +1575,7 @@ class UploadFileResource(ResourceMixin, Resource):
         from timesketch.lib import tasks
         pipeline = tasks.build_index_pipeline(
             file_path=file_path, events=events, timeline_name=timeline_name,
-            index_name=index_name, file_extension=file_extension, 
+            index_name=index_name, file_extension=file_extension,
             sketch_id=sketch_id, only_index=enable_stream)
         pipeline.apply_async()
 
@@ -1728,14 +1727,14 @@ class UploadFileResource(ResourceMixin, Resource):
         if sketch_id:
             sketch = Sketch.query.get_with_acl(sketch_id)
 
-        index_name = form.get('index_name',  uuid.uuid4().hex)
+        index_name = form.get('index_name', uuid.uuid4().hex)
         if not isinstance(index_name, six.text_type):
             index_name = codecs.decode(index_name, 'utf-8')
 
         file_storage = request.files.get('file')
 
         if file_storage:
-            return self._upload_file(file_storage, form)
+            return self._upload_file(file_storage, form, sketch, index_name)
 
         events = form.get('events', [])
         if not events:

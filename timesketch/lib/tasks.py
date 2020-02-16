@@ -134,8 +134,8 @@ def _get_index_analyzers():
 
 
 def build_index_pipeline(
-            file_path='', events='', timeline_name='', index_name='',
-            file_extension='', sketch_id=None, only_index=False):
+        file_path='', events='', timeline_name='', index_name='',
+        file_extension='', sketch_id=None, only_index=False):
     """Build a pipeline for index and analysis.
 
     Args:

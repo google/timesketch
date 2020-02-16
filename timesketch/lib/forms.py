@@ -16,9 +16,6 @@
 from __future__ import unicode_literals
 
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileAllowed
-from flask_wtf.file import FileField
-from flask_wtf.file import FileRequired
 from wtforms import widgets
 from wtforms.fields import BooleanField
 from wtforms.fields import HiddenField
