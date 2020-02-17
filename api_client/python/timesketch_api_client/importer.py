@@ -36,13 +36,13 @@ class ImportStreamer(object):
 
     # The number of entries before automatically flushing
     # the streamer.
-    ENTRY_THRESHOLD = 100000
+    DEFAULT_ENTRY_THRESHOLD = 100000
 
     # Number of bytes in a binary file before automatically
     # chunking it up into smaller pieces.
-    FILE_SIZE_THRESHOLD = 104857600  # 100 Mb.
+    DEFAULT_FILESIZE_THRESHOLD = 104857600  # 100 Mb.
 
-    def __init__(self, entry_threshold=None):
+    def __init__(self):
         """Initialize the upload streamer."""
         self._count = 0
         self._data_lines = []
@@ -55,7 +55,8 @@ class ImportStreamer(object):
         self._timeline_name = None
         self._timestamp_desc = None
 
-        self._threshold = entry_threshold or self.ENTRY_THRESHOLD
+        self._threshold_entry = self.DEFAULT_ENTRY_THRESHOLD
+        self._threshold_filesize = self.DEFAULT_FILESIZE_THRESHOLD
 
     def _fix_data_frame(self, data_frame):
         """Returns a data frame with added columns for Timesketch upload.
@@ -162,21 +163,22 @@ class ImportStreamer(object):
             'total_file_size': file_size,
             'index_name': self._index,
         }
-        if file_size <= self.FILE_SIZE_THRESHOLD:
+        if file_size <= self._threshold_filesize:
             file_dict = {
                 'file': open(file_path, 'rb')}
             response = self._sketch.api.session.post(
                 self._resource_url, files=file_dict, data=data)
         else:
-            chunks = int(math.ceil(float(file_size) / self.FILE_SIZE_THRESHOLD))
+            chunks = int(
+                math.ceil(float(file_size) / self._threshold_filesize))
             data['chunk_total_chunks'] = chunks
             for index in range(0, chunks):
                 data['chunk_index'] = index
-                start = self.FILE_SIZE_THRESHOLD * index
+                start = self._threshold_filesize * index
                 data['chunk_byte_offset'] = start
                 fh = open(file_path, 'rb')
                 fh.seek(start)
-                binary_data = fh.read(self.FILE_SIZE_THRESHOLD)
+                binary_data = fh.read(self._threshold_filesize)
                 file_stream = io.BytesIO(binary_data)
                 file_stream.name = file_path
                 file_dict = {'file': file_stream}
@@ -240,16 +242,16 @@ class ImportStreamer(object):
             raise ValueError(
                 'Need a field called timestamp_desc in the data frame.')
 
-        if size <= self._threshold:
+        if size <= self._threshold_entry:
             end_stream = not part_of_iter
             self._upload_data_frame(data_frame_use, end_stream=end_stream)
             return
 
-        chunks = int(math.ceil(float(size) / self._threshold))
+        chunks = int(math.ceil(float(size) / self._threshold_entry))
         for index in range(0, chunks):
-            chunk_start = index * self._threshold
+            chunk_start = index * self._threshold_entry
             data_chunk = data_frame_use[
-                chunk_start:chunk_start + self._threshold]
+                chunk_start:chunk_start + self._threshold_entry]
             end_stream = bool(index == chunks - 1)
             self._upload_data_frame(data_chunk, end_stream=end_stream)
 
@@ -266,7 +268,7 @@ class ImportStreamer(object):
         if not isinstance(entry, dict):
             raise TypeError('Entry object needs to be a dict.')
 
-        if self._count >= self._threshold:
+        if self._count >= self._threshold_entry:
             self.flush(end_stream=False)
             self._reset()
 
@@ -337,7 +339,8 @@ class ImportStreamer(object):
         file_ending = filepath.lower().split('.')[-1]
         if file_ending == 'csv':
             for chunk_frame in pandas.read_csv(
-                    filepath, delimiter=delimiter, chunksize=self._threshold):
+                    filepath, delimiter=delimiter,
+                    chunksize=self._threshold_entry):
                 self.add_data_frame(chunk_frame, part_of_iter=True)
         elif file_ending == 'plaso':
             self._upload_binary_file(filepath)
@@ -445,6 +448,14 @@ class ImportStreamer(object):
         """
         self._sketch = sketch
         self._resource_url = '{0:s}/upload/'.format(sketch.api.api_root)
+
+    def set_entry_threshold(self, threshold):
+        """Set the threshold for number of entries per chunk."""
+        self._threshold_filesize = threshold
+
+    def set_filesize_threshold(self, threshold):
+        """Set the threshold for file size per chunk."""
+        self._threshold_filesize = threshold
 
     def set_message_format_string(self, format_string):
         """Set the message format string."""
