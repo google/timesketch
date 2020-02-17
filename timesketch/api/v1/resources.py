@@ -1654,6 +1654,7 @@ class UploadFileResource(ResourceMixin, Resource):
         enable_stream = form.get('enable_stream', False)
 
         if chunk_total_chunks is None:
+            file_storage.save(file_path)
             return self._upload_and_index(
                 file_path=file_path,
                 file_extension=file_extension,
