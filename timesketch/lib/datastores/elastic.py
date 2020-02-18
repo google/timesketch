@@ -331,6 +331,8 @@ class ElasticsearchDataStore(object):
                 search_type=search_type,
                 scroll=scroll_timeout)
 
+        # The argument " _source_include" changed to "_source_includes" in
+        # ES version 7. This check add support for both version 6 and 7 clients.
         # pylint: disable=unexpected-keyword-arg
         if self.version.startswith('6'):
             _search_result = self.client.search(
