@@ -332,6 +332,7 @@ class ElasticsearchDataStore(object):
                 scroll=scroll_timeout)
 
         if self.version.startswith('6'):
+            # pylint: disable=unexpected-keyword-arg
             _search_result = self.client.search(
                 body=query_dsl,
                 index=list(indices),
@@ -339,6 +340,7 @@ class ElasticsearchDataStore(object):
                 _source_include=return_fields,
                 scroll=scroll_timeout)
         else:
+            # pylint: disable=unexpected-keyword-arg
             _search_result = self.client.search(
                 body=query_dsl,
                 index=list(indices),
@@ -346,9 +348,6 @@ class ElasticsearchDataStore(object):
                 _source_includes=return_fields,
                 scroll=scroll_timeout)
 
-        # Suppress the lint error because elasticsearch-py adds parameters
-        # to the function with a decorator and this makes pylint sad.
-        # pylint: disable=unexpected-keyword-arg
         return _search_result
 
     def search_stream(self, sketch_id=None, query_string=None,
