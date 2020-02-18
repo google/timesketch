@@ -19,6 +19,7 @@ import logging
 import subprocess
 import traceback
 
+import codecs
 import io
 import json
 import six
@@ -469,7 +470,8 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
         file_handle = io.StringIO(events)
         source_type = 'jsonl'
     else:
-        file_handle = open(file_path, 'r', encoding='utf-8')
+        file_handle = codecs.open(
+            file_path, 'r', encoding='utf-8', errors='replace')
 
     event_type = 'generic_event'  # Document type for Elasticsearch
     validators = {

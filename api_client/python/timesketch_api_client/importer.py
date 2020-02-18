@@ -15,6 +15,7 @@
 from __future__ import unicode_literals
 
 import io
+import codecs
 import json
 import math
 import logging
@@ -42,6 +43,9 @@ class ImportStreamer(object):
     # chunking it up into smaller pieces.
     DEFAULT_FILESIZE_THRESHOLD = 104857600  # 100 Mb.
 
+    # Define a default encoding for processing text files.
+    DEFAULT_TEXT_ENCODING = 'utf-8'
+
     def __init__(self):
         """Initialize the upload streamer."""
         self._count = 0
@@ -55,6 +59,7 @@ class ImportStreamer(object):
         self._timeline_name = None
         self._timestamp_desc = None
 
+        self._text_encoding = self.DEFAULT_TEXT_ENCODING
         self._threshold_entry = self.DEFAULT_ENTRY_THRESHOLD
         self._threshold_filesize = self.DEFAULT_FILESIZE_THRESHOLD
 
@@ -338,13 +343,18 @@ class ImportStreamer(object):
 
         file_ending = filepath.lower().split('.')[-1]
         if file_ending == 'csv':
-            for chunk_frame in pandas.read_csv(
-                    filepath, delimiter=delimiter,
-                    chunksize=self._threshold_entry):
-                self.add_data_frame(chunk_frame, part_of_iter=True)
+            with codecs.open(
+                    filepath, 'r', encoding=self._text_encoding,
+                    errors='replace') as fh:
+                for chunk_frame in pandas.read_csv(
+                        fh, delimiter=delimiter,
+                        chunksize=self._threshold_entry):
+                    self.add_data_frame(chunk_frame, part_of_iter=True)
         elif file_ending == 'plaso':
             self._upload_binary_file(filepath)
         elif file_ending == 'jsonl':
+            # TODO (kiddi): Replace JSONL handling as a followup to prevent
+            # merge issues with other PRs.
             data_frame = None
             with open(filepath, 'r') as fh:
                 lines = [json.loads(x) for x in fh]
@@ -460,6 +470,10 @@ class ImportStreamer(object):
     def set_message_format_string(self, format_string):
         """Set the message format string."""
         self._format_string = format_string
+
+    def set_text_encoding(self, encoding):
+        """Set the default encoding for reading text files."""
+        self._text_encoding = encoding
 
     def set_timeline_name(self, name):
         """Set the timeline name."""
