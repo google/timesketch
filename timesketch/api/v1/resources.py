@@ -419,7 +419,7 @@ class SketchResource(ResourceMixin, Resource):
 
         mappings = []
 
-        for index_name, value in mappings_settings.items():
+        for _, value in mappings_settings.items():
             # The structure is different in ES version 6.x and lower. This check
             # makes sure we support both old and new versions.
             properties = value['mappings'].get('properties')
@@ -1606,6 +1606,7 @@ class UploadFileResource(ResourceMixin, Resource):
         enable_stream = form.enable_stream.data
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
+        # pylint: disable=import-outside-toplevel
         from timesketch.lib import tasks
         pipeline = tasks.build_index_pipeline(
             file_path, timeline_name, index_name, file_extension, sketch_id,
@@ -1625,6 +1626,7 @@ class UploadFileResource(ResourceMixin, Resource):
 class TaskResource(ResourceMixin, Resource):
     """Resource to get information on celery task."""
 
+    # pylint: disable=import-outside-toplevel
     def __init__(self):
         super(TaskResource, self).__init__()
         from timesketch import create_celery_app
@@ -2017,6 +2019,7 @@ class AnalyzerRunResource(ResourceMixin, Resource):
                     'Kwargs needs to be a dictionary of parameters.')
 
         # Import here to avoid circular imports.
+        # pylint: disable=import-outside-toplevel
         from timesketch.lib import tasks
         try:
             analyzer_group, session_id = tasks.build_sketch_analysis_pipeline(
@@ -2100,6 +2103,7 @@ class TimelineListResource(ResourceMixin, Resource):
 
         # Run sketch analyzers when timeline is added. Import here to avoid
         # circular imports.
+        # pylint: disable=import-outside-toplevel
         if current_app.config.get('AUTO_SKETCH_ANALYZERS'):
             from timesketch.lib import tasks
             sketch_analyzer_group, _ = tasks.build_sketch_analysis_pipeline(

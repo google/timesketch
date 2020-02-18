@@ -535,6 +535,7 @@ class ElasticsearchDataStore(object):
             }
         }
 
+        # TODO: Remove when we deprecate Elasticsearch version 6.x
         if self.version.startswith('6'):
             _document_mapping = {doc_type: _document_mapping}
 
