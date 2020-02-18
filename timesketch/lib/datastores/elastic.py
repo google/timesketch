@@ -331,8 +331,8 @@ class ElasticsearchDataStore(object):
                 search_type=search_type,
                 scroll=scroll_timeout)
 
+        # pylint: disable=unexpected-keyword-arg
         if self.version.startswith('6'):
-            # pylint: disable=unexpected-keyword-arg
             _search_result = self.client.search(
                 body=query_dsl,
                 index=list(indices),
@@ -340,7 +340,6 @@ class ElasticsearchDataStore(object):
                 _source_include=return_fields,
                 scroll=scroll_timeout)
         else:
-            # pylint: disable=unexpected-keyword-arg
             _search_result = self.client.search(
                 body=query_dsl,
                 index=list(indices),
