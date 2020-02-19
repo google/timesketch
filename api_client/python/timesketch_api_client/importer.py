@@ -126,12 +126,13 @@ class ImportStreamer(object):
             end_stream: boolean indicating whether this is the last chunk of
                 the stream.
         """
+        events = [x.dropna().to_dict() for _, x in data_frame.iterrows()]
         data = {
             'name': self._timeline_name,
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
             'index_name': self._index,
-            'events': data_frame.to_json(orient='records', lines=True)
+            'events': json.dumps(events),
         }
 
         response = self._sketch.api.session.post(self._resource_url, data=data)
