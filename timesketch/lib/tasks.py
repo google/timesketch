@@ -28,6 +28,7 @@ from celery import chain
 from celery import signals
 from flask import current_app
 from sqlalchemy import create_engine
+from elasticsearch.exceptions import RequestError
 
 from timesketch import create_celery_app
 from timesketch.lib import errors
@@ -502,7 +503,8 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
         _set_timeline_status(index_name, status='fail', error_msg=str(e))
         raise
 
-    except (RuntimeError, ImportError, NameError, UnboundLocalError) as e:
+    except (RuntimeError, ImportError, NameError, UnboundLocalError,
+            RequestError) as e:
         _set_timeline_status(index_name, status='fail', error_msg=str(e))
         raise
 

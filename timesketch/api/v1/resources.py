@@ -417,18 +417,25 @@ class SketchResource(ResourceMixin, Resource):
                 index=sketch_indices)
 
         mappings = []
+
         for _, value in mappings_settings.items():
-            for _, v in value['mappings'].items():
-                for field, value_dict in v['properties'].items():
-                    mapping_dict = {}
-                    # Exclude internal fields
-                    if field.startswith('__'):
-                        continue
-                    if field == 'timesketch_label':
-                        continue
-                    mapping_dict['field'] = field
-                    mapping_dict['type'] = value_dict.get('type', 'n/a')
-                    mappings.append(mapping_dict)
+            # The structure is different in ES version 6.x and lower. This check
+            # makes sure we support both old and new versions.
+            properties = value['mappings'].get('properties')
+            if not properties:
+                properties = next(
+                    iter(value['mappings'].values())).get('properties')
+
+            for field, value_dict in properties.items():
+                mapping_dict = {}
+                # Exclude internal fields
+                if field.startswith('__'):
+                    continue
+                if field == 'timesketch_label':
+                    continue
+                mapping_dict['field'] = field
+                mapping_dict['type'] = value_dict.get('type', 'n/a')
+                mappings.append(mapping_dict)
 
         # Make the list of dicts unique
         mappings = {v['field']: v for v in mappings}.values()
@@ -858,6 +865,12 @@ class ExploreResource(ResourceMixin, Resource):
             'timeline_names': tl_names,
             'scroll_id': result.get('_scroll_id', ''),
         }
+
+        # Elasticsearch version 7.x returns total hits as a dictionary.
+        # TODO: Refactor when version 6.x has been deprecated.
+        if isinstance(meta['es_total_count'], dict):
+            meta['es_total_count'] = meta.get('value', 0)
+
         schema = {'meta': meta, 'objects': result['hits']['hits']}
         return jsonify(schema)
 
@@ -1756,6 +1769,7 @@ class UploadFileResource(ResourceMixin, Resource):
 class TaskResource(ResourceMixin, Resource):
     """Resource to get information on celery task."""
 
+    # pylint: disable=import-outside-toplevel
     def __init__(self):
         super(TaskResource, self).__init__()
         # pylint: disable=import-outside-toplevel
@@ -2233,6 +2247,7 @@ class TimelineListResource(ResourceMixin, Resource):
 
         # Run sketch analyzers when timeline is added. Import here to avoid
         # circular imports.
+        # pylint: disable=import-outside-toplevel
         if current_app.config.get('AUTO_SKETCH_ANALYZERS'):
             # pylint: disable=import-outside-toplevel
             from timesketch.lib import tasks
