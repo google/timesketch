@@ -14,6 +14,7 @@
 """Timesketch data importer."""
 from __future__ import unicode_literals
 
+import datetime
 import io
 import codecs
 import json
@@ -21,8 +22,11 @@ import math
 import logging
 import os
 import uuid
+import time
+import six
 
 import pandas
+import dateutil.parser
 from . import timeline
 from . import definitions
 
@@ -59,9 +63,54 @@ class ImportStreamer(object):
         self._timeline_name = None
         self._timestamp_desc = None
 
+        self._chunk = 1
+
         self._text_encoding = self.DEFAULT_TEXT_ENCODING
         self._threshold_entry = self.DEFAULT_ENTRY_THRESHOLD
         self._threshold_filesize = self.DEFAULT_FILESIZE_THRESHOLD
+
+    def _fix_dict(self, my_dict):
+        """Adjusts a dict with so that it can be uploaded to Timesketch.
+
+        Args:
+            my_dict: a dictionary that may be missing few fields needed
+                    for Timesketch.
+        """
+        if 'message' not in my_dict and self._format_string:
+            my_dict['message'] = self._format_string.format(**my_dict)
+
+        _ = my_dict.setdefault('timestamp_desc', self._timestamp_desc)
+
+        if 'datetime' not in my_dict:
+            for key in my_dict:
+                key_string = key.lower()
+                if 'time' not in key_string:
+                    continue
+
+                if key_string == 'timestamp_desc':
+                    continue
+
+                value = my_dict[key]
+                if isinstance(value, six.string_types):
+                    try:
+                        date = dateutil.parser.parse(my_dict[key])
+                        my_dict['datetime'] = date.isoformat()
+                        break
+                    except ValueError:
+                        continue
+                else:
+                    try:
+                        date = datetime.datetime.utcfromtimestamp(value / 1e6)
+                        my_dict['datetime'] = date.isoformat()
+                        break
+                    except ValueError:
+                        continue
+
+        # We don't want to include any columns that start with an underscore.
+        underscore_columns = [x for x in my_dict if x.startswith('_')]
+        if underscore_columns:
+            for column in underscore_columns:
+                del my_dict[column]
 
     def _fix_data_frame(self, data_frame):
         """Returns a data frame with added columns for Timesketch upload.
@@ -118,6 +167,45 @@ class ImportStreamer(object):
         self._count = 0
         self._data_lines = []
 
+    def _upload_data_buffer(self, end_stream):
+        """Upload data to Timesketch.
+
+        Args:
+            end_stream: boolean indicating whether this is the last chunk of
+                the stream.
+        """
+        if not self._data_lines:
+            return
+
+        start_time = time.time()
+        data = {
+            'name': self._timeline_name,
+            'sketch_id': self._sketch.id,
+            'enable_stream': not end_stream,
+            'index_name': self._index,
+            'events': '\n'.join([json.dumps(x) for x in self._data_lines]),
+        }
+        logging.debug(
+            'Data buffer ready for upload, took {0:.2f} seconds to '
+            'prepare.'.format(time.time() - start_time))
+
+        response = self._sketch.api.session.post(self._resource_url, data=data)
+        # TODO: Add in the ability to re-upload failed file.
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            raise RuntimeError(
+                'Error uploading data: [{0:d}] {1:s} {2:s}, '
+                'index {3:s}'.format(
+                    response.status_code, response.reason, response.text,
+                    self._index))
+
+        logging.debug(
+            'Data buffer nr. {0:d} uploaded, total time: {1:.2f}s'.format(
+                self._chunk, time.time() - start_time))
+        self._chunk += 1
+        response_dict = response.json()
+        self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
+        self._last_response = response_dict
+
     def _upload_data_frame(self, data_frame, end_stream):
         """Upload data to Timesketch.
 
@@ -126,16 +214,16 @@ class ImportStreamer(object):
             end_stream: boolean indicating whether this is the last chunk of
                 the stream.
         """
-        events = [x.dropna().to_dict() for _, x in data_frame.iterrows()]
         data = {
             'name': self._timeline_name,
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
             'index_name': self._index,
-            'events': json.dumps(events),
+            'events': data_frame.to_json(orient='records', lines=True),
         }
 
         response = self._sketch.api.session.post(self._resource_url, data=data)
+        self._chunk += 1
         # TODO: Add in the ability to re-upload failed file.
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             raise RuntimeError(
@@ -278,6 +366,7 @@ class ImportStreamer(object):
             self.flush(end_stream=False)
             self._reset()
 
+        self._fix_dict(entry)
         self._data_lines.append(entry)
         self._count += 1
 
@@ -356,16 +445,16 @@ class ImportStreamer(object):
         elif file_ending == 'jsonl':
             # TODO (kiddi): Replace JSONL handling as a followup to prevent
             # merge issues with other PRs.
-            data_frame = None
-            with open(filepath, 'r') as fh:
-                lines = [json.loads(x) for x in fh]
-                data_frame = pandas.DataFrame(lines)
-            if data_frame is None:
-                raise TypeError('Unable to parse the JSON file.')
-            if data_frame.empty:
-                raise TypeError('Is the JSON file empty?')
-
-            self.add_data_frame(data_frame)
+            with codecs.open(
+                    filepath, 'r', encoding=self._text_encoding,
+                    errors='replace') as fh:
+                for line in fh:
+                    try:
+                        self.add_json(line.strip())
+                    except TypeError as e:
+                        logging.error(
+                            'Unable to decode line: {0!s} - {1:s}'.format(
+                                e, line))
         else:
             raise TypeError(
                 'File needs to have a file extension of: .csv, .jsonl or '
@@ -440,10 +529,7 @@ class ImportStreamer(object):
             return
 
         self._ready()
-
-        data_frame = pandas.DataFrame(self._data_lines)
-        data_frame_use = self._fix_data_frame(data_frame)
-        self._upload_data_frame(data_frame_use, end_stream=end_stream)
+        self._upload_data_buffer(end_stream=end_stream)
 
     @property
     def response(self):

@@ -508,9 +508,9 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
 
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
-        error_msg = traceback.format_exc(e)
+        error_msg = traceback.format_exc()
         _set_timeline_status(index_name, status='fail', error_msg=error_msg)
-        logging.error(error_msg)
+        logging.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         return None
 
     # Set status to ready when done
