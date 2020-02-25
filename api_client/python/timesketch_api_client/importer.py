@@ -41,7 +41,7 @@ class ImportStreamer(object):
 
     # The number of entries before automatically flushing
     # the streamer.
-    DEFAULT_ENTRY_THRESHOLD = 100000
+    DEFAULT_ENTRY_THRESHOLD = 50000
 
     # Number of bytes in a binary file before automatically
     # chunking it up into smaller pieces.
@@ -199,6 +199,9 @@ class ImportStreamer(object):
             'prepare.'.format(time.time() - start_time))
 
         response = self._sketch.api.session.post(self._resource_url, data=data)
+        # To prevent unexpected errors with connection refusal adding a quick
+        # sleep.
+        time.sleep(2)
         # TODO: Add in the ability to re-upload failed file.
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             raise RuntimeError(
@@ -555,7 +558,7 @@ class ImportStreamer(object):
 
     def set_entry_threshold(self, threshold):
         """Set the threshold for number of entries per chunk."""
-        self._threshold_filesize = threshold
+        self._threshold_entry = threshold
 
     def set_filesize_threshold(self, threshold):
         """Set the threshold for file size per chunk."""
