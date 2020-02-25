@@ -25,6 +25,7 @@ from uuid import uuid4
 import six
 
 from elasticsearch import Elasticsearch
+from elasticsearch.exceptions import ConnectionTimeout
 from elasticsearch.exceptions import NotFoundError
 # pylint: disable=redefined-builtin
 from elasticsearch.exceptions import ConnectionError
@@ -622,12 +623,22 @@ class ElasticsearchDataStore(object):
             self.import_counter['events'] += 1
 
             if self.import_counter['events'] % int(flush_interval) == 0:
-                self.client.bulk(body=self.import_events)
+                try:
+                    self.client.bulk(body=self.import_events)
+                except ConnectionTimeout as e:
+                    # TODO: Add a retry here.
+                    es_logger.error(
+                        'Unable to add events, with error: {0!s}'.format(e))
                 self.import_events = []
         else:
             # Import the remaining events in the queue.
             if self.import_events:
-                self.client.bulk(body=self.import_events)
+                try:
+                    self.client.bulk(body=self.import_events)
+                except ConnectionTimeout as e:
+                    # TODO: Add a retry here.
+                    es_logger.error(
+                        'Unable to add events, with error: {0!s}'.format(e))
 
         return self.import_counter['events']
 
