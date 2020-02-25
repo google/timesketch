@@ -171,12 +171,37 @@ Let's look at an example:
 ```
 
 
-## CSV or JSONL file.
+## A file, CSV, PLASO or JSONL.
+
+Files can also be added using the importer. That is files that are
+supported by Timesketch. These would be CSV, JSONL (JSON lines) and
+a plaso file.
+
+The function `add_file` in the importer is used to add a file.
+
+Here is an example of how the importer can be used:
 
 ```
-#TODO: Add an example here.
+from timesketch_api_client import importer
+from timesketch_api_client import client
+
+...
+
+with importer.ImportStreamer() as streamer:
+  streamer.set_sketch(my_sketch)
+  streamer.set_timeline_name('my_file_with_a_timeline')
+  streamer.set_timestamp_description('some_description')
+
+  streamer.add_file('/path_to_file/mydump.plaso')
 ```
 
+If the file that is being imported is either a CSV or a JSONL file the importer
+will split the file up if it is large and send it in pieces. Each piece of the
+file will be indexed as soon as it is uploaded to the backend.
+
+In the case of a plaso file, it will also be split up into smaller chunks and
+uploaded. However indexing does not start until all pieces have been transferred
+and the final plaso storage file reassambled.
 
 ## Excel Sheet
 

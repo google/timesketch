@@ -20,6 +20,7 @@ import csv
 import datetime
 import email
 import json
+import logging
 import random
 import smtplib
 import sys
@@ -29,6 +30,8 @@ import six
 
 from dateutil import parser
 from flask import current_app
+
+from timesketch.lib import errors
 
 
 # Set CSV field size limit to systems max value.
@@ -49,13 +52,16 @@ def random_color():
     return '{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
 
 
-
-def read_and_validate_csv(path, delimiter=','):
+def read_and_validate_csv(file_handle, delimiter=','):
     """Generator for reading a CSV file.
 
     Args:
-        path: Path to the CSV file
+        file_handle: a file-like object containing the CSV content.
         delimiter: character used as a field separator, default: ','
+
+    Raises:
+        RuntimeError: when there are missing fields.
+        DataIngestionError: when there are issues with the data ingestion.
     """
     # Columns that must be present in the CSV file.
     mandatory_fields = ['message', 'datetime', 'timestamp_desc']
@@ -67,22 +73,19 @@ def read_and_validate_csv(path, delimiter=','):
     # Due to issues with python2.
     if six.PY2:
         delimiter = str(delimiter)
-        open_function = open(path, 'r')
-    else:
-        open_function = open(path, mode='r', encoding='utf-8')
 
-    with open_function as fh:
-        reader = csv.DictReader(fh, delimiter=delimiter)
-        csv_header = reader.fieldnames
-        missing_fields = []
-        # Validate the CSV header
-        for field in mandatory_fields:
-            if field not in csv_header:
-                missing_fields.append(field)
-        if missing_fields:
-            raise RuntimeError(
-                'Missing fields in CSV header: {0:s}'.format(
-                    ','.join(missing_fields)))
+    reader = csv.DictReader(file_handle, delimiter=delimiter)
+    csv_header = reader.fieldnames
+    missing_fields = []
+    # Validate the CSV header
+    for field in mandatory_fields:
+        if field not in csv_header:
+            missing_fields.append(field)
+    if missing_fields:
+        raise RuntimeError(
+            'Missing fields in CSV header: {0:s}'.format(
+                ','.join(missing_fields)))
+    try:
         for row in reader:
             try:
                 # normalize datetime to ISO 8601 format if it's not the case.
@@ -97,94 +100,95 @@ def read_and_validate_csv(path, delimiter=','):
                 continue
 
             yield row
+    except csv.Error as e:
+        error_string = 'Unable to read file, with error: {0!s}'.format(e)
+        logging.error(error_string)
+        raise errors.DataIngestionError(error_string)
 
 
-def read_and_validate_redline(path):
+def read_and_validate_redline(file_handle):
     """Generator for reading a Redline CSV file.
     Args:
-        path: Path to the file
+        file_handle: a file-like object containing the CSV content.
     """
     # Columns that must be present in the CSV file
-
-    # check if it is the right redline format
     mandatory_fields = ['Alert', 'Tag', 'Timestamp', 'Field', 'Summary']
 
-    with open(path, 'rb') as fh:
-        csv.register_dialect('myDialect',
-                             delimiter=',',
-                             quoting=csv.QUOTE_ALL,
-                             skipinitialspace=True)
-        reader = csv.DictReader(fh, delimiter=',', dialect='myDialect')
+    csv.register_dialect(
+        'myDialect', delimiter=',', quoting=csv.QUOTE_ALL,
+        skipinitialspace=True)
+    reader = csv.DictReader(file_handle, delimiter=',', dialect='myDialect')
 
-        csv_header = reader.fieldnames
-        missing_fields = []
-        # Validate the CSV header
-        for field in mandatory_fields:
-            if field not in csv_header:
-                missing_fields.append(field)
-        if missing_fields:
-            raise RuntimeError(
-                'Missing fields in CSV header: {0:s}'.format(missing_fields))
-        for row in reader:
+    csv_header = reader.fieldnames
+    missing_fields = []
+    # Validate the CSV header
+    for field in mandatory_fields:
+        if field not in csv_header:
+            missing_fields.append(field)
+    if missing_fields:
+        raise RuntimeError(
+            'Missing fields in CSV header: {0:s}'.format(missing_fields))
+    for row in reader:
+        dt = parser.parse(row['Timestamp'])
+        timestamp = int(time.mktime(dt.timetuple())) * 1000
+        dt_iso_format = dt.isoformat()
+        timestamp_desc = row['Field']
 
-            dt = parser.parse(row['Timestamp'])
-            timestamp = int(time.mktime(dt.timetuple())) * 1000
-            dt_iso_format = dt.isoformat()
-            timestamp_desc = row['Field']
+        summary = row['Summary']
+        alert = row['Alert']
+        tag = row['Tag']
 
-            summary = row['Summary']
-            alert = row['Alert']
-            tag = row['Tag']
+        row_to_yield = {}
+        row_to_yield["message"] = summary
+        row_to_yield["timestamp"] = timestamp
+        row_to_yield["datetime"] = dt_iso_format
+        row_to_yield["timestamp_desc"] = timestamp_desc
+        row_to_yield["alert"] = alert #extra field
+        tags = [tag]
+        row_to_yield["tag"] = tags # extra field
 
-            row_to_yield = {}
-            row_to_yield["message"] = summary
-            row_to_yield["timestamp"] = timestamp
-            row_to_yield["datetime"] = dt_iso_format
-            row_to_yield["timestamp_desc"] = timestamp_desc
-            row_to_yield["alert"] = alert #extra field
-            tags = [tag]
-            row_to_yield["tag"] = tags # extra field
-
-            yield row_to_yield
+        yield row_to_yield
 
 
-def read_and_validate_jsonl(path):
+def read_and_validate_jsonl(file_handle):
     """Generator for reading a JSONL (json lines) file.
 
     Args:
-        path: Path to the JSONL file
+        file_handle: a file-like object containing the CSV content.
+
+    Raises:
+        RuntimeError: if there are missing fields.
+        DataIngestionError: If the ingestion fails.
+
+    Yields:
+        A dict that's ready to add to the datastore.
     """
     # Fields that must be present in each entry of the JSONL file.
     mandatory_fields = ['message', 'datetime', 'timestamp_desc']
-    with open(path, 'rb') as fh:
-        lineno = 0
-        for line in fh:
-            lineno += 1
-            try:
-                linedict = json.loads(line)
-                ld_keys = linedict.keys()
-                if 'datetime' not in ld_keys and 'timestamp' in ld_keys:
-                    epoch = int(str(linedict['timestamp'])[:10])
-                    dt = datetime.datetime.fromtimestamp(epoch)
-                    linedict['datetime'] = dt.isoformat()
-                if 'timestamp' not in ld_keys and 'datetime' in ld_keys:
-                    linedict['timestamp'] = parser.parse(linedict['datetime'])
+    lineno = 0
+    for line in file_handle:
+        lineno += 1
+        try:
+            linedict = json.loads(line)
+            ld_keys = linedict.keys()
+            if 'datetime' not in ld_keys and 'timestamp' in ld_keys:
+                epoch = int(str(linedict['timestamp'])[:10])
+                dt = datetime.datetime.fromtimestamp(epoch)
+                linedict['datetime'] = dt.isoformat()
+            if 'timestamp' not in ld_keys and 'datetime' in ld_keys:
+                linedict['timestamp'] = parser.parse(linedict['datetime'])
 
-                missing_fields = []
-                for field in mandatory_fields:
-                    if field not in linedict.keys():
-                        missing_fields.append(field)
-                if missing_fields:
-                    raise RuntimeError(
-                        u"Missing field(s) at line {0:n}: {1:s}"
-                        .format(lineno, missing_fields))
-
-                yield linedict
-
-            except ValueError as e:
+            missing_fields = [x for x in mandatory_fields if x not in linedict]
+            if missing_fields:
                 raise RuntimeError(
-                    u"Error parsing JSON at line {0:n}: {1:s}"
-                    .format(lineno, e))
+                    'Missing field(s) at line {0:n}: {1:s}'.format(
+                        lineno, ','.join(missing_fields)))
+
+            yield linedict
+
+        except ValueError as e:
+            raise errors.DataIngestionError(
+                'Error parsing JSON at line {0:n}: {1:s}'.format(lineno, e))
 
 
 def get_validated_indices(indices, sketch_indices):

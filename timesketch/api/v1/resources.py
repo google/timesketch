@@ -78,7 +78,6 @@ from timesketch.lib.forms import NameDescriptionForm
 from timesketch.lib.forms import EventAnnotationForm
 from timesketch.lib.forms import EventCreateForm
 from timesketch.lib.forms import ExploreForm
-from timesketch.lib.forms import UploadFileForm
 from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
@@ -1522,49 +1521,28 @@ class EventAnnotationResource(ResourceMixin, Resource):
 class UploadFileResource(ResourceMixin, Resource):
     """Resource that processes uploaded files."""
 
-    @login_required
-    def post(self):
-        """Handles POST request to the resource.
+    def _upload_and_index(
+            self, file_extension, timeline_name, index_name, sketch,
+            enable_stream, file_path='', events='', meta=None):
+        """Creates a full pipeline for an uploaded file and returns the results.
+
+        Args:
+            file_extension: the extension of the uploaded file.
+            timeline_name: name the timeline will be stored under in the
+                           datastore.
+            index_name: the Elastic index name for the timeline.
+            sketch: Instance of timesketch.models.sketch.Sketch
+            enable_stream: boolean indicating whether this is file is part of a
+                           stream or not.
+            file_path: the path to the file to be uploaded (optional).
+            events: a string with events to upload (optional).
+            meta: optional dict with additional meta fields that will be
+                  included in the return.
 
         Returns:
-            A view in JSON (instance of flask.wrappers.Response)
+            A timeline if created otherwise a search index in JSON (instance
+            of flask.wrappers.Response)
         """
-        upload_enabled = current_app.config['UPLOAD_ENABLED']
-        if not upload_enabled:
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Upload not enabled')
-
-        upload_folder = current_app.config['UPLOAD_FOLDER']
-
-        form = UploadFileForm()
-        if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Upload validation failed: {0:s}'.format(
-                    form.errors['file'][0]))
-
-        sketch_id = form.sketch_id.data or None
-        file_storage = form.file.data
-        _filename, _extension = os.path.splitext(file_storage.filename)
-        file_extension = _extension.lstrip('.')
-        timeline_name = form.name.data or _filename.rstrip('.')
-
-        sketch = None
-        if sketch_id:
-            sketch = Sketch.query.get_with_acl(sketch_id)
-
-        # We do not need a human readable filename or
-        # datastore index name, so we use UUIDs here.
-        filename = uuid.uuid4().hex
-        if not isinstance(filename, six.text_type):
-            filename = codecs.decode(filename, 'utf-8')
-
-        index_name = form.index_name.data or uuid.uuid4().hex
-        if not isinstance(index_name, six.text_type):
-            index_name = codecs.decode(index_name, 'utf-8')
-
-        file_path = os.path.join(upload_folder, filename)
-        file_storage.save(file_path)
-
         # Check if search index already exists.
         searchindex = SearchIndex.query.filter_by(
             name=timeline_name,
@@ -1603,24 +1581,185 @@ class UploadFileResource(ResourceMixin, Resource):
                 db_session.add(timeline)
                 db_session.commit()
 
-        enable_stream = form.enable_stream.data
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
         # pylint: disable=import-outside-toplevel
         from timesketch.lib import tasks
         pipeline = tasks.build_index_pipeline(
-            file_path, timeline_name, index_name, file_extension, sketch_id,
-            only_index=enable_stream)
+            file_path=file_path, events=events, timeline_name=timeline_name,
+            index_name=index_name, file_extension=file_extension,
+            sketch_id=sketch.id, only_index=enable_stream)
         pipeline.apply_async()
 
         # Return Timeline if it was created.
         # pylint: disable=no-else-return
         if timeline:
             return self.to_json(
-                timeline, status_code=HTTP_STATUS_CODE_CREATED)
+                timeline, status_code=HTTP_STATUS_CODE_CREATED, meta=meta)
 
         return self.to_json(
-            searchindex, status_code=HTTP_STATUS_CODE_CREATED)
+            searchindex, status_code=HTTP_STATUS_CODE_CREATED, meta=meta)
+
+    def _upload_events(self, events, form, sketch, index_name):
+        """Upload a file like object.
+
+        Args:
+            events: string with all the events.
+            form: a dict with the configuration for the upload.
+            sketch: Instance of timesketch.models.sketch.Sketch
+            index_name: the Elastic index name for the timeline.
+
+        Returns:
+            A timeline if created otherwise a search index in JSON (instance
+            of flask.wrappers.Response)
+        """
+        timeline_name = form.get('name', 'unknown_events')
+        file_extension = 'jsonl'
+
+        return self._upload_and_index(
+            events=events,
+            file_extension=file_extension,
+            timeline_name=timeline_name,
+            index_name=index_name,
+            sketch=sketch,
+            enable_stream=form.get('enable_stream', False))
+
+    def _upload_file(self, file_storage, form, sketch, index_name):
+        """Upload a file.
+
+        Args:
+            file_storage: a FileStorage object.
+            form: a dict with the configuration for the upload.
+            sketch: Instance of timesketch.models.sketch.Sketch
+            index_name: the Elastic index name for the timeline.
+
+        Returns:
+            A timeline if created otherwise a search index in JSON (instance
+            of flask.wrappers.Response)
+        """
+        _filename, _extension = os.path.splitext(file_storage.filename)
+        file_extension = _extension.lstrip('.')
+        timeline_name = form.get('name', _filename.rstrip('.'))
+
+        # We do not need a human readable filename or
+        # datastore index name, so we use UUIDs here.
+        filename = uuid.uuid4().hex
+        if not isinstance(filename, six.text_type):
+            filename = codecs.decode(filename, 'utf-8')
+
+        upload_folder = current_app.config['UPLOAD_FOLDER']
+        file_path = os.path.join(upload_folder, filename)
+
+        chunk_index = form.get('chunk_index')
+        if isinstance(chunk_index, six.string_types):
+            chunk_index = int(chunk_index)
+        chunk_byte_offset = form.get('chunk_byte_offset')
+        if isinstance(chunk_byte_offset, six.string_types):
+            chunk_byte_offset = int(chunk_byte_offset)
+        chunk_total_chunks = form.get('chunk_total_chunks')
+        if isinstance(chunk_total_chunks, six.string_types):
+            chunk_total_chunks = int(chunk_total_chunks)
+        file_size = form.get('total_file_size')
+        if isinstance(file_size, six.string_types):
+            file_size = int(file_size)
+        enable_stream = form.get('enable_stream', False)
+
+        if chunk_total_chunks is None:
+            file_storage.save(file_path)
+            return self._upload_and_index(
+                file_path=file_path,
+                file_extension=file_extension,
+                timeline_name=timeline_name,
+                index_name=index_name,
+                sketch=sketch,
+                enable_stream=enable_stream)
+
+        # For file chunks we need the correct filepath, otherwise each chunk
+        # will get their own UUID as a filename.
+        file_path = os.path.join(upload_folder, index_name)
+        try:
+            with open(file_path, 'ab') as fh:
+                fh.seek(chunk_byte_offset)
+                fh.write(file_storage.read())
+        except OSError as e:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to write data with error: {0!s}.'.format(e))
+
+        if (chunk_index + 1) != chunk_total_chunks:
+            schema = {
+                'meta': {
+                    'file_upload': True,
+                    'upload_complete': False,
+                    'total_chunks': chunk_total_chunks,
+                    'chunk_index': chunk_index,
+                    'file_size': file_size},
+                'objects': []}
+            response = jsonify(schema)
+            response.status_code = HTTP_STATUS_CODE_CREATED
+            return response
+
+        if os.path.getsize(file_path) != file_size:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to save file correctly, inconsistent file size '
+                '({0:d} but should have been {1:d})'.format(
+                    os.path.getsize(file_path), file_size))
+
+        meta = {
+            'file_upload': True,
+            'upload_complete': True,
+            'file_size': file_size,
+            'total_chunks': chunk_total_chunks,
+        }
+
+        return self._upload_and_index(
+            file_path=file_path,
+            file_extension=file_extension,
+            timeline_name=timeline_name,
+            index_name=index_name,
+            sketch=sketch,
+            enable_stream=enable_stream,
+            meta=meta)
+
+    @login_required
+    def post(self):
+        """Handles POST request to the resource.
+
+        Returns:
+            A view in JSON (instance of flask.wrappers.Response)
+        """
+        upload_enabled = current_app.config['UPLOAD_ENABLED']
+        if not upload_enabled:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Upload not enabled')
+
+        form = request.data
+        if not form:
+            form = request.form
+
+        sketch_id = form.get('sketch_id', None)
+        if not isinstance(sketch_id, int):
+            sketch_id = int(sketch_id)
+
+        sketch = None
+        if sketch_id:
+            sketch = Sketch.query.get_with_acl(sketch_id)
+
+        index_name = form.get('index_name', uuid.uuid4().hex)
+        if not isinstance(index_name, six.text_type):
+            index_name = codecs.decode(index_name, 'utf-8')
+
+        file_storage = request.files.get('file')
+
+        if file_storage:
+            return self._upload_file(file_storage, form, sketch, index_name)
+
+        events = form.get('events')
+        if not events:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to upload data, no file uploaded nor any events.')
+        return self._upload_events(events, form, sketch, index_name)
 
 
 class TaskResource(ResourceMixin, Resource):
@@ -1629,6 +1768,7 @@ class TaskResource(ResourceMixin, Resource):
     # pylint: disable=import-outside-toplevel
     def __init__(self):
         super(TaskResource, self).__init__()
+        # pylint: disable=import-outside-toplevel
         from timesketch import create_celery_app
         self.celery = create_celery_app()
 
@@ -2105,6 +2245,7 @@ class TimelineListResource(ResourceMixin, Resource):
         # circular imports.
         # pylint: disable=import-outside-toplevel
         if current_app.config.get('AUTO_SKETCH_ANALYZERS'):
+            # pylint: disable=import-outside-toplevel
             from timesketch.lib import tasks
             sketch_analyzer_group, _ = tasks.build_sketch_analysis_pipeline(
                 sketch_id, searchindex_id, current_user.id)
