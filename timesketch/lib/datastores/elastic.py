@@ -331,15 +331,25 @@ class ElasticsearchDataStore(object):
                 search_type=search_type,
                 scroll=scroll_timeout)
 
-        # Suppress the lint error because elasticsearch-py adds parameters
-        # to the function with a decorator and this makes pylint sad.
+        # The argument " _source_include" changed to "_source_includes" in
+        # ES version 7. This check add support for both version 6 and 7 clients.
         # pylint: disable=unexpected-keyword-arg
-        return self.client.search(
-            body=query_dsl,
-            index=list(indices),
-            search_type=search_type,
-            _source_include=return_fields,
-            scroll=scroll_timeout)
+        if self.version.startswith('6'):
+            _search_result = self.client.search(
+                body=query_dsl,
+                index=list(indices),
+                search_type=search_type,
+                _source_include=return_fields,
+                scroll=scroll_timeout)
+        else:
+            _search_result = self.client.search(
+                body=query_dsl,
+                index=list(indices),
+                search_type=search_type,
+                _source_includes=return_fields,
+                scroll=scroll_timeout)
+
+        return _search_result
 
     def search_stream(self, sketch_id=None, query_string=None,
                       query_filter=None, query_dsl=None, indices=None,
@@ -378,6 +388,11 @@ class ElasticsearchDataStore(object):
         scroll_id = result['_scroll_id']
         scroll_size = result['hits']['total']
 
+        # Elasticsearch version 7.x returns total hits as a dictionary.
+        # TODO: Refactor when version 6.x has been deprecated.
+        if isinstance(scroll_size, dict):
+            scroll_size = scroll_size.get('value', 0)
+
         for event in result['hits']['hits']:
             yield event
 
@@ -403,11 +418,21 @@ class ElasticsearchDataStore(object):
             # Suppress the lint error because elasticsearch-py adds parameters
             # to the function with a decorator and this makes pylint sad.
             # pylint: disable=unexpected-keyword-arg
-            return self.client.get(
-                index=searchindex_id,
-                id=event_id,
-                doc_type='_all',
-                _source_exclude=['timesketch_label'])
+            if self.version.startswith('6'):
+                event = self.client.get(
+                    index=searchindex_id,
+                    id=event_id,
+                    doc_type='_all',
+                    _source_exclude=['timesketch_label'])
+            else:
+                event = self.client.get(
+                    index=searchindex_id,
+                    id=event_id,
+                    doc_type='_all',
+                    _source_excludes=['timesketch_label'])
+
+            return event
+
         except NotFoundError:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
 
@@ -500,14 +525,19 @@ class ElasticsearchDataStore(object):
             Document type in string format.
         """
         _document_mapping = {
-            doc_type: {
-                'properties': {
-                    'timesketch_label': {
-                        'type': 'nested'
-                    }
+            'properties': {
+                'timesketch_label': {
+                    'type': 'nested'
+                },
+                'datetime': {
+                    'type': 'date'
                 }
             }
         }
+
+        # TODO: Remove when we deprecate Elasticsearch version 6.x
+        if self.version.startswith('6'):
+            _document_mapping = {doc_type: _document_mapping}
 
         if not self.client.indices.exists(index_name):
             try:
@@ -565,16 +595,19 @@ class ElasticsearchDataStore(object):
             header = {
                 'index': {
                     '_index': index_name,
-                    '_type': event_type
                 }
             }
             update_header = {
                 'update': {
                     '_index': index_name,
-                    '_type': event_type,
                     '_id': event_id
                 }
             }
+
+            # TODO: Remove when we deprecate Elasticsearch version 6.x
+            if self.version.startswith('6'):
+                header['index']['_type'] = event_type
+                update_header['update']['_type'] = event_type
 
             if event_id:
                 # Event has "lang" defined if there is a script used for import.

@@ -16,9 +16,6 @@
 from __future__ import unicode_literals
 
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileAllowed
-from flask_wtf.file import FileField
-from flask_wtf.file import FileRequired
 from wtforms import widgets
 from wtforms.fields import BooleanField
 from wtforms.fields import HiddenField
@@ -235,22 +232,6 @@ class EventAnnotationForm(BaseForm):
     annotation = StringField('Annotation', validators=[DataRequired()])
     annotation_type = StringField('Type', validators=[DataRequired()])
     events = StringField('Events', validators=[DataRequired()])
-
-
-class UploadFileForm(BaseForm):
-    """Form to handle file uploads."""
-    file = FileField(
-        'file',
-        validators=[
-            FileRequired(),
-            FileAllowed(['plaso', 'csv', 'jsonl'],
-                        'Allowed file extensions: .plaso, .csv, or .jsonl')
-        ])
-    name = StringField('Timeline name', validators=[Optional()])
-    sketch_id = IntegerField('Sketch ID', validators=[Optional()])
-    index_name = StringField('Index Name', validators=[Optional()])
-    enable_stream = BooleanField(
-        'Enable stream', false_values={False, 'false', ''}, default=False)
 
 
 class StoryForm(BaseForm):

@@ -32,7 +32,7 @@ services:
     # uncomment the following lines to control JVM memory utilization
     # in smaller deployments with minimal resources
     #  - ES_JAVA_OPTS= -Xms1g -Xmx1g # 1G min/1G max
-    image: elasticsearch:6.4.2
+    image: elasticsearch:7.6.0
     ports:
       - "9200:9200"
       - "9300:9300"
