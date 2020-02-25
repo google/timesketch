@@ -454,8 +454,6 @@ class ImportStreamer(object):
         elif file_ending == 'plaso':
             self._upload_binary_file(filepath)
         elif file_ending == 'jsonl':
-            # TODO (kiddi): Replace JSONL handling as a followup to prevent
-            # merge issues with other PRs.
             with codecs.open(
                     filepath, 'r', encoding=self._text_encoding,
                     errors='replace') as fh:
@@ -463,9 +461,7 @@ class ImportStreamer(object):
                     try:
                         self.add_json(line.strip())
                     except TypeError as e:
-                        logging.error(
-                            'Unable to decode line: {0!s} - {1:s}'.format(
-                                e, line))
+                        logging.error('Unable to decode line: {0!s}'.format(e))
         else:
             raise TypeError(
                 'File needs to have a file extension of: .csv, .jsonl or '
