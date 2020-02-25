@@ -198,12 +198,14 @@ if __name__ == '__main__':
     config_group.add_argument(
         '--threshold_entry', '--threshold-entry', '--entries', action='store',
         type=int, default=0, dest='entry_threshold',
-        help='How many entries should be buffered up before being sent to server.')
+        help=(
+            'How many entries should be buffered up before being '
+            'sent to server.'))
     config_group.add_argument(
         '--threshold_size', '--threshold-size', '--filesize', action='store',
         type=int, default=0, dest='size_threshold',
         help=(
-            'For binary file transer, how many bytes should be transferred '
+            'For binary file transfer, how many bytes should be transferred '
             'per chunk.'))
     config_group.add_argument(
         '--sketch_id', '--sketch-id', type=int, default=0, dest='sketch_id',
