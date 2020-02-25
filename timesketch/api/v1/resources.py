@@ -1522,7 +1522,7 @@ class UploadFileResource(ResourceMixin, Resource):
     """Resource that processes uploaded files."""
 
     def _upload_and_index(
-            self, file_extension, timeline_name, index_name, sketch, sketch_id,
+            self, file_extension, timeline_name, index_name, sketch,
             enable_stream, file_path='', events='', meta=None):
         """Creates a full pipeline for an uploaded file and returns the results.
 
@@ -1532,7 +1532,6 @@ class UploadFileResource(ResourceMixin, Resource):
                            datastore.
             index_name: the Elastic index name for the timeline.
             sketch: Instance of timesketch.models.sketch.Sketch
-            sketch_id: integer with the sketch ID.
             enable_stream: boolean indicating whether this is file is part of a
                            stream or not.
             file_path: the path to the file to be uploaded (optional).
@@ -1589,7 +1588,7 @@ class UploadFileResource(ResourceMixin, Resource):
         pipeline = tasks.build_index_pipeline(
             file_path=file_path, events=events, timeline_name=timeline_name,
             index_name=index_name, file_extension=file_extension,
-            sketch_id=sketch_id, only_index=enable_stream)
+            sketch_id=sketch.id, only_index=enable_stream)
         pipeline.apply_async()
 
         # Return Timeline if it was created.
@@ -1623,7 +1622,6 @@ class UploadFileResource(ResourceMixin, Resource):
             timeline_name=timeline_name,
             index_name=index_name,
             sketch=sketch,
-            sketch_id=sketch.id,
             enable_stream=form.get('enable_stream', False))
 
     def _upload_file(self, file_storage, form, sketch, index_name):
@@ -1674,7 +1672,6 @@ class UploadFileResource(ResourceMixin, Resource):
                 timeline_name=timeline_name,
                 index_name=index_name,
                 sketch=sketch,
-                sketch_id=sketch.id,
                 enable_stream=enable_stream)
 
         # For file chunks we need the correct filepath, otherwise each chunk
@@ -1722,7 +1719,6 @@ class UploadFileResource(ResourceMixin, Resource):
             timeline_name=timeline_name,
             index_name=index_name,
             sketch=sketch,
-            sketch_id=sketch.id,
             enable_stream=enable_stream,
             meta=meta)
 

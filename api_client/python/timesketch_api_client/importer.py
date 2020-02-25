@@ -72,6 +72,15 @@ class ImportStreamer(object):
     def _fix_dict(self, my_dict):
         """Adjusts a dict with so that it can be uploaded to Timesketch.
 
+        This function will take a dictionary and modify it. Summary of the
+        changes are:
+          * If "message" is not a key and a format message string has been
+              defined, a message field is constructed.
+          * If "datetime" is not a key, an attempt to generate it is made.
+          * If "timestamp_desc" is not set but defined by the importer it
+              is added.
+          * All keys that start with an underscore ("_") are removed.
+
         Args:
             my_dict: a dictionary that may be missing few fields needed
                     for Timesketch.
@@ -366,6 +375,8 @@ class ImportStreamer(object):
             self.flush(end_stream=False)
             self._reset()
 
+        # Changing the dictionary to add fields, such as timestamp description,
+        # message field, etc. See function docstring for further details.
         self._fix_dict(entry)
         self._data_lines.append(entry)
         self._count += 1
