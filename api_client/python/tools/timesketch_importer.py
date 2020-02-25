@@ -11,11 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""A simple frontend to the Timesketch data importer.
-
-This tool is limited to upload files to Timesketch, which is only
-part of the capabilities of the importer API.
-"""
+"""A simple frontend to the Timesketch data importer."""
 from __future__ import unicode_literals
 
 import argparse
@@ -36,7 +32,7 @@ from timesketch_api_client import sketch
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
 
 
-def get_client(
+def get_api_client(
         host: str, username: str, password: str = '', client_id: str = '',
         client_secret: str = '', run_local: bool = False
         ) -> client.TimesketchApi:
@@ -99,6 +95,12 @@ def upload_file(
     """
     if not my_sketch or not hasattr(my_sketch, 'id'):
         return 'Sketch needs to be set'
+
+    _, _, file_extension = file_path.rpartition('.')
+    if file_extension.lower() not in ('plaso', 'csv', 'jsonl'):
+        return (
+            'File needs to have one of the following extensions: '
+            '.plaso, .csv, .jsonl (not {0:s})').format(file_extension.lower())
 
     with importer.ImportStreamer() as streamer:
         streamer.set_sketch(my_sketch)
@@ -230,7 +232,7 @@ if __name__ == '__main__':
         'run_local', False)
 
     logger.info('Creating a client.')
-    ts_client = get_client(
+    ts_client = get_api_client(
         host=conf_host, username=conf_username, password=conf_password,
         client_id=conf_client_id, client_secret=conf_client_secret,
         run_local=conf_run_local)
