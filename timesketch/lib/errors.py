@@ -18,7 +18,11 @@ from __future__ import unicode_literals
 from flask import jsonify
 
 
-class ApiHTTPError(Exception):
+class Error(Exception):
+    """Base error class."""
+
+
+class ApiHTTPError(Error):
     """Error class for API HTTP errors."""
 
     def __init__(self, message, status_code):
@@ -28,7 +32,7 @@ class ApiHTTPError(Exception):
             message: Description of the error.
             status_code: HTTP status code.
         """
-        Exception.__init__(self)
+        super(ApiHTTPError, self).__init__()
         self.message = message
         self.status_code = status_code
 
@@ -44,3 +48,7 @@ class ApiHTTPError(Exception):
         })
         response.status_code = self.status_code
         return response
+
+
+class DataIngestionError(Error):
+    """Raised when unable to ingest data."""

@@ -41,13 +41,17 @@ if test ${MODE} = "dpkg"; then
 	DPKG_PACKAGES="${DPKG_PACKAGES} python3 ${DPKG_PYTHON3_DEPENDENCIES} ${DPKG_PYTHON3_TEST_DEPENDENCIES}";
 
 	docker exec -e "DEBIAN_FRONTEND=noninteractive" ${CONTAINER_NAME} sh -c "apt-get install -y ${DPKG_PACKAGES}";
+	docker exec cd api_client/python && python setup.py build && python setup.py install
+	docker exec cd ../../
 	docker cp ../timesketch ${CONTAINER_NAME}:/
 
 elif test ${MODE} = "pypi"; then
 	pip install -r requirements.txt;
 	pip install -r test_requirements.txt;
+	cd api_client/python && python setup.py build && python setup.py install
 
 elif test ${TRAVIS_OS_NAME} = "linux"; then
 	pip3 install -r requirements.txt;
 	pip3 install -r test_requirements.txt;
+	cd api_client/python && python setup.py build && python setup.py install
 fi

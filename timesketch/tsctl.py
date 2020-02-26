@@ -446,7 +446,9 @@ class ImportTimeline(Command):
         # Import here to avoid circular imports.
         from timesketch.lib import tasks  # pylint: disable=import-outside-toplevel
         pipeline = tasks.build_index_pipeline(
-            file_path, timeline_name, index_name, extension, sketch.id)
+            file_path=file_path, events='', timeline_name=timeline_name,
+            index_name=index_name, file_extension=extension,
+            sketch_id=sketch.id)
         pipeline.apply_async(task_id=index_name)
 
         print('Imported {0:s} to sketch: {1:d} ({2:s})'.format(

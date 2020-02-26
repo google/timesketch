@@ -241,6 +241,11 @@ class TimesketchApi(object):
         if auth_mode == 'oauth':
             return self._create_oauth_session(client_id, client_secret)
 
+        if auth_mode == 'oauth_local':
+            return self._create_oauth_session(
+                client_id=client_id, client_secret=client_secret,
+                run_server=False, skip_open=True)
+
         session = requests.Session()
 
         # If using HTTP Basic auth, add the user/pass to the session

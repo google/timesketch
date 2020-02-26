@@ -14,14 +14,19 @@
 """Timesketch data importer."""
 from __future__ import unicode_literals
 
+import datetime
+import io
+import codecs
 import json
 import math
 import logging
 import os
-import tempfile
 import uuid
+import time
+import six
 
 import pandas
+import dateutil.parser
 from . import timeline
 from . import definitions
 
@@ -36,9 +41,16 @@ class ImportStreamer(object):
 
     # The number of entries before automatically flushing
     # the streamer.
-    ENTRY_THRESHOLD = 100000
+    DEFAULT_ENTRY_THRESHOLD = 100000
 
-    def __init__(self, entry_threshold=None):
+    # Number of bytes in a binary file before automatically
+    # chunking it up into smaller pieces.
+    DEFAULT_FILESIZE_THRESHOLD = 104857600  # 100 Mb.
+
+    # Define a default encoding for processing text files.
+    DEFAULT_TEXT_ENCODING = 'utf-8'
+
+    def __init__(self):
         """Initialize the upload streamer."""
         self._count = 0
         self._data_lines = []
@@ -51,7 +63,63 @@ class ImportStreamer(object):
         self._timeline_name = None
         self._timestamp_desc = None
 
-        self._threshold = entry_threshold or self.ENTRY_THRESHOLD
+        self._chunk = 1
+
+        self._text_encoding = self.DEFAULT_TEXT_ENCODING
+        self._threshold_entry = self.DEFAULT_ENTRY_THRESHOLD
+        self._threshold_filesize = self.DEFAULT_FILESIZE_THRESHOLD
+
+    def _fix_dict(self, my_dict):
+        """Adjusts a dict with so that it can be uploaded to Timesketch.
+
+        This function will take a dictionary and modify it. Summary of the
+        changes are:
+          * If "message" is not a key and a format message string has been
+              defined, a message field is constructed.
+          * If "datetime" is not a key, an attempt to generate it is made.
+          * If "timestamp_desc" is not set but defined by the importer it
+              is added.
+          * All keys that start with an underscore ("_") are removed.
+
+        Args:
+            my_dict: a dictionary that may be missing few fields needed
+                    for Timesketch.
+        """
+        if 'message' not in my_dict and self._format_string:
+            my_dict['message'] = self._format_string.format(**my_dict)
+
+        _ = my_dict.setdefault('timestamp_desc', self._timestamp_desc)
+
+        if 'datetime' not in my_dict:
+            for key in my_dict:
+                key_string = key.lower()
+                if 'time' not in key_string:
+                    continue
+
+                if key_string == 'timestamp_desc':
+                    continue
+
+                value = my_dict[key]
+                if isinstance(value, six.string_types):
+                    try:
+                        date = dateutil.parser.parse(my_dict[key])
+                        my_dict['datetime'] = date.isoformat()
+                        break
+                    except ValueError:
+                        continue
+                else:
+                    try:
+                        date = datetime.datetime.utcfromtimestamp(value / 1e6)
+                        my_dict['datetime'] = date.isoformat()
+                        break
+                    except ValueError:
+                        continue
+
+        # We don't want to include any columns that start with an underscore.
+        underscore_columns = [x for x in my_dict if x.startswith('_')]
+        if underscore_columns:
+            for column in underscore_columns:
+                del my_dict[column]
 
     def _fix_data_frame(self, data_frame):
         """Returns a data frame with added columns for Timesketch upload.
@@ -108,37 +176,136 @@ class ImportStreamer(object):
         self._count = 0
         self._data_lines = []
 
-    def _upload_data(self, file_name, end_stream):
+    def _upload_data_buffer(self, end_stream):
         """Upload data to Timesketch.
 
         Args:
-            file_name: a full path to the file that is about to be uploaded.
             end_stream: boolean indicating whether this is the last chunk of
                 the stream.
         """
-        files = {
-            'file': open(file_name, 'rb')
-        }
+        if not self._data_lines:
+            return
+
+        start_time = time.time()
         data = {
             'name': self._timeline_name,
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
             'index_name': self._index,
+            'events': '\n'.join([json.dumps(x) for x in self._data_lines]),
+        }
+        logging.debug(
+            'Data buffer ready for upload, took {0:.2f} seconds to '
+            'prepare.'.format(time.time() - start_time))
+
+        response = self._sketch.api.session.post(self._resource_url, data=data)
+        # TODO: Add in the ability to re-upload failed file.
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            raise RuntimeError(
+                'Error uploading data: [{0:d}] {1:s} {2:s}, '
+                'index {3:s}'.format(
+                    response.status_code, response.reason, response.text,
+                    self._index))
+
+        logging.debug(
+            'Data buffer nr. {0:d} uploaded, total time: {1:.2f}s'.format(
+                self._chunk, time.time() - start_time))
+        self._chunk += 1
+        response_dict = response.json()
+        self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
+        self._last_response = response_dict
+
+    def _upload_data_frame(self, data_frame, end_stream):
+        """Upload data to Timesketch.
+
+        Args:
+            data_frame: a pandas DataFrame with the content to upload.
+            end_stream: boolean indicating whether this is the last chunk of
+                the stream.
+        """
+        data = {
+            'name': self._timeline_name,
+            'sketch_id': self._sketch.id,
+            'enable_stream': not end_stream,
+            'index_name': self._index,
+            'events': data_frame.to_json(orient='records', lines=True),
         }
 
-        response = self._sketch.api.session.post(
-            self._resource_url, files=files, data=data)
+        response = self._sketch.api.session.post(self._resource_url, data=data)
+        self._chunk += 1
+        # TODO: Add in the ability to re-upload failed file.
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            raise RuntimeError(
+                'Error uploading data: [{0:d}] {1:s} {2:s}, '
+                'index {3:s}'.format(
+                    response.status_code, response.reason, response.text,
+                    self._index))
+
+        response_dict = response.json()
+        self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
+        self._last_response = response_dict
+
+    def _upload_binary_file(self, file_path):
+        """Upload binary data to Timesketch, potentially chunking it up.
+
+        Args:
+            file_path: a full path to the file that is about to be uploaded.
+        """
+        file_size = os.path.getsize(file_path)
+
+        if self._timeline_name:
+            timeline_name = self._timeline_name
+        else:
+            file_name = os.basename(file_path)
+            file_name_no_ext, _, _ = file_name.rpartition('.')
+            timeline_name = file_name_no_ext
+
+        data = {
+            'name': timeline_name,
+            'sketch_id': self._sketch.id,
+            'total_file_size': file_size,
+            'index_name': self._index,
+        }
+        if file_size <= self._threshold_filesize:
+            file_dict = {
+                'file': open(file_path, 'rb')}
+            response = self._sketch.api.session.post(
+                self._resource_url, files=file_dict, data=data)
+        else:
+            chunks = int(
+                math.ceil(float(file_size) / self._threshold_filesize))
+            data['chunk_total_chunks'] = chunks
+            for index in range(0, chunks):
+                data['chunk_index'] = index
+                start = self._threshold_filesize * index
+                data['chunk_byte_offset'] = start
+                fh = open(file_path, 'rb')
+                fh.seek(start)
+                binary_data = fh.read(self._threshold_filesize)
+                file_stream = io.BytesIO(binary_data)
+                file_stream.name = file_path
+                file_dict = {'file': file_stream}
+                response = self._sketch.api.session.post(
+                    self._resource_url, files=file_dict, data=data)
+
+                if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+                    # TODO (kiddi): Re-do this chunk.
+                    raise RuntimeError(
+                        'Error uploading data chunk: {0:d}/{1:d}. Status code: '
+                        '{2:d} - {3:s} {4:s}'.format(
+                            index, chunks, response.status_code,
+                            response.reason, response.text))
 
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             raise RuntimeError(
                 'Error uploading data: [{0:d}] {1:s} {2:s}, file: {3:s}, '
                 'index {4:s}'.format(
                     response.status_code, response.reason, response.text,
-                    file_name, self._index))
+                    file_path, self._index))
 
         response_dict = response.json()
-        self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
         self._last_response = response_dict
+        self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
 
     def add_data_frame(self, data_frame, part_of_iter=False):
         """Add a data frame into the buffer.
@@ -178,24 +345,18 @@ class ImportStreamer(object):
             raise ValueError(
                 'Need a field called timestamp_desc in the data frame.')
 
-        if size <= self._threshold:
-            csv_file = tempfile.NamedTemporaryFile(suffix='.csv')
-            data_frame_use.to_csv(csv_file.name, index=False, encoding='utf-8')
+        if size <= self._threshold_entry:
             end_stream = not part_of_iter
-            self._upload_data(csv_file.name, end_stream=end_stream)
+            self._upload_data_frame(data_frame_use, end_stream=end_stream)
             return
 
-        chunks = int(math.ceil(float(size) / self._threshold))
+        chunks = int(math.ceil(float(size) / self._threshold_entry))
         for index in range(0, chunks):
-            chunk_start = index * self._threshold
+            chunk_start = index * self._threshold_entry
             data_chunk = data_frame_use[
-                chunk_start:chunk_start + self._threshold]
-
-            csv_file = tempfile.NamedTemporaryFile(suffix='.csv')
-            data_chunk.to_csv(csv_file.name, index=False, encoding='utf-8')
-
+                chunk_start:chunk_start + self._threshold_entry]
             end_stream = bool(index == chunks - 1)
-            self._upload_data(csv_file.name, end_stream=end_stream)
+            self._upload_data_frame(data_chunk, end_stream=end_stream)
 
     def add_dict(self, entry):
         """Add an entry into the buffer.
@@ -210,10 +371,13 @@ class ImportStreamer(object):
         if not isinstance(entry, dict):
             raise TypeError('Entry object needs to be a dict.')
 
-        if self._count >= self._threshold:
+        if self._count >= self._threshold_entry:
             self.flush(end_stream=False)
             self._reset()
 
+        # Changing the dictionary to add fields, such as timestamp description,
+        # message field, etc. See function docstring for further details.
+        self._fix_dict(entry)
         self._data_lines.append(entry)
         self._count += 1
 
@@ -280,22 +444,24 @@ class ImportStreamer(object):
 
         file_ending = filepath.lower().split('.')[-1]
         if file_ending == 'csv':
-            for chunk_frame in pandas.read_csv(
-                    filepath, delimiter=delimiter, chunksize=self._threshold):
-                self.add_data_frame(chunk_frame, part_of_iter=True)
+            with codecs.open(
+                    filepath, 'r', encoding=self._text_encoding,
+                    errors='replace') as fh:
+                for chunk_frame in pandas.read_csv(
+                        fh, delimiter=delimiter,
+                        chunksize=self._threshold_entry):
+                    self.add_data_frame(chunk_frame, part_of_iter=True)
         elif file_ending == 'plaso':
-            self._sketch.upload(self._timeline_name, filepath, self._index)
+            self._upload_binary_file(filepath)
         elif file_ending == 'jsonl':
-            data_frame = None
-            with open(filepath, 'r') as fh:
-                lines = [json.loads(x) for x in fh]
-                data_frame = pandas.DataFrame(lines)
-            if data_frame is None:
-                raise TypeError('Unable to parse the JSON file.')
-            if data_frame.empty:
-                raise TypeError('Is the JSON file empty?')
-
-            self.add_data_frame(data_frame)
+            with codecs.open(
+                    filepath, 'r', encoding=self._text_encoding,
+                    errors='replace') as fh:
+                for line in fh:
+                    try:
+                        self.add_json(line.strip())
+                    except TypeError as e:
+                        logging.error('Unable to decode line: {0!s}'.format(e))
         else:
             raise TypeError(
                 'File needs to have a file extension of: .csv, .jsonl or '
@@ -370,14 +536,7 @@ class ImportStreamer(object):
             return
 
         self._ready()
-
-        data_frame = pandas.DataFrame(self._data_lines)
-        data_frame_use = self._fix_data_frame(data_frame)
-
-        csv_file = tempfile.NamedTemporaryFile(suffix='.csv')
-        data_frame_use.to_csv(csv_file.name, index=False, encoding='utf-8')
-
-        self._upload_data(csv_file.name, end_stream=end_stream)
+        self._upload_data_buffer(end_stream=end_stream)
 
     @property
     def response(self):
@@ -394,9 +553,21 @@ class ImportStreamer(object):
         self._sketch = sketch
         self._resource_url = '{0:s}/upload/'.format(sketch.api.api_root)
 
+    def set_entry_threshold(self, threshold):
+        """Set the threshold for number of entries per chunk."""
+        self._threshold_filesize = threshold
+
+    def set_filesize_threshold(self, threshold):
+        """Set the threshold for file size per chunk."""
+        self._threshold_filesize = threshold
+
     def set_message_format_string(self, format_string):
         """Set the message format string."""
         self._format_string = format_string
+
+    def set_text_encoding(self, encoding):
+        """Set the default encoding for reading text files."""
+        self._text_encoding = encoding
 
     def set_timeline_name(self, name):
         """Set the timeline name."""
