@@ -118,6 +118,13 @@ def upload_file(
         if time_desc:
             streamer.set_timestamp_description(time_desc)
 
+        entry_threshold = config_dict.get('entry_threshold')
+        if entry_threshold:
+            streamer.set_entry_threshold(entry_threshold)
+        size_threshold = config_dict.get('size_threshold')
+        if size_threshold:
+            streamer.set_filesize_threshold(size_threshold)
+
         streamer.add_file(file_path)
 
     return 'File got successfully uploaded to sketch: {0:d}'.format(
@@ -188,6 +195,18 @@ if __name__ == '__main__':
         '--timestamp_description', '--timestamp-description', '--time-desc',
         '--time_desc', action='store', type=str, default='', dest='time_desc',
         help='Value for the timestamp_description field.')
+    config_group.add_argument(
+        '--threshold_entry', '--threshold-entry', '--entries', action='store',
+        type=int, default=0, dest='entry_threshold',
+        help=(
+            'How many entries should be buffered up before being '
+            'sent to server.'))
+    config_group.add_argument(
+        '--threshold_size', '--threshold-size', '--filesize', action='store',
+        type=int, default=0, dest='size_threshold',
+        help=(
+            'For binary file transfer, how many bytes should be transferred '
+            'per chunk.'))
     config_group.add_argument(
         '--sketch_id', '--sketch-id', type=int, default=0, dest='sketch_id',
         action='store', help=(
@@ -263,6 +282,10 @@ if __name__ == '__main__':
             'index_name', ''),
         'timestamp_description': options.time_desc or config_options.get(
             'timestamp_description', ''),
+        'entry_threshold': options.entry_threshold or config_options.get(
+            'entry_threshold', 0),
+        'size_threshold': options.size_threshold or config_options.get(
+            'size_threshold', 0),
     }
 
     logger.info('Uploading file.')
