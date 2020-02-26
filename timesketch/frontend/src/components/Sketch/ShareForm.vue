@@ -55,8 +55,7 @@ limitations under the License.
           <b-autocomplete
             clear-on-select
             v-model="userNameInput"
-            :data="systemUsers"
-            field="username"
+            :data="filteredUserArray"
             placeholder="Username .."
             icon="magnify"
             @select="addUser">
@@ -73,8 +72,7 @@ limitations under the License.
             clear-on-select
             open-on-focus
             v-model="groupNameInput"
-            :data="systemGroups"
-            field="name"
+            :data="filteredGroupArray"
             placeholder="Group name .."
             icon="magnify"
             @select="addGroup">
@@ -138,6 +136,22 @@ export default {
     },
     currentGroups() {
       return this.meta.collaborators.groups.filter(f => !this.groupsToRemove.includes(f));
+    },
+    filteredUserArray() {
+      return this.systemUsers.filter((option) => {
+        return option
+          .toString()
+          .toLowerCase()
+          .indexOf(this.userNameInput.toLowerCase()) >= 0
+      })
+    },
+    filteredGroupArray() {
+      return this.systemUsers.filter((option) => {
+        return option
+          .toString()
+          .toLowerCase()
+          .indexOf(this.groupNameInput.toLowerCase()) >= 0
+      })
     }
   },
   methods: {
