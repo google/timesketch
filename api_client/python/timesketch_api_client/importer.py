@@ -241,7 +241,7 @@ class ImportStreamer(object):
         # TODO: Add in the ability to re-upload failed file.
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             raise RuntimeError(
-                'Error uploading data: [{0:d}] {1:s} {2:s}, '
+                'Error uploading data: [{0:d}] {1!s} {2!s}, '
                 'index {3:s}'.format(
                     response.status_code, response.reason, response.text,
                     self._index))
@@ -261,7 +261,7 @@ class ImportStreamer(object):
         if self._timeline_name:
             timeline_name = self._timeline_name
         else:
-            file_name = os.basename(file_path)
+            file_name = os.path.basename(file_path)
             file_name_no_ext, _, _ = file_name.rpartition('.')
             timeline_name = file_name_no_ext
 
