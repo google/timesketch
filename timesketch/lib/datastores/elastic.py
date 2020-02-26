@@ -19,6 +19,7 @@ from collections import Counter
 import codecs
 import json
 import logging
+import socket
 
 from uuid import uuid4
 
@@ -625,7 +626,7 @@ class ElasticsearchDataStore(object):
             if self.import_counter['events'] % int(flush_interval) == 0:
                 try:
                     self.client.bulk(body=self.import_events)
-                except ConnectionTimeout as e:
+                except (ConnectionTimeout, socket.timeout) as e:
                     # TODO: Add a retry here.
                     es_logger.error(
                         'Unable to add events, with error: {0!s}'.format(e))
@@ -635,7 +636,7 @@ class ElasticsearchDataStore(object):
             if self.import_events:
                 try:
                     self.client.bulk(body=self.import_events)
-                except ConnectionTimeout as e:
+                except (ConnectionTimeout, socket.timeout) as e:
                     # TODO: Add a retry here.
                     es_logger.error(
                         'Unable to add events, with error: {0!s}'.format(e))

@@ -199,6 +199,8 @@ class ImportStreamer(object):
             'prepare.'.format(time.time() - start_time))
 
         response = self._sketch.api.session.post(self._resource_url, data=data)
+        # TODO: Investigate why the sleep is needed, fix the underlying issue
+        # and get rid of it here.
         # To prevent unexpected errors with connection refusal adding a quick
         # sleep.
         time.sleep(2)
