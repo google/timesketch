@@ -18,7 +18,6 @@ from timesketch.lib.analyzers import account_finder
 from timesketch.lib.analyzers import browser_search
 from timesketch.lib.analyzers import browser_timeframe
 from timesketch.lib.analyzers import chain
-from timesketch.lib.analyzers import crash
 from timesketch.lib.analyzers import domain
 from timesketch.lib.analyzers import expert_sessionizers
 from timesketch.lib.analyzers import feature_extraction
@@ -31,3 +30,4 @@ from timesketch.lib.analyzers import ssh_sessionizer
 from timesketch.lib.analyzers import gcp_servicekey
 from timesketch.lib.analyzers import ntfs_timestomp
 from timesketch.lib.analyzers import yetiindicators
+from timesketch.lib.analyzers import win_crash
