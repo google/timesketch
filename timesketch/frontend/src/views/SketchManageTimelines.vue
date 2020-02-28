@@ -121,7 +121,9 @@ export default {
       })
     },
     makeTimelineAvailable (event) {
-      this.availableSearchIndices.unshift(event.searchindex)
+      if (event.searchindex.status[0].status === 'ready') {
+        this.availableSearchIndices.unshift(event.searchindex)
+      }
     }
   },
   created: function () {

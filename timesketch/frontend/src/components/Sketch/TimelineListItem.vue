@@ -18,7 +18,7 @@ limitations under the License.
   <div>
 
     <!-- Timeline detail modal -->
-    <b-modal :active.sync="showInfoModal" :width="640" scroll="keep">
+    <b-modal :active.sync="showInfoModal" :width="1024" scroll="keep">
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -33,8 +33,12 @@ limitations under the License.
                 <li>Added by: {{ timeline.searchindex.user.username }}</li>
                 <li>Added: {{ timeline.searchindex.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
               </ul>
-              <strong v-if="timeline.description">Description</strong>
-              <p>{{ timeline.description}}</p>
+
+              <span v-if="timelineStatus === 'fail'">
+                <h5 style="color:red;">Error detail</h5>
+                <pre>{{ timeline.searchindex.description }}</pre>
+              </span>
+
             </div>
           </div>
         </div>
@@ -71,9 +75,9 @@ limitations under the License.
       <button class="modal-close is-large" aria-label="close" v-on:click="showEditModal = !showEditModal"></button>
     </b-modal>
 
-    <div v-if="timelineStatus === 'processing'" class="ts-timeline-color-box is-pulled-left" style="background-color: #f5f5f5;"></div>
-
-    <div v-if="timelineStatus === 'ready'" class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
+    <div v-if="timelineStatus === 'processing'" class="ts-timeline-color-box is-pulled-left blink" style="background-color: #f5f5f5;"></div>
+    <div v-else-if="timelineStatus === 'fail'" v-on:click="showInfoModal =! showInfoModal" class="ts-timeline-color-box is-pulled-left" style="background-color: #f5f5f5;"></div>
+    <div v-else-if="timelineStatus === 'ready'" class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
       <div class="dropdown-trigger">
         <div class="ts-timeline-color-box" v-bind:style="timelineColorStyle" v-on:click="colorPickerActive = !colorPickerActive"></div>
       </div>
@@ -85,6 +89,8 @@ limitations under the License.
         </div>
       </div>
     </div>
+    <div v-else class="ts-timeline-color-box is-pulled-left" style="background-color: #f5f5f5;"></div>
+
 
     <div v-if="controls" class="field is-grouped is-pulled-right" style="margin-top:10px;">
       <p class="control">
@@ -95,7 +101,7 @@ limitations under the License.
           <span>Info</span>
         </button>
       </p>
-      <p v-if="meta.permissions.write" class="control">
+      <p v-if="meta.permissions.write && timelineStatus === 'ready'" class="control">
         <button class="button is-rounded is-small is-outlined" v-on:click="showEditModal = !showEditModal">
           <span class="icon is-small">
             <i class="fas fa-edit"></i>
@@ -103,10 +109,10 @@ limitations under the License.
           <span>Rename</span>
         </button>
       </p>
-      <p class="control">
+      <p v-if="timelineStatus === 'ready'" class="control">
         <ts-analyzer-list-dropdown :timeline="timeline" @newAnalysisSession="setAnalysisSession($event)"></ts-analyzer-list-dropdown>
       </p>
-      <p class="control">
+      <p v-if="timelineStatus === 'ready'" class="control">
         <button class="button is-small is-rounded is-outlined" @click="showAnalysisHistory = !showAnalysisHistory">
           <span class="icon is-small">
             <i class="fas fa-history"></i>
@@ -126,8 +132,14 @@ limitations under the License.
     <span v-if="timelineStatus === 'ready'" class="is-size-7">
       Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
     </span>
-    <span v-if="timelineStatus !== 'ready'" class="is-size-7">
-      Indexing in progress <span class="blink">...</span>
+    <span v-else-if="timelineStatus === 'fail'" class="is-size-7">
+      ERROR: <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline">Click here for details</span>
+    </span>
+    <span v-else-if="timelineStatus === 'processing'" class="is-size-7">
+      Indexing in progress...
+    </span>
+    <span v-else class="is-size-7">
+      Unknown status: {{ timelineStatus }}
     </span>
 
     <br>
@@ -287,7 +299,7 @@ export default {
 
 @keyframes blinker {
   50% {
-    opacity: 0;
+    opacity: 40%;
   }
 }
 </style>

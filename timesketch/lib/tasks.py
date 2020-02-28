@@ -19,6 +19,8 @@ import logging
 import subprocess
 import traceback
 
+import codecs
+import io
 import json
 import six
 
@@ -29,6 +31,7 @@ from sqlalchemy import create_engine
 from elasticsearch.exceptions import RequestError
 
 from timesketch import create_celery_app
+from timesketch.lib import errors
 from timesketch.lib.analyzers import manager
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.lib.utils import read_and_validate_csv
@@ -132,12 +135,16 @@ def _get_index_analyzers():
     return chain(tasks)
 
 
-def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
-                         sketch_id=None, only_index=False):
+def build_index_pipeline(
+        file_path='', events='', timeline_name='', index_name='',
+        file_extension='', sketch_id=None, only_index=False):
     """Build a pipeline for index and analysis.
 
     Args:
-        file_path: Path to the file to index.
+        file_path: The full path to a file to upload, either a file_path or
+            or events need to be defined.
+        events: String with the event data, either file_path or events
+            needs to be defined.
         timeline_name: Name of the timeline to create.
         index_name: Name of the index to index to.
         file_extension: The file extension of the file.
@@ -151,13 +158,16 @@ def build_index_pipeline(file_path, timeline_name, index_name, file_extension,
         Celery chain with indexing task (or single indexing task) and analyzer
         task group.
     """
+    if not (file_path or events):
+        raise RuntimeError(
+            'Unable to upload data, missing either a file or events.')
     index_task_class = _get_index_task_class(file_extension)
     index_analyzer_chain = _get_index_analyzers()
     sketch_analyzer_chain = None
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
     index_task = index_task_class.s(
-        file_path, timeline_name, index_name, file_extension)
+        file_path, events, timeline_name, index_name, file_extension)
 
     if only_index:
         return index_task
@@ -396,11 +406,12 @@ def run_sketch_analyzer(index_name, sketch_id, analysis_id, analyzer_name,
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
-def run_plaso(source_file_path, timeline_name, index_name, source_type):
+def run_plaso(file_path, events, timeline_name, index_name, source_type):
     """Create a Celery task for processing Plaso storage file.
 
     Args:
-        source_file_path: Path to plaso storage file.
+        file_path: Path to the plaso file on disk.
+        events: String with event data, invalid for plaso files.
         timeline_name: Name of the Timesketch timeline.
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
@@ -408,6 +419,8 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
     Returns:
         Name (str) of the index.
     """
+    if events:
+        raise RuntimeError('Plaso uploads needs a file, not events.')
     # Log information to Celery
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
     logging.info(message.format(timeline_name, index_name, source_type))
@@ -418,7 +431,7 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
         psort_path = 'psort.py'
 
     cmd = [
-        psort_path, '-o', 'timesketch', source_file_path, '--name',
+        psort_path, '-o', 'timesketch', file_path, '--name',
         timeline_name, '--status_view', 'none', '--index', index_name
     ]
 
@@ -441,11 +454,12 @@ def run_plaso(source_file_path, timeline_name, index_name, source_type):
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
-def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
+def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
     """Create a Celery task for processing a CSV or JSONL file.
 
     Args:
-        source_file_path: Path to CSV or JSONL file.
+        file_path: Path to the JSON or CSV file.
+        events: A string with the events.
         timeline_name: Name of the Timesketch timeline.
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
@@ -453,10 +467,17 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
     Returns:
         Name (str) of the index.
     """
+    if events:
+        file_handle = io.StringIO(events)
+        source_type = 'jsonl'
+    else:
+        file_handle = codecs.open(
+            file_path, 'r', encoding='utf-8', errors='replace')
+
     event_type = 'generic_event'  # Document type for Elasticsearch
     validators = {
         'csv': read_and_validate_csv,
-        'jsonl': read_and_validate_jsonl
+        'jsonl': read_and_validate_jsonl,
     }
     read_and_validate = validators.get(source_type)
 
@@ -473,10 +494,14 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
     # all possible errors and exit the task.
     try:
         es.create_index(index_name=index_name, doc_type=event_type)
-        for event in read_and_validate(source_file_path):
+        for event in read_and_validate(file_handle):
             es.import_event(index_name, event_type, event)
         # Import the remaining events
         es.flush_queued_events()
+
+    except errors.DataIngestionError as e:
+        _set_timeline_status(index_name, status='fail', error_msg=str(e))
+        raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError,
             RequestError) as e:
@@ -485,9 +510,9 @@ def run_csv_jsonl(source_file_path, timeline_name, index_name, source_type):
 
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
-        error_msg = traceback.format_exc(e)
+        error_msg = traceback.format_exc()
         _set_timeline_status(index_name, status='fail', error_msg=error_msg)
-        logging.error(error_msg)
+        logging.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         return None
 
     # Set status to ready when done
