@@ -1,13 +1,12 @@
 """Tests for WinCrashPlugin."""
 from __future__ import unicode_literals
 
-import mock, unittest
+import unittest
+import mock
 
 from timesketch.lib.analyzers import win_crash
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
-from timesketch.models.user import User
-from timesketch.models.sketch import Sketch
 
 class TestWinCrashPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
@@ -66,6 +65,19 @@ class TestWinCrashPlugin(BaseTest):
             self.assertEqual(
                 self.analyzer.extract_filename(s),
                 expected_list[i])
+
+    def test_mark_as_crash(self):
+        mock_event = mock.Mock()
+        filename = 'sample_filename.exe'
+        self.analyzer.mark_as_crash(mock_event, filename)
+        mock_event.add_attributes.assert_called_once_with(
+            {'crash_app': filename})
+        mock_event.add_tags.assert_called_once_with(['win_crash'])
+
+        mock_event = mock.Mock()
+        self.analyzer.mark_as_crash(mock_event, None)
+        mock_event.add_attributes.assert_not_called()
+        mock_event.add_tags.assert_called_once_with(['win_crash'])
 
 if __name__ == '__main__':
     unittest.main()
