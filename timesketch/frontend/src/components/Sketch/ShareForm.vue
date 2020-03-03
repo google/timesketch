@@ -146,7 +146,7 @@ export default {
       })
     },
     filteredGroupArray() {
-      return this.systemUsers.filter((option) => {
+      return this.systemGroups.filter((option) => {
         return option
           .toString()
           .toLowerCase()
