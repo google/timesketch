@@ -782,12 +782,11 @@ class ExploreResource(ResourceMixin, Resource):
         scroll_id = form.scroll_id.data
 
         query_filter = request.json.get('filter', [])
-        return_fields = []
+
         return_field_string = form.fields.data
         if return_field_string:
             return_fields = [x.strip() for x in return_field_string.split(',')]
-
-        if not return_fields:
+        else:
             return_fields = query_filter.get('fields', [])
             return_fields = [field['field'] for field in return_fields]
             return_fields.extend(DEFAULT_SOURCE_FIELDS)
