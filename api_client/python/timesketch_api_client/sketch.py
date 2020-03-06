@@ -15,6 +15,7 @@
 from __future__ import unicode_literals
 
 import json
+import logging
 
 import pandas
 
@@ -24,6 +25,11 @@ from . import error
 from . import resource
 from . import timeline
 from . import view as view_lib
+
+
+logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
+logger = logging.getLogger('sketch_api')
+
 
 class Sketch(resource.BaseResource):
     """Timesketch sketch object.
@@ -393,6 +399,12 @@ class Sketch(resource.BaseResource):
             more_meta = more_response_json.get('meta', {})
             added_time = more_meta.get('es_time', 0)
             response_json['meta']['es_time'] += added_time
+
+        total_elastic_count = response_json.get('es_total_count', 0)
+        if total_elastic_count != total_count:
+            logger.info('{0:>30s}: {1:d}\n{2:>30s}: {3:d}'.format(
+                'Total results from search', total_elastic_count,
+                'Total results returned', total_count))
 
         if as_pandas:
             return self._build_pandas_dataframe(response_json, return_fields)
