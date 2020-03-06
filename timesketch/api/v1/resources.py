@@ -781,7 +781,7 @@ class ExploreResource(ResourceMixin, Resource):
         enable_scroll = form.enable_scroll.data
         scroll_id = form.scroll_id.data
 
-        query_filter = request.json.get('filter', [])
+        query_filter = request.json.get('filter', {})
 
         return_field_string = form.fields.data
         if return_field_string:
