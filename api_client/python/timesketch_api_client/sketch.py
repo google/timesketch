@@ -404,9 +404,9 @@ class Sketch(resource.BaseResource):
         total_elastic_count = response_json.get(
             'meta', {}).get('es_total_count', 0)
         if total_elastic_count != total_count:
-          logger.info(
-              '{0:d} results were returned, but {1:d} records matched the '
-              'search query'.format(total_count, total_elastic_count))
+            logger.info(
+                '{0:d} results were returned, but {1:d} records matched the '
+                'search query'.format(total_count, total_elastic_count))
 
         if as_pandas:
             return self._build_pandas_dataframe(response_json, return_fields)
