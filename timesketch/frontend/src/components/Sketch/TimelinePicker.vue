@@ -15,11 +15,13 @@ limitations under the License.
 -->
 <template>
   <div>
-    <span v-for="timeline in sketch.active_timelines" :key="timeline.id" class="tag is-medium" style="cursor: pointer; margin-right: 7px;" v-bind:style="timelineColor(timeline)" v-on:click="toggleIndex(timeline.searchindex.index_name)">
+    <span v-for="timeline in sketch.active_timelines" :key="timeline.id" class="tag is-medium" style="cursor: pointer; margin-right: 7px;margin-bottom:7px;" v-bind:style="timelineColor(timeline)" v-on:click="toggleIndex(timeline.searchindex.index_name)">
       {{ timeline.name }}
     </span>
-    <button class="button is-text" v-on:click="enableAllIndices">Enable all</button>
-    <button class="button is-text" v-on:click="disableAllIndices">Disable all</button>
+    <div v-if="sketch.active_timelines.length > 3" style="margin-top:7px;">
+      <span style="text-decoration: underline; cursor: pointer; margin-right: 10px;" v-on:click="enableAllIndices">Enable all</span>
+      <span style="text-decoration: underline; cursor: pointer;" v-on:click="disableAllIndices">Disable all</span>
+    </div>
   </div>
 </template>
 
