@@ -14,6 +14,7 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
+import os
 import json
 import logging
 
@@ -400,11 +401,12 @@ class Sketch(resource.BaseResource):
             added_time = more_meta.get('es_time', 0)
             response_json['meta']['es_time'] += added_time
 
-        total_elastic_count = response_json.get('es_total_count', 0)
+        total_elastic_count = response_json.get(
+            'meta', {}).get('es_total_count', 0)
         if total_elastic_count != total_count:
-            logger.info('{0:>30s}: {1:d}\n{2:>30s}: {3:d}'.format(
-                'Total results from search', total_elastic_count,
-                'Total results returned', total_count))
+          logger.info(
+              '{0:d} results were returned, but {1:d} records matched the '
+              'search query'.format(total_count, total_elastic_count))
 
         if as_pandas:
             return self._build_pandas_dataframe(response_json, return_fields)
