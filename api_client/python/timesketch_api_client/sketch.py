@@ -14,7 +14,9 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
+import os
 import json
+import logging
 
 import pandas
 
@@ -24,6 +26,11 @@ from . import error
 from . import resource
 from . import timeline
 from . import view as view_lib
+
+
+logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
+logger = logging.getLogger('sketch_api')
+
 
 class Sketch(resource.BaseResource):
     """Timesketch sketch object.
@@ -305,7 +312,7 @@ class Sketch(resource.BaseResource):
         Args:
             query_string: Elasticsearch query string.
             query_dsl: Elasticsearch query DSL as JSON string.
-            query_filter: Filter for the query as JSON string.
+            query_filter: Filter for the query as a dict.
             view: View object instance (optional).
             return_fields: List of fields that should be included in the
                 response. Optional and defaults to None.
@@ -322,36 +329,36 @@ class Sketch(resource.BaseResource):
 
         Raises:
             ValueError: if unable to query for the results.
+            RuntimeError: if the query is missing needed values.
         """
-        default_filter = {
-            'time_start': None,
-            'time_end': None,
-            'size': self.DEFAULT_SIZE_LIMIT,
-            'terminate_after': self.DEFAULT_SIZE_LIMIT,
-            'indices': '_all',
-            'order': 'asc'
-        }
-
-        if as_pandas:
-            default_filter['size'] = 10000
-            default_filter['terminate_after'] = 10000
-
         if not (query_string or query_filter or query_dsl or view):
             raise RuntimeError('You need to supply a query or view')
 
         if not query_filter:
-            query_filter = default_filter
+            query_filter = {
+                'time_start': None,
+                'time_end': None,
+                'size': self.DEFAULT_SIZE_LIMIT,
+                'terminate_after': self.DEFAULT_SIZE_LIMIT,
+                'indices': '_all',
+                'order': 'asc'
+            }
+
+        if not isinstance(query_filter, dict):
+            raise ValueError(
+                'Unable to query with a query filter that isn\'t a dict.')
 
         if view:
             if view.query_string:
                 query_string = view.query_string
             query_filter = json.loads(view.query_filter)
 
-            query_filter['size'] = self.DEFAULT_SIZE_LIMIT
-            query_filter['terminate_after'] = self.DEFAULT_SIZE_LIMIT
-
             if view.query_dsl:
                 query_dsl = json.loads(view.query_dsl)
+
+        if as_pandas:
+            query_filter.setdefault('size', self.DEFAULT_SIZE_LIMIT)
+            query_filter.setdefault('terminate_after', self.DEFAULT_SIZE_LIMIT)
 
         resource_url = '{0:s}/sketches/{1:d}/explore/'.format(
             self.api.api_root, self.id)
@@ -393,6 +400,13 @@ class Sketch(resource.BaseResource):
             more_meta = more_response_json.get('meta', {})
             added_time = more_meta.get('es_time', 0)
             response_json['meta']['es_time'] += added_time
+
+        total_elastic_count = response_json.get(
+            'meta', {}).get('es_total_count', 0)
+        if total_elastic_count != total_count:
+            logger.info(
+                '{0:d} results were returned, but {1:d} records matched the '
+                'search query'.format(total_count, total_elastic_count))
 
         if as_pandas:
             return self._build_pandas_dataframe(response_json, return_fields)
