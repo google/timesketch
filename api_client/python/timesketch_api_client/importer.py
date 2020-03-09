@@ -14,26 +14,36 @@
 """Timesketch data importer."""
 from __future__ import unicode_literals
 
+import codecs
 import datetime
 import io
-import codecs
 import json
-import math
 import logging
+import math
 import os
-import uuid
-import time
 import six
+import string
+import time
+import uuid
 
 import pandas
 import dateutil.parser
+
 from . import timeline
 from . import definitions
 
 
-def format_data_frame_row(row, format_message_string):
-    """Return a formatted data frame using a format string."""
-    return format_message_string.format(**row)
+def format_data_frame(dataframe, format_message_string):
+    """Add a message field to a data frame using a format message string."""
+    dataframe['message'] = ''
+
+    formatter = string.Formatter()
+    for literal_text, field, _, _ in formatter.parse(format_message_string):
+        dataframe['message'] = dataframe['message'] + literal_text
+
+        if field:
+            dataframe['message'] = dataframe[
+                'message'] + dataframe[field].astype(str)
 
 
 class ImportStreamer(object):
@@ -130,10 +140,8 @@ class ImportStreamer(object):
         Returns:
             A pandas data frame with added columns needed for Timesketch.
         """
-        if 'message' not in data_frame:
-            data_frame['message'] = data_frame.apply(
-                lambda row: format_data_frame_row(
-                    row, self._format_string), axis=1)
+        if 'message' not in data_frame and self._format_string:
+            format_data_frame(data_frame, self._format_string)
 
         if 'timestamp_desc' not in data_frame:
             data_frame['timestamp_desc'] = self._timestamp_desc
