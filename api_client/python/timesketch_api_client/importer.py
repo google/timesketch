@@ -21,13 +21,13 @@ import json
 import logging
 import math
 import os
-import six
 import string
 import time
 import uuid
 
-import pandas
 import dateutil.parser
+import pandas
+import six
 
 from . import timeline
 from . import definitions
