@@ -22,6 +22,7 @@ services:
       - TIMESKETCH_USER=${TIMESKETCH_USER}
       - TIMESKETCH_PASSWORD=${TIMESKETCH_PASSWORD}
     restart: always
+    working_dir: /tmp
     volumes:
       - ../:/usr/local/src/timesketch/
 
