@@ -183,6 +183,7 @@ class ExploreResourceTest(BaseTest):
             },
             'es_total_count': 1,
             'es_time': 5,
+            'count_per_index': {},
             'scroll_id': ''
         },
         'objects': [{

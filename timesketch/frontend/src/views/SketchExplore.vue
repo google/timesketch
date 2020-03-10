@@ -123,7 +123,7 @@ limitations under the License.
               </span>
             </div>
 
-            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateQueryFilter="updateQueryFilter($event)" :current-query-filter="currentQueryFilter"></ts-explore-timeline-picker>
+            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateQueryFilter="updateQueryFilter($event)" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index"></ts-explore-timeline-picker>
           </div>
         </div>
       </div>
