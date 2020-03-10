@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 import json
 import logging
 import os
+import time
 import traceback
 import yaml
 
@@ -458,6 +459,30 @@ class BaseIndexAnalyzer(object):
         """
         analysis = Analysis.query.get(analysis_id)
         analysis.set_status('STARTED')
+
+        timeline = analysis.timeline
+        searchindex = timeline.searchindex
+        counter = 0
+        while True:
+            status = searchindex.get_status.status
+            status = status.lower()
+            print('current status is: {}'.format(status))
+            if status == 'ready':
+                break
+
+            if status == 'fail':
+                logging.error(
+                    'Unable to run analyzer on a failed index ({0:s})'.format(
+                        searchindex_id))
+                return 'Failed'
+
+            time.sleep(10)
+            counter += 1
+            if counter >= 360:
+                logging.error(
+                    'Indexing has taken too long time, aborting run of analyzer')
+                return 'Failed'
+            searchindex = SearchIndex.query.filter_by(id=timeline.searchindex.id).first()
 
         # Run the analyzer. Broad Exception catch to catch any error and store
         # the error in the DB for display in the UI.

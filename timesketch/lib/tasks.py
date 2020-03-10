@@ -244,28 +244,6 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
     analysis_session = AnalysisSession(user, sketch)
 
     searchindex = SearchIndex.query.get(searchindex_id)
-    counter = 0
-    while True:
-        status = searchindex.get_status.status
-        status = status.lower()
-        print('current status is: {}'.format(status))
-        if status == 'ready':
-            break
-
-        if status == 'fail':
-            logging.error(
-                'Unable to run analyzer on a failed index ({0:s})'.format(
-                    searchindex_id))
-            return None, None
-
-        time.sleep(10)
-        counter += 1
-        if counter >= 360:
-            logging.error(
-                'Indexing has taken too long time, aborting run of analyzer')
-            return None, None
-        searchindex = SearchIndex.query.get(searchindex_id)
-
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
     for analyzer_name, analyzer_cls in analyzers:
         if not analyzer_cls.IS_SKETCH_ANALYZER:
