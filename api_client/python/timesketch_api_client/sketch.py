@@ -467,7 +467,7 @@ class Sketch(resource.BaseResource):
                 analyzer_kwargs = {analyzer_name: analyzer_kwargs}
 
         if timeline_name:
-            sketch = self.lazyload_data()
+            sketch = self.lazyload_data(refresh_cache=True)
             timelines = []
             for timeline_dict in sketch['objects'][0]['timelines']:
                 name = timeline_dict.get('name', '')
