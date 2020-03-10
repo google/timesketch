@@ -247,10 +247,11 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
     counter = 0
     while True:
         status = searchindex.get_status()
-        if status == 'READY':
+        status = status.lower()
+        if status == 'ready':
             break
 
-        if status == 'FAIL':
+        if status == 'fail':
             logging.error(
                 'Unable to run analyzer on a failed index ({0:s})'.format(
                     searchindex_id))
