@@ -87,6 +87,9 @@ class MockElasticIndices(object):
         """Mock get mapping call."""
         return {}
 
+    def stats(self, *args, **kwargs):
+        return {'indices': {}}
+
 
 class MockDataStore(object):
     """A mock implementation of a Datastore."""
