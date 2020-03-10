@@ -478,14 +478,15 @@ class BaseIndexAnalyzer(object):
             if status == 'fail':
                 logging.error(
                     'Unable to run analyzer on a failed index ({0:s})'.format(
-                        searchindex_id))
+                        searchindex.index_name))
                 return 'Failed'
 
             time.sleep(self.SECONDS_PER_WAIT)
             counter += 1
             if counter >= self.MAXIMUM_WAITS:
                 logging.error(
-                    'Indexing has taken too long time, aborting run of analyzer')
+                    'Indexing has taken too long time, aborting run of '
+                    'analyzer')
                 return 'Failed'
             # Refresh the searchindex object.
             db_session.refresh(searchindex)
