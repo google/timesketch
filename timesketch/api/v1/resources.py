@@ -824,10 +824,11 @@ class ExploreResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'The request needs a query string/DSL and or a star filter.')
 
-        agg = {"indices": {
-            "terms": {
-                "field": "_index",
-                "size": 10
+        # Aggregate hit count per index.
+        index_stats_agg = {
+            "indices": {
+                "terms": {
+                    "field": "_index"
                 }
             }
         }
@@ -843,7 +844,7 @@ class ExploreResource(ResourceMixin, Resource):
                 query_filter,
                 query_dsl,
                 indices,
-                aggregations=agg,
+                aggregations=index_stats_agg,
                 return_fields=return_fields,
                 enable_scroll=enable_scroll)
 
