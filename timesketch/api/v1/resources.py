@@ -410,8 +410,10 @@ class SketchResource(ResourceMixin, Resource):
             for t in sketch.active_timelines
         ]
 
-        es_stats = self.datastore.index_stats(sketch_indices)
+        # Get event count and size on disk for each index in the sketch.
         stats_per_index = {}
+        es_stats = self.datastore.client.indices.stats(
+            index=sketch_indices, metric='docs, store')
         for index_name, stats in es_stats['indices'].items():
             stats_per_index[index_name] = {
                 'count': stats['total']['docs']['count'],

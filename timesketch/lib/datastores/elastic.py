@@ -452,18 +452,6 @@ class ElasticsearchDataStore(object):
         result = self.client.count(index=indices)
         return result.get('count', 0)
 
-    def index_stats(self, indices):
-        """Stats.
-
-        Args:
-            indices: List of indices.
-
-        Returns:
-            Number of documents.
-        """
-        result = self.client.indices.stats(index=indices, metric='docs, store')
-        return result
-
     def set_label(self, searchindex_id, event_id, event_type, sketch_id,
                   user_id, label, toggle=False, single_update=True):
         """Set label on event in the datastore.
