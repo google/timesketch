@@ -242,13 +242,13 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
     sketch = Sketch.query.get(sketch_id)
     analysis_session = AnalysisSession(user, sketch)
 
-    searchindex = SearchIndex.query.get(searchindex_id)
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
     for analyzer_name, analyzer_cls in analyzers:
         if not analyzer_cls.IS_SKETCH_ANALYZER:
             continue
 
         kwargs = analyzer_kwargs.get(analyzer_name, {})
+        searchindex = SearchIndex.query.get(searchindex_id)
         timeline = Timeline.query.filter_by(
             sketch=sketch, searchindex=searchindex).first()
 
