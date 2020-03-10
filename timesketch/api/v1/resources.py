@@ -815,6 +815,14 @@ class ExploreResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'The request needs a query string/DSL and or a star filter.')
 
+        agg = {"indices": {
+            "terms": {
+                "field": "_index",
+                "size": 10
+                }
+            }
+        }
+
         if scroll_id:
             # pylint: disable=unexpected-keyword-arg
             result = self.datastore.client.scroll(
@@ -826,9 +834,17 @@ class ExploreResource(ResourceMixin, Resource):
                 query_filter,
                 query_dsl,
                 indices,
-                aggregations=None,
+                aggregations=agg,
                 return_fields=return_fields,
                 enable_scroll=enable_scroll)
+
+        # Get number of matching documents per index.
+        count_per_index = {}
+        try:
+            for bucket in result['aggregations']['indices']['buckets']:
+                count_per_index[bucket['key']] = bucket['doc_count']
+        except KeyError:
+            pass
 
         # Get labels for each event that matches the sketch.
         # Remove all other labels.
@@ -868,6 +884,7 @@ class ExploreResource(ResourceMixin, Resource):
             'es_total_count': result['hits']['total'],
             'timeline_colors': tl_colors,
             'timeline_names': tl_names,
+            'count_per_index': count_per_index,
             'scroll_id': result.get('_scroll_id', ''),
         }
 
