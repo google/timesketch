@@ -466,7 +466,6 @@ class BaseIndexAnalyzer(object):
         while True:
             status = searchindex.get_status.status
             status = status.lower()
-            print('current status is: {}'.format(status))
             if status == 'ready':
                 break
 
@@ -482,7 +481,8 @@ class BaseIndexAnalyzer(object):
                 logging.error(
                     'Indexing has taken too long time, aborting run of analyzer')
                 return 'Failed'
-            searchindex = SearchIndex.query.filter_by(id=timeline.searchindex.id).first()
+            # Refresh the searchindex object.
+            db_session.refresh(searchindex)
 
         # Run the analyzer. Broad Exception catch to catch any error and store
         # the error in the DB for display in the UI.

@@ -22,7 +22,6 @@ import traceback
 import codecs
 import io
 import json
-import time
 import six
 
 from celery import chain
