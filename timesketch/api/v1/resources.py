@@ -414,10 +414,11 @@ class SketchResource(ResourceMixin, Resource):
         stats_per_index = {}
         es_stats = self.datastore.client.indices.stats(
             index=sketch_indices, metric='docs, store')
-        for index_name, stats in es_stats['indices'].items():
+        for index_name, stats in es_stats.get('indices', {}).items():
             stats_per_index[index_name] = {
-                'count': stats['total']['docs']['count'],
-                'bytes': stats['total']['store']['size_in_bytes']
+                'count': stats.get('total', {}).get('docs', {}).get('count', 0),
+                'bytes': stats.get(
+                    'total', {}).get('store', {}).get('size_in_bytes', 0)
             }
 
         if not sketch_indices:
@@ -854,7 +855,9 @@ class ExploreResource(ResourceMixin, Resource):
         count_per_index = {}
         try:
             for bucket in result['aggregations']['indices']['buckets']:
-                count_per_index[bucket['key']] = bucket['doc_count']
+                key = bucket.get('key')
+                if key:
+                    count_per_index[key] = bucket.get('doc_count')
         except KeyError:
             pass
 
