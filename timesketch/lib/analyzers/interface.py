@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 import json
 import logging
 import os
+import time
 import traceback
 import yaml
 
@@ -381,6 +382,11 @@ class BaseIndexAnalyzer(object):
     # Used as hints to the frontend UI in order to render input forms.
     FORM_FIELDS = []
 
+    # Configure how long an analyzer should run before the timeline
+    # gets fully indexed.
+    SECONDS_PER_WAIT = 10
+    MAXIMUM_WAITS = 360
+
     def __init__(self, index_name):
         """Initialize the analyzer object.
 
@@ -458,6 +464,32 @@ class BaseIndexAnalyzer(object):
         """
         analysis = Analysis.query.get(analysis_id)
         analysis.set_status('STARTED')
+
+        timeline = analysis.timeline
+        searchindex = timeline.searchindex
+
+        counter = 0
+        while True:
+            status = searchindex.get_status.status
+            status = status.lower()
+            if status == 'ready':
+                break
+
+            if status == 'fail':
+                logging.error(
+                    'Unable to run analyzer on a failed index ({0:s})'.format(
+                        searchindex.index_name))
+                return 'Failed'
+
+            time.sleep(self.SECONDS_PER_WAIT)
+            counter += 1
+            if counter >= self.MAXIMUM_WAITS:
+                logging.error(
+                    'Indexing has taken too long time, aborting run of '
+                    'analyzer')
+                return 'Failed'
+            # Refresh the searchindex object.
+            db_session.refresh(searchindex)
 
         # Run the analyzer. Broad Exception catch to catch any error and store
         # the error in the DB for display in the UI.
