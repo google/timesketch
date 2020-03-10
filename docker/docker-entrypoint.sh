@@ -10,8 +10,12 @@ if [ "$1" = 'timesketch' ]; then
   fi
 
   # Set up the Postgres connection
+  if [ $POSTGRES_PASSWORD ]; then echo "POSTGRES_PASSWORD usage is discouraged. Use Docker Secrets instead and set POSTGRES_PASSWORD_FILE to /run/secrets/secret-name"; fi
+  if [ $POSTGRES_PASSWORD_FILE ]; then POSTGRES_PASSWORD=$(cat $POSTGRES_PASSWORD_FILE); fi
+
   if [ $POSTGRES_USER ] && [ $POSTGRES_PASSWORD ] && [ $POSTGRES_ADDRESS ] && [ $POSTGRES_PORT ]; then
     sed -i 's#postgresql://<USERNAME>:<PASSWORD>@localhost#postgresql://'$POSTGRES_USER':'$POSTGRES_PASSWORD'@'$POSTGRES_ADDRESS':'$POSTGRES_PORT'#' /etc/timesketch/timesketch.conf
+    unset POSTGRES_PASSWORD
   else
     # Log an error since we need the above-listed environment variables
     echo "Please pass values for the POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_ADDRESS, and POSTGRES_PORT environment variables"
@@ -42,6 +46,8 @@ if [ "$1" = 'timesketch' ]; then
     TIMESKETCH_USER="admin"
     echo "TIMESKETCH_USER set to default: ${TIMESKETCH_USER}";
   fi
+  if [ $TIMESKETCH_PASSWORD ]; then echo "TIMESKETCH_PASSWORD usage is discouraged. Use Docker Secrets instead and set TIMESKETCH_PASSWORD_FILE to /run/secrets/secret-name"; fi
+  if [ $TIMESKETCH_PASSWORD_FILE ]; then TIMESKETCH_PASSWORD=$(cat $TIMESKETCH_PASSWORD_FILE); fi
   if [ -z ${TIMESKETCH_PASSWORD:+x} ]; then
     TIMESKETCH_PASSWORD="$(openssl rand -base64 32)"
     echo "TIMESKETCH_PASSWORD set randomly to: ${TIMESKETCH_PASSWORD}";
@@ -50,6 +56,7 @@ if [ "$1" = 'timesketch' ]; then
   # Sleep to allow the other processes to start
   sleep 5
   tsctl add_user --username "$TIMESKETCH_USER" --password "$TIMESKETCH_PASSWORD"
+  unset TIMESKETCH_PASSWORD
 
   # Run the Timesketch server (without SSL)
   cd /tmp
