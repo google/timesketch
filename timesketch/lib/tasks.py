@@ -22,6 +22,7 @@ import traceback
 import codecs
 import io
 import json
+import time
 import six
 
 from celery import chain
@@ -242,13 +243,32 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
     sketch = Sketch.query.get(sketch_id)
     analysis_session = AnalysisSession(user, sketch)
 
+    searchindex = SearchIndex.query.get(searchindex_id)
+    counter = 0
+    while True:
+        status = searchindex.get_status()
+        if status == 'READY':
+            break
+
+        if status == 'FAIL':
+            logging.error(
+                'Unable to run analyzer on a failed index ({0:s})'.format(
+                    searchindex_id))
+            return None, None
+
+        time.sleep(10)
+        counter += 1
+        if counter >= 360:
+            logging.error(
+                'Indexing has taken too long time, aborting run of analyzer')
+            return None, None
+
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
     for analyzer_name, analyzer_cls in analyzers:
         if not analyzer_cls.IS_SKETCH_ANALYZER:
             continue
 
         kwargs = analyzer_kwargs.get(analyzer_name, {})
-        searchindex = SearchIndex.query.get(searchindex_id)
         timeline = Timeline.query.filter_by(
             sketch=sketch, searchindex=searchindex).first()
 
