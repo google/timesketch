@@ -100,8 +100,8 @@ class WinCrashSketchPlugin(interface.BaseSketchAnalyzer):
             The Elasticsearch query
         """
         conditions = list()
-        for e in elements.values():
-            conditions += ['({0})'.format(' AND '.join(e))]
+        for element_list in elements.values():
+            conditions += ['({0})'.format(' AND '.join(element_list))]
         return ' OR '.join(conditions)
 
     def extract_filename(self, text):
@@ -119,7 +119,7 @@ class WinCrashSketchPlugin(interface.BaseSketchAnalyzer):
                 # The regex can match on full file paths and filenames,
                 # so only return the filename.
                 return min([m for m in match.groups() if m])
-        return None
+        return ''
 
     def mark_as_crash(self, event, filename):
         """Mark entries with crash artefacts.
@@ -147,11 +147,22 @@ class WinCrashSketchPlugin(interface.BaseSketchAnalyzer):
             query_string=query, return_fields=return_fields)
 
         # Container for filenames of crashed applications.
-        filenames = list()
+        filenames = set()
 
         for event in events:
             data_type = event.source.get('data_type')
             event_text = None
+
+            # Tag entries that show the crash reporting has been disabled.
+            if data_type == 'windows:registry:key_value':
+                event.add_comment(
+                    'WARNING: The crash reporting was disabled. '
+                    'It could be indicative of attacker activity. '
+                    'For details refer to page 16 from '
+                    'https://assets.documentcloud.org/documents/3461560/'
+                    'Google-Aquarium-Clean.pdf.')
+                event.commit()
+                continue
 
             # Search event log entries for filenames of crashed applications.
             if data_type == 'windows:evtx:record':
@@ -161,30 +172,18 @@ class WinCrashSketchPlugin(interface.BaseSketchAnalyzer):
             elif data_type == 'fs:stat':
                 event_text = event.source.get('filename')
 
-            # Tag entries that show the crash reporting has been disabled.
-            elif data_type == 'windows:registry:key_value':
-                event.add_comment(
-                    'WARNING: The crash reporting was disabled. '
-                    'It could be indicative of attacker activity. '
-                    'For details refer to page 16 from '
-                    'https://assets.documentcloud.org/documents/3461560/'
-                    'Google-Aquarium-Clean.pdf.')
-                event.commit()
-
             # If found the filename, tag the entry as crash-related
             filename = self.extract_filename(event_text)
             if filename:
                 self.mark_as_crash(event, filename)
-                filenames.append(filename)
+                filenames.add(filename)
                 event.commit()
-
-        # Dedup the filenames of crashed apps
-        filenames = set(filenames)
 
         # Create a saved view with our query.
         if filenames:
             self.sketch.add_view(
-                'Windows Crash activity', 'win_crash', query_string=query)
+                'Windows Crash activity', 'win_crash',
+                query_string='tag:"win_crash"')
 
         return 'Windows Crash analyzer completed, ' + \
             '{0:d} crashed application{1:s} identified: {2:s}'.format(

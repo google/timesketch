@@ -58,7 +58,7 @@ class TestWinCrashPlugin(BaseTest):
         expected_list = (
             'notepad.exe',
             'notepad.exe',
-            None,
+            '',
             'iexplore.exe')
 
         for i, s in enumerate(string_list):
