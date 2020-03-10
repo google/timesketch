@@ -382,6 +382,11 @@ class BaseIndexAnalyzer(object):
     # Used as hints to the frontend UI in order to render input forms.
     FORM_FIELDS = []
 
+    # Configure how long an analyzer should run before the timeline
+    # gets fully indexed.
+    SECONDS_PER_WAIT = 10
+    MAXIMUM_WAITS = 360
+
     def __init__(self, index_name):
         """Initialize the analyzer object.
 
@@ -462,6 +467,7 @@ class BaseIndexAnalyzer(object):
 
         timeline = analysis.timeline
         searchindex = timeline.searchindex
+
         counter = 0
         while True:
             status = searchindex.get_status.status
@@ -475,9 +481,9 @@ class BaseIndexAnalyzer(object):
                         searchindex_id))
                 return 'Failed'
 
-            time.sleep(10)
+            time.sleep(self.SECONDS_PER_WAIT)
             counter += 1
-            if counter >= 360:
+            if counter >= self.MAXIMUM_WAITS:
                 logging.error(
                     'Indexing has taken too long time, aborting run of analyzer')
                 return 'Failed'
