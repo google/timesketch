@@ -246,8 +246,9 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
     searchindex = SearchIndex.query.get(searchindex_id)
     counter = 0
     while True:
-        status = searchindex.get_status()
+        status = searchindex.get_status.status
         status = status.lower()
+        print('current status is: {}'.format(status))
         if status == 'ready':
             break
 
@@ -263,6 +264,7 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
             logging.error(
                 'Indexing has taken too long time, aborting run of analyzer')
             return None, None
+        searchindex = SearchIndex.query.get(searchindex_id)
 
     analyzers = manager.AnalysisManager.get_analyzers(analyzer_names)
     for analyzer_name, analyzer_cls in analyzers:
