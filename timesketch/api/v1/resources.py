@@ -410,6 +410,14 @@ class SketchResource(ResourceMixin, Resource):
             for t in sketch.active_timelines
         ]
 
+        es_stats = self.datastore.index_stats(sketch_indices)
+        stats_per_index = {}
+        for index_name, stats in es_stats['indices'].items():
+            stats_per_index[index_name] = {
+                'count': stats['total']['docs']['count'],
+                'bytes': stats['total']['store']['size_in_bytes']
+            }
+
         if not sketch_indices:
             mappings_settings = {}
         else:
@@ -467,7 +475,8 @@ class SketchResource(ResourceMixin, Resource):
             analyzers=[
                 x for x, y in analyzer_manager.AnalysisManager.get_analyzers()
             ],
-            mappings=list(mappings)
+            mappings=list(mappings),
+            stats=stats_per_index
         )
         return self.to_json(sketch, meta=meta)
 
