@@ -505,7 +505,7 @@ class BaseIndexAnalyzer(object):
                 indices=indices, fields=return_fields)
 
         with codecs.open(
-            self._file_name, encoding='utf-8', errors='replace') as csv_fh:
+                self._file_name, encoding='utf-8', errors='replace') as csv_fh:
             reader = csv.DictReader(csv_fh)
             for row in reader:
                 event = Event(row, sketch=self.sketch, context=self._context)
