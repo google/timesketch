@@ -30,4 +30,3 @@ from timesketch.lib.analyzers import ssh_sessionizer
 from timesketch.lib.analyzers import gcp_servicekey
 from timesketch.lib.analyzers import ntfs_timestomp
 from timesketch.lib.analyzers import yetiindicators
-from timesketch.lib.analyzers import story
