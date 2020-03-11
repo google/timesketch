@@ -14,8 +14,9 @@
 
 from __future__ import unicode_literals
 
-import csv
+import codecs
 import collections
+import csv
 import os
 import traceback
 import uuid
@@ -503,7 +504,8 @@ class BaseIndexAnalyzer(object):
                 query_string=query_string, query_dsl=query_dsl,
                 indices=indices, fields=return_fields)
 
-        with open(self._file_name) as csv_fh:
+        with codecs.open(
+            self._file_name, encoding='utf-8', errors='replace') as csv_fh:
             reader = csv.DictReader(csv_fh)
             for row in reader:
                 event = Event(row, sketch=self.sketch, context=self._context)
