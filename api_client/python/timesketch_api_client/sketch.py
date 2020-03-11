@@ -24,6 +24,7 @@ from . import aggregation
 from . import definitions
 from . import error
 from . import resource
+from . import story
 from . import timeline
 from . import view as view_lib
 
@@ -143,6 +144,31 @@ class Sketch(resource.BaseResource):
 
         return data_frame
 
+    def create_story(self, title):
+        """Create a story object.
+
+        Args:
+            title: the title of the story.
+
+        Returns:
+            A story object (instance of Story) for the newly
+            created story.
+        """
+        resource_url = '{0:s}/sketches/{1:d}/stories/'.format(
+            self.api.api_root, self.id)
+        data = {
+            'title': title,
+            'content': ''
+        }
+
+        response = self.api.session.post(resource_url, json=data)
+        response_json = response.json()
+        story_dict = response_json.get('objects', [{}])[0]
+        return story.Story(
+            story_id=story_dict.get('id', -1),
+            sketch_id=self.id,
+            api=self.api)
+
     def list_aggregations(self):
         """List all saved aggregations for this sketch.
 
@@ -208,6 +234,25 @@ class Sketch(resource.BaseResource):
             if view_name and view_name.lower() == view.name.lower():
                 return view
         return None
+
+    def list_stories(self):
+        """Get a list of all stories that are attached to the sketch.
+
+        Returns:
+            List of stories (instances of Story objects)
+        """
+        story_list = []
+        resource_url = '{0:s}/sketches/{1:d}/stories/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.get(resource_url)
+        response_json = response.json()
+        stories = response_json.get('objects', [[]])[0]
+        for story_dict in stories:
+            story_list.append(story.Story(
+                story_id=story_dict.get('id', -1),
+                sketch_id=self.id,
+                api=self.api))
+        return story_list
 
     def list_views(self):
         """List all saved views for this sketch.

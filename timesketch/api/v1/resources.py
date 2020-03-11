@@ -1882,7 +1882,7 @@ class StoryListResource(ResourceMixin, Resource):
             title = form.title.data
         sketch = Sketch.query.get_with_acl(sketch_id)
         story = Story(
-            title=title, content='', sketch=sketch, user=current_user)
+            title=title, content='[]', sketch=sketch, user=current_user)
         db_session.add(story)
         db_session.commit()
         return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
@@ -1932,12 +1932,16 @@ class StoryResource(ResourceMixin, Resource):
         Returns:
             A view in JSON (instance of flask.wrappers.Response)
         """
-        form = StoryForm.build(request)
-        if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
         sketch = Sketch.query.get_with_acl(sketch_id)
         story = Story.query.get(story_id)
+
+        if not story:
+            msg = 'No Story found with this ID.'
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
+
+        if not sketch:
+            msg = 'No sketch found with this ID.'
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
         if story.sketch_id != sketch.id:
             abort(
@@ -1945,11 +1949,50 @@ class StoryResource(ResourceMixin, Resource):
                 'Sketch ID ({0:d}) does not match with the ID in '
                 'the story ({1:d})'.format(sketch.id, story.sketch_id))
 
-        story.title = form.title.data
-        story.content = form.content.data
+        form = request.json
+        if not form:
+            form = request.data
+
+        story.title = form.get('title', '')
+        story.content = form.get('content', '[]')
         db_session.add(story)
         db_session.commit()
         return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
+
+    @login_required
+    def delete(self, sketch_id, story_id):
+        """Handles DELETE request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            story_id: Integer primary key for a story database model
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        story = Story.query.get(story_id)
+
+        if not story:
+            msg = 'No Story found with this ID.'
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
+
+        if not sketch:
+            msg = 'No sketch found with this ID.'
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
+
+        # Check that this timeline belongs to the sketch
+        if story.sketch_id != sketch.id:
+            msg = (
+                'The sketch ID ({0:d}) does not match with the story'
+                'sketch ID ({1:d})'.format(sketch.id, story.sketch_id))
+            abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
+
+        if not sketch.has_permission(user=current_user, permission='write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have write permission on the sketch.')
+
+        sketch.stories.remove(story)
+        db_session.commit()
+        return HTTP_STATUS_CODE_OK
 
 
 class QueryResource(ResourceMixin, Resource):

@@ -15,6 +15,8 @@
 from __future__ import unicode_literals
 
 import os
+import json
+import logging
 import uuid
 
 # pylint: disable=wrong-import-order
@@ -33,6 +35,9 @@ from . import definitions
 from . import error
 from . import index
 from . import sketch
+
+
+logger = logging.getLogger('client_api')
 
 
 class TimesketchApi(object):
@@ -270,10 +275,16 @@ class TimesketchApi(object):
         Returns:
             Dictionary with the response data.
         """
-        # TODO: Catch HTTP errors and add descriptive message string.
         resource_url = '{0:s}/{1:s}'.format(self.api_root, resource_uri)
         response = self.session.get(resource_url)
-        return response.json()
+        try:
+            return response.json()
+        except json.JSONDecodeError as e:
+            logger.error(
+                'Error fetching resources: [{0:d}] {1!s} {2!s}, error: '
+                '{3!s}'.format(
+                    response.status_code, response.reason, response.text, e))
+        return {}
 
     def create_sketch(self, name, description=None):
         """Create a new sketch.
@@ -362,7 +373,7 @@ class TimesketchApi(object):
         return pandas.DataFrame(lines)
 
     def list_sketches(self):
-        """Get list of all open sketches that the user has access to.
+        """Get a list of all open sketches that the user has access to.
 
         Returns:
             List of Sketch objects instances.
