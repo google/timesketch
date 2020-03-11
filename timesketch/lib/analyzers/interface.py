@@ -365,10 +365,8 @@ class Sketch(object):
         Returns:
             An instance of a Story object.
         """
-
         story = SQLStory.get_or_create(
-            title=title, content=json.dumps([]), sketch=self.sql_sketch,
-            user=None)
+            title=title, content='[]', sketch=self.sql_sketch, user=None)
         db_session.add(story)
         db_session.commit()
         return Story(story)
