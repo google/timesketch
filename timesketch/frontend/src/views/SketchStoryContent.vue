@@ -45,7 +45,7 @@ limitations under the License.
                   </div>
                   <transition name="fade">
                     <div class="column" v-if="obj.content">
-                      <div v-html="obj.html" class="markdown-body" style="max-height: 600px;overflow: auto"></div>
+                      <div v-html="toHtml(obj.content)" class="markdown-body" style="max-height: 600px;overflow: auto"></div>
                     </div>
                   </transition>
                 </div>
@@ -57,7 +57,7 @@ limitations under the License.
                     </button>
                   </p>
                 </div>
-                <div v-on:dblclick="obj.edit = !obj.edit" class="markdown-body" v-if="!obj.edit" v-html="obj.html"></div>
+                <div v-on:dblclick="obj.edit = !obj.edit" class="markdown-body" v-if="!obj.edit" v-html="toHtml(obj.content)"></div>
               </div>
 
               <div v-if="obj.componentName" @mouseover="obj.isActive = true" @mouseleave="obj.isActive = false">
@@ -109,7 +109,6 @@ const defaultBlock = () => {
     componentName: '',
     componentProps: {},
     content: '',
-    html: '',
     edit: true,
     showPanel: false,
     isActive: false
@@ -128,7 +127,6 @@ export default {
   methods: {
     update: _.debounce(function (e, obj) {
       obj.content = e.target.value
-      obj.html = marked(e.target.value, { sanitize: false })
       this.save()
     }, 300),
     addBlock (index) {
@@ -144,6 +142,7 @@ export default {
       this.save()
     },
     addViewComponent (event, index) {
+      console.log(event)
       let newIndex = index + 1
       let newBlock = defaultBlock()
       newBlock.componentName = 'TsViewEventList'
@@ -167,6 +166,9 @@ export default {
       ApiClient.updateStory(this.title, content, this.sketchId, this.storyId)
         .then((response) => {
         }).catch((e) => {})
+    },
+    toHtml (markdown) {
+      return marked(markdown, { sanitize: false })
     }
   },
   computed: {

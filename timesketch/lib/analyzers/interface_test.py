@@ -15,10 +15,13 @@
 
 from __future__ import unicode_literals
 
+import json
+
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 from timesketch.lib.analyzers import interface
 from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import Story
 from timesketch.models.sketch import View
 
 
@@ -59,6 +62,23 @@ class TestAnalysisSketch(BaseTest):
         view = sketch.add_view(
             view_name='MockView', analyzer_name="Test", query_string='test')
         self.assertIsInstance(view, View)
+
+    def test_add_story(self):
+        """Test adding a story to a sketch."""
+        sketch = interface.Sketch(sketch_id=self.SKETCH_ID)
+        story = sketch.add_story(title='test')
+        view = sketch.add_view(
+            view_name='MockView', analyzer_name="Test", query_string='test')
+        sql_story = story.story
+        story.add_text('test')
+        story.add_view(view)
+        content_json = sql_story.content
+        content_list = json.loads(sql_story.content)
+        self.assertIsInstance(sql_story, Story)
+        self.assertIsInstance(content_json, str)
+        self.assertIsInstance(content_list, list)
+        self.assertIsInstance(content_list[0], dict)
+        self.assertIsInstance(content_list[1], dict)
 
     def test_get_all_instances(self):
         """Test get all indices from a sketch."""
