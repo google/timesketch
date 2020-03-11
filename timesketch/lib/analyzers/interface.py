@@ -31,6 +31,7 @@ from timesketch.models import db_session
 from timesketch.models.sketch import Aggregation
 from timesketch.models.sketch import Event as SQLEvent
 from timesketch.models.sketch import Sketch as SQLSketch
+from timesketch.models.sketch import Story as SQLStory
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Analysis
@@ -43,6 +44,7 @@ def _flush_datastore_decorator(func):
         self.datastore.flush_queued_events()
         return func_return
     return wrapper
+
 
 def get_config_path(file_name):
     """Returns a path to a configuration file.
@@ -351,6 +353,26 @@ class Sketch(object):
         db_session.commit()
         return view
 
+    def add_story(self, title):
+        """Add a story to the Sketch.
+
+        Args:
+            title: The name of the view.
+
+        Raises:
+            ValueError: If both query_string an query_dsl are missing.
+
+        Returns:
+            An instance of a Story object.
+        """
+
+        story = SQLStory.get_or_create(
+            title=title, content=json.dumps([]), sketch=self.sql_sketch,
+            user=None)
+        db_session.add(story)
+        db_session.commit()
+        return Story(story)
+
     def get_all_indices(self):
         """List all indices in the Sketch.
         Returns:
@@ -359,6 +381,71 @@ class Sketch(object):
         active_timelines = self.sql_sketch.active_timelines
         indices = [t.searchindex.index_name for t in active_timelines]
         return indices
+
+
+class Story(object):
+    """Story object with helper methods.
+
+    Attributes:
+        story (SQLAlchemy): Instance of a SQLAlchemy Story object.
+    """
+    def __init__(self, story):
+        """Initializes a Story object.
+
+        Args:
+            story: SQLAlchemy Story object.
+        """
+        self.story = story
+
+    @staticmethod
+    def _create_new_block():
+        """Create a new block to be added to a Story.
+
+        Returns:
+            Dictionary with default block content.
+        """
+        block = {
+            'componentName': '',
+            'componentProps': {},
+            'content': '',
+            'edit': False,
+            'showPanel': False,
+            'isActive': False
+        }
+        return block
+
+    def _commit(self, block):
+        """Commit the Story to database.
+
+        Args:
+            block (dict): Block to add.
+        """
+        story_blocks = json.loads(self.story.content)
+        story_blocks.append(block)
+        self.story.content = json.dumps(story_blocks)
+        db_session.add(self.story)
+        db_session.commit()
+
+    def add_text(self, text):
+        """Add a text block to the Story.
+
+        Args:
+            text (str): text (markdown is supported) to add to the story.
+        """
+        block = self._create_new_block()
+        block['content'] = text
+        self._commit(block)
+
+    def add_view(self, view):
+        """Add a saved view to the Story.
+
+        Args:
+            view (View): Saved view to add to the story.
+        """
+        block = self._create_new_block()
+        block['componentName'] = 'TsViewEventList'
+        block['componentProps']['view'] = {'id': view.id, 'name': view.name}
+        self._commit(block)
 
 
 class BaseIndexAnalyzer(object):
