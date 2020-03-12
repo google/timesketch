@@ -230,13 +230,14 @@ class AggregationBlock(BaseBlock):
         super(AggregationBlock, self).__init__(story, index)
         self._agg_id = 0
         self._agg_name = ''
-        self._agg_type = ''
+        self._agg_type = 'chart'
 
     @property
     def aggregation(self):
         """Returns the aggregation object."""
         if self._data:
             return self._data
+        return None
 
     @aggregation.setter
     def aggregation(self, agg_obj):
@@ -423,7 +424,7 @@ class Story(resource.BaseResource):
         """Adds an aggregation object to the story.
 
         Args:
-            agg_obj: an aggregation object (instance of aggregation.Aggregation).
+            agg_obj: an aggregation object (instance of aggregation.Aggregation)
             index: an integer, if supplied determines where the new
                 block will be added. If not supplied it will be
                 appended at the end.
