@@ -211,14 +211,38 @@ class Sketch(resource.BaseResource):
                 return aggregation_obj
         return None
 
+    def get_story(self, story_id=None, story_title=None):
+        """Returns a story object that is stored in the sketch.
+
+        Args:
+            story_id: an integer indicating the ID of the story to
+                be fetched. Defaults to None.
+            story_title: a string with the title of the story. Optional
+                and defaults to None.
+
+        Returns:
+            A story object (instance of Story) if one is found. Returns
+            a None if neiter story_id or story_title is defined or if
+            the view does not exist.
+        """
+        if story_id is None and story_title is None:
+            return None
+
+        for story in self.list_stories():
+            if story_id and story_id == story.id:
+                return story
+            if story_title and story_title.lower() == story.title.lower():
+                return story
+        return None
+
     def get_view(self, view_id=None, view_name=None):
         """Returns a view object that is stored in the sketch.
 
         Args:
-            view_name: a string with the name of the view. Optional
-                and defaults to None.
             view_id: an integer indicating the ID of the view to
                 be fetched. Defaults to None.
+            view_name: a string with the name of the view. Optional
+                and defaults to None.
 
         Returns:
             A view object (instance of View) if one is found. Returns
