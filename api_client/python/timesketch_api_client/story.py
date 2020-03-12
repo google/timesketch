@@ -406,4 +406,4 @@ class Story(resource.BaseResource):
                 data_frame = self._sketch.explore(
                     view=block.view, as_pandas=True)
                 string_list.append(data_frame.to_string(index=False))
-        return '\n'.join(string_list)
+        return '\n\n'.join(string_list)
