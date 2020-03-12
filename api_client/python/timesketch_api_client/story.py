@@ -230,7 +230,7 @@ class AggregationBlock(BaseBlock):
         super(AggregationBlock, self).__init__(story, index)
         self._agg_id = 0
         self._agg_name = ''
-        self._agg_type = 'chart'
+        self._agg_type = 'table'
 
     @property
     def aggregation(self):
@@ -291,7 +291,7 @@ class AggregationBlock(BaseBlock):
 
         self._agg_id = agg_dict.get('id', 0)
         self._agg_name = agg_dict.get('name', '')
-        self._agg_type = agg_dict.get('type', 'chart')
+        self._agg_type = agg_dict.get('type', 'table')
 
     def to_dict(self):
         """Returns a dict with the block data.
@@ -377,6 +377,10 @@ class Story(resource.BaseResource):
                     agg_obj = aggregation.Aggregation(self._sketch, self._api)
                     agg_obj.from_store(block.agg_id)
                     block.feed(agg_obj)
+
+                    # Defaults to a table view.
+                    if not block.agg_type:
+                        block.agg_type = 'table'
                 self._blocks.append(block)
         return self._blocks
 
