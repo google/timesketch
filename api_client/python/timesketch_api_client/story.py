@@ -74,11 +74,15 @@ class BaseBlock(object):
 
     def move_down(self):
         """Moves a block down one location in the index."""
-        self._story.move_to(self, self.index+1)
+        new_index = self.index + 1
+        self._story.move_to(self, new_index)
+        self.index = new_index
 
     def move_up(self):
         """Moves a block up one location in the index."""
-        self._story.move_to(self, self.index-1)
+        new_index = self.index - 1
+        self._story.move_to(self, new_index)
+        self.index = new_index
 
     def to_dict(self):
         """Returns a dict with the block data.
