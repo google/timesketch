@@ -6,6 +6,7 @@ import re
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
+
 class WinCrashSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Windows application crashes."""
 
@@ -190,5 +191,6 @@ class WinCrashSketchPlugin(interface.BaseSketchAnalyzer):
                 len(filenames),
                 's' if len(filenames) > 1 else '',
                 ', '.join(filenames))
+
 
 manager.AnalysisManager.register_analyzer(WinCrashSketchPlugin)
