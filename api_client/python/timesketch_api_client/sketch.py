@@ -228,11 +228,11 @@ class Sketch(resource.BaseResource):
         if story_id is None and story_title is None:
             return None
 
-        for story in self.list_stories():
-            if story_id and story_id == story.id:
-                return story
-            if story_title and story_title.lower() == story.title.lower():
-                return story
+        for story_obj in self.list_stories():
+            if story_id and story_id == story_obj.id:
+                return story_obj
+            if story_title and story_title.lower() == story_obj.title.lower():
+                return story_obj
         return None
 
     def get_view(self, view_id=None, view_name=None):

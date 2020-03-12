@@ -341,7 +341,7 @@ class ElasticsearchDataStore(object):
                 body=query_dsl,
                 index=list(indices),
                 search_type=search_type,
-                _source_include=return_fields,
+                _source_includes=return_fields,
                 scroll=scroll_timeout)
         else:
             _search_result = self.client.search(
@@ -425,7 +425,7 @@ class ElasticsearchDataStore(object):
                     index=searchindex_id,
                     id=event_id,
                     doc_type='_all',
-                    _source_exclude=['timesketch_label'])
+                    _source_excludes=['timesketch_label'])
             else:
                 event = self.client.get(
                     index=searchindex_id,
