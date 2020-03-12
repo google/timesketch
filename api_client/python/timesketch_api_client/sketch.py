@@ -166,7 +166,7 @@ class Sketch(resource.BaseResource):
         story_dict = response_json.get('objects', [{}])[0]
         return story.Story(
             story_id=story_dict.get('id', -1),
-            sketch_id=self.id,
+            sketch=self,
             api=self.api)
 
     def list_aggregations(self):
@@ -250,7 +250,7 @@ class Sketch(resource.BaseResource):
         for story_dict in stories:
             story_list.append(story.Story(
                 story_id=story_dict.get('id', -1),
-                sketch_id=self.id,
+                sketch=self,
                 api=self.api))
         return story_list
 
