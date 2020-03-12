@@ -376,6 +376,7 @@ class Story(resource.BaseResource):
                     agg_obj = aggregation.Aggregation(self._sketch, self._api)
                     agg_obj.from_store(block.agg_id)
                     block.feed(agg_obj)
+                self._blocks.append(block)
         return self._blocks
 
     @property
@@ -417,6 +418,35 @@ class Story(resource.BaseResource):
         self._blocks.insert(index, block)
         self.commit()
         self.reset()
+
+    def add_aggregation(self, agg_obj, index=-1):
+        """Adds an aggregation object to the story.
+
+        Args:
+            agg_obj: an aggregation object (instance of aggregation.Aggregation).
+            index: an integer, if supplied determines where the new
+                block will be added. If not supplied it will be
+                appended at the end.
+
+        Returns:
+            Boolean that indicates whether block was successfully added.
+
+        Raises:
+            TypeError: if the view object is not of the correct type.
+        """
+        if not hasattr(agg_obj, 'id'):
+            raise TypeError('Aggregation object is not correctly formed.')
+
+        if not hasattr(agg_obj, 'name'):
+            raise TypeError('Aggregation object is not correctly formed.')
+
+        if index == -1:
+            index = len(self._blocks)
+
+        agg_block = AggregationBlock(self, index)
+        agg_block.feed(agg_obj)
+
+        return self._add_block(agg_block, index)
 
     def add_text(self, text, index=-1):
         """Adds a text block to the story.
@@ -528,7 +558,8 @@ class Story(resource.BaseResource):
                     view=block.view, as_pandas=True)
                 string_list.append(data_frame.to_string(index=False))
             elif block.TYPE == 'aggregation':
-                data_frame = self.get_aggregation(block.agg_id)
+                agg_obj = self._sketch.get_aggregation(block.agg_id)
                 # TODO: Support charts.
+                data_frame = agg_obj.table
                 string_list.append(data_frame.to_string(index=False))
         return '\n\n'.join(string_list)

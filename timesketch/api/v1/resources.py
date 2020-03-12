@@ -1905,6 +1905,14 @@ class StoryResource(ResourceMixin, Resource):
         sketch = Sketch.query.get_with_acl(sketch_id)
         story = Story.query.get(story_id)
 
+        if not story:
+            msg = 'No Story found with this ID.'
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
+
+        if not sketch:
+            msg = 'No sketch found with this ID.'
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
+
         # Check that this story belongs to the sketch
         if story.sketch_id != sketch.id:
             abort(
