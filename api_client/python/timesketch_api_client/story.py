@@ -43,6 +43,7 @@ class BaseBlock(object):
     def data(self, data):
         """Feeds data to the block."""
         self._data = data
+        self._story.commit()
 
     @property
     def json(self):
@@ -116,6 +117,11 @@ class ViewBlock(BaseBlock):
         """Returns the view."""
         return self._data
 
+    @view.setter
+    def view(self, new_view):
+        """Sets a new view to the block."""
+        self.data = new_view
+
     @property
     def view_id(self):
         """Returns the view ID."""
@@ -179,6 +185,11 @@ class TextBlock(BaseBlock):
         if not self._data:
             return ''
         return self._data
+
+    @text.setter
+    def text(self, new_text):
+        """Sets a new text to the block."""
+        self.data = new_text
 
     def from_dict(self, data_dict):
         """Feed a block from a block dict."""
@@ -294,23 +305,8 @@ class Story(resource.BaseResource):
     def _add_block(self, block, index):
         """Adds a block to the story's content."""
         self._blocks.insert(index, block)
-        self._commit()
-        self.refresh()
-
-    def _commit(self):
-        """Commit the story to the server."""
-        content_list = [x.to_dict() for x in self._blocks]
-        content = json.dumps(content_list)
-
-        data = {
-            'title': self.title,
-            'content': content,
-        }
-        response = self.api.session.post(
-            '{0:s}/{1:s}'.format(self.api.api_root, self.resource_uri),
-            json=data)
-
-        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+        self.commit()
+        self.reset()
 
     def add_text(self, text, index=-1):
         """Adds a text block to the story.
@@ -360,6 +356,21 @@ class Story(resource.BaseResource):
 
         return self._add_block(view_block, index)
 
+    def commit(self):
+        """Commit the story to the server."""
+        content_list = [x.to_dict() for x in self._blocks]
+        content = json.dumps(content_list)
+
+        data = {
+            'title': self.title,
+            'content': content,
+        }
+        response = self.api.session.post(
+            '{0:s}/{1:s}'.format(self.api.api_root, self.resource_uri),
+            json=data)
+
+        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+
     def delete(self):
         """Delete the story from the sketch.
 
@@ -380,15 +391,15 @@ class Story(resource.BaseResource):
         if old_block.data != block.data:
             raise ValueError('Block is not correctly set.')
         self._blocks.insert(new_index, block)
-        self._commit()
+        self.commit()
 
     def remove_block(self, index):
         """Removes a block from the story."""
         _ = self._blocks.pop(index)
-        self._commit()
-        self.refresh()
+        self.commit()
+        self.reset()
 
-    def refresh(self):
+    def reset(self):
         """Refresh story content."""
         self._title = ''
         self._blocks = []
@@ -397,7 +408,7 @@ class Story(resource.BaseResource):
 
     def to_string(self):
         """Returns a string with the content of all the story."""
-        self.refresh()
+        self.reset()
         string_list = []
         for block in self.blocks:
             if block.TYPE == 'text':
