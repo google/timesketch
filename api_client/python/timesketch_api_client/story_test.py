@@ -37,5 +37,23 @@ class StoryTest(unittest.TestCase):
         story = self.sketch.list_stories()[0]
         self.assertIsInstance(story, story_lib.Story)
         self.assertEqual(story.id, 1)
-        self.assertEqual(story.title, 'my first test story')
-        self.assertEqual(len(story), 2)
+        self.assertEqual(story.title, 'My First Story')
+        self.assertEqual(len(story), 3)
+        blocks = list(story.blocks)
+        text_count = 0
+        view_count = 0
+        for block in blocks:
+            if block.TYPE == 'text':
+                text_count += 1
+            elif block.TYPE == 'view':
+                view_count += 1
+
+        self.assertEqual(text_count, 2)
+        self.assertEqual(view_count, 1)
+
+        self.assertEqual(blocks[0].text, '# My Heading\nWith Some Text.')
+
+        blocks[0].move_down()
+        blocks = list(story.blocks)
+        self.assertEqual(len(blocks), 3)
+        self.assertEqual(blocks[1].text, '# My Heading\nWith Some Text.')

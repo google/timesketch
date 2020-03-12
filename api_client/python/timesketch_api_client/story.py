@@ -261,8 +261,8 @@ class Story(resource.BaseResource):
             Story name as a string.
         """
         if not self._title:
-            story = self.lazyload_data()
-            objects = story.get('objects')
+            story_data = self.lazyload_data()
+            objects = story_data.get('objects')
             if objects:
                 self._title = objects[0].get('title', 'No Title')
         return self._title
@@ -284,6 +284,7 @@ class Story(resource.BaseResource):
 
     def __len__(self):
         """Returns the number of blocks stored in the story."""
+        _ = self.blocks
         return len(self._blocks)
 
     def _add_block(self, block, index):
