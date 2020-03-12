@@ -16,6 +16,9 @@ from __future__ import unicode_literals
 
 import json
 
+import pandas as pd
+
+from . import aggregation
 from . import definitions
 from . import resource
 from . import view
@@ -218,6 +221,108 @@ class TextBlock(BaseBlock):
         return text_block
 
 
+class AggregationBlock(BaseBlock):
+    """Block object for aggregation."""
+
+    TYPE = 'aggregation'
+
+    def __init__(self, story, index):
+        super(AggregationBlock, self).__init__(story, index)
+        self._agg_id = 0
+        self._agg_name = ''
+        self._agg_type = ''
+
+    @property
+    def aggregation(self):
+        """Returns the aggregation object."""
+        if self._data:
+            return self._data
+
+    @aggregation.setter
+    def aggregation(self, agg_obj):
+        """Set the aggregation object."""
+        self._data = agg_obj
+
+    @property
+    def agg_name(self):
+        """Returns the aggregation name."""
+        return self._agg_name
+
+    @property
+    def agg_id(self):
+        """Returns the aggregation ID."""
+        return self._agg_id
+
+    @property
+    def agg_type(self):
+        """Returns the aggregation type."""
+        return self._agg_type
+
+    @agg_type.setter
+    def agg_type(self, new_type):
+        """Sets the aggregation type."""
+        self._agg_type = new_type
+
+    @property
+    def table(self):
+        """Returns a table view, as a pandas DataFrame."""
+        if not self._data:
+            return pd.DataFrame()
+        return self._data.table
+
+    @property
+    def chart(self):
+        """Returns a chart back from the aggregation."""
+        if not self._data:
+            return None
+        return self._data.chart
+
+    def from_dict(self, data_dict):
+        """Feed a block from a block dict."""
+        component = data_dict.get('componentName', 'N/A')
+        if component != 'TsAggregationEventList':
+            raise TypeError('Not an aggregation block.')
+
+        props = data_dict.get('componentProps', {})
+        agg_dict = props.get('aggregation')
+        if not agg_dict:
+            raise TypeError('View not defined')
+
+        self._agg_id = agg_dict.get('id', 0)
+        self._agg_name = agg_dict.get('name', '')
+        self._agg_type = agg_dict.get('type', 'chart')
+
+    def to_dict(self):
+        """Returns a dict with the block data.
+
+        Raises:
+            ValueError: if the block has not been fed with data.
+            TypeError: if the data that was fed is of the wrong type.
+
+        Returns:
+            A dict with the block data.
+        """
+        if not self._data:
+            raise ValueError('No data has been fed to the block.')
+
+        aggregation_obj = self._data
+        if not hasattr(aggregation_obj, 'id'):
+            raise TypeError('Aggregation object is not correctly formed.')
+
+        if not hasattr(aggregation_obj, 'name'):
+            raise TypeError('Aggregation object is not correctly formed.')
+
+        aggregation_block = self._get_base()
+        aggregation_block['componentName'] = 'TsAggregationEventList'
+        aggregation_block['componentProps']['aggregation'] = {
+            'id': aggregation_obj.id,
+            'name': aggregation_obj.name,
+            'type': self._agg_type,
+        }
+
+        return aggregation_block
+
+
 class Story(resource.BaseResource):
     """Story object.
 
@@ -254,18 +359,23 @@ class Story(resource.BaseResource):
                 content = objects[0].get('content', [])
             index = 0
             for content_block in json.loads(content):
+                name = content_block.get('componentName', '')
                 if content_block.get('content'):
                     block = TextBlock(self, index)
                     block.from_dict(content_block)
-                else:
+                elif name == 'TsViewEventList':
                     block = ViewBlock(self, index)
                     block.from_dict(content_block)
                     view_obj = view.View(
                         block.view_id, block.view_name, self._sketch.id,
                         self._api)
                     block.feed(view_obj)
-                self._blocks.append(block)
-                index += 1
+                elif name == 'TsAggregationEventList':
+                    block = AggregationBlock(self, index)
+                    block.from_dict(content_block)
+                    agg_obj = aggregation.Aggregation(self._sketch, self._api)
+                    agg_obj.from_store(block.agg_id)
+                    block.feed(agg_obj)
         return self._blocks
 
     @property
@@ -416,5 +526,9 @@ class Story(resource.BaseResource):
             elif block.TYPE == 'view':
                 data_frame = self._sketch.explore(
                     view=block.view, as_pandas=True)
+                string_list.append(data_frame.to_string(index=False))
+            elif block.TYPE == 'aggregation':
+                data_frame = self.get_aggregation(block.agg_id)
+                # TODO: Support charts.
                 string_list.append(data_frame.to_string(index=False))
         return '\n\n'.join(string_list)
