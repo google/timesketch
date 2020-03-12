@@ -410,6 +410,17 @@ class SketchResource(ResourceMixin, Resource):
             for t in sketch.active_timelines
         ]
 
+        # Get event count and size on disk for each index in the sketch.
+        stats_per_index = {}
+        es_stats = self.datastore.client.indices.stats(
+            index=sketch_indices, metric='docs, store')
+        for index_name, stats in es_stats.get('indices', {}).items():
+            stats_per_index[index_name] = {
+                'count': stats.get('total', {}).get('docs', {}).get('count', 0),
+                'bytes': stats.get(
+                    'total', {}).get('store', {}).get('size_in_bytes', 0)
+            }
+
         if not sketch_indices:
             mappings_settings = {}
         else:
@@ -467,7 +478,8 @@ class SketchResource(ResourceMixin, Resource):
             analyzers=[
                 x for x, y in analyzer_manager.AnalysisManager.get_analyzers()
             ],
-            mappings=list(mappings)
+            mappings=list(mappings),
+            stats=stats_per_index
         )
         return self.to_json(sketch, meta=meta)
 
@@ -815,6 +827,15 @@ class ExploreResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'The request needs a query string/DSL and or a star filter.')
 
+        # Aggregate hit count per index.
+        index_stats_agg = {
+            "indices": {
+                "terms": {
+                    "field": "_index"
+                }
+            }
+        }
+
         if scroll_id:
             # pylint: disable=unexpected-keyword-arg
             result = self.datastore.client.scroll(
@@ -826,9 +847,19 @@ class ExploreResource(ResourceMixin, Resource):
                 query_filter,
                 query_dsl,
                 indices,
-                aggregations=None,
+                aggregations=index_stats_agg,
                 return_fields=return_fields,
                 enable_scroll=enable_scroll)
+
+        # Get number of matching documents per index.
+        count_per_index = {}
+        try:
+            for bucket in result['aggregations']['indices']['buckets']:
+                key = bucket.get('key')
+                if key:
+                    count_per_index[key] = bucket.get('doc_count')
+        except KeyError:
+            pass
 
         # Get labels for each event that matches the sketch.
         # Remove all other labels.
@@ -868,6 +899,7 @@ class ExploreResource(ResourceMixin, Resource):
             'es_total_count': result['hits']['total'],
             'timeline_colors': tl_colors,
             'timeline_names': tl_names,
+            'count_per_index': count_per_index,
             'scroll_id': result.get('_scroll_id', ''),
         }
 
