@@ -39,11 +39,16 @@ class TestWinCrashPlugin(BaseTest):
             ' OR (data_type:"fs:stat" AND filename:"/Microsoft/Windows/WER/")'
             ' OR (data_type:"windows:registry:key_value" AND '
             'key_path:"\\\\Control\\\\CrashControl")'
-            )
+        ).replace('(', '').replace(')', '')
 
-        self.assertEqual(
-            self.analyzer.formulate_query(template),
-            expected_query)
+        # To prevent flakiness we break up the query into a set.
+        expected_set = set(expected_query.split())
+
+        formulated_query = self.analyzer.formulate_query(template)
+        formulated_set = set(
+            formulated_query.replace('(', '').replace(')', '').split())
+
+        self.assertSetEqual(expected_set, formulated_set)
 
     def test_extract_filename(self):
         """Test generator of filename extraction regex"""
