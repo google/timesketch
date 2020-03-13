@@ -706,4 +706,3 @@ class Story(object):
         }
         change = SKETCH_CHANGE('STORY_ADD', 'view', params)
         self._analyzer.updates.append(change)
-
