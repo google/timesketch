@@ -31,7 +31,7 @@ EVENT_CHANGE = collections.namedtuple('event_change', 'type, source, what')
 SKETCH_CHANGE = collections.namedtuple('sketch_change', 'type, source, what')
 
 VIEW_OBJECT = collections.namedtuple('view', 'id, name')
-AGG_OBJECT = collections.namedtuple('aggregation', 'id', 'name')
+AGG_OBJECT = collections.namedtuple('aggregation', 'id, name')
 
 
 class AnalyzerContext(object):
@@ -107,27 +107,6 @@ class AnalyzerContext(object):
         """
         if event.event_id not in self.event_cache:
             self.event_cache[event.event_id] = event
-
-    def add_story(self, title):
-        """Add a story to the Sketch.
-
-        Args:
-            title: The name of the view.
-
-        Raises:
-            ValueError: If both query_string an query_dsl are missing.
-
-        Returns:
-            An instance of a Story object.
-        """
-        params = {
-            'title': title,
-        }
-        change = SKETCH_CHANGE('ADD', 'story', params)
-        self.updates.append(change)
-
-        story = Story(self, title=title)
-        return story
 
     def add_query(
             self, query_string=None, query_dsl=None, indices=None, fields=None):
@@ -395,6 +374,9 @@ class Sketch(object):
         change = SKETCH_CHANGE('ADD', 'aggregation', params)
         self.updates.append(change)
 
+        agg_obj = AGG_OBJECT(1, name)
+        return agg_obj
+
     def add_view(self, view_name, analyzer_name, query_string=None,
                  query_dsl=None, query_filter=None):
         """Add saved view to the Sketch.
@@ -429,6 +411,27 @@ class Sketch(object):
 
         view = VIEW_OBJECT(1, name)
         return view
+
+    def add_story(self, title):
+        """Add a story to the Sketch.
+
+        Args:
+            title: The name of the view.
+
+        Raises:
+            ValueError: If both query_string an query_dsl are missing.
+
+        Returns:
+            An instance of a Story object.
+        """
+        params = {
+            'title': title,
+        }
+        change = SKETCH_CHANGE('ADD', 'story', params)
+        self.updates.append(change)
+
+        story = Story(self, title=title)
+        return story
 
     def get_all_indices(self):
         """List all indices in the Sketch.
