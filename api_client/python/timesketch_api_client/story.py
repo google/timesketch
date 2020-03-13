@@ -424,11 +424,14 @@ class Story(resource.BaseResource):
         self.commit()
         self.reset()
 
-    def add_aggregation(self, agg_obj, index=-1):
+    def add_aggregation(self, agg_obj, agg_type='table', index=-1):
         """Adds an aggregation object to the story.
 
         Args:
             agg_obj: an aggregation object (instance of aggregation.Aggregation)
+            agg_type (str): string indicating the type of aggregation, can be:
+                "table" or the name of the chart to be used, eg "barcharct",
+                "hbarchart". Defaults to "table".
             index: an integer, if supplied determines where the new
                 block will be added. If not supplied it will be
                 appended at the end.
@@ -450,6 +453,7 @@ class Story(resource.BaseResource):
 
         agg_block = AggregationBlock(self, index)
         agg_block.feed(agg_obj)
+        agg_block.agg_type = agg_type
 
         return self._add_block(agg_block, index)
 
