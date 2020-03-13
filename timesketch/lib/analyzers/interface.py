@@ -434,6 +434,22 @@ class Story(object):
         block['content'] = text
         self._commit(block)
 
+    def add_aggregation(self, aggregation, agg_type):
+        """Add a saved aggregation to the Story.
+
+        Args:
+            aggregation (Aggregation): Saved aggregation to add to the story.
+            agg_type (str): string indicating the type of aggregation, can be:
+                "table" or the name of the chart to be used, eg "barcharct",
+                "hbarchart".
+        """
+        block = self._create_new_block()
+        block['componentName'] = 'TsAggregationEventList'
+        block['componentProps']['aggregation'] = {
+            'id': aggregation.id, 'name': aggregation.name,
+            'type': agg_type}
+        self._commit(block)
+
     def add_view(self, view):
         """Add a saved view to the Story.
 
