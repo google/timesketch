@@ -165,7 +165,7 @@ class Sketch(resource.BaseResource):
         response_json = response.json()
         story_dict = response_json.get('objects', [{}])[0]
         return story.Story(
-            story_id=story_dict.get('id', -1),
+            story_id=story_dict.get('id', 0),
             sketch=self,
             api=self.api)
 
@@ -223,7 +223,9 @@ class Sketch(resource.BaseResource):
         Returns:
             A story object (instance of Story) if one is found. Returns
             a None if neiter story_id or story_title is defined or if
-            the view does not exist.
+            the view does not exist. If a story title is defined and
+            not a story id, the first story that is found with the same
+            title will be returned.
         """
         if story_id is None and story_title is None:
             return None
