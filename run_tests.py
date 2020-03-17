@@ -13,11 +13,12 @@ def run_python_tests(coverage=False):
             subprocess.check_call(
                 'nosetests --with-coverage'
                 + ' --cover-package=timesketch_api_client,timesketch'
-                + ' api_client/python/timesketch_api_client/ timesketch/',
+                + ' api_client/python/ timesketch/',
                 shell=True,
             )
         else:
-            subprocess.check_call(['nosetests'])
+            subprocess.check_call(
+                ['nosetests', '-x', 'timesketch/', 'api_client/python/'])
     finally:
         subprocess.check_call(['rm', '-f', '.coverage'])
 

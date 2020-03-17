@@ -35,20 +35,23 @@ class MockSketch(object):
 class MockStreamer(importer.ImportStreamer):
     """Mock the import streamer."""
 
-    def __init__(self, entry_threshold=None):
-        super(MockStreamer, self).__init__(entry_threshold)
-        self.files = []
+    def __init__(self):
+        super(MockStreamer, self).__init__()
         self.lines = []
-        self.columns = []
 
-    def _upload_data(self, file_name, end_stream):
-        self.files.append(file_name)
-        with open(file_name, 'r') as fh:
-            first_line = next(fh)
-            self.columns = [x.strip() for x in first_line.split(',')]
-            for line in fh:
-                line = line.strip()
-                self.lines.append(line)
+    @property
+    def columns(self):
+        columns = set()
+        for line in self.lines:
+            columns.update(line.keys())
+        return list(columns)
+
+    def _upload_data_buffer(self, end_stream):
+        self.lines.extend(self._data_lines)
+
+    def _upload_data_frame(self, data_frame, end_stream):
+        self.lines.extend(
+            json.loads(data_frame.to_json(orient='records')))
 
     def close(self):
         pass
@@ -110,7 +113,6 @@ class TimesketchImporterTest(unittest.TestCase):
 
     def test_adding_data_frames(self):
         """Test adding a data frame to the importer."""
-
         with MockStreamer() as streamer:
             streamer.set_sketch(MockSketch())
             streamer.set_timestamp_description('Log Entries')
@@ -120,25 +122,24 @@ class TimesketchImporterTest(unittest.TestCase):
 
             streamer.add_data_frame(self.frame)
             self._run_all_tests(streamer.columns, streamer.lines)
-            self.assertEqual(len(streamer.files), 1)
+            self.assertEqual(len(streamer.lines), 5)
 
         # Test by splitting up the dataset into chunks.
         lines = None
-        files = None
         columns = None
-        with MockStreamer(2) as streamer:
+        with MockStreamer() as streamer:
             streamer.set_sketch(MockSketch())
             streamer.set_timestamp_description('Log Entries')
             streamer.set_timeline_name('Test Entries')
+            streamer.set_entry_threshold(2)
             streamer.set_message_format_string(
                 '{stuff:s} -> {correct!s} [{random_number:d}]')
 
             streamer.add_data_frame(self.frame)
             lines = streamer.lines
-            files = streamer.files
             columns = streamer.columns
         self._run_all_tests(columns, lines)
-        self.assertEqual(len(files), 3)
+        self.assertEqual(len(lines), 5)
 
     def test_adding_dict(self):
         """Test adding a dict to the importer."""
@@ -183,12 +184,7 @@ class TimesketchImporterTest(unittest.TestCase):
 
         self.assertSetEqual(column_set, correct_set)
 
-        message_index = columns.index('message')
-        messages = []
-        for line in lines:
-            message = line.split(',')[message_index]
-            messages.append(message)
-
+        messages = [x.get('message', 'N/A') for x in lines]
         message_correct = set([
             'fra sjalfstaedi til sjalfstaedis -> True [52]',
             'from bar to foobar -> False [13245]',

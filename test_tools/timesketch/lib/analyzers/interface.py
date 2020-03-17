@@ -31,6 +31,7 @@ EVENT_CHANGE = collections.namedtuple('event_change', 'type, source, what')
 SKETCH_CHANGE = collections.namedtuple('sketch_change', 'type, source, what')
 
 VIEW_OBJECT = collections.namedtuple('view', 'id, name')
+AGG_OBJECT = collections.namedtuple('aggregation', 'id, name')
 
 
 class AnalyzerContext(object):
@@ -373,6 +374,9 @@ class Sketch(object):
         change = SKETCH_CHANGE('ADD', 'aggregation', params)
         self.updates.append(change)
 
+        agg_obj = AGG_OBJECT(1, name)
+        return agg_obj
+
     def add_view(self, view_name, analyzer_name, query_string=None,
                  query_dsl=None, query_filter=None):
         """Add saved view to the Sketch.
@@ -407,6 +411,27 @@ class Sketch(object):
 
         view = VIEW_OBJECT(1, name)
         return view
+
+    def add_story(self, title):
+        """Add a story to the Sketch.
+
+        Args:
+            title: The name of the view.
+
+        Raises:
+            ValueError: If both query_string an query_dsl are missing.
+
+        Returns:
+            An instance of a Story object.
+        """
+        params = {
+            'title': title,
+        }
+        change = SKETCH_CHANGE('ADD', 'story', params)
+        self.updates.append(change)
+
+        story = Story(self, title=title)
+        return story
 
     def get_all_indices(self):
         """List all indices in the Sketch.
@@ -629,3 +654,55 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
     def run(self):
         """Entry point for the analyzer."""
         raise NotImplementedError
+
+
+class Story(object):
+    """Mocked story object."""
+
+    def __init__(self, analyzer, title):
+        """Initialize the story."""
+        self.id = 1
+        self.title = title
+        self._analyzer = analyzer
+
+    def add_aggregation(self, aggregation, agg_type):
+        """Add a saved aggregation to the Story.
+
+        Args:
+            aggregation (Aggregation): Saved aggregation to add to the story.
+            agg_type (str): string indicating the type of aggregation, can be:
+                "table" or the name of the chart to be used, eg "barcharct",
+                "hbarchart".
+        """
+        params = {
+            'agg_id': aggregation.id,
+            'agg_name': aggregation.name,
+            'agg_type': agg_type,
+        }
+        change = SKETCH_CHANGE('STORY_ADD', 'aggregation', params)
+        self._analyzer.updates.append(change)
+
+    def add_text(self, text):
+        """Add a text block to the Story.
+
+        Args:
+            text (str): text (markdown is supported) to add to the story.
+        """
+        params = {
+            'text': text,
+        }
+        change = SKETCH_CHANGE('STORY_ADD', 'text', params)
+        self._analyzer.updates.append(change)
+
+    def add_view(self, view):
+        """Add a saved view to the story.
+
+        Args:
+            view (View): Saved view to add to the story.
+        """
+        params = {
+            'view_id': view.id,
+            'view_name': view.name
+        }
+        change = SKETCH_CHANGE('STORY_ADD', 'view', params)
+        self._analyzer.updates.append(change)
