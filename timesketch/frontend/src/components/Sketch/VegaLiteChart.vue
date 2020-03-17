@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div id="vega"></div>
+  <div :id="vegaId"></div>
 </template>
 
 <script>
@@ -22,9 +22,14 @@ import { default as vegaEmbed } from 'vega-embed'
 
 export default {
   props: ['vegaSpec'],
+  data () {
+    return {
+      vegaId: 'vega-' + this._uid
+    }
+  },
   watch: {
     vegaSpec: function (newVal, oldVal) {
-      vegaEmbed('#vega', JSON.parse(this.vegaSpec), { actions: false })
+      vegaEmbed('#'+ this.vegaId, JSON.parse(this.vegaSpec), { actions: false })
     }
   }
 }

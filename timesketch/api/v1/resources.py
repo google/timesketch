@@ -400,6 +400,7 @@ class SketchResource(ResourceMixin, Resource):
         for _, cls in aggregator_manager.AggregatorManager.get_aggregators():
             aggregators[cls.NAME] = {
                 'form_fields': cls.FORM_FIELDS,
+                'display_name': cls.DISPLAY_NAME,
                 'description': cls.DESCRIPTION
             }
 
@@ -992,7 +993,8 @@ class AggregationInfoResource(ResourceMixin, Resource):
 
     REMOVE_FIELDS = frozenset(['_shards', 'hits', 'timed_out', 'took'])
 
-    def _get_info(self, aggregator_name):
+    @staticmethod
+    def _get_info(aggregator_name):
         """Returns a dict with information about an aggregation."""
         agg_class = aggregator_manager.AggregatorManager.get_aggregator(
             aggregator_name)
@@ -1007,6 +1009,7 @@ class AggregationInfoResource(ResourceMixin, Resource):
 
         return {
             'name': agg_class.NAME,
+            'display_name': agg_class.DISPLAY_NAME,
             'description': agg_class.DESCRIPTION,
             'fields': field_lines,
         }

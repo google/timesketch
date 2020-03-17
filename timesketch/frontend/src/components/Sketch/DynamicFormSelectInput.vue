@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div class="field">
+  <div class="field" v-if="display">
     <label class="label">{{ label }}</label>
     <div class="control">
       <div class="select">
@@ -29,6 +29,6 @@ limitations under the License.
 
 <script>
 export default {
-  props: ['options', 'label', 'value']
+  props: ['options', 'label', 'value', 'display']
 }
 </script>

@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <div>
     <span v-for="timeline in sketch.active_timelines" :key="timeline.id" class="tag is-medium" style="cursor: pointer; margin-right: 7px;margin-bottom:7px;" v-bind:style="timelineColor(timeline)" v-on:click="toggleIndex(timeline.searchindex.index_name)">
-      {{ timeline.name }} <span v-if="indexIsEnabled(timeline.searchindex.index_name)" class="tag is-small" style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);">{{ countPerIndex[timeline.searchindex.index_name] || '0' }}</span>
+      {{ timeline.name }} <span v-if="indexIsEnabled(timeline.searchindex.index_name) && countPerIndex" class="tag is-small" style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);">{{ countPerIndex[timeline.searchindex.index_name] || '0' }}</span>
     </span>
     <div v-if="sketch.active_timelines.length > 3" style="margin-top:7px;">
       <span style="text-decoration: underline; cursor: pointer; margin-right: 10px;" v-on:click="enableAllIndices">Enable all</span>

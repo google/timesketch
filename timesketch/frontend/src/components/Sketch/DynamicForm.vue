@@ -19,6 +19,7 @@ limitations under the License.
                  :key="index"
                  :is="field.type"
                  :value="formData[field.name]"
+                 :display="field.display"
                  @input="updateForm(field.name, $event)"
                  v-bind="field">
       </component>

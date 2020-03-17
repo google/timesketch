@@ -21,7 +21,7 @@ limitations under the License.
         <select v-model="selected" @change="setActiveAggregator()">
           <option disabled value="">Please select one</option>
           <option v-for="(aggregator, name) in meta.aggregators" :key="aggregator.id" :value="name">
-            {{ name }} - {{ aggregator.description }}
+            {{ aggregator.display_name }}
           </option>
         </select>
       </div>

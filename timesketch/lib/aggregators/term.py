@@ -55,7 +55,7 @@ def get_spec(field, query='', query_dsl=''):
     elif query_dsl:
         query_filter = query_dsl
     else:
-        raise ValueError('Neiter query nor query DSL provided.')
+        raise ValueError('Neither query nor query DSL provided.')
 
     return {
         'aggregations': {
@@ -77,6 +77,7 @@ class FilteredTermsAggregation(interface.BaseAggregator):
     """Query Filter Term Aggregation."""
 
     NAME = 'query_bucket'
+    DISPLAY_NAME = 'Filtered Terms Aggregation'
     DESCRIPTION = 'Aggregating values of a field after applying a filter'
 
     SUPPORTED_CHARTS = frozenset(['barchart', 'hbarchart'])
@@ -86,26 +87,30 @@ class FilteredTermsAggregation(interface.BaseAggregator):
             'type': 'ts-dynamic-form-select-input',
             'name': 'supported_charts',
             'label': 'Chart type to render',
-            'options': list(SUPPORTED_CHARTS)
+            'options': list(SUPPORTED_CHARTS),
+            'display': True
         },
         {
             'name': 'query_string',
             'type': 'ts-dynamic-form-text-input',
             'label': 'The filter query to narrow down the result set',
             'placeholder': 'Query',
-            'default_value': ''
+            'default_value': '',
+            'display': True
         },
         {
             'name': 'query_dsl',
             'type': 'ts-dynamic-form-text-input',
             'label': 'The filter query DSL to narrow down the result',
             'placeholder': 'Query DSL',
-            'default_value': ''
+            'default_value': '',
+            'display': False
         },
         {
             'name': 'field',
             'type': 'ts-dynamic-form-text-input',
             'label': 'What field to aggregate.',
+            'display': True
         }
     ]
 
