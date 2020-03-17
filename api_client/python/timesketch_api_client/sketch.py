@@ -186,7 +186,7 @@ class Sketch(resource.BaseResource):
         if not user_list and not group_list:
             return True
 
-        resource_url = '{0:s}/sketches/{1:d}/collaborator/'.format(
+        resource_url = '{0:s}/sketches/{1:d}/collaborators/'.format(
             self.api.api_root, self.id)
 
         data = {}
@@ -627,7 +627,7 @@ class Sketch(resource.BaseResource):
         if not user_list and not group_list:
             return True
 
-        resource_url = '{0:s}/sketches/{1:d}/collaborator/'.format(
+        resource_url = '{0:s}/sketches/{1:d}/collaborators/'.format(
             self.api.api_root, self.id)
 
         data = {}
