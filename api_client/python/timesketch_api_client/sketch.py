@@ -169,6 +169,40 @@ class Sketch(resource.BaseResource):
             sketch=self,
             api=self.api)
 
+    def add_to_acl(self, user_list=None, group_list=None):
+        """Add users or groups to the sketch ACL.
+
+        Args:
+            user_list: optional list of users to add to the ACL
+                of the sketch. Each user is a string.
+            group_list: optional list of groups to add to the ACL
+                of the sketch. Each user is a string.
+
+        Returns:
+            A boolean indicating whether the ACL change was successful.
+        """
+        if not user_list and not group_list:
+            return True
+
+        resource_url = '{0:s}/sketches/{1:d}/collaborator/'.format(
+            self.api.api_root, self.id)
+
+        data = {}
+        if group_list:
+            group_list_corrected = [str(x).strip() for x in group_list]
+            data['groups'] = group_list_corrected
+
+        if user_list:
+            user_list_corrected = [str(x).strip() for x in user_list]
+            data['users'] = user_list_corrected
+
+        if not data:
+            return True
+
+        response = self.api.session.post(resource_url, json=data)
+
+        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+
     def list_aggregations(self):
         """List all saved aggregations for this sketch.
 
