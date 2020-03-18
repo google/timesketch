@@ -202,6 +202,7 @@ class ResourceMixin(object):
     view_fields = {
         'id': fields.Integer,
         'name': fields.String,
+        'description': fields.String,
         'user': fields.Nested(user_fields),
         'query_string': fields.String,
         'query_filter': fields.String,
@@ -451,15 +452,26 @@ class SketchResource(ResourceMixin, Resource):
         # Make the list of dicts unique
         mappings = {v['field']: v for v in mappings}.values()
 
-        meta = dict(
-            aggregators=aggregators,
-            views=[{
+        views = []
+        for view in sketch.get_named_views:
+            if not view.user:
+                username = 'System'
+            else:
+                username = view.user.username
+            view = {
                 'name': view.name,
+                'description': view.description,
                 'id': view.id,
                 'query': view.query_string,
+                'user': username,
                 'created_at': view.created_at,
                 'updated_at': view.updated_at
-            } for view in sketch.get_named_views],
+            }
+            views.append(view)
+
+        meta = dict(
+            aggregators=aggregators,
+            views=views,
             searchtemplates=[{
                 'name': searchtemplate.name,
                 'id': searchtemplate.id

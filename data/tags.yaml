@@ -1,0 +1,21 @@
+# Config file for the tagger analyzer.
+#
+# Each definition needs to define either a query_string or a query_dsl.
+#
+# The create_view is an optional boolean that determines whether a view
+# should be created if there are hits.
+#
+# The tagger works in the way that the query is run and the emojis and
+# tags that are defined  are applied to the matching events.
+# A view is created id the tag is added (only if there are results).
+#
+# Example:
+#
+# test_tagger:
+#        query_string: 'test'
+#        attribute: 'domain'
+#        tags: ['test-tag']
+#        emojis: ['FISHING_POLE']
+#        create_view: true
+#        view_name: 'TEST view name'
+# ------------------------------------------------------------------------
