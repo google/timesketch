@@ -342,7 +342,6 @@ class Sketch(object):
         if not query_filter:
             query_filter = {'indices': '_all'}
 
-        #name = '[{0:s}] {1:s}'.format(analyzer_name, view_name)
         description = 'analyzer: {0:s}'.format(analyzer_name)
         view = View.get_or_create(
             name=view_name, description=description, sketch=self.sql_sketch,
