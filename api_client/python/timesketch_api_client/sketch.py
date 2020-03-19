@@ -235,6 +235,28 @@ class Sketch(resource.BaseResource):
             aggregations.append(aggregation_obj)
         return aggregations
 
+    def get_analyzer_status(self):
+        """Returns a list of started analyzers and their status."""
+        stats_list = []
+        for timeline in self.list_timelines():
+            resource_uri = '{0:s}/sketches/{1:d}/timelines/{2:d}/analysis'.format(
+                self.api.api_root, self.id, timeline.id)
+            response = self.api.session.get(resource_uri)
+            response_json = response.json()
+            for result in response_json.get('objects', []):
+                stat = {
+                    'index': timeline.index,
+                    'id': timeline.id,
+                    'analyzer': result.get('analyzer_name', 'N/A'),
+                    'results': result.get('result', 'N/A'),
+                    'status': 'N/A',
+                }
+                status = result.get('status', [])
+                if len(status) == 1:
+                    stat['status'] = status[0].get('status', 'N/A')
+                stats_list.append(stat)
+        return stats_list
+
     def get_aggregation(self, aggregation_id):
         """Return a stored aggregation.
 
