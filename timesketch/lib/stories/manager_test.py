@@ -55,17 +55,18 @@ class TestStoryExportManager(BaseTest):
         exporter_class = exporter_dict.get('mockformat')
         self.assertEqual(exporter_class, MockStoryExporter)
 
-        manager.StoryExportMannager.clear_registration()
+        manager.StoryExportManager.clear_registration()
         exporters = manager.StoryExportManager.get_exporters()
-        exporter_list = list(exporters)
+        exporter_list = [x for x, _ in exporters]
         self.assertEqual(exporter_list, [])
 
-        manager.StoryExportManager.register_analyzer(MockStoryExporter)
-        manager.StoryExportManager.register_analyzer(MockStoryExporter2)
-        manager.StoryExportManager.register_analyzer(MockStoryExporter3)
+        manager.StoryExportManager.clear_registration()
+        manager.StoryExportManager.register_exporter(MockStoryExporter)
+        manager.StoryExportManager.register_exporter(MockStoryExporter2)
+        manager.StoryExportManager.register_exporter(MockStoryExporter3)
 
-        manager.StoryExportMannager.clear_registration()
         exporters = manager.StoryExportManager.get_exporters()
+        exporter_list = [x for x, _ in exporters]
         self.assertEqual(len(exporter_list), 3)
         self.assertIn('mockformat', exporter_list)
 
@@ -74,7 +75,7 @@ class TestStoryExportManager(BaseTest):
         exporter_class = manager.StoryExportManager.get_exporter('mockformat')
         self.assertEqual(exporter_class, MockStoryExporter)
 
-    def test_register_analyzer(self):
+    def test_register_exporter(self):
         """Test so we raise KeyError when exporter is already registered."""
         self.assertRaises(
             KeyError, manager.StoryExportManager.register_exporter,
