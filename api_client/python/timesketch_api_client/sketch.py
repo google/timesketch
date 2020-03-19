@@ -243,7 +243,7 @@ class Sketch(resource.BaseResource):
                 self.api.api_root, self.id, timeline.id)
             response = self.api.session.get(resource_uri)
             response_json = response.json()
-            for result in response_json.get('objects', []):
+            for result in response_json.get('objects', [[]])[0]:
                 stat = {
                     'index': timeline.index,
                     'id': timeline.id,
