@@ -344,13 +344,13 @@ class Sketch(resource.BaseResource):
             self.api.api_root, self.id)
         response = self.api.session.get(resource_url)
         response_json = response.json()
-        objects = response_json.get('objects')
-        if not objects:
+        story_objects = response_json.get('objects')
+        if not story_objects:
             return story_list
 
-        if not len(objects) == 1:
+        if not len(story_objects) == 1:
             return story_list
-        stories = objects[0]
+        stories = story_objects[0]
         for story_dict in stories:
             story_list.append(story.Story(
                 story_id=story_dict.get('id', -1),

@@ -52,13 +52,13 @@ class View(resource.BaseResource):
             The dict value of the key "name".
         """
         view = self.lazyload_data(refresh_cache=refresh)
-        objects = view.get('objects')
-        if not objects:
+        view_objects = view.get('objects')
+        if not view_objects:
             return ''
-        if not len(objects) == 1:
+        if not len(view_objects) == 1:
             return ''
 
-        first_object = objects[0]
+        first_object = view_objects[0]
         return first_object.get(name, default_value)
 
     @property
