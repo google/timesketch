@@ -82,6 +82,8 @@ from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
 from timesketch.lib.forms import TimelineForm
+from timesketch.lib.stories import api_fetcher as story_api_fetcher
+from timesketch.lib.stories import manager as story_export_manager
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.experimental.utils import GRAPH_VIEWS
 from timesketch.lib.experimental.utils import get_graph_views
@@ -1891,6 +1893,21 @@ class StoryListResource(ResourceMixin, Resource):
 class StoryResource(ResourceMixin, Resource):
     """Resource to get a story."""
 
+    def _export_story(self, story, sketch_id, export_format='markdown'):
+        """Returns a story in a format as requested in export_format."""
+        exporter_class = story_export_manager.StoryExportManager.get_exporter(
+            export_format)
+        if not exporter_class:
+            return b''
+
+        with exporter_class() as exporter:
+            data_fetcher = story_api_fetcher.ApiDataFetcher()
+            exporter.set_data_fetcher(data_fetcher)
+            exporter.set_sketch_id(sketch_id)
+
+            exporter.from_string(story.content)
+            return exporter.export_story()
+
     @login_required
     def get(self, sketch_id, story_id):
         """Handles GET request to the resource.
@@ -1960,6 +1977,11 @@ class StoryResource(ResourceMixin, Resource):
         form = request.json
         if not form:
             form = request.data
+
+        if form and form.get('export_format'):
+            export_format = form.get('export_format')
+            return self._export_story(
+                story=story, sketch_id=sketch_id, export_format=export_format)
 
         story.title = form.get('title', '')
         story.content = form.get('content', '[]')
