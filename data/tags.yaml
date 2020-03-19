@@ -13,7 +13,6 @@
 #
 # test_tagger:
 #        query_string: 'test'
-#        attribute: 'domain'
 #        tags: ['test-tag']
 #        emojis: ['FISHING_POLE']
 #        create_view: true
