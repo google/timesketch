@@ -15,6 +15,8 @@
 
 from __future__ import unicode_literals
 
+import json
+
 from flask import current_app
 import pandas as pd
 
@@ -23,6 +25,7 @@ from timesketch.lib.stories import interface
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models.sketch import Aggregation
+from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import View
 
 
@@ -90,15 +93,28 @@ class ApiDataFetcher(interface.DataFetcher):
             return pd.DataFrame()
 
         query_filter = view.query_filter
-        if not query_filter:
+        if query_filter and isinstance(query_filter, str):
+            query_filter = json.loads(query_filter)
+        elif not query_filter:
             query_filter = {'indices': '_all', 'size': 100}
+
+        if view.query_dsl:
+            query_dsl = json.loads(view.query_dsl)
+        else:
+            query_dsl = None
+
+        sketch = Sketch.query.get_with_acl(self._sketch_id)
+        sketch_indices = [
+            t.searchindex.index_name
+            for t in sketch.active_timelines
+        ]
 
         results = self._datastore.search_stream(
             sketch_id=self._sketch_id,
             query_string=view.query_string,
             query_filter=query_filter,
-            query_dsl=view.query_dsl,
-            indices='_all',
+            query_dsl=query_dsl,
+            indices=sketch_indices,
         )
         result_list = [x.get('_source') for x in results]
         return pd.DataFrame(result_list)

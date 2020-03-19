@@ -1902,9 +1902,9 @@ class StoryResource(ResourceMixin, Resource):
 
         with exporter_class() as exporter:
             data_fetcher = story_api_fetcher.ApiDataFetcher()
-            exporter.set_data_fetcher(data_fetcher)
-            exporter.set_sketch_id(sketch_id)
+            data_fetcher.set_sketch_id(sketch_id)
 
+            exporter.set_data_fetcher(data_fetcher)
             exporter.from_string(story.content)
             return exporter.export_story()
 

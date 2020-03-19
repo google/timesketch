@@ -15,6 +15,7 @@
 from __future__ import unicode_literals
 
 import json
+import logging
 
 import pandas as pd
 
@@ -22,6 +23,9 @@ from . import aggregation
 from . import definitions
 from . import resource
 from . import view
+
+
+logger = logging.getLogger('story_api')
 
 
 class BaseBlock(object):
@@ -514,8 +518,8 @@ class Story(resource.BaseResource):
             'title': self.title,
             'content': content,
         }
-        response = self.api.session.post(
-            '{0:s}/{1:s}'.format(self.api.api_root, self.resource_uri),
+        response = self._api.session.post(
+            '{0:s}/{1:s}'.format(self._api.api_root, self.resource_uri),
             json=data)
 
         return response.status_code in definitions.HTTP_STATUS_CODE_20X
@@ -526,8 +530,8 @@ class Story(resource.BaseResource):
         Returns:
             Boolean that indicates whether the deletion was successful.
         """
-        response = self.api.session.delete(
-            '{0:s}/{1:s}'.format(self.api.api_root, self.resource_uri))
+        response = self._api.session.delete(
+            '{0:s}/{1:s}'.format(self._api.api_root, self.resource_uri))
 
         return response.status_code in definitions.HTTP_STATUS_CODE_20X
 
@@ -554,6 +558,24 @@ class Story(resource.BaseResource):
         self._blocks = []
         _ = self.lazyload_data(refresh_cache=True)
         _ = self.blocks
+
+    def to_markdown(self):
+        """Return a markdown formatted string with the content of the story."""
+        resource_url = '{0:s}/sketches/{1:d}/stories/{2:d}/'.format(
+            self._api.api_root, self._sketch.id, self.id)
+
+        data = {
+            'export_format': 'markdown'
+        }
+        response = self._api.session.post(resource_url, json=data)
+
+        if response.status_code in definitions.HTTP_STATUS_CODE_20X:
+            return response.text
+
+        logger.error(
+            'Error exporting story: [{0:d}] {1!s} {2!s}'.format(
+                response.status_code, response.reason, response.text))
+        return ''
 
     def to_string(self):
         """Returns a string with the content of all the story."""

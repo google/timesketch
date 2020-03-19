@@ -27,7 +27,6 @@ class StoryExporter(object):
     def __init__(self):
         """Initialize the exporter."""
         self._data_lines = []
-        self._sketch_id = 0
         self._data_fetcher = None
 
     @property
@@ -78,10 +77,6 @@ class StoryExporter(object):
         """
         self._data_fetcher = data_fetcher
 
-    def set_sketch_id(self, sketch_id):
-        """Set the sketch id."""
-        self._sketch_id = sketch_id
-
     def __enter__(self):
         """Make it possible to use "with" statement."""
         self.reset()
@@ -95,6 +90,10 @@ class StoryExporter(object):
 
 class DataFetcher(object):
     """A data fetcher interface."""
+
+    def __init__(self):
+        """Initialize the data fetcher."""
+        self._sketch_id = 0
 
     def get_aggregation(self, agg_dict):
         """Returns a data frame from an aggregation dict.
@@ -119,3 +118,7 @@ class DataFetcher(object):
             A pandas DataFrame with the results from a view aggregation.
         """
         raise NotImplementedError
+
+    def set_sketch_id(self, sketch_id):
+        """Set the sketch id."""
+        self._sketch_id = sketch_id
