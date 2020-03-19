@@ -54,7 +54,6 @@ class TaggerSketchPlugin(interface.BaseSketchAnalyzer):
         """
         query = config.get('query_string')
         query_dsl = config.get('query_dsl')
-        attribute = config.get('attribute')
         create_view = config.get('create_view', False)
         view_name = config.get('view_name')
         tags = config.get('tags', [])
@@ -62,8 +61,7 @@ class TaggerSketchPlugin(interface.BaseSketchAnalyzer):
         emojis_to_add = [emojis.get_emoji(x) for x in emoji_names]
 
         event_counter = 0
-        events = self.event_stream(
-            query_string=query, query_dsl=query_dsl, return_fields=[attribute])
+        events = self.event_stream(query_string=query, query_dsl=query_dsl)
 
         for event in events:
             event_counter += 1
