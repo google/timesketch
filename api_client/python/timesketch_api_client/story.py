@@ -561,11 +561,15 @@ class Story(resource.BaseResource):
 
     def to_markdown(self):
         """Return a markdown formatted string with the content of the story."""
+        return self.to_export_format('markdown')
+
+    def to_export_format(self, export_format):
+        """Returns exported copy of the story as defined in export_format."""
         resource_url = '{0:s}/sketches/{1:d}/stories/{2:d}/'.format(
             self._api.api_root, self._sketch.id, self.id)
 
         data = {
-            'export_format': 'markdown'
+            'export_format': export_format
         }
         response = self._api.session.post(resource_url, json=data)
 

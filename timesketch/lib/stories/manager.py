@@ -44,6 +44,11 @@ class StoryExportManager(object):
             yield exporter_type, exporter_class
 
     @classmethod
+    def get_formats(cls):
+        """Retrieves the registered format types."""
+        return cls._class_registry.keys()
+
+    @classmethod
     def get_exporter(cls, exporter_type):
         """Retrieves a class object of a specific exporter.
 
