@@ -40,7 +40,7 @@ class ApiDataFetcher(interface.DataFetcher):
             port=current_app.config['ELASTIC_PORT'])
 
     def get_aggregation(self, agg_dict):
-        """Returns a data frame from an aggregation dict.
+        """Returns a pandas DataFrame from an aggregation dict.
 
         Args:
             agg_dict (dict): a dictionary containing information

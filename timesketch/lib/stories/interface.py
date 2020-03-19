@@ -31,7 +31,11 @@ class StoryExporter(object):
 
     @property
     def data(self):
-        """Returns the data."""
+        """Returns the exported story.
+
+        Returns:
+            The story in the exported format as defined in EXPORT_FORMAT.
+        """
         return self.export_story()
 
     def export_story(self):
@@ -39,16 +43,24 @@ class StoryExporter(object):
         raise NotImplementedError
 
     def from_string(self, json_string):
-        """Feed the exporter with a JSON string."""
+        """Feed the exporter with a JSON string.
+
+        Args:
+            json_string: JSON formatted string.
+        """
         blocks = json.loads(json_string)
         if not isinstance(blocks, (list, tuple)):
             return
 
         for block in blocks:
-            self.from_dict(block)
+            self.from_block_dict(block)
 
-    def from_dict(self, block):
-        """Feed the exporter with a single block dict."""
+    def from_block_dict(self, block):
+        """Feed the exporter with a single block dict.
+
+        Args:
+            block: single block dict from the story.
+        """
         component = block.get('componentName', 'N/A')
         properties = block.get('componentProps', {})
 
@@ -66,7 +78,11 @@ class StoryExporter(object):
                     properties.get('aggregation')))
 
     def reset(self):
-        """Reset the story."""
+        """Reset story by removing all blocks.
+
+        This function can be called to clear all blocks in the story
+        and feed it again with new blocks.
+        """
         self._data_lines = []
 
     def set_data_fetcher(self, data_fetcher):

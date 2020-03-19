@@ -1894,7 +1894,18 @@ class StoryResource(ResourceMixin, Resource):
     """Resource to get a story."""
 
     def _export_story(self, story, sketch_id, export_format='markdown'):
-        """Returns a story in a format as requested in export_format."""
+        """Returns a story in a format as requested in export_format.
+
+        Args:
+            story: a story object (instance of Story) that is to be exported.
+            sketch_id: integer with the sketch ID.
+            export_format: string with the name of the format to export the
+                story to. Defaults to "markdown".
+
+        Returns:
+            The exported story in the format described. This could be a text
+            or a binary, depending on the output format.
+        """
         exporter_class = story_export_manager.StoryExportManager.get_exporter(
             export_format)
         if not exporter_class:
