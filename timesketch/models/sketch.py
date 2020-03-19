@@ -227,6 +227,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
            BaseModel):
     """Implements the View model."""
     name = Column(Unicode(255))
+    description = Column(UnicodeText())
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
@@ -239,6 +240,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
                  name,
                  sketch,
                  user,
+                 description=None,
                  searchtemplate=None,
                  query_string=None,
                  query_filter=None,
@@ -249,6 +251,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             name: The name of the timeline
             sketch: A sketch (instance of timesketch.models.sketch.Sketch)
             user: A user (instance of timesketch.models.user.User)
+            description (str): Description of the view
             searchtemplate: Instance of timesketch.models.sketch.SearchTemplate
             query_string: The query string
             query_filter: The filter to apply (JSON format as string)
@@ -258,6 +261,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         self.name = name
         self.sketch = sketch
         self.user = user
+        self.description = description
         self.searchtemplate = searchtemplate
         self.query_string = query_string
         self.query_filter = query_filter
@@ -313,6 +317,7 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
                      BaseModel):
     """Implements the Search Template model."""
     name = Column(Unicode(255))
+    description = Column(UnicodeText())
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
@@ -322,6 +327,7 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     def __init__(self,
                  name,
                  user,
+                 description=None,
                  query_string=None,
                  query_filter=None,
                  query_dsl=None):
@@ -330,6 +336,7 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         Args:
             name: The name of the timeline
             user: A user (instance of timesketch.models.user.User)
+            description (str): Description of the search template
             query_string: The query string
             query_filter: The filter to apply (JSON format as string)
             query_dsl: A query DSL document (JSON format as string)
@@ -337,6 +344,7 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         super(SearchTemplate, self).__init__()
         self.name = name
         self.user = user
+        self.description = description
         self.query_string = query_string
         if not query_filter:
             filter_template = {
