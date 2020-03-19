@@ -236,11 +236,19 @@ class Sketch(resource.BaseResource):
         return aggregations
 
     def get_analyzer_status(self):
-        """Returns a list of started analyzers and their status."""
+        """Returns a list of started analyzers and their status.
+
+        Returns:
+            A list of dict objects that contains status information
+            of each analyzer run. The dict contains information about
+            what timeline it ran against, the results and current
+            status of the analyzer run.
+        """
         stats_list = []
-        for timeline in self.list_timelines():
-            resource_uri = '{0:s}/sketches/{1:d}/timelines/{2:d}/analysis'.format(
-                self.api.api_root, self.id, timeline.id)
+        for timeline_obj in self.list_timelines():
+            resource_uri = (
+                '{0:s}/sketches/{1:d}/timelines/{2:d}/analysis').format(
+                    self.api.api_root, self.id, timeline_obj.id)
             response = self.api.session.get(resource_uri)
             response_json = response.json()
             objects = response_json.get('objects')
@@ -248,8 +256,8 @@ class Sketch(resource.BaseResource):
                 continue
             for result in objects[0]:
                 stat = {
-                    'index': timeline.index,
-                    'timeline_id': timeline.id,
+                    'index': timeline_obj.index,
+                    'timeline_id': timeline_obj.id,
                     'analyzer': result.get('analyzer_name', 'N/A'),
                     'results': result.get('result', 'N/A'),
                     'status': 'N/A',
