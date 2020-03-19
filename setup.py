@@ -43,7 +43,7 @@ if version_tuple < (3, 5):
     sys.exit(1)
 
 
-timesketch_version = '20200310'
+timesketch_version = '20200319'
 
 timesketch_description = (
     'Timesketch is a web based tool for collaborative forensic timeline '
