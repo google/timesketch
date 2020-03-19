@@ -71,6 +71,19 @@ class View(resource.BaseResource):
         return self._get_top_level_attribute('description', default_value='')
 
     @property
+    def user(self):
+        """Property that returns the username of the view creator.
+
+        Returns:
+            A string with the username of the user generating the view.
+        """
+        user_dict = self._get_top_level_attribute('user', default_value={})
+        username = user_dict.get('username')
+        if not username:
+            return 'System'
+        return username
+
+    @property
     def query_string(self):
         """Property that returns the views query string.
 
