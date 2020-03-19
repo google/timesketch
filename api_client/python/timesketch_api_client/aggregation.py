@@ -35,8 +35,7 @@ class Aggregation(resource.BaseResource):
         view: a view ID if the aggregation is tied to a specific view.
     """
 
-    def __init__(
-            self, sketch, api):
+    def __init__(self, sketch, api):
         self._sketch = sketch
         self._aggregator_data = {}
         self._parameters = {}

@@ -342,12 +342,16 @@ class Sketch(object):
         if not query_filter:
             query_filter = {'indices': '_all'}
 
-        name = '[{0:s}] {1:s}'.format(analyzer_name, view_name)
-        view = View.get_or_create(name=name, sketch=self.sql_sketch, user=None)
+        description = 'analyzer: {0:s}'.format(analyzer_name)
+        view = View.get_or_create(
+            name=view_name, description=description, sketch=self.sql_sketch,
+            user=None)
+        view.description = description
         view.query_string = query_string
         view.query_filter = view.validate_filter(query_filter)
         view.query_dsl = query_dsl
         view.searchtemplate = None
+        view.set_status(status='new')
 
         db_session.add(view)
         db_session.commit()
@@ -432,6 +436,22 @@ class Story(object):
         """
         block = self._create_new_block()
         block['content'] = text
+        self._commit(block)
+
+    def add_aggregation(self, aggregation, agg_type):
+        """Add a saved aggregation to the Story.
+
+        Args:
+            aggregation (Aggregation): Saved aggregation to add to the story.
+            agg_type (str): string indicating the type of aggregation, can be:
+                "table" or the name of the chart to be used, eg "barcharct",
+                "hbarchart".
+        """
+        block = self._create_new_block()
+        block['componentName'] = 'TsAggregationEventList'
+        block['componentProps']['aggregation'] = {
+            'id': aggregation.id, 'name': aggregation.name,
+            'type': agg_type}
         self._commit(block)
 
     def add_view(self, view):
