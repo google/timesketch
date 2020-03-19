@@ -14,9 +14,6 @@ class TestTaggerPlugin(BaseTest):
         self.assertIsNotNone(query)
         self.assertIsInstance(query, str)
 
-        attribute = config.get('attribute')
-        self.assertIsNotNone(attribute)
-
         emojis_to_add = config.get('emojis')
         if emojis_to_add:
             self.assertIsInstance(emojis_to_add, (list, tuple))
@@ -40,7 +37,6 @@ class TestTaggerPlugin(BaseTest):
           query_string: '*'
           tags: ['place-holder']
           emojis: ['ID_BUTTON']
-          attribute: 'message'
           """)
 
         self.assertIsInstance(test_config, dict)
