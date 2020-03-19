@@ -342,12 +342,16 @@ class Sketch(object):
         if not query_filter:
             query_filter = {'indices': '_all'}
 
-        name = '[{0:s}] {1:s}'.format(analyzer_name, view_name)
-        view = View.get_or_create(name=name, sketch=self.sql_sketch, user=None)
+        description = 'analyzer: {0:s}'.format(analyzer_name)
+        view = View.get_or_create(
+            name=view_name, description=description, sketch=self.sql_sketch,
+            user=None)
+        view.description = description
         view.query_string = query_string
         view.query_filter = view.validate_filter(query_filter)
         view.query_dsl = query_dsl
         view.searchtemplate = None
+        view.set_status(status='new')
 
         db_session.add(view)
         db_session.commit()
