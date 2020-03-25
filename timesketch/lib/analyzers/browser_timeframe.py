@@ -178,7 +178,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         # solely on browser events.
         query = 'source_short:"WEBHIST" OR source:"WEBHIST"'
 
-        return_fields = ['timestamp', 'url', 'tag', '__ts_emojis']
+        return_fields = ['datetime', 'timestamp', 'url', 'tag', '__ts_emojis']
 
         data_frame = self.event_pandas(
             query_string=query, return_fields=return_fields)
@@ -210,23 +210,73 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         hour_count = dict(aggregation.values.tolist())
         data_frame_outside = data_frame[~data_frame.hour.isin(activity_hours)]
 
+        # ADD HOUR/DAY AND ADD TWO AGGREGATIONS AS CHARTS, BARCHART FOR HOUR
+        # SOMETHING ELSE FOR DAY!!! -> ADD THIS INTO THE BROWSER STORY
         for event in utils.get_events_from_data_frame(
                 data_frame_outside, self.datastore):
             event.add_tags(['outside-active-hours'])
             hour = event.source.get('hour')
             this_hour_count = hour_count.get(hour)
+            datetime = event.source.get('datetime')
+            day, _, _ = datetime.partition('T')
             event.add_attributes(
                 {'activity_summary': (
                     'Number of events for this hour ({0:d}): {1:d}, with the '
                     'threshold value: {2:0.2f}').format(
                         hour, this_hour_count, threshold),
-                 'hour_count': this_hour_count})
+                 'hour_count': this_hour_count,
+                 'browser_hour': hour,
+                 'browser_day': day})
             event.add_emojis([sleeping_emoji])
             event.commit()
 
+        tagged_events, _ = data_frame_outside.shape
+        if tagged_events:
+
+            params = {
+                'field': 'browser_hour',
+                'limit': 30,
+            }
+            agg_hour = self.sketch.add_aggregation(
+                name='Browser Activity Per Hour.', agg_name='field_bucket',
+                agg_params=params, chart_type='barchart',
+                description='Created by the browser timeframe analyzer')
+
+            params = {
+                'field': 'browser_day',
+                'limit': 1000,
+            }
+            agg_day = self.sketch.add_aggregation(
+                name='Browser Activity Per Day.', agg_name='field_bucket',
+                agg_params=params, chart_type='circlechart',
+                description='Created by the browser timeframe analyzer')
+
+            story = self.sketch.add_story(utils.BROWSER_STORY_TITLE)
+            if utils.BROWSER_STORY_HEADER not in story.data:
+                story.add_text(utils.BROWSER_STORY_HEADER)
+
+            story.add_text(
+                '## Browser Timeframe Analyzer.\n\nThe browser timeframe '
+                'analyzer discovered {0:d} browser events that ocurred '
+                'outside of the typical browsing window of this browser '
+                'history (out of {1:d} total events).\n\nTake into '
+                'consideration that this analyzer extracts the hour of '
+                'browsing activity, and then finds the frequency of browsing '
+                'events, extracting the longest block of most active hours '
+                'and then proceeds with flagging all events outside of that '
+                'block of hours.\n\nThe hours considered to be active hours '
+                'are the hours between {2:d} and {3:d}'.format(
+                    tagged_events, total_count, activity_hours[0],
+                    activity_hours[-1]))
+
+            story.add_text('An overview of all browser activity, grouped by the hour.')
+            story.add_aggregation(agg_hour, 'barchart')
+            story.add_text('An overview of all browser activity, grouped by the day.')
+            story.add_aggregation(agg_day, 'circlechart')
+
         return (
             'Tagged {0:d} out of {1:d} events as outside of normal '
-            'active hours.').format(data_frame_outside.shape[0], total_count)
+            'active hours.').format(tagged_events, total_count)
 
 
 manager.AnalysisManager.register_analyzer(BrowserTimeframeSketchPlugin)

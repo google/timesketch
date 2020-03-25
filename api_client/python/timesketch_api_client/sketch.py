@@ -500,10 +500,8 @@ class Sketch(resource.BaseResource):
         if view:
             if view.query_string:
                 query_string = view.query_string
-            query_filter = json.loads(view.query_filter)
-
-            if view.query_dsl:
-                query_dsl = json.loads(view.query_dsl)
+            query_filter = view.query_filter
+            query_dsl = view.query_dsl
 
         if as_pandas:
             query_filter.setdefault('size', self.DEFAULT_SIZE_LIMIT)

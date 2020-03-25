@@ -2003,8 +2003,8 @@ class StoryResource(ResourceMixin, Resource):
 
         if form and form.get('export_format'):
             export_format = form.get('export_format')
-            return self._export_story(
-                story=story, sketch_id=sketch_id, export_format=export_format)
+            return jsonify(story=self._export_story(
+                story=story, sketch_id=sketch_id, export_format=export_format))
 
         story.title = form.get('title', '')
         story.content = form.get('content', '[]')

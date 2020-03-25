@@ -14,6 +14,8 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
+import json
+
 from . import resource
 
 
@@ -97,15 +99,19 @@ class View(resource.BaseResource):
         """Property that returns the views filter.
 
         Returns:
-            Elasticsearch filter as JSON string.
+            Elasticsearch filter as a dict.
         """
-        return self._get_top_level_attribute('query_filter', default_value='')
+        query_filter_string = self._get_top_level_attribute(
+            'query_filter', default_value='')
+        return json.loads(query_filter_string)
 
     @property
     def query_dsl(self):
         """Property that returns the views query DSL.
 
         Returns:
-            Elasticsearch DSL as JSON string.
+            Elasticsearch DSL as a dict.
         """
-        return self._get_top_level_attribute('query_dsl', default_value='')
+        dsl_string = self._get_top_level_attribute(
+            'query_dsl', default_value='')
+        return json.loads(dsl_string)

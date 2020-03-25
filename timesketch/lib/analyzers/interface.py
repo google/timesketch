@@ -321,7 +321,7 @@ class Sketch(object):
         return aggregation
 
     def add_view(self, view_name, analyzer_name, query_string=None,
-                 query_dsl=None, query_filter=None):
+                 query_dsl=None, query_filter=None, additional_fields=None):
         """Add saved view to the Sketch.
 
         Args:
@@ -330,6 +330,8 @@ class Sketch(object):
             query_string: Elasticsearch query string.
             query_dsl: Dictionary with Elasticsearch DSL query.
             query_filter: Dictionary with Elasticsearch filters.
+            additional_fields: A list with field names to include in the
+                view output.
 
         Raises:
             ValueError: If both query_string an query_dsl are missing.
@@ -341,6 +343,9 @@ class Sketch(object):
 
         if not query_filter:
             query_filter = {'indices': '_all'}
+
+        if additional_fields:
+            query_filter['fields'] = additional_fields
 
         description = 'analyzer: {0:s}'.format(analyzer_name)
         view = View.get_or_create(
@@ -369,6 +374,12 @@ class Sketch(object):
         Returns:
             An instance of a Story object.
         """
+        story = SQLStory.query.filter_by(
+            title=title, sketch=self.sql_sketch, user=None).first()
+
+        if story:
+            return Story(story)
+
         story = SQLStory.get_or_create(
             title=title, content='[]', sketch=self.sql_sketch, user=None)
         db_session.add(story)
@@ -398,6 +409,11 @@ class Story(object):
             story: SQLAlchemy Story object.
         """
         self.story = story
+
+    @property
+    def data(self):
+        """Return back the content of the story object."""
+        return self.story.content
 
     @staticmethod
     def _create_new_block():

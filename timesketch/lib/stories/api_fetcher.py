@@ -40,36 +40,34 @@ class ApiDataFetcher(interface.DataFetcher):
             port=current_app.config['ELASTIC_PORT'])
 
     def get_aggregation(self, agg_dict):
-        """Returns a pandas DataFrame from an aggregation dict.
+        """Returns an aggregation object from an aggregation dict.
 
         Args:
             agg_dict (dict): a dictionary containing information
                 about the stored aggregation.
 
         Returns:
-            A pandas DataFrame with the results from a saved aggregation.
+            An aggregation object (instance of AggregationResult) from a
+            saved aggregation or None if not found.
         """
         aggregation_id = agg_dict.get('id')
         if not aggregation_id:
-            return pd.DataFrame()
+            return None
 
         aggregation = Aggregation.query.get(aggregation_id)
         if not aggregation:
-            return pd.DataFrame()
+            return None
 
-        # Run the aggregator...
         try:
             agg_class = aggregator_manager.AggregatorManager.get_aggregator(
-                aggregation.name)
+                aggregation.agg_type)
         except KeyError:
-            return pd.DataFrame()
+            return None
 
         if not agg_class:
             return pd.DataFrame()
         aggregator = agg_class(sketch_id=self._sketch_id)
-        result_obj = aggregator.run(aggregation.parameters)
-        # TODO: Support charts.
-        return result_obj.to_pandas()
+        return aggregator.run(aggregation.parameters)
 
     def get_view(self, view_dict):
         """Returns a data frame from a view dict.

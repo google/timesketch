@@ -27,16 +27,53 @@ class MarkdownStoryExporter(interface.StoryExporter):
     # String representing the output format of the story.
     EXPORT_FORMAT = 'markdown'
 
+    # Number of rows of a DataFrame to include at the top of a markdown table.
+    _DATAFRAM_HEADER_ROWS = 20
+
+    # Number of rows of a DataFrame to include as a trailer of a table.
+    _DATAFRAM_TAIL_ROWS = 5
+
+    # The number of rows
+    def _dataframe_to_markdown(self, data_frame):
+        """Returns a markdown formatted string from a pandas DataFrame."""
+        nr_rows, _ = data_frame.shape
+        if not nr_rows:
+            return ''
+
+        if nr_rows <= (self._DATAFRAM_HEADER_ROWS + self._DATAFRAM_TAIL_ROWS):
+            return tabulate.tabulate(
+                data_frame, tablefmt='pipe', headers='keys')
+
+        return_lines = []
+        return_lines.append(tabulate.tabulate(
+            data_frame[:self._DATAFRAM_HEADER_ROWS], tablefmt='pipe',
+            headers='keys'))
+        return_lines.append('| ... |')
+        return_lines.append(tabulate.tabulate(
+            data_frame[-self._DATAFRAM_TAIL_ROWS:], tablefmt='pipe',
+            headers='keys'))
+        return '\n'.join(return_lines)
+
     def export_story(self):
         """Export the story as a markdown."""
         return_strings = []
-        for line in self._data_lines:
-            if isinstance(line, str):
-                return_strings.append(line)
+        for line_dict in self._data_lines:
+            line_type = line_dict.get('type', '')
+            if line_type == 'text':
+                return_strings.append(line_dict.get('value', ''))
                 continue
 
-            return_strings.append(
-                tabulate.tabulate(line, tablefmt='pipe', headers='keys'))
+            elif line_type == 'aggregation':
+                aggregation = line_dict.get('value')
+                if not aggregation:
+                    return_strings.append(
+                        '**Unable to fetch aggregation data**')
+                    continue
+                return_strings.append(
+                    self._dataframe_to_markdown(aggregation.to_pandas()))
+            elif line_type == 'dataframe':
+                return_strings.append(
+                    self._dataframe_to_markdown(line_dict.get('value')))
 
         return '\n\n'.join(return_strings)
 

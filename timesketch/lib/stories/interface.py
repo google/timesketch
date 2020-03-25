@@ -26,6 +26,7 @@ class StoryExporter(object):
 
     def __init__(self):
         """Initialize the exporter."""
+        # List of Dict objects, two keys: type, value.
         self._data_lines = []
         self._data_fetcher = None
 
@@ -68,14 +69,18 @@ class StoryExporter(object):
             return
 
         if not component:
-            self._data_lines.append(block.get('content', ''))
+            self._data_lines.append(
+                {'type': 'text', 'value': block.get('content', '')})
         elif component == 'TsViewEventList':
-            self._data_lines.append(
-                self._data_fetcher.get_view(properties.get('view')))
+            self._data_lines.append({
+                'type': 'dataframe',
+                'value': self._data_fetcher.get_view(properties.get('view'))})
         elif component == 'TsAggregationEventList':
-            self._data_lines.append(
-                self._data_fetcher.get_aggregation(
-                    properties.get('aggregation')))
+            self._data_lines.append({
+                'type': 'aggregation',
+                'value': self._data_fetcher.get_aggregation(
+                    properties.get('aggregation'))})
+            print('ADDED AGG: {}'.format(type(self._data_lines[-1].get('value'))))
 
     def reset(self):
         """Reset story by removing all blocks.
@@ -112,14 +117,15 @@ class DataFetcher(object):
         self._sketch_id = 0
 
     def get_aggregation(self, agg_dict):
-        """Returns a data frame from an aggregation dict.
+        """Returns an aggregation object from an aggregation dict.
 
         Args:
             agg_dict (dict): a dictionary containing information
                 about the stored aggregation.
 
         Returns:
-            A pandas DataFrame with the results from a saved aggregation.
+            An aggregation object (instance of AggregationResult) from a
+            saved aggregation or None if not found.
         """
         raise NotImplementedError
 
