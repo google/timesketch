@@ -14,16 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-        <div class="card">
-          <header class="card-header">
-            <span class="card-header-title">
-              {{ title }}
-            </span>
-          </header>
-          <div class="card-content" ref="vegaChart">
-            <ts-vega-lite-chart :vegaSpec="vegaSpec"></ts-vega-lite-chart>
-          </div>
-        </div>
+  <div class="card">
+    <div class="card-content" ref="vegaChart">
+      <ts-vega-lite-chart :vegaSpec="vegaSpec"></ts-vega-lite-chart>
+    </div>
+  </div>
 </template>
 
 <script>

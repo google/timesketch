@@ -448,7 +448,7 @@ class Story(object):
                 "hbarchart".
         """
         block = self._create_new_block()
-        block['componentName'] = 'TsAggregationEventList'
+        block['componentName'] = 'TsAggregationCompact'
         block['componentProps']['aggregation'] = {
             'id': aggregation.id, 'name': aggregation.name,
             'type': agg_type}

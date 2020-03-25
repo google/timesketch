@@ -1909,7 +1909,8 @@ class StoryListResource(ResourceMixin, Resource):
 class StoryResource(ResourceMixin, Resource):
     """Resource to get a story."""
 
-    def _export_story(self, story, sketch_id, export_format='markdown'):
+    @staticmethod
+    def _export_story(story, sketch_id, export_format='markdown'):
         """Returns a story in a format as requested in export_format.
 
         Args:

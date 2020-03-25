@@ -63,8 +63,11 @@ limitations under the License.
               <div v-if="obj.componentName" @mouseover="obj.isActive = true" @mouseleave="obj.isActive = false">
                 <article class="message">
                   <div class="message-header">
-                    <p>
+                    <p v-if="obj.componentName === 'TsViewEventList'">
                       <router-link :to="{ name: 'SketchExplore', query: {view: obj.componentProps.view.id}}"><strong>{{ obj.componentProps.view.name }}</strong></router-link>
+                    </p>
+                    <p v-if="obj.componentName === 'TsAggregationCompact'">
+                      {{ obj.componentProps.aggregation.name }}
                     </p>
                     <button class="delete" aria-label="delete" v-on:click="deleteBlock(index)"></button>
                   </div>
@@ -85,6 +88,9 @@ limitations under the License.
                     <p class="control" v-if="meta.views.length">
                       <ts-view-list-dropdown @setActiveView="addViewComponent($event, index)" :is-rounded="true" :title="'+ Saved view'"></ts-view-list-dropdown>
                     </p>
+                    <p class="control" v-if="sketch.aggregations.length">
+                      <ts-aggregation-list-dropdown @addAggregation="addAggregationComponent($event, index)" :is-rounded="true" :title="'+ Saved aggregation'"></ts-aggregation-list-dropdown>
+                    </p>
                   </div>
               </div>
 
@@ -101,6 +107,8 @@ limitations under the License.
 import ApiClient from '../utils/RestApiClient'
 import marked from 'marked'
 import _ from 'lodash'
+import TsAggregationListDropdown from '../components/Sketch/AggregationListDropdown'
+import TsAggregationCompact from "../components/Sketch/AggregationCompact"
 import TsViewListDropdown from '../components/Sketch/ViewListDropdown'
 import TsViewEventList from '../components/Sketch/EventListCompact'
 
@@ -116,7 +124,7 @@ const defaultBlock = () => {
 }
 
 export default {
-  components: { TsViewListDropdown, TsViewEventList },
+  components: { TsAggregationListDropdown, TsAggregationCompact, TsViewListDropdown, TsViewEventList },
   props: ['sketchId', 'storyId'],
   data () {
     return {
@@ -141,8 +149,15 @@ export default {
       }
       this.save()
     },
+    addAggregationComponent (event, index) {
+      let newIndex = index + 1
+      let newBlock = defaultBlock()
+      newBlock.componentName = 'TsAggregationCompact'
+      newBlock.componentProps = { aggregation: event }
+      this.blocks.splice(newIndex, 0, newBlock)
+      this.save()
+    },
     addViewComponent (event, index) {
-      console.log(event)
       let newIndex = index + 1
       let newBlock = defaultBlock()
       newBlock.componentName = 'TsViewEventList'
@@ -183,7 +198,7 @@ export default {
     ApiClient.getStory(this.sketchId, this.storyId).then((response) => {
       this.title = response.data.objects[0].title
       let content = response.data.objects[0].content
-      if (content === '') {
+      if (content === '[]') {
         this.blocks = [defaultBlock()]
       } else {
         this.blocks = JSON.parse(content)

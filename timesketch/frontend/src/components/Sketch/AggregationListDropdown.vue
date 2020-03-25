@@ -14,16 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div class="field">
-    <label class="label">Choose an aggregator</label>
-    <div class="control">
-      <div class="select">
-        <select v-model="selected" @change="setActiveAggregator()">
-          <option disabled value="">Please select one</option>
-          <option v-for="(aggregator, name) in meta.aggregators" :key="aggregator.id" :value="name">
-            {{ aggregator.display_name }}
-          </option>
-        </select>
+  <div class="dropdown" v-bind:class="{'is-active': dropdownActive}">
+    <div class="dropdown-trigger">
+      <a class="button" v-bind:class="{'is-rounded': isRounded}" aria-haspopup="true" aria-controls="dropdown-menu" v-on:click="dropdownActive = !dropdownActive">
+        <span>{{ title || 'Aggregations' }}</span>
+        <span class="icon is-small">
+          <i class="fas fa-angle-down" aria-hidden="true"></i>
+        </span>
+      </a>
+    </div>
+    <div class="dropdown-menu" id="dropdown-menu" role="menu">
+      <div class="dropdown-content">
+        <span class="dropdown-item" v-if="sketch.aggregations && sketch.aggregations.length < 1">No saved aggregations</span>
+        <a class="dropdown-item" v-on:click="setActiveAggregation(agg)" v-for="agg in sketch.aggregations" :key="agg.id">
+          <span>{{ agg.name }}</span>
+        </a>
       </div>
     </div>
   </div>
@@ -34,21 +39,22 @@ export default {
   props: ['isRounded', 'title'],
   data () {
     return {
-      selected: '',
-      selectedChart: ''
-    }
-  },
-  computed: {
-    meta () {
-      return this.$store.state.meta
+      dropdownActive: false
     }
   },
   methods: {
-    setActiveAggregator: function () {
-      let aggregatorClone = JSON.parse(JSON.stringify(this.meta.aggregators[this.selected]))
-      aggregatorClone.name = this.selected
-      this.$emit('setActiveAggregator', aggregatorClone)
+    setActiveAggregation: function (aggregation) {
+      this.$emit('addAggregation', aggregation)
+      this.viewListDropdownActive = false
     }
   },
+  computed: {
+    sketch () {
+      return this.$store.state.sketch
+    }
+  }
 }
 </script>
+
+<!-- CSS scoped to this component only -->
+<style scoped lang="scss"></style>

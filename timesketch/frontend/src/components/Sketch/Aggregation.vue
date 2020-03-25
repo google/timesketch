@@ -15,6 +15,32 @@ limitations under the License.
 -->
 <template>
   <div>
+
+    <b-modal :active.sync="showSaveModal" :width="640" scroll="keep">
+      <div class="card">
+        <header class="card-header">
+          <p class="card-header-title">Save aggregation</p>
+        </header>
+        <div class="card-content">
+          <div class="content">
+            <form v-on:submit.prevent="save()">
+              <div class="field">
+                <label class="label">Name</label>
+                <div class="control">
+                  <input v-model="aggregationName" class="input" type="text" required placeholder="Name your aggregation" autofocus>
+                </div>
+              </div>
+              <div class="field">
+                <div class="control">
+                  <input class="button is-success" type="submit" value="Save">
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </b-modal>
+
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
@@ -46,7 +72,7 @@ limitations under the License.
               {{ selectedAggregator.display_name }}
             </span>
             <span class="card-header-icon">
-            <a class="button is-rounded is-small" v-on:click="save()">
+            <a class="button is-rounded is-small" v-on:click="showSaveModal =! showSaveModal">
               <span class="icon is-small">
                 <i class="fas fa-save"></i>
               </span>
@@ -67,7 +93,7 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 import TsVegaLiteChart from './VegaLiteChart'
 import TsDynamicForm from './DynamicForm'
-import TsSketchExploreAggregatorListDropdown from './AggregationListDropdown'
+import TsSketchExploreAggregatorListDropdown from './AggregatorListDropdown'
 
 export default {
   props: ['showAggregations'],
@@ -82,7 +108,9 @@ export default {
       formData: {},
       vegaSpec: {},
       selectedAggregator: '',
-      showChart: false
+      showChart: false,
+      showSaveModal: false,
+      aggregationName: ''
     }
   },
   computed: {
@@ -115,7 +143,12 @@ export default {
       }).catch((e) => {})
     },
     save: function () {
-      ApiClient.saveAggregation(this.sketch.id, this.selectedAggregator, this.formData)
+      this.showSaveModal = false
+      ApiClient.saveAggregation(this.sketch.id, this.selectedAggregator, this.aggregationName, this.formData).then((response) => {
+        let aggregation = response.data.objects[0]
+        this.$store.state.sketch.aggregations.push(aggregation)
+        this.aggregationName = ''
+      }).catch((e) => {})
     }
   }
 

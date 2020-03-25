@@ -161,18 +161,15 @@ export default {
   runAggregator (sketchId, formData) {
     return RestApiClient.post('/sketches/' + sketchId + '/aggregation/explore/', formData)
   },
-  saveAggregation (sketchId, aggregation, formData) {
+  saveAggregation (sketchId, aggregation, name, formData) {
     let form_data = {
-      'name': aggregation.display_name,
+      'name': name,
       'description': aggregation.description,
       'agg_type': aggregation.name,
       'chart_type': formData['supported_charts'],
       'parameters': formData
     }
     return RestApiClient.post('/sketches/' + sketchId + '/aggregation/', form_data)
-    console.log(aggregation)
-    console.log(form_data)
-    console.log(formData)
   },
   // Misc resources
   countSketchEvents (sketchId) {
