@@ -56,7 +56,6 @@ limitations under the License.
                 <i class="fas fa-angle-up" v-if="showSearch" aria-hidden="true"></i>
               </span>
             </span>
-
           </header>
 
           <div class="card-content" v-if="showSearch">
@@ -129,27 +128,9 @@ limitations under the License.
       </div>
     </section>
 
-    <section class="section">
-      <div class="container is-fluid">
-        <div class="card">
-          <header class="card-header" v-on:click="showAggregations = !showAggregations" style="cursor: pointer">
-            <span class="card-header-title">
-              <span class="icon is-small"><i class="fas fa-chart-bar"></i></span>
-              <span style="margin-left:10px;">Insights</span>
-            </span>
-            <span class="card-header-icon">
-              <span class="icon">
-                <i class="fas fa-angle-down" v-if="!showAggregations" aria-hidden="true"></i>
-                <i class="fas fa-angle-up" v-if="showAggregations" aria-hidden="true"></i>
-              </span>
-            </span>
-          </header>
-          <div class="card-content" v-show="showAggregations">
-            <ts-sketch-explore-aggregation></ts-sketch-explore-aggregation>
-          </div>
-        </div>
-      </div>
-    </section>
+    <!-- Insights -->
+    <ts-sketch-explore-aggregation :show-aggregations="showAggregations"></ts-sketch-explore-aggregation>
+    <!-- End Insights -->
 
     <section class="section" id="context" v-show="contextEvent">
       <div class="container is-fluid">

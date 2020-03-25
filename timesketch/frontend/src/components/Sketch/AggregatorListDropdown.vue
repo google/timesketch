@@ -14,13 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div class="field" v-if="display">
-    <label class="label">{{ label }}</label>
+  <div class="field">
+    <label class="label">Choose an aggregator</label>
     <div class="control">
       <div class="select">
-        <select :value="value" @input="$emit('input', $event.target.value)">
+        <select v-model="selected" @change="setActiveAggregator()">
           <option disabled value="">Please select one</option>
-          <option v-for="option in options" :key="option">{{ option }}</option>
+          <option v-for="(aggregator, name) in meta.aggregators" :key="aggregator.id" :value="name">
+            {{ aggregator.display_name }}
+          </option>
         </select>
       </div>
     </div>
@@ -29,6 +31,24 @@ limitations under the License.
 
 <script>
 export default {
-  props: ['options', 'label', 'value', 'display']
+  props: ['isRounded', 'title'],
+  data () {
+    return {
+      selected: '',
+      selectedChart: ''
+    }
+  },
+  computed: {
+    meta () {
+      return this.$store.state.meta
+    }
+  },
+  methods: {
+    setActiveAggregator: function () {
+      let aggregatorClone = JSON.parse(JSON.stringify(this.meta.aggregators[this.selected]))
+      aggregatorClone.name = this.selected
+      this.$emit('setActiveAggregator', aggregatorClone)
+    }
+  },
 }
 </script>

@@ -23,6 +23,7 @@ class TermsAggregation(interface.BaseAggregator):
     """Terms Bucket Aggregation."""
 
     NAME = 'field_bucket'
+    DISPLAY_NAME = 'Terms Aggregation'
     DESCRIPTION = 'Aggregating values of a particular field'
 
     SUPPORTED_CHARTS = frozenset(['barchart', 'hbarchart'])
@@ -32,21 +33,24 @@ class TermsAggregation(interface.BaseAggregator):
             'type': 'ts-dynamic-form-select-input',
             'name': 'supported_charts',
             'label': 'Chart type to render',
-            'options': list(SUPPORTED_CHARTS)
+            'options': list(SUPPORTED_CHARTS),
+            'display': True
         },
         {
             'type': 'ts-dynamic-form-text-input',
             'name': 'field',
             'label': 'What field to aggregate on',
             'placeholder': 'Enter a field to aggregate',
-            'default_value': ''
+            'default_value': '',
+            'display': True
         },
         {
             'type': 'ts-dynamic-form-text-input',
             'name': 'limit',
             'label': 'Number of results to return',
             'placeholder': 'Enter number of results to return',
-            'default_value': '10'
+            'default_value': '10',
+            'display': True
         }
     ]
 

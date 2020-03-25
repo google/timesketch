@@ -285,13 +285,13 @@ class AggregationBlock(BaseBlock):
     def from_dict(self, data_dict):
         """Feed a block from a block dict."""
         component = data_dict.get('componentName', 'N/A')
-        if component != 'TsAggregationEventList':
+        if component != 'TsAggregationCompact':
             raise TypeError('Not an aggregation block.')
 
         props = data_dict.get('componentProps', {})
         agg_dict = props.get('aggregation')
         if not agg_dict:
-            raise TypeError('View not defined')
+            raise TypeError('Aggregation not defined')
 
         self._agg_id = agg_dict.get('id', 0)
         self._agg_name = agg_dict.get('name', '')
@@ -318,7 +318,7 @@ class AggregationBlock(BaseBlock):
             raise TypeError('Aggregation object is not correctly formed.')
 
         aggregation_block = self._get_base()
-        aggregation_block['componentName'] = 'TsAggregationEventList'
+        aggregation_block['componentName'] = 'TsAggregationCompact'
         aggregation_block['componentProps']['aggregation'] = {
             'id': aggregation_obj.id,
             'name': aggregation_obj.name,
@@ -375,7 +375,7 @@ class Story(resource.BaseResource):
                         block.view_id, block.view_name, self._sketch.id,
                         self._api)
                     block.feed(view_obj)
-                elif name == 'TsAggregationEventList':
+                elif name == 'TsAggregationCompact':
                     block = AggregationBlock(self, index)
                     block.from_dict(content_block)
                     agg_obj = aggregation.Aggregation(self._sketch, self._api)
