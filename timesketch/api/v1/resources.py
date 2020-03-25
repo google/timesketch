@@ -403,6 +403,7 @@ class SketchResource(ResourceMixin, Resource):
         for _, cls in aggregator_manager.AggregatorManager.get_aggregators():
             aggregators[cls.NAME] = {
                 'form_fields': cls.FORM_FIELDS,
+                'display_name': cls.DISPLAY_NAME,
                 'description': cls.DESCRIPTION
             }
 
@@ -1006,7 +1007,8 @@ class AggregationInfoResource(ResourceMixin, Resource):
 
     REMOVE_FIELDS = frozenset(['_shards', 'hits', 'timed_out', 'took'])
 
-    def _get_info(self, aggregator_name):
+    @staticmethod
+    def _get_info(aggregator_name):
         """Returns a dict with information about an aggregation."""
         agg_class = aggregator_manager.AggregatorManager.get_aggregator(
             aggregator_name)
@@ -1021,6 +1023,7 @@ class AggregationInfoResource(ResourceMixin, Resource):
 
         return {
             'name': agg_class.NAME,
+            'display_name': agg_class.DISPLAY_NAME,
             'description': agg_class.DESCRIPTION,
             'fields': field_lines,
         }
@@ -1132,6 +1135,7 @@ class AggregationExploreResource(ResourceMixin, Resource):
             if chart_type:
                 meta['vega_spec'] = result_obj.to_chart(
                     chart_name=chart_type, chart_title=aggregator.chart_title)
+                meta['vega_chart_title'] = aggregator.chart_title
 
         elif aggregation_dsl:
             # pylint: disable=unexpected-keyword-arg
@@ -1905,7 +1909,8 @@ class StoryListResource(ResourceMixin, Resource):
 class StoryResource(ResourceMixin, Resource):
     """Resource to get a story."""
 
-    def _export_story(self, story, sketch_id, export_format='markdown'):
+    @staticmethod
+    def _export_story(story, sketch_id, export_format='markdown'):
         """Returns a story in a format as requested in export_format.
 
         Args:

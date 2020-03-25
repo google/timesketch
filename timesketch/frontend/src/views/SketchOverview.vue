@@ -235,7 +235,7 @@ export default {
     TsUploadTimelineForm,
     TsSketchStoryList,
     TsSketchTimelinesManage,
-    TsShareForm
+    TsShareForm,
   },
   data () {
     return {

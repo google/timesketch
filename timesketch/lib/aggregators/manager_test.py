@@ -23,6 +23,7 @@ class MockAggregator(object):
     """Mock aggregator class."""
     NAME = 'MockAggregator'
     DESCRIPTION = 'MockDescription'
+    DISPLAY_NAME = 'MockDisplayName'
     FORM_FIELDS = {}
     SUPPORTED_CHARTS = frozenset()
 
@@ -36,7 +37,7 @@ class TestAggregatorManager(BaseTest):
     def test_get_aggregators(self):
         """Test to get aggregator class objects."""
         aggregators = manager.AggregatorManager.get_aggregators()
-        aggregator_list = [x for x in aggregators]
+        aggregator_list = list(aggregators)
         first_aggregator_tuple = aggregator_list[0]
         aggregator_name, aggregator_class = first_aggregator_tuple
         self.assertIsInstance(aggregator_list, list)
