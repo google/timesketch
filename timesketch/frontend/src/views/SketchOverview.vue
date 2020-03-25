@@ -210,6 +210,15 @@ limitations under the License.
       </div>
     </section>
 
+    <section class="section" v-if="sketch.active_timelines.length">
+      <div class="container is-fluid">
+        <span v-for="agg in sketch.aggregations" :key="agg.id">
+          <ts-sketch-explore-aggregation-compact :aggregation="agg"></ts-sketch-explore-aggregation-compact>
+          <br>
+        </span>
+      </div>
+    </section>
+
     <ts-sketch-timelines-manage v-if="!sketch.timelines.length" :hide-navigation="true"></ts-sketch-timelines-manage>
 
   </div>
@@ -225,6 +234,7 @@ import TsSketchStoryList from '../components/Sketch/StoryList'
 import TsUploadTimelineForm from '../components/Sketch/UploadForm'
 import TsSketchTimelinesManage from './SketchManageTimelines'
 import TsShareForm from '../components/Sketch/ShareForm'
+import TsSketchExploreAggregationCompact from "../components/Sketch/AggregationCompact"
 
 export default {
   components: {
@@ -235,7 +245,8 @@ export default {
     TsUploadTimelineForm,
     TsSketchStoryList,
     TsSketchTimelinesManage,
-    TsShareForm
+    TsShareForm,
+    TsSketchExploreAggregationCompact,
   },
   data () {
     return {

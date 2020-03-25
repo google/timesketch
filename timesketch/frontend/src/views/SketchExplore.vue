@@ -132,10 +132,6 @@ limitations under the License.
     <ts-sketch-explore-aggregation :show-aggregations="showAggregations"></ts-sketch-explore-aggregation>
     <!-- End Insights -->
 
-    <span v-for="agg in sketch.aggregations" :key="agg.id">
-      <ts-sketch-explore-aggregation-compact :agg-name="agg.agg_type" :agg-parameters="agg.parameters"></ts-sketch-explore-aggregation-compact>
-    </span>
-
     <section class="section" id="context" v-show="contextEvent">
       <div class="container is-fluid">
         <b-message type="is-warning" aria-close-label="Close message">
@@ -299,13 +295,11 @@ import TsExploreTimelinePicker from '../components/Sketch/TimelinePicker'
 import TsExploreFilterTime from '../components/Sketch/TimeFilter'
 import TsExploreSessionChart from '../components/Sketch/SessionChart'
 import TsSketchExploreAggregation from "../components/Sketch/Aggregation"
-import TsSketchExploreAggregationCompact from "../components/Sketch/AggregationCompact"
 import EventBus from "../main"
 
 export default {
   components: {
     TsSketchExploreAggregation,
-    TsSketchExploreAggregationCompact,
     TsViewListDropdown,
     TsCreateViewForm,
     TsSketchExploreEventList,

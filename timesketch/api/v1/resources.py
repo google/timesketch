@@ -1135,6 +1135,7 @@ class AggregationExploreResource(ResourceMixin, Resource):
             if chart_type:
                 meta['vega_spec'] = result_obj.to_chart(
                     chart_name=chart_type, chart_title=aggregator.chart_title)
+                meta['vega_chart_title'] = aggregator.chart_title
 
         elif aggregation_dsl:
             # pylint: disable=unexpected-keyword-arg
