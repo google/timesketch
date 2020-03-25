@@ -561,7 +561,8 @@ class Story(resource.BaseResource):
 
     def to_markdown(self):
         """Return a markdown formatted string with the content of the story."""
-        return self.to_export_format('markdown')
+        story_dict = self.to_export_format('markdown')
+        return story_dict.get('story', '')
 
     def to_export_format(self, export_format):
         """Returns exported copy of the story as defined in export_format."""

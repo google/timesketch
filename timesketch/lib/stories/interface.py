@@ -80,7 +80,6 @@ class StoryExporter(object):
                 'type': 'aggregation',
                 'value': self._data_fetcher.get_aggregation(
                     properties.get('aggregation'))})
-            print('ADDED AGG: {}'.format(type(self._data_lines[-1].get('value'))))
 
     def reset(self):
         """Reset story by removing all blocks.

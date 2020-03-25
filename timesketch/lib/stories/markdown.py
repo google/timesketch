@@ -38,7 +38,7 @@ class MarkdownStoryExporter(interface.StoryExporter):
         """Returns a markdown formatted string from a pandas DataFrame."""
         nr_rows, _ = data_frame.shape
         if not nr_rows:
-            return ''
+            return '*<empty table>*'
 
         if nr_rows <= (self._DATAFRAM_HEADER_ROWS + self._DATAFRAM_TAIL_ROWS):
             return tabulate.tabulate(

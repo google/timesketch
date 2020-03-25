@@ -210,8 +210,6 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         hour_count = dict(aggregation.values.tolist())
         data_frame_outside = data_frame[~data_frame.hour.isin(activity_hours)]
 
-        # ADD HOUR/DAY AND ADD TWO AGGREGATIONS AS CHARTS, BARCHART FOR HOUR
-        # SOMETHING ELSE FOR DAY!!! -> ADD THIS INTO THE BROWSER STORY
         for event in utils.get_events_from_data_frame(
                 data_frame_outside, self.datastore):
             event.add_tags(['outside-active-hours'])
@@ -252,8 +250,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                 description='Created by the browser timeframe analyzer')
 
             story = self.sketch.add_story(utils.BROWSER_STORY_TITLE)
-            if utils.BROWSER_STORY_HEADER not in story.data:
-                story.add_text(utils.BROWSER_STORY_HEADER)
+            story.add_text(utils.BROWSER_STORY_HEADER, skip_if_already_there=True)
 
             story.add_text(
                 '## Browser Timeframe Analyzer.\n\nThe browser timeframe '

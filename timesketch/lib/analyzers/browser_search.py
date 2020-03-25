@@ -243,8 +243,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 description='Created by the browser search analyzer')
 
             story = self.sketch.add_story(utils.BROWSER_STORY_TITLE)
-            if utils.BROWSER_STORY_HEADER not in story.data:
-                story.add_text(utils.BROWSER_STORY_HEADER)
+            story.add_text(utils.BROWSER_STORY_HEADER, skip_if_already_there=True)
 
             story.add_text(
                 '## Browser Search Analyzer.\n\nThe browser search '

@@ -67,7 +67,9 @@ class ApiDataFetcher(interface.DataFetcher):
         if not agg_class:
             return pd.DataFrame()
         aggregator = agg_class(sketch_id=self._sketch_id)
-        return aggregator.run(aggregation.parameters)
+        parameter_string = aggregation.parameters
+        parameters = json.loads(parameter_string)
+        return aggregator.run(**parameters)
 
     def get_view(self, view_dict):
         """Returns a data frame from a view dict.

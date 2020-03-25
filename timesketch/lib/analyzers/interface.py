@@ -413,7 +413,7 @@ class Story(object):
     @property
     def data(self):
         """Return back the content of the story object."""
-        return self.story.content
+        return json.loads(self.story.content)
 
     @staticmethod
     def _create_new_block():
@@ -444,12 +444,26 @@ class Story(object):
         db_session.add(self.story)
         db_session.commit()
 
-    def add_text(self, text):
+    def add_text(self, text, skip_if_already_there=False):
         """Add a text block to the Story.
 
         Args:
             text (str): text (markdown is supported) to add to the story.
+            skip_if_already_there (boolean): if set to True then the text
+                will not be added if a block with this text already exists.
         """
+        if skip_if_already_there and self.data:
+            for block in self.data:
+                if not block:
+                    continue
+                if not isinstance(block, dict):
+                    continue
+                old_text = block.get('content')
+                if not old_text:
+                    continue
+                if text == old_text:
+                    return
+
         block = self._create_new_block()
         block['content'] = text
         self._commit(block)

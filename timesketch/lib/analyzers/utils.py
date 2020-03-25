@@ -243,8 +243,12 @@ def _fix_np_nan(source_dict, attribute, replace_with=None):
         replace_with = []
 
     value = source_dict.get(attribute)
-    if numpy.isnan(value):
-        source_dict[attribute] = replace_with
+    try:
+        if numpy.isnan(value):
+            source_dict[attribute] = replace_with
+    except TypeError:
+        # The value does not need to be changed.
+        pass
 
 
 def get_events_from_data_frame(frame, datastore):
