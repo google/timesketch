@@ -24,7 +24,7 @@ from timesketch.lib.analyzers import interface
 
 # Title and header text of a story that is common among browser
 # based analyzers.
-BROWSER_STORY_TITLE = 'Browser Based Artifacts'
+BROWSER_STORY_TITLE = 'Browser Artifact Story'
 BROWSER_STORY_HEADER = """
 # Browser Based Artifacts
 
@@ -278,7 +278,7 @@ def get_events_from_data_frame(frame, datastore):
         _fix_np_nan(source, 'tag')
 
         datetime = source.get('datetime')
-        if not isinstance(datetime, str):
+        if hasattr(datetime, 'to_pydatetime'):
             datetime_string = datetime.to_pydatetime().isoformat()
             source['datetime'] = datetime_string
 

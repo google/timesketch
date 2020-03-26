@@ -75,7 +75,7 @@ class StoryExporter(object):
             self._data_lines.append({
                 'type': 'dataframe',
                 'value': self._data_fetcher.get_view(properties.get('view'))})
-        elif component == 'TsAggregationEventList':
+        elif component == 'TsAggregationCompact':
             self._data_lines.append({
                 'type': 'aggregation',
                 'value': self._data_fetcher.get_aggregation(

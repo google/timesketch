@@ -682,14 +682,17 @@ class Story(object):
         change = SKETCH_CHANGE('STORY_ADD', 'aggregation', params)
         self._analyzer.updates.append(change)
 
-    def add_text(self, text):
+    def add_text(self, text, skip_if_already_there=False):
         """Add a text block to the Story.
 
         Args:
             text (str): text (markdown is supported) to add to the story.
+            skip_if_already_there (boolean): if set to True then the text
+                will not be added if a block with this text already exists.
         """
         params = {
             'text': text,
+            'skip_if_already_there': skip_if_already_there,
         }
         change = SKETCH_CHANGE('STORY_ADD', 'text', params)
         self._analyzer.updates.append(change)

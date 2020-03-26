@@ -345,7 +345,8 @@ class Sketch(object):
             query_filter = {'indices': '_all'}
 
         if additional_fields:
-            query_filter['fields'] = additional_fields
+            query_filter['fields'] = [
+                {'field': x.strip()} for x in additional_fields]
 
         description = 'analyzer: {0:s}'.format(analyzer_name)
         view = View.get_or_create(
