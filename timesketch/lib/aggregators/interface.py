@@ -147,6 +147,54 @@ class BaseAggregator(object):
             'description': self.DESCRIPTION,
         }
 
+    def format_field_by_type(self, field_name):
+        """Format field name based on mapping type.
+
+        For text fields we need to use .keyword because text fields are not
+        available to aggregations per default.
+
+        For all other types using the field name as is works.
+
+        Args:
+            field_name (str): Name of the field.
+
+        Returns:
+            Field name as string formatted after mapping type.
+        """
+        # Default field format is just the name unchanged.
+        field_format = field_name
+        field_type = None
+
+        # Get the mapping for the field.
+        mapping = self.elastic.indices.get_field_mapping(
+            index=self.index, fields=field_name)
+
+        # The returned structure is nested so we need to unpack it.
+        # Example:
+        # {'<INDEX NAME>': {
+        #     'mappings': {
+        #         'inode': {
+        #             'full_name': 'inode',
+        #             'mapping': {
+        #                 'inode': {
+        #                     'type': 'long'
+        #                 }
+        #             }
+        #         }
+        #     }
+        # }}
+        for value in mapping.values():
+            mappings = value.get('mappings', {})
+            mapping = mappings.get(field_name, {}).get('mapping', {})
+            field_type = mapping.get(field_name, {}).get('type', None)
+            if field_type:
+                break
+
+        if field_type == 'text':
+            field_format = '{0:s}.keyword'.format(field_name)
+
+        return field_format
+
     def elastic_aggregation(self, aggregation_spec):
         """Helper method to execute aggregation in Elasticsearch.
 

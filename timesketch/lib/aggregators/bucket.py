@@ -84,6 +84,8 @@ class TermsAggregation(interface.BaseAggregator):
             Instance of interface.AggregationResult with aggregation result.
         """
         self.field = field
+        formatted_field_name = self.format_field_by_type(field)
+
         # Encoding information for Vega-Lite.
         encoding = {
             'x': {
@@ -102,7 +104,7 @@ class TermsAggregation(interface.BaseAggregator):
             'aggs': {
                 'aggregation': {
                     'terms': {
-                        'field': '{0:s}.keyword'.format(field),
+                        'field': formatted_field_name,
                         'size': limit
                     }
                 }

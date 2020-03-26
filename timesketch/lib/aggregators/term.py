@@ -64,7 +64,7 @@ def get_spec(field, query='', query_dsl=''):
                 'aggregations': {
                     'term_count': {
                         'terms': {
-                            'field': '{0:s}.keyword'.format(field)
+                            'field': field
                         }
                     }
                 }
@@ -155,8 +155,10 @@ class FilteredTermsAggregation(interface.BaseAggregator):
             raise ValueError('Both query_string and query_dsl are missing')
 
         self.field = field
+        formatted_field_name = self.format_field_by_type(field)
+
         aggregation_spec = get_spec(
-            field=field, query=query_string, query_dsl=query_dsl)
+            field=formatted_field_name, query=query_string, query_dsl=query_dsl)
 
         # Encoding information for Vega-Lite.
         encoding = {
