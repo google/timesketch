@@ -223,8 +223,8 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                     'threshold value: {2:0.2f}').format(
                         hour, this_hour_count, threshold),
                  'hour_count': this_hour_count,
-                 'browser_hour': hour,
-                 'browser_day': day})
+                 'browser_hour': str(hour),
+                 'browser_day': str(day)})
             event.add_emojis([sleeping_emoji])
             event.commit()
 
@@ -250,7 +250,8 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                 description='Created by the browser timeframe analyzer')
 
             story = self.sketch.add_story(utils.BROWSER_STORY_TITLE)
-            story.add_text(utils.BROWSER_STORY_HEADER, skip_if_already_there=True)
+            story.add_text(
+                utils.BROWSER_STORY_HEADER, skip_if_already_there=True)
 
             story.add_text(
                 '## Browser Timeframe Analyzer.\n\nThe browser timeframe '
@@ -266,9 +267,11 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                     tagged_events, total_count, activity_hours[0],
                     activity_hours[-1]))
 
-            story.add_text('An overview of all browser activity, grouped by the hour.')
+            story.add_text(
+                'An overview of all browser activity, grouped by the hour.')
             story.add_aggregation(agg_hour, 'barchart')
-            story.add_text('An overview of all browser activity, grouped by the day.')
+            story.add_text(
+                'An overview of all browser activity, grouped by the day.')
             story.add_aggregation(agg_day, 'circlechart')
 
         return (
