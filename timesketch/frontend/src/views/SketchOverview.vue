@@ -159,7 +159,7 @@ limitations under the License.
                 </div>
               </header>
               <div class="card-content" style="padding:5px;">
-                <ts-timeline-list :timelines="sketch.timelines" :controls="false"></ts-timeline-list>
+                <ts-timeline-list :timelines="sketch.timelines" :controls="true" :is-compact="true"></ts-timeline-list>
               </div>
             </div>
           </div>

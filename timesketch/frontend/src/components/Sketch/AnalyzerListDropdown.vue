@@ -23,7 +23,7 @@ limitations under the License.
     </button>
     <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
       <div class="modal-card" style="width:300px;">
-        <div class="field" v-for="analyzer in meta.analyzers">
+        <div class="field" v-for="analyzer in analyzers">
           <b-checkbox v-model="selectedAnalyzers" :native-value="analyzer" type="is-info">{{ analyzer }}</b-checkbox>
         </div>
         <button v-if="selectedAnalyzers.length" class="button is-success" v-on:click="runAnalyzers">Run</button>
@@ -48,6 +48,9 @@ export default {
     },
     meta() {
       return this.$store.state.meta
+    },
+    analyzers () {
+      return this.meta.analyzers.sort()
     }
   },
   methods: {
