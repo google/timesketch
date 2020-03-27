@@ -28,17 +28,20 @@ class AggregationResult(object):
     """Result object for aggregations.
 
     Attributes:
+        chart_type: Chart type to render, defaults to "table".
         encoding: Dict with Vega-Lite encoding information.
         values: List of dicts with aggregation data.
     """
 
-    def __init__(self, encoding, values):
+    def __init__(self, encoding, values, chart_type='table'):
         """Initialize the object.
 
         Args:
             encoding: Dict with Vega-Lite encoding information.
             values: List of dicts with aggregation data.
+            chart_type: Chart type to render, defaults to "table".
         """
+        self.chart_type = chart_type
         self.encoding = encoding
         self.values = values
 
@@ -65,12 +68,13 @@ class AggregationResult(object):
         return pandas.DataFrame(self.values)
 
     def to_chart(
-            self, chart_name, chart_title='', as_html=False,
+            self, chart_name='', chart_title='', as_html=False,
             interactive=False):
         """Encode aggregation result as Vega-Lite chart.
 
         Args:
-            chart_name: Name of chart as string.
+            chart_name: Name of chart as string, defaults to initialized
+                value of the chart type..
             chart_title: The title of the chart.
             as_html: Boolean indicating if chart should be returned in HTML.
             interactive: Boolean indicating if chart should be interactive.
@@ -81,6 +85,8 @@ class AggregationResult(object):
         Raises:
             RuntimeError if chart type does not exist.
         """
+        if not chart_name:
+            chart_name = self.chart_type
         chart_class = chart_manager.ChartManager.get_chart(chart_name)
 
         if not chart_class:

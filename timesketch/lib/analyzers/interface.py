@@ -15,6 +15,7 @@
 
 from __future__ import unicode_literals
 
+import datetime
 import json
 import logging
 import os
@@ -478,11 +479,20 @@ class Story(object):
                 "table" or the name of the chart to be used, eg "barcharct",
                 "hbarchart".
         """
+        today = datetime.datetime.utcnow()
         block = self._create_new_block()
         block['componentName'] = 'TsAggregationCompact'
         block['componentProps']['aggregation'] = {
-            'id': aggregation.id, 'name': aggregation.name,
-            'type': agg_type}
+            'agg_type': aggregation.agg_type,
+            'id': aggregation.id,
+            'name': aggregation.name,
+            'chart_type': agg_type,
+            'description': aggregation.description,
+            'created_at': today.isoformat(),
+            'updated_at': today.isoformat(),
+            'parameters': aggregation.parameters,
+            'user': {'username': None},
+            }
         self._commit(block)
 
     def add_view(self, view):

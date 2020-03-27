@@ -74,12 +74,13 @@ class TermsAggregation(interface.BaseAggregator):
         return 'Top results for an unknown field'
 
     # pylint: disable=arguments-differ
-    def run(self, field, limit=10):
+    def run(self, field, limit=10, supported_charts='table'):
         """Run the aggregation.
 
         Args:
             field: What field to aggregate.
             limit: How many buckets to return.
+            supported_charts: Chart type to render. Defaults to table.
 
         Returns:
             Instance of interface.AggregationResult with aggregation result.
@@ -121,7 +122,8 @@ class TermsAggregation(interface.BaseAggregator):
             d = {field: bucket['key'], 'count': bucket['doc_count']}
             values.append(d)
 
-        return interface.AggregationResult(encoding, values)
+        return interface.AggregationResult(
+            encoding=encoding, values=values, chart_type=supported_charts)
 
 
 manager.AggregatorManager.register_aggregator(TermsAggregation)

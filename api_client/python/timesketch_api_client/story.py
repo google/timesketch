@@ -235,6 +235,7 @@ class AggregationBlock(BaseBlock):
         self._agg_id = 0
         self._agg_name = ''
         self._agg_type = 'table'
+        self._agg_dict = {}
 
     @property
     def aggregation(self):
@@ -295,7 +296,8 @@ class AggregationBlock(BaseBlock):
 
         self._agg_id = agg_dict.get('id', 0)
         self._agg_name = agg_dict.get('name', '')
-        self._agg_type = agg_dict.get('type', 'table')
+        self._agg_type = agg_dict.get('chart_type', 'table')
+        self._agg_dict = agg_dict
 
     def to_dict(self):
         """Returns a dict with the block data.
@@ -322,7 +324,13 @@ class AggregationBlock(BaseBlock):
         aggregation_block['componentProps']['aggregation'] = {
             'id': aggregation_obj.id,
             'name': aggregation_obj.name,
-            'type': self._agg_type,
+            'chart_type': self._agg_type,
+            'agg_type': self._agg_dict.get('agg_type'),
+            'description': self._agg_dict.get('description'),
+            'created_at': self._agg_dict.get('created_at'),
+            'updated_at': self._agg_dict.get('updated_at'),
+            'parameters': self._agg_dict.get('parameters', {}),
+            'user': self._agg_dict.get('user', {}),
         }
 
         return aggregation_block
