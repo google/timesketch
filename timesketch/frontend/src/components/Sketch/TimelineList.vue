@@ -17,7 +17,7 @@ limitations under the License.
   <ul class="content-list">
     <transition-group name="list" tag="p">
       <li style="padding:10px;" v-for="timeline in timelines" :key="timeline.id">
-        <ts-timeline-list-item :timeline="timeline" :controls="controls" @remove="remove(timeline)" @save="save(timeline)"></ts-timeline-list-item>
+        <ts-timeline-list-item :timeline="timeline" :controls="controls" :is-compact="isCompact" @remove="remove(timeline)" @save="save(timeline)"></ts-timeline-list-item>
       </li>
     </transition-group>
   </ul>
@@ -29,7 +29,7 @@ import TsTimelineListItem from './TimelineListItem'
 
 export default {
   components: { TsTimelineListItem },
-  props: ['timelines', 'controls'],
+  props: ['timelines', 'controls', 'isCompact'],
   computed: {
     sketch () {
       return this.$store.state.sketch

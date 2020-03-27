@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus>
+    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus>
     <button class="button is-outlined is-rounded is-small" slot="trigger">
       <span class="icon is-small">
         <i class="fas fa-play-circle"></i>
@@ -23,13 +23,14 @@ limitations under the License.
     </button>
     <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
       <div class="modal-card" style="width:300px;">
-        <div class="field" v-for="analyzer in meta.analyzers">
+        <div class="field" v-for="analyzer in sortedAnalyzerList()">
           <b-checkbox v-model="selectedAnalyzers" :native-value="analyzer" type="is-info">{{ analyzer }}</b-checkbox>
         </div>
         <button v-if="selectedAnalyzers.length" class="button is-success" v-on:click="runAnalyzers">Run</button>
       </div>
     </b-dropdown-item>
   </b-dropdown>
+
 </template>
 
 <script>
@@ -51,6 +52,10 @@ export default {
     }
   },
   methods: {
+    sortedAnalyzerList: function () {
+      const analyzerArrayCopy = [...this.$store.state.meta.analyzers];
+      return analyzerArrayCopy.sort()
+    },
     runAnalyzers: function () {
       ApiClient.runAnalyzers(this.sketch.id, this.timeline.id, this.selectedAnalyzers).then((response) => {
         this.$emit('newAnalysisSession', response.data.objects[0].analysis_session)
