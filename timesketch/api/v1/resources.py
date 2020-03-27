@@ -1127,6 +1127,7 @@ class AggregationExploreResource(ResourceMixin, Resource):
             }
             meta = {
                 'method': 'aggregator_run',
+                'chart_type': chart_type,
                 'name': aggregator_description.get('name'),
                 'description': aggregator_description.get('description'),
                 'es_time': time_after - time_before,
@@ -1134,7 +1135,8 @@ class AggregationExploreResource(ResourceMixin, Resource):
 
             if chart_type:
                 meta['vega_spec'] = result_obj.to_chart(
-                    chart_name=chart_type, chart_title=aggregator.chart_title)
+                    chart_name=chart_type,
+                    chart_title=aggregator.chart_title)
                 meta['vega_chart_title'] = aggregator.chart_title
 
         elif aggregation_dsl:

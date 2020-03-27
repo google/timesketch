@@ -16,3 +16,4 @@
 # Register all charts here by importing them.
 from timesketch.lib.charts import barchart
 from timesketch.lib.charts import circles
+from timesketch.lib.charts import table

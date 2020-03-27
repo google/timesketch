@@ -16,7 +16,8 @@ limitations under the License.
 <template>
   <div class="card">
     <div class="card-content" ref="vegaChart">
-      <ts-vega-lite-chart :vegaSpec="vegaSpec"></ts-vega-lite-chart>
+      <ts-table-chart v-show="chartType === 'table'" :table-data="chartData"></ts-table-chart>
+      <ts-vega-lite-chart v-show="chartType !== 'table'" :vegaSpec="vegaSpec"></ts-vega-lite-chart>
     </div>
   </div>
 </template>
@@ -24,14 +25,17 @@ limitations under the License.
 <script>
 import ApiClient from '../../utils/RestApiClient'
 import TsVegaLiteChart from './VegaLiteChart'
+import TsTableChart from './TableChart'
 
 export default {
   props: ['aggregation'],
-  components: {TsVegaLiteChart},
+  components: {TsVegaLiteChart, TsTableChart},
   data () {
     return {
       vegaSpec: {},
-      title: ''
+      title: '',
+      chartType: '',
+      chartData: {}
     }
   },
   computed: {
@@ -51,6 +55,8 @@ export default {
         spec.config.autosize = { type: 'fit', contains: 'padding' }
         this.vegaSpec = JSON.stringify(spec)
         this.title = response.data.meta.vega_chart_title
+        this.chartType = response.data.meta.chart_type
+        this.chartData = spec.data.values
       }).catch((e) => {})
     }
   },
