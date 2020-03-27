@@ -575,7 +575,7 @@ class Story(resource.BaseResource):
         response = self._api.session.post(resource_url, json=data)
 
         if response.status_code in definitions.HTTP_STATUS_CODE_20X:
-            return response.text
+            return response.json()
 
         logger.error(
             'Error exporting story: [{0:d}] {1!s} {2!s}'.format(
