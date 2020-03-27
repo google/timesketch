@@ -207,7 +207,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 day, _, _ = datetime.partition('T')
                 event.add_attributes({
                     'search_string': search_query,
-                    'search_day': day})
+                    'search_day': str(day)})
 
                 event.add_human_readable('{0:s} search query: {1:s}'.format(
                     engine, search_query), self.NAME)
