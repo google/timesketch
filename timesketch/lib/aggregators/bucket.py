@@ -26,7 +26,8 @@ class TermsAggregation(interface.BaseAggregator):
     DISPLAY_NAME = 'Terms Aggregation'
     DESCRIPTION = 'Aggregating values of a particular field'
 
-    SUPPORTED_CHARTS = frozenset(['barchart', 'hbarchart', 'table'])
+    SUPPORTED_CHARTS = frozenset(
+        ['barchart', 'circlechart', 'hbarchart', 'table'])
 
     FORM_FIELDS = [
         {

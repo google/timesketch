@@ -234,6 +234,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
             params = {
                 'field': 'browser_hour',
                 'limit': 30,
+                'supported_charts': 'barchart'
             }
             agg_hour = self.sketch.add_aggregation(
                 name='Browser Activity Per Hour.', agg_name='field_bucket',
@@ -243,6 +244,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
             params = {
                 'field': 'browser_day',
                 'limit': 1000,
+                'supported_charts': 'circlechart'
             }
             agg_day = self.sketch.add_aggregation(
                 name='Browser Activity Per Day.', agg_name='field_bucket',

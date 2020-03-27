@@ -80,7 +80,8 @@ class FilteredTermsAggregation(interface.BaseAggregator):
     DISPLAY_NAME = 'Filtered Terms Aggregation'
     DESCRIPTION = 'Aggregating values of a field after applying a filter'
 
-    SUPPORTED_CHARTS = frozenset(['barchart', 'hbarchart', 'table'])
+    SUPPORTED_CHARTS = frozenset(
+        ['barchart', 'circlechart', 'hbarchart', 'table'])
 
     FORM_FIELDS = [
         {
