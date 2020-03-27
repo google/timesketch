@@ -95,7 +95,7 @@ limitations under the License.
 
 
     <div v-if="controls" class="field is-grouped is-pulled-right" style="margin-top:10px;">
-      <p class="control">
+      <p v-if="!isCompact" class="control">
         <button class="button is-rounded is-small is-outlined" v-on:click="showInfoModal = !showInfoModal">
                 <span class="icon is-small">
                   <i class="fas fa-info-circle"></i>
@@ -103,7 +103,7 @@ limitations under the License.
           <span>Info</span>
         </button>
       </p>
-      <p v-if="meta.permissions.write && timelineStatus === 'ready'" class="control">
+      <p v-if="meta.permissions.write && timelineStatus === 'ready' && !isCompact" class="control">
         <button class="button is-rounded is-small is-outlined" v-on:click="showEditModal = !showEditModal">
           <span class="icon is-small">
             <i class="fas fa-edit"></i>
@@ -114,7 +114,7 @@ limitations under the License.
       <p v-if="timelineStatus === 'ready'" class="control">
         <ts-analyzer-list-dropdown :timeline="timeline" @newAnalysisSession="setAnalysisSession($event)"></ts-analyzer-list-dropdown>
       </p>
-      <p v-if="timelineStatus === 'ready'" class="control">
+      <p v-if="timelineStatus === 'ready' && !isCompact" class="control">
         <button class="button is-small is-rounded is-outlined" @click="showAnalysisHistory = !showAnalysisHistory">
           <span class="icon is-small">
             <i class="fas fa-history"></i>
@@ -122,7 +122,7 @@ limitations under the License.
           <span>History</span>
         </button>
       </p>
-      <p v-if="meta.permissions.write" class="control">
+      <p v-if="meta.permissions.write && !isCompact" class="control">
         <button v-on:click="remove(timeline)" class="button is-small is-rounded is-danger is-outlined">Remove</button>
       </p>
     </div>
@@ -176,7 +176,7 @@ export default {
     TsAnalyzerSessionDetail,
     TsAnalyzerHistory
   },
-  props: ['timeline', 'controls'],
+  props: ['timeline', 'controls', 'isCompact'],
   data () {
     return {
       initialColor: {},
