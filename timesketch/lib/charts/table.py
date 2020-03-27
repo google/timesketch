@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Table chart."""
+import altair as alt
+
 from timesketch.lib.charts import manager
 from timesketch.lib.charts import interface
-
-import altair as alt
 
 
 class TableChart(interface.BaseChart):
