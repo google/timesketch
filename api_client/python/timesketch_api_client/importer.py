@@ -14,26 +14,36 @@
 """Timesketch data importer."""
 from __future__ import unicode_literals
 
+import codecs
 import datetime
 import io
-import codecs
 import json
-import math
 import logging
+import math
 import os
-import uuid
+import string
 import time
+import uuid
+
+import dateutil.parser
+import pandas
 import six
 
-import pandas
-import dateutil.parser
 from . import timeline
 from . import definitions
 
 
-def format_data_frame_row(row, format_message_string):
-    """Return a formatted data frame using a format string."""
-    return format_message_string.format(**row)
+def format_data_frame(dataframe, format_message_string):
+    """Add a message field to a data frame using a format message string."""
+    dataframe['message'] = ''
+
+    formatter = string.Formatter()
+    for literal_text, field, _, _ in formatter.parse(format_message_string):
+        dataframe['message'] = dataframe['message'] + literal_text
+
+        if field:
+            dataframe['message'] = dataframe[
+                'message'] + dataframe[field].astype(str)
 
 
 class ImportStreamer(object):
@@ -130,10 +140,8 @@ class ImportStreamer(object):
         Returns:
             A pandas data frame with added columns needed for Timesketch.
         """
-        if 'message' not in data_frame:
-            data_frame['message'] = data_frame.apply(
-                lambda row: format_data_frame_row(
-                    row, self._format_string), axis=1)
+        if 'message' not in data_frame and self._format_string:
+            format_data_frame(data_frame, self._format_string)
 
         if 'timestamp_desc' not in data_frame:
             data_frame['timestamp_desc'] = self._timestamp_desc
@@ -207,7 +215,7 @@ class ImportStreamer(object):
         # TODO: Add in the ability to re-upload failed file.
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             raise RuntimeError(
-                'Error uploading data: [{0:d}] {1:s} {2:s}, '
+                'Error uploading data: [{0:d}] {1!s} {2!s}, '
                 'index {3:s}'.format(
                     response.status_code, response.reason, response.text,
                     self._index))
@@ -297,13 +305,13 @@ class ImportStreamer(object):
                     # TODO (kiddi): Re-do this chunk.
                     raise RuntimeError(
                         'Error uploading data chunk: {0:d}/{1:d}. Status code: '
-                        '{2:d} - {3:s} {4:s}'.format(
+                        '{2:d} - {3!s} {4!s}'.format(
                             index, chunks, response.status_code,
                             response.reason, response.text))
 
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             raise RuntimeError(
-                'Error uploading data: [{0:d}] {1:s} {2:s}, file: {3:s}, '
+                'Error uploading data: [{0:d}] {1!s} {2!s}, file: {3:s}, '
                 'index {4:s}'.format(
                     response.status_code, response.reason, response.text,
                     file_path, self._index))

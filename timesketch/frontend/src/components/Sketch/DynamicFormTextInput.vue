@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div class="field">
+  <div class="field" v-if="display">
     <label class="label">{{ label }}</label>
-    <input class="input"
+    <input class="input" style="max-width: 400px;"
            type="text"
            :name="name"
            :value="value"
@@ -26,6 +26,6 @@ limitations under the License.
 </template>
 <script>
 export default {
-  props: ['placeholder', 'label', 'name', 'value']
+  props: ['placeholder', 'label', 'name', 'value', 'display']
 }
 </script>

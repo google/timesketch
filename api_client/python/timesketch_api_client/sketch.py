@@ -14,7 +14,9 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
+import os
 import json
+import logging
 
 import pandas
 
@@ -22,8 +24,14 @@ from . import aggregation
 from . import definitions
 from . import error
 from . import resource
+from . import story
 from . import timeline
 from . import view as view_lib
+
+
+logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
+logger = logging.getLogger('sketch_api')
+
 
 class Sketch(resource.BaseResource):
     """Timesketch sketch object.
@@ -136,6 +144,70 @@ class Sketch(resource.BaseResource):
 
         return data_frame
 
+    def create_story(self, title):
+        """Create a story object.
+
+        Args:
+            title: the title of the story.
+
+        Returns:
+            A story object (instance of Story) for the newly
+            created story.
+        """
+        resource_url = '{0:s}/sketches/{1:d}/stories/'.format(
+            self.api.api_root, self.id)
+        data = {
+            'title': title,
+            'content': ''
+        }
+
+        response = self.api.session.post(resource_url, json=data)
+        response_json = response.json()
+        story_dict = response_json.get('objects', [{}])[0]
+        return story.Story(
+            story_id=story_dict.get('id', 0),
+            sketch=self,
+            api=self.api)
+
+    def add_to_acl(self, user_list=None, group_list=None, make_public=False):
+        """Add users or groups to the sketch ACL.
+
+        Args:
+            user_list: optional list of users to add to the ACL
+                of the sketch. Each user is a string.
+            group_list: optional list of groups to add to the ACL
+                of the sketch. Each user is a string.
+            make_public: Optional boolean indicating the sketch should be
+                marked as public.
+
+        Returns:
+            A boolean indicating whether the ACL change was successful.
+        """
+        if not user_list and not group_list:
+            return True
+
+        resource_url = '{0:s}/sketches/{1:d}/collaborators/'.format(
+            self.api.api_root, self.id)
+
+        data = {}
+        if group_list:
+            group_list_corrected = [str(x).strip() for x in group_list]
+            data['groups'] = group_list_corrected
+
+        if user_list:
+            user_list_corrected = [str(x).strip() for x in user_list]
+            data['users'] = user_list_corrected
+
+        if make_public:
+            data['public'] = 'true'
+
+        if not data:
+            return True
+
+        response = self.api.session.post(resource_url, json=data)
+
+        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+
     def list_aggregations(self):
         """List all saved aggregations for this sketch.
 
@@ -163,6 +235,39 @@ class Sketch(resource.BaseResource):
             aggregations.append(aggregation_obj)
         return aggregations
 
+    def get_analyzer_status(self):
+        """Returns a list of started analyzers and their status.
+
+        Returns:
+            A list of dict objects that contains status information
+            of each analyzer run. The dict contains information about
+            what timeline it ran against, the results and current
+            status of the analyzer run.
+        """
+        stats_list = []
+        for timeline_obj in self.list_timelines():
+            resource_uri = (
+                '{0:s}/sketches/{1:d}/timelines/{2:d}/analysis').format(
+                    self.api.api_root, self.id, timeline_obj.id)
+            response = self.api.session.get(resource_uri)
+            response_json = response.json()
+            objects = response_json.get('objects')
+            if not objects:
+                continue
+            for result in objects[0]:
+                stat = {
+                    'index': timeline_obj.index,
+                    'timeline_id': timeline_obj.id,
+                    'analyzer': result.get('analyzer_name', 'N/A'),
+                    'results': result.get('result', 'N/A'),
+                    'status': 'N/A',
+                }
+                status = result.get('status', [])
+                if len(status) == 1:
+                    stat['status'] = status[0].get('status', 'N/A')
+                stats_list.append(stat)
+        return stats_list
+
     def get_aggregation(self, aggregation_id):
         """Return a stored aggregation.
 
@@ -178,14 +283,40 @@ class Sketch(resource.BaseResource):
                 return aggregation_obj
         return None
 
+    def get_story(self, story_id=None, story_title=None):
+        """Returns a story object that is stored in the sketch.
+
+        Args:
+            story_id: an integer indicating the ID of the story to
+                be fetched. Defaults to None.
+            story_title: a string with the title of the story. Optional
+                and defaults to None.
+
+        Returns:
+            A story object (instance of Story) if one is found. Returns
+            a None if neiter story_id or story_title is defined or if
+            the view does not exist. If a story title is defined and
+            not a story id, the first story that is found with the same
+            title will be returned.
+        """
+        if story_id is None and story_title is None:
+            return None
+
+        for story_obj in self.list_stories():
+            if story_id and story_id == story_obj.id:
+                return story_obj
+            if story_title and story_title.lower() == story_obj.title.lower():
+                return story_obj
+        return None
+
     def get_view(self, view_id=None, view_name=None):
         """Returns a view object that is stored in the sketch.
 
         Args:
-            view_name: a string with the name of the view. Optional
-                and defaults to None.
             view_id: an integer indicating the ID of the view to
                 be fetched. Defaults to None.
+            view_name: a string with the name of the view. Optional
+                and defaults to None.
 
         Returns:
             A view object (instance of View) if one is found. Returns
@@ -201,6 +332,31 @@ class Sketch(resource.BaseResource):
             if view_name and view_name.lower() == view.name.lower():
                 return view
         return None
+
+    def list_stories(self):
+        """Get a list of all stories that are attached to the sketch.
+
+        Returns:
+            List of stories (instances of Story objects)
+        """
+        story_list = []
+        resource_url = '{0:s}/sketches/{1:d}/stories/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.get(resource_url)
+        response_json = response.json()
+        story_objects = response_json.get('objects')
+        if not story_objects:
+            return story_list
+
+        if not len(story_objects) == 1:
+            return story_list
+        stories = story_objects[0]
+        for story_dict in stories:
+            story_list.append(story.Story(
+                story_id=story_dict.get('id', -1),
+                sketch=self,
+                api=self.api))
+        return story_list
 
     def list_views(self):
         """List all saved views for this sketch.
@@ -305,7 +461,7 @@ class Sketch(resource.BaseResource):
         Args:
             query_string: Elasticsearch query string.
             query_dsl: Elasticsearch query DSL as JSON string.
-            query_filter: Filter for the query as JSON string.
+            query_filter: Filter for the query as a dict.
             view: View object instance (optional).
             return_fields: List of fields that should be included in the
                 response. Optional and defaults to None.
@@ -322,36 +478,36 @@ class Sketch(resource.BaseResource):
 
         Raises:
             ValueError: if unable to query for the results.
+            RuntimeError: if the query is missing needed values.
         """
-        default_filter = {
-            'time_start': None,
-            'time_end': None,
-            'size': self.DEFAULT_SIZE_LIMIT,
-            'terminate_after': self.DEFAULT_SIZE_LIMIT,
-            'indices': '_all',
-            'order': 'asc'
-        }
-
-        if as_pandas:
-            default_filter['size'] = 10000
-            default_filter['terminate_after'] = 10000
-
         if not (query_string or query_filter or query_dsl or view):
             raise RuntimeError('You need to supply a query or view')
 
         if not query_filter:
-            query_filter = default_filter
+            query_filter = {
+                'time_start': None,
+                'time_end': None,
+                'size': self.DEFAULT_SIZE_LIMIT,
+                'terminate_after': self.DEFAULT_SIZE_LIMIT,
+                'indices': '_all',
+                'order': 'asc'
+            }
+
+        if not isinstance(query_filter, dict):
+            raise ValueError(
+                'Unable to query with a query filter that isn\'t a dict.')
 
         if view:
             if view.query_string:
                 query_string = view.query_string
             query_filter = json.loads(view.query_filter)
 
-            query_filter['size'] = self.DEFAULT_SIZE_LIMIT
-            query_filter['terminate_after'] = self.DEFAULT_SIZE_LIMIT
-
             if view.query_dsl:
                 query_dsl = json.loads(view.query_dsl)
+
+        if as_pandas:
+            query_filter.setdefault('size', self.DEFAULT_SIZE_LIMIT)
+            query_filter.setdefault('terminate_after', self.DEFAULT_SIZE_LIMIT)
 
         resource_url = '{0:s}/sketches/{1:d}/explore/'.format(
             self.api.api_root, self.id)
@@ -393,6 +549,13 @@ class Sketch(resource.BaseResource):
             more_meta = more_response_json.get('meta', {})
             added_time = more_meta.get('es_time', 0)
             response_json['meta']['es_time'] += added_time
+
+        total_elastic_count = response_json.get(
+            'meta', {}).get('es_total_count', 0)
+        if total_elastic_count != total_count:
+            logger.info(
+                '{0:d} results were returned, but {1:d} records matched the '
+                'search query'.format(total_count, total_elastic_count))
 
         if as_pandas:
             return self._build_pandas_dataframe(response_json, return_fields)
@@ -453,7 +616,7 @@ class Sketch(resource.BaseResource):
                 analyzer_kwargs = {analyzer_name: analyzer_kwargs}
 
         if timeline_name:
-            sketch = self.lazyload_data()
+            sketch = self.lazyload_data(refresh_cache=True)
             timelines = []
             for timeline_dict in sketch['objects'][0]['timelines']:
                 name = timeline_dict.get('name', '')
@@ -485,6 +648,45 @@ class Sketch(resource.BaseResource):
 
         return '[{0:d}] {1:s} {2:s}'.format(
             response.status_code, response.reason, response.text)
+
+    def remove_acl(self, user_list=None, group_list=None, remove_public=False):
+        """Remove users or groups to the sketch ACL.
+
+        Args:
+            user_list: optional list of users to remove from the ACL
+                of the sketch. Each user is a string.
+            group_list: optional list of groups to remove from the ACL
+                of the sketch. Each user is a string.
+            remove_public: Optional boolean indicating the sketch should be
+                no longer marked as public.
+
+        Returns:
+            A boolean indicating whether the ACL change was successful.
+        """
+        if not user_list and not group_list:
+            return True
+
+        resource_url = '{0:s}/sketches/{1:d}/collaborators/'.format(
+            self.api.api_root, self.id)
+
+        data = {}
+        if group_list:
+            group_list_corrected = [str(x).strip() for x in group_list]
+            data['remove_groups'] = group_list_corrected
+
+        if user_list:
+            user_list_corrected = [str(x).strip() for x in user_list]
+            data['remove_users'] = user_list_corrected
+
+        if remove_public:
+            data['public'] = 'false'
+
+        if not data:
+            return True
+
+        response = self.api.session.post(resource_url, json=data)
+
+        return response.status_code in definitions.HTTP_STATUS_CODE_20X
 
     def aggregate(self, aggregate_dsl):
         """Run an aggregation request on the sketch.

@@ -45,7 +45,7 @@ limitations under the License.
                   </div>
                   <transition name="fade">
                     <div class="column" v-if="obj.content">
-                      <div v-html="obj.html" class="markdown-body" style="max-height: 600px;overflow: auto"></div>
+                      <div v-html="toHtml(obj.content)" class="markdown-body" style="max-height: 600px;overflow: auto"></div>
                     </div>
                   </transition>
                 </div>
@@ -57,14 +57,17 @@ limitations under the License.
                     </button>
                   </p>
                 </div>
-                <div v-on:dblclick="obj.edit = !obj.edit" class="markdown-body" v-if="!obj.edit" v-html="obj.html"></div>
+                <div v-on:dblclick="obj.edit = !obj.edit" class="markdown-body" v-if="!obj.edit" v-html="toHtml(obj.content)"></div>
               </div>
 
               <div v-if="obj.componentName" @mouseover="obj.isActive = true" @mouseleave="obj.isActive = false">
                 <article class="message">
                   <div class="message-header">
-                    <p>
+                    <p v-if="obj.componentName === 'TsViewEventList'">
                       <router-link :to="{ name: 'SketchExplore', query: {view: obj.componentProps.view.id}}"><strong>{{ obj.componentProps.view.name }}</strong></router-link>
+                    </p>
+                    <p v-if="obj.componentName === 'TsAggregationCompact'">
+                      {{ obj.componentProps.aggregation.name }}
                     </p>
                     <button class="delete" aria-label="delete" v-on:click="deleteBlock(index)"></button>
                   </div>
@@ -85,6 +88,9 @@ limitations under the License.
                     <p class="control" v-if="meta.views.length">
                       <ts-view-list-dropdown @setActiveView="addViewComponent($event, index)" :is-rounded="true" :title="'+ Saved view'"></ts-view-list-dropdown>
                     </p>
+                    <p class="control" v-if="sketch.aggregations.length">
+                      <ts-aggregation-list-dropdown @addAggregation="addAggregationComponent($event, index)" :is-rounded="true" :title="'+ Saved aggregation'"></ts-aggregation-list-dropdown>
+                    </p>
                   </div>
               </div>
 
@@ -101,6 +107,8 @@ limitations under the License.
 import ApiClient from '../utils/RestApiClient'
 import marked from 'marked'
 import _ from 'lodash'
+import TsAggregationListDropdown from '../components/Sketch/AggregationListDropdown'
+import TsAggregationCompact from "../components/Sketch/AggregationCompact"
 import TsViewListDropdown from '../components/Sketch/ViewListDropdown'
 import TsViewEventList from '../components/Sketch/EventListCompact'
 
@@ -109,7 +117,6 @@ const defaultBlock = () => {
     componentName: '',
     componentProps: {},
     content: '',
-    html: '',
     edit: true,
     showPanel: false,
     isActive: false
@@ -117,7 +124,7 @@ const defaultBlock = () => {
 }
 
 export default {
-  components: { TsViewListDropdown, TsViewEventList },
+  components: { TsAggregationListDropdown, TsAggregationCompact, TsViewListDropdown, TsViewEventList },
   props: ['sketchId', 'storyId'],
   data () {
     return {
@@ -128,7 +135,6 @@ export default {
   methods: {
     update: _.debounce(function (e, obj) {
       obj.content = e.target.value
-      obj.html = marked(e.target.value, { sanitize: false })
       this.save()
     }, 300),
     addBlock (index) {
@@ -141,6 +147,14 @@ export default {
       if (!this.blocks.length) {
         this.blocks = [defaultBlock()]
       }
+      this.save()
+    },
+    addAggregationComponent (event, index) {
+      let newIndex = index + 1
+      let newBlock = defaultBlock()
+      newBlock.componentName = 'TsAggregationCompact'
+      newBlock.componentProps = { aggregation: event }
+      this.blocks.splice(newIndex, 0, newBlock)
       this.save()
     },
     addViewComponent (event, index) {
@@ -167,6 +181,9 @@ export default {
       ApiClient.updateStory(this.title, content, this.sketchId, this.storyId)
         .then((response) => {
         }).catch((e) => {})
+    },
+    toHtml (markdown) {
+      return marked(markdown, { sanitize: false })
     }
   },
   computed: {
@@ -181,7 +198,7 @@ export default {
     ApiClient.getStory(this.sketchId, this.storyId).then((response) => {
       this.title = response.data.objects[0].title
       let content = response.data.objects[0].content
-      if (content === '') {
+      if (content === '[]') {
         this.blocks = [defaultBlock()]
       } else {
         this.blocks = JSON.parse(content)

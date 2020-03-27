@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 import json
 import logging
 import os
+import time
 import traceback
 import yaml
 
@@ -30,6 +31,7 @@ from timesketch.models import db_session
 from timesketch.models.sketch import Aggregation
 from timesketch.models.sketch import Event as SQLEvent
 from timesketch.models.sketch import Sketch as SQLSketch
+from timesketch.models.sketch import Story as SQLStory
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import View
 from timesketch.models.sketch import Analysis
@@ -42,6 +44,7 @@ def _flush_datastore_decorator(func):
         self.datastore.flush_queued_events()
         return func_return
     return wrapper
+
 
 def get_config_path(file_name):
     """Returns a path to a configuration file.
@@ -339,16 +342,38 @@ class Sketch(object):
         if not query_filter:
             query_filter = {'indices': '_all'}
 
-        name = '[{0:s}] {1:s}'.format(analyzer_name, view_name)
-        view = View.get_or_create(name=name, sketch=self.sql_sketch, user=None)
+        description = 'analyzer: {0:s}'.format(analyzer_name)
+        view = View.get_or_create(
+            name=view_name, description=description, sketch=self.sql_sketch,
+            user=None)
+        view.description = description
         view.query_string = query_string
         view.query_filter = view.validate_filter(query_filter)
         view.query_dsl = query_dsl
         view.searchtemplate = None
+        view.set_status(status='new')
 
         db_session.add(view)
         db_session.commit()
         return view
+
+    def add_story(self, title):
+        """Add a story to the Sketch.
+
+        Args:
+            title: The name of the view.
+
+        Raises:
+            ValueError: If both query_string an query_dsl are missing.
+
+        Returns:
+            An instance of a Story object.
+        """
+        story = SQLStory.get_or_create(
+            title=title, content='[]', sketch=self.sql_sketch, user=None)
+        db_session.add(story)
+        db_session.commit()
+        return Story(story)
 
     def get_all_indices(self):
         """List all indices in the Sketch.
@@ -358,6 +383,87 @@ class Sketch(object):
         active_timelines = self.sql_sketch.active_timelines
         indices = [t.searchindex.index_name for t in active_timelines]
         return indices
+
+
+class Story(object):
+    """Story object with helper methods.
+
+    Attributes:
+        story (SQLAlchemy): Instance of a SQLAlchemy Story object.
+    """
+    def __init__(self, story):
+        """Initializes a Story object.
+
+        Args:
+            story: SQLAlchemy Story object.
+        """
+        self.story = story
+
+    @staticmethod
+    def _create_new_block():
+        """Create a new block to be added to a Story.
+
+        Returns:
+            Dictionary with default block content.
+        """
+        block = {
+            'componentName': '',
+            'componentProps': {},
+            'content': '',
+            'edit': False,
+            'showPanel': False,
+            'isActive': False
+        }
+        return block
+
+    def _commit(self, block):
+        """Commit the Story to database.
+
+        Args:
+            block (dict): Block to add.
+        """
+        story_blocks = json.loads(self.story.content)
+        story_blocks.append(block)
+        self.story.content = json.dumps(story_blocks)
+        db_session.add(self.story)
+        db_session.commit()
+
+    def add_text(self, text):
+        """Add a text block to the Story.
+
+        Args:
+            text (str): text (markdown is supported) to add to the story.
+        """
+        block = self._create_new_block()
+        block['content'] = text
+        self._commit(block)
+
+    def add_aggregation(self, aggregation, agg_type):
+        """Add a saved aggregation to the Story.
+
+        Args:
+            aggregation (Aggregation): Saved aggregation to add to the story.
+            agg_type (str): string indicating the type of aggregation, can be:
+                "table" or the name of the chart to be used, eg "barcharct",
+                "hbarchart".
+        """
+        block = self._create_new_block()
+        block['componentName'] = 'TsAggregationCompact'
+        block['componentProps']['aggregation'] = {
+            'id': aggregation.id, 'name': aggregation.name,
+            'type': agg_type}
+        self._commit(block)
+
+    def add_view(self, view):
+        """Add a saved view to the Story.
+
+        Args:
+            view (View): Saved view to add to the story.
+        """
+        block = self._create_new_block()
+        block['componentName'] = 'TsViewEventList'
+        block['componentProps']['view'] = {'id': view.id, 'name': view.name}
+        self._commit(block)
 
 
 class BaseIndexAnalyzer(object):
@@ -380,6 +486,11 @@ class BaseIndexAnalyzer(object):
 
     # Used as hints to the frontend UI in order to render input forms.
     FORM_FIELDS = []
+
+    # Configure how long an analyzer should run before the timeline
+    # gets fully indexed.
+    SECONDS_PER_WAIT = 10
+    MAXIMUM_WAITS = 360
 
     def __init__(self, index_name):
         """Initialize the analyzer object.
@@ -458,6 +569,32 @@ class BaseIndexAnalyzer(object):
         """
         analysis = Analysis.query.get(analysis_id)
         analysis.set_status('STARTED')
+
+        timeline = analysis.timeline
+        searchindex = timeline.searchindex
+
+        counter = 0
+        while True:
+            status = searchindex.get_status.status
+            status = status.lower()
+            if status == 'ready':
+                break
+
+            if status == 'fail':
+                logging.error(
+                    'Unable to run analyzer on a failed index ({0:s})'.format(
+                        searchindex.index_name))
+                return 'Failed'
+
+            time.sleep(self.SECONDS_PER_WAIT)
+            counter += 1
+            if counter >= self.MAXIMUM_WAITS:
+                logging.error(
+                    'Indexing has taken too long time, aborting run of '
+                    'analyzer')
+                return 'Failed'
+            # Refresh the searchindex object.
+            db_session.refresh(searchindex)
 
         # Run the analyzer. Broad Exception catch to catch any error and store
         # the error in the DB for display in the UI.

@@ -55,7 +55,7 @@ def get_spec(field, query='', query_dsl=''):
     elif query_dsl:
         query_filter = query_dsl
     else:
-        raise ValueError('Neiter query nor query DSL provided.')
+        raise ValueError('Neither query nor query DSL provided.')
 
     return {
         'aggregations': {
@@ -64,7 +64,7 @@ def get_spec(field, query='', query_dsl=''):
                 'aggregations': {
                     'term_count': {
                         'terms': {
-                            'field': '{0:s}.keyword'.format(field)
+                            'field': field
                         }
                     }
                 }
@@ -77,35 +77,40 @@ class FilteredTermsAggregation(interface.BaseAggregator):
     """Query Filter Term Aggregation."""
 
     NAME = 'query_bucket'
+    DISPLAY_NAME = 'Filtered Terms Aggregation'
     DESCRIPTION = 'Aggregating values of a field after applying a filter'
 
-    SUPPORTED_CHARTS = frozenset(['barchart', 'hbarchart'])
+    SUPPORTED_CHARTS = frozenset(['barchart', 'hbarchart', 'table'])
 
     FORM_FIELDS = [
         {
             'type': 'ts-dynamic-form-select-input',
             'name': 'supported_charts',
             'label': 'Chart type to render',
-            'options': list(SUPPORTED_CHARTS)
+            'options': list(SUPPORTED_CHARTS),
+            'display': True
         },
         {
             'name': 'query_string',
             'type': 'ts-dynamic-form-text-input',
             'label': 'The filter query to narrow down the result set',
             'placeholder': 'Query',
-            'default_value': ''
+            'default_value': '',
+            'display': True
         },
         {
             'name': 'query_dsl',
             'type': 'ts-dynamic-form-text-input',
             'label': 'The filter query DSL to narrow down the result',
             'placeholder': 'Query DSL',
-            'default_value': ''
+            'default_value': '',
+            'display': False
         },
         {
             'name': 'field',
             'type': 'ts-dynamic-form-text-input',
             'label': 'What field to aggregate.',
+            'display': True
         }
     ]
 
@@ -150,8 +155,10 @@ class FilteredTermsAggregation(interface.BaseAggregator):
             raise ValueError('Both query_string and query_dsl are missing')
 
         self.field = field
+        formatted_field_name = self.format_field_by_type(field)
+
         aggregation_spec = get_spec(
-            field=field, query=query_string, query_dsl=query_dsl)
+            field=formatted_field_name, query=query_string, query_dsl=query_dsl)
 
         # Encoding information for Vega-Lite.
         encoding = {

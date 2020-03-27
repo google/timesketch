@@ -18,8 +18,8 @@ limitations under the License.
 
     <section class="section">
       <div class="container is-fluid">
-        <ts-navbar-secondary v-if="sketch.active_timelines.length" currentAppContext="sketch" currentPage="overview">
-          <b-tooltip :label="shareTooltip" position="is-bottom" type="is-white">
+        <ts-navbar-secondary currentAppContext="sketch" currentPage="overview">
+          <b-tooltip v-if="meta.collaborators" :label="shareTooltip" position="is-bottom" type="is-white">
             <a v-if="meta.permissions.write" class="button is-info is-rounded" style="margin-right:10px;" v-on:click="showShareModal = !showShareModal">
                 <span class="icon is-small">
                   <i v-if="meta.permissions.public" class="fas fa-globe"></i>
@@ -113,6 +113,15 @@ limitations under the License.
         <div class="card" style="min-height: 200px;">
           <div class="card-content">
             <ts-sketch-summary :sketch="sketch"></ts-sketch-summary>
+            <br>
+            <b-field grouped group-multiline>
+              <div class="control" v-for="user in meta.collaborators.users" :key="user.name">
+                <b-tag attached size="is-medium">{{ user }}</b-tag>
+              </div>
+              <div class="control" v-for="group in meta.collaborators.groups" :key="group.name">
+                <b-tag attached size="is-medium">{{ group }}</b-tag>
+              </div>
+            </b-field>
           </div>
         </div>
       </div>
@@ -226,7 +235,7 @@ export default {
     TsUploadTimelineForm,
     TsSketchStoryList,
     TsSketchTimelinesManage,
-    TsShareForm
+    TsShareForm,
   },
   data () {
     return {
@@ -246,7 +255,7 @@ export default {
     count () {
       return this.$store.state.count
     },
-    shareTooltip () {
+    shareTooltip: function () {
       let msg = ''
       let baseMsg = 'Shared with '
       if (this.meta.collaborators.users.length) {

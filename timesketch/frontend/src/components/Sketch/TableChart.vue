@@ -14,21 +14,37 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div class="field" v-if="display">
-    <label class="label">{{ label }}</label>
-    <div class="control">
-      <div class="select">
-        <select :value="value" @input="$emit('input', $event.target.value)">
-          <option disabled value="">Please select one</option>
-          <option v-for="option in options" :key="option">{{ option }}</option>
-        </select>
-      </div>
-    </div>
+  <div v-if="tableData">
+    <b-table
+      :data="tableData"
+      :columns="getColumns()"
+      :paginated="true"
+      :pagination-simple="true"
+      :per-page="10"
+      :hoverable="true"
+      icon-pack="fas"
+      pagination-size="is-small">
+    </b-table>
   </div>
 </template>
 
 <script>
 export default {
-  props: ['options', 'label', 'value', 'display']
+  props: ['tableData'],
+  methods: {
+    getColumns: function () {
+      let columns = []
+      let firstRow = this.tableData[0]
+      Object.keys(firstRow).forEach(function(key) {
+        columns.push({
+          field: key,
+          label: key,
+          sortable: true,
+        })
+      })
+      return columns
+    }
+  }
 }
+
 </script>

@@ -82,6 +82,8 @@ from timesketch.lib.forms import StoryForm
 from timesketch.lib.forms import GraphExploreForm
 from timesketch.lib.forms import SearchIndexForm
 from timesketch.lib.forms import TimelineForm
+from timesketch.lib.stories import api_fetcher as story_api_fetcher
+from timesketch.lib.stories import manager as story_export_manager
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.experimental.utils import GRAPH_VIEWS
 from timesketch.lib.experimental.utils import get_graph_views
@@ -202,6 +204,7 @@ class ResourceMixin(object):
     view_fields = {
         'id': fields.Integer,
         'name': fields.String,
+        'description': fields.String,
         'user': fields.Nested(user_fields),
         'query_string': fields.String,
         'query_filter': fields.String,
@@ -400,6 +403,7 @@ class SketchResource(ResourceMixin, Resource):
         for _, cls in aggregator_manager.AggregatorManager.get_aggregators():
             aggregators[cls.NAME] = {
                 'form_fields': cls.FORM_FIELDS,
+                'display_name': cls.DISPLAY_NAME,
                 'description': cls.DESCRIPTION
             }
 
@@ -409,6 +413,17 @@ class SketchResource(ResourceMixin, Resource):
             t.searchindex.index_name
             for t in sketch.active_timelines
         ]
+
+        # Get event count and size on disk for each index in the sketch.
+        stats_per_index = {}
+        es_stats = self.datastore.client.indices.stats(
+            index=sketch_indices, metric='docs, store')
+        for index_name, stats in es_stats.get('indices', {}).items():
+            stats_per_index[index_name] = {
+                'count': stats.get('total', {}).get('docs', {}).get('count', 0),
+                'bytes': stats.get(
+                    'total', {}).get('store', {}).get('size_in_bytes', 0)
+            }
 
         if not sketch_indices:
             mappings_settings = {}
@@ -440,15 +455,26 @@ class SketchResource(ResourceMixin, Resource):
         # Make the list of dicts unique
         mappings = {v['field']: v for v in mappings}.values()
 
-        meta = dict(
-            aggregators=aggregators,
-            views=[{
+        views = []
+        for view in sketch.get_named_views:
+            if not view.user:
+                username = 'System'
+            else:
+                username = view.user.username
+            view = {
                 'name': view.name,
+                'description': view.description,
                 'id': view.id,
                 'query': view.query_string,
+                'user': username,
                 'created_at': view.created_at,
                 'updated_at': view.updated_at
-            } for view in sketch.get_named_views],
+            }
+            views.append(view)
+
+        meta = dict(
+            aggregators=aggregators,
+            views=views,
             searchtemplates=[{
                 'name': searchtemplate.name,
                 'id': searchtemplate.id
@@ -467,7 +493,8 @@ class SketchResource(ResourceMixin, Resource):
             analyzers=[
                 x for x, y in analyzer_manager.AnalysisManager.get_analyzers()
             ],
-            mappings=list(mappings)
+            mappings=list(mappings),
+            stats=stats_per_index
         )
         return self.to_json(sketch, meta=meta)
 
@@ -781,10 +808,15 @@ class ExploreResource(ResourceMixin, Resource):
         enable_scroll = form.enable_scroll.data
         scroll_id = form.scroll_id.data
 
-        query_filter = request.json.get('filter', [])
-        return_fields = query_filter.get('fields', [])
-        return_fields = [field['field'] for field in return_fields]
-        return_fields.extend(DEFAULT_SOURCE_FIELDS)
+        query_filter = request.json.get('filter', {})
+
+        return_field_string = form.fields.data
+        if return_field_string:
+            return_fields = [x.strip() for x in return_field_string.split(',')]
+        else:
+            return_fields = query_filter.get('fields', [])
+            return_fields = [field['field'] for field in return_fields]
+            return_fields.extend(DEFAULT_SOURCE_FIELDS)
 
         sketch_indices = {
             t.searchindex.index_name
@@ -810,6 +842,15 @@ class ExploreResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'The request needs a query string/DSL and or a star filter.')
 
+        # Aggregate hit count per index.
+        index_stats_agg = {
+            "indices": {
+                "terms": {
+                    "field": "_index"
+                }
+            }
+        }
+
         if scroll_id:
             # pylint: disable=unexpected-keyword-arg
             result = self.datastore.client.scroll(
@@ -821,9 +862,19 @@ class ExploreResource(ResourceMixin, Resource):
                 query_filter,
                 query_dsl,
                 indices,
-                aggregations=None,
+                aggregations=index_stats_agg,
                 return_fields=return_fields,
                 enable_scroll=enable_scroll)
+
+        # Get number of matching documents per index.
+        count_per_index = {}
+        try:
+            for bucket in result['aggregations']['indices']['buckets']:
+                key = bucket.get('key')
+                if key:
+                    count_per_index[key] = bucket.get('doc_count')
+        except KeyError:
+            pass
 
         # Get labels for each event that matches the sketch.
         # Remove all other labels.
@@ -863,6 +914,7 @@ class ExploreResource(ResourceMixin, Resource):
             'es_total_count': result['hits']['total'],
             'timeline_colors': tl_colors,
             'timeline_names': tl_names,
+            'count_per_index': count_per_index,
             'scroll_id': result.get('_scroll_id', ''),
         }
 
@@ -955,7 +1007,8 @@ class AggregationInfoResource(ResourceMixin, Resource):
 
     REMOVE_FIELDS = frozenset(['_shards', 'hits', 'timed_out', 'took'])
 
-    def _get_info(self, aggregator_name):
+    @staticmethod
+    def _get_info(aggregator_name):
         """Returns a dict with information about an aggregation."""
         agg_class = aggregator_manager.AggregatorManager.get_aggregator(
             aggregator_name)
@@ -970,6 +1023,7 @@ class AggregationInfoResource(ResourceMixin, Resource):
 
         return {
             'name': agg_class.NAME,
+            'display_name': agg_class.DISPLAY_NAME,
             'description': agg_class.DESCRIPTION,
             'fields': field_lines,
         }
@@ -1073,6 +1127,7 @@ class AggregationExploreResource(ResourceMixin, Resource):
             }
             meta = {
                 'method': 'aggregator_run',
+                'chart_type': chart_type,
                 'name': aggregator_description.get('name'),
                 'description': aggregator_description.get('description'),
                 'es_time': time_after - time_before,
@@ -1080,7 +1135,9 @@ class AggregationExploreResource(ResourceMixin, Resource):
 
             if chart_type:
                 meta['vega_spec'] = result_obj.to_chart(
-                    chart_name=chart_type, chart_title=aggregator.chart_title)
+                    chart_name=chart_type,
+                    chart_title=aggregator.chart_title)
+                meta['vega_chart_title'] = aggregator.chart_title
 
         elif aggregation_dsl:
             # pylint: disable=unexpected-keyword-arg
@@ -1845,7 +1902,7 @@ class StoryListResource(ResourceMixin, Resource):
             title = form.title.data
         sketch = Sketch.query.get_with_acl(sketch_id)
         story = Story(
-            title=title, content='', sketch=sketch, user=current_user)
+            title=title, content='[]', sketch=sketch, user=current_user)
         db_session.add(story)
         db_session.commit()
         return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
@@ -1853,6 +1910,33 @@ class StoryListResource(ResourceMixin, Resource):
 
 class StoryResource(ResourceMixin, Resource):
     """Resource to get a story."""
+
+    @staticmethod
+    def _export_story(story, sketch_id, export_format='markdown'):
+        """Returns a story in a format as requested in export_format.
+
+        Args:
+            story: a story object (instance of Story) that is to be exported.
+            sketch_id: integer with the sketch ID.
+            export_format: string with the name of the format to export the
+                story to. Defaults to "markdown".
+
+        Returns:
+            The exported story in the format described. This could be a text
+            or a binary, depending on the output format.
+        """
+        exporter_class = story_export_manager.StoryExportManager.get_exporter(
+            export_format)
+        if not exporter_class:
+            return b''
+
+        with exporter_class() as exporter:
+            data_fetcher = story_api_fetcher.ApiDataFetcher()
+            data_fetcher.set_sketch_id(sketch_id)
+
+            exporter.set_data_fetcher(data_fetcher)
+            exporter.from_string(story.content)
+            return exporter.export_story()
 
     @login_required
     def get(self, sketch_id, story_id):
@@ -1867,6 +1951,14 @@ class StoryResource(ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
         story = Story.query.get(story_id)
+
+        if not story:
+            msg = 'No Story found with this ID.'
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
+
+        if not sketch:
+            msg = 'No sketch found with this ID.'
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
         # Check that this story belongs to the sketch
         if story.sketch_id != sketch.id:
@@ -1895,12 +1987,16 @@ class StoryResource(ResourceMixin, Resource):
         Returns:
             A view in JSON (instance of flask.wrappers.Response)
         """
-        form = StoryForm.build(request)
-        if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
         sketch = Sketch.query.get_with_acl(sketch_id)
         story = Story.query.get(story_id)
+
+        if not story:
+            msg = 'No Story found with this ID.'
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
+
+        if not sketch:
+            msg = 'No sketch found with this ID.'
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
         if story.sketch_id != sketch.id:
             abort(
@@ -1908,11 +2004,55 @@ class StoryResource(ResourceMixin, Resource):
                 'Sketch ID ({0:d}) does not match with the ID in '
                 'the story ({1:d})'.format(sketch.id, story.sketch_id))
 
-        story.title = form.title.data
-        story.content = form.content.data
+        form = request.json
+        if not form:
+            form = request.data
+
+        if form and form.get('export_format'):
+            export_format = form.get('export_format')
+            return self._export_story(
+                story=story, sketch_id=sketch_id, export_format=export_format)
+
+        story.title = form.get('title', '')
+        story.content = form.get('content', '[]')
         db_session.add(story)
         db_session.commit()
         return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
+
+    @login_required
+    def delete(self, sketch_id, story_id):
+        """Handles DELETE request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+            story_id: Integer primary key for a story database model
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        story = Story.query.get(story_id)
+
+        if not story:
+            msg = 'No Story found with this ID.'
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
+
+        if not sketch:
+            msg = 'No sketch found with this ID.'
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
+
+        # Check that this timeline belongs to the sketch
+        if story.sketch_id != sketch.id:
+            msg = (
+                'The sketch ID ({0:d}) does not match with the story'
+                'sketch ID ({1:d})'.format(sketch.id, story.sketch_id))
+            abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
+
+        if not sketch.has_permission(user=current_user, permission='write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have write permission on the sketch.')
+
+        sketch.stories.remove(story)
+        db_session.commit()
+        return HTTP_STATUS_CODE_OK
 
 
 class QueryResource(ResourceMixin, Resource):
