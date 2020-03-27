@@ -81,7 +81,8 @@ limitations under the License.
             </span>
           </header>
           <div class="card-content">
-            <ts-vega-lite-chart :vegaSpec="vegaSpec"></ts-vega-lite-chart>
+            <ts-table-chart v-show="chartType === 'table'" :table-data="chartData"></ts-table-chart>
+            <ts-vega-lite-chart v-show="chartType !== 'table'" :vegaSpec="vegaSpec"></ts-vega-lite-chart>
           </div>
         </div>
       </div>
@@ -94,13 +95,15 @@ import ApiClient from '../../utils/RestApiClient'
 import TsVegaLiteChart from './VegaLiteChart'
 import TsDynamicForm from './DynamicForm'
 import TsSketchExploreAggregatorListDropdown from './AggregatorListDropdown'
+import TsTableChart from './TableChart'
 
 export default {
   props: ['showAggregations'],
   components: {
     TsDynamicForm,
     TsVegaLiteChart,
-    TsSketchExploreAggregatorListDropdown
+    TsSketchExploreAggregatorListDropdown,
+    TsTableChart
   },
   data () {
     return {
@@ -110,7 +113,9 @@ export default {
       selectedAggregator: '',
       showChart: false,
       showSaveModal: false,
-      aggregationName: ''
+      aggregationName: '',
+      chartType: '',
+      chartData: {}
     }
   },
   computed: {
@@ -140,6 +145,8 @@ export default {
         spec.config.view.width = this.$refs.vegaChart.$el.offsetWidth
         spec.config.autosize = { type: 'fit', contains: 'padding' }
         this.vegaSpec = JSON.stringify(spec)
+        this.chartType = response.data.meta.chart_type
+        this.chartData = spec.data.values
       }).catch((e) => {})
     },
     save: function () {
