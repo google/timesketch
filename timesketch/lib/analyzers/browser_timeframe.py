@@ -215,66 +215,53 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
             event.add_tags(['outside-active-hours'])
             hour = event.source.get('hour')
             this_hour_count = hour_count.get(hour)
-            datetime = event.source.get('datetime')
-            day, _, _ = datetime.partition('T')
             event.add_attributes(
                 {'activity_summary': (
                     'Number of events for this hour ({0:d}): {1:d}, with the '
                     'threshold value: {2:0.2f}').format(
                         hour, this_hour_count, threshold),
-                 'hour_count': this_hour_count,
-                 'browser_hour': str(hour),
-                 'browser_day': str(day)})
+                 'hour_count': this_hour_count})
             event.add_emojis([sleeping_emoji])
             event.commit()
 
         tagged_events, _ = data_frame_outside.shape
         if tagged_events:
-
-            params = {
-                'field': 'browser_hour',
-                'limit': 30,
-                'supported_charts': 'barchart'
-            }
-            agg_hour = self.sketch.add_aggregation(
-                name='Browser Activity Per Hour.', agg_name='field_bucket',
-                agg_params=params, chart_type='barchart',
-                description='Created by the browser timeframe analyzer')
-
-            params = {
-                'field': 'browser_day',
-                'limit': 1000,
-                'supported_charts': 'circlechart'
-            }
-            agg_day = self.sketch.add_aggregation(
-                name='Browser Activity Per Day.', agg_name='field_bucket',
-                agg_params=params, chart_type='circlechart',
-                description='Created by the browser timeframe analyzer')
-
             story = self.sketch.add_story(utils.BROWSER_STORY_TITLE)
             story.add_text(
                 utils.BROWSER_STORY_HEADER, skip_if_already_there=True)
 
+            # Find some statistics about the run time of the analyzer.
+            percent = (tagged_events / total_count) * 100.0
+            last_hour = activity_hours[0]
+            end = 0
+            for hour in activity_hours[1:]:
+                if hour != last_hour + 1:
+                    end = hour
+                    break
+                last_hour = hour
+
+            if not end:
+                first = activity_hours[0]
+                last = activity_hours[-1]
+            else:
+                first = end
+                index = activity_hours.index(end)
+                last = activity_hours[index - 1]
             story.add_text(
                 '## Browser Timeframe Analyzer.\n\nThe browser timeframe '
                 'analyzer discovered {0:d} browser events that ocurred '
                 'outside of the typical browsing window of this browser '
-                'history (out of {1:d} total events).\n\nTake into '
-                'consideration that this analyzer extracts the hour of '
-                'browsing activity, and then finds the frequency of browsing '
-                'events, extracting the longest block of most active hours '
-                'and then proceeds with flagging all events outside of that '
-                'block of hours.\n\nThe hours considered to be active hours '
-                'are the hours between {2:d} and {3:d}'.format(
-                    tagged_events, total_count, activity_hours[0],
-                    activity_hours[-1]))
-
-            story.add_text(
-                'An overview of all browser activity, grouped by the hour.')
-            story.add_aggregation(agg_hour, 'barchart')
-            story.add_text(
-                'An overview of all browser activity, grouped by the day.')
-            story.add_aggregation(agg_day, 'circlechart')
+                'history, or around {1:0.2f}%  of the {2:d} total events.'
+                '\n\nThe analyzer determines the activity hours by finding '
+                'the frequency of browsing events per hour, and then '
+                'discovering the longest block of most active hours before '
+                'proceeding with flagging all events outside of that time '
+                'period. This can information can be used by other analyzers '
+                'or by manually looking for other acitivy within the '
+                'inactive time period to find unusual actions.\n\n'
+                'The hours considered to be active hours are the hours '
+                'between {3:02d} and {4:02d} (hours in UTC)'.format(
+                    tagged_events, percent, total_count, first, last))
 
         return (
             'Tagged {0:d} out of {1:d} events as outside of normal '

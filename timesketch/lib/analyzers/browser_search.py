@@ -19,7 +19,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
     NAME = 'browser_search'
 
-    DEPENDENCIES = frozenset()
+    DEPENDENCIES = frozenset(['domain'])
 
     # A list of fields to include in the view output.
     _FIELDS_TO_INCLUDE = ['domain', 'url', 'search_string']
@@ -207,6 +207,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 day, _, _ = datetime.partition('T')
                 event.add_attributes({
                     'search_string': search_query,
+                    'search_engine': engine,
                     'search_day': str(day)})
 
                 event.add_human_readable('{0:s} search query: {1:s}'.format(
@@ -227,7 +228,6 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
             params = {
                 'field': 'search_string',
                 'limit': 20,
-                'supported_charts': 'hbarchart'
             }
             agg_obj = self.sketch.add_aggregation(
                 name='Top 20 browser search queries.', agg_name='field_bucket',
@@ -237,11 +237,20 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
             params = {
                 'field': 'search_day',
                 'limit': 20,
-                'supported_charts': 'barchart'
             }
             agg_days = self.sketch.add_aggregation(
                 name='Top 20 days of search queries.', agg_name='field_bucket',
-                agg_params=params, view_id=view.id, chart_type='barchart',
+                agg_params=params, chart_type='hbarchart',
+                description='Created by the browser search analyzer')
+
+            params = {
+                'query_string': 'tag:"browser-search"',
+                'supported_charts': 'hbarchart',
+                'field': 'domain',
+            }
+            agg_engines = self.sketch.add_aggregation(
+                name='Top Search Engines', agg_name='query_bucket',
+                agg_params=params, view_id=view.id, chart_type='hbarchart',
                 description='Created by the browser search analyzer')
 
             story = self.sketch.add_story(utils.BROWSER_STORY_TITLE)
@@ -254,12 +263,14 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 'it\'s findings.\n\n'.format(simple_counter))
             story.add_text(
                 'The top 20 most commonly discovered searches were:')
-            story.add_aggregation(agg_obj, 'hbarchart')
+            story.add_aggregation(agg_obj)
+            story.add_text('The domains used to search:')
+            story.add_aggregation(agg_engines, 'hbarchart')
             story.add_text(
                 'And an overview of all the discovered search terms:')
             story.add_view(view)
             story.add_text('And the most common days of search:')
-            story.add_aggregation(agg_days, 'barchart')
+            story.add_aggregation(agg_days)
 
         return (
             'Browser Search completed with {0:d} search results '

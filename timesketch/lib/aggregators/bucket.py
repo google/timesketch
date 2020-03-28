@@ -74,7 +74,9 @@ class TermsAggregation(interface.BaseAggregator):
         return 'Top results for an unknown field'
 
     # pylint: disable=arguments-differ
-    def run(self, field, limit=10, supported_charts='table'):
+    def run(
+            self, field, limit=10, supported_charts='table',
+            order_field='count'):
         """Run the aggregation.
 
         Args:
@@ -95,7 +97,7 @@ class TermsAggregation(interface.BaseAggregator):
                 'type': 'nominal',
                 'sort': {
                     'op': 'sum',
-                    'field': 'count',
+                    'field': order_field,
                     'order': 'descending'
                 }
             },

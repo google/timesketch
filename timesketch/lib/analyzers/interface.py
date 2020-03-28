@@ -312,6 +312,9 @@ class Sketch(object):
         else:
             view = None
 
+        if chart_type:
+            agg_params['supported_charts'] = chart_type
+
         agg_json = json.dumps(agg_params)
         aggregation = Aggregation.get_or_create(
             name=name, description=description, agg_type=agg_name,
@@ -470,17 +473,27 @@ class Story(object):
         block['content'] = text
         self._commit(block)
 
-    def add_aggregation(self, aggregation, agg_type):
+    def add_aggregation(self, aggregation, agg_type=''):
         """Add a saved aggregation to the Story.
 
         Args:
             aggregation (Aggregation): Saved aggregation to add to the story.
             agg_type (str): string indicating the type of aggregation, can be:
                 "table" or the name of the chart to be used, eg "barcharct",
-                "hbarchart".
+                "hbarchart". Defaults to the valueu of supported_charts.
         """
         today = datetime.datetime.utcnow()
         block = self._create_new_block()
+        parameter_dict = json.loads(aggregation.parameters)
+        if agg_type:
+            parameter_dict['supported_charts'] = agg_type
+        else:
+            agg_type = parameter_dict.get('supported_charts')
+            # Neither agg_type nor supported_charts is set.
+            if not agg_type:
+                agg_type = 'table'
+                parameter_dict['supported_charts'] = 'table'
+
         block['componentName'] = 'TsAggregationCompact'
         block['componentProps']['aggregation'] = {
             'agg_type': aggregation.agg_type,
@@ -490,7 +503,7 @@ class Story(object):
             'description': aggregation.description,
             'created_at': today.isoformat(),
             'updated_at': today.isoformat(),
-            'parameters': aggregation.parameters,
+            'parameters': json.dumps(parameter_dict),
             'user': {'username': None},
             }
         self._commit(block)
