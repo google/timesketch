@@ -20,6 +20,7 @@ class AggregatorManager(object):
     """The aggregator manager."""
 
     _class_registry = {}
+    _exclude_registry = set()
 
     @classmethod
     def get_aggregators(cls):
@@ -31,6 +32,8 @@ class AggregatorManager(object):
                 type: the aggregator class.
         """
         for agg_name, agg_class in iter(cls._class_registry.items()):
+            if agg_name in cls._exclude_registry:
+                continue
             yield agg_name, agg_class
 
     @classmethod
@@ -54,13 +57,16 @@ class AggregatorManager(object):
         return aggregator_class
 
     @classmethod
-    def register_aggregator(cls, aggregator_class):
+    def register_aggregator(cls, aggregator_class, exclude_from_list=False):
         """Registers an aggregator class.
 
         The aggregator classes are identified by their lower case name.
 
         Args:
             aggregator_class (type): the aggregator class to register.
+            exclude_from_list (boolean): if set to True then the aggregator
+                gets registered but will not be included in the
+                get_aggregators function. Defaults to False.
 
         Raises:
             KeyError: if class is already set for the corresponding name.
@@ -70,8 +76,11 @@ class AggregatorManager(object):
             raise KeyError('Class already set for name: {0:s}.'.format(
                 aggregator_class.NAME))
         cls._class_registry[aggregator_name] = aggregator_class
+        if exclude_from_list:
+            cls._exclude_registry.add(aggregator_name)
 
     @classmethod
     def clear_registration(cls):
         """Clears all aggregator registrations."""
         cls._class_registry = {}
+        cls._exclude_registry = set()

@@ -245,7 +245,6 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
             params = {
                 'query_string': 'tag:"browser-search"',
-                'supported_charts': 'hbarchart',
                 'field': 'domain',
             }
             agg_engines = self.sketch.add_aggregation(

@@ -80,9 +80,11 @@ class TermsAggregation(interface.BaseAggregator):
         """Run the aggregation.
 
         Args:
-            field: What field to aggregate.
+            field: What field to aggregate on.
             limit: How many buckets to return.
             supported_charts: Chart type to render. Defaults to table.
+            order_field: The name of the field that is used for the order
+                of items in the aggregation, defaults to "count".
 
         Returns:
             Instance of interface.AggregationResult with aggregation result.

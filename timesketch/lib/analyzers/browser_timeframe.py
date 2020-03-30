@@ -247,6 +247,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                 first = end
                 index = activity_hours.index(end)
                 last = activity_hours[index - 1]
+
             story.add_text(
                 '## Browser Timeframe Analyzer.\n\nThe browser timeframe '
                 'analyzer discovered {0:d} browser events that ocurred '
@@ -262,6 +263,22 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                 'The hours considered to be active hours are the hours '
                 'between {3:02d} and {4:02d} (hours in UTC)'.format(
                     tagged_events, percent, total_count, first, last))
+
+            params = {
+                'data': aggregation.to_dict(orient='records'),
+                'title': 'Browser Activity Per Hour',
+                'field': 'hour',
+                'order_field': 'hour',
+            }
+            agg_obj = self.sketch.add_aggregation(
+                name='Browser Activity Per Hour', agg_name='manual_feed',
+                agg_params=params, chart_type='barchart',
+                description='Created by the browser timeframe analyzer')
+            story.add_text(
+                'An overview of all browser activity per hour. The threshold '
+                'used to determine if an hour was considered to be active '
+                'was: {0:0.2f}'.format(threshold))
+            story.add_aggregation(agg_obj)
 
         return (
             'Tagged {0:d} out of {1:d} events as outside of normal '
