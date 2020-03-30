@@ -258,18 +258,21 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
             story.add_text(
                 '## Browser Search Analyzer.\n\nThe browser search '
-                'analyzer found {0:d} browser searches. This is a summary of '
-                'it\'s findings.\n\n'.format(simple_counter))
+                'analyzer takes URLs usually resevered for browser '
+                'search queries and extracts the search string.'
+                'In this timeline the analyzer discovered {0:d} '
+                'browser searches.\n\nThis is a summary of '
+                'it\'s findings.'.format(simple_counter))
             story.add_text(
                 'The top 20 most commonly discovered searches were:')
             story.add_aggregation(agg_obj)
             story.add_text('The domains used to search:')
             story.add_aggregation(agg_engines, 'hbarchart')
+            story.add_text('And the most common days of search:')
+            story.add_aggregation(agg_days)
             story.add_text(
                 'And an overview of all the discovered search terms:')
             story.add_view(view)
-            story.add_text('And the most common days of search:')
-            story.add_aggregation(agg_days)
 
         return (
             'Browser Search completed with {0:d} search results '
