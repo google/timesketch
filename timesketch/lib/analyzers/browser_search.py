@@ -208,7 +208,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 event.add_attributes({
                     'search_string': search_query,
                     'search_engine': engine,
-                    'search_day': str(day)})
+                    'search_day': 'D:{0:s}'.format(day)})
 
                 event.add_human_readable('{0:s} search query: {1:s}'.format(
                     engine, search_query), self.NAME)

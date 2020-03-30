@@ -103,7 +103,10 @@ class TermsAggregation(interface.BaseAggregator):
                     'order': 'descending'
                 }
             },
-            'y': {'field': 'count', 'type': 'quantitative'}
+            'y': {'field': 'count', 'type': 'quantitative'},
+            'tooltip': [
+                {'field': field, 'type': 'nominal'},
+                {'field': order_field, 'type': 'quantitative'}],
         }
 
         aggregation_spec = {

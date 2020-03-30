@@ -175,7 +175,10 @@ class FilteredTermsAggregation(interface.BaseAggregator):
                     'order': 'descending'
                 }
             },
-            'y': {'field': 'count', 'type': 'quantitative'}
+            'y': {'field': 'count', 'type': 'quantitative'},
+            'tooltip': [
+                {'field': field, 'type': 'nominal'},
+                {'field': 'count', 'type': 'quantitative'}],
         }
 
         response = self.elastic_aggregation(aggregation_spec)
