@@ -480,7 +480,7 @@ class Story(object):
             aggregation (Aggregation): Saved aggregation to add to the story.
             agg_type (str): string indicating the type of aggregation, can be:
                 "table" or the name of the chart to be used, eg "barcharct",
-                "hbarchart". Defaults to the valueu of supported_charts.
+                "hbarchart". Defaults to the value of supported_charts.
         """
         today = datetime.datetime.utcnow()
         block = self._create_new_block()
