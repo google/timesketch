@@ -11,7 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Feed aggregations."""
+"""Feed aggregation.
+
+This file provides a manual feed aggregator. This is useful for analyzers
+that have already done the aggregation inside the analyzer, as part of the
+analysis work they do. Instead of adding attributes to all events or
+redo the aggregation each time the analyzer can simply store the aggregation
+results as part of the parameters to the manual aggregator. That way the
+aggregation can be used to generate charts and tables in stories and stored
+insights. This analyzer is not useful for UI and therefore is "hidden" from
+views.
+"""
 
 from __future__ import unicode_literals
 

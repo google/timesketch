@@ -228,7 +228,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         if tagged_events:
             story = self.sketch.add_story(utils.BROWSER_STORY_TITLE)
             story.add_text(
-                utils.BROWSER_STORY_HEADER, skip_if_already_there=True)
+                utils.BROWSER_STORY_HEADER, skip_if_exists=True)
 
             # Find some statistics about the run time of the analyzer.
             percent = (tagged_events / total_count) * 100.0

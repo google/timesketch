@@ -230,7 +230,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 'limit': 20,
             }
             agg_obj = self.sketch.add_aggregation(
-                name='Top 20 browser search queries.', agg_name='field_bucket',
+                name='Top 20 browser search queries', agg_name='field_bucket',
                 agg_params=params, view_id=view.id, chart_type='hbarchart',
                 description='Created by the browser search analyzer')
 
@@ -239,7 +239,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 'limit': 20,
             }
             agg_days = self.sketch.add_aggregation(
-                name='Top 20 days of search queries.', agg_name='field_bucket',
+                name='Top 20 days of search queries', agg_name='field_bucket',
                 agg_params=params, chart_type='hbarchart',
                 description='Created by the browser search analyzer')
 
@@ -254,7 +254,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
             story = self.sketch.add_story(utils.BROWSER_STORY_TITLE)
             story.add_text(
-                utils.BROWSER_STORY_HEADER, skip_if_already_there=True)
+                utils.BROWSER_STORY_HEADER, skip_if_exists=True)
 
             story.add_text(
                 '## Browser Search Analyzer.\n\nThe browser search '

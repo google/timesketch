@@ -449,15 +449,15 @@ class Story(object):
         db_session.add(self.story)
         db_session.commit()
 
-    def add_text(self, text, skip_if_already_there=False):
+    def add_text(self, text, skip_if_exists=False):
         """Add a text block to the Story.
 
         Args:
             text (str): text (markdown is supported) to add to the story.
-            skip_if_already_there (boolean): if set to True then the text
+            skip_if_exists (boolean): if set to True then the text
                 will not be added if a block with this text already exists.
         """
-        if skip_if_already_there and self.data:
+        if skip_if_exists and self.data:
             for block in self.data:
                 if not block:
                     continue

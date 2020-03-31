@@ -682,7 +682,7 @@ class Story(object):
         change = SKETCH_CHANGE('STORY_ADD', 'aggregation', params)
         self._analyzer.updates.append(change)
 
-    def add_text(self, text, skip_if_already_there=False):
+    def add_text(self, text, skip_if_exists=False):
         """Add a text block to the Story.
 
         Args:
@@ -692,7 +692,7 @@ class Story(object):
         """
         params = {
             'text': text,
-            'skip_if_already_there': skip_if_already_there,
+            'skip_if_exists': skip_if_exists,
         }
         change = SKETCH_CHANGE('STORY_ADD', 'text', params)
         self._analyzer.updates.append(change)
