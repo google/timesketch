@@ -36,7 +36,8 @@ class CircleChart(interface.BaseChart):
         self._add_url_href(self.encoding)
 
         if self.chart_title:
-            chart = chart.mark_circle(filled=True, size=100).properties(title=self.chart_title)
+            chart = chart.mark_circle(filled=True, size=100).properties(
+                title=self.chart_title)
         else:
             chart = chart.mark_circle(filled=True, size=100)
         field = self.encoding.get('y', {}).get('field', 'count')
