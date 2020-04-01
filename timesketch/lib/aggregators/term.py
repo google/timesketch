@@ -80,7 +80,8 @@ class FilteredTermsAggregation(interface.BaseAggregator):
     DISPLAY_NAME = 'Filtered Terms Aggregation'
     DESCRIPTION = 'Aggregating values of a field after applying a filter'
 
-    SUPPORTED_CHARTS = frozenset(['barchart', 'hbarchart', 'table'])
+    SUPPORTED_CHARTS = frozenset(
+        ['barchart', 'circlechart', 'hbarchart', 'table'])
 
     FORM_FIELDS = [
         {
@@ -133,7 +134,9 @@ class FilteredTermsAggregation(interface.BaseAggregator):
         return 'Top results for an unknown field after filtering'
 
     # pylint: disable=arguments-differ
-    def run(self, field, query_string='', query_dsl=''):
+    def run(
+            self, field, query_string='', query_dsl='',
+            supported_charts='table'):
         """Run the aggregation.
 
         Args:
@@ -144,6 +147,7 @@ class FilteredTermsAggregation(interface.BaseAggregator):
             query_dsl (str): the query DSL field to run on all documents prior
                 to aggregating the results. Either a query string or a query
                 DSL has to be present.
+            supported_charts: Chart type to render. Defaults to table.
 
         Returns:
             Instance of interface.AggregationResult with aggregation result.
@@ -171,7 +175,10 @@ class FilteredTermsAggregation(interface.BaseAggregator):
                     'order': 'descending'
                 }
             },
-            'y': {'field': 'count', 'type': 'quantitative'}
+            'y': {'field': 'count', 'type': 'quantitative'},
+            'tooltip': [
+                {'field': field, 'type': 'nominal'},
+                {'field': 'count', 'type': 'quantitative'}],
         }
 
         response = self.elastic_aggregation(aggregation_spec)
@@ -192,7 +199,8 @@ class FilteredTermsAggregation(interface.BaseAggregator):
             }
             values.append(d)
 
-        return interface.AggregationResult(encoding, values)
+        return interface.AggregationResult(
+            encoding=encoding, values=values, chart_type=supported_charts)
 
 
 manager.AggregatorManager.register_aggregator(FilteredTermsAggregation)

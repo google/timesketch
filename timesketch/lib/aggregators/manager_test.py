@@ -28,6 +28,15 @@ class MockAggregator(object):
     SUPPORTED_CHARTS = frozenset()
 
 
+class MockAggregator2(object):
+    """Mock aggregator class."""
+    NAME = 'MockAggregatorAgain'
+    DESCRIPTION = 'MockDescriptionForMocker'
+    DISPLAY_NAME = 'MockDisplayName'
+    FORM_FIELDS = {}
+    SUPPORTED_CHARTS = frozenset()
+
+
 class TestAggregatorManager(BaseTest):
     """Tests for the functionality of the manager module."""
 
@@ -44,6 +53,14 @@ class TestAggregatorManager(BaseTest):
         self.assertIsInstance(first_aggregator_tuple, tuple)
         self.assertEqual(aggregator_class, MockAggregator)
         self.assertEqual(aggregator_name, 'mockaggregator')
+
+        # Register the second, but so that it does not appear in list.
+        manager.AggregatorManager.register_aggregator(
+            MockAggregator2, exclude_from_list=True)
+
+        aggregators = manager.AggregatorManager.get_aggregators()
+        aggregator_list = list(aggregators)
+        self.assertEqual(len(aggregator_list), 1)
 
     def test_get_aggregator(self):
         """Test to get aggregator class from registry."""

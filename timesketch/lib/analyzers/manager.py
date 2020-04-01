@@ -93,10 +93,14 @@ class AnalysisManager(object):
         if not analyzer_names:
             analyzer_names = cls._class_registry.keys()
 
+        completed_analyzers = set()
         for cluster in cls._build_dependencies(analyzer_names):
             for analyzer_name in cluster:
+                if analyzer_name in completed_analyzers:
+                    continue
                 analyzer_class = cls.get_analyzer(analyzer_name)
                 yield analyzer_name, analyzer_class
+                completed_analyzers.add(analyzer_name)
 
     @classmethod
     def get_analyzer(cls, analyzer_name):

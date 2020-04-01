@@ -26,7 +26,8 @@ class TermsAggregation(interface.BaseAggregator):
     DISPLAY_NAME = 'Terms Aggregation'
     DESCRIPTION = 'Aggregating values of a particular field'
 
-    SUPPORTED_CHARTS = frozenset(['barchart', 'hbarchart', 'table'])
+    SUPPORTED_CHARTS = frozenset(
+        ['barchart', 'circlechart', 'hbarchart', 'table'])
 
     FORM_FIELDS = [
         {
@@ -73,12 +74,17 @@ class TermsAggregation(interface.BaseAggregator):
         return 'Top results for an unknown field'
 
     # pylint: disable=arguments-differ
-    def run(self, field, limit=10):
+    def run(
+            self, field, limit=10, supported_charts='table',
+            order_field='count'):
         """Run the aggregation.
 
         Args:
-            field: What field to aggregate.
+            field: What field to aggregate on.
             limit: How many buckets to return.
+            supported_charts: Chart type to render. Defaults to table.
+            order_field: The name of the field that is used for the order
+                of items in the aggregation, defaults to "count".
 
         Returns:
             Instance of interface.AggregationResult with aggregation result.
@@ -93,11 +99,14 @@ class TermsAggregation(interface.BaseAggregator):
                 'type': 'nominal',
                 'sort': {
                     'op': 'sum',
-                    'field': 'count',
+                    'field': order_field,
                     'order': 'descending'
                 }
             },
-            'y': {'field': 'count', 'type': 'quantitative'}
+            'y': {'field': 'count', 'type': 'quantitative'},
+            'tooltip': [
+                {'field': field, 'type': 'nominal'},
+                {'field': order_field, 'type': 'quantitative'}],
         }
 
         aggregation_spec = {
@@ -120,7 +129,8 @@ class TermsAggregation(interface.BaseAggregator):
             d = {field: bucket['key'], 'count': bucket['doc_count']}
             values.append(d)
 
-        return interface.AggregationResult(encoding, values)
+        return interface.AggregationResult(
+            encoding=encoding, values=values, chart_type=supported_charts)
 
 
 manager.AggregatorManager.register_aggregator(TermsAggregation)

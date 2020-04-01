@@ -15,6 +15,7 @@
 
 from __future__ import unicode_literals
 
+import datetime
 import json
 import logging
 import os
@@ -311,6 +312,9 @@ class Sketch(object):
         else:
             view = None
 
+        if chart_type:
+            agg_params['supported_charts'] = chart_type
+
         agg_json = json.dumps(agg_params)
         aggregation = Aggregation.get_or_create(
             name=name, description=description, agg_type=agg_name,
@@ -321,7 +325,7 @@ class Sketch(object):
         return aggregation
 
     def add_view(self, view_name, analyzer_name, query_string=None,
-                 query_dsl=None, query_filter=None):
+                 query_dsl=None, query_filter=None, additional_fields=None):
         """Add saved view to the Sketch.
 
         Args:
@@ -330,6 +334,8 @@ class Sketch(object):
             query_string: Elasticsearch query string.
             query_dsl: Dictionary with Elasticsearch DSL query.
             query_filter: Dictionary with Elasticsearch filters.
+            additional_fields: A list with field names to include in the
+                view output.
 
         Raises:
             ValueError: If both query_string an query_dsl are missing.
@@ -341,6 +347,10 @@ class Sketch(object):
 
         if not query_filter:
             query_filter = {'indices': '_all'}
+
+        if additional_fields:
+            query_filter['fields'] = [
+                {'field': x.strip()} for x in additional_fields]
 
         description = 'analyzer: {0:s}'.format(analyzer_name)
         view = View.get_or_create(
@@ -369,6 +379,12 @@ class Sketch(object):
         Returns:
             An instance of a Story object.
         """
+        story = SQLStory.query.filter_by(
+            title=title, sketch=self.sql_sketch, user=None).first()
+
+        if story:
+            return Story(story)
+
         story = SQLStory.get_or_create(
             title=title, content='[]', sketch=self.sql_sketch, user=None)
         db_session.add(story)
@@ -399,6 +415,11 @@ class Story(object):
         """
         self.story = story
 
+    @property
+    def data(self):
+        """Return back the content of the story object."""
+        return json.loads(self.story.content)
+
     @staticmethod
     def _create_new_block():
         """Create a new block to be added to a Story.
@@ -428,30 +449,63 @@ class Story(object):
         db_session.add(self.story)
         db_session.commit()
 
-    def add_text(self, text):
+    def add_text(self, text, skip_if_exists=False):
         """Add a text block to the Story.
 
         Args:
             text (str): text (markdown is supported) to add to the story.
+            skip_if_exists (boolean): if set to True then the text
+                will not be added if a block with this text already exists.
         """
+        if skip_if_exists and self.data:
+            for block in self.data:
+                if not block:
+                    continue
+                if not isinstance(block, dict):
+                    continue
+                old_text = block.get('content')
+                if not old_text:
+                    continue
+                if text == old_text:
+                    return
+
         block = self._create_new_block()
         block['content'] = text
         self._commit(block)
 
-    def add_aggregation(self, aggregation, agg_type):
+    def add_aggregation(self, aggregation, agg_type=''):
         """Add a saved aggregation to the Story.
 
         Args:
             aggregation (Aggregation): Saved aggregation to add to the story.
             agg_type (str): string indicating the type of aggregation, can be:
                 "table" or the name of the chart to be used, eg "barcharct",
-                "hbarchart".
+                "hbarchart". Defaults to the value of supported_charts.
         """
+        today = datetime.datetime.utcnow()
         block = self._create_new_block()
+        parameter_dict = json.loads(aggregation.parameters)
+        if agg_type:
+            parameter_dict['supported_charts'] = agg_type
+        else:
+            agg_type = parameter_dict.get('supported_charts')
+            # Neither agg_type nor supported_charts is set.
+            if not agg_type:
+                agg_type = 'table'
+                parameter_dict['supported_charts'] = 'table'
+
         block['componentName'] = 'TsAggregationCompact'
         block['componentProps']['aggregation'] = {
-            'id': aggregation.id, 'name': aggregation.name,
-            'type': agg_type}
+            'agg_type': aggregation.agg_type,
+            'id': aggregation.id,
+            'name': aggregation.name,
+            'chart_type': agg_type,
+            'description': aggregation.description,
+            'created_at': today.isoformat(),
+            'updated_at': today.isoformat(),
+            'parameters': json.dumps(parameter_dict),
+            'user': {'username': None},
+            }
         self._commit(block)
 
     def add_view(self, view):

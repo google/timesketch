@@ -178,7 +178,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
         # solely on browser events.
         query = 'source_short:"WEBHIST" OR source:"WEBHIST"'
 
-        return_fields = ['timestamp', 'url', 'tag', '__ts_emojis']
+        return_fields = ['datetime', 'timestamp', 'url', 'tag', '__ts_emojis']
 
         data_frame = self.event_pandas(
             query_string=query, return_fields=return_fields)
@@ -224,9 +224,65 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
             event.add_emojis([sleeping_emoji])
             event.commit()
 
+        tagged_events, _ = data_frame_outside.shape
+        if tagged_events:
+            story = self.sketch.add_story(utils.BROWSER_STORY_TITLE)
+            story.add_text(
+                utils.BROWSER_STORY_HEADER, skip_if_exists=True)
+
+            # Find some statistics about the run time of the analyzer.
+            percent = (tagged_events / total_count) * 100.0
+            last_hour = activity_hours[0]
+            end = 0
+            for hour in activity_hours[1:]:
+                if hour != last_hour + 1:
+                    end = hour
+                    break
+                last_hour = hour
+
+            if not end:
+                first = activity_hours[0]
+                last = activity_hours[-1]
+            else:
+                first = end
+                index = activity_hours.index(end)
+                last = activity_hours[index - 1]
+
+            story.add_text(
+                '## Browser Timeframe Analyzer.\n\nThe browser timeframe '
+                'analyzer discovered {0:d} browser events that ocurred '
+                'outside of the typical browsing window of this browser '
+                'history, or around {1:0.2f}%  of the {2:d} total events.'
+                '\n\nThe analyzer determines the activity hours by finding '
+                'the frequency of browsing events per hour, and then '
+                'discovering the longest block of most active hours before '
+                'proceeding with flagging all events outside of that time '
+                'period. This can information can be used by other analyzers '
+                'or by manually looking for other acitivy within the '
+                'inactive time period to find unusual actions.\n\n'
+                'The hours considered to be active hours are the hours '
+                'between {3:02d} and {4:02d} (hours in UTC)'.format(
+                    tagged_events, percent, total_count, first, last))
+
+            params = {
+                'data': aggregation.to_dict(orient='records'),
+                'title': 'Browser Activity Per Hour',
+                'field': 'hour',
+                'order_field': 'hour',
+            }
+            agg_obj = self.sketch.add_aggregation(
+                name='Browser Activity Per Hour', agg_name='manual_feed',
+                agg_params=params, chart_type='barchart',
+                description='Created by the browser timeframe analyzer')
+            story.add_text(
+                'An overview of all browser activity per hour. The threshold '
+                'used to determine if an hour was considered to be active '
+                'was: {0:0.2f}'.format(threshold))
+            story.add_aggregation(agg_obj)
+
         return (
             'Tagged {0:d} out of {1:d} events as outside of normal '
-            'active hours.').format(data_frame_outside.shape[0], total_count)
+            'active hours.').format(tagged_events, total_count)
 
 
 manager.AnalysisManager.register_analyzer(BrowserTimeframeSketchPlugin)
