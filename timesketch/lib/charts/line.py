@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Circle chart class.."""
+"""Line Chart object."""
 
 from __future__ import unicode_literals
 
@@ -21,10 +21,10 @@ from timesketch.lib.charts import manager
 from timesketch.lib.charts import interface
 
 
-class CircleChart(interface.BaseChart):
-    """Circlechart object."""
+class LineChart(interface.BaseChart):
+    """Line Chart object."""
 
-    NAME = 'circlechart'
+    NAME = 'linechart'
 
     def generate(self):
         """Generate the chart.
@@ -36,14 +36,11 @@ class CircleChart(interface.BaseChart):
         self._add_url_href(self.encoding)
 
         if self.chart_title:
-            chart = chart.mark_circle(filled=True, size=100).properties(title=self.chart_title)
+            chart = chart.mark_line().properties(title=self.chart_title)
         else:
-            chart = chart.mark_circle(filled=True, size=100)
-        field = self.encoding.get('y', {}).get('field', 'count')
-        color = alt.Color(field=field, type='quantitative')
+            chart = chart.mark_line()
         chart.encoding = alt.FacetedEncoding.from_dict(self.encoding)
-        chart.encoding.color = color
         return chart
 
 
-manager.ChartManager.register_chart(CircleChart)
+manager.ChartManager.register_chart(LineChart)
