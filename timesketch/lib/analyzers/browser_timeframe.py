@@ -281,7 +281,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                 description='Created by the browser timeframe analyzer')
             group.add_aggregation(agg_obj)
 
-            lines = [{'hour': x, 'count': threshold} for x in range(0,24)]
+            lines = [{'hour': x, 'count': threshold} for x in range(0, 24)]
             params = {
                 'data': lines,
                 'title': 'Browser Timeframe Threshold',

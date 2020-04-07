@@ -1152,7 +1152,6 @@ class AggregationGroupResource(ResourceMixin, Resource):
 
             charts.append(chart)
 
-
         how = group.how
         if how == 'horizontal':
             chart = alt.hconcat(*charts)
@@ -1455,7 +1454,7 @@ class AggregationGroupListResource(ResourceMixin, Resource):
             how=form.get('how', 'layer'),
             user=current_user,
             sketch=sketch,
-            view=view_id
+            view=form.get('view_id')
         )
         db_session.add(aggregation_group)
         db_session.commit()

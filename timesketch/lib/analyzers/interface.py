@@ -495,7 +495,7 @@ class AggregationGroup(object):
         self._how = 'layer'
         self.commit()
 
-    def set_parameters(self, parmeters=None):
+    def set_parameters(self, parameters=None):
         """Sets the chart parameters."""
         if isinstance(parameters, dict):
             parameter_string = json.dumps(parameters)

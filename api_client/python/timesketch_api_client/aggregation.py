@@ -292,8 +292,9 @@ class AggregationGroup(resource.BaseResource):
         self.view = None
         self.type = None
         resource_uri = 'sketches/{0:d}/aggregation/explore/'.format(sketch.id)
-        super(Aggregation, self).__init__(api, resource_uri)
+        super(AggregationGroup, self).__init__(api, resource_uri)
 
     def from_store(self, group_id, group_name=''):
-        """Vatar skyringu."""
-
+        """Vantar skyringu."""
+        # TODO: Implement.
+        # TODO: Implement other functions needed to make this work.

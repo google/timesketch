@@ -433,8 +433,8 @@ class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             user (User): The user who created the aggregation
             sketch (Sketch): The sketch that the aggregation is bound to
             view (View): Optional, the view that the aggregation is bound to
-            aggregationgroup (AggregationGroup): Optional, an AggregationGroup that the
-                aggregation is bound to.
+            aggregationgroup (AggregationGroup): Optional, an AggregationGroup
+                that the aggregation is bound to.
         """
         super(Aggregation, self).__init__()
         self.name = name
@@ -453,7 +453,8 @@ class AggregationGroup(
     """Implements the Aggregation Group model."""
     name = Column(Unicode(255))
     description = Column(UnicodeText())
-    aggregations = relationship('Aggregation', backref='aggregationgroup', lazy='select')
+    aggregations = relationship(
+        'Aggregation', backref='aggregationgroup', lazy='select')
     parameters = Column(UnicodeText())
     how = Column(Unicode(15))
     user_id = Column(Integer, ForeignKey('user.id'))
