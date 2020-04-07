@@ -32,6 +32,7 @@ from __future__ import unicode_literals
 
 import codecs
 import datetime
+import io
 import json
 import hashlib
 import os
@@ -1117,6 +1118,7 @@ class AggregationGroupResource(ResourceMixin, Resource):
 
         result_chart = None
         how = group.how
+        charts = []
         objects = []
         time_before = time.time()
         for aggregator in group.aggregations:
@@ -1142,7 +1144,6 @@ class AggregationGroupResource(ResourceMixin, Resource):
             aggregator_obj = agg_class(sketch_id=sketch_id)
             chart_type = aggregator_parameters.pop('supported_charts', None)
             color = aggregator_parameters.pop('chart_color', '')
-
             result_obj = aggregator_obj.run(**aggregator_parameters)
 
             chart = result_obj.to_chart(
