@@ -81,7 +81,7 @@ class FilteredTermsAggregation(interface.BaseAggregator):
     DESCRIPTION = 'Aggregating values of a field after applying a filter'
 
     SUPPORTED_CHARTS = frozenset(
-        ['barchart', 'circlechart', 'hbarchart', 'table'])
+        ['barchart', 'circlechart', 'hbarchart', 'linechart', 'table'])
 
     FORM_FIELDS = [
         {
@@ -114,17 +114,6 @@ class FilteredTermsAggregation(interface.BaseAggregator):
             'display': True
         }
     ]
-
-    def __init__(self, sketch_id=None, index=None):
-        """Initialize the aggregator object.
-
-        Args:
-            sketch_id: Sketch ID.
-            index: List of elasticsearch index names.
-        """
-        super(FilteredTermsAggregation, self).__init__(
-            sketch_id=sketch_id, index=index)
-        self.field = ''
 
     @property
     def chart_title(self):
@@ -199,8 +188,15 @@ class FilteredTermsAggregation(interface.BaseAggregator):
             }
             values.append(d)
 
+        if query_string:
+            extra_query_url = 'AND {0:s}'.format(query_string)
+        else:
+            extra_query_url = ''
+
         return interface.AggregationResult(
-            encoding=encoding, values=values, chart_type=supported_charts)
+            encoding=encoding, values=values, chart_type=supported_charts,
+            sketch_url=self._sketch_url, field=field,
+            extra_query_url=extra_query_url)
 
 
 manager.AggregatorManager.register_aggregator(FilteredTermsAggregation)
