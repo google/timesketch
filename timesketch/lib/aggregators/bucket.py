@@ -27,7 +27,7 @@ class TermsAggregation(interface.BaseAggregator):
     DESCRIPTION = 'Aggregating values of a particular field'
 
     SUPPORTED_CHARTS = frozenset(
-        ['barchart', 'circlechart', 'hbarchart', 'table'])
+        ['barchart', 'circlechart', 'hbarchart', 'linechart', 'table'])
 
     FORM_FIELDS = [
         {
@@ -54,17 +54,6 @@ class TermsAggregation(interface.BaseAggregator):
             'display': True
         }
     ]
-
-    def __init__(self, sketch_id=None, index=None):
-        """Initialize the aggregator object.
-
-        Args:
-            sketch_id: Sketch ID.
-            index: List of elasticsearch index names.
-        """
-        super(TermsAggregation, self).__init__(
-            sketch_id=sketch_id, index=index)
-        self.field = ''
 
     @property
     def chart_title(self):
@@ -130,7 +119,8 @@ class TermsAggregation(interface.BaseAggregator):
             values.append(d)
 
         return interface.AggregationResult(
-            encoding=encoding, values=values, chart_type=supported_charts)
+            encoding=encoding, values=values, chart_type=supported_charts,
+            sketch_url=self._sketch_url, field=field)
 
 
 manager.AggregatorManager.register_aggregator(TermsAggregation)
