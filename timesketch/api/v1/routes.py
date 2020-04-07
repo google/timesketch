@@ -15,6 +15,8 @@
 
 from __future__ import unicode_literals
 
+from .resources import AggregationGroupResource
+from .resources import AggregationGroupListResource
 from .resources import AggregationListResource
 from .resources import AggregationLegacyResource
 from .resources import AggregationExploreResource
@@ -62,6 +64,8 @@ API_ROUTES = [
     (AnalyzerRunResource, '/sketches/<int:sketch_id>/analyzer/'),
     (AnalyzerSessionResource, '/sketches/<int:sketch_id>/analyzer/sessions/<int:session_id>/'),
     (AggregationListResource, '/sketches/<int:sketch_id>/aggregation/'),
+    (AggregationGroupResource, '/sketches/<int:sketch_id>/aggregation/group/<int:group_id>/'),
+    (AggregationGroupListResource, '/sketches/<int:sketch_id>/aggregation/group/'),
     (AggregationLegacyResource, '/sketches/<int:sketch_id>/aggregation/legacy/'),
     (AggregationExploreResource, '/sketches/<int:sketch_id>/aggregation/explore/'),
     (AggregationInfoResource, '/aggregation/info/'),

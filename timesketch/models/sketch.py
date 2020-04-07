@@ -418,9 +418,10 @@ class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     user_id = Column(Integer, ForeignKey('user.id'))
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     view_id = Column(Integer, ForeignKey('view.id'))
+    aggregationgroup_id = Column(Integer, ForeignKey('aggregationgroup.id'))
 
     def __init__(self, name, description, agg_type, parameters, chart_type,
-                 user, sketch, view=None):
+                 user, sketch, view=None, aggregationgroup=None):
         """Initialize the Aggregation object.
 
         Args:
@@ -431,14 +432,56 @@ class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             chart_type (str): Chart plugin type
             user (User): The user who created the aggregation
             sketch (Sketch): The sketch that the aggregation is bound to
-            view (View): Optional: The view that the aggregation is bound to
+            view (View): Optional, the view that the aggregation is bound to
+            aggregationgroup (AggregationGroup): Optional, an AggregationGroup that the
+                aggregation is bound to.
         """
         super(Aggregation, self).__init__()
         self.name = name
         self.description = description
         self.agg_type = agg_type
+        self.aggregationgroup = aggregationgroup
         self.parameters = parameters
         self.chart_type = chart_type
+        self.user = user
+        self.sketch = sketch
+        self.view = view
+
+
+class AggregationGroup(
+        AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
+    """Implements the Aggregation Group model."""
+    name = Column(Unicode(255))
+    description = Column(UnicodeText())
+    aggregations = relationship('Aggregation', backref='aggregationgroup', lazy='select')
+    parameters = Column(UnicodeText())
+    how = Column(Unicode(15))
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    view_id = Column(Integer, ForeignKey('view.id'))
+
+    def __init__(
+            self, name, description, aggregations, parameters, how,
+            user, sketch, view=None):
+        """Initialize the Aggregation object.
+
+        Args:
+            name (str): Name of the aggregation
+            description (str): Description of the aggregation
+            aggregations (Aggregation): List of aggregation objects.
+            parameters (str): A JSON formatted dict with parameters for
+                charting.
+            how (str): Describes how charts should be joined together.
+            user (User): The user who created the aggregation
+            sketch (Sketch): The sketch that the aggregation is bound to
+            view (View): Optional: The view that the aggregation is bound to
+        """
+        super(AggregationGroup, self).__init__()
+        self.name = name
+        self.description = description
+        self.aggregations = aggregations
+        self.parameters = parameters
+        self.how = how
         self.user = user
         self.sketch = sketch
         self.view = view

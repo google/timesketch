@@ -264,6 +264,11 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                 'between {3:02d} and {4:02d} (hours in UTC)'.format(
                     tagged_events, percent, total_count, first, last))
 
+            group = self.sketch.add_aggregation_group(
+                name='Browser Activity Per Hour',
+                description='Created by the browser timeframe analyzer')
+            group.set_layered()
+
             params = {
                 'data': aggregation.to_dict(orient='records'),
                 'title': 'Browser Activity Per Hour',
@@ -274,11 +279,24 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                 name='Browser Activity Per Hour', agg_name='manual_feed',
                 agg_params=params, chart_type='barchart',
                 description='Created by the browser timeframe analyzer')
+            group.add_aggregation(agg_obj)
+
+            lines = [{'hour': x, 'count': threshold} for x in range(0,24)]
+            params = {
+                'data': lines,
+                'title': 'Browser Timeframe Threshold',
+            }
+            agg_line = self.sketch.add_aggregation(
+                name='Browser Activity Per Hour', agg_name='manual_feed',
+                agg_params=params, chart_type='linechart',
+                description='Created by the browser timeframe analyzer')
+            group.add_aggregation(agg_line)
+
             story.add_text(
                 'An overview of all browser activity per hour. The threshold '
                 'used to determine if an hour was considered to be active '
                 'was: {0:0.2f}'.format(threshold))
-            story.add_aggregation(agg_obj)
+            story.add_aggregation_group(agg_obj)
 
         return (
             'Tagged {0:d} out of {1:d} events as outside of normal '

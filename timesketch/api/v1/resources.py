@@ -32,12 +32,14 @@ from __future__ import unicode_literals
 
 import codecs
 import datetime
+import io
 import json
 import hashlib
 import os
 import time
 import uuid
 
+import altair as alt
 import six
 
 from dateutil import parser
@@ -90,6 +92,7 @@ from timesketch.lib.experimental.utils import get_graph_views
 from timesketch.lib.experimental.utils import get_graph_view
 from timesketch.models import db_session
 from timesketch.models.sketch import Aggregation
+from timesketch.models.sketch import AggregationGroup
 from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import AnalysisSession
 from timesketch.models.sketch import Event
@@ -1065,6 +1068,155 @@ class AggregationInfoResource(ResourceMixin, Resource):
         return jsonify(self._get_info(aggregator_name))
 
 
+class AggregationGroupResource(ResourceMixin, Resource):
+    """Resource for aggregation group requests."""
+
+    @login_required
+    def get(self, sketch_id, group_id):
+        """Handles GET request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model.
+            group_id: Integer primary key for an aggregation group database
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        group = AggregationGroup.query.get(group_id)
+
+        if not group:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No Group found with this ID.')
+
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        # Check that this group belongs to the sketch
+        if group.sketch_id != sketch.id:
+            msg = (
+                'The sketch ID ({0:d}) does not match with the aggregation '
+                'group sketch ID ({1:d})'.format(sketch.id, group.sketch_id))
+            abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
+
+        if not sketch.has_permission(user=current_user, permission='read'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have read permission on the sketch.')
+
+        charts = []
+        configs = []
+        objects = []
+        time_before = time.time()
+        for aggregator in group.aggregations:
+            if aggregator.aggregationgroup_id != group.id:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'All aggregations in a group must belong to the group.')
+            if aggregator.sketch_id != group.sketch_id:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'All aggregations in a group must belong to the group '
+                    'sketch')
+
+            if aggregator.parameters:
+                aggregator_parameters = json.loads(aggregator.parameters)
+            else:
+                aggregator_parameters = {}
+
+            agg_class = aggregator_manager.AggregatorManager.get_aggregator(
+                aggregator.agg_type)
+            if not agg_class:
+                continue
+            aggregator_obj = agg_class(sketch_id=sketch_id)
+            chart_type = aggregator_parameters.pop('supported_charts', None)
+            result_obj = aggregator_obj.run(**aggregator_parameters)
+
+            chart = result_obj.to_chart(
+                chart_name=chart_type,
+                chart_title=aggregator_obj.chart_title,
+                as_chart=True, interactive=True)
+
+            buckets = result_obj.to_dict()
+            buckets['buckets'] = buckets.pop('values')
+            result = {
+                'aggregation_result': {
+                    aggregator.name: buckets
+                }
+            }
+            objects.append(result)
+
+            configs.append(chart.config)
+            # We need to stip out all configs before we concatenate charts.
+            chart.config = alt.Undefined
+            if hasattr(chart, '$schema'):
+                delattr(chart, '$schema')
+
+            charts.append(chart)
+
+
+        how = group.how
+        if how == 'horizontal':
+            chart = alt.hconcat(*charts)
+        elif how == 'vertical':
+            chart = alt.vconcat(*charts)
+        else:
+            chart = alt.layer(*charts)
+
+        # TODO(kiddi): Combine configs.
+        chart.config = configs[0]
+        time_after = time.time()
+
+        chart_io = io.StringIO()
+        chart.save(chart_io, format='json')
+        chart_io.seek(0)
+        meta = {
+            'method': 'aggregator_group',
+            'chart_type': 'compound: {0:s}'.format(how),
+            'name': group.name,
+            'description': group.description,
+            'es_time': time_after - time_before,
+            'vega_spec': chart_io.read(),
+            'vega_chart_title': group.name
+        }
+        schema = {'meta': meta, 'objects': objects}
+        return jsonify(schema)
+
+    @login_required
+    def delete(self, sketch_id, group_id):
+        """Handles DELETE request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model.
+            group_id: Integer primary key for an aggregation group database
+                model.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        group = AggregationGroup.query.get(group_id)
+
+        if not group:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No Group found with this ID.')
+
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        # Check that this group belongs to the sketch
+        if group.sketch_id != sketch.id:
+            msg = (
+                'The sketch ID ({0:d}) does not match with the aggregation '
+                'group sketch ID ({1:d})'.format(sketch.id, group.sketch_id))
+            abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
+
+        if not sketch.has_permission(user=current_user, permission='write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have write permission on the sketch.')
+
+        db_session.delete(group)
+        db_session.commit()
+        return HTTP_STATUS_CODE_OK
+
+
 class AggregationExploreResource(ResourceMixin, Resource):
     """Resource to send an aggregation request."""
 
@@ -1235,6 +1387,81 @@ class AggregationListResource(ResourceMixin, Resource):
         sketch = Sketch.query.get_with_acl(sketch_id)
         aggregation = self.create_aggregation_from_form(sketch, form)
         return self.to_json(aggregation, status_code=HTTP_STATUS_CODE_CREATED)
+
+
+class AggregationGroupListResource(ResourceMixin, Resource):
+    """Resource to query for a list of stored aggregation queries."""
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Handler for /api/v1/sketches/<int:sketch_id>/aggregation/group/
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            Views in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch.has_permission(user=current_user, permission='read'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have read permission on the sketch.')
+        groups = AggregationGroup.query(sketch_id=sketch_id)
+        return self.to_json(groups)
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            An aggregation in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch.has_permission(user=current_user, permission='write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have write permission on the sketch.')
+
+        form = request.json
+        if not form:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'No JSON data, unable to process request to create '
+                'a new aggregation group.')
+
+        aggregation_string = form.get('aggregations', '')
+        if not aggregation_string:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to create an empty group.')
+
+        agg_list = [int(x) for x in aggregation_string.split(',')]
+        named_aggs = sketch.get_named_aggregations
+        aggregations = [agg for agg in named_aggs if agg.id in agg_list]
+
+        # Create the aggregation in the database
+        # TODO (kiddi): Support parameters.
+        aggregation_group = AggregationGroup(
+            name=form.get('name', 'No Group Name'),
+            description=form.get('description', ''),
+            parameters=form.get('parameters', ''),
+            aggregations=aggregations,
+            how=form.get('how', 'layer'),
+            user=current_user,
+            sketch=sketch,
+            view=view_id
+        )
+        db_session.add(aggregation_group)
+        db_session.commit()
+
+        return self.to_json(
+            aggregation_group, status_code=HTTP_STATUS_CODE_CREATED)
 
 
 class AggregationLegacyResource(ResourceMixin, Resource):

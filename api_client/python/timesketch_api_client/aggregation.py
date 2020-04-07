@@ -272,3 +272,28 @@ class Aggregation(resource.BaseResource):
 
         vega_spec_string = json.dumps(vega_spec)
         return altair.Chart.from_json(vega_spec_string)
+
+
+class AggregationGroup(resource.BaseResource):
+    """Aggregation Group object.
+
+    Attributes:
+        chart_type: the type of chart that will be generated
+            from this aggregation object.
+        type: the type of aggregation object.
+        view: a view ID if the aggregation is tied to a specific view.
+    """
+
+    def __init__(self, sketch, api):
+        self._sketch = sketch
+        self._aggregator_data = {}
+        self.aggregator_name = ''
+        self.chart_type = ''
+        self.view = None
+        self.type = None
+        resource_uri = 'sketches/{0:d}/aggregation/explore/'.format(sketch.id)
+        super(Aggregation, self).__init__(api, resource_uri)
+
+    def from_store(self, group_id, group_name=''):
+        """Vatar skyringu."""
+
