@@ -27,7 +27,7 @@ class BaseChart(object):
 
     def __init__(
             self, data, title='', sketch_url='', field='',
-            extra_query_url=''):
+            extra_query_url='', aggregation_id=None):
         """Initialize the chart object.
 
         Args:
@@ -38,6 +38,7 @@ class BaseChart(object):
             extra_query_url: For Chart URL transformation. If provided an extra
                 condition will be added to URL transformations in the query
                 field.
+            aggregation_id: Integer with the aggregation ID.
 
         Raises:
             RuntimeError if values or encoding is missing from data.
@@ -57,6 +58,7 @@ class BaseChart(object):
         self.encoding = _encoding
         self.chart_title = title
 
+        self._aggregation_id = aggregation_id
         self._extra_query_url = extra_query_url
         self._field = field
         self._sketch_url = sketch_url
@@ -76,7 +78,12 @@ class BaseChart(object):
             return chart
 
         datum = getattr(alt.datum, self._field)
-        url = '{0:s}?q={1:s}:"'.format(self._sketch_url, self._field)
+        if self._aggregation_id:
+            agg_string = 'a={0:d}&'.format(self._aggregation_id)
+        else:
+            agg_string = ''
+        url = '{0:s}?{1:s}q={2:s}:"'.format(
+            self._sketch_url, agg_string, self._field)
         return chart.transform_calculate(
             url=url + datum + '" ' + self._extra_query_url)
 
