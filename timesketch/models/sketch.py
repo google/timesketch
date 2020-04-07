@@ -50,6 +50,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     events = relationship('Event', backref='sketch', lazy='select')
     stories = relationship('Story', backref='sketch', lazy='select')
     aggregations = relationship('Aggregation', backref='sketch', lazy='select')
+    aggregationgroups = relationship(
+        'AggregationGroup', backref='sketch', lazy='select')
     analysis = relationship('Analysis', backref='sketch', lazy='select')
 
     def __init__(self, name, description, user):
@@ -235,6 +237,8 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     searchtemplate_id = Column(Integer, ForeignKey('searchtemplate.id'))
     aggregations = relationship('Aggregation', backref='view', lazy='select')
+    aggregationgroups = relationship(
+        'AggregationGroup', backref='view', lazy='select')
 
     def __init__(self,
                  name,
@@ -462,25 +466,25 @@ class AggregationGroup(
     view_id = Column(Integer, ForeignKey('view.id'))
 
     def __init__(
-            self, name, description, aggregations, parameters, how,
-            user, sketch, view=None):
-        """Initialize the Aggregation object.
+            self, name, description, user, sketch, aggregations=None,
+            parameters='', how='', view=None):
+        """Initialize the AggregationGroup object.
 
         Args:
             name (str): Name of the aggregation
             description (str): Description of the aggregation
+            user (User): The user who created the aggregation
+            sketch (Sketch): The sketch that the aggregation is bound to
             aggregations (Aggregation): List of aggregation objects.
             parameters (str): A JSON formatted dict with parameters for
                 charting.
             how (str): Describes how charts should be joined together.
-            user (User): The user who created the aggregation
-            sketch (Sketch): The sketch that the aggregation is bound to
             view (View): Optional: The view that the aggregation is bound to
         """
         super(AggregationGroup, self).__init__()
         self.name = name
         self.description = description
-        self.aggregations = aggregations
+        self.aggregations = aggregations or []
         self.parameters = parameters
         self.how = how
         self.user = user

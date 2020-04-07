@@ -342,6 +342,9 @@ class Sketch(object):
         else:
             view = None
 
+        if not description:
+            description = 'Created by an analyzer'
+
         aggregation_group = SQLAggregationGroup.get_or_create(
             name=name, description=description, user=None,
             sketch=self.sql_sketch, view=view)
