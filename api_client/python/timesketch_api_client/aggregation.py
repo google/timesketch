@@ -278,23 +278,38 @@ class AggregationGroup(resource.BaseResource):
     """Aggregation Group object.
 
     Attributes:
-        chart_type: the type of chart that will be generated
-            from this aggregation object.
-        type: the type of aggregation object.
+        id: the ID of the group.
         view: a view ID if the aggregation is tied to a specific view.
     """
 
-    def __init__(self, sketch, api):
-        self._sketch = sketch
-        self._aggregator_data = {}
-        self.aggregator_name = ''
-        self.chart_type = ''
-        self.view = None
-        self.type = None
-        resource_uri = 'sketches/{0:d}/aggregation/explore/'.format(sketch.id)
+    def __init__(self, sketch, api, group_id):
+        """Initialize the aggregation group."""
+        resource_uri = 'sketches/{0:d}/aggregation/group/{1:d}/'.format(
+            sketch.id, group_id)
         super(AggregationGroup, self).__init__(api, resource_uri)
 
-    def from_store(self, group_id, group_name=''):
-        """Vantar skyringu."""
-        # TODO: Implement.
-        # TODO: Implement other functions needed to make this work.
+        self.id = group_id
+        self._sketch = sketch
+        self._aggregator_data = {}
+
+    @property
+    def name(self):
+        """Returns the name of the aggregation group."""
+        data = self.lazyload_data()
+        return data.get('name')
+
+    @property
+    def raw(self):
+        return self.lazyload_data()
+
+        """
+    name = Column(Unicode(255))
+    description = Column(UnicodeText())
+    aggregations = relationship(
+        'Aggregation', backref='aggregationgroup', lazy='select')
+    parameters = Column(UnicodeText())
+    how = Column(Unicode(15))
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    view_id = Column(Integer, ForeignKey('view.id'))
+      """
