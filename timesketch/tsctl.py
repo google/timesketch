@@ -91,6 +91,16 @@ class AddUser(Command):
         sys.stdout.write('User {0:s} created/updated\n'.format(username))
 
 
+class ListUsers(Command):
+    """List all users."""
+
+    # pylint: disable=arguments-differ, method-hidden
+    def run(self):
+        """The run method for the command."""
+        for user in User.query.all():
+            print(user.username)
+
+
 class AddGroup(Command):
     """Create a new Timesketch group."""
     option_list = (Option('--name', '-n', dest='name', required=True), )
@@ -106,6 +116,16 @@ class AddGroup(Command):
         sys.stdout.write('Group {0:s} created\n'.format(name))
 
 
+class ListGroups(Command):
+    """List all groups."""
+
+    # pylint: disable=arguments-differ, method-hidden
+    def run(self):
+        """The run method for the command."""
+        for group in Group.query.all():
+            print(group.name)
+
+
 class GroupManager(Command):
     """Manage group memberships."""
     option_list = (
@@ -116,23 +136,38 @@ class GroupManager(Command):
             action='store_true',
             required=False,
             default=False),
+        Option(
+            '--expand',
+            dest='expand',
+            action='store_true',
+            required=False,
+            default=False),
         Option('--group', '-g', dest='group_name', required=True),
-        Option('--user', '-u', dest='user_name', required=True), )
+        Option('--user', '-u', dest='user_name', required=False, default=None)
+    )
 
     # pylint: disable=arguments-differ, method-hidden
-    def run(self, remove, group_name, user_name):
+    def run(self, remove, expand, group_name, user_name):
         """Add the user to the group."""
         if not isinstance(group_name, six.text_type):
             group_name = codecs.decode(group_name, 'utf-8')
 
+        group = Group.query.filter_by(name=group_name).first()
+
+        # List all members of a group and then exit.
+        if expand:
+            for _user in group.users:
+                print(_user.username)
+            return
+
         if not isinstance(user_name, six.text_type):
             user_name = codecs.decode(user_name, 'utf-8')
-
-        group = Group.query.filter_by(name=group_name).first()
-        user = User.query.filter_by(username=user_name).first()
+        user = None
+        if user_name:
+            user = User.query.filter_by(username=user_name).first()
 
         # Add or remove user from group
-        if remove:
+        if remove and user:
             try:
                 user.groups.remove(group)
                 sys.stdout.write('{0:s} removed from group {1:s}\n'.format(
@@ -141,7 +176,7 @@ class GroupManager(Command):
             except ValueError:
                 sys.stdout.write('{0:s} is not a member of group {1:s}\n'.
                                  format(user_name, group_name))
-        else:
+        elif user:
             user.groups.append(group)
             try:
                 db_session.commit()
@@ -444,7 +479,8 @@ class ImportTimeline(Command):
 
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
-        from timesketch.lib import tasks  # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel
+        from timesketch.lib import tasks
         pipeline = tasks.build_index_pipeline(
             file_path=file_path, events='', timeline_name=timeline_name,
             index_name=index_name, file_extension=extension,
@@ -459,7 +495,9 @@ def main():
     # Setup Flask-script command manager and register commands.
     shell_manager = Manager(create_app)
     shell_manager.add_command('add_user', AddUser())
+    shell_manager.add_command('list_users', ListUsers())
     shell_manager.add_command('add_group', AddGroup())
+    shell_manager.add_command('list_groups', ListGroups)
     shell_manager.add_command('manage_group', GroupManager())
     shell_manager.add_command('add_index', AddSearchIndex())
     shell_manager.add_command('db', MigrateCommand)
