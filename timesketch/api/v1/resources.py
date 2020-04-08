@@ -344,23 +344,21 @@ class SketchListResource(ResourceMixin, Resource):
         Returns:
             List of sketches (instance of flask.wrappers.Response)
         """
-        # TODO: Handle offset parameter
-        sketches = Sketch.all_with_acl().filter(
+        filtered_sketches = Sketch.all_with_acl().filter(
             not_(Sketch.Status.status == 'deleted'),
-            Sketch.Status.parent).order_by(Sketch.updated_at.desc())
-        paginated_result = sketches.paginate(1, 10, False)
-        meta = {
-            'next': paginated_result.next_num,
-            'previous': paginated_result.prev_num,
-            'offset': paginated_result.page,
-            'limit': paginated_result.per_page
-        }
-        if not paginated_result.has_prev:
-            meta['previous'] = None
-        if not paginated_result.has_next:
-            meta['next'] = None
-        result = self.to_json(paginated_result.items, meta=meta)
-        return result
+            Sketch.Status.parent).order_by(Sketch.updated_at.desc()).all()
+
+        # Just return a subset of the sketch objects to reduce the amount of
+        # data returned.
+        sketches = []
+        for sketch in filtered_sketches:
+            sketches.append({
+                'name': sketch.name,
+                'updated_at': str(sketch.updated_at),
+                'user': sketch.user.username,
+                'id': sketch.id
+            })
+        return jsonify({'objects': sketches})
 
     @login_required
     def post(self):
@@ -2866,3 +2864,16 @@ class SessionResource(ResourceMixin, Resource):
 
         sessions.append({'truncated': isTruncated})
         return sessions
+
+
+class LoggedInUserResource(ResourceMixin, Resource):
+    """Resource to get the logged in user."""
+
+    @login_required
+    def get(self):
+        """Handles GET request to the resource.
+
+        Returns:
+            User object
+        """
+        return self.to_json(current_user)

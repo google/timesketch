@@ -20,7 +20,7 @@ limitations under the License.
     <section class="section">
       <div class="container">
         <ts-navbar-secondary>
-          <button v-if="sketches" class="button is-success is-rounded" v-on:click="showSketchCreateModal = !showSketchCreateModal"><strong>+ Sketch</strong></button>
+          <button v-if="mySketches || sharedSketches" class="button is-success is-rounded" v-on:click="showSketchCreateModal = !showSketchCreateModal"><strong>+ Sketch</strong></button>
         </ts-navbar-secondary>
       </div>
     </section>
@@ -38,15 +38,16 @@ limitations under the License.
       </div>
     </b-modal>
 
-    <div class="section">
+    <div v-if="!mySketches.length && !sharedSketches.length" class="has-text-centered">
+      <h1 class="title">Welcome to Timesketch</h1>
+      <button class="button is-success is-rounded" v-on:click="showSketchCreateModal = !showSketchCreateModal"><strong>Create sketch</strong></button>
+    </div>
+
+    <div v-if="mySketches.length" class="section">
       <div class="container">
         <div class="card">
           <div class="card-content">
-            <div v-if="!sketches" class="has-text-centered">
-              <h1 class="title">Welcome to Timesketch</h1>
-              <button class="button is-success is-rounded" v-on:click="showSketchCreateModal = !showSketchCreateModal"><strong>Create sketch</strong></button>
-            </div>
-            <ts-sketch-list :sketches="sketches"></ts-sketch-list>
+            <ts-sketch-list :sketches="mySketches"></ts-sketch-list>
           </div>
         </div>
       </div>
@@ -68,13 +69,22 @@ export default {
   data () {
     return {
       showSketchCreateModal: false,
-      sketches: []
+      mySketches: [],
+      sharedSketches: []
     }
   },
   created: function () {
     ApiClient.getSketchList().then((response) => {
       this.$store.dispatch('resetState')
-      this.sketches = response.data.objects[0]
+      let sketches = response.data.objects
+      let user = this.$store.state
+      console.log(this.$store.state.meta)
+      this.mySketches = sketches.filter(function (sketch) {
+        return sketch.user === user
+      })
+      this.sharedSketches = sketches.filter(function (sketch) {
+        return sketch.user !== user
+      })
     }).catch((e) => {
       console.error(e)
     })

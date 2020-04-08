@@ -20,11 +20,15 @@ import ApiClient from './utils/RestApiClient'
 Vue.use(Vuex)
 
 const defaultState = () => {
-  return {
-    sketch: {},
-    meta: {},
-    count: 0
-  }
+  ApiClient.getLoggedInUser().then((response) => {
+    let user = response.data.objects[0].username
+    return {
+      sketch: {},
+      meta: {},
+      count: 0,
+      user: user
+    }
+  }).catch((e) => {})
 }
 
 // Initial state
@@ -61,3 +65,6 @@ export default new Vuex.Store({
     }
   }
 })
+
+
+
