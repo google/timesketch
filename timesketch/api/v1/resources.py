@@ -138,6 +138,18 @@ class ResourceMixin(object):
         'updated_at': fields.DateTime
     }
 
+    aggregation_group_fields = {
+        'id': fields.Integer,
+        'name': fields.String,
+        'description': fields.String,
+        'aggregations': fields.Nested(aggregation_fields),
+        'parameters': fields.String,
+        'how': fields.String,
+        'user': fields.Nested(user_fields),
+        'created_at': fields.DateTime,
+        'updated_at': fields.DateTime
+    }
+
     status_fields = {
         'id': fields.Integer,
         'status': fields.String,
@@ -235,6 +247,7 @@ class ResourceMixin(object):
         'timelines': fields.List(fields.Nested(timeline_fields)),
         'stories': fields.List(fields.Nested(story_fields)),
         'aggregations': fields.Nested(aggregation_fields),
+        'aggregation_groups': fields.Nested(aggregation_group_fields),
         'active_timelines': fields.List(fields.Nested(timeline_fields)),
         'status': fields.Nested(status_fields),
         'created_at': fields.DateTime,
@@ -257,6 +270,7 @@ class ResourceMixin(object):
 
     fields_registry = {
         'aggregation': aggregation_fields,
+        'aggregation_group': aggregation_group_fields,
         'searchindex': searchindex_fields,
         'analysis': analysis_fields,
         'analysissession': analysis_session_fields,
@@ -1408,7 +1422,8 @@ class AggregationGroupListResource(ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'The user does not have read permission on the sketch.')
-        groups = AggregationGroup.query(sketch_id=sketch_id)
+        groups = AggregationGroup.query.filter_by(
+            sketch_id=sketch_id).all()
         return self.to_json(groups)
 
     @login_required

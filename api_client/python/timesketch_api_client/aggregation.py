@@ -289,27 +289,73 @@ class AggregationGroup(resource.BaseResource):
         super(AggregationGroup, self).__init__(api, resource_uri)
 
         self.id = group_id
+        self._meta = {}
         self._sketch = sketch
-        self._aggregator_data = {}
+        self._aggregations = []
+
+    @property
+    def chart(self):
+        """Property that returns an altair Vega-lite chart."""
+        return self.generate_chart()
 
     @property
     def name(self):
         """Returns the name of the aggregation group."""
-        data = self.lazyload_data()
-        return data.get('name')
+        self._fill_fields()
+        return self._meta.get('name', '')
+
+    @property
+    def how(self):
+        """Returns how the charts are supposed to be joined."""
+        self._fill_fields()
+        return self._meta.get('how', '')
+
+    @property
+    def parameters(self):
+        """Returns a dict with the group parameters."""
+        self._fill_fields()
+        parameter_string = self._meta.get('parameters', '')
+        return json.loads(parameter_string)
 
     @property
     def raw(self):
         return self.lazyload_data()
 
-        """
-    name = Column(Unicode(255))
-    description = Column(UnicodeText())
-    aggregations = relationship(
-        'Aggregation', backref='aggregationgroup', lazy='select')
-    parameters = Column(UnicodeText())
-    how = Column(Unicode(15))
-    user_id = Column(Integer, ForeignKey('user.id'))
-    sketch_id = Column(Integer, ForeignKey('sketch.id'))
-    view_id = Column(Integer, ForeignKey('view.id'))
-      """
+    @property
+    def table(self):
+        """Property that returns a pandas DataFrame."""
+        return self.to_pandas()
+
+    def _fill_fields(self):
+        """Fill fields with data from aggregation group."""
+        data = self.lazyload_data(refresh_cache=True)
+
+        self._meta = data.get('meta', {})
+        if not self._aggregations:
+            objects = data.get('objects', [])
+            self._aggregations = [x.get('aggregation_result') for x in objects]
+
+    def generate_chart(self):
+        """Returns an altair Vega-lite chart."""
+        data = self.lazyload_data()
+
+        meta = data.get('meta', {})
+        vega_spec = meta.get('vega_spec')
+
+        if not vega_spec:
+            return altair.Chart(pandas.DataFrame()).mark_point()
+
+        vega_spec_string = json.dumps(vega_spec)
+        return altair.Chart.from_json(vega_spec_string)
+
+    def to_pandas(self):
+        """Returns a pandas DataFrame."""
+        self._fill_fields()
+        data_frames = []
+        for agg_dict in self._aggregations:
+            for bucket_dict in agg_dict.values():
+                df = pandas.DataFrame(bucket_dict.get('buckets', []))
+                data_frames.append(df)
+
+        return pandas.concat(data_frames)
+

@@ -218,7 +218,7 @@ class Sketch(resource.BaseResource):
         resource_url = '{0:s}/sketches/{1:d}/aggregation/group/'.format(
             self.api.api_root, self.id)
         response = self.api.session.get(resource_url)
-        return response.json
+        return response.json()
 
     def list_aggregations(self):
         """List all saved aggregations for this sketch.
