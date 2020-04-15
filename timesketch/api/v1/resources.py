@@ -1435,7 +1435,7 @@ class AggregationGroupListResource(ResourceMixin, Resource):
                 'parameters': group.parameters,
                 'how': group.how,
                 'description': group.description,
-                'agg_ids': ','.join([str(x.id) for x in group.aggregations])
+                'agg_ids': json.dumps([x.id for x in group.aggregations])
             }
             objects.append(group_dict)
         response = jsonify({'meta': meta, 'objects': objects})

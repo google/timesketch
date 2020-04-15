@@ -26,6 +26,19 @@ class BarChart(interface.BaseChart):
 
     NAME = 'barchart'
 
+    def generate_base(self):
+        """Generate the base chart.
+
+        Returns:
+            Instance of altair.Chart
+        """
+        chart = alt.Chart(self.values)
+        if self.chart_title:
+            return chart.mark_bar().properties(title=self.chart_title)
+
+        chart.encoding = alt.FacetedEncoding.from_dict(self.encoding)
+        return chart.mark_bar()
+
     def generate(self):
         """Generate the chart.
 

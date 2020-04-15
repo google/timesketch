@@ -360,6 +360,8 @@ class AggregationGroup(resource.BaseResource):
         aggs = group_dict.get('agg_ids')
         if not aggs:
             raise TypeError('Group contains no aggregations')
+
+        aggs = json.loads(aggs)
         if not isinstance(aggs, (list, tuple)):
             raise TypeError('Aggregations need to be a list.')
 

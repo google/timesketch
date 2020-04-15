@@ -310,10 +310,13 @@ class Sketch(resource.BaseResource):
             goup_id: id of the stored aggregation group.
 
         Returns:
-            An aggregation group object (instance of AggregationGroup).
+            An aggregation group object (instance of AggregationGroup)
+            if stored, otherwise None object.
         """
-        return aggregation.AggregationGroup(
-            sketch=self, api=self.api, group_id=group_id)
+        for group_obj in self.list_aggregation_groups():
+            if group_obj.id == aggregation_id:
+                return group_obj
+        return None
 
     def get_story(self, story_id=None, story_title=None):
         """Returns a story object that is stored in the sketch.
