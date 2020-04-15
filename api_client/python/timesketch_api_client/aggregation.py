@@ -354,7 +354,8 @@ class AggregationGroup(resource.BaseResource):
             raise TypeError('How a group is connected needs to be defined.')
 
         parameter_string = group_dict.get('parameters', '')
-        self._parameters = json.loads(parameter_string)
+        if parameter_string:
+            self._parameters = json.loads(parameter_string)
 
         aggs = group_dict.get('agg_ids')
         if not aggs:
