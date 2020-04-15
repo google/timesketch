@@ -270,7 +270,7 @@ class ResourceMixin(object):
 
     fields_registry = {
         'aggregation': aggregation_fields,
-        'aggregation_group': aggregation_group_fields,
+        'aggregationgroup': aggregation_group_fields,
         'searchindex': searchindex_fields,
         'analysis': analysis_fields,
         'analysissession': analysis_session_fields,
@@ -1424,7 +1424,23 @@ class AggregationGroupListResource(ResourceMixin, Resource):
                 'The user does not have read permission on the sketch.')
         groups = AggregationGroup.query.filter_by(
             sketch_id=sketch_id).all()
-        return self.to_json(groups)
+        meta = {
+            'command': 'list_groups',
+        }
+        objects = []
+        for group in groups:
+            group_dict = {
+                'id': group.id,
+                'name': group.name,
+                'parameters': group.parameters,
+                'how': group.how,
+                'description': group.description,
+                'agg_ids': ','.join([str(x.id) for x in group.aggregations])
+            }
+            objects.append(group_dict)
+        response = jsonify({'meta': meta, 'objects': objects})
+        response.status_code = HTTP_STATUS_CODE_OK
+        return response
 
     @login_required
     def post(self, sketch_id):

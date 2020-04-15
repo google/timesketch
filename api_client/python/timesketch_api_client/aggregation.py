@@ -282,61 +282,97 @@ class AggregationGroup(resource.BaseResource):
         view: a view ID if the aggregation is tied to a specific view.
     """
 
-    def __init__(self, sketch, api, group_id):
+    def __init__(self, sketch, api):
         """Initialize the aggregation group."""
-        resource_uri = 'sketches/{0:d}/aggregation/group/{1:d}/'.format(
-            sketch.id, group_id)
+        resource_uri = 'sketches/{0:d}/aggregation/group/'.format(
+            sketch.id)
         super(AggregationGroup, self).__init__(api, resource_uri)
 
-        self.id = group_id
-        self._meta = {}
+        self.id = None
+        self._name = 'N/A'
+        self._description = 'N/A'
+        self._how = ''
+        self._parameters = {}
         self._sketch = sketch
         self._aggregations = []
 
     @property
     def chart(self):
         """Property that returns an altair Vega-lite chart."""
+        if not self._aggregations:
+            return altair.Chart()
         return self.generate_chart()
+
+    @property
+    def description(self):
+        """Returns the description of the aggregation group."""
+        return self._description
 
     @property
     def name(self):
         """Returns the name of the aggregation group."""
-        self._fill_fields()
-        return self._meta.get('name', '')
+        return self._name
 
     @property
     def how(self):
         """Returns how the charts are supposed to be joined."""
-        self._fill_fields()
-        return self._meta.get('how', '')
+        return self._how
 
     @property
     def parameters(self):
         """Returns a dict with the group parameters."""
-        self._fill_fields()
-        parameter_string = self._meta.get('parameters', '')
-        return json.loads(parameter_string)
-
-    @property
-    def raw(self):
-        return self.lazyload_data()
+        return self._parameters
 
     @property
     def table(self):
         """Property that returns a pandas DataFrame."""
         return self.to_pandas()
 
-    def _fill_fields(self):
-        """Fill fields with data from aggregation group."""
-        data = self.lazyload_data(refresh_cache=True)
+    def from_dict(self, group_dict):
+        """Feed group data from a dictionary.
 
-        self._meta = data.get('meta', {})
-        if not self._aggregations:
-            objects = data.get('objects', [])
-            self._aggregations = [x.get('aggregation_result') for x in objects]
+        Args:
+            group_dict (dict): a dictionary with the aggregation group
+                information.
+
+        Raises:
+            TypeError: if the dictionary does not contain the correct
+                information.
+        """
+        group_id = group_dict.get('id')
+        if not group_id:
+            raise TypeError('Group ID is missing.')
+        self.id = group_id
+        self.resource_uri = 'sketches/{0:d}/aggregation/group/{1:d}/'.format(
+            self._sketch.id, group_id)
+
+        self._name = group_dict.get('name', '')
+        self._description = group_dict.get('description', '')
+
+        self._how = group_dict.get('how')
+        if not self._how:
+            raise TypeError('How a group is connected needs to be defined.')
+
+        parameter_string = group_dict.get('parameters', '')
+        self._parameters = json.loads(parameter_string)
+
+        aggs = group_dict.get('agg_ids')
+        if not aggs:
+            raise TypeError('Group contains no aggregations')
+        if not isinstance(aggs, (list, tuple)):
+            raise TypeError('Aggregations need to be a list.')
+
+        self._aggregations = []
+        for agg_id in aggs:
+            agg_obj = Aggregation(self._sketch, self.api)
+            agg_obj.from_store(agg_id)
+            self._aggregations.append(agg_obj)
 
     def generate_chart(self):
         """Returns an altair Vega-lite chart."""
+        if not self._aggregations:
+            return altair.Chart()
+
         data = self.lazyload_data()
 
         meta = data.get('meta', {})
@@ -350,12 +386,12 @@ class AggregationGroup(resource.BaseResource):
 
     def to_pandas(self):
         """Returns a pandas DataFrame."""
-        self._fill_fields()
+        if not self._aggregations:
+            return pandas.DataFrame()
+
         data_frames = []
-        for agg_dict in self._aggregations:
-            for bucket_dict in agg_dict.values():
-                df = pandas.DataFrame(bucket_dict.get('buckets', []))
-                data_frames.append(df)
+        for agg_obj in self._aggregations:
+            data_frames.append(agg_obj.to_pandas())
 
         return pandas.concat(data_frames)
 
