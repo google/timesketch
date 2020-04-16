@@ -30,31 +30,20 @@ class AggregationResult(object):
     Attributes:
         chart_type: Chart type to render, defaults to "table".
         encoding: Dict with Vega-Lite encoding information.
-        field: String that contains the field name used for URL generation.
         values: List of dicts with aggregation data.
     """
 
-    def __init__(
-            self, encoding, values, chart_type='table', sketch_url='',
-            field='', extra_query_url=''):
+    def __init__(self, encoding, values, chart_type='table'):
         """Initialize the object.
 
         Args:
             encoding: Dict with Vega-Lite encoding information.
             values: List of dicts with aggregation data.
             chart_type: Chart type to render, defaults to "table".
-            sketch_url: Sketch URL for rendering.
-            field: String that contains the field name used for URL generation.
-            extra_query_url: For Chart URL transformation. If provided an extra
-                condition will be added to URL transformations in the query
-                field.
         """
         self.chart_type = chart_type
         self.encoding = encoding
-        self.field = field
         self.values = values
-        self._sketch_url = sketch_url
-        self._extra_query_url = extra_query_url
 
     def to_dict(self, encoding=False):
         """Encode aggregation result as dict.
@@ -80,7 +69,7 @@ class AggregationResult(object):
 
     def to_chart(
             self, chart_name='', chart_title='', as_html=False,
-            interactive=False, as_chart=False, base=False):
+            interactive=False):
         """Encode aggregation result as Vega-Lite chart.
 
         Args:
@@ -89,10 +78,6 @@ class AggregationResult(object):
             chart_title: The title of the chart.
             as_html: Boolean indicating if chart should be returned in HTML.
             interactive: Boolean indicating if chart should be interactive.
-            as_chart: Boolean indicating if chart should be returned as a
-                chart object (instance of altair.vegalite.v3.api.LayerChart).
-            base: Boolean indicating whether a base chart object or a regular
-                one should be returned.
 
         Returns:
             Vega-Lite chart spec in either JSON or HTML format.
@@ -108,23 +93,14 @@ class AggregationResult(object):
             raise RuntimeError('No such chart type: {0:s}'.format(chart_name))
 
         chart_data = self.to_dict(encoding=True)
-        chart_object = chart_class(
-            chart_data, title=chart_title, sketch_url=self._sketch_url,
-            field=self.field, extra_query_url=self._extra_query_url)
-
-        if base:
-            chart = chart_object.generate_base()
-        else:
-            chart = chart_object.generate()
+        chart_object = chart_class(chart_data, title=chart_title)
+        chart = chart_object.generate()
 
         if interactive:
             chart = chart.interactive()
 
         if as_html:
             return chart.to_html()
-
-        if as_chart:
-            return chart
         return chart.to_dict()
 
 
@@ -148,20 +124,17 @@ class BaseAggregator(object):
         """Initialize the aggregator object.
 
         Args:
-            field: String that contains the field name used for URL generation.
             sketch_id: Sketch ID.
             index: List of elasticsearch index names.
         """
         if not sketch_id and not index:
             raise RuntimeError('Need at least sketch_id or index')
 
+        self.sketch = SQLSketch.query.get(sketch_id)
+        self.index = index
         self.elastic = Elasticsearch(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
-        self.field = ''
-        self.index = index
-        self.sketch = SQLSketch.query.get(sketch_id)
-        self._sketch_url = '/sketch/{0:d}/explore'.format(sketch_id)
 
         if not self.index:
             active_timelines = self.sketch.active_timelines
