@@ -99,10 +99,6 @@ class BaseChart(object):
             return
         encoding['href'] = {'field': 'url', 'type': 'nominal'}
 
-    def generate_base(self):
-        """Entry point for a base chart."""
-        raise NotImplementedError
-
     def generate(self):
         """Entry point for the chart."""
         raise NotImplementedError
