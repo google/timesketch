@@ -62,7 +62,7 @@ class ManualFeedAggregation(interface.BaseAggregator):
 
     # pylint: disable=arguments-differ
     def run(
-            self, data, title='', supported_charts='tables', field='count',
+            self, data, title='', supported_charts='tables', field=None,
             order_field='count'):
         """Run the aggregation.
 
@@ -85,6 +85,17 @@ class ManualFeedAggregation(interface.BaseAggregator):
             raise ValueError('Data is missing')
 
         self.title = title
+
+        if not field:
+            keys = set()
+            for row in data:
+                list(map(keys.add, row.keys()))
+            keys.discard('count')
+            keys.discard('bucket_name')
+            if keys:
+                field = list(keys)[0]
+            else:
+                field = 'count'
 
         # Encoding information for Vega-Lite.
         encoding = {

@@ -285,6 +285,8 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
             params = {
                 'data': lines,
                 'title': 'Browser Timeframe Threshold',
+                'field': 'hour',
+                'order_field': 'hour',
             }
             agg_line = self.sketch.add_aggregation(
                 name='Browser Activity Per Hour', agg_name='manual_feed',

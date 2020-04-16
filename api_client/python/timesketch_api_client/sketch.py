@@ -314,7 +314,7 @@ class Sketch(resource.BaseResource):
             if stored, otherwise None object.
         """
         for group_obj in self.list_aggregation_groups():
-            if group_obj.id == aggregation_id:
+            if group_obj.id == group_id:
                 return group_obj
         return None
 

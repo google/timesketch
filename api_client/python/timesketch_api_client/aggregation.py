@@ -296,6 +296,11 @@ class AggregationGroup(resource.BaseResource):
         self._sketch = sketch
         self._aggregations = []
 
+    def __str__(self):
+        """Return a string representation of the group."""
+        return '[{0:d}] {1:s} - {2:s}'.format(
+            self.id, self._name, self._description)
+
     @property
     def chart(self):
         """Property that returns an altair Vega-lite chart."""
@@ -386,6 +391,14 @@ class AggregationGroup(resource.BaseResource):
 
         vega_spec_string = json.dumps(vega_spec)
         return altair.Chart.from_json(vega_spec_string)
+
+    def get_charts(self):
+        """Returns a list of altair Chart objects from each aggregation."""
+        return [x.chart for x in self._aggregations]
+
+    def get_tables(self):
+        """Returns a list of pandas DataFrame from each aggregation."""
+        return [x.table for x in self._aggregations]
 
     def to_pandas(self):
         """Returns a pandas DataFrame."""

@@ -32,7 +32,6 @@ from __future__ import unicode_literals
 
 import codecs
 import datetime
-import io
 import json
 import hashlib
 import os
@@ -1116,7 +1115,8 @@ class AggregationGroupResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'The user does not have read permission on the sketch.')
 
-        charts = []
+        result_chart = None
+        how = group.how
         configs = []
         objects = []
         time_before = time.time()
@@ -1149,6 +1149,15 @@ class AggregationGroupResource(ResourceMixin, Resource):
                 chart_title=aggregator_obj.chart_title,
                 as_chart=True, interactive=True)
 
+            if result_chart is None:
+                result_chart = chart
+            elif how == 'horizontal':
+                result_chart = alt.hconcat(chart, result_chart)
+            elif how == 'vertical':
+                result_chart = alt.vconcat(chart, result_chart)
+            else:
+                result_chart = alt.layer(chart, result_chart)
+
             buckets = result_obj.to_dict()
             buckets['buckets'] = buckets.pop('values')
             result = {
@@ -1157,37 +1166,19 @@ class AggregationGroupResource(ResourceMixin, Resource):
                 }
             }
             objects.append(result)
-
             configs.append(chart.config)
-            # We need to stip out all configs before we concatenate charts.
-            chart.config = alt.Undefined
-            if hasattr(chart, '$schema'):
-                delattr(chart, '$schema')
-
-            charts.append(chart)
-
-        how = group.how
-        if how == 'horizontal':
-            chart = alt.hconcat(*charts)
-        elif how == 'vertical':
-            chart = alt.vconcat(*charts)
-        else:
-            chart = alt.layer(*charts)
 
         # TODO(kiddi): Combine configs.
         chart.config = configs[0]
         time_after = time.time()
 
-        chart_io = io.StringIO()
-        chart.save(chart_io, format='json')
-        chart_io.seek(0)
         meta = {
             'method': 'aggregator_group',
             'chart_type': 'compound: {0:s}'.format(how),
             'name': group.name,
             'description': group.description,
             'es_time': time_after - time_before,
-            'vega_spec': chart_io.read(),
+            'vega_spec': result_chart.to_dict(),
             'vega_chart_title': group.name
         }
         schema = {'meta': meta, 'objects': objects}

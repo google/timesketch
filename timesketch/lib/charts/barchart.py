@@ -36,8 +36,9 @@ class BarChart(interface.BaseChart):
         if self.chart_title:
             return chart.mark_bar().properties(title=self.chart_title)
 
+        chart = chart.mark_bar()
         chart.encoding = alt.FacetedEncoding.from_dict(self.encoding)
-        return chart.mark_bar()
+        return chart
 
     def generate(self):
         """Generate the chart.

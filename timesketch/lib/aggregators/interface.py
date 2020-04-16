@@ -80,7 +80,7 @@ class AggregationResult(object):
 
     def to_chart(
             self, chart_name='', chart_title='', as_html=False,
-            interactive=False, as_chart=False):
+            interactive=False, as_chart=False, base=False):
         """Encode aggregation result as Vega-Lite chart.
 
         Args:
@@ -91,6 +91,8 @@ class AggregationResult(object):
             interactive: Boolean indicating if chart should be interactive.
             as_chart: Boolean indicating if chart should be returned as a
                 chart object (instance of altair.vegalite.v3.api.LayerChart).
+            base: Boolean indicating whether a base chart object or a regular
+                one should be returned.
 
         Returns:
             Vega-Lite chart spec in either JSON or HTML format.
@@ -109,7 +111,11 @@ class AggregationResult(object):
         chart_object = chart_class(
             chart_data, title=chart_title, sketch_url=self._sketch_url,
             field=self.field, extra_query_url=self._extra_query_url)
-        chart = chart_object.generate()
+
+        if base:
+            chart = chart_object.generate_base()
+        else:
+            chart = chart_object.generate()
 
         if interactive:
             chart = chart.interactive()
