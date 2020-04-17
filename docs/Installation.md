@@ -16,10 +16,10 @@ Install Java
     $ sudo apt-get install openjdk-8-jre-headless
     $ sudo apt-get install apt-transport-https
 
-Install the latest Elasticsearch 6.x release:
+Install the latest Elasticsearch 7.x release:
 
     $ sudo wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-    $ sudo echo "deb https://artifacts.elastic.co/packages/6.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list
+    $ sudo echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
     $ sudo apt-get update
     $ sudo apt-get install elasticsearch
 
@@ -33,7 +33,7 @@ Make sure that Elasticsearch is started on boot:
     /bin/systemctl daemon-reload
     /bin/systemctl enable elasticsearch.service
     /bin/systemctl start elasticsearch.service
-    
+
 Make sure that Elasticsearch is running:
 
     /bin/systemctl status elasticsearch.service
@@ -59,7 +59,7 @@ Then you need to restart PostgreSQL:
 
 Now it is time to install Timesketch. First we need to install some dependencies:
 
-    $ sudo apt-get install python3-pip python3-dev libffi3-dev
+    $ sudo apt-get install python3-pip python3-dev libffi-dev
 
 Then install Timesketch itself:
 

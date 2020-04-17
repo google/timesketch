@@ -7,12 +7,12 @@ To enable uploading and processing of Plaso storage files, there are a couple of
 NOTE: Due to changes in the format of the Plaso storage file you need to run the latest version of Plaso (>=1.5.0).
 
 Following the official Plaso documentation:
-https://github.com/log2timeline/plaso/wiki/Ubuntu-Packaged-Release
+https://plaso.readthedocs.io/en/latest/sources/user/Ubuntu-Packaged-Release.html
 
     $ sudo add-apt-repository universe
     $ sudo add-apt-repository ppa:gift/stable
     $ sudo apt-get update
-    $ sudo apt-get install python-plaso
+    $ sudo apt-get install plaso-tools
 
 **Install Redis**
 
