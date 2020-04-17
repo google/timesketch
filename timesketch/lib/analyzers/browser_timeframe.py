@@ -299,7 +299,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                 'An overview of all browser activity per hour. The threshold '
                 'used to determine if an hour was considered to be active '
                 'was: {0:0.2f}'.format(threshold))
-            story.add_aggregation_group(agg_obj)
+            story.add_aggregation_group(group)
 
         return (
             'Tagged {0:d} out of {1:d} events as outside of normal '

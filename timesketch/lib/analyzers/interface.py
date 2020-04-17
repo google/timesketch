@@ -447,6 +447,16 @@ class AggregationGroup(object):
         # TODO(kiddi): Add support for parameters.
         self._parameters = ''
 
+    @property
+    def id(self):
+        """Returns the group ID."""
+        return self.group.id
+
+    @property
+    def name(self):
+        """Returns the group name."""
+        return self.group.name
+
     def add_aggregation(self, aggregation_obj):
         """Add an aggregation object to the group.
 
@@ -625,6 +635,9 @@ class Story(object):
             aggregation_group (SQLAggregationGroup): Save aggregation group
                 to add to the story.
         """
+        if not isinstance(aggregation_group, AggregationGroup):
+            return
+
         block = self._create_new_block()
         block['componentName'] = 'TsAggregationGroupCompact'
         block['componentProps']['aggregation_group'] = {
