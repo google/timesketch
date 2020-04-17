@@ -34,9 +34,9 @@ class BarChart(interface.BaseChart):
         """
         chart = self._get_chart_with_transform()
         if self.chart_title:
-            chart = chart.mark_bar(size=20).properties(title=self.chart_title)
+            chart = chart.mark_bar(strokeWidth=0.3).properties(title=self.chart_title)
         else:
-            chart = chart.mark_bar(size=20)
+            chart = chart.mark_bar(strokeWidth=0.3)
 
         self._add_url_href(self.encoding)
         chart.encoding = alt.FacetedEncoding.from_dict(self.encoding)

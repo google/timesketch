@@ -390,6 +390,28 @@ class AggregationGroup(resource.BaseResource):
             agg_obj.from_store(agg_id)
             self._aggregations.append(agg_obj)
 
+    def from_store(self, group_id):
+        """Feed group data from a group ID.
+
+        Args:
+            group_id (int): the group ID to fetch from the store.
+
+        Raises:
+            TypeError: if the group ID does not exist.
+        """
+        self.id = group_id
+        resource_uri = 'sketches/{0:d}/aggregation/group/'.format(
+            self._sketch.id)
+        resource_data = self.api.fetch_resource_data(resource_uri)
+        for group_dict in data.get('objects', []):
+            group_dict_id = group_dict.get('id')
+            if not group_dict_id:
+                continue
+            if group_dict_id == group_id:
+                self.from_dict(group_dict)
+                return
+        raise TypeError('Group ID not found.')
+
     def generate_chart(self):
         """Returns an altair Vega-lite chart."""
         if not self._aggregations:

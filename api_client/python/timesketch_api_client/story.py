@@ -455,7 +455,7 @@ class Story(resource.BaseResource):
     def blocks(self):
         """Returns all the blocks of the story."""
         if not self._blocks:
-            story_data = self.lazyload_data()
+            story_data = self.lazyload_data(refresh=True)
             objects = story_data.get('objects')
             content = ''
             if objects:
