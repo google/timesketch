@@ -19,6 +19,7 @@ import json
 import altair
 import pandas
 
+from . import definitions
 from . import error
 from . import resource
 
@@ -29,6 +30,7 @@ class Aggregation(resource.BaseResource):
     Attributes:
         aggregator_name: name of the aggregator class used to
             generate the aggregation.
+        chart_color: the color of the chart.
         chart_type: the type of chart that will be generated
             from this aggregation object.
         type: the type of aggregation object.
@@ -40,6 +42,7 @@ class Aggregation(resource.BaseResource):
         self._aggregator_data = {}
         self._parameters = {}
         self.aggregator_name = ''
+        self.chart_color = ''
         self.chart_type = ''
         self.view = None
         self.type = None
@@ -98,6 +101,8 @@ class Aggregation(resource.BaseResource):
             self.view = view_id
 
         self.aggregator_name = aggregator_name
+
+        self.chart_color = parameters.pop('chart_color', '')
 
         form_data = {
             'aggregator_name': aggregator_name,
@@ -332,6 +337,16 @@ class AggregationGroup(resource.BaseResource):
     def table(self):
         """Property that returns a pandas DataFrame."""
         return self.to_pandas()
+
+    def delete(self):
+        """Deletes the group from the store."""
+        if not self.id:
+            return False
+
+        response = self._api.session.delete(
+            '{0:s}/{1:s}'.format(self._api.api_root, self.resource_uri))
+
+        return response.status_code in definitions.HTTP_STATUS_CODE_20X
 
     def from_dict(self, group_dict):
         """Feed group data from a dictionary.

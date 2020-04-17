@@ -53,7 +53,7 @@ class BaseChart(object):
         if isinstance(_values, pd.DataFrame):
             self.values = _values
         else:
-            self.values = alt.Data(values=_values)
+            self.values = pd.DataFrame(_values)
 
         self.encoding = _encoding
         self.chart_title = title
@@ -102,3 +102,14 @@ class BaseChart(object):
     def generate(self):
         """Entry point for the chart."""
         raise NotImplementedError
+
+    def set_color(self, color):
+        """Sets a color value for the chart.
+
+        Args:
+            color: a string with the color name to be added.
+        """
+        self.values['color'] = color
+        self.encoding['color']  = {
+            'type': 'nominal', 'field': 'color', 'scale': None}
+

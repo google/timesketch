@@ -1142,12 +1142,14 @@ class AggregationGroupResource(ResourceMixin, Resource):
                 continue
             aggregator_obj = agg_class(sketch_id=sketch_id)
             chart_type = aggregator_parameters.pop('supported_charts', None)
+            color = aggregator_parameters.pop('chart_color', '')
+
             result_obj = aggregator_obj.run(**aggregator_parameters)
 
             chart = result_obj.to_chart(
                 chart_name=chart_type,
                 chart_title=aggregator_obj.chart_title,
-                as_chart=True, interactive=True)
+                as_chart=True, interactive=True, color=color)
 
             if result_chart is None:
                 result_chart = chart
@@ -1169,7 +1171,7 @@ class AggregationGroupResource(ResourceMixin, Resource):
             configs.append(chart.config)
 
         # TODO(kiddi): Combine configs.
-        chart.config = configs[0]
+        #chart.config = configs[0]
         time_after = time.time()
 
         meta = {
@@ -1268,6 +1270,7 @@ class AggregationExploreResource(ResourceMixin, Resource):
                 aggregator_parameters = {}
             aggregator = agg_class(sketch_id=sketch_id)
             chart_type = aggregator_parameters.pop('supported_charts', None)
+            chart_color = aggregator_parameters.pop('chart_color', '')
             time_before = time.time()
             result_obj = aggregator.run(**aggregator_parameters)
             time_after = time.time()
@@ -1292,7 +1295,7 @@ class AggregationExploreResource(ResourceMixin, Resource):
             if chart_type:
                 meta['vega_spec'] = result_obj.to_chart(
                     chart_name=chart_type,
-                    chart_title=aggregator.chart_title)
+                    chart_title=aggregator.chart_title, color=chart_color)
                 meta['vega_chart_title'] = aggregator.chart_title
 
         elif aggregation_dsl:
