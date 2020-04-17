@@ -59,7 +59,7 @@ Then you need to restart PostgreSQL:
 
 Now it is time to install Timesketch. First we need to install some dependencies:
 
-    $ sudo apt-get install python3-pip python3-dev libffi3-dev
+    $ sudo apt-get install python3-pip python3-dev libffi-dev
 
 Then install Timesketch itself:
 
