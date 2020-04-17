@@ -24,6 +24,9 @@ limitations under the License.
       </router-link>
     </div>
     <div class="navbar-end">
+      <div class="navbar-item" style="color: #ffffff;">
+        {{ currentUser }}
+      </div>
       <div class="navbar-item">
         <a href="/logout" style="color:#fff;">Logout</a>
       </div>
@@ -33,7 +36,12 @@ limitations under the License.
 
 <script>
 export default {
-  name: 'ts-navbar-main'
+  name: 'ts-navbar-main',
+  computed: {
+    currentUser () {
+      return this.$store.state.currentUser
+    }
+  }
 }
 </script>
 

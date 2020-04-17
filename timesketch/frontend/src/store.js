@@ -19,16 +19,13 @@ import ApiClient from './utils/RestApiClient'
 
 Vue.use(Vuex)
 
-const defaultState = () => {
-  ApiClient.getLoggedInUser().then((response) => {
-    let user = response.data.objects[0].username
-    return {
-      sketch: {},
-      meta: {},
-      count: 0,
-      user: user
-    }
-  }).catch((e) => {})
+const defaultState = (currentUser) => {
+  return {
+    sketch: {},
+    meta: {},
+    count: 0,
+    currentUser: currentUser
+  }
 }
 
 // Initial state
@@ -44,8 +41,11 @@ export default new Vuex.Store({
     SET_COUNT (state, payload) {
       Vue.set(state, 'count', payload)
     },
-    RESET_STATE (state) {
-      Object.assign(state, defaultState())
+    RESET_STATE (state, payload) {
+      ApiClient.getLoggedInUser().then((response) => {
+        let currentUser = response.data.objects[0].username
+        Object.assign(state, defaultState(currentUser))
+      })
     }
   },
   actions: {

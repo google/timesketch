@@ -15,7 +15,6 @@ limitations under the License.
 -->
 <template>
   <div>
-    <b-switch class="is-pulled-right" type="is-info" v-model="showSearch">Search</b-switch>
     <b-table
       :data="sketches"
       :per-page="10"
@@ -27,10 +26,10 @@ limitations under the License.
       icon-prev="chevron-left"
       icon-next="chevron-right">
       <template slot-scope="props">
-        <b-table-column field="name" label="Sketch" :searchable="showSearch">
+        <b-table-column field="name" label="Name">
           <router-link :to="{ name: 'SketchOverview', params: {sketchId: props.row.id } }"><strong>{{ props.row.name }}</strong></router-link>
         </b-table-column>
-        <b-table-column field="user" label="Created by" width="200" :searchable="showSearch">
+        <b-table-column field="user" label="Created by" width="200">
           {{ props.row.user }}
         </b-table-column>
         <b-table-column field="updated_at" label="Last activity" width="200">
@@ -43,12 +42,7 @@ limitations under the License.
 
 <script>
 export default {
-  props: ['sketches'],
-  data () {
-    return {
-      showSearch: false
-    }
-  }
+  props: ['sketches']
 }
 </script>
 

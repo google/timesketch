@@ -358,7 +358,8 @@ class SketchListResource(ResourceMixin, Resource):
                 'user': sketch.user.username,
                 'id': sketch.id
             })
-        return jsonify({'objects': sketches})
+        meta = {'current_user': current_user.username}
+        return jsonify({'objects': sketches, 'meta': meta})
 
     @login_required
     def post(self):
