@@ -5,7 +5,9 @@ FROM ubuntu:18.04
 RUN apt-get update && apt-get -y upgrade && apt-get -y dist-upgrade
 
 # Setup install environment and Timesketch dependencies
-RUN apt-get -y install apt-transport-https \
+RUN apt-get --no-install-recommends -y install apt-transport-https \
+                       apt-utils \
+                       ca-certificates \
                        git \
                        libffi-dev \
                        lsb-release \
@@ -14,9 +16,9 @@ RUN apt-get -y install apt-transport-https \
                        python3-psycopg2
 
 # Install Plaso, nodejs and yarn.
-RUN apt-get -y install software-properties-common
+RUN apt-get --no-install-recommends -y install software-properties-common
 RUN add-apt-repository ppa:gift/stable && apt-get update
-RUN apt-get update && apt-get -y install plaso-tools
+RUN apt-get update && apt-get --no-install-recommends -y install plaso-tools
 
 # Use Python 3 pip (pip3) to install Timesketch
 RUN pip3 install timesketch
