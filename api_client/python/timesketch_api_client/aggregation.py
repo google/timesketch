@@ -103,6 +103,8 @@ class Aggregation(resource.BaseResource):
         self.aggregator_name = aggregator_name
         self.chart_color = parameters.get('chart_color', '')
 
+        self.chart_color = parameters.pop('chart_color', '')
+
         form_data = {
             'aggregator_name': aggregator_name,
             'aggregator_parameters': parameters,
