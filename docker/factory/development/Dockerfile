@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common \
     apt-transport-https \
     apt-utils \
+    ca-certificates \
     curl \
     git \
     gpg-agent \
