@@ -110,6 +110,5 @@ class BaseChart(object):
             color: a string with the color name to be added.
         """
         self.values['color'] = color
-        self.encoding['color']  = {
+        self.encoding['color'] = {
             'type': 'nominal', 'field': 'color', 'scale': None}
-

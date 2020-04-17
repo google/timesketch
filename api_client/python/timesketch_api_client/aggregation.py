@@ -403,7 +403,7 @@ class AggregationGroup(resource.BaseResource):
         resource_uri = 'sketches/{0:d}/aggregation/group/'.format(
             self._sketch.id)
         resource_data = self.api.fetch_resource_data(resource_uri)
-        for group_dict in data.get('objects', []):
+        for group_dict in resource_data.get('objects', []):
             group_dict_id = group_dict.get('id')
             if not group_dict_id:
                 continue
@@ -446,4 +446,3 @@ class AggregationGroup(resource.BaseResource):
             data_frames.append(agg_obj.to_pandas())
 
         return pandas.concat(data_frames)
-
