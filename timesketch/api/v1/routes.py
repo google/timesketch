@@ -52,6 +52,7 @@ from .resources import SessionResource
 from .resources import UserListResource
 from .resources import GroupListResource
 from .resources import CollaboratorResource
+from .resources import LoggedInUserResource
 
 
 # Disable error for long line. Readability is more important than line
@@ -94,5 +95,6 @@ API_ROUTES = [
     (SessionResource, '/sketches/<int:sketch_id>/explore/sessions/<string:timeline_index>'),
     (UserListResource, '/users/'),
     (GroupListResource, '/groups/'),
-    (CollaboratorResource, '/sketches/<int:sketch_id>/collaborators/')
+    (CollaboratorResource, '/sketches/<int:sketch_id>/collaborators/'),
+    (LoggedInUserResource, '/users/me/')
 ]

@@ -206,5 +206,8 @@ export default {
   },
   getAnalyzerSession (sketchId, sessionId) {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/' + sessionId + '/')
+  },
+  getLoggedInUser () {
+    return RestApiClient.get('/users/me/')
   }
 }
