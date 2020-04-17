@@ -106,7 +106,7 @@ def mock_response(*args, **kwargs):
 
     sketch_list_data = {
         'meta': {'es_time': 324},
-        'objects': [sketch_data['objects']]}
+        'objects': sketch_data['objects']}
 
     timeline_data = {
         'meta': {

@@ -88,3 +88,13 @@ ul.content-list>li:hover {
 }
 
 ul.content-list>li:last-child { border-bottom: none; }
+
+.ts-search-input {
+    outline: none;
+    border: none;
+    font-size: 1.2em;
+    border-radius: 5px;
+    padding: 15px;
+    background: #f9f9f9;
+    width: 100%;
+  }

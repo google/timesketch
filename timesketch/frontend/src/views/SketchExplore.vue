@@ -623,15 +623,6 @@ export default {
 </script>
 
 <style lang="scss">
-  .ts-search-input {
-    outline: none;
-    border: none;
-    font-size: 1.2em;
-    border-radius: 5px;
-    padding: 15px;
-    background: #f9f9f9;
-    width: 100%;
-  }
   .dropdown-menu {
     box-shadow: 0 30px 30px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
   }
