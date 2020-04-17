@@ -380,7 +380,7 @@ class TimesketchApi(object):
         """
         sketches = []
         response = self.fetch_resource_data('sketches/')
-        for sketch_dict in response['objects'][0]:
+        for sketch_dict in response['objects']:
             sketch_id = sketch_dict['id']
             sketch_name = sketch_dict['name']
             sketch_obj = sketch.Sketch(
