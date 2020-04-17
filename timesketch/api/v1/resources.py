@@ -1117,7 +1117,6 @@ class AggregationGroupResource(ResourceMixin, Resource):
 
         result_chart = None
         how = group.how
-        configs = []
         objects = []
         time_before = time.time()
         for aggregator in group.aggregations:
@@ -1168,11 +1167,9 @@ class AggregationGroupResource(ResourceMixin, Resource):
                 }
             }
             objects.append(result)
-            configs.append(chart.config)
 
-        # TODO(kiddi): Combine configs.
-        #chart.config = configs[0]
         time_after = time.time()
+        result_chart.title = group.name
 
         meta = {
             'method': 'aggregator_group',

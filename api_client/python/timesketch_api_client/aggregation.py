@@ -101,8 +101,7 @@ class Aggregation(resource.BaseResource):
             self.view = view_id
 
         self.aggregator_name = aggregator_name
-
-        self.chart_color = parameters.pop('chart_color', '')
+        self.chart_color = parameters.get('chart_color', '')
 
         form_data = {
             'aggregator_name': aggregator_name,
@@ -343,8 +342,8 @@ class AggregationGroup(resource.BaseResource):
         if not self.id:
             return False
 
-        response = self._api.session.delete(
-            '{0:s}/{1:s}'.format(self._api.api_root, self.resource_uri))
+        response = self.api.session.delete(
+            '{0:s}/{1:s}'.format(self.api.api_root, self.resource_uri))
 
         return response.status_code in definitions.HTTP_STATUS_CODE_20X
 
