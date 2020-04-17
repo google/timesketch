@@ -32,7 +32,6 @@ from __future__ import unicode_literals
 
 import codecs
 import datetime
-import io
 import json
 import hashlib
 import os
@@ -1118,7 +1117,6 @@ class AggregationGroupResource(ResourceMixin, Resource):
 
         result_chart = None
         how = group.how
-        charts = []
         objects = []
         time_before = time.time()
         for aggregator in group.aggregations:
