@@ -444,7 +444,6 @@ class AggregationGroup(object):
         """
         self.group = aggregation_group
         self._how = 'layer'
-        # TODO(kiddi): Add support for parameters.
         self._parameters = ''
 
     @property
@@ -509,7 +508,12 @@ class AggregationGroup(object):
         self.commit()
 
     def set_parameters(self, parameters=None):
-        """Sets the chart parameters."""
+        """Sets the parameters for the aggregation group.
+
+        Args:
+            parameters: a JSON string or a dict with the parameters
+                for the aggregation group.
+        """
         if isinstance(parameters, dict):
             parameter_string = json.dumps(parameters)
         elif isinstance(parameters, str):
@@ -519,6 +523,7 @@ class AggregationGroup(object):
         else:
             parameter_string = str(parameters)
         self._parameters = parameter_string
+        self.commit()
 
 
 class Story(object):

@@ -1168,8 +1168,12 @@ class AggregationGroupResource(ResourceMixin, Resource):
             }
             objects.append(result)
 
+        parameters = {}
+        if group.parameters:
+            parameters = json.loads(parameters)
+
+        result_chart.title = parameters.get('chart_title', group.name)
         time_after = time.time()
-        result_chart.title = group.name
 
         meta = {
             'method': 'aggregator_group',

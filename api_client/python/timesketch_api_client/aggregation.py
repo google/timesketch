@@ -283,7 +283,6 @@ class AggregationGroup(resource.BaseResource):
 
     Attributes:
         id: the ID of the group.
-        view: a view ID if the aggregation is tied to a specific view.
     """
 
     def __init__(self, sketch, api):
