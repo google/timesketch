@@ -73,9 +73,9 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 
         Get named aggregations, i.e. only aggregations that have a name.
         """
-        return  [
+        return [
             agg for agg in self.aggregations
-            if agg.name != ''
+            if agg.name != '' and not agg.aggregationgroup
         ]
 
     @property

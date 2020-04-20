@@ -158,8 +158,17 @@ export default {
   search (sketchId, formData) {
     return RestApiClient.post('/sketches/' + sketchId + '/explore/', formData)
   },
+  getAggregations (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/aggregation/')
+  },
+  getAggregationGroups (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/aggregation/group/')
+  },
   runAggregator (sketchId, formData) {
     return RestApiClient.post('/sketches/' + sketchId + '/aggregation/explore/', formData)
+  },
+  runAggregatorGroup (sketchId, groupId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/aggregation/group/' + groupId + '/')
   },
   saveAggregation (sketchId, aggregation, name, formData) {
     let form_data = {
