@@ -91,8 +91,8 @@ limitations under the License.
                     <p class="control" v-if="meta.views.length">
                       <ts-view-list-dropdown @setActiveView="addViewComponent($event, index)" :is-rounded="true" :title="'+ Saved view'"></ts-view-list-dropdown>
                     </p>
-                    <p class="control" v-if="aggs">
-                      <ts-aggregation-list-dropdown @addAggregation="addAggregationComponent($event, index)" :is-rounded="true" :title="'+ Aggregation'" :aggregations="aggs" ></ts-aggregation-list-dropdown>
+                    <p class="control" v-if="allAggregations">
+                      <ts-aggregation-list-dropdown @addAggregation="addAggregationComponent($event, index)" :is-rounded="true" :title="'+ Aggregation'" :aggregations="allAggregations" ></ts-aggregation-list-dropdown>
                     </p>
                   </div>
               </div>
@@ -205,7 +205,7 @@ export default {
     meta () {
       return this.$store.state.meta
     },
-    aggs () {
+    allAggregations () {
       const concat = (...arrays) => [].concat(...arrays.filter(Array.isArray));
       return concat(this.aggregations, this.aggregationGroups)
     }

@@ -56,6 +56,7 @@ export default {
         this.vegaSpec = JSON.stringify(spec)
         this.title = response.data.meta.vega_chart_title
         this.chartType = response.data.meta.chart_type
+        // Get the first key of the object.
         this.chartData = spec.datasets[Object.keys(spec.datasets)[0]]
       }).catch((e) => {})
     }
