@@ -246,7 +246,7 @@ class ResourceMixin(object):
         'timelines': fields.List(fields.Nested(timeline_fields)),
         'stories': fields.List(fields.Nested(story_fields)),
         'aggregations': fields.Nested(aggregation_fields),
-        'aggregation_groups': fields.Nested(aggregation_group_fields),
+        'aggregationgroups': fields.Nested(aggregation_group_fields),
         'active_timelines': fields.List(fields.Nested(timeline_fields)),
         'status': fields.Nested(status_fields),
         'created_at': fields.DateTime,

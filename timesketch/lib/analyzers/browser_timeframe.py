@@ -249,7 +249,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                 last = activity_hours[index - 1]
 
             story.add_text(
-                '## Browser Timeframe Analyzer.\n\nThe browser timeframe '
+                '## Browser Timeframe Analyzer\n\nThe browser timeframe '
                 'analyzer discovered {0:d} browser events that ocurred '
                 'outside of the typical browsing window of this browser '
                 'history, or around {1:0.2f}%  of the {2:d} total events.'
@@ -257,12 +257,15 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                 'the frequency of browsing events per hour, and then '
                 'discovering the longest block of most active hours before '
                 'proceeding with flagging all events outside of that time '
-                'period. This can information can be used by other analyzers '
-                'or by manually looking for other acitivy within the '
+                'period. This information can be used by other analyzers '
+                'or by manually looking for other activity within the '
                 'inactive time period to find unusual actions.\n\n'
                 'The hours considered to be active hours are the hours '
-                'between {3:02d} and {4:02d} (hours in UTC)'.format(
-                    tagged_events, percent, total_count, first, last))
+                'between {3:02d} and {4:02d} (hours in UTC) and the '
+                'threshold used to determine if an hour was considered to be '
+                'active was: {5:0.2f}.'.format(
+                    tagged_events, percent, total_count, first, last,
+                    threshold))
 
             group = self.sketch.add_aggregation_group(
                 name='Browser Activity Per Hour',
@@ -294,11 +297,6 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                 agg_params=params, chart_type='linechart',
                 description='Created by the browser timeframe analyzer')
             group.add_aggregation(agg_line)
-
-            story.add_text(
-                'An overview of all browser activity per hour. The threshold '
-                'used to determine if an hour was considered to be active '
-                'was: {0:0.2f}'.format(threshold))
             story.add_aggregation_group(group)
 
         return (
