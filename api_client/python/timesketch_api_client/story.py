@@ -336,6 +336,96 @@ class AggregationBlock(BaseBlock):
         return aggregation_block
 
 
+class AggregationGroupBlock(BaseBlock):
+    """Block object for aggregation groups."""
+
+    TYPE = 'aggregation_group'
+
+    def __init__(self, story, index):
+        super(AggregationGroupBlock, self).__init__(story, index)
+        self._group_id = 0
+        self._group_name = ''
+
+    @property
+    def group(self):
+        """Returns the aggregation group object."""
+        if self._data:
+            return self._data
+        return None
+
+    @group.setter
+    def group(self, group_obj):
+        """Set the aggregation group object."""
+        self._data = group_obj
+
+    @property
+    def group_name(self):
+        """Returns the aggregation group name."""
+        return self._group_name
+
+    @property
+    def group_id(self):
+        """Returns the aggregation group ID."""
+        return self._group_id
+
+    @property
+    def table(self):
+        """Returns a table view, as a pandas DataFrame."""
+        if not self._data:
+            return pd.DataFrame()
+        return self._data.table
+
+    @property
+    def chart(self):
+        """Returns a chart back from the aggregation."""
+        if not self._data:
+            return None
+        return self._data.chart
+
+    def from_dict(self, data_dict):
+        """Feed a block from a block dict."""
+        component = data_dict.get('componentName', 'N/A')
+        if component != 'TsAggregationGroupCompact':
+            raise TypeError('Not an aggregation group block.')
+
+        props = data_dict.get('componentProps', {})
+        group_dict = props.get('aggregation_group')
+        if not group_dict:
+            raise TypeError('Aggregation group not defined')
+
+        self._group_id = group_dict.get('id', 0)
+        self._group_name = group_dict.get('name', '')
+
+    def to_dict(self):
+        """Returns a dict with the block data.
+
+        Raises:
+            ValueError: if the block has not been fed with data.
+            TypeError: if the data that was fed is of the wrong type.
+
+        Returns:
+            A dict with the block data.
+        """
+        if not self._data:
+            raise ValueError('No data has been fed to the block.')
+
+        group_obj = self._data
+        if not hasattr(group_obj, 'id'):
+            raise TypeError('Aggregation group object is not correctly formed.')
+
+        if not hasattr(group_obj, 'aggregations'):
+            raise TypeError('Aggregation group object is not correctly formed.')
+
+        group_block = self._get_base()
+        group_block['componentName'] = 'TsAggregationGroupCompact'
+        group_block['componentProps']['aggregation_group'] = {
+            'id': group_obj.id,
+            'name': group_obj.name,
+        }
+
+        return group_block
+
+
 class Story(resource.BaseResource):
     """Story object.
 
@@ -365,7 +455,7 @@ class Story(resource.BaseResource):
     def blocks(self):
         """Returns all the blocks of the story."""
         if not self._blocks:
-            story_data = self.lazyload_data()
+            story_data = self.lazyload_data(refresh_cache=True)
             objects = story_data.get('objects')
             content = ''
             if objects:
@@ -393,6 +483,13 @@ class Story(resource.BaseResource):
                     # Defaults to a table view.
                     if not block.agg_type:
                         block.agg_type = 'table'
+                elif name == 'TsAggregationGroupCompact':
+                    block = AggregationGroupBlock(self, index)
+                    block.from_dict(content_block)
+                    group_obj = aggregation.AggregationGroup(
+                        self._sketch, self._api)
+                    group_obj.from_store(block.group_id)
+                    block.feed(group_obj)
                 self._blocks.append(block)
         return self._blocks
 

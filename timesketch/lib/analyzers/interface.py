@@ -30,6 +30,7 @@ from timesketch.lib import definitions
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models import db_session
 from timesketch.models.sketch import Aggregation
+from timesketch.models.sketch import AggregationGroup as SQLAggregationGroup
 from timesketch.models.sketch import Event as SQLEvent
 from timesketch.models.sketch import Sketch as SQLSketch
 from timesketch.models.sketch import Story as SQLStory
@@ -324,6 +325,34 @@ class Sketch(object):
         db_session.commit()
         return aggregation
 
+    def add_aggregation_group(self, name, description='', view_id=None):
+        """Add aggregation Group to the sketch.
+
+        Args:
+            name: the name of the aggregation run.
+            description: optional description of the aggregation, visible in
+                the UI.
+            view_id: optional ID of the view to attach the aggregation to.
+        """
+        if not name:
+            raise ValueError('Aggregator group name needs to be defined.')
+
+        if view_id:
+            view = View.query.get(view_id)
+        else:
+            view = None
+
+        if not description:
+            description = 'Created by an analyzer'
+
+        aggregation_group = SQLAggregationGroup.get_or_create(
+            name=name, description=description, user=None,
+            sketch=self.sql_sketch, view=view)
+        db_session.add(aggregation_group)
+        db_session.commit()
+
+        return AggregationGroup(aggregation_group)
+
     def add_view(self, view_name, analyzer_name, query_string=None,
                  query_dsl=None, query_filter=None, additional_fields=None):
         """Add saved view to the Sketch.
@@ -399,6 +428,103 @@ class Sketch(object):
         active_timelines = self.sql_sketch.active_timelines
         indices = [t.searchindex.index_name for t in active_timelines]
         return indices
+
+
+class AggregationGroup(object):
+    """Aggregation Group object with helper methods.
+
+    Attributes:
+        group (SQLAlchemy): Instance of a SQLAlchemy AggregationGroup object.
+    """
+    def __init__(self, aggregation_group):
+        """Initializes the AggregationGroup object.
+
+        Args:
+            aggregation_group: SQLAlchemy AggregationGroup object.
+        """
+        self.group = aggregation_group
+        self._orientation = 'layer'
+        self._parameters = ''
+
+    @property
+    def id(self):
+        """Returns the group ID."""
+        return self.group.id
+
+    @property
+    def name(self):
+        """Returns the group name."""
+        return self.group.name
+
+    def add_aggregation(self, aggregation_obj):
+        """Add an aggregation object to the group.
+
+        Args:
+            aggregation_obj (Aggregation): the Aggregation objec.
+        """
+        self.group.aggregations.append(aggregation_obj)
+        self.group.orientation = self._orientation
+        db_session.add(aggregation_obj)
+        db_session.add(self.group)
+        db_session.commit()
+
+    def commit(self):
+        """Commit changes to DB."""
+        self.group.orientation = self._orientation
+        self.group.parameters = self._parameters
+        db_session.add(self.group)
+        db_session.commit()
+
+    def set_orientation(self, orientation='layer'):
+        """Sets how charts should be joined.
+
+        Args:
+            orienation: string that contains how they should be connected
+                together, That is the chart orientation,  the options are:
+                "layer", "horizontal" and "vertical". The default behavior
+                is "layer".
+        """
+        orientation = orientation.lower()
+        if orientation == 'layer' or orientation.starstwith('layer'):
+            self._orientation = 'layer'
+        elif orientation == 'horizontal' or orientation.startswith('hor'):
+            self._orientation = 'horizontal'
+        elif orientation == 'vertical' or orientation.startswith('ver'):
+            self._orientation = 'vertical'
+        self.commit()
+
+    def set_vertical(self):
+        """Sets the "orienation" to vertical."""
+        self._orientation = 'vertical'
+        self.commit()
+
+    def set_horizontal(self):
+        """Sets the "orientation" to horizontal."""
+        self._orientation = 'horizontal'
+        self.commit()
+
+    def set_layered(self):
+        """Sets the "orientation" to layer."""
+        self._orientation = 'layer'
+        self.commit()
+
+    def set_parameters(self, parameters=None):
+        """Sets the parameters for the aggregation group.
+
+        Args:
+            parameters: a JSON string or a dict with the parameters
+                for the aggregation group.
+        """
+        if isinstance(parameters, dict):
+            parameter_string = json.dumps(parameters)
+        elif isinstance(parameters, str):
+            parameter_string = parameters
+        elif parameters is None:
+            parameter_string = ''
+        else:
+            parameter_string = str(parameters)
+        self._parameters = parameter_string
+        self.commit()
 
 
 class Story(object):
@@ -506,6 +632,23 @@ class Story(object):
             'parameters': json.dumps(parameter_dict),
             'user': {'username': None},
             }
+        self._commit(block)
+
+    def add_aggregation_group(self, aggregation_group):
+        """Add an aggregation group to the Story.
+
+        Args:
+            aggregation_group (SQLAggregationGroup): Save aggregation group
+                to add to the story.
+        """
+        if not isinstance(aggregation_group, AggregationGroup):
+            return
+
+        block = self._create_new_block()
+        block['componentName'] = 'TsAggregationGroupCompact'
+        block['componentProps']['aggregation_group'] = {
+            'id': aggregation_group.id,
+            'name': aggregation_group.name}
         self._commit(block)
 
     def add_view(self, view):

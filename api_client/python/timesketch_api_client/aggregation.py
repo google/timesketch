@@ -19,6 +19,7 @@ import json
 import altair
 import pandas
 
+from . import definitions
 from . import error
 from . import resource
 
@@ -29,6 +30,7 @@ class Aggregation(resource.BaseResource):
     Attributes:
         aggregator_name: name of the aggregator class used to
             generate the aggregation.
+        chart_color: the color of the chart.
         chart_type: the type of chart that will be generated
             from this aggregation object.
         type: the type of aggregation object.
@@ -40,6 +42,7 @@ class Aggregation(resource.BaseResource):
         self._aggregator_data = {}
         self._parameters = {}
         self.aggregator_name = ''
+        self.chart_color = ''
         self.chart_type = ''
         self.view = None
         self.type = None
@@ -98,6 +101,7 @@ class Aggregation(resource.BaseResource):
             self.view = view_id
 
         self.aggregator_name = aggregator_name
+        self.chart_color = parameters.get('chart_color', '')
 
         form_data = {
             'aggregator_name': aggregator_name,
@@ -272,3 +276,182 @@ class Aggregation(resource.BaseResource):
 
         vega_spec_string = json.dumps(vega_spec)
         return altair.Chart.from_json(vega_spec_string)
+
+
+class AggregationGroup(resource.BaseResource):
+    """Aggregation Group object.
+
+    Attributes:
+        id: the ID of the group.
+    """
+
+    def __init__(self, sketch, api):
+        """Initialize the aggregation group."""
+        resource_uri = 'sketches/{0:d}/aggregation/group/'.format(
+            sketch.id)
+        super(AggregationGroup, self).__init__(api, resource_uri)
+
+        self.id = None
+        self._name = 'N/A'
+        self._description = 'N/A'
+        self._orientation = ''
+        self._parameters = {}
+        self._sketch = sketch
+        self._aggregations = []
+
+    def __str__(self):
+        """Return a string representation of the group."""
+        return '[{0:d}] {1:s} - {2:s}'.format(
+            self.id, self._name, self._description)
+
+    @property
+    def chart(self):
+        """Property that returns an altair Vega-lite chart."""
+        if not self._aggregations:
+            return altair.Chart()
+        return self.generate_chart()
+
+    @property
+    def description(self):
+        """Returns the description of the aggregation group."""
+        return self._description
+
+    @property
+    def name(self):
+        """Returns the name of the aggregation group."""
+        return self._name
+
+    @property
+    def orientation(self):
+        """Returns the chart orientation."""
+        return self._orientation
+
+    @property
+    def parameters(self):
+        """Returns a dict with the group parameters."""
+        return self._parameters
+
+    @property
+    def table(self):
+        """Property that returns a pandas DataFrame."""
+        return self.to_pandas()
+
+    def delete(self):
+        """Deletes the group from the store."""
+        if not self.id:
+            return False
+
+        response = self.api.session.delete(
+            '{0:s}/{1:s}'.format(self.api.api_root, self.resource_uri))
+
+        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+
+    def from_dict(self, group_dict):
+        """Feed group data from a dictionary.
+
+        Args:
+            group_dict (dict): a dictionary with the aggregation group
+                information.
+
+        Raises:
+            TypeError: if the dictionary does not contain the correct
+                information.
+        """
+        group_id = group_dict.get('id')
+        if not group_id:
+            raise TypeError('Group ID is missing.')
+        self.id = group_id
+        self.resource_uri = 'sketches/{0:d}/aggregation/group/{1:d}/'.format(
+            self._sketch.id, group_id)
+
+        self._name = group_dict.get('name', '')
+        self._description = group_dict.get('description', '')
+
+        self._orientation = group_dict.get('orientation')
+        if not self._orientation:
+            raise TypeError('How a group is connected needs to be defined.')
+
+        parameter_string = group_dict.get('parameters', '')
+        if parameter_string:
+            self._parameters = json.loads(parameter_string)
+
+        aggs = group_dict.get('agg_ids')
+        if not aggs:
+            raise TypeError('Group contains no aggregations')
+
+        aggs = json.loads(aggs)
+        if not isinstance(aggs, (list, tuple)):
+            raise TypeError('Aggregations need to be a list.')
+
+        self._aggregations = []
+        for agg_id in aggs:
+            agg_obj = Aggregation(self._sketch, self.api)
+            agg_obj.from_store(agg_id)
+            self._aggregations.append(agg_obj)
+
+    def from_store(self, group_id):
+        """Feed group data from a group ID.
+
+        Args:
+            group_id (int): the group ID to fetch from the store.
+
+        Raises:
+            TypeError: if the group ID does not exist.
+        """
+        self.id = group_id
+        resource_uri = 'sketches/{0:d}/aggregation/group/'.format(
+            self._sketch.id)
+        resource_data = self.api.fetch_resource_data(resource_uri)
+        for group_dict in resource_data.get('objects', []):
+            group_dict_id = group_dict.get('id')
+            if not group_dict_id:
+                continue
+            if group_dict_id == group_id:
+                self.from_dict(group_dict)
+                return
+        raise TypeError('Group ID not found.')
+
+    def generate_chart(self):
+        """Returns an altair Vega-lite chart."""
+        if not self._aggregations:
+            return altair.Chart()
+
+        data = self.lazyload_data()
+
+        meta = data.get('meta', {})
+        vega_spec = meta.get('vega_spec')
+
+        if not vega_spec:
+            return altair.Chart(pandas.DataFrame()).mark_point()
+
+        vega_spec_string = json.dumps(vega_spec)
+        return altair.Chart.from_json(vega_spec_string)
+
+    def get_charts(self):
+        """Returns a list of altair Chart objects from each aggregation."""
+        return [x.chart for x in self._aggregations]
+
+    def get_tables(self):
+        """Returns a list of pandas DataFrame from each aggregation."""
+        return [x.table for x in self._aggregations]
+
+    def to_pandas(self):
+        """Returns a pandas DataFrame.
+
+        Aggregation groups are meant for charts, not data frames. However
+        there are situations where you may want to be able to produce
+        a DataFrame, and in that case all DataFrame objects from each
+        aggregation are concatenated to return a single one.
+
+        Returns:
+            A single DataFrame that consists of a DataFrame from each
+            aggregation in the group concatenated.
+        """
+        if not self._aggregations:
+            return pandas.DataFrame()
+
+        data_frames = []
+        for agg_obj in self._aggregations:
+            data_frames.append(agg_obj.to_pandas())
+
+        return pandas.concat(data_frames)

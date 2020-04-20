@@ -208,6 +208,26 @@ class Sketch(resource.BaseResource):
 
         return response.status_code in definitions.HTTP_STATUS_CODE_20X
 
+    def list_aggregation_groups(self):
+        """List all saved aggregation groups for this sketch.
+
+        Returns:
+            List of aggregation groups (instances of AggregationGroup objects)
+        """
+        groups = []
+        resource_url = '{0:s}/sketches/{1:d}/aggregation/group/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.get(resource_url)
+        data = response.json()
+        for group_dict in data.get('objects', []):
+            if not group_dict.get('id'):
+                continue
+            group = aggregation.AggregationGroup(
+                sketch=self, api=self.api)
+            group.from_dict(group_dict)
+            groups.append(group)
+        return groups
+
     def list_aggregations(self):
         """List all saved aggregations for this sketch.
 
@@ -281,6 +301,21 @@ class Sketch(resource.BaseResource):
         for aggregation_obj in self.list_aggregations():
             if aggregation_obj.id == aggregation_id:
                 return aggregation_obj
+        return None
+
+    def get_aggregation_group(self, group_id):
+        """Return a stored aggregation group.
+
+        Args:
+            goup_id: id of the stored aggregation group.
+
+        Returns:
+            An aggregation group object (instance of AggregationGroup)
+            if stored, otherwise None object.
+        """
+        for group_obj in self.list_aggregation_groups():
+            if group_obj.id == group_id:
+                return group_obj
         return None
 
     def get_story(self, story_id=None, story_title=None):

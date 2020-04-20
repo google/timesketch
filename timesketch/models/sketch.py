@@ -50,6 +50,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     events = relationship('Event', backref='sketch', lazy='select')
     stories = relationship('Story', backref='sketch', lazy='select')
     aggregations = relationship('Aggregation', backref='sketch', lazy='select')
+    aggregationgroups = relationship(
+        'AggregationGroup', backref='sketch', lazy='select')
     analysis = relationship('Analysis', backref='sketch', lazy='select')
 
     def __init__(self, name, description, user):
@@ -235,6 +237,8 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     searchtemplate_id = Column(Integer, ForeignKey('searchtemplate.id'))
     aggregations = relationship('Aggregation', backref='view', lazy='select')
+    aggregationgroups = relationship(
+        'AggregationGroup', backref='view', lazy='select')
 
     def __init__(self,
                  name,
@@ -418,9 +422,10 @@ class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     user_id = Column(Integer, ForeignKey('user.id'))
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     view_id = Column(Integer, ForeignKey('view.id'))
+    aggregationgroup_id = Column(Integer, ForeignKey('aggregationgroup.id'))
 
     def __init__(self, name, description, agg_type, parameters, chart_type,
-                 user, sketch, view=None):
+                 user, sketch, view=None, aggregationgroup=None):
         """Initialize the Aggregation object.
 
         Args:
@@ -431,14 +436,57 @@ class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             chart_type (str): Chart plugin type
             user (User): The user who created the aggregation
             sketch (Sketch): The sketch that the aggregation is bound to
-            view (View): Optional: The view that the aggregation is bound to
+            view (View): Optional, the view that the aggregation is bound to
+            aggregationgroup (AggregationGroup): Optional, an AggregationGroup
+                that the aggregation is bound to.
         """
         super(Aggregation, self).__init__()
         self.name = name
         self.description = description
         self.agg_type = agg_type
+        self.aggregationgroup = aggregationgroup
         self.parameters = parameters
         self.chart_type = chart_type
+        self.user = user
+        self.sketch = sketch
+        self.view = view
+
+
+class AggregationGroup(
+        AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseModel):
+    """Implements the Aggregation Group model."""
+    name = Column(Unicode(255))
+    description = Column(UnicodeText())
+    aggregations = relationship(
+        'Aggregation', backref='aggregationgroup', lazy='select')
+    parameters = Column(UnicodeText())
+    orientation = Column(Unicode(40))
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    view_id = Column(Integer, ForeignKey('view.id'))
+
+    def __init__(
+            self, name, description, user, sketch, aggregations=None,
+            parameters='', orientation='', view=None):
+        """Initialize the AggregationGroup object.
+
+        Args:
+            name (str): Name of the aggregation
+            description (str): Description of the aggregation
+            user (User): The user who created the aggregation
+            sketch (Sketch): The sketch that the aggregation is bound to
+            aggregations (Aggregation): List of aggregation objects.
+            parameters (str): A JSON formatted dict with parameters for
+                charting.
+            orientation (str): Describes how charts should be joined together.
+            view (View): Optional: The view that the aggregation is bound to
+        """
+        super(AggregationGroup, self).__init__()
+        self.name = name
+        self.description = description
+        self.aggregations = aggregations or []
+        self.parameters = parameters
+        self.orientation = orientation
         self.user = user
         self.sketch = sketch
         self.view = view

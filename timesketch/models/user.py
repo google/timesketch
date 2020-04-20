@@ -59,6 +59,8 @@ class User(UserMixin, BaseModel):
     views = relationship('View', backref='user', lazy='dynamic')
     stories = relationship('Story', backref='user', lazy='dynamic')
     aggregations = relationship('Aggregation', backref='user', lazy='dynamic')
+    aggregationgroups = relationship(
+        'AggregationGroup', backref='user', lazy='dynamic')
     my_groups = relationship('Group', backref='user', lazy='dynamic')
     groups = relationship(
         'Group',
