@@ -146,7 +146,8 @@ export default {
         spec.config.autosize = { type: 'fit', contains: 'padding' }
         this.vegaSpec = JSON.stringify(spec)
         this.chartType = response.data.meta.chart_type
-        this.chartData = spec.data.values
+        // Get the first key of the object.
+        this.chartData = spec.datasets[Object.keys(spec.datasets)[0]]
       }).catch((e) => {})
     },
     save: function () {

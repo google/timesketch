@@ -25,8 +25,8 @@ limitations under the License.
     </div>
     <div class="dropdown-menu" id="dropdown-menu" role="menu">
       <div class="dropdown-content">
-        <span class="dropdown-item" v-if="sketch.aggregations && sketch.aggregations.length < 1">No saved aggregations</span>
-        <a class="dropdown-item" v-on:click="setActiveAggregation(agg)" v-for="agg in sketch.aggregations" :key="agg.id">
+        <span class="dropdown-item" v-if="aggregations && aggregations.length < 1">No saved aggregations</span>
+        <a class="dropdown-item" v-on:click="setActiveAggregation(agg)" v-for="agg in aggregations" :key="agg.id">
           <span>{{ agg.name }}</span>
         </a>
       </div>
@@ -36,7 +36,7 @@ limitations under the License.
 
 <script>
 export default {
-  props: ['isRounded', 'title'],
+  props: ['isRounded', 'title', 'aggregations'],
   data () {
     return {
       dropdownActive: false
@@ -46,11 +46,6 @@ export default {
     setActiveAggregation: function (aggregation) {
       this.$emit('addAggregation', aggregation)
       this.viewListDropdownActive = false
-    }
-  },
-  computed: {
-    sketch () {
-      return this.$store.state.sketch
     }
   }
 }

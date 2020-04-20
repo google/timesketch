@@ -69,6 +69,9 @@ limitations under the License.
                     <p v-if="obj.componentName === 'TsAggregationCompact'">
                       {{ obj.componentProps.aggregation.name }}
                     </p>
+                    <p v-if="obj.componentName === 'TsAggregationGroupCompact'">
+                      {{ obj.componentProps.aggregation_group.name }}
+                    </p>
                     <button class="delete" aria-label="delete" v-on:click="deleteBlock(index)"></button>
                   </div>
                   <div class="message-body">
@@ -88,8 +91,8 @@ limitations under the License.
                     <p class="control" v-if="meta.views.length">
                       <ts-view-list-dropdown @setActiveView="addViewComponent($event, index)" :is-rounded="true" :title="'+ Saved view'"></ts-view-list-dropdown>
                     </p>
-                    <p class="control" v-if="sketch.aggregations.length">
-                      <ts-aggregation-list-dropdown @addAggregation="addAggregationComponent($event, index)" :is-rounded="true" :title="'+ Saved aggregation'"></ts-aggregation-list-dropdown>
+                    <p class="control" v-if="allAggregations">
+                      <ts-aggregation-list-dropdown @addAggregation="addAggregationComponent($event, index)" :is-rounded="true" :title="'+ Aggregation'" :aggregations="allAggregations" ></ts-aggregation-list-dropdown>
                     </p>
                   </div>
               </div>
@@ -109,6 +112,7 @@ import marked from 'marked'
 import _ from 'lodash'
 import TsAggregationListDropdown from '../components/Sketch/AggregationListDropdown'
 import TsAggregationCompact from "../components/Sketch/AggregationCompact"
+import TsAggregationGroupCompact from "../components/Sketch/AggregationGroupCompact"
 import TsViewListDropdown from '../components/Sketch/ViewListDropdown'
 import TsViewEventList from '../components/Sketch/EventListCompact'
 
@@ -124,12 +128,14 @@ const defaultBlock = () => {
 }
 
 export default {
-  components: { TsAggregationListDropdown, TsAggregationCompact, TsViewListDropdown, TsViewEventList },
+  components: { TsAggregationListDropdown, TsAggregationCompact, TsAggregationGroupCompact, TsViewListDropdown, TsViewEventList },
   props: ['sketchId', 'storyId'],
   data () {
     return {
       blocks: [],
-      title: ''
+      title: '',
+      aggregations: [],
+      aggregationGroups: []
     }
   },
   methods: {
@@ -152,8 +158,14 @@ export default {
     addAggregationComponent (event, index) {
       let newIndex = index + 1
       let newBlock = defaultBlock()
-      newBlock.componentName = 'TsAggregationCompact'
-      newBlock.componentProps = { aggregation: event }
+      // If object has an agg_ids key it is an aggregation group.
+      if ('agg_ids' in event) {
+        newBlock.componentName = 'TsAggregationGroupCompact'
+        newBlock.componentProps = { aggregation_group: event }
+      } else {
+        newBlock.componentName = 'TsAggregationCompact'
+        newBlock.componentProps = { aggregation: event }
+      }
       this.blocks.splice(newIndex, 0, newBlock)
       this.save()
     },
@@ -192,6 +204,10 @@ export default {
     },
     meta () {
       return this.$store.state.meta
+    },
+    allAggregations () {
+      const concat = (...arrays) => [].concat(...arrays.filter(Array.isArray));
+      return concat(this.aggregations, this.aggregationGroups)
     }
   },
   created: function () {
@@ -203,6 +219,16 @@ export default {
       } else {
         this.blocks = JSON.parse(content)
       }
+    }).catch((e) => {
+      console.error(e)
+    })
+    ApiClient.getAggregations(this.sketchId).then((response) => {
+      this.aggregations = response.data.objects[0]
+    }).catch((e) => {
+      console.error(e)
+    })
+    ApiClient.getAggregationGroups(this.sketchId).then((response) => {
+      this.aggregationGroups = response.data.objects
     }).catch((e) => {
       console.error(e)
     })
