@@ -330,8 +330,8 @@ class Sketch(object):
 
         Args:
             name: the name of the aggregation run.
-            description: description of the aggregation, visible in the UI,
-                this is optional.
+            description: optional description of the aggregation, visible in
+                the UI.
             view_id: optional ID of the view to attach the aggregation to.
         """
         if not name:
@@ -443,7 +443,7 @@ class AggregationGroup(object):
             aggregation_group: SQLAlchemy AggregationGroup object.
         """
         self.group = aggregation_group
-        self._how = 'layer'
+        self._orientation = 'layer'
         self._parameters = ''
 
     @property
@@ -463,48 +463,49 @@ class AggregationGroup(object):
             aggregation_obj (Aggregation): the Aggregation objec.
         """
         self.group.aggregations.append(aggregation_obj)
-        self.group.how = self._how
+        self.group.orientation = self._orientation
         db_session.add(aggregation_obj)
         db_session.add(self.group)
         db_session.commit()
 
     def commit(self):
         """Commit changes to DB."""
-        self.group.how = self._how
+        self.group.orientation = self._orientation
         self.group.parameters = self._parameters
         db_session.add(self.group)
         db_session.commit()
 
-    def set_how(self, how='layer'):
+    def set_orientation(self, orientation='layer'):
         """Sets how charts should be joined.
 
         Args:
-            how: string that contains how they should be connected together,
-                the options are: "layer", "horizontal" and "vertical". The
-                default behavior is "layer".
+            orienation: string that contains how they should be connected
+                together, That is the chart orientation,  the options are:
+                "layer", "horizontal" and "vertical". The default behavior
+                is "layer".
         """
-        how = how.lower()
-        if how == 'layer' or how.starstwith('layer'):
-            self._how = 'layer'
-        elif how == 'horizontal' or how.startswith('hor'):
-            self._how = 'horizontal'
-        elif how == 'vertical' or how.startswith('ver'):
-            self._how = 'vertical'
+        orientation = orientation.lower()
+        if orientation == 'layer' or orientation.starstwith('layer'):
+            self._orientation = 'layer'
+        elif orientation == 'horizontal' or orientation.startswith('hor'):
+            self._orientation = 'horizontal'
+        elif orientation == 'vertical' or orientation.startswith('ver'):
+            self._orientation = 'vertical'
         self.commit()
 
     def set_vertical(self):
-        """Sets the "how" to vertical."""
-        self._how = 'vertical'
+        """Sets the "orienation" to vertical."""
+        self._orientation = 'vertical'
         self.commit()
 
     def set_horizontal(self):
-        """Sets the "how" to horizontal."""
-        self._how = 'horizontal'
+        """Sets the "orientation" to horizontal."""
+        self._orientation = 'horizontal'
         self.commit()
 
     def set_layered(self):
-        """Sets the "how" to layer."""
-        self._how = 'layer'
+        """Sets the "orientation" to layer."""
+        self._orientation = 'layer'
         self.commit()
 
     def set_parameters(self, parameters=None):

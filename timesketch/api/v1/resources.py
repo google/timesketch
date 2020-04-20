@@ -143,7 +143,7 @@ class ResourceMixin(object):
         'description': fields.String,
         'aggregations': fields.Nested(aggregation_fields),
         'parameters': fields.String,
-        'how': fields.String,
+        'orientation': fields.String,
         'user': fields.Nested(user_fields),
         'created_at': fields.DateTime,
         'updated_at': fields.DateTime
@@ -1115,7 +1115,7 @@ class AggregationGroupResource(ResourceMixin, Resource):
                 'The user does not have read permission on the sketch.')
 
         result_chart = None
-        how = group.how
+        orientation = group.orientation
         objects = []
         time_before = time.time()
         for aggregator in group.aggregations:
@@ -1150,9 +1150,9 @@ class AggregationGroupResource(ResourceMixin, Resource):
 
             if result_chart is None:
                 result_chart = chart
-            elif how == 'horizontal':
+            elif orientation == 'horizontal':
                 result_chart = alt.hconcat(chart, result_chart)
-            elif how == 'vertical':
+            elif orientation == 'vertical':
                 result_chart = alt.vconcat(chart, result_chart)
             else:
                 result_chart = alt.layer(chart, result_chart)
@@ -1175,7 +1175,7 @@ class AggregationGroupResource(ResourceMixin, Resource):
 
         meta = {
             'method': 'aggregator_group',
-            'chart_type': 'compound: {0:s}'.format(how),
+            'chart_type': 'compound: {0:s}'.format(orientation),
             'name': group.name,
             'description': group.description,
             'es_time': time_after - time_before,
@@ -1426,7 +1426,7 @@ class AggregationGroupListResource(ResourceMixin, Resource):
                 'id': group.id,
                 'name': group.name,
                 'parameters': group.parameters,
-                'how': group.how,
+                'orientation': group.orientation,
                 'description': group.description,
                 'agg_ids': json.dumps([x.id for x in group.aggregations])
             }
@@ -1464,18 +1464,22 @@ class AggregationGroupListResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to create an empty group.')
 
-        agg_list = [int(x) for x in aggregation_string.split(',')]
+        agg_list = json.loads(aggregation_string)
+        if not isinstance(agg_list, (list, tuple)):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Aggregations needs to be a list of IDs.')
+
         named_aggs = sketch.get_named_aggregations
         aggregations = [agg for agg in named_aggs if agg.id in agg_list]
 
         # Create the aggregation in the database
-        # TODO (kiddi): Support parameters.
         aggregation_group = AggregationGroup(
             name=form.get('name', 'No Group Name'),
             description=form.get('description', ''),
             parameters=form.get('parameters', ''),
             aggregations=aggregations,
-            how=form.get('how', 'layer'),
+            orientation=form.get('orientation', 'layer'),
             user=current_user,
             sketch=sketch,
             view=form.get('view_id')

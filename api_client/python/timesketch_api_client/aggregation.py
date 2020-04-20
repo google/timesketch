@@ -294,7 +294,7 @@ class AggregationGroup(resource.BaseResource):
         self.id = None
         self._name = 'N/A'
         self._description = 'N/A'
-        self._how = ''
+        self._orientation = ''
         self._parameters = {}
         self._sketch = sketch
         self._aggregations = []
@@ -322,9 +322,9 @@ class AggregationGroup(resource.BaseResource):
         return self._name
 
     @property
-    def how(self):
-        """Returns how the charts are supposed to be joined."""
-        return self._how
+    def orientation(self):
+        """Returns the chart orientation."""
+        return self._orientation
 
     @property
     def parameters(self):
@@ -367,8 +367,8 @@ class AggregationGroup(resource.BaseResource):
         self._name = group_dict.get('name', '')
         self._description = group_dict.get('description', '')
 
-        self._how = group_dict.get('how')
-        if not self._how:
+        self._orientation = group_dict.get('orientation')
+        if not self._orientation:
             raise TypeError('How a group is connected needs to be defined.')
 
         parameter_string = group_dict.get('parameters', '')
@@ -436,7 +436,17 @@ class AggregationGroup(resource.BaseResource):
         return [x.table for x in self._aggregations]
 
     def to_pandas(self):
-        """Returns a pandas DataFrame."""
+        """Returns a pandas DataFrame.
+
+        Aggregation groups are meant for charts, not data frames. However
+        there are situations where you may want to be able to produce
+        a DataFrame, and in that case all DataFrame objects from each
+        aggregation are concatenated to return a single one.
+
+        Returns:
+            A single DataFrame that consists of a DataFrame from each
+            aggregation in the group concatenated.
+        """
         if not self._aggregations:
             return pandas.DataFrame()
 

@@ -460,14 +460,14 @@ class AggregationGroup(
     aggregations = relationship(
         'Aggregation', backref='aggregationgroup', lazy='select')
     parameters = Column(UnicodeText())
-    how = Column(Unicode(15))
+    orientation = Column(Unicode(40))
     user_id = Column(Integer, ForeignKey('user.id'))
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     view_id = Column(Integer, ForeignKey('view.id'))
 
     def __init__(
             self, name, description, user, sketch, aggregations=None,
-            parameters='', how='', view=None):
+            parameters='', orientation='', view=None):
         """Initialize the AggregationGroup object.
 
         Args:
@@ -478,7 +478,7 @@ class AggregationGroup(
             aggregations (Aggregation): List of aggregation objects.
             parameters (str): A JSON formatted dict with parameters for
                 charting.
-            how (str): Describes how charts should be joined together.
+            orientation (str): Describes how charts should be joined together.
             view (View): Optional: The view that the aggregation is bound to
         """
         super(AggregationGroup, self).__init__()
@@ -486,7 +486,7 @@ class AggregationGroup(
         self.description = description
         self.aggregations = aggregations or []
         self.parameters = parameters
-        self.how = how
+        self.orientation = orientation
         self.user = user
         self.sketch = sketch
         self.view = view
