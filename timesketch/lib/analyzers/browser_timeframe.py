@@ -263,7 +263,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                 'The hours considered to be active hours are the hours '
                 'between {3:02d} and {4:02d} (hours in UTC) and the '
                 'threshold used to determine if an hour was considered to be '
-                'active was: {0:0.2f}.'.format(
+                'active was: {5:0.2f}.'.format(
                     tagged_events, percent, total_count, first, last,
                     threshold))
 
