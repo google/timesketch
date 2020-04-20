@@ -1168,7 +1168,7 @@ class AggregationGroupResource(ResourceMixin, Resource):
 
         parameters = {}
         if group.parameters:
-            parameters = json.loads(parameters)
+            parameters = json.loads(group.parameters)
 
         result_chart.title = parameters.get('chart_title', group.name)
         time_after = time.time()

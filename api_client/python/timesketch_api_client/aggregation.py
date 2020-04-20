@@ -512,6 +512,7 @@ class AggregationGroup(resource.BaseResource):
                 self.api.api_root, self._sketch.id)
 
         response = self.api.session.post(resource_url, json=data)
+        _ = self.lazyload_data(refresh_cache=True)
         return response.status_code in definitions.HTTP_STATUS_CODE_20X
 
     def to_pandas(self):
