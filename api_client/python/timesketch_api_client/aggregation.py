@@ -381,7 +381,7 @@ class AggregationGroup(resource.BaseResource):
         """Returns a dict with the group parameters."""
         return self._parameters
 
-    @parameters.setter(self):
+    @parameters.setter
     def parameters(self, parameters):
         """Sets the group parameters."""
         self._parameters = parameters
