@@ -348,20 +348,44 @@ class AggregationGroup(resource.BaseResource):
         """Returns the description of the aggregation group."""
         return self._description
 
+    @description.setter
+    def description(self, description):
+        """Sets the description of the aggregation group."""
+        self._description = description
+        self.save()
+
     @property
     def name(self):
         """Returns the name of the aggregation group."""
         return self._name
+
+    @name.setter
+    def name(self, name):
+        """Sets the name of the aggregation group."""
+        self._name = name
+        self.save()
 
     @property
     def orientation(self):
         """Returns the chart orientation."""
         return self._orientation
 
+    @orientation.setter
+    def orientation(self, orientation):
+        """Sets the chart orientation."""
+        self._orientation = orientation
+        self.save()
+
     @property
     def parameters(self):
         """Returns a dict with the group parameters."""
         return self._parameters
+
+    @parameters.setter(self):
+    def parameters(self, parameters):
+        """Sets the group parameters."""
+        self._parameters = parameters
+        self.save()
 
     @property
     def table(self):
