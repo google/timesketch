@@ -505,13 +505,13 @@ class AggregationGroup(resource.BaseResource):
         }
 
         if self.id:
-            resource_url = '{0:s}/sketches/{1:d}/aggregation/group/{2:d}/'.format(
+            res_url = '{0:s}/sketches/{1:d}/aggregation/group/{2:d}/'.format(
                 self.api.api_root, self._sketch.id, self.id)
         else:
-            resource_url = '{0:s}/sketches/{1:d}/aggregation/group/'.format(
+            res_url = '{0:s}/sketches/{1:d}/aggregation/group/'.format(
                 self.api.api_root, self._sketch.id)
 
-        response = self.api.session.post(resource_url, json=data)
+        response = self.api.session.post(res_url, json=data)
         _ = self.lazyload_data(refresh_cache=True)
         return response.status_code in definitions.HTTP_STATUS_CODE_20X
 
