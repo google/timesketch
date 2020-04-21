@@ -184,6 +184,7 @@ class Aggregation(resource.BaseResource):
         """
         self.type = 'aggregator_run'
         self._parameters = aggregator_parameters
+
         self.resource_data = self._run_aggregator(
             aggregator_name, aggregator_parameters, view_id, chart_type)
 
@@ -212,6 +213,11 @@ class Aggregation(resource.BaseResource):
         """Property that returns the description string."""
         return self._aggregator_data.get('description', '')
 
+    @description.setter
+    def description(self, description):
+        """Set the description of an aggregation."""
+        self._aggregator_data['description'] = description
+
     @property
     def id(self):
         """Property that returns the ID of the aggregator, if possible."""
@@ -219,7 +225,7 @@ class Aggregation(resource.BaseResource):
         if agg_id:
             return agg_id
 
-        return -1
+        return 0
 
     @property
     def name(self):
@@ -228,6 +234,11 @@ class Aggregation(resource.BaseResource):
         if name:
             return name
         return self.aggregator_name
+
+    @name.setter
+    def name(self, name):
+        """Set the name of the aggregation."""
+        self._aggregator_data['name'] = name
 
     @property
     def dict(self):
@@ -277,6 +288,27 @@ class Aggregation(resource.BaseResource):
         vega_spec_string = json.dumps(vega_spec)
         return altair.Chart.from_json(vega_spec_string)
 
+    def save(self):
+        """Save the aggregation in the database."""
+        data = {
+            'name': self.name,
+            'description': self.description,
+            'agg_type': self.aggregator_name,
+            'parameters': self._parameters,
+            'chart_type': self.chart_type,
+            'view_id': self.view,
+        }
+
+        if self.id:
+            resource_url = '{0:s}/sketches/{1:d}/aggregation/{2:d}/'.format(
+                self.api.api_root, self._sketch.id, self.id)
+        else:
+            resource_url = '{0:s}/sketches/{1:d}/aggregation/'.format(
+                self.api.api_root, self._sketch.id)
+
+        response = self.api.session.post(resource_url, json=data)
+        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+
 
 class AggregationGroup(resource.BaseResource):
     """Aggregation Group object.
@@ -316,20 +348,44 @@ class AggregationGroup(resource.BaseResource):
         """Returns the description of the aggregation group."""
         return self._description
 
+    @description.setter
+    def description(self, description):
+        """Sets the description of the aggregation group."""
+        self._description = description
+        self.save()
+
     @property
     def name(self):
         """Returns the name of the aggregation group."""
         return self._name
+
+    @name.setter
+    def name(self, name):
+        """Sets the name of the aggregation group."""
+        self._name = name
+        self.save()
 
     @property
     def orientation(self):
         """Returns the chart orientation."""
         return self._orientation
 
+    @orientation.setter
+    def orientation(self, orientation):
+        """Sets the chart orientation."""
+        self._orientation = orientation
+        self.save()
+
     @property
     def parameters(self):
         """Returns a dict with the group parameters."""
         return self._parameters
+
+    @parameters.setter
+    def parameters(self, parameters):
+        """Sets the group parameters."""
+        self._parameters = parameters
+        self.save()
 
     @property
     def table(self):
@@ -434,6 +490,30 @@ class AggregationGroup(resource.BaseResource):
     def get_tables(self):
         """Returns a list of pandas DataFrame from each aggregation."""
         return [x.table for x in self._aggregations]
+
+    def save(self):
+        """Save the aggregation group in the database."""
+        if not self._aggregations:
+            return False
+
+        data = {
+            'name': self._name,
+            'description': self._description,
+            'parameters': json.dumps(self._parameters),
+            'aggregations': json.dumps([x.id for x in self._aggregations]),
+            'orientation': self._orientation,
+        }
+
+        if self.id:
+            res_url = '{0:s}/sketches/{1:d}/aggregation/group/{2:d}/'.format(
+                self.api.api_root, self._sketch.id, self.id)
+        else:
+            res_url = '{0:s}/sketches/{1:d}/aggregation/group/'.format(
+                self.api.api_root, self._sketch.id)
+
+        response = self.api.session.post(res_url, json=data)
+        _ = self.lazyload_data(refresh_cache=True)
+        return response.status_code in definitions.HTTP_STATUS_CODE_20X
 
     def to_pandas(self):
         """Returns a pandas DataFrame.

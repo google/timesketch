@@ -248,10 +248,22 @@ class Sketch(resource.BaseResource):
         if not isinstance(first_object, dict):
             return aggregations
 
+        aggregation_groups = first_object.get('aggregationgroups')
+        if aggregation_groups:
+            aggregation_groups = aggregation_groups[0]
+            groups = [
+                x.get('id', 0) for x in aggregation_groups.get(
+                    'aggregations', [])]
+        else:
+            groups = tuple()
+
         for aggregation_dict in first_object.get('aggregations', []):
+            agg_id = aggregation_dict.get('id')
+            if agg_id in groups:
+                continue
             aggregation_obj = aggregation.Aggregation(
                 sketch=self, api=self.api)
-            aggregation_obj.from_store(aggregation_id=aggregation_dict['id'])
+            aggregation_obj.from_store(aggregation_id=agg_id)
             aggregations.append(aggregation_obj)
         return aggregations
 

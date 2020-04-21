@@ -1168,7 +1168,7 @@ class AggregationGroupResource(ResourceMixin, Resource):
 
         parameters = {}
         if group.parameters:
-            parameters = json.loads(parameters)
+            parameters = json.loads(group.parameters)
 
         result_chart.title = parameters.get('chart_title', group.name)
         time_after = time.time()
@@ -1184,6 +1184,71 @@ class AggregationGroupResource(ResourceMixin, Resource):
         }
         schema = {'meta': meta, 'objects': objects}
         return jsonify(schema)
+
+    @login_required
+    def post(self, sketch_id, group_id):
+        """Handles POST request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model.
+            group_id: Integer primary key for an aggregation group database
+                model.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        group = AggregationGroup.query.get(group_id)
+        if not group:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No Group found with this ID.')
+
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        # Check that this group belongs to the sketch
+        if group.sketch_id != sketch.id:
+            msg = (
+                'The sketch ID ({0:d}) does not match with the aggregation '
+                'group sketch ID ({1:d})'.format(sketch.id, group.sketch_id))
+            abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
+
+        if not sketch.has_permission(user=current_user, permission='write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have write permission on the sketch.')
+
+
+        form = request.json
+        if not form:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'No JSON data, unable to process request to create '
+                'a new aggregation group.')
+
+        group.name = form.get('name', group.name)
+        group.description = form.get('description', group.description)
+        group.parameters = form.get('parameters', group.parameters)
+        group.orientation = form.get('orientation', group.orientation)
+        group.user = current_user
+        group.sketch = sketch
+
+        agg_ids = json.loads(form.get('aggregations', group.aggregations))
+        aggregations = []
+
+        for agg_id in agg_ids:
+            aggregation = Aggregation.query.get(agg_id)
+            if not aggregation:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'No aggregation found for ID: {0:d}'.format(agg_id))
+            aggregations.append(aggregation)
+
+        group.aggregations = aggregations
+
+        db_session.add(group)
+        db_session.commit()
+
+        return self.to_json(group, status_code=HTTP_STATUS_CODE_CREATED)
+
 
     @login_required
     def delete(self, sketch_id, group_id):
