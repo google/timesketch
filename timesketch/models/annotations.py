@@ -135,6 +135,45 @@ class LabelMixin(object):
                               parent=relationship(self)))
         return relationship(self.Label)
 
+    def add_label(self, label, user=None):
+        """Add a label to an object.
+
+        Each entry can have multible labels.
+
+        Args:
+            label: Name of the label.
+            user: Optional user that adds the label (sketch.User).
+        """
+        self.labels.append(self.Label(user=user, label=label))
+        db_session.commit()
+
+    def has_label(self, label):
+        """Returns a boolean whether a label is applied.
+
+        Args:
+            label: Name of the label.
+
+        Returns:
+            True if the label is set, False otherwise.
+        """
+        for label_obj in self.labels:
+            if label_obj.label.lower() == label.lower():
+                return True
+
+        return False
+
+    @property
+    def get_labels(self):
+        """Returns a list of all applied labels.
+
+        Returns:
+            A list of strings with all the applied labels.
+        """
+        if not self.labels:
+            return []
+
+        return [x.label for x in self.labels]
+
 
 class CommentMixin(object):
     """
