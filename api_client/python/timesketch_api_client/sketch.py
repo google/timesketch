@@ -235,8 +235,9 @@ class Sketch(resource.BaseResource):
             include_labels (list): list of strings with labels. If defined
                 then only return aggregations that have the label in the list.
             exclude_labels (list): list of strings with labels. If defined
-                then only return aggregations that don't have a label in the list.
-                If include_labels is defined it overwrites this variable.
+                then only return aggregations that don't have a label in the
+                list. include_labels will be processed first in case both are
+                defined.
 
         Returns:
             List of aggregations (instances of Aggregation objects)

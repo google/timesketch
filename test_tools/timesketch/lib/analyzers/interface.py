@@ -17,6 +17,7 @@ from __future__ import unicode_literals
 import codecs
 import collections
 import csv
+import json
 import os
 import traceback
 import uuid
@@ -379,8 +380,35 @@ class Sketch(object):
         agg_obj = AGG_OBJECT(1, name)
         return agg_obj
 
+    def add_aggregation_group(self, name, description='', view_id=None):
+        """Add aggregation Group to the sketch.
+
+        Args:
+            name: the name of the aggregation run.
+            description: optional description of the aggregation, visible in
+                the UI.
+            view_id: optional ID of the view to attach the aggregation to.
+        """
+        if not name:
+            raise ValueError('Aggregator group name needs to be defined.')
+
+        if not description:
+            description = 'Created by an analyzer'
+
+        params = {
+            'name': name,
+            'description': description,
+            'view_id': view_id
+        }
+        change = SKETCH_CHANGE('ADD', 'aggregation_group', params)
+        self.updates.append(change)
+
+        return AggregationGroup(
+            analyzer=self, name=name, description=description, user=None,
+            sketch=self.id, view=view_id)
+
     def add_view(self, view_name, analyzer_name, query_string=None,
-                 query_dsl=None, query_filter=None):
+                 query_dsl=None, query_filter=None, additional_fields=None):
         """Add saved view to the Sketch.
 
         Args:
@@ -389,6 +417,8 @@ class Sketch(object):
             query_string: Elasticsearch query string.
             query_dsl: Dictionary with Elasticsearch DSL query.
             query_filter: Dictionary with Elasticsearch filters.
+            additional_fields: A list with field names to include in the
+                view output.
 
         Raises:
             ValueError: If both query_string an query_dsl are missing.
@@ -407,6 +437,7 @@ class Sketch(object):
             'query_string': query_string,
             'query_dsl': query_dsl,
             'query_filter': query_filter,
+            'additional_fields': additional_fields,
         }
         change = SKETCH_CHANGE('ADD', 'view', params)
         self.updates.append(change)
@@ -711,3 +742,104 @@ class Story(object):
         }
         change = SKETCH_CHANGE('STORY_ADD', 'view', params)
         self._analyzer.updates.append(change)
+
+
+class AggregationGroup(object):
+    """Aggregation Group object with helper methods.
+
+    Attributes:
+        group (SQLAlchemy): Instance of a SQLAlchemy AggregationGroup object.
+    """
+    def __init__(self, analyzer, name, description, user, sketch, view):
+        """Initializes the AggregationGroup object."""
+        self._analyzer = analyzer
+        self._name = name
+        self._description = description
+        self._user = user
+        self._sketch = sketch
+        self._view = view
+
+        self._orientation = 'layer'
+        self._parameters = ''
+
+    @property
+    def id(self):
+        """Returns the group ID."""
+        return 1
+
+    @property
+    def name(self):
+        """Returns the group name."""
+        return self._name
+
+    def add_aggregation(self, aggregation_obj):
+        """Add an aggregation object to the group.
+
+        Args:
+            aggregation_obj (Aggregation): the Aggregation objec.
+        """
+        params = {
+            'agg_id': aggregation_obj.id,
+            'agg_name': aggregation_obj.name,
+        }
+        change = SKETCH_CHANGE('AGGREGATION_GROUP_ADD', 'aggregation', params)
+        self._analyzer.updates.append(change)
+
+    def commit(self):
+        """Commit changes to DB."""
+        change = SKETCH_CHANGE(
+            'AGGREGATION_GROUP_CHANGE', 'commit_issued', {})
+        self._analyzer.updates.append(change)
+
+    def set_orientation(self, orientation='layer'):
+        """Sets how charts should be joined.
+
+        Args:
+            orienation: string that contains how they should be connected
+                together, That is the chart orientation,  the options are:
+                "layer", "horizontal" and "vertical". The default behavior
+                is "layer".
+        """
+        orientation = orientation.lower()
+        params = {
+            'orientation': orientation,
+        }
+        change = SKETCH_CHANGE(
+            'AGGREGATION_GROUP_CHANGE', 'orientation', params)
+        self._analyzer.updates.append(change)
+
+    def set_vertical(self):
+        """Sets the "orienation" to vertical."""
+        self.set_orientation('vertical')
+
+    def set_horizontal(self):
+        """Sets the "orientation" to horizontal."""
+        self.set_orientation('horizontal')
+
+    def set_layered(self):
+        """Sets the "orientation" to layer."""
+        self.set_orientation('layer')
+
+    def set_parameters(self, parameters=None):
+        """Sets the parameters for the aggregation group.
+
+        Args:
+            parameters: a JSON string or a dict with the parameters
+                for the aggregation group.
+        """
+        if isinstance(parameters, dict):
+            parameter_string = json.dumps(parameters)
+        elif isinstance(parameters, str):
+            parameter_string = parameters
+        elif parameters is None:
+            parameter_string = ''
+        else:
+            parameter_string = str(parameters)
+
+        params = {
+            'parameters': parameter_string,
+        }
+        change = SKETCH_CHANGE(
+            'AGGREGATION_GROUP_CHANGE', 'parameters', params)
+        self._analyzer.updates.append(change)
+        self._parameters = parameter_string

@@ -136,7 +136,7 @@ class Aggregation(resource.BaseResource):
         self.aggregator_name = data.get('agg_type')
         self.type = 'stored'
 
-        label_string = aggregation_dict.get('label_string', '')
+        label_string = data.get('label_string', '')
         if label_string:
             self._labels = label_string.split(',')
         else:
