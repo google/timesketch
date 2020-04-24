@@ -837,32 +837,22 @@ class Sketch(resource.BaseResource):
         Returns:
           A stored aggregation object or None if not stored.
         """
-        resource_url = '{0:s}/sketches/{1:d}/aggregation/'.format(
-            self.api.api_root, self.id)
+        # TODO: Deprecate this function.
+        logger.warning(
+            'This function is about to be deprecated, please use the '
+            '`.save()` function of an aggregation object instead')
 
-        form_data = {
-            'name': name,
-            'description': description,
-            'agg_type': aggregator_name,
-            'chart_type': chart_type,
-            'sketch': self.id,
-            'parameters': aggregator_parameters
-        }
+        aggregator_obj = self.run_aggregator(
+            aggregator_name, aggregator_parameters)
+        aggregator_obj.name = name
+        aggregator_obj.description = description
+        if chart_type:
+            aggregator_obj.chart_type = chart_type
+        if aggregator_obj.save():
+            _ = self.lazyload_data(refresh_cache=True)
+            return aggregator_obj
 
-        response = self.api.session.post(resource_url, json=form_data)
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            error.error_message(
-                response, message='Error storing the aggregation',
-                error=RuntimeError)
-
-        response_dict = response.json()
-
-        objects = response_dict.get('objects', [])
-        if not objects:
-            return None
-
-        _ = self.lazyload_data(refresh_cache=True)
-        return self.get_aggregation(objects[0].get('id'))
+        return None
 
     def comment_event(self, event_id, index, comment_text):
         """
