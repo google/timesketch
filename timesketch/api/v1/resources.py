@@ -1007,10 +1007,11 @@ class AggregationResource(ResourceMixin, Resource):
         aggregation.sketch = sketch
 
         labels = form.labels.data
-        for label in labels.split(','):
-            if aggregation.has_label(label):
-                continue
-            aggregation.add_label(label)
+        if labels:
+            for label in json.loads(labels):
+                if aggregation.has_label(label):
+                    continue
+                aggregation.add_label(label)
 
         aggregation.parameters = json.dumps(
             form.parameters.data, ensure_ascii=False)

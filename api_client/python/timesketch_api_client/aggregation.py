@@ -320,7 +320,7 @@ class Aggregation(resource.BaseResource):
             'parameters': self._parameters,
             'chart_type': self.chart_type,
             'view_id': self.view,
-            'labels': self._labels,
+            'labels': json.dumps(self._labels),
         }
 
         if self.id:
