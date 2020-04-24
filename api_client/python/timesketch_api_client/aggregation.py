@@ -319,9 +319,11 @@ class Aggregation(resource.BaseResource):
             'agg_type': self.aggregator_name,
             'parameters': self._parameters,
             'chart_type': self.chart_type,
-            'view_id': self.view,
-            'labels': json.dumps(self._labels),
         }
+        if self.view:
+            data['view_id'] = self.view
+        if self._labels:
+            data['labels'] = json.dumps(self._labels)
 
         if self.id:
             resource_url = '{0:s}/sketches/{1:d}/aggregation/{2:d}/'.format(

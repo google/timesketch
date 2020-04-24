@@ -32,7 +32,7 @@ EVENT_CHANGE = collections.namedtuple('event_change', 'type, source, what')
 SKETCH_CHANGE = collections.namedtuple('sketch_change', 'type, source, what')
 
 VIEW_OBJECT = collections.namedtuple('view', 'id, name')
-AGG_OBJECT = collections.namedtuple('aggregation', 'id, name')
+AGG_OBJECT = collections.namedtuple('aggregation', 'id, name parameters')
 
 
 class AnalyzerContext(object):
@@ -377,7 +377,7 @@ class Sketch(object):
         change = SKETCH_CHANGE('ADD', 'aggregation', params)
         self.updates.append(change)
 
-        agg_obj = AGG_OBJECT(1, name)
+        agg_obj = AGG_OBJECT(1, name, agg_params)
         return agg_obj
 
     def add_aggregation_group(self, name, description='', view_id=None):
@@ -698,7 +698,7 @@ class Story(object):
         self.title = title
         self._analyzer = analyzer
 
-    def add_aggregation(self, aggregation, agg_type):
+    def add_aggregation(self, aggregation, agg_type=''):
         """Add a saved aggregation to the Story.
 
         Args:
@@ -707,10 +707,21 @@ class Story(object):
                 "table" or the name of the chart to be used, eg "barcharct",
                 "hbarchart".
         """
+        parameter_dict = aggregation.parameters
+        if agg_type:
+            parameter_dict['supported_charts'] = agg_type
+        else:
+            agg_type = parameter_dict.get('supported_charts')
+            # Neither agg_type nor supported_charts is set.
+            if not agg_type:
+                agg_type = 'table'
+                parameter_dict['supported_charts'] = 'table'
+
         params = {
             'agg_id': aggregation.id,
             'agg_name': aggregation.name,
             'agg_type': agg_type,
+            'agg_params': parameter_dict,
         }
         change = SKETCH_CHANGE('STORY_ADD', 'aggregation', params)
         self._analyzer.updates.append(change)
