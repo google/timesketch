@@ -174,6 +174,18 @@ class LabelMixin(object):
 
         return [x.label for x in self.labels]
 
+    @property
+    def label_string(self):
+        """Returns a comma separated string with the labels.
+
+        Returns:
+            A comma separated string with the labels.
+        """
+        if not self.labels:
+            return ''
+
+        return ','.join([x.label for x in self.labels])
+
 
 class CommentMixin(object):
     """

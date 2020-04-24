@@ -132,6 +132,7 @@ class ResourceMixin(object):
         'agg_type': fields.String,
         'parameters': fields.String,
         'chart_type': fields.String,
+        'label_string': fields.String,
         'user': fields.Nested(user_fields),
         'created_at': fields.DateTime,
         'updated_at': fields.DateTime
@@ -1004,6 +1005,12 @@ class AggregationResource(ResourceMixin, Resource):
         aggregation.chart_type = form.chart_type.data
         aggregation.user = current_user
         aggregation.sketch = sketch
+
+        labels = form.labels.data
+        for label in labels.split(','):
+            if aggregation.has_label(label):
+                continue
+            aggregation.add_label(label)
 
         aggregation.parameters = json.dumps(
             form.parameters.data, ensure_ascii=False)

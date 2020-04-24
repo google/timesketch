@@ -187,6 +187,7 @@ class SaveAggregationForm(BaseForm):
     parameters = StringField('Aggregation parameters')
     chart_type = StringField('Chart plugin type')
     view_id = IntegerField('Attach to View')
+    labels = StringField('Aggregation labels')
 
 
 class AggregationExploreForm(BaseForm):

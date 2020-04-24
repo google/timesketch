@@ -228,8 +228,15 @@ class Sketch(resource.BaseResource):
             groups.append(group)
         return groups
 
-    def list_aggregations(self):
+    def list_aggregations(self, include_labels=None, exclude_labels=None):
         """List all saved aggregations for this sketch.
+
+        Args:
+            include_labels (list): list of strings with labels. If defined
+                then only return aggregations that have the label in the list.
+            exclude_labels (list): list of strings with labels. If defined
+                then only return aggregations that don't have a label in the list.
+                If include_labels is defined it overwrites this variable.
 
         Returns:
             List of aggregations (instances of Aggregation objects)
@@ -261,6 +268,20 @@ class Sketch(resource.BaseResource):
             agg_id = aggregation_dict.get('id')
             if agg_id in groups:
                 continue
+            label_string = aggregation_dict.get('label_string', '')
+            if label_string:
+                labels = label_string.split(',')
+            else:
+                labels = []
+
+            if include_labels:
+                if not any(x in include_labels for x in labels):
+                    continue
+
+            if exclude_labels:
+                if any(x in exclude_labels for x in labels):
+                    continue
+
             aggregation_obj = aggregation.Aggregation(
                 sketch=self, api=self.api)
             aggregation_obj.from_store(aggregation_id=agg_id)
