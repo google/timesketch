@@ -17,6 +17,7 @@ This module implements annotations that can be use on other database models.
 
 from __future__ import unicode_literals
 
+import json
 import six
 
 from sqlalchemy import Column
@@ -176,15 +177,15 @@ class LabelMixin(object):
 
     @property
     def label_string(self):
-        """Returns a comma separated string with the labels.
+        """Returns a JSON encoded string with a list of the labels.
 
         Returns:
-            A comma separated string with the labels.
+            A JSON encoded string with the list of labels.
         """
         if not self.labels:
             return ''
 
-        return ','.join([x.label for x in self.labels])
+        return json.dumps([x.label for x in self.labels])
 
 
 class CommentMixin(object):

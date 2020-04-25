@@ -271,7 +271,7 @@ class Sketch(resource.BaseResource):
                 continue
             label_string = aggregation_dict.get('label_string', '')
             if label_string:
-                labels = label_string.split(',')
+                labels = json.loads(label_string)
             else:
                 labels = []
 

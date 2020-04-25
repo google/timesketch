@@ -138,7 +138,7 @@ class Aggregation(resource.BaseResource):
 
         label_string = data.get('label_string', '')
         if label_string:
-            self._labels = label_string.split(',')
+            self._labels = json.loads(label_string)
         else:
             self._labels = []
 
