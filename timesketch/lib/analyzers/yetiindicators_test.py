@@ -49,17 +49,17 @@ class TestThreatintelPlugin(BaseTest):
                 'YetiIndicators.get_indicators')
     def test_indicator_match(self, mock_get_indicators, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
-        self.sessionizer = yetiindicators.YetiIndicators('test_index', 1)
-        self.sessionizer.datastore.client = mock.Mock()
-        self.sessionizer.intel = MOCK_YETI_INTEL
+        sessionizer = yetiindicators.YetiIndicators('test_index', 1)
+        sessionizer.datastore.client = mock.Mock()
+        sessionizer.intel = MOCK_YETI_INTEL
         mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS
 
         event = copy.deepcopy(MockDataStore.event_dict)
         event['_source'].update(MATCHING_DOMAIN_MESSAGE)
-        self.sessionizer.datastore.import_event(
+        sessionizer.datastore.import_event(
             'test_index', event['_type'], event['_source'], '0')
 
-        message = self.sessionizer.run()
+        message = sessionizer.run()
         self.assertEqual(
             message,
             '1 events matched 1 indicators. [Random incident:x-incident]')
@@ -75,17 +75,17 @@ class TestThreatintelPlugin(BaseTest):
                 'YetiIndicators.get_indicators')
     def test_indicator_nomatch(self, mock_get_indicators, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
-        self.sessionizer = yetiindicators.YetiIndicators('test_index', 1)
-        self.sessionizer.datastore.client = mock.Mock()
-        self.sessionizer.intel = MOCK_YETI_INTEL
+        sessionizer = yetiindicators.YetiIndicators('test_index', 1)
+        sessionizer.datastore.client = mock.Mock()
+        sessionizer.intel = MOCK_YETI_INTEL
         mock_get_neighbors.return_value = MOCK_YETI_NEIGHBORS
 
         event = copy.deepcopy(MockDataStore.event_dict)
         event['_source'].update(OK_DOMAIN_MESSAGE)
-        self.sessionizer.datastore.import_event(
+        sessionizer.datastore.import_event(
             'test_index', event['_type'], event['_source'], '0')
 
-        message = self.sessionizer.run()
+        message = sessionizer.run()
         self.assertEqual(message, 'No indicators were found in the timeline.')
         mock_get_indicators.assert_called_once()
         mock_get_neighbors.assert_not_called()
