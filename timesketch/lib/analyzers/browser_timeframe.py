@@ -281,7 +281,8 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
             agg_obj = self.sketch.add_aggregation(
                 name='Browser Activity Per Hour', agg_name='manual_feed',
                 agg_params=params, chart_type='barchart',
-                description='Created by the browser timeframe analyzer')
+                description='Created by the browser timeframe analyzer',
+                label='informational')
             group.add_aggregation(agg_obj)
 
             lines = [{'hour': x, 'count': threshold} for x in range(0, 24)]
@@ -295,7 +296,8 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
             agg_line = self.sketch.add_aggregation(
                 name='Browser Activity Per Hour', agg_name='manual_feed',
                 agg_params=params, chart_type='linechart',
-                description='Created by the browser timeframe analyzer')
+                description='Created by the browser timeframe analyzer',
+                label='informational')
             group.add_aggregation(agg_line)
             story.add_aggregation_group(group)
 

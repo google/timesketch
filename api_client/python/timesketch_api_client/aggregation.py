@@ -40,6 +40,7 @@ class Aggregation(resource.BaseResource):
     def __init__(self, sketch, api):
         self._sketch = sketch
         self._aggregator_data = {}
+        self._labels = []
         self._parameters = {}
         self.aggregator_name = ''
         self.chart_color = ''
@@ -135,6 +136,12 @@ class Aggregation(resource.BaseResource):
         self.aggregator_name = data.get('agg_type')
         self.type = 'stored'
 
+        label_string = data.get('label_string', '')
+        if label_string:
+            self._labels = json.loads(label_string)
+        else:
+            self._labels = []
+
         chart_type = data.get('chart_type')
         param_string = data.get('parameters', '')
         if param_string:
@@ -228,6 +235,11 @@ class Aggregation(resource.BaseResource):
         return 0
 
     @property
+    def labels(self):
+        """Property that returns a list of the aggregation labels."""
+        return self._labels
+
+    @property
     def name(self):
         """Property that returns the name of the aggregation."""
         name = self._aggregator_data.get('name')
@@ -249,6 +261,17 @@ class Aggregation(resource.BaseResource):
     def table(self):
         """Property that returns a pandas DataFrame."""
         return self.to_pandas()
+
+    def add_label(self, label):
+        """Add a label to the aggregation.
+
+        Args:
+            label (str): string with the label information.
+        """
+        if label in self._labels:
+            return
+        self._labels.append(label)
+        self.save()
 
     def to_dict(self):
         """Returns a dict."""
@@ -296,8 +319,11 @@ class Aggregation(resource.BaseResource):
             'agg_type': self.aggregator_name,
             'parameters': self._parameters,
             'chart_type': self.chart_type,
-            'view_id': self.view,
         }
+        if self.view:
+            data['view_id'] = self.view
+        if self._labels:
+            data['labels'] = json.dumps(self._labels)
 
         if self.id:
             resource_url = '{0:s}/sketches/{1:d}/aggregation/{2:d}/'.format(

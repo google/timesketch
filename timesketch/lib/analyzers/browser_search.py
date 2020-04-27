@@ -241,7 +241,8 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
             agg_days = self.sketch.add_aggregation(
                 name='Top 20 days of search queries', agg_name='field_bucket',
                 agg_params=params, chart_type='hbarchart',
-                description='Created by the browser search analyzer')
+                description='Created by the browser search analyzer',
+                label='informational')
 
             params = {
                 'query_string': 'tag:"browser-search"',

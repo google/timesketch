@@ -17,6 +17,7 @@ This module implements annotations that can be use on other database models.
 
 from __future__ import unicode_literals
 
+import json
 import six
 
 from sqlalchemy import Column
@@ -134,6 +135,57 @@ class LabelMixin(object):
                                       self.__tablename__))),
                               parent=relationship(self)))
         return relationship(self.Label)
+
+    def add_label(self, label, user=None):
+        """Add a label to an object.
+
+        Each entry can have multible labels.
+
+        Args:
+            label: Name of the label.
+            user: Optional user that adds the label (sketch.User).
+        """
+        self.labels.append(self.Label(user=user, label=label))
+        db_session.commit()
+
+    def has_label(self, label):
+        """Returns a boolean whether a label is applied.
+
+        Args:
+            label: Name of the label.
+
+        Returns:
+            True if the label is set, False otherwise.
+        """
+        for label_obj in self.labels:
+            if label_obj.label.lower() == label.lower():
+                return True
+
+        return False
+
+    @property
+    def get_labels(self):
+        """Returns a list of all applied labels.
+
+        Returns:
+            A list of strings with all the applied labels.
+        """
+        if not self.labels:
+            return []
+
+        return [x.label for x in self.labels]
+
+    @property
+    def label_string(self):
+        """Returns a JSON encoded string with a list of the labels.
+
+        Returns:
+            A JSON encoded string with the list of labels.
+        """
+        if not self.labels:
+            return ''
+
+        return json.dumps([x.label for x in self.labels])
 
 
 class CommentMixin(object):

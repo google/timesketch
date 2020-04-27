@@ -69,9 +69,10 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 
     @property
     def get_named_aggregations(self):
-        """Get named aggregations.
+        """Get named aggregations that don't belong to a group.
 
-        Get named aggregations, i.e. only aggregations that have a name.
+        Get named aggregations, i.e. only aggregations that have a name and
+        are not part of a group.
         """
         return [
             agg for agg in self.aggregations
@@ -80,7 +81,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
 
     @property
     def get_named_views(self):
-        """
+        """Get named views.
+
         Get named views, i.e. only views that has a name. Views without names
         are used as user state views and should not be visible in the UI.
         """
