@@ -73,7 +73,6 @@ from timesketch.lib.forms import AddTimelineSimpleForm
 from timesketch.lib.forms import AggregationExploreForm
 from timesketch.lib.forms import AggregationLegacyForm
 from timesketch.lib.forms import CreateTimelineForm
-from timesketch.lib.forms import SaveAggregationForm
 from timesketch.lib.forms import SaveViewForm
 from timesketch.lib.forms import NameDescriptionForm
 from timesketch.lib.forms import EventAnnotationForm
@@ -132,6 +131,7 @@ class ResourceMixin(object):
         'agg_type': fields.String,
         'parameters': fields.String,
         'chart_type': fields.String,
+        'label_string': fields.String,
         'user': fields.Nested(user_fields),
         'created_at': fields.DateTime,
         'updated_at': fields.DateTime
@@ -990,26 +990,50 @@ class AggregationResource(ResourceMixin, Resource):
             aggregation_id: Integer primary key for an aggregation database
                 model
         """
-        form = SaveAggregationForm.build(request)
-        if not form.validate_on_submit():
+        form = request.json
+        if not form:
+            form = request.data
+
+        if not form:
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
         sketch = Sketch.query.get_with_acl(sketch_id)
-        aggregation = Aggregation.query.get(aggregation_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
-        aggregation.name = form.name.data
-        aggregation.description = form.description.data
-        aggregation.agg_type = form.agg_type.data
-        aggregation.chart_type = form.chart_type.data
+        aggregation = Aggregation.query.get(aggregation_id)
+        if not aggregation:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No aggregation found with this ID.')
+
+        if not sketch.has_permission(user=current_user, permission='write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have write permission on the sketch.')
+
+        aggregation.name = form.get('name', '')
+        aggregation.description = form.get('description', '')
+        aggregation.agg_type = form.get('agg_type', aggregation.agg_type)
+        aggregation.chart_type = form.get('chart_type', aggregation.chart_type)
         aggregation.user = current_user
         aggregation.sketch = sketch
 
-        aggregation.parameters = json.dumps(
-            form.parameters.data, ensure_ascii=False)
+        labels = form.get('labels', '')
+        if labels:
+            for label in json.loads(labels):
+                if aggregation.has_label(label):
+                    continue
+                aggregation.add_label(label)
 
-        if form.view.data:
-            aggregation.view = form.view_id.data
+        if form.get('parameters'):
+            aggregation.parameters = json.dumps(
+                form.get('parameters'), ensure_ascii=False)
+
+        if form.get('view_id'):
+            aggregation.view = form.get('view_id')
 
         db_session.add(aggregation)
         db_session.commit()
@@ -1417,12 +1441,13 @@ class AggregationListResource(ResourceMixin, Resource):
             An aggregation (instance of timesketch.models.sketch.Aggregation)
         """
         # Default to user supplied data
-        name = form.name.data
-        description = form.description.data
-        agg_type = form.agg_type.data
-        parameters = json.dumps(form.parameters.data, ensure_ascii=False)
-        chart_type = form.chart_type.data
-        view_id = form.view_id.data
+        name = form.get('name', '')
+        description = form.get('description', '')
+        agg_type = form.get('agg_type', '')
+        parameter_data = form.get('parameters', {})
+        parameters = json.dumps(parameter_data, ensure_ascii=False)
+        chart_type = form.get('chart_type', '')
+        view_id = form.get('view_id')
 
         # Create the aggregation in the database
         aggregation = Aggregation(
@@ -1435,6 +1460,14 @@ class AggregationListResource(ResourceMixin, Resource):
             sketch=sketch,
             view=view_id
         )
+
+        labels = form.get('labels', '')
+        if labels:
+            for label in json.loads(labels):
+                if aggregation.has_label(label):
+                    continue
+                aggregation.add_label(label)
+
         db_session.add(aggregation)
         db_session.commit()
 
@@ -1450,12 +1483,24 @@ class AggregationListResource(ResourceMixin, Resource):
         Returns:
             An aggregation in JSON (instance of flask.wrappers.Response)
         """
-        form = SaveAggregationForm.build(request)
-        if not form.validate_on_submit():
+        form = request.json
+        if not form:
+            form = request.data
+
+        if not form:
             abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to verify form data.')
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        if not sketch.has_permission(user=current_user, permission='write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have write permission on the sketch.')
+
         aggregation = self.create_aggregation_from_form(sketch, form)
         return self.to_json(aggregation, status_code=HTTP_STATUS_CODE_CREATED)
 

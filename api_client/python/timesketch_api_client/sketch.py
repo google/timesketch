@@ -228,8 +228,16 @@ class Sketch(resource.BaseResource):
             groups.append(group)
         return groups
 
-    def list_aggregations(self):
+    def list_aggregations(self, include_labels=None, exclude_labels=None):
         """List all saved aggregations for this sketch.
+
+        Args:
+            include_labels (list): list of strings with labels. If defined
+                then only return aggregations that have the label in the list.
+            exclude_labels (list): list of strings with labels. If defined
+                then only return aggregations that don't have a label in the
+                list. include_labels will be processed first in case both are
+                defined.
 
         Returns:
             List of aggregations (instances of Aggregation objects)
@@ -261,6 +269,20 @@ class Sketch(resource.BaseResource):
             agg_id = aggregation_dict.get('id')
             if agg_id in groups:
                 continue
+            label_string = aggregation_dict.get('label_string', '')
+            if label_string:
+                labels = json.loads(label_string)
+            else:
+                labels = []
+
+            if include_labels:
+                if not any(x in include_labels for x in labels):
+                    continue
+
+            if exclude_labels:
+                if any(x in exclude_labels for x in labels):
+                    continue
+
             aggregation_obj = aggregation.Aggregation(
                 sketch=self, api=self.api)
             aggregation_obj.from_store(aggregation_id=agg_id)
@@ -815,32 +837,22 @@ class Sketch(resource.BaseResource):
         Returns:
           A stored aggregation object or None if not stored.
         """
-        resource_url = '{0:s}/sketches/{1:d}/aggregation/'.format(
-            self.api.api_root, self.id)
+        # TODO: Deprecate this function.
+        logger.warning(
+            'This function is about to be deprecated, please use the '
+            '`.save()` function of an aggregation object instead')
 
-        form_data = {
-            'name': name,
-            'description': description,
-            'agg_type': aggregator_name,
-            'chart_type': chart_type,
-            'sketch': self.id,
-            'parameters': aggregator_parameters
-        }
+        aggregator_obj = self.run_aggregator(
+            aggregator_name, aggregator_parameters)
+        aggregator_obj.name = name
+        aggregator_obj.description = description
+        if chart_type:
+            aggregator_obj.chart_type = chart_type
+        if aggregator_obj.save():
+            _ = self.lazyload_data(refresh_cache=True)
+            return aggregator_obj
 
-        response = self.api.session.post(resource_url, json=form_data)
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            error.error_message(
-                response, message='Error storing the aggregation',
-                error=RuntimeError)
-
-        response_dict = response.json()
-
-        objects = response_dict.get('objects', [])
-        if not objects:
-            return None
-
-        _ = self.lazyload_data(refresh_cache=True)
-        return self.get_aggregation(objects[0].get('id'))
+        return None
 
     def comment_event(self, event_id, index, comment_text):
         """

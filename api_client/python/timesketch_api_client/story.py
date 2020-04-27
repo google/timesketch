@@ -685,7 +685,7 @@ class Story(resource.BaseResource):
         logger.error(
             'Error exporting story: [{0:d}] {1!s} {2!s}'.format(
                 response.status_code, response.reason, response.text))
-        return ''
+        return {}
 
     def to_string(self):
         """Returns a string with the content of all the story."""

@@ -291,7 +291,7 @@ class Sketch(object):
 
     def add_aggregation(
             self, name, agg_name, agg_params, description='', view_id=None,
-            chart_type=None):
+            chart_type=None, label=''):
         """Add aggregation to the sketch.
 
         Args:
@@ -302,6 +302,7 @@ class Sketch(object):
                 this is optional.
             view_id: optional ID of the view to attach the aggregation to.
             chart_type: string representing the chart type.
+            label: string with a label to attach to the aggregation.
         """
         if not agg_name:
             raise ValueError('Aggregator name needs to be defined.')
@@ -321,6 +322,9 @@ class Sketch(object):
             name=name, description=description, agg_type=agg_name,
             parameters=agg_json, chart_type=chart_type, user=None,
             sketch=self.sql_sketch, view=view)
+
+        if label:
+            aggregation.add_label(label)
         db_session.add(aggregation)
         db_session.commit()
         return aggregation
