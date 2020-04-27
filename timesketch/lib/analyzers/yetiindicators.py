@@ -1,26 +1,14 @@
 """Index analyzer plugin for Yeti indicators."""
 from __future__ import unicode_literals
 
+import re
+
 from flask import current_app
 import requests
 
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 from timesketch.lib import emojis
-
-
-def build_query_for_indicators(indicators):
-    """Builds an Elasticsearch query for Yeti indicator patterns.
-
-    Prepends and appends .* to the regex to be able to search within a field.
-
-    Returns:
-      The resulting ES query string.
-    """
-    query = []
-    for domain in indicators:
-        query.append('domain:/.*{0:s}.*/'.format(domain['pattern']))
-    return ' OR '.join(query)
 
 
 class YetiIndicators(interface.BaseSketchAnalyzer):
@@ -39,18 +27,16 @@ class YetiIndicators(interface.BaseSketchAnalyzer):
         self.intel = {}
         self.yeti_api_root = current_app.config.get('YETI_API_ROOT')
         self.yeti_api_key = current_app.config.get('YETI_API_KEY')
-        self.yeti_indicator_labels = current_app.config.get(
-            'YETI_INDICATOR_LABELS', [])
 
-    def get_bad_domain_indicators(self, entity_id):
-        """Retrieves a list of indicators associated to a given entity.
+    def get_neighbors(self, entity_id):
+        """Retrieves a list of neighbors associated to a given entity.
 
         Args:
           entity_id (str): STIX ID of the entity to get associated inticators
-                from. (typically an Intrusion Set)
+                from. (typically an Intrusion Set or an Incident)
 
         Returns:
-          A list of JSON objects describing a Yeti Indicator.
+          A list of JSON objects describing a Yeti object.
         """
         results = requests.post(
             self.yeti_api_root + '/entities/{0:s}/neighbors/'.format(entity_id),
@@ -58,29 +44,41 @@ class YetiIndicators(interface.BaseSketchAnalyzer):
         )
         if results.status_code != 200:
             return []
-        domain_indicators = []
+        neighbors = []
         for neighbor in results.json().get('vertices', {}).values():
-            if neighbor['type'] == 'x-regex' and \
-                set(self.yeti_indicator_labels) <= set(neighbor['labels']):
-                domain_indicators.append(neighbor)
+            neighbors.append(neighbor)
 
-        return domain_indicators
+        return neighbors
 
-    def get_intrusion_sets(self):
-        """Populates the intel attribute with data from Yeti.
-
-        Retrieved intel consists of Intrusion sets and associated Indicators.
-        """
+    def get_indicators(self, indicator_type):
+        """Populates the intel attribute with entities from Yeti."""
         results = requests.post(
-            self.yeti_api_root + '/entities/filter/',
-            json={'name': '', 'type': 'intrusion-set'},
+            self.yeti_api_root + '/indicators/filter/',
+            json={'name': '', 'type': indicator_type},
             headers={'X-Yeti-API': self.yeti_api_key},
         )
         if results.status_code != 200:
             return
         self.intel = {item['id']: item for item in results.json()}
-        for _id in self.intel:
-            self.intel[_id]['indicators'] = self.get_bad_domain_indicators(_id)
+        for item in results.json():
+            item['compiled_regexp'] = re.compile(item['pattern'])
+            self.intel[item['id']] = item
+
+    def mark_event(self, indicator, event, neighbors):
+        """Anotate an event with data from indicators and neighbors.
+
+        Tags with skull emoji, adds a comment to the event.
+        """
+        event.add_emojis([emojis.get_emoji('SKULL')])
+        event.add_tags([n['name'] for n in neighbors])
+        event.commit()
+
+        msg = 'Indicator match: "{0:s}" ({1:s})\n'.format(
+            indicator['name'], indicator['id'])
+        msg += 'Related entities: {0!s}'.format(
+            [n['name'] for n in neighbors])
+        event.add_comment(msg)
+        event.commit()
 
     def run(self):
         """Entry point for the analyzer.
@@ -91,41 +89,38 @@ class YetiIndicators(interface.BaseSketchAnalyzer):
         if not self.yeti_api_root or not self.yeti_api_key:
             return 'No Yeti configuration settings found, aborting.'
 
-        self.get_intrusion_sets()
-        actors_found = []
-        for intrusion_set in self.intel.values():
-            if not intrusion_set['indicators']:
-                continue
+        self.get_indicators('x-regex')
 
-            found = False
+        entities_found = set()
 
-            for indicator in intrusion_set['indicators']:
-                query = build_query_for_indicators([indicator])
+        events = self.event_stream(query_string='*',
+                                   return_fields=['message'])
+        total_matches = 0
+        matching_indicators = set()
+        for event in events:
+            for _id, indicator in self.intel.items():
+                regexp = indicator['compiled_regexp']
+                if regexp.search(event.source['message']):
+                    total_matches += 1
+                    matching_indicators.add(indicator['id'])
+                    neighbors = self.get_neighbors(indicator['id'])
+                    self.mark_event(indicator, event, neighbors)
+                    for n in neighbors:
+                        entities_found.add('{0:s}:{1:s}'.format(
+                            n['name'], n['type']
+                        ))
 
-                events = self.event_stream(query_string=query,
-                                           return_fields=[])
+        if not total_matches:
+            return 'No indicators were found in the timeline.'
 
-                name = intrusion_set['name']
-                for event in events:
-                    found = True
-                    event.add_emojis([emojis.get_emoji('SKULL')])
-                    event.add_tags([name])
-                    event.commit()
-                    event.add_comment(
-                        'Indicator "{0:s}" found for actor "{1:s}"'.format(
-                            indicator['name'], name))
-
-            if found:
-                actors_found.append(name)
-                self.sketch.add_view(
-                    'Domain activity for actor {0:s}'.format(name),
-                    self.NAME,
-                    query_string=query)
-
-        if actors_found:
-            return '{0:d} actors were found! [{1:s}]'.format(
-                len(actors_found), ', '.join(actors_found))
-        return 'No indicators were found in the timeline.'
+        for entity in entities_found:
+            name, _type = entity.split(':')
+            self.sketch.add_view(
+                'Indicator matches for {0:s} ({1:s})'.format(name, _type),
+                self.NAME,
+                query_string='tag:"{0:s}"'.format(name))
+        return '{0:d} events matched {1:d} indicators. [{2:s}]'.format(
+            total_matches, len(matching_indicators), ', '.join(entities_found))
 
 
 manager.AnalysisManager.register_analyzer(YetiIndicators)
