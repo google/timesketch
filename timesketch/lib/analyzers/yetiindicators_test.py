@@ -57,7 +57,7 @@ class TestThreatintelPlugin(BaseTest):
         event = copy.deepcopy(MockDataStore.event_dict)
         event['_source'].update(MATCHING_DOMAIN_MESSAGE)
         self.sessionizer.datastore.import_event(
-            'aaa', event['_type'], event['_source'], '0')
+            'test_index', event['_type'], event['_source'], '0')
 
         message = self.sessionizer.run()
         self.assertEqual(
@@ -83,7 +83,7 @@ class TestThreatintelPlugin(BaseTest):
         event = copy.deepcopy(MockDataStore.event_dict)
         event['_source'].update(OK_DOMAIN_MESSAGE)
         self.sessionizer.datastore.import_event(
-            'aaa', event['_type'], event['_source'], '0')
+            'test_index', event['_type'], event['_source'], '0')
 
         message = self.sessionizer.run()
         self.assertEqual(message, 'No indicators were found in the timeline.')
