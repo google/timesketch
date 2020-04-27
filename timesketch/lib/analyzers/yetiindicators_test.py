@@ -43,8 +43,10 @@ class TestThreatintelPlugin(BaseTest):
     # Mock the Elasticsearch datastore.
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
-    @mock.patch('timesketch.lib.analyzers.yetiindicators.YetiIndicators.get_neighbors')
-    @mock.patch('timesketch.lib.analyzers.yetiindicators.YetiIndicators.get_indicators')
+    @mock.patch('timesketch.lib.analyzers.yetiindicators.'
+                'YetiIndicators.get_neighbors')
+    @mock.patch('timesketch.lib.analyzers.yetiindicators.'
+                'YetiIndicators.get_indicators')
     def test_indicator_match(self, mock_get_indicators, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
         self.sessionizer = yetiindicators.YetiIndicators('test_index', 1)
@@ -58,15 +60,19 @@ class TestThreatintelPlugin(BaseTest):
             'aaa', event['_type'], event['_source'], '0')
 
         message = self.sessionizer.run()
-        self.assertEqual(message, '1 events matched 1 indicators. [Random incident:x-incident]')
+        self.assertEqual(
+            message,
+            '1 events matched 1 indicators. [Random incident:x-incident]')
         mock_get_indicators.assert_called_once()
         mock_get_neighbors.assert_called_once()
 
     # Mock the Elasticsearch datastore.
     @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
                 MockDataStore)
-    @mock.patch('timesketch.lib.analyzers.yetiindicators.YetiIndicators.get_neighbors')
-    @mock.patch('timesketch.lib.analyzers.yetiindicators.YetiIndicators.get_indicators')
+    @mock.patch('timesketch.lib.analyzers.yetiindicators.'
+                'YetiIndicators.get_neighbors')
+    @mock.patch('timesketch.lib.analyzers.yetiindicators.'
+                'YetiIndicators.get_indicators')
     def test_indicator_nomatch(self, mock_get_indicators, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
         self.sessionizer = yetiindicators.YetiIndicators('test_index', 1)
