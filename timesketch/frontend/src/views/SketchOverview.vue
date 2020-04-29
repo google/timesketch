@@ -115,10 +115,10 @@ limitations under the License.
             <ts-sketch-summary :sketch="sketch"></ts-sketch-summary>
             <br>
             <b-field grouped group-multiline>
-              <div class="control" v-for="user in meta.collaborators.users" :key="user.name">
+              <div class="control" v-for="user in sortedUserList()" :key="user.name">
                 <b-tag attached size="is-medium">{{ user }}</b-tag>
               </div>
-              <div class="control" v-for="group in meta.collaborators.groups" :key="group.name">
+              <div class="control" v-for="group in sortedGroupList()" :key="group.name">
                 <b-tag attached size="is-medium">{{ group }}</b-tag>
               </div>
             </b-field>
@@ -277,6 +277,14 @@ export default {
       }).catch((e) => {
         console.error(e)
       })
+    },
+    sortedUserList: function () {
+      const userArrayCopy = [...this.$store.state.meta.collaborators.users];
+      return userArrayCopy.sort()
+    },
+    sortedGroupList: function () {
+      const groupArrayCopy = [...this.$store.state.meta.collaborators.groups];
+      return groupArrayCopy.sort()
     },
     closeShareModal: function () {
       this.showShareModal = false

@@ -29,8 +29,8 @@ limitations under the License.
             <div class="content">
               <ul>
                 <li>Elasticsearch index: {{ timeline.searchindex.index_name }}</li>
-                <li>Number of events: {{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }} ({{ meta.stats[timeline.searchindex.index_name]['count']}})</li>
-                <li>Size on disk: {{ meta.stats[timeline.searchindex.index_name]['bytes'] | compactBytes }} ({{ meta.stats[timeline.searchindex.index_name]['bytes']}})</li>
+                <li v-if="meta.stats[timeline.searchindex.index_name]">Number of events: {{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }} ({{ meta.stats[timeline.searchindex.index_name]['count']}})</li>
+                <li v-if="meta.stats[timeline.searchindex.index_name]">Size on disk: {{ meta.stats[timeline.searchindex.index_name]['bytes'] | compactBytes }} ({{ meta.stats[timeline.searchindex.index_name]['bytes']}})</li>
                 <li>Original name: {{ timeline.searchindex.name }}</li>
                 <li>Added by: {{ timeline.searchindex.user.username }}</li>
                 <li>Added: {{ timeline.searchindex.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
