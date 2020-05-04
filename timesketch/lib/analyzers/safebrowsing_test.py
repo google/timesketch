@@ -122,7 +122,7 @@ class TestSafeBrowsingSketchPlugin(BaseTest):
             ('https://w.com', 'https://w.com'),
             ('Something before@https://w.com', 'https://w.com'),
             ('https://w.com and after', 'https://w.com'),
-            ('nothing', None),
+            ('nothing', ''),
         ]
 
         for entry, result in URLS:

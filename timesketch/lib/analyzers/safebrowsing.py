@@ -9,7 +9,8 @@ import pkg_resources
 import requests
 from flask import current_app
 
-from timesketch.lib.analyzers import interface, manager
+from timesketch.lib.analyzers import interface
+from timesketch.lib.analyzers import manager
 
 
 class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
@@ -17,15 +18,26 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
 
     NAME = 'safebrowsing'
 
-    _SAFE_BROWSING_BULK_LIMIT = 500
-    _URL_WHITELIST_CONFIG = 'safebrowsing_whitelist.yaml'
-    _SAFEBROWSING_ENTRY_KEEP = frozenset(
-        [
-            'platformType',
-            'threatType',
-        ],
-    )
+    # Safe Browsing API v4, threatMatches.find endpoint.
+    _SAFE_BROWSING_THREATMATCHING_ENDPOINT = (
+        'https://safebrowsing.googleapis.com/v4/threatMatches:find')
 
+    # Maximal number of URLs in a single Lookup request as per the
+    # Safe Browsing API documentation.
+    _SAFE_BROWSING_BULK_LIMIT = 500
+
+    # An optional file containing URL wildcards to be whitelisted
+    # in a YAML file.
+    _URL_WHITELIST_CONFIG = 'safebrowsing_whitelist.yaml'
+
+    # The keys to be added to the TS event from the ThreatMatch object
+    # we get from Safe Browsing API.
+    _SAFEBROWSING_ENTRY_KEEP = frozenset([
+        'platformType',
+        'threatType',
+    ])
+
+    # Used to find proper URLs in the 'url' entries of TS events.
     _URL_BEGINNING_RE = re.compile(r'(http(s|):\/\/\S*)')
 
     def __init__(self, index_name, sketch_id):
@@ -78,13 +90,12 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
         """
         results = {}
 
-        endpoint = 'https://safebrowsing.googleapis.com/v4/threatMatches:find'
         api_client = {
             'clientId': self._google_client_id,
             'clientVersion': self._google_client_version,
         }
 
-        for i in range(0, len(urls), self._SAFE_BROWSING_BULK_LIMIT):
+        for index in range(0, len(urls), self._SAFE_BROWSING_BULK_LIMIT):
             body = {
                 'client': api_client,
                 'threatInfo': {
@@ -93,30 +104,42 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
                     'threatEntryTypes': ['URL'],
                     'threatEntries': [
                         {'url': url}
-                        for url in urls[i:i + self._SAFE_BROWSING_BULK_LIMIT]
+                        for url in urls[
+                            index:index + self._SAFE_BROWSING_BULK_LIMIT]
                     ],
                 },
             }
 
-            r = requests.post(
-                endpoint,
+            response = requests.post(
+                self._SAFE_BROWSING_THREATMATCHING_ENDPOINT,
                 params={'key': self._safebrowsing_api_key},
                 json=body,
             )
 
-            r.raise_for_status()
+            response.raise_for_status()
 
-            result = r.json()
-            if result and 'matches' in result:
-                for match in result['matches']:
-                    threat_result = match.copy()
+            result = response.json()
 
-                    # Keeping only interesting keys
-                    for key in match.keys():
-                        if key not in self._SAFEBROWSING_ENTRY_KEEP:
-                            threat_result.pop(key)
+            if not result:
+                continue
 
-                    results[match['threat']['url']] = threat_result
+            if 'matches' not in result:
+                continue
+
+            for match in result.get('matches'):
+                result_url = match.get('threat', {}).get('url')
+
+                if not result_url:
+                    continue
+
+                # Removing all key/values that are not defined in
+                # the _SAFEBROWSING_ENTRY_KEEP.
+                threat_result = match.copy()
+                for key in match.keys():
+                    if key not in self._SAFEBROWSING_ENTRY_KEEP:
+                        threat_result.pop(key)
+
+                results[result_url] = threat_result
 
         return results
 
@@ -127,14 +150,14 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
             url_entry: a URL, with some other characters before and after
 
         Returns:
-            String with the URL
+            String with the URL or empty string if not found
         """
         m = self._URL_BEGINNING_RE.search(url_entry)
 
         if m:
             return m.group(1)
 
-        return None
+        return ''
 
     def run(self):
         """Entry point for the analyzer.
@@ -142,6 +165,10 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
         Returns:
             String with summary of the analyzer result
         """
+        # Exit ASAP if the API key is missing.
+        if not self._safebrowsing_api_key:
+            return 'Safe Browsing API requires an API key!'
+
         query = (
             '{"query": { "bool": { "should": [ '
             '{ "exists" : { "field" : "url" }} ] } } }')
@@ -167,9 +194,6 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
         if not urls:
             return 'No URLs to analyze.'
 
-        if not self._safebrowsing_api_key:
-            return 'Safe Browsing API requires an API key!'
-
         url_whitelisted = 0
 
         url_whitelist = set(
@@ -187,7 +211,7 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
                 url_whitelist.add('*.%s/*' % domain)
 
         logging.info(
-            '{:d} entries on the whitelist.'.format(len(url_whitelist)),
+            '{0:d} entries on the whitelist.'.format(len(url_whitelist)),
         )
 
         safebrowsing_platforms = current_app.config.get(
@@ -216,31 +240,34 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
                 safebrowsing_types,
             )
         except requests.HTTPError:
-            return "Couldn't reach the Safe Browsing API."
+            return 'Couldn\'t reach the Safe Browsing API.'
 
         for url, events in urls.items():
-            if url in safebrowsing_results:
-                safebrowsing_result = safebrowsing_results[url]
-                for event in events:
-                    tags = ['google-safebrowsing-url']
+            if url not in safebrowsing_results:
+                continue
 
-                    threat_type = safebrowsing_result.get('threatType')
+            safebrowsing_result = safebrowsing_results[url]
+            for event in events:
+                tags = ['google-safebrowsing-url']
 
-                    if threat_type:
-                        tags.append(
-                            'google-safebrowsing-%s' % threat_type.lower(),
-                        )
+                threat_type = safebrowsing_result.get('threatType')
 
-                    event.add_tags(tags)
-                    event.add_attributes(
-                        {
-                            'google-safebrowsing-threat': safebrowsing_result,
-                        },
+                if threat_type:
+                    tags.append(
+                        'google-safebrowsing-%s' % threat_type.lower(),
                     )
-                    event.commit()
 
-        return '{:d} Safe Browsing result(s) on {:d} URL(s), ' \
-            '{:d} whitelisted.'.format(
+                event.add_tags(tags)
+                event.add_attributes(
+                    {
+                        'google-safebrowsing-threat': safebrowsing_result,
+                    },
+                )
+                event.commit()
+
+        return (
+            '{0:d} Safe Browsing result(s) on {1:d} URL(s), '
+            '{2:d} whitelisted.').format(
                 len(safebrowsing_results),
                 len(urls),
                 url_whitelisted,
