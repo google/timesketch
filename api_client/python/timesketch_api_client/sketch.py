@@ -229,6 +229,13 @@ class Sketch(resource.BaseResource):
             sketch=self,
             api=self.api)
 
+    def delete(self):
+        """Deletes the sketch."""
+        resource_url = '{0:s}/sketches/{1:d}/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.delete(resource_url)
+        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+
     def add_to_acl(self, user_list=None, group_list=None, make_public=False):
         """Add users or groups to the sketch ACL.
 

@@ -66,3 +66,11 @@ class Timeline(resource.BaseResource):
             index_name = timeline['objects'][0]['searchindex']['index_name']
             self._searchindex = index_name
         return self._searchindex
+
+    def delete(self):
+        """Deletes the timeline."""
+        resource_url = '{0:s}/{1:s}'.format(
+            self.api.api_root, self.resource_uri)
+        response = self.api.session.delete(resource_url)
+        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+

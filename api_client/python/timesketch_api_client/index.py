@@ -59,3 +59,11 @@ class SearchIndex(resource.BaseResource):
         """
         searchindex = self.lazyload_data()
         return searchindex['objects'][0]['index_name']
+
+    def delete(self):
+        """Deletes the index."""
+        resource_url = '{0:s}/searchindices/{1:d}/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.delete(resource_url)
+        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+
