@@ -411,6 +411,24 @@ class SketchListResource(ResourceMixin, Resource):
         return self.to_json(sketch, status_code=HTTP_STATUS_CODE_CREATED)
 
 
+class SketchArchiveResource(ResourceMixin, Resource):
+    """Resource to archive a sketch."""
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            A sketch in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        # TODO: Implement what is missing.
+
+
 class SketchResource(ResourceMixin, Resource):
     """Resource to get a sketch."""
 
@@ -425,6 +443,7 @@ class SketchResource(ResourceMixin, Resource):
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
         aggregators = {}
         for _, cls in aggregator_manager.AggregatorManager.get_aggregators():
             aggregators[cls.NAME] = {
