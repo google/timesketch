@@ -25,8 +25,8 @@ from typing import Dict
 import yaml
 
 from timesketch_api_client import client
-from timesketch_api_client import importer
 from timesketch_api_client import sketch
+from timesketch_import_client import importer
 
 
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))

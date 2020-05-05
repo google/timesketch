@@ -10,15 +10,15 @@ import argparse
 def run_python_tests(coverage=False):
     try:
         if coverage:
-            subprocess.check_call(
+            subprocess.check_call((
                 'nosetests --with-coverage'
-                + ' --cover-package=timesketch_api_client,timesketch'
-                + ' api_client/python/ timesketch/',
-                shell=True,
-            )
+                ' --cover-package=timesketch_api_client,'
+                'timesketch_import_client,timesketch'
+                ' api_client/python/ timesketch/'), shell=True)
         else:
             subprocess.check_call(
-                ['nosetests', '-x', 'timesketch/', 'api_client/python/'])
+                ['nosetests', '-x', 'timesketch/', 'api_client/python/',
+                 'importer_client/python'])
     finally:
         subprocess.check_call(['rm', '-f', '.coverage'])
 

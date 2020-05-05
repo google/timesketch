@@ -473,6 +473,11 @@ class Sketch(resource.BaseResource):
         Returns:
             Timeline object instance.
         """
+        # TODO: Deprecate this function.
+        logger.warning(
+            'This function is about to be deprecated, please use the '
+            'timesketch_import_client instead')
+
         resource_url = '{0:s}/upload/'.format(self.api.api_root)
         files = {'file': open(file_path, 'rb')}
         data = {'name': timeline_name, 'sketch_id': self.id,
