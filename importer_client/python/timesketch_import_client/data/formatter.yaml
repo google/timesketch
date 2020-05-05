@@ -1,0 +1,13 @@
+# This YAML file defines how to process log files.
+# The parameters here can be defined either as arguments
+# to the import streamer, as a separate config file
+# or in this default config.
+#
+# The format of the file is:
+#
+# name:
+#       message: <format_string>
+#       timestamp_desc: <description>
+#       encoding: <encoding>
+#       data_type: <data_type>
+#       columns: <list_of_columns>

@@ -31,19 +31,7 @@ import six
 
 from timesketch_api_client import timeline
 from timesketch_api_client import definitions
-
-
-def format_data_frame(dataframe, format_message_string):
-    """Add a message field to a data frame using a format message string."""
-    dataframe['message'] = ''
-
-    formatter = string.Formatter()
-    for literal_text, field, _, _ in formatter.parse(format_message_string):
-        dataframe['message'] = dataframe['message'] + literal_text
-
-        if field:
-            dataframe['message'] = dataframe[
-                'message'] + dataframe[field].astype(str)
+from timesketch_import_client import utils
 
 
 class ImportStreamer(object):
@@ -57,8 +45,9 @@ class ImportStreamer(object):
     # chunking it up into smaller pieces.
     DEFAULT_FILESIZE_THRESHOLD = 104857600  # 100 Mb.
 
-    # Define a default encoding for processing text files.
+    # Define default values for few of the variable.
     DEFAULT_TEXT_ENCODING = 'utf-8'
+    DEFAULT_TIMESTAMP_DESC = 'Time Logged'
 
     def __init__(self):
         """Initialize the upload streamer."""
@@ -71,11 +60,11 @@ class ImportStreamer(object):
         self._sketch = None
         self._timeline_id = None
         self._timeline_name = None
-        self._timestamp_desc = None
 
         self._chunk = 1
 
         self._text_encoding = self.DEFAULT_TEXT_ENCODING
+        self._timestamp_desc = self.DEFAULT_TIMESTAMP_DESC
         self._threshold_entry = self.DEFAULT_ENTRY_THRESHOLD
         self._threshold_filesize = self.DEFAULT_FILESIZE_THRESHOLD
 
@@ -95,8 +84,11 @@ class ImportStreamer(object):
             my_dict: a dictionary that may be missing few fields needed
                     for Timesketch.
         """
-        if 'message' not in my_dict and self._format_string:
-            my_dict['message'] = self._format_string.format(**my_dict)
+        if 'message' not in my_dict:
+            format_string = (
+                self._format_string or utils.get_combined_message_string(
+                    mydict=my_dict))
+            my_dict['message'] = format_string.format(**my_dict)
 
         _ = my_dict.setdefault('timestamp_desc', self._timestamp_desc)
 
@@ -140,8 +132,11 @@ class ImportStreamer(object):
         Returns:
             A pandas data frame with added columns needed for Timesketch.
         """
-        if 'message' not in data_frame and self._format_string:
-            format_data_frame(data_frame, self._format_string)
+        if 'message' not in data_frame:
+            format_string = (
+                self._format_string or utils.get_combined_message_string(
+                    dataframe=data_frame))
+            utils.format_data_frame(data_frame, format_string)
 
         if 'timestamp_desc' not in data_frame:
             data_frame['timestamp_desc'] = self._timestamp_desc
