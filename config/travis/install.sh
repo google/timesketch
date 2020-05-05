@@ -42,6 +42,7 @@ if test ${MODE} = "dpkg"; then
 
 	docker exec -e "DEBIAN_FRONTEND=noninteractive" ${CONTAINER_NAME} sh -c "apt-get install -y ${DPKG_PACKAGES}";
 	docker exec cd api_client/python && python setup.py build && python setup.py install
+	docker exec cd importer_client/python && python setup.py build && python setup.py install
 	docker exec cd ../../
 	docker cp ../timesketch ${CONTAINER_NAME}:/
 
@@ -49,9 +50,11 @@ elif test ${MODE} = "pypi"; then
 	pip install -r requirements.txt;
 	pip install -r test_requirements.txt;
 	cd api_client/python && python setup.py build && python setup.py install
+	cd importer_client/python && python setup.py build && python setup.py install
 
 elif test ${TRAVIS_OS_NAME} = "linux"; then
 	pip3 install -r requirements.txt;
 	pip3 install -r test_requirements.txt;
 	cd api_client/python && python setup.py build && python setup.py install
+	cd importer_client/python && python setup.py build && python setup.py install
 fi
