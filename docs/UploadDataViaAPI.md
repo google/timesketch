@@ -24,6 +24,12 @@ parsed or have readily available, but they are not in the correct format that
 Timesketch requires or you want an automatic way to import the data, or a way to
 built an importer into your already existing toolsets.
 
+This is therefore useful for uploading CSV or JSON files, or through other code
+that processes data to stream to Timesketch. The importer takes in simple
+configuration parameters to make the necessary adjustments to the data so that
+it can be ingested by Timesketch. In the future these adjustments will be
+configurable using a config file, until then a more manual approach is needed.
+
 ## Basics
 
 The importer will take as an input either:
@@ -96,7 +102,7 @@ connecting to a Timesketch instance.
 import pandas as pd
 
 from timesketch_api_client import client
-from timesketch_api_client import importer
+from timesketch_import_client import importer
 
 ...
 def action():
@@ -182,8 +188,8 @@ The function `add_file` in the importer is used to add a file.
 Here is an example of how the importer can be used:
 
 ```
-from timesketch_api_client import importer
 from timesketch_api_client import client
+from timesketch_import_client import importer
 
 ...
 
@@ -207,7 +213,7 @@ and the final plaso storage file reassambled.
 
 ```
 from timesketch_api_client import client
-from timesketch_api_client import importer
+from timesketch_import_client import importer
 
 ...
 def action():
