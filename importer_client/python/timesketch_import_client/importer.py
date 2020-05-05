@@ -29,8 +29,8 @@ import dateutil.parser
 import pandas
 import six
 
-from . import timeline
-from . import definitions
+from timesketch_api_client import timeline
+from timesketch_api_client import definitions
 
 
 def format_data_frame(dataframe, format_message_string):
