@@ -51,13 +51,13 @@ elif test ${MODE} = "pypi"; then
 	pip install -r requirements.txt;
 	pip install -r test_requirements.txt;
 	cd api_client/python && python setup.py build && python setup.py install
-        cd ../../
+	cd ../../
 	cd importer_client/python && python setup.py build && python setup.py install
 
 elif test ${TRAVIS_OS_NAME} = "linux"; then
 	pip3 install -r requirements.txt;
 	pip3 install -r test_requirements.txt;
 	cd api_client/python && python setup.py build && python setup.py install
-        cd ../../
+	cd ../../
 	cd importer_client/python && python setup.py build && python setup.py install
 fi
