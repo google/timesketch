@@ -281,8 +281,10 @@ if __name__ == '__main__':
         logger.error('Unable to get sketch ID: {0:d}'.format(sketch_id))
         sys.exit(1)
 
+    filename = os.path.basename(options.path)
+    default_timeline_name, _, _ = filename.rpartition('.')
     conf_timeline_name = options.timeline_name or config_options.get(
-        'timeline_name', 'unnamed_timeline_imported_from_importer')
+        'timeline_name', default_timeline_name)
 
     config = {
         'message_format_string': options.format_string or config_options.get(

@@ -518,10 +518,16 @@ class ImportStreamer(object):
         if not os.path.isfile(filepath):
             raise TypeError('Entry object needs to be a file that exists.')
 
+        if not self._timeline_name:
+            base_path = os.path.basename(filepath)
+            default_timeline_name, _, _ = base_path.rpartition('.')
+            self.set_timeline_name(default_timeline_name)
+
         file_ending = filepath.lower().split('.')[-1]
         if file_ending == 'csv':
             if self._csv_delimiter:
                 delimiter = self._csv_delimiter
+
             with codecs.open(
                     filepath, 'r', encoding=self._text_encoding,
                     errors='replace') as fh:
@@ -531,6 +537,7 @@ class ImportStreamer(object):
                     self.add_data_frame(chunk_frame, part_of_iter=True)
         elif file_ending == 'plaso':
             self._upload_binary_file(filepath)
+
         elif file_ending == 'jsonl':
             with codecs.open(
                     filepath, 'r', encoding=self._text_encoding,
@@ -540,6 +547,7 @@ class ImportStreamer(object):
                         self.add_json(line.strip())
                     except TypeError as e:
                         logger.error('Unable to decode line: {0!s}'.format(e))
+
         else:
             raise TypeError(
                 'File needs to have a file extension of: .csv, .jsonl or '
