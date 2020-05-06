@@ -36,6 +36,10 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
     ],
+    data_files=[
+        ('data', glob.glob(
+            os.path.join('timesketch_import_client', 'data', '*.yaml'))),
+    ],
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,

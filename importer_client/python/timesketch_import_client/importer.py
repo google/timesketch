@@ -15,22 +15,19 @@
 from __future__ import unicode_literals
 
 import codecs
-import datetime
 import io
 import json
 import logging
 import math
 import os
-import string
 import time
 import uuid
 
-import dateutil.parser
 import pandas
-import six
 
 from timesketch_api_client import timeline
 from timesketch_api_client import definitions
+from timesketch_import_client import data as data_config
 from timesketch_import_client import utils
 
 
@@ -52,10 +49,13 @@ class ImportStreamer(object):
     def __init__(self):
         """Initialize the upload streamer."""
         self._count = 0
+        self._csv_delimiter = None
         self._data_lines = []
+        self._datetime_field = None
         self._format_string = None
         self._index = uuid.uuid4().hex
         self._last_response = None
+        self._logfile_config = []
         self._resource_url = ''
         self._sketch = None
         self._timeline_id = None
@@ -93,29 +93,27 @@ class ImportStreamer(object):
         _ = my_dict.setdefault('timestamp_desc', self._timestamp_desc)
 
         if 'datetime' not in my_dict:
-            for key in my_dict:
-                key_string = key.lower()
-                if 'time' not in key_string:
-                    continue
-
-                if key_string == 'timestamp_desc':
-                    continue
-
-                value = my_dict[key]
-                if isinstance(value, six.string_types):
-                    try:
-                        date = dateutil.parser.parse(my_dict[key])
-                        my_dict['datetime'] = date.isoformat()
-                        break
-                    except ValueError:
+            date = ''
+            if self._datetime_field:
+                value = my_dict.get(self._datetime_field)
+                if value:
+                    date = utils.get_datestring_from_value(value)
+            if not date:
+                for key in my_dict:
+                    key_string = key.lower()
+                    if 'time' not in key_string:
                         continue
-                else:
-                    try:
-                        date = datetime.datetime.utcfromtimestamp(value / 1e6)
-                        my_dict['datetime'] = date.isoformat()
-                        break
-                    except ValueError:
+
+                    if key_string == 'timestamp_desc':
                         continue
+
+                    value = my_dict[key]
+                    date = utils.get_datestring_from_value(value)
+                    if date:
+                        break
+
+            if date:
+                my_dict['datetime'] = date
 
         # We don't want to include any columns that start with an underscore.
         underscore_columns = [x for x in my_dict if x.startswith('_')]
@@ -142,19 +140,28 @@ class ImportStreamer(object):
             data_frame['timestamp_desc'] = self._timestamp_desc
 
         if 'datetime' not in data_frame:
-            for column in data_frame.columns[
-                    data_frame.columns.str.contains('time', case=False)]:
-                if column.lower() == 'timestamp_desc':
-                    continue
+            if self._datetime_field and self._datetime_field in data_frame:
                 try:
                     data_frame['timestamp'] = pandas.to_datetime(
-                        data_frame[column], utc=True)
-                    # We want the first successful timestamp value.
-                    break
+                        data_frame[self._datetime_field], utc=True)
                 except ValueError as e:
                     logging.info(
                         'Unable to convert timestamp in column: %s, error %s',
-                        column, e)
+                        self._datetime_field, e)
+            else:
+                for column in data_frame.columns[
+                        data_frame.columns.str.contains('time', case=False)]:
+                    if column.lower() == 'timestamp_desc':
+                        continue
+                    try:
+                        data_frame['timestamp'] = pandas.to_datetime(
+                            data_frame[column], utc=True)
+                        # We want the first successful timestamp value.
+                        break
+                    except ValueError as e:
+                        logging.info(
+                            'Unable to convert timestamp in column: '
+                            '%s, error %s', column, e)
 
             if 'timestamp' in data_frame:
                 data_frame['datetime'] = data_frame['timestamp'].dt.strftime(
@@ -164,6 +171,33 @@ class ImportStreamer(object):
         columns = list(
             data_frame.columns[~data_frame.columns.str.contains('^_')])
         return data_frame[columns]
+
+    def _load_config(self, config_dict):
+        """Sets up the streamer based on a configuration dict.
+
+        Args:
+            config_dict (dict): A dictionary that contains
+                configuration details for the streamer.
+        """
+        message = config_dict.get('message')
+        if message:
+            self.set_message_format_string(message)
+
+        timestamp_desc = config_dict.get('timestamp_desc')
+        if timestamp_desc:
+            self.set_timestamp_description(timestamp_desc)
+
+        separator = config_dict.get('separator')
+        if separator:
+            self.set_csv_delimiter(separator)
+
+        encoding = config_dict.get('encoding')
+        if encoding:
+            self.set_text_encoding(encoding)
+
+        datetime_string = config_dict.get('datetime')
+        if datetime_string:
+            self.set_datetime_column(datetime_string)
 
     def _ready(self):
         """Check whether all variables have been set.
@@ -334,6 +368,24 @@ class ImportStreamer(object):
             raise TypeError('Entry object needs to be a DataFrame')
 
         size = data_frame.shape[0]
+
+        # Read through config files to see if we can configure the streamer.
+        for config in self._logfile_config:
+            data_type = config.get('data_type')
+            if data_type and 'data_type' in data_frame:
+                data_types = data_frame.data_type.unique()
+                if len(data_types) == 1:
+                    if data_type == data_types[0]:
+                        self._load_config(config)
+                        break
+            column_string = config.get('columns')
+            if not column_string:
+                continue
+            columns = set(column_string.split(','))
+            df_columns = set(data_frame.columns)
+            if columns == df_columns:
+                self._load_config(config)
+
         data_frame_use = self._fix_data_frame(data_frame)
 
         if 'datetime' not in data_frame_use:
@@ -452,6 +504,8 @@ class ImportStreamer(object):
 
         file_ending = filepath.lower().split('.')[-1]
         if file_ending == 'csv':
+            if self._csv_delimiter:
+                delimiter = self._csv_delimiter
             with codecs.open(
                     filepath, 'r', encoding=self._text_encoding,
                     errors='replace') as fh:
@@ -551,6 +605,54 @@ class ImportStreamer(object):
         """Returns the last response from an upload."""
         return self._last_response
 
+    def set_config_file(self, file_path=''):
+        """Loads a YAML config file describing the log file config.
+
+        This function reads a YAML config file, and uses the config
+        from there to set up the streamer config. The config file
+        can be a single entry and used to just setup the streamer
+        or it can define a list of files and set the streamer
+        depending on the input file itself.
+
+        Args:
+            file_path (str): the path to the config file. If not
+                supplied the default value of features.yaml that
+                comes with the tool is chosen.
+        """
+        config = data_config.load_config(file_path)
+        if isinstance(config, (list, tuple)):
+            self._logfile_config = config
+            return
+
+        # This is a single config dict.
+        if isinstance(config, dict):
+            self._load_config(config)
+            self._logfile_config = [config]
+
+    def set_csv_delimiter(self, delimiter):
+        """Set the CSV delimiter for CSV file parsing."""
+        self._csv_delimiter = delimiter
+
+    def set_datetime_column(self, column):
+        """Sets the column where the timestamp is defined in."""
+        self._datetime_field = column
+
+    def set_entry_threshold(self, threshold):
+        """Set the threshold for number of entries per chunk."""
+        self._threshold_entry = threshold
+
+    def set_filesize_threshold(self, threshold):
+        """Set the threshold for file size per chunk."""
+        self._threshold_filesize = threshold
+
+    def set_index_name(self, index):
+        """Set the index name."""
+        self._index = index
+
+    def set_message_format_string(self, format_string):
+        """Set the message format string."""
+        self._format_string = format_string
+
     def set_sketch(self, sketch):
         """Set a client for the streamer.
 
@@ -561,18 +663,6 @@ class ImportStreamer(object):
         self._sketch = sketch
         self._resource_url = '{0:s}/upload/'.format(sketch.api.api_root)
 
-    def set_entry_threshold(self, threshold):
-        """Set the threshold for number of entries per chunk."""
-        self._threshold_entry = threshold
-
-    def set_filesize_threshold(self, threshold):
-        """Set the threshold for file size per chunk."""
-        self._threshold_filesize = threshold
-
-    def set_message_format_string(self, format_string):
-        """Set the message format string."""
-        self._format_string = format_string
-
     def set_text_encoding(self, encoding):
         """Set the default encoding for reading text files."""
         self._text_encoding = encoding
@@ -580,10 +670,6 @@ class ImportStreamer(object):
     def set_timeline_name(self, name):
         """Set the timeline name."""
         self._timeline_name = name
-
-    def set_index_name(self, index):
-        """Set the index name."""
-        self._index = index
 
     def set_timestamp_description(self, description):
         """Set the timestamp description field."""

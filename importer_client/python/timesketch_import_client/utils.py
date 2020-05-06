@@ -13,7 +13,11 @@
 # limitations under the License.
 """Some utility functions for the Timesketch importer."""
 
+import datetime
 import string
+
+import six
+import dateutil.parser
 
 
 # When there is no defined format message string a default one is used
@@ -81,3 +85,30 @@ def get_combined_message_string(dataframe=None, mydict=None):
     string_values = [
         '[{0:s}] = {{{0:s}}}'.format(x) for x in my_list]
     return ', '.join(string_values)
+
+
+def get_datestring_from_value(value):
+    """Returns an empty string or a date value.
+
+    Args:
+        value (any): A string or an int/float that contains a timestamp
+            value that can be parsed into a datetime.
+
+    Returns:
+        A string with the timestamp in ISO 8601 or an empty string if not
+        able to parse the timestamp.
+    """
+    if isinstance(value, six.string_types):
+        try:
+            date = dateutil.parser.parse(value)
+            return date.isoformat()
+        except ValueError:
+            pass
+
+    if isinstance(value, (int, float)):
+        try:
+            date = datetime.datetime.utcfromtimestamp(value / 1e6)
+            return date.isoformat()
+        except ValueError:
+            pass
+    return ''
