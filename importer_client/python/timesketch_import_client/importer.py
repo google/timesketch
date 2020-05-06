@@ -709,6 +709,8 @@ class ImportStreamer(object):
     def __enter__(self):
         """Make it possible to use "with" statement."""
         self._reset()
+        # Load the default config file to configure the tool with.
+        self.set_config_file()
         return self
 
     # pylint: disable=unused-argument
