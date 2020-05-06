@@ -30,6 +30,8 @@ from timesketch_api_client import definitions
 from timesketch_import_client import data as data_config
 from timesketch_import_client import utils
 
+logger = logging.getLogger('ts_importer')
+
 
 class ImportStreamer(object):
     """Upload object used to stream results to Timesketch."""
@@ -55,7 +57,7 @@ class ImportStreamer(object):
         self._format_string = None
         self._index = uuid.uuid4().hex
         self._last_response = None
-        self._logfile_config = []
+        self._logfile_config = {}
         self._resource_url = ''
         self._sketch = None
         self._timeline_id = None
@@ -145,7 +147,7 @@ class ImportStreamer(object):
                     data_frame['timestamp'] = pandas.to_datetime(
                         data_frame[self._datetime_field], utc=True)
                 except ValueError as e:
-                    logging.info(
+                    logger.info(
                         'Unable to convert timestamp in column: %s, error %s',
                         self._datetime_field, e)
             else:
@@ -159,7 +161,7 @@ class ImportStreamer(object):
                         # We want the first successful timestamp value.
                         break
                     except ValueError as e:
-                        logging.info(
+                        logger.info(
                             'Unable to convert timestamp in column: '
                             '%s, error %s', column, e)
 
@@ -231,7 +233,7 @@ class ImportStreamer(object):
             'index_name': self._index,
             'events': '\n'.join([json.dumps(x) for x in self._data_lines]),
         }
-        logging.debug(
+        logger.debug(
             'Data buffer ready for upload, took {0:.2f} seconds to '
             'prepare.'.format(time.time() - start_time))
 
@@ -249,7 +251,7 @@ class ImportStreamer(object):
                     response.status_code, response.reason, response.text,
                     self._index))
 
-        logging.debug(
+        logger.debug(
             'Data buffer nr. {0:d} uploaded, total time: {1:.2f}s'.format(
                 self._chunk, time.time() - start_time))
         self._chunk += 1
@@ -370,21 +372,35 @@ class ImportStreamer(object):
         size = data_frame.shape[0]
 
         # Read through config files to see if we can configure the streamer.
-        for config in self._logfile_config:
+        for config_name, config in self._logfile_config.items():
             data_type = config.get('data_type')
             if data_type and 'data_type' in data_frame:
                 data_types = data_frame.data_type.unique()
                 if len(data_types) == 1:
                     if data_type == data_types[0]:
+                        logger.info(
+                            'Using config %s for streamer.', config_name)
                         self._load_config(config)
                         break
-            column_string = config.get('columns')
-            if not column_string:
+
+            column_string = config.get('columns', '')
+            column_subset_string = config.get('columns_subset', '')
+            if not any([column_string, column_subset_string]):
                 continue
-            columns = set(column_string.split(','))
+
             df_columns = set(data_frame.columns)
-            if columns == df_columns:
+
+            columns = set(column_string.split(','))
+            if columns and columns == df_columns:
+                logger.info('Using config %s for streamer.', config_name)
                 self._load_config(config)
+                break
+
+            columns_subset = set(column_subset_string.split(','))
+            if columns_subset and columns_subset.issubset(df_columns):
+                logger.info('Using config %s for streamer.', config_name)
+                self._load_config(config)
+                break
 
         data_frame_use = self._fix_data_frame(data_frame)
 
@@ -523,7 +539,7 @@ class ImportStreamer(object):
                     try:
                         self.add_json(line.strip())
                     except TypeError as e:
-                        logging.error('Unable to decode line: {0!s}'.format(e))
+                        logger.error('Unable to decode line: {0!s}'.format(e))
         else:
             raise TypeError(
                 'File needs to have a file extension of: .csv, .jsonl or '
@@ -620,14 +636,18 @@ class ImportStreamer(object):
                 comes with the tool is chosen.
         """
         config = data_config.load_config(file_path)
-        if isinstance(config, (list, tuple)):
-            self._logfile_config = config
+        if not isinstance(config, dict):
+            logger.error(
+                'Unable to read config file since it does not produce a dict')
             return
 
-        # This is a single config dict.
-        if isinstance(config, dict):
-            self._load_config(config)
-            self._logfile_config = [config]
+        self._logfile_config = config
+
+        if all([isinstance(x, dict) for x in config.values()]):
+            # This is a config file.
+            return
+
+        self._load_config(config)
 
     def set_csv_delimiter(self, delimiter):
         """Set the CSV delimiter for CSV file parsing."""

@@ -5,7 +5,7 @@
 #
 # The format of the file is:
 #
-# - name:
+# name:
 #       message: '<format_string>'
 #       timestamp_desc: <description>
 #       datetime: <column with time information>
@@ -13,6 +13,7 @@
 #       encoding: <encoding>
 #       data_type: <data_type>
 #       columns: <list_of_columns>
+#       columns_subset: <list_of_columns>
 #
 # The config fields are either used for configuring the streamer or for
 # identifying the file. The file identifier is either the use of a data_type
@@ -45,10 +46,20 @@
 #                   "data_type" in the data set for it to be matched on.
 #
 #       columns - a list of columns that should be present in the data file
-#                 for this to be a match on.
+#                 for this to be a match on. It should be noted that all the
+#                 columns need to be present and no extra columnns should be
+#                 in the log file. If there may be extra columns then use
+#                 columns_subset instead.
+#
+#       columns_subset - a list of columns that should be present in the data
+#                        file. This list defines a subset of the columns that
+#                        can be present. To match all of the columns here
+#                        need to be present, yet there may be extra columns
+#                        present in the output file.
 
-- redline:
-        message: 'User: {UniqueUsername} did {EventType}: {Summary1} - {Summary2} - {Summary3}'
+redline:
+        message: 'User: {UniqueUsername}, with event type: {EventType} => {Summary1} - {Summary2} - {Summary3}'
         timestamp_desc: Event Logged
         datetime: EventTimestamp
-        columns: 'EventTimestamp,EventType,AuditType,Summary1,Summary2,Summary3,UniqueUsername'
+        columns_subset: 'EventTimestamp,EventType,AuditType,Summary1,Summary2,Summary3,UniqueUsername'
+
