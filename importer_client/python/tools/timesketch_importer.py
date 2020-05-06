@@ -118,6 +118,9 @@ def upload_file(
         if time_desc:
             streamer.set_timestamp_description(time_desc)
 
+        log_config_file = config_dict.get('log_config_file', '')
+        streamer.set_config_file(log_config_file)
+
         entry_threshold = config_dict.get('entry_threshold')
         if entry_threshold:
             streamer.set_entry_threshold(entry_threshold)
@@ -171,6 +174,13 @@ if __name__ == '__main__':
         default='', metavar='FILEPATH', dest='config_file', help=(
             'Path to a YAML config file that can be used to store '
             'all parameters to this tool (except this path)'))
+    config_group.add_argument(
+        '--log-config-file', '--log_config_file', '--lc', action='store',
+        type=str, default='', metavar='FILEPATH', dest='log_config_file',
+        help=(
+            'Path to a YAML config file that defines the config for parsing '
+            'and setting up file parsing. By default formatter.yaml that '
+            'comes with the importer will be used.'))
     config_group.add_argument(
         '--host', '--hostname', '--host-uri', '--host_uri', dest='host',
         type=str, default='', action='store',
@@ -286,7 +296,9 @@ if __name__ == '__main__':
             'entry_threshold', 0),
         'size_threshold': options.size_threshold or config_options.get(
             'size_threshold', 0),
+        'log_config_file': options.log_config_file,
     }
+
 
     logger.info('Uploading file.')
     result = upload_file(

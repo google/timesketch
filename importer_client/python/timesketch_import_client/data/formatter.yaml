@@ -47,3 +47,8 @@
 #       columns - a list of columns that should be present in the data file
 #                 for this to be a match on.
 
+- redline:
+        message: 'User: {UniqueUsername} did {EventType}: {Summary1} - {Summary2} - {Summary3}'
+        timestamp_desc: Event Logged
+        datetime: EventTimestamp
+        columns: 'EventTimestamp,EventType,AuditType,Summary1,Summary2,Summary3,UniqueUsername'
