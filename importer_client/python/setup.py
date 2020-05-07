@@ -24,7 +24,7 @@ from setuptools import setup
 
 setup(
     name='timesketch-import-client',
-    version='20200505',
+    version='20200507',
     description='Timesketch Import Client',
     license='Apache License, Version 2.0',
     url='http://www.timesketch.org/',
@@ -35,6 +35,10 @@ setup(
         'Environment :: Console',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
+    ],
+    data_files=[
+        ('data', glob.glob(
+            os.path.join('timesketch_import_client', 'data', '*.yaml'))),
     ],
     packages=find_packages(),
     include_package_data=True,

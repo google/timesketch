@@ -1,0 +1,65 @@
+# This YAML file defines how to process log files.
+# The parameters here can be defined either as arguments
+# to the import streamer, as a separate config file
+# or in this default config.
+#
+# The format of the file is:
+#
+# name:
+#       message: '<format_string>'
+#       timestamp_desc: <description>
+#       datetime: <column with time information>
+#       separator: <if a csv file then the separator>
+#       encoding: <encoding>
+#       data_type: <data_type>
+#       columns: <list_of_columns>
+#       columns_subset: <list_of_columns>
+#
+# The config fields are either used for configuring the streamer or for
+# identifying the file. The file identifier is either the use of a data_type
+# or a list of available columns in the file.
+#
+# Configuration parameters:
+#       message - this is the format string for the message attribute. It can
+#                 consist of a string with curly brackets for variable
+#                 expansion, eg: "User {user} visited {url}", would generate
+#                 a message string where the attributes "user" and "url" will
+#                 get expanded.
+#
+#       timestamp_desc - a string value that will be used to set the timestamp
+#                 description field.
+#
+#       datetime - if there is no column called datetime this config can be set
+#                  to tell the tool in what column the date information is
+#                  stored. Otherwise the tool will attempt to guess based on
+#                  column names.
+#
+#       separator - only applicable for CSV files, if the separator is not a
+#                   comma (,) then this variable can be set to indicate the
+#                   separator value.
+#
+#       encoding - if the file encoding is not UTF-8 it can be set here.
+#
+# Identification parameters:
+#       data_type - this can be used if there is a field in the dataset that
+#                   is called "data_type". There can only be one value of
+#                   "data_type" in the data set for it to be matched on.
+#
+#       columns - a list of columns that should be present in the data file
+#                 for this to be a match on. It should be noted that all the
+#                 columns need to be present and no extra columnns should be
+#                 in the log file. If there may be extra columns then use
+#                 columns_subset instead.
+#
+#       columns_subset - a list of columns that should be present in the data
+#                        file. This list defines a subset of the columns that
+#                        can be present. To match all of the columns here
+#                        need to be present, yet there may be extra columns
+#                        present in the output file.
+
+redline:
+        message: 'User: {UniqueUsername}, with event type: {EventType} => {Summary1} - {Summary2} - {Summary3}'
+        timestamp_desc: 'Event Logged'
+        datetime: 'EventTimestamp'
+        columns_subset: 'EventTimestamp,EventType,AuditType,Summary1,Summary2,Summary3,UniqueUsername'
+
