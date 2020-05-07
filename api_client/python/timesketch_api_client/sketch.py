@@ -644,7 +644,7 @@ class Sketch(resource.BaseResource):
         if response.status_code == 200:
             return response.json()
 
-        return '[{0:d}] {1:s} {2:s}'.format(
+        return '[{0:d}] {1!s} {2!s}'.format(
             response.status_code, response.reason, response.text)
 
     def run_analyzer(
@@ -718,7 +718,7 @@ class Sketch(resource.BaseResource):
         if response.status_code == 200:
             return response.json()
 
-        return '[{0:d}] {1:s} {2:s}'.format(
+        return '[{0:d}] {1!s} {2!s}'.format(
             response.status_code, response.reason, response.text)
 
     def remove_acl(self, user_list=None, group_list=None, remove_public=False):
