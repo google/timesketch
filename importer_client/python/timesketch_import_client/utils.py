@@ -36,7 +36,13 @@ FIELDS_TO_SKIP_STARTSWITH = frozenset([
 
 
 def format_data_frame(dataframe, format_message_string):
-    """Add a message field to a data frame using a format message string."""
+    """Add a message field to a data frame using a format message string.
+
+    Args:
+        dataframe (pandas.DataFrame): the data frame containing the data.
+        format_message_String (str): the format string used to generate
+            a message column.
+    """
     dataframe['message'] = ''
 
     formatter = string.Formatter()

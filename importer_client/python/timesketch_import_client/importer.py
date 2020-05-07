@@ -44,7 +44,7 @@ class ImportStreamer(object):
     # chunking it up into smaller pieces.
     DEFAULT_FILESIZE_THRESHOLD = 104857600  # 100 Mb.
 
-    # Define default values for few of the variable.
+    # Define default values.
     DEFAULT_TEXT_ENCODING = 'utf-8'
     DEFAULT_TIMESTAMP_DESC = 'Time Logged'
 

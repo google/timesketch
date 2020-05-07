@@ -59,7 +59,7 @@
 
 redline:
         message: 'User: {UniqueUsername}, with event type: {EventType} => {Summary1} - {Summary2} - {Summary3}'
-        timestamp_desc: Event Logged
-        datetime: EventTimestamp
+        timestamp_desc: 'Event Logged'
+        datetime: 'EventTimestamp'
         columns_subset: 'EventTimestamp,EventType,AuditType,Summary1,Summary2,Summary3,UniqueUsername'
 
