@@ -324,6 +324,7 @@ export default {
         objects: []
       },
       currentQueryString: "",
+      previousQueryString: "",
       currentQueryFilter: {
         'from': 0,
         'time_start': null,
@@ -382,7 +383,6 @@ export default {
   methods: {
     search: function () {
       if (this.contextEvent) {
-
         // Scroll to the context box in the UI
         this.$scrollTo('#context', 200, {offset: -300})
       }
@@ -394,6 +394,14 @@ export default {
         meta: {},
         objects: []
       }
+
+      // Reset pagination when a new query string is entered.
+      if (this.previousQueryString !== this.currentQueryString) {
+        this.currentQueryFilter.from = 0
+      }
+
+      // Save the query string for later check if pagination should be reset.
+      this.previousQueryString = this.currentQueryString
 
       // Update with selected fields
       this.currentQueryFilter.fields = this.selectedFields
