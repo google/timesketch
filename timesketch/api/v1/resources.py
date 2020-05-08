@@ -1975,6 +1975,12 @@ class UploadFileResource(ResourceMixin, Resource):
 
         if searchindex:
             searchindex.set_status('processing')
+            timeline = Timeline.query.filter_by(
+                name=searchindex.name,
+                description=searchindex.description,
+                sketch=sketch,
+                user=current_user,
+                searchindex=searchindex).first()
         else:
             # Create the search index in the Timesketch database
             searchindex = SearchIndex.get_or_create(

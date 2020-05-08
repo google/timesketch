@@ -15,14 +15,17 @@
 """This is the setup file for the project."""
 from __future__ import unicode_literals
 
+import os
+import glob
+
 from setuptools import find_packages
 from setuptools import setup
 
 
 setup(
-    name='timesketch-api-client',
-    version='20200505',
-    description='Timesketch API client',
+    name='timesketch-import-client',
+    version='20200507',
+    description='Timesketch Import Client',
     license='Apache License, Version 2.0',
     url='http://www.timesketch.org/',
     maintainer='Timesketch development team',
@@ -33,14 +36,18 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
     ],
+    data_files=[
+        ('data', glob.glob(
+            os.path.join('timesketch_import_client', 'data', '*.yaml'))),
+    ],
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
+    scripts=glob.glob(os.path.join('tools', '[a-z]*.py')),
     install_requires=frozenset([
         'pandas',
-        'requests',
-        'altair',
-        'google-auth',
-        'google_auth_oauthlib',
-        'beautifulsoup4']),
+        'xlrd',
+        'timesketch-api-client',
+        'pyyaml',
+    ]),
     )

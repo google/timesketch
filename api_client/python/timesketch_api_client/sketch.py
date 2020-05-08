@@ -473,6 +473,11 @@ class Sketch(resource.BaseResource):
         Returns:
             Timeline object instance.
         """
+        # TODO: Deprecate this function.
+        logger.warning(
+            'This function is about to be deprecated, please use the '
+            'timesketch_import_client instead')
+
         resource_url = '{0:s}/upload/'.format(self.api.api_root)
         files = {'file': open(file_path, 'rb')}
         data = {'name': timeline_name, 'sketch_id': self.id,
@@ -639,7 +644,7 @@ class Sketch(resource.BaseResource):
         if response.status_code == 200:
             return response.json()
 
-        return '[{0:d}] {1:s} {2:s}'.format(
+        return '[{0:d}] {1!s} {2!s}'.format(
             response.status_code, response.reason, response.text)
 
     def run_analyzer(
@@ -713,7 +718,7 @@ class Sketch(resource.BaseResource):
         if response.status_code == 200:
             return response.json()
 
-        return '[{0:d}] {1:s} {2:s}'.format(
+        return '[{0:d}] {1!s} {2!s}'.format(
             response.status_code, response.reason, response.text)
 
     def remove_acl(self, user_list=None, group_list=None, remove_public=False):
