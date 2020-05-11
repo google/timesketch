@@ -98,11 +98,11 @@ class CredentialStorage:
         data_string = json.dumps(data)
 
         random_string, key = self._get_default_key()
-        fernet = fernet.Fernet(key)
+        crypto = fernet.Fernet(key)
 
         with open(file_path, 'w') as fw:
             fw.write(random_string)
-            fw.write(fernet.encrypt(data_string))
+            fw.write(crypto.encrypt(data_string))
 
         file_permission = stat.S_IREAD | stat.S_IWRITE
         os.chmod(file_path, file_permission)
@@ -131,8 +131,8 @@ class CredentialStorage:
             key_string = '{0:s}{1:s}{2:s}'.format(
                 getpass.getuser(), random_string, self.SHARED_KEY)
             key = base64.b64encode(bytes(key_string, 'utf-8'))
-            fernet = fernet.Fernet(key)
-            data_string = fernet.decrypt(data)
+            crypto = fernet.Fernet(key)
+            data_string = crypto.decrypt(data)
             try:
                 token_dict = json.loads(data_string)
             except ValueError:
