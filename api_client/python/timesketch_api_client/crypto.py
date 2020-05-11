@@ -49,16 +49,27 @@ class CredentialStorage:
         self._filepath = os.path.join(
             home_path, self.DEFAULT_CREDENTIAL_FILENAME)
 
-    def _get_default_key(self):
-        """Returns the default encryption key."""
-        letters = string.ascii_letters
-        random_string = ''.join(
-            random.choice(letters) for _ in range(self.RANDOM_KEY_LENGTH))
+    def _get_key(self, seed_key):
+        """Returns an encryption key.
 
-        key_string = '{0:s}{1:s}{2:s}'.format(
-            getpass.getuser(), random_string, self.SHARED_KEY)
+        Args:
+            seed_key (str): a seed used to generate an encryption key.
 
-        return random_string, base64.b64encode(bytes(key_string, 'utf-8'))
+        Returns:
+            Bytes with the encryption key.
+        """
+
+        key_string_half = '{0:s}{1:s}'.format(
+            getpass.getuser(), seed_key)
+
+        if len(key_string_half) >= 32:
+            key_string = key_string_half[:32]
+        else:
+            key_string = '{0:s}{1:s}'.format(
+                key_string_half, self.SHARED_KEY)
+            key_string = key_string[:32]
+
+        return base64.b64encode(bytes(key_string, 'utf-8'))
 
     def set_filepath(self, file_path):
         """Set the filepath to the credential file."""
@@ -97,7 +108,10 @@ class CredentialStorage:
             data['expiry'] = cred_obj.expiry.isoformat()
         data_string = json.dumps(data)
 
-        random_string, key = self._get_default_key()
+        letters = string.ascii_letters
+        random_string = ''.join(
+            random.choice(letters) for _ in range(self.RANDOM_KEY_LENGTH))
+        key = self._get_key(random_string)
         crypto = fernet.Fernet(key)
 
         with open(file_path, 'w') as fw:
@@ -127,10 +141,8 @@ class CredentialStorage:
 
         with open(file_path, 'r') as fh:
             random_string = fh.read(self.RANDOM_KEY_LENGTH)
+            key = self._get_key(random_string)
             data = fh.read()
-            key_string = '{0:s}{1:s}{2:s}'.format(
-                getpass.getuser(), random_string, self.SHARED_KEY)
-            key = base64.b64encode(bytes(key_string, 'utf-8'))
             crypto = fernet.Fernet(key)
             data_string = crypto.decrypt(data)
             try:
