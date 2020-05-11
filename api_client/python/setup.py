@@ -38,7 +38,7 @@ setup(
     zip_safe=False,
     install_requires=frozenset([
         'pandas',
-        'crytography',
+        'cryptography',
         'requests',
         'altair',
         'google-auth',
