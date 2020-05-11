@@ -23,7 +23,7 @@ import random
 import string
 import stat
 
-import cryptography
+from cryptography import fernet
 from google.oauth2 import credentials
 
 
@@ -98,7 +98,7 @@ class CredentialStorage:
         data_string = json.dumps(data)
 
         random_string, key = self._get_default_key()
-        fernet = cryptography.fernet.Fernet(key)
+        fernet = fernet.Fernet(key)
 
         with open(file_path, 'w') as fw:
             fw.write(random_string)
@@ -131,7 +131,7 @@ class CredentialStorage:
             key_string = '{0:s}{1:s}{2:s}'.format(
                 getpass.getuser(), random_string, self.SHARED_KEY)
             key = base64.b64encode(bytes(key_string, 'utf-8'))
-            fernet = cryptography.fernet.Fernet(key)
+            fernet = fernet.Fernet(key)
             data_string = fernet.decrypt(data)
             try:
                 token_dict = json.loads(data_string)
