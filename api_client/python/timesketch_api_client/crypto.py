@@ -55,10 +55,10 @@ class CredentialStorage:
         random_string = ''.join(
             random.choice(letters) for _ in range(self.RANDOM_KEY_LENGTH))
 
-        key_string = b'{0:s}{1:s}{2:s}'.format(
+        key_string = '{0:s}{1:s}{2:s}'.format(
             getpass.getuser(), random_string, self.SHARED_KEY)
 
-        return random_string, base64.b64encode(key_string)
+        return random_string, base64.b64encode(bytes(key_string, 'utf-8'))
 
     def set_filepath(self, file_path):
         """Set the filepath to the credential file."""
@@ -128,9 +128,9 @@ class CredentialStorage:
         with open(file_path, 'r') as fh:
             random_string = fh.read(self.RANDOM_KEY_LENGTH)
             data = fh.read()
-            key_string = b'{0:s}{1:s}{2:s}'.format(
+            key_string = '{0:s}{1:s}{2:s}'.format(
                 getpass.getuser(), random_string, self.SHARED_KEY)
-            key = base64.b64encode(key_string)
+            key = base64.b64encode(bytes(key_string, 'utf-8'))
             fernet = cryptography.fernet.Fernet(key)
             data_string = fernet.decrypt(data)
             try:
