@@ -82,9 +82,7 @@ class CredentialStorage:
             file_path = self._filepath
 
         if not os.path.isfile(file_path):
-            logger.error(
-                'Unable to save file, path %s does not exist.', file_path)
-            return
+            logger.info('File does not exist, creating it.')
 
         data = {
             'token': cred_obj.token,
