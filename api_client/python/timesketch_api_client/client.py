@@ -67,7 +67,8 @@ class TimesketchApi(object):
                  verify=True,
                  client_id='',
                  client_secret='',
-                 auth_mode='timesketch'):
+                 auth_mode='timesketch',
+                 create_session=True):
         """Initializes the TimesketchApi object.
 
         Args:
@@ -80,6 +81,9 @@ class TimesketchApi(object):
             auth_mode: The authentication mode to use. Defaults to 'timesketch'
                 Supported values are 'timesketch' (Timesketch login form),
                 'http-basic' (HTTP Basic authentication) and oauth.
+            create_session: Boolean indicating whether the client object
+                should create a session object. If set to False the
+                function "set_session" needs to be called before proceeding.
 
         Raises:
             ConnectionError: If the Timesketch server is unreachable.
@@ -88,8 +92,13 @@ class TimesketchApi(object):
         """
         self._host_uri = host_uri
         self.api_root = '{0:s}/api/v1'.format(host_uri)
-        self._credentials = None
+        self.credentials = None
         self._flow = None
+
+        if not create_session:
+            self.session = None
+            return
+
         try:
             self.session = self._create_session(
                 username, password, verify=verify, client_id=client_id,
@@ -99,6 +108,14 @@ class TimesketchApi(object):
         except RuntimeError as e:
             raise RuntimeError(
                 'Unable to connect to server, with error: {0!s}'.format(e))
+
+    def set_credentials(self, credential_object):
+        """Sets the credential object."""
+        self.credentials = credential_object
+
+    def set_session(self, session_object):
+        """Sets the session object."""
+        self.session = session_object
 
     def _authenticate_session(self, session, username, password):
         """Post username/password to authenticate the HTTP seesion.
@@ -209,8 +226,15 @@ class TimesketchApi(object):
 
         session = flow.authorized_session()
         self._flow = flow
-        self._credentials = flow.credentials
+        self.credentials = flow.credentials
+        return self.authenticate_oauth_session(session)
 
+    def authenticate_oauth_session(self, session):
+        """Authenticate an OAUTH session.
+
+        Args:
+            session: Authorized session object.
+        """
         # Authenticate to the Timesketch backend.
         login_callback_url = '{0:s}{1:s}'.format(
             self._host_uri, self.DEFAULT_OAUTH_API_CALLBACK)
@@ -308,12 +332,12 @@ class TimesketchApi(object):
 
     def get_oauth_token_status(self):
         """Return a dict with OAuth token status, if one exists."""
-        if not self._credentials:
+        if not self.credentials:
             return {
                 'status': 'No stored credentials.'}
         return {
-            'expired': self._credentials.expired,
-            'expiry_time': self._credentials.expiry.isoformat(),
+            'expired': self.credentials.expired,
+            'expiry_time': self.credentials.expiry.isoformat(),
         }
 
     def get_sketch(self, sketch_id):
@@ -454,7 +478,7 @@ class TimesketchApi(object):
 
     def refresh_oauth_token(self):
         """Refresh an OAUTH token if one is defined."""
-        if not self._credentials:
+        if not self.credentials:
             return
         request = google.auth.transport.requests.Request()
-        self._credentials.refresh(request)
+        self.credentials.refresh(request)

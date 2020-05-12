@@ -114,9 +114,10 @@ class CredentialStorage:
         key = self._get_key(random_string)
         crypto = fernet.Fernet(key)
 
-        with open(file_path, 'w') as fw:
-            fw.write(random_string)
-            fw.write(crypto.encrypt(data_string))
+        with open(file_path, 'wb') as fw:
+            fw.write(bytes(random_string, 'utf-8'))
+            fw.write(
+                crypto.encrypt(bytes(data_string, 'utf-8')))
 
         file_permission = stat.S_IREAD | stat.S_IWRITE
         os.chmod(file_path, file_permission)
@@ -139,14 +140,22 @@ class CredentialStorage:
         if not os.path.isfile(file_path):
             return None
 
-        with open(file_path, 'r') as fh:
+        with open(file_path, 'rb') as fh:
             random_string = fh.read(self.RANDOM_KEY_LENGTH)
-            key = self._get_key(random_string)
+            key = self._get_key(random_string.decode('utf-8'))
             data = fh.read()
             crypto = fernet.Fernet(key)
-            data_string = crypto.decrypt(data)
             try:
-                token_dict = json.loads(data_string)
+                data_string = crypto.decrypt(data)
+            except fernet.InvalidSignature as e:
+                logger.error(
+                    'Unable to decrypt data, signature is not correct: %s', e)
+                return None
+            except fernet.InvalidToken as e:
+                logger.error('Unable to decrypt data, error %s', e)
+                return None
+            try:
+                token_dict = json.loads(data_string.decode('utf-8'))
             except ValueError:
                 return None
 

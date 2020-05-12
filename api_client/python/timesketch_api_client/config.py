@@ -18,11 +18,29 @@ import configparser
 import logging
 import os
 
+from google.auth.transport import requests as auth_requests
+
 from . import client
-#from . import crypto
+from . import crypto
 
 
 logger = logging.getLogger('config_assistance_api')
+
+
+def get_client(config_dict=None, config_path=''):
+    """Returns a Timesketch API client using the configuration assistant.
+
+    Args:
+        config_dict (dict): optional dict that will be used to configure
+            the client.
+        config_path (str): optional path to the configuration file, if
+            not supplied a default path will be used.
+    """
+    assistant = ConfigAssistant()
+    assistant.load_config_file(config_path)
+    if config_dict:
+        assistant.load_config_dict(config_dict)
+    return assistant.get_client()
 
 
 class ConfigAssistant:
@@ -75,11 +93,41 @@ class ConfigAssistant:
 
     def get_client(self):
         """Returns a Timesketch API client if possible."""
-
         if self.missing:
             return None
 
-        # Check auth mode and go for crypto client if oauth...
+        auth_mode = self._config.get('auth_mode', 'timesketch')
+        if auth_mode.startswith('oauth'):
+            credential_storage = crypto.CredentialStorage()
+            credentials = credential_storage.load_credentials()
+            if not credentials:
+                return client.TimesketchApi(
+                    host_uri=self._config.get('host_uri'),
+                    username=self._config.get('username'),
+                    password=self._config.get('password', ''),
+                    verify=self._config.get('verify', True),
+                    client_id=self._config.get('client_id', ''),
+                    client_secret=self._config.get('client_secret', ''),
+                    auth_mode=auth_mode,
+                )
+
+            ts = client.TimesketchApi(
+                host_uri=self._config.get('host_uri'),
+                username=self._config.get('username'),
+                auth_mode=auth_mode,
+                create_session=False)
+            ts.set_credentials(credentials)
+            session = auth_requests.AuthorizedSession(credentials)
+            try:
+                ts.refresh_oauth_token()
+            except auth_requests.RefreshError as e:
+                logger.error(
+                    'Unable to refresh credentials, with error: %s', e)
+                return None
+            session = ts.authenticate_oauth_session(session)
+            ts.set_session(session)
+            return ts
+
         return client.TimesketchApi(
             host_uri=self._config.get('host_uri'),
             username=self._config.get('username'),
@@ -87,7 +135,7 @@ class ConfigAssistant:
             verify=self._config.get('verify', True),
             client_id=self._config.get('client_id', ''),
             client_secret=self._config.get('client_secret', ''),
-            auth_mode=self._config.get('auth_mode', 'timesketch'),
+            auth_mode=auth_mode,
         )
 
     def get_missing_config(self):
@@ -111,7 +159,7 @@ class ConfigAssistant:
         """
         return name.lower() in self._config
 
-    def load_config(self, config_file_path=''):
+    def load_config_file(self, config_file_path=''):
         """Load the config from file.
 
         Args:
@@ -155,6 +203,27 @@ class ConfigAssistant:
         timesketch_config = config['timesketch']
         for name, value in timesketch_config.items():
             self.set_config(name, value)
+
+    def load_config_dict(self, config_dict):
+        """Loads configuration from a dictionary.
+
+        Only loads the config items that are needed for the client,
+        other keys are ignored in the dict object.
+
+        Args:
+            config_dict (dict): dict object with configuration.
+        """
+        fields = list(self.CLIENT_NEEDED)
+        fields.extend(list(self.OAUTH_CLIENT_NEEDED))
+
+        for key, value in config_dict.items():
+            key = key.lower()
+            if key not in fields:
+                continue
+
+            if not value:
+                continue
+            self.set_config(key, value)
 
     def save_config(self, file_path=''):
         """Save the current config to a file.

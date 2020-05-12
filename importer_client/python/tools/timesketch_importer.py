@@ -22,61 +22,14 @@ import sys
 
 from typing import Dict
 
-import yaml
-
-from timesketch_api_client import client
+from timesketch_api_client import crypto
+from timesketch_api_client import config
 from timesketch_api_client import sketch
+from timesketch_import_client import cli
 from timesketch_import_client import importer
 
 
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
-
-
-def get_api_client(
-        host: str, username: str, password: str = '', client_id: str = '',
-        client_secret: str = '', run_local: bool = False
-        ) -> client.TimesketchApi:
-    """Returns a Timesketch API client.
-
-    Args:
-        host (str): the Timesketch host.
-        username (str): the username to authenticate with.
-        password (str): optional used if OAUTH is not the authentication
-                        mechanism.
-        client_id (str): if OAUTH is used then a client ID needs to be set.
-        client_secret (str): if OAUTH is used then a client secret needs to be
-                             set.
-        run_local (bool): if OAUTH is used to authenticate and set to True
-                          then the authentication URL is printed on screen
-                          instead of starting a web server, this suits well
-                          if the connection is over a SSH connection for
-                          instance.
-
-    Raises:
-        TypeError: If a non supported authentication mode is passed in.
-
-    Returns:
-        A Timesketch API client object.
-    """
-    if run_local and client_secret:
-        auth_mode = 'oauth_local'
-    elif client_secret:
-        auth_mode = 'oauth'
-    elif password:
-        auth_mode = 'timesketch'
-    else:
-        raise TypeError(
-            'Neither password nor client secret provided, unable '
-            'to authenticate')
-
-    if not host.startswith('http'):
-        host = 'https://{0:s}'.format(host)
-
-    api_client = client.TimesketchApi(
-        host_uri=host, username=username, password=password,
-        client_id=client_id, client_secret=client_secret, auth_mode=auth_mode)
-
-    return api_client
 
 
 def upload_file(
@@ -170,11 +123,6 @@ if __name__ == '__main__':
     config_group = argument_parser.add_argument_group(
         'Configuration Arguments')
     config_group.add_argument(
-        '--config-file', '--config_file', action='store', type=str,
-        default='', metavar='FILEPATH', dest='config_file', help=(
-            'Path to a YAML config file that can be used to store '
-            'all parameters to this tool (except this path)'))
-    config_group.add_argument(
         '--log-config-file', '--log_config_file', '--lc', action='store',
         type=str, default='', metavar='FILEPATH', dest='log_config_file',
         help=(
@@ -182,7 +130,7 @@ if __name__ == '__main__':
             'and setting up file parsing. By default formatter.yaml that '
             'comes with the importer will be used.'))
     config_group.add_argument(
-        '--host', '--hostname', '--host-uri', '--host_uri', dest='host',
+        '--host', '--hostname', '--host-uri', '--host_uri', dest='host_uri',
         type=str, default='', action='store',
         help='The URI to the Timesketch instance')
     config_group.add_argument(
@@ -228,50 +176,57 @@ if __name__ == '__main__':
             'Path to the file that is to be imported.'))
 
     options = argument_parser.parse_args()
-    config_options = {}
-
-    if options.config_file:
-        if not os.path.isfile(options.config_file):
-            logger.error('Config file does not exist ({0:s})'.format(
-                options.config_file))
-            sys.exit(1)
-        with open(options.config_file, 'r') as fh:
-            config_options = yaml.safe_load(fh)
 
     if not os.path.isfile(options.path):
         logger.error('Path {0:s} is not valid, unable to continue.')
         sys.exit(1)
 
-    conf_host = options.host or config_options.get('host', '')
-    if not conf_host:
-        logger.error('Hostname for Timesketch server must be set.')
-        sys.exit(1)
+    assistant = config.ConfigAssistant()
+    assistant.load_config_file()
+    assistant.load_config_dict(vars(options))
 
-    conf_password = options.password or config_options.get('password', '')
-    conf_pwd_prompt = options.pwd_prompt or config_options.get(
-        'pwd_prompt', False)
-    if not conf_password and conf_pwd_prompt:
+    conf_password = ''
+    if options.pwd_prompt:
         conf_password = getpass.getpass('Type in the password: ')
+    else:
+        conf_password = options.password
 
-    conf_client_id = options.client_id or config_options.get('client_id', '')
-    conf_client_secret = options.client_secret or config_options.get(
-        'client_secret', '')
-    conf_username = options.username or config_options.get('username', '')
-    conf_run_local = options.run_local or config_options.get(
-        'run_local', False)
+    if conf_password:
+        assistant.set_config('auth_mode', 'timesketch')
+        assistant.set_config('password', conf_password)
+
+    if options.run_local:
+        assistant.set_config('auth_mode', 'oauth_local')
+
+    if options.client_secret:
+        assistant.set_config('auth_mode', 'oauth')
+
+    # Gather all questions that are missing.
+    while True:
+        for field in assistant.missing:
+            value = cli.ask_question(
+                'What is the value for: {0:s} ='.format(field), input_type=str)
+            if value:
+                assistant.set_config(field, value)
+        if not assistant.missing:
+            break
 
     logger.info('Creating a client.')
-    ts_client = get_api_client(
-        host=conf_host, username=conf_username, password=conf_password,
-        client_id=conf_client_id, client_secret=conf_client_secret,
-        run_local=conf_run_local)
-
+    ts_client = assistant.get_client()
     if not ts_client:
         logger.error('Unable to create a Timesketch API client, exiting.')
         sys.exit(1)
 
     logger.info('Client created.')
-    sketch_id = options.sketch_id or config_options.get('sketch_id', 0)
+    logger.info('Saving TS config.')
+    assistant.save_config()
+
+    if ts_client.credentials:
+        logger.info('Saving Credentials.')
+        cred_storage = crypto.CredentialStorage()
+        cred_storage.save_credentials(ts_client.credentials)
+
+    sketch_id = options.sketch_id
     if sketch_id:
         sketch = ts_client.get_sketch(sketch_id)
     else:
@@ -283,24 +238,17 @@ if __name__ == '__main__':
 
     filename = os.path.basename(options.path)
     default_timeline_name, _, _ = filename.rpartition('.')
-    conf_timeline_name = options.timeline_name or config_options.get(
-        'timeline_name', default_timeline_name)
+    conf_timeline_name = options.timeline_name or default_timeline_name
 
     config = {
-        'message_format_string': options.format_string or config_options.get(
-            'format_string', ''),
+        'message_format_string': options.format_string,
         'timeline_name': conf_timeline_name,
-        'index_name': options.index_name or config_options.get(
-            'index_name', ''),
-        'timestamp_description': options.time_desc or config_options.get(
-            'timestamp_description', ''),
-        'entry_threshold': options.entry_threshold or config_options.get(
-            'entry_threshold', 0),
-        'size_threshold': options.size_threshold or config_options.get(
-            'size_threshold', 0),
+        'index_name': options.index_name,
+        'timestamp_description': options.time_desc,
+        'entry_threshold': options.entry_threshold,
+        'size_threshold': options.size_threshold,
         'log_config_file': options.log_config_file,
     }
-
 
     logger.info('Uploading file.')
     result = upload_file(
