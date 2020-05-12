@@ -205,7 +205,7 @@ if __name__ == '__main__':
     while True:
         for field in assistant.missing:
             value = cli.ask_question(
-                'What is the value for: {0:s} ='.format(field), input_type=str)
+                'What is the value for [{0:s}]'.format(field), input_type=str)
             if value:
                 assistant.set_config(field, value)
         if not assistant.missing:
