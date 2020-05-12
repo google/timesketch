@@ -94,9 +94,10 @@ class ConfigAssistant:
             return None
 
         auth_mode = self._config.get('auth_mode', 'timesketch')
+        credential_storage = crypto.CredentialStorage()
+        credentials = credential_storage.load_credentials()
+
         if auth_mode.startswith('oauth'):
-            credential_storage = crypto.CredentialStorage()
-            credentials = credential_storage.load_credentials()
             if not credentials:
                 return client.TimesketchApi(
                     host_uri=self._config.get('host_uri'),
@@ -114,7 +115,7 @@ class ConfigAssistant:
                 auth_mode=auth_mode,
                 create_session=False)
             ts.set_credentials(credentials)
-            session = auth_requests.AuthorizedSession(credentials)
+            session = auth_requests.AuthorizedSession(credentials.credential)
             try:
                 ts.refresh_oauth_token()
             except auth_requests.RefreshError as e:
@@ -125,10 +126,19 @@ class ConfigAssistant:
             ts.set_session(session)
             return ts
 
+        if credentials:
+            username = credentials.credential.get(
+                'username', self._config.get('username', ''))
+            password = credentials.credential.get(
+                'password', self._config.get('password', ''))
+        else:
+            username = self._config.get('username', '')
+            password = self._config.get('password', '')
+
         return client.TimesketchApi(
             host_uri=self._config.get('host_uri'),
-            username=self._config.get('username'),
-            password=self._config.get('password', ''),
+            username=username,
+            password=password,
             verify=self._config.get('verify', True),
             client_id=self._config.get('client_id', ''),
             client_secret=self._config.get('client_secret', ''),

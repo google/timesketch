@@ -185,21 +185,30 @@ if __name__ == '__main__':
     assistant.load_config_file()
     assistant.load_config_dict(vars(options))
 
+    cred_storage = crypto.CredentialStorage()
+    credentials = cred_storage.load_credentials()
     conf_password = ''
-    if options.pwd_prompt:
-        conf_password = getpass.getpass('Type in the password: ')
+
+    if credentials:
+        if credentials.TYPE.lower() == 'oauth':
+            assistant.set_config('auth_mode', 'oauth')
+        elif credentials.TYPE.lower() == 'timesketch':
+            assistant.set_config('auth_mode', 'timesketch')
+
     else:
-        conf_password = options.password
+        if options.pwd_prompt:
+            conf_password = getpass.getpass('Type in the password: ')
+        else:
+            conf_password = options.password
 
-    if conf_password:
-        assistant.set_config('auth_mode', 'timesketch')
-        assistant.set_config('password', conf_password)
+        if options.run_local:
+            assistant.set_config('auth_mode', 'oauth_local')
 
-    if options.run_local:
-        assistant.set_config('auth_mode', 'oauth_local')
+        if options.client_secret:
+            assistant.set_config('auth_mode', 'oauth')
 
-    if options.client_secret:
-        assistant.set_config('auth_mode', 'oauth')
+        if conf_password:
+            assistant.set_config('auth_mode', 'timesketch')
 
     # Gather all questions that are missing.
     while True:
@@ -210,6 +219,15 @@ if __name__ == '__main__':
                 assistant.set_config(field, value)
         if not assistant.missing:
             break
+
+    if conf_password:
+        credentials = crypto.TimesketchPwdCredentials()
+        credentials.credential = {
+            'username': assistant.get_config('username'),
+            'password': conf_password
+        }
+        logger.info('Saving Credentials.')
+        cred_storage.save_credentials(credentials)
 
     logger.info('Creating a client.')
     ts_client = assistant.get_client()
@@ -223,7 +241,6 @@ if __name__ == '__main__':
 
     if ts_client.credentials:
         logger.info('Saving Credentials.')
-        cred_storage = crypto.CredentialStorage()
         cred_storage.save_credentials(ts_client.credentials)
 
     sketch_id = options.sketch_id

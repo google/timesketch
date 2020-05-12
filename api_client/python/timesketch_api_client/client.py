@@ -31,6 +31,7 @@ from google_auth_oauthlib import flow as googleauth_flow
 import google.auth.transport.requests
 import pandas
 
+from . import crypto
 from . import definitions
 from . import error
 from . import index
@@ -226,7 +227,8 @@ class TimesketchApi(object):
 
         session = flow.authorized_session()
         self._flow = flow
-        self.credentials = flow.credentials
+        self.credentials = crypto.TimesketchOAuthCredentials()
+        self.credentials.credential = flow.credentials
         return self.authenticate_oauth_session(session)
 
     def authenticate_oauth_session(self, session):
@@ -336,8 +338,8 @@ class TimesketchApi(object):
             return {
                 'status': 'No stored credentials.'}
         return {
-            'expired': self.credentials.expired,
-            'expiry_time': self.credentials.expiry.isoformat(),
+            'expired': self.credentials.credential.expired,
+            'expiry_time': self.credentials.credential.expiry.isoformat(),
         }
 
     def get_sketch(self, sketch_id):
@@ -481,4 +483,4 @@ class TimesketchApi(object):
         if not self.credentials:
             return
         request = google.auth.transport.requests.Request()
-        self.credentials.refresh(request)
+        self.credentials.credential.refresh(request)
