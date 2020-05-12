@@ -66,7 +66,7 @@ verify = True
             fw.write(self.TEST_CONFIG)
 
             fw.seek(0)
-            config_obj.load_config(fw.name)
+            config_obj.load_config_file(fw.name)
         expected_fields = [
             'host_uri', 'auth_mode', 'verify', 'client_id',
             'client_secret', 'username']
