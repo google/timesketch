@@ -239,15 +239,15 @@ class CredentialStorage:
             logger.info('File does not exist, creating it.')
 
         letters = string.ascii_letters
-        random_string = ''.join(
+        random_seed_string = ''.join(
             random.choice(letters) for _ in range(self.RANDOM_KEY_LENGTH))
-        key = self._get_key(random_string)
+        key = self._get_key(random_seed_string)
         crypto = fernet.Fernet(key)
 
         data = cred_obj.serialize()
 
         with open(file_path, 'wb') as fw:
-            fw.write(bytes(random_string, 'utf-8'))
+            fw.write(bytes(random_seed_string, 'utf-8'))
             fw.write(crypto.encrypt(data))
 
         file_permission = stat.S_IREAD | stat.S_IWRITE
@@ -272,8 +272,8 @@ class CredentialStorage:
             return None
 
         with open(file_path, 'rb') as fh:
-            random_string = fh.read(self.RANDOM_KEY_LENGTH)
-            key = self._get_key(random_string.decode('utf-8'))
+            random_seed_string = fh.read(self.RANDOM_KEY_LENGTH)
+            key = self._get_key(random_seed_string.decode('utf-8'))
             data = fh.read()
             crypto = fernet.Fernet(key)
             try:

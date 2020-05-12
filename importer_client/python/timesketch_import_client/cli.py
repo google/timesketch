@@ -22,6 +22,9 @@ def ask_question(question, input_type, default=None):
         question (str): the text that the user will be prompted.
         input_type (type): the type of the input data.
         default (object): default value for the question, optional.
+
+    Returns:
+        object: The value (type of input_type) that is ready by the user.
     """
     if default:
         return click.prompt(question, type=input_type, default=default)

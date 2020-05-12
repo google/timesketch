@@ -196,6 +196,8 @@ if __name__ == '__main__':
             assistant.set_config('auth_mode', 'timesketch')
 
     else:
+        # Check whether we'll need to read password for timesketch
+        # auth from the command line.
         if options.pwd_prompt:
             conf_password = getpass.getpass('Type in the password: ')
         else:

@@ -83,6 +83,9 @@ class ConfigAssistant:
     def get_config(self, name):
         """Returns a value for a given config.
 
+        Args:
+            name (str): the name of the config value to retrieve.
+
         Raises:
             KeyError: if the config does not exist.
         """
@@ -146,7 +149,11 @@ class ConfigAssistant:
         )
 
     def get_missing_config(self):
-        """Returns a list of configuration parameters that are missing."""
+        """Returns a list of configuration parameters that are missing.
+
+        Returns:
+            A list of parameters that are missing from the config object.
+        """
         needed_set = self.CLIENT_NEEDED
         auth_mode = self._config.get('auth_mode', '')
         if auth_mode.startswith('oauth'):
@@ -258,7 +265,7 @@ class ConfigAssistant:
             config.write(fw)
 
     def set_config(self, name, value):
-        """Saves a config.
+        """Sets a given config item with a value.
 
         Args:
           name (str): the name of the configuration value to be set.
