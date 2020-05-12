@@ -79,7 +79,7 @@ class CredentialStorage:
     def save_credentials(self, cred_obj, file_path=''):
         """Save credential data to a token file.
 
-        This function will create an EncryptedFile (go/encryptedfile)
+        This function will create an encrypted file
         in the user's home directory (~/.timesketch.token by default)
         that contains a stored copy of the credential object.
 
@@ -89,6 +89,8 @@ class CredentialStorage:
             file_path (str): Full path to the file storing the saved
                 credentials.
         """
+        # TODO (kiddi): Support user/pass credentials as well. Create
+        # a separate credential object that wraps the OAUTH creds.
         if not file_path:
             file_path = self._filepath
 
