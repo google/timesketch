@@ -50,9 +50,6 @@ class ConfigAssistant:
     a state about what config has been passed to it, to assist possible
     UIs to understand what is missing in order to setup a Timesketch API
     client.
-
-    Attributes:
-      asdfsadf
     """
 
     # The name of the default config file.
