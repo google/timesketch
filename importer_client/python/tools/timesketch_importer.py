@@ -238,7 +238,13 @@ if __name__ == '__main__':
 
     filename = os.path.basename(options.path)
     default_timeline_name, _, _ = filename.rpartition('.')
-    conf_timeline_name = options.timeline_name or default_timeline_name
+
+    if options.timeline_name:
+        conf_timeline_name = options.timeline_name
+    else:
+        conf_timeline_name = cli.ask_question(
+            'What is the timeline name', input_type=str,
+            default=default_timeline_name)
 
     config = {
         'message_format_string': options.format_string,

@@ -74,7 +74,6 @@ verify = True
 
         self.assertEqual(config_obj.get_config('host_uri'), 'http://127.0.0.1')
 
-    #def test_save_config(self, file_path=''):
     def test_save_config(self):
         """Test saving the config."""
         config_obj = config.ConfigAssistant()
