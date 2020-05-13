@@ -107,6 +107,11 @@ if __name__ == '__main__':
         '--pwd-prompt', '--pwd_prompt', action='store_true', default=False,
         dest='pwd_prompt', help='Prompt for password.')
     auth_group.add_argument(
+        '--cred-prompt', '--cred_prompt', '--token-password',
+        '--token_password', '--token', action='store_true', default=False,
+        dest='cred_prompt',
+        help='Prompt for password to decrypt and encrypt credential file.')
+    auth_group.add_argument(
         '--client-secret', '--client_secret', action='store', type=str,
         default='', dest='client_secret', help='OAUTH client secret.')
     auth_group.add_argument(
@@ -186,7 +191,23 @@ if __name__ == '__main__':
     assistant.load_config_dict(vars(options))
 
     cred_storage = crypto.CredentialStorage()
-    credentials = cred_storage.load_credentials()
+    credential_password = ''
+    if options.cred_prompt:
+        credential_password = cli.ask_question(
+            'Enter password to encrypt/decrypt credential file',
+            input_type=str, hide_input=True)
+
+    try:
+        credentials = cred_storage.load_credentials(
+            config_assistant=assistant, password=credential_password)
+    except IOError as e:
+        logger.error(
+            'Unable to decrypt the credential file, with error: %s', e)
+        logger.error(
+            'If you\'ve forgotten the password you can delete '
+            'the ~/.timesketch.token file and run the tool again.')
+        sys.exit(1)
+
     conf_password = ''
 
     if credentials:
@@ -229,10 +250,12 @@ if __name__ == '__main__':
             'password': conf_password
         }
         logger.info('Saving Credentials.')
-        cred_storage.save_credentials(credentials)
+        cred_storage.save_credentials(
+            credentials, password=credential_password,
+            config_assistant=assistant)
 
     logger.info('Creating a client.')
-    ts_client = assistant.get_client()
+    ts_client = assistant.get_client(password=credential_password)
     if not ts_client:
         logger.error('Unable to create a Timesketch API client, exiting.')
         sys.exit(1)
@@ -243,7 +266,9 @@ if __name__ == '__main__':
 
     if ts_client.credentials:
         logger.info('Saving Credentials.')
-        cred_storage.save_credentials(ts_client.credentials)
+        cred_storage.save_credentials(
+            ts_client.credentials, password=credential_password,
+            config_assistant=assistant)
 
     sketch_id = options.sketch_id
     if sketch_id:

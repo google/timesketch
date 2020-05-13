@@ -15,20 +15,23 @@
 
 import click
 
-def ask_question(question, input_type, default=None):
+def ask_question(question, input_type, default=None, hide_input=False):
     """Presents the user with a prompt with a default return value and a type.
 
     Args:
         question (str): the text that the user will be prompted.
         input_type (type): the type of the input data.
         default (object): default value for the question, optional.
+        hide_input (bool): whether the input should be hidden, eg. when asking
+            for a password.
 
     Returns:
         object: The value (type of input_type) that is ready by the user.
     """
     if default:
-        return click.prompt(question, type=input_type, default=default)
-    return click.prompt(question, type=input_type)
+        return click.prompt(
+            question, type=input_type, default=default, hide_input=hide_input)
+    return click.prompt(question, type=input_type, hide_input=hide_input)
 
 
 def confirm_choice(choice, default=True, abort=True):

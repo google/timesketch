@@ -91,14 +91,15 @@ class ConfigAssistant:
         """
         return self._config[name]
 
-    def get_client(self):
+    def get_client(self, password=''):
         """Returns a Timesketch API client if possible."""
         if self.missing:
             return None
 
         auth_mode = self._config.get('auth_mode', 'timesketch')
         credential_storage = crypto.CredentialStorage()
-        credentials = credential_storage.load_credentials()
+        credentials = credential_storage.load_credentials(
+            config_assistant=self, password=password)
 
         if auth_mode.startswith('oauth'):
             if not credentials:
@@ -260,6 +261,12 @@ class ConfigAssistant:
             'client_secret': self._config.get('client_secret', ''),
             'auth_mode': self._config.get('auth_mode', 'timesketch')
         }
+
+        if 'cred_key' in self._config:
+            cred_key = self._config.get('cred_key')
+            if isinstance(cred_key, bytes):
+                cred_key = cred_key.decode('utf-8')
+            config['timesketch']['cred_key'] = cred_key
 
         with open(file_path, 'w') as fw:
             config.write(fw)
