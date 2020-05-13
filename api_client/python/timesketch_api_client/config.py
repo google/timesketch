@@ -91,8 +91,13 @@ class ConfigAssistant:
         """
         return self._config[name]
 
-    def get_client(self, password=''):
-        """Returns a Timesketch API client if possible."""
+    def get_client(self, token_password=''):
+        """Returns a Timesketch API client if possible.
+
+        Args:
+            token_password (str): an optional password to decrypt
+                the credential token file.
+        """
         if self.missing:
             return None
 

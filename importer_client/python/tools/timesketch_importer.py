@@ -191,15 +191,15 @@ if __name__ == '__main__':
     assistant.load_config_dict(vars(options))
 
     cred_storage = crypto.CredentialStorage()
-    credential_password = ''
+    token_password = ''
     if options.cred_prompt:
-        credential_password = cli.ask_question(
+        token_password = cli.ask_question(
             'Enter password to encrypt/decrypt credential file',
             input_type=str, hide_input=True)
 
     try:
         credentials = cred_storage.load_credentials(
-            config_assistant=assistant, password=credential_password)
+            config_assistant=assistant, password=token_password)
     except IOError as e:
         logger.error(
             'Unable to decrypt the credential file, with error: %s', e)
@@ -251,11 +251,11 @@ if __name__ == '__main__':
         }
         logger.info('Saving Credentials.')
         cred_storage.save_credentials(
-            credentials, password=credential_password,
+            credentials, password=token_password,
             config_assistant=assistant)
 
     logger.info('Creating a client.')
-    ts_client = assistant.get_client(password=credential_password)
+    ts_client = assistant.get_client(token_password=token_password)
     if not ts_client:
         logger.error('Unable to create a Timesketch API client, exiting.')
         sys.exit(1)
@@ -267,7 +267,7 @@ if __name__ == '__main__':
     if ts_client.credentials:
         logger.info('Saving Credentials.')
         cred_storage.save_credentials(
-            ts_client.credentials, password=credential_password,
+            ts_client.credentials, password=token_password,
             config_assistant=assistant)
 
     sketch_id = options.sketch_id
