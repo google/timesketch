@@ -104,7 +104,7 @@ class ConfigAssistant:
         auth_mode = self._config.get('auth_mode', 'timesketch')
         credential_storage = crypto.CredentialStorage()
         credentials = credential_storage.load_credentials(
-            config_assistant=self, password=password)
+            config_assistant=self, password=token_password)
 
         if auth_mode.startswith('oauth'):
             if not credentials:
