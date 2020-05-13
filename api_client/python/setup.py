@@ -21,7 +21,7 @@ from setuptools import setup
 
 setup(
     name='timesketch-api-client',
-    version='20200505',
+    version='20200513',
     description='Timesketch API client',
     license='Apache License, Version 2.0',
     url='http://www.timesketch.org/',
@@ -38,6 +38,7 @@ setup(
     zip_safe=False,
     install_requires=frozenset([
         'pandas',
+        'cryptography',
         'requests',
         'altair',
         'google-auth',
