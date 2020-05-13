@@ -19,11 +19,12 @@ import os
 import getpass
 import json
 import logging
-import random
-import string
 import stat
 
 from cryptography import fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from google.oauth2 import credentials
 
 
@@ -177,13 +178,13 @@ class CredentialStorage:
     """Class to store and retrieve stored credentials."""
 
     # A default shared secret that will be used as part of the key.
-    SHARED_KEY = 'thetta er mjog leynt'
+    SHARED_KEY = 'afar mikid leyndarmal'
 
     # The default filename of the token file.
     DEFAULT_CREDENTIAL_FILENAME = '.timesketch.token'
 
-    # The number of characters in the random part of the default key.
-    RANDOM_KEY_LENGTH = 20
+    # Length of the salt.
+    SALT_LENGTH = 16
 
     def __init__(self):
         """Initialize the class."""
@@ -192,27 +193,31 @@ class CredentialStorage:
         self._filepath = os.path.join(
             home_path, self.DEFAULT_CREDENTIAL_FILENAME)
 
-    def _get_key(self, seed_key):
+    def _get_key(self, salt, password=''):
         """Returns an encryption key.
 
         Args:
-            seed_key (str): a seed used to generate an encryption key.
+            salt (bytes): a salt used during the encryption.
+            password (str): optional password, if not supplied
+                a default one will be generated.
 
         Returns:
             Bytes with the encryption key.
         """
+        if not password:
+            password = '{0:s}{1:s}'.format(
+                getpass.getuser(), self.SHARED_KEY)
 
-        key_string_half = '{0:s}{1:s}'.format(
-            getpass.getuser(), seed_key)
-
-        if len(key_string_half) >= 32:
-            key_string = key_string_half[:32]
-        else:
-            key_string = '{0:s}{1:s}'.format(
-                key_string_half, self.SHARED_KEY)
-            key_string = key_string[:32]
-
-        return base64.b64encode(bytes(key_string, 'utf-8'))
+        password = bytes(password, 'utf-8')
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=100000,
+            backend=default_backend()
+        )
+        return base64.urlsafe_b64encode(
+            kdf.derive(password))
 
     def set_filepath(self, file_path):
         """Set the filepath to the credential file."""
@@ -238,16 +243,14 @@ class CredentialStorage:
         if not os.path.isfile(file_path):
             logger.info('File does not exist, creating it.')
 
-        letters = string.ascii_letters
-        random_seed_string = ''.join(
-            random.choice(letters) for _ in range(self.RANDOM_KEY_LENGTH))
-        key = self._get_key(random_seed_string)
+        salt = os.urandom(self.SALT_LENGTH)
+        key = self._get_key(salt)
         crypto = fernet.Fernet(key)
 
         data = cred_obj.serialize()
 
         with open(file_path, 'wb') as fw:
-            fw.write(bytes(random_seed_string, 'utf-8'))
+            fw.write(salt)
             fw.write(crypto.encrypt(data))
 
         file_permission = stat.S_IREAD | stat.S_IWRITE
@@ -272,8 +275,8 @@ class CredentialStorage:
             return None
 
         with open(file_path, 'rb') as fh:
-            random_seed_string = fh.read(self.RANDOM_KEY_LENGTH)
-            key = self._get_key(random_seed_string.decode('utf-8'))
+            salt = fh.read(self.SALT_LENGTH)
+            key = self._get_key(salt)
             data = fh.read()
             crypto = fernet.Fernet(key)
             try:
