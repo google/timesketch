@@ -24,7 +24,7 @@ from setuptools import setup
 
 setup(
     name='timesketch-import-client',
-    version='20200513',
+    version='20200514',
     description='Timesketch Import Client',
     license='Apache License, Version 2.0',
     url='http://www.timesketch.org/',
@@ -45,7 +45,6 @@ setup(
     zip_safe=False,
     scripts=glob.glob(os.path.join('tools', '[a-z]*.py')),
     install_requires=frozenset([
-        'click',
         'pandas',
         'xlrd',
         'timesketch-api-client',
