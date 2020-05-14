@@ -22,10 +22,10 @@ import sys
 
 from typing import Dict
 
+from timesketch_api_client import cli_input
 from timesketch_api_client import crypto
 from timesketch_api_client import config
 from timesketch_api_client import sketch
-from timesketch_import_client import cli
 from timesketch_import_client import importer
 
 
@@ -193,7 +193,7 @@ if __name__ == '__main__':
     cred_storage = crypto.CredentialStorage()
     token_password = ''
     if options.cred_prompt:
-        token_password = cli.ask_question(
+        token_password = cli_input.ask_question(
             'Enter password to encrypt/decrypt credential file',
             input_type=str, hide_input=True)
 
@@ -233,16 +233,6 @@ if __name__ == '__main__':
         if conf_password:
             assistant.set_config('auth_mode', 'timesketch')
 
-    # Gather all questions that are missing.
-    while True:
-        for field in assistant.missing:
-            value = cli.ask_question(
-                'What is the value for [{0:s}]'.format(field), input_type=str)
-            if value:
-                assistant.set_config(field, value)
-        if not assistant.missing:
-            break
-
     if conf_password:
         credentials = crypto.TimesketchPwdCredentials()
         credentials.credential = {
@@ -253,6 +243,10 @@ if __name__ == '__main__':
         cred_storage.save_credentials(
             credentials, password=token_password,
             config_assistant=assistant)
+
+    # Gather all questions that are missing.
+    config.configure_missing_parameters(
+        config_assistant=assistant, token_password=token_password)
 
     logger.info('Creating a client.')
     ts_client = assistant.get_client(token_password=token_password)
@@ -286,7 +280,7 @@ if __name__ == '__main__':
     if options.timeline_name:
         conf_timeline_name = options.timeline_name
     else:
-        conf_timeline_name = cli.ask_question(
+        conf_timeline_name = cli_input.ask_question(
             'What is the timeline name', input_type=str,
             default=default_timeline_name)
 

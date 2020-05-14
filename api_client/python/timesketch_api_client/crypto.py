@@ -296,7 +296,8 @@ class CredentialStorage:
         elif config_assistant:
             try:
                 password = config_assistant.get_config('cred_key')
-                password = bytes(password, 'utf-8')
+                if not isinstance(password, bytes):
+                    password = bytes(password, 'utf-8')
             except KeyError:
                 raise IOError(
                     'Not able to determine encryption key from config.')

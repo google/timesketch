@@ -21,6 +21,7 @@ import os
 from google.auth.transport import requests as auth_requests
 
 from . import client
+from . import cli_input
 from . import crypto
 
 
@@ -41,6 +42,63 @@ def get_client(config_dict=None, config_path=''):
     if config_dict:
         assistant.load_config_dict(config_dict)
     return assistant.get_client()
+
+
+def configure_missing_parameters(config_assistant, token_password=''):
+    """Fill in missing configuration for a config assistant.
+
+    This function will take in a configuration assistant object and check
+    whether it is not fully configured. If it isn't it will ask the user
+    to fill in the missing details.
+
+    It will also check to see whether a password has been set if the auth
+    is username/password and ask for a password to store credentials.
+
+    Args:
+        config_assistant (ConfigAssistant): a config assistant that might
+            not be fully configured.
+        token_password (str): an optional password to decrypt
+            the credential token file.
+    """
+    for field in config_assistant.missing:
+        value = cli_input.ask_question(
+            'What is the value for [{0:s}]'.format(field), input_type=str)
+        if value:
+            config_assistant.set_config(field, value)
+
+    if config_assistant.missing:
+        # We still have unanswered questions.
+        return configure_missing_parameters(config_assistant, token_password)
+
+    config_assistant.save_config()
+    credential_storage = crypto.CredentialStorage()
+    credentials = credential_storage.load_credentials(
+        config_assistant=config_assistant, password=token_password)
+
+    # Check if we are using username/password and we don't have credentials
+    # saved.
+    auth_mode = config_assistant.get_config('auth_mode')
+    if auth_mode != 'timesketch':
+        return None
+
+    if credentials:
+        return None
+
+    username = config_assistant.get_config('username')
+    password = cli_input.ask_question(
+        'Password for user {0:s}'.format(username), input_type=str,
+        hide_input=True)
+    credentials = crypto.TimesketchPwdCredentials()
+    credentials.credential = {
+        'username': username,
+        'password': password
+    }
+    cred_storage = crypto.CredentialStorage()
+    cred_storage.save_credentials(
+        credentials, password=token_password,
+        config_assistant=config_assistant)
+    config_assistant.save_config()
+    return None
 
 
 class ConfigAssistant:
