@@ -329,7 +329,7 @@ class CredentialStorage:
 
                 return cred_obj
             except TypeError:
-                logger.warning('Credential object is not "timesketch" auth.')
+                logger.debug('Credential object is not "timesketch" auth.')
 
             cred_obj = TimesketchOAuthCredentials()
             cred_obj.deserialize(data_string)
