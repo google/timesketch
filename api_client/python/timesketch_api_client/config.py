@@ -28,7 +28,7 @@ from . import crypto
 logger = logging.getLogger('config_assistance_api')
 
 
-def get_client(config_dict=None, config_path=''):
+def get_client(config_dict=None, config_path='', token_password=''):
     """Returns a Timesketch API client using the configuration assistant.
 
     Args:
@@ -36,12 +36,16 @@ def get_client(config_dict=None, config_path=''):
             the client.
         config_path (str): optional path to the configuration file, if
             not supplied a default path will be used.
+        token_password (str): an optional password to decrypt
+            the credential token file.
     """
     assistant = ConfigAssistant()
     assistant.load_config_file(config_path)
     if config_dict:
         assistant.load_config_dict(config_dict)
-    return assistant.get_client()
+
+    configure_missing_parameters(assistant, token_password)
+    return assistant.get_client(token_password=token_password)
 
 
 def configure_missing_parameters(config_assistant, token_password=''):
