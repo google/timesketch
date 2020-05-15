@@ -1,9 +1,6 @@
 # Use the official Docker Hub Ubuntu 18.04 base image
 FROM ubuntu:18.04
 
-# Add Plaso PPA repository
-RUN add-apt-repository ppa:gift/stable
-
 # Setup install environment and Timesketch dependencies
 RUN apt-get update && apt-get -y install \
     apt-transport-https \
@@ -16,6 +13,11 @@ RUN apt-get update && apt-get -y install \
     python3-dev \
     python3-pip \
     python3-psycopg2 \
+ && rm -rf /var/lib/apt/lists/*
+
+# Install Plaso
+RUN add-apt-repository ppa:gift/stable
+RUN apt-get update && apt-get -y install \
     plaso-tools \
  && rm -rf /var/lib/apt/lists/*
 
