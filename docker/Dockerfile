@@ -13,6 +13,8 @@ RUN apt-get --no-install-recommends -y install apt-transport-https \
                        lsb-release \
                        python3-dev \
                        python3-pip \
+                       python3-setuptools \
+                       python3-wheel \
                        python3-psycopg2
 
 # Install Plaso, nodejs and yarn.
