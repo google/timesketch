@@ -1,5 +1,6 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: [ 'build', '-t', 'gcr.io/timesketch-demo/timesketch', '.' ]
+  dir: 'docker/e2e/'
 images:
 - 'gcr.io/timesketch-demo/timesketch'
