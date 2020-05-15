@@ -22,6 +22,7 @@ from google.auth.transport import requests as auth_requests
 
 from . import client
 from . import cli_input
+from . import credentials as ts_credentials
 from . import crypto
 
 
@@ -92,7 +93,7 @@ def configure_missing_parameters(config_assistant, token_password=''):
     password = cli_input.ask_question(
         'Password for user {0:s}'.format(username), input_type=str,
         hide_input=True)
-    credentials = crypto.TimesketchPwdCredentials()
+    credentials = ts_credentials.TimesketchPwdCredentials()
     credentials.credential = {
         'username': username,
         'password': password
