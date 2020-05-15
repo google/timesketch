@@ -18,17 +18,9 @@ credential objects Timesketch supports.
 """
 from __future__ import unicode_literals
 
-import base64
-import os
-import getpass
 import json
-import logging
-import stat
 
 from google.oauth2 import credentials
-
-
-logger = logging.getLogger('crypto_client_api')
 
 
 class TimesketchCredentials:
