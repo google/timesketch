@@ -22,4 +22,4 @@ RUN apt-get update && apt-get -y install \
  && rm -rf /var/lib/apt/lists/*
 
 # Use Python 3 pip (pip3) to install Timesketch
-RUN pip3 install timesketch
+RUN pip3 install https://github.com/google/timesketch/archive/master.zip

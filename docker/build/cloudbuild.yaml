@@ -1,5 +1,5 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/release/timesketch', '-f', 'Dockerfile-prod', '.' ]
+  args: [ 'build', '-t', 'gcr.io/$PROJECT_ID/release/timesketch:latest', '-t', 'gcr.io/$PROJECT_ID/release/timesketch:$TAG_NAME', '-f', 'Dockerfile-prod', '.' ]
   dir: 'docker/build/'
-images: ['gcr.io/$PROJECT_ID/release/timesketch:$TAG_NAME', 'gcr.io/$PROJECT_ID/release/timesketch:latest']
+images: ['gcr.io/$PROJECT_ID/release/timesketch:latest', 'gcr.io/$PROJECT_ID/release/timesketch:$TAG_NAME']
