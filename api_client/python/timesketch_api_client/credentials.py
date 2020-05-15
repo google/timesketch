@@ -11,7 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Timesketch API crypto storage library for OAUTH client."""
+"""Timesketch API credential library.
+
+This library contains classes that define how to serialize the different
+credential objects Timesketch supports.
+"""
 from __future__ import unicode_literals
 
 import base64
