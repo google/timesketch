@@ -19,8 +19,6 @@ services:
       - ELASTIC_PORT=9200
       - REDIS_ADDRESS=redis
       - REDIS_PORT=6379
-      - NEO4J_ADDRESS=neo4j
-      - NEO4J_PORT=7474
       - TIMESKETCH_USER=dev
       - TIMESKETCH_PASSWORD=dev
       - CHOKIDAR_USEPOLLING=true
@@ -50,10 +48,4 @@ services:
 
   redis:
     image: redis
-    restart: always
-
-  neo4j:
-    image: neo4j
-    environment:
-      - NEO4J_AUTH=none
     restart: always

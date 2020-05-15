@@ -1,5 +1,5 @@
 # Use the latest Timesketch development base image
-FROM timesketch/timesketch-dev-base:20191128
+FROM timesketch/timesketch-dev-base:20200327
 
 # Install dependencies for Timesketch
 COPY requirements.txt /timesketch-requirements.txt
