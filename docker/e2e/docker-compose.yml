@@ -23,7 +23,7 @@ services:
       - redis
     restart: always
     volumes:
-      - ../:/usr/local/src/timesketch/
+      - ../../:/usr/local/src/timesketch/
 
   elasticsearch:
     environment:
