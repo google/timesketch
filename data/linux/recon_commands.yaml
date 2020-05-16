@@ -20,5 +20,5 @@ detection:
     - 'hostname -f'
     - 'netstat -nltupw'
     - 'cat /proc/net/*'
+  condition: keywords | count() > 3
 timeframe: 30m
-conditions: count > 3
