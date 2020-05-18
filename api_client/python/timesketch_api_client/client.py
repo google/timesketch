@@ -31,7 +31,7 @@ from google_auth_oauthlib import flow as googleauth_flow
 import google.auth.transport.requests
 import pandas
 
-from . import crypto
+from . import credentials
 from . import definitions
 from . import error
 from . import index
@@ -227,7 +227,7 @@ class TimesketchApi(object):
 
         session = flow.authorized_session()
         self._flow = flow
-        self.credentials = crypto.TimesketchOAuthCredentials()
+        self.credentials = credentials.TimesketchOAuthCredentials()
         self.credentials.credential = flow.credentials
         return self.authenticate_oauth_session(session)
 
