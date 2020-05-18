@@ -7,6 +7,8 @@ import os
 from sigma.backends import elasticsearch as sigma_elasticsearch
 import sigma.configuration as sigma_configuration
 from sigma.parser import collection as sigma_collection
+from timesketch.lib.analyzers import utils
+
 
 
 from timesketch.lib.analyzers import interface
@@ -24,6 +26,8 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
     # this file.
     _RULES_PATH = ''
 
+    # A list of fields to include in the view output.
+    _FIELDS_TO_INCLUDE = ['message']
 
     def __init__(self, index_name, sketch_id):
         """Initialize the Index Analyzer.
@@ -55,7 +59,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         events = self.event_stream(
             query_string=query, return_fields=return_fields)
         for event in events:
-            event.add_tags([tag_name])
+            event.add_tags(["sigma_"+tag_name])
             event.commit()
             tagged_events += 1
         return tagged_events
@@ -69,6 +73,8 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(
             self.sigma_config, {})
         tags_applied = {}
+
+        simple_counter = 0
 
         rules_path = os.path.join(os.path.dirname(__file__), self._RULES_PATH)
         for rule_filename in os.listdir(rules_path):
@@ -91,6 +97,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                     continue
 
                 for result in results:
+                    simple_counter += 1
                     logging.info(
                         '[sigma] Generated query {0:s}'.format(result))
                     number_of_tagged_events = self.run_sigma_rule(
@@ -102,6 +109,43 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         for tag_name, number_of_tagged_events in tags_applied.items():
             output_string += '* {0:s}: {1:d}'.format(
                 tag_name, number_of_tagged_events)
+
+
+
+
+        if simple_counter > 0:
+            view = self.sketch.add_view(
+                view_name='Sigma Rule matches', analyzer_name=self.NAME,
+                query_string='tag:"sigma*"',
+                additional_fields=self._FIELDS_TO_INCLUDE)
+            params = {
+                'field': 'tag',
+                'limit': 20,
+            }
+            agg_obj = self.sketch.add_aggregation(
+                name='Top 20 Sigma tags', agg_name='field_bucket',
+                agg_params=params, view_id=view.id, chart_type='hbarchart',
+                description='Created by the Sigma analyzer')
+
+
+            story = self.sketch.add_story("Sigma Rule hits")
+            story.add_text(
+                utils.BROWSER_STORY_HEADER, skip_if_exists=True)
+
+            story.add_text(
+                '## Sigma Analyzer.\n\nThe Sigma '
+                'analyzer takes Events and matches them with Sigma rules.'
+                'In this timeline the analyzer discovered {0:d} '
+                'Sigma tags.\n\nThis is a summary of '
+                'it\'s findings.'.format(simple_counter))
+            story.add_text(
+                'The top 20 most commonly discovered tags were:')
+            story.add_aggregation(agg_obj)
+            story.add_text(
+                'And an overview of all the discovered search terms:')
+            story.add_view(view)
+
+
         return output_string
 
 
@@ -112,5 +156,23 @@ class LinuxRulesSigmaPlugin(SigmaPlugin):
 
     NAME = 'sigma_linux'
 
+class WindowsRulesSigmaPlugin(SigmaPlugin):
+    """Sigma plugin to run Windows rules."""
+
+    _RULES_PATH = '../../../data/windows'
+
+    NAME = 'sigma_windows'
+
+class TestRulesSigmaPlugin(SigmaPlugin):
+    """Sigma plugin to run Windows rules."""
+
+    _RULES_PATH = '../../../data/test_rules'
+
+    NAME = 'a_sigma_test'
+
 
 manager.AnalysisManager.register_analyzer(LinuxRulesSigmaPlugin)
+manager.AnalysisManager.register_analyzer(WindowsRulesSigmaPlugin)
+manager.AnalysisManager.register_analyzer(TestRulesSigmaPlugin)
+
+

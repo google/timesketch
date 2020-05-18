@@ -1,0 +1,22 @@
+title: Unix archiving commands
+description: Commands that are run by attackers after compromising a system to potentially exfil data
+status: experimental
+author: jaegeral
+logsource:
+  service: shell
+references:
+  - None
+detection:
+  keywords:
+    - 'gunzip '
+    - 'unzip '
+    - 'unrar '
+    - 'rar '
+    - 'tar x '
+    - 'zip '
+    - 'gzip '
+    - 'lsar '
+  condition: keywords
+falsepositives:
+    - A lot
+level: low
