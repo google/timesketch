@@ -110,9 +110,6 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
             output_string += '* {0:s}: {1:d}'.format(
                 tag_name, number_of_tagged_events)
 
-
-
-
         if simple_counter > 0:
             view = self.sketch.add_view(
                 view_name='Sigma Rule matches', analyzer_name=self.NAME,
