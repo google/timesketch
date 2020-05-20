@@ -16,7 +16,6 @@
 from __future__ import unicode_literals
 
 import datetime
-import io
 import markdown
 
 
@@ -62,23 +61,6 @@ class HTMLStoryExporter(interface.StoryExporter):
             'printed out. View the full view in Timesketch to get all '
             'the results.</i>').format(
                 html_code, self._DATAFRAM_HEADER_ROWS, nr_rows)
-
-    def _chart_to_html(self, chart_obj):
-        """Return a HTML formatter string from a altair Chart object.
-
-        Args:
-          chart_obj (altair.LayerChart): a chart object.
-
-        Returns:
-          str: HTML formatted string.
-        """
-        string_fh = io.StringIO()
-        chart_obj.save(string_fh, format='html')
-        string_fh.seek(0)
-        html_code = string_fh.read()
-        first = html_code.partition('<body>')[2]
-        html_code = first.partition('</body>')[0]
-        return html_code
 
     def export_story(self):
         """Export the story as a HTML."""
