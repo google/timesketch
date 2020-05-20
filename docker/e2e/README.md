@@ -1,7 +1,6 @@
-# Docker
+# Docker for e2e tests
 
 Timesketch has support for Docker. This is a convenient way of getting up and running.
-
 NOTE: Windows based host systems are not supported at this time.
 
 ### Install Docker
@@ -22,7 +21,7 @@ Follow the official instructions [here](https://www.elastic.co/guide/en/elastics
 ### Build and Start Containers
 
 ```shell
-cd docker
+cd docker/e2e
 sudo docker-compose up
 ```
 
@@ -40,7 +39,6 @@ sudo docker-compose up
 The timesketch docker config is set to write all data to the host filesystem, not the containers.  This is accomplished with docker [volumes](https://docs.docker.com/engine/admin/volumes/volumes/) that map to the following locations:
 
 - elasticsearch: /var/lib/elasticsearch
-- neo4j: /var/lib/neo4j/data
 - postgres: /var/lib/postgresql
 - redis: /var/lib/redis
 
@@ -49,8 +47,6 @@ The timesketch docker config is set to write all data to the host filesystem, no
 On mac, you can set up the shares as following
 
 ```shell
-sudo mkdir -p /var/lib/neo4j/data
-sudo chown `whoami` /var/lib/neo4j/data
 sudo mkdir -p /var/lib/elasticsearch
 sudo chown `whoami` /var/lib/elasticsearch
 sudo mkdir -p /var/lib/postgresql/data

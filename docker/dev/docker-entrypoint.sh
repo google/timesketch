@@ -49,16 +49,6 @@ if [ "$1" = 'timesketch' ]; then
     echo "Please pass values for the REDIS_ADDRESS and REDIS_PORT environment variables"
   fi
 
-  # Set up the Neo4j connection
-  if [ $NEO4J_ADDRESS ] && [ $NEO4J_PORT ]; then
-    sed -i 's#GRAPH_BACKEND_ENABLED = False#GRAPH_BACKEND_ENABLED = True#' /etc/timesketch/timesketch.conf
-    sed -i 's#NEO4J_HOST =.*#NEO4J_HOST = \x27'$NEO4J_ADDRESS'\x27#' /etc/timesketch/timesketch.conf
-    sed -i 's#NEO4J_PORT =.*#NEO4J_PORT = '$NEO4J_PORT'#' /etc/timesketch/timesketch.conf
-  else
-    # Log an error since we need the above-listed environment variables
-    echo "Please pass values for the NEO4J_ADDRESS and NEO4J_PORT environment variables if you want graph support"
-  fi
-
   # Enable debug for the development server
   sed -i s/"DEBUG = False"/"DEBUG = True"/ /etc/timesketch/timesketch.conf
 
