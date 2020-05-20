@@ -463,7 +463,7 @@ class Sketch(resource.BaseResource):
         return timelines
 
     def upload(self, timeline_name, file_path, index=None):
-        """Upload a CSV, JSONL, or Plaso file to the server for indexing.
+        """Upload a CSV, JSONL, mans, or Plaso file to the server for indexing.
 
         Args:
             timeline_name: Name of the resulting timeline.

@@ -385,7 +385,7 @@ class ImportTimeline(Command):
         extension = extension.lstrip('.')
         filename = os.path.basename(file_path_no_extension)
 
-        supported_extensions = ('plaso', 'csv', 'jsonl')
+        supported_extensions = ('plaso', 'mans', 'csv', 'jsonl')
 
         if not os.path.isfile(file_path):
             sys.exit('No such file: {0:s}'.format(file_path))

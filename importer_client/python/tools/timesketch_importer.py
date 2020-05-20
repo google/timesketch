@@ -51,10 +51,10 @@ def upload_file(
         return 'Sketch needs to be set'
 
     _, _, file_extension = file_path.rpartition('.')
-    if file_extension.lower() not in ('plaso', 'csv', 'jsonl'):
+    if file_extension.lower() not in ('plaso', 'mans', 'csv', 'jsonl'):
         return (
             'File needs to have one of the following extensions: '
-            '.plaso, .csv, .jsonl (not {0:s})').format(file_extension.lower())
+            '.plaso, .mans, .csv, .jsonl (not {0:s})').format(file_extension.lower())
 
     with importer.ImportStreamer() as streamer:
         streamer.set_sketch(my_sketch)
