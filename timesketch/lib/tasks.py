@@ -29,6 +29,7 @@ from celery import signals
 from flask import current_app
 from sqlalchemy import create_engine
 from elasticsearch.exceptions import RequestError
+from mans_to_es import MansToEs
 
 from timesketch import create_celery_app
 from timesketch.lib import errors
