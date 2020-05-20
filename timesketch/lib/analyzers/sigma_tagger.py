@@ -118,7 +118,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         total_tagged_events = sum(tags_applied.values())
         output_string = 'Applied {0:d} tags\n'.format(total_tagged_events)
         for tag_name, number_of_tagged_events in tags_applied.items():
-            output_string += '* {0:s}: {1:d}'.format(
+            output_string += '* {0:s}: {1:d}\n'.format(
                 tag_name, number_of_tagged_events)
 
         if simple_counter > 0:
