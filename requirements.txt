@@ -31,4 +31,4 @@ Werkzeug==0.16.0
 WTForms==2.2.1
 xlrd==1.2.0
 tabulate==0.8.6
-markdown=3.2.2
+markdown==3.2.2
