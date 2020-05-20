@@ -57,7 +57,7 @@ class HTMLStoryExporter(interface.StoryExporter):
             index=False, max_rows=self._DATAFRAM_HEADER_ROWS)
         return (
             '{0:s}\n<b>...</b><br/>'
-            '<i>Table contains more records than are displayed.'
+            '<i>Table contains more records than are displayed. '
             'Only the first {1:d} records out of total {2:d} are '
             'printed out. View the full view in Timesketch to get all '
             'the results.</i>').format(
@@ -97,6 +97,8 @@ class HTMLStoryExporter(interface.StoryExporter):
 
         md = markdown.Markdown()
 
+        chart_number = 1
+        charts = []
         for line_dict in self._data_lines:
             line_type = line_dict.get('type', '')
             if line_type == 'text':
@@ -119,7 +121,10 @@ class HTMLStoryExporter(interface.StoryExporter):
                         chart_name=chart_type, chart_title=title,
                         interactive=True, color=chart_color, as_chart=True)
 
-                    return_strings.append(self._chart_to_html(chart))
+                    charts.append(chart)
+                    return_strings.append(
+                        '<div id="vis{0:d}"></div>'.format(chart_number))
+                    chart_number += 1
 
             elif line_type == 'dataframe':
                 return_strings.append(
@@ -128,7 +133,21 @@ class HTMLStoryExporter(interface.StoryExporter):
             elif line_type == 'chart':
                 data_dict = line_dict.get('value')
                 chart = data_dict.get('chart')
-                return_strings.append(self._chart_to_html(chart))
+
+                charts.append(chart)
+                return_strings.append(
+                    '<div id="vis{0:d}"></div>'.format(chart_number))
+                chart_number += 1
+
+        if charts:
+            return_strings.append('<script type="text/javascript">')
+            for index, chart in enumerate(charts):
+                vis_nr = index + 1
+                return_strings.append(
+                    'vegaEmbed(\'#vis{0:d}\', {1:s}).'
+                    'catch(console.error);'.format(
+                        vis_nr, chart.to_json(indent=None)))
+            return_strings.append('</script>')
 
         return_strings.append('</body></html>')
         return '\n\n'.join(return_strings)
