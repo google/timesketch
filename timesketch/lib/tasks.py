@@ -110,7 +110,7 @@ def _get_index_task_class(file_extension):
     if file_extension == 'plaso':
         index_class = run_plaso
     elif file_extension == 'mans':
-        index_class = run_mans    
+        index_class = run_mans
     elif file_extension in ['csv', 'jsonl']:
         index_class = run_csv_jsonl
     else:
