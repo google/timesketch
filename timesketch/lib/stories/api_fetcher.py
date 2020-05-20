@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 import json
 
 from flask import current_app
+import altair as alt
 import pandas as pd
 
 from timesketch.lib.stories import interface
@@ -25,6 +26,7 @@ from timesketch.lib.stories import interface
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models.sketch import Aggregation
+from timesketch.models.sketch import AggregationGroup
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import View
 
@@ -70,6 +72,60 @@ class ApiDataFetcher(interface.DataFetcher):
         parameter_string = aggregation.parameters
         parameters = json.loads(parameter_string)
         return aggregator.run(**parameters)
+
+    def get_aggregation_group(self, agg_dict):
+        """Returns an aggregation object from an aggregation dict.
+
+        Args:
+            agg_dict (dict): a dictionary containing information
+                about the stored aggregation.
+
+        Returns:
+            A chart object (instance of altair.Chart) with the combined
+            chart object.
+        """
+        group_id = agg_dict.get('id')
+        if not group_id:
+            return None
+
+        group = AggregationGroup.query.get(group_id)
+        if not group:
+            return None
+
+        orientation = group.orientation
+
+        result_chart = None
+        for aggregator in group.aggregations:
+            if aggregator.parameters:
+                aggregator_parameters = json.loads(aggregator.parameters)
+            else:
+                aggregator_parameters = {}
+
+            agg_class = aggregator_manager.AggregatorManager.get_aggregator(
+                aggregator.agg_type)
+            if not agg_class:
+                continue
+
+            aggregator_obj = agg_class(sketch_id=self._sketch_id)
+            chart_type = aggregator_parameters.pop('supported_charts', None)
+            color = aggregator_parameters.pop('chart_color', '')
+            result_obj = aggregator_obj.run(**aggregator_parameters)
+
+            chart = result_obj.to_chart(
+                chart_name=chart_type,
+                chart_title=aggregator_obj.chart_title,
+                as_chart=True, interactive=True, color=color)
+
+            if result_chart is None:
+                result_chart = chart
+            elif orientation == 'horizontal':
+                result_chart = alt.hconcat(chart, result_chart)
+            elif orientation == 'vertical':
+                result_chart = alt.vconcat(chart, result_chart)
+            else:
+                result_chart = alt.layer(chart, result_chart)
+
+        return result_chart
 
     def get_view(self, view_dict):
         """Returns a data frame from a view dict.

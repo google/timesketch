@@ -74,6 +74,10 @@ class MarkdownStoryExporter(interface.StoryExporter):
                 return_strings.append(
                     self._dataframe_to_markdown(line_dict.get('value')))
 
+            elif line_type == 'chart':
+                return_strings.append(
+                    '*<unable_to_display_chart_objects>*')
+
         return '\n\n'.join(return_strings)
 
 

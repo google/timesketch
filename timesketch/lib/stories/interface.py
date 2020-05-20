@@ -80,6 +80,11 @@ class StoryExporter(object):
                 'type': 'aggregation',
                 'value': self._data_fetcher.get_aggregation(
                     properties.get('aggregation'))})
+        elif component == 'TsAggregationGroupCompact':
+            self._data_lines.append({
+                'type': 'chart',
+                'value': self._data_fetcher.get_aggregation_group(
+                    properties.get('aggregation_group'))})
 
     def reset(self):
         """Reset story by removing all blocks.
@@ -125,6 +130,19 @@ class DataFetcher(object):
         Returns:
             An aggregation object (instance of AggregationResult) from a
             saved aggregation or None if not found.
+        """
+        raise NotImplementedError
+
+    def get_aggregation_group(self, agg_dict):
+        """Returns an aggregation object from an aggregation group dict.
+
+        Args:
+            agg_dict (dict): a dictionary containing information
+                about the stored aggregation group.
+
+        Returns:
+            A chart object (instance of altair.Chart) with the combined
+            chart object.
         """
         raise NotImplementedError
 
