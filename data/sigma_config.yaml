@@ -51,8 +51,10 @@ fieldmappings:
     ObjectType: xml_string # that is a bit hacky but the processName is currently not being parsed that is why searching in the raw xml
     ProcessName: xml_string # that is a bit hacky but the processName is currently not being parsed that is why searching in the raw xml
     GroupSid: xml_string
-
-
+    CommandLine: xml_string
+    Message: xml_string
+    Message.keywords: xml_string
+    keywords: xml_string # that might be wrong, only introduced during powershell stuff
 
     AccessMask: object_access_mask_requested
     AccountName: user_name
@@ -65,7 +67,6 @@ fieldmappings:
     ClientAddress: src_ip_addr
     ClientIPAddress: src_ip_addr
     ClientIP: src_ip_addr
-    CommandLine: process_command_line
     Company: file_company
     Configuration:
         EventID=16: sysmon_configuration

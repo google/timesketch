@@ -78,6 +78,11 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
 
         rules_path = os.path.join(os.path.dirname(__file__), self._RULES_PATH)
         for rule_filename in os.listdir(rules_path):
+
+            if os.path.isdir(os.path.join(rules_path, rule_filename)):
+                logging.error("this is a directory, not a file, skipping:"+rule_filename)
+                continue
+
             tag_name, _ = rule_filename.rsplit('.')
             tags_applied[tag_name] = 0
             rule_file_path = os.path.join(rules_path, rule_filename)
@@ -85,7 +90,13 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
             logging.info('[sigma] Reading rules from {0!s}'.format(
                 rule_file_path))
             with open(rule_file_path, 'r') as rule_file:
-                rule_file_content = rule_file.read()
+                try:
+                    rule_file_content = rule_file.read()
+                except UnicodeDecodeError as exception:
+                    logging.error(
+                        'Error generating rule in file {0:s}: {1!s}'.format(
+                            rule_file_path, exception))
+                    continue
                 parser = sigma_collection.SigmaCollectionParser(
                     rule_file_content, self.sigma_config, None)
                 try:
@@ -167,9 +178,18 @@ class TestRulesSigmaPlugin(SigmaPlugin):
 
     NAME = 'a_sigma_test'
 
+class PowershellRulesSigmaPlugin(SigmaPlugin):
+    """Sigma plugin to run Windows rules."""
+
+    _RULES_PATH = '../../../data/powershell'
+
+    NAME = 'a_sigma_powershell'
+
 
 manager.AnalysisManager.register_analyzer(LinuxRulesSigmaPlugin)
 manager.AnalysisManager.register_analyzer(WindowsRulesSigmaPlugin)
 manager.AnalysisManager.register_analyzer(TestRulesSigmaPlugin)
+manager.AnalysisManager.register_analyzer(PowershellRulesSigmaPlugin)
+
 
 
