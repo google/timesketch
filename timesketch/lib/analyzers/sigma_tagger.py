@@ -80,7 +80,8 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         for rule_filename in os.listdir(rules_path):
 
             if os.path.isdir(os.path.join(rules_path, rule_filename)):
-                logging.error("this is a directory, not a file, skipping:"+rule_filename)
+                logging.error(
+                    'this is a directory, not a file, skipping: {0:s}'.format(rule_filename))
                 continue
 
             tag_name, _ = rule_filename.rsplit('.')
@@ -185,11 +186,7 @@ class PowershellRulesSigmaPlugin(SigmaPlugin):
 
     NAME = 'a_sigma_powershell'
 
-
 manager.AnalysisManager.register_analyzer(LinuxRulesSigmaPlugin)
 manager.AnalysisManager.register_analyzer(WindowsRulesSigmaPlugin)
 manager.AnalysisManager.register_analyzer(TestRulesSigmaPlugin)
 manager.AnalysisManager.register_analyzer(PowershellRulesSigmaPlugin)
-
-
-
