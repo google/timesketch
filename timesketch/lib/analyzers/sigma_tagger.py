@@ -81,7 +81,8 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
 
             if os.path.isdir(os.path.join(rules_path, rule_filename)):
                 logging.error(
-                    'this is a directory, not a file, skipping: {0:s}'.format(rule_filename))
+                    'this is a directory, not a file, skipping: {0:s}'.format(
+                        rule_filename))
                 continue
 
             tag_name, _ = rule_filename.rsplit('.')
