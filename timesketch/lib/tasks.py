@@ -110,7 +110,7 @@ def _get_index_task_class(file_extension):
     if file_extension == 'plaso':
         index_class = run_plaso
     elif file_extension == 'mans':
-        index_class = run_mans        
+        index_class = run_mans    
     elif file_extension in ['csv', 'jsonl']:
         index_class = run_csv_jsonl
     else:
@@ -544,7 +544,7 @@ def run_mans(file_path, events, timeline_name, index_name, source_type):
 
     elastic_host = current_app.config['ELASTIC_HOST']
     elastic_port = int(current_app.config['ELASTIC_PORT'])
-    try: 
+    try:
         mte = MansToEs(filename=file_path, name=timeline_name, index=index_name,
                        es_host=elastic_host, es_port=elastic_port)
         mte.run()
@@ -553,7 +553,7 @@ def run_mans(file_path, events, timeline_name, index_name, source_type):
         error_msg = traceback.format_exc()
         _set_timeline_status(index_name, status='fail', error_msg=error_msg)
         logging.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
-        return None  
+        return None
 
     # Mark the searchindex and timelines as ready
     _set_timeline_status(index_name, status='ready')
