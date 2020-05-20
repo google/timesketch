@@ -3,7 +3,7 @@ services:
   timesketch:
     build:
       context: ../../
-      dockerfile: ./docker/development/Dockerfile
+      dockerfile: ./docker/dev/Dockerfile
     ports:
             - "127.0.0.1:5000:5000"
     links:
