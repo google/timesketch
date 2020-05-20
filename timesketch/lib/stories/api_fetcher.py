@@ -49,29 +49,39 @@ class ApiDataFetcher(interface.DataFetcher):
                 about the stored aggregation.
 
         Returns:
-            An aggregation object (instance of AggregationResult) from a
-            saved aggregation or None if not found.
+            A dict with metadata information as well as the aggregation
+            object (instance of AggregationResult) from a saved aggregation
+            or an empty dict if not found.
         """
         aggregation_id = agg_dict.get('id')
         if not aggregation_id:
-            return None
+            return {}
 
         aggregation = Aggregation.query.get(aggregation_id)
         if not aggregation:
-            return None
+            return {}
 
         try:
             agg_class = aggregator_manager.AggregatorManager.get_aggregator(
                 aggregation.agg_type)
         except KeyError:
-            return None
+            return {}
 
         if not agg_class:
             return pd.DataFrame()
         aggregator = agg_class(sketch_id=self._sketch_id)
         parameter_string = aggregation.parameters
         parameters = json.loads(parameter_string)
-        return aggregator.run(**parameters)
+        data = {
+            'aggregation': aggregator.run(**parameters),
+            'name': aggregation.name,
+            'description': aggregation.description,
+            'agg_type': aggregation.agg_type,
+            'parameters': parameters,
+            'chart_type': aggregation.chart_type,
+            'user': aggregation.user,
+        }
+        return data
 
     def get_aggregation_group(self, agg_dict):
         """Returns an aggregation object from an aggregation dict.
@@ -81,8 +91,9 @@ class ApiDataFetcher(interface.DataFetcher):
                 about the stored aggregation.
 
         Returns:
-            A chart object (instance of altair.Chart) with the combined
-            chart object.
+            A dict that contains metadata about the aggregation group
+            as well as a chart object (instance of altair.Chart)
+            with the combined chart object from the group.
         """
         group_id = agg_dict.get('id')
         if not group_id:
@@ -125,7 +136,15 @@ class ApiDataFetcher(interface.DataFetcher):
             else:
                 result_chart = alt.layer(chart, result_chart)
 
-        return result_chart
+        data = {
+            'name': group.name,
+            'description': group.description,
+            'chart': result_chart,
+            'parameters': group.parameters,
+            'orientation': group.orientation,
+            'user': group.user,
+        }
+        return data
 
     def get_view(self, view_dict):
         """Returns a data frame from a view dict.

@@ -63,13 +63,15 @@ class MarkdownStoryExporter(interface.StoryExporter):
                 return_strings.append(line_dict.get('value', ''))
 
             elif line_type == 'aggregation':
-                aggregation = line_dict.get('value')
+                aggregation_data = line_dict.get('value')
+                aggregation = aggregation_data.get('aggregation')
                 if not aggregation:
                     return_strings.append(
                         '**Unable to fetch aggregation data**')
                     continue
                 return_strings.append(
                     self._dataframe_to_markdown(aggregation.to_pandas()))
+
             elif line_type == 'dataframe':
                 return_strings.append(
                     self._dataframe_to_markdown(line_dict.get('value')))
