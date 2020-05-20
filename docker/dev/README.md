@@ -1,4 +1,4 @@
-## Development
+## Docker for development
 
 You can run Timesketch on Docker in development mode.
 
