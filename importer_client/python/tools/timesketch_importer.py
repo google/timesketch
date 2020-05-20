@@ -23,6 +23,7 @@ import sys
 from typing import Dict
 
 from timesketch_api_client import cli_input
+from timesketch_api_client import credentials as ts_credentials
 from timesketch_api_client import crypto
 from timesketch_api_client import config
 from timesketch_api_client import sketch
@@ -234,7 +235,7 @@ if __name__ == '__main__':
             assistant.set_config('auth_mode', 'timesketch')
 
     if conf_password:
-        credentials = crypto.TimesketchPwdCredentials()
+        credentials = ts_credentials.TimesketchPwdCredentials()
         credentials.credential = {
             'username': assistant.get_config('username'),
             'password': conf_password

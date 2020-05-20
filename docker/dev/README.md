@@ -5,13 +5,13 @@ You can run Timesketch on Docker in development mode.
 ### Start a developer version of docker containers in this directory
 
 ```
-$  docker-compose up -d
+docker-compose up -d
 ```
 
 ### Find out container ID for the timesketch container
 
 ```
-$ CONTAINER_ID="$(sudo docker container list -f name=development_timesketch -q)"
+CONTAINER_ID="$(sudo docker container list -f name=development_timesketch -q)"
 ```
 In the output look for CONTAINER ID for the timesketch container
 
@@ -26,7 +26,7 @@ echo $CONTAINER_ID
 
 ### Start a celery container shell
 ```
-$ sudo docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel info
+sudo docker exec -it $CONTAINER_ID celery -A timesketch.lib.tasks worker --loglevel info
 ```
 
 ### Start development webserver
