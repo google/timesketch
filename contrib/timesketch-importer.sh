@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # This script watches a directory for new files and executes the importer
-# on any .plaso, .csv and .jsonl files. To be place in /usr/local/bin/
+# on any .plaso, .mans, .csv and .jsonl files. To be place in /usr/local/bin/
 
 config_file="/etc/timesketch-importer.conf"
 if [ -s "$config_file" ]; then

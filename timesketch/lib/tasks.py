@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Celery task for processing Plaso storage files."""
+"""Celery task for processing Plaso storage or mans files."""
 
 from __future__ import unicode_literals
 
@@ -29,6 +29,7 @@ from celery import signals
 from flask import current_app
 from sqlalchemy import create_engine
 from elasticsearch.exceptions import RequestError
+from mans_to_es import MansToEs
 
 from timesketch import create_celery_app
 from timesketch.lib import errors
@@ -108,6 +109,8 @@ def _get_index_task_class(file_extension):
     """
     if file_extension == 'plaso':
         index_class = run_plaso
+    elif file_extension == 'mans':
+        index_class = run_mans
     elif file_extension in ['csv', 'jsonl']:
         index_class = run_csv_jsonl
     else:
@@ -516,6 +519,43 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
         return None
 
     # Set status to ready when done
+    _set_timeline_status(index_name, status='ready')
+
+    return index_name
+
+
+@celery.task(track_started=True, base=SqlAlchemyTask)
+def run_mans(file_path, events, timeline_name, index_name, source_type):
+    """Create a Celery task for processing mans file.
+
+    Args:
+        file_path: Path to the mans file.
+        events: A string with the events. Not used in mans.
+        timeline_name: Name of the Timesketch timeline.
+        index_name: Name of the datastore index.
+        source_type: Type of file, csv or jsonl.
+
+    Returns:
+        Name (str) of the index.
+    """
+    # Log information to Celery
+    message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
+    logging.info(message.format(timeline_name, index_name, source_type))
+
+    elastic_host = current_app.config['ELASTIC_HOST']
+    elastic_port = int(current_app.config['ELASTIC_PORT'])
+    try:
+        mte = MansToEs(filename=file_path, name=timeline_name, index=index_name,
+                       es_host=elastic_host, es_port=elastic_port)
+        mte.run()
+    except Exception as e:  # pylint: disable=broad-except
+        # Mark the searchindex and timelines as failed and exit the task
+        error_msg = traceback.format_exc()
+        _set_timeline_status(index_name, status='fail', error_msg=error_msg)
+        logging.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
+        return None
+
+    # Mark the searchindex and timelines as ready
     _set_timeline_status(index_name, status='ready')
 
     return index_name
