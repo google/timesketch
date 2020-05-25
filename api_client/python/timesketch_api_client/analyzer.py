@@ -16,12 +16,9 @@ from __future__ import unicode_literals
 
 import datetime
 import json
-import logging
 
 from . import definitions
 from . import resource
-
-logger = logging.getLogger('analyzer_results')
 
 
 class AnalyzerResult(resource.BaseResource):
