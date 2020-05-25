@@ -30,7 +30,7 @@ class HTMLStoryExporter(interface.StoryExporter):
     EXPORT_FORMAT = 'html'
 
     # Number of rows of a DataFrame to include at the top of a markdown table.
-    _DATAFRAM_HEADER_ROWS = 30
+    _DATAFRAME_HEADER_ROWS = 30
 
     HTML_HEADER = (
         '<html>'
@@ -49,21 +49,21 @@ class HTMLStoryExporter(interface.StoryExporter):
         if not nr_rows:
             return '<b>empty table</b>'
 
-        if nr_rows <= self._DATAFRAM_HEADER_ROWS:
+        if nr_rows <= self._DATAFRAME_HEADER_ROWS:
             return data_frame.to_html(index=False)
 
         html_code = data_frame.to_html(
-            index=False, max_rows=self._DATAFRAM_HEADER_ROWS)
+            index=False, max_rows=self._DATAFRAME_HEADER_ROWS)
         return (
             '{0:s}\n<b>...</b><br/>'
             '<i>Table contains more records than are displayed. '
             'Only the first {1:d} records out of total {2:d} are '
             'printed out. View the full view in Timesketch to get all '
             'the results.</i>').format(
-                html_code, self._DATAFRAM_HEADER_ROWS, nr_rows)
+                html_code, self._DATAFRAME_HEADER_ROWS, nr_rows)
 
     def export_story(self):
-        """Export the story as a HTML."""
+        """Export the story as HTML."""
         return_strings = [self.HTML_HEADER]
 
         return_strings.append(
