@@ -14,6 +14,7 @@
 """Timesketch API analyzer result object."""
 from __future__ import unicode_literals
 
+import datetime
 import json
 import logging
 
@@ -49,7 +50,7 @@ class AnalyzerResult(resource.BaseResource):
             return {}
 
         for result in objects[0]:
-            result_id = result.get('id')
+            result_id = result.get('analysissession_id', -1)
             if result_id != self._session_id:
                 continue
             status_list = result.get('status', [])
@@ -60,15 +61,22 @@ class AnalyzerResult(resource.BaseResource):
             timeline = result.get('timeline', {})
 
             return {
-                'id': status.get('id', -1),
-                'rid': result_id,
+                'id': result_id,
                 'analyzer': result.get('analyzer_name', 'N/A'),
                 'results': result.get('result'),
                 'description': result.get('description', 'N/A'),
-                'timeline': timeline.get('name', 'N/A'),
                 'user': result.get('user', {}).get('username', 'System'),
                 'parameters': json.loads(result.get('parameters', '{}')),
                 'status': status.get('status', 'Unknown'),
+                'status_date': status.get('updated_at', ''),
+                'log': result.get('log', ''),
+                'created': result.get('created_at'),
+                'timeline': timeline.get('name', 'N/A'),
+                'timeline_id': timeline.get('id', -1),
+                'timeline_user': timeline.get('user', {}).get(
+                    'username', 'System'),
+                'timeline_name': timeline.get('name', 'N/A'),
+                'timeline_deleted': timeline.get('deleted', False),
             }
 
         return {}
@@ -77,6 +85,12 @@ class AnalyzerResult(resource.BaseResource):
     def id(self):
         """Returns the session ID."""
         return self._session_id
+
+    @property
+    def log(self):
+        """Returns back logs from the analyzer session, if there are any."""
+        data = self._fetch_data()
+        return data.get('log', 'No recorded logs.')
 
     @property
     def results(self):
@@ -89,3 +103,12 @@ class AnalyzerResult(resource.BaseResource):
         """Returns the current status of the analyzer run."""
         data = self._fetch_data()
         return data.get('status', 'Unknown')
+
+    @property
+    def status_string(self):
+        """Returns a longer version of a status string."""
+        data = self._fetch_data()
+        return '[{0:s}] Status: {1:s}'.format(
+            data.get('status_date', datetime.datetime.utcnow().isoformat()),
+            data.get('status', 'Unknown')
+        )
