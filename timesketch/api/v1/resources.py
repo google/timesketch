@@ -2305,6 +2305,11 @@ class StoryResource(ResourceMixin, Resource):
             data_fetcher.set_sketch_id(sketch_id)
 
             exporter.set_data_fetcher(data_fetcher)
+            exporter.set_title(story.title)
+            exporter.set_creation_date(story.created_at.isoformat())
+            exporter.set_author(story.user)
+            exporter.set_exporter(current_user.username)
+
             exporter.from_string(story.content)
             return exporter.export_story()
 

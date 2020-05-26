@@ -1,0 +1,52 @@
+version: '3'
+services:
+  timesketch:
+    environment:
+      - POSTGRES_USER=timesketch
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_ADDRESS=postgres
+      - POSTGRES_PORT=5432
+      - ELASTIC_ADDRESS=elasticsearch
+      - ELASTIC_PORT=9200
+      - REDIS_ADDRESS=redis
+      - REDIS_PORT=6379
+      - TIMESKETCH_USER=${TIMESKETCH_USER}
+      - TIMESKETCH_PASSWORD=${TIMESKETCH_PASSWORD}
+    build:
+      context: ../../
+      dockerfile: ./docker/e2e/Dockerfile
+    ports:
+      - "80:80"
+    links:
+      - elasticsearch
+      - postgres
+      - redis
+    restart: always
+    volumes:
+      - ../../:/usr/local/src/timesketch/
+
+  elasticsearch:
+    environment:
+      - TAKE_FILE_OWNERSHIP=1
+      - discovery.type=single-node
+    # uncomment the following lines to control JVM memory utilization
+    # in smaller deployments with minimal resources
+    #  - ES_JAVA_OPTS= -Xms1g -Xmx1g # 1G min/1G max
+    image: elasticsearch:7.6.0
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    restart: always
+
+  postgres:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=timesketch
+      - POSTGRES_PASSWORD=password
+    restart: always
+
+  redis:
+    image: redis
+    restart: always

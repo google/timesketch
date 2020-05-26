@@ -23,7 +23,7 @@ PyJWT==1.7.1
 python_dateutil==2.8.1
 PyYAML==5.3
 redis==3.3.11
-requests==2.22.0
+requests==2.23.0
 sigmatools==0.14 ; python_version > '3.4'
 six==1.12.0
 SQLAlchemy==1.3.12
@@ -31,3 +31,5 @@ Werkzeug==0.16.0
 WTForms==2.2.1
 xlrd==1.2.0
 tabulate==0.8.6
+markdown==3.2.2
+mans_to_es==1.6

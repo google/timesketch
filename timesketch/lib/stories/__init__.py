@@ -14,4 +14,5 @@
 """Story exporter modules."""
 
 # Register all analyzers here by importing them.
+from timesketch.lib.stories import html
 from timesketch.lib.stories import markdown

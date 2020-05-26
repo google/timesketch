@@ -664,8 +664,13 @@ class Story(resource.BaseResource):
         _ = self.lazyload_data(refresh_cache=True)
         _ = self.blocks
 
+    def to_html(self):
+        """Returns HTML formatted string with the content of the story."""
+        story_dict = self.to_export_format('html')
+        return story_dict.get('story', '')
+
     def to_markdown(self):
-        """Return a markdown formatted string with the content of the story."""
+        """Returns markdown formatted string with the content of the story."""
         story_dict = self.to_export_format('markdown')
         return story_dict.get('story', '')
 

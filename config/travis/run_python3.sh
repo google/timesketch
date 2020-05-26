@@ -5,7 +5,7 @@
 # Exit on error.
 set -e;
 
-nosetests3
+python3 ./run_tests.py
 
 python3 ./setup.py build
 python3 ./setup.py sdist
