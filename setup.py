@@ -25,7 +25,8 @@ import glob
 import os
 import sys
 
-from pkg_resources import parse_requirements
+import pkg_resources
+
 from setuptools import find_packages
 from setuptools import setup
 
@@ -36,6 +37,25 @@ if version_tuple < (3, 5):
         'Unsupported Python version: {0:s}, version 3.5 or higher '
         'required.').format(sys.version))
     sys.exit(1)
+
+
+def parse_requirements_from_file(path):
+    """Parses requirements from a requirements file.
+
+    Args:
+      path (str): path to the requirements file.
+
+    Yields:
+      pkg_resources.Requirement: package resource requirement.
+    """
+    with open(path, 'r') as file_object:
+        file_contents = file_object.read()
+    for req in pkg_resources.parse_requirements(file_contents):
+        try:
+            requirement = str(req.req)
+        except AttributeError:
+            requirement = str(req)
+        yield requirement
 
 
 timesketch_version = '20200507'
@@ -73,10 +93,6 @@ setup(
     include_package_data=True,
     zip_safe=False,
     entry_points={'console_scripts': ['tsctl=timesketch.tsctl:main']},
-    install_requires=[str(req.req) for req in parse_requirements(
-        'requirements.txt',
-    )],
-    tests_require=[str(req.req) for req in parse_requirements(
-        'test_requirements.txt',
-    )],
+    install_requires=parse_requirements_from_file('requirements.txt'),
+    tests_require=parse_requirements_from_file('test_requirements.txt'),
 )
