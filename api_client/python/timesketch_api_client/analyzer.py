@@ -47,7 +47,7 @@ class AnalyzerResult(resource.BaseResource):
             return {}
 
         for result in objects[0]:
-            result_id = result.get('analysissession_id', -1)
+            result_id = result.get('analysissession_id')
             if result_id != self._session_id:
                 continue
             status_list = result.get('status', [])
