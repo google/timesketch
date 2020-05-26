@@ -8,8 +8,8 @@ DPKG_PYTHON3_TEST_DEPENDENCIES="python3-distutils python3-flask-testing python3-
 # Exit on error.
 set -e;
 
-#if test -n "${UBUNTU_VERSION}";
-if test ${MODE} = "dpkg"; then
+if test -n "${UBUNTU_VERSION}";
+then
 	CONTAINER_NAME="ubuntu${UBUNTU_VERSION}";
 	docker pull ubuntu:${UBUNTU_VERSION};
 	docker run --name=${CONTAINER_NAME} --detach -i ubuntu:${UBUNTU_VERSION};
@@ -34,30 +34,34 @@ if test ${MODE} = "dpkg"; then
 	# Install packages.
 	DPKG_PACKAGES="git";
 
-	if test ${TARGET} = "pylint"; then
+	if test ${TARGET} = "pylint";
+	then
 		DPKG_PACKAGES="${DPKG_PACKAGES} python3-distutils pylint";
 	fi
+	DPKG_PACKAGES="${DPKG_PACKAGES} python3";
 
-	DPKG_PACKAGES="${DPKG_PACKAGES} python3 ${DPKG_PYTHON3_DEPENDENCIES} ${DPKG_PYTHON3_TEST_DEPENDENCIES}";
-
+	if test ${TARGET} = "pypi";
+	then
+		DPKG_PACKAGES="${DPKG_PACKAGES} python3-pip";
+	else
+		DPKG_PACKAGES="${DPKG_PACKAGES} ${DPKG_PYTHON3_DEPENDENCIES} ${DPKG_PYTHON3_TEST_DEPENDENCIES}";
+	fi
 	docker exec -e "DEBIAN_FRONTEND=noninteractive" ${CONTAINER_NAME} sh -c "apt-get install -y ${DPKG_PACKAGES}";
-	docker exec cd api_client/python && python setup.py build && python setup.py install
-	docker exec cd ../../
-	docker exec cd importer_client/python && python setup.py build && python setup.py install
-	docker exec cd ../../
+
 	docker cp ../timesketch ${CONTAINER_NAME}:/
 
-elif test ${MODE} = "pypi"; then
-	pip install -r requirements.txt;
-	pip install -r test_requirements.txt;
-	cd api_client/python && python setup.py build && python setup.py install
-	cd ../../
-	cd importer_client/python && python setup.py build && python setup.py install
+	if test ${TARGET} = "pypi";
+	then
+		docker exec ${CONTAINER_NAME} sh -c "cd timesketch && pip3 install -r requirements.txt";
+		docker exec ${CONTAINER_NAME} sh -c "cd timesketch && pip3 install -r test_requirements.txt";
+		docker exec ${CONTAINER_NAME} sh -c "(cd timesketch/api_client/python && python3 setup.py build && python3 setup.py install)";
+		docker exec ${CONTAINER_NAME} sh -c "(cd timesketch/importer_client/python && python3 setup.py build && python3 setup.py install)";
+	fi
 
-elif test ${TRAVIS_OS_NAME} = "linux"; then
+elif test ${TRAVIS_OS_NAME} = "linux";
+then
 	pip3 install -r requirements.txt;
 	pip3 install -r test_requirements.txt;
-	cd api_client/python && python setup.py build && python setup.py install
-	cd ../../
-	cd importer_client/python && python setup.py build && python setup.py install
+	(cd api_client/python && python setup.py build && python setup.py install);
+	(cd importer_client/python && python setup.py build && python setup.py install);
 fi
