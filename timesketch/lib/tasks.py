@@ -29,7 +29,9 @@ from celery import signals
 from flask import current_app
 from sqlalchemy import create_engine
 from elasticsearch.exceptions import RequestError
-from mans_to_es import MansToEs
+
+# Disabled until the project can provide a non-ES native import.
+# from mans_to_es import MansToEs
 
 from timesketch import create_celery_app
 from timesketch.lib import errors
@@ -109,10 +111,11 @@ def _get_index_task_class(file_extension):
     """
     if file_extension == 'plaso':
         index_class = run_plaso
-    elif file_extension == 'mans':
-        index_class = run_mans
     elif file_extension in ['csv', 'jsonl']:
         index_class = run_csv_jsonl
+    # Disabled
+    # elif file_extension == 'mans':
+    #    index_class = run_mans
     else:
         raise KeyError('No task that supports {0:s}'.format(file_extension))
     return index_class
@@ -524,20 +527,10 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
     return index_name
 
 
-@celery.task(track_started=True, base=SqlAlchemyTask)
+# Disabled until mans_to_es can produce a stream of events instead of doing
+# raw Elasticsearch operations.
+"""
 def run_mans(file_path, events, timeline_name, index_name, source_type):
-    """Create a Celery task for processing mans file.
-
-    Args:
-        file_path: Path to the mans file.
-        events: A string with the events. Not used in mans.
-        timeline_name: Name of the Timesketch timeline.
-        index_name: Name of the datastore index.
-        source_type: Type of file, csv or jsonl.
-
-    Returns:
-        Name (str) of the index.
-    """
     # Log information to Celery
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
     logging.info(message.format(timeline_name, index_name, source_type))
@@ -559,3 +552,4 @@ def run_mans(file_path, events, timeline_name, index_name, source_type):
     _set_timeline_status(index_name, status='ready')
 
     return index_name
+"""
