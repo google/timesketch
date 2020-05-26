@@ -27,3 +27,11 @@ def error_message(response, message=None, error=RuntimeError):
         text = soup.p.string
     raise error('{0:s}, with error [{1:d}] {2!s} {3:s}'.format(
         message, response.status_code, response.reason, text))
+
+
+class Error(Exception):
+    """Base error class."""
+
+
+class UnableToRunAnalyzer(Error):
+    """Raised when unable to run an analyzer."""
