@@ -529,6 +529,7 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
 
 # Disabled until mans_to_es can produce a stream of events instead of doing
 # raw Elasticsearch operations.
+# pylint: disable=pointless-string-statement
 """
 def run_mans(file_path, events, timeline_name, index_name, source_type):
     # Log information to Celery
