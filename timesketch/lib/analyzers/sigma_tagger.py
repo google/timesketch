@@ -77,45 +77,51 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         simple_counter = 0
 
         rules_path = os.path.join(os.path.dirname(__file__), self._RULES_PATH)
-        for rule_filename in os.listdir(rules_path):
 
-            if os.path.isdir(os.path.join(rules_path, rule_filename)):
-                logging.error(
-                    'this is a directory, not a file, skipping: {0:s}'.format(
-                        rule_filename))
-                continue
+        # The extension to search for
+        exten = '.yml'
 
-            tag_name, _ = rule_filename.rsplit('.')
-            tags_applied[tag_name] = 0
-            rule_file_path = os.path.join(rules_path, rule_filename)
-            rule_file_path = os.path.abspath(rule_file_path)
-            logging.info('[sigma] Reading rules from {0!s}'.format(
-                rule_file_path))
-            with open(rule_file_path, 'r') as rule_file:
-                try:
-                    rule_file_content = rule_file.read()
-                except UnicodeDecodeError as exception:
-                    logging.error(
-                        'Error generating rule in file {0:s}: {1!s}'.format(
-                            rule_file_path, exception))
-                    continue
-                parser = sigma_collection.SigmaCollectionParser(
-                    rule_file_content, self.sigma_config, None)
-                try:
-                    results = parser.generate(sigma_backend)
-                except NotImplementedError as exception:
-                    logging.error(
-                        'Error generating rule in file {0:s}: {1!s}'.format(
-                            rule_file_path, exception))
-                    continue
+        for dirpath, dirnames, files in os.walk(rules_path):
+            for rule_filename in files:
+                if rule_filename.lower().endswith(exten):
+                    print(os.path.join(dirpath, rule_filename))
+                    if os.path.isdir(os.path.join(rules_path, rule_filename)): # if a sub dir is found, append it to be scanned for rules
+                        logging.error(
+                            'this is a directory, not a file, skipping: {0:s}'.format(
+                                rule_filename))
+                        continue
 
-                for result in results:
-                    simple_counter += 1
-                    logging.info(
-                        '[sigma] Generated query {0:s}'.format(result))
-                    number_of_tagged_events = self.run_sigma_rule(
-                        result, tag_name)
-                    tags_applied[tag_name] += number_of_tagged_events
+                    tag_name, _ = rule_filename.rsplit('.')
+                    tags_applied[tag_name] = 0
+                    rule_file_path = os.path.join(dirpath, rule_filename)
+                    rule_file_path = os.path.abspath(rule_file_path)
+                    logging.info('[sigma] Reading rules from {0!s}'.format(
+                        rule_file_path))
+                    with open(rule_file_path, 'r') as rule_file:
+                        try:
+                            rule_file_content = rule_file.read()
+                        except UnicodeDecodeError as exception:
+                            logging.error(
+                                'Error generating rule in file {0:s}: {1!s}'.format(
+                                    rule_file_path, exception))
+                            continue
+                        parser = sigma_collection.SigmaCollectionParser(
+                            rule_file_content, self.sigma_config, None)
+                        try:
+                            results = parser.generate(sigma_backend)
+                        except NotImplementedError as exception:
+                            logging.error(
+                                'Error generating rule in file {0:s}: {1!s}'.format(
+                                    rule_file_path, exception))
+                            continue
+
+                        for result in results:
+                            simple_counter += 1
+                            logging.info(
+                                '[sigma] Generated query {0:s}'.format(result))
+                            number_of_tagged_events = self.run_sigma_rule(
+                                result, tag_name)
+                            tags_applied[tag_name] += number_of_tagged_events
 
         total_tagged_events = sum(tags_applied.values())
         output_string = 'Applied {0:d} tags\n'.format(total_tagged_events)
@@ -128,13 +134,13 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                 view_name='Sigma Rule matches', analyzer_name=self.NAME,
                 query_string='tag:"sigma*"',
                 additional_fields=self._FIELDS_TO_INCLUDE)
-            params = {
+            agg_params = {
                 'field': 'tag',
                 'limit': 20,
             }
             agg_obj = self.sketch.add_aggregation(
                 name='Top 20 Sigma tags', agg_name='field_bucket',
-                agg_params=params, view_id=view.id, chart_type='hbarchart',
+                agg_params=agg_params, view_id=view.id, chart_type='hbarchart',
                 description='Created by the Sigma analyzer')
 
 
