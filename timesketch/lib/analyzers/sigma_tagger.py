@@ -180,14 +180,6 @@ class TestRulesSigmaPlugin(SigmaPlugin):
 
     NAME = 'sigma_test'
 
-class PowershellRulesSigmaPlugin(SigmaPlugin):
-    """Sigma plugin to run Windows rules."""
-
-    _RULES_PATH = '../../../data/powershell'
-
-    NAME = 'sigma_powershell'
-
 manager.AnalysisManager.register_analyzer(LinuxRulesSigmaPlugin)
 manager.AnalysisManager.register_analyzer(WindowsRulesSigmaPlugin)
 manager.AnalysisManager.register_analyzer(TestRulesSigmaPlugin)
-manager.AnalysisManager.register_analyzer(PowershellRulesSigmaPlugin)
