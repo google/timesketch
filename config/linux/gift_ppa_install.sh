@@ -8,79 +8,98 @@ set -e
 
 # Dependencies for running timesketch, alphabetized, one per line.
 # This should not include packages only required for testing or development.
-PYTHON2_DEPENDENCIES="python-alembic
-                      python-altair
-                      python-amqp
-                      python-aniso8601
-                      python-asn1crypto
-                      python-attr
-                      python-bcrypt
-                      python-billiard
-                      python-blinker
-                      python-bs4
-                      python-celery
-                      python-certifi
-                      python-cffi
-                      python-chardet
-                      python-click
-                      python-configparser
-                      python-cryptography
-                      python-datasketch
-                      python-dateutil
-                      python-editor
-                      python-elasticsearch
-                      python-entrypoints
-                      python-enum34
-                      python-flask
-                      python-flask-bcrypt
-                      python-flask-login
-                      python-flask-migrate
-                      python-flask-restful
-                      python-flask-script
-                      python-flask-sqlalchemy
-                      python-flask-wtf
-                      python-gunicorn
-                      python-idna
-                      python-ipaddress
-                      python-itsdangerous
-                      python-jinja2
-                      python-jsonschema
-                      python-jwt
-                      python-kombu
-                      python-mako
-                      python-markupsafe
-                      python-neo4jrestclient
-                      python-numpy
-                      python-pandas
-                      python-parameterized
-                      python-pycparser
-                      python-pyrsistent
-                      python-redis
-                      python-requests
-                      python-six
-                      python-sqlalchemy
-                      python-toolz
-                      python-typing
-                      python-tz
-                      python-urllib3
-                      python-vine
-                      python-werkzeug
-                      python-wtforms
-                      python-yaml";
+PYTHON_DEPENDENCIES="python3-alembic
+                     python3-altair
+                     python3-amqp
+                     python3-aniso8601
+                     python3-asn1crypto
+                     python3-attr
+                     python3-bcrypt
+                     python3-billiard
+                     python3-blinker
+                     python3-bs4
+                     python3-celery
+                     python3-certifi
+                     python3-cffi
+                     python3-chardet
+                     python3-ciso8601
+                     python3-click
+                     python3-cryptography
+                     python3-datasketch
+                     python3-dateutil
+                     python3-editor
+                     python3-elasticsearch
+                     python3-entrypoints
+                     python3-flask
+                     python3-flask-bcrypt
+                     python3-flask-login
+                     python3-flask-migrate
+                     python3-flask-restful
+                     python3-flask-script
+                     python3-flask-sqlalchemy
+                     python3-flaskext.wtf
+                     python3-google-auth
+                     python3-google-auth-oauthlib
+                     python3-gunicorn
+                     python3-idna
+                     python3-itsdangerous
+                     python3-jinja2
+                     python3-jsonschema
+                     python3-jwt
+                     python3-kombu
+                     python3-mako
+                     python3-mans-to-es
+                     python3-markdown
+                     python3-markupsafe
+                     python3-neo4jrestclient
+                     python3-numpy
+                     python3-oauthlib
+                     python3-pandas
+                     python3-parameterized
+                     python3-pycparser
+                     python3-pyrsistent
+                     python3-redis
+                     python3-requests
+                     python3-requests-oauthlib
+                     python3-sigmatools
+                     python3-six
+                     python3-sqlalchemy
+                     python3-tabulate
+                     python3-toolz
+                     python3-tz
+                     python3-urllib3
+                     python3-vine
+                     python3-werkzeug
+                     python3-wtforms
+                     python3-xlrd
+                     python3-xmltodict
+                     python3-yaml";
 
 # Additional dependencies for running tests, alphabetized, one per line.
-TEST_DEPENDENCIES="python-coverage
-                   python-flask-testing
-                   python-funcsigs
-                   python-mock
-                   python-nose
-                   python-pbr
-                   python-setuptools";
+TEST_DEPENDENCIES="python3-coverage
+                   python3-flask-testing
+                   python3-mock
+                   python3-nose
+                   python3-pbr
+                   python3-setuptools";
+
+# Additional dependencies for development, alphabetized, one per line.
+DEVELOPMENT_DEPENDENCIES="pylint";
+
+# Additional dependencies for debugging, alphabetized, one per line.
 
 
 sudo add-apt-repository ppa:gift/dev -y
 sudo apt-get update -q
-sudo apt-get install -y ${PYTHON2_DEPENDENCIES}
+sudo apt-get install -y ${PYTHON_DEPENDENCIES}
+
+if [[ "$*" =~ "include-debug" ]]; then
+    sudo apt-get install -y ${DEBUG_DEPENDENCIES}
+fi
+
+if [[ "$*" =~ "include-development" ]]; then
+    sudo apt-get install -y ${DEVELOPMENT_DEPENDENCIES}
+fi
 
 if [[ "$*" =~ "include-test" ]]; then
     sudo apt-get install -y ${TEST_DEPENDENCIES}
