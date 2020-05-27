@@ -59,7 +59,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         events = self.event_stream(
             query_string=query, return_fields=return_fields)
         for event in events:
-            event.add_tags(["sigma_"+tag_name])
+            event.add_tags(['sigma_{0:s}'.format(tag_name)])
             event.commit()
             tagged_events += 1
         return tagged_events
@@ -78,12 +78,10 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
 
         rules_path = os.path.join(os.path.dirname(__file__), self._RULES_PATH)
 
-        # The extension to search for
-        exten = '.yml'
 
         for dirpath, dirnames, files in os.walk(rules_path):
             for rule_filename in files:
-                if rule_filename.lower().endswith(exten):
+                if rule_filename.lower().endswith('yml'):
                     print(os.path.join(dirpath, rule_filename))
                     if os.path.isdir(os.path.join(rules_path, rule_filename)): # if a sub dir is found, append it to be scanned for rules
                         logging.error(
