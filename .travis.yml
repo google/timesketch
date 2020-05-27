@@ -46,6 +46,9 @@ jobs:
     python: 3.8
     services:
     - docker
+  - name: "Dockerfile-prod"
+    env: TARGET="dockerfile"
+    group: edge
 cache:
 - pip
 install:
