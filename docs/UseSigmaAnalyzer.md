@@ -4,6 +4,10 @@
 
 See description at the Sigma Github repository: https://github.com/Neo23x0/sigma#what-is-sigma
 
+The rules in this repository are mostly from: https://github.com/Neo23x0/sigma/rules
+
+The licence for those rules is: https://github.com/Neo23x0/sigma/blob/master/LICENSE.LGPL.txt
+
 ## Sigma in Timesketch
 
 Since early 2020 Timesketch has Sigma support implemented. Sigma can be used as an analyser.
