@@ -351,7 +351,7 @@ class ImportStreamer(object):
                 if len(data_types) == 1:
                     data_type = data_types[0]
 
-            df_columns = data_frame.columns
+            df_columns = list(data_frame.columns)
             self._config_helper.configure_streamer(
                 self, data_type=data_type, columns=df_columns)
 
