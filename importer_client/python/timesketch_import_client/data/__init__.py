@@ -35,7 +35,8 @@ def load_config(file_path=''):
             used that comes with the tool.
 
     Returns:
-        A list with dicts containing the loaded YAML config.
+        dict: a dict with the key being a config file identifier and the value
+        being another dict with the configuration items.
     """
     if not file_path:
         base_path = os.path.dirname(__file__)
@@ -43,18 +44,18 @@ def load_config(file_path=''):
 
     if not file_path.endswith('.yaml'):
         logger.error('Can\'t load a config that is not a YAML file.')
-        return []
+        return {}
 
     if not os.path.isfile(file_path):
         logger.error('File path does not exist, unable to load YAML config.')
-        return []
+        return {}
 
     with codecs.open(file_path, 'r') as fh:
         try:
             data = yaml.safe_load(fh)
+            return data
         except (AttributeError, yaml.parser.ParserError) as e:
             logger.error('Unable to parse YAML file, with error: %s', e)
-            return []
-        if not data:
-            return []
-        return data
+            return {}
+
+    return {}

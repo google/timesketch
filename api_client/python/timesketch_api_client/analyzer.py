@@ -46,20 +46,22 @@ class AnalyzerResult(resource.BaseResource):
         if not objects:
             return {}
 
+        result_dict = {}
         for result in objects[0]:
             result_id = result.get('analysissession_id')
             if result_id != self._session_id:
                 continue
             status_list = result.get('status', [])
             if len(status_list) != 1:
-                return {}
+                continue
             status = status_list[0]
 
             timeline = result.get('timeline', {})
 
-            return {
-                'id': result_id,
-                'analyzer': result.get('analyzer_name', 'N/A'),
+            result_dict['id'] = result_id
+            result_dict.setdefault('analyzers', [])
+            result_dict['analyzers'].append({
+                'name': result.get('analyzer_name', 'N/A'),
                 'results': result.get('result'),
                 'description': result.get('description', 'N/A'),
                 'user': result.get('user', {}).get('username', 'System'),
@@ -74,9 +76,9 @@ class AnalyzerResult(resource.BaseResource):
                     'username', 'System'),
                 'timeline_name': timeline.get('name', 'N/A'),
                 'timeline_deleted': timeline.get('deleted', False),
-            }
+            })
 
-        return {}
+        return result_dict
 
     @property
     def id(self):
@@ -87,25 +89,50 @@ class AnalyzerResult(resource.BaseResource):
     def log(self):
         """Returns back logs from the analyzer session, if there are any."""
         data = self._fetch_data()
-        return data.get('log', 'No recorded logs.')
+        return_strings = []
+        for entry in data.get('analyzers', []):
+            return_strings.append(
+                '[{0:s}] = {1:s}'.format(
+                    entry.get('name', 'No Name'),
+                    entry.get('log', 'No recorded logs.')))
+        return '\n'.join(return_strings)
 
     @property
     def results(self):
         """Returns the results from the analyzer session."""
         data = self._fetch_data()
-        return data.get('results', 'No results yet.')
+        return_strings = []
+        for entry in data.get('analyzers', []):
+            results = entry.get('results')
+            if not results:
+              results = 'No results yet.'
+            return_strings.append(
+                '[{0:s}] = {1:s}'.format(
+                    entry.get('name', 'No Name'), results))
+        return '\n'.join(return_strings)
 
     @property
     def status(self):
         """Returns the current status of the analyzer run."""
         data = self._fetch_data()
-        return data.get('status', 'Unknown')
+        return_strings = []
+        for entry in data.get('analyzers', []):
+            return_strings.append(
+                '[{0:s}] = {1:s}'.format(
+                    entry.get('name', 'No Name'),
+                    entry.get('status', 'Unknown.')))
+        return '\n'.join(return_strings)
 
     @property
     def status_string(self):
         """Returns a longer version of a status string."""
         data = self._fetch_data()
-        return '[{0:s}] Status: {1:s}'.format(
-            data.get('status_date', datetime.datetime.utcnow().isoformat()),
-            data.get('status', 'Unknown')
-        )
+        return_strings = []
+        for entry in data.get('analyzers', []):
+            return_strings.append(
+                '{0:s} - {1:s}: {2:s}'.format(
+                    entry.get('name', 'No Name'),
+                    entry.get(
+                        'status_date', datetime.datetime.utcnow().isoformat()),
+                    entry.get('status', 'Unknown.')))
+        return '\n'.join(return_strings)

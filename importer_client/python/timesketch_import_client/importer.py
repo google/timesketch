@@ -27,7 +27,6 @@ import pandas
 
 from timesketch_api_client import timeline
 from timesketch_api_client import definitions
-from timesketch_import_client import data as data_config
 from timesketch_import_client import utils
 
 logger = logging.getLogger('ts_importer')
@@ -51,13 +50,14 @@ class ImportStreamer(object):
     def __init__(self):
         """Initialize the upload streamer."""
         self._count = 0
+        self._config_helper = None
+        self._dict_config_loaded = False
         self._csv_delimiter = None
         self._data_lines = []
         self._datetime_field = None
         self._format_string = None
         self._index = uuid.uuid4().hex
         self._last_response = None
-        self._logfile_config = {}
         self._resource_url = ''
         self._sketch = None
         self._timeline_id = None
@@ -173,33 +173,6 @@ class ImportStreamer(object):
         columns = list(
             data_frame.columns[~data_frame.columns.str.contains('^_')])
         return data_frame[columns]
-
-    def _load_config(self, config_dict):
-        """Sets up the streamer based on a configuration dict.
-
-        Args:
-            config_dict (dict): A dictionary that contains
-                configuration details for the streamer.
-        """
-        message = config_dict.get('message')
-        if message:
-            self.set_message_format_string(message)
-
-        timestamp_desc = config_dict.get('timestamp_desc')
-        if timestamp_desc:
-            self.set_timestamp_description(timestamp_desc)
-
-        separator = config_dict.get('separator')
-        if separator:
-            self.set_csv_delimiter(separator)
-
-        encoding = config_dict.get('encoding')
-        if encoding:
-            self.set_text_encoding(encoding)
-
-        datetime_string = config_dict.get('datetime')
-        if datetime_string:
-            self.set_datetime_column(datetime_string)
 
     def _ready(self):
         """Check whether all variables have been set.
@@ -371,36 +344,16 @@ class ImportStreamer(object):
 
         size = data_frame.shape[0]
 
-        # Read through config files to see if we can configure the streamer.
-        for config_name, config in self._logfile_config.items():
-            data_type = config.get('data_type')
-            if data_type and 'data_type' in data_frame:
+        if self._config_helper:
+            data_type = ''
+            if 'data_type' in data_frame:
                 data_types = data_frame.data_type.unique()
                 if len(data_types) == 1:
-                    if data_type == data_types[0]:
-                        logger.info(
-                            'Using config %s for streamer.', config_name)
-                        self._load_config(config)
-                        break
+                    data_type = data_types[0]
 
-            column_string = config.get('columns', '')
-            column_subset_string = config.get('columns_subset', '')
-            if not any([column_string, column_subset_string]):
-                continue
-
-            df_columns = set(data_frame.columns)
-
-            columns = set(column_string.split(','))
-            if columns and columns == df_columns:
-                logger.info('Using config %s for streamer.', config_name)
-                self._load_config(config)
-                break
-
-            columns_subset = set(column_subset_string.split(','))
-            if columns_subset and columns_subset.issubset(df_columns):
-                logger.info('Using config %s for streamer.', config_name)
-                self._load_config(config)
-                break
+            df_columns = list(data_frame.columns)
+            self._config_helper.configure_streamer(
+                self, data_type=data_type, columns=df_columns)
 
         data_frame_use = self._fix_data_frame(data_frame)
 
@@ -450,6 +403,13 @@ class ImportStreamer(object):
         if self._count >= self._threshold_entry:
             self.flush(end_stream=False)
             self._reset()
+
+        if self._config_helper and not self._dict_config_loaded:
+            data_type = entry.get('data_type', '')
+            columns = entry.keys()
+            self._config_helper.configure_streamer(
+                self, data_type=data_type, columns=columns)
+            self._dict_config_loaded = True
 
         # Changing the dictionary to add fields, such as timestamp description,
         # message field, etc. See function docstring for further details.
@@ -629,34 +589,6 @@ class ImportStreamer(object):
         """Returns the last response from an upload."""
         return self._last_response
 
-    def set_config_file(self, file_path=''):
-        """Loads a YAML config file describing the log file config.
-
-        This function reads a YAML config file, and uses the config
-        from there to set up the streamer config. The config file
-        can be a single entry and used to just setup the streamer
-        or it can define a list of files and set the streamer
-        depending on the input file itself.
-
-        Args:
-            file_path (str): the path to the config file. If not
-                supplied the default value of features.yaml that
-                comes with the tool is chosen.
-        """
-        config = data_config.load_config(file_path)
-        if not isinstance(config, dict):
-            logger.error(
-                'Unable to read config file since it does not produce a dict')
-            return
-
-        self._logfile_config = config
-
-        if all([isinstance(x, dict) for x in config.values()]):
-            # This is a config file.
-            return
-
-        self._load_config(config)
-
     def set_csv_delimiter(self, delimiter):
         """Set the CSV delimiter for CSV file parsing."""
         self._csv_delimiter = delimiter
@@ -672,6 +604,10 @@ class ImportStreamer(object):
     def set_filesize_threshold(self, threshold):
         """Set the threshold for file size per chunk."""
         self._threshold_filesize = threshold
+
+    def set_config_helper(self, helper):
+        """Set the config helper object."""
+        self._config_helper = helper
 
     def set_index_name(self, index):
         """Set the index name."""
@@ -717,8 +653,6 @@ class ImportStreamer(object):
     def __enter__(self):
         """Make it possible to use "with" statement."""
         self._reset()
-        # Load the default config file to configure the tool with.
-        self.set_config_file()
         return self
 
     # pylint: disable=unused-argument

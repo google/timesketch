@@ -290,16 +290,22 @@ class Sketch(resource.BaseResource):
             aggregations.append(aggregation_obj)
         return aggregations
 
-    def get_analyzer_status(self):
+    def get_analyzer_status(self, as_sessions=False):
         """Returns a list of started analyzers and their status.
 
+        Args:
+            as_sessions (bool): optional, if set to True then a list of
+                AnalyzerResult objects will be returned. Defaults to
+                returning a list of dicts.
         Returns:
-            A list of dict objects that contains status information
-            of each analyzer run. The dict contains information about
-            what timeline it ran against, the results and current
-            status of the analyzer run.
+            If "as_sessions" is set then a list of AnalyzerResult gets
+            returned, otherwise a list of dict objects that contains
+            status information of each analyzer run. The dict contains
+            information about what timeline it ran against, the
+            results and current status of the analyzer run.
         """
         stats_list = []
+        sessions = []
         for timeline_obj in self.list_timelines():
             resource_uri = (
                 '{0:s}/sketches/{1:d}/timelines/{2:d}/analysis').format(
@@ -310,17 +316,27 @@ class Sketch(resource.BaseResource):
             if not objects:
                 continue
             for result in objects[0]:
+                session_id = result.get('analysissession_id')
                 stat = {
                     'index': timeline_obj.index,
                     'timeline_id': timeline_obj.id,
+                    'session_id': session_id,
                     'analyzer': result.get('analyzer_name', 'N/A'),
                     'results': result.get('result', 'N/A'),
                     'status': 'N/A',
                 }
+                if as_sessions and session_id:
+                    sessions.append(analyzer.AnalyzerResult(
+                        timeline_id=timeline_obj.id, session_id=session_id,
+                        sketch_id=self.id, api=self.api))
                 status = result.get('status', [])
                 if len(status) == 1:
                     stat['status'] = status[0].get('status', 'N/A')
                 stats_list.append(stat)
+
+        if as_sessions:
+            return sessions
+
         return stats_list
 
     def get_aggregation(self, aggregation_id):

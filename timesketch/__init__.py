@@ -88,6 +88,7 @@ def create_app(config=None):
     # Plaso version that we support
     if app.config['UPLOAD_ENABLED']:
         try:
+            # pylint: disable=import-outside-toplevel
             from plaso import __version__ as plaso_version
             app.config['PLASO_VERSION'] = plaso_version
         except ImportError:

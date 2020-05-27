@@ -27,6 +27,7 @@ from timesketch_api_client import credentials as ts_credentials
 from timesketch_api_client import crypto
 from timesketch_api_client import config
 from timesketch_api_client import sketch
+from timesketch_import_client import helper
 from timesketch_import_client import importer
 
 
@@ -57,28 +58,37 @@ def upload_file(
             '.plaso, .csv, '
             '.jsonl (not {0:s})').format(file_extension.lower())
 
+    import_helper = helper.ImportHelper()
+    import_helper.add_config_dict(config_dict)
+
+    log_config_file = config_dict.get('log_config_file', '')
+    if log_config_file:
+        import_helper.add_config(log_config_file)
+
     with importer.ImportStreamer() as streamer:
         streamer.set_sketch(my_sketch)
+        streamer.set_config_helper(import_helper)
 
         format_string = config_dict.get('message_format_string')
         if format_string:
             streamer.set_message_format_string(format_string)
+
         timeline_name = config_dict.get('timeline_name')
         if timeline_name:
             streamer.set_timeline_name(timeline_name)
+
         index_name = config_dict.get('index_name')
         if index_name:
             streamer.set_index_name(index_name)
+
         time_desc = config_dict.get('timestamp_description')
         if time_desc:
             streamer.set_timestamp_description(time_desc)
 
-        log_config_file = config_dict.get('log_config_file', '')
-        streamer.set_config_file(log_config_file)
-
         entry_threshold = config_dict.get('entry_threshold')
         if entry_threshold:
             streamer.set_entry_threshold(entry_threshold)
+
         size_threshold = config_dict.get('size_threshold')
         if size_threshold:
             streamer.set_filesize_threshold(size_threshold)
