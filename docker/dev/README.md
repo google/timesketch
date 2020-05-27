@@ -8,6 +8,12 @@ You can run Timesketch on Docker in development mode.
 docker-compose up -d
 ```
 
+If you see the folowing message you can continue
+
+```
+Timesketch development server is ready!
+```
+
 ### Find out container ID for the timesketch container
 
 ```

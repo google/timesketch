@@ -48,7 +48,7 @@ limitations under the License.
 
             <b-message type="is-success">
               <p>
-                Upload a new timeline or choose an existing one from the list below. You can upload either a Plaso storage file, mans, JSONL, or a CSV file.
+                Upload a new timeline or choose an existing one from the list below. You can upload either a Plaso storage file, JSONL, or a CSV file.
                 <br>
                 If you are uploading a CSV or JSONL file make sure to read the <a href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines" rel="noreferrer" target="_blank">documentation</a> to learn what columns are needed.
               </p>
