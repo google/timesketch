@@ -31,8 +31,8 @@ Timesketch is an open source tool for collaborative forensic timeline analysis. 
 * [Import other data](docs/CreateTimeLineFromOtherData.md)
 
 #### Using Timesketch
-
 * [Users guide](docs/Users-Guide.md)
+* [Using Sigma Analyzer](docs/UseSigmaAnalyzer.md)
 
 ## Community
 * [Community guide](docs/Community-Guide.md)
