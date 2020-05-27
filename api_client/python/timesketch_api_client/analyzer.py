@@ -103,10 +103,12 @@ class AnalyzerResult(resource.BaseResource):
         data = self._fetch_data()
         return_strings = []
         for entry in data.get('analyzers', []):
+            results = entry.get('results')
+            if not results:
+              results = 'No results yet.'
             return_strings.append(
                 '[{0:s}] = {1:s}'.format(
-                    entry.get('name', 'No Name'),
-                    entry.get('results', 'No results yet.')))
+                    entry.get('name', 'No Name'), results))
         return '\n'.join(return_strings)
 
     @property
