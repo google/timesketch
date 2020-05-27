@@ -72,7 +72,7 @@ limitations under the License.
         <div class="card-content">
           <div class="content">
             <p>
-              Supported formats are Plaso storage file, mans, JSONL, or a CSV file.
+              Supported formats are Plaso storage file, JSONL, or a CSV file.
               If you are uploading a CSV or JSONL file make sure to read the <a href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines" rel="noreferrer" target="_blank">documentation</a> to learn what columns are needed.
             </p>
             <ts-upload-timeline-form @toggleModal="showUploadTimelineModal = !showUploadTimelineModal"></ts-upload-timeline-form>
