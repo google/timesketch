@@ -25,22 +25,37 @@ import glob
 import os
 import sys
 
+import pkg_resources
+
 from setuptools import find_packages
 from setuptools import setup
 
-try:  # for pip >= 10
-    from pip._internal.download import PipSession
-    from pip._internal.req import parse_requirements
-except ImportError:  # for pip <= 9.0.3
-    from pip.download import PipSession
-    from pip.req import parse_requirements
 
 version_tuple = (sys.version_info[0], sys.version_info[1])
-if version_tuple < (3, 5):
+if version_tuple < (3, 6):
     print((
-        'Unsupported Python version: {0:s}, version 3.5 or higher '
+        'Unsupported Python version: {0:s}, version 3.6 or higher '
         'required.').format(sys.version))
     sys.exit(1)
+
+
+def parse_requirements_from_file(path):
+    """Parses requirements from a requirements file.
+
+    Args:
+      path (str): path to the requirements file.
+
+    Yields:
+      pkg_resources.Requirement: package resource requirement.
+    """
+    with open(path, 'r') as file_object:
+        file_contents = file_object.read()
+    for req in pkg_resources.parse_requirements(file_contents):
+        try:
+            requirement = str(req.req)
+        except AttributeError:
+            requirement = str(req)
+        yield requirement
 
 
 timesketch_version = '20200507'
@@ -78,10 +93,6 @@ setup(
     include_package_data=True,
     zip_safe=False,
     entry_points={'console_scripts': ['tsctl=timesketch.tsctl:main']},
-    install_requires=[str(req.req) for req in parse_requirements(
-        'requirements.txt', session=PipSession(),
-    )],
-    tests_require=[str(req.req) for req in parse_requirements(
-        'test_requirements.txt', session=PipSession(),
-    )],
+    install_requires=parse_requirements_from_file('requirements.txt'),
+    tests_require=parse_requirements_from_file('test_requirements.txt'),
 )

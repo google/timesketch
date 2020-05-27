@@ -20,6 +20,7 @@ import logging
 
 import pandas
 
+from . import analyzer
 from . import aggregation
 from . import definitions
 from . import error
@@ -463,7 +464,7 @@ class Sketch(resource.BaseResource):
         return timelines
 
     def upload(self, timeline_name, file_path, index=None):
-        """Upload a CSV, JSONL, or Plaso file to the server for indexing.
+        """Upload a CSV, JSONL, mans, or Plaso file to the server for indexing.
 
         Args:
             timeline_name: Name of the resulting timeline.
@@ -665,8 +666,12 @@ class Sketch(resource.BaseResource):
                 there are more than a single timeline with the same name a
                 timeline_id is required.
 
+        Raises:
+            error.UnableToRunAnalyzer: if not able to run the analyzer.
+
         Returns:
-            A string with the results of the API call to run the analyzer.
+            If the analyzer runs successfully return back an AnalyzerResult
+            object.
         """
         if not timeline_id and not timeline_name:
             return (
@@ -681,7 +686,7 @@ class Sketch(resource.BaseResource):
         # with parameters for the analyzer.
         if analyzer_kwargs:
             if not isinstance(analyzer_kwargs, dict):
-                return (
+                raise error.UnableToRunAnalyzer(
                     'Unable to run analyzer, analyzer kwargs needs to be a '
                     'dict')
             if analyzer_name not in analyzer_kwargs:
@@ -696,14 +701,15 @@ class Sketch(resource.BaseResource):
                     timelines.append(timeline_dict.get('id'))
 
             if not timelines:
-                return 'No timelines with the name: {0:s} were found'.format(
-                    timeline_name)
+                raise error.UnableToRunAnalyzer(
+                    'No timelines with the name: {0:s} were found'.format(
+                        timeline_name))
 
             if len(timelines) != 1:
-                return (
+                raise error.UnableToRunAnalyzer(
                     'There are {0:d} timelines defined in the sketch with '
                     'this name, please use a unique name or a '
-                    'timeline ID').format(len(timelines))
+                    'timeline ID'.format(len(timelines)))
 
             timeline_id = timelines[0]
 
@@ -716,10 +722,26 @@ class Sketch(resource.BaseResource):
         response = self.api.session.post(resource_url, json=data)
 
         if response.status_code == 200:
-            return response.json()
+            data = response.json()
+            objects = data.get('objects', [])
+            if not objects:
+                raise error.UnableToRunAnalyzer(
+                    'No session data returned back, analyzer may have run but '
+                    'unable to verify, please verify manually.')
 
-        return '[{0:d}] {1!s} {2!s}'.format(
-            response.status_code, response.reason, response.text)
+            session_id = objects[0].get('analysis_session')
+            if not session_id:
+                raise error.UnableToRunAnalyzer(
+                    'Analyzer may have run, but there is no session ID to '
+                    'verify that it has. Please verify manually.')
+
+            session = analyzer.AnalyzerResult(
+                timeline_id=timeline_id, session_id=session_id,
+                sketch_id=self.id, api=self.api)
+            return session
+
+        raise error.UnableToRunAnalyzer('[{0:d}] {1!s} {2!s}'.format(
+            response.status_code, response.reason, response.text))
 
     def remove_acl(self, user_list=None, group_list=None, remove_public=False):
         """Remove users or groups to the sketch ACL.

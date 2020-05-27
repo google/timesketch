@@ -1,5 +1,6 @@
 include AUTHORS LICENSE README.md
-include requirements.in requirements.txt
+include requirements.txt test_requirements.txt
+include run_tests.py
 exclude .gitignore
 exclude *.pyc
 recursive-include config *

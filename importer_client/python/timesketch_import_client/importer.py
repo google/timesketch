@@ -504,7 +504,7 @@ class ImportStreamer(object):
         self.add_data_frame(data_frame)
 
     def add_file(self, filepath, delimiter=','):
-        """Add a CSV, JSONL or a PLASO file to the buffer.
+        """Add a CSV, JSONL, mans or a PLASO file to the buffer.
 
         Args:
             filepath: the path to the file to add.
@@ -535,7 +535,7 @@ class ImportStreamer(object):
                         fh, delimiter=delimiter,
                         chunksize=self._threshold_entry):
                     self.add_data_frame(chunk_frame, part_of_iter=True)
-        elif file_ending == 'plaso':
+        elif file_ending in ('plaso', 'mans'):
             self._upload_binary_file(filepath)
 
         elif file_ending == 'jsonl':
@@ -550,7 +550,7 @@ class ImportStreamer(object):
 
         else:
             raise TypeError(
-                'File needs to have a file extension of: .csv, .jsonl or '
+                'File needs to have a file extension of: .csv, .jsonl, mans or '
                 '.plaso')
 
     def add_json(self, json_entry, column_names=None):

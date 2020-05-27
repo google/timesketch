@@ -188,6 +188,7 @@ class ResourceMixin(object):
         'analyzer_name': fields.String,
         'parameters': fields.String,
         'result': fields.String,
+        'analysissession_id': fields.Integer,
         'log': fields.String,
         'user': fields.Nested(user_fields),
         'timeline': fields.Nested(timeline_fields),
@@ -2305,6 +2306,11 @@ class StoryResource(ResourceMixin, Resource):
             data_fetcher.set_sketch_id(sketch_id)
 
             exporter.set_data_fetcher(data_fetcher)
+            exporter.set_title(story.title)
+            exporter.set_creation_date(story.created_at.isoformat())
+            exporter.set_author(story.user)
+            exporter.set_exporter(current_user.username)
+
             exporter.from_string(story.content)
             return exporter.export_story()
 
@@ -2559,12 +2565,20 @@ class AnalysisResource(ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
 
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
         if not sketch.has_permission(current_user, 'read'):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'User does not have read access to sketch')
 
         timeline = Timeline.query.get(timeline_id)
+        if not timeline:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No timeline found with this ID.')
+
         analysis_history = Analysis.query.filter_by(timeline=timeline).all()
 
         return self.to_json(analysis_history)
