@@ -32,3 +32,6 @@ data/test_rules/*
 # Exclude Vagrant runtime files
 vagrant/.vagrant/
 vagrant/*.log
+
+#Sigma rules
+data/sigma

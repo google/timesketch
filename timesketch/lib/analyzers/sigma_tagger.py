@@ -114,6 +114,11 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                                 'Error generating rule in file {0:s}: {1!s}'.format(
                                     rule_file_path, exception))
                             continue
+                        except Exception as exception:
+                            logging.error(
+                                'Error generating rule in file {0:s}: {1!s}'.format(
+                                    rule_file_path, exception))
+                            continue
 
                         for result in results:
                             simple_counter += 1
@@ -168,14 +173,14 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
 class LinuxRulesSigmaPlugin(SigmaPlugin):
     """Sigma plugin to run Linux rules."""
 
-    _RULES_PATH = '../../../data/linux'
+    _RULES_PATH = '../../../data/sigma/rules/linux'
 
     NAME = 'sigma_linux'
 
 class WindowsRulesSigmaPlugin(SigmaPlugin):
     """Sigma plugin to run Windows rules."""
 
-    _RULES_PATH = '../../../data/windows'
+    _RULES_PATH = '../../../data/sigma/rules/windows'
 
     NAME = 'sigma_windows'
 
