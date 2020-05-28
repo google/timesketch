@@ -138,6 +138,9 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + /stories/ + storyId + '/', formData)
   },
+  deleteStory (sketchId, storyId) {
+    return RestApiClient.delete('/sketches/' + sketchId + /stories/ + storyId + '/')
+  },
   // Saved views
   getView (sketchId, viewId) {
     return RestApiClient.get('/sketches/' + sketchId + '/views/' + viewId + '/')

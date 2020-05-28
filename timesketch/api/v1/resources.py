@@ -2414,7 +2414,7 @@ class StoryResource(ResourceMixin, Resource):
             msg = 'No sketch found with this ID.'
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
-        # Check that this timeline belongs to the sketch
+        # Check that this story belongs to the sketch
         if story.sketch_id != sketch.id:
             msg = (
                 'The sketch ID ({0:d}) does not match with the story'
