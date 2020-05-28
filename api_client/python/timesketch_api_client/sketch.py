@@ -145,6 +145,50 @@ class Sketch(resource.BaseResource):
 
         return data_frame
 
+    def create_view(
+            self, name, query_string='', query_dsl='', query_filter=None):
+        """Create a view object.
+
+        Args:
+            name (str): the name of the view.
+            query_string (str): Elasticsearch query string. This is optional
+                yet either a query string or a query DSL is required.
+            query_dsl (str): Elasticsearch query DSL as JSON string. This is
+                optional yet either a query string or a query DSL is required.
+            query_filter (dict): Filter for the query as a dict.
+
+        Raises:
+            RuntimeError: if neither query_string nor query_dsl is provided or
+                if view wasn't created for some reason.
+        """
+        if not (query_string or query_dsl):
+            raise RuntimeError('You need to supply a query string or a dsl')
+
+        resource_url = '{0:s}/sketches/{1:d}/views/'.format(
+            self.api.api_root, self.id)
+
+        data = {
+            'name': name,
+            'query': query_string,
+            'filter': query_filter,
+            'dsl': query_dsl,
+        }
+        response = self.api.session.post(resource_url, json=data)
+
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            raise RuntimeError(
+                'Unable to create view, error code: {0:d} - {1!s} '
+                '{2!s}'.format(
+                    response.status_code, response.reason, response.text))
+
+        response_json = response.json()
+        view_dict = response_json.get('objects', [{}])[0]
+        return view_lib.View(
+            view_id=view_dict.get('id'),
+            view_name=name,
+            sketch_id=self.id,
+            api=self.api)
+
     def create_story(self, title):
         """Create a story object.
 
