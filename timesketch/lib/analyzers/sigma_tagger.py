@@ -79,7 +79,9 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         for dirpath, dirnames, files in os.walk(rules_path):
             for rule_filename in files:
                 if rule_filename.lower().endswith('yml'):
-                    if os.path.isdir(os.path.join(rules_path, rule_filename)): # if a sub dir is found, append it to be scanned for rules
+                    
+                    # if a sub dir is found, append it to be scanned for rules
+                    if os.path.isdir(os.path.join(rules_path, rule_filename)):
                         logging.error(
                             'this is a directory, not a file, skipping: {0:s}'.format(
                                 rule_filename))
