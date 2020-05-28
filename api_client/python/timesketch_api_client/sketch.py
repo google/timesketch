@@ -145,7 +145,8 @@ class Sketch(resource.BaseResource):
 
         return data_frame
 
-    def create_view(self, name, query_string='', query_dsl='', query_filter=None):
+    def create_view(
+            self, name, query_string='', query_dsl='', query_filter=None):
         """Create a view object.
 
         Args:
