@@ -1,3 +1,0 @@
-[submodule "data/sigma"]
-	path = data/sigma
-	url = https://github.com/Neo23x0/sigma.git

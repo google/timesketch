@@ -33,3 +33,5 @@ data/test_rules/*
 vagrant/.vagrant/
 vagrant/*.log
 
+# exclude Sigma rules
+data/sigma
