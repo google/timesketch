@@ -140,7 +140,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
 
             story = self.sketch.add_story("Sigma Rule hits")
             story.add_text(
-                utils.BROWSER_STORY_HEADER, skip_if_exists=True)
+                utils.SIGMA_STORY_HEADER, skip_if_exists=True)
 
             story.add_text(
                 '## Sigma Analyzer.\n\nThe Sigma '
