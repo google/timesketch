@@ -79,7 +79,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         for dirpath, dirnames, files in os.walk(rules_path):
             for rule_filename in files:
                 if rule_filename.lower().endswith('yml'):
-                    
+
                     # if a sub dir is found, append it to be scanned for rules
                     if os.path.isdir(os.path.join(rules_path, rule_filename)):
                         logging.error(
@@ -94,13 +94,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                     logging.info('[sigma] Reading rules from {0!s}'.format(
                         rule_file_path))
                     with open(rule_file_path, 'r') as rule_file:
-                        try:
-                            rule_file_content = rule_file.read()
-                        except UnicodeDecodeError as exception:
-                            logging.error(
-                                'Error generating rule in file {0:s}: {1!s}'.format(
-                                    rule_file_path, exception))
-                            continue
+                        rule_file_content = rule_file.read()
                         parser = sigma_collection.SigmaCollectionParser(
                             rule_file_content, self.sigma_config, None)
                         try:
