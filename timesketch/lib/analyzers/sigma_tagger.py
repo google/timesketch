@@ -26,9 +26,6 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
     # this file.
     _RULES_PATH = ''
 
-    # A list of fields to include in the view output.
-    _FIELDS_TO_INCLUDE = ['message']
-
     def __init__(self, index_name, sketch_id):
         """Initialize the Index Analyzer.
 
@@ -82,7 +79,6 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         for dirpath, dirnames, files in os.walk(rules_path):
             for rule_filename in files:
                 if rule_filename.lower().endswith('yml'):
-                    print(os.path.join(dirpath, rule_filename))
                     if os.path.isdir(os.path.join(rules_path, rule_filename)): # if a sub dir is found, append it to be scanned for rules
                         logging.error(
                             'this is a directory, not a file, skipping: {0:s}'.format(
@@ -135,8 +131,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         if simple_counter > 0:
             view = self.sketch.add_view(
                 view_name='Sigma Rule matches', analyzer_name=self.NAME,
-                query_string='tag:"sigma*"',
-                additional_fields=self._FIELDS_TO_INCLUDE)
+                query_string='tag:"sigma*"')
             agg_params = {
                 'field': 'tag',
                 'limit': 20,
