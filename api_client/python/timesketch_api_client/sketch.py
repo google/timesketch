@@ -158,14 +158,29 @@ class Sketch(resource.BaseResource):
             query_filter (dict): Filter for the query as a dict.
 
         Raises:
-            RuntimeError: if neither query_string nor query_dsl is provided or
-                if view wasn't created for some reason.
+            ValueError: if neither query_string nor query_dsl is provided or
+                if query_filter is not a dict.
+            RuntimeError: if a view wasn't created for some reason.
         """
         if not (query_string or query_dsl):
-            raise RuntimeError('You need to supply a query string or a dsl')
+            raise ValueError('You need to supply a query string or a dsl')
 
         resource_url = '{0:s}/sketches/{1:d}/views/'.format(
             self.api.api_root, self.id)
+
+        if not query_filter:
+            query_filter = {
+                'time_start': None,
+                'time_end': None,
+                'size': self.DEFAULT_SIZE_LIMIT,
+                'terminate_after': self.DEFAULT_SIZE_LIMIT,
+                'indices': '_all',
+                'order': 'asc'
+            }
+
+        if not isinstance(query_filter, dict):
+            raise ValueError(
+                'Unable to query with a query filter that isn\'t a dict.')
 
         data = {
             'name': name,
@@ -594,15 +609,16 @@ class Sketch(resource.BaseResource):
         """Explore the sketch.
 
         Args:
-            query_string: Elasticsearch query string.
-            query_dsl: Elasticsearch query DSL as JSON string.
-            query_filter: Filter for the query as a dict.
+            query_string (str): Elasticsearch query string.
+            query_dsl (str): Elasticsearch query DSL as JSON string.
+            query_filter (dict): Filter for the query as a dict.
             view: View object instance (optional).
-            return_fields: List of fields that should be included in the
-                response. Optional and defaults to None.
-            as_pandas: Optional bool that determines if the results should
-                be returned back as a dictionary or a Pandas DataFrame.
-            max_entries: Optional integer denoting a best effort to limit
+            return_fields (str): A comma separated string with a list of fields
+                that should be included in the response. Optional and defaults
+                to None.
+            as_pandas (bool): Optional bool that determines if the results
+                should be returned back as a dictionary or a Pandas DataFrame.
+            max_entries (int): Optional integer denoting a best effort to limit
                 the output size to the number of events. Events are read in,
                 10k at a time so there may be more events in the answer back
                 than this number denotes, this is a best effort.
