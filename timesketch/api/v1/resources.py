@@ -476,18 +476,19 @@ class SketchArchiveResource(ResourceMixin, Resource):
 
         with zipfile.ZipFile(file_object, mode='w') as zip_file:
             for story in sketch.stories:
+                print('exporting story: {}'.format(story.title))
                 with story_exporter() as exporter:
                     data_fetcher = story_api_fetcher.ApiDataFetcher()
                     data_fetcher.set_sketch_id(sketch.id)
 
                     exporter.set_data_fetcher(data_fetcher)
                     exporter.from_string(story.content)
-                    data = exporter.export_story()
                     zip_file.writestr(
                         'stories/{0:s}'.format(story.title),
-                        data=data.get('story', ''))
+                        data=exporter.export_story())
 
             for aggregation in sketch.aggregations:
+                print('exporting agg: {}'.format(aggregation.name))
                 data = {
                     'aggregator_name': aggregation.agg_type,
                     'aggregator_parameters': aggregation.parameters
@@ -500,14 +501,21 @@ class SketchArchiveResource(ResourceMixin, Resource):
                     'aggregations/{0:s}'.format(aggregation.name),
                     data=data)
 
+            for view in sketch.views:
+                print('exporting view: {}'.format(view.name))
+
+                #query_string = Column(UnicodeText())
+                #    query_filter = Column(UnicodeText())
+                #    query_dsl = Column(UnicodeText())
+
+            for group in sketch.aggregationgroups:
+                print('exporting group: {}'.format(group.name))
+
         file_object.close()
         return file_object
 
             # HERNA
 
-            #    views = relationship('View', backref='sketch', lazy='select')
-            #    aggregations = relationship('Aggregation', backref='sketch', lazy='select')
-            #    aggregationgroups = relationship(
 
     def _unarchive_sketch(self, sketch):
         """Open up a sketch again."""
@@ -526,7 +534,9 @@ class SketchArchiveResource(ResourceMixin, Resource):
 
 
         sketch.add_label(self.ARCHIVE_LABEL)
+        print('exporting...')
         zip_file = self._export_sketch(sketch)
+        print('export done...')
 
         # Go through all timelines in a sketch.
         # 
