@@ -1854,6 +1854,100 @@ class EventResource(ResourceMixin, Resource):
         }
         return jsonify(schema)
 
+class EventTaggingResource(ResourceMixin, Resource):
+    """Resource to fetch and set tags to an event."""
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model
+
+        Returns:
+            An annotation in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            msg = 'No sketch found with this ID.'
+            abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
+
+        if not sketch.has_permission(current_user, 'write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, (
+                    'User does not have sufficient access rights to '
+                    'modify a sketch.'))
+
+        form = request.json
+        if not form:
+            form = request.data
+
+        tag_dict = {
+            'event_count': 0,
+            'tag_count': 0,
+        }
+        datastore = self.datastore
+
+        try:
+            tags_to_add = json.loads(form.get('tag_string', ''))
+        except json.JSONDecodeError as e:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to read the tags, with error: {0!s}'.format(e))
+        if not isinstance(tags_to_add, list):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Tags need to be a list')
+
+        if not all([isinstance(x, str) for x in tags_to_add]):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Tags need to be a list of strings')
+
+        events = form.get('events', [])
+        for _event in events:
+            query = {
+                'query': {
+                    'bool': {
+                        'filter': {
+                            'term': {
+                                '_id': _event['_id'],
+                            }
+                        }
+                    }
+                }
+            }
+            results = datastore.client.search(
+                index=[_event['_index']], body=query)
+
+            ds_events = results['hits']['hits']
+            if len(ds_events) != 1:
+                logger.error(
+                    'Unable to tag event: {0:s}, couldn\'t find the '
+                    'event.'.format(_event['_id']))
+                continue
+
+            source = ds_events[0].get('_source', {})
+            existing_tags = source.get('tag', [])
+            new_tags = list(set().union(existing_tags, tags_to_add))
+
+            if set(existing_tags) == set(new_tags):
+                continue
+
+            datastore.import_event(
+                index_name=_event['_index'], event_type=_event['_type'],
+                event_id=_event['_id'], event={'tag': new_tags})
+
+            tag_dict['event_count'] += 1
+            tag_dict['tag_count'] += len(new_tags)
+
+        datastore.flush_queued_events()
+        schema = {
+            'meta': tag_dict,
+            'objects': []}
+        response = jsonify(schema)
+        response.status_code = HTTP_STATUS_CODE_OK
+        return response
+
 
 class EventAnnotationResource(ResourceMixin, Resource):
     """Resource to create an annotation for an event."""
@@ -1878,8 +1972,6 @@ class EventAnnotationResource(ResourceMixin, Resource):
         indices = [t.searchindex.index_name for t in sketch.timelines]
         annotation_type = form.annotation_type.data
         events = form.events.raw_data
-        tag_dict = {}
-        datastore = self.datastore
 
         for _event in events:
             searchindex_id = _event['_index']
@@ -1932,46 +2024,6 @@ class EventAnnotationResource(ResourceMixin, Resource):
                     form.annotation.data,
                     toggle=toggle)
 
-            elif 'tags' in annotation_type:
-                # We only need to update the datastore.
-                query = {
-                    'query': {
-                        'bool': {
-                            'filter': {
-                                'term': {
-                                    '_id': _event['_id'],
-                                }
-                            }
-                        }
-                    }
-                }
-                results = datastore.client.search(
-                    index=[_event['_index']], body=query)
-
-                ds_events = results['hits']['hits']
-                if len(ds_events) != 1:
-                    logger.error(
-                        'Unable to tag event: {0:s}, couldn\'t find the '
-                        'event.'.format(_event['_id']))
-                    continue
-
-                source = ds_events[0].get('_source', {})
-                existing_tags = source.get('tag', [])
-                tags_to_add = json.loads(form.annotation.data)
-                new_tags = list(set().union(existing_tags, tags_to_add))
-
-                if set(existing_tags) == set(new_tags):
-                    continue
-
-                datastore.import_event(
-                    index_name=_event['_index'], event_type=_event['_type'],
-                    event_id=_event['_id'], event={'tag': new_tags})
-
-                tag_dict.setdefault('event_count', 0)
-                tag_dict['event_count'] += 1
-                tag_dict.setdefault('tag_count', 0)
-                tag_dict['tag_count'] += len(new_tags)
-                continue
             else:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
@@ -1982,15 +2034,6 @@ class EventAnnotationResource(ResourceMixin, Resource):
             # Save the event to the database
             db_session.add(event)
             db_session.commit()
-
-        if tag_dict:
-            datastore.flush_queued_events()
-            schema = {
-                'meta': tag_dict,
-                'objects': []}
-            response = jsonify(schema)
-            response.status_code = HTTP_STATUS_CODE_CREATED
-            return response
 
         return self.to_json(
             annotations, status_code=HTTP_STATUS_CODE_CREATED)

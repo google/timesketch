@@ -29,6 +29,7 @@ from .resources import ExploreResource
 from .resources import EventResource
 from .resources import EventAnnotationResource
 from .resources import EventCreateResource
+from .resources import EventTaggingResource
 from .resources import GraphResource
 from .resources import GraphViewListResource
 from .resources import GraphViewResource
@@ -73,6 +74,7 @@ API_ROUTES = [
     (AggregationResource, '/sketches/<int:sketch_id>/aggregation/<int:aggregation_id>/'),
     (ExploreResource, '/sketches/<int:sketch_id>/explore/'),
     (EventResource, '/sketches/<int:sketch_id>/event/'),
+    (EventTaggingResource, '/sketches/<int:sketch_id>/event/tagging/'),
     (EventAnnotationResource, '/sketches/<int:sketch_id>/event/annotate/'),
     (EventCreateResource, '/sketches/<int:sketch_id>/event/create/'),
     (ViewListResource, '/sketches/<int:sketch_id>/views/'),

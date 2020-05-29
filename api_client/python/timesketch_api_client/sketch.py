@@ -1021,11 +1021,10 @@ class Sketch(resource.BaseResource):
             raise ValueError('Tags need to be a list of strings.')
 
         form_data = {
-            'annotation': json.dumps(tags),
-            'annotation_type': 'tags',
+            'tag_string': json.dumps(tags),
             'events': events
         }
-        resource_url = '{0:s}/sketches/{1:d}/event/annotate/'.format(
+        resource_url = '{0:s}/sketches/{1:d}/event/tagging/'.format(
             self.api.api_root, self.id)
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
