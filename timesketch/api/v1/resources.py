@@ -39,7 +39,9 @@ import logging
 import os
 import time
 import uuid
+import random
 import requests
+import string
 import zipfile
 
 import altair as alt
@@ -51,6 +53,7 @@ from flask import abort
 from flask import current_app
 from flask import jsonify
 from flask import request
+from flask import send_file
 from flask_login import current_user
 from flask_login import login_required
 from flask_restful import fields
@@ -124,6 +127,43 @@ def bad_request(message):
     response = jsonify({'message': message})
     response.status_code = HTTP_STATUS_CODE_BAD_REQUEST
     return response
+
+
+def _run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None):
+    agg_class = aggregator_manager.AggregatorManager.get_aggregator(
+        aggregator_name)
+    if not agg_class:
+        return None, {}
+    if not aggregator_parameters:
+        aggregator_parameters = {}
+
+    aggregator = agg_class(sketch_id=sketch_id)
+
+    chart_type = aggregator_parameters.pop('supported_charts', None)
+    chart_color = aggregator_parameters.pop('chart_color', '')
+
+    time_before = time.time()
+    result_obj = aggregator.run(**aggregator_parameters)
+    time_after = time.time()
+
+    aggregator_description = aggregator.describe
+
+    meta = {
+        'method': 'aggregator_run',
+        'chart_type': chart_type,
+        'chart_color': chart_color,
+        'name': aggregator_description.get('name'),
+        'description': aggregator_description.get('description'),
+        'es_time': time_after - time_before,
+    }
+
+    if chart_type:
+        meta['vega_spec'] = result_obj.to_chart(
+            chart_name=chart_type,
+            chart_title=aggregator.chart_title, color=chart_color)
+        meta['vega_chart_title'] = aggregator.chart_title
+
+    return result_obj, meta
 
 
 class ResourceMixin(object):
@@ -447,6 +487,8 @@ class SketchArchiveResource(ResourceMixin, Resource):
         print('---')
         if action == 'archive':
             return self._archive_sketch(sketch)
+        elif action == 'export':
+            return self._export_sketch(sketch)
         elif action == 'unarchive':
             return self._unarchive_sketch(sketch)
         else:
@@ -457,26 +499,27 @@ class SketchArchiveResource(ResourceMixin, Resource):
     def _export_sketch(self, sketch):
         """Returns a ZIP file with the exported content of a sketch."""
         # Export content to a ZIP container
-        #   Stories exported
         #   Views Exported
-        #   Metadata about sketch.
         #   Comments dumped.
         #   Annotations dumped
         #   Starred events dumped
         file_object = io.BytesIO()
 
-        request_url = request.url
-        if request_url.endswith('/'):
-            request_url = request_url[:-1]
-        base_url = request_url.rpartition('/')[0]
-        aggregation_url = '{0:s}/aggregation/explore/'.format(base_url)
-
         story_exporter = story_export_manager.StoryExportManager.get_exporter(
             'html')
 
+        meta = {
+            'user': current_user.username,
+            'time': datetime.datetime.utcnow().isoformat(),
+            'sketch_id': sketch.id,
+            'sketch_name': sketch.name,
+            'sketch_description': sketch.description,
+        }
+
         with zipfile.ZipFile(file_object, mode='w') as zip_file:
+            zip_file.writestr('METADATA', data=json.dumps(meta))
+
             for story in sketch.stories:
-                print('exporting story: {}'.format(story.title))
                 with story_exporter() as exporter:
                     data_fetcher = story_api_fetcher.ApiDataFetcher()
                     data_fetcher.set_sketch_id(sketch.id)
@@ -484,24 +527,47 @@ class SketchArchiveResource(ResourceMixin, Resource):
                     exporter.set_data_fetcher(data_fetcher)
                     exporter.from_string(story.content)
                     zip_file.writestr(
-                        'stories/{0:s}'.format(story.title),
+                        'stories/{0:s}.html'.format(story.title),
                         data=exporter.export_story())
 
+            agg_names = []
             for aggregation in sketch.aggregations:
-                print('exporting agg: {}'.format(aggregation.name))
-                data = {
-                    'aggregator_name': aggregation.agg_type,
-                    'aggregator_parameters': aggregation.parameters
-                }
-                r = requests.post(aggregation_url, json=data)
-                print(r)
-                print(r.response_code)
-                data = r.json().get('objects')[0]
+                name = aggregation.name
+                if name in agg_names:
+                    letters = string.ascii_lowercase
+                    random_string = ''.join(
+                        random.choice(letters) for i in range(5))
+                    name = '{0:s}_{1:s}'.format(name, random_string)
+
+                print('exporting agg: {}'.format(name))
+                parameters = json.loads(aggregation.parameters)
+                result_obj, meta = _run_aggregator(
+                    sketch.id, aggregator_name=aggregation.agg_type,
+                    aggregator_parameters=parameters)
+
                 zip_file.writestr(
-                    'aggregations/{0:s}'.format(aggregation.name),
-                    data=data)
+                    'aggregations/{0:s}.meta'.format(name),
+                    data=json.dumps(meta))
+
+                html = result_obj.to_chart(
+                    chart_name=meta.get('chart_type'),
+                    chart_title=aggregation.name,
+                    color=meta.get('chart_color'),
+                    interactive=True, as_html=True)
+                zip_file.writestr(
+                    'aggregations/{0:s}.html'.format(name),
+                    data=html)
+
+                string_io = io.StringIO()
+                df = result_obj.to_pandas()
+                df.to_csv(string_io, index=False)
+                string_io.seek(0)
+                zip_file.writestr(
+                    'aggregations/{0:s}.csv'.format(name),
+                    data=string_io.read())
 
             for view in sketch.views:
+                #HERNA
                 print('exporting view: {}'.format(view.name))
 
                 #query_string = Column(UnicodeText())
@@ -511,11 +577,10 @@ class SketchArchiveResource(ResourceMixin, Resource):
             for group in sketch.aggregationgroups:
                 print('exporting group: {}'.format(group.name))
 
-        file_object.close()
-        return file_object
-
-            # HERNA
-
+        file_object.seek(0)
+        return send_file(
+            file_object, mimetype='zip',
+            attachment_filename='timesketch_export.zip')
 
     def _unarchive_sketch(self, sketch):
         """Open up a sketch again."""
@@ -540,7 +605,7 @@ class SketchArchiveResource(ResourceMixin, Resource):
 
         # Go through all timelines in a sketch.
         # 
-        return zip_file
+        return send_file(zip_file, mimetype='zip', attachment_filename='timesketch_export.zip')
 
 
 class SketchResource(ResourceMixin, Resource):
