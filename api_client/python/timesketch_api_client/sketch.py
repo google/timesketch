@@ -145,6 +145,65 @@ class Sketch(resource.BaseResource):
 
         return data_frame
 
+    def create_view(
+            self, name, query_string='', query_dsl='', query_filter=None):
+        """Create a view object.
+
+        Args:
+            name (str): the name of the view.
+            query_string (str): Elasticsearch query string. This is optional
+                yet either a query string or a query DSL is required.
+            query_dsl (str): Elasticsearch query DSL as JSON string. This is
+                optional yet either a query string or a query DSL is required.
+            query_filter (dict): Filter for the query as a dict.
+
+        Raises:
+            ValueError: if neither query_string nor query_dsl is provided or
+                if query_filter is not a dict.
+            RuntimeError: if a view wasn't created for some reason.
+        """
+        if not (query_string or query_dsl):
+            raise ValueError('You need to supply a query string or a dsl')
+
+        resource_url = '{0:s}/sketches/{1:d}/views/'.format(
+            self.api.api_root, self.id)
+
+        if not query_filter:
+            query_filter = {
+                'time_start': None,
+                'time_end': None,
+                'size': self.DEFAULT_SIZE_LIMIT,
+                'terminate_after': self.DEFAULT_SIZE_LIMIT,
+                'indices': '_all',
+                'order': 'asc'
+            }
+
+        if not isinstance(query_filter, dict):
+            raise ValueError(
+                'Unable to query with a query filter that isn\'t a dict.')
+
+        data = {
+            'name': name,
+            'query': query_string,
+            'filter': query_filter,
+            'dsl': query_dsl,
+        }
+        response = self.api.session.post(resource_url, json=data)
+
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            raise RuntimeError(
+                'Unable to create view, error code: {0:d} - {1!s} '
+                '{2!s}'.format(
+                    response.status_code, response.reason, response.text))
+
+        response_json = response.json()
+        view_dict = response_json.get('objects', [{}])[0]
+        return view_lib.View(
+            view_id=view_dict.get('id'),
+            view_name=name,
+            sketch_id=self.id,
+            api=self.api)
+
     def create_story(self, title):
         """Create a story object.
 
@@ -290,16 +349,22 @@ class Sketch(resource.BaseResource):
             aggregations.append(aggregation_obj)
         return aggregations
 
-    def get_analyzer_status(self):
+    def get_analyzer_status(self, as_sessions=False):
         """Returns a list of started analyzers and their status.
 
+        Args:
+            as_sessions (bool): optional, if set to True then a list of
+                AnalyzerResult objects will be returned. Defaults to
+                returning a list of dicts.
         Returns:
-            A list of dict objects that contains status information
-            of each analyzer run. The dict contains information about
-            what timeline it ran against, the results and current
-            status of the analyzer run.
+            If "as_sessions" is set then a list of AnalyzerResult gets
+            returned, otherwise a list of dict objects that contains
+            status information of each analyzer run. The dict contains
+            information about what timeline it ran against, the
+            results and current status of the analyzer run.
         """
         stats_list = []
+        sessions = []
         for timeline_obj in self.list_timelines():
             resource_uri = (
                 '{0:s}/sketches/{1:d}/timelines/{2:d}/analysis').format(
@@ -310,17 +375,27 @@ class Sketch(resource.BaseResource):
             if not objects:
                 continue
             for result in objects[0]:
+                session_id = result.get('analysissession_id')
                 stat = {
                     'index': timeline_obj.index,
                     'timeline_id': timeline_obj.id,
+                    'session_id': session_id,
                     'analyzer': result.get('analyzer_name', 'N/A'),
                     'results': result.get('result', 'N/A'),
                     'status': 'N/A',
                 }
+                if as_sessions and session_id:
+                    sessions.append(analyzer.AnalyzerResult(
+                        timeline_id=timeline_obj.id, session_id=session_id,
+                        sketch_id=self.id, api=self.api))
                 status = result.get('status', [])
                 if len(status) == 1:
                     stat['status'] = status[0].get('status', 'N/A')
                 stats_list.append(stat)
+
+        if as_sessions:
+            return sessions
+
         return stats_list
 
     def get_aggregation(self, aggregation_id):
@@ -464,7 +539,7 @@ class Sketch(resource.BaseResource):
         return timelines
 
     def upload(self, timeline_name, file_path, index=None):
-        """Upload a CSV, JSONL, mans, or Plaso file to the server for indexing.
+        """Upload a CSV, JSONL or Plaso file to the server for indexing.
 
         Args:
             timeline_name: Name of the resulting timeline.
@@ -534,15 +609,16 @@ class Sketch(resource.BaseResource):
         """Explore the sketch.
 
         Args:
-            query_string: Elasticsearch query string.
-            query_dsl: Elasticsearch query DSL as JSON string.
-            query_filter: Filter for the query as a dict.
+            query_string (str): Elasticsearch query string.
+            query_dsl (str): Elasticsearch query DSL as JSON string.
+            query_filter (dict): Filter for the query as a dict.
             view: View object instance (optional).
-            return_fields: List of fields that should be included in the
-                response. Optional and defaults to None.
-            as_pandas: Optional bool that determines if the results should
-                be returned back as a dictionary or a Pandas DataFrame.
-            max_entries: Optional integer denoting a best effort to limit
+            return_fields (str): A comma separated string with a list of fields
+                that should be included in the response. Optional and defaults
+                to None.
+            as_pandas (bool): Optional bool that determines if the results
+                should be returned back as a dictionary or a Pandas DataFrame.
+            max_entries (int): Optional integer denoting a best effort to limit
                 the output size to the number of events. Events are read in,
                 10k at a time so there may be more events in the answer back
                 than this number denotes, this is a best effort.

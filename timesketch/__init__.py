@@ -33,13 +33,8 @@ from timesketch.models import configure_engine
 from timesketch.models import init_db
 from timesketch.models.sketch import Sketch
 from timesketch.models.user import User
-from timesketch.views.home import home_views
-from timesketch.views.sketch import sketch_views
 from timesketch.views.auth import auth_views
 from timesketch.views.spa import spa_views
-
-# Set to true to use the new Vue.js based frontend.
-USE_NEW_FRONTEND = True
 
 
 def create_app(config=None):
@@ -52,13 +47,8 @@ def create_app(config=None):
     Returns:
         Application object (instance of flask.Flask).
     """
-    # Setup the Flask app and load the config.
-    template_folder = 'templates'
-    static_folder = 'static'
-
-    if USE_NEW_FRONTEND:
-        template_folder = 'frontend/dist'
-        static_folder = 'frontend/dist'
+    template_folder = 'frontend/dist'
+    static_folder = 'frontend/dist'
 
     app = Flask(
         __name__,
@@ -98,6 +88,7 @@ def create_app(config=None):
     # Plaso version that we support
     if app.config['UPLOAD_ENABLED']:
         try:
+            # pylint: disable=import-outside-toplevel
             from plaso import __version__ as plaso_version
             app.config['PLASO_VERSION'] = plaso_version
         except ImportError:
@@ -115,13 +106,8 @@ def create_app(config=None):
     # Register blueprints. Blueprints are a way to organize your Flask
     # Flask application. See this for more information:
     # http://flask.pocoo.org/docs/latest/blueprints/
-    if USE_NEW_FRONTEND:
-        app.register_blueprint(spa_views)
-        app.register_blueprint(auth_views)
-    else:
-        app.register_blueprint(auth_views)
-        app.register_blueprint(home_views)
-        app.register_blueprint(sketch_views)
+    app.register_blueprint(spa_views)
+    app.register_blueprint(auth_views)
 
     # Setup URL routes for the API.
     api_v1 = Api(app, prefix='/api/v1')

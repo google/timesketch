@@ -73,7 +73,7 @@ def get_combined_message_string(dataframe=None, mydict=None):
         raise ValueError('Need to define either a dict or a DataFrame')
 
     if mydict:
-        my_list = mydict.keys()
+      my_list = list(mydict.keys())
     else:
         my_list = list(dataframe.columns)
 
