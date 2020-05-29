@@ -200,7 +200,8 @@ class MockDataStore(object):
                   sketch_id,
                   user_id,
                   label,
-                  toggle=False):
+                  toggle=False,
+                  single_update=True):
         """Mock adding a label to an event."""
         return
 
