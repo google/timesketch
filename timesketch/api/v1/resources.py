@@ -114,6 +114,7 @@ logger = logging.getLogger('api_resources')
 ARCHIVE_LABEL = 'archived'
 logger = logging.getLogger('api_resources')
 ARCHIVE_LABEL = 'archived'
+logger = logging.getLogger('api_resources')
 
 
 def bad_request(message):
