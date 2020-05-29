@@ -63,7 +63,7 @@ from .resources import LoggedInUserResource
 API_ROUTES = [
     (SketchListResource, '/sketches/'),
     (SketchResource, '/sketches/<int:sketch_id>/'),
-    (SketchArchiveResource, '/sketches/<int:sketch_id>/archive'),
+    (SketchArchiveResource, '/sketches/<int:sketch_id>/archive/'),
     (AnalysisResource, '/sketches/<int:sketch_id>/timelines/<int:timeline_id>/analysis/'),
     (AnalyzerRunResource, '/sketches/<int:sketch_id>/analyzer/'),
     (AnalyzerSessionResource, '/sketches/<int:sketch_id>/analyzer/sessions/<int:session_id>/'),

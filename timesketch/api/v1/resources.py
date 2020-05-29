@@ -34,10 +34,13 @@ import codecs
 import datetime
 import json
 import hashlib
+import io
 import logging
 import os
 import time
 import uuid
+import requests
+import zipfile
 
 import altair as alt
 import elasticsearch
@@ -414,9 +417,11 @@ class SketchListResource(ResourceMixin, Resource):
 class SketchArchiveResource(ResourceMixin, Resource):
     """Resource to archive a sketch."""
 
+    ARCHIVE_LABEL = 'archived'
+
     @login_required
-    def get(self, sketch_id):
-        """Handles GET request to the resource.
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
 
         Returns:
             A sketch in JSON (instance of flask.wrappers.Response)
@@ -426,7 +431,106 @@ class SketchArchiveResource(ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
-        # TODO: Implement what is missing.
+        if not sketch.has_permission(current_user, 'delete'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, (
+                    'User does not have sufficient access rights to '
+                    'delete a sketch.'))
+
+        form = request.json
+        if not form:
+            form = request.data
+
+        action = form.get('action', '')
+
+        print(action)
+        print('---')
+        if action == 'archive':
+            return self._archive_sketch(sketch)
+        elif action == 'unarchive':
+            return self._unarchive_sketch(sketch)
+        else:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'The action: [{0:s}] is not supported.'.format(action))
+
+    def _export_sketch(self, sketch):
+        """Returns a ZIP file with the exported content of a sketch."""
+        # Export content to a ZIP container
+        #   Stories exported
+        #   Views Exported
+        #   Metadata about sketch.
+        #   Comments dumped.
+        #   Annotations dumped
+        #   Starred events dumped
+        file_object = io.BytesIO()
+
+        request_url = request.url
+        if request_url.endswith('/'):
+            request_url = request_url[:-1]
+        base_url = request_url.rpartition('/')[0]
+        aggregation_url = '{0:s}/aggregation/explore/'.format(base_url)
+
+        story_exporter = story_export_manager.StoryExportManager.get_exporter(
+            'html')
+
+        with zipfile.ZipFile(file_object, mode='w') as zip_file:
+            for story in sketch.stories:
+                with story_exporter() as exporter:
+                    data_fetcher = story_api_fetcher.ApiDataFetcher()
+                    data_fetcher.set_sketch_id(sketch.id)
+
+                    exporter.set_data_fetcher(data_fetcher)
+                    exporter.from_string(story.content)
+                    data = exporter.export_story()
+                    zip_file.writestr(
+                        'stories/{0:s}'.format(story.title),
+                        data=data.get('story', ''))
+
+            for aggregation in sketch.aggregations:
+                data = {
+                    'aggregator_name': aggregation.agg_type,
+                    'aggregator_parameters': aggregation.parameters
+                }
+                r = requests.post(aggregation_url, json=data)
+                print(r)
+                print(r.response_code)
+                data = r.json().get('objects')[0]
+                zip_file.writestr(
+                    'aggregations/{0:s}'.format(aggregation.name),
+                    data=data)
+
+        file_object.close()
+        return file_object
+
+            # HERNA
+
+            #    views = relationship('View', backref='sketch', lazy='select')
+            #    aggregations = relationship('Aggregation', backref='sketch', lazy='select')
+            #    aggregationgroups = relationship(
+
+    def _unarchive_sketch(self, sketch):
+        """Open up a sketch again."""
+        sketch.remove_label(self.ARCHIVE_LABEL)
+
+    def _archive_sketch(self, sketch):
+        labels_to_prevent_deletion = current_app.config[
+            'LABELS_TO_PREVENT_DELETION']
+
+        for label in labels_to_prevent_deletion:
+            if sketch.has_label(label):
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    'A sketch with the label {0:s} cannot be '
+                    'archived.'.format(label))
+
+
+        sketch.add_label(self.ARCHIVE_LABEL)
+        zip_file = self._export_sketch(sketch)
+
+        # Go through all timelines in a sketch.
+        # 
+        return zip_file
 
 
 class SketchResource(ResourceMixin, Resource):
