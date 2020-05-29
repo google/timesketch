@@ -47,7 +47,7 @@ class TestThreatintelPlugin(BaseTest):
                 'YetiIndicators.get_neighbors')
     @mock.patch('timesketch.lib.analyzers.yetiindicators.'
                 'YetiIndicators.get_indicators')
-    def test_indicator_match(self, mock_get_indicators, mock_get_neighbors, _):
+    def test_indicator_match(self, mock_get_indicators, mock_get_neighbors):
         """Test that ES queries for indicators are correctly built."""
         sessionizer = yetiindicators.YetiIndicators('test_index', 1)
         sessionizer.datastore.client = mock.Mock()
