@@ -70,7 +70,12 @@ class YetiIndicators(interface.BaseSketchAnalyzer):
         Tags with skull emoji, adds a comment to the event.
         """
         event.add_emojis([emojis.get_emoji('SKULL')])
-        event.add_tags([n['name'] for n in neighbors])
+        tags = []
+        for n in neighbors:
+            slug = re.sub(r'[^a-z0-9]', '-', n['name'].lower())
+            slug = re.sub(r'-+', '-', slug)
+            tags.append(slug)
+        event.add_tags(tags)
         event.commit()
 
         msg = 'Indicator match: "{0:s}" ({1:s})\n'.format(

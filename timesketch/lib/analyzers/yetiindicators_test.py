@@ -47,7 +47,7 @@ class TestThreatintelPlugin(BaseTest):
                 'YetiIndicators.get_neighbors')
     @mock.patch('timesketch.lib.analyzers.yetiindicators.'
                 'YetiIndicators.get_indicators')
-    def test_indicator_match(self, mock_get_indicators, mock_get_neighbors):
+    def test_indicator_match(self, mock_get_indicators, mock_get_neighbors, _):
         """Test that ES queries for indicators are correctly built."""
         sessionizer = yetiindicators.YetiIndicators('test_index', 1)
         sessionizer.datastore.client = mock.Mock()
@@ -89,3 +89,15 @@ class TestThreatintelPlugin(BaseTest):
         self.assertEqual(message, 'No indicators were found in the timeline.')
         mock_get_indicators.assert_called_once()
         mock_get_neighbors.assert_not_called()
+
+    @mock.patch('timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+                MockDataStore)
+    def test_slug(self):
+        sessionizer = yetiindicators.YetiIndicators('test_index', 1)
+        mock_event = mock.Mock()
+        sessionizer.mark_event(
+            MOCK_YETI_INTEL["x-regex--6ebc9344-1111-4d65-8bdd-b6dddf613068"],
+            mock_event,
+            MOCK_YETI_NEIGHBORS)
+        # The name of the entity is "Random incident"
+        mock_event.add_tags.assert_called_once_with(['random-incident'])
