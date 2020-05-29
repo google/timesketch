@@ -36,6 +36,7 @@ import json
 import hashlib
 import io
 import logging
+import io
 import os
 import time
 import uuid
@@ -469,7 +470,6 @@ class SketchListResource(ResourceMixin, Resource):
 
 class SketchArchiveResource(ResourceMixin, Resource):
     """Resource to archive a sketch."""
-
 
     @login_required
     def get(self, sketch_id):
