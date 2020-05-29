@@ -1001,6 +1001,35 @@ class Sketch(resource.BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
 
+    def tag_events(self, events, tags):
+        """Tags one or more events with a list of tags.
+
+        Args:
+            events: Array of JSON objects representing events.
+            tags: List of tags (str) to add to the events.
+
+        Raises:
+            ValueError: if tags is not a list of strings.
+
+        Returns:
+            Dictionary with query results.
+        """
+        if not isinstance(tags, list):
+            raise ValueError('Tags need to be a list.')
+
+        if not all([isinstance(x, str) for x in tags]):
+            raise ValueError('Tags need to be a list of strings.')
+
+        form_data = {
+            'annotation': json.dumps(tags),
+            'annotation_type': 'tags',
+            'events': events
+        }
+        resource_url = '{0:s}/sketches/{1:d}/event/annotate/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.post(resource_url, json=form_data)
+        return response.json()
+
     def search_by_label(self, label_name, as_pandas=False):
         """Searches for all events containing a given label.
 
