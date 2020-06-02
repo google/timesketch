@@ -29,8 +29,8 @@ def error_message(response, message=None, error=RuntimeError):
         text = soup.p.string
     else:
         try:
-            message = json.loads(response.text)
-            text = message.get('message', 'Unable to get message')
+            response_dict = json.loads(response.text)
+            text = response_dict.get('message', 'Unable to get message')
         except (json.JSONDecodeError, AttributeError):
             text = str(response.text)
     raise error('{0:s}, with error [{1:d}] {2!s} {3:s}'.format(
