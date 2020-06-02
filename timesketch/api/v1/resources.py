@@ -537,7 +537,7 @@ class SketchArchiveResource(ResourceMixin, Resource):
     def _export_sketch(self, sketch):
         """Returns a ZIP file with the exported content of a sketch."""
         file_object = io.BytesIO()
-        sketch_is_archived = story.has_label(ARCHIVE_LABEL)
+        sketch_is_archived = sketch.has_label(ARCHIVE_LABEL)
 
         if sketch_is_archived:
             _ = self._unarchive_sketch(sketch)
