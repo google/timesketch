@@ -112,7 +112,6 @@ from timesketch.models.user import Group
 
 logger = logging.getLogger('api_resources')
 ARCHIVE_LABEL = 'archived'
-logger = logging.getLogger('api_resources')
 
 
 def bad_request(message):
@@ -538,6 +537,10 @@ class SketchArchiveResource(ResourceMixin, Resource):
     def _export_sketch(self, sketch):
         """Returns a ZIP file with the exported content of a sketch."""
         file_object = io.BytesIO()
+        is_archived = story.has_label(ARCHIVE_LABEL)
+
+        if is_archived:
+            _ = self._unarchive_sketch(sketch)
 
         story_exporter = story_export_manager.StoryExportManager.get_exporter(
             'html')
@@ -672,6 +675,9 @@ class SketchArchiveResource(ResourceMixin, Resource):
             # TODO (kiddi): Add in support for comments/stars/labels.
             # TODO (kiddi): Add in support for all tagged events (includes
             # a metadata file with a list of all tags and their count).
+
+        if is_archived:
+            _ = self._archive_sketch(sketch)
 
         file_object.seek(0)
         return send_file(
