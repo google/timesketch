@@ -264,16 +264,16 @@ def validate_api_token():
     validated_email = token_json.get('email')
 
     # Check if the authenticating user is part of the allowed domains.
-    domain_allowlist = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
-    if domain_allowlist:
+    hosted_domains = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
+    if hosted_domains:
         _, _, domain = validated_email.partition('@')
-        if domain.lower() != domain_allowlist.lower():
+        if domain.lower() != hosted_domains.lower():
             return abort(
                 HTTP_STATUS_CODE_UNAUTHORIZED,
                 'Domain {0:s} is not allowed to authenticate against this '
                 'instance.'.format(domain))
 
-    user_allowlist = current_app.config.get('GOOGLE_OIDC_USER_ALLOWLIST')
+    user_allowlist = current_app.config.get('GOOGLE_OIDC_ALLOWED_USERS')
     # Check if the authenticating user is on the allowlist.
     if user_allowlist:
         if validated_email not in user_allowlist:
@@ -358,7 +358,7 @@ def google_openid_connect():
             'Unable to validate request, with error: {0!s}'.format(e))
 
     validated_email = decoded_jwt.get('email')
-    user_allowlist = current_app.config.get('GOOGLE_OIDC_USER_ALLOWLIST')
+    user_allowlist = current_app.config.get('GOOGLE_OIDC_ALLOWED_USERS')
 
     # Check if the authenticating user is on the allowlist.
     if user_allowlist:

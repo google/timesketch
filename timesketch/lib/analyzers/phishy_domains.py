@@ -42,7 +42,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         self.domain_scoring_threshold = current_app.config.get(
             'DOMAIN_ANALYZER_WATCHED_DOMAINS_SCORE_THRESHOLD', 0.75)
         self.domain_scoring_allowlist = current_app.config.get(
-            'DOMAIN_ANALYZER_ALLOWLISTED_DOMAINS', [])
+            'DOMAIN_ANALYZER_EXCLUDE_DOMAINS', [])
 
     @staticmethod
     def _get_minhash_from_domain(domain):
