@@ -1158,7 +1158,8 @@ class Sketch(resource.BaseResource):
                 '{0:s} first'.format(directory))
 
         if not file_path.lower().endswith('.zip'):
-            raise RuntimeError('File needs to have a .zip extension.')
+            logger.warning('File does not end with a .zip, adding it.')
+            file_path = '{0:s}.zip'.format(file_path)
 
         if os.path.isfile(file_path):
             raise RuntimeError('File [{0:s}] already exists.'.format(file_path))
