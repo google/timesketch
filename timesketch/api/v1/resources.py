@@ -36,7 +36,6 @@ import json
 import hashlib
 import io
 import logging
-import io
 import os
 import time
 import uuid
@@ -225,6 +224,7 @@ class ResourceMixin(object):
         'description': fields.String,
         'index_name': fields.String,
         'status': fields.Nested(status_fields),
+        'label_string': fields.String,
         'deleted': fields.Boolean,
         'created_at': fields.DateTime,
         'updated_at': fields.DateTime
