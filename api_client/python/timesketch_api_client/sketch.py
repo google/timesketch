@@ -1141,3 +1141,40 @@ class Sketch(resource.BaseResource):
         return_status = response.status_code in definitions.HTTP_STATUS_CODE_20X
         self._archived = return_status
         return return_status
+
+    def export(self, file_path):
+        """Exports the content of the story to a ZIP file.
+
+        Args:
+            file_path (str): a file path where the ZIP file will be saved.
+
+        Raises:
+            RuntimeError: if sketch cannot be exported.
+        """
+        directory = os.path.dirname(file_path)
+        if not os.path.isdir(directory):
+            raise RuntimeError(
+                'The directory needs to exist, please create: '
+                '{0:s} first'.format(directory))
+
+        if not file_path.lower().endswith('.zip'):
+            logger.warning('File does not end with a .zip, adding it.')
+            file_path = '{0:s}.zip'.format(file_path)
+
+        if os.path.isfile(file_path):
+            raise RuntimeError('File [{0:s}] already exists.'.format(file_path))
+
+        form_data = {
+            'action': 'export'
+        }
+        resource_url = '{0:s}/sketches/{1:d}/archive/'.format(
+            self.api.api_root, self.id)
+
+        response = self.api.session.post(resource_url, json=form_data)
+        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+            error.error_message(
+                response, message='Failed exporting the sketch',
+                error=RuntimeError)
+
+        with open(file_path, 'wb') as fw:
+            fw.write(response.content)
