@@ -14,12 +14,8 @@
 """Tests for the Timesketch importer."""
 from __future__ import unicode_literals
 
-import json
 import unittest
-import mock
 import tempfile
-
-import pandas
 
 from . import helper
 
@@ -113,7 +109,7 @@ class TimesketchHelperTest(unittest.TestCase):
         streamer = MockStreamer()
         self._helper.configure_streamer(
             streamer, data_type='foo:no',
-            columns=['vedur', 'magn', 'auka' ,'rigning'])
+            columns=['vedur', 'magn', 'auka', 'rigning'])
 
         self.assertEqual(
             streamer.format_string,
@@ -128,7 +124,7 @@ class TimesketchHelperTest(unittest.TestCase):
         streamer = MockStreamer()
         self._helper.configure_streamer(
             streamer, data_type='data:secret:message',
-            columns=['vedur', 'auka' ,'rigning'])
+            columns=['vedur', 'auka', 'rigning'])
 
         self.assertEqual(
             streamer.format_string,
