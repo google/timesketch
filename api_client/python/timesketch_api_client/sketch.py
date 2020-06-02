@@ -1155,19 +1155,19 @@ class Sketch(resource.BaseResource):
         if not os.path.isdir(directory):
             raise RuntimeError(
                 'The directory needs to exist, please create: '
-                '%s first', directory)
+                '{0:s} first'.format(directory))
 
         if not file_path.lower().endswith('.zip'):
             raise RuntimeError('File needs to have a .zip extension.')
 
         if os.path.isfile(file_path):
-            raise RuntimeError('File [%s] already exists.', file_path)
+            raise RuntimeError('File [{0:s}] already exists.'.format(file_path))
 
         form_data = {
-                'action': 'export'
+            'action': 'export'
         }
         resource_url = '{0:s}/sketches/{1:d}/archive/'.format(
-                self.api.api_root, self.id)
+            self.api.api_root, self.id)
 
         response = self.api.session.post(resource_url, json=form_data)
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
