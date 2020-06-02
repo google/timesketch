@@ -264,22 +264,22 @@ def validate_api_token():
     validated_email = token_json.get('email')
 
     # Check if the authenticating user is part of the allowed domains.
-    domain_whitelist = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
-    if domain_whitelist:
+    domain_allowlist = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
+    if domain_allowlist:
         _, _, domain = validated_email.partition('@')
-        if domain.lower() != domain_whitelist.lower():
+        if domain.lower() != domain_allowlist.lower():
             return abort(
                 HTTP_STATUS_CODE_UNAUTHORIZED,
                 'Domain {0:s} is not allowed to authenticate against this '
                 'instance.'.format(domain))
 
-    user_whitelist = current_app.config.get('GOOGLE_OIDC_USER_WHITELIST')
-    # Check if the authenticating user is on the whitelist.
-    if user_whitelist:
-        if validated_email not in user_whitelist:
+    user_allowlist = current_app.config.get('GOOGLE_OIDC_USER_ALLOWLIST')
+    # Check if the authenticating user is on the allowlist.
+    if user_allowlist:
+        if validated_email not in user_allowlist:
             return abort(
                 HTTP_STATUS_CODE_UNAUTHORIZED,
-                'Unauthorized request, user not in whitelist')
+                'Unauthorized request, user not in allowlist')
 
     user = User.get_or_create(username=validated_email, name=validated_email)
     login_user(user)
@@ -358,14 +358,14 @@ def google_openid_connect():
             'Unable to validate request, with error: {0!s}'.format(e))
 
     validated_email = decoded_jwt.get('email')
-    user_whitelist = current_app.config.get('GOOGLE_OIDC_USER_WHITELIST')
+    user_allowlist = current_app.config.get('GOOGLE_OIDC_USER_ALLOWLIST')
 
-    # Check if the authenticating user is on the whitelist.
-    if user_whitelist:
-        if validated_email not in user_whitelist:
+    # Check if the authenticating user is on the allowlist.
+    if user_allowlist:
+        if validated_email not in user_allowlist:
             return abort(
                 HTTP_STATUS_CODE_UNAUTHORIZED,
-                'Unauthorized request, user not in whitelist')
+                'Unauthorized request, user not in allowlist')
 
     user = User.get_or_create(username=validated_email, name=validated_email)
     login_user(user)

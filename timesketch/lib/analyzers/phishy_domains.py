@@ -41,8 +41,8 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
         self.domain_scoring_threshold = current_app.config.get(
             'DOMAIN_ANALYZER_WATCHED_DOMAINS_SCORE_THRESHOLD', 0.75)
-        self.domain_scoring_whitelist = current_app.config.get(
-            'DOMAIN_ANALYZER_WHITELISTED_DOMAINS', [])
+        self.domain_scoring_allowlist = current_app.config.get(
+            'DOMAIN_ANALYZER_ALLOWLISTED_DOMAINS', [])
 
     @staticmethod
     def _get_minhash_from_domain(domain):
@@ -204,9 +204,9 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         watched_domains_list_temp = set(watched_domains_list)
         watched_domains_list = []
         for domain in watched_domains_list_temp:
-            if domain in self.domain_scoring_whitelist:
+            if domain in self.domain_scoring_allowlist:
                 continue
-            if any(domain.endswith(x) for x in self.domain_scoring_whitelist):
+            if any(domain.endswith(x) for x in self.domain_scoring_allowlist):
                 continue
 
             if '.' not in domain:
@@ -222,7 +222,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
             }
 
         similar_domain_counter = 0
-        whitelist_encountered = False
+        allowlist_encountered = False
         evil_emoji = emojis.get_emoji('SKULL_CROSSBONE')
         phishing_emoji = emojis.get_emoji('FISHING_POLE')
         for domain, _ in iter(domain_counter.items()):
@@ -244,9 +244,9 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
                 text = 'Domain {0:s} is similar to {1:s}'.format(
                     domain, ', '.join(similar_text_list))
                 if any(domain.endswith(
-                        x) for x in self.domain_scoring_whitelist):
-                    tags_to_add.append('whitelisted-domain')
-                    whitelist_encountered = True
+                        x) for x in self.domain_scoring_allowlist):
+                    tags_to_add.append('allowlisted-domain')
+                    allowlist_encountered = True
 
             for event in domains.get(domain, []):
                 event.add_emojis(emojis_to_add)
@@ -262,12 +262,12 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
                 view_name='Phishy Domains', analyzer_name=self.NAME,
                 query_string='tag:"phishy-domain"')
 
-            if whitelist_encountered:
+            if allowlist_encountered:
                 self.sketch.add_view(
-                    view_name='Phishy Domains, excl. whitelist',
+                    view_name='Phishy Domains, excl. allowlist',
                     analyzer_name=self.NAME,
                     query_string=(
-                        'tag:"phishy-domain" AND NOT tag:"whitelisted-domain"'))
+                        'tag:"phishy-domain" AND NOT tag:"allowlisted-domain"'))
 
         return (
             '{0:d} potentially phishy domains discovered.').format(
