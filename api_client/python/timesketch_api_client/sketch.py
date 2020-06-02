@@ -1122,9 +1122,9 @@ class Sketch(resource.BaseResource):
             'action': 'archive'
         }
         response = self.api.session.post(resource_url, json=data)
-        answer = response.status_code in definitions.HTTP_STATUS_CODE_20X
-        self._archived = answer
-        return answer
+        return_status = response.status_code in definitions.HTTP_STATUS_CODE_20X
+        self._archived = return_status
+        return return_status
 
     def unarchive(self):
         """Unarchives a sketch and return boolean whether it was succesful."""
@@ -1138,6 +1138,6 @@ class Sketch(resource.BaseResource):
             'action': 'unarchive'
         }
         response = self.api.session.post(resource_url, json=data)
-        answer = response.status_code in definitions.HTTP_STATUS_CODE_20X
-        self._archived = answer
-        return answer
+        return_status = response.status_code in definitions.HTTP_STATUS_CODE_20X
+        self._archived = return_status
+        return return_status

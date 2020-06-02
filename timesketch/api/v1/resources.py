@@ -537,9 +537,9 @@ class SketchArchiveResource(ResourceMixin, Resource):
     def _export_sketch(self, sketch):
         """Returns a ZIP file with the exported content of a sketch."""
         file_object = io.BytesIO()
-        is_archived = story.has_label(ARCHIVE_LABEL)
+        sketch_is_archived = story.has_label(ARCHIVE_LABEL)
 
-        if is_archived:
+        if sketch_is_archived:
             _ = self._unarchive_sketch(sketch)
 
         story_exporter = story_export_manager.StoryExportManager.get_exporter(
@@ -676,7 +676,7 @@ class SketchArchiveResource(ResourceMixin, Resource):
             # TODO (kiddi): Add in support for all tagged events (includes
             # a metadata file with a list of all tags and their count).
 
-        if is_archived:
+        if sketch_is_archived:
             _ = self._archive_sketch(sketch)
 
         file_object.seek(0)
@@ -705,6 +705,7 @@ class SketchArchiveResource(ResourceMixin, Resource):
             search_index.remove_label(ARCHIVE_LABEL)
             indexes_to_open.append(search_index.index_name)
 
+        # TODO (kiddi): Move this to lib/datastores/elastic.py.
         self.datastore.client.indices.open(','.join(indexes_to_open))
         return HTTP_STATUS_CODE_OK
 
@@ -748,6 +749,7 @@ class SketchArchiveResource(ResourceMixin, Resource):
                 continue
             search_index.add_label(ARCHIVE_LABEL)
             indexes_to_close.append(search_index.index_name)
+        # TODO (kiddi): Move this to lib/datastores/elastic.py.
         self.datastore.client.indices.close(','.join(indexes_to_close))
         return HTTP_STATUS_CODE_OK
 
