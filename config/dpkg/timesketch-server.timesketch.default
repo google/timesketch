@@ -201,7 +201,7 @@ EMAIL_FROM_USER = 'nobody'
 EMAIL_SMTP_SERVER = 'localhost'
 
 # Only send emails to these users.
-EMAIL_USER_ALOWLIST = []
+EMAIL_USER_ALLOWLIST = []
 
 # Configuration to construct URLs for resources.
 EXTERNAL_HOST_URL = 'https://localhost'
