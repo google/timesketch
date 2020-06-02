@@ -34,12 +34,16 @@ import codecs
 import datetime
 import json
 import hashlib
+import io
 import logging
 import os
 import time
 import uuid
+import zipfile
 
 import altair as alt
+import elasticsearch
+import pandas as pd
 import six
 
 from dateutil import parser
@@ -47,6 +51,7 @@ from flask import abort
 from flask import current_app
 from flask import jsonify
 from flask import request
+from flask import send_file
 from flask_login import current_user
 from flask_login import login_required
 from flask_restful import fields
@@ -106,6 +111,7 @@ from timesketch.models.user import Group
 
 
 logger = logging.getLogger('api_resources')
+ARCHIVE_LABEL = 'archived'
 
 
 def bad_request(message):
@@ -120,6 +126,56 @@ def bad_request(message):
     response = jsonify({'message': message})
     response.status_code = HTTP_STATUS_CODE_BAD_REQUEST
     return response
+
+
+def _run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None):
+    """Run an aggregator and return back results.
+
+    Args:
+        sketch_id (int): the sketch ID.
+        aggregator_name (str): the name of the aggregator class to run.
+        aggregator_parameters (dict): dict containing the parameters used
+            for running the aggregator.
+
+    Returns:
+        Tuple[Object, Dict]: a tuple containing the aggregator result object
+            (instance of AggregationResult) and a dict containing metadata
+            from the aggregator run.
+    """
+    agg_class = aggregator_manager.AggregatorManager.get_aggregator(
+        aggregator_name)
+    if not agg_class:
+        return None, {}
+    if not aggregator_parameters:
+        aggregator_parameters = {}
+
+    aggregator = agg_class(sketch_id=sketch_id)
+
+    chart_type = aggregator_parameters.pop('supported_charts', None)
+    chart_color = aggregator_parameters.pop('chart_color', '')
+
+    time_before = time.time()
+    result_obj = aggregator.run(**aggregator_parameters)
+    time_after = time.time()
+
+    aggregator_description = aggregator.describe
+
+    meta = {
+        'method': 'aggregator_run',
+        'chart_type': chart_type,
+        'chart_color': chart_color,
+        'name': aggregator_description.get('name'),
+        'description': aggregator_description.get('description'),
+        'es_time': time_after - time_before,
+    }
+
+    if chart_type:
+        meta['vega_spec'] = result_obj.to_chart(
+            chart_name=chart_type,
+            chart_title=aggregator.chart_title, color=chart_color)
+        meta['vega_chart_title'] = aggregator.chart_title
+
+    return result_obj, meta
 
 
 class ResourceMixin(object):
@@ -167,6 +223,7 @@ class ResourceMixin(object):
         'description': fields.String,
         'index_name': fields.String,
         'status': fields.Nested(status_fields),
+        'label_string': fields.String,
         'deleted': fields.Boolean,
         'created_at': fields.DateTime,
         'updated_at': fields.DateTime
@@ -179,6 +236,7 @@ class ResourceMixin(object):
         'description': fields.String,
         'status': fields.Nested(status_fields),
         'color': fields.String,
+        'label_string': fields.String,
         'searchindex': fields.Nested(searchindex_fields),
         'deleted': fields.Boolean,
         'created_at': fields.DateTime,
@@ -253,6 +311,7 @@ class ResourceMixin(object):
         'aggregations': fields.Nested(aggregation_fields),
         'aggregationgroups': fields.Nested(aggregation_group_fields),
         'active_timelines': fields.List(fields.Nested(timeline_fields)),
+        'label_string': fields.String,
         'status': fields.Nested(status_fields),
         'created_at': fields.DateTime,
         'updated_at': fields.DateTime
@@ -408,6 +467,293 @@ class SketchListResource(ResourceMixin, Resource):
         return self.to_json(sketch, status_code=HTTP_STATUS_CODE_CREATED)
 
 
+class SketchArchiveResource(ResourceMixin, Resource):
+    """Resource to archive a sketch."""
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            A sketch in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        if not sketch.has_permission(current_user, 'read'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, (
+                    'User does not have sufficient access rights to '
+                    'read the sketch.'))
+        meta = {
+            'is_archived': sketch.has_label(ARCHIVE_LABEL),
+            'sketch_id': sketch.id,
+            'sketch_name': sketch.name,
+        }
+        schema = {
+            'meta': meta,
+            'objects': []
+        }
+        return jsonify(schema)
+
+    @login_required
+    def post(self, sketch_id):
+        """Handles POST request to the resource.
+
+        Returns:
+            A sketch in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        if not sketch.has_permission(current_user, 'delete'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, (
+                    'User does not have sufficient access rights to '
+                    'delete a sketch.'))
+
+        form = request.json
+        if not form:
+            form = request.data
+
+        action = form.get('action', '')
+        if action == 'archive':
+            return self._archive_sketch(sketch)
+
+        if action == 'export':
+            return self._export_sketch(sketch)
+
+        if action == 'unarchive':
+            return self._unarchive_sketch(sketch)
+
+        return abort(
+            HTTP_STATUS_CODE_NOT_FOUND,
+            'The action: [{0:s}] is not supported.'.format(action))
+
+    def _export_sketch(self, sketch):
+        """Returns a ZIP file with the exported content of a sketch."""
+        file_object = io.BytesIO()
+        sketch_is_archived = story.has_label(ARCHIVE_LABEL)
+
+        if sketch_is_archived:
+            _ = self._unarchive_sketch(sketch)
+
+        story_exporter = story_export_manager.StoryExportManager.get_exporter(
+            'html')
+
+        # TODO (kiddi): Add timesketch version (needs to be moved to a separate
+        # library)
+        meta = {
+            'user': current_user.username,
+            'time': datetime.datetime.utcnow().isoformat(),
+            'sketch_id': sketch.id,
+            'sketch_name': sketch.name,
+            'sketch_description': sketch.description,
+        }
+
+        with zipfile.ZipFile(file_object, mode='w') as zip_file:
+            zip_file.writestr('METADATA', data=json.dumps(meta))
+
+            for story in sketch.stories:
+                with story_exporter() as exporter:
+                    data_fetcher = story_api_fetcher.ApiDataFetcher()
+                    data_fetcher.set_sketch_id(sketch.id)
+
+                    exporter.set_data_fetcher(data_fetcher)
+                    exporter.from_string(story.content)
+                    zip_file.writestr(
+                        'stories/{0:04d}_{1:s}.html'.format(
+                            story.id, story.title),
+                        data=exporter.export_story())
+
+            for aggregation in sketch.aggregations:
+                name = '{0:04d}_{1:s}'.format(aggregation.id, aggregation.name)
+                parameters = json.loads(aggregation.parameters)
+                result_obj, meta = _run_aggregator(
+                    sketch.id, aggregator_name=aggregation.agg_type,
+                    aggregator_parameters=parameters)
+
+                zip_file.writestr(
+                    'aggregations/{0:s}.meta'.format(name),
+                    data=json.dumps(meta))
+
+                html = result_obj.to_chart(
+                    chart_name=meta.get('chart_type'),
+                    chart_title=aggregation.name,
+                    color=meta.get('chart_color'),
+                    interactive=True, as_html=True)
+                zip_file.writestr(
+                    'aggregations/{0:s}.html'.format(name),
+                    data=html)
+
+                string_io = io.StringIO()
+                data_frame = result_obj.to_pandas()
+                data_frame.to_csv(string_io, index=False)
+                string_io.seek(0)
+                zip_file.writestr(
+                    'aggregations/{0:s}.csv'.format(name),
+                    data=string_io.read())
+
+            for view in sketch.views:
+                name = '{0:04d}_{1:s}'.format(view.id, view.name)
+                sketch_indices = {
+                    t.searchindex.index_name
+                    for t in sketch.timelines
+                }
+                query_filter = json.loads(view.query_filter)
+                if not query_filter:
+                    query_filter = {}
+                indices = query_filter.get('indices', sketch_indices)
+                if not indices or '_all' in indices:
+                    indices = [
+                        t.searchindex.index_name
+                        for t in sketch.timelines
+                    ]
+
+                query_dsl = view.query_dsl
+                if query_dsl:
+                    query_dict = json.loads(query_dsl)
+                    if not query_dict:
+                        query_dsl = None
+
+                # TODO (kiddi): Include all fields, not just the default one.
+                # TODO (kiddi): Enable scrolling support.
+                result = self.datastore.search(
+                    sketch_id=sketch.id,
+                    query_string=view.query_string,
+                    query_filter=query_filter,
+                    query_dsl=query_dsl,
+                    indices=indices)
+
+                fh = io.StringIO()
+                lines = []
+                for event in result['hits']['hits']:
+                    line = event['_source']
+                    line.setdefault('label', [])
+                    line['_id'] = event['_id']
+                    line['_type'] = event['_type']
+                    line['_index'] = event['_index']
+                    try:
+                        for label in line['timesketch_label']:
+                            if sketch.id != label['sketch_id']:
+                                continue
+                            line['label'].append(label['name'])
+                        del line['timesketch_label']
+                    except KeyError:
+                        pass
+
+                    lines.append(line)
+                data_frame = pd.DataFrame(lines)
+                del lines
+                data_frame.to_csv(fh, index=False)
+                fh.seek(0)
+                zip_file.writestr(
+                    'views/{0:s}.csv'.format(name), data=fh.read())
+
+                if not view.user:
+                    username = 'System'
+                else:
+                    username = view.user.username
+                meta = {
+                    'name': view.name,
+                    'view_id': view.id,
+                    'description': view.description,
+                    'query_string': view.query_string,
+                    'query_filter': view.query_filter,
+                    'query_dsl': view.query_dsl,
+                    'username': username,
+                    'sketch_id': view.sketch_id,
+                }
+                zip_file.writestr(
+                    'views/{0:s}.meta'.format(name), data=json.dumps(meta))
+
+            # TODO (kiddi): Add in aggregation group support.
+            # TODO (kiddi): Add in support for comments/stars/labels.
+            # TODO (kiddi): Add in support for all tagged events (includes
+            # a metadata file with a list of all tags and their count).
+
+        if sketch_is_archived:
+            _ = self._archive_sketch(sketch)
+
+        file_object.seek(0)
+        return send_file(
+            file_object, mimetype='zip',
+            attachment_filename='timesketch_export.zip')
+
+    def _unarchive_sketch(self, sketch):
+        """Unarchives a sketch by opening up all indices and removing labels.
+
+        Args:
+            sketch: Instance of timesketch.models.sketch.Sketch
+        """
+        if not sketch.has_label(ARCHIVE_LABEL):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to unarchive a sketch that wasn\'t already archived '
+                '(sketch: {0:d})'.format(sketch.id))
+
+        sketch.remove_label(ARCHIVE_LABEL)
+
+        indexes_to_open = []
+        for timeline in sketch.timelines:
+            timeline.remove_label(ARCHIVE_LABEL)
+            search_index = timeline.searchindex
+            search_index.remove_label(ARCHIVE_LABEL)
+            indexes_to_open.append(search_index.index_name)
+
+        # TODO (kiddi): Move this to lib/datastores/elastic.py.
+        self.datastore.client.indices.open(','.join(indexes_to_open))
+        return HTTP_STATUS_CODE_OK
+
+    def _archive_sketch(self, sketch):
+        """Unarchives a sketch by opening up all indices and removing labels.
+
+        Args:
+            sketch: Instance of timesketch.models.sketch.Sketch
+        """
+        if sketch.has_label(ARCHIVE_LABEL):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to archive a sketch that was already archived '
+                '(sketch: {0:d})'.format(sketch.id))
+
+        labels_to_prevent_deletion = current_app.config[
+            'LABELS_TO_PREVENT_DELETION']
+
+        for label in labels_to_prevent_deletion:
+            if sketch.has_label(label):
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    'A sketch with the label {0:s} cannot be '
+                    'archived.'.format(label))
+
+        sketch.add_label(ARCHIVE_LABEL)
+
+        # Go through all timelines in a sketch.
+        #    Each timeline has only a single search index, however
+        #    each search index can be part of multiple timelines.
+        #    Only archive a search index if all of it's timelines
+        #    are archived.
+        indexes_to_close = []
+        for timeline in sketch.timelines:
+            timeline.add_label(ARCHIVE_LABEL)
+            search_index = timeline.searchindex
+
+            if not all(
+                    [x.has_label(
+                        ARCHIVE_LABEL) for x in search_index.timelines]):
+                continue
+            search_index.add_label(ARCHIVE_LABEL)
+            indexes_to_close.append(search_index.index_name)
+        # TODO (kiddi): Move this to lib/datastores/elastic.py.
+        self.datastore.client.indices.close(','.join(indexes_to_close))
+        return HTTP_STATUS_CODE_OK
+
+
 class SketchResource(ResourceMixin, Resource):
     """Resource to get a sketch."""
 
@@ -419,6 +765,10 @@ class SketchResource(ResourceMixin, Resource):
             A sketch in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
         aggregators = {}
         for _, cls in aggregator_manager.AggregatorManager.get_aggregators():
             aggregators[cls.NAME] = {
@@ -522,11 +872,22 @@ class SketchResource(ResourceMixin, Resource):
     def delete(self, sketch_id):
         """Handles DELETE request to the resource."""
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
         if not sketch.has_permission(current_user, 'delete'):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN, (
                     'User does not have sufficient access rights to '
                     'delete a sketch.'))
+        not_delete_labels = current_app.config.get(
+            'LABELS_TO_PREVENT_DELETION', [])
+        for label in not_delete_labels:
+            if sketch.has_label(label):
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    'Sketch with the label [{0:s}] cannot be deleted.'.format(
+                        label))
         sketch.set_status(status='deleted')
         return HTTP_STATUS_CODE_OK
 
@@ -539,6 +900,9 @@ class SketchResource(ResourceMixin, Resource):
         """
         form = NameDescriptionForm.build(request)
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
         if not form.validate_on_submit():
             abort(
@@ -643,6 +1007,12 @@ class ViewListResource(ResourceMixin, Resource):
             Views in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have read access controls on sketch.')
         return self.to_json(sketch.get_named_views)
 
     @login_required
@@ -661,6 +1031,12 @@ class ViewListResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to save view, not able to validate form data.')
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have write access controls on sketch.')
         view = self.create_view_from_form(sketch, form)
         return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
 
@@ -680,7 +1056,14 @@ class ViewResource(ResourceMixin, Resource):
             A view in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
         view = View.query.get(view_id)
+
+        if not sketch.has_permission(current_user, 'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have read access controls on sketch.')
 
         # Check that this view belongs to the sketch
         if view.sketch_id != sketch.id:
@@ -720,7 +1103,16 @@ class ViewResource(ResourceMixin, Resource):
             view_id: Integer primary key for a view database model
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'delete'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have delete access controls on sketch.')
         view = View.query.get(view_id)
+        if not view:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No view found with this ID.')
 
         # Check that this view belongs to the sketch
         if view.sketch_id != sketch.id:
@@ -754,6 +1146,12 @@ class ViewResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to update view, not able to validate form data')
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have write access controls on sketch.')
         view = View.query.get(view_id)
         view.query_string = form.query.data
         view.query_filter = json.dumps(form.filter.data, ensure_ascii=False)
@@ -816,6 +1214,19 @@ class ExploreResource(ResourceMixin, Resource):
             JSON with list of matched events
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        if not sketch.has_permission(current_user, 'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have read access controls on sketch.')
+
+        if sketch.has_label(ARCHIVE_LABEL):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to query on an archived sketch.')
+
         form = ExploreForm.build(request)
 
         if not form.validate_on_submit():
@@ -964,6 +1375,12 @@ class AggregationResource(ResourceMixin, Resource):
             JSON with aggregation results
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have read access controls on sketch.')
         aggregation = Aggregation.query.get(aggregation_id)
 
         # Check that this aggregation belongs to the sketch
@@ -1007,6 +1424,9 @@ class AggregationResource(ResourceMixin, Resource):
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have write access controls on sketch.')
 
         aggregation = Aggregation.query.get(aggregation_id)
         if not aggregation:
@@ -1340,6 +1760,13 @@ class AggregationExploreResource(ResourceMixin, Resource):
                 'Not able to run aggregation, unable to validate form data.')
 
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        if not sketch.has_permission(current_user, 'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have read access controls on sketch.')
         sketch_indices = {
             t.searchindex.index_name
             for t in sketch.timelines
@@ -1431,6 +1858,13 @@ class AggregationListResource(ResourceMixin, Resource):
             Views in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        if not sketch.has_permission(current_user, 'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have read access controls on sketch.')
         aggregations = sketch.get_named_aggregations
         return self.to_json(aggregations)
 
@@ -1526,6 +1960,10 @@ class AggregationGroupListResource(ResourceMixin, Resource):
             Views in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
         if not sketch.has_permission(user=current_user, permission='read'):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
@@ -1561,6 +1999,10 @@ class AggregationGroupListResource(ResourceMixin, Resource):
             An aggregation in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
         if not sketch.has_permission(user=current_user, permission='write'):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
@@ -1621,6 +2063,13 @@ class AggregationLegacyResource(ResourceMixin, Resource):
             JSON with aggregation results
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        if not sketch.has_permission(current_user, 'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have read access controls on sketch.')
         form = AggregationLegacyForm.build(request)
 
         if not form.validate_on_submit():
@@ -1698,6 +2147,13 @@ class EventCreateResource(ResourceMixin, Resource):
                 'Failed to add event, form data not validated')
 
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have write access controls on sketch.')
+
         timeline_name = 'sketch specific timeline'
         index_name_seed = 'timesketch' + str(sketch_id)
         event_type = 'user_created_event'
@@ -1810,6 +2266,13 @@ class EventResource(ResourceMixin, Resource):
 
         args = self.parser.parse_args()
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have read access controls on sketch.')
+
         searchindex_id = args.get('searchindex_id')
         searchindex = SearchIndex.query.filter_by(
             index_name=searchindex_id).first()
@@ -1969,6 +2432,13 @@ class EventAnnotationResource(ResourceMixin, Resource):
 
         annotations = []
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have write access controls on sketch.')
+
         indices = [t.searchindex.index_name for t in sketch.timelines]
         annotation_type = form.annotation_type.data
         events = form.events.raw_data
@@ -2271,6 +2741,11 @@ class UploadFileResource(ResourceMixin, Resource):
         sketch = None
         if sketch_id:
             sketch = Sketch.query.get_with_acl(sketch_id)
+            if not sketch:
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND,
+                    'No sketch found with this ID.')
+
 
         index_name = form.get('index_name', uuid.uuid4().hex)
         if not isinstance(index_name, six.text_type):
@@ -2346,6 +2821,13 @@ class StoryListResource(ResourceMixin, Resource):
             Stories in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have read access controls on sketch.')
+
         stories = []
         for story in Story.query.filter_by(
                 sketch=sketch).order_by(desc(Story.created_at)):
@@ -2367,10 +2849,17 @@ class StoryListResource(ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
 
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have write access controls on sketch.')
+
         title = ''
         if form.title.data:
             title = form.title.data
-        sketch = Sketch.query.get_with_acl(sketch_id)
         story = Story(
             title=title, content='[]', sketch=sketch, user=current_user)
         db_session.add(story)
@@ -2435,6 +2924,10 @@ class StoryResource(ResourceMixin, Resource):
             msg = 'No sketch found with this ID.'
             abort(HTTP_STATUS_CODE_NOT_FOUND, msg)
 
+        if not sketch.has_permission(current_user, 'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have read access controls on sketch.')
+
         # Check that this story belongs to the sketch
         if story.sketch_id != sketch.id:
             abort(
@@ -2478,6 +2971,10 @@ class StoryResource(ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'Sketch ID ({0:d}) does not match with the ID in '
                 'the story ({1:d})'.format(sketch.id, story.sketch_id))
+
+        if not sketch.has_permission(current_user, 'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have write access controls on sketch.')
 
         form = request.json
         if not form:
@@ -2548,6 +3045,12 @@ class QueryResource(ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have read access controls on sketch.')
         schema = {
             'objects': [],
             'meta': {}}
@@ -2574,6 +3077,12 @@ class CountEventsResource(ResourceMixin, Resource):
             Number of events in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have read access controls on sketch.')
         indices = [t.searchindex.index_name for t in sketch.active_timelines]
         count = self.datastore.count(indices)
         meta = dict(count=count)
@@ -2609,6 +3118,10 @@ class TimelineCreateResource(ResourceMixin, Resource):
         sketch = None
         if sketch_id:
             sketch = Sketch.query.get_with_acl(sketch_id)
+            if not sketch:
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND,
+                    'No sketch found with this ID.')
 
         # We do not need a human readable filename or
         # datastore index name, so we use UUIDs here.
@@ -2663,6 +3176,9 @@ class AnalysisResource(ResourceMixin, Resource):
             An analysis in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
         if not sketch:
             abort(
@@ -2695,6 +3211,10 @@ class AnalyzerSessionResource(ResourceMixin, Resource):
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
 
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
         if not sketch.has_permission(current_user, 'read'):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
@@ -2716,6 +3236,9 @@ class AnalyzerRunResource(ResourceMixin, Resource):
             A list of all available analyzer names.
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
         if not sketch.has_permission(current_user, 'read'):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
@@ -2733,6 +3256,9 @@ class AnalyzerRunResource(ResourceMixin, Resource):
             A string with the response from running the analyzer.
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
         if not sketch.has_permission(current_user, 'read'):
             return abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
@@ -2819,6 +3345,12 @@ class TimelineListResource(ResourceMixin, Resource):
             View in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have read access controls on sketch.')
         return self.to_json(sketch.timelines)
 
     @login_required
@@ -2829,6 +3361,13 @@ class TimelineListResource(ResourceMixin, Resource):
             A sketch in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        if not sketch.has_permission(current_user, 'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have write access controls on sketch.')
         form = AddTimelineSimpleForm.build(request)
         metadata = {'created': True}
 
@@ -2893,6 +3432,9 @@ class TimelineResource(ResourceMixin, Resource):
             timeline_id: Integer primary key for a timeline database model
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
         timeline = Timeline.query.get(timeline_id)
 
         # Check that this timeline belongs to the sketch
@@ -2918,6 +3460,9 @@ class TimelineResource(ResourceMixin, Resource):
             timeline_id: Integer primary key for a timeline database model
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
         timeline = Timeline.query.get(timeline_id)
         form = TimelineForm.build(request)
 
@@ -2954,6 +3499,9 @@ class TimelineResource(ResourceMixin, Resource):
             timeline_id: Integer primary key for a timeline database model
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
         timeline = Timeline.query.get(timeline_id)
 
         # Check that this timeline belongs to the sketch
@@ -2972,6 +3520,15 @@ class TimelineResource(ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'The user does not have write permission on the sketch.')
+
+        not_delete_labels = current_app.config.get(
+            'LABELS_TO_PREVENT_DELETION', [])
+        for label in not_delete_labels:
+            if timeline.has_label(label):
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    'Timelines with label [{0:s}] cannot be deleted.'.format(
+                        label))
 
         sketch.timelines.remove(timeline)
         db_session.commit()
@@ -3158,6 +3715,36 @@ class SearchIndexResource(ResourceMixin, Resource):
         searchindex = SearchIndex.query.get_with_acl(searchindex_id)
         return self.to_json(searchindex)
 
+    @login_required
+    def delete(self, searchindex_id):
+        """Handles DELETE request to the resource."""
+        searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        if not searchindex:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No searchindex found with this ID.')
+
+        timelines = Timeline.query.filter_by(searchindex=searchindex).all()
+        sketches = [
+            t.sketch for t in timelines
+            if t.sketch and t.sketch.get_status.status != 'deleted'
+        ]
+        if sketches:
+            error_strings = ['WARNING: This timeline is in use by:']
+            for sketch in sketches:
+                error_strings.append(' * {0:s}'.format(sketch.name))
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                '\n'.join(error_strings))
+
+        db_session.delete(searchindex)
+        db_session.commit()
+        try:
+            self.datastore.client.indices.delete(index=searchindex.index_name)
+        except elasticsearch.NotFoundError:
+            pass
+        return HTTP_STATUS_CODE_OK
+
 
 class UserListResource(ResourceMixin, Resource):
     """Resource to get list of users."""
@@ -3196,6 +3783,9 @@ class CollaboratorResource(ResourceMixin, Resource):
             sketch_id: Integer primary key for a sketch database model
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
         form = request.json
 
         # TODO: Add granular ACL controls.
@@ -3264,8 +3854,15 @@ class SessionResource(ResourceMixin, Resource):
         sessions = []
         isTruncated = False
 
-        #check the timeline belongs to the sketch
         sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+        if not sketch.has_permission(current_user, 'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have read access controls on sketch.')
+
+        #check the timeline belongs to the sketch
         sketch_indices = {t.searchindex.index_name for t in sketch.timelines
                           if t.searchindex.index_name == timeline_index}
 

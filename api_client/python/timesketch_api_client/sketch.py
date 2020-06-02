@@ -57,6 +57,7 @@ class Sketch(resource.BaseResource):
         """
         self.id = sketch_id
         self.api = api
+        self._archived = None
         self._sketch_name = sketch_name
         self._resource_uri = 'sketches/{0:d}'.format(self.id)
         super(Sketch, self).__init__(api=api, resource_uri=self._resource_uri)
@@ -228,6 +229,13 @@ class Sketch(resource.BaseResource):
             story_id=story_dict.get('id', 0),
             sketch=self,
             api=self.api)
+
+    def delete(self):
+        """Deletes the sketch."""
+        resource_url = '{0:s}/sketches/{1:d}/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.delete(resource_url)
+        return response.status_code in definitions.HTTP_STATUS_CODE_20X
 
     def add_to_acl(self, user_list=None, group_list=None, make_public=False):
         """Add users or groups to the sketch ACL.
@@ -629,10 +637,14 @@ class Sketch(resource.BaseResource):
 
         Raises:
             ValueError: if unable to query for the results.
-            RuntimeError: if the query is missing needed values.
+            RuntimeError: if the query is missing needed values, or if the
+                sketch is archived.
         """
         if not (query_string or query_filter or query_dsl or view):
             raise RuntimeError('You need to supply a query or view')
+
+        if self.is_archived():
+            raise RuntimeError('Unable to query an archived sketch.')
 
         if not query_filter:
             query_filter = {
@@ -1085,3 +1097,47 @@ class Sketch(resource.BaseResource):
             self.api.api_root, self.id)
         response = self.api.session.post(resource_url, json=form_data)
         return response.json()
+
+    def is_archived(self):
+        """Return a boolean indicating whether the sketch has been archived."""
+        if self._archived is not None:
+            return self._archived
+
+        resource_url = '{0:s}/sketches/{1:d}/archive/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.get(resource_url)
+        meta = response.json().get('meta', {})
+        self._archived = meta.get('is_archived', False)
+        return self._archived
+
+    def archive(self):
+        """Archive a sketch and return a boolean whether it was succesful."""
+        if self.is_archived():
+            logger.error('Sketch already archived.')
+            return False
+
+        resource_url = '{0:s}/sketches/{1:d}/archive/'.format(
+            self.api.api_root, self.id)
+        data = {
+            'action': 'archive'
+        }
+        response = self.api.session.post(resource_url, json=data)
+        return_status = response.status_code in definitions.HTTP_STATUS_CODE_20X
+        self._archived = return_status
+        return return_status
+
+    def unarchive(self):
+        """Unarchives a sketch and return boolean whether it was succesful."""
+        if not self.is_archived():
+            logger.error('Sketch wasn\'t archived.')
+            return False
+
+        resource_url = '{0:s}/sketches/{1:d}/archive/'.format(
+            self.api.api_root, self.id)
+        data = {
+            'action': 'unarchive'
+        }
+        response = self.api.session.post(resource_url, json=data)
+        return_status = response.status_code in definitions.HTTP_STATUS_CODE_20X
+        self._archived = return_status
+        return return_status
