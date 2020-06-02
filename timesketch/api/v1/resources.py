@@ -39,13 +39,11 @@ import logging
 import os
 import time
 import uuid
-import random
-import requests
-import string
 import zipfile
 
 import altair as alt
 import elasticsearch
+import pandas as pd
 import six
 
 from dateutil import parser
@@ -113,6 +111,7 @@ from timesketch.models.user import Group
 
 
 logger = logging.getLogger('api_resources')
+ARCHIVE_LABEL = 'archived'
 
 
 def bad_request(message):
@@ -130,6 +129,19 @@ def bad_request(message):
 
 
 def _run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None):
+    """Run an aggregator and return back results.
+
+    Args:
+        sketch_id (int): the sketch ID.
+        aggregator_name (str): the name of the aggregator class to run.
+        aggregator_parameters (dict): dict containing the parameters used
+            for running the aggregator.
+
+    Returns:
+        Tuple[Object, Dict]: a tuple containing the aggregator result object
+            (instance of AggregationResult) and a dict containing metadata
+            from the aggregator run.
+    """
     agg_class = aggregator_manager.AggregatorManager.get_aggregator(
         aggregator_name)
     if not agg_class:
@@ -457,7 +469,34 @@ class SketchListResource(ResourceMixin, Resource):
 class SketchArchiveResource(ResourceMixin, Resource):
     """Resource to archive a sketch."""
 
-    ARCHIVE_LABEL = 'archived'
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            A sketch in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        if not sketch.has_permission(current_user, 'read'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, (
+                    'User does not have sufficient access rights to '
+                    'read the sketch.'))
+        meta = {
+            'is_archived': sketch.has_label(ARCHIVE_LABEL),
+            'sketch_id': sketch.id,
+            'sketch_name': sketch.name,
+        }
+        schema = {
+            'meta': meta,
+            'objects': []
+        }
+        return jsonify(schema)
 
     @login_required
     def post(self, sketch_id):
@@ -482,32 +521,28 @@ class SketchArchiveResource(ResourceMixin, Resource):
             form = request.data
 
         action = form.get('action', '')
-
-        print(action)
-        print('---')
         if action == 'archive':
             return self._archive_sketch(sketch)
-        elif action == 'export':
+
+        if action == 'export':
             return self._export_sketch(sketch)
-        elif action == 'unarchive':
+
+        if action == 'unarchive':
             return self._unarchive_sketch(sketch)
-        else:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                'The action: [{0:s}] is not supported.'.format(action))
+
+        return abort(
+            HTTP_STATUS_CODE_NOT_FOUND,
+            'The action: [{0:s}] is not supported.'.format(action))
 
     def _export_sketch(self, sketch):
         """Returns a ZIP file with the exported content of a sketch."""
-        # Export content to a ZIP container
-        #   Views Exported
-        #   Comments dumped.
-        #   Annotations dumped
-        #   Starred events dumped
         file_object = io.BytesIO()
 
         story_exporter = story_export_manager.StoryExportManager.get_exporter(
             'html')
 
+        # TODO (kiddi): Add timesketch version (needs to be moved to a separate
+        # library)
         meta = {
             'user': current_user.username,
             'time': datetime.datetime.utcnow().isoformat(),
@@ -527,19 +562,12 @@ class SketchArchiveResource(ResourceMixin, Resource):
                     exporter.set_data_fetcher(data_fetcher)
                     exporter.from_string(story.content)
                     zip_file.writestr(
-                        'stories/{0:s}.html'.format(story.title),
+                        'stories/{0:04d}_{1:s}.html'.format(
+                            story.id, story.title),
                         data=exporter.export_story())
 
-            agg_names = []
             for aggregation in sketch.aggregations:
-                name = aggregation.name
-                if name in agg_names:
-                    letters = string.ascii_lowercase
-                    random_string = ''.join(
-                        random.choice(letters) for i in range(5))
-                    name = '{0:s}_{1:s}'.format(name, random_string)
-
-                print('exporting agg: {}'.format(name))
+                name = '{0:04d}_{1:s}'.format(aggregation.id, aggregation.name)
                 parameters = json.loads(aggregation.parameters)
                 result_obj, meta = _run_aggregator(
                     sketch.id, aggregator_name=aggregation.agg_type,
@@ -559,23 +587,90 @@ class SketchArchiveResource(ResourceMixin, Resource):
                     data=html)
 
                 string_io = io.StringIO()
-                df = result_obj.to_pandas()
-                df.to_csv(string_io, index=False)
+                data_frame = result_obj.to_pandas()
+                data_frame.to_csv(string_io, index=False)
                 string_io.seek(0)
                 zip_file.writestr(
                     'aggregations/{0:s}.csv'.format(name),
                     data=string_io.read())
 
             for view in sketch.views:
-                #HERNA
-                print('exporting view: {}'.format(view.name))
+                name = '{0:04d}_{1:s}'.format(view.id, view.name)
+                sketch_indices = {
+                    t.searchindex.index_name
+                    for t in sketch.timelines
+                }
+                query_filter = json.loads(view.query_filter)
+                if not query_filter:
+                    query_filter = {}
+                indices = query_filter.get('indices', sketch_indices)
+                if not indices or '_all' in indices:
+                    indices = [
+                        t.searchindex.index_name
+                        for t in sketch.timelines
+                    ]
 
-                #query_string = Column(UnicodeText())
-                #    query_filter = Column(UnicodeText())
-                #    query_dsl = Column(UnicodeText())
+                query_dsl = view.query_dsl
+                if query_dsl:
+                    query_dict = json.loads(query_dsl)
+                    if not query_dict:
+                        query_dsl = None
 
-            for group in sketch.aggregationgroups:
-                print('exporting group: {}'.format(group.name))
+                # TODO (kiddi): Include all fields, not just the default one.
+                # TODO (kiddi): Enable scrolling support.
+                result = self.datastore.search(
+                    sketch_id=sketch.id,
+                    query_string=view.query_string,
+                    query_filter=query_filter,
+                    query_dsl=query_dsl,
+                    indices=indices)
+
+                fh = io.StringIO()
+                lines = []
+                for event in result['hits']['hits']:
+                    line = event['_source']
+                    line.setdefault('label', [])
+                    line['_id'] = event['_id']
+                    line['_type'] = event['_type']
+                    line['_index'] = event['_index']
+                    try:
+                        for label in line['timesketch_label']:
+                            if sketch.id != label['sketch_id']:
+                                continue
+                            line['label'].append(label['name'])
+                        del line['timesketch_label']
+                    except KeyError:
+                        pass
+
+                    lines.append(line)
+                data_frame = pd.DataFrame(lines)
+                del lines
+                data_frame.to_csv(fh, index=False)
+                fh.seek(0)
+                zip_file.writestr(
+                    'views/{0:s}.csv'.format(name), data=fh.read())
+
+                if not view.user:
+                    username = 'System'
+                else:
+                    username = view.user.username
+                meta = {
+                    'name': view.name,
+                    'view_id': view.id,
+                    'description': view.description,
+                    'query_string': view.query_string,
+                    'query_filter': view.query_filter,
+                    'query_dsl': view.query_dsl,
+                    'username': username,
+                    'sketch_id': view.sketch_id,
+                }
+                zip_file.writestr(
+                    'views/{0:s}.meta'.format(name), data=json.dumps(meta))
+
+            # TODO (kiddi): Add in aggregation group support.
+            # TODO (kiddi): Add in support for comments/stars/labels.
+            # TODO (kiddi): Add in support for all tagged events (includes
+            # a metadata file with a list of all tags and their count).
 
         file_object.seek(0)
         return send_file(
@@ -583,10 +678,41 @@ class SketchArchiveResource(ResourceMixin, Resource):
             attachment_filename='timesketch_export.zip')
 
     def _unarchive_sketch(self, sketch):
-        """Open up a sketch again."""
-        sketch.remove_label(self.ARCHIVE_LABEL)
+        """Unarchives a sketch by opening up all indices and removing labels.
+
+        Args:
+            sketch: Instance of timesketch.models.sketch.Sketch
+        """
+        if not sketch.has_label(ARCHIVE_LABEL):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to unarchive a sketch that wasn\'t already archived '
+                '(sketch: {0:d})'.format(sketch.id))
+
+        sketch.remove_label(ARCHIVE_LABEL)
+
+        indexes_to_open = []
+        for timeline in sketch.timelines:
+            timeline.remove_label(ARCHIVE_LABEL)
+            search_index = timeline.searchindex
+            search_index.remove_label(ARCHIVE_LABEL)
+            indexes_to_open.append(search_index.index_name)
+
+        self.datastore.client.indices.open(','.join(indexes_to_open))
+        return HTTP_STATUS_CODE_OK
 
     def _archive_sketch(self, sketch):
+        """Unarchives a sketch by opening up all indices and removing labels.
+
+        Args:
+            sketch: Instance of timesketch.models.sketch.Sketch
+        """
+        if sketch.has_label(ARCHIVE_LABEL):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to archive a sketch that was already archived '
+                '(sketch: {0:d})'.format(sketch.id))
+
         labels_to_prevent_deletion = current_app.config[
             'LABELS_TO_PREVENT_DELETION']
 
@@ -597,15 +723,26 @@ class SketchArchiveResource(ResourceMixin, Resource):
                     'A sketch with the label {0:s} cannot be '
                     'archived.'.format(label))
 
-
-        sketch.add_label(self.ARCHIVE_LABEL)
-        print('exporting...')
-        zip_file = self._export_sketch(sketch)
-        print('export done...')
+        sketch.add_label(ARCHIVE_LABEL)
 
         # Go through all timelines in a sketch.
-        # 
-        return send_file(zip_file, mimetype='zip', attachment_filename='timesketch_export.zip')
+        #    Each timeline has only a single search index, however
+        #    each search index can be part of multiple timelines.
+        #    Only archive a search index if all of it's timelines
+        #    are archived.
+        indexes_to_close = []
+        for timeline in sketch.timelines:
+            timeline.add_label(ARCHIVE_LABEL)
+            search_index = timeline.searchindex
+
+            if not all(
+                    [x.has_label(
+                        ARCHIVE_LABEL) for x in search_index.timelines]):
+                continue
+            search_index.add_label(ARCHIVE_LABEL)
+            indexes_to_close.append(search_index.index_name)
+        self.datastore.client.indices.close(','.join(indexes_to_close))
+        return HTTP_STATUS_CODE_OK
 
 
 class SketchResource(ResourceMixin, Resource):
@@ -1075,6 +1212,11 @@ class ExploreResource(ResourceMixin, Resource):
         if not sketch.has_permission(current_user, 'read'):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have read access controls on sketch.')
+
+        if sketch.has_label(ARCHIVE_LABEL):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to query on an archived sketch.')
 
         form = ExploreForm.build(request)
 
@@ -3589,7 +3731,7 @@ class SearchIndexResource(ResourceMixin, Resource):
         db_session.delete(searchindex)
         db_session.commit()
         try:
-            es.client.indices.delete(index=searchindex.index_name)
+            self.datastore.client.indices.delete(index=searchindex.index_name)
         except elasticsearch.NotFoundError:
             pass
         return HTTP_STATUS_CODE_OK

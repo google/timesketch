@@ -14,6 +14,7 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
+from . import definitions
 from . import resource
 
 
@@ -66,4 +67,3 @@ class SearchIndex(resource.BaseResource):
             self.api.api_root, self.id)
         response = self.api.session.delete(resource_url)
         return response.status_code in definitions.HTTP_STATUS_CODE_20X
-

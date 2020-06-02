@@ -14,6 +14,7 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
+from . import definitions
 from . import resource
 
 
@@ -75,7 +76,7 @@ class Timeline(resource.BaseResource):
             String with the timeline status.
         """
         data = self.data
-        timeline_object = self.data.get('objects', [{}])[0]
+        timeline_object = data.get('objects', [{}])[0]
         status_list = timeline_object.get('status')
 
         if not status_list:
@@ -90,4 +91,3 @@ class Timeline(resource.BaseResource):
             self.api.api_root, self.resource_uri)
         response = self.api.session.delete(resource_url)
         return response.status_code in definitions.HTTP_STATUS_CODE_20X
-

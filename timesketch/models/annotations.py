@@ -148,18 +148,17 @@ class LabelMixin(object):
         self.labels.append(self.Label(user=user, label=label))
         db_session.commit()
 
-    def remove_label(self, label, user=None):
+    def remove_label(self, label):
         """Remove a label from an object.
 
         Args:
             label: Name of the label.
-            user: Optional user that adds the label (sketch.User).
         """
-        for index, label_obj in enumerate(self.labels):
-            if label_obj.label.lower() == label.lower():
-                _ = self.labels.pop(index)
-                db_session.commit()
-                return
+        for label_obj in self.labels:
+            if label_obj.label.lower() != label.lower():
+                continue
+            self.labels.remove(label_obj)
+        db_session.commit()
 
     def has_label(self, label):
         """Returns a boolean whether a label is applied.
