@@ -41,7 +41,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
         self.domain_scoring_threshold = current_app.config.get(
             'DOMAIN_ANALYZER_WATCHED_DOMAINS_SCORE_THRESHOLD', 0.75)
-        self.domain_scoring_allowlist = current_app.config.get(
+        self.domain_scoring_exclude_domains = current_app.config.get(
             'DOMAIN_ANALYZER_EXCLUDE_DOMAINS', [])
 
     @staticmethod
@@ -204,9 +204,9 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         watched_domains_list_temp = set(watched_domains_list)
         watched_domains_list = []
         for domain in watched_domains_list_temp:
-            if domain in self.domain_scoring_allowlist:
+            if domain in self.domain_scoring_exclude_domains:
                 continue
-            if any(domain.endswith(x) for x in self.domain_scoring_allowlist):
+            if any(domain.endswith(x) for x in self.domain_scoring_exclude_domains):
                 continue
 
             if '.' not in domain:
@@ -244,7 +244,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
                 text = 'Domain {0:s} is similar to {1:s}'.format(
                     domain, ', '.join(similar_text_list))
                 if any(domain.endswith(
-                        x) for x in self.domain_scoring_allowlist):
+                        x) for x in self.domain_scoring_exclude_domains):
                     tags_to_add.append('allowlisted-domain')
                     allowlist_encountered = True
 
