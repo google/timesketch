@@ -175,6 +175,6 @@ def win_logins(sketch_id):
 
 
 if __name__ == "__main__":
-    from timesketch import create_app
+    from timesketch.app import create_app
     with create_app().app_context():
         main()

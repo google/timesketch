@@ -30,6 +30,8 @@ import pkg_resources
 from setuptools import find_packages
 from setuptools import setup
 
+from timesketch import version
+
 
 version_tuple = (sys.version_info[0], sys.version_info[1])
 if version_tuple < (3, 6):
@@ -58,8 +60,6 @@ def parse_requirements_from_file(path):
         yield requirement
 
 
-timesketch_version = '20200507'
-
 timesketch_description = (
     'Timesketch is a web based tool for collaborative forensic timeline '
     'analysis. Using sketches you and your collaborators can easily organize '
@@ -68,7 +68,7 @@ timesketch_description = (
 
 setup(
     name='timesketch',
-    version=timesketch_version,
+    version=version.get_version(),
     description='Digital forensic timeline analysis',
     long_description=timesketch_description,
     license='Apache License, Version 2.0',

@@ -166,6 +166,9 @@ class Sketch(resource.BaseResource):
         if not (query_string or query_dsl):
             raise ValueError('You need to supply a query string or a dsl')
 
+        if self.is_archived():
+            raise RuntimeError('Unable create a view on an archived sketch.')
+
         resource_url = '{0:s}/sketches/{1:d}/views/'.format(
             self.api.api_root, self.id)
 
@@ -215,6 +218,10 @@ class Sketch(resource.BaseResource):
             A story object (instance of Story) for the newly
             created story.
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to create a story in an archived sketch.')
+
         resource_url = '{0:s}/sketches/{1:d}/stories/'.format(
             self.api.api_root, self.id)
         data = {
@@ -232,6 +239,11 @@ class Sketch(resource.BaseResource):
 
     def delete(self):
         """Deletes the sketch."""
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to delete an archived sketch, first '
+                'unarchive then delete.')
+
         resource_url = '{0:s}/sketches/{1:d}/'.format(
             self.api.api_root, self.id)
         response = self.api.session.delete(resource_url)
@@ -282,6 +294,9 @@ class Sketch(resource.BaseResource):
         Returns:
             List of aggregation groups (instances of AggregationGroup objects)
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to list aggregation groups on an archived sketch.')
         groups = []
         resource_url = '{0:s}/sketches/{1:d}/aggregation/group/'.format(
             self.api.api_root, self.id)
@@ -310,6 +325,9 @@ class Sketch(resource.BaseResource):
         Returns:
             List of aggregations (instances of Aggregation objects)
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to list aggregations on an archived sketch.')
         aggregations = []
         data = self.lazyload_data(refresh_cache=True)
 
@@ -371,6 +389,9 @@ class Sketch(resource.BaseResource):
             information about what timeline it ran against, the
             results and current status of the analyzer run.
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to list analyzer status on an archived sketch.')
         stats_list = []
         sessions = []
         for timeline_obj in self.list_timelines():
@@ -416,6 +437,9 @@ class Sketch(resource.BaseResource):
             An aggregation object, if stored (instance of Aggregation),
             otherwise None object.
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to get aggregations on an archived sketch.')
         for aggregation_obj in self.list_aggregations():
             if aggregation_obj.id == aggregation_id:
                 return aggregation_obj
@@ -431,6 +455,10 @@ class Sketch(resource.BaseResource):
             An aggregation group object (instance of AggregationGroup)
             if stored, otherwise None object.
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to get aggregation groups on an archived sketch.')
+
         for group_obj in self.list_aggregation_groups():
             if group_obj.id == group_id:
                 return group_obj
@@ -452,6 +480,10 @@ class Sketch(resource.BaseResource):
             not a story id, the first story that is found with the same
             title will be returned.
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to get stories on an archived sketch.')
+
         if story_id is None and story_title is None:
             return None
 
@@ -476,6 +508,10 @@ class Sketch(resource.BaseResource):
             a None if neiter view_id or view_name is defined or if
             the view does not exist.
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to get views on an archived sketch.')
+
         if view_id is None and view_name is None:
             return None
 
@@ -492,6 +528,10 @@ class Sketch(resource.BaseResource):
         Returns:
             List of stories (instances of Story objects)
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to list stories on an archived sketch.')
+
         story_list = []
         resource_url = '{0:s}/sketches/{1:d}/stories/'.format(
             self.api.api_root, self.id)
@@ -517,6 +557,10 @@ class Sketch(resource.BaseResource):
         Returns:
             List of views (instances of View objects)
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to list views on an archived sketch.')
+
         sketch = self.lazyload_data()
         views = []
         for view in sketch['meta']['views']:
@@ -534,6 +578,10 @@ class Sketch(resource.BaseResource):
         Returns:
             List of timelines (instances of Timeline objects)
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to list timelines on an archived sketch.')
+
         sketch = self.lazyload_data()
         timelines = []
         for timeline_dict in sketch['objects'][0]['timelines']:
@@ -557,6 +605,10 @@ class Sketch(resource.BaseResource):
         Returns:
             Timeline object instance.
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to upload files to an archived sketch.')
+
         # TODO: Deprecate this function.
         logger.warning(
             'This function is about to be deprecated, please use the '
@@ -586,6 +638,10 @@ class Sketch(resource.BaseResource):
         Returns:
             Timeline object instance.
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to add a timeline to an archived sketch.')
+
         resource_url = '{0:s}/sketches/{1:d}/timelines/'.format(
             self.api.api_root, self.id)
         form_data = {'timeline': searchindex.id}
@@ -761,6 +817,10 @@ class Sketch(resource.BaseResource):
             If the analyzer runs successfully return back an AnalyzerResult
             object.
         """
+        if self.is_archived():
+            raise error.UnableToRunAnalyzer(
+                'Unable to run an analyzer on an archived sketch.')
+
         if not timeline_id and not timeline_name:
             return (
                 'Unable to run analyzer, need to define either '
@@ -882,6 +942,10 @@ class Sketch(resource.BaseResource):
         Raises:
             ValueError: if unable to query for the results.
         """
+        if self.is_archived():
+            raise ValueError(
+                'Unable to run an aggregation on an archived sketch.')
+
         if not aggregate_dsl:
             raise RuntimeError(
                 'You need to supply an aggregation query DSL string.')
@@ -924,6 +988,10 @@ class Sketch(resource.BaseResource):
         Returns:
             An aggregation object (instance of Aggregator).
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to run an aggregator on an archived sketch.')
+
         aggregation_obj = aggregation.Aggregation(
             sketch=self,
             api=self.api)
@@ -952,6 +1020,10 @@ class Sketch(resource.BaseResource):
         Returns:
           A stored aggregation object or None if not stored.
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to store an aggregator on an archived sketch.')
+
         # TODO: Deprecate this function.
         logger.warning(
             'This function is about to be deprecated, please use the '
@@ -980,6 +1052,10 @@ class Sketch(resource.BaseResource):
         Returns:
              a json data of the query.
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to comment on an event in an archived sketch.')
+
         form_data = {
             'annotation': comment_text,
             'annotation_type': 'comment',
@@ -1003,6 +1079,10 @@ class Sketch(resource.BaseResource):
         Returns:
             Dictionary with query results.
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to label events in an archived sketch.')
+
         form_data = {
             'annotation': label_name,
             'annotation_type': 'label',
@@ -1022,10 +1102,15 @@ class Sketch(resource.BaseResource):
 
         Raises:
             ValueError: if tags is not a list of strings.
+            RuntimeError: if the sketch is archived.
 
         Returns:
             Dictionary with query results.
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to tag events in an archived sketch.')
+
         if not isinstance(tags, list):
             raise ValueError('Tags need to be a list.')
 
@@ -1052,6 +1137,10 @@ class Sketch(resource.BaseResource):
         Returns:
             A dictionary with query results.
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to search for labels in an archived sketch.')
+
         query = {
             "nested": {
                 "path": "timesketch_label",
@@ -1087,6 +1176,10 @@ class Sketch(resource.BaseResource):
         Returns:
             Dictionary with query results.
         """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to add an event to an archived sketch.')
+
         form_data = {
             'timestamp': timestamp,
             'timestamp_desc': timestamp_desc,

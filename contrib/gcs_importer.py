@@ -23,7 +23,7 @@ import logging
 
 from werkzeug.exceptions import Forbidden
 
-from timesketch import create_app
+from timesketch.app import create_app
 from timesketch.lib import tasks
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
