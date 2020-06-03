@@ -61,6 +61,7 @@ from flask_restful import Resource
 from sqlalchemy import desc
 from sqlalchemy import not_
 
+from timesketch import version
 from timesketch.lib.analyzers import manager as analyzer_manager
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.aggregators_old import heatmap
@@ -545,14 +546,13 @@ class SketchArchiveResource(ResourceMixin, Resource):
         story_exporter = story_export_manager.StoryExportManager.get_exporter(
             'html')
 
-        # TODO (kiddi): Add timesketch version (needs to be moved to a separate
-        # library)
         meta = {
             'user': current_user.username,
             'time': datetime.datetime.utcnow().isoformat(),
             'sketch_id': sketch.id,
             'sketch_name': sketch.name,
             'sketch_description': sketch.description,
+            'timesketch_version': version.get_version(),
         }
 
         with zipfile.ZipFile(file_object, mode='w') as zip_file:
@@ -3396,6 +3396,8 @@ class TimelineListResource(ResourceMixin, Resource):
                 user=current_user,
                 searchindex=searchindex)
             sketch.timelines.append(timeline)
+            for label in sketch.get_labels():
+                timeline.add_label(label)
             db_session.add(timeline)
             db_session.commit()
         else:
