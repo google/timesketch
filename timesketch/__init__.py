@@ -70,6 +70,10 @@ def create_app(config=None):
         os.environ['TIMESKETCH_SETTINGS'] = config
         try:
             app.config.from_envvar('TIMESKETCH_SETTINGS')
+            if app.config.get('EMAIL_RECIPIENTS') is None:
+                sys.stderr.write(
+                    "Warning, please update your timesketch.conf "
+                    "format. https://github.com/google/timesketch/pull/1245")
         except IOError:
             sys.stderr.write(
                 'Config file {0} does not exist.\n'.format(config))
