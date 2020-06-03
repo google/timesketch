@@ -61,6 +61,12 @@ export default {
   deleteSketch (sketchId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/')
   },
+  archiveSketch (sketchId) {
+    let formData = {
+      action: 'archive'
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/archive/', formData)
+  },
   getSketchTimelines (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/')
   },

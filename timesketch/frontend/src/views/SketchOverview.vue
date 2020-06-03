@@ -44,6 +44,10 @@ limitations under the License.
                   <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-trash"></i></span>
                   <span>Delete</span>
                 </a>
+                <span v-if="meta.permissions.delete" class="dropdown-item" v-on:click="archiveSketch">
+                  <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-archive"></i></span>
+                  <span>Archive</span>
+                </span>
               </div>
             </div>
           </div>
@@ -127,7 +131,7 @@ limitations under the License.
       </div>
     </section>
 
-    <!-- Stats -->
+    <!-- Stats
     <section class="section" v-if="sketch.active_timelines.length">
       <div class="container is-fluid">
         <div class="card" style="min-height: 100px;">
@@ -137,6 +141,7 @@ limitations under the License.
         </div>
       </div>
     </section>
+    -->
 
     <!-- Timeline, Saved View and Stories lists-->
     <section class="section" v-if="sketch.timelines && sketch.timelines.length ? sketch.timelines.length: false">
@@ -275,6 +280,11 @@ export default {
       ApiClient.deleteSketch(this.sketch.id).then((response) => {
         this.$router.push({ name: 'Home' })
       }).catch((e) => {
+        console.error(e)
+      })
+    },
+    archiveSketch: function () {
+      ApiClient.archiveSketch(this.sketch.id).then((response) => {}).catch((e) => {
         console.error(e)
       })
     },
