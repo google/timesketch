@@ -204,6 +204,9 @@ def get_validated_indices(indices, sketch_indices):
     exclude = set(indices) - set(sketch_indices)
     if exclude:
         indices = [index for index in indices if index not in exclude]
+
+    # Only include ready indices.
+    indices = [x for x in indices if x.get_status.lower() == 'ready']
     return indices
 
 

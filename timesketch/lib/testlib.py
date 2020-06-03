@@ -21,7 +21,7 @@ import six
 
 from flask_testing import TestCase
 
-from timesketch import create_app
+from timesketch.app import create_app
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.models import init_db
 from timesketch.models import drop_all

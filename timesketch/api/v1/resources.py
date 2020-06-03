@@ -2575,6 +2575,9 @@ class UploadFileResource(ResourceMixin, Resource):
                     searchindex=searchindex)
                 timeline.set_status('processing')
                 sketch.timelines.append(timeline)
+                for label in sketch.get_labels():
+                    timeline.add_label(label)
+                    searchindex.add_label(label)
                 db_session.add(timeline)
                 db_session.commit()
 
@@ -2746,7 +2749,6 @@ class UploadFileResource(ResourceMixin, Resource):
                     HTTP_STATUS_CODE_NOT_FOUND,
                     'No sketch found with this ID.')
 
-
         index_name = form.get('index_name', uuid.uuid4().hex)
         if not isinstance(index_name, six.text_type):
             index_name = codecs.decode(index_name, 'utf-8')
@@ -2771,7 +2773,7 @@ class TaskResource(ResourceMixin, Resource):
     def __init__(self):
         super(TaskResource, self).__init__()
         # pylint: disable=import-outside-toplevel
-        from timesketch import create_celery_app
+        from timesketch.app import create_celery_app
         self.celery = create_celery_app()
 
     @login_required
@@ -3398,6 +3400,7 @@ class TimelineListResource(ResourceMixin, Resource):
             sketch.timelines.append(timeline)
             for label in sketch.get_labels():
                 timeline.add_label(label)
+                searchindex.add_label(label)
             db_session.add(timeline)
             db_session.commit()
         else:

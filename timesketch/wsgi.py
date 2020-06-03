@@ -32,7 +32,7 @@ Example configuration for Apache with mod_wsgi (a2enmod mod_wsgi):
 #activate_virtualenv = '/path/to/your/virtualenv/bin/activate_this.py'
 #execfile(activate_virtualenv, dict(__file__=activate_virtualenv))
 
-from timesketch import create_app
+from timesketch.app import create_app
 from timesketch.models import db_session
 
 application = create_app()
