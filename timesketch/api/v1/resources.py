@@ -1252,6 +1252,7 @@ class ExploreResource(ResourceMixin, Resource):
         sketch_indices = {
             t.searchindex.index_name
             for t in sketch.timelines
+            if t.get_status.status.lower() == 'ready'
         }
         if not query_filter:
             query_filter = {}
@@ -2567,6 +2568,8 @@ class UploadFileResource(ResourceMixin, Resource):
             db_session.commit()
 
             if sketch and sketch.has_permission(current_user, 'write'):
+                labels_to_prevent_deletion = current_app.config[
+                    'LABELS_TO_PREVENT_DELETION']
                 timeline = Timeline(
                     name=searchindex.name,
                     description=searchindex.description,
@@ -2575,7 +2578,9 @@ class UploadFileResource(ResourceMixin, Resource):
                     searchindex=searchindex)
                 timeline.set_status('processing')
                 sketch.timelines.append(timeline)
-                for label in sketch.get_labels():
+                for label in sketch.get_labels:
+                    if label not in labels_to_prevent_deletion:
+                        continue
                     timeline.add_label(label)
                     searchindex.add_label(label)
                 db_session.add(timeline)
@@ -3398,7 +3403,12 @@ class TimelineListResource(ResourceMixin, Resource):
                 user=current_user,
                 searchindex=searchindex)
             sketch.timelines.append(timeline)
-            for label in sketch.get_labels():
+            labels_to_prevent_deletion = current_app.config[
+                'LABELS_TO_PREVENT_DELETION']
+
+            for label in sketch.get_labels:
+                if label not in labels_to_prevent_deletion:
+                    continue
                 timeline.add_label(label)
                 searchindex.add_label(label)
             db_session.add(timeline)

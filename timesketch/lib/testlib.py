@@ -45,6 +45,7 @@ class TestConfig(object):
     WTF_CSRF_ENABLED = False
     ELASTIC_HOST = None
     ELASTIC_PORT = None
+    LABELS_TO_PREVENT_DELETION = ['protected', 'magic']
     UPLOAD_ENABLED = False
     GRAPH_BACKEND_ENABLED = False
     AUTO_INDEX_ANALYZERS = []
