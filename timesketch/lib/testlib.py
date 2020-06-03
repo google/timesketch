@@ -401,6 +401,7 @@ class BaseTest(TestCase):
         if acl:
             for permission in ['read', 'write', 'delete']:
                 searchindex.grant_permission(permission=permission, user=user)
+        searchindex.set_status(status='ready')
         self._commit_to_database(searchindex)
         return searchindex
 
@@ -452,6 +453,7 @@ class BaseTest(TestCase):
             sketch=sketch,
             searchindex=searchindex,
             color=self.COLOR_WHITE)
+        timeline.set_status(status='ready')
         self._commit_to_database(timeline)
         return timeline
 

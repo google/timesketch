@@ -72,6 +72,13 @@ def mock_response(*args, **kwargs):
             return self.json_data
 
     auth_text_data = '<input id="csrf_token" name="csrf_token" value="test">'
+
+    archive_data = {
+        'is_archived': False,
+        'sketch_id': 1,
+        'sketch_name': 'test',
+    }
+
     sketch_data = {
         'meta': {
             'views': [{
@@ -185,6 +192,8 @@ def mock_response(*args, **kwargs):
         MockResponse(json_data=story_list_data),
         'http://127.0.0.1/api/v1/sketches/1/stories/1/':
         MockResponse(json_data=story_data),
+        'http://127.0.0.1/api/v1/sketches/1/archive/':
+        MockResponse(json_data=archive_data),
     }
 
     if kwargs.get('empty', False):
