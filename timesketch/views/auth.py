@@ -274,6 +274,14 @@ def validate_api_token():
                 'instance.'.format(domain))
 
     user_allowlist = current_app.config.get('GOOGLE_OIDC_ALLOWED_USERS')
+    """ TODO remove that after a 6 months, this following check is to ensure
+           backportability of config file
+           """
+    if len(user_allowlist) == 0:
+        print("Warning, please update your timesketch.conf format. https://github.com/google/timesketch/pull/1245")
+        user_allowlist = current_app.config.get(
+            'GOOGLE_OIDC_USER_WHITELIST', [])
+
     # Check if the authenticating user is on the allowlist.
     if user_allowlist:
         if validated_email not in user_allowlist:
