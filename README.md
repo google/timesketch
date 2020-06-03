@@ -20,7 +20,7 @@ Timesketch is an open source tool for collaborative forensic timeline analysis. 
 
 #### Installation
 * [Install Timesketch manually](docs/Installation.md)
-* [Use Docker](docker/README.md)
+* [Use Docker](docker/)
 * [Upgrade from existing installation](docs/Upgrading.md)
 
 #### Adding timelines

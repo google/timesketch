@@ -28,6 +28,7 @@ import six
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConnectionTimeout
 from elasticsearch.exceptions import NotFoundError
+from elasticsearch.exceptions import RequestError
 # pylint: disable=redefined-builtin
 from elasticsearch.exceptions import ConnectionError
 from flask import abort
@@ -547,6 +548,12 @@ class ElasticsearchDataStore(object):
                     index=index_name, body={'mappings': _document_mapping})
             except ConnectionError:
                 raise RuntimeError('Unable to connect to Timesketch backend.')
+            except RequestError:
+                index_exists = self.client.indices.exists(index_name)
+                es_logger.warning(
+                    'Attempting to create an index that already exists '
+                    '({0:s} - {1:s})'.format(index_name, str(index_exists)))
+
         # We want to return unicode here to keep SQLalchemy happy.
         if six.PY2:
             if not isinstance(index_name, six.text_type):

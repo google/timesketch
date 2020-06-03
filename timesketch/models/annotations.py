@@ -145,6 +145,8 @@ class LabelMixin(object):
             label: Name of the label.
             user: Optional user that adds the label (sketch.User).
         """
+        if self.has_label(label):
+            return
         self.labels.append(self.Label(user=user, label=label))
         db_session.commit()
 
