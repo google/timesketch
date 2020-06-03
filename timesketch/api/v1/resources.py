@@ -112,7 +112,6 @@ from timesketch.models.user import Group
 
 
 logger = logging.getLogger('api_resources')
-ARCHIVE_LABEL = 'archived'
 
 
 def bad_request(message):
@@ -489,7 +488,7 @@ class SketchArchiveResource(ResourceMixin, Resource):
                     'User does not have sufficient access rights to '
                     'read the sketch.'))
         meta = {
-            'is_archived': sketch.has_label(ARCHIVE_LABEL),
+            'is_archived': sketch.get_status.status == 'archived',
             'sketch_id': sketch.id,
             'sketch_name': sketch.name,
         }
@@ -538,7 +537,7 @@ class SketchArchiveResource(ResourceMixin, Resource):
     def _export_sketch(self, sketch):
         """Returns a ZIP file with the exported content of a sketch."""
         file_object = io.BytesIO()
-        sketch_is_archived = sketch.has_label(ARCHIVE_LABEL)
+        sketch_is_archived = sketch.get_status.status == 'archived'
 
         if sketch_is_archived:
             _ = self._unarchive_sketch(sketch)
@@ -603,16 +602,14 @@ class SketchArchiveResource(ResourceMixin, Resource):
                 sketch_indices = {
                     t.searchindex.index_name
                     for t in sketch.timelines
+                    if t.get_status.status.lower() == 'ready'
                 }
                 query_filter = json.loads(view.query_filter)
                 if not query_filter:
                     query_filter = {}
                 indices = query_filter.get('indices', sketch_indices)
                 if not indices or '_all' in indices:
-                    indices = [
-                        t.searchindex.index_name
-                        for t in sketch.timelines
-                    ]
+                    indices = sketch_indices
 
                 query_dsl = view.query_dsl
                 if query_dsl:
@@ -690,19 +687,21 @@ class SketchArchiveResource(ResourceMixin, Resource):
         Args:
             sketch: Instance of timesketch.models.sketch.Sketch
         """
-        if not sketch.has_label(ARCHIVE_LABEL):
+        if sketch.get_status.status != 'archived':
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to unarchive a sketch that wasn\'t already archived '
                 '(sketch: {0:d})'.format(sketch.id))
 
-        sketch.remove_label(ARCHIVE_LABEL)
+        sketch.set_status(status='ready')
 
         indexes_to_open = []
         for timeline in sketch.timelines:
-            timeline.remove_label(ARCHIVE_LABEL)
+            if timeline.get_status.status != 'archived':
+                continue
+            timeline.set_status(status='ready')
             search_index = timeline.searchindex
-            search_index.remove_label(ARCHIVE_LABEL)
+            search_index.set_status(status='ready')
             indexes_to_open.append(search_index.index_name)
 
         # TODO (kiddi): Move this to lib/datastores/elastic.py.
@@ -715,14 +714,14 @@ class SketchArchiveResource(ResourceMixin, Resource):
         Args:
             sketch: Instance of timesketch.models.sketch.Sketch
         """
-        if sketch.has_label(ARCHIVE_LABEL):
+        if sketch.get_status.status == 'archived':
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to archive a sketch that was already archived '
                 '(sketch: {0:d})'.format(sketch.id))
 
-        labels_to_prevent_deletion = current_app.config[
-            'LABELS_TO_PREVENT_DELETION']
+        labels_to_prevent_deletion = current_app.config.get(
+            'LABELS_TO_PREVENT_DELETION', [])
 
         for label in labels_to_prevent_deletion:
             if sketch.has_label(label):
@@ -731,7 +730,7 @@ class SketchArchiveResource(ResourceMixin, Resource):
                     'A sketch with the label {0:s} cannot be '
                     'archived.'.format(label))
 
-        sketch.add_label(ARCHIVE_LABEL)
+        sketch.set_status(status='archived')
 
         # Go through all timelines in a sketch.
         #    Each timeline has only a single search index, however
@@ -740,15 +739,18 @@ class SketchArchiveResource(ResourceMixin, Resource):
         #    are archived.
         indexes_to_close = []
         for timeline in sketch.timelines:
-            timeline.add_label(ARCHIVE_LABEL)
+            if timeline.get_status.status != 'ready':
+                continue
+            timeline.set_status(status='archived')
             search_index = timeline.searchindex
 
-            if not all(
-                    [x.has_label(
-                        ARCHIVE_LABEL) for x in search_index.timelines]):
+            if not all([
+                    x.get_status.status == 'archived'
+                    for x in search_index.timelines]):
                 continue
-            search_index.add_label(ARCHIVE_LABEL)
+            search_index.set_status(status='archived')
             indexes_to_close.append(search_index.index_name)
+
         # TODO (kiddi): Move this to lib/datastores/elastic.py.
         self.datastore.client.indices.close(','.join(indexes_to_close))
         return HTTP_STATUS_CODE_OK
@@ -782,10 +784,19 @@ class SketchResource(ResourceMixin, Resource):
         sketch_indices = [
             t.searchindex.index_name
             for t in sketch.active_timelines
+            if t.get_status.status != 'archived'
         ]
 
         # Get event count and size on disk for each index in the sketch.
         stats_per_index = {}
+        for timeline in sketch.active_timelines:
+            if timeline.get_status.status != 'archived':
+                continue
+            stats_per_index[timeline.searchindex.index_name] = {
+                'count': 0,
+                'bytes': 0
+            }
+
         es_stats = self.datastore.client.indices.stats(
             index=sketch_indices, metric='docs, store')
         for index_name, stats in es_stats.get('indices', {}).items():
@@ -1222,7 +1233,7 @@ class ExploreResource(ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have read access controls on sketch.')
 
-        if sketch.has_label(ARCHIVE_LABEL):
+        if sketch.get_status.status == 'archived':
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to query on an archived sketch.')
@@ -1768,9 +1779,16 @@ class AggregationExploreResource(ResourceMixin, Resource):
         if not sketch.has_permission(current_user, 'read'):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have read access controls on sketch.')
+
+        if sketch.get_status.status == 'archived':
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Not able to run aggregation on an archived sketch.')
+
         sketch_indices = {
             t.searchindex.index_name
             for t in sketch.timelines
+            if t.get_status.status.lower() == 'ready'
         }
 
         aggregation_dsl = form.aggregation_dsl.data
@@ -2081,6 +2099,7 @@ class AggregationLegacyResource(ResourceMixin, Resource):
         query_dsl = form.dsl.data
         sketch_indices = [
             t.searchindex.index_name for t in sketch.timelines
+            if t.get_status.status.lower() == 'ready'
         ]
         indices = query_filter.get('indices', sketch_indices)
 
@@ -2278,7 +2297,9 @@ class EventResource(ResourceMixin, Resource):
         searchindex = SearchIndex.query.filter_by(
             index_name=searchindex_id).first()
         event_id = args.get('event_id')
-        indices = [t.searchindex.index_name for t in sketch.timelines]
+        indices = [
+            t.searchindex.index_name for t in sketch.timelines
+            if t.get_status.status.lower() == 'ready']
 
         # Check if the requested searchindex is part of the sketch
         if searchindex_id not in indices:
@@ -2440,7 +2461,9 @@ class EventAnnotationResource(ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have write access controls on sketch.')
 
-        indices = [t.searchindex.index_name for t in sketch.timelines]
+        indices = [
+            t.searchindex.index_name for t in sketch.timelines
+            if t.get_status.status.lower() == 'ready']
         annotation_type = form.annotation_type.data
         events = form.events.raw_data
 
@@ -2568,8 +2591,8 @@ class UploadFileResource(ResourceMixin, Resource):
             db_session.commit()
 
             if sketch and sketch.has_permission(current_user, 'write'):
-                labels_to_prevent_deletion = current_app.config[
-                    'LABELS_TO_PREVENT_DELETION']
+                labels_to_prevent_deletion = current_app.config.get(
+                    'LABELS_TO_PREVENT_DELETION', [])
                 timeline = Timeline(
                     name=searchindex.name,
                     description=searchindex.description,
@@ -2753,6 +2776,10 @@ class UploadFileResource(ResourceMixin, Resource):
                 abort(
                     HTTP_STATUS_CODE_NOT_FOUND,
                     'No sketch found with this ID.')
+            if sketch.get_status.status == 'archived':
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Unable to upload a file to an archived sketch.')
 
         index_name = form.get('index_name', uuid.uuid4().hex)
         if not isinstance(index_name, six.text_type):
@@ -3090,7 +3117,10 @@ class CountEventsResource(ResourceMixin, Resource):
         if not sketch.has_permission(current_user, 'read'):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have read access controls on sketch.')
-        indices = [t.searchindex.index_name for t in sketch.active_timelines]
+        indices = [
+            t.searchindex.index_name for t in sketch.active_timelines
+            if t.get_status.status != 'archived'
+        ]
         count = self.datastore.count(indices)
         meta = dict(count=count)
         schema = dict(meta=meta, objects=[])
@@ -3403,8 +3433,8 @@ class TimelineListResource(ResourceMixin, Resource):
                 user=current_user,
                 searchindex=searchindex)
             sketch.timelines.append(timeline)
-            labels_to_prevent_deletion = current_app.config[
-                'LABELS_TO_PREVENT_DELETION']
+            labels_to_prevent_deletion = current_app.config.get(
+                'LABELS_TO_PREVENT_DELETION', [])
 
             for label in sketch.get_labels:
                 if label not in labels_to_prevent_deletion:
