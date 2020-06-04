@@ -39,7 +39,6 @@ import os
 import time
 import uuid
 
-import altair as alt
 import elasticsearch
 import six
 
@@ -57,6 +56,7 @@ from flask_restful import Resource
 from sqlalchemy import desc
 from sqlalchemy import not_
 
+from timesketch.api.v1.utils import run_aggregator_group
 from timesketch.lib.analyzers import manager as analyzer_manager
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.aggregators_old import heatmap
@@ -1205,6 +1205,11 @@ class AggregationGroupResource(ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
+        if not sketch.has_permission(user=current_user, permission='read'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have read permission on the sketch.')
+
         # Check that this group belongs to the sketch
         if group.sketch_id != sketch.id:
             msg = (
@@ -1212,79 +1217,7 @@ class AggregationGroupResource(ResourceMixin, Resource):
                 'group sketch ID ({1:d})'.format(sketch.id, group.sketch_id))
             abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
 
-        if not sketch.has_permission(user=current_user, permission='read'):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN,
-                'The user does not have read permission on the sketch.')
-
-        result_chart = None
-        orientation = group.orientation
-        objects = []
-        time_before = time.time()
-        for aggregator in group.aggregations:
-            if aggregator.aggregationgroup_id != group.id:
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    'All aggregations in a group must belong to the group.')
-            if aggregator.sketch_id != group.sketch_id:
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    'All aggregations in a group must belong to the group '
-                    'sketch')
-
-            if aggregator.parameters:
-                aggregator_parameters = json.loads(aggregator.parameters)
-            else:
-                aggregator_parameters = {}
-
-            agg_class = aggregator_manager.AggregatorManager.get_aggregator(
-                aggregator.agg_type)
-            if not agg_class:
-                continue
-            aggregator_obj = agg_class(sketch_id=sketch_id)
-            chart_type = aggregator_parameters.pop('supported_charts', None)
-            color = aggregator_parameters.pop('chart_color', '')
-            result_obj = aggregator_obj.run(**aggregator_parameters)
-
-            chart = result_obj.to_chart(
-                chart_name=chart_type,
-                chart_title=aggregator_obj.chart_title,
-                as_chart=True, interactive=True, color=color)
-
-            if result_chart is None:
-                result_chart = chart
-            elif orientation == 'horizontal':
-                result_chart = alt.hconcat(chart, result_chart)
-            elif orientation == 'vertical':
-                result_chart = alt.vconcat(chart, result_chart)
-            else:
-                result_chart = alt.layer(chart, result_chart)
-
-            buckets = result_obj.to_dict()
-            buckets['buckets'] = buckets.pop('values')
-            result = {
-                'aggregation_result': {
-                    aggregator.name: buckets
-                }
-            }
-            objects.append(result)
-
-        parameters = {}
-        if group.parameters:
-            parameters = json.loads(group.parameters)
-
-        result_chart.title = parameters.get('chart_title', group.name)
-        time_after = time.time()
-
-        meta = {
-            'method': 'aggregator_group',
-            'chart_type': 'compound: {0:s}'.format(orientation),
-            'name': group.name,
-            'description': group.description,
-            'es_time': time_after - time_before,
-            'vega_spec': result_chart.to_dict(),
-            'vega_chart_title': group.name
-        }
+        _, objects, meta = run_aggregator_group(group, sketch_id=sketch.id)
         schema = {'meta': meta, 'objects': objects}
         return jsonify(schema)
 

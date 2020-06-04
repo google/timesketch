@@ -83,6 +83,25 @@ def _export_aggregation(aggregation, sketch, zip_file):
         'aggregations/{0:s}.csv'.format(name), data=string_io.read())
 
 
+def _export_aggregation_group(group, sketch, zip_file):
+    """Export an aggregation group from a sketch and write it to a ZIP file.
+
+    Args:
+        group (timesketch.models.sketch.AggregationGroup): an aggregation
+            group object.
+        sketch (timesketch.models.sketch.Sketch): a sketch object.
+        zip_file (ZipFile): a zip file handle that can be used to write
+            content to.
+    """
+    name = '{0:04d}_{1:s}'.format(group.id, group.name)
+    chart, _, meta = utils.run_aggregator_group(group, sketch_id=sketch.id)
+
+    zip_file.writestr(
+        'aggregation_groups/{0:s}.meta'.format(name), json.dumps(meta))
+    zip_file.writestr(
+        'aggregation_groups/{0:s}.html'.format(name), chart.to_html())
+
+
 def _export_story(story, sketch, story_exporter, zip_file):
     """Export a story from a sketch into a ZIP file.
 
@@ -162,6 +181,30 @@ def _query_results_to_filehandle(result, sketch):
 class SketchArchiveResource(resources.ResourceMixin, Resource):
     """Resource to archive a sketch."""
 
+    DEFAULT_QUERY_FILTER = {
+        'size':10000,
+        'terminate_after': 10000
+    }
+
+    def __init__(self, **kwargs):
+        super(SketchArchiveResource, self).__init__(**kwargs)
+        self._sketch = None
+        self._sketch_indices = None
+
+    @property
+    def sketch_indices(self):
+        """Returns a set of sketch indices that are ready."""
+        if not self._sketch_indices:
+            if not self._sketch:
+                return set()
+
+            self._sketch_indices = {
+                t.searchindex.index_name
+                for t in self._sketch.timelines
+                if t.get_status.status.lower() == 'ready'
+            }
+        return self._sketch_indices
+
     @login_required
     def get(self, sketch_id):
         """Handles GET request to the resource.
@@ -208,6 +251,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                     'User does not have sufficient access rights to '
                     'delete a sketch.'))
 
+        self._sketch = sketch
         form = request.json
         if not form:
             form = request.data
@@ -237,12 +281,6 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             pd.DataFrame: a pandas DataFrame with all the events in the
                 datastore that have a label.
         """
-        sketch_indices = {
-            t.searchindex.index_name
-            for t in sketch.timelines
-            if t.get_status.status.lower() == 'ready'
-        }
-
         query_dsl = {
             'query': {
                 'nested': {
@@ -266,9 +304,9 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         result = self.datastore.search(
             sketch_id=sketch.id,
             query_string='',
-            query_filter={},
+            query_filter=self.DEFAULT_QUERY_FILTER,
             query_dsl=json.dumps(query_dsl),
-            indices=sketch_indices)
+            indices=self.sketch_indices)
 
         return _query_results_to_dataframe(result, sketch)
 
@@ -291,6 +329,10 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 lines.append(line)
         db_frame = pd.DataFrame(lines)
 
+        size = db_frame.shape[0]
+        if not size:
+            return
+
         event_frame = self._get_all_events_with_a_label('__ts_comment', sketch)
         frame = event_frame.merge(db_frame, on=['_index', '_id'])
 
@@ -309,6 +351,44 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         string_io.seek(0)
         zip_file.writestr(
             'events/starred_events.csv', data=string_io.read())
+
+    def _export_tagged_events(self, sketch, zip_file):
+        """Export all events that have been tagged and store in a ZIP file."""
+        result = self.datastore.search(
+            sketch_id=sketch.id,
+            query_string='_exists_:tag',
+            query_filter=self.DEFAULT_QUERY_FILTER,
+            query_dsl='',
+            indices=self.sketch_indices)
+
+        fh = _query_results_to_filehandle(result, sketch)
+        zip_file.writestr(
+            'events/tagged_events.csv', data=fh.read())
+
+        parameters = {
+            'limit': 100,
+            'field': 'tag',
+        }
+        result_obj, meta = utils.run_aggregator(
+            sketch.id, aggregator_name='field_bucket',
+            aggregator_parameters=parameters)
+
+        zip_file.writestr(
+            'events/tagged_event_stats.meta', data=json.dumps(meta))
+
+        html = result_obj.to_chart(
+            chart_name='hbarchart',
+            chart_title='Top 100 identified tags',
+            interactive=True, as_html=True)
+        zip_file.writestr(
+            'events/tagged_event_stats.html', data=html)
+
+        string_io = io.StringIO()
+        data_frame = result_obj.to_pandas()
+        data_frame.to_csv(string_io, index=False)
+        string_io.seek(0)
+        zip_file.writestr(
+            'events/tagged_event_stats.csv', data=string_io.read())
 
     def _export_sketch(self, sketch):
         """Returns a ZIP file with the exported content of a sketch."""
@@ -342,12 +422,14 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             for view in sketch.views:
                 self._export_view(view, sketch, zip_file)
 
+            for group in sketch.aggregationgroups:
+                _export_aggregation_group(group, sketch, zip_file)
+
             self._export_events_with_comments(sketch, zip_file)
             self._export_starred_events(sketch, zip_file)
+            self._export_tagged_events(sketch, zip_file)
 
             # TODO (kiddi): Add in aggregation group support.
-            # TODO (kiddi): Add in support for all tagged events (includes
-            # a metadata file with a list of all tags and their count).
 
         if sketch_is_archived:
             _ = self._archive_sketch(sketch)
@@ -367,19 +449,14 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 content to.
         """
         name = '{0:04d}_{1:s}'.format(view.id, view.name)
-        sketch_indices = {
-            t.searchindex.index_name
-            for t in sketch.timelines
-            if t.get_status.status.lower() == 'ready'
-        }
 
         query_filter = json.loads(view.query_filter)
         if not query_filter:
-            query_filter = {}
+            query_filter = self.DEFAULT_QUERY_FILTER
 
-        indices = query_filter.get('indices', sketch_indices)
+        indices = query_filter.get('indices', self.sketch_indices)
         if not indices or '_all' in indices:
-            indices = sketch_indices
+            indices = self.sketch_indices
 
         query_dsl = view.query_dsl
         if query_dsl:
