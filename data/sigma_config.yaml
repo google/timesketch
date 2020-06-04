@@ -23,12 +23,15 @@ logsources:
   webserver:
     category: webserver
     conditions:
-      data_type: "apache:access OR iis:log:line"
+      data_type:
+        - "apache:access"
+        - "iis:log:line"
   shell:
     service: shell
     conditions:
-      data_type: "shell:zsh:history"
-      data_type: "bash:history:command"
+      data_type:
+        - "shell:zsh:history"
+        - "bash:history:command"
   winprefetch:
     service: winprefetch
     conditions:
@@ -40,8 +43,9 @@ logsources:
   service_windows_security:
     service: security
     conditions:
-      source_name: "Microsoft-Windows-Security-Auditing"
-      source_name: "Microsoft-Windows-Eventlog"
+      source_name:
+        - "Microsoft-Windows-Security-Auditing"
+        - "Microsoft-Windows-Eventlog"
 fieldmappings:
     EventID: event_identifier
     ComputerName: computer_name
