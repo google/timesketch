@@ -1,4 +1,4 @@
-# Copyright 2015 Google Inc. All rights reserved.
+# Copyright 2020 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""This module holds version 1 of the Timesketch API, archive API."""
+"""This module holds archive API calls for version 1 of the Timesketch API."""
 
 from __future__ import unicode_literals
 
