@@ -34,7 +34,7 @@ from .resources import GraphResource
 from .resources import GraphViewListResource
 from .resources import GraphViewResource
 from .resources import SketchResource
-from .resources import SketchArchiveResource
+from .archive import SketchArchiveResource
 from .resources import SketchListResource
 from .resources import ViewResource
 from .resources import ViewListResource
