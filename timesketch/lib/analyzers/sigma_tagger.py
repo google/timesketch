@@ -94,10 +94,10 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                     logging.info('[sigma] Reading rules from {0!s}'.format(
                         rule_file_path))
                     with open(rule_file_path, 'r') as rule_file:
-                        rule_file_content = rule_file.read()
-                        parser = sigma_collection.SigmaCollectionParser(
-                            rule_file_content, self.sigma_config, None)
                         try:
+                            rule_file_content = rule_file.read()
+                            parser = sigma_collection.SigmaCollectionParser(
+                            rule_file_content, self.sigma_config, None)
                             results = parser.generate(sigma_backend)
                         except NotImplementedError as exception:
                             logging.error(
