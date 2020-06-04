@@ -24,7 +24,7 @@ from setuptools import setup
 
 setup(
     name='timesketch-import-client',
-    version='20200514',
+    version='20200527',
     description='Timesketch Import Client',
     license='Apache License, Version 2.0',
     url='http://www.timesketch.org/',

@@ -8,16 +8,22 @@ You can run Timesketch on Docker in development mode.
 docker-compose up -d
 ```
 
+If you see the folowing message you can continue
+
+```
+Timesketch development server is ready!
+```
+
 ### Find out container ID for the timesketch container
 
 ```
-CONTAINER_ID="$(sudo docker container list -f name=development_timesketch -q)"
+CONTAINER_ID="$(sudo docker container list -f name=dev_timesketch -q)"
 ```
 In the output look for CONTAINER ID for the timesketch container
 
 To write the ID to a variable, use:
 ```
-export CONTAINER_ID="$(sudo docker container list -f name=development_timesketch -q)"
+export CONTAINER_ID="$(sudo docker container list -f name=dev_timesketch -q)"
 ```
 and test with
 ```
