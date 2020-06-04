@@ -250,7 +250,7 @@ def validate_jwt(decoded_jwt, expected_issuer, expected_domain=None):
 
         if issued_at > now:
             raise JwtValidationError('Token was issued in the future')
-        elif expires_at < now:
+        if expires_at < now:
             raise JwtValidationError('Token has expired')
     except KeyError as e:
         raise JwtValidationError('Missing timestamp: {}'.format(e))

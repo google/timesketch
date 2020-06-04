@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 
 import mock
 
-from datasketch.minhash import MinHash
 from flask import current_app
+from datasketch.minhash import MinHash
 
 from timesketch.lib.analyzers import phishy_domains
 from timesketch.lib.testlib import BaseTest
