@@ -11,3 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+
+# TODO: Remove once a new plaso release comes out.
+def create_app(config=None):
+    """Create the Flask app instance that is used throughout the application.
+
+    Args:
+        config: Path to configuration file as a string or an object with config
+        directives.
+
+    Returns:
+        Application object (instance of flask.Flask).
+    """
+    # pylint: disable=import-outside-toplevel
+    from timesketch import app
+    return app.create_app(config)
