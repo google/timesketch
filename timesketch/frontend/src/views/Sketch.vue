@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <router-view></router-view>
+  <router-view v-if="sketch.status"></router-view>
 </template>
 
 <script>
@@ -22,6 +22,18 @@ export default {
   props: ['sketchId'],
   created: function () {
     this.$store.dispatch('updateSketch', this.sketchId)
+  },
+  computed: {
+    sketch () {
+      return this.$store.state.sketch
+    }
+  },
+  watch: {
+    sketch: function (newVal) {
+      if (newVal.status[0].status === 'archived') {
+        this.$router.push({ name: 'SketchOverview', params: { sketchId: this.sketch.id } })
+      }
+    }
   }
 }
 </script>
