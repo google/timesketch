@@ -1105,7 +1105,7 @@ class Sketch(resource.BaseResource):
             RuntimeError: if the sketch is archived.
 
         Returns:
-            Dictionary with query results.
+            A boolean indicating whether the operation was successful or not.
         """
         if self.is_archived():
             raise RuntimeError(
@@ -1124,7 +1124,7 @@ class Sketch(resource.BaseResource):
         resource_url = '{0:s}/sketches/{1:d}/event/tagging/'.format(
             self.api.api_root, self.id)
         response = self.api.session.post(resource_url, json=form_data)
-        return response.json()
+        return response.status_code in definitions.HTTP_STATUS_CODE_20X
 
     def search_by_label(self, label_name, as_pandas=False):
         """Searches for all events containing a given label.
