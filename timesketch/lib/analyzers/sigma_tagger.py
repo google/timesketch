@@ -80,6 +80,10 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
 
 
         for dirpath, dirnames, files in os.walk(rules_path):
+
+            if 'deprecated' in dirnames:
+                dirnames.remove('deprecated')
+
             for rule_filename in files:
                 if rule_filename.lower().endswith('yml'):
 
@@ -101,7 +105,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                             rule_file_content = rule_file.read()
                             parser = sigma_collection.SigmaCollectionParser(
                             rule_file_content, self.sigma_config, None)
-                            results = parser.generate(sigma_backend)
+                            parsed_sigma_rules = parser.generate(sigma_backend)
                         except NotImplementedError as exception:
                             logging.error(
                                 'Error generating rule in file {0:s}: {1!s}'.format(
@@ -113,17 +117,20 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                                     rule_file_path, exception))
                             continue
 
-                        for result in results:
+                        for sigma_rule in parsed_sigma_rules:
                             try:
                                 simple_counter += 1
+                                # TODO fix that in Sigma hack to get rid of nested stuff
+                                # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
+                                sigma_rule = sigma_rule.replace(".keyword:", ":")
                                 logging.info(
-                                    '[sigma] Generated query {0:s}'.format(result))
+                                    '[sigma] Generated query {0:s}'.format(sigma_rule))
                                 number_of_tagged_events = self.run_sigma_rule(
-                                    result, tag_name)
+                                    sigma_rule, tag_name)
                                 tags_applied[tag_name] += number_of_tagged_events
                             except elasticsearch.TransportError as es_TransportError:
                                 logging.error(
-                                    'Timeout generating rule in file {0:s}: {1!s} waiting for 5 seconds'.format(
+                                    'Timeout generating rule in file {0:s}: {1!s} waiting for 10 seconds'.format(
                                         rule_file_path, es_TransportError))
                                 time.sleep(10) # waiting 5 seconds before continue
 
