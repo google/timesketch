@@ -3,6 +3,9 @@ from __future__ import unicode_literals
 
 import logging
 import os
+import time
+import elasticsearch
+
 
 from sigma.backends import elasticsearch as sigma_elasticsearch
 import sigma.configuration as sigma_configuration
@@ -111,12 +114,18 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                             continue
 
                         for result in results:
-                            simple_counter += 1
-                            logging.info(
-                                '[sigma] Generated query {0:s}'.format(result))
-                            number_of_tagged_events = self.run_sigma_rule(
-                                result, tag_name)
-                            tags_applied[tag_name] += number_of_tagged_events
+                            try:
+                                simple_counter += 1
+                                logging.info(
+                                    '[sigma] Generated query {0:s}'.format(result))
+                                number_of_tagged_events = self.run_sigma_rule(
+                                    result, tag_name)
+                                tags_applied[tag_name] += number_of_tagged_events
+                            except elasticsearch.TransportError as es_TransportError:
+                                logging.error(
+                                    'Timeout generating rule in file {0:s}: {1!s} waiting for 5 seconds'.format(
+                                        rule_file_path, es_TransportError))
+                                time.sleep(10) # waiting 5 seconds before continue
 
         total_tagged_events = sum(tags_applied.values())
         output_string = 'Applied {0:d} tags\n'.format(total_tagged_events)
@@ -180,6 +189,14 @@ class TestRulesSigmaPlugin(SigmaPlugin):
 
     NAME = 'sigma_test'
 
+class ComplianceRulesSigmaPlugin(SigmaPlugin):
+    """Sigma plugin to run Windows rules."""
+
+    _RULES_PATH = '../../../data/sigma/rules/compliance'
+
+    NAME = 'sigma_compliance'
+
+manager.AnalysisManager.register_analyzer(ComplianceRulesSigmaPlugin)
 manager.AnalysisManager.register_analyzer(LinuxRulesSigmaPlugin)
 manager.AnalysisManager.register_analyzer(WindowsRulesSigmaPlugin)
 manager.AnalysisManager.register_analyzer(TestRulesSigmaPlugin)
