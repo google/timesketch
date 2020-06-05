@@ -275,7 +275,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         Args:
             label (string): the label string to search for.
-            sketch...
+            sketch (timesketch.models.sketch.Sketch): a sketch object.
 
         Returns:
             pd.DataFrame: a pandas DataFrame with all the events in the
