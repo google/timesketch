@@ -26,6 +26,16 @@ const RestApiClient = axios.create({
   }
 })
 
+const RestApiBlobClient = axios.create({
+  baseURL: '/api/v1',
+  responseType: 'blob',
+  headers: {
+    common: {
+      'X-CSRFToken': document.getElementsByTagName('meta')[0]['content']
+    }
+  }
+})
+
 // Show message on errors.
 RestApiClient.interceptors.response.use(function (response) {
   return response;
@@ -60,6 +70,24 @@ export default {
   },
   deleteSketch (sketchId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/')
+  },
+  archiveSketch (sketchId) {
+    let formData = {
+      action: 'archive'
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/archive/', formData)
+  },
+  unArchiveSketch (sketchId) {
+    let formData = {
+      action: 'unarchive'
+    }
+    return RestApiClient.post('/sketches/' + sketchId + '/archive/', formData)
+  },
+  exportSketch (sketchId) {
+    let formData = {
+      action: 'export'
+    }
+    return RestApiBlobClient.post('/sketches/' + sketchId + '/archive/', formData)
   },
   getSketchTimelines (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/')
