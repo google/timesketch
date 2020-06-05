@@ -189,14 +189,6 @@ class TestRulesSigmaPlugin(SigmaPlugin):
 
     NAME = 'sigma_test'
 
-class ComplianceRulesSigmaPlugin(SigmaPlugin):
-    """Sigma plugin to run Windows rules."""
-
-    _RULES_PATH = '../../../data/sigma/rules/compliance'
-
-    NAME = 'sigma_compliance'
-
-manager.AnalysisManager.register_analyzer(ComplianceRulesSigmaPlugin)
 manager.AnalysisManager.register_analyzer(LinuxRulesSigmaPlugin)
 manager.AnalysisManager.register_analyzer(WindowsRulesSigmaPlugin)
 manager.AnalysisManager.register_analyzer(TestRulesSigmaPlugin)
