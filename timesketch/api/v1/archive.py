@@ -285,8 +285,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             indexes_to_open.append(search_index.index_name)
 
         # TODO (kiddi): Move this to lib/datastores/elastic.py.
-        if indexes_to_open:
-            self.datastore.client.indices.open(','.join(indexes_to_open))
+        self.datastore.client.indices.open(','.join(indexes_to_open))
         return HTTP_STATUS_CODE_OK
 
     def _archive_sketch(self, sketch):
@@ -333,6 +332,5 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             indexes_to_close.append(search_index.index_name)
 
         # TODO (kiddi): Move this to lib/datastores/elastic.py.
-        if indexes_to_close:
-            self.datastore.client.indices.close(','.join(indexes_to_close))
+        self.datastore.client.indices.close(','.join(indexes_to_close))
         return HTTP_STATUS_CODE_OK
