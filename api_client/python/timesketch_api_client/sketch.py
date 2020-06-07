@@ -247,7 +247,7 @@ class Sketch(resource.BaseResource):
         resource_url = '{0:s}/sketches/{1:d}/'.format(
             self.api.api_root, self.id)
         response = self.api.session.delete(resource_url)
-        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return error.check_return_status(response, logger)
 
     def add_to_acl(self, user_list=None, group_list=None, make_public=False):
         """Add users or groups to the sketch ACL.
@@ -286,7 +286,7 @@ class Sketch(resource.BaseResource):
 
         response = self.api.session.post(resource_url, json=data)
 
-        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return error.check_return_status(response, logger)
 
     def list_aggregation_groups(self):
         """List all saved aggregation groups for this sketch.
@@ -738,7 +738,7 @@ class Sketch(resource.BaseResource):
         }
 
         response = self.api.session.post(resource_url, json=form_data)
-        if response.status_code != 200:
+        if not error.check_return_status(response, logger):
             error.error_message(
                 response, message='Unable to query results',
                 error=ValueError)
@@ -754,7 +754,7 @@ class Sketch(resource.BaseResource):
             if max_entries and total_count >= max_entries:
                 break
             more_response = self.api.session.post(resource_url, json=form_data)
-            if more_response.status_code != 200:
+            if not error.check_return_status(more_response, logger):
                 error.error_message(
                     response, message='Unable to query results',
                     error=ValueError)
@@ -865,27 +865,27 @@ class Sketch(resource.BaseResource):
 
         response = self.api.session.post(resource_url, json=data)
 
-        if response.status_code == 200:
-          data = error.get_response_json(response, logger)
-            objects = data.get('objects', [])
-            if not objects:
-                raise error.UnableToRunAnalyzer(
-                    'No session data returned back, analyzer may have run but '
-                    'unable to verify, please verify manually.')
+        if not error.check_return_status(response, logger):
+            raise error.UnableToRunAnalyzer('[{0:d}] {1!s} {2!s}'.format(
+                response.status_code, response.reason, response.text))
 
-            session_id = objects[0].get('analysis_session')
-            if not session_id:
-                raise error.UnableToRunAnalyzer(
-                    'Analyzer may have run, but there is no session ID to '
-                    'verify that it has. Please verify manually.')
+        data = error.get_response_json(response, logger)
+        objects = data.get('objects', [])
+        if not objects:
+            raise error.UnableToRunAnalyzer(
+                'No session data returned back, analyzer may have run but '
+                'unable to verify, please verify manually.')
 
-            session = analyzer.AnalyzerResult(
-                timeline_id=timeline_id, session_id=session_id,
-                sketch_id=self.id, api=self.api)
-            return session
+        session_id = objects[0].get('analysis_session')
+        if not session_id:
+            raise error.UnableToRunAnalyzer(
+                'Analyzer may have run, but there is no session ID to '
+                'verify that it has. Please verify manually.')
 
-        raise error.UnableToRunAnalyzer('[{0:d}] {1!s} {2!s}'.format(
-            response.status_code, response.reason, response.text))
+        session = analyzer.AnalyzerResult(
+            timeline_id=timeline_id, session_id=session_id,
+            sketch_id=self.id, api=self.api)
+        return session
 
     def remove_acl(self, user_list=None, group_list=None, remove_public=False):
         """Remove users or groups to the sketch ACL.
@@ -923,8 +923,7 @@ class Sketch(resource.BaseResource):
             return True
 
         response = self.api.session.post(resource_url, json=data)
-
-        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return error.check_return_status(response, logger)
 
     def aggregate(self, aggregate_dsl):
         """Run an aggregation request on the sketch.
@@ -1120,7 +1119,7 @@ class Sketch(resource.BaseResource):
         resource_url = '{0:s}/sketches/{1:d}/event/tagging/'.format(
             self.api.api_root, self.id)
         response = self.api.session.post(resource_url, json=form_data)
-        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return error.check_return_status(response, logger)
 
     def search_by_label(self, label_name, as_pandas=False):
         """Searches for all events containing a given label.
@@ -1212,11 +1211,10 @@ class Sketch(resource.BaseResource):
             'action': 'archive'
         }
         response = self.api.session.post(resource_url, json=data)
-        return_status = response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return_status = error.check_return_status(response, logger)
         self._archived = return_status
 
-        return error.check_return_status(response, logger)
-
+        return return_status
 
     def unarchive(self):
         """Unarchives a sketch and return boolean whether it was succesful."""
@@ -1230,7 +1228,7 @@ class Sketch(resource.BaseResource):
             'action': 'unarchive'
         }
         response = self.api.session.post(resource_url, json=data)
-        return_status = response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return_status = error.check_return_status(response, logger)
         self._archived = return_status
         return return_status
 

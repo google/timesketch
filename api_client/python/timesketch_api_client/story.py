@@ -20,7 +20,7 @@ import logging
 import pandas as pd
 
 from . import aggregation
-from . import definitions
+from . import error
 from . import resource
 from . import view
 
@@ -627,7 +627,7 @@ class Story(resource.BaseResource):
             '{0:s}/{1:s}'.format(self._api.api_root, self.resource_uri),
             json=data)
 
-        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return error.check_return_status(response, logger)
 
     def delete(self):
         """Delete the story from the sketch.
@@ -638,7 +638,7 @@ class Story(resource.BaseResource):
         response = self._api.session.delete(
             '{0:s}/{1:s}'.format(self._api.api_root, self.resource_uri))
 
-        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return error.check_return_status(response, logger)
 
     def move_to(self, block, new_index):
         """Moves a block from one index to another."""

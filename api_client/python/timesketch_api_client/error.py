@@ -22,9 +22,17 @@ from . import definitions
 
 
 def _get_message(response):
-    """Return a formatted message string from the response text."""
+    """Return a formatted message string from the response text.
+
+    Args:
+        response (requests.Response): a response object from a HTTP
+            request.
+
+    Returns:
+        str: a string with the message field extracted from the
+            response.text.
+    """
     soup = bs4.BeautifulSoup(response.text, features='html.parser')
-    text = ''
     if soup.p:
         return soup.p.string
 
@@ -40,7 +48,18 @@ def _get_message(response):
 
 
 def get_response_json(response, logger):
-    """Return the JSON object from a response, logging any errors."""
+    """Return the JSON object from a response, logging any errors.
+
+    Args:
+        response (requests.Response): a response object from a HTTP
+            request.
+        logger (logging.Logger): a logger object that can be used to
+            write log messages.
+
+    Returns:
+        dict: a dict with the decoded JSON object within the HTTP
+            response object.
+    """
     status = response.status_code in definitions.HTTP_STATUS_CODE_20X
     if not status:
         logger.warning('Failed response: [{0:d}] {2:s} {1:s}'.format(
@@ -65,7 +84,18 @@ def error_message(response, message=None, error=RuntimeError):
 
 
 def check_return_status(response, logger):
-    """Check return status and return a boolean."""
+    """Check return status and return a boolean.
+
+    Args:
+        response (requests.Response): a response object from a HTTP
+            request.
+        logger (logging.Logger): a logger object that can be used to
+            write log messages.
+
+    Returns:
+        bool: a boolean indicating whether the return status was in
+            the 20X range of HTTP responses.
+    """
     status = response.status_code in definitions.HTTP_STATUS_CODE_20X
     if status:
         return status

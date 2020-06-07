@@ -14,8 +14,13 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
-from . import definitions
+import logging
+
+from . import error
 from . import resource
+
+
+logger = logging.getLogger('timeline_api')
 
 
 class Timeline(resource.BaseResource):
@@ -90,4 +95,4 @@ class Timeline(resource.BaseResource):
         resource_url = '{0:s}/{1:s}'.format(
             self.api.api_root, self.resource_uri)
         response = self.api.session.delete(resource_url)
-        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return error.check_return_status(response, logger)
