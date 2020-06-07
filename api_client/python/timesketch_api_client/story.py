@@ -684,13 +684,7 @@ class Story(resource.BaseResource):
         }
         response = self._api.session.post(resource_url, json=data)
 
-        if response.status_code in definitions.HTTP_STATUS_CODE_20X:
-            return response.json()
-
-        logger.error(
-            'Error exporting story: [{0:d}] {1!s} {2!s}'.format(
-                response.status_code, response.reason, response.text))
-        return {}
+        return error.get_response_json(response, logger)
 
     def to_string(self):
         """Returns a string with the content of all the story."""

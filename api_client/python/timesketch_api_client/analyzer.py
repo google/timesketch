@@ -16,9 +16,14 @@ from __future__ import unicode_literals
 
 import datetime
 import json
+import logging
 
 from . import definitions
+from . import error
 from . import resource
+
+
+logger = logging.getLogger('analyzer_api')
 
 
 class AnalyzerResult(resource.BaseResource):
@@ -40,7 +45,7 @@ class AnalyzerResult(resource.BaseResource):
         if not response.status_code in definitions.HTTP_STATUS_CODE_20X:
             return {}
 
-        data = response.json()
+        data = error.get_response_json(response, logger)
 
         objects = data.get('objects')
         if not objects:

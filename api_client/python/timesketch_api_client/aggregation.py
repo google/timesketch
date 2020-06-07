@@ -15,6 +15,7 @@
 from __future__ import unicode_literals
 
 import json
+import logging
 
 import altair
 import pandas
@@ -22,6 +23,9 @@ import pandas
 from . import definitions
 from . import error
 from . import resource
+
+
+logger = logging.getLogger('aggregation_api')
 
 
 class Aggregation(resource.BaseResource):
@@ -116,7 +120,7 @@ class Aggregation(resource.BaseResource):
             error.error_message(
                 response, message='Unable to query results', error=ValueError)
 
-        return response.json()
+        return error.get_response_json(response, logger)
 
     def from_store(self, aggregation_id):
         """Initialize the aggregation object from a stored aggregation.
@@ -175,7 +179,7 @@ class Aggregation(resource.BaseResource):
             error.error_message(
                 response, message='Unable to query results', error=ValueError)
 
-        self.resource_data = response.json()
+        self.resource_data = error.get_response_json(response, logger)
 
     def from_aggregator_run(
             self, aggregator_name, aggregator_parameters,

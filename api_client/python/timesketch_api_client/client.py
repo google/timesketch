@@ -303,14 +303,7 @@ class TimesketchApi(object):
         """
         resource_url = '{0:s}/{1:s}'.format(self.api_root, resource_uri)
         response = self.session.get(resource_url)
-        try:
-            return response.json()
-        except json.JSONDecodeError as e:
-            logger.error(
-                'Error fetching resources: [{0:d}] {1!s} {2!s}, error: '
-                '{3!s}'.format(
-                    response.status_code, response.reason, response.text, e))
-        return {}
+        return error.get_response_json(response, logger)
 
     def create_sketch(self, name, description=None):
         """Create a new sketch.
@@ -328,7 +321,7 @@ class TimesketchApi(object):
         resource_url = '{0:s}/sketches/'.format(self.api_root)
         form_data = {'name': name, 'description': description}
         response = self.session.post(resource_url, json=form_data)
-        response_dict = response.json()
+        response_dict = error.get_response_json(response, logger)
         sketch_id = response_dict['objects'][0]['id']
         return self.get_sketch(sketch_id)
 
@@ -373,7 +366,7 @@ class TimesketchApi(object):
             data = {'aggregator': name}
             resource_url = '{0:s}/{1:s}'.format(self.api_root, resource_uri)
             response = self.session.post(resource_url, json=data)
-            response_json = response.json()
+            response_json = error.get_response_json(response, logger)
         else:
             response_json = self.fetch_resource_data(resource_uri)
 
@@ -456,7 +449,7 @@ class TimesketchApi(object):
                 response, message='Error creating searchindex',
                 error=RuntimeError)
 
-        response_dict = response.json()
+        response_dict = error.get_response_json(response, logger)
         metadata_dict = response_dict['meta']
         created = metadata_dict.get('created', False)
         searchindex_id = response_dict['objects'][0]['id']
