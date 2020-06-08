@@ -15,6 +15,8 @@
 
 from __future__ import unicode_literals
 
+from .archive import SketchArchiveResource
+from .collaborator import CollaboratorResource
 from .resources import AggregationGroupResource
 from .resources import AggregationGroupListResource
 from .resources import AggregationListResource
@@ -34,7 +36,6 @@ from .resources import GraphResource
 from .resources import GraphViewListResource
 from .resources import GraphViewResource
 from .resources import SketchResource
-from .archive import SketchArchiveResource
 from .resources import SketchListResource
 from .resources import ViewResource
 from .resources import ViewListResource
@@ -53,7 +54,6 @@ from .resources import SearchIndexResource
 from .resources import SessionResource
 from .resources import UserListResource
 from .resources import GroupListResource
-from .resources import CollaboratorResource
 from .resources import LoggedInUserResource
 
 
