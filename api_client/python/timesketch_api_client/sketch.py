@@ -270,7 +270,9 @@ class Sketch(resource.BaseResource):
         response = self.api.session.delete(resource_url)
         return error.check_return_status(response, logger)
 
-    def add_to_acl(self, user_list=None, group_list=None, make_public=False):
+    def add_to_acl(
+            self, user_list=None, group_list=None,
+            make_public=False, permissions=None):
         """Add users or groups to the sketch ACL.
 
         Args:
@@ -280,6 +282,8 @@ class Sketch(resource.BaseResource):
                 of the sketch. Each user is a string.
             make_public: Optional boolean indicating the sketch should be
                 marked as public.
+            permissions: optional list of permissions (read, write, delete).
+                If not the default set of permissions are applied (read, write)
 
         Returns:
             A boolean indicating whether the ACL change was successful.
@@ -301,6 +305,12 @@ class Sketch(resource.BaseResource):
 
         if make_public:
             data['public'] = 'true'
+
+        if permissions:
+            allowed_permissions = set(['read', 'write', 'delete'])
+            permissions = list(
+                allowed_permissions.intersection(set(permissions)))
+            data['permissions'] = json.dumps(permissions)
 
         if not data:
             return True

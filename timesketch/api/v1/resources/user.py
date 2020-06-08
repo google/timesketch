@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """User and Group resources for version 1 of the Timesketch API."""
+import json
 
 from flask import abort
 from flask import request
@@ -83,13 +84,25 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
         form = request.json
 
-        # TODO: Add granular ACL controls.
-        # https://github.com/google/timesketch/issues/1016
-
         if not sketch.has_permission(user=current_user, permission='write'):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'The user does not have write permission on the sketch.')
+
+        permission_string = form.get('permissions', '')
+        if permission_string:
+            try:
+                permissions = json.loads(permission_string)
+            except json.JSONDecodeError:
+                permissions = []
+        else:
+            permissions = []
+
+        # You cannot grant a permission you don't have.
+        for index, permission in enumerate(permissions):
+            if not sketch.has_permission(
+                    user=current_user, permission=permission):
+                _ = permissions.pop(index)
 
         for username in form.get('users', []):
             # Try the username with any potential @domain preserved.
@@ -102,25 +115,58 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
                 user = User.query.filter_by(username=base_username).first()
 
             if user:
-                sketch.grant_permission(permission='read', user=user)
-                sketch.grant_permission(permission='write', user=user)
+                user_permissions = permissions or ['read', 'write']
+                for permission in user_permissions:
+                    sketch.grant_permission(permission=permission, user=user)
 
         for group in form.get('groups', []):
             group = Group.query.filter_by(name=group).first()
+
             # Only add groups publicly visible or owned by the current user
             if not group.user or group.user == current_user:
-                sketch.grant_permission(permission='read', group=group)
-                sketch.grant_permission(permission='write', group=group)
+                group_permissions = permissions or ['read', 'write']
+                for permission in group_permissions:
+                    sketch.grant_permission(permission=permission, group=group)
+
+        user_permissions = {}
+        group_permissions = {}
+
+        read_permissions = sketch.get_permissions('read')
+        for user in read_permissions.get('users'):
+            user_permissions[user.username] = ['read']
+        for group in read_permissions.get('groups'):
+            group_permissions[group.name] = ['read']
+
+        write_permissions = sketch.get_permissions('write')
+        for user in write_permissions.get('users'):
+            user_permissions.setdefault(user.username, [])
+            user_permissions[user.username].append('write')
+        for group in write_permissions.get('groups'):
+            group_permissions.setdefault(user.username, [])
+            group_permissions[group.name].append('write')
+
+        delete_permissions = sketch.get_permissions('delete')
+        for user in delete_permissions.get('users'):
+            user_permissions.setdefault(user.username, [])
+            user_permissions[user.username].append('delete')
+        for group in delete_permissions.get('groups'):
+            group_permissions.setdefault(user.username, [])
+            group_permissions[group.name].append('delete')
+
 
         for username in form.get('remove_users', []):
             user = User.query.filter_by(username=username).first()
-            sketch.revoke_permission(permission='read', user=user)
-            sketch.revoke_permission(permission='write', user=user)
+            permission_list = permissions or user_permissions.get(
+                username, [])
+            for permission in permission_list:
+                sketch.revoke_permission(permission=permission, user=user)
 
         for group in form.get('remove_groups', []):
             group = Group.query.filter_by(name=group).first()
-            sketch.revoke_permission(permission='read', group=group)
-            sketch.revoke_permission(permission='write', group=group)
+            permission_list = permissions or group_permissions.get(
+                username, [])
+            for permission in permission_list:
+                sketch.revoke_permission(permission=permission, user=user)
 
         public = form.get('public')
         if public == 'true':

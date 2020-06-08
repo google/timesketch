@@ -210,6 +210,38 @@ class AccessControlMixin(object):
             self.AccessControlEntry.parent == self).all()
         return set(ace.user for ace in aces)
 
+    def get_permissions(self, permission):
+        """Get list of users and groups that have permission on the object.
+
+        Args:
+            permission (str): the permission string (read, write or delete)
+
+        Returns:
+            Dict with users, groups and an indication of whether the sketch
+            is public. Values are a set of user objects
+            (instances of timesketch.models.user.User) or group objects
+            (instances of timesketch.models.user.Group)
+        """
+        return_dict = {}
+
+        # pylint: disable=singleton-comparison
+        aces = self.AccessControlEntry.query.filter(
+            not_(self.AccessControlEntry.user == None),
+            self.AccessControlEntry.permission == permission,
+            self.AccessControlEntry.parent == self).all()
+
+        return_dict['users'] = set(ace.user for ace in aces)
+
+        group_aces = self.AccessControlEntry.query.filter(
+            not_(self.AccessControlEntry.group == None),
+            self.AccessControlEntry.permission == permission,
+            self.AccessControlEntry.parent == self).all()
+
+        return_dict['groups'] = set(ace.group for ace in group_aces)
+
+        return_dict['is_public'] = self.is_public
+        return return_dict
+
     def has_permission(self, user, permission):
         """Check if the user has a specific permission.
 
