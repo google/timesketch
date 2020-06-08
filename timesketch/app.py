@@ -91,7 +91,7 @@ def create_app(config=None):
             from plaso import __version__ as plaso_version
             app.config['PLASO_VERSION'] = plaso_version
         except ImportError:
-            sys.stderr.write('Upload is enabled, but Plaso is not installed.')
+            pass
 
     # Setup the database.
     configure_engine(app.config['SQLALCHEMY_DATABASE_URI'])
