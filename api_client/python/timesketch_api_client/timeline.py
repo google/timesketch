@@ -14,6 +14,7 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
+from . import definitions
 from . import resource
 
 
@@ -66,3 +67,27 @@ class Timeline(resource.BaseResource):
             index_name = timeline['objects'][0]['searchindex']['index_name']
             self._searchindex = index_name
         return self._searchindex
+
+    @property
+    def status(self):
+        """Property that returns the timeline status.
+
+        Returns:
+            String with the timeline status.
+        """
+        data = self.data
+        timeline_object = data.get('objects', [{}])[0]
+        status_list = timeline_object.get('status')
+
+        if not status_list:
+            return 'Unknown'
+
+        status = status_list[0]
+        return status.get('status')
+
+    def delete(self):
+        """Deletes the timeline."""
+        resource_url = '{0:s}/{1:s}'.format(
+            self.api.api_root, self.resource_uri)
+        response = self.api.session.delete(resource_url)
+        return response.status_code in definitions.HTTP_STATUS_CODE_20X

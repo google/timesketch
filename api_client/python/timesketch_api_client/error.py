@@ -14,6 +14,8 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
+import json
+
 import bs4
 
 
@@ -25,6 +27,12 @@ def error_message(response, message=None, error=RuntimeError):
     text = ''
     if soup.p:
         text = soup.p.string
+    else:
+        try:
+            response_dict = json.loads(response.text)
+            text = response_dict.get('message', 'Unable to get message')
+        except (json.JSONDecodeError, AttributeError):
+            text = str(response.text)
     raise error('{0:s}, with error [{1:d}] {2!s} {3:s}'.format(
         message, response.status_code, response.reason, text))
 

@@ -34,6 +34,7 @@ from .resources import GraphResource
 from .resources import GraphViewListResource
 from .resources import GraphViewResource
 from .resources import SketchResource
+from .archive import SketchArchiveResource
 from .resources import SketchListResource
 from .resources import ViewResource
 from .resources import ViewListResource
@@ -62,6 +63,7 @@ from .resources import LoggedInUserResource
 API_ROUTES = [
     (SketchListResource, '/sketches/'),
     (SketchResource, '/sketches/<int:sketch_id>/'),
+    (SketchArchiveResource, '/sketches/<int:sketch_id>/archive/'),
     (AnalysisResource, '/sketches/<int:sketch_id>/timelines/<int:timeline_id>/analysis/'),
     (AnalyzerRunResource, '/sketches/<int:sketch_id>/analyzer/'),
     (AnalyzerSessionResource, '/sketches/<int:sketch_id>/analyzer/sessions/<int:session_id>/'),

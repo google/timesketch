@@ -2,8 +2,8 @@
 from __future__ import unicode_literals
 
 import copy
-import mock
 import re
+import mock
 
 from flask import current_app
 
@@ -12,19 +12,19 @@ from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 
 MOCK_YETI_INTEL = {
-    "x-regex--6ebc9344-1111-4d65-8bdd-b6dddf613068": {
-    "id": "x-regex--6ebc9344-1111-4d65-8bdd-b6dddf613068",
-    "name": "Secret Fancy Bear c2",
-    "pattern": "baddomain\\.com",
-    "compiled_regexp": re.compile("baddomain\\.com"),
-    "type": "x-regex",
+    'x-regex--6ebc9344-1111-4d65-8bdd-b6dddf613068': {
+        'id': 'x-regex--6ebc9344-1111-4d65-8bdd-b6dddf613068',
+        'name': 'Secret Fancy Bear c2',
+        'pattern': 'baddomain\\.com',
+        'compiled_regexp': re.compile('baddomain\\.com'),
+        'type': 'x-regex',
     }
 }
 
 MOCK_YETI_NEIGHBORS = [{
-    "id": "x-incident--6ebc9344-1111-4d65-8bdd-b6dddf613068",
-    "name": "Random incident",
-    "type": "x-incident",
+    'id': 'x-incident--6ebc9344-1111-4d65-8bdd-b6dddf613068',
+    'name': 'Random incident',
+    'type': 'x-incident',
 }]
 
 MATCHING_DOMAIN_MESSAGE = {'message': 'baddomain.com'}
@@ -96,7 +96,7 @@ class TestThreatintelPlugin(BaseTest):
         sessionizer = yetiindicators.YetiIndicators('test_index', 1)
         mock_event = mock.Mock()
         sessionizer.mark_event(
-            MOCK_YETI_INTEL["x-regex--6ebc9344-1111-4d65-8bdd-b6dddf613068"],
+            MOCK_YETI_INTEL['x-regex--6ebc9344-1111-4d65-8bdd-b6dddf613068'],
             mock_event,
             MOCK_YETI_NEIGHBORS)
         # The name of the entity is "Random incident"

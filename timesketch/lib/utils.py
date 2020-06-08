@@ -204,6 +204,7 @@ def get_validated_indices(indices, sketch_indices):
     exclude = set(indices) - set(sketch_indices)
     if exclude:
         indices = [index for index in indices if index not in exclude]
+
     return indices
 
 

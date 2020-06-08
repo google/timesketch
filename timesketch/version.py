@@ -1,4 +1,4 @@
-# Copyright 2014 Google Inc. All rights reserved.
+# Copyright 2020 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,16 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Version information for Timesketch."""
+
+__version__ = '20200507'
 
 
-# TODO: Remove once a new plaso release comes out.
-def create_app(config=None):
-    """Create the Flask app instance that is used throughout the application.
-
-    Args:
-        config: Path to configuration file as a string or an object with config
-        directives.
-
-    Returns:
-        Application object (instance of flask.Flask).
-    """
+def get_version():
+    """Returns the version information."""
+    return __version__
