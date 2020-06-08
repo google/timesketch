@@ -370,7 +370,7 @@ def google_openid_connect():
 
     # Check if the authenticating user is on the allowlist.
     if allowed_users:
-        if validated_email not in user_allowlist:
+        if validated_email not in allowed_users:
             return abort(
                 HTTP_STATUS_CODE_UNAUTHORIZED,
                 'Unauthorized request, user not in allowlist')
