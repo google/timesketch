@@ -70,7 +70,7 @@ def create_app(config=None):
         os.environ['TIMESKETCH_SETTINGS'] = config
         try:
             app.config.from_envvar('TIMESKETCH_SETTINGS')
-            if app.config.get('EMAIL_RECIPIENTS') is None:
+            if not app.config.get('EMAIL_RECIPIENTS'):
                 sys.stderr.write(
                     "Warning, please update your timesketch.conf "
                     "format. https://github.com/google/timesketch/pull/1245")
