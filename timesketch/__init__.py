@@ -72,8 +72,8 @@ def create_app(config=None):
             app.config.from_envvar('TIMESKETCH_SETTINGS')
             if not app.config.get('EMAIL_RECIPIENTS'):
                 sys.stderr.write(
-                    "Warning, please update your timesketch.conf "
-                    "format. https://github.com/google/timesketch/pull/1245")
+                    "Warning, EMAIL_USER_WHITELIST has been deprecated. "
+                    "Please update timesketch.conf.")
         except IOError:
             sys.stderr.write(
                 'Config file {0} does not exist.\n'.format(config))
