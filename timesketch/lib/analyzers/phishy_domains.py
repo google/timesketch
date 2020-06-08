@@ -255,7 +255,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
                     domain, ', '.join(similar_text_list))
                 if any(domain.endswith(
                         x) for x in self.domain_scoring_exclude_domains):
-                    tags_to_add.append('allowlisted-domain')
+                    tags_to_add.append('known-domain')
                     allowlist_encountered = True
 
             for event in domains.get(domain, []):
@@ -277,7 +277,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
                     view_name='Phishy Domains, excl. allowlist',
                     analyzer_name=self.NAME,
                     query_string=(
-                        'tag:"phishy-domain" AND NOT tag:"allowlisted-domain"'))
+                        'tag:"phishy-domain" AND NOT tag:"known-domain"'))
 
         return (
             '{0:d} potentially phishy domains discovered.').format(
