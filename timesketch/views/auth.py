@@ -368,7 +368,7 @@ def google_openid_connect():
     validated_email = decoded_jwt.get('email')
     allowed_users = current_app.config.get('GOOGLE_OIDC_ALLOWED_USERS')
 
-    # Check if the authenticating user is on the allowlist.
+    # Check if the authenticating user is allowed.
     if allowed_users:
         if validated_email not in allowed_users:
             return abort(
