@@ -245,12 +245,6 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
-        if not sketch.has_permission(current_user, 'delete'):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN, (
-                    'User does not have sufficient access rights to '
-                    'delete a sketch.'))
-
         self._sketch = sketch
         form = request.json
         if not form:
@@ -258,12 +252,30 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         action = form.get('action', '')
         if action == 'archive':
+            if not sketch.has_permission(current_user, 'delete'):
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    'User does not have sufficient access rights to '
+                    'delete a sketch.')
+
             return self._archive_sketch(sketch)
 
         if action == 'export':
+            if not sketch.has_permission(current_user, 'read'):
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN, (
+                        'User does not have sufficient access rights to '
+                        'read a sketch.'))
+
             return self._export_sketch(sketch)
 
         if action == 'unarchive':
+            if not sketch.has_permission(current_user, 'delete'):
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN, (
+                        'User does not have sufficient access rights to '
+                        'delete a sketch.'))
+
             return self._unarchive_sketch(sketch)
 
         return abort(
