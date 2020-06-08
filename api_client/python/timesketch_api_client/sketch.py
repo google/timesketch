@@ -58,9 +58,30 @@ class Sketch(resource.BaseResource):
         self.id = sketch_id
         self.api = api
         self._archived = None
+        self._labels = []
         self._sketch_name = sketch_name
         self._resource_uri = 'sketches/{0:d}'.format(self.id)
         super(Sketch, self).__init__(api=api, resource_uri=self._resource_uri)
+
+    @property
+    def labels(self):
+        """Property that returns the sketch labels."""
+        if self._labels:
+            return self._labels
+
+        data = self.lazyload_data()
+        objects = data.get('objects', [])
+        if not objects:
+            return self._labels
+
+        sketch_data = objects[0]
+        label_string = sketch_data.get('label_string', '')
+        if label_string:
+            self._labels = json.loads(label_string)
+        else:
+            self._labels = []
+
+        return self._labels
 
     @property
     def name(self):
@@ -1229,7 +1250,10 @@ class Sketch(resource.BaseResource):
         }
         response = self.api.session.post(resource_url, json=data)
         return_status = error.check_return_status(response, logger)
-        self._archived = return_status
+
+        # return_status = True means unarchive is successful or that
+        # the archive status is False.
+        self._archived = not return_status
         return return_status
 
     def export(self, file_path):

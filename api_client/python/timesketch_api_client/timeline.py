@@ -42,11 +42,32 @@ class Timeline(resource.BaseResource):
             searchindex: The Elasticsearch index name (optional)
         """
         self.id = timeline_id
+        self._labels = []
         self._name = name
         self._searchindex = searchindex
         resource_uri = 'sketches/{0:d}/timelines/{1:d}/'.format(
             sketch_id, self.id)
         super(Timeline, self).__init__(api, resource_uri)
+
+    @property
+    def labels(self):
+        """Property that returns the timeline labels."""
+        if self._labels:
+            return self._labels
+
+        data = self.lazyload_data()
+        objects = data.get('objects', [])
+        if not objects:
+            return self._labels
+
+        timeline_data = objects[0]
+        label_string = timeline_data.get('label_string', '')
+        if label_string:
+            self._labels = json.loads(label_string)
+        else:
+            self._labels = []
+
+        return self._labels
 
     @property
     def name(self):
