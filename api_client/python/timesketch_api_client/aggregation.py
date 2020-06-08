@@ -15,13 +15,16 @@
 from __future__ import unicode_literals
 
 import json
+import logging
 
 import altair
 import pandas
 
-from . import definitions
 from . import error
 from . import resource
+
+
+logger = logging.getLogger('aggregation_api')
 
 
 class Aggregation(resource.BaseResource):
@@ -112,11 +115,11 @@ class Aggregation(resource.BaseResource):
         }
 
         response = self.api.session.post(resource_url, json=form_data)
-        if response.status_code != 200:
+        if not error.check_return_status(response, logger):
             error.error_message(
                 response, message='Unable to query results', error=ValueError)
 
-        return response.json()
+        return error.get_response_json(response, logger)
 
     def from_store(self, aggregation_id):
         """Initialize the aggregation object from a stored aggregation.
@@ -171,11 +174,11 @@ class Aggregation(resource.BaseResource):
         }
 
         response = self.api.session.post(resource_url, json=form_data)
-        if response.status_code != 200:
+        if not error.check_return_status(response, logger):
             error.error_message(
                 response, message='Unable to query results', error=ValueError)
 
-        self.resource_data = response.json()
+        self.resource_data = error.get_response_json(response, logger)
 
     def from_aggregator_run(
             self, aggregator_name, aggregator_parameters,
@@ -333,7 +336,7 @@ class Aggregation(resource.BaseResource):
                 self.api.api_root, self._sketch.id)
 
         response = self.api.session.post(resource_url, json=data)
-        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return error.check_return_status(response, logger)
 
 
 class AggregationGroup(resource.BaseResource):
@@ -426,7 +429,7 @@ class AggregationGroup(resource.BaseResource):
         response = self.api.session.delete(
             '{0:s}/{1:s}'.format(self.api.api_root, self.resource_uri))
 
-        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return error.check_return_status(response, logger)
 
     def from_dict(self, group_dict):
         """Feed group data from a dictionary.
@@ -539,7 +542,7 @@ class AggregationGroup(resource.BaseResource):
 
         response = self.api.session.post(res_url, json=data)
         _ = self.lazyload_data(refresh_cache=True)
-        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return error.check_return_status(response, logger)
 
     def to_pandas(self):
         """Returns a pandas DataFrame.

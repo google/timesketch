@@ -58,9 +58,30 @@ class Sketch(resource.BaseResource):
         self.id = sketch_id
         self.api = api
         self._archived = None
+        self._labels = []
         self._sketch_name = sketch_name
         self._resource_uri = 'sketches/{0:d}'.format(self.id)
         super(Sketch, self).__init__(api=api, resource_uri=self._resource_uri)
+
+    @property
+    def labels(self):
+        """Property that returns the sketch labels."""
+        if self._labels:
+            return self._labels
+
+        data = self.lazyload_data()
+        objects = data.get('objects', [])
+        if not objects:
+            return self._labels
+
+        sketch_data = objects[0]
+        label_string = sketch_data.get('label_string', '')
+        if label_string:
+            self._labels = json.loads(label_string)
+        else:
+            self._labels = []
+
+        return self._labels
 
     @property
     def name(self):
@@ -200,7 +221,7 @@ class Sketch(resource.BaseResource):
                 '{2!s}'.format(
                     response.status_code, response.reason, response.text))
 
-        response_json = response.json()
+        response_json = error.get_response_json(response, logger)
         view_dict = response_json.get('objects', [{}])[0]
         return view_lib.View(
             view_id=view_dict.get('id'),
@@ -230,7 +251,7 @@ class Sketch(resource.BaseResource):
         }
 
         response = self.api.session.post(resource_url, json=data)
-        response_json = response.json()
+        response_json = error.get_response_json(response, logger)
         story_dict = response_json.get('objects', [{}])[0]
         return story.Story(
             story_id=story_dict.get('id', 0),
@@ -247,7 +268,7 @@ class Sketch(resource.BaseResource):
         resource_url = '{0:s}/sketches/{1:d}/'.format(
             self.api.api_root, self.id)
         response = self.api.session.delete(resource_url)
-        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return error.check_return_status(response, logger)
 
     def add_to_acl(self, user_list=None, group_list=None, make_public=False):
         """Add users or groups to the sketch ACL.
@@ -286,7 +307,7 @@ class Sketch(resource.BaseResource):
 
         response = self.api.session.post(resource_url, json=data)
 
-        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return error.check_return_status(response, logger)
 
     def list_aggregation_groups(self):
         """List all saved aggregation groups for this sketch.
@@ -301,7 +322,7 @@ class Sketch(resource.BaseResource):
         resource_url = '{0:s}/sketches/{1:d}/aggregation/group/'.format(
             self.api.api_root, self.id)
         response = self.api.session.get(resource_url)
-        data = response.json()
+        data = error.get_response_json(response, logger)
         for group_dict in data.get('objects', []):
             if not group_dict.get('id'):
                 continue
@@ -399,7 +420,7 @@ class Sketch(resource.BaseResource):
                 '{0:s}/sketches/{1:d}/timelines/{2:d}/analysis').format(
                     self.api.api_root, self.id, timeline_obj.id)
             response = self.api.session.get(resource_uri)
-            response_json = response.json()
+            response_json = error.get_response_json(response, logger)
             objects = response_json.get('objects')
             if not objects:
                 continue
@@ -536,7 +557,7 @@ class Sketch(resource.BaseResource):
         resource_url = '{0:s}/sketches/{1:d}/stories/'.format(
             self.api.api_root, self.id)
         response = self.api.session.get(resource_url)
-        response_json = response.json()
+        response_json = error.get_response_json(response, logger)
         story_objects = response_json.get('objects')
         if not story_objects:
             return story_list
@@ -619,7 +640,7 @@ class Sketch(resource.BaseResource):
         data = {'name': timeline_name, 'sketch_id': self.id,
                 'index_name': index}
         response = self.api.session.post(resource_url, files=files, data=data)
-        response_dict = response.json()
+        response_dict = error.get_response_json(response, logger)
         timeline_dict = response_dict['objects'][0]
         timeline_obj = timeline.Timeline(
             timeline_id=timeline_dict['id'],
@@ -652,7 +673,7 @@ class Sketch(resource.BaseResource):
                 response, message='Failed adding timeline',
                 error=RuntimeError)
 
-        response_dict = response.json()
+        response_dict = error.get_response_json(response, logger)
         timeline_dict = response_dict['objects'][0]
         timeline_obj = timeline.Timeline(
             timeline_id=timeline_dict['id'],
@@ -738,12 +759,12 @@ class Sketch(resource.BaseResource):
         }
 
         response = self.api.session.post(resource_url, json=form_data)
-        if response.status_code != 200:
+        if not error.check_return_status(response, logger):
             error.error_message(
                 response, message='Unable to query results',
                 error=ValueError)
 
-        response_json = response.json()
+        response_json = error.get_response_json(response, logger)
 
         scroll_id = response_json.get('meta', {}).get('scroll_id', '')
         form_data['scroll_id'] = scroll_id
@@ -754,11 +775,11 @@ class Sketch(resource.BaseResource):
             if max_entries and total_count >= max_entries:
                 break
             more_response = self.api.session.post(resource_url, json=form_data)
-            if more_response.status_code != 200:
+            if not error.check_return_status(more_response, logger):
                 error.error_message(
                     response, message='Unable to query results',
                     error=ValueError)
-            more_response_json = more_response.json()
+            more_response_json = error.get_response_json(more_response, logger)
             count = len(more_response_json.get('objects', []))
             total_count += count
             response_json['objects'].extend(
@@ -786,11 +807,7 @@ class Sketch(resource.BaseResource):
 
         response = self.api.session.get(resource_url)
 
-        if response.status_code == 200:
-            return response.json()
-
-        return '[{0:d}] {1!s} {2!s}'.format(
-            response.status_code, response.reason, response.text)
+        return error.get_response_json(response, logger)
 
     def run_analyzer(
             self, analyzer_name, analyzer_kwargs=None, timeline_id=None,
@@ -869,27 +886,27 @@ class Sketch(resource.BaseResource):
 
         response = self.api.session.post(resource_url, json=data)
 
-        if response.status_code == 200:
-            data = response.json()
-            objects = data.get('objects', [])
-            if not objects:
-                raise error.UnableToRunAnalyzer(
-                    'No session data returned back, analyzer may have run but '
-                    'unable to verify, please verify manually.')
+        if not error.check_return_status(response, logger):
+            raise error.UnableToRunAnalyzer('[{0:d}] {1!s} {2!s}'.format(
+                response.status_code, response.reason, response.text))
 
-            session_id = objects[0].get('analysis_session')
-            if not session_id:
-                raise error.UnableToRunAnalyzer(
-                    'Analyzer may have run, but there is no session ID to '
-                    'verify that it has. Please verify manually.')
+        data = error.get_response_json(response, logger)
+        objects = data.get('objects', [])
+        if not objects:
+            raise error.UnableToRunAnalyzer(
+                'No session data returned back, analyzer may have run but '
+                'unable to verify, please verify manually.')
 
-            session = analyzer.AnalyzerResult(
-                timeline_id=timeline_id, session_id=session_id,
-                sketch_id=self.id, api=self.api)
-            return session
+        session_id = objects[0].get('analysis_session')
+        if not session_id:
+            raise error.UnableToRunAnalyzer(
+                'Analyzer may have run, but there is no session ID to '
+                'verify that it has. Please verify manually.')
 
-        raise error.UnableToRunAnalyzer('[{0:d}] {1!s} {2!s}'.format(
-            response.status_code, response.reason, response.text))
+        session = analyzer.AnalyzerResult(
+            timeline_id=timeline_id, session_id=session_id,
+            sketch_id=self.id, api=self.api)
+        return session
 
     def remove_acl(self, user_list=None, group_list=None, remove_public=False):
         """Remove users or groups to the sketch ACL.
@@ -927,8 +944,7 @@ class Sketch(resource.BaseResource):
             return True
 
         response = self.api.session.post(resource_url, json=data)
-
-        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return error.check_return_status(response, logger)
 
     def aggregate(self, aggregate_dsl):
         """Run an aggregation request on the sketch.
@@ -1067,7 +1083,7 @@ class Sketch(resource.BaseResource):
         resource_url = '{0:s}/sketches/{1:d}/event/annotate/'.format(
             self.api.api_root, self.id)
         response = self.api.session.post(resource_url, json=form_data)
-        return response.json()
+        return error.get_response_json(response, logger)
 
     def label_events(self, events, label_name):
         """Labels one or more events with label_name.
@@ -1091,7 +1107,7 @@ class Sketch(resource.BaseResource):
         resource_url = '{0:s}/sketches/{1:d}/event/annotate/'.format(
             self.api.api_root, self.id)
         response = self.api.session.post(resource_url, json=form_data)
-        return response.json()
+        return error.get_response_json(response, logger)
 
     def tag_events(self, events, tags):
         """Tags one or more events with a list of tags.
@@ -1124,7 +1140,7 @@ class Sketch(resource.BaseResource):
         resource_url = '{0:s}/sketches/{1:d}/event/tagging/'.format(
             self.api.api_root, self.id)
         response = self.api.session.post(resource_url, json=form_data)
-        return response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return error.check_return_status(response, logger)
 
     def search_by_label(self, label_name, as_pandas=False):
         """Searches for all events containing a given label.
@@ -1189,7 +1205,7 @@ class Sketch(resource.BaseResource):
         resource_url = '{0:s}/sketches/{1:d}/event/create/'.format(
             self.api.api_root, self.id)
         response = self.api.session.post(resource_url, json=form_data)
-        return response.json()
+        return error.get_response_json(response, logger)
 
     def is_archived(self):
         """Return a boolean indicating whether the sketch has been archived."""
@@ -1199,7 +1215,8 @@ class Sketch(resource.BaseResource):
         resource_url = '{0:s}/sketches/{1:d}/archive/'.format(
             self.api.api_root, self.id)
         response = self.api.session.get(resource_url)
-        meta = response.json().get('meta', {})
+        data = error.get_response_json(response, logger)
+        meta = data.get('meta', {})
         self._archived = meta.get('is_archived', False)
         return self._archived
 
@@ -1215,8 +1232,9 @@ class Sketch(resource.BaseResource):
             'action': 'archive'
         }
         response = self.api.session.post(resource_url, json=data)
-        return_status = response.status_code in definitions.HTTP_STATUS_CODE_20X
+        return_status = error.check_return_status(response, logger)
         self._archived = return_status
+
         return return_status
 
     def unarchive(self):
@@ -1231,8 +1249,11 @@ class Sketch(resource.BaseResource):
             'action': 'unarchive'
         }
         response = self.api.session.post(resource_url, json=data)
-        return_status = response.status_code in definitions.HTTP_STATUS_CODE_20X
-        self._archived = return_status
+        return_status = error.check_return_status(response, logger)
+
+        # return_status = True means unarchive is successful or that
+        # the archive status is False.
+        self._archived = not return_status
         return return_status
 
     def export(self, file_path):
