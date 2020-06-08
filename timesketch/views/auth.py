@@ -366,7 +366,7 @@ def google_openid_connect():
             'Unable to validate request, with error: {0!s}'.format(e))
 
     validated_email = decoded_jwt.get('email')
-    user_allowlist = current_app.config.get('GOOGLE_OIDC_ALLOWED_USERS')
+    allowed_users = current_app.config.get('GOOGLE_OIDC_ALLOWED_USERS')
 
     # Check if the authenticating user is on the allowlist.
     if user_allowlist:
