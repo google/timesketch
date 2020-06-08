@@ -64,6 +64,7 @@ fieldmappings:
     GroupSid: xml_string
     CommandLine: xml_string
     ServiceName: xml_string
+    Service: xml_string
     Message: xml_string
     keywords: xml_string # that might be wrong, only introduced during powershell stuff
 
