@@ -44,9 +44,8 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         self.domain_scoring_exclude_domains = current_app.config.get(
             'DOMAIN_ANALYZER_EXCLUDE_DOMAINS', [])
 
-        """ TODO remove that after a 6 months, this following check is to ensure
-        backportability of config file
-        """
+        # TODO: remove that after a 6 months, this following check is to ensure
+        # compatibility of the config file.
         if len(self.domain_scoring_exclude_domains) == 0:
             print("Warning, please update your timesketch.conf format. https://github.com/google/timesketch/pull/1245")
             self.domain_scoring_exclude_domains = current_app.config.get(
