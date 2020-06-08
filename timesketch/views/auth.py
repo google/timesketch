@@ -373,7 +373,7 @@ def google_openid_connect():
         if validated_email not in allowed_users:
             return abort(
                 HTTP_STATUS_CODE_UNAUTHORIZED,
-                'Unauthorized request, user not in allowlist')
+                'Unauthorized request, user not allowed')
 
     user = User.get_or_create(username=validated_email, name=validated_email)
     login_user(user)
