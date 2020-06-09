@@ -321,9 +321,18 @@ class Sketch(resource.BaseResource):
 
         if permissions:
             allowed_permissions = set(['read', 'write', 'delete'])
-            permissions = list(
+            use_permissions = list(
                 allowed_permissions.intersection(set(permissions)))
-            data['permissions'] = json.dumps(permissions)
+            if set(use_permissions) != set(permissions):
+                logger.warning('Some permissions are invalid: {0:s}'.format(
+                    ', '.join(list(
+                        set(permissions).difference(set(use_permissions))))))
+
+            if not use_permissions:
+                logger.error('No permissions left to add.')
+                return False
+
+            data['permissions'] = json.dumps(use_permissions)
 
         if not data:
             return True
