@@ -651,7 +651,7 @@ class ElasticsearchDataStore(object):
             if self.import_events:
                 try:
                     self.client.bulk(body=self.import_events)
-                except (ConnectionTimeout, socket.timeout) as e:
+                except (ConnectionTimeout, socket.timeout):
                     # TODO: Add a retry here.
                     es_logger.error('Unable to add events', exc_info=True)
 
