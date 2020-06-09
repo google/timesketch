@@ -73,8 +73,8 @@ class TestAnalysisManager(BaseTest):
     def test_get_analyzers(self):
         """Test to get analyzer class objects."""
         analyzers = manager.AnalysisManager.get_analyzers()
-        analyzer_list = [x for x in analyzers]
-        self.assertIsInstance(analyzer_list, list)
+        analyzer_list = list(analyzers)
+
         analyzer_dict = {}
         for name, analyzer_class in analyzer_list:
             analyzer_dict[name] = analyzer_class
@@ -84,7 +84,7 @@ class TestAnalysisManager(BaseTest):
 
         manager.AnalysisManager.clear_registration()
         analyzers = manager.AnalysisManager.get_analyzers()
-        analyzer_list = [x for x in analyzers]
+        analyzer_list = list(analyzers)
         self.assertEqual(analyzer_list, [])
 
         manager.AnalysisManager.register_analyzer(MockAnalyzer)
@@ -93,9 +93,9 @@ class TestAnalysisManager(BaseTest):
         manager.AnalysisManager.register_analyzer(MockAnalyzer4)
 
         analyzers = manager.AnalysisManager.get_analyzers()
-        analyzer_list = [x for x, _ in analyzers]
-        self.assertEqual(len(analyzer_list), 4)
-        self.assertIn('mockanalyzer', analyzer_list)
+        analyzer_names_list = [x for x, _ in analyzers]
+        self.assertEqual(len(analyzer_names_list), 4)
+        self.assertIn('mockanalyzer', analyzer_names_list)
 
         # pylint: disable=protected-access
         analyzers_to_run = [
@@ -117,7 +117,7 @@ class TestAnalysisManager(BaseTest):
         manager.AnalysisManager.register_analyzer(MockAnalyzerFail2)
         with self.assertRaises(KeyError):
             analyzers = manager.AnalysisManager.get_analyzers()
-            analyzer_list = [x for x, _ in analyzers]
+            _ = list(analyzers)
 
     def test_get_analyzer(self):
         """Test to get analyzer class from registry."""

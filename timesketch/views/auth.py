@@ -25,11 +25,12 @@ from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
+
+from oauthlib import oauth2
+
 from flask_login import current_user
 from flask_login import login_user
 from flask_login import logout_user
-
-from oauthlib import oauth2
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_UNAUTHORIZED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
