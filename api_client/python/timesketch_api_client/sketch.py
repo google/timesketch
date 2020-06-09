@@ -64,6 +64,19 @@ class Sketch(resource.BaseResource):
         super(Sketch, self).__init__(api=api, resource_uri=self._resource_uri)
 
     @property
+    def acl(self):
+        """Property that returns back a ACL dict."""
+        data = self.lazyload_data()
+        objects = data.get('objects')
+        if not objects:
+            return {}
+        data_object = objects[0]
+        permission_string = data_object.get('all_permissions')
+        if not permission_string:
+            return {}
+        return json.loads(permission_string)
+
+    @property
     def labels(self):
         """Property that returns the sketch labels."""
         if self._labels:

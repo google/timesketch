@@ -128,43 +128,18 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
                 for permission in group_permissions:
                     sketch.grant_permission(permission=permission, group=group)
 
-        user_permissions = {}
-        group_permissions = {}
-
-        read_permissions = sketch.get_permissions('read')
-        for user in read_permissions.get('users'):
-            user_permissions[user.username] = ['read']
-        for group in read_permissions.get('groups'):
-            group_permissions[group.name] = ['read']
-
-        write_permissions = sketch.get_permissions('write')
-        for user in write_permissions.get('users'):
-            user_permissions.setdefault(user.username, [])
-            user_permissions[user.username].append('write')
-        for group in write_permissions.get('groups'):
-            group_permissions.setdefault(user.username, [])
-            group_permissions[group.name].append('write')
-
-        delete_permissions = sketch.get_permissions('delete')
-        for user in delete_permissions.get('users'):
-            user_permissions.setdefault(user.username, [])
-            user_permissions[user.username].append('delete')
-        for group in delete_permissions.get('groups'):
-            group_permissions.setdefault(user.username, [])
-            group_permissions[group.name].append('delete')
-
-
+        all_permissions = sketch.get_all_permissions()
         for username in form.get('remove_users', []):
             user = User.query.filter_by(username=username).first()
-            permission_list = permissions or user_permissions.get(
-                username, [])
+            permission_list = permissions or all_permissions.get(
+                'user/{0:s}'.format(username), [])
             for permission in permission_list:
                 sketch.revoke_permission(permission=permission, user=user)
 
         for group in form.get('remove_groups', []):
             group = Group.query.filter_by(name=group).first()
-            permission_list = permissions or group_permissions.get(
-                username, [])
+            permission_list = permissions or all_permissions.get(
+                'group/{0:s}'.format(username), [])
             for permission in permission_list:
                 sketch.revoke_permission(permission=permission, user=user)
 
