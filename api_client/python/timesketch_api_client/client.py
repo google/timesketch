@@ -111,7 +111,7 @@ class TimesketchApi(object):
                 'Unable to connect to server, with error: {0!s}'.format(e))
 
     @property
-    def versionn(self):
+    def version(self):
         """Property that returns back the API client version."""
         return version.get_version()
 
