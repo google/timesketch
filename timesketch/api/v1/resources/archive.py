@@ -21,8 +21,6 @@ import json
 import logging
 import zipfile
 
-import pandas as pd
-
 from flask import abort
 from flask import current_app
 from flask import jsonify
@@ -31,6 +29,8 @@ from flask import send_file
 from flask_login import current_user
 from flask_login import login_required
 from flask_restful import Resource
+
+import pandas as pd
 
 from timesketch import version
 from timesketch.api.v1 import resources

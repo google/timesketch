@@ -15,9 +15,9 @@
 
 from __future__ import unicode_literals
 
-import numpy
-
 from six.moves import urllib_parse as urlparse
+
+import numpy
 
 from timesketch.lib.analyzers import interface
 
