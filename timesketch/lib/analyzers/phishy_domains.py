@@ -49,7 +49,6 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         if len(self.domain_scoring_exclude_domains) == 0:
             print("Warning, DOMAIN_ANALYZER_WHITELISTED_DOMAINS has been deprecated. "
                     "Please update timesketch.conf.")
-            )
             self.domain_scoring_exclude_domains = current_app.config.get(
                 'DOMAIN_ANALYZER_WHITELISTED_DOMAINS', [])
 
