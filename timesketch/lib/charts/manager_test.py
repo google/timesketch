@@ -33,7 +33,7 @@ class TestChartManager(BaseTest):
     def test_get_charts(self):
         """Test to get chart class objects."""
         charts = manager.ChartManager.get_charts()
-        chart_list = [x for x in charts]
+        chart_list = list(charts)
         first_chart_tuple = chart_list[0]
         chart_name, chart_class = first_chart_tuple
         self.assertIsInstance(chart_list, list)

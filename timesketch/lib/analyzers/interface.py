@@ -23,9 +23,10 @@ import time
 import traceback
 import yaml
 
+from flask import current_app
+
 import pandas
 
-from flask import current_app
 from timesketch.lib import definitions
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models import db_session

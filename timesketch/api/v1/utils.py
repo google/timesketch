@@ -18,9 +18,10 @@ from __future__ import unicode_literals
 import json
 import time
 
-import altair as alt
 from flask import abort
 from flask import jsonify
+
+import altair as alt
 
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
