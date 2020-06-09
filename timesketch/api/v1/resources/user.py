@@ -105,7 +105,8 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
                 abort(
                     HTTP_STATUS_CODE_FORBIDDEN,
                     'The user does not have {0:s} permission on the sketch '
-                    'and therefore can\'t grant it to others')
+                    'and therefore can\'t grant it to '
+                    'others'.format(permission))
 
         for username in form.get('users', []):
             # Try the username with any potential @domain preserved.
