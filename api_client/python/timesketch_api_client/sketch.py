@@ -329,7 +329,8 @@ class Sketch(resource.BaseResource):
             return True
 
         response = self.api.session.post(resource_url, json=data)
-
+        # Refresh the sketch data to reflect ACL changes.
+        _ = self.lazyload_data(refresh_cache=True)
         return error.check_return_status(response, logger)
 
     def list_aggregation_groups(self):
@@ -977,6 +978,8 @@ class Sketch(resource.BaseResource):
             return True
 
         response = self.api.session.post(resource_url, json=data)
+        # Refresh the sketch data to reflect ACL changes.
+        _ = self.lazyload_data(refresh_cache=True)
         return error.check_return_status(response, logger)
 
     def aggregate(self, aggregate_dsl):
