@@ -273,7 +273,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
             if allowlist_encountered:
                 self.sketch.add_view(
-                    view_name='Phishy Domains, excl. allowlist',
+                    view_name='Phishy Domains, excl. known domains',
                     analyzer_name=self.NAME,
                     query_string=(
                         'tag:"phishy-domain" AND NOT tag:"known-domain"'))

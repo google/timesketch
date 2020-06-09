@@ -273,21 +273,21 @@ def validate_api_token():
                 'Domain {0:s} is not allowed to authenticate against this '
                 'instance.'.format(domain))
 
-    user_allowlist = current_app.config.get('GOOGLE_OIDC_ALLOWED_USERS')
-    """ TODO remove that after a 6 months, this following check is to ensure
-           backportability of config file
-           """
+    allowed_users = current_app.config.get('GOOGLE_OIDC_ALLOWED_USERS')
+    # TODO: Remove that after a 6 months, this following check is to ensure
+    # compatibility of config file
     if len(user_allowlist) == 0:
-        print("Warning, please update your timesketch.conf format. https://github.com/google/timesketch/pull/1245")
+        print("Warning, GOOGLE_OIDC_USER_WHITELIST has been deprecated. "
+                  "Please update timesketch.conf.")
         user_allowlist = current_app.config.get(
             'GOOGLE_OIDC_USER_WHITELIST', [])
 
     # Check if the authenticating user is on the allowlist.
-    if user_allowlist:
-        if validated_email not in user_allowlist:
+    if allowed_users:
+        if validated_email not in allowed_users:
             return abort(
                 HTTP_STATUS_CODE_UNAUTHORIZED,
-                'Unauthorized request, user not in allowlist')
+                'Unauthorized request, user not allowed')
 
     user = User.get_or_create(username=validated_email, name=validated_email)
     login_user(user)
