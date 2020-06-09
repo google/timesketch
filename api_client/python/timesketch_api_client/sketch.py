@@ -931,7 +931,9 @@ class Sketch(resource.BaseResource):
             sketch_id=self.id, api=self.api)
         return session
 
-    def remove_acl(self, user_list=None, group_list=None, remove_public=False):
+    def remove_acl(
+            self, user_list=None, group_list=None, remove_public=False,
+            permissions=None):
         """Remove users or groups to the sketch ACL.
 
         Args:
@@ -941,6 +943,8 @@ class Sketch(resource.BaseResource):
                 of the sketch. Each user is a string.
             remove_public: Optional boolean indicating the sketch should be
                 no longer marked as public.
+            permissions: optional list of permissions (read, write, delete).
+                If not the default set of permissions are applied (read, write)
 
         Returns:
             A boolean indicating whether the ACL change was successful.
@@ -962,6 +966,12 @@ class Sketch(resource.BaseResource):
 
         if remove_public:
             data['public'] = 'false'
+
+        if permissions:
+            allowed_permissions = set(['read', 'write', 'delete'])
+            permissions = list(
+                allowed_permissions.intersection(set(permissions)))
+            data['permissions'] = json.dumps(permissions)
 
         if not data:
             return True

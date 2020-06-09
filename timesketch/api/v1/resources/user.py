@@ -99,10 +99,13 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             permissions = []
 
         # You cannot grant a permission you don't have.
-        for index, permission in enumerate(permissions):
+        for permission in permissions:
             if not sketch.has_permission(
                     user=current_user, permission=permission):
-                _ = permissions.pop(index)
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    'The user does not have {0:s} permission on the sketch '
+                    'and therefore can\'t grant it to others')
 
         for username in form.get('users', []):
             # Try the username with any potential @domain preserved.
