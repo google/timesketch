@@ -70,7 +70,8 @@ def get_response_json(response, logger):
         return response.json()
     except json.JSONDecodeError as e:
         logger.error('Unable to decode response: {0!s}'.format(e))
-        return {}
+
+    return {}
 
 
 def error_message(response, message=None, error=RuntimeError):
