@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Elasticsearch datastore."""
-
 from __future__ import unicode_literals
 
 from collections import Counter
@@ -356,7 +355,7 @@ class ElasticsearchDataStore(object):
 
     def search_stream(self, sketch_id=None, query_string=None,
                       query_filter=None, query_dsl=None, indices=None,
-                      return_fields=None):
+                      return_fields=None, enable_scroll=True):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -368,6 +367,7 @@ class ElasticsearchDataStore(object):
             query_dsl: Dictionary containing Elasticsearch DSL query
             indices: List of indices to query
             return_fields: List of fields to return
+            enable_scroll: Boolean determing whether scrolling is enabled.
 
         Returns:
             Generator of event documents in JSON format
@@ -386,10 +386,14 @@ class ElasticsearchDataStore(object):
             query_filter=query_filter,
             indices=indices,
             return_fields=return_fields,
-            enable_scroll=True)
+            enable_scroll=enable_scroll)
 
-        scroll_id = result['_scroll_id']
-        scroll_size = result['hits']['total']
+        if enable_scroll:
+            scroll_id = result['_scroll_id']
+            scroll_size = result['hits']['total']
+        else:
+            scroll_id = None
+            scroll_size = 0
 
         # Elasticsearch version 7.x returns total hits as a dictionary.
         # TODO: Refactor when version 6.x has been deprecated.

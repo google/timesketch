@@ -1109,12 +1109,14 @@ class Sketch(resource.BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return error.get_response_json(response, logger)
 
-    def tag_events(self, events, tags):
+    def tag_events(self, events, tags, verbose=False):
         """Tags one or more events with a list of tags.
 
         Args:
             events: Array of JSON objects representing events.
             tags: List of tags (str) to add to the events.
+            verbose: Bool that determines whether extra information
+                is added to the meta dict that gets returned.
 
         Raises:
             ValueError: if tags is not a list of strings.
@@ -1135,7 +1137,8 @@ class Sketch(resource.BaseResource):
 
         form_data = {
             'tag_string': json.dumps(tags),
-            'events': events
+            'events': events,
+            'verbose': verbose,
         }
         resource_url = '{0:s}/sketches/{1:d}/event/tagging/'.format(
             self.api.api_root, self.id)
@@ -1150,7 +1153,7 @@ class Sketch(resource.BaseResource):
 
         response_json = error.get_response_json(response, logger)
         meta = response_json.get('meta', {})
-        meta['number_of_events_sent'] = len(events)
+        meta['total_number_of_events_sent_by_client'] = len(events)
         return meta
 
     def search_by_label(self, label_name, as_pandas=False):
