@@ -293,6 +293,9 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
     # The maximum number of events to tag in a single request.
     MAX_EVENTS_TO_TAG = 100000
 
+    # The size of the buffer before a bulk update in ES takes place.
+    BUFFER_SIZE_FOR_ES_BULK_UPDATES = 10000
+
     @login_required
     def post(self, sketch_id):
         """Handles POST request to the resource.
@@ -378,14 +381,9 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
             time_tag_gathering_start = time.time()
 
         for _index in event_df['_index'].unique():
-            query_filter = {
-                'time_start': None,
-                'time_end': None,
-                'indices': [_index],
-            }
-
             index_slice = event_df[event_df['_index'] == _index]
             index_size = index_slice.shape[0]
+
             if verbose:
                 tag_dict.setdefault('index_count', {})
                 tag_dict['index_count'][_index] = index_size
@@ -399,22 +397,35 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
             for index_chunk in np.array_split(
                     index_slice['_id'].unique(), chunks):
                 should_list = [{'match': {'_id': x}} for x in index_chunk]
-                query = {
+                query_body = {
                     'query': {
                         'bool': {
                             'should': should_list
                         }
                     }
                 }
+
+                size = len(should_list) + 100
+                query_body['size'] = size
+                query_body['terminate_after'] = size
+
                 try:
-                    for result in datastore.search_stream(
-                            sketch_id=sketch.id, query_dsl=json.dumps(query),
-                            indices=[_index], return_fields=['tag'],
-                            query_filter=query_filter, enable_scroll=False):
-                        tag = result.get('_source', {}).get('tag', [])
-                        if not tag:
-                            continue
-                        tags.append({'_id': result.get('_id'), 'tag': tag})
+                    # pylint: disable=unexpected-keyword-arg
+                    if datastore.version.startswith('6'):
+                        search = datastore.client.search(
+                            body=json.dumps(query_body),
+                            index=[_index],
+                            _source_include=['tag'],
+                            search_type='query_then_fetch'
+                        )
+                    else:
+                        search = datastore.client.search(
+                            body=json.dumps(query_body),
+                            index=[_index],
+                            _source_includes=['tag'],
+                            search_type='query_then_fetch'
+                        )
+
                 except RequestError as e:
                     logger.error('Unable to query for events, {0!s}'.format(e))
                     errors.append(
@@ -422,6 +433,12 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
                     abort(
                         HTTP_STATUS_CODE_BAD_REQUEST,
                         'Unable to query events, {0!s}'.format(e))
+
+                for result in search['hits']['hits']:
+                    tag = result.get('_source', {}).get('tag', [])
+                    if not tag:
+                        continue
+                    tags.append({'_id': result.get('_id'), 'tag': tag})
 
             if not tags:
                 continue
@@ -448,7 +465,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
             time_tag_start = time.time()
 
         if event_size > datastore.DEFAULT_FLUSH_INTERVAL:
-            flush_interval = 10000
+            flush_interval = self.BUFFER_SIZE_FOR_ES_BULK_UPDATES
         else:
             flush_interval = datastore.DEFAULT_FLUSH_INTERVAL
         _ = event_df.apply(
