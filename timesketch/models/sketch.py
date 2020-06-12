@@ -17,15 +17,15 @@ from __future__ import unicode_literals
 
 import json
 
+from flask import current_app
+from flask import url_for
+
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy.orm import relationship
-
-from flask import current_app
-from flask import url_for
 
 from timesketch.models import BaseModel
 from timesketch.models.acl import AccessControlMixin
@@ -134,7 +134,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         for timeline in self.timelines:
             timeline_status = timeline.get_status.status
             index_status = timeline.searchindex.get_status.status
-            if (timeline_status or index_status) in ['processing', 'fail']:
+            if (timeline_status or index_status) in (
+                    'processing', 'fail', 'archived'):
                 continue
             _timelines.append(timeline)
         return _timelines

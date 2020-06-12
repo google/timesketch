@@ -25,6 +25,8 @@ import yaml
 import six
 
 from flask import current_app
+from werkzeug.exceptions import Forbidden
+
 from flask_migrate import MigrateCommand
 from flask_script import Command
 from flask_script import Manager
@@ -33,9 +35,8 @@ from flask_script import Option
 from flask_script import prompt_bool
 from flask_script import prompt_pass
 from sqlalchemy.exc import IntegrityError
-from werkzeug.exceptions import Forbidden
 
-from timesketch import create_app
+from timesketch.app import create_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models import db_session
 from timesketch.models import drop_all

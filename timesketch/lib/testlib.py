@@ -21,7 +21,7 @@ import six
 
 from flask_testing import TestCase
 
-from timesketch import create_app
+from timesketch.app import create_app
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.models import init_db
 from timesketch.models import drop_all
@@ -45,6 +45,7 @@ class TestConfig(object):
     WTF_CSRF_ENABLED = False
     ELASTIC_HOST = None
     ELASTIC_PORT = None
+    LABELS_TO_PREVENT_DELETION = ['protected', 'magic']
     UPLOAD_ENABLED = False
     GRAPH_BACKEND_ENABLED = False
     AUTO_INDEX_ANALYZERS = []
@@ -400,6 +401,7 @@ class BaseTest(TestCase):
         if acl:
             for permission in ['read', 'write', 'delete']:
                 searchindex.grant_permission(permission=permission, user=user)
+        searchindex.set_status(status='ready')
         self._commit_to_database(searchindex)
         return searchindex
 
@@ -451,6 +453,7 @@ class BaseTest(TestCase):
             sketch=sketch,
             searchindex=searchindex,
             color=self.COLOR_WHITE)
+        timeline.set_status(status='ready')
         self._commit_to_database(timeline)
         return timeline
 

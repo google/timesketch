@@ -16,9 +16,13 @@ from __future__ import unicode_literals
 
 import datetime
 import json
+import logging
 
-from . import definitions
+from . import error
 from . import resource
+
+
+logger = logging.getLogger('analyzer_api')
 
 
 class AnalyzerResult(resource.BaseResource):
@@ -35,12 +39,12 @@ class AnalyzerResult(resource.BaseResource):
         super(AnalyzerResult, self).__init__(api, resource_uri)
 
     def _fetch_data(self):
-        """Returns..."""
+        """Returns a dict with the analyzer results."""
         response = self.api.session.get(self.resource_uri)
-        if not response.status_code in definitions.HTTP_STATUS_CODE_20X:
+        if not error.check_return_status(response, logger):
             return {}
 
-        data = response.json()
+        data = error.get_response_json(response, logger)
 
         objects = data.get('objects')
         if not objects:
@@ -105,7 +109,7 @@ class AnalyzerResult(resource.BaseResource):
         for entry in data.get('analyzers', []):
             results = entry.get('results')
             if not results:
-              results = 'No results yet.'
+                results = 'No results yet.'
             return_strings.append(
                 '[{0:s}] = {1:s}'.format(
                     entry.get('name', 'No Name'), results))

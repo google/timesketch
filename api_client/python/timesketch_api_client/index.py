@@ -14,7 +14,14 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
+import json
+import logging
+
+from . import error
 from . import resource
+
+
+logger = logging.getLogger('index_api')
 
 
 class SearchIndex(resource.BaseResource):
@@ -33,10 +40,31 @@ class SearchIndex(resource.BaseResource):
             searchindex_name: Name of the searchindex (optional).
         """
         self.id = searchindex_id
+        self._labels = []
         self._searchindex_name = searchindex_name
         self._resource_uri = 'searchindices/{0:d}'.format(self.id)
         super(SearchIndex, self).__init__(
             api=api, resource_uri=self._resource_uri)
+
+    @property
+    def labels(self):
+        """Property that returns the SearchIndex labels."""
+        if self._labels:
+            return self._labels
+
+        data = self.lazyload_data()
+        objects = data.get('objects', [])
+        if not objects:
+            return self._labels
+
+        index_data = objects[0]
+        label_string = index_data.get('label_string', '')
+        if label_string:
+            self._labels = json.loads(label_string)
+        else:
+            self._labels = []
+
+        return self._labels
 
     @property
     def name(self):
@@ -59,3 +87,10 @@ class SearchIndex(resource.BaseResource):
         """
         searchindex = self.lazyload_data()
         return searchindex['objects'][0]['index_name']
+
+    def delete(self):
+        """Deletes the index."""
+        resource_url = '{0:s}/searchindices/{1:d}/'.format(
+            self.api.api_root, self.id)
+        response = self.api.session.delete(resource_url)
+        return error.check_return_status(response, logger)

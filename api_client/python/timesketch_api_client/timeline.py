@@ -14,7 +14,14 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
+import json
+import logging
+
+from . import error
 from . import resource
+
+
+logger = logging.getLogger('timeline_api')
 
 
 class Timeline(resource.BaseResource):
@@ -36,11 +43,32 @@ class Timeline(resource.BaseResource):
             searchindex: The Elasticsearch index name (optional)
         """
         self.id = timeline_id
+        self._labels = []
         self._name = name
         self._searchindex = searchindex
         resource_uri = 'sketches/{0:d}/timelines/{1:d}/'.format(
             sketch_id, self.id)
         super(Timeline, self).__init__(api, resource_uri)
+
+    @property
+    def labels(self):
+        """Property that returns the timeline labels."""
+        if self._labels:
+            return self._labels
+
+        data = self.lazyload_data()
+        objects = data.get('objects', [])
+        if not objects:
+            return self._labels
+
+        timeline_data = objects[0]
+        label_string = timeline_data.get('label_string', '')
+        if label_string:
+            self._labels = json.loads(label_string)
+        else:
+            self._labels = []
+
+        return self._labels
 
     @property
     def name(self):
@@ -66,3 +94,27 @@ class Timeline(resource.BaseResource):
             index_name = timeline['objects'][0]['searchindex']['index_name']
             self._searchindex = index_name
         return self._searchindex
+
+    @property
+    def status(self):
+        """Property that returns the timeline status.
+
+        Returns:
+            String with the timeline status.
+        """
+        data = self.data
+        timeline_object = data.get('objects', [{}])[0]
+        status_list = timeline_object.get('status')
+
+        if not status_list:
+            return 'Unknown'
+
+        status = status_list[0]
+        return status.get('status')
+
+    def delete(self):
+        """Deletes the timeline."""
+        resource_url = '{0:s}/{1:s}'.format(
+            self.api.api_root, self.resource_uri)
+        response = self.api.session.delete(resource_url)
+        return error.check_return_status(response, logger)

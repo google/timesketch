@@ -24,16 +24,17 @@ import io
 import json
 import six
 
+from elasticsearch.exceptions import RequestError
+from flask import current_app
+
 from celery import chain
 from celery import signals
-from flask import current_app
 from sqlalchemy import create_engine
-from elasticsearch.exceptions import RequestError
 
 # Disabled until the project can provide a non-ES native import.
 # from mans_to_es import MansToEs
 
-from timesketch import create_celery_app
+from timesketch.app import create_celery_app
 from timesketch.lib import errors
 from timesketch.lib.analyzers import manager
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
