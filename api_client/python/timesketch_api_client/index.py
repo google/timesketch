@@ -88,6 +88,23 @@ class SearchIndex(resource.BaseResource):
         searchindex = self.lazyload_data()
         return searchindex['objects'][0]['index_name']
 
+    @property
+    def status(self):
+        """Property that returns the index status.
+
+        Returns:
+            String with the index status.
+        """
+        data = self.data
+        timeline_object = data.get('objects', [{}])[0]
+        status_list = timeline_object.get('status')
+
+        if not status_list:
+            return 'Unknown'
+
+        status = status_list[0]
+        return status.get('status')
+
     def delete(self):
         """Deletes the index."""
         resource_url = '{0:s}/searchindices/{1:d}/'.format(

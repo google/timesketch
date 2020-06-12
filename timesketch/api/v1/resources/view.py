@@ -220,9 +220,10 @@ class ViewResource(resources.ResourceMixin, Resource):
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
-        if not sketch.has_permission(current_user, 'delete'):
+
+        if not sketch.has_permission(current_user, 'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
-                  'User does not have delete access controls on sketch.')
+                  'User does not have write access controls on sketch.')
         view = View.query.get(view_id)
         if not view:
             abort(

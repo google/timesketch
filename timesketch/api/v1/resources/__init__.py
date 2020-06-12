@@ -169,6 +169,7 @@ class ResourceMixin(object):
         'active_timelines': fields.List(fields.Nested(timeline_fields)),
         'label_string': fields.String,
         'status': fields.Nested(status_fields),
+        'all_permissions': fields.String,
         'created_at': fields.DateTime,
         'updated_at': fields.DateTime
     }
