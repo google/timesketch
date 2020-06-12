@@ -343,6 +343,22 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
 
         events = form.get('events', [])
         event_df = pd.DataFrame(events)
+
+        for field in ['_id', '_type', '_index']:
+            if field not in event_df:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Events need to have a [{0:s}] field associated '
+                    'to it.'.format(field))
+            if any(event_df[field].isna()):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'All events need to have a [{0:s}] field '
+                    'set, it cannot have a non-value.'.format(field))
+
+        # Remove any potential extra fields from the events.
+        event_df = event_df[['_id', '_type', '_index']]
+
         tag_df = pd.DataFrame()
 
         event_size = event_df.shape[0]
@@ -353,6 +369,8 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
                 'request'.format(self.MAX_EVENTS_TO_TAG))
 
         tag_dict['number_of_events_passed_to_api'] = event_size
+
+        errors = []
 
         verbose = form.get('verbose', False)
         if verbose:
@@ -399,6 +417,8 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
                         tags.append({'_id': result.get('_id'), 'tag': tag})
                 except RequestError as e:
                     logger.error('Unable to query for events, {0!s}'.format(e))
+                    errors.append(
+                        'Unable to query for events, {0!s}'.format(e))
                     abort(
                         HTTP_STATUS_CODE_BAD_REQUEST,
                         'Unable to query events, {0!s}'.format(e))
@@ -414,6 +434,10 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
             tag_dict[
                 'time_to_gather_tags'] = time.time() - time_tag_gathering_start
             tag_dict['number_of_events'] = len(events)
+
+            if tag_df.shape[0]:
+                tag_dict['number_of_events_in_tag_frame'] = tag_df.shape[0]
+
             if 'tag' in event_df:
                 current_tag_events = event_df[~event_df['tag'].isna()].shape[0]
                 tag_dict['number_of_events_with_tags'] = current_tag_events
@@ -434,6 +458,9 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
 
         if verbose:
             tag_dict['time_to_tag'] = time.time() - time_tag_start
+
+        if errors:
+            tag_dict['errors'] = errors
 
         schema = {
             'meta': tag_dict,
