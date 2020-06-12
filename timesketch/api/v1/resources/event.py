@@ -405,6 +405,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
                     }
                 }
 
+                # Adding a small buffer to make sure all results are captured.
                 size = len(should_list) + 100
                 query_body['size'] = size
                 query_body['terminate_after'] = size
