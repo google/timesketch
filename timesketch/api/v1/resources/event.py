@@ -407,7 +407,8 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
                 continue
             tag_df = pd.concat([tag_df, pd.DataFrame(tags)])
 
-        event_df = event_df.merge(tag_df, on='_id', how='left')
+        if tag_df.shape[0]:
+            event_df = event_df.merge(tag_df, on='_id', how='left')
 
         if verbose:
             tag_dict[
