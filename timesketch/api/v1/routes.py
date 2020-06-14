@@ -33,6 +33,7 @@ from .resources.event import CountEventsResource
 from .resources.sketch import SketchResource
 from .resources.sketch import SketchListResource
 from .resources.archive import SketchArchiveResource
+from .resources.information import TSVersionResource
 from .resources.view import ViewResource
 from .resources.view import ViewListResource
 from .resources.searchtemplate import SearchTemplateResource
@@ -92,5 +93,6 @@ API_ROUTES = [
     (UserListResource, '/users/'),
     (GroupListResource, '/groups/'),
     (CollaboratorResource, '/sketches/<int:sketch_id>/collaborators/'),
+    (TSVersionResource, '/version/'),
     (LoggedInUserResource, '/users/me/')
 ]

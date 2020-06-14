@@ -113,7 +113,16 @@ class TimesketchApi(object):
     @property
     def version(self):
         """Property that returns back the API client version."""
-        return version.get_version()
+        version_dict = self.fetch_resource_data('/version/')
+        ts_version = None
+        if version_dict:
+            ts_version = version_dict.get('meta', {}).get('version')
+
+        if ts_version:
+            return 'API Client: {0:s}\nTS Backend: {1:s}'.format(
+                version.get_version(), ts_version)
+
+        return 'API Client: {0:s}'.format(version.get_version())
 
     def set_credentials(self, credential_object):
         """Sets the credential object."""

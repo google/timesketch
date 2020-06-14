@@ -36,6 +36,7 @@ from flask_script import prompt_bool
 from flask_script import prompt_pass
 from sqlalchemy.exc import IntegrityError
 
+from timesketch import version
 from timesketch.app import create_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models import db_session
@@ -46,6 +47,16 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
+
+
+class GetVersion(Command):
+    """Returns the version information of Timesketch."""
+
+    # pylint: disable=method-hidden
+    def run(self):
+        """Return the version information of Timesketch."""
+        return 'Timesketch version: {0:s}'.format(
+            version.get_version())
 
 
 class DropDataBaseTables(Command):
@@ -507,6 +518,7 @@ def main():
     shell_manager.add_command('purge', PurgeTimeline())
     shell_manager.add_command('search_template', SearchTemplateManager())
     shell_manager.add_command('import', ImportTimeline())
+    shell_manager.add_command('version', GetVersion())
     shell_manager.add_command('runserver',
                               Server(host='127.0.0.1', port=5000))
     shell_manager.add_option(
