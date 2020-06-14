@@ -373,8 +373,17 @@ class ListSketches(Command):
         print(' ID | Name {0:s} | Description'.format(' '*(name_len-5)))
         print('+-'*40)
         for sketch in sketches:
+            status = sketch.get_status.status
+            if status == 'deleted':
+                continue
+
+            if status == 'archived':
+                name = '{0:s} (archived)'.format(sketch.name)
+            else:
+                name = sketch.name
+
             print(fmt_string.format(
-                sketch.id, sketch.name, sketch.description))
+                sketch.id, name, sketch.description))
             print('-'*80)
 
 

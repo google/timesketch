@@ -113,7 +113,7 @@ class TimesketchApi(object):
     @property
     def version(self):
         """Property that returns back the API client version."""
-        version_dict = self.fetch_resource_data('/version/')
+        version_dict = self.fetch_resource_data('version/')
         ts_version = None
         if version_dict:
             ts_version = version_dict.get('meta', {}).get('version')
