@@ -64,6 +64,19 @@ class Sketch(resource.BaseResource):
         super(Sketch, self).__init__(api=api, resource_uri=self._resource_uri)
 
     @property
+    def acl(self):
+        """Property that returns back a ACL dict."""
+        data = self.lazyload_data()
+        objects = data.get('objects')
+        if not objects:
+            return {}
+        data_object = objects[0]
+        permission_string = data_object.get('all_permissions')
+        if not permission_string:
+            return {}
+        return json.loads(permission_string)
+
+    @property
     def labels(self):
         """Property that returns the sketch labels."""
         if self._labels:
@@ -270,7 +283,9 @@ class Sketch(resource.BaseResource):
         response = self.api.session.delete(resource_url)
         return error.check_return_status(response, logger)
 
-    def add_to_acl(self, user_list=None, group_list=None, make_public=False):
+    def add_to_acl(
+            self, user_list=None, group_list=None,
+            make_public=False, permissions=None):
         """Add users or groups to the sketch ACL.
 
         Args:
@@ -280,6 +295,8 @@ class Sketch(resource.BaseResource):
                 of the sketch. Each user is a string.
             make_public: Optional boolean indicating the sketch should be
                 marked as public.
+            permissions: optional list of permissions (read, write, delete).
+                If not the default set of permissions are applied (read, write)
 
         Returns:
             A boolean indicating whether the ACL change was successful.
@@ -302,11 +319,27 @@ class Sketch(resource.BaseResource):
         if make_public:
             data['public'] = 'true'
 
+        if permissions:
+            allowed_permissions = set(['read', 'write', 'delete'])
+            use_permissions = list(
+                allowed_permissions.intersection(set(permissions)))
+            if set(use_permissions) != set(permissions):
+                logger.warning('Some permissions are invalid: {0:s}'.format(
+                    ', '.join(list(
+                        set(permissions).difference(set(use_permissions))))))
+
+            if not use_permissions:
+                logger.error('No permissions left to add.')
+                return False
+
+            data['permissions'] = json.dumps(use_permissions)
+
         if not data:
             return True
 
         response = self.api.session.post(resource_url, json=data)
-
+        # Refresh the sketch data to reflect ACL changes.
+        _ = self.lazyload_data(refresh_cache=True)
         return error.check_return_status(response, logger)
 
     def list_aggregation_groups(self):
@@ -908,7 +941,9 @@ class Sketch(resource.BaseResource):
             sketch_id=self.id, api=self.api)
         return session
 
-    def remove_acl(self, user_list=None, group_list=None, remove_public=False):
+    def remove_acl(
+            self, user_list=None, group_list=None, remove_public=False,
+            permissions=None):
         """Remove users or groups to the sketch ACL.
 
         Args:
@@ -918,6 +953,8 @@ class Sketch(resource.BaseResource):
                 of the sketch. Each user is a string.
             remove_public: Optional boolean indicating the sketch should be
                 no longer marked as public.
+            permissions: optional list of permissions (read, write, delete).
+                If not the default set of permissions are applied (read, write)
 
         Returns:
             A boolean indicating whether the ACL change was successful.
@@ -940,10 +977,18 @@ class Sketch(resource.BaseResource):
         if remove_public:
             data['public'] = 'false'
 
+        if permissions:
+            allowed_permissions = set(['read', 'write', 'delete'])
+            permissions = list(
+                allowed_permissions.intersection(set(permissions)))
+            data['permissions'] = json.dumps(permissions)
+
         if not data:
             return True
 
         response = self.api.session.post(resource_url, json=data)
+        # Refresh the sketch data to reflect ACL changes.
+        _ = self.lazyload_data(refresh_cache=True)
         return error.check_return_status(response, logger)
 
     def aggregate(self, aggregate_dsl):
@@ -1109,19 +1154,21 @@ class Sketch(resource.BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return error.get_response_json(response, logger)
 
-    def tag_events(self, events, tags):
+    def tag_events(self, events, tags, verbose=False):
         """Tags one or more events with a list of tags.
 
         Args:
             events: Array of JSON objects representing events.
             tags: List of tags (str) to add to the events.
+            verbose: Bool that determines whether extra information
+                is added to the meta dict that gets returned.
 
         Raises:
             ValueError: if tags is not a list of strings.
             RuntimeError: if the sketch is archived.
 
         Returns:
-            A boolean indicating whether the operation was successful or not.
+            A dict with the results from the tagging operation.
         """
         if self.is_archived():
             raise RuntimeError(
@@ -1135,12 +1182,24 @@ class Sketch(resource.BaseResource):
 
         form_data = {
             'tag_string': json.dumps(tags),
-            'events': events
+            'events': events,
+            'verbose': verbose,
         }
         resource_url = '{0:s}/sketches/{1:d}/event/tagging/'.format(
             self.api.api_root, self.id)
         response = self.api.session.post(resource_url, json=form_data)
-        return error.check_return_status(response, logger)
+        status = error.check_return_status(response, logger)
+        if not status:
+            return {
+                'number_of_events': len(events),
+                'number_of_events_with_tag': 0,
+                'success': status
+            }
+
+        response_json = error.get_response_json(response, logger)
+        meta = response_json.get('meta', {})
+        meta['total_number_of_events_sent_by_client'] = len(events)
+        return meta
 
     def search_by_label(self, label_name, as_pandas=False):
         """Searches for all events containing a given label.

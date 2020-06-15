@@ -17,6 +17,8 @@ The timesketch API is a RESTful API that exposes the following resources:
 """
 from __future__ import unicode_literals
 
+import logging
+
 from flask import current_app
 from flask import jsonify
 from flask_restful import fields
@@ -24,6 +26,12 @@ from flask_restful import marshal
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+
+
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
 
 
 class ResourceMixin(object):
@@ -161,6 +169,7 @@ class ResourceMixin(object):
         'active_timelines': fields.List(fields.Nested(timeline_fields)),
         'label_string': fields.String,
         'status': fields.Nested(status_fields),
+        'all_permissions': fields.String,
         'created_at': fields.DateTime,
         'updated_at': fields.DateTime
     }

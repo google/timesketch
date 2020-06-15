@@ -18,10 +18,12 @@ from __future__ import unicode_literals
 from setuptools import find_packages
 from setuptools import setup
 
+from timesketch_api_client import version
+
 
 setup(
     name='timesketch-api-client',
-    version='20200608',
+    version=version.get_version(),
     description='Timesketch API client',
     license='Apache License, Version 2.0',
     url='http://www.timesketch.org/',
