@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 import codecs
 import os
 import pwd
+import re
 import sys
 import uuid
 import yaml
@@ -397,6 +398,8 @@ class ImportTimeline(Command):
                required=False),
     )
 
+    FILENAME_RE = re.compile(r'(^\d+)_.+\.(plaso|csv|jsonl)')
+
     # pylint: disable=arguments-differ, method-hidden
     def run(self, file_path, sketch_id, username, timeline_name):
         """This is the run method."""
@@ -430,11 +433,18 @@ class ImportTimeline(Command):
         sketch = None
         # If filename starts with <number> then use that as sketch_id.
         # E.g: 42_file_name.plaso means sketch_id is 42.
-        sketch_id_from_filename = filename.split('_')[0]
+        file_match = self.FILENAME_RE.match(filename)
+        if file_match:
+            sketch_id_from_filename = file_match.groups()[0]
+        else:
+            sketch_id_from_filename = ''
+
         if not sketch_id and sketch_id_from_filename.isdigit():
             sketch_id = sketch_id_from_filename
 
         if sketch_id:
+            if not sketch_id.isdigit():
+                sys.exit('Sketch ID needs to be a number, not a string.')
             try:
                 sketch = Sketch.query.get_with_acl(sketch_id, user=user)
             except Forbidden:

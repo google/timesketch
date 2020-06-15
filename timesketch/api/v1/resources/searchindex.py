@@ -126,6 +126,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 '\n'.join(error_strings))
 
+        searchindex.set_status(status='deleted')
         db_session.delete(searchindex)
         db_session.commit()
         try:
