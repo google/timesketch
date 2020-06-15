@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 import collections
 import difflib
 
+import logging
+
 from flask import current_app
 from datasketch.minhash import MinHash
 
@@ -47,8 +49,8 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         # TODO: remove that after a 6 months, this following check is to ensure
         # compatibility of the config file.
         if len(self.domain_scoring_exclude_domains) == 0:
-            print("Warning, DOMAIN_ANALYZER_WHITELISTED_DOMAINS has been deprecated. "
-                    "Please update timesketch.conf.")
+            logging.warning('Warning, DOMAIN_ANALYZER_WHITELISTED_DOMAINS has been deprecated. '
+                    'Please update timesketch.conf.')
             self.domain_scoring_exclude_domains = current_app.config.get(
                 'DOMAIN_ANALYZER_WHITELISTED_DOMAINS', [])
 

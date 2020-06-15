@@ -278,9 +278,9 @@ def validate_api_token():
     # TODO: Remove that after a 6 months, this following check is to ensure
     # compatibility of config file
     if len(user_allowlist) == 0:
-        print("Warning, GOOGLE_OIDC_USER_WHITELIST has been deprecated. "
-                  "Please update timesketch.conf.")
-        user_allowlist = current_app.config.get(
+        current_app.logger.warning('Warning, GOOGLE_OIDC_USER_WHITELIST has been deprecated. '
+                  'Please update timesketch.conf.')
+        allowed_users = current_app.config.get(
             'GOOGLE_OIDC_USER_WHITELIST', [])
 
     # Check if the authenticating user is on the allowlist.
