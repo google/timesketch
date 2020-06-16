@@ -242,11 +242,11 @@ class EventResource(resources.ResourceMixin, Resource):
             index_name=searchindex_id).first()
         if not searchindex:
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
+                HTTP_STATUS_CODE_BAD_REQUEST,
                 'Search index not found for this event.')
         if searchindex.get_status.status == 'deleted':
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
+                HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to query event on a closed search index.')
 
         event_id = args.get('event_id')
