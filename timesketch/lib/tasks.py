@@ -79,11 +79,14 @@ def _set_timeline_status(index_name, status, error_msg=None):
         status: Status to set.
         error_msg: Error message.
     """
-    searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+    searchindices = SearchIndex.query.filter_by(index_name=index_name).all()
     timelines = Timeline.query.filter_by(searchindex=searchindex).all()
 
     # Set status
-    searchindex.set_status(status)
+    for searchindex in searchindices:
+        searchindex.set_status(status)
+        db_session.add(searchindex)
+
     for timeline in timelines:
         timeline.set_status(status)
         db_session.add(timeline)
@@ -94,7 +97,6 @@ def _set_timeline_status(index_name, status, error_msg=None):
         searchindex.description = error_msg
 
     # Commit changes to database
-    db_session.add(searchindex)
     db_session.commit()
 
 
