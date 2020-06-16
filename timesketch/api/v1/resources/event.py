@@ -240,6 +240,15 @@ class EventResource(resources.ResourceMixin, Resource):
         searchindex_id = args.get('searchindex_id')
         searchindex = SearchIndex.query.filter_by(
             index_name=searchindex_id).first()
+        if not searchindex:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'Search index not found for this event.')
+        if searchindex.get_status.status == 'deleted':
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'Unable to query event on a closed search index.')
+
         event_id = args.get('event_id')
         indices = [
             t.searchindex.index_name for t in sketch.timelines

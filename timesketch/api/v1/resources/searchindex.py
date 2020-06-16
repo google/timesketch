@@ -47,7 +47,7 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
             List of search indices in JSON (instance of flask.wrappers.Response)
         """
         indices = SearchIndex.all_with_acl(current_user).all()
-        return self.to_json(indices)
+        return self.to_json([i for i in indices if i.get_status.status != 'deleted'])
 
     @login_required
     def post(self):
@@ -70,6 +70,7 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
 
         if searchindex:
             metadata['created'] = False
+            metadata['deleted'] = searchindex.get_status.status == 'deleted'
             status_code = HTTP_STATUS_CODE_OK
         else:
             searchindex = SearchIndex.get_or_create(
@@ -126,6 +127,10 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN, (
                     'User does not have sufficient access rights to '
                     'delete the search index.'))
+
+        if searchindex.get_status.status == 'deleted':
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Search index already deleted.')
 
         timelines = Timeline.query.filter_by(searchindex=searchindex).all()
         sketches = [
