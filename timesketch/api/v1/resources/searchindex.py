@@ -79,6 +79,10 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
                 index_name=es_index_name)
             searchindex.grant_permission(
                 permission='read', user=current_user)
+            searchindex.grant_permission(
+                permission='write', user=current_user)
+            searchindex.grant_permission(
+                permission='delete', user=current_user)
 
             if public:
                 searchindex.grant_permission(permission='read', user=None)
@@ -116,6 +120,12 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'No searchindex found with this ID.')
+
+        if not searchindex.has_permission(current_user, 'delete'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, (
+                    'User does not have sufficient access rights to '
+                    'delete the search index.'))
 
         timelines = Timeline.query.filter_by(searchindex=searchindex).all()
         sketches = [
