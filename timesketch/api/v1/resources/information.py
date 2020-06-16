@@ -22,7 +22,7 @@ from timesketch.api.v1 import resources
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 
 
-class TSVersionResource(resources.ResourceMixin, Resource):
+class VersionResource(resources.ResourceMixin, Resource):
     """Resource to get Timesketch API version information."""
 
     @login_required

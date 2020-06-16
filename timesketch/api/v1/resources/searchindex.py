@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """SearchIndex resources for version 1 of the Timesketch API."""
+import logging
 
 import elasticsearch
 from flask import request
@@ -30,6 +31,9 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Timeline
+
+
+logger = logging.getLogger('index_api_resources')
 
 
 class SearchIndexListResource(resources.ResourceMixin, Resource):
@@ -118,6 +122,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
             t.sketch for t in timelines
             if t.sketch and t.sketch.get_status.status != 'deleted'
         ]
+
         if sketches:
             error_strings = ['WARNING: This timeline is in use by:']
             for sketch in sketches:
@@ -127,10 +132,21 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
                 '\n'.join(error_strings))
 
         searchindex.set_status(status='deleted')
-        db_session.delete(searchindex)
         db_session.commit()
+
+        other_indexes = SearchIndex.query.filter_by(
+            index_name=searchindex.index_name).all()
+        if len(other_indexes) > 1:
+            logger.warning(
+                'Search index: {0:s} belongs to more than one '
+                'db entry.'.format(searchindex.index_name))
+            return HTTP_STATUS_CODE_OK
+
         try:
-            self.datastore.client.indices.delete(index=searchindex.index_name)
+            self.datastore.client.indices.close(index=searchindex.index_name)
         except elasticsearch.NotFoundError:
-            pass
+            logger.warning(
+                'Unable to close index: {0:s}, the index wasn\'t '
+                'found.'.format(searchindex.index_name))
+
         return HTTP_STATUS_CODE_OK
