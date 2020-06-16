@@ -456,7 +456,7 @@ class ElasticsearchDataStore(object):
             return 0
         try:
             result = self.client.count(index=indices)
-        except NotFoundError as e:
+        except (NotFoundError, RequestError) as e:
             es_logger.error(
                 'Unable to count indexes (index not found), with '
                 'error: {0!s}'.format(e))
