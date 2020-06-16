@@ -47,7 +47,8 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
             List of search indices in JSON (instance of flask.wrappers.Response)
         """
         indices = SearchIndex.all_with_acl(current_user).all()
-        return self.to_json([i for i in indices if i.get_status.status != 'deleted'])
+        return self.to_json(
+            [i for i in indices if i.get_status.status != 'deleted'])
 
     @login_required
     def post(self):
