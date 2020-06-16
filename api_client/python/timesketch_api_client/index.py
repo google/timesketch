@@ -46,18 +46,25 @@ class SearchIndex(resource.BaseResource):
         super(SearchIndex, self).__init__(
             api=api, resource_uri=self._resource_uri)
 
+    def _get_object_dict(self):
+        """Returns the object dict from the resources dict."""
+        data = self.lazyload_data()
+        objects = data.get('objects', [])
+        if not objects:
+            return {}
+
+        return objects[0]
+
     @property
     def labels(self):
         """Property that returns the SearchIndex labels."""
         if self._labels:
             return self._labels
 
-        data = self.lazyload_data()
-        objects = data.get('objects', [])
-        if not objects:
+        index_data = self._get_object_dict()
+        if not index_data:
             return self._labels
 
-        index_data = objects[0]
         label_string = index_data.get('label_string', '')
         if label_string:
             self._labels = json.loads(label_string)
@@ -74,8 +81,8 @@ class SearchIndex(resource.BaseResource):
             Searchindex name as string.
         """
         if not self._searchindex_name:
-            searchindex = self.lazyload_data()
-            self._searchindex_name = searchindex['objects'][0]['name']
+            index_data = self._get_object_dict()
+            self._searchindex_name = index_data.get('name', 'no name defined')
         return self._searchindex_name
 
     @property
@@ -85,8 +92,8 @@ class SearchIndex(resource.BaseResource):
         Returns:
             Elasticsearch index name as string.
         """
-        searchindex = self.lazyload_data()
-        return searchindex['objects'][0]['index_name']
+        index_data = self._get_object_dict()
+        return index_data.get('index_name', 'unkown index name')
 
     @property
     def status(self):
@@ -95,15 +102,19 @@ class SearchIndex(resource.BaseResource):
         Returns:
             String with the index status.
         """
-        data = self.data
-        timeline_object = data.get('objects', [{}])[0]
-        status_list = timeline_object.get('status')
-
+        index_data = self._get_object_dict()
+        status_list = index_data.get('status')
         if not status_list:
             return 'Unknown'
 
         status = status_list[0]
         return status.get('status')
+
+    @property
+    def description(self):
+        """Property that returns the description of the index."""
+        index_data = self._get_object_dict()
+        return index_data.get('description', 'no description provided')
 
     def delete(self):
         """Deletes the index."""

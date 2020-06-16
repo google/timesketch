@@ -76,6 +76,11 @@ class TimelineListResource(resources.ResourceMixin, Resource):
 
         searchindex_id = form.timeline.data
         searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        if searchindex.get_status.status == 'deleted':
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to create a timeline using a deleted search index')
+
         timeline_id = [
             t.searchindex.id for t in sketch.timelines
             if t.searchindex.id == searchindex_id
