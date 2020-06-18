@@ -30,7 +30,7 @@ class VersionResource(resources.ResourceMixin, Resource):
         """Handles GET request to the resource.
 
         Returns:
-            List of usernames
+            JSON object including version info
         """
         schema = {
             'meta': {
