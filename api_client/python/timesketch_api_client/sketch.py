@@ -1240,13 +1240,21 @@ class Sketch(resource.BaseResource):
         return self.explore(
             query_dsl=json.dumps({'query': query}), as_pandas=as_pandas)
 
-    def add_event(self, message, timestamp, timestamp_desc):
+    def add_event(
+            self, message, timestamp, timestamp_desc, attributes=None,
+            tags=None):
         """Adds an event to the sketch specific timeline.
 
         Args:
             message: A string that will be used as the message string.
             timestamp: Micro seconds since 1970-01-01 00:00:00.
             timestamp_desc : Description of the timestamp.
+            attributes: A dict of extra attributes to add to the event.
+            tags: A list of strings to include as tags.
+
+        Raises:
+            ValueError: If tags is not a list of strings or attributes
+                is not a dict.
 
         Returns:
             Dictionary with query results.
@@ -1255,11 +1263,31 @@ class Sketch(resource.BaseResource):
             raise RuntimeError(
                 'Unable to add an event to an archived sketch.')
 
+        if tags is None:
+            tags = []
+
+        if not isinstance(tags, list):
+            raise ValueError('Tags needs to be a list.')
+
+        if any([not isinstance(x, str) for x in tags]):
+            raise ValueError('Tags needs to be a list of strings.')
+
+        if attributes is None:
+            attributes = {}
+
+        if not isinstance(attributes, dict):
+            raise ValueError('Attributes needs to be a dict.')
+
         form_data = {
             'timestamp': timestamp,
             'timestamp_desc': timestamp_desc,
-            'message': message
+            'message': message,
+            'tags': tags
         }
+        if any([x in list(attributes.keys()) for x in form_data.keys()]):
+            raise ValueError('Attributes cannot overwrite values already set.')
+
+        form_data.update(attributes)
 
         resource_url = '{0:s}/sketches/{1:d}/event/create/'.format(
             self.api.api_root, self.id)

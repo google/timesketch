@@ -14,6 +14,7 @@
 """Event resources for version 1 of the Timesketch API."""
 
 import codecs
+import datetime
 import hashlib
 import json
 import logging
@@ -104,36 +105,64 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         Returns:
             An annotation in JSON (instance of flask.wrappers.Response)
         """
-        form = forms.EventCreateForm.build(request)
-        if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Failed to add event, form data not validated')
-
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
         if not sketch.has_permission(current_user, 'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have write access controls on sketch.')
 
+        form = request.json
+        if not form:
+            form = request.data
+
         timeline_name = 'sketch specific timeline'
-        index_name_seed = 'timesketch' + str(sketch_id)
+        index_name_seed = 'timesketch_{0:d}'.format(sketch_id)
         event_type = 'user_created_event'
 
-        # derive datetime from timestamp:
-        parsed_datetime = dateutil.parser.parse(form.timestamp.data)
+        date_string = form.get('timestamp')
+        if not date_string:
+            date = datetime.datetime.utcnow().isoformat()
+        else:
+            # derive datetime from timestamp:
+            date = dateutil.parser.parse(date_string)
+
         timestamp = int(
-            time.mktime(parsed_datetime.utctimetuple())) * 1000000
-        timestamp += parsed_datetime.microsecond
+            time.mktime(date.utctimetuple())) * 1000000
+        timestamp += date.microsecond
 
         event = {
-            'datetime': form.timestamp.data,
+            'datetime': date_string,
             'timestamp': timestamp,
-            'timestamp_desc': form.timestamp_desc.data,
-            'message': form.message.data,
+            'timestamp_desc': form.get('timestamp_desc', 'Event Happened'),
+            'message': form.get('message', 'No message string'),
         }
+
+        attributes = form.get('attributes', {})
+        if not isinstance(attributes, dict):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to add an event where the attributes are not a '
+                'dict object.')
+
+        event.update(attributes)
+
+        tags = form.get('tags', [])
+        if not isinstance(tags, list):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to add an event where the tags are not a '
+                'list of strings.')
+
+        if tags and any([not isinstance(x, str) for x in tags]):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to add an event where the tags are not a '
+                'list of strings.')
+
+        event['tags'] = tags
 
         # We do not need a human readable filename or
         # datastore index name, so we use UUIDs here.
