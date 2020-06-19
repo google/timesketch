@@ -1247,7 +1247,7 @@ class Sketch(resource.BaseResource):
 
         Args:
             message: A string that will be used as the message string.
-            timestamp: Micro seconds since 1970-01-01 00:00:00.
+            timestamp: A string with the timestamp of the message.
             timestamp_desc : Description of the timestamp.
             attributes: A dict of extra attributes to add to the event.
             tags: A list of strings to include as tags.
