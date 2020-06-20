@@ -149,20 +149,20 @@ class EventCreateResource(resources.ResourceMixin, Resource):
 
         event.update(attributes)
 
-        tags = form.get('tags', [])
-        if not isinstance(tags, list):
+        tag = form.get('tag', [])
+        if not isinstance(tag, list):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to add an event where the tags are not a '
                 'list of strings.')
 
-        if tags and any([not isinstance(x, str) for x in tags]):
+        if tag and any([not isinstance(x, str) for x in tag]):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to add an event where the tags are not a '
                 'list of strings.')
 
-        event['tags'] = tags
+        event['tag'] = tag
 
         # We do not need a human readable filename or
         # datastore index name, so we use UUIDs here.

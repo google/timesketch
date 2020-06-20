@@ -1282,12 +1282,12 @@ class Sketch(resource.BaseResource):
             'timestamp': timestamp,
             'timestamp_desc': timestamp_desc,
             'message': message,
-            'tags': tags
+            'tag': tags
         }
         if any([x in attributes for x in form_data]):
             raise ValueError('Attributes cannot overwrite values already set.')
 
-        form_data.update(attributes)
+        form_data['attributes'] = attributes
 
         resource_url = '{0:s}/sketches/{1:d}/event/create/'.format(
             self.api.api_root, self.id)
