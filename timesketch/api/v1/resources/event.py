@@ -211,6 +211,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
                 if timeline not in sketch.timelines:
                     sketch.timelines.append(timeline)
 
+                timeline.set_status('ready')
                 db_session.add(timeline)
                 db_session.commit()
 
