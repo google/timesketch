@@ -13,6 +13,9 @@
 # limitations under the License.
 """Sketch resources for version 1 of the Timesketch API."""
 
+import logging
+
+import elasticsearch
 import six
 
 from flask import jsonify
@@ -38,6 +41,9 @@ from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
+
+
+logger = logging.getLogger('sketch_api_resources')
 
 
 class SketchListResource(resources.ResourceMixin, Resource):
@@ -142,8 +148,15 @@ class SketchResource(resources.ResourceMixin, Resource):
                 'bytes': 0
             }
 
-        es_stats = self.datastore.client.indices.stats(
-            index=sketch_indices, metric='docs, store')
+        try:
+            es_stats = self.datastore.client.indices.stats(
+                index=sketch_indices, metric='docs, store')
+        except elasticsearch.NotFoundError as e:
+            es_stats = {}
+            logger.error(
+                'Unable to find index in datastore, with error: '
+                '{0!s}'.format(e))
+
         for index_name, stats in es_stats.get('indices', {}).items():
             stats_per_index[index_name] = {
                 'count': stats.get('total', {}).get('docs', {}).get('count', 0),
@@ -154,8 +167,14 @@ class SketchResource(resources.ResourceMixin, Resource):
         if not sketch_indices:
             mappings_settings = {}
         else:
-            mappings_settings = self.datastore.client.indices.get_mapping(
-                index=sketch_indices)
+            try:
+                mappings_settings = self.datastore.client.indices.get_mapping(
+                    index=sketch_indices)
+            except elasticsearch.NotFoundError as e:
+                logger.error(
+                    'Unable to get indices mapping in datastore, with error: '
+                    '{0!s}'.format(e))
+                mappings_settings = {}
 
         mappings = []
 

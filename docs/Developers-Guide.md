@@ -23,7 +23,7 @@ Install Node.js and Yarn
 
     $ apt-get update && apt-get install nodejs yarn
 
-Cd to timesketch repository root (folder that contains `package.json`)
+Cd to timesketch repository root (folder that contains `package.json` - on docker it is: `/usr/local/src/timesketch/timesketch/frontend`)
 and install Node.js packages (this will create `node_modules/` folder in the
 current directory and install packages from `package.json` there)
 

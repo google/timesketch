@@ -454,7 +454,13 @@ class ElasticsearchDataStore(object):
         """
         if not indices:
             return 0
-        result = self.client.count(index=indices)
+        try:
+            result = self.client.count(index=indices)
+        except (NotFoundError, RequestError) as e:
+            es_logger.error(
+                'Unable to count indexes (index not found), with '
+                'error: {0!s}'.format(e))
+            return 0
         return result.get('count', 0)
 
     def set_label(self, searchindex_id, event_id, event_type, sketch_id,

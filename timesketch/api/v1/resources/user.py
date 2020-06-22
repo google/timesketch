@@ -13,6 +13,7 @@
 # limitations under the License.
 """User and Group resources for version 1 of the Timesketch API."""
 import json
+import logging
 
 from flask import abort
 from flask import request
@@ -27,6 +28,9 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models.sketch import Sketch
 from timesketch.models.user import User
 from timesketch.models.user import Group
+
+
+logger = logging.getLogger('user_api_resources')
 
 
 class UserListResource(resources.ResourceMixin, Resource):
@@ -123,8 +127,11 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
                 for permission in user_permissions:
                     sketch.grant_permission(permission=permission, user=user)
 
-        for group in form.get('groups', []):
-            group = Group.query.filter_by(name=group).first()
+        for group_name in form.get('groups', []):
+            group = Group.query.filter_by(name=group_name).first()
+
+            if not group:
+                logger.error('Group: {0:s} not found'.format(group_name))
 
             # Only add groups publicly visible or owned by the current user
             if not group.user or group.user == current_user:
