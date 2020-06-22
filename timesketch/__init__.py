@@ -25,3 +25,6 @@ def create_app(config=None):
     Returns:
         Application object (instance of flask.Flask).
     """
+    # pylint: disable=import-outside-toplevel
+    from timesketch import app
+    return app.create_app(config)
