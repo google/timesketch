@@ -1241,13 +1241,13 @@ class Sketch(resource.BaseResource):
             query_dsl=json.dumps({'query': query}), as_pandas=as_pandas)
 
     def add_event(
-            self, message, timestamp, timestamp_desc, attributes=None,
+            self, message, date, timestamp_desc, attributes=None,
             tags=None):
         """Adds an event to the sketch specific timeline.
 
         Args:
             message: A string that will be used as the message string.
-            timestamp: A string with the timestamp of the message.
+            date: A string with the timestamp of the message.
             timestamp_desc : Description of the timestamp.
             attributes: A dict of extra attributes to add to the event.
             tags: A list of strings to include as tags.
@@ -1269,7 +1269,7 @@ class Sketch(resource.BaseResource):
         if not isinstance(tags, list):
             raise ValueError('Tags needs to be a list.')
 
-        if any([not isinstance(x, str) for x in tags]):
+        if any([not isinstance(tag, str) for tag in tags]):
             raise ValueError('Tags needs to be a list of strings.')
 
         if attributes is None:
@@ -1279,7 +1279,7 @@ class Sketch(resource.BaseResource):
             raise ValueError('Attributes needs to be a dict.')
 
         form_data = {
-            'timestamp': timestamp,
+            'date_string': date,
             'timestamp_desc': timestamp_desc,
             'message': message,
             'tag': tags

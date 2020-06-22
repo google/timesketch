@@ -122,7 +122,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         index_name_seed = 'timesketch_{0:d}'.format(sketch_id)
         event_type = 'user_created_event'
 
-        date_string = form.get('timestamp')
+        date_string = form.get('date_string')
         if not date_string:
             date = datetime.datetime.utcnow().isoformat()
         else:
