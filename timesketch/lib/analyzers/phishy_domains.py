@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 import collections
 import difflib
 
+import logging
+
 from flask import current_app
 from datasketch.minhash import MinHash
 
@@ -41,8 +43,17 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
         self.domain_scoring_threshold = current_app.config.get(
             'DOMAIN_ANALYZER_WATCHED_DOMAINS_SCORE_THRESHOLD', 0.75)
-        self.domain_scoring_whitelist = current_app.config.get(
-            'DOMAIN_ANALYZER_WHITELISTED_DOMAINS', [])
+        self.domain_scoring_exclude_domains = current_app.config.get(
+            'DOMAIN_ANALYZER_EXCLUDE_DOMAINS', [])
+
+        # TODO: remove that after a 6 months, this following check is to ensure
+        # compatibility of the config file.
+        if len(self.domain_scoring_exclude_domains) == 0:
+            logging.warning('Warning, DOMAIN_ANALYZER_WHITELISTED_DOMAINS has been deprecated. '
+                    'Please update timesketch.conf.')
+            self.domain_scoring_exclude_domains = current_app.config.get(
+                'DOMAIN_ANALYZER_WHITELISTED_DOMAINS', [])
+
 
     @staticmethod
     def _get_minhash_from_domain(domain):
@@ -204,9 +215,9 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         watched_domains_list_temp = set(watched_domains_list)
         watched_domains_list = []
         for domain in watched_domains_list_temp:
-            if domain in self.domain_scoring_whitelist:
+            if domain in self.domain_scoring_exclude_domains:
                 continue
-            if any(domain.endswith(x) for x in self.domain_scoring_whitelist):
+            if any(domain.endswith(x) for x in self.domain_scoring_exclude_domains):
                 continue
 
             if '.' not in domain:
@@ -222,7 +233,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
             }
 
         similar_domain_counter = 0
-        whitelist_encountered = False
+        allowlist_encountered = False
         evil_emoji = emojis.get_emoji('SKULL_CROSSBONE')
         phishing_emoji = emojis.get_emoji('FISHING_POLE')
         for domain, _ in iter(domain_counter.items()):
@@ -244,9 +255,9 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
                 text = 'Domain {0:s} is similar to {1:s}'.format(
                     domain, ', '.join(similar_text_list))
                 if any(domain.endswith(
-                        x) for x in self.domain_scoring_whitelist):
-                    tags_to_add.append('whitelisted-domain')
-                    whitelist_encountered = True
+                        x) for x in self.domain_scoring_exclude_domains):
+                    tags_to_add.append('known-domain')
+                    allowlist_encountered = True
 
             for event in domains.get(domain, []):
                 event.add_emojis(emojis_to_add)
@@ -262,12 +273,12 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
                 view_name='Phishy Domains', analyzer_name=self.NAME,
                 query_string='tag:"phishy-domain"')
 
-            if whitelist_encountered:
+            if allowlist_encountered:
                 self.sketch.add_view(
-                    view_name='Phishy Domains, excl. whitelist',
+                    view_name='Phishy Domains, excl. known domains',
                     analyzer_name=self.NAME,
                     query_string=(
-                        'tag:"phishy-domain" AND NOT tag:"whitelisted-domain"'))
+                        'tag:"phishy-domain" AND NOT tag:"known-domain"'))
 
         return (
             '{0:d} potentially phishy domains discovered.').format(
