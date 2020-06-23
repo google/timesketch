@@ -210,13 +210,6 @@ class TrashViewForm(BaseForm):
     view_id = IntegerField('View ID', validators=[DataRequired()])
 
 
-class EventCreateForm(BaseForm):
-    """Generic form to handle event addition. E.g. message and timestamp."""
-    timestamp = StringField('timestamp', validators=[DataRequired()])
-    timestamp_desc = StringField('timestamp_desc', validators=[DataRequired()])
-    message = StringField('message', validators=[DataRequired()])
-
-
 class EventAnnotationForm(BaseForm):
     """Generic form to handle event annotation. E.g. comment and labels."""
     annotation = StringField('Annotation', validators=[DataRequired()])
