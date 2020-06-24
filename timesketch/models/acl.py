@@ -21,6 +21,7 @@ The model has the following permissions: "read", "write" and "delete".
 """
 
 import codecs
+import json
 
 import six
 
@@ -173,6 +174,11 @@ class AccessControlMixin(object):
         return ace
 
     @property
+    def all_permissions(self):
+        """Return a string with all object permissions."""
+        return json.dumps(self.get_all_permissions())
+
+    @property
     def groups(self):
         """List what groups have acess to this sketch.
 
@@ -209,6 +215,68 @@ class AccessControlMixin(object):
             self.AccessControlEntry.permission == 'read',
             self.AccessControlEntry.parent == self).all()
         return set(ace.user for ace in aces)
+
+    def get_all_permissions(self):
+        """Get a dict of all users/groups that have permission on the object.
+
+        Returns:
+            Dict with users/groups as the key and permissions as the value.
+                Usernames are prepended by user/ and groups by groups/.
+        """
+        return_dict = {}
+
+        # pylint: disable=singleton-comparison
+        aces = self.AccessControlEntry.query.filter(
+            not_(self.AccessControlEntry.user == None),
+            self.AccessControlEntry.parent == self).all()
+
+        for ace in aces:
+            name = 'user/{0:s}'.format(ace.user.username)
+            return_dict.setdefault(name, [])
+            return_dict[name].append(ace.permission)
+
+        group_aces = self.AccessControlEntry.query.filter(
+            not_(self.AccessControlEntry.group == None),
+            self.AccessControlEntry.parent == self).all()
+
+        for ace in group_aces:
+            name = 'group/{0:s}'.format(ace.group.name)
+            return_dict.setdefault(name, [])
+            return_dict[name].append(ace.permission)
+
+        return return_dict
+
+    def get_permissions(self, permission):
+        """Get a dict of users and groups that have permission on the object.
+
+        Args:
+            permission (str): the permission string (read, write or delete)
+
+        Returns:
+            Dict with users, groups and an indication of whether the sketch
+            is public. Values are a set of user objects
+            (instances of timesketch.models.user.User) or group objects
+            (instances of timesketch.models.user.Group)
+        """
+        return_dict = {}
+
+        # pylint: disable=singleton-comparison
+        aces = self.AccessControlEntry.query.filter(
+            not_(self.AccessControlEntry.user == None),
+            self.AccessControlEntry.permission == permission,
+            self.AccessControlEntry.parent == self).all()
+
+        return_dict['users'] = set(ace.user for ace in aces)
+
+        group_aces = self.AccessControlEntry.query.filter(
+            not_(self.AccessControlEntry.group == None),
+            self.AccessControlEntry.permission == permission,
+            self.AccessControlEntry.parent == self).all()
+
+        return_dict['groups'] = set(ace.group for ace in group_aces)
+
+        return_dict['is_public'] = self.is_public
+        return return_dict
 
     def has_permission(self, user, permission):
         """Check if the user has a specific permission.

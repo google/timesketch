@@ -79,22 +79,25 @@ def _set_timeline_status(index_name, status, error_msg=None):
         status: Status to set.
         error_msg: Error message.
     """
-    searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
-    timelines = Timeline.query.filter_by(searchindex=searchindex).all()
+    searchindices = SearchIndex.query.filter_by(index_name=index_name).all()
 
     # Set status
-    searchindex.set_status(status)
-    for timeline in timelines:
-        timeline.set_status(status)
-        db_session.add(timeline)
+    for searchindex in searchindices:
+        searchindex.set_status(status)
 
-    # Update description if there was a failure in ingestion
-    if error_msg and status == 'fail':
-        # TODO: Don't overload the description field.
-        searchindex.description = error_msg
+        # Update description if there was a failure in ingestion
+        if error_msg and status == 'fail':
+            # TODO: Don't overload the description field.
+            searchindex.description = error_msg
+
+        db_session.add(searchindex)
+
+        timelines = Timeline.query.filter_by(searchindex=searchindex).all()
+        for timeline in timelines:
+            timeline.set_status(status)
+            db_session.add(timeline)
 
     # Commit changes to database
-    db_session.add(searchindex)
     db_session.commit()
 
 

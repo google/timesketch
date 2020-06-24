@@ -18,6 +18,7 @@ from __future__ import unicode_literals
 import codecs
 import os
 import pwd
+import re
 import sys
 import uuid
 import yaml
@@ -36,6 +37,7 @@ from flask_script import prompt_bool
 from flask_script import prompt_pass
 from sqlalchemy.exc import IntegrityError
 
+from timesketch import version
 from timesketch.app import create_app
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models import db_session
@@ -46,6 +48,16 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import SearchTemplate
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
+
+
+class GetVersion(Command):
+    """Returns the version information of Timesketch."""
+
+    # pylint: disable=method-hidden
+    def run(self):
+        """Return the version information of Timesketch."""
+        return 'Timesketch version: {0:s}'.format(
+            version.get_version())
 
 
 class DropDataBaseTables(Command):
@@ -362,8 +374,17 @@ class ListSketches(Command):
         print(' ID | Name {0:s} | Description'.format(' '*(name_len-5)))
         print('+-'*40)
         for sketch in sketches:
+            status = sketch.get_status.status
+            if status == 'deleted':
+                continue
+
+            if status == 'archived':
+                name = '{0:s} (archived)'.format(sketch.name)
+            else:
+                name = sketch.name
+
             print(fmt_string.format(
-                sketch.id, sketch.name, sketch.description))
+                sketch.id, name, sketch.description))
             print('-'*80)
 
 
@@ -376,6 +397,8 @@ class ImportTimeline(Command):
         Option('--timeline_name', '-n', dest='timeline_name',
                required=False),
     )
+
+    FILENAME_RE = re.compile(r'(^\d+)_.+\.(plaso|csv|jsonl)')
 
     # pylint: disable=arguments-differ, method-hidden
     def run(self, file_path, sketch_id, username, timeline_name):
@@ -410,11 +433,18 @@ class ImportTimeline(Command):
         sketch = None
         # If filename starts with <number> then use that as sketch_id.
         # E.g: 42_file_name.plaso means sketch_id is 42.
-        sketch_id_from_filename = filename.split('_')[0]
+        file_match = self.FILENAME_RE.match(filename)
+        if file_match:
+            sketch_id_from_filename = file_match.groups()[0]
+        else:
+            sketch_id_from_filename = ''
+
         if not sketch_id and sketch_id_from_filename.isdigit():
             sketch_id = sketch_id_from_filename
 
         if sketch_id:
+            if not sketch_id.isdigit():
+                sys.exit('Sketch ID needs to be a number, not a string.')
             try:
                 sketch = Sketch.query.get_with_acl(sketch_id, user=user)
             except Forbidden:
@@ -507,6 +537,7 @@ def main():
     shell_manager.add_command('purge', PurgeTimeline())
     shell_manager.add_command('search_template', SearchTemplateManager())
     shell_manager.add_command('import', ImportTimeline())
+    shell_manager.add_command('version', GetVersion())
     shell_manager.add_command('runserver',
                               Server(host='127.0.0.1', port=5000))
     shell_manager.add_option(

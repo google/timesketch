@@ -36,10 +36,15 @@ def _get_message(response):
     if soup.p:
         return soup.p.string
 
+    if isinstance(response.text, bytes):
+        response_text = response.text.decode('utf-8')
+    else:
+        response_text = response.text
+
     try:
-        response_dict = json.loads(response.text.decode('utf-8'))
-    except (json.JSONDecodeError, AttributeError):
-        return str(response.text)
+        response_dict = json.loads(response_text)
+    except json.JSONDecodeError:
+        return response_text
 
     if not isinstance(response_dict, dict):
         return str(response_dict)
@@ -63,14 +68,15 @@ def get_response_json(response, logger):
     status = response.status_code in definitions.HTTP_STATUS_CODE_20X
     if not status:
         logger.warning('Failed response: [{0:d}] {2:s} {1:s}'.format(
-            response.status_code, response.reason.encode('utf-8'),
+            response.status_code, response.reason.decode('utf-8'),
             _get_message(response)))
 
     try:
         return response.json()
     except json.JSONDecodeError as e:
         logger.error('Unable to decode response: {0!s}'.format(e))
-        return {}
+
+    return {}
 
 
 def error_message(response, message=None, error=RuntimeError):

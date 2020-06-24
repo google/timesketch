@@ -265,22 +265,30 @@ def validate_api_token():
     validated_email = token_json.get('email')
 
     # Check if the authenticating user is part of the allowed domains.
-    domain_whitelist = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
-    if domain_whitelist:
+    hosted_domains = current_app.config.get('GOOGLE_OIDC_HOSTED_DOMAIN')
+    if hosted_domains:
         _, _, domain = validated_email.partition('@')
-        if domain.lower() != domain_whitelist.lower():
+        if domain.lower() != hosted_domains.lower():
             return abort(
                 HTTP_STATUS_CODE_UNAUTHORIZED,
                 'Domain {0:s} is not allowed to authenticate against this '
                 'instance.'.format(domain))
 
-    user_whitelist = current_app.config.get('GOOGLE_OIDC_USER_WHITELIST')
-    # Check if the authenticating user is on the whitelist.
-    if user_whitelist:
-        if validated_email not in user_whitelist:
+    allowed_users = current_app.config.get('GOOGLE_OIDC_ALLOWED_USERS')
+    # TODO: Remove that after a 6 months, this following check is to ensure
+    # compatibility of config file
+    if len(user_allowlist) == 0:
+        current_app.logger.warning('Warning, GOOGLE_OIDC_USER_WHITELIST has been deprecated. '
+                  'Please update timesketch.conf.')
+        allowed_users = current_app.config.get(
+            'GOOGLE_OIDC_USER_WHITELIST', [])
+
+    # Check if the authenticating user is on the allowlist.
+    if allowed_users:
+        if validated_email not in allowed_users:
             return abort(
                 HTTP_STATUS_CODE_UNAUTHORIZED,
-                'Unauthorized request, user not in whitelist')
+                'Unauthorized request, user not allowed')
 
     user = User.get_or_create(username=validated_email, name=validated_email)
     login_user(user)
@@ -359,14 +367,14 @@ def google_openid_connect():
             'Unable to validate request, with error: {0!s}'.format(e))
 
     validated_email = decoded_jwt.get('email')
-    user_whitelist = current_app.config.get('GOOGLE_OIDC_USER_WHITELIST')
+    allowed_users = current_app.config.get('GOOGLE_OIDC_ALLOWED_USERS')
 
-    # Check if the authenticating user is on the whitelist.
-    if user_whitelist:
-        if validated_email not in user_whitelist:
+    # Check if the authenticating user is allowed.
+    if allowed_users:
+        if validated_email not in allowed_users:
             return abort(
                 HTTP_STATUS_CODE_UNAUTHORIZED,
-                'Unauthorized request, user not in whitelist')
+                'Unauthorized request, user not allowed')
 
     user = User.get_or_create(username=validated_email, name=validated_email)
     login_user(user)

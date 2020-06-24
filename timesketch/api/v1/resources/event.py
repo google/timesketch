@@ -14,13 +14,18 @@
 """Event resources for version 1 of the Timesketch API."""
 
 import codecs
+import datetime
 import hashlib
 import json
 import logging
+import math
 import time
 import six
 
 import dateutil
+from elasticsearch.exceptions import RequestError
+import numpy as np
+import pandas as pd
 
 from flask import jsonify
 from flask import request
@@ -47,6 +52,45 @@ from timesketch.models.sketch import Timeline
 logger = logging.getLogger('api_resources')
 
 
+def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
+    """Tag each event from a dataframe with tags.
+
+    Args:
+        row (np.Series): a single row of data with existing tags and
+            information about the event in order to be able to add
+            tags to it.
+        tag_dict (dict): a dict that contains information to be returned
+            by the API call to the user.
+        tags_to_add (list[str]): a list of strings of tags to add to each
+            event.
+        datastore (elastic.ElasticsearchDataStore): the datastore object.
+        flush_interval (int): the number of events to import before a bulk
+            update is done with the datastore.
+    """
+    tag_dict['events_processed_by_api'] += 1
+    existing_tags = set()
+
+    if 'tag' in row:
+        tag = row['tag']
+        if isinstance(tag, (list, tuple)):
+            existing_tags = set(tag)
+
+        new_tags = list(set().union(existing_tags, set(tags_to_add)))
+    else:
+        new_tags = tags_to_add
+
+    if set(existing_tags) == set(new_tags):
+        return
+
+    datastore.import_event(
+        index_name=row['_index'], event_type=row['_type'],
+        event_id=row['_id'], event={'tag': new_tags},
+        flush_interval=flush_interval)
+
+    tag_dict['tags_applied'] += len(new_tags)
+    tag_dict['number_of_events_with_added_tags'] += 1
+
+
 class EventCreateResource(resources.ResourceMixin, Resource):
     """Resource to create an annotation for an event."""
 
@@ -61,36 +105,64 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         Returns:
             An annotation in JSON (instance of flask.wrappers.Response)
         """
-        form = forms.EventCreateForm.build(request)
-        if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Failed to add event, form data not validated')
-
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
         if not sketch.has_permission(current_user, 'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have write access controls on sketch.')
 
+        form = request.json
+        if not form:
+            form = request.data
+
         timeline_name = 'sketch specific timeline'
-        index_name_seed = 'timesketch' + str(sketch_id)
+        index_name_seed = 'timesketch_{0:d}'.format(sketch_id)
         event_type = 'user_created_event'
 
-        # derive datetime from timestamp:
-        parsed_datetime = dateutil.parser.parse(form.timestamp.data)
+        date_string = form.get('date_string')
+        if not date_string:
+            date = datetime.datetime.utcnow().isoformat()
+        else:
+            # derive datetime from timestamp:
+            date = dateutil.parser.parse(date_string)
+
         timestamp = int(
-            time.mktime(parsed_datetime.utctimetuple())) * 1000000
-        timestamp += parsed_datetime.microsecond
+            time.mktime(date.utctimetuple())) * 1000000
+        timestamp += date.microsecond
 
         event = {
-            'datetime': form.timestamp.data,
+            'datetime': date_string,
             'timestamp': timestamp,
-            'timestamp_desc': form.timestamp_desc.data,
-            'message': form.message.data,
+            'timestamp_desc': form.get('timestamp_desc', 'Event Happened'),
+            'message': form.get('message', 'No message string'),
         }
+
+        attributes = form.get('attributes', {})
+        if not isinstance(attributes, dict):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to add an event where the attributes are not a '
+                'dict object.')
+
+        event.update(attributes)
+
+        tag = form.get('tag', [])
+        if not isinstance(tag, list):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to add an event where the tags are not a '
+                'list of strings.')
+
+        if tag and any([not isinstance(x, str) for x in tag]):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to add an event where the tags are not a '
+                'list of strings.')
+
+        event['tag'] = tag
 
         # We do not need a human readable filename or
         # datastore index name, so we use UUIDs here.
@@ -139,6 +211,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
                 if timeline not in sketch.timelines:
                     sketch.timelines.append(timeline)
 
+                timeline.set_status('ready')
                 db_session.add(timeline)
                 db_session.commit()
 
@@ -197,6 +270,15 @@ class EventResource(resources.ResourceMixin, Resource):
         searchindex_id = args.get('searchindex_id')
         searchindex = SearchIndex.query.filter_by(
             index_name=searchindex_id).first()
+        if not searchindex:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Search index not found for this event.')
+        if searchindex.get_status.status == 'deleted':
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to query event on a closed search index.')
+
         event_id = args.get('event_id')
         indices = [
             t.searchindex.index_name for t in sketch.timelines
@@ -244,6 +326,15 @@ class EventResource(resources.ResourceMixin, Resource):
 class EventTaggingResource(resources.ResourceMixin, Resource):
     """Resource to fetch and set tags to an event."""
 
+    # The number of events to bulk together for each query.
+    EVENT_CHUNK_SIZE = 1000
+
+    # The maximum number of events to tag in a single request.
+    MAX_EVENTS_TO_TAG = 100000
+
+    # The size of the buffer before a bulk update in ES takes place.
+    BUFFER_SIZE_FOR_ES_BULK_UPDATES = 10000
+
     @login_required
     def post(self, sketch_id):
         """Handles POST request to the resource.
@@ -270,8 +361,9 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
             form = request.data
 
         tag_dict = {
-            'event_count': 0,
-            'tag_count': 0,
+            'events_processed_by_api': 0,
+            'number_of_events_with_added_tags': 0,
+            'tags_applied': 0,
         }
         datastore = self.datastore
 
@@ -281,6 +373,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to read the tags, with error: {0!s}'.format(e))
+
         if not isinstance(tags_to_add, list):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Tags need to be a list')
@@ -291,43 +384,141 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
                 'Tags need to be a list of strings')
 
         events = form.get('events', [])
-        for _event in events:
-            query = {
-                'query': {
-                    'bool': {
-                        'filter': {
-                            'term': {
-                                '_id': _event['_id'],
-                            }
+        event_df = pd.DataFrame(events)
+
+        for field in ['_id', '_type', '_index']:
+            if field not in event_df:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Events need to have a [{0:s}] field associated '
+                    'to it.'.format(field))
+            if any(event_df[field].isna()):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'All events need to have a [{0:s}] field '
+                    'set, it cannot have a non-value.'.format(field))
+
+        # Remove any potential extra fields from the events.
+        event_df = event_df[['_id', '_type', '_index']]
+
+        tag_df = pd.DataFrame()
+
+        event_size = event_df.shape[0]
+        if event_size > self.MAX_EVENTS_TO_TAG:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Cannot tag more than {0:d} events in a single '
+                'request'.format(self.MAX_EVENTS_TO_TAG))
+
+        tag_dict['number_of_events_passed_to_api'] = event_size
+
+        errors = []
+
+        verbose = form.get('verbose', False)
+        if verbose:
+            tag_dict['number_of_indices'] = len(event_df['_index'].unique())
+            time_tag_gathering_start = time.time()
+
+        for _index in event_df['_index'].unique():
+            index_slice = event_df[event_df['_index'] == _index]
+            index_size = index_slice.shape[0]
+
+            if verbose:
+                tag_dict.setdefault('index_count', {})
+                tag_dict['index_count'][_index] = index_size
+
+            if index_size <= self.EVENT_CHUNK_SIZE:
+                chunks = 1
+            else:
+                chunks = math.ceil(index_size / self.EVENT_CHUNK_SIZE)
+
+            tags = []
+            for index_chunk in np.array_split(
+                    index_slice['_id'].unique(), chunks):
+                should_list = [{'match': {'_id': x}} for x in index_chunk]
+                query_body = {
+                    'query': {
+                        'bool': {
+                            'should': should_list
                         }
                     }
                 }
-            }
-            results = datastore.client.search(
-                index=[_event['_index']], body=query)
 
-            ds_events = results['hits']['hits']
-            if len(ds_events) != 1:
-                logger.error(
-                    'Unable to tag event: {0:s}, couldn\'t find the '
-                    'event.'.format(_event['_id']))
+                # Adding a small buffer to make sure all results are captured.
+                size = len(should_list) + 100
+                query_body['size'] = size
+                query_body['terminate_after'] = size
+
+                try:
+                    # pylint: disable=unexpected-keyword-arg
+                    if datastore.version.startswith('6'):
+                        search = datastore.client.search(
+                            body=json.dumps(query_body),
+                            index=[_index],
+                            _source_include=['tag'],
+                            search_type='query_then_fetch'
+                        )
+                    else:
+                        search = datastore.client.search(
+                            body=json.dumps(query_body),
+                            index=[_index],
+                            _source_includes=['tag'],
+                            search_type='query_then_fetch'
+                        )
+
+                except RequestError as e:
+                    logger.error('Unable to query for events, {0!s}'.format(e))
+                    errors.append(
+                        'Unable to query for events, {0!s}'.format(e))
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        'Unable to query events, {0!s}'.format(e))
+
+                for result in search['hits']['hits']:
+                    tag = result.get('_source', {}).get('tag', [])
+                    if not tag:
+                        continue
+                    tags.append({'_id': result.get('_id'), 'tag': tag})
+
+            if not tags:
                 continue
+            tag_df = pd.concat([tag_df, pd.DataFrame(tags)])
 
-            source = ds_events[0].get('_source', {})
-            existing_tags = source.get('tag', [])
-            new_tags = list(set().union(existing_tags, tags_to_add))
+        if tag_df.shape[0]:
+            event_df = event_df.merge(tag_df, on='_id', how='left')
 
-            if set(existing_tags) == set(new_tags):
-                continue
+        if verbose:
+            tag_dict[
+                'time_to_gather_tags'] = time.time() - time_tag_gathering_start
+            tag_dict['number_of_events'] = len(events)
 
-            datastore.import_event(
-                index_name=_event['_index'], event_type=_event['_type'],
-                event_id=_event['_id'], event={'tag': new_tags})
+            if tag_df.shape[0]:
+                tag_dict['number_of_events_in_tag_frame'] = tag_df.shape[0]
 
-            tag_dict['event_count'] += 1
-            tag_dict['tag_count'] += len(new_tags)
+            if 'tag' in event_df:
+                current_tag_events = event_df[~event_df['tag'].isna()].shape[0]
+                tag_dict['number_of_events_with_tags'] = current_tag_events
+            else:
+                tag_dict['number_of_events_with_tags'] = 0
 
+            tag_dict['tags_to_add'] = tags_to_add
+            time_tag_start = time.time()
+
+        if event_size > datastore.DEFAULT_FLUSH_INTERVAL:
+            flush_interval = self.BUFFER_SIZE_FOR_ES_BULK_UPDATES
+        else:
+            flush_interval = datastore.DEFAULT_FLUSH_INTERVAL
+        _ = event_df.apply(
+            _tag_event, axis=1, tag_dict=tag_dict, tags_to_add=tags_to_add,
+            datastore=datastore, flush_interval=flush_interval)
         datastore.flush_queued_events()
+
+        if verbose:
+            tag_dict['time_to_tag'] = time.time() - time_tag_start
+
+        if errors:
+            tag_dict['errors'] = errors
+
         schema = {
             'meta': tag_dict,
             'objects': []}

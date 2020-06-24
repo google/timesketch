@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """SearchIndex resources for version 1 of the Timesketch API."""
+import logging
 
 import elasticsearch
 from flask import request
@@ -32,6 +33,9 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Timeline
 
 
+logger = logging.getLogger('index_api_resources')
+
+
 class SearchIndexListResource(resources.ResourceMixin, Resource):
     """Resource to get all search indices."""
 
@@ -43,7 +47,8 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
             List of search indices in JSON (instance of flask.wrappers.Response)
         """
         indices = SearchIndex.all_with_acl(current_user).all()
-        return self.to_json(indices)
+        return self.to_json(
+            [i for i in indices if i.get_status.status != 'deleted'])
 
     @login_required
     def post(self):
@@ -66,6 +71,7 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
 
         if searchindex:
             metadata['created'] = False
+            metadata['deleted'] = searchindex.get_status.status == 'deleted'
             status_code = HTTP_STATUS_CODE_OK
         else:
             searchindex = SearchIndex.get_or_create(
@@ -75,6 +81,10 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
                 index_name=es_index_name)
             searchindex.grant_permission(
                 permission='read', user=current_user)
+            searchindex.grant_permission(
+                permission='write', user=current_user)
+            searchindex.grant_permission(
+                permission='delete', user=current_user)
 
             if public:
                 searchindex.grant_permission(permission='read', user=None)
@@ -113,11 +123,22 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'No searchindex found with this ID.')
 
+        if not searchindex.has_permission(current_user, 'delete'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, (
+                    'User does not have sufficient access rights to '
+                    'delete the search index.'))
+
+        if searchindex.get_status.status == 'deleted':
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Search index already deleted.')
+
         timelines = Timeline.query.filter_by(searchindex=searchindex).all()
         sketches = [
             t.sketch for t in timelines
             if t.sketch and t.sketch.get_status.status != 'deleted'
         ]
+
         if sketches:
             error_strings = ['WARNING: This timeline is in use by:']
             for sketch in sketches:
@@ -126,10 +147,22 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 '\n'.join(error_strings))
 
-        db_session.delete(searchindex)
+        searchindex.set_status(status='deleted')
         db_session.commit()
+
+        other_indexes = SearchIndex.query.filter_by(
+            index_name=searchindex.index_name).all()
+        if len(other_indexes) > 1:
+            logger.warning(
+                'Search index: {0:s} belongs to more than one '
+                'db entry.'.format(searchindex.index_name))
+            return HTTP_STATUS_CODE_OK
+
         try:
-            self.datastore.client.indices.delete(index=searchindex.index_name)
+            self.datastore.client.indices.close(index=searchindex.index_name)
         except elasticsearch.NotFoundError:
-            pass
+            logger.warning(
+                'Unable to close index: {0:s}, the index wasn\'t '
+                'found.'.format(searchindex.index_name))
+
         return HTTP_STATUS_CODE_OK

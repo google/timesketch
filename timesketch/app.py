@@ -70,6 +70,10 @@ def create_app(config=None):
         os.environ['TIMESKETCH_SETTINGS'] = config
         try:
             app.config.from_envvar('TIMESKETCH_SETTINGS')
+            if not app.config.get('EMAIL_RECIPIENTS'):
+                sys.stderr.write(
+                    "Warning, EMAIL_USER_WHITELIST has been deprecated. "
+                    "Please update timesketch.conf.")
         except IOError:
             sys.stderr.write(
                 'Config file {0} does not exist.\n'.format(config))

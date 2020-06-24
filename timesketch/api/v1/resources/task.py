@@ -49,6 +49,8 @@ class TaskResource(resources.ResourceMixin, Resource):
                 user=current_user).all()
         schema = {'objects': [], 'meta': {}}
         for search_index in indices:
+            if search_index.get_status.status == 'deleted':
+                continue
             # pylint: disable=too-many-function-args
             celery_task = self.celery.AsyncResult(search_index.index_name)
             task = dict(

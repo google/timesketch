@@ -35,6 +35,7 @@ from . import definitions
 from . import error
 from . import index
 from . import sketch
+from . import version
 
 
 logger = logging.getLogger('client_api')
@@ -108,6 +109,20 @@ class TimesketchApi(object):
         except RuntimeError as e:
             raise RuntimeError(
                 'Unable to connect to server, with error: {0!s}'.format(e))
+
+    @property
+    def version(self):
+        """Property that returns back the API client version."""
+        version_dict = self.fetch_resource_data('version/')
+        ts_version = None
+        if version_dict:
+            ts_version = version_dict.get('meta', {}).get('version')
+
+        if ts_version:
+            return 'API Client: {0:s}\nTS Backend: {1:s}'.format(
+                version.get_version(), ts_version)
+
+        return 'API Client: {0:s}'.format(version.get_version())
 
     def set_credentials(self, credential_object):
         """Sets the credential object."""
