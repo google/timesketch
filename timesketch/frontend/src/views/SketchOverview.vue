@@ -50,20 +50,20 @@ limitations under the License.
               </span>
               <span>More</span>
             </a>
-            <b-dropdown-item aria-role="listitem">
-              <a v-if="meta.permissions.delete" class="dropdown-item" v-on:click="showDeleteSketchModal = !showDeleteSketchModal">
+            <b-dropdown-item v-if="meta.permissions.delete" aria-role="listitem">
+              <a class="dropdown-item" v-on:click="showDeleteSketchModal = !showDeleteSketchModal">
                 <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-trash"></i></span>
                 <span>Delete</span>
               </a>
             </b-dropdown-item>
-            <b-dropdown-item aria-role="listitem">
-              <a v-if="meta.permissions.delete" class="dropdown-item" v-on:click="archiveSketch">
+            <b-dropdown-item v-if="meta.permissions.delete" aria-role="listitem">
+              <a class="dropdown-item" v-on:click="archiveSketch">
                 <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-archive"></i></span>
                 <span>Archive</span>
               </a>
             </b-dropdown-item>
-            <b-dropdown-item aria-role="listitem">
-              <a v-if="meta.permissions.read" class="dropdown-item" v-on:click="exportSketch()">
+            <b-dropdown-item v-if="meta.permissions.read" aria-role="listitem">
+              <a class="dropdown-item" v-on:click="exportSketch()">
                 <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-file-export"></i></span>
                 <span>Export</span>
               </a>
