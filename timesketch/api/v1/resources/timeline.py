@@ -112,6 +112,10 @@ class TimelineListResource(resources.ResourceMixin, Resource):
                     continue
                 timeline.add_label(label)
                 searchindex.add_label(label)
+
+            # Set status to ready so the timeline can be queried.
+            timeline.set_status('ready')
+
             db_session.add(timeline)
             db_session.commit()
         else:
