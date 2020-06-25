@@ -10,7 +10,7 @@ Now you need to add timelines to your new sketch. To do so, you can click “Imp
 Alternatively, you can go to “Timelines” tab and select from all available timelines.
 
 ## Navigating a sketch
-A sketch consists of 5 tabs: “Overview”, “Explore”, “Stories”, “Views” and “Timelines”.
+A sketch consists of 5 tabs: “Overview”, “Explore”, “Stories”
 
 ![navigation bar](images/Navigation.png)
 
