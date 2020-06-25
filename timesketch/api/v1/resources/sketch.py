@@ -157,11 +157,18 @@ class SketchResource(resources.ResourceMixin, Resource):
                 'Unable to find index in datastore, with error: '
                 '{0!s}'.format(e))
 
+        # Stats for index. Num docs per shard and size on disk.
         for index_name, stats in es_stats.get('indices', {}).items():
+            doc_count_all_shards = stats.get(
+                'total', {}).get('docs', {}).get('count', 0)
+            bytes_on_disk = stats.get(
+                'total', {}).get('store', {}).get('size_in_bytes', 0)
+            num_shards = stats.get('_shards', {}).get('total', 1)
+            doc_count = int(doc_count_all_shards / num_shards)
+
             stats_per_index[index_name] = {
-                'count': stats.get('total', {}).get('docs', {}).get('count', 0),
-                'bytes': stats.get(
-                    'total', {}).get('store', {}).get('size_in_bytes', 0)
+                'count': doc_count,
+                'bytes': bytes_on_disk
             }
 
         if not sketch_indices:
