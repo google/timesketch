@@ -1,0 +1,4 @@
+{"message": "A message","timestamp": 123456789,"datetime": "2015-07-24T19:01:01+00:00","timestamp_desc": "Write time","extra_field_1": "foo"}
+{"message": "Another message","timestamp": 123456790,"datetime": "2015-07-24T19:01:02+00:00","timestamp_desc": "Write time","extra_field_1": "bar"}
+{"message": "Yet more messages","timestamp": 123456791,"datetime": "2015-07-24T19:01:03+00:00","timestamp_desc": "Write time","extra_field_1": "baz"}
+{"message": "Install: zmap:amd64 (1.1.0-1) [Commandline: apt-get install zmap]","timestamp": 123456791,"datetime": "2015-07-24T19:01:03+00:00","timestamp_desc": "foo","command":"Commandline: apt-get install zmap","data_type":"apt:history:line","display_name":"GZIP:/var/log/apt/history.log.1.gz","filename":"/var/log/apt/history.log.1.gz","packages":"Install: zmap:amd64 (1.1.0-1)","parser":"apt_history"}
