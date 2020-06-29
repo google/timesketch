@@ -247,10 +247,11 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
             return 'Couldn\'t reach the Safe Browsing API.'
 
         for url in lookup_urls:
-            if url not in safebrowsing_results:
+            safebrowsing_result = safebrowsing_results.get(url)
+
+            if not safebrowsing_result:
                 continue
 
-            safebrowsing_result = safebrowsing_results[url]
             for event in urls[url]:
                 tags = ['google-safebrowsing-url']
 
@@ -277,7 +278,7 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
 
         return (
             '{0:d} Safe Browsing result(s) on {1:d} URL(s), '
-            '{2:d} allow listed.').format(
+            '{2:d} on the allow list.').format(
                 len(safebrowsing_results),
                 len(urls),
                 url_allowlisted,
