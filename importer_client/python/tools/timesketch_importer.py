@@ -195,7 +195,8 @@ if __name__ == '__main__':
     options = argument_parser.parse_args()
 
     if not os.path.isfile(options.path):
-        logger.error('Path {0:s} is not valid, unable to continue.')
+        logger.error('Path {0:s} is not valid, unable to continue.'.format(
+            options.path))
         sys.exit(1)
 
     assistant = config.ConfigAssistant()
