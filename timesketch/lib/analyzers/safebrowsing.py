@@ -246,12 +246,12 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
         except requests.HTTPError:
             return 'Couldn\'t reach the Safe Browsing API.'
 
-        for url, events in urls.items():
+        for url in lookup_urls:
             if url not in safebrowsing_results:
                 continue
 
             safebrowsing_result = safebrowsing_results[url]
-            for event in events:
+            for event in urls[url]:
                 tags = ['google-safebrowsing-url']
 
                 threat_type = safebrowsing_result.get('threatType')
