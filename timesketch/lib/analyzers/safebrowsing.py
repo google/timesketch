@@ -116,7 +116,11 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
                 json=body,
             )
 
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except requests.exceptions.HTTPError as e:
+                logging.error(e)
+                continue
 
             result = response.json()
 
