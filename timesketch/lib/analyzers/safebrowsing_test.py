@@ -110,7 +110,7 @@ class TestSafeBrowsingSketchPlugin(BaseTest):
 
         HELPERS = [
             self.check_sanitize_url,
-            self.check_whitelist,
+            self.check_allowlist,
         ]
 
         for helper in HELPERS:
@@ -133,8 +133,8 @@ class TestSafeBrowsingSketchPlugin(BaseTest):
             )
 
     # pylint: disable=missing-docstring
-    def check_whitelist(self, analyzer):
-        WHITELIST = [
+    def check_allowlist(self, analyzer):
+        ALLOW_LIST = [
             'lorem-*.com',
             'ipsum.dk',
             'dolo?.co.*',
@@ -142,32 +142,32 @@ class TestSafeBrowsingSketchPlugin(BaseTest):
 
         self.assertTrue(
             # pylint: disable=protected-access
-            analyzer._is_url_whitelisted(
+            analyzer._is_url_allowlisted(
                 'lorem-ipsum.com',
-                WHITELIST,
+                ALLOW_LIST,
             ),
         )
 
         self.assertFalse(
             # pylint: disable=protected-access
-            analyzer._is_url_whitelisted(
+            analyzer._is_url_allowlisted(
                 'ipsum.com',
-                WHITELIST,
+                ALLOW_LIST,
             ),
         )
 
         self.assertTrue(
             # pylint: disable=protected-access
-            analyzer._is_url_whitelisted(
+            analyzer._is_url_allowlisted(
                 'dolor.co.dk',
-                WHITELIST,
+                ALLOW_LIST,
             ),
         )
 
         self.assertFalse(
             # pylint: disable=protected-access
-            analyzer._is_url_whitelisted(
+            analyzer._is_url_allowlisted(
                 'www.amet.com',
-                WHITELIST,
+                ALLOW_LIST,
             ),
         )

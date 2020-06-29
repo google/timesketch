@@ -26,9 +26,9 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
     # Safe Browsing API documentation.
     _SAFE_BROWSING_BULK_LIMIT = 500
 
-    # An optional file containing URL wildcards to be whitelisted
+    # An optional file containing URL wildcards to be allow listed
     # in a YAML file.
-    _URL_WHITELIST_CONFIG = 'safebrowsing_whitelist.yaml'
+    _URL_ALLOW_LIST_CONFIG = 'safebrowsing_allowlist.yaml'
 
     # The keys to be added to the TS event from the ThreatMatch object
     # we get from Safe Browsing API.
@@ -62,17 +62,17 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
             pkg_resources.get_distribution('timesketch').version,
         )
 
-    def _is_url_whitelisted(self, url, whitelist):
-        """Does a glob-match against the whitelist.
+    def _is_url_allowlisted(self, url, allowlist):
+        """Does a fnmatch against the allowlist.
 
         Args:
             url: The url
-            whitelist: The whitelist, list-like
+            allowlist: The allowlist, list-like
         Returns:
             Boolean with the result
         """
 
-        for url_pattern in whitelist:
+        for url_pattern in allowlist:
             if fnmatch.fnmatchcase(url, url_pattern):
                 return True
 
@@ -194,24 +194,24 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
         if not urls:
             return 'No URLs to analyze.'
 
-        url_whitelisted = 0
+        url_allowlisted = 0
 
-        url_whitelist = set(
+        url_allowlist = set(
             interface.get_yaml_config(
-                self._URL_WHITELIST_CONFIG,
+                self._URL_ALLOW_LIST_CONFIG,
             ),
         )
 
-        if not url_whitelist:
-            domain_analyzer_whitelisted = current_app.config.get(
-                'DOMAIN_ANALYZER_WHITELISTED_DOMAINS',
+        if not url_allowlist:
+            domain_analyzer_allowlisted = current_app.config.get(
+                'DOMAIN_ANALYZER_EXCLUDE_DOMAINS',
                 [],
             )
-            for domain in domain_analyzer_whitelisted:
-                url_whitelist.add('*.%s/*' % domain)
+            for domain in domain_analyzer_allowlisted:
+                url_allowlist.add('*.%s/*' % domain)
 
         logging.info(
-            '{0:d} entries on the whitelist.'.format(len(url_whitelist)),
+            '{0:d} entries on the allowlist.'.format(len(url_allowlist)),
         )
 
         safebrowsing_platforms = current_app.config.get(
@@ -227,8 +227,8 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
         lookup_urls = []
 
         for url in urls:
-            if self._is_url_whitelisted(url, url_whitelist):
-                url_whitelisted += 1
+            if self._is_url_allowlisted(url, url_allowlist):
+                url_allowlisted += 1
                 continue
 
             lookup_urls.append(url)
@@ -267,10 +267,10 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
 
         return (
             '{0:d} Safe Browsing result(s) on {1:d} URL(s), '
-            '{2:d} whitelisted.').format(
+            '{2:d} allow listed.').format(
                 len(safebrowsing_results),
                 len(urls),
-                url_whitelisted,
+                url_allowlisted,
             )
 
 
