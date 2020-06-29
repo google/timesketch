@@ -258,9 +258,15 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
                     )
 
                 event.add_tags(tags)
+
+                threat_attributes = []
+                for item in safebrowsing_result.items():
+                    threat_attributes.append('%s: %s' % item)
+
                 event.add_attributes(
                     {
-                        'google-safebrowsing-threat': safebrowsing_result,
+                        'google-safebrowsing-threat': ', '.join(
+                            threat_attributes),
                     },
                 )
                 event.commit()
