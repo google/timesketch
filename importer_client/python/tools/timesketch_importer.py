@@ -27,8 +27,10 @@ from timesketch_api_client import credentials as ts_credentials
 from timesketch_api_client import crypto
 from timesketch_api_client import config
 from timesketch_api_client import sketch
+from timesketch_api_client import version as api_version
 from timesketch_import_client import helper
 from timesketch_import_client import importer
+from timesketch_import_client import version as importer_version
 
 
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
@@ -104,6 +106,10 @@ if __name__ == '__main__':
 
     argument_parser = argparse.ArgumentParser(
         description='A tool to upload data to Timesketch, using the API.')
+
+    argument_parser.add_argument(
+        '--version', action='store_true', dest='show_version',
+        help='Print version information')
 
     auth_group = argument_parser.add_argument_group('Authentication Arguments')
     auth_group.add_argument(
@@ -189,13 +195,25 @@ if __name__ == '__main__':
             'provided a new sketch will be created.'))
 
     argument_parser.add_argument(
-        'path', action='store', type=str, help=(
+        'path', action='store', nargs='?', type=str, help=(
             'Path to the file that is to be imported.'))
 
     options = argument_parser.parse_args()
 
+    if options.show_version:
+        print('API Client Version: {0:s}'.format(api_version.get_version()))
+        print('Importer Client Version: {0:s}'.format(
+            importer_version.get_version()))
+        sys.exit(0)
+
+    if not options.path:
+        logger.error(
+            'A valid file path needs to be provided, unable to continue.')
+        sys.exit(1)
+
     if not os.path.isfile(options.path):
-        logger.error('Path {0:s} is not valid, unable to continue.')
+        logger.error('Path {0:s} is not valid, unable to continue.'.format(
+            options.path))
         sys.exit(1)
 
     assistant = config.ConfigAssistant()
