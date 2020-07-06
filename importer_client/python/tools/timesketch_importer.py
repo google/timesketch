@@ -300,11 +300,11 @@ def main(args=None):
 
     sketch_id = options.sketch_id
     if sketch_id:
-        sketch = ts_client.get_sketch(sketch_id)
+        my_sketch = ts_client.get_sketch(sketch_id)
     else:
-        sketch = ts_client.create_sketch('New Sketch From Importer CLI')
+        my_sketch = ts_client.create_sketch('New Sketch From Importer CLI')
 
-    if not sketch:
+    if not my_sketch:
         logger.error('Unable to get sketch ID: {0:d}'.format(sketch_id))
         sys.exit(1)
 
@@ -318,7 +318,7 @@ def main(args=None):
             'What is the timeline name', input_type=str,
             default=default_timeline_name)
 
-    config = {
+    config_dict = {
         'message_format_string': options.format_string,
         'timeline_name': conf_timeline_name,
         'index_name': options.index_name,
@@ -330,7 +330,7 @@ def main(args=None):
 
     logger.info('Uploading file.')
     result = upload_file(
-        my_sketch=sketch, config_dict=config, file_path=options.path)
+        my_sketch=my_sketch, config_dict=config_dict, file_path=options.path)
     logger.info(result)
 
 
