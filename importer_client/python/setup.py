@@ -21,10 +21,11 @@ import glob
 from setuptools import find_packages
 from setuptools import setup
 
+from timesketch_import_client import version
 
 setup(
     name='timesketch-import-client',
-    version='20200527',
+    version=version.get_version(),
     description='Timesketch Import Client',
     license='Apache License, Version 2.0',
     url='http://www.timesketch.org/',
