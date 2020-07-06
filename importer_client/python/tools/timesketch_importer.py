@@ -101,7 +101,11 @@ def upload_file(
         my_sketch.id)
 
 
-if __name__ == '__main__':
+def main(args=None):
+    """The main function of the tool."""
+    if args is None:
+        args = sys.argv[1:]
+
     logger = logging.getLogger('timesketch_importer')
 
     argument_parser = argparse.ArgumentParser(
@@ -198,7 +202,7 @@ if __name__ == '__main__':
         'path', action='store', nargs='?', type=str, help=(
             'Path to the file that is to be imported.'))
 
-    options = argument_parser.parse_args()
+    options = argument_parser.parse_args(args)
 
     if options.show_version:
         print('API Client Version: {0:s}'.format(api_version.get_version()))
@@ -328,3 +332,7 @@ if __name__ == '__main__':
     result = upload_file(
         my_sketch=sketch, config_dict=config, file_path=options.path)
     logger.info(result)
+
+
+if __name__ == '__main__':
+    main()

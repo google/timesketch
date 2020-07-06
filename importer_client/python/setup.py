@@ -44,7 +44,9 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    scripts=glob.glob(os.path.join('tools', '[a-z]*.py')),
+    entry_points={
+        'console_scripts': [
+            'timesketch_importer = tools.timesketch_importer:main']},
     install_requires=frozenset([
         'pandas',
         'xlrd',
