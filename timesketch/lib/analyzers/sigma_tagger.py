@@ -90,7 +90,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                     # if a sub dir is found, append it to be scanned for rules
                     if os.path.isdir(os.path.join(rules_path, rule_filename)):
                         logging.error(
-                            'this is a directory, not a file, skipping: {0:s}'.format(
+                            'this is a directory, skipping: {0:s}'.format(
                                 rule_filename))
                         continue
 
@@ -104,41 +104,40 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                         try:
                             rule_file_content = rule_file.read()
                             parser = sigma_collection.SigmaCollectionParser(
-                            rule_file_content, self.sigma_config, None)
+                                rule_file_content, self.sigma_config, None)
                             parsed_sigma_rules = parser.generate(sigma_backend)
                         except NotImplementedError as exception:
                             logging.error(
-                                'Error generating rule in file {0:s}: {1!s}'.format(
-                                    rule_file_path, exception))
-                            continue
-                        except Exception as exception:
-                            logging.error(
-                                'Error generating rule in file {0:s}: {1!s}'.format(
-                                    rule_file_path, exception))
+                                'Error generating rule in file {0:s}: {1!s}'
+                                .format(rule_file_path, exception))
                             continue
 
                         for sigma_rule in parsed_sigma_rules:
                             try:
                                 simple_counter += 1
-                                # TODO fix that in Sigma hack to get rid of nested stuff
+                                # TODO fix that in Sigma to remove nested stuff
                                 # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
-                                sigma_rule = sigma_rule.replace(".keyword:", ":")
+                                sigma_rule = sigma_rule\
+                                    .replace(".keyword:", ":")
                                 logging.info(
-                                    '[sigma] Generated query {0:s}'.format(sigma_rule))
-                                number_of_tagged_events = self.run_sigma_rule(
+                                    '[sigma] Generated query {0:s}'
+                                    .format(sigma_rule))
+                                sum_of_tagged_events = self.run_sigma_rule(
                                     sigma_rule, tag_name)
-                                tags_applied[tag_name] += number_of_tagged_events
-                            except elasticsearch.TransportError as es_TransportError:
+                                tags_applied[tag_name] += sum_of_tagged_events
+                            except elasticsearch.TransportError \
+                                    as es_TransportError:
                                 logging.error(
-                                    'Timeout generating rule in file {0:s}: {1!s} waiting for 10 seconds'.format(
+                                    'Timeout generating rule in file {0:s}: '
+                                    '{1!s} waiting for 10 seconds'.format(
                                         rule_file_path, es_TransportError))
-                                time.sleep(10) # waiting 5 seconds before continue
+                                time.sleep(10) # waiting 10 seconds
 
         total_tagged_events = sum(tags_applied.values())
         output_string = 'Applied {0:d} tags\n'.format(total_tagged_events)
-        for tag_name, number_of_tagged_events in tags_applied.items():
+        for tag_name, sum_of_tagged_events in tags_applied.items():
             output_string += '* {0:s}: {1:d}\n'.format(
-                tag_name, number_of_tagged_events)
+                tag_name, sum_of_tagged_events)
 
         if simple_counter > 0:
             view = self.sketch.add_view(
