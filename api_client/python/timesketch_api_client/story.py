@@ -25,7 +25,7 @@ from . import resource
 from . import view
 
 
-logger = logging.getLogger('story_api')
+logger = logging.getLogger('timesketch_api.story')
 
 
 class BaseBlock(object):

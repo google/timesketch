@@ -21,7 +21,7 @@ from . import error
 from . import resource
 
 
-logger = logging.getLogger('timeline_api')
+logger = logging.getLogger('timesketch_api.timeline')
 
 
 class Timeline(resource.BaseResource):
