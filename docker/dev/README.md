@@ -44,3 +44,10 @@ sudo docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file 
 You now can access your development version at http://127.0.0.1:5000/
 Log in with user: dev password: dev
 
+### Run tests
+
+```
+docker exec -w /usr/local/src/timesketch -it $CONTAINER_ID python3 run_tests.py --coverage
+```
+
+That will run all tests in your docker container. It is recommended to run all tests at least before creating a pull request.
