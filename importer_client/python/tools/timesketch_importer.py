@@ -27,8 +27,10 @@ from timesketch_api_client import credentials as ts_credentials
 from timesketch_api_client import crypto
 from timesketch_api_client import config
 from timesketch_api_client import sketch
+from timesketch_api_client import version as api_version
 from timesketch_import_client import helper
 from timesketch_import_client import importer
+from timesketch_import_client import version as importer_version
 
 
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
@@ -99,11 +101,19 @@ def upload_file(
         my_sketch.id)
 
 
-if __name__ == '__main__':
+def main(args=None):
+    """The main function of the tool."""
+    if args is None:
+        args = sys.argv[1:]
+
     logger = logging.getLogger('timesketch_importer')
 
     argument_parser = argparse.ArgumentParser(
         description='A tool to upload data to Timesketch, using the API.')
+
+    argument_parser.add_argument(
+        '--version', action='store_true', dest='show_version',
+        help='Print version information')
 
     auth_group = argument_parser.add_argument_group('Authentication Arguments')
     auth_group.add_argument(
@@ -189,13 +199,25 @@ if __name__ == '__main__':
             'provided a new sketch will be created.'))
 
     argument_parser.add_argument(
-        'path', action='store', type=str, help=(
+        'path', action='store', nargs='?', type=str, help=(
             'Path to the file that is to be imported.'))
 
-    options = argument_parser.parse_args()
+    options = argument_parser.parse_args(args)
+
+    if options.show_version:
+        print('API Client Version: {0:s}'.format(api_version.get_version()))
+        print('Importer Client Version: {0:s}'.format(
+            importer_version.get_version()))
+        sys.exit(0)
+
+    if not options.path:
+        logger.error(
+            'A valid file path needs to be provided, unable to continue.')
+        sys.exit(1)
 
     if not os.path.isfile(options.path):
-        logger.error('Path {0:s} is not valid, unable to continue.')
+        logger.error('Path {0:s} is not valid, unable to continue.'.format(
+            options.path))
         sys.exit(1)
 
     assistant = config.ConfigAssistant()
@@ -278,11 +300,11 @@ if __name__ == '__main__':
 
     sketch_id = options.sketch_id
     if sketch_id:
-        sketch = ts_client.get_sketch(sketch_id)
+        my_sketch = ts_client.get_sketch(sketch_id)
     else:
-        sketch = ts_client.create_sketch('New Sketch From Importer CLI')
+        my_sketch = ts_client.create_sketch('New Sketch From Importer CLI')
 
-    if not sketch:
+    if not my_sketch:
         logger.error('Unable to get sketch ID: {0:d}'.format(sketch_id))
         sys.exit(1)
 
@@ -296,7 +318,7 @@ if __name__ == '__main__':
             'What is the timeline name', input_type=str,
             default=default_timeline_name)
 
-    config = {
+    config_dict = {
         'message_format_string': options.format_string,
         'timeline_name': conf_timeline_name,
         'index_name': options.index_name,
@@ -308,5 +330,9 @@ if __name__ == '__main__':
 
     logger.info('Uploading file.')
     result = upload_file(
-        my_sketch=sketch, config_dict=config, file_path=options.path)
+        my_sketch=my_sketch, config_dict=config_dict, file_path=options.path)
     logger.info(result)
+
+
+if __name__ == '__main__':
+    main()
