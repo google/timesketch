@@ -33,7 +33,7 @@ from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Timeline
 
 
-logger = logging.getLogger('index_api_resources')
+logger = logging.getLogger('timesketch.index_api')
 
 
 class SearchIndexListResource(resources.ResourceMixin, Resource):

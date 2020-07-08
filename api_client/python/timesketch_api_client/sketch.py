@@ -31,7 +31,7 @@ from . import view as view_lib
 
 
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
-logger = logging.getLogger('sketch_api')
+logger = logging.getLogger('timesketch_api.sketch')
 
 
 class Sketch(resource.BaseResource):

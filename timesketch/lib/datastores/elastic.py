@@ -35,8 +35,7 @@ from flask import abort
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
 # Setup logging
-es_logger = logging.getLogger('elasticsearch')
-es_logger.addHandler(logging.NullHandler())
+es_logger = logging.getLogger('timesketch.elasticsearch')
 es_logger.setLevel(logging.WARNING)
 
 ADD_LABEL_SCRIPT = """
@@ -456,10 +455,10 @@ class ElasticsearchDataStore(object):
             return 0
         try:
             result = self.client.count(index=indices)
-        except (NotFoundError, RequestError) as e:
+        except (NotFoundError, RequestError):
             es_logger.error(
-                'Unable to count indexes (index not found), with '
-                'error: {0!s}'.format(e))
+                'Unable to count indexes (index not found)',
+                exc_info=True)
             return 0
         return result.get('count', 0)
 
@@ -643,10 +642,9 @@ class ElasticsearchDataStore(object):
             if self.import_counter['events'] % int(flush_interval) == 0:
                 try:
                     self.client.bulk(body=self.import_events)
-                except (ConnectionTimeout, socket.timeout) as e:
+                except (ConnectionTimeout, socket.timeout):
                     # TODO: Add a retry here.
-                    es_logger.error(
-                        'Unable to add events, with error: {0!s}'.format(e))
+                    es_logger.error('Unable to add events', exc_info=True)
                 self.import_events = []
         else:
             # Import the remaining events in the queue.
@@ -655,8 +653,7 @@ class ElasticsearchDataStore(object):
                     self.client.bulk(body=self.import_events)
                 except (ConnectionTimeout, socket.timeout) as e:
                     # TODO: Add a retry here.
-                    es_logger.error(
-                        'Unable to add events, with error: {0!s}'.format(e))
+                    es_logger.error('Unable to add events', exc_info=True)
 
         return self.import_counter['events']
 
