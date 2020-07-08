@@ -22,7 +22,7 @@ from . import error
 from . import resource
 
 
-logger = logging.getLogger('analyzer_api')
+logger = logging.getLogger('timesketch_api.analyzer')
 
 
 class AnalyzerResult(resource.BaseResource):

@@ -49,7 +49,7 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 
 
-logger = logging.getLogger('api_resources')
+logger = logging.getLogger('timesketch.event_api')
 
 
 def _tag_event(row, tag_dict, tags_to_add, datastore, flush_interval):
@@ -467,7 +467,7 @@ class EventTaggingResource(resources.ResourceMixin, Resource):
                         )
 
                 except RequestError as e:
-                    logger.error('Unable to query for events, {0!s}'.format(e))
+                    logger.error('Unable to query for events', exc_info=True)
                     errors.append(
                         'Unable to query for events, {0!s}'.format(e))
                     abort(

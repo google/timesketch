@@ -21,7 +21,7 @@ import os
 import yaml
 
 
-logger = logging.getLogger('import_client_config_loader')
+logger = logging.getLogger('timesketch_importer.config_loader')
 
 DEFAULT_FILE = 'formatter.yaml'
 

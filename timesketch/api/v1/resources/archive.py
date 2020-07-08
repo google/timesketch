@@ -45,7 +45,7 @@ from timesketch.models.sketch import Event
 from timesketch.models.sketch import Sketch
 
 
-logger = logging.getLogger('api_archive_resource')
+logger = logging.getLogger('timesketch.api_archive')
 
 
 def _export_aggregation(aggregation, sketch, zip_file):
