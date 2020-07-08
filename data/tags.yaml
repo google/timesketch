@@ -18,3 +18,16 @@
 #        create_view: true
 #        view_name: 'TEST view name'
 # ------------------------------------------------------------------------
+gcs_bucket_creation_tagger:
+  query_string: 'serviceName: "storage.googleapis.com" AND methodName: "storage.buckets.create"'
+  tags: ['gcs_bucket_create']
+  emojis: ['BUCKET', 'SPARKLES']
+  create_view: true
+  view_name: 'Bucket creation'
+
+gcs_bucket_permission_added_tagger:
+  query_string:  'serviceName: "storage.googleapis.com" AND methodName: "storage.setIamPermissions"'  # And eventually action: "ADD"
+  tags: ['gcs_bucket_add']
+  emojis: ['BUCKET', 'PERSON_STANDING']
+  create_view: true
+  view_name: 'Bucket permission - Add'
