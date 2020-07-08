@@ -26,7 +26,7 @@ gcs_bucket_creation_tagger:
   view_name: 'Bucket creation'
 
 gcs_bucket_permission_added_tagger:
-  query_string:  'serviceName: "storage.googleapis.com" AND methodName: "storage.setIamPermissions"'  # And eventually action: "ADD"
+  query_string:  'serviceName: "storage.googleapis.com" AND methodName: "storage.setIamPermissions" AND policyDelta:*ADD*'
   tags: ['gcs_bucket_add']
   emojis: ['BUCKET', 'PERSON_STANDING']
   create_view: true
