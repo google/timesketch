@@ -18,3 +18,30 @@
 #        create_view: true
 #        view_name: 'TEST view name'
 # ------------------------------------------------------------------------
+gcs_bucket_creation_tagger:
+  query_string: 'serviceName: "storage.googleapis.com" AND methodName: "storage.buckets.create"'
+  tags: ['gcs-bucket-create']
+  emojis: ['BUCKET', 'SPARKLES']
+  create_view: true
+  view_name: 'Bucket creation'
+
+gcs_bucket_permission_added_tagger:
+  query_string:  'serviceName: "storage.googleapis.com" AND methodName: "storage.setIamPermissions" AND policyDelta:*ADD*'
+  tags: ['gcs-bucket-add']
+  emojis: ['BUCKET', 'PERSON_STANDING']
+  create_view: true
+  view_name: 'Bucket permission - Add'
+
+gcs_bucket_permission_remove_tagger:
+  query_string:  'serviceName: "storage.googleapis.com" AND methodName: "storage.setIamPermissions" AND policyDelta:*REMOVE*'
+  tags: ['gcs-bucket-remove']
+  emojis: ['BUCKET', 'WASTEBASKET']
+  create_view: true
+  view_name: 'Bucket permission - Remove'
+
+gcs_bucket_permission_world_added_tagger:
+  query_string:  'serviceName: "storage.googleapis.com" AND methodName: "storage.setIamPermissions" AND policyDelta:*ADD allUsers* OR policyDelta:*ADD allAuthenticatedUsers*'
+  tags: ['gcs-bucket-world-add']
+  emojis: ['BUCKET', 'GLOBE']
+  create_view: true
+  view_name: 'Bucket permission - World Readable'
