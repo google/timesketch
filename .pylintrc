@@ -67,6 +67,7 @@ confidence=
 # --disable=W".
 disable=assignment-from-none,
         bad-inline-option,
+        cyclic-import,
         deprecated-pragma,
         duplicate-code,
         eq-without-hash,
