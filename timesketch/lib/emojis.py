@@ -28,6 +28,7 @@ EMOJI_MAP = {
     'BUCKET': emoji('&#x1FAA3', 'Storage bucket'),
     'CAMERA': emoji('&#x1F4F7', 'Screenshot activity'),
     'FISHING_POLE': emoji('&#x1F3A3', 'Phishing'),
+    'GLOBE': emoji('&#x1F30F', 'The world'),
     'ID_BUTTON': emoji('&#x1F194', 'Account ID'),
     'LINK': emoji('&#x1F517', 'Events Linked'),
     'LOCK': emoji('&#x1F512', 'Logon activity'),
