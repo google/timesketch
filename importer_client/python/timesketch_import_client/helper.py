@@ -20,7 +20,7 @@ import os
 from timesketch_import_client import data as data_config
 
 
-logger = logging.getLogger('ts_import_helper')
+logger = logging.getLogger('timesketch_importer.ts_import_helper')
 
 
 class ImportHelper:

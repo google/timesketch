@@ -38,7 +38,7 @@ from . import sketch
 from . import version
 
 
-logger = logging.getLogger('client_api')
+logger = logging.getLogger('timesketch_api.client')
 
 
 class TimesketchApi(object):

@@ -43,7 +43,7 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
 
 
-logger = logging.getLogger('sketch_api_resources')
+logger = logging.getLogger('timesketch.sketch_api')
 
 
 class SketchListResource(resources.ResourceMixin, Resource):
@@ -151,11 +151,10 @@ class SketchResource(resources.ResourceMixin, Resource):
         try:
             es_stats = self.datastore.client.indices.stats(
                 index=sketch_indices, metric='docs, store')
-        except elasticsearch.NotFoundError as e:
+        except elasticsearch.NotFoundError:
             es_stats = {}
             logger.error(
-                'Unable to find index in datastore, with error: '
-                '{0!s}'.format(e))
+                'Unable to find index in datastore', exc_info=True)
 
         # Stats for index. Num docs per shard and size on disk.
         for index_name, stats in es_stats.get('indices', {}).items():
@@ -177,10 +176,9 @@ class SketchResource(resources.ResourceMixin, Resource):
             try:
                 mappings_settings = self.datastore.client.indices.get_mapping(
                     index=sketch_indices)
-            except elasticsearch.NotFoundError as e:
+            except elasticsearch.NotFoundError:
                 logger.error(
-                    'Unable to get indices mapping in datastore, with error: '
-                    '{0!s}'.format(e))
+                    'Unable to get indices mapping in datastore', exc_info=True)
                 mappings_settings = {}
 
         mappings = []

@@ -21,7 +21,7 @@ from . import error
 from . import resource
 
 
-logger = logging.getLogger('index_api')
+logger = logging.getLogger('timesketch_api.index')
 
 
 class SearchIndex(resource.BaseResource):

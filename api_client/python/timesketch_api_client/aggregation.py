@@ -24,7 +24,7 @@ from . import error
 from . import resource
 
 
-logger = logging.getLogger('aggregation_api')
+logger = logging.getLogger('timesketch_api.aggregation')
 
 
 class Aggregation(resource.BaseResource):
