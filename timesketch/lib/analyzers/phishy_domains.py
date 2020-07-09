@@ -49,8 +49,9 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         # TODO: remove that after a 6 months, this following check is to ensure
         # compatibility of the config file.
         if len(self.domain_scoring_exclude_domains) == 0:
-            logging.warning('Warning, DOMAIN_ANALYZER_WHITELISTED_DOMAINS has been deprecated. '
-                    'Please update timesketch.conf.')
+            logging.warning(
+                'Warning, DOMAIN_ANALYZER_WHITELISTED_DOMAINS has been '
+                'deprecated. Please update timesketch.conf.')
             self.domain_scoring_exclude_domains = current_app.config.get(
                 'DOMAIN_ANALYZER_WHITELISTED_DOMAINS', [])
 
@@ -217,7 +218,8 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         for domain in watched_domains_list_temp:
             if domain in self.domain_scoring_exclude_domains:
                 continue
-            if any(domain.endswith(x) for x in self.domain_scoring_exclude_domains):
+            if any(domain.endswith(x)
+                   for x in self.domain_scoring_exclude_domains):
                 continue
 
             if '.' not in domain:
