@@ -41,7 +41,7 @@ gcs_bucket_permission_remove_tagger:
 
 gcs_bucket_permission_world_added_tagger:
   query_string:  'serviceName: "storage.googleapis.com" AND methodName: "storage.setIamPermissions" AND policyDelta:*ADD allUsers* OR policyDelta:*ADD allAuthenticatedUsers*'
-  tags: ['gcs_bucket_world_add']
+  tags: ['gcs-bucket-world-add']
   emojis: ['BUCKET', 'GLOBE']
   create_view: true
   view_name: 'Bucket permission - World Readable'
