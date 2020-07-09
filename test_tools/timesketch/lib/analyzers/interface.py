@@ -18,6 +18,7 @@ import codecs
 import collections
 import csv
 import json
+import logging
 import os
 import traceback
 import uuid
@@ -27,12 +28,41 @@ import pandas
 from timesketch.lib import definitions
 
 
+logger = logging.getLogger('test_tool.analyzer_run')
+
+
 # Define named tuples to track changes made to events and sketches.
 EVENT_CHANGE = collections.namedtuple('event_change', 'type, source, what')
 SKETCH_CHANGE = collections.namedtuple('sketch_change', 'type, source, what')
 
 VIEW_OBJECT = collections.namedtuple('view', 'id, name')
 AGG_OBJECT = collections.namedtuple('aggregation', 'id, name parameters')
+
+
+def get_config_path(file_name):
+    """Returns a path to a configuration file.
+
+    Args:
+        file_name: String that defines the config file name.
+
+    Returns:
+        The path to the configuration file or None if the file cannot be found.
+    """
+    path = os.path.join('etc', 'timesketch', file_name)
+    if os.path.isfile(path):
+        return os.path.abspath(path)
+
+    path = os.path.join('data', file_name)
+    if os.path.isfile(path):
+        return os.path.abspath(path)
+
+    path = os.path.join(
+        os.path.dirname(__file__), '..', 'data', file_name)
+    path = os.path.abspath(path)
+    if os.path.isfile(path):
+        return path
+
+    return None
 
 
 class AnalyzerContext(object):
@@ -44,6 +74,7 @@ class AnalyzerContext(object):
         self.analyzer_result = ''
         self.error = None
         self.event_cache = {}
+        self.failed = False
         self.sketch = None
         self.queries = []
 
@@ -64,6 +95,9 @@ class AnalyzerContext(object):
             return_strings.append('  -- Query #{0:02d} --'.format(qid+1))
             for key, value in query.items():
                 return_strings.append('{0:>20s}: {1!s}'.format(key, value))
+
+        if self.failed:
+            return '\n'.join(return_strings)
 
         if self.sketch and self.sketch.updates:
             return_strings.append('')
@@ -562,14 +596,33 @@ class BaseIndexAnalyzer(object):
                 query_string=query_string, query_dsl=query_dsl,
                 indices=indices, fields=return_fields)
 
+        _, _, file_extension = self._file_name.rpartition('.')
+        file_extension = file_extension.lower()
+        if file_extension not in ['csv', 'jsonl']:
+            raise ValueError(
+                'Unable to parse the test file [{0:s}] unless it has the '
+                'extension of either .csv or .jsonl'.format(self._file_name))
+
         with codecs.open(
-                self._file_name, encoding='utf-8', errors='replace') as csv_fh:
-            reader = csv.DictReader(csv_fh)
-            for row in reader:
-                event = Event(row, sketch=self.sketch, context=self._context)
-                if self._context:
-                    self._context.add_event(event)
-                yield event
+                self._file_name, encoding='utf-8', errors='replace') as fh:
+
+            if file_extension == 'csv':
+                reader = csv.DictReader(fh)
+                for row in reader:
+                    event = Event(
+                        row, sketch=self.sketch, context=self._context)
+                    if self._context:
+                        self._context.add_event(event)
+                    yield event
+            elif file_extension == 'jsonl':
+                for row in fh:
+                    event = Event(
+                        json.loads(row), sketch=self.sketch,
+                        context=self._context)
+                    if self._context:
+                        self._context.add_event(event)
+                    yield event
+
 
     def run_wrapper(self):
         """A wrapper method to run the analyzer.
@@ -584,6 +637,11 @@ class BaseIndexAnalyzer(object):
         except Exception:  # pylint: disable=broad-except
             if self._context:
                 self._context.error = traceback.format_exc()
+            logger.error(
+                'Unable to run the analyzer.\nMake sure the test data '
+                'contains all the necessary information to run.'
+                '\n\nThe traceback for the execution is:\n\n', exc_info=True)
+            self._context.failed = True
             return
 
         # Update database analysis object with result and status
@@ -724,6 +782,23 @@ class Story(object):
             'agg_params': parameter_dict,
         }
         change = SKETCH_CHANGE('STORY_ADD', 'aggregation', params)
+        self._analyzer.updates.append(change)
+
+    def add_aggregation_group(self, aggregation_group):
+        """Add an aggregation group to the Story.
+
+        Args:
+            aggregation_group (SQLAggregationGroup): Save aggregation group
+                to add to the story.
+        """
+        if not isinstance(aggregation_group, AggregationGroup):
+            return
+
+        params = {
+            'group_id': aggregation_group.id,
+            'group_name': aggregation_group.name
+        }
+        change = SKETCH_CHANGE('STORY_ADD', 'aggregation_group', params)
         self._analyzer.updates.append(change)
 
     def add_text(self, text, skip_if_exists=False):
