@@ -24,6 +24,7 @@ from flask_bcrypt import check_password_hash
 from flask_login import UserMixin
 from sqlalchemy.types import Boolean
 from sqlalchemy import Column
+from sqlalchemy import Column
 from sqlalchemy import PrimaryKeyConstraint
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
@@ -52,6 +53,7 @@ class User(UserMixin, BaseModel):
     name = Column(Unicode(255))
     email = Column(Unicode(255))
     active = Column(Boolean(), default=True)
+    admin = Column(Boolean(), default=False)
     sketches = relationship('Sketch', backref='user', lazy='dynamic')
     searchindices = relationship(
         'SearchIndex', backref='user', lazy='dynamic')
