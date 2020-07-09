@@ -10,8 +10,6 @@ VERSION=`date -u +"%Y%m%d"`
 DPKG_DATE=`date -R`
 
 # Update the Python module versions.
-sed "s/__version__ = '[0-9]*'/__version__ = '${VERSION}'/" -i api_client/python/timesketch_api_client/version.py
-sed "s/__version__ = '[0-9]*'/__version__ = '${VERSION}'/" -i importer_client/python/timesketch_import_client/version.py
 sed "s/__version__ = '[0-9]*'/__version__ = '${VERSION}'/" -i timesketch/version.py
 
 # Update the version in the dpkg configuration files.
