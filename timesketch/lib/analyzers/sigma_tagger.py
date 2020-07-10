@@ -115,7 +115,8 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                         for sigma_rule in parsed_sigma_rules:
                             try:
                                 simple_counter += 1
-                                # TODO fix that in Sigma to remove nested stuff
+                                # TODO Investigate how to handle .keyword
+                                # fields in Sigma.
                                 # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
                                 sigma_rule = sigma_rule\
                                     .replace(".keyword:", ":")
