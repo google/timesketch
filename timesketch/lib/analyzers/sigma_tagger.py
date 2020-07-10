@@ -173,28 +173,11 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
 
         return output_string
 
-
-class SampleRulesSigmaPlugin(SigmaPlugin):
-    """Sigma plugin to run Linux rules."""
-
-    _RULES_PATH = '../../../data/sigma_sample'
-
-    NAME = 'sigma_sample'
-
-class AllRulesSigmaPlugin(SigmaPlugin):
-    """Sigma plugin to run Windows rules."""
+class RulesSigmaPlugin(SigmaPlugin):
+    """Sigma plugin to run rules."""
 
     _RULES_PATH = '../../../data/sigma/rules/'
 
-    NAME = 'sigma_all'
+    NAME = 'sigma'
 
-class TestRulesSigmaPlugin(SigmaPlugin):
-    """Sigma plugin to run Windows rules."""
-
-    _RULES_PATH = '../../../data/test_rules'
-
-    NAME = 'sigma_test'
-
-manager.AnalysisManager.register_analyzer(SampleRulesSigmaPlugin)
-manager.AnalysisManager.register_analyzer(AllRulesSigmaPlugin)
-manager.AnalysisManager.register_analyzer(TestRulesSigmaPlugin)
+manager.AnalysisManager.register_analyzer(RulesSigmaPlugin)

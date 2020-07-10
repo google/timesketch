@@ -24,5 +24,5 @@ class TestSigmaPlugin(BaseTest):
         """Test analyzer."""
         # TODO: Add more tests
 
-        _ = sigma_tagger.SampleRulesSigmaPlugin(
+        _ = sigma_tagger.RulesSigmaPlugin(
             sketch_id=1, index_name=self.test_index)

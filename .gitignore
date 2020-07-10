@@ -27,11 +27,7 @@ timesketch/static/dist
 # Test files
 .coverage
 tests-coverage.txt
-data/test_rules/*
 
 # Exclude Vagrant runtime files
 vagrant/.vagrant/
 vagrant/*.log
-
-# exclude Sigma rules
-data/sigma
