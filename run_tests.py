@@ -27,9 +27,6 @@ def run_python(args):
     if not args.no_tests:
         run_python_tests(coverage=args.coverage)
 
-    if not args.no_lint:
-        subprocess.check_call(['./config/travis/run_pylint.sh', '--coverage'])
-
 
 def parse_cli_args(args=None):
     """Parse command-line arguments to this script.
@@ -39,17 +36,13 @@ def parse_cli_args(args=None):
 
     Returns:
         Instance of argparse.Namespace with the following boolean attributes:
-        py, js, selenium, full, no_lint, no_tests, coverage
+        py, js, selenium, full, no_tests, coverage
 
     Raises:
         SystemExit if arguments are invalid or --help is present.
     """
     p = argparse.ArgumentParser(
         description="Run Python unit tests and linters."
-    )
-    p.add_argument(
-        '--no-lint', action='store_true',
-        help='Skip all linters.'
     )
     p.add_argument(
         '--no-tests', action='store_true',
