@@ -4,8 +4,4 @@ usr/lib/python3*/dist-packages/timesketch/*/*/*.py
 usr/lib/python3*/dist-packages/timesketch/*/*/*/*.py
 usr/lib/python3*/dist-packages/timesketch/frontend/dist/*
 usr/lib/python3*/dist-packages/timesketch/frontend/dist/*/*
-usr/lib/python3*/dist-packages/timesketch/static/*/*
-usr/lib/python3*/dist-packages/timesketch/static/*/*/*
-usr/lib/python3*/dist-packages/timesketch/templates/*
-usr/lib/python3*/dist-packages/timesketch/templates/*/*
 usr/lib/python3*/dist-packages/timesketch*.egg-info/*
