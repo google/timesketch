@@ -34,6 +34,7 @@ logsources:
       data_type:
         - "shell:zsh:history"
         - "bash:history:command"
+        - "apt:history:line"
   winprefetch:
     service: winprefetch
     conditions:
