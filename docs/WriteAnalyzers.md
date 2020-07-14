@@ -96,9 +96,3 @@ Result from analyzer run:
 
 Do not try to run analyzer_run.py in your docker instance of Timesketch
 as it will mix certain things with the actual installed Timesketch instance.
-
-
-
-
-
-
