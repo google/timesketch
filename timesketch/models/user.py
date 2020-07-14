@@ -24,7 +24,6 @@ from flask_bcrypt import check_password_hash
 from flask_login import UserMixin
 from sqlalchemy.types import Boolean
 from sqlalchemy import Column
-from sqlalchemy import Column
 from sqlalchemy import PrimaryKeyConstraint
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
