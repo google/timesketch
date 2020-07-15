@@ -4,8 +4,8 @@ from __future__ import unicode_literals
 import logging
 import os
 import time
-import elasticsearch
 import codecs
+import elasticsearch
 
 
 from sigma.backends import elasticsearch as sigma_elasticsearch
