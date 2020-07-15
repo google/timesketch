@@ -98,7 +98,7 @@ def run_verifier(rules_path, config_file_path):
                 tag_name, _, _ = rule_filename.rpartition('.')
                 rule_file_path = os.path.join(dirpath, rule_filename)
                 rule_file_path = os.path.abspath(rule_file_path)
-                logging.info('[sigma] Reading rules from {0!s}'.format(
+                logging.debug('[sigma] Reading rules from {0:s}'.format(
                     rule_file_path))
                 with codecs.open(rule_file_path, 'r',
                     encoding="utf-8") as rule_file:
@@ -109,7 +109,7 @@ def run_verifier(rules_path, config_file_path):
                         parsed_sigma_rules = parser.generate(sigma_backend)
                     except (NotImplementedError) as exception:
                         logging.error(
-                            '{0:s} Error NotImplementedError generating rule in file {1:s}: {1!s}'
+                            '{0:s} Error NotImplementedError generating rule in file {1:s}: {2!s}'
                                 .format(rule_filename,rule_file_path, exception))
 
                         sigma_rules_with_problems.append(rule_file_path)
