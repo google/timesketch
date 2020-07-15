@@ -64,9 +64,12 @@ class SketchListResource(resources.ResourceMixin, Resource):
         Returns:
             List of sketches (instance of flask.wrappers.Response)
         """
-        filtered_sketches = Sketch.all_with_acl().filter(
-            not_(Sketch.Status.status == 'deleted'),
-            Sketch.Status.parent).order_by(Sketch.updated_at.desc()).all()
+        if current_user.admin:
+            filtered_sketches = Sketch.query.all()
+        else:
+            filtered_sketches = Sketch.all_with_acl().filter(
+                not_(Sketch.Status.status == 'deleted'),
+                Sketch.Status.parent).order_by(Sketch.updated_at.desc()).all()
 
         # Just return a subset of the sketch objects to reduce the amount of
         # data returned.
@@ -110,6 +113,35 @@ class SketchListResource(resources.ResourceMixin, Resource):
 class SketchResource(resources.ResourceMixin, Resource):
     """Resource to get a sketch."""
 
+    def _get_sketch_for_admin(self, sketch):
+        """Missing a docstring."""
+        sketch_fields = {
+            'id': sketch.id,
+            'name': sketch.name,
+            'description': sketch.description,
+            'user': {'username': current_user.username},
+            'timelines': [],
+            'stories': [],
+            'aggregations': [],
+            'aggregationgroups': [],
+            'active_timelines': [],
+            'label_string': sketch.label_string,
+            'status': [{
+                'id': 0,
+                'status': 'unknown'}],
+            'all_permissions': sketch.all_permissions,
+            'created_at': sketch.created_at,
+            'updated_at': sketch.updated_at,
+        }
+
+        meta = {'current_user': current_user.username}
+        return jsonify(
+            {
+                'objects': [sketch_fields],
+                'meta': meta
+            }
+        )
+
     @login_required
     def get(self, sketch_id):
         """Handles GET request to the resource.
@@ -117,7 +149,13 @@ class SketchResource(resources.ResourceMixin, Resource):
         Returns:
             A sketch in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        if current_user.admin:
+            sketch = Sketch.query.get(sketch_id)
+            if not sketch.has_permission(current_user, 'read'):
+                return self._get_sketch_for_admin(sketch)
+        else:
+            sketch = Sketch.query.get_with_acl(sketch_id)
+
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
