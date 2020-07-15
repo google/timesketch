@@ -83,3 +83,37 @@ If you want to test that feature, get some evtx files from the following
 
 - https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES
 - https://github.com/sans-blue-team/DeepBlueCLI/evtx
+
+## Verify rules
+
+Deploying rules that can not be parsed by Sigma can cause problems on analyst side
+as well as Timesketch operator side. The analyst might not be able to see
+the logs and the errors might only occur when running the analyzer.
+
+This is why a standalone tool can be used from:
+```
+test_tools/sigma_verify_rules.py
+```
+
+This tool takes the following options:
+```
+usage: sigma_verify_rules.py [-h] [--config_file PATH_TO_TEST_FILE]
+                             PATH_TO_RULES
+sigma_verify_rules.py: error: the following arguments are required: PATH_TO_RULES
+```
+
+And could be used like the following to verify your rules would work:
+```
+sigma_verfy_rules.py --config_file sigma_config.yaml ../timesketch/data/sigma/rules
+```
+
+If any rules in that folder is causing problems it will be shown:
+```
+sigma_verify_rules.py --config_file ../data/sigma_config.yaml ../timesketch/data/sigma/rules
+ERROR:root:reverse_shell.yaml Error generating rule in file ../timesketch/data/sigma/rules/linux/reverse_shell.yaml you should not use this rule in Timesketch: No condition found
+ERROR:root:recon_commands.yaml Error generating rule in file ../timesketch/data/sigma/rules/data/linux/recon_commands.yaml you should not use this rule in Timesketch: No condition found
+You should NOT import the following rules
+../timesketch/data/sigma/rules/linux/reverse_shell.yaml
+../timesketch/data/sigma/rules/linux/recon_commands.yaml
+```
+
