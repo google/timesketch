@@ -5,6 +5,7 @@ import logging
 import os
 import time
 import elasticsearch
+import codecs
 
 
 from sigma.backends import elasticsearch as sigma_elasticsearch
@@ -100,7 +101,8 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                     rule_file_path = os.path.abspath(rule_file_path)
                     logging.info('[sigma] Reading rules from {0!s}'.format(
                         rule_file_path))
-                    with open(rule_file_path, 'r') as rule_file:
+                    with codecs.open(rule_file_path, 'r', encoding='utf-8',
+                                     errors='replace') as rule_file:
                         try:
                             rule_file_content = rule_file.read()
                             parser = sigma_collection.SigmaCollectionParser(
