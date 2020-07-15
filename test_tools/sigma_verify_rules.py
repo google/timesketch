@@ -25,13 +25,14 @@ import argparse
 import sys
 import codecs
 
+import sigma.parser.exceptions
+
 
 
 from sigma.backends import elasticsearch as sigma_elasticsearch
 import sigma.configuration as sigma_configuration
 from sigma.parser import collection as sigma_collection
-logging.basicConfig(level=os.environ.get("LOGLEVEL", "ERROR"))
-import sigma.parser.exceptions
+logging.basicConfig(level=os.environ.get('LOGLEVEL', 'ERROR'))
 
 
 def get_codepath():
@@ -49,6 +50,7 @@ def get_codepath():
 
 def run_verifier(rules_path, config_file_path):
     """Run an sigma parsing test on a given dir and returns results from the run.
+
     Args:
         rules_path: the path to the rules.
         config_file_path: the path to a config file that contains mapping data.
@@ -56,7 +58,7 @@ def run_verifier(rules_path, config_file_path):
         IOError: if the path to either test or analyzer file does not exist
                  or if the analyzer module or class cannot be loaded.
     Returns:
-        two lists:
+        a tuple of lists:
             - sigma_verified_rules with rules that can be added
             - sigma_rules_with_problems with rules that should not be added
     """
@@ -73,6 +75,8 @@ def run_verifier(rules_path, config_file_path):
         sigma_config_con = sigma_config_file.read()
     sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_con)
     sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(sigma_config, {})
+    sigma_verified_rules = []
+    sigma_rules_with_problems = []
 
     for dirpath, dirnames, files in os.walk(rules_path):
 
@@ -81,20 +85,17 @@ def run_verifier(rules_path, config_file_path):
 
         rule_extensions = ("yml","yaml")
 
-        sigma_verified_rules  = []
-        sigma_rules_with_problems = []
-
         for rule_filename in files:
             if rule_filename.lower().endswith(rule_extensions):
 
                 # if a sub dir is found, append it to be scanned for rules
                 if os.path.isdir(os.path.join(rules_path, rule_filename)):
-                    logging.error(
-                        'this is a directory, skipping: {0:s}'.format(
+                    logging.debug(
+                        'This is a directory, skipping: {0:s}'.format(
                             rule_filename))
                     continue
 
-                tag_name, _ = rule_filename.rsplit('.')
+                tag_name, _, _ = rule_filename.rpartition('.')
                 rule_file_path = os.path.join(dirpath, rule_filename)
                 rule_file_path = os.path.abspath(rule_file_path)
                 logging.info('[sigma] Reading rules from {0!s}'.format(
