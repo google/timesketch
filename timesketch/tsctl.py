@@ -556,6 +556,7 @@ class ImportTimeline(Command):
 
 
 def main():
+    """Main function of the script, setting up the shell manager."""
     # Setup Flask-script command manager and register commands.
     shell_manager = Manager(create_app)
     shell_manager.add_command('add_user', AddUser())
