@@ -89,9 +89,9 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
 
                     # if a sub dir is found, append it to be scanned for rules
                     if os.path.isdir(os.path.join(rules_path, rule_filename)):
-                        logging.error((
-                            'this is a directory, not a file, skipping: '
-                            '{0:s}').format(rule_filename))
+                        logging.error(
+                            'this is a directory, skipping: {0:s}'.format(
+                                rule_filename))
                         continue
 
                     tag_name, _ = rule_filename.rsplit('.')
@@ -107,46 +107,38 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                                 rule_file_content, self.sigma_config, None)
                             parsed_sigma_rules = parser.generate(sigma_backend)
                         except NotImplementedError as exception:
-                            logging.error((
-                                'Error generating rule in file {0:s}: '
-                                '{1!s}').format(rule_file_path, exception))
-                            continue
-                        except Exception as exception:  # pylint: disable=broad-except
-                            logging.error((
-                                'Error generating rule in file {0:s}: '
-                                '{1!s}').format(rule_file_path, exception))
+                            logging.error(
+                                'Error generating rule in file {0:s}: {1!s}'
+                                .format(rule_file_path, exception))
                             continue
 
                         for sigma_rule in parsed_sigma_rules:
                             try:
                                 simple_counter += 1
-                                # TODO fix that in Sigma hack to get rid of
-                                # nested stuff. Also see:
+                                # TODO Investigate how to handle .keyword
+                                # fields in Sigma.
                                 # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
-                                sigma_rule = sigma_rule.replace(
-                                    ".keyword:", ":")
+                                sigma_rule = sigma_rule\
+                                    .replace(".keyword:", ":")
                                 logging.info(
-                                    '[sigma] Generated query {0:s}'.format(
-                                        sigma_rule))
-                                number_of_tagged_events = self.run_sigma_rule(
+                                    '[sigma] Generated query {0:s}'
+                                    .format(sigma_rule))
+                                sum_of_tagged_events = self.run_sigma_rule(
                                     sigma_rule, tag_name)
-                                tags_applied[tag_name] += (
-                                    number_of_tagged_events)
-
-                            except elasticsearch.TransportError as exception:
-                                logging.error((
+                                tags_applied[tag_name] += sum_of_tagged_events
+                            except elasticsearch.TransportError \
+                                    as es_TransportError:
+                                logging.error(
                                     'Timeout generating rule in file {0:s}: '
-                                    '{1!s} waiting for 10 seconds').format(
-                                        rule_file_path, exception))
-
-                                # Waiting 10 seconds before continuing.
-                                time.sleep(10)
+                                    '{1!s} waiting for 10 seconds'.format(
+                                        rule_file_path, es_TransportError))
+                                time.sleep(10) # waiting 10 seconds
 
         total_tagged_events = sum(tags_applied.values())
         output_string = 'Applied {0:d} tags\n'.format(total_tagged_events)
-        for tag_name, number_of_tagged_events in tags_applied.items():
+        for tag_name, sum_of_tagged_events in tags_applied.items():
             output_string += '* {0:s}: {1:d}\n'.format(
-                tag_name, number_of_tagged_events)
+                tag_name, sum_of_tagged_events)
 
         if simple_counter > 0:
             view = self.sketch.add_view(
@@ -182,28 +174,11 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
 
         return output_string
 
+class RulesSigmaPlugin(SigmaPlugin):
+    """Sigma plugin to run rules."""
 
-class LinuxRulesSigmaPlugin(SigmaPlugin):
-    """Sigma plugin to run Linux rules."""
+    _RULES_PATH = '../../../data/sigma/rules/'
 
-    _RULES_PATH = '../../../data/sigma/rules/linux'
+    NAME = 'sigma'
 
-    NAME = 'sigma_linux'
-
-class WindowsRulesSigmaPlugin(SigmaPlugin):
-    """Sigma plugin to run Windows rules."""
-
-    _RULES_PATH = '../../../data/sigma/rules/windows'
-
-    NAME = 'sigma_windows'
-
-class TestRulesSigmaPlugin(SigmaPlugin):
-    """Sigma plugin to run Windows rules."""
-
-    _RULES_PATH = '../../../data/test_rules'
-
-    NAME = 'sigma_test'
-
-manager.AnalysisManager.register_analyzer(LinuxRulesSigmaPlugin)
-manager.AnalysisManager.register_analyzer(WindowsRulesSigmaPlugin)
-manager.AnalysisManager.register_analyzer(TestRulesSigmaPlugin)
+manager.AnalysisManager.register_analyzer(RulesSigmaPlugin)

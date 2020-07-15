@@ -46,7 +46,8 @@ def get_config_path(file_name):
         file_name: String that defines the config file name.
 
     Returns:
-        The path to the configuration file or None if the file cannot be found.
+        The path to the configuration file or an empty string if the file
+        cannot be found.
     """
     path = os.path.join('etc', 'timesketch', file_name)
     if os.path.isfile(path):
@@ -62,7 +63,13 @@ def get_config_path(file_name):
     if os.path.isfile(path):
         return path
 
-    return None
+    path = os.path.join(
+        os.path.dirname(__file__), '..', '..', '..', '..', 'data', file_name)
+    path = os.path.abspath(path)
+    if os.path.isfile(path):
+        return path
+
+    return ''
 
 
 class AnalyzerContext(object):
