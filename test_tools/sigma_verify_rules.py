@@ -23,6 +23,7 @@ import logging
 import os
 import argparse
 import sys
+import codecs
 
 
 
