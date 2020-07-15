@@ -157,7 +157,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if not os.path.isdir(options.rules_path):
-        print('The path to the analyzer file does not exist ({0:s})'.format(
+        print('The path to the rules does not exist ({0:s})'.format(
             options.rules_path))
         sys.exit(1)
 
