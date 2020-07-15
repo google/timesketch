@@ -39,7 +39,7 @@ timesketch/test_tools/test_events/sigma_events.jsonl
 
 The following command
 ```
-python3 analyzer_run.py --test_file test_events/sigma_events.jsonl ../timesketch/lib/analyzers/sigma_tagger.py RulesSigmaPlugin
+PYTHONPATH=. python3 analyzer_run.py --test_file test_events/sigma_events.jsonl ../timesketch/lib/analyzers/sigma_tagger.py RulesSigmaPlugin
 ```
 
 Will give you that output:
