@@ -67,9 +67,11 @@ def get_response_json(response, logger):
     """
     status = response.status_code in definitions.HTTP_STATUS_CODE_20X
     if not status:
+        reason = response.reason
+        if isinstance(reason, bytes):
+            reason = reason.decode('utf-8')
         logger.warning('Failed response: [{0:d}] {2:s} {1:s}'.format(
-            response.status_code, response.reason.decode('utf-8'),
-            _get_message(response)))
+            response.status_code, reason, _get_message(response)))
 
     try:
         return response.json()

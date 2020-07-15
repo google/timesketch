@@ -617,7 +617,7 @@ class Sketch(resource.BaseResource):
 
         sketch = self.lazyload_data()
         views = []
-        for view in sketch['meta']['views']:
+        for view in sketch['meta'].get('views', []):
             view_obj = view_lib.View(
                 view_id=view['id'],
                 view_name=view['name'],
