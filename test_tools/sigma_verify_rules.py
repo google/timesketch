@@ -98,7 +98,8 @@ def run_verifier(rules_path, config_file_path):
                 rule_file_path = os.path.abspath(rule_file_path)
                 logging.info('[sigma] Reading rules from {0!s}'.format(
                     rule_file_path))
-                with open(rule_file_path, 'r') as rule_file:
+                with codecs.open(rule_file_path, 'r',
+                    encoding="utf-8") as rule_file:
                     try:
                         rule_file_content = rule_file.read()
                         parser = sigma_collection.SigmaCollectionParser(
@@ -108,9 +109,10 @@ def run_verifier(rules_path, config_file_path):
                         logging.error(
                             '{0:s} Error NotImplementedError generating rule in file {1:s}: {1!s}'
                                 .format(rule_filename,rule_file_path, exception))
+
                         sigma_rules_with_problems.append(rule_file_path)
                         continue
-                    except (sigma.parser.exceptions.SigmaParseError) as exception:
+                    except (sigma.parser.exceptions.SigmaParseError, TypeError) as exception:
                         logging.error(
                             '{0:s} Error generating rule in file {1:s} '
                             'you should not use this rule in Timesketch: {2!s}'
@@ -165,6 +167,11 @@ if __name__ == '__main__':
         rules_path=options.rules_path,
         config_file_path=options.config_file_path)
 
-    print('You should NOT import the following rules')
+    print('### You should NOT import the following rules ###')
     for badrule in sigma_rules_with_problems:
         print(badrule)
+
+    print('### You can import the following rules ###')
+    for goodrule in sigma_verified_rules:
+        print(goodrule)
+
