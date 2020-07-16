@@ -131,6 +131,11 @@ class SketchResource(resources.ResourceMixin, Resource):
             A limited view of a sketch in JSON (instance of
             flask.wrappers.Response)
         """
+        if sketch.get_status.status == 'archived':
+            status = 'archived'
+        else:
+            status = 'admin_view'
+
         sketch_fields = {
             'id': sketch.id,
             'name': sketch.name,
@@ -144,7 +149,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             'label_string': sketch.label_string,
             'status': [{
                 'id': 0,
-                'status': 'unknown'}],
+                'status': status}],
             'all_permissions': sketch.all_permissions,
             'created_at': sketch.created_at,
             'updated_at': sketch.updated_at,
