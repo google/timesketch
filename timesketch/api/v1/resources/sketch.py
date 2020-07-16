@@ -114,7 +114,23 @@ class SketchResource(resources.ResourceMixin, Resource):
     """Resource to get a sketch."""
 
     def _get_sketch_for_admin(self, sketch):
-        """Missing a docstring."""
+        """Returns a limited sketch view for adminstrators.
+
+        An administrator needs to get information about all sketches
+        that are stored on the backend. However that view should be
+        limited for sketches that user does not have explicit read
+        or other permissions as well. In those cases the returned
+        sketch only contains information about the name, description,
+        etc but not any information about the data, nor any access
+        to the underlying data of the sketch.
+
+        Args:
+            sketch: a sketch object (instance of models.Sketch)
+
+        Returns:
+            A limited view of a sketch in JSON (instance of
+            flask.wrappers.Response)
+        """
         sketch_fields = {
             'id': sketch.id,
             'name': sketch.name,
