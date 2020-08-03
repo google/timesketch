@@ -87,42 +87,42 @@ def run_verifier(rules_path, config_file_path):
         rule_extensions = ('yml', 'yaml')
 
         for rule_filename in files:
-            if rule_filename.lower().endswith(rule_extensions):
+            if not rule_filename.lower().endswith(rule_extensions):
+                continue
 
-                # if a sub dir is found, append it to be scanned for rules
-                if os.path.isdir(os.path.join(rules_path, rule_filename)):
-                    logging.debug(
-                        'This is a directory, skipping: {0:s}'.format(
-                            rule_filename))
+            # if a sub dir is found, skip it, it is alredy part of the os.walk
+            if os.path.isdir(os.path.join(rules_path, rule_filename)):
+                logging.debug(
+                    'Directory found, skipping: {0:s}'.format(rule_filename))
+                continue
+
+            tag_name, _, _ = rule_filename.rpartition('.')
+            rule_file_path = os.path.join(dirpath, rule_filename)
+            rule_file_path = os.path.abspath(rule_file_path)
+            logging.debug('[sigma] Reading rules from {0:s}'.format(
+                rule_file_path))
+            with codecs.open(rule_file_path, 'r',
+                encoding="utf-8") as rule_file:
+                try:
+                    rule_file_content = rule_file.read()
+                    parser = sigma_collection.SigmaCollectionParser(
+                        rule_file_content, sigma_config, None)
+                    parsed_sigma_rules = parser.generate(sigma_backend)
+                except (NotImplementedError) as exception:
+                    logging.error(
+                        '{0:s} Error NotImplementedError generating rule in file {1:s}: {2!s}'
+                            .format(rule_filename,rule_file_path, exception))
+
+                    sigma_rules_with_problems.append(rule_file_path)
                     continue
-
-                tag_name, _, _ = rule_filename.rpartition('.')
-                rule_file_path = os.path.join(dirpath, rule_filename)
-                rule_file_path = os.path.abspath(rule_file_path)
-                logging.debug('[sigma] Reading rules from {0:s}'.format(
-                    rule_file_path))
-                with codecs.open(rule_file_path, 'r',
-                    encoding="utf-8") as rule_file:
-                    try:
-                        rule_file_content = rule_file.read()
-                        parser = sigma_collection.SigmaCollectionParser(
-                            rule_file_content, sigma_config, None)
-                        parsed_sigma_rules = parser.generate(sigma_backend)
-                    except (NotImplementedError) as exception:
-                        logging.error(
-                            '{0:s} Error NotImplementedError generating rule in file {1:s}: {2!s}'
-                                .format(rule_filename,rule_file_path, exception))
-
-                        sigma_rules_with_problems.append(rule_file_path)
-                        continue
-                    except (sigma.parser.exceptions.SigmaParseError, TypeError) as exception:
-                        logging.error(
-                            '{0:s} Error generating rule in file {1:s} '
-                            'you should not use this rule in Timesketch: {2!s}'
-                                .format(rule_filename,rule_file_path, exception))
-                        sigma_rules_with_problems.append(rule_file_path)
-                        continue
-                    sigma_verified_rules.append(rule_file_path)
+                except (sigma.parser.exceptions.SigmaParseError, TypeError) as exception:
+                    logging.error(
+                        '{0:s} Error generating rule in file {1:s} '
+                        'you should not use this rule in Timesketch: {2!s}'
+                            .format(rule_filename,rule_file_path, exception))
+                    sigma_rules_with_problems.append(rule_file_path)
+                    continue
+                sigma_verified_rules.append(rule_file_path)
     return sigma_verified_rules,sigma_rules_with_problems
 
 
