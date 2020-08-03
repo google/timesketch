@@ -45,6 +45,24 @@ def get_codepath():
             return sys_path
     return dirname
 
+def verify_rules_file(rule_file_path):
+    """Verifies a given file path contains a valid sigma rule.
+
+        Args:
+            rule_file_path: the path to the rules.
+
+        Raises:
+            IOError: if the path to either test or analyzer file does not exist
+                     or if the analyzer module or class cannot be loaded.
+
+        Returns:
+            true: rule_file_path contains a valid sigma rule
+            false: rule_file_path does not contain a valid sigma rule
+        """
+
+
+    return true
+
 
 def run_verifier(rules_path, config_file_path):
     """Run an sigma parsing test on a given dir and returns results from the run.

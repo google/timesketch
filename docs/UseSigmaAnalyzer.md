@@ -104,7 +104,7 @@ sigma_verify_rules.py: error: the following arguments are required: PATH_TO_RULE
 
 And could be used like the following to verify your rules would work:
 ```
-sigma_verfy_rules.py --config_file sigma_config.yaml ../timesketch/data/sigma/rules
+sigma_verify_rules.py --config_file ../data/sigma_config.yaml ../data/sigma/rules
 ```
 
 If any rules in that folder is causing problems it will be shown:
