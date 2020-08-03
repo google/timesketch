@@ -24,14 +24,12 @@ import os
 import argparse
 import sys
 import codecs
-
 import sigma.parser.exceptions
-
-
+import sigma.configuration as sigma_configuration
 
 from sigma.backends import elasticsearch as sigma_elasticsearch
-import sigma.configuration as sigma_configuration
 from sigma.parser import collection as sigma_collection
+
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'ERROR'))
 
 
@@ -54,9 +52,11 @@ def run_verifier(rules_path, config_file_path):
     Args:
         rules_path: the path to the rules.
         config_file_path: the path to a config file that contains mapping data.
+
     Raises:
         IOError: if the path to either test or analyzer file does not exist
                  or if the analyzer module or class cannot be loaded.
+
     Returns:
         a tuple of lists:
             - sigma_verified_rules with rules that can be added
@@ -74,7 +74,8 @@ def run_verifier(rules_path, config_file_path):
     with open(sigma_config_path, 'r') as sigma_config_file:
         sigma_config_con = sigma_config_file.read()
     sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_con)
-    sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(sigma_config, {})
+    sigma_backend = sigma_elasticsearch.\
+        ElasticsearchQuerystringBackend(sigma_config, {})
     sigma_verified_rules = []
     sigma_rules_with_problems = []
 
@@ -83,7 +84,7 @@ def run_verifier(rules_path, config_file_path):
         if 'deprecated' in dirnames:
             dirnames.remove('deprecated')
 
-        rule_extensions = ("yml","yaml")
+        rule_extensions = ('yml', 'yaml')
 
         for rule_filename in files:
             if rule_filename.lower().endswith(rule_extensions):
