@@ -72,17 +72,16 @@ def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
             parser = sigma_collection.SigmaCollectionParser(
                 rule_file_content, sigma_config, None)
             parsed_sigma_rules = parser.generate(sigma_backend)
-        except (NotImplementedError) as exception:
+        except (NotImplementedError) as e:
             logging.error(
                 '{0:s} Error with file {1:s}: {2!s}'.format
-                (rule_filename, rule_file_path, exception))
+                (rule_filename, rule_file_path, e))
             return False
-        except (
-        sigma.parser.exceptions.SigmaParseError, TypeError) as exception:
+        except (sigma.parser.exceptions.SigmaParseError, TypeError) as e:
             logging.error(
                 '{0:s} Error with file {1:s} '
                 'you should not use this rule in Timesketch: {2!s}'
-                    .format(rule_filename, rule_file_path, exception))
+                .format(rule_filename, rule_file_path, e))
             return False
 
     return True
