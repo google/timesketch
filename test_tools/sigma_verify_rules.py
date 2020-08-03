@@ -13,7 +13,7 @@
 # limitations under the License.
 """A tool to test sigma rules.
 This tool can be used to verify your rules before running an analyzer.
-It also does not require you to have a full blown Timesketch instance up and running.
+It also does not require you to have a full blown Timesketch instance.
 Example way of running the tool:
   $ sigma_verify_rules.py --config_file ../data/sigma_config.yaml ../data/linux/
 """
@@ -65,7 +65,7 @@ def verify_rules_file(rule_file_path):
 
 
 def run_verifier(rules_path, config_file_path):
-    """Run an sigma parsing test on a given dir and returns results from the run.
+    """Run an sigma parsing test on a dir and returns results from the run.
 
     Args:
         rules_path: the path to the rules.
@@ -114,7 +114,6 @@ def run_verifier(rules_path, config_file_path):
                     'Directory found, skipping: {0:s}'.format(rule_filename))
                 continue
 
-            tag_name, _, _ = rule_filename.rpartition('.')
             rule_file_path = os.path.join(dirpath, rule_filename)
             rule_file_path = os.path.abspath(rule_file_path)
             logging.debug('[sigma] Reading rules from {0:s}'.format(
