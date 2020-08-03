@@ -45,23 +45,47 @@ def get_codepath():
             return sys_path
     return dirname
 
-def verify_rules_file(rule_file_path):
+def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
     """Verifies a given file path contains a valid sigma rule.
 
         Args:
             rule_file_path: the path to the rules.
+            sigma_config: config to use
+            sigma_backend: A sigma.backends instance
 
         Raises:
-            IOError: if the path to either test or analyzer file does not exist
-                     or if the analyzer module or class cannot be loaded.
+            None
 
         Returns:
             true: rule_file_path contains a valid sigma rule
             false: rule_file_path does not contain a valid sigma rule
         """
 
+    logging.debug('[sigma] Reading rules from {0:s}'.format(
+        rule_file_path))
 
-    return true
+    path, rule_filename = os.path.split(rule_file_path)
+
+    with codecs.open(rule_file_path, 'r', encoding="utf-8") as rule_file:
+        try:
+            rule_file_content = rule_file.read()
+            parser = sigma_collection.SigmaCollectionParser(
+                rule_file_content, sigma_config, None)
+            parsed_sigma_rules = parser.generate(sigma_backend)
+        except (NotImplementedError) as exception:
+            logging.error(
+                '{0:s} Error with file {1:s}: {2!s}'.format
+                (rule_filename, rule_file_path, exception))
+            return False
+        except (
+        sigma.parser.exceptions.SigmaParseError, TypeError) as exception:
+            logging.error(
+                '{0:s} Error with file {1:s} '
+                'you should not use this rule in Timesketch: {2!s}'
+                    .format(rule_filename, rule_file_path, exception))
+            return False
+
+    return True
 
 
 def run_verifier(rules_path, config_file_path):
@@ -94,8 +118,8 @@ def run_verifier(rules_path, config_file_path):
     sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_con)
     sigma_backend = sigma_elasticsearch.\
         ElasticsearchQuerystringBackend(sigma_config, {})
-    sigma_verified_rules = []
-    sigma_rules_with_problems = []
+    return_verified_rules = []
+    return_rules_with_problems = []
 
     for dirpath, dirnames, files in os.walk(rules_path):
 
@@ -116,31 +140,14 @@ def run_verifier(rules_path, config_file_path):
 
             rule_file_path = os.path.join(dirpath, rule_filename)
             rule_file_path = os.path.abspath(rule_file_path)
-            logging.debug('[sigma] Reading rules from {0:s}'.format(
-                rule_file_path))
-            with codecs.open(rule_file_path, 'r',
-                encoding="utf-8") as rule_file:
-                try:
-                    rule_file_content = rule_file.read()
-                    parser = sigma_collection.SigmaCollectionParser(
-                        rule_file_content, sigma_config, None)
-                    parsed_sigma_rules = parser.generate(sigma_backend)
-                except (NotImplementedError) as exception:
-                    logging.error(
-                        '{0:s} Error NotImplementedError generating rule in file {1:s}: {2!s}'
-                            .format(rule_filename,rule_file_path, exception))
 
-                    sigma_rules_with_problems.append(rule_file_path)
-                    continue
-                except (sigma.parser.exceptions.SigmaParseError, TypeError) as exception:
-                    logging.error(
-                        '{0:s} Error generating rule in file {1:s} '
-                        'you should not use this rule in Timesketch: {2!s}'
-                            .format(rule_filename,rule_file_path, exception))
-                    sigma_rules_with_problems.append(rule_file_path)
-                    continue
-                sigma_verified_rules.append(rule_file_path)
-    return sigma_verified_rules,sigma_rules_with_problems
+            if verify_rules_file(rule_file_path, sigma_config, sigma_backend):
+                return_verified_rules.append(rule_file_path)
+            else:
+                logging.info('File did not work{0:s}'.format(rule_file_path))
+                return_rules_with_problems.append(rule_file_path)
+
+    return return_verified_rules, return_rules_with_problems
 
 
 if __name__ == '__main__':
@@ -167,12 +174,21 @@ if __name__ == '__main__':
     arguments.add_argument(
         'rules_path', action='store', default='', type=str,
         metavar='PATH_TO_RULES', help='Path to the rules to test.')
-
+    arguments.add_argument(
+        '--debug', action='store_true', help='print debug messages ')
+    arguments.add_argument(
+        '--info', action='store_true', help='print info messages ')
     try:
         options = arguments.parse_args()
     except UnicodeEncodeError:
         print(arguments.format_help())
         sys.exit(1)
+
+    if options.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
+
+    if options.info:
+        logging.getLogger().setLevel(logging.INFO)
 
     if not os.path.isfile(options.config_file_path):
         print('Config file not found.')
@@ -194,4 +210,3 @@ if __name__ == '__main__':
     print('### You can import the following rules ###')
     for goodrule in sigma_verified_rules:
         print(goodrule)
-
