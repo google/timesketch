@@ -131,7 +131,7 @@ def run_verifier(rules_path, config_file_path):
             if not rule_filename.lower().endswith(rule_extensions):
                 continue
 
-            # if a sub dir is found, skip it, it is alredy part of the os.walk
+            # If a sub dir is found, skip it
             if os.path.isdir(os.path.join(rules_path, rule_filename)):
                 logging.debug(
                     'Directory found, skipping: {0:s}'.format(rule_filename))
