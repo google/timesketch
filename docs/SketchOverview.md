@@ -37,3 +37,22 @@ You can share the sketch with users, groups of users, make it available to all u
 
 **Filter** Add a filter, e.g. to show only starred events
 
+## More
+
+If you click on the "More" Button in the Sketch Overview, you get the following three options.
+
+### Delete
+
+Delete the whole sketch. *Note:* this will not delete the Timelines.
+
+### Archive
+
+Archive the whole sketch.
+
+### Export
+
+Export will export the following items:
+
+- events (starred, tagged, tagged_event_stats)
+- stories as html
+- views (as csv)
