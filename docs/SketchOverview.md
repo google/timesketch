@@ -41,6 +41,8 @@ You can share the sketch with users, groups of users, make it available to all u
 
 If you click on the "More" Button in the Sketch Overview, you get the following three options.
 
+![Sketch Overview more dialogue](images/SketchMore.png) 
+
 ### Delete
 
 Delete the whole sketch. *Note:* this will not delete the Timelines.
