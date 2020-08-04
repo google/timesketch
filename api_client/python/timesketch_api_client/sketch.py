@@ -1217,19 +1217,19 @@ class Sketch(resource.BaseResource):
                 'Unable to search for labels in an archived sketch.')
 
         query = {
-            "nested": {
-                "path": "timesketch_label",
-                "query": {
-                    "bool": {
-                        "must": [
+            'nested': {
+                'path': 'timesketch_label',
+                'query': {
+                    'bool': {
+                        'must': [
                             {
-                                "term": {
-                                    "timesketch_label.name": label_name
+                                'term': {
+                                    'timesketch_label.name': label_name
                                 }
                             },
                             {
-                                "term": {
-                                    "timesketch_label.sketch_id": self.id
+                                'term': {
+                                    'timesketch_label.sketch_id': self.id
                                 }
                             }
                         ]

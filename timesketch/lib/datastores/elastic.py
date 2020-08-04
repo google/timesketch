@@ -95,7 +95,7 @@ class ElasticsearchDataStore(object):
         label_query = {
             'bool': {
                 'should': [],
-                "minimum_should_match": 1
+                'minimum_should_match': 1
             }
         }
 
@@ -205,7 +205,7 @@ class ElasticsearchDataStore(object):
             datetime_ranges = {
                 'bool': {
                     'should': [],
-                    "minimum_should_match": 1
+                    'minimum_should_match': 1
                 }
             }
 
