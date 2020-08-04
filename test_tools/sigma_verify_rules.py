@@ -14,6 +14,7 @@
 """A tool to test sigma rules.
 This tool can be used to verify your rules before running an analyzer.
 It also does not require you to have a full blown Timesketch instance.
+Default this tool will show only the rules that cause problems.
 Example way of running the tool:
   $ sigma_verify_rules.py --config_file ../data/sigma_config.yaml ../data/linux/
 """
@@ -71,14 +72,27 @@ def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
             rule_file_content = rule_file.read()
             parser = sigma_collection.SigmaCollectionParser(
                 rule_file_content, sigma_config, None)
+
+            # trying to get the sigma rule id
+            for element in parser.parsers:
+                logging.info('Rule Id: {0:s}'.format(element.parsedyaml['id']))
             parsed_sigma_rules = parser.generate(sigma_backend)
+            for sigma_rule in parsed_sigma_rules:
+                # TODO Investigate how to handle .keyword
+                # fields in Sigma.
+                # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
+                sigma_rule = sigma_rule \
+                    .replace(".keyword:", ":")
+                logging.info(
+                    '{0:s} Generated query {1:s}'
+                        .format(rule_file_path, sigma_rule))
         except (NotImplementedError) as e:
-            logging.error(
+            logging.info(
                 '{0:s} Error with file {1:s}: {2!s}'.format
                 (rule_filename, rule_file_path, e))
             return False
         except (sigma.parser.exceptions.SigmaParseError, TypeError) as e:
-            logging.error(
+            logging.info(
                 '{0:s} Error with file {1:s} '
                 'you should not use this rule in Timesketch: {2!s}'
                 .format(rule_filename, rule_file_path, e))
@@ -202,10 +216,13 @@ if __name__ == '__main__':
         rules_path=options.rules_path,
         config_file_path=options.config_file_path)
 
-    print('### You should NOT import the following rules ###')
-    for badrule in sigma_rules_with_problems:
-        print(badrule)
+    if len(sigma_rules_with_problems) > 0:
+        print('### You should NOT import the following rules ###')
+        print('### To get the reason per rule, re-run with --info###')
+        for badrule in sigma_rules_with_problems:
+            print(badrule)
 
-    print('### You can import the following rules ###')
-    for goodrule in sigma_verified_rules:
-        print(goodrule)
+    if len(sigma_verified_rules) > 0:
+        logging.info('### You can import the following rules ###')
+        for goodrule in sigma_verified_rules:
+            logging.info(goodrule)
