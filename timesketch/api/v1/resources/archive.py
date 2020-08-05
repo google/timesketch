@@ -494,7 +494,14 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             data_frame = _query_results_to_dataframe(result, sketch)
 
             total_count = result.get(
-                'hits', {}).get('total', {}).get('value', '')
+                'hits', {}).get('total', {}).get('value', 0)
+
+            if isinstance(total_count, str):
+                try:
+                    total_count = int(total_count, 10)
+                except ValueError:
+                    total_count = 0
+
             event_count = len(result['hits']['hits'])
 
             while event_count < total_count:
@@ -505,6 +512,13 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 add_frame = _query_results_to_dataframe(result, sketch)
                 if add_frame.shape[0]:
                     data_frame = pd.concat([data_frame, add_frame], sort=False)
+                else:
+                    logger.warning(
+                        'Data Frame returned from a search operation was '
+                        'empty, count {0:d} out of {1:d} total. Query is: '
+                        '"{2:s}"'.format(
+                            event_count, total_count,
+                            view.query_string or query_dsl))
 
             fh = io.StringIO()
             data_frame.to_csv(fh, index=False)
