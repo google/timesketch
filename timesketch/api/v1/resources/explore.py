@@ -13,6 +13,7 @@
 # limitations under the License.
 """View resources for version 1 of the Timesketch API."""
 
+import datetime
 import io
 import json
 import zipfile
@@ -198,12 +199,14 @@ class ExploreResource(resources.ResourceMixin, Resource):
         if file_name:
             file_object = io.BytesIO()
             form_data = {
+                'created_at': datetime.datetime.utcnow().isoformat(),
+                'created_by': current_user.username,
                 'sketch': sketch_id,
                 'query': form.query.data,
                 'query_dsl': query_dsl,
                 'query_filter': query_filter,
                 'return_fields': return_fields,
-                'meta': meta,
+                'query_meta': meta,
             }
             with zipfile.ZipFile(file_object, mode='w') as zip_file:
                 zip_file.writestr('METADATA', data=json.dumps(form_data))

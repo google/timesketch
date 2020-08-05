@@ -809,7 +809,7 @@ class Sketch(resource.BaseResource):
             # TODO: Add in scrolling support (requires changes in API as well).
             with open(file_name, 'wb') as fw:
                 fw.write(response.content)
-            return
+            return True
 
         response_json = error.get_response_json(response, logger)
 
