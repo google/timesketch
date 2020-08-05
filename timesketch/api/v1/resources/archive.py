@@ -182,7 +182,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
     """Resource to archive a sketch."""
 
     DEFAULT_QUERY_FILTER = {
-        'size':10000,
+        'size': 10000,
         'terminate_after': 10000
     }
 
@@ -482,21 +482,62 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         if not indices or '_all' in indices:
             indices = self.sketch_indices
 
+        # Ignoring the size limits in views to reduce the amount of queries
+        # needed to get all the data.
+        query_filter['terminate_after'] = 10000
+        query_filter['size'] = 10000
+
         query_dsl = view.query_dsl
         if query_dsl:
             query_dict = json.loads(query_dsl)
             if not query_dict:
                 query_dsl = None
 
-        # TODO (kiddi): Enable scrolling support.
         result = self.datastore.search(
             sketch_id=sketch.id,
             query_string=view.query_string,
             query_filter=query_filter,
             query_dsl=query_dsl,
+            enable_scroll=True,
             indices=indices)
 
-        fh = _query_results_to_filehandle(result, sketch)
+        scroll_id = result.get('_scroll_id', '')
+        if scroll_id:
+            data_frame = _query_results_to_dataframe(result, sketch)
+
+            total_count = result.get(
+                'hits', {}).get('total', {}).get('value', 0)
+
+            if isinstance(total_count, str):
+                try:
+                    total_count = int(total_count, 10)
+                except ValueError:
+                    total_count = 0
+
+            event_count = len(result['hits']['hits'])
+
+            while event_count < total_count:
+                # pylint: disable=unexpected-keyword-arg
+                result = self.datastore.client.scroll(
+                    scroll_id=scroll_id, scroll='1m')
+                event_count += len(result['hits']['hits'])
+                add_frame = _query_results_to_dataframe(result, sketch)
+                if add_frame.shape[0]:
+                    data_frame = pd.concat([data_frame, add_frame], sort=False)
+                else:
+                    logger.warning(
+                        'Data Frame returned from a search operation was '
+                        'empty, count {0:d} out of {1:d} total. Query is: '
+                        '"{2:s}"'.format(
+                            event_count, total_count,
+                            view.query_string or query_dsl))
+
+            fh = io.StringIO()
+            data_frame.to_csv(fh, index=False)
+            fh.seek(0)
+        else:
+            fh = _query_results_to_filehandle(result, sketch)
+
         zip_file.writestr(
             'views/{0:s}.csv'.format(name), data=fh.read())
 
