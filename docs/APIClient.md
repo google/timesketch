@@ -168,6 +168,7 @@ params = {
     'field': 'domain',
     'limit': 10,
     'supported_charts': 'hbarchart',
+    'chart_title': 'Top 10 Domains Visited',
 }
 
 aggregation = sketch.run_aggregator(aggregator_name='field_bucket', aggregator_parameters=params)
@@ -185,11 +186,17 @@ Or as a chart
 aggregation.chart
 ```
 
+And if you want to save that aggregation for future use.
 
+```
+aggregation.name = 'TopDomains'
+aggregation.save()
+```
 
 ### Other Options
 
 The sketch object can be used to do several other actions that are not documented in this first document, such as:
+
 + Create/list/retrieve stories
 + Manually add events to the sketch
 + Add timelines to the sketch
