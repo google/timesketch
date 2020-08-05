@@ -55,6 +55,6 @@ Archive the whole sketch.
 
 Export will export the following items:
 
-- events (starred, tagged, tagged_event_stats)
+- events (starred, tagged, tagged_event_stats, comments, ...)
 - stories as html
 - views (as csv)
