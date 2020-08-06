@@ -31,12 +31,12 @@ def get_range(my_list, complete_list):
     for index in range(0, list_length):
         cur_item = my_list[index]
         try:
-          cur_index = complete_list.index(cur_item)
+            cur_index = complete_list.index(cur_item)
         except ValueError:
             logger.error(
                 'Value in list does not exist in the complete list, and '
                 'therefore unable to extract a range.')
-            raise StopIteration
+            return
         if index == list_length -1:
             yield (cur_first, cur_item)
             continue
@@ -92,12 +92,11 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
                 by='record_number').iloc[[0, -1]].record_number.values
 
             record_numbers = set(source_frame.record_number.unique())
-            all_numbers = set([x + low for x in range(0, high - low + 1)])
+            all_numbers = {x + low for x in range(0, high - low + 1)}
 
             missing_records = all_numbers.difference(record_numbers)
             if not missing_records:
                 continue
-            t1 = time.time()
             if len(missing_records) > len(all_numbers) / 2:
                 # Let's rather calculate the ranges of records instead of
                 # missing records.
@@ -164,8 +163,10 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
         text_items = [
             'Overview of file:',
             '',
-            ' + First day of logs: {0:s}'.format(first_date.strftime('%Y-%m-%d')),
-            ' + Last day of logs: {0:s}'.format(last_date.strftime('%Y-%m-%d')),
+            ' + First day of logs: {0:s}'.format(
+                first_date.strftime('%Y-%m-%d')),
+            ' + Last day of logs: {0:s}'.format(
+                last_date.strftime('%Y-%m-%d')),
             ' + Number of entries: {0:d}'.format(event_frame.shape[0]),
             ' + Number of unique log sources: {0:d}'.format(
                 len(event_frame.source_name.unique())),
@@ -188,15 +189,14 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
 
         if missing_ranges:
             for day_range in missing_ranges:
-                  first, last = day_range
-                  if first == last:
-                      text_items.append(
-                          ' + Missing logs from **{0:d}**'.format(first))
-                  else:
-                      text_items.append(
-                          ' + Missing logs from: **{0:d}** all the way up to '
-                          '**{1:d}**'.format(first, last))
-
+                first, last = day_range
+                if first == last:
+                    text_items.append(
+                        ' + Missing logs from **{0:d}**'.format(first))
+                else:
+                    text_items.append(
+                        ' + Missing logs from: **{0:d}** all the way up to '
+                        '**{1:d}**'.format(first, last))
 
         counter_array = event_count['count'].values
         quarter = np.percentile(counter_array, 25)
