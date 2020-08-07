@@ -90,13 +90,19 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
             # Find the lowest and highest record number for the source.
             low, high = source_frame.sort_values(
                 by='record_number').iloc[[0, -1]].record_number.values
+            if isinstance(low, str):
+                low = int(low)
+            if isinstance(high, str):
+                high = int(high)
 
             record_numbers = set(source_frame.record_number.unique())
-            all_numbers = {x + low for x in range(0, high - low + 1)}
+            record_numbers = {int(x) for x in record_numbers}
+            all_numbers = {int(x) + low for x in range(0, high - low + 1)}
 
             missing_records = all_numbers.difference(record_numbers)
             if not missing_records:
                 continue
+
             if len(missing_records) > len(all_numbers) / 2:
                 # Let's rather calculate the ranges of records instead of
                 # missing records.
@@ -234,29 +240,30 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
             event_count = event_count.append(df_append, sort=False)
             event_count.sort_values(by='day', inplace=True)
 
-            params = {
-                'data': event_count.to_dict('records'),
-                'title': 'Event Records Per Day',
-                'supported_charts': 'barchart',
-                'field': 'day',
-                'order_field': 'day'
-            }
-            agg_obj = self.sketch.add_aggregation(
-                name='Event Records Per Day', agg_name='manual_feed',
-                agg_params=params, chart_type='barchart',
-                description='Created by the EVTX Gap analyzer',
-                label='informational')
-            story.add_aggregation(agg_obj)
+            if event_count.shape[0]:
+                params = {
+                    'data': event_count.to_dict('records'),
+                    'title': 'Event Records Per Day',
+                    'supported_charts': 'barchart',
+                    'field': 'day',
+                    'order_field': 'day'
+                }
+                agg_obj = self.sketch.add_aggregation(
+                    name='Event Records Per Day', agg_name='manual_feed',
+                    agg_params=params, chart_type='barchart',
+                    description='Created by the EVTX Gap analyzer',
+                    label='informational')
+                story.add_aggregation(agg_obj)
 
         if record_gaps:
             text_items = []
             for source, record_dict in record_gaps.items():
-                text_items.append(' + Source: **{0:s}**'.format(source))
+                text_items.append('  + Source: **{0:s}**'.format(source))
                 if 'missing' in record_dict:
                     text = 'missing'
                     record_gap = record_dict['missing']
                 else:
-                    text = 'defined'
+                    text = 'defined (all others are missing)'
                     record_gap = record_dict['included']
 
                 for gap in record_gap:
@@ -264,16 +271,16 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
 
                     if first == last:
                         text_items.append(
-                            '    + Record number: {0:d} is {1:s}'.format(
+                            '    - Record number: {0:d} is {1:s}'.format(
                                 first, text))
                     else:
                         text_items.append(
-                            '    + Records from number {0:d} all the way '
+                            '    - Records from number {0:d} all the way '
                             'up to {1:d} are {2:s}'.format(first, last, text))
             story.add_text(
                 '## Event Record Number Analysis.\n\nBy looking at the record '
                 'numbers and attempting to identify jumps in numbers '
-                'the following gaps were discovered:\n{0:s}'.format(
+                'the following gaps were discovered:\n\n{0:s}'.format(
                     '\n'.join(text_items)))
 
         return (
