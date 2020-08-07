@@ -222,7 +222,7 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
 
         if text_items:
             story.add_text(
-                '## Event Frequency Analysis.\n\nBy looking at the number of'
+                '## Event Frequency Analysis.\n\nBy looking at the number of '
                 'entries per day and analyzing days that had few or no '
                 'records the following gaps were discovered:\n\n{0:s}'.format(
                     '\n'.join(text_items)))
@@ -263,7 +263,7 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
                     text = 'missing'
                     record_gap = record_dict['missing']
                 else:
-                    text = 'defined (all others are missing)'
+                    text = 'defined (those not defined are missing)'
                     record_gap = record_dict['included']
 
                 for gap in record_gap:
