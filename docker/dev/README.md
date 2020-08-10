@@ -2,6 +2,8 @@
 
 You can run Timesketch on Docker in development mode.
 
+NOTE: It is not recommended to try to run on a system with less than 8 GB of RAM.
+
 ### Start a developer version of docker containers in this directory
 
 ```
