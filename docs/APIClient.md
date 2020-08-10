@@ -3,10 +3,9 @@
 The API client is a set of Python libraries that can be used to interact with the REST API of Timesketch from notebooks or scripts. It takes
 care of setting up authentication, sending the API calls to the server, error handling, and presentation.
 
-This is not meant to be a full fledged documentation of the API client, but rather a starting point for people on how to use the API client in
-a script. The same methods can be used for interactions in a notebook, however those instructions are best left in a notebook (TODO: Create a
-notebook and link to it here).
-
+This documentation will give an overview for the most common use cases of the API client. Some available methods will not be covered in this documentation
+whereas others will be documented further in a notebook. (TODO: Create a notebook and link to it here).
+ 
 ## Basic Connections
 
 The API client defines a config library specifically intended to help with setting up all configuration for connecting to Timesketch, including
@@ -62,7 +61,7 @@ To fetch a specific one use the `get_sketch` function:
 sketch = ts_client.get_sketch(SKETCH_ID)
 ```
 
-All you need is the sketch ID, eg:
+All that the function needs is the sketch ID, eg:
 
 ```
 sketch = ts_client.get_sketch(25)
@@ -86,7 +85,7 @@ The sketch object has several ways to explore data, via aggregations or searches
 
 ### Views
 
-The first is simply to list up all views... the function `list_views` returns back View object for all views. An example overview would be:
+To list all the views use the `list_views` function. This functions returns a View object for all views. An example overview would be:
 
 ```
 for view in sketch.list_views():
