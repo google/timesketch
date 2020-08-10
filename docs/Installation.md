@@ -2,6 +2,8 @@
 
 # Install Timesketch from scratch
 
+NOTE: It is not recommended to try to run on a system with less than 8 GB of RAM.
+
 #### Install Ubuntu
 
 This installation guide is based on Ubuntu 18.04LTS Server edition. Follow the installation guide for Ubuntu and install the base system.
