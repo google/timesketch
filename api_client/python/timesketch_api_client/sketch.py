@@ -806,7 +806,6 @@ class Sketch(resource.BaseResource):
                 error=ValueError)
 
         if file_name:
-            # TODO: Add in scrolling support (requires changes in API as well).
             with open(file_name, 'wb') as fw:
                 fw.write(response.content)
             return True
