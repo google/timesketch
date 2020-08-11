@@ -228,11 +228,10 @@ class Sketch(resource.BaseResource):
         }
         response = self.api.session.post(resource_url, json=data)
 
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            raise RuntimeError(
-                'Unable to create view, error code: {0:d} - {1!s} '
-                '{2!s}'.format(
-                    response.status_code, response.reason, response.text))
+        status = error.check_return_status(response, logger)
+        if not status:
+            error.error_message(
+                response, 'Unable to create view', error=RuntimeError)
 
         response_json = error.get_response_json(response, logger)
         view_dict = response_json.get('objects', [{}])[0]
@@ -247,6 +246,9 @@ class Sketch(resource.BaseResource):
 
         Args:
             title: the title of the story.
+
+        Raises:
+            RuntimeError: if a story wasn't created for some reason.
 
         Returns:
             A story object (instance of Story) for the newly
@@ -264,6 +266,12 @@ class Sketch(resource.BaseResource):
         }
 
         response = self.api.session.post(resource_url, json=data)
+
+        status = error.check_return_status(response, logger)
+        if not status:
+            error.error_message(
+                response, 'Unable to create a story', error=RuntimeError)
+
         response_json = error.get_response_json(response, logger)
         story_dict = response_json.get('objects', [{}])[0]
         return story.Story(
@@ -617,7 +625,7 @@ class Sketch(resource.BaseResource):
 
         sketch = self.lazyload_data()
         views = []
-        for view in sketch['meta']['views']:
+        for view in sketch['meta'].get('views', []):
             view_obj = view_lib.View(
                 view_id=view['id'],
                 view_name=view['name'],
@@ -1372,7 +1380,8 @@ class Sketch(resource.BaseResource):
             self.api.api_root, self.id)
 
         response = self.api.session.post(resource_url, json=form_data)
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+        status = error.check_return_status(response, logger)
+        if not status:
             error.error_message(
                 response, message='Failed exporting the sketch',
                 error=RuntimeError)
