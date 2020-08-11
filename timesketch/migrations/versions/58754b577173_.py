@@ -1,4 +1,4 @@
-"""empty message
+"""Adding AggregationGroups to the Aggregation DB.
 
 Revision ID: 58754b577173
 Revises: 64c00337b9d1
