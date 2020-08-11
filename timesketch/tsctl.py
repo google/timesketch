@@ -104,6 +104,35 @@ class AddUser(Command):
         sys.stdout.write('User {0:s} created/updated\n'.format(username))
 
 
+class MakeUserAdmin(Command):
+    """Make user into an administrator."""
+    option_list = (
+        Option('--username', '-u', dest='username', required=True),
+        Option(
+            '--remove', '-r', dest='remove', action='store_true',
+            required=False, default=False),
+    )
+
+    # pylint: disable=arguments-differ, method-hidden
+    def run(self, username, remove):
+        """Adds the admin bit to a user."""
+        user = User.query.filter_by(username=username).first()
+
+        if not user:
+            sys.stdout.write('User [{0:s}] does not exist.\n'.format(
+                username))
+            return
+        user.admin = not remove
+        db_session.add(user)
+        db_session.commit()
+
+        if remove:
+            sys.stdout.write('User {0:s} is no longer an admin.\n'.format(
+                username))
+        else:
+            sys.stdout.write('User {0:s} is now an admin.\n'.format(username))
+
+
 class ListUsers(Command):
     """List all users."""
 
@@ -111,7 +140,11 @@ class ListUsers(Command):
     def run(self):
         """The run method for the command."""
         for user in User.query.all():
-            print(user.username)
+            if user.admin:
+                extra = ' (admin)'
+            else:
+                extra = ''
+            print('{0:s}{1:s}'.format(user.username, extra))
 
 
 class AddGroup(Command):
@@ -523,9 +556,11 @@ class ImportTimeline(Command):
 
 
 def main():
+    """Main function of the script, setting up the shell manager."""
     # Setup Flask-script command manager and register commands.
     shell_manager = Manager(create_app)
     shell_manager.add_command('add_user', AddUser())
+    shell_manager.add_command('make_admin', MakeUserAdmin())
     shell_manager.add_command('list_users', ListUsers())
     shell_manager.add_command('add_group', AddGroup())
     shell_manager.add_command('list_groups', ListGroups)
