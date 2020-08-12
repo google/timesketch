@@ -48,6 +48,7 @@ class Aggregation(resource.BaseResource):
         self.aggregator_name = ''
         self.chart_color = ''
         self.chart_type = ''
+        self.chart_title = ''
         self.view = None
         self.type = None
         resource_uri = 'sketches/{0:d}/aggregation/explore/'.format(sketch.id)
@@ -212,6 +213,23 @@ class Aggregation(resource.BaseResource):
 
         # TODO: Implement a method to refresh cache.
         return self.resource_data
+
+    @property
+    def title(self):
+        """Property that returns the chart title of an aggregation."""
+        if self.chart_title:
+            return self.chart_title
+
+        data = self.lazyload_data()
+        meta = data.get('meta', {})
+        self.chart_title = meta.get('vega_chart_title', '')
+
+        return self.chart_title
+
+    @title.setter
+    def title(self, new_title):
+        """Set the chart title of an aggregation."""
+        self.chart_title = new_title
 
     @property
     def chart(self):
