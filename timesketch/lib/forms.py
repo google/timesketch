@@ -170,6 +170,7 @@ class ExploreForm(BaseForm):
     enable_scroll = BooleanField(
         'Enable scroll', false_values={False, 'false', ''}, default=False)
     scroll_id = StringField('Scroll ID', default='')
+    file_name = StringField('Export to File')
 
 
 class GraphExploreForm(BaseForm):

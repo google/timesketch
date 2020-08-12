@@ -731,7 +731,8 @@ class Sketch(resource.BaseResource):
                 view=None,
                 return_fields=None,
                 as_pandas=False,
-                max_entries=None):
+                max_entries=None,
+                file_name=''):
         """Explore the sketch.
 
         Args:
@@ -748,10 +749,16 @@ class Sketch(resource.BaseResource):
                 the output size to the number of events. Events are read in,
                 10k at a time so there may be more events in the answer back
                 than this number denotes, this is a best effort.
+            file_name (str): Optional filename, if provided the results of
+                the query will be exported to a ZIP file instead of being
+                returned back as a dict or a pandas DataFrame. The ZIP file
+                will contain a METADATA file and a CSV with the results from
+                the query.
 
         Returns:
             Dictionary with query results or a pandas DataFrame if as_pandas
-            is set to True.
+            is set to True. If file_name is provided then no value will be
+            returned.
 
         Raises:
             ValueError: if unable to query for the results.
@@ -797,6 +804,7 @@ class Sketch(resource.BaseResource):
             'dsl': query_dsl,
             'fields': return_fields,
             'enable_scroll': True,
+            'file_name': file_name,
         }
 
         response = self.api.session.post(resource_url, json=form_data)
@@ -804,6 +812,11 @@ class Sketch(resource.BaseResource):
             error.error_message(
                 response, message='Unable to query results',
                 error=ValueError)
+
+        if file_name:
+            with open(file_name, 'wb') as fw:
+                fw.write(response.content)
+            return True
 
         response_json = error.get_response_json(response, logger)
 
