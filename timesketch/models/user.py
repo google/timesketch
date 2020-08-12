@@ -52,6 +52,7 @@ class User(UserMixin, BaseModel):
     name = Column(Unicode(255))
     email = Column(Unicode(255))
     active = Column(Boolean(), default=True)
+    admin = Column(Boolean(), default=False)
     sketches = relationship('Sketch', backref='user', lazy='dynamic')
     searchindices = relationship(
         'SearchIndex', backref='user', lazy='dynamic')
