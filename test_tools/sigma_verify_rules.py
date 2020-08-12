@@ -64,25 +64,29 @@ def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
     logging.debug('[sigma] Reading rules from {0:s}'.format(
         rule_file_path))
 
-    path, rule_filename = os.path.split(rule_file_path)
+    try:
+        path, rule_filename = os.path.split(rule_file_path)
 
-    with codecs.open(rule_file_path, 'r', encoding="utf-8") as rule_file:
-        try:
-            rule_file_content = rule_file.read()
-            parser = sigma_collection.SigmaCollectionParser(
-                rule_file_content, sigma_config, None)
-            parsed_sigma_rules = parser.generate(sigma_backend)
-        except (NotImplementedError) as e:
-            logging.error(
-                '{0:s} Error with file {1:s}: {2!s}'.format
-                (rule_filename, rule_file_path, e))
-            return False
-        except (sigma.parser.exceptions.SigmaParseError, TypeError) as e:
-            logging.error(
-                '{0:s} Error with file {1:s} '
-                'you should not use this rule in Timesketch: {2!s}'
-                .format(rule_filename, rule_file_path, e))
-            return False
+        with codecs.open(rule_file_path, 'r', encoding="utf-8") as rule_file:
+            try:
+                rule_file_content = rule_file.read()
+                parser = sigma_collection.SigmaCollectionParser(
+                    rule_file_content, sigma_config, None)
+                parsed_sigma_rules = parser.generate(sigma_backend)
+            except (NotImplementedError) as e:
+                logging.error(
+                    '{0:s} Error with file {1:s}: {2!s}'.format
+                    (rule_filename, rule_file_path, e))
+                return False
+            except (sigma.parser.exceptions.SigmaParseError, TypeError) as e:
+                logging.error(
+                    '{0:s} Error with file {1:s} '
+                    'you should not use this rule in Timesketch: {2!s}'
+                    .format(rule_filename, rule_file_path, e))
+                return False
+    except (FileNotFoundError) as e:
+        logging.error("Rule file not found")
+        return False
 
     return True
 
@@ -103,6 +107,7 @@ def run_verifier(rules_path, config_file_path):
             - sigma_verified_rules with rules that can be added
             - sigma_rules_with_problems with rules that should not be added
     """
+
     if not os.path.isdir(rules_path):
         raise IOError('Rules not found at path: {0:s}'.format(
             rules_path))
