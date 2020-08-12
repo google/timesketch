@@ -13,15 +13,20 @@
 # limitations under the License.
 """View resources for version 1 of the Timesketch API."""
 
+import datetime
+import io
 import json
+import zipfile
 
+from flask import abort
 from flask import jsonify
 from flask import request
-from flask import abort
+from flask import send_file
 from flask_restful import Resource
 from flask_login import login_required
 from flask_login import current_user
 
+from timesketch.api.v1 import export
 from timesketch.api.v1 import resources
 from timesketch.lib import forms
 from timesketch.lib.utils import get_validated_indices
@@ -73,6 +78,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
         query_dsl = form.dsl.data
         enable_scroll = form.enable_scroll.data
         scroll_id = form.scroll_id.data
+        file_name = form.file_name.data
 
         query_filter = request.json.get('filter', {})
 
@@ -189,6 +195,28 @@ class ExploreResource(resources.ResourceMixin, Resource):
         # TODO: Refactor when version 6.x has been deprecated.
         if isinstance(meta['es_total_count'], dict):
             meta['es_total_count'] = meta['es_total_count'].get('value', 0)
+
+        if file_name:
+            file_object = io.BytesIO()
+            form_data = {
+                'created_at': datetime.datetime.utcnow().isoformat(),
+                'created_by': current_user.username,
+                'sketch': sketch_id,
+                'query': form.query.data,
+                'query_dsl': query_dsl,
+                'query_filter': query_filter,
+                'return_fields': return_fields,
+                'query_meta': meta,
+            }
+            with zipfile.ZipFile(file_object, mode='w') as zip_file:
+                zip_file.writestr('METADATA', data=json.dumps(form_data))
+                fh = export.query_results_to_filehandle(result, sketch)
+                fh.seek(0)
+                zip_file.writestr('query_results.csv', fh.read())
+            file_object.seek(0)
+            return send_file(
+                file_object, mimetype='zip',
+                attachment_filename=file_name)
 
         schema = {'meta': meta, 'objects': result['hits']['hits']}
         return jsonify(schema)
