@@ -135,6 +135,25 @@ limitations under the License.
       Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
       <span class="tag is-small" :title="meta.stats[timeline.searchindex.index_name]['count'] + ' events in index'">{{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }}</span>
     </span>
+
+    <div v-if="timelineStatus === 'ready'" class="is-size-6 small-top-margin">
+      <strong>Data Source:</strong>
+        <ul>
+          <li v-for="dt in meta.stats[timeline.searchindex.index_name]['data_types']" :key="dt.data_type">
+            <input type="checkbox" class="checkbox" :id="dt.data_type" :value="dt.data_type" v-model="checkedDataTypes">
+              <label :for="dt.data_type">
+                <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: { index: timeline.searchindex.index_name, q: 'data_type:&quot;'+dt.data_type+'&quot;' }}">{{ dt.data_type }} </router-link>
+              </label>
+            <span class="tag is-small" :title="dt.count + ' events in index'">{{ dt.count | compactNumber }}</span>
+          </li>
+        </ul>
+        <a class="button is-rounded is-small small-top-margin" :disabled="checkedDataTypes.length === 0" v-on:click="openFilteredTimeline(timeline.searchindex.index_name, checkedDataTypes)">
+          <span class="icon is-small">
+            <i class="fas fa-check-square"></i>
+          </span>
+          <span>Open Filtered</span>
+        </a>
+    </div>
     <span v-else-if="timelineStatus === 'fail'" class="is-size-7">
       ERROR: <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline">Click here for details</span>
     </span>
@@ -168,6 +187,7 @@ import ApiClient from '../../utils/RestApiClient'
 import TsAnalyzerListDropdown from './AnalyzerListDropdown'
 import TsAnalyzerSessionDetail from './AnalyzerSessionDetail'
 import TsAnalyzerHistory from './AnalyzerHistory'
+import router from '../../router'
 
 export default {
   components: {
@@ -179,6 +199,7 @@ export default {
   props: ['timeline', 'controls', 'isCompact'],
   data () {
     return {
+      checkedDataTypes: [],
       initialColor: {},
       newColor: '',
       newTimelineName: '',
@@ -237,6 +258,17 @@ export default {
         }
         this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
       }).catch((e) => {})
+    },
+    openFilteredTimeline: function (index, dataTypes) {
+      let searchQuery = ''
+      for (let i = 0; i < dataTypes.length; i++) {
+        const dt = dataTypes[i];
+        if (i != 0) {
+          searchQuery += ' OR '
+        }
+        searchQuery += 'data_type:"' + dt + '"'
+      }
+      router.push({name: 'SketchExplore', query: { index: index, q: searchQuery }})
     }
   },
   mounted () {
@@ -295,10 +327,17 @@ export default {
 .vc-sketch {
   box-shadow: none;
 }
-
 .blink {
   animation: blinker 1s linear infinite;
 }
+.checkbox {
+  margin-left: 2px;
+  margin-right: 6px;
+}
+.small-top-margin {
+  margin-top: 2px;
+}
+
 
 @keyframes blinker {
   50% {
