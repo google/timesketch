@@ -10,6 +10,7 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
+logger = logging.getLogger('timesketch.analyzers.login')
 LOGON_TYPES = {
     '0': 'Unknown',
     '2': 'Interactive',
@@ -170,7 +171,7 @@ class LoginSketchPlugin(interface.BaseSketchAnalyzer):
                 try:
                     identifier = int(identifier, 10)
                 except ValueError:
-                    logging.warning((
+                    logger.warning((
                         'Unable to convert EVTX identifier to an integer, '
                         'value is {0:s}').format(identifier))
                     continue

@@ -33,6 +33,7 @@ from flask import current_app
 
 from timesketch.lib import errors
 
+logger = logging.getLogger('timesketch.utils')
 
 # Set CSV field size limit to systems max value.
 csv.field_size_limit(sys.maxsize)
@@ -102,7 +103,7 @@ def read_and_validate_csv(file_handle, delimiter=','):
             yield row
     except csv.Error as e:
         error_string = 'Unable to read file, with error: {0!s}'.format(e)
-        logging.error(error_string)
+        logger.error(error_string)
         raise errors.DataIngestionError(error_string)
 
 

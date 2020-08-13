@@ -50,8 +50,12 @@ from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import AnalysisSession
 from timesketch.models.user import User
 
+
+logger = logging.getLogger('timesketch.tasks')
 celery = create_celery_app()
 
+
+# pylint: disable=unused-argument
 @signals.after_setup_logger.connect
 def setup_loggers(logger, *args, **kwargs):
     """Configure the logger."""
@@ -338,7 +342,7 @@ def run_email_result_task(index_name, sketch_id=None):
         try:
             to_username = searchindex.user.username
         except AttributeError:
-            logging.warning('No user to send email to.')
+            logger.warning('No user to send email to.')
             return ''
 
         if sketch_id:
@@ -392,9 +396,9 @@ def run_index_analyzer(index_name, analyzer_name, **kwargs):
     analyzer = analyzer_class(index_name=index_name, **kwargs)
     result = analyzer.run_wrapper()
     if result:
-        logging.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
+        logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
     else:
-        logging.info('[{0:s}] return with no results.'.format(analyzer_name))
+        logger.info('[{0:s}] return with no results.'.format(analyzer_name))
     return index_name
 
 
@@ -417,7 +421,7 @@ def run_sketch_analyzer(index_name, sketch_id, analysis_id, analyzer_name,
         sketch_id=sketch_id, index_name=index_name, **kwargs)
 
     result = analyzer.run_wrapper(analysis_id)
-    logging.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
+    logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
     return index_name
 
 
@@ -439,7 +443,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type):
         raise RuntimeError('Plaso uploads needs a file, not events.')
     # Log information to Celery
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
-    logging.info(message.format(timeline_name, index_name, source_type))
+    logger.info(message.format(timeline_name, index_name, source_type))
 
     try:
         psort_path = current_app.config['PSORT_PATH']
@@ -498,7 +502,7 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
     read_and_validate = validators.get(source_type)
 
     # Log information to Celery
-    logging.info(
+    logger.info(
         'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'.format(
             timeline_name, index_name, source_type))
 
@@ -528,7 +532,7 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
         _set_timeline_status(index_name, status='fail', error_msg=error_msg)
-        logging.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
+        logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         return None
 
     # Set status to ready when done
@@ -544,7 +548,7 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
 def run_mans(file_path, events, timeline_name, index_name, source_type):
     # Log information to Celery
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
-    logging.info(message.format(timeline_name, index_name, source_type))
+    logger.info(message.format(timeline_name, index_name, source_type))
 
     elastic_host = current_app.config['ELASTIC_HOST']
     elastic_port = int(current_app.config['ELASTIC_PORT'])
@@ -556,7 +560,7 @@ def run_mans(file_path, events, timeline_name, index_name, source_type):
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
         _set_timeline_status(index_name, status='fail', error_msg=error_msg)
-        logging.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
+        logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         return None
 
     # Mark the searchindex and timelines as ready

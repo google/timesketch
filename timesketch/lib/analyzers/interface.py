@@ -40,6 +40,9 @@ from timesketch.models.sketch import View
 from timesketch.models.sketch import Analysis
 
 
+logger = logging.getLogger('timesketch.analyzers')
+
+
 def _flush_datastore_decorator(func):
     """Decorator that flushes the bulk insert queue in the datastore."""
     def wrapper(self, *args, **kwargs):
@@ -91,7 +94,7 @@ def get_yaml_config(file_name):
             return yaml.safe_load(fh)
         except yaml.parser.ParserError as exception:
             # pylint: disable=logging-format-interpolation
-            logging.warning((
+            logger.warning((
                 'Unable to read in YAML config file, '
                 'with error: {0!s}').format(exception))
             return {}
@@ -785,7 +788,7 @@ class BaseIndexAnalyzer(object):
                 break
 
             if status == 'fail':
-                logging.error(
+                logger.error(
                     'Unable to run analyzer on a failed index ({0:s})'.format(
                         searchindex.index_name))
                 return 'Failed'
@@ -793,7 +796,7 @@ class BaseIndexAnalyzer(object):
             time.sleep(self.SECONDS_PER_WAIT)
             counter += 1
             if counter >= self.MAXIMUM_WAITS:
-                logging.error(
+                logger.error(
                     'Indexing has taken too long time, aborting run of '
                     'analyzer')
                 return 'Failed'
