@@ -34,6 +34,7 @@ from sqlalchemy import create_engine
 # Disabled until the project can provide a non-ES native import.
 # from mans_to_es import MansToEs
 
+from timesketch.app import configure_logger
 from timesketch.app import create_celery_app
 from timesketch.lib import errors
 from timesketch.lib.analyzers import manager
@@ -50,6 +51,11 @@ from timesketch.models.sketch import AnalysisSession
 from timesketch.models.user import User
 
 celery = create_celery_app()
+
+@signals.after_setup_logger.connect
+def setup_loggers(logger, *args, **kwargs):
+    """Configure the logger."""
+    configure_logger()
 
 
 class SqlAlchemyTask(celery.Task):

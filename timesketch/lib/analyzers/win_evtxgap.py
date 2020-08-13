@@ -78,7 +78,8 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
 
         # Generator of events based on your query.
         event_frame = self.event_pandas(
-            query_string=query, return_fields=return_fields)
+            query_string=query, indices=[self.index_name],
+            return_fields=return_fields)
 
         if not event_frame.shape[0]:
             return 'No EVTX events discovered.'
@@ -151,20 +152,24 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
                 'there aren\'t any gaps, just that these tests weren\'t able '
                 'to find ones.')
 
-        story = self.sketch.add_story(self.STORY_TITLE)
+        story = self.sketch.add_story('{0:s} - {1:s}'.format(
+            self.STORY_TITLE, self.timeline_name))
         story.add_text(
             'This story is the result of the EVTX Gap analyzer. It attempts '
-            'to detect gaps in EVTX files using two different methods.\n\n'
-            'First of all it looks at missing entries in record numbers '
-            'and secondly it attempts to look at gaps in days with no records.'
-            '\n\nThis may be an indication of someone clearing the logs, yet '
-            'it may be an indication of something else. At least this should '
-            'be interpreted as something that warrants a second look.\n\n'
+            'to detect gaps in EVTX files found in index '
+            '[{0:s}](/sketch/{1:d}/explore?index={2:s}) using two different '
+            'methods.\n\nFirst of all it looks at missing entries in record '
+            'numbers and secondly it attempts to look at gaps in days with '
+            'no records.\n\nThis may be an indication of someone clearing '
+            'the logs, yet it may be an indication of something else. At '
+            'least this should be interpreted as something that warrants a '
+            'second look.\n\n'
             'This will obviously not catch every instance of someone clearing '
             'EVTX records, even if that\'s done in bulk. Therefore it should '
             'not be interpreted that if this analyzer does not discover '
             'something that the records have not been wiped. Please verify '
-            'the results given by this analyzer.')
+            'the results given by this analyzer.'.format(
+                self.timeline_name, self.sketch.id, self.index_name))
 
         text_items = [
             'Overview of file:',

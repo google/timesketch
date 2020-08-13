@@ -15,6 +15,7 @@
 
 from __future__ import unicode_literals
 
+import logging
 import os
 import sys
 
@@ -155,6 +156,24 @@ def create_app(config=None):
     CSRFProtect(app)
 
     return app
+
+
+def configure_logger():
+    """Configure the logger."""
+    class NoESFilter(logging.Filter):
+        """Custom filter to filter out ES logs"""
+        def filter(self, record):
+            """Filter out records."""
+            return not record.name.lower() == 'elasticsearch'
+
+    logger_formatter = logging.Formatter(
+        '[%(asctime)s] %(name)s/%(levelname)s %(message)s')
+    logger_filter = NoESFilter()
+    logger = logging.getLogger('timesketch')
+
+    for handler in logger.parent.handlers:
+        handler.setFormatter(logger_formatter)
+        handler.addFilter(logger_filter)
 
 
 def create_celery_app():

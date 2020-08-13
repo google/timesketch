@@ -702,6 +702,7 @@ class BaseIndexAnalyzer(object):
         """
         self.name = self.NAME
         self.index_name = index_name
+        self.timeline_name = ''
         self.datastore = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
@@ -773,6 +774,7 @@ class BaseIndexAnalyzer(object):
         analysis.set_status('STARTED')
 
         timeline = analysis.timeline
+        self.timeline_name = timeline.name
         searchindex = timeline.searchindex
 
         counter = 0
