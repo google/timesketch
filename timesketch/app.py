@@ -169,9 +169,9 @@ def configure_logger():
     logger_formatter = logging.Formatter(
         '[%(asctime)s] %(name)s/%(levelname)s %(message)s')
     logger_filter = NoESFilter()
-    logger = logging.getLogger('timesketch')
+    logger_object = logging.getLogger('timesketch')
 
-    for handler in logger.parent.handlers:
+    for handler in logger_object.parent.handlers:
         handler.setFormatter(logger_formatter)
         handler.addFilter(logger_filter)
 
