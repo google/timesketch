@@ -99,6 +99,14 @@ def export_story(story, sketch, story_exporter, zip_file):
 
         exporter.set_data_fetcher(data_fetcher)
         exporter.from_string(story.content)
+        exporter.set_creation_date(story.created_at.isoformat())
+        if story.user:
+            author = story.user.username
+        else:
+            author = 'System'
+        exporter.set_author(author)
+        exporter.set_title(story.title)
+
         zip_file.writestr(
             'stories/{0:04d}_{1:s}.html'.format(
                 story.id, story.title),

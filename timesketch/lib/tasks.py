@@ -57,7 +57,7 @@ celery = create_celery_app()
 
 # pylint: disable=unused-argument
 @signals.after_setup_logger.connect
-def setup_loggers(logger, *args, **kwargs):
+def setup_loggers(*args, **kwargs):
     """Configure the logger."""
     configure_logger()
 
