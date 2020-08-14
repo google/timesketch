@@ -244,6 +244,8 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
             df_append = pd.DataFrame(rows_to_append)
             event_count = event_count.append(df_append, sort=False)
             event_count.sort_values(by='day', inplace=True)
+            if 'timestamp' in event_count:
+                del event_count['timestamp']
 
             if event_count.shape[0]:
                 params = {
