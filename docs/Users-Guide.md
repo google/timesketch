@@ -323,6 +323,12 @@ With Analyzers you can enrich your data in timelines. The analysers are written 
 
 The systems consist of a set of background workers that can execute Python code on a stream of events. It provides an easy to use API to programmatically do all the actions available in the UI, e.g. tagging events, star and create saved views etc. The idea is to automatically enrich data with encoded analysis knowledge.
 
+The code for Analyzers is located at
+
+```
+/timesketch/lib/analyzers
+```
+
 ### Activate Analyzers
 
 To use Analyzers, celery workers need to run. 
@@ -359,6 +365,26 @@ It will also tell in a story:
 The browser timeframe analyzer discovers browser events that ocurred outside of the typical browsing window of this browser history.
 
 The analyzer determines the activity hours by finding the frequency of browsing events per hour, and then discovering the longest block of most active hours before proceeding with flagging all events outside of that time period. This information can be used by other analyzers or by manually looking for other activity within the inactive time period to find unusual actions.
+
+#### Chain alanyzer
+
+Sketch analyzer for chained events
+
+The purpose of the chain analyzer is to chain together events that can be described as linked, either by sharing some common entitites, or one event being a derivative of another event. An example of this would be that a browser downloads an executable, which then later gets executed. 
+
+The signs of execution could lie in multiple events, from different sources, but they are all linked or chained together. This could help an analyst see the connection between these separate but chained events. Another example could be a document written and then compressed into a ZIP file, which would then be exfilled through some means. If the document and the ZIP file are chained together it could be easier for the analyst to track the meaning of an exfil event involving the compressed file.
+
+#### Domain Analyzer
+
+The Domain Analyzer extracts domain and TLD info from events that have a field with either ```url``` or ```domain```.
+
+It will also add information about:
+
+- Known CDN providers (based on timeskcteh config)
+
+#### EVTX Sessionizer
+
+This Analyzer will determine start end event for a user session based on EVTX events.
 
 #### Sigma Analyzer
 
