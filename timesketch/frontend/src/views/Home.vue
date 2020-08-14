@@ -92,20 +92,6 @@ limitations under the License.
       </div>
     </div>
 
-    <!--
-    <div v-if="sharedSketches.length && !search" class="section">
-      <div v-if="mySketches.length" style="margin-top:15px;"></div>
-      <div class="container">
-        <p class="subtitle">Shared with me</p>
-        <div class="card">
-          <div class="card-content">
-            <ts-sketch-list :sketches="sharedSketches"></ts-sketch-list>
-          </div>
-        </div>
-      </div>
-    </div>
-    -->
-
   </div>
 </template>
 
