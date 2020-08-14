@@ -1,5 +1,14 @@
 ## Table of Contents
+
 - [Table of Contents](#table-of-contents)
+- [Concepts](#concepts)
+  - [Sketches](#sketches)
+  - [Adding Timelines](#adding-timelines)
+  - [Adding event](#adding-event)
+  - [Views](#views)
+    - [Hiding events from a view](#hiding-events-from-a-view)
+  - [Heatmap](#heatmap)
+  - [Stories](#stories)
 - [Demo](#demo)
 - [tsctl](#tsctl)
   - [Start timesketch](#start-timesketch)
@@ -19,16 +28,68 @@
   - [search_template](#search_template)
   - [import](#import)
   - [similarity_score](#similarity_score)
-- [Concepts](#concepts)
-  - [Sketches](#sketches)
-  - [Adding Timelines](#adding-timelines)
-  - [Adding event](#adding-event)
-  - [Views](#views)
-    - [Hiding events from a view](#hiding-events-from-a-view)
-  - [Heatmap](#heatmap)
-  - [Stories](#stories)
 - [Searching](#searching)
 - [Analyzers](#analyzers)
+  - [Develop Analyzers](#develop-analyzers)
+  - [Analyzer description](#analyzer-description)
+    - [Browser Search Analyzer](#browser-search-analyzer)
+    - [Browser Timeframe Analyzer](#browser-timeframe-analyzer)
+    - [Chain alanyzer](#chain-alanyzer)
+    - [Domain Analyzer](#domain-analyzer)
+    - [Windows EVTX Sessionizer](#windows-evtx-sessionizer)
+    - [Windows EVTX Gap analyzer](#windows-evtx-gap-analyzer)
+    - [Safebrowsing Analyzer](#safebrowsing-analyzer)
+    - [Sigma Analyzer](#sigma-analyzer)
+    - [YetiIndicators Analyzer](#yetiindicators-analyzer)
+
+## Concepts
+
+Timesketch is built on multiple sketches, where one sketch is usually one case.
+Every sketch can consist of multiple timelines with multiple views.
+
+### Sketches
+
+There is a dedicated document to walk you through [Sketches](/docs/SketchOverview.md)
+
+### Adding Timelines
+
+- [Create timeline from JSON/JSONL/CSV file](/docs/CreateTimelineFromJSONorCSV.md)
+- [Create timeline from Plaso file](/docs/CreateTimelineFromPlaso.md)
+- [Enable Plaso upload via HTTP](/docs/EnablePlasoUpload.md)
+
+### Adding event
+
+*This feature is currently not implemented in the Web UI*
+
+~~To manually adding an event, visit the sketch view. Within that screen, there is the possibility to star an event, hide an event as well as add a manual event (marked with a little +).
+This event will have the previously selected time pre-filled but can be changed.~~
+
+### Views
+
+#### Hiding events from a view
+
+All about reducing noise in the result views.
+Hit the little eye to hide events from the list making it possible to
+curate views to emphasize the important things.
+The events are still there and can be easily shown for those who want to see them.
+Hit the big red button to show/hide the events.
+
+### Heatmap
+
+*This feature is currently not implemented in the Web UI*
+
+~~The heatmap aggregation calculates on which day of the week and at which hour events happened. This can be very useful e.g. when analyzing lateral movement or login events.~~
+
+### Stories
+
+A story is a place where you can capture the narrative of your technical investigation and add detail to your story with raw timeline data.
+The editor let you to write and capture the story behind your investigation and at the same time enable you to share detailed findings without spending hours writing reports.
+
+you can add events from previously saved searches.
+Just hit enter to start a new paragraph and choose the saved search from the dropdown menu.
+
+See [Medium article](https://medium.com/timesketch/timesketch-2016-7-db3083e78156)
+
 
 ## Demo
 
@@ -107,12 +168,14 @@ Not yet implemented.
 #### Adding groups
 
 Command:
-```
+
+```shell
 tsctl add_group
 ```
 
 Parameters:
-```
+
+```shell
 --name / -n
 ```
 
@@ -126,19 +189,22 @@ Add or remove a user to a group. To add a user, specify the group and user. To
 remove a user, include the -r option.
 
 Command:
-```
+
+```shell
 tsctl manage_group
 ```
 
 Parameters:
-```
+
+```shell
 --remove / -r (optional)
 --group / -g
 --user / -u
 ```
 
 Example:
-```
+
+```shell
 tsctl manage_group -u user_foo -g group_bar
 ```
 
@@ -147,26 +213,30 @@ tsctl manage_group -u user_foo -g group_bar
 Create a new Timesketch searchindex.
 
 Command:
-```
+
+```shell
 tsctl add_index
 ```
 
 Parameters:
-```
+
+```shell
 --name / -n
 --index / -i
 --user / -u
 ```
 
 Example:
-```
+
+```shell
 tsctl add_index -u user_foo -i test_index_name -n sample
 ```
 
 ### Migrate db
 
 Command:
-```
+
+```shell
 tsctl db
 ```
 
@@ -175,14 +245,16 @@ tsctl db
 Will drop all databases.
 
 Comand:
-```
+
+```shell
 tsctl drop_db
 ```
 
 ### Import json to Timesketch
 
 Command:
-```
+
+```shell
 tsctl json2ts
 ```
 
@@ -190,11 +262,14 @@ tsctl json2ts
 
 Delete timeline permanently from Timesketch and Elasticsearch. It will alert if a timeline is still in use in a sketch and promt for confirmation before deletion.
 
+````
 	Args:
 		index_name: The name of the index in Elasticsearch
+````
 
 Comand:
-```
+
+```shell
 tsctl purge
 ```
 
@@ -203,12 +278,14 @@ tsctl purge
 Export/Import search templates to/from file.
 
 Command:
-```
+
+```shell
 tsctl search_template
 ```
 
 Parameters:
-```
+
+```shell
 --import / -i
 --export / -e
 ```
@@ -221,12 +298,14 @@ export_location: Path to the yaml file to export templates.
 Creates a new Timesketch timeline from a file. Supported file formats are: plaso, csv and jsonl.
 
 Command:
-```
+
+```shell
 tsctl import
 ```
 
 Parameters:
-```
+
+```shell
 --file / -f
 --sketch_id / -s      (optional)
 --username / -f       (optional)
@@ -235,61 +314,13 @@ Parameters:
 
 The sketch id is inferred from the filename if it starts with a number. The timeline name can also be generated from the filename if not specified.
 
-
 ### similarity_score
 
 Command:
-```
+
+```shell
 tsctl similarity_score
 ```
-
-## Concepts
-
-Timesketch is built on multiple sketches, where one sketch is usually one case.
-Every sketch can consist of multiple timelines with multiple views.
-
-### Sketches
-
-There is a dedicated document to walk you through [Sketches](/docs/SketchOverview.md)
-
-### Adding Timelines
-
-* [Create timeline from JSON/JSONL/CSV file](/docs/CreateTimelineFromJSONorCSV.md)
-* [Create timeline from Plaso file](/docs/CreateTimelineFromPlaso.md)
-* [Enable Plaso upload via HTTP](/docs/EnablePlasoUpload.md)
-
-### Adding event
-
-*This feature is currently not implemented in the Web UI*
-
-~~To manually adding an event, visit the sketch view. Within that screen, there is the possibility to star an event, hide an event as well as add a manual event (marked with a little +).
-This event will have the previously selected time pre-filled but can be changed.~~
-
-### Views
-
-#### Hiding events from a view
-
-All about reducing noise in the result views.
-Hit the little eye to hide events from the list making it possible to
-curate views to emphasize the important things.
-The events are still there and can be easily shown for those who want to see them.
-Hit the big red button to show/hide the events.
-
-### Heatmap
-
-*This feature is currently not implemented in the Web UI*
-
-~~The heatmap aggregation calculates on which day of the week and at which hour events happened. This can be very useful e.g. when analyzing lateral movement or login events.~~
-
-### Stories
-
-A story is a place where you can capture the narrative of your technical investigation and add detail to your story with raw timeline data.
-The editor let you to write and capture the story behind your investigation and at the same time enable you to share detailed findings without spending hours writing reports.
-
-you can add events from previously saved searches.
-Just hit enter to start a new paragraph and choose the saved search from the dropdown menu.
-
-See [Medium article](https://medium.com/timesketch/timesketch-2016-7-db3083e78156)
 
 ## Searching
 
@@ -298,6 +329,7 @@ There is a dedicated document called [SearchQueryGuide](/docs/SearchQueryGuide.m
 All data within Timesketch is stored in elasticsearch. So the search works similar to ES.
 
 Using the advances search, a JSON can be passed to Timesketch
+
 ```json
 {
 	"query": {
@@ -325,29 +357,17 @@ The systems consist of a set of background workers that can execute Python code 
 
 The code for Analyzers is located at
 
-```
+```shell
 /timesketch/lib/analyzers
 ```
-
-### Activate Analyzers
-
-To use Analyzers, celery workers need to run. 
-
-To run a Celery worker process:
-
-```
-$ celery -A timesketch.lib.tasks worker --loglevel=info
-```
-
-Read on how to run the Celery worker in the background over at the official [Celery documentation](http://docs.celeryproject.org/en/latest/userguide/daemonizing.html#daemonizing).
-
-To start the worker in Docker, please see [Docker readme](docker/dev/README.md#start-a-celery-container-shell)
 
 ### Develop Analyzers
 
 There is a dedicated document to walk you through the process of developing [Analyzers](/docs/WriteAnalyzers.md)
 
 ### Analyzer description
+
+*Note:* Not all analyzers are explained in this documentation. If you have questions to a particular analyzers, please have a look at the code or file an Issue on Github.
 
 #### Browser Search Analyzer
 
@@ -382,9 +402,44 @@ It will also add information about:
 
 - Known CDN providers (based on timeskcteh config)
 
-#### EVTX Sessionizer
+#### Windows EVTX Sessionizer
 
 This Analyzer will determine start end event for a user session based on EVTX events.
+
+#### Windows EVTX Gap analyzer
+
+It attempts to detect gaps in EVTX files found in an index  using two different methods.
+
+First of all it looks at missing entries in record numbers and secondly it attempts to look at gaps in days with no records.
+
+This may be an indication of someone clearing the logs, yet it may be an indication of something else. At least this should be interpreted as something that warrants a second look.
+
+This will obviously not catch every instance of someone clearing EVTX records, even if that's done in bulk. Therefore it should not be interpreted that if this analyzer does not discover something that the records have not been wiped. Please verify the results given by this analyzer.
+
+#### Safebrowsing Analyzer
+
+This Analyzer checks urls found in a sketch against the [Google Safebrowsing API](https://developers.google.com/safe-browsing/v4/reference/rest).
+
+To use this Analyzer, the following parameter must be set in the ````timesketch.conf````:
+
+````config
+SAFEBROWSING_API_KEY = ''
+````
+
+This analyzer can be customized by creating an optional file containing URL wildcards to be allow listed called
+
+````config
+safebrowsing_allowlist.yaml
+````
+
+There are also two additional config parameters, please refer to the [Safe Browsing API reference](https://developers.google.com/safe-browsing/v4/reference/rest).
+
+
+Platforms to be looked at in Safe Browsing (PlatformType).
+````SAFEBROWSING_PLATFORMS = ['ANY_PLATFORM']````
+
+Types to be looked at in Safe Browsing (ThreatType).
+````SAFEBROWSING_THREATTYPES = ['MALWARE']````
 
 #### Sigma Analyzer
 
@@ -393,3 +448,14 @@ The Sigma Analyzer translates Sigma rules in Elastic Search Queries and adds a t
 It will also create a story with the Top 10 matched Sigma rules.
 
 There is a dedicated document to walk you through the process of using the [Sigma Analyzer](/docs/UseSigmaAnalyzer.md).
+
+#### YetiIndicators Analyzer
+
+This is a Index analyzer for [Yeti](https://yeti-platform.github.io/) threat intel indicators.
+
+To use this Analyzer, the following parameter must be set with corresponding values in the ````timesketch.conf````:
+
+````config
+YETI_API_ROOT = ''
+YETI_API_KEY = ''
+````
