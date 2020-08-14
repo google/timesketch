@@ -14,6 +14,9 @@ from timesketch.lib.analyzers import utils
 from timesketch.lib import emojis
 
 
+logger = logging.getLogger('timesketch.analyzers.browser_search')
+
+
 class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for BrowserSearch."""
 
@@ -82,7 +85,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 decoded_url = decoded_url.decode('utf-8')
             except UnicodeDecodeError as exception:
                 decoded_url = decoded_url.decode('utf-8', errors='replace')
-                logging.warning(
+                logger.warning(
                     'Unable to decode URL: {0:s} with error: {1!s}'.format(
                         url, exception))
 
