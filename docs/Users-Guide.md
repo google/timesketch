@@ -30,8 +30,6 @@
 - [Searching](#searching)
 - [Analyzers](#analyzers)
 
-
-
 ## Demo
 
 To play with timesketch without any installation visit [demo.timesketch.org](https://demo.timesketch.org)
@@ -338,3 +336,34 @@ $ celery -A timesketch.lib.tasks worker --loglevel=info
 Read on how to run the Celery worker in the background over at the official [Celery documentation](http://docs.celeryproject.org/en/latest/userguide/daemonizing.html#daemonizing).
 
 To start the worker in Docker, please see [Docker readme](docker/dev/README.md#start-a-celery-container-shell)
+
+### Develop Analyzers
+
+There is a dedicated document to walk you through the process of developing [Analyzers](/docs/WriteAnalyzers.md)
+
+### Analyzer description
+
+#### Browser Search Analyzer
+
+The browser search analyzer takes URLs usually resevered for browser search queries and extracts the search string.
+
+It will also tell in a story:
+
+- The top 20 most commonly discovered searches
+- The domains used to search
+- The most common days of search
+- And an overview of all the discovered search terms
+
+#### Browser Timeframe Analyzer
+
+The browser timeframe analyzer discovers browser events that ocurred outside of the typical browsing window of this browser history.
+
+The analyzer determines the activity hours by finding the frequency of browsing events per hour, and then discovering the longest block of most active hours before proceeding with flagging all events outside of that time period. This information can be used by other analyzers or by manually looking for other activity within the inactive time period to find unusual actions.
+
+#### Sigma Analyzer
+
+The Sigma Analyzer translates Sigma rules in Elastic Search Queries and adds a tag to every matching event.
+
+It will also create a story with the Top 10 matched Sigma rules.
+
+There is a dedicated document to walk you through the process of using the [Sigma Analyzer](/docs/UseSigmaAnalyzer.md).
