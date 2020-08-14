@@ -28,6 +28,8 @@
   - [Heatmap](#heatmap)
   - [Stories](#stories)
 - [Searching](#searching)
+- [Analyzers](#analyzers)
+
 
 
 ## Demo
@@ -316,3 +318,23 @@ Using the advances search, a JSON can be passed to Timesketch
 	}
 }
 ```
+
+## Analyzers
+
+With Analyzers you can enrich your data in timelines. The analysers are written in Python. 
+
+The systems consist of a set of background workers that can execute Python code on a stream of events. It provides an easy to use API to programmatically do all the actions available in the UI, e.g. tagging events, star and create saved views etc. The idea is to automatically enrich data with encoded analysis knowledge.
+
+### Activate Analyzers
+
+To use Analyzers, celery workers need to run. 
+
+To run a Celery worker process:
+
+```
+$ celery -A timesketch.lib.tasks worker --loglevel=info
+```
+
+Read on how to run the Celery worker in the background over at the official [Celery documentation](http://docs.celeryproject.org/en/latest/userguide/daemonizing.html#daemonizing).
+
+To start the worker in Docker, please see [Docker readme](docker/dev/README.md#start-a-celery-container-shell)
