@@ -137,22 +137,29 @@ limitations under the License.
     </span>
 
     <div v-if="timelineStatus === 'ready'" class="is-size-6 small-top-margin">
-      <strong>Data Source:</strong>
+      <a @click="toggleExpansion(timeline)">
+        <span class="icon">
+            <i :class="[isExpanded(timeline) ? 'fas fa-minus-circle' : 'fas fa-plus-circle']"></i>
+        </span>
+        <strong> Data Source</strong>
+      </a>
+      <div class="small-top-margin" v-show="isExpanded(timeline)">
         <ul>
           <li v-for="dt in meta.stats[timeline.searchindex.index_name]['data_types']" :key="dt.data_type">
-            <input type="checkbox" class="checkbox" :id="dt.data_type" :value="dt.data_type" v-model="checkedDataTypes">
+            <input type="checkbox" class="checkbox-margin" :id="dt.data_type" :value="dt.data_type" v-model="checkedDataTypes">
               <label :for="dt.data_type">
                 <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: { index: timeline.searchindex.index_name, q: 'data_type:&quot;'+dt.data_type+'&quot;' }}">{{ dt.data_type }} </router-link>
               </label>
             <span class="tag is-small" :title="dt.count + ' events in index'">{{ dt.count | compactNumber }}</span>
           </li>
         </ul>
-        <a class="button is-rounded is-small small-top-margin" :disabled="checkedDataTypes.length === 0" v-on:click="openFilteredTimeline(timeline.searchindex.index_name, checkedDataTypes)">
+        <a class="button is-rounded is-small small-top-margin checkbox-margin" :disabled="checkedDataTypes.length === 0" v-on:click="openFilteredTimeline(timeline.searchindex.index_name, checkedDataTypes)">
           <span class="icon is-small">
             <i class="fas fa-check-square"></i>
           </span>
           <span>Open Filtered</span>
         </a>
+      </div>
     </div>
     <span v-else-if="timelineStatus === 'fail'" class="is-size-7">
       ERROR: <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline">Click here for details</span>
@@ -200,6 +207,7 @@ export default {
   data () {
     return {
       checkedDataTypes: [],
+      expandedDataSource: [],
       initialColor: {},
       newColor: '',
       newTimelineName: '',
@@ -269,6 +277,15 @@ export default {
         searchQuery += 'data_type:"' + dt + '"'
       }
       router.push({name: 'SketchExplore', query: { index: index, q: searchQuery }})
+    },
+    isExpanded(key) {
+      return this.expandedDataSource.indexOf(key) !== -1;
+    },
+    toggleExpansion(key) {
+      if (this.isExpanded(key))
+        this.expandedDataSource.splice(this.expandedDataSource.indexOf(key), 1);
+      else
+        this.expandedDataSource.push(key);
     }
   },
   mounted () {
@@ -330,8 +347,8 @@ export default {
 .blink {
   animation: blinker 1s linear infinite;
 }
-.checkbox {
-  margin-left: 2px;
+.checkbox-margin {
+  margin-left: 10px;
   margin-right: 6px;
 }
 .small-top-margin {
