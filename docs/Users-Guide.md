@@ -1,33 +1,33 @@
 ## Table of Contents
-1. [Demo](#demo)
-2. [tsctl](#tsctl)
-   - [Start timesketch](#start-timesketch)
-   - [User management](#user-management)
-     - [Adding users](#adding-users)
-     - [Change user password](#change-user-password)
-     - [Removing users](#removing-users)
-   - [Group Management](#group-management)
-     - [Adding groups](#adding-groups)
-     - [Removing groups](#removing-groups)
-     - [Managing group membership](#managing-group-membership)
-   - [Add index](#add_index)
-   - [Migrate database](#migrate-db)
-   - [Drop database](#drop-database)
-   - [Import JSON to timesketch](#import-json-to-timesketch)
-   - [Purge](#purge)
-   - [Search template](#search_template)
-   - [Import](#import)
-   - [similarity_score](#similarity_score)
-3. [Concepts](#concepts)
-   - [Sketches](#sketches)
-   - [Adding Timelines](#adding-timelines)
-   - [Using Stories](#stories)
-   - [Adding event](#adding-event)
-   - [Views](#views)
-       - [Hiding events from a view](#hiding-events-from-a-view)
-       - [Heatmap](#heatmap)
-       - [Stories](#stories)
-4. [Searching](#searching)
+- [Table of Contents](#table-of-contents)
+- [Demo](#demo)
+- [tsctl](#tsctl)
+  - [Start timesketch](#start-timesketch)
+  - [User management](#user-management)
+    - [Adding users](#adding-users)
+    - [Change user password](#change-user-password)
+    - [Removing users](#removing-users)
+  - [Group management](#group-management)
+    - [Adding groups](#adding-groups)
+    - [Removing groups](#removing-groups)
+    - [Managing group membership](#managing-group-membership)
+  - [add_index](#add_index)
+  - [Migrate db](#migrate-db)
+  - [Drop database](#drop-database)
+  - [Import json to Timesketch](#import-json-to-timesketch)
+  - [Purge](#purge)
+  - [search_template](#search_template)
+  - [import](#import)
+  - [similarity_score](#similarity_score)
+- [Concepts](#concepts)
+  - [Sketches](#sketches)
+  - [Adding Timelines](#adding-timelines)
+  - [Adding event](#adding-event)
+  - [Views](#views)
+    - [Hiding events from a view](#hiding-events-from-a-view)
+  - [Heatmap](#heatmap)
+  - [Stories](#stories)
+- [Searching](#searching)
 
 
 ## Demo
@@ -260,10 +260,10 @@ There is a dedicated document to walk you through [Sketches](/docs/SketchOvervie
 
 ### Adding event
 
-To manually adding an event, visit the sketch view. Within that screen, there is the possibility to star an event, hide an event as well as add a manual event (marked with a little +).
-This event will have the previously selected time pre-filled but can be changed.
+*This feature is currently not implemented in the Web UI*
 
-![Add event screenshot](/docs/add_event.png)
+~~To manually adding an event, visit the sketch view. Within that screen, there is the possibility to star an event, hide an event as well as add a manual event (marked with a little +).
+This event will have the previously selected time pre-filled but can be changed.~~
 
 ### Views
 
@@ -277,7 +277,9 @@ Hit the big red button to show/hide the events.
 
 ### Heatmap
 
-The heatmap aggregation calculates on which day of the week and at which hour events happened. This can be very useful e.g. when analyzing lateral movement or login events.
+*This feature is currently not implemented in the Web UI*
+
+~~The heatmap aggregation calculates on which day of the week and at which hour events happened. This can be very useful e.g. when analyzing lateral movement or login events.~~
 
 ### Stories
 

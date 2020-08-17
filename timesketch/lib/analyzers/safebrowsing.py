@@ -13,6 +13,9 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
+logger = logging.getLogger('timesketch.tasks')
+
+
 class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Safe Browsing."""
 
@@ -119,7 +122,7 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
             try:
                 response.raise_for_status()
             except requests.exceptions.HTTPError as e:
-                logging.error(e)
+                logger.error(e)
                 continue
 
             result = response.json()
@@ -214,7 +217,7 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
             for domain in domain_analyzer_allowlisted:
                 url_allowlist.add('*.%s/*' % domain)
 
-        logging.info(
+        logger.info(
             '{0:d} entries on the allowlist.'.format(len(url_allowlist)),
         )
 

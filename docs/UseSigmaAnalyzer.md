@@ -48,7 +48,7 @@ sigma_config.yaml
 There is a section with mappings, most mappings where copied from HELK configuration.
 If you find a mapping missing, feel free to add and create a PR.
 
-###Field Mapping
+### Field Mapping
 Some adjustments verified:
 
 - s/EventID/event_identifier
