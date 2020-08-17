@@ -80,7 +80,8 @@ class SketchListResource(resources.ResourceMixin, Resource):
                 'name': sketch.name,
                 'updated_at': str(sketch.updated_at),
                 'user': sketch.user.username,
-                'id': sketch.id
+                'id': sketch.id,
+                'status': sketch.get_status.status
             })
         meta = {'current_user': current_user.username}
         return jsonify({'objects': sketches, 'meta': meta})
