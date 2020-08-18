@@ -113,6 +113,78 @@ def export_story(story, sketch, story_exporter, zip_file):
             data=exporter.export_story())
 
 
+def query_to_filehandle(
+        query_string='', query_dsl='', query_filter=None, sketch=None,
+        datastore=None, indices=None):
+    """Query the datastore and return back a file object with the results.
+
+    This function takes a query string or DSL, queries the datastore
+    and fetches all the events and stores them in a file-like object
+    which gets returned back.
+
+    Args:
+        query_string (str): Elasticsearch query string.
+        query_dsl (str): Elasticsearch query DSL as JSON string.
+        query_filter (dict): Filter for the query as a dict.
+        sketch (timesketch.models.sketch.Sketch): a sketch object.
+        datastore (elastic.ElasticsearchDataStore): the datastore object.
+        indices (list): List of indices to query
+
+    Returns:
+        file-like object in a CSV format with the results.
+    """
+    # Ignoring the size limits to reduce the amount of queries
+    # needed to get all the data.
+    query_filter['terminate_after'] = 10000
+    query_filter['size'] = 10000
+
+    result = datastore.search(
+        sketch_id=sketch.id,
+        query_string=query_string,
+        query_filter=query_filter,
+        query_dsl=query_dsl,
+        enable_scroll=True,
+        indices=indices)
+
+    scroll_id = result.get('_scroll_id', '')
+    if not scroll_id:
+        return query_results_to_filehandle(result, sketch)
+
+    data_frame = query_results_to_dataframe(result, sketch)
+
+    total_count = result.get(
+        'hits', {}).get('total', {}).get('value', 0)
+
+    if isinstance(total_count, str):
+        try:
+            total_count = int(total_count, 10)
+        except ValueError:
+            total_count = 0
+
+    event_count = len(result['hits']['hits'])
+
+    while event_count < total_count:
+        # pylint: disable=unexpected-keyword-arg
+        result = datastore.client.scroll(
+            scroll_id=scroll_id, scroll='1m')
+        event_count += len(result['hits']['hits'])
+        add_frame = query_results_to_dataframe(result, sketch)
+        if add_frame.shape[0]:
+            data_frame = pd.concat([data_frame, add_frame], sort=False)
+        else:
+            logger.warning(
+                'Data Frame returned from a search operation was '
+                'empty, count {0:d} out of {1:d} total. Query is: '
+                '"{2:s}"'.format(
+                    event_count, total_count,
+                    query_string or query_dsl))
+
+    fh = io.StringIO()
+    data_frame.to_csv(fh, index=False)
+    fh.seek(0)
+    return fh
+
+
 def query_results_to_dataframe(result, sketch):
     """Returns a data frame from a Elastic query result dict.
 
