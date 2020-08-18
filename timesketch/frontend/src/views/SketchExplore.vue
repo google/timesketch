@@ -324,6 +324,8 @@ export default {
       currentPage: 1,
       contextEvent: false,
       originalContext: false,
+      isFullPage: true,
+      loadingComponent: null,
       eventList: {
         meta: {},
         objects: []
@@ -422,6 +424,7 @@ export default {
       }).catch((e) => {})
     },
     exportSearchResult: function () {
+      this.loadingOpen()
       let formData = {
         'query': this.currentQueryString,
         'filter': this.currentQueryFilter,
@@ -435,8 +438,10 @@ export default {
         fileLink.setAttribute('download', fileName);
         document.body.appendChild(fileLink);
         fileLink.click();
+        this.loadingClose()
       }).catch((e) => {
         console.error(e)
+        this.loadingClose()
       })
 
     },
@@ -619,8 +624,17 @@ export default {
         this.currentQueryFilter.order = 'asc'
       }
       this.search()
+    },
+    loadingOpen: function () {
+      this.loadingComponent = this.$buefy.loading.open({
+        container: this.isFullPage ? null : this.$refs.element.$el
+      })
+    },
+    loadingClose: function () {
+      this.loadingComponent.close()
     }
   },
+
   watch: {
     numEvents: function (newVal) {
       this.currentQueryFilter.size = newVal
