@@ -47,7 +47,7 @@ limitations under the License.
               <span class="icon is-small">
                 <i class="fas fa-save"></i>
               </span>
-              <span>Save</span>
+              <span>Save as view</span>
             </a>
 
             <span class="card-header-icon">
@@ -250,6 +250,14 @@ limitations under the License.
                     </b-dropdown>
                   </div>
                 </div>
+
+                <div class="level-item">
+                  <button v-if="eventList.objects.length" class="button is-small" style="border-radius: 4px;" v-on:click="exportSearchResult">
+                    <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-file-export"></i></span>
+                    <span>Export to CSV</span>
+                  </button>
+                </div>
+
               </div>
             </nav>
 
@@ -415,6 +423,25 @@ export default {
         this.eventList.objects = response.data.objects
         this.eventList.meta = response.data.meta
       }).catch((e) => {})
+    },
+    exportSearchResult: function () {
+      let formData = {
+        'query': this.currentQueryString,
+        'filter': this.currentQueryFilter,
+        'file_name': "export.zip"
+      }
+      ApiClient.exportSearchResult(this.sketchId, formData).then((response) => {
+        let fileURL = window.URL.createObjectURL(new Blob([response.data]));
+        let fileLink = document.createElement('a');
+        let fileName = 'export.zip'
+        fileLink.href = fileURL;
+        fileLink.setAttribute('download', fileName);
+        document.body.appendChild(fileLink);
+        fileLink.click();
+      }).catch((e) => {
+        console.error(e)
+      })
+
     },
     searchView: function (viewId) {
       // Reset selected events.
