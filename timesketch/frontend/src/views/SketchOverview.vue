@@ -264,7 +264,9 @@ export default {
     return {
       showUploadTimelineModal: false,
       showDeleteSketchModal: false,
-      showShareModal: false
+      showShareModal: false,
+      isFullPage: true,
+      loadingComponent: null,
     }
   },
   computed: {
@@ -317,6 +319,7 @@ export default {
       })
     },
     exportSketch: function () {
+      this.loadingOpen()
       ApiClient.exportSketch(this.sketch.id).then((response) => {
         let fileURL = window.URL.createObjectURL(new Blob([response.data]));
         let fileLink = document.createElement('a');
@@ -325,8 +328,10 @@ export default {
         fileLink.setAttribute('download', fileName);
         document.body.appendChild(fileLink);
         fileLink.click();
+        this.loadingClose()
       }).catch((e) => {
         console.error(e)
+        this.loadingClose()
       })
     },
     sortedUserList: function () {
@@ -347,6 +352,14 @@ export default {
         queue: false
       })
       this.$store.dispatch('updateSketch', this.sketch.id)
+    },
+    loadingOpen: function () {
+      this.loadingComponent = this.$buefy.loading.open({
+        container: this.isFullPage ? null : this.$refs.element.$el
+      })
+    },
+    loadingClose: function () {
+      this.loadingComponent.close()
     }
   }
 }
