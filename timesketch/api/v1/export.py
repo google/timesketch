@@ -138,6 +138,9 @@ def query_to_filehandle(
     query_filter['terminate_after'] = 10000
     query_filter['size'] = 10000
 
+    if 'from' in query_filter:
+        del query_filter['from']
+
     result = datastore.search(
         sketch_id=sketch.id,
         query_string=query_string,
