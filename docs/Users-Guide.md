@@ -426,6 +426,8 @@ This may be an indication of someone clearing the logs, yet it may be an indicat
 
 This will obviously not catch every instance of someone clearing EVTX records, even if that's done in bulk. Therefore it should not be interpreted that if this analyzer does not discover something that the records have not been wiped. Please verify the results given by this analyzer.
 
+The results of this analyzer will be a story, that details the findings.
+
 #### Safebrowsing Analyzer
 
 This Analyzer checks urls found in a sketch against the [Google Safebrowsing API](https://developers.google.com/safe-browsing/v4/reference/rest).
