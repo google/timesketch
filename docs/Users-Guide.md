@@ -84,11 +84,14 @@ Hit the big red button to show/hide the events.
 A story is a place where you can capture the narrative of your technical investigation and add detail to your story with raw timeline data.
 The editor lets you to write and capture the story behind your investigation and at the same time enable you to share detailed findings without spending hours writing reports.
 
-you can add events from previously saved searches.
+You can add events from previously saved searches.
 Just hit enter to start a new paragraph and choose the saved search from the dropdown menu.
 
 See [Medium article](https://medium.com/timesketch/timesketch-2016-7-db3083e78156)
 
+You can add saved views, aggregations and text in markdown format to a story.
+
+Some analyzers automatically generate stories to either highlight possible events of interest or to document their runtime.
 
 ## Demo
 
@@ -115,6 +118,7 @@ tsctl runserver -c /etc/timesketch/timesketch.conf
 Will start the timesketch server
 
 Command:
+
 ```shell
 tsctl runserver
 ```
@@ -124,18 +128,21 @@ tsctl runserver
 #### Adding users
 
 Command:
-```
+
+```shell
 tsctl add_user
 ```
 
 Parameters:
-```
+
+```shell
 --name / -n
 --password / -p (optional)
 ```
 
 Example
-```
+
+```shell
 tsctl add_user --name foo
 ```
 
@@ -144,18 +151,21 @@ tsctl add_user --name foo
 To change a user password, the add_user command can be used, as it is checking if the user exists if yes it will update the update.
 
 Command:
-```
+
+```shell
 tsctl add_user
 ```
 
 Parameters:
-```
+
+```shell
 --username / -u
 --password / -p (optional)
 ```
 
 Example
-```
+
+```shell
 tsctl add_user --username foo
 ```
 
@@ -262,10 +272,10 @@ tsctl json2ts
 
 Delete timeline permanently from Timesketch and Elasticsearch. It will alert if a timeline is still in use in a sketch and prompt for confirmation before deletion.
 
-````
+```shell
  Args:
    index_name: The name of the index in Elasticsearch
-````
+```
 
 Comand:
 
