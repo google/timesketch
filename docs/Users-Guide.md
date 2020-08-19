@@ -418,7 +418,7 @@ This Analyzer will determine the start and end event for a user session based on
 
 #### Windows EVTX Gap analyzer
 
-It attempts to detect gaps in EVTX files found in an index  using two different methods.
+It attempts to detect gaps in EVTX files found in an index using two different methods.
 
 First of all it looks at missing entries in record numbers and secondly it attempts to look at gaps in days with no records.
 
