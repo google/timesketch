@@ -50,7 +50,6 @@ Every sketch can consist of multiple timelines with multiple views.
 ### Sketches
 
 There is a dedicated document to walk you through [Sketches](/docs/SketchOverview.md)
-
 ### Adding Timelines
 
 - [Create timeline from JSON/JSONL/CSV file](/docs/CreateTimelineFromJSONorCSV.md)
@@ -90,6 +89,7 @@ Just hit enter to start a new paragraph and choose the saved search from the dro
 
 See [Medium article](https://medium.com/timesketch/timesketch-2016-7-db3083e78156)
 
+
 ## Demo
 
 To play with timesketch without any installation visit [demo.timesketch.org](https://demo.timesketch.org)
@@ -115,7 +115,6 @@ tsctl runserver -c /etc/timesketch/timesketch.conf
 Will start the timesketch server
 
 Command:
-
 ```shell
 tsctl runserver
 ```
@@ -125,21 +124,18 @@ tsctl runserver
 #### Adding users
 
 Command:
-
-```shell
+```
 tsctl add_user
 ```
 
 Parameters:
-
-```shell
+```
 --name / -n
 --password / -p (optional)
 ```
 
 Example
-
-```shell
+```
 tsctl add_user --name foo
 ```
 
@@ -148,21 +144,18 @@ tsctl add_user --name foo
 To change a user password, the add_user command can be used, as it is checking if the user exists if yes it will update the update.
 
 Command:
-
-```shell
+```
 tsctl add_user
 ```
 
 Parameters:
-
-```shell
+```
 --username / -u
 --password / -p (optional)
 ```
 
 Example
-
-```shell
+```
 tsctl add_user --username foo
 ```
 
@@ -269,7 +262,7 @@ tsctl json2ts
 
 Delete timeline permanently from Timesketch and Elasticsearch. It will alert if a timeline is still in use in a sketch and prompt for confirmation before deletion.
 
-````shell
+````
  Args:
    index_name: The name of the index in Elasticsearch
 ````
@@ -441,6 +434,7 @@ safebrowsing_allowlist.yaml
 
 There are also two additional config parameters, please refer to the [Safe Browsing API reference](https://developers.google.com/safe-browsing/v4/reference/rest).
 
+ 
 Platforms to be looked at in Safe Browsing (PlatformType).
 ````SAFEBROWSING_PLATFORMS = ['ANY_PLATFORM']````
 
@@ -451,7 +445,7 @@ Types to be looked at in Safe Browsing (ThreatType).
 
 The Sigma Analyzer translates Sigma rules in Elastic Search Queries and adds a tag to every matching event.
 
-It will also create a story with the Top 10 matched Sigma rules
+It will also create a story with the Top 10 matched Sigma rules.
 
 There is a dedicated document to walk you through the process of using the [Sigma Analyzer](/docs/UseSigmaAnalyzer.md).
 
@@ -465,3 +459,4 @@ To use this Analyzer, the following parameter must be set with corresponding val
 YETI_API_ROOT = ''
 YETI_API_KEY = ''
 ````
+
