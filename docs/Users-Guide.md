@@ -406,7 +406,7 @@ The signs of execution could lie in multiple events, from different sources, but
 
 #### Domain Analyzer
 
-The Domain Analyzer extracts domain and TLD info from events that have a field with either ```url``` or ```domain```.
+The Domain Analyzer extracts domain and Top Level Domain (TLD) info from events that have a field with either ```url``` or ```domain```.
 
 It will also add information about:
 
