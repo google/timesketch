@@ -7,16 +7,16 @@ import time
 import codecs
 import elasticsearch
 
-
 from sigma.backends import elasticsearch as sigma_elasticsearch
 import sigma.configuration as sigma_configuration
 from sigma.parser import collection as sigma_collection
 from timesketch.lib.analyzers import utils
 
-
-
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
+
+
+logger = logging.getLogger('timesketch.analyzers.sigma_tagger')
 
 
 class SigmaPlugin(interface.BaseSketchAnalyzer):
@@ -39,7 +39,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         """
         super(SigmaPlugin, self).__init__(index_name, sketch_id)
         sigma_config_path = interface.get_config_path(self._CONFIG_FILE)
-        logging.debug('[sigma] Loading config from {0!s}'.format(
+        logger.debug('[sigma] Loading config from {0!s}'.format(
             sigma_config_path))
         with open(sigma_config_path, 'r') as sigma_config_file:
             sigma_config = sigma_config_file.read()
@@ -90,7 +90,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
 
                     # if a sub dir is found, append it to be scanned for rules
                     if os.path.isdir(os.path.join(rules_path, rule_filename)):
-                        logging.error(
+                        logger.error(
                             'this is a directory, skipping: {0:s}'.format(
                                 rule_filename))
                         continue
@@ -99,7 +99,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                     tags_applied[tag_name] = 0
                     rule_file_path = os.path.join(dirpath, rule_filename)
                     rule_file_path = os.path.abspath(rule_file_path)
-                    logging.info('[sigma] Reading rules from {0!s}'.format(
+                    logger.info('[sigma] Reading rules from {0!s}'.format(
                         rule_file_path))
                     with codecs.open(rule_file_path, 'r', encoding='utf-8',
                                      errors='replace') as rule_file:
@@ -109,7 +109,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                                 rule_file_content, self.sigma_config, None)
                             parsed_sigma_rules = parser.generate(sigma_backend)
                         except NotImplementedError as exception:
-                            logging.error(
+                            logger.error(
                                 'Error generating rule in file {0:s}: {1!s}'
                                 .format(rule_file_path, exception))
                             continue
@@ -122,7 +122,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                                 # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
                                 sigma_rule = sigma_rule\
                                     .replace(".keyword:", ":")
-                                logging.info(
+                                logger.info(
                                     '[sigma] Generated query {0:s}'
                                     .format(sigma_rule))
                                 sum_of_tagged_events = self.run_sigma_rule(
@@ -130,7 +130,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                                 tags_applied[tag_name] += sum_of_tagged_events
                             except elasticsearch.TransportError \
                                     as es_TransportError:
-                                logging.error(
+                                logger.error(
                                     'Timeout generating rule in file {0:s}: '
                                     '{1!s} waiting for 10 seconds'.format(
                                         rule_file_path, es_TransportError))

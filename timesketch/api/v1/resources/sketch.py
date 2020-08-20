@@ -29,6 +29,7 @@ from flask_login import current_user
 from sqlalchemy import not_
 
 from timesketch.api.v1 import resources
+from timesketch.api.v1 import utils
 from timesketch.lib import forms
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
@@ -79,7 +80,8 @@ class SketchListResource(resources.ResourceMixin, Resource):
                 'name': sketch.name,
                 'updated_at': str(sketch.updated_at),
                 'user': sketch.user.username,
-                'id': sketch.id
+                'id': sketch.id,
+                'status': sketch.get_status.status
             })
         meta = {'current_user': current_user.username}
         return jsonify({'objects': sketches, 'meta': meta})
@@ -204,7 +206,8 @@ class SketchResource(resources.ResourceMixin, Resource):
                 continue
             stats_per_index[timeline.searchindex.index_name] = {
                 'count': 0,
-                'bytes': 0
+                'bytes': 0,
+                'data_types' : []
             }
 
         try:
@@ -228,6 +231,18 @@ class SketchResource(resources.ResourceMixin, Resource):
                 'count': doc_count,
                 'bytes': bytes_on_disk
             }
+
+            # Stats per data type in the index.
+            parameters = {
+                'limit': '100',
+                'field': 'data_type'
+            }
+            result_obj, _ = utils.run_aggregator(
+                sketch.id, aggregator_name='field_bucket',
+                aggregator_parameters=parameters,
+                index=[index_name])
+            stats_per_index[index_name]['data_types'] = result_obj.values
+
 
         if not sketch_indices:
             mappings_settings = {}

@@ -17,7 +17,7 @@ limitations under the License.
   <div>
     <b-table
       :data="sketches"
-      :per-page="10"
+      :per-page="perPage"
       paginated
       pagination-simple
       pagination-position="bottom"
@@ -29,6 +29,11 @@ limitations under the License.
         <b-table-column field="name" label="Name">
           <router-link :to="{ name: 'SketchOverview', params: {sketchId: props.row.id } }"><strong>{{ props.row.name }}</strong></router-link>
         </b-table-column>
+        <b-table-column field="status">
+          <span v-if="props.row.status === 'archived'">
+            <b-tag>{{ props.row.status }}</b-tag>
+          </span>
+        </b-table-column>
         <b-table-column field="user" label="Created by" width="200">
           {{ props.row.user }}
         </b-table-column>
@@ -36,13 +41,41 @@ limitations under the License.
           {{ new Date(props.row.updated_at) | moment("YYYY-MM-DD HH:mm") }}
         </b-table-column>
       </template>
+
+      <template slot="bottom-left">
+        <div class="has-text-right">
+          <div class="level" >
+            <div class="level-left" style="margin-right: 10px;">
+              Rows per page:
+            </div>
+            <div class="level-right">
+              <b-select class="is-pulled-left" placeholder="Rows per page" v-model="perPage" size="is-small">
+                <option v-bind:value="perPage">{{ perPage }}</option>
+                <option value="20">20</option>
+                <option value="40">40</option>
+                <option value="80">80</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="500">500</option>
+              </b-select>
+            </div>
+          </div>
+        </div>
+      </template>
+
     </b-table>
   </div>
+
 </template>
 
 <script>
 export default {
-  props: ['sketches']
+  props: ['sketches'],
+  data () {
+    return {
+      perPage: 20
+    }
+  },
 }
 </script>
 

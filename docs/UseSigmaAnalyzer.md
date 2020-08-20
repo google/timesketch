@@ -82,6 +82,14 @@ Which will show up in Timesketch UI as *a_sigma_test* on top of the analyzers.
 
 Note: if you create new rules, you need to restart your celery worker to pick them up.
 
+### Analyzer_run.py
+
+You can run the Sigma analyzer providing sample data:
+
+```shell
+python3 test_tools/analyzer_run.py --test_file test_tools/test_events/sigma_events.jsonl timesketch/lib/analyzers/sigma_tagger.py RulesSigmaPlugin
+```
+
 ## Test data
 
 If you want to test that feature, get some evtx files from the following
