@@ -90,6 +90,8 @@ You can add saved views, aggregations and text in markdown format to a story.
 
 Some analyzers automatically generate stories to either highlight possible events of interest or to document their runtime.
 
+If you want to export a story, export the whole Sketch. The zip file will contain each story.
+
 ## Demo
 
 To play with timesketch without any installation visit [demo.timesketch.org](https://demo.timesketch.org)
