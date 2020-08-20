@@ -12,6 +12,7 @@
 - [Insights / Aggegations](#insights--aggegations)
   - [Terms aggregation](#terms-aggregation)
   - [Filtered terms aggregation](#filtered-terms-aggregation)
+- [Customize columns](#customize-columns)
 - [Stories](#stories)
 - [Demo](#demo)
 - [Searching](#searching)
@@ -94,6 +95,12 @@ Once the aggregation is completed, you can save the aggregation by clicking the 
 ### Filtered terms aggregation
 
 The filtered terms aggregation works the same way the terms aggregation works with one additional input field the filter query. This can be used for example to aggregate over data_types only for events that contain a certain string.
+
+## Customize columns
+
+In the Explore view of a sketch the message is the only column visible. To add more columns, click the *customize* columns* button on the top right of the events list.
+
+The list of available columns is pre-populated from the columns in your timeline.
 
 ## Stories
 
