@@ -2,11 +2,17 @@
 
 - [Table of Contents](#table-of-contents)
 - [Concepts](#concepts)
-  - [Sketches](#sketches)
-  - [Adding Timelines](#adding-timelines)
-  - [Adding event](#adding-event)
-  - [Views](#views)
-  - [Stories](#stories)
+- [Login](#login)
+- [Sketches](#sketches)
+- [Adding Timelines](#adding-timelines)
+- [Adding event](#adding-event)
+- [Add a comment](#add-a-comment)
+- [Star an event](#star-an-event)
+- [Views](#views)
+- [Insights / Aggegations](#insights--aggegations)
+  - [Terms aggregation](#terms-aggregation)
+  - [Filtered terms aggregation](#filtered-terms-aggregation)
+- [Stories](#stories)
 - [Demo](#demo)
 - [Searching](#searching)
 - [Analyzers](#analyzers)
@@ -27,26 +33,69 @@
 Timesketch is built on multiple sketches, where one sketch is usually one case.
 Every sketch can consist of multiple timelines with multiple views.
 
-### Sketches
+## Login
+
+Use the credentials provided by your Timesketch admin to log on to Timesketch or use OAuth to authenticate.
+
+## Sketches
 
 There is a dedicated document to walk you through [Sketches](/docs/SketchOverview.md)
-### Adding Timelines
+
+## Adding Timelines
 
 - [Create timeline from JSON/JSONL/CSV file](/docs/CreateTimelineFromJSONorCSV.md)
 - [Create timeline from Plaso file](/docs/CreateTimelineFromPlaso.md)
 - [Enable Plaso upload via HTTP](/docs/EnablePlasoUpload.md)
 
-### Adding event
+## Adding event
 
 This feature is currently not implemented in the Web UI. But you can add events using the [API client](/docs/APIClient.md).
 
-### Views
+## Add a comment
+
+You can comment events in your sketch. The comments are safed in your sketch, that means if you add a timeline to multiple sketches, the comments are only shown in the one sketch you made the comments.
+
+## Star an event
+
+Click the little star symbol in the Event List to star an event. Stared events can be used to filter on them and or to add all starred events in your story.
+
+## Views
 
 Views are saved search queries. Those can either be created by the User, by API or via Analyzers.
 
 To create a view from the Web Ui, click the *Save as view* button on the top right of the Search fiels in the Explore Tab of a sketch.
 
-### Stories
+## Insights / Aggegations
+
+The *Insights* functionality in a sketch gives the opportunity to run aggregations on the events in a sketch.
+
+There are currently two aggregators available:
+- Terms aggregation
+- Filtered terms aggregation
+
+### Terms aggregation
+
+The term aggregation can be used for example to get a table view of the present data types in the sketch.
+
+You can choose between the following chart types:
+
+- circlechart
+- table
+- barchart
+- hbchart
+- linechart
+
+The next value to provide is the field you want to aggregate on, for example the data_type.
+
+The last value is the number of results to return.
+
+Once the aggregation is completed, you can save the aggregation by clicking the *save* button on the top right  corner of the aggregation result, for example to add it to a story.
+
+### Filtered terms aggregation
+
+The filtered terms aggregation works the same way the terms aggregation works with one additional input field the filter query. This can be used for example to aggregate over data_types only for events that contain a certain string.
+
+## Stories
 
 A story is a place where you can capture the narrative of your technical investigation and add detail to your story with raw timeline data and aggregated data.
 The editor lets you to write and capture the story behind your investigation and at the same time enable you to share detailed findings without spending hours writing reports.
@@ -65,8 +114,6 @@ If you want to export a story, export the whole Sketch. The zip file will contai
 ## Demo
 
 To play with timesketch without any installation visit [demo.timesketch.org](https://demo.timesketch.org)
-
-
 
 ## Searching
 
