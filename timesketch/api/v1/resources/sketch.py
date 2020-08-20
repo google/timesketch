@@ -207,42 +207,42 @@ class SketchResource(resources.ResourceMixin, Resource):
             stats_per_index[timeline.searchindex.index_name] = {
                 'count': 0,
                 'bytes': 0,
-                'data_types' : []
+                'data_types': []
             }
 
-        try:
-            es_stats = self.datastore.client.indices.stats(
-                index=sketch_indices, metric='docs, store')
-        except elasticsearch.NotFoundError:
-            es_stats = {}
-            logger.error(
-                'Unable to find index in datastore', exc_info=True)
+        if sketch_indices:
+            try:
+                es_stats = self.datastore.client.indices.stats(
+                    index=sketch_indices, metric='docs, store')
+            except elasticsearch.NotFoundError:
+                es_stats = {}
+                logger.error(
+                    'Unable to find index in datastore', exc_info=True)
 
-        # Stats for index. Num docs per shard and size on disk.
-        for index_name, stats in es_stats.get('indices', {}).items():
-            doc_count_all_shards = stats.get(
-                'total', {}).get('docs', {}).get('count', 0)
-            bytes_on_disk = stats.get(
-                'total', {}).get('store', {}).get('size_in_bytes', 0)
-            num_shards = stats.get('_shards', {}).get('total', 1)
-            doc_count = int(doc_count_all_shards / num_shards)
+            # Stats for index. Num docs per shard and size on disk.
+            for index_name, stats in es_stats.get('indices', {}).items():
+                doc_count_all_shards = stats.get(
+                    'total', {}).get('docs', {}).get('count', 0)
+                bytes_on_disk = stats.get(
+                    'total', {}).get('store', {}).get('size_in_bytes', 0)
+                num_shards = stats.get('_shards', {}).get('total', 1)
+                doc_count = int(doc_count_all_shards / num_shards)
 
-            stats_per_index[index_name] = {
-                'count': doc_count,
-                'bytes': bytes_on_disk
-            }
+                stats_per_index[index_name] = {
+                    'count': doc_count,
+                    'bytes': bytes_on_disk
+                }
 
-            # Stats per data type in the index.
-            parameters = {
-                'limit': '100',
-                'field': 'data_type'
-            }
-            result_obj, _ = utils.run_aggregator(
-                sketch.id, aggregator_name='field_bucket',
-                aggregator_parameters=parameters,
-                index=[index_name])
-            stats_per_index[index_name]['data_types'] = result_obj.values
-
+                # Stats per data type in the index.
+                parameters = {
+                    'limit': '100',
+                    'field': 'data_type'
+                }
+                result_obj, _ = utils.run_aggregator(
+                    sketch.id, aggregator_name='field_bucket',
+                    aggregator_parameters=parameters,
+                    index=[index_name])
+                stats_per_index[index_name]['data_types'] = result_obj.values
 
         if not sketch_indices:
             mappings_settings = {}
