@@ -6,7 +6,6 @@
   - [Adding Timelines](#adding-timelines)
   - [Adding event](#adding-event)
   - [Views](#views)
-  - [Heatmap](#heatmap)
   - [Stories](#stories)
 - [Demo](#demo)
 - [Searching](#searching)
@@ -46,12 +45,6 @@ This feature is currently not implemented in the Web UI. But you can add events 
 Views are saved search queries. Those can either be created by the User, by API or via Analyzers.
 
 To create a view from the Web Ui, click the *Save as view* button on the top right of the Search fiels in the Explore Tab of a sketch.
-
-### Heatmap
-
-*This feature is currently not implemented in the Web UI*
-
-~~The heatmap aggregation calculates on which day of the week and at which hour events happened. This can be very useful e.g. when analyzing lateral movement or login events.~~
 
 ### Stories
 
