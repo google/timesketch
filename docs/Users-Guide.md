@@ -125,7 +125,7 @@ There is a dedicated document to walk you through the process of developing [Ana
 
 ### Analyzer description
 
-*Note:* Not all analyzers are explained in this documentation. If you have questions to a particular analyzer, please have a look at the code or file an Issue on Github.
+*Note:* Not all analyzers are explained in this documentation. If you have questions to a particular analyzer, please have a look at the code or file an [Issue on Github](https://github.com/google/timesketch/issues/new).
 
 #### Browser Search Analyzer
 
