@@ -58,10 +58,7 @@ There is a dedicated document to walk you through [Sketches](/docs/SketchOvervie
 
 ### Adding event
 
-*This feature is currently not implemented in the Web UI*
-
-~~To manually add an event, visit the sketch view. Within that screen, there is the possibility to star an event, hide an event as well as add a manual event (marked with a little +).
-This event will have the previously selected time pre-filled but can be changed.~~
+This feature is currently not implemented in the Web UI. But you can add events using the [API client](/docs/APIClient.md).
 
 ### Views
 
