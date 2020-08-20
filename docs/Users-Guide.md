@@ -6,7 +6,6 @@
   - [Adding Timelines](#adding-timelines)
   - [Adding event](#adding-event)
   - [Views](#views)
-    - [Hiding events from a view](#hiding-events-from-a-view)
   - [Heatmap](#heatmap)
   - [Stories](#stories)
 - [Demo](#demo)
@@ -44,13 +43,9 @@ This feature is currently not implemented in the Web UI. But you can add events 
 
 ### Views
 
-#### Hiding events from a view
+Views are saved search queries. Those can either be created by the User, by API or via Analyzers.
 
-All about reducing noise in the result views.
-Hit the little eye to hide events from the list making it possible to
-curate views to emphasize the important things.
-The events are still there and can be easily shown for those who want to see them.
-Hit the big red button to show/hide the events.
+To create a view from the Web Ui, click the *Save as view* button on the top right of the Search fiels in the Explore Tab of a sketch.
 
 ### Heatmap
 
