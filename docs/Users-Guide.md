@@ -78,7 +78,7 @@ Hit the big red button to show/hide the events.
 
 ### Stories
 
-A story is a place where you can capture the narrative of your technical investigation and add detail to your story with raw timeline data.
+A story is a place where you can capture the narrative of your technical investigation and add detail to your story with raw timeline data and aggregated data.
 The editor lets you to write and capture the story behind your investigation and at the same time enable you to share detailed findings without spending hours writing reports.
 
 You can add events from previously saved searches.
