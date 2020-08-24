@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """A tool to test sigma rules.
+
 This tool can be used to verify your rules before running an analyzer.
 It also does not require you to have a full blown Timesketch instance.
 Example way of running the tool:
@@ -32,7 +33,7 @@ from sigma.parser import collection as sigma_collection
 
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'ERROR'))
 
-
+# TODO: move this function to a library as it is duplicate to WebUI
 def get_codepath():
     """Return the absolute path to where the tool is run from."""
     path = __file__
@@ -59,7 +60,7 @@ def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
         Returns:
             true: rule_file_path contains a valid sigma rule
             false: rule_file_path does not contain a valid sigma rule
-        """
+    """
 
     logging.debug('[sigma] Reading rules from {0:s}'.format(
         rule_file_path))
