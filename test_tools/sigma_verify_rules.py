@@ -31,6 +31,7 @@ import sigma.configuration as sigma_configuration
 from sigma.backends import elasticsearch as sigma_elasticsearch
 from sigma.parser import collection as sigma_collection
 
+logger = logging.getLogger('timesketch.test_tool.sigma-verify')
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'ERROR'))
 
 def get_codepath():
@@ -63,7 +64,7 @@ def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
             false: rule_file_path does not contain a valid sigma rule
     """
 
-    logging.debug('[sigma] Reading rules from {0:s}'.format(
+    logger.debug('[sigma] Reading rules from {0:s}'.format(
         rule_file_path))
 
     try:
@@ -76,18 +77,18 @@ def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
                     rule_file_content, sigma_config, None)
                 parsed_sigma_rules = parser.generate(sigma_backend)
             except (NotImplementedError) as e:
-                logging.error(
+                logger.error(
                     '{0:s} Error with file {1:s}: {2!s}'.format
                     (rule_filename, rule_file_path, e))
                 return False
             except (sigma.parser.exceptions.SigmaParseError, TypeError) as e:
-                logging.error(
+                logger.error(
                     '{0:s} Error with file {1:s} '
                     'you should not use this rule in Timesketch: {2!s}'
                     .format(rule_filename, rule_file_path, e))
                 return False
     except (FileNotFoundError) as e:
-        logging.error("Rule file not found")
+        logger.error("Rule file not found")
         return False
 
     return True
@@ -140,7 +141,7 @@ def run_verifier(rules_path, config_file_path):
 
             # If a sub dir is found, skip it
             if os.path.isdir(os.path.join(rules_path, rule_filename)):
-                logging.debug(
+                logger.debug(
                     'Directory found, skipping: {0:s}'.format(rule_filename))
                 continue
 
@@ -150,7 +151,7 @@ def run_verifier(rules_path, config_file_path):
             if verify_rules_file(rule_file_path, sigma_config, sigma_backend):
                 return_verified_rules.append(rule_file_path)
             else:
-                logging.info('File did not work{0:s}'.format(rule_file_path))
+                logger.info('File did not work{0:s}'.format(rule_file_path))
                 return_rules_with_problems.append(rule_file_path)
 
     return return_verified_rules, return_rules_with_problems
@@ -191,10 +192,10 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if options.debug:
-        logging.getLogger().setLevel(logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
 
     if options.info:
-        logging.getLogger().setLevel(logging.INFO)
+        logger.setLevel(logging.INFO)
 
     if not os.path.isfile(options.config_file_path):
         print('Config file not found.')
