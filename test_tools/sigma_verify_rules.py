@@ -33,9 +33,10 @@ from sigma.parser import collection as sigma_collection
 
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'ERROR'))
 
-# TODO: move this function to a library as it is duplicate to WebUI
 def get_codepath():
     """Return the absolute path to where the tool is run from."""
+    # TODO: move this function to a library as it is duplicate to WebUI
+
     path = __file__
     if path.startswith(os.path.sep):
         return path
