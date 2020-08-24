@@ -2,7 +2,7 @@
 
 ## What is Sigma
 
-See description at the Sigma Github repository: https://github.com/Neo23x0/sigma#what-is-sigma
+See description at the [Sigma Github repository](https://github.com/Neo23x0/sigma#what-is-sigma)
 
 ## Sigma in Timesketch
 
@@ -11,7 +11,7 @@ Since early 2020 Timesketch has Sigma support implemented. Sigma can be used as 
 ### Install rules
 
 Timesketch deliberatly does not provide a set of Sigma rules, as those would add complexity to maintain.
-Instead we recommend to clone https://github.com/Neo23x0/sigma to /data/sigma.
+Instead we recommend to clone [https://github.com/Neo23x0/sigma](https://github.com/Neo23x0/sigma) to /data/sigma.
 This directory will not be catched by git.
 
 ```shell
@@ -71,8 +71,8 @@ python3 test_tools/analyzer_run.py --test_file test_tools/test_events/sigma_even
 If you want to test that feature, get some evtx files from the following
  links and parse it via plaso
 
-- https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES
-- https://github.com/sans-blue-team/DeepBlueCLI/evtx
+- [github.com/sbousseaden/EVTX-ATTACK-SAMPLES](https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES)
+- [github.com/sans-blue-team/DeepBlueCLI/evtx](https://github.com/sans-blue-team/DeepBlueCLI/evtx)
 
 ## Verify rules
 
