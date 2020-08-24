@@ -58,30 +58,6 @@ Some adjustments verified:
 - s/EventID/event_identifier
 - s/Source/source_name
 
-## Adding a new Operating System to support Sigma TS
-
-To adda  new operating system or new set of rules, adjust the following file:
-
-```shell
-timesketch/timesketch/analyzers/sigma_tagger.py
-```
-
-In that file, specify, where your rules are stored and how they should appear in the Timesketch UI.
-
-## Testing new rules
-
-There is a folder in the data directory that has .gitignore content for createing new rules locally.
-
-Folder:
-
-```shell
-timesketch/data/test_rules 
-```
-
-Which will show up in Timesketch UI as *a_sigma_test* on top of the analyzers.
-
-Note: if you create new rules, you need to restart your celery worker to pick them up.
-
 ### Analyzer_run.py
 
 You can run the Sigma analyzer providing sample data:
