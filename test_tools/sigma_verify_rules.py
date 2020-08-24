@@ -63,7 +63,6 @@ def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
             true: rule_file_path contains a valid sigma rule
             false: rule_file_path does not contain a valid sigma rule
     """
-
     logger.debug('[sigma] Reading rules from {0:s}'.format(
         rule_file_path))
 
@@ -76,7 +75,7 @@ def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
                 parser = sigma_collection.SigmaCollectionParser(
                     rule_file_content, sigma_config, None)
                 parsed_sigma_rules = parser.generate(sigma_backend)
-            except (NotImplementedError):
+            except NotImplementedError:
                 logger.error('{0:s} Error with file {1:s}'
                 .format(rule_filename, rule_file_path), exc_info=True)
                 return False
@@ -86,7 +85,7 @@ def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
                     'you should not use this rule in Timesketch '
                     .format(rule_filename, rule_file_path), exc_info=True)
                 return False
-    except (FileNotFoundError) as e:
+    except FileNotFoundError:
         logger.error('Rule file not found')
         return False
 
@@ -109,7 +108,6 @@ def run_verifier(rules_path, config_file_path):
             - sigma_verified_rules with rules that can be added
             - sigma_rules_with_problems with rules that should not be added
     """
-
     if not os.path.isdir(rules_path):
         raise IOError('Rules not found at path: {0:s}'.format(
             rules_path))
