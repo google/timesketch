@@ -34,6 +34,8 @@ from sigma.parser import collection as sigma_collection
 logger = logging.getLogger('timesketch.test_tool.sigma-verify')
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'ERROR'))
 
+RULE_EXTENSIONS = ('yml', 'yaml')
+
 def get_codepath():
     """Return the absolute path to where the tool is run from."""
     # TODO: move this function to a library as it is duplicate to WebUI
@@ -130,10 +132,8 @@ def run_verifier(rules_path, config_file_path):
         if 'deprecated' in [x.lower for x in dirnames]:
             dirnames.remove('deprecated')
 
-        rule_extensions = ('yml', 'yaml')
-
         for rule_filename in files:
-            if not rule_filename.lower().endswith(rule_extensions):
+            if not rule_filename.lower().endswith(RULE_EXTENSIONS):
                 continue
 
             # If a sub dir is found, skip it
