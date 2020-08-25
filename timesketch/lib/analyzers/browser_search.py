@@ -228,37 +228,45 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 view_name='Browser Search', analyzer_name=self.NAME,
                 query_string='tag:"browser-search"',
                 additional_fields=self._FIELDS_TO_INCLUDE)
+
             params = {
                 'field': 'search_string',
                 'limit': 20,
+                'index': self.index_name,
             }
             agg_obj = self.sketch.add_aggregation(
-                name='Top 20 browser search queries', agg_name='field_bucket',
-                agg_params=params, view_id=view.id, chart_type='hbarchart',
+                name='Top 20 browser search queries ({0:s})'.format(
+                    self.timeline_name),
+                agg_name='field_bucket', agg_params=params, view_id=view.id,
+                chart_type='table',
                 description='Created by the browser search analyzer')
 
             params = {
                 'field': 'search_day',
+                'index': self.index_name,
                 'limit': 20,
             }
             agg_days = self.sketch.add_aggregation(
-                name='Top 20 days of search queries', agg_name='field_bucket',
-                agg_params=params, chart_type='hbarchart',
+                name='Top 20 days of search queries ({0:s})'.format(
+                    self.timeline_name), agg_name='field_bucket',
+                agg_params=params, chart_type='table',
                 description='Created by the browser search analyzer',
                 label='informational')
 
             params = {
                 'query_string': 'tag:"browser-search"',
+                'index': self.index_name,
                 'field': 'domain',
             }
             agg_engines = self.sketch.add_aggregation(
-                name='Top Search Engines', agg_name='query_bucket',
-                agg_params=params, view_id=view.id, chart_type='hbarchart',
+                name='Top Search Engines ({0:s})'.format(self.timeline_name),
+                agg_name='query_bucket', agg_params=params, view_id=view.id,
+                chart_type='hbarchart',
                 description='Created by the browser search analyzer')
 
-            story = self.sketch.add_story(utils.BROWSER_STORY_TITLE)
-            story.add_text(
-                utils.BROWSER_STORY_HEADER, skip_if_exists=True)
+            story = self.sketch.add_story('{0:s} - {1:s}'.format(
+                utils.BROWSER_STORY_TITLE, self.timeline_name))
+            story.add_text(utils.BROWSER_STORY_HEADER, skip_if_exists=True)
 
             story.add_text(
                 '## Browser Search Analyzer.\n\nThe browser search '
@@ -266,7 +274,9 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
                 'search queries and extracts the search string.'
                 'In this timeline the analyzer discovered {0:d} '
                 'browser searches.\n\nThis is a summary of '
-                'it\'s findings.'.format(simple_counter))
+                'it\'s findings for the timeline **{1:s}**.'.format(
+                    simple_counter, self.timeline_name))
+
             story.add_text(
                 'The top 20 most commonly discovered searches were:')
             story.add_aggregation(agg_obj)

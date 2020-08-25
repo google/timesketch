@@ -81,13 +81,17 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
 
                 number_chained_events = chain_plugin.build_chain(
                     base_event=event, chain_id=chain_id)
+                if not number_chained_events:
+                    continue
+
                 counter[chain_id] = number_chained_events
                 counter['total'] += number_chained_events
 
                 chain_id_list = event.source.get('chain_id_list', [])
                 chain_id_list.append(chain_id)
                 chain_plugins_list = event.source.get('chain_plugins', [])
-                chain_plugins_list.append(chain_plugin.NAME)
+                if chain_plugin.NAME not in chain_plugins_list:
+                    chain_plugins_list.append(chain_plugin.NAME)
                 attributes = {
                     'chain_id_list': chain_id_list,
                     'chain_plugins': chain_plugins_list}
