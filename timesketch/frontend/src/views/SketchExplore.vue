@@ -242,6 +242,10 @@ limitations under the License.
                         <b-switch type="is-info" v-model="displayOptions.showEmojis">
                           <span>Show emojis</span>
                         </b-switch>
+                        <br>
+                        <b-switch type="is-info" v-model="displayOptions.showMillis">
+                          <span>Show microseconds</span>
+                        </b-switch>
 
                       </b-dropdown-item>
                     </b-dropdown>
@@ -349,7 +353,8 @@ export default {
       selectedEvents: {},
       displayOptions: {
         showTags: true,
-        showEmojis: true
+        showEmojis: true,
+        showMillis: false
       }
     }
   },
