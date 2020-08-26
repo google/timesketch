@@ -304,26 +304,20 @@ export default {
       })
     },
     archiveSketch: function () {
-      //this.loadingOpen()
       this.isArchived = true
       ApiClient.archiveSketch(this.sketch.id).then((response) => {
         this.$store.dispatch('updateSketch', this.sketch.id)
         this.$router.push({ name: 'SketchOverview', params: { sketchId: this.sketch.id } })
-        //this.loadingClose()
       }).catch((e) => {
-        //this.loadingClose()
         console.error(e)
       })
     },
     unArchiveSketch: function () {
-      //this.loadingOpen()
       this.isArchived = false
       ApiClient.unArchiveSketch(this.sketch.id).then((response) => {
         this.$store.dispatch('updateSketch', this.sketch.id)
         this.$router.push({ name: 'SketchOverview', params: { sketchId: this.sketch.id } })
-        //this.loadingClose()
       }).catch((e) => {
-        //this.loadingClose()
         console.error(e)
       })
     },
