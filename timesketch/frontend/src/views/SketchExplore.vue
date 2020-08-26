@@ -94,7 +94,11 @@ limitations under the License.
                     <br>
                     <br>
                     <b-switch type="is-info" v-model="activeStarFilter" v-on:input="toggleLabelChip('__ts_star')">
-                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Show only starred events
+                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Show starred events
+                    </b-switch>
+                    <br>
+                    <b-switch type="is-info" v-model="activeCommentFilter" v-on:input="toggleLabelChip('__ts_comment')">
+                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-comment"></i></span>Show events with comments
                     </b-switch>
                   </b-dropdown-item>
                 </b-dropdown>
@@ -115,6 +119,7 @@ limitations under the License.
               <span v-for="(chip, index) in currentQueryFilter.chips" :key="index">
                 <span v-if="chip.type !== 'datetime_range'" class="tag is-light is-rounded" style="margin-right:7px;">
                   <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
+                  <span v-else-if="chip.value === '__ts_comment'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-comment"></i></span>
                   <span v-else-if="chip.type === 'label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
                   <span style="margin-right:7px;">{{ chip | filterChip }}</span>
                   <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
@@ -325,6 +330,7 @@ export default {
       showSearch: true,
       searchInProgress: false,
       activeStarFilter: false,
+      activeCommentFilter: false,
       currentPage: 1,
       contextEvent: false,
       originalContext: false,
@@ -474,11 +480,15 @@ export default {
           this.currentQueryFilter.indices = allIndices
         }
         this.activeStarFilter = false
+        this.activeCommentFilter = false
         let chips = this.currentQueryFilter.chips
         if (chips) {
           for (let i = 0; i < chips.length; i++) {
             if (chips[i].value === '__ts_star') {
               this.activeStarFilter = true
+            }
+            if (chips[i].value === '__ts_comment') {
+              this.activeCommentFilter = true
             }
           }
         }
@@ -543,6 +553,9 @@ export default {
       let chip = this.currentQueryFilter.chips[chipIndex]
       if (chip.value === '__ts_star') {
         this.activeStarFilter = false
+      }
+      if (chip.value === '__ts_comment') {
+        this.activeCommentFilter = false
       }
       this.currentQueryFilter.chips.splice(chipIndex, 1)
       this.search()
