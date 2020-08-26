@@ -94,11 +94,11 @@ limitations under the License.
                     <br>
                     <br>
                     <b-switch type="is-info" v-model="activeStarFilter" v-on:input="toggleLabelChip('__ts_star')">
-                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Show only starred events
+                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Show starred events
                     </b-switch>
                     <br>
                     <b-switch type="is-info" v-model="activeCommentFilter" v-on:input="toggleLabelChip('__ts_comment')">
-                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-comment"></i></span>Show only events with comments
+                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-comment"></i></span>Show events with comments
                     </b-switch>
                   </b-dropdown-item>
                 </b-dropdown>
