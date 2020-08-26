@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <div v-if="sketch.status">
 
-    <div v-if="sketch.status[0].status === 'archived'" class="task-container columns is-multiline" style="margin-top:50px;">
+    <div v-if="isArchived" class="task-container columns is-multiline" style="margin-top:50px;">
       <div class="card column is-half is-offset-one-quarter has-text-centered" style="min-height: 300px; padding-top: 90px;">
         <h4 class="title is-4">{{ sketch.name }}</h4>
         <p>This sketch has been archived</p>
@@ -27,7 +27,7 @@ limitations under the License.
       </div>
     </div>
 
-    <div v-if="sketch.status[0].status !== 'archived'">
+    <div v-if="!isArchived">
     <section class="section">
       <div class="container is-fluid">
         <ts-navbar-secondary currentAppContext="sketch" currentPage="overview">
@@ -267,6 +267,7 @@ export default {
       showShareModal: false,
       isFullPage: true,
       loadingComponent: null,
+      isArchived: false
     }
   },
   computed: {
@@ -303,6 +304,7 @@ export default {
       })
     },
     archiveSketch: function () {
+      this.isArchived = true
       ApiClient.archiveSketch(this.sketch.id).then((response) => {
         this.$store.dispatch('updateSketch', this.sketch.id)
         this.$router.push({ name: 'SketchOverview', params: { sketchId: this.sketch.id } })
@@ -311,6 +313,7 @@ export default {
       })
     },
     unArchiveSketch: function () {
+      this.isArchived = false
       ApiClient.unArchiveSketch(this.sketch.id).then((response) => {
         this.$store.dispatch('updateSketch', this.sketch.id)
         this.$router.push({ name: 'SketchOverview', params: { sketchId: this.sketch.id } })
@@ -360,6 +363,11 @@ export default {
     },
     loadingClose: function () {
       this.loadingComponent.close()
+    }
+  },
+  created: function () {
+    if (this.sketch.status[0].status === 'archived') {
+      this.isArchived = true
     }
   }
 }
