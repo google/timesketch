@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Plugin for chaining Chrome downloads to filesystem events."""
+"""Plugin for chaining Chrome downloads to filesystem and execution events."""
 
 from timesketch.lib.analyzers.chain_plugins import interface
 from timesketch.lib.analyzers.chain_plugins import manager
@@ -11,7 +11,7 @@ class ChromeDownloadFilesystemChainPlugin(interface.BaseChainPlugin):
     NAME = 'chromefilesystem'
     DESCRIPTION = (
         'Plugin to chain Chrome download records to corresponding filesystem '
-        'events and even execution events.')
+        'events and execution events.')
 
     SEARCH_QUERY = 'data_type:"chrome:history:file_downloaded"'
     EVENT_FIELDS = ['full_path']
@@ -38,6 +38,7 @@ class ChromeDownloadFilesystemChainPlugin(interface.BaseChainPlugin):
             separator = '/'
 
         target = target.split(separator)[-1]
+        # TODO: Add more checks here, eg; USB, generic execution, etc.
         search_query = (
             '(data_type:"fs:stat" AND filename:"*{0:s}") OR '
             '(data_type:"fs:stat:ntfs" AND name:"{0:s}")').format(
