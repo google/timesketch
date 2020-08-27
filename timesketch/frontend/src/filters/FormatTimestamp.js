@@ -1,5 +1,5 @@
 /*
-Copyright 2019 Google Inc. All rights reserved.
+Copyright 2020 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,18 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 export default {
-  name: 'filterChip',
+  name: 'formatTimestamp',
   filter: function (input) {
-    if (input.operator === 'must_not') {
-      return 'NOT ' + input.field + ':' + input.value
-    } else if (input.type === 'label') {
-      if (input.value === '__ts_star') {
-        return 'Starred'
-      } else if (input.value === '__ts_comment') {
-        return 'Commented'
-      }
-      return input.value
+    let tsLength=parseInt(input).toString().length
+    if (tsLength === 13) {
+      return input  // exit early if timestamp is already in milliseconds
+    } else if (tsLength === 16) {
+      input = input / 1000  // microseconds -> milliseconds
+    } else if (tsLength === 10) {
+      input = input * 1000000  // seconds -> milliseconds
     }
-    return input.field + ':' + input.value
+    return input
   }
 }

@@ -124,6 +124,34 @@ class ExploreResource(resources.ResourceMixin, Resource):
             }
         }
 
+        if file_name:
+            file_object = io.BytesIO()
+
+            form_data = {
+                'created_at': datetime.datetime.utcnow().isoformat(),
+                'created_by': current_user.username,
+                'sketch': sketch_id,
+                'query': form.query.data,
+                'query_dsl': query_dsl,
+                'query_filter': query_filter,
+                'return_fields': return_fields,
+            }
+            with zipfile.ZipFile(file_object, mode='w') as zip_file:
+                zip_file.writestr('METADATA', data=json.dumps(form_data))
+                fh = export.query_to_filehandle(
+                    query_string=form.query.data,
+                    query_dsl=query_dsl,
+                    query_filter=query_filter,
+                    indices=indices,
+                    sketch=sketch,
+                    datastore=self.datastore)
+                fh.seek(0)
+                zip_file.writestr('query_results.csv', fh.read())
+            file_object.seek(0)
+            return send_file(
+                file_object, mimetype='zip',
+                attachment_filename=file_name)
+
         if scroll_id:
             # pylint: disable=unexpected-keyword-arg
             result = self.datastore.client.scroll(
@@ -195,28 +223,6 @@ class ExploreResource(resources.ResourceMixin, Resource):
         # TODO: Refactor when version 6.x has been deprecated.
         if isinstance(meta['es_total_count'], dict):
             meta['es_total_count'] = meta['es_total_count'].get('value', 0)
-
-        if file_name:
-            file_object = io.BytesIO()
-            form_data = {
-                'created_at': datetime.datetime.utcnow().isoformat(),
-                'created_by': current_user.username,
-                'sketch': sketch_id,
-                'query': form.query.data,
-                'query_dsl': query_dsl,
-                'query_filter': query_filter,
-                'return_fields': return_fields,
-                'query_meta': meta,
-            }
-            with zipfile.ZipFile(file_object, mode='w') as zip_file:
-                zip_file.writestr('METADATA', data=json.dumps(form_data))
-                fh = export.query_results_to_filehandle(result, sketch)
-                fh.seek(0)
-                zip_file.writestr('query_results.csv', fh.read())
-            file_object.seek(0)
-            return send_file(
-                file_object, mimetype='zip',
-                attachment_filename=file_name)
 
         schema = {'meta': meta, 'objects': result['hits']['hits']}
         return jsonify(schema)

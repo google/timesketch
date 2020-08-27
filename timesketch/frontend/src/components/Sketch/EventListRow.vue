@@ -32,7 +32,7 @@ limitations under the License.
 
         <!-- Timeline color (set the color for the timeline) -->
         <td v-bind:style="timelineColor">
-          {{ event._source.datetime | moment("utc", "YYYY-MM-DDTHH:mm:ss.SSSSSS") }}
+          {{ event._source.timestamp | formatTimestamp | moment("utc", datetimeFormat) }}
         </td>
 
         <!-- Action column -->
@@ -69,7 +69,7 @@ limitations under the License.
 
         <!-- Timeline name -->
         <td class="ts-timeline-name-column">
-          <span>
+          <span :title="timelineName">
             {{ timelineName }}
           </span>
         </td>
@@ -167,6 +167,13 @@ limitations under the License.
         'background-color': hexColor
       }
     },
+    datetimeFormat () {
+      if (this.displayOptions.showMillis) {
+        return 'YYYY-MM-DDTHH:mm:ss.SSSSSS'
+      } else {
+        return 'YYYY-MM-DDTHH:mm:ss'
+      }
+    },
     timelineName () {
       return this.timeline(this.event._index).name
     },
@@ -174,8 +181,10 @@ limitations under the License.
       if (!this.prevEvent) {
         return 0
       }
-      let timestamp = Math.floor(this.event._source.timestamp / 1000000)
-      let prevTimestamp = Math.floor(this.prevEvent._source.timestamp / 1000000)
+      let timestampMillis = this.$options.filters.formatTimestamp(this.event._source.timestamp)
+      let prevTimestampMillis = this.$options.filters.formatTimestamp(this.prevEvent._source.timestamp)
+      let timestamp = Math.floor(timestampMillis / 1000)
+      let prevTimestamp = Math.floor(prevTimestampMillis / 1000)
       let delta = Math.floor(timestamp - prevTimestamp)
       if (this.order === 'desc') {
         delta = Math.floor(prevTimestamp - timestamp)
@@ -302,6 +311,7 @@ limitations under the License.
   overflow: hidden;
   text-overflow: ellipsis;
   text-align: right;
+  max-width: 150px;
   word-wrap: break-word;
 }
 
@@ -311,7 +321,7 @@ limitations under the License.
   background: #f5f5f5;
   border-radius: 30px;
   position: relative;
-  margin: 0 0 0 70px;
+  margin: 0 0 0 45px;
   text-align: center;
 }
 
@@ -328,7 +338,7 @@ limitations under the License.
   width: 2px;
   height: 20px;
   background: #f5f5f5;
-  margin: 0 0 0 100px;
+  margin: 0 0 0 75px;
 }
 
 .ts-shadow-on-hover:hover {
