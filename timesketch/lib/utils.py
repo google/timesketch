@@ -53,6 +53,26 @@ def random_color():
     return '{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
 
 
+def _parse_tag_field(row):
+    """Reading in a tag field and converting to a list of strings."""
+    if isinstance(row, (list, tuple)):
+        return row
+
+    if not isinstance(row, str):
+        row = str(row)
+
+    if row.startswith('[') and row.endswith(']'):
+        return json.loads(row)
+
+    if row == '-':
+      return []
+
+    if ',' in row:
+        return row.split(',')
+
+    return [row]
+
+
 def read_and_validate_csv(file_handle, delimiter=','):
     """Generator for reading a CSV file.
 
@@ -97,6 +117,8 @@ def read_and_validate_csv(file_handle, delimiter=','):
                     time.mktime(parsed_datetime.utctimetuple()) * 1000000)
                 normalized_timestamp += parsed_datetime.microsecond
                 row['timestamp'] = str(normalized_timestamp)
+                if 'tag' in row:
+                    row['tag'] = [x for x in _parse_tag_field(row['tag']) if x]
             except ValueError:
                 continue
 
@@ -185,6 +207,9 @@ def read_and_validate_jsonl(file_handle):
                     'Missing field(s) at line {0:n}: {1:s}'.format(
                         lineno, ','.join(missing_fields)))
 
+            if 'tag' in linedict:
+                linedict['tag'] = [
+                    x for x in _parse_tag_field(linedict['tag']) if x]
             yield linedict
 
         except ValueError as e:

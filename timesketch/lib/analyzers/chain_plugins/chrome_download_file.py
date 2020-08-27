@@ -50,7 +50,7 @@ class ChromeDownloadFilesystemChainPlugin(interface.BaseChainPlugin):
             yield event
 
         exec_query = 'executable:"*{0:s}"'.format(target)
-        return_fields = ['executable']
+        return_fields = ['executable', 'chains']
 
         events = self.analyzer_object.event_stream(
             exec_query, return_fields=return_fields, scroll=False)

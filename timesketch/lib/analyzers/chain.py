@@ -54,7 +54,9 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
         link_emoji = emojis.get_emoji('LINK')
 
         number_of_base_events = 0
+        number_of_chains = 0
         counter = collections.Counter()
+        events_to_update = {}
 
         # TODO: Have each plugin run in a separate task.
         # TODO: Add a time limit for each plugins run to prevent it from
@@ -68,7 +70,6 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
                 search_string = chain_plugin.SEARCH_QUERY
 
             return_fields = chain_plugin.EVENT_FIELDS
-            return_fields.extend(['chain_id_list', 'chain_plugins'])
             events = self.event_stream(
                 query_string=search_string, query_dsl=search_dsl,
                 return_fields=return_fields)
@@ -76,35 +77,62 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
             for event in events:
                 if not chain_plugin.process_chain(event):
                     continue
-                number_of_base_events += 1
                 chain_id = uuid.uuid4().hex
 
-                number_chained_events = chain_plugin.build_chain(
+                chained_events = chain_plugin.build_chain(
                     base_event=event, chain_id=chain_id)
+                number_chained_events = len(chained_events)
                 if not number_chained_events:
                     continue
 
-                counter[chain_id] = number_chained_events
+                for chained_event in chained_events:
+                    chained_id = chained_event.get('event_id')
+                    if chained_id not in events_to_update:
+                        default = {
+                            'event': chained_event.get('event'),
+                            'chains': []
+                        }
+                        events_to_update[chained_id] = default
+
+                    events_to_update[chained_id]['chains'].append(
+                        chained_event.get('chain'))
+
+                number_of_base_events += 1
+
+                counter[chain_plugin.NAME] += number_chained_events
                 counter['total'] += number_chained_events
 
-                chain_id_list = event.source.get('chain_id_list', [])
-                chain_id_list.append(chain_id)
-                chain_plugins_list = event.source.get('chain_plugins', [])
-                if chain_plugin.NAME not in chain_plugins_list:
-                    chain_plugins_list.append(chain_plugin.NAME)
-                attributes = {
-                    'chain_id_list': chain_id_list,
-                    'chain_plugins': chain_plugins_list}
-                event.add_attributes(attributes)
-                event.add_emojis([link_emoji])
-                event.commit()
+                chain = {
+                    'chain_id': chain_id,
+                    'plugin': chain_plugin.NAME,
+                    'is_base': True,
+                    'leafs': number_chained_events,
+                }
+                if event.event_id not in events_to_update:
+                    default = {
+                        'event': event,
+                        'chains': []
+                    }
+                    events_to_update[event.event_id] = default
+                events_to_update[event.event_id]['chains'].append(chain)
+                number_of_chains += 1
 
-        number_of_chains = len(counter.keys()) - 1
+        for event_update in events_to_update.values():
+            event = event_update.get('event')
+            attributes = {
+                'chains': event_update.get('chains')
+            }
+            event.add_attributes(attributes)
+            event.add_emojis([link_emoji])
+            event.commit()
+
+        chain_string = ' - '.join([
+            '[{0:s}] {1:d}'.format(x[0], x[1]) for x in counter.most_common()])
         return (
             '{0:d} base events annotated with a chain UUID for {1:d} '
-            'chains for a total of {2:d} events.'.format(
+            'chains for a total of {2:d} events. {3:s}'.format(
                 number_of_base_events, number_of_chains,
-                counter['total']))
+                counter['total'], chain_string))
 
 
 manager.AnalysisManager.register_analyzer(ChainSketchPlugin)
