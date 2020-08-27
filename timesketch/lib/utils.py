@@ -65,7 +65,7 @@ def _parse_tag_field(row):
         return json.loads(row)
 
     if row == '-':
-      return []
+        return []
 
     if ',' in row:
         return row.split(',')

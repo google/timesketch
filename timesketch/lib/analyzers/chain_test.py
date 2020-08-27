@@ -1,8 +1,9 @@
 """Tests for Chain analyzer."""
 from __future__ import unicode_literals
 
-import mock
 import uuid
+
+import mock
 
 from timesketch.lib import emojis
 from timesketch.lib import testlib
@@ -36,7 +37,7 @@ class FakeAnalyzer(chain.ChainSketchPlugin):
     """Fake analyzer object used for "finding events"."""
 
     def event_stream(self, query_string=None, query_filter=None, query_dsl=None,
-                     indices=None, return_fields=None):
+                     indices=None, return_fields=None, scroll=True):
         """Yields few test events."""
         event_one = FakeEvent({
             'url': 'http://minsida.biz',
@@ -135,8 +136,8 @@ class TestChainAnalyzer(testlib.BaseTest):
         for event in plugin.ALL_EVENTS:
             attributes = event.attributes
             chains = attributes.get('chains', [])
-            for chain in chains:
-                plugin = chain.get('plugin', '')
+            for event_chain in chains:
+                plugin = event_chain.get('plugin', '')
                 self.assertEqual(plugin, 'fake_chain')
 
             event_emojis = event.emojis
