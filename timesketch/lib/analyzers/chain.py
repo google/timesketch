@@ -127,7 +127,8 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
             event.commit()
 
         chain_string = ' - '.join([
-            '[{0:s}] {1:d}'.format(x[0], x[1]) for x in counter.most_common()])
+            '[{0:s}] {1:d}'.format(
+                x[0], x[1]) for x in counter.most_common() if x[0] != 'total'])
         return (
             '{0:d} base events annotated with a chain UUID for {1:d} '
             'chains for a total of {2:d} events. {3:s}'.format(
