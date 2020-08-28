@@ -71,7 +71,7 @@ class BaseChainPlugin(object):
         for event in self.get_chained_events(base_event):
             chain = {
                 'chain_id': chain_id,
-                'plugin': self.NAME,
+                'plugins': [self.NAME],
                 'is_base': False,
                 'type': self.TYPE,
             }

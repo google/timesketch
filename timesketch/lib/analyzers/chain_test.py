@@ -67,6 +67,7 @@ class FakeChainPlugin(interface.BaseChainPlugin):
     NAME = 'fake_chain'
     DESCRIPTION = 'Fake plugin for the chain analyzer.'
     SEARCH_QUERY = 'give me all the data'
+    TYPE = 'fake'
     EVENT_FIELDS = ['kedjur']
     ALL_EVENTS = []
 
@@ -137,8 +138,8 @@ class TestChainAnalyzer(testlib.BaseTest):
             attributes = event.attributes
             chains = attributes.get('chains', [])
             for event_chain in chains:
-                plugin = event_chain.get('plugin', '')
-                self.assertEqual(plugin, 'fake_chain')
+                plugins = event_chain.get('plugins', [''])
+                self.assertEqual(plugins[0], 'fake_chain')
 
             event_emojis = event.emojis
             self.assertEqual(len(event_emojis), 1)

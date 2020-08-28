@@ -89,16 +89,18 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
                 if not number_chained_events:
                     continue
 
+                chain_type = chain_plugin.TYPE
+                _ = events_to_update.setdefault(chain_type, {})
                 for chained_event in chained_events:
                     chained_id = chained_event.get('event_id')
-                    if chained_id not in events_to_update:
+                    if chained_id not in events_to_update[chain_type]:
                         default = {
                             'event': chained_event.get('event'),
                             'chains': []
                         }
-                        events_to_update[chained_id] = default
+                        events_to_update[chain_type][chained_id] = default
 
-                    events_to_update[chained_id]['chains'].append(
+                    events_to_update[chain_type][chained_id]['chains'].append(
                         chained_event.get('chain'))
 
                 number_of_base_events += 1
@@ -106,15 +108,13 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
                 counter[chain_plugin.NAME] += number_chained_events
                 counter['total'] += number_chained_events
 
-                chain_type = chain_plugin.TYPE
                 chain = {
                     'chain_id': chain_id,
-                    'plugin': chain_plugin.NAME,
+                    'plugins': [chain_plugin.NAME],
                     'is_base': True,
                     'leafs': number_chained_events,
                     'type': chain_type,
                 }
-                _ = events_to_update.setdefault(chain_type, {})
                 if event.event_id not in events_to_update[chain_type]:
                     default = {
                         'event': event,
@@ -125,16 +125,24 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
                     chain)
                 number_of_chains += 1
 
-        for chain_type, events in events_to_update.items():
+        # TODO: This whole thing needs rewriting and most likely this data
+        # structure of events_to_update as well. Since we need to take into
+        # consideration the merger of potential base events. Also leaf count
+        # needs to be summed up, etc. And then other chains need to be removed
+        # after merging. So maybe we need to go through the structure twice,
+        # once for merging and cleanup and then second time around for event
+        # updates?
+        for chain_type, event_structure in events_to_update.items():
             if chain_type != 'session':
-                for event_list in events.values():
+                for event_dict in event_structure.values():
+                    event_list = event_dict.get('chains', [])
                     if len(event_list) <= 1:
                         continue
                     chain_id = event_list[0].get('chain_id')
                     for event in event_list[1:]:
                         event['chain_id'] = chain_id
 
-            for event_update in events:
+            for event_update in event_structure.values():
                 event = event_update.get('event')
                 attributes = {
                     'chains': event_update.get('chains')
