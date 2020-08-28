@@ -42,8 +42,7 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
         self.index_name = index_name
         self._chain_plugins = (
             chain_manager.ChainPluginsManager.get_plugins(self))
-        super(ChainSketchPlugin, self).__init__(index_name, sketch_id)
-
+        super().__init__(index_name, sketch_id)
 
     def run(self):
         """Entry point for the analyzer.
@@ -56,6 +55,10 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
         number_of_base_events = 0
         number_of_chains = 0
         counter = collections.Counter()
+
+        # This is a data structure to hold all events. The keys will
+        # be a chain type, with each value being another dict, that has
+        # the event ID as the respective key.
         events_to_update = {}
 
         # TODO: Have each plugin run in a separate task.
@@ -102,29 +105,42 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
                 counter[chain_plugin.NAME] += number_chained_events
                 counter['total'] += number_chained_events
 
+                chain_type = chain_plugin.TYPE
                 chain = {
                     'chain_id': chain_id,
                     'plugin': chain_plugin.NAME,
                     'is_base': True,
                     'leafs': number_chained_events,
+                    'type': chain_type,
                 }
-                if event.event_id not in events_to_update:
+                _ = events_to_update.setdefault(chain_type, {})
+                if event.event_id not in events_to_update[chain_type]:
                     default = {
                         'event': event,
                         'chains': []
                     }
-                    events_to_update[event.event_id] = default
-                events_to_update[event.event_id]['chains'].append(chain)
+                    events_to_update[chain_type][event.event_id] = default
+                events_to_update[chain_type][event.event_id]['chains'].append(
+                    chain)
                 number_of_chains += 1
 
-        for event_update in events_to_update.values():
-            event = event_update.get('event')
-            attributes = {
-                'chains': event_update.get('chains')
-            }
-            event.add_attributes(attributes)
-            event.add_emojis([link_emoji])
-            event.commit()
+        for chain_type, events in events_to_update.items():
+            if chain_type != 'session':
+                for event_list in events.values():
+                    if len(event_list) <= 1:
+                        continue
+                    chain_id = event_list[0].get('chain_id')
+                    for event in event_list[1:]:
+                        event['chain_id'] = chain_id
+
+            for event_update in events:
+                event = event_update.get('event')
+                attributes = {
+                    'chains': event_update.get('chains')
+                }
+                event.add_attributes(attributes)
+                event.add_emojis([link_emoji])
+                event.commit()
 
         chain_string = ' - '.join([
             '[{0:s}] {1:d}'.format(

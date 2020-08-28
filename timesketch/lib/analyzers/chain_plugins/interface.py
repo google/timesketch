@@ -14,6 +14,14 @@ class BaseChainPlugin(object):
     NAME = 'chain'
     DESCRIPTION = ''
 
+    # The chain type defines what sort of chain this is. An "event"
+    # type is simply a chain of events that are linked together, and might
+    # be the most common one. Another type would be "session", denoting that
+    # every event in that chain are part of a single session. Any given event
+    # can only have one event per chain type, except session, in which it can
+    # belong to multiple chains.
+    TYPE = 'event'
+
     # A string value that defines the search query used to find the original
     # event that starts the chain. In order for this plugin to work
     # either the SEARCH_QUERY or SEARCH_QUERY_DSL needs to be defined.
@@ -31,7 +39,7 @@ class BaseChainPlugin(object):
 
     def __init__(self, analyzer_object):
         """Initialize the plugin."""
-        super(BaseChainPlugin, self).__init__()
+        super().__init__()
         self.analyzer_object = analyzer_object
 
     def process_chain(self, base_event):
@@ -64,10 +72,12 @@ class BaseChainPlugin(object):
             chain = {
                 'chain_id': chain_id,
                 'plugin': self.NAME,
-                'is_base': False
+                'is_base': False,
+                'type': self.TYPE,
             }
             events.append({
                 'event_id': event.event_id,
+                'type': self.TYPE,
                 'event': event,
                 'chain': chain,
             })
