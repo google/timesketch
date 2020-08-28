@@ -58,7 +58,8 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
 
         # This is a data structure to hold all events. The keys will
         # be a chain type, with each value being another dict, that has
-        # the event ID as the respective key.
+        # the event ID as the respective key and the events and chains
+        # as values.
         events_to_update = {}
 
         # TODO: Have each plugin run in a separate task.
