@@ -56,14 +56,14 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
             int: number of events tagged.
         """
         return_fields = []
-        tagged_events = 0
+        tagged_events_counter = 0
         events = self.event_stream(
             query_string=query, return_fields=return_fields)
         for event in events:
             event.add_tags(['sigma_{0:s}'.format(tag_name)])
             event.commit()
-            tagged_events += 1
-        return tagged_events
+            tagged_events_counter += 1
+        return tagged_events_counter
 
     def run(self):
         """Entry point for the analyzer.
@@ -75,7 +75,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
             self.sigma_config, {})
         tags_applied = {}
 
-        simple_counter = 0
+        sigma_rule_counter = 0
 
         rules_path = os.path.join(os.path.dirname(__file__), self._RULES_PATH)
 
@@ -116,7 +116,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
 
                         for sigma_rule in parsed_sigma_rules:
                             try:
-                                simple_counter += 1
+                                sigma_rule_counter += 1
                                 # TODO Investigate how to handle .keyword
                                 # fields in Sigma.
                                 # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
@@ -125,9 +125,9 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                                 logger.info(
                                     '[sigma] Generated query {0:s}'
                                     .format(sigma_rule))
-                                sum_of_tagged_events = self.run_sigma_rule(
+                                tagged_events_counter = self.run_sigma_rule(
                                     sigma_rule, tag_name)
-                                tags_applied[tag_name] += sum_of_tagged_events
+                                tags_applied[tag_name] += tagged_events_counter
                             except elasticsearch.TransportError \
                                     as es_TransportError:
                                 logger.error(
@@ -138,11 +138,11 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
 
         total_tagged_events = sum(tags_applied.values())
         output_string = 'Applied {0:d} tags\n'.format(total_tagged_events)
-        for tag_name, sum_of_tagged_events in tags_applied.items():
+        for tag_name, tagged_events_counter in tags_applied.items():
             output_string += '* {0:s}: {1:d}\n'.format(
-                tag_name, sum_of_tagged_events)
+                tag_name, tagged_events_counter)
 
-        if simple_counter > 0:
+        if sigma_rule_counter > 0:
             view = self.sketch.add_view(
                 view_name='Sigma Rule matches', analyzer_name=self.NAME,
                 query_string='tag:"sigma*"')
@@ -165,7 +165,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                 'analyzer takes Events and matches them with Sigma rules.'
                 'In this timeline the analyzer discovered {0:d} '
                 'Sigma tags.\n\nThis is a summary of '
-                'it\'s findings.'.format(simple_counter))
+                'it\'s findings.'.format(sigma_rule_counter))
             story.add_text(
                 'The top 20 most commonly discovered tags were:')
             story.add_aggregation(agg_obj)
