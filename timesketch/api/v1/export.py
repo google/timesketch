@@ -207,6 +207,9 @@ def query_results_to_dataframe(result, sketch):
         line['_id'] = event['_id']
         line['_type'] = event['_type']
         line['_index'] = event['_index']
+        if 'tag' in line:
+            if isinstance(line['tag'], (list, tuple)):
+                line['tag'] = ','.join(line['tag'])
         try:
             for label in line['timesketch_label']:
                 if sketch.id != label['sketch_id']:

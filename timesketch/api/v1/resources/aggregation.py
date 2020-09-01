@@ -390,6 +390,7 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             for t in sketch.timelines
             if t.get_status.status.lower() == 'ready'
         }
+        indices_string = ','.join(sketch_indices)
 
         aggregation_dsl = form.aggregation_dsl.data
         aggregator_name = form.aggregator_name.data
@@ -407,7 +408,9 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                 return {}
             if not aggregator_parameters:
                 aggregator_parameters = {}
-            aggregator = agg_class(sketch_id=sketch_id)
+
+            index = aggregator_parameters.pop('index', indices_string)
+            aggregator = agg_class(sketch_id=sketch_id, index=index)
             chart_type = aggregator_parameters.pop('supported_charts', None)
             chart_color = aggregator_parameters.pop('chart_color', '')
             chart_title = aggregator_parameters.pop(
