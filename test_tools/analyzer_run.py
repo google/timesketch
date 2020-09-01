@@ -22,6 +22,9 @@ Example way of running the tool:
   $ python analyzer_run.py --test_file test_file.txt \
       ../timesketch/lib/analyzers/my_analyzer.py MyAnalyzerSketchPlugin
 
+Remark: The tool ignores Elastic Search queries. It should be fed with
+data that matches the expected output of the analyzer.
+
 """
 
 import argparse
