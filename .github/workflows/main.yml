@@ -5,7 +5,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          path: docker/e2e
       - name: Build the stack
-        run: docker-compose up -d
+        run: docker-compose -f docker/e2e/docker-compose.yml up -d
