@@ -7,3 +7,5 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build the stack
         run: docker-compose -f docker/e2e/docker-compose.yml up -d
+        env:
+          ELASTICSEARCH_VERSION: 7.6.2
