@@ -4,8 +4,7 @@ import time
 
 manager = test_manager.EndToEndTestManager()
 
-print("sleeping..")
-time.sleep(60)
+time.sleep(30)
 for test in manager.get_tests():
     t = test[1]()
     t.run_wrapper()
