@@ -21,4 +21,4 @@ if [ -z "$CONTAINER_ID" ]; then
   export CONTAINER_ID="$(sudo -E docker container list -f name=e2e_timesketch -q)"
 fi
 
-sudo -E docker exec $CONTAINER_ID python3 /usr/local/src/timesketch/test_tools/e2e/run_in_container.py
+sudo -E docker exec $CONTAINER_ID python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
