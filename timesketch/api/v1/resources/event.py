@@ -129,7 +129,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
             # derive datetime from timestamp:
             try:
                 date = dateutil.parser.parse(date_string)
-            except OverflowError as e:
+            except (dateutil.parser.ParserError, OverflowError) as e:
                 logger.error('Unable to convert date string', exc_info=True)
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
