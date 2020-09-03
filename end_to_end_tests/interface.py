@@ -15,9 +15,13 @@
 import time
 import unittest
 import os
+import inspect
+import traceback
+from collections import Counter
 
 from timesketch_api_client.client import TimesketchApi
 
+# Default values based on Docker config.
 TEST_DATA_DIR = '/usr/local/src/timesketch/end_to_end_tests/test_data'
 HOST_URI = 'http://127.0.0.1'
 USERNAME = 'test'
@@ -28,9 +32,10 @@ class BaseEndToEndTest(object):
     """Base class for end to end tests.
 
     Attributes:
-        name: Test name.
-        client: Instance of an API client.
-        sketch: Instance of Sketch object.
+        name: Test name
+        client: Instance of an API client
+        sketch: Instance of Sketch object
+        assertions: Instance of unittest.TestCase
     """
 
     NAME = 'name'
@@ -42,26 +47,40 @@ class BaseEndToEndTest(object):
             host_uri=HOST_URI, username=USERNAME, password=PASSWORD)
         self.sketch = self.client.create_sketch(name=self.name)
         self.assertions = unittest.TestCase()
+        self._counter = Counter()
+        print('*** {0:s} ***'.format(self.name))
 
-    def import_timeline(self, filename, wait=True):
+    def import_timeline(self, filename):
         file_path = os.path.join(TEST_DATA_DIR, filename)
-        print('Importing: {}'.format(file_path))
+        print('Importing: {0:s}'.format(file_path))
+
+        # TODO: Replace this with the import client
         timeline = self.sketch.upload(
             timeline_name=file_path, file_path=file_path)
 
-        if wait:
-            while True:
-                _ = timeline.lazyload_data(refresh_cache=True)
-                status = timeline.status
-                if status == 'ready':
-                    break
-                time.sleep(5)
+        # Poll the timeline status and wait for it to be ready
+        while True:
+            _ = timeline.lazyload_data(refresh_cache=True)
+            status = timeline.status
+            if status == 'ready':
+                break
+            time.sleep(5)
 
-    def run_wrapper(self):
-        """A wrapper method to run the test."""
-        print('Running tests from: {}'.format(self.name))
-        self.run()
+    def _get_test_methods(self):
+        for name, func in inspect.getmembers(self, predicate=inspect.ismethod):
+            if name.startswith('test_'):
+                yield name, func
 
-    def run(self):
-        """Entry point for the analyzer."""
-        raise NotImplementedError
+    def run_tests(self):
+        for test_name, test_func in self._get_test_methods():
+            self._counter['tests'] += 1
+            print('Running test: {0:s} ...'.format(
+                test_name), end="", flush=True)
+            try:
+                test_func()
+            except Exception:  # pylint: disable=broad-except
+                print(traceback.format_exc())
+                self._counter['errors'] += 1
+                continue
+            print('[OK]')
+        return self._counter

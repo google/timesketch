@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""E2E tests of Timesketch query functionality."""
+"""End to end tests of Timesketch query functionality."""
 
 from . import interface
 from . import manager
@@ -22,12 +22,13 @@ class QueryTest(interface.BaseEndToEndTest):
 
     def __init__(self):
         super(QueryTest, self).__init__()
-
-    def run(self):
         self.import_timeline('evtx.plaso')
+
+    def test_wildcard_query(self):
         response_json = self.sketch.explore(query_string="*")
         count = response_json.get('meta', {}).get('es_total_count', 0)
-        self.assertions.assertEqual(count, 32050)
+        self.assertions.assertEqual(count, 3205)
+        return True
 
 
 manager.EndToEndTestManager.register_test(QueryTest)

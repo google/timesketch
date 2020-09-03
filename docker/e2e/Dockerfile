@@ -26,8 +26,9 @@ RUN wget https://raw.githubusercontent.com/google/timesketch/master/requirements
 RUN pip3 install -r requirements.txt
 RUN pip3 install https://github.com/google/timesketch/archive/e2e-testing.zip
 
-# Install Timesketch API client
+# Install Timesketch API and import clients
 RUN pip3 install timesketch-api-client
+RUN pip3 install timesketch-import-client
 
 # Copy Timesketch config files into /etc/timesketch
 RUN mkdir /etc/timesketch
