@@ -5,9 +5,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Build the stack
+      - name: Set up infrastructure with docker-compose
         run: docker-compose -f docker/e2e/docker-compose.yml up -d
         env:
           ELASTICSEARCH_VERSION: 7.6.2
-      - name: Test all the things
+      - name: Run e2e tests
         run: docker-compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/test_tools/e2e/run_in_container.py
