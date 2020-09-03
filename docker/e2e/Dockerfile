@@ -24,8 +24,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install Timesketch from master to get the latest code
 RUN wget https://raw.githubusercontent.com/google/timesketch/master/requirements.txt
 RUN pip3 install -r requirements.txt
-#RUN pip3 install https://github.com/google/timesketch/archive/master.zip
 
+# Install timesketch from the current branch (In the context of CI platform)
 ADD . /tmp/timesketch
 RUN pip3 install /tmp/timesketch
 
@@ -35,10 +35,6 @@ RUN pip3 install timesketch-import-client
 
 # Copy Timesketch config files into /etc/timesketch
 RUN mkdir /etc/timesketch
-#RUN cp /usr/local/share/timesketch/timesketch.conf /etc/timesketch/
-#RUN cp /usr/local/share/timesketch/features.yaml /etc/timesketch/
-#RUN cp /usr/local/share/timesketch/sigma_config.yaml /etc/timesketch/
-
 RUN cp /tmp/timesketch/data/timesketch.conf /etc/timesketch/
 RUN cp /tmp/timesketch/data/features.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
