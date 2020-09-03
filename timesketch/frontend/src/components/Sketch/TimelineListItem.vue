@@ -113,9 +113,9 @@ limitations under the License.
       </p>
       <p v-if="timelineStatus === 'ready'" class="control">
         <span style="margin-right:7px;">
-          <button class="button is-small is-rounded is-outlined" @click="toggleExpansion(timeline)">
+          <button class="button is-small is-rounded is-outlined" @click="isOpen = !isOpen" :disabled="meta.stats[timeline.searchindex.index_name]['data_types'].length === 0">
             <span class="icon is-small">
-              <i :class="[isExpanded(timeline) ? 'fas fa-minus-circle' : 'fas fa-plus-circle']"></i>
+              <i :class="[isOpen ? 'fas fa-minus-circle' : 'fas fa-plus-circle']"></i>
             </span>
             <span>Show data types</span>
           </button>
@@ -142,8 +142,8 @@ limitations under the License.
     <span v-if="timelineStatus === 'ready'" class="is-size-7">
       Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
       <span class="tag is-small" :title="meta.stats[timeline.searchindex.index_name]['count'] + ' events in index'">{{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }}</span>
-        <div class="small-top-margin" v-show="isExpanded(timeline)">
-          <!-- TODO (binglot): Consider implementing Buefy for the expand/collapse functionality. -->
+      <b-collapse :open="isOpen" class="panel" animation="slide">
+        <div class="small-top-margin">
           <ul>
             <li v-for="dt in meta.stats[timeline.searchindex.index_name]['data_types']" :key="dt.data_type">
               <input type="checkbox" class="checkbox-margin" :id="dt.data_type" :value="dt.data_type" v-model="checkedDataTypes">
@@ -153,13 +153,14 @@ limitations under the License.
               <span class="tag is-small" :title="dt.count + ' events in index'">{{ dt.count | compactNumber }}</span>
             </li>
           </ul>
-          <a class="button is-rounded is-small small-top-margin checkbox-margin" :disabled="checkedDataTypes.length === 0" v-on:click="openFilteredTimeline(timeline.searchindex.index_name, checkedDataTypes)">
+          <a class="button is-rounded is-small small-top-margin checkbox-margin" @click="openFilteredTimeline(timeline.searchindex.index_name, checkedDataTypes)" :disabled="checkedDataTypes.length === 0">
             <span class="icon is-small">
               <i class="fas fa-check-square"></i>
             </span>
             <span>Open Filtered</span>
           </a>
         </div>
+      </b-collapse>
     </span>
     <span v-else-if="timelineStatus === 'fail'" class="is-size-7">
       ERROR: <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline">Click here for details</span>
@@ -206,7 +207,6 @@ export default {
   data () {
     return {
       checkedDataTypes: [],
-      expandedDataSource: [],
       initialColor: {},
       newColor: '',
       newTimelineName: '',
@@ -217,7 +217,8 @@ export default {
       showAnalysisDetail: false,
       showAnalysisHistory: false,
       timelineStatus: null,
-      autoRefresh: false
+      autoRefresh: false,
+      isOpen: false
     }
   },
   computed: {
@@ -267,6 +268,9 @@ export default {
       }).catch((e) => {})
     },
     openFilteredTimeline: function (index, dataTypes) {
+      if (dataTypes.length === 0) {
+        return false;
+      }
       let searchQuery = ''
       for (let i = 0; i < dataTypes.length; i++) {
         const dt = dataTypes[i];
@@ -276,15 +280,6 @@ export default {
         searchQuery += 'data_type:"' + dt + '"'
       }
       this.$router.push({name: 'SketchExplore', query: { index: index, q: searchQuery }})
-    },
-    isExpanded(key) {
-      return this.expandedDataSource.indexOf(key) !== -1;
-    },
-    toggleExpansion(key) {
-      if (this.isExpanded(key))
-        this.expandedDataSource.splice(this.expandedDataSource.indexOf(key), 1);
-      else
-        this.expandedDataSource.push(key);
     }
   },
   mounted () {
