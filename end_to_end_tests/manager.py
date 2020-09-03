@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""This file contains a class for managing e2e tests."""
+"""This file contains a class for managing end to end tests."""
 
 
 class EndToEndTestManager(object):

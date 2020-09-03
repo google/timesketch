@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Interface for e2e tests."""
 
 import time
 import unittest
@@ -51,6 +52,11 @@ class BaseEndToEndTest(object):
         print('*** {0:s} ***'.format(self.name))
 
     def import_timeline(self, filename):
+        """Import a Plaso, CSV or JSONL file.
+
+        Args:
+            filename (str): Filename of the file to be imported.
+        """
         file_path = os.path.join(TEST_DATA_DIR, filename)
         print('Importing: {0:s}'.format(file_path))
 
@@ -59,19 +65,30 @@ class BaseEndToEndTest(object):
             timeline_name=file_path, file_path=file_path)
 
         # Poll the timeline status and wait for it to be ready
+        # TODO: Add retries and figure out how to fail.
         while True:
             _ = timeline.lazyload_data(refresh_cache=True)
             status = timeline.status
             if status == 'ready':
                 break
-            time.sleep(5)
+            time.sleep(5)  # seconds
 
     def _get_test_methods(self):
+        """Inspect class and list all methods that mathes the critera.
+
+        Yields:
+            Function name and bound method.
+        """
         for name, func in inspect.getmembers(self, predicate=inspect.ismethod):
             if name.startswith('test_'):
                 yield name, func
 
     def run_tests(self):
+        """Run all test functions from the class.
+
+        Returns:
+            Counter of number of tests and errors.
+        """
         for test_name, test_func in self._get_test_methods():
             self._counter['tests'] += 1
             print('Running test: {0:s} ...'.format(

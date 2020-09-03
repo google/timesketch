@@ -18,13 +18,17 @@ from . import manager
 
 
 class QueryTest(interface.BaseEndToEndTest):
+    """End to end tests for query functionality."""
+
     NAME = 'query_test'
 
     def __init__(self):
+        """Initialize the test."""
         super(QueryTest, self).__init__()
         self.import_timeline('evtx.plaso')
 
     def test_wildcard_query(self):
+        """Wildcard query over all data in the sketch."""
         response_json = self.sketch.explore(query_string="*")
         count = response_json.get('meta', {}).get('es_total_count', 0)
         self.assertions.assertEqual(count, 3205)
