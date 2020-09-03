@@ -134,8 +134,8 @@ class EventCreateResource(resources.ResourceMixin, Resource):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     'Unable to add event, not able to convert the date '
-                    'string. Was it properly formed? Error: {0!s}'.format(
-                        e))
+                    'string. Was it properly formatted? Error: '
+                    '{0!s}'.format(e))
 
         timestamp = int(
             time.mktime(date.utctimetuple())) * 1000000
