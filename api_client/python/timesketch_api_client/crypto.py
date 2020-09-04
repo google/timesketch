@@ -28,7 +28,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from . import credentials
 
 
-logger = logging.getLogger('crypto_client_api')
+logger = logging.getLogger('timesketch_api.crypto_client')
 
 
 class CredentialStorage:

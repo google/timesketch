@@ -29,6 +29,7 @@ from flask_login import current_user
 from sqlalchemy import not_
 
 from timesketch.api.v1 import resources
+from timesketch.api.v1 import utils
 from timesketch.lib import forms
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
@@ -43,7 +44,7 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
 
 
-logger = logging.getLogger('sketch_api_resources')
+logger = logging.getLogger('timesketch.sketch_api')
 
 
 class SketchListResource(resources.ResourceMixin, Resource):
@@ -64,9 +65,12 @@ class SketchListResource(resources.ResourceMixin, Resource):
         Returns:
             List of sketches (instance of flask.wrappers.Response)
         """
-        filtered_sketches = Sketch.all_with_acl().filter(
-            not_(Sketch.Status.status == 'deleted'),
-            Sketch.Status.parent).order_by(Sketch.updated_at.desc()).all()
+        if current_user.admin:
+            filtered_sketches = Sketch.query.all()
+        else:
+            filtered_sketches = Sketch.all_with_acl().filter(
+                not_(Sketch.Status.status == 'deleted'),
+                Sketch.Status.parent).order_by(Sketch.updated_at.desc()).all()
 
         # Just return a subset of the sketch objects to reduce the amount of
         # data returned.
@@ -76,7 +80,8 @@ class SketchListResource(resources.ResourceMixin, Resource):
                 'name': sketch.name,
                 'updated_at': str(sketch.updated_at),
                 'user': sketch.user.username,
-                'id': sketch.id
+                'id': sketch.id,
+                'status': sketch.get_status.status
             })
         meta = {'current_user': current_user.username}
         return jsonify({'objects': sketches, 'meta': meta})
@@ -110,6 +115,56 @@ class SketchListResource(resources.ResourceMixin, Resource):
 class SketchResource(resources.ResourceMixin, Resource):
     """Resource to get a sketch."""
 
+    def _get_sketch_for_admin(self, sketch):
+        """Returns a limited sketch view for adminstrators.
+
+        An administrator needs to get information about all sketches
+        that are stored on the backend. However that view should be
+        limited for sketches that user does not have explicit read
+        or other permissions as well. In those cases the returned
+        sketch only contains information about the name, description,
+        etc but not any information about the data, nor any access
+        to the underlying data of the sketch.
+
+        Args:
+            sketch: a sketch object (instance of models.Sketch)
+
+        Returns:
+            A limited view of a sketch in JSON (instance of
+            flask.wrappers.Response)
+        """
+        if sketch.get_status.status == 'archived':
+            status = 'archived'
+        else:
+            status = 'admin_view'
+
+        sketch_fields = {
+            'id': sketch.id,
+            'name': sketch.name,
+            'description': sketch.description,
+            'user': {'username': current_user.username},
+            'timelines': [],
+            'stories': [],
+            'aggregations': [],
+            'aggregationgroups': [],
+            'active_timelines': [],
+            'label_string': sketch.label_string,
+            'status': [{
+                'id': 0,
+                'status': status}],
+            'all_permissions': sketch.all_permissions,
+            'created_at': sketch.created_at,
+            'updated_at': sketch.updated_at,
+        }
+
+        meta = {'current_user': current_user.username}
+        return jsonify(
+            {
+                'objects': [sketch_fields],
+                'meta': meta
+            }
+        )
+
     @login_required
     def get(self, sketch_id):
         """Handles GET request to the resource.
@@ -117,7 +172,13 @@ class SketchResource(resources.ResourceMixin, Resource):
         Returns:
             A sketch in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        if current_user.admin:
+            sketch = Sketch.query.get(sketch_id)
+            if not sketch.has_permission(current_user, 'read'):
+                return self._get_sketch_for_admin(sketch)
+        else:
+            sketch = Sketch.query.get_with_acl(sketch_id)
+
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
@@ -145,31 +206,43 @@ class SketchResource(resources.ResourceMixin, Resource):
                 continue
             stats_per_index[timeline.searchindex.index_name] = {
                 'count': 0,
-                'bytes': 0
+                'bytes': 0,
+                'data_types': []
             }
 
-        try:
-            es_stats = self.datastore.client.indices.stats(
-                index=sketch_indices, metric='docs, store')
-        except elasticsearch.NotFoundError as e:
-            es_stats = {}
-            logger.error(
-                'Unable to find index in datastore, with error: '
-                '{0!s}'.format(e))
+        if sketch_indices:
+            try:
+                es_stats = self.datastore.client.indices.stats(
+                    index=sketch_indices, metric='docs, store')
+            except elasticsearch.NotFoundError:
+                es_stats = {}
+                logger.error(
+                    'Unable to find index in datastore', exc_info=True)
 
-        # Stats for index. Num docs per shard and size on disk.
-        for index_name, stats in es_stats.get('indices', {}).items():
-            doc_count_all_shards = stats.get(
-                'total', {}).get('docs', {}).get('count', 0)
-            bytes_on_disk = stats.get(
-                'total', {}).get('store', {}).get('size_in_bytes', 0)
-            num_shards = stats.get('_shards', {}).get('total', 1)
-            doc_count = int(doc_count_all_shards / num_shards)
+            # Stats for index. Num docs per shard and size on disk.
+            for index_name, stats in es_stats.get('indices', {}).items():
+                doc_count_all_shards = stats.get(
+                    'total', {}).get('docs', {}).get('count', 0)
+                bytes_on_disk = stats.get(
+                    'total', {}).get('store', {}).get('size_in_bytes', 0)
+                num_shards = stats.get('_shards', {}).get('total', 1)
+                doc_count = int(doc_count_all_shards / num_shards)
 
-            stats_per_index[index_name] = {
-                'count': doc_count,
-                'bytes': bytes_on_disk
-            }
+                stats_per_index[index_name] = {
+                    'count': doc_count,
+                    'bytes': bytes_on_disk
+                }
+
+                # Stats per data type in the index.
+                parameters = {
+                    'limit': '100',
+                    'field': 'data_type'
+                }
+                result_obj, _ = utils.run_aggregator(
+                    sketch.id, aggregator_name='field_bucket',
+                    aggregator_parameters=parameters,
+                    index=[index_name])
+                stats_per_index[index_name]['data_types'] = result_obj.values
 
         if not sketch_indices:
             mappings_settings = {}
@@ -177,10 +250,9 @@ class SketchResource(resources.ResourceMixin, Resource):
             try:
                 mappings_settings = self.datastore.client.indices.get_mapping(
                     index=sketch_indices)
-            except elasticsearch.NotFoundError as e:
+            except elasticsearch.NotFoundError:
                 logger.error(
-                    'Unable to get indices mapping in datastore, with error: '
-                    '{0!s}'.format(e))
+                    'Unable to get indices mapping in datastore', exc_info=True)
                 mappings_settings = {}
 
         mappings = []

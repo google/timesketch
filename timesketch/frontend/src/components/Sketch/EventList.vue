@@ -16,13 +16,13 @@ limitations under the License.
 <template>
   <table class="table is-fullwidth">
     <thead>
-      <th width="220"></th>
+      <th :width="datetimeWidth">Datetime (UTC)</th>
       <th width="1">
         <span class="control">
           <input type="checkbox" v-on:click="toggleSelectAll">
         </span>
       </th>
-      <th v-for="(field, index) in selectedFields" :key="index">{{ field.field }}</th>
+      <th v-for="(field, index) in selectedFields" :key="index">{{ field.field | capitalize }}</th>
       <th width="150">Timeline name</th>
     </thead>
     <ts-sketch-explore-event-list-row v-for="(event, index) in eventList"
@@ -60,6 +60,15 @@ export default {
       } else {
         EventBus.$emit('selectEvent')
         this.selectAll = true
+      }
+    }
+  },
+  computed: {
+    datetimeWidth () {
+      if (this.displayOptions.showMillis) {
+        return '220'
+      } else {
+        return '165'
       }
     }
   }

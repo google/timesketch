@@ -29,7 +29,7 @@ from timesketch_api_client import timeline
 from timesketch_api_client import definitions
 from timesketch_import_client import utils
 
-logger = logging.getLogger('ts_importer')
+logger = logging.getLogger('timesketch_importer.importer')
 
 
 class ImportStreamer(object):

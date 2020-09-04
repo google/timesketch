@@ -33,7 +33,26 @@ from timesketch_import_client import importer
 from timesketch_import_client import version as importer_version
 
 
-logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
+logger = logging.getLogger('timesketch_importer.importer_frontend')
+
+
+def configure_logger_debug():
+    """Configure the logger to log debug logs."""
+    logger.setLevel(logging.DEBUG)
+    logger_formatter = logging.Formatter(
+        '[%(asctime)s] %(name)s/%(levelname)s %(message)s '
+        '<%(module)s/%(funcName)s>')
+    for handler in logger.parent.handlers:
+        handler.setFormatter(logger_formatter)
+
+
+def configure_logger_default():
+    """Configure the logger to only log information and above logs."""
+    logger.setLevel(logging.INFO)
+    logger_formatter = logging.Formatter(
+        '[%(asctime)s] %(name)s/%(levelname)s %(message)s')
+    for handler in logger.parent.handlers:
+        handler.setFormatter(logger_formatter)
 
 
 def upload_file(
@@ -106,14 +125,16 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
 
-    logger = logging.getLogger('timesketch_importer')
-
     argument_parser = argparse.ArgumentParser(
         description='A tool to upload data to Timesketch, using the API.')
 
     argument_parser.add_argument(
         '--version', action='store_true', dest='show_version',
         help='Print version information')
+
+    argument_parser.add_argument(
+        '--debug', '--verbose', '-d', action='store_true', dest='show_debug',
+        help='Make the logging more verbose to include debug logs.')
 
     auth_group = argument_parser.add_argument_group('Authentication Arguments')
     auth_group.add_argument(
@@ -210,6 +231,11 @@ def main(args=None):
             importer_version.get_version()))
         sys.exit(0)
 
+    if options.show_debug:
+        configure_logger_debug()
+    else:
+        configure_logger_default()
+
     if not options.path:
         logger.error(
             'A valid file path needs to be provided, unable to continue.')
@@ -234,9 +260,11 @@ def main(args=None):
     try:
         credentials = cred_storage.load_credentials(
             config_assistant=assistant, password=token_password)
-    except IOError as e:
+    except IOError:
         logger.error(
-            'Unable to decrypt the credential file, with error: %s', e)
+            'Unable to decrypt the credential file')
+        logger.debug(
+            'Error details:', exc_info=True)
         logger.error(
             'If you\'ve forgotten the password you can delete '
             'the ~/.timesketch.token file and run the tool again.')

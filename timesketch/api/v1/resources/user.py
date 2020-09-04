@@ -30,7 +30,7 @@ from timesketch.models.user import User
 from timesketch.models.user import Group
 
 
-logger = logging.getLogger('user_api_resources')
+logger = logging.getLogger('timesketch.user_api')
 
 
 class UserListResource(resources.ResourceMixin, Resource):

@@ -62,9 +62,11 @@ class HorizontalBarChart(interface.BaseChart):
         chart = self._get_chart_with_transform()
         self._add_url_href(encoding)
 
-        bars = chart.mark_bar()
         if self.chart_title:
-            bars.properties(title=self.chart_title)
+            bars = chart.mark_bar().properties(
+                title=self.chart_title)
+        else:
+            bars = chart.mark_bar()
 
         bars.encoding = alt.FacetedEncoding.from_dict(encoding)
 

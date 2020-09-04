@@ -21,6 +21,8 @@ export default {
     } else if (input.type === 'label') {
       if (input.value === '__ts_star') {
         return 'Starred'
+      } else if (input.value === '__ts_comment') {
+        return 'Commented'
       }
       return input.value
     }

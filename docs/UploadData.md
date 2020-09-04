@@ -16,14 +16,15 @@ Let's explore each of these ways a bit further.
 ## Using the importer CLI Tool.
 
 If the data that is to be imported is a single file then the importer tool
-can be used. It utilizes the importer library and the API client to upload
-the file. This is a simple wrapper around the importer library. The tool comes
+can be used. It utilizes the importer client library and the API client to upload
+the file. This is a simple wrapper around the importer client libraries. The tool comes
 with the installation of the timesketch importer client.
 
 There are two methods to use the tool:
 
 1. Define all parameters on the command line.
-2. Define the parameters in the [~/.timesketchrc](/docs/APIConfigFile.md) file.
+2. The preferred method of just running the tool omitting all information about the 
+authentication and/or server information and have the tool ask all the questions.
 
 The easiest way to discover the parameters and how to run the tool is to run:
 
@@ -37,12 +38,12 @@ The minimum set of parameters to the run tool are:
 $ timesketch_importer.py path_to_my_file.csv
 ```
 
-However this requires that the `~/.timesketchrc` file contains all the necessary
-configs. If there are configuration items that are missing then the tool will
-ask questions to get the remaining parameters.
+If the information to connect to Timesketch are not present (host information,
+auth method and auth information) then the tool will ask the user for the missing
+information and store it in the configuration file `~/.timesketchrc` for future use.
 
 Remember for OAUTH authentication both `client_id` and `client_secret` need to
-be set.
+provided to the tool.
 
 The tool will store the user credentials in an encrypted file as soon as it
 runs for the first time. This token file will be used for subsequent uses

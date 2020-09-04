@@ -390,6 +390,7 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             for t in sketch.timelines
             if t.get_status.status.lower() == 'ready'
         }
+        indices_string = ','.join(sketch_indices)
 
         aggregation_dsl = form.aggregation_dsl.data
         aggregator_name = form.aggregator_name.data
@@ -407,9 +408,13 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                 return {}
             if not aggregator_parameters:
                 aggregator_parameters = {}
-            aggregator = agg_class(sketch_id=sketch_id)
+
+            index = aggregator_parameters.pop('index', indices_string)
+            aggregator = agg_class(sketch_id=sketch_id, index=index)
             chart_type = aggregator_parameters.pop('supported_charts', None)
             chart_color = aggregator_parameters.pop('chart_color', '')
+            chart_title = aggregator_parameters.pop(
+                'chart_title', aggregator.chart_title)
             time_before = time.time()
             result_obj = aggregator.run(**aggregator_parameters)
             time_after = time.time()
@@ -434,8 +439,8 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             if chart_type:
                 meta['vega_spec'] = result_obj.to_chart(
                     chart_name=chart_type,
-                    chart_title=aggregator.chart_title, color=chart_color)
-                meta['vega_chart_title'] = aggregator.chart_title
+                    chart_title=chart_title, color=chart_color)
+                meta['vega_chart_title'] = chart_title
 
         elif aggregation_dsl:
             # pylint: disable=unexpected-keyword-arg

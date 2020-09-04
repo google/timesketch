@@ -2,6 +2,8 @@
 
 You can run Timesketch on Docker in development mode.
 
+NOTE: It is not recommended to try to run on a system with less than 8 GB of RAM.
+
 ### Start a developer version of docker containers in this directory
 
 ```
@@ -44,3 +46,10 @@ sudo docker exec -it $CONTAINER_ID gunicorn --reload -b 0.0.0.0:5000 --log-file 
 You now can access your development version at http://127.0.0.1:5000/
 Log in with user: dev password: dev
 
+### Run tests
+
+```
+docker exec -w /usr/local/src/timesketch -it $CONTAINER_ID python3 run_tests.py --coverage
+```
+
+That will run all tests in your docker container. It is recommended to run all tests at least before creating a pull request.

@@ -15,6 +15,7 @@
 
 from __future__ import unicode_literals
 
+import logging
 import os
 import sys
 
@@ -70,10 +71,11 @@ def create_app(config=None):
         os.environ['TIMESKETCH_SETTINGS'] = config
         try:
             app.config.from_envvar('TIMESKETCH_SETTINGS')
-            if not app.config.get('EMAIL_RECIPIENTS'):
+
+            if 'EMAIL_USER_WHITELIST' in app.config:
                 sys.stderr.write(
-                    "Warning, EMAIL_USER_WHITELIST has been deprecated. "
-                    "Please update timesketch.conf.")
+                    'Warning, EMAIL_USER_WHITELIST has been deprecated. '
+                    'Please update timesketch.conf.')
         except IOError:
             sys.stderr.write(
                 'Config file {0} does not exist.\n'.format(config))
@@ -154,6 +156,24 @@ def create_app(config=None):
     CSRFProtect(app)
 
     return app
+
+
+def configure_logger():
+    """Configure the logger."""
+    class NoESFilter(logging.Filter):
+        """Custom filter to filter out ES logs"""
+        def filter(self, record):
+            """Filter out records."""
+            return not record.name.lower() == 'elasticsearch'
+
+    logger_formatter = logging.Formatter(
+        '[%(asctime)s] %(name)s/%(levelname)s %(message)s')
+    logger_filter = NoESFilter()
+    logger_object = logging.getLogger('timesketch')
+
+    for handler in logger_object.parent.handlers:
+        handler.setFormatter(logger_formatter)
+        handler.addFilter(logger_filter)
 
 
 def create_celery_app():

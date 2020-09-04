@@ -26,7 +26,7 @@ from . import credentials as ts_credentials
 from . import crypto
 
 
-logger = logging.getLogger('config_assistance_api')
+logger = logging.getLogger('timesketch_api.config_assistance')
 
 
 def get_client(config_dict=None, config_path='', token_password=''):

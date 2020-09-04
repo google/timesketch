@@ -41,7 +41,8 @@ def bad_request(message):
     return response
 
 
-def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None):
+def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None,
+                   index=None):
     """Run an aggregator and return back results.
 
     Args:
@@ -49,6 +50,7 @@ def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None):
         aggregator_name (str): the name of the aggregator class to run.
         aggregator_parameters (dict): dict containing the parameters used
             for running the aggregator.
+        index (list): the list of elasticsearch index names to use.
 
     Returns:
         Tuple[Object, Dict]: a tuple containing the aggregator result object
@@ -62,7 +64,7 @@ def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None):
     if not aggregator_parameters:
         aggregator_parameters = {}
 
-    aggregator = agg_class(sketch_id=sketch_id)
+    aggregator = agg_class(sketch_id=sketch_id, index=index)
 
     chart_type = aggregator_parameters.pop('supported_charts', None)
     chart_color = aggregator_parameters.pop('chart_color', '')
