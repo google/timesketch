@@ -51,7 +51,7 @@ class EndToEndTestManager(object):
             test_class = cls._class_registry[test_name.lower()]
         except KeyError:
             raise KeyError(
-                'No such chart type: {0:s}'.format(test_name.lower()))
+                'No such test type: {0:s}'.format(test_name.lower()))
         return test_class
 
     @classmethod

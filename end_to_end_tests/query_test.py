@@ -35,7 +35,6 @@ class QueryTest(interface.BaseEndToEndTest):
         response_json = self.sketch.explore(query_string="*")
         count = response_json.get('meta', {}).get('es_total_count', 0)
         self.assertions.assertEqual(count, 3205)
-        return True
 
 
 manager.EndToEndTestManager.register_test(QueryTest)

@@ -107,7 +107,7 @@ class BaseEndToEndTest(object):
         for test_name, test_func in self._get_test_methods():
             self._counter['tests'] += 1
             print('Running test: {0:s} ...'.format(
-                test_name), end="", flush=True)
+                test_name), end='', flush=True)
             try:
                 test_func()
             except Exception:  # pylint: disable=broad-except
