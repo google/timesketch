@@ -33,7 +33,6 @@ class BaseEndToEndTest(object):
     """Base class for end to end tests.
 
     Attributes:
-        name: Test name
         client: Instance of an API client
         sketch: Instance of Sketch object
         assertions: Instance of unittest.TestCase
