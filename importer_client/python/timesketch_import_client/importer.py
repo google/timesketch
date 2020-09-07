@@ -54,6 +54,7 @@ class ImportStreamer(object):
         self._dict_config_loaded = False
         self._csv_delimiter = None
         self._data_lines = []
+        self._data_type = None
         self._datetime_field = None
         self._format_string = None
         self._index = uuid.uuid4().hex
@@ -93,6 +94,8 @@ class ImportStreamer(object):
             my_dict['message'] = format_string.format(**my_dict)
 
         _ = my_dict.setdefault('timestamp_desc', self._timestamp_desc)
+        if self._data_type:
+            _ = my_dict.setdefault('data_type', self._data_type)
 
         if 'datetime' not in my_dict:
             date = ''
@@ -140,6 +143,9 @@ class ImportStreamer(object):
 
         if 'timestamp_desc' not in data_frame:
             data_frame['timestamp_desc'] = self._timestamp_desc
+
+        if self._data_type and 'data_type' not in data_frame:
+            data_frame['data_type'] = self._data_type
 
         if 'datetime' not in data_frame:
             if self._datetime_field and self._datetime_field in data_frame:
@@ -592,6 +598,10 @@ class ImportStreamer(object):
     def set_csv_delimiter(self, delimiter):
         """Set the CSV delimiter for CSV file parsing."""
         self._csv_delimiter = delimiter
+
+    def set_data_type(self, data_type):
+        """Sets the column where the data_type is defined in."""
+        self._data_type = data_type
 
     def set_datetime_column(self, column):
         """Sets the column where the timestamp is defined in."""
