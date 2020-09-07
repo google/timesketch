@@ -46,7 +46,6 @@ class ImportStreamer(object):
     # Define default values.
     DEFAULT_TEXT_ENCODING = 'utf-8'
     DEFAULT_TIMESTAMP_DESC = 'Time Logged'
-    DEFAULT_DATA_TYPE = 'data:entry'
 
     def __init__(self):
         """Initialize the upload streamer."""
@@ -55,6 +54,7 @@ class ImportStreamer(object):
         self._dict_config_loaded = False
         self._csv_delimiter = None
         self._data_lines = []
+        self._data_type = None
         self._datetime_field = None
         self._format_string = None
         self._index = uuid.uuid4().hex
@@ -66,7 +66,6 @@ class ImportStreamer(object):
 
         self._chunk = 1
 
-        self._data_type = self.DEFAULT_DATA_TYPE
         self._text_encoding = self.DEFAULT_TEXT_ENCODING
         self._timestamp_desc = self.DEFAULT_TIMESTAMP_DESC
         self._threshold_entry = self.DEFAULT_ENTRY_THRESHOLD
@@ -95,7 +94,8 @@ class ImportStreamer(object):
             my_dict['message'] = format_string.format(**my_dict)
 
         _ = my_dict.setdefault('timestamp_desc', self._timestamp_desc)
-        _ = my_dict.setdefault('data_type', self._data_type)
+        if self._data_type:
+            _ = my_dict.setdefault('data_type', self._data_type)
 
         if 'datetime' not in my_dict:
             date = ''
@@ -144,7 +144,7 @@ class ImportStreamer(object):
         if 'timestamp_desc' not in data_frame:
             data_frame['timestamp_desc'] = self._timestamp_desc
 
-        if 'data_type' not in data_frame:
+        if self._data_type and 'data_type' not in data_frame:
             data_frame['data_type'] = self._data_type
 
         if 'datetime' not in data_frame:
