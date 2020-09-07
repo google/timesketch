@@ -25,6 +25,9 @@ class QueryTest(interface.BaseEndToEndTest):
     def __init__(self):
         """Initialize the test."""
         super(QueryTest, self).__init__()
+
+    def setup(self):
+        """Import test timeline."""
         self.import_timeline('evtx.plaso')
 
     def test_wildcard_query(self):

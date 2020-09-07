@@ -11,14 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Interface for e2e tests."""
+"""Interface for end-to-end tests."""
 
 import time
 import unittest
 import os
 import inspect
 import traceback
-from collections import Counter
+import collections
 
 from timesketch_api_client.client import TimesketchApi
 
@@ -42,20 +42,21 @@ class BaseEndToEndTest(object):
     NAME = 'name'
 
     def __init__(self):
-        """Initialize the analyzer object."""
-        self.name = self.NAME
+        """Initialize the end-to-end test object."""
         self.client = TimesketchApi(
             host_uri=HOST_URI, username=USERNAME, password=PASSWORD)
-        self.sketch = self.client.create_sketch(name=self.name)
+        self.sketch = self.client.create_sketch(name=self.NAME)
         self.assertions = unittest.TestCase()
-        self._counter = Counter()
-        print('*** {0:s} ***'.format(self.name))
+        self._counter = collections.Counter()
 
     def import_timeline(self, filename):
         """Import a Plaso, CSV or JSONL file.
 
         Args:
             filename (str): Filename of the file to be imported.
+
+        Raises:
+            TimeoutError if import takes too long.
         """
         file_path = os.path.join(TEST_DATA_DIR, filename)
         print('Importing: {0:s}'.format(file_path))
@@ -64,17 +65,23 @@ class BaseEndToEndTest(object):
         timeline = self.sketch.upload(
             timeline_name=file_path, file_path=file_path)
 
-        # Poll the timeline status and wait for it to be ready
-        # TODO: Add retries and figure out how to fail.
+        # Poll the timeline status and wait for the timeline to be ready
+        max_time_seconds = 600  # Timeout after 10min
+        sleep_time_seconds = 5  # Sleep between API calls
+        max_retries = max_time_seconds / sleep_time_seconds
+        retry_count = 0
         while True:
+            if retry_count >= max_retries:
+                raise TimeoutError
             _ = timeline.lazyload_data(refresh_cache=True)
             status = timeline.status
             if status == 'ready':
                 break
-            time.sleep(5)  # seconds
+            retry_count += 1
+            time.sleep(sleep_time_seconds)
 
     def _get_test_methods(self):
-        """Inspect class and list all methods that mathes the critera.
+        """Inspect class and list all methods that matches the criteria.
 
         Yields:
             Function name and bound method.
@@ -83,12 +90,20 @@ class BaseEndToEndTest(object):
             if name.startswith('test_'):
                 yield name, func
 
+    def setup(self):
+        """Setup function that is run before any tests.
+
+        This is a good place to import any data that is needed.
+        """
+        return NotImplementedError
+
     def run_tests(self):
         """Run all test functions from the class.
 
         Returns:
             Counter of number of tests and errors.
         """
+        print('*** {0:s} ***'.format(self.NAME))
         for test_name, test_func in self._get_test_methods():
             self._counter['tests'] += 1
             print('Running test: {0:s} ...'.format(
