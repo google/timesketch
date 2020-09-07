@@ -75,6 +75,7 @@ class BaseEndToEndTest(object):
                 raise TimeoutError
             _ = timeline.lazyload_data(refresh_cache=True)
             status = timeline.status
+            # TODO: Do something with other statuses? (e.g. failed)
             if status == 'ready':
                 break
             retry_count += 1
@@ -111,7 +112,7 @@ class BaseEndToEndTest(object):
             try:
                 test_func()
             except Exception:  # pylint: disable=broad-except
-                # TODO Change to logging module instead of prints
+                # TODO: Change to logging module instead of prints
                 print(traceback.format_exc())
                 self._counter['errors'] += 1
                 continue
