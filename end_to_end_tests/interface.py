@@ -111,6 +111,7 @@ class BaseEndToEndTest(object):
             try:
                 test_func()
             except Exception:  # pylint: disable=broad-except
+                # TODO Change to logging module instead of prints
                 print(traceback.format_exc())
                 self._counter['errors'] += 1
                 continue
