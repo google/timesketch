@@ -46,6 +46,7 @@ class ImportStreamer(object):
     # Define default values.
     DEFAULT_TEXT_ENCODING = 'utf-8'
     DEFAULT_TIMESTAMP_DESC = 'Time Logged'
+    DEFAULT_DATA_TYPE = 'data:entry'
 
     def __init__(self):
         """Initialize the upload streamer."""
@@ -65,6 +66,7 @@ class ImportStreamer(object):
 
         self._chunk = 1
 
+        self._data_type = self.DEFAULT_DATA_TYPE
         self._text_encoding = self.DEFAULT_TEXT_ENCODING
         self._timestamp_desc = self.DEFAULT_TIMESTAMP_DESC
         self._threshold_entry = self.DEFAULT_ENTRY_THRESHOLD
@@ -93,6 +95,7 @@ class ImportStreamer(object):
             my_dict['message'] = format_string.format(**my_dict)
 
         _ = my_dict.setdefault('timestamp_desc', self._timestamp_desc)
+        _ = my_dict.setdefault('data_type', self._data_type)
 
         if 'datetime' not in my_dict:
             date = ''
@@ -140,6 +143,9 @@ class ImportStreamer(object):
 
         if 'timestamp_desc' not in data_frame:
             data_frame['timestamp_desc'] = self._timestamp_desc
+
+        if 'data_type' not in data_frame:
+            data_frame['data_type'] = self._data_type
 
         if 'datetime' not in data_frame:
             if self._datetime_field and self._datetime_field in data_frame:
@@ -592,6 +598,10 @@ class ImportStreamer(object):
     def set_csv_delimiter(self, delimiter):
         """Set the CSV delimiter for CSV file parsing."""
         self._csv_delimiter = delimiter
+
+    def set_data_type(self, data_type):
+        """Sets the column where the data_type is defined in."""
+        self._data_type = data_type
 
     def set_datetime_column(self, column):
         """Sets the column where the timestamp is defined in."""
