@@ -287,6 +287,10 @@ class ConfigAssistant:
         for name, value in timesketch_config.items():
             self.set_config(name, value)
 
+        cli_config = config['cli']
+        for name, value in cli_config.items():
+            self.set_config(name, value)
+
     def load_config_dict(self, config_dict):
         """Loads configuration from a dictionary.
 
@@ -328,6 +332,10 @@ class ConfigAssistant:
             'client_id': self._config.get('client_id', ''),
             'client_secret': self._config.get('client_secret', ''),
             'auth_mode': self._config.get('auth_mode', 'timesketch')
+        }
+        config['cli'] = {
+            'sketch': self._config.get('sketch', ''),
+            'output_format': self._config.get('output_format', 'tabular')
         }
 
         if 'cred_key' in self._config:
