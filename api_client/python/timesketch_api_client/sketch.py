@@ -1268,7 +1268,8 @@ class Sketch(resource.BaseResource):
 
         Args:
             message: A string that will be used as the message string.
-            date: A string with the timestamp of the message.
+            date: A string with the timestamp of the message. This should be
+                in a human readable format, eg: "2020-09-03T22:52:21".
             timestamp_desc : Description of the timestamp.
             attributes: A dict of extra attributes to add to the event.
             tags: A list of strings to include as tags.
