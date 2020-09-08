@@ -61,15 +61,12 @@ class BaseEndToEndTest(object):
         file_path = os.path.join(TEST_DATA_DIR, filename)
         print('Importing: {0:s}'.format(file_path))
 
+        # Import using the importer client.
         with importer.ImportStreamer() as streamer:
             streamer.set_sketch(self.sketch)
             streamer.set_timeline_name(file_path)
-            streamer.set_timestamp_description('test')
             streamer.add_file(file_path)
             timeline = streamer.timeline
-
-        #timeline = self.sketch.upload(
-        #    timeline_name=file_path, file_path=file_path)
 
         # Poll the timeline status and wait for the timeline to be ready
         max_time_seconds = 600  # Timeout after 10min
