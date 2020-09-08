@@ -20,7 +20,8 @@ import inspect
 import traceback
 import collections
 
-from timesketch_api_client.client import TimesketchApi
+from timesketch_api_client import client as api_client
+from timesketch_import_client import importer
 
 # Default values based on Docker config.
 TEST_DATA_DIR = '/usr/local/src/timesketch/end_to_end_tests/test_data'
@@ -33,7 +34,7 @@ class BaseEndToEndTest(object):
     """Base class for end to end tests.
 
     Attributes:
-        client: Instance of an API client
+        api: Instance of an API client
         sketch: Instance of Sketch object
         assertions: Instance of unittest.TestCase
     """
@@ -42,9 +43,9 @@ class BaseEndToEndTest(object):
 
     def __init__(self):
         """Initialize the end-to-end test object."""
-        self.client = TimesketchApi(
+        self.api = api_client.TimesketchApi(
             host_uri=HOST_URI, username=USERNAME, password=PASSWORD)
-        self.sketch = self.client.create_sketch(name=self.NAME)
+        self.sketch = self.api.create_sketch(name=self.NAME)
         self.assertions = unittest.TestCase()
         self._counter = collections.Counter()
 
@@ -60,9 +61,15 @@ class BaseEndToEndTest(object):
         file_path = os.path.join(TEST_DATA_DIR, filename)
         print('Importing: {0:s}'.format(file_path))
 
-        # TODO: Replace this with the import client
-        timeline = self.sketch.upload(
-            timeline_name=file_path, file_path=file_path)
+        with importer.ImportStreamer() as streamer:
+            streamer.set_sketch(self.sketch)
+            streamer.set_timeline_name(file_path)
+            streamer.set_timestamp_description('test')
+            streamer.add_file(file_path)
+            timeline = streamer.timeline
+
+        #timeline = self.sketch.upload(
+        #    timeline_name=file_path, file_path=file_path)
 
         # Poll the timeline status and wait for the timeline to be ready
         max_time_seconds = 600  # Timeout after 10min
