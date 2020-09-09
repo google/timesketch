@@ -274,7 +274,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                 abort(
                     HTTP_STATUS_CODE_FORBIDDEN,
                     'User does not have sufficient access rights to '
-                    'delete a sketch.')
+                    'unarchive a sketch.')
 
             return self._unarchive_sketch(sketch)
 
