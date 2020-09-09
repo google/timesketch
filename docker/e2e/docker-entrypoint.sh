@@ -2,6 +2,7 @@
 
 # Run the container the default way
 if [ "$1" = 'timesketch' ]; then
+
   # Set SECRET_KEY in /etc/timesketch/timesketch.conf if it isn't already set
   if grep -q "SECRET_KEY = '<KEY_GOES_HERE>'" /etc/timesketch/timesketch.conf; then
     OPENSSL_RAND=$( openssl rand -base64 32 )
@@ -46,7 +47,7 @@ if [ "$1" = 'timesketch' ]; then
     TIMESKETCH_USER="admin"
     echo "TIMESKETCH_USER set to default: ${TIMESKETCH_USER}";
   fi
-  if [ $TIMESKETCH_PASSWORD ]; then echo "TIMESKETCH_PASSWORD usage is discouraged. Use Docker Secrets instead and set TIMESKETCH_PASSWORD_FILE to /run/secrets/secret-name"; fi
+
   if [ $TIMESKETCH_PASSWORD_FILE ]; then TIMESKETCH_PASSWORD=$(cat $TIMESKETCH_PASSWORD_FILE); fi
   if [ -z ${TIMESKETCH_PASSWORD:+x} ]; then
     TIMESKETCH_PASSWORD="$(openssl rand -base64 32)"
@@ -60,8 +61,8 @@ if [ "$1" = 'timesketch' ]; then
 
   # Run the Timesketch server (without SSL)
   cd /tmp
-  exec `bash -c "/usr/local/bin/celery -A timesketch.lib.tasks worker --uid nobody --loglevel info &\
-  gunicorn -b 0.0.0.0:80 --access-logfile - --error-logfile - --log-level info --timeout 120 timesketch.wsgi:application"`
+  exec `bash -c "/usr/local/bin/celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & \
+  gunicorn --reload -b 0.0.0.0:80 --access-logfile - --error-logfile - --log-level info --timeout 120 timesketch.wsgi:application"`
 fi
 
 # Run a custom command on container start
