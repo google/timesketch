@@ -61,7 +61,6 @@ class BaseEndToEndTest(object):
         file_path = os.path.join(TEST_DATA_DIR, filename)
         print('Importing: {0:s}'.format(file_path))
 
-        # Import using the importer client.
         with importer.ImportStreamer() as streamer:
             streamer.set_sketch(self.sketch)
             streamer.set_timeline_name(file_path)
