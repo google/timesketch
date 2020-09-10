@@ -77,6 +77,7 @@ class ElasticsearchDataStore(object):
     def __init__(self, host='127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
         super(ElasticsearchDataStore, self).__init__()
+        self._error_container = {}
         self.client = Elasticsearch([{'host': host, 'port': port}])
         self.import_counter = Counter()
         self.import_events = []
@@ -592,11 +593,11 @@ class ElasticsearchDataStore(object):
         """Add event to Elasticsearch.
 
         Args:
-            flush_interval: Number of events to queue up before indexing
             index_name: Name of the index in Elasticsearch
             event_type: Type of event (e.g. plaso_event)
             event: Event dictionary
             event_id: Event Elasticsearch ID
+            flush_interval: Number of events to queue up before indexing
         """
         if event:
             for k, v in event.items():
@@ -663,6 +664,7 @@ class ElasticsearchDataStore(object):
 
         return_dict = {
             'number_of_events': len(self.import_events) / 2,
+            'total_events': self.import_counter['events'],
         }
 
         try:
@@ -673,8 +675,6 @@ class ElasticsearchDataStore(object):
 
         errors_in_upload = results.get('errors', False)
         return_dict['errors_in_upload'] = errors_in_upload
-        error_counter = Counter()
-        error_detail_counter = Counter()
 
         if errors_in_upload:
             items = results.get('items', [])
@@ -684,6 +684,19 @@ class ElasticsearchDataStore(object):
             for item in items:
                 index = item.get('index', {})
                 index_name = index.get('_index', 'N/A')
+
+                _ = self._error_container.setdefault(
+                    index_name, {
+                        'errors': [],
+                        'types': Counter(),
+                        'details': Counter()
+                    }
+                )
+
+                error_counter = self._error_container[index_name]['types']
+                error_detail_counter = self._error_container[index_name][
+                    'details']
+                error_list = self._error_container[index_name]['errors']
 
                 error = index.get('error', {})
                 status_code = index.get('status', 0)
@@ -706,14 +719,13 @@ class ElasticsearchDataStore(object):
                     caused_by.get('type', 'Unknown Type'),
                     caused_reason,
                 )
-                return_dict['errors'].append(error_msg)
+                error_list.append(error_msg)
                 es_logger.error(
                     'Unable to upload document: {0:s} to index {1:s} - '
                     '[{2:d}] {3:s}'.format(
                         doc_id, index_name, status_code, error_msg))
 
-        return_dict['error_types'] = error_counter
-        return_dict['error_details'] = error_detail_counter
+        return_dict['error_container'] = self._error_container
 
         self.import_events = []
         return return_dict

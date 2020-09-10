@@ -62,6 +62,45 @@ def setup_loggers(*args, **kwargs):
     configure_logger()
 
 
+def get_import_errors(error_container, index_name, total_count):
+    """Returns a string with error message or an empty string if no errors.
+
+    Args:
+      error_container: dict with error messages for each index.
+      index_name: string with the search index name.
+      total_count: integer with the total amount of events indexed.
+    """
+    if index_name not in error_container:
+        return ''
+
+    index_dict = error_container[index_name]
+    error_list = index_dict.get('errors', [])
+
+    if not error_list:
+        return ''
+
+    error_count = len(error_list)
+
+    error_types = index_dict.get('types')
+    error_details = index_dict.get('details')
+
+    if error_types:
+        top_type = error_types.most_common()[0][0]
+    else:
+        top_type = 'Unknown Reasons'
+
+    if error_details:
+        top_details = error_details.most_common()[0][0]
+    else:
+        top_details = 'Unknown Reasons'
+
+    return (
+        '{0:d} out of {1:d} events imported. Most common error type '
+        'is "{2:s}" with the detail of "{3:s}"').format(
+            total_count - error_count, total_count,
+            top_type, top_details)
+
+
 class SqlAlchemyTask(celery.Task):
     """An abstract task that runs on task completion."""
     abstract = True
@@ -519,30 +558,15 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
         for event in read_and_validate(file_handle):
             es.import_event(index_name, event_type, event)
             final_counter += 1
+
         # Import the remaining events
         results = es.flush_queued_events()
-        errors_in_upload = results.get('errors_in_upload', False)
-        if errors_in_upload:
-            error_count = len(results.get('errors', []))
-            total_count = int(results.get('number_of_events', 0))
 
-            error_types = results.get('error_types')
-            if error_types:
-                top_type = error_types.most_common()[0][0]
-            else:
-                top_type = 'Unknown Reasons'
-
-            error_details = results.get('error_details')
-            if error_details:
-                top_details = error_details.most_common()[0][0]
-            else:
-                top_details = 'Unknown Reasons'
-
-            error_msg = (
-                '{0:d} out of {1:d} events imported. Most common error type '
-                'is "{2:s}" with the detail of "{3:s}"').format(
-                    total_count - error_count, total_count,
-                    top_type, top_details)
+        error_container = results.get('error_container', {})
+        error_msg = get_import_errors(
+            error_container=error_container,
+            index_name=index_name,
+            total_count=results.get('total_events', 0))
 
     except errors.DataIngestionError as e:
         _set_timeline_status(index_name, status='fail', error_msg=str(e))

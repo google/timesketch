@@ -178,8 +178,13 @@ class ImportStreamer(object):
                 data_frame['datetime'] = data_frame['timestamp'].dt.strftime(
                     '%Y-%m-%dT%H:%M:%S%z')
         else:
-            date = pandas.to_datetime(data_frame['datetime'], utc=True)
-            data_frame['datetime'] = date.dt.strftime('%Y-%m-%dT%H:%M:%S%z')
+            try:
+                date = pandas.to_datetime(data_frame['datetime'], utc=True)
+                data_frame['datetime'] = date.dt.strftime('%Y-%m-%dT%H:%M:%S%z')
+            except Exception:  # pylint: disable=broad-except
+                logger.error(
+                    'Unable to change datetime, is it badly formed?',
+                    exc_info=True)
 
         # TODO: Support labels in uploads/imports.
         if 'label' in data_frame:
