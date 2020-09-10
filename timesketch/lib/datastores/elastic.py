@@ -658,8 +658,57 @@ class ElasticsearchDataStore(object):
         return self.import_counter['events']
 
     def flush_queued_events(self):
-        if self.import_events:
-            self.client.bulk(body=self.import_events)
+        if not self.import_events:
+            return {}
+
+        return_dict = {
+            'number_of_events': len(self.import_events) / 2,
+        }
+
+        results = self.client.bulk(body=self.import_events)
+        errors_in_upload = results.get('errors', False)
+        return_dict['errors_in_upload'] = errors_in_upload
+        error_counter = Counter()
+        error_detail_counter = Counter()
+
+        if errors_in_upload:
+            items = results.get('items', [])
+            return_dict['errors'] = []
+
+            es_logger.error('Errors while attempting to upload events.')
+            for item in items:
+                index = item.get('index', {})
+                index_name = index.get('_index', 'N/A')
+
+                error = index.get('error', {})
+                status_code = index.get('status', 0)
+                doc_id = index.get('_id', '')
+                caused_by = error.get('caused_by', {})
+
+                caused_reason = caused_by.get('reason', 'Unkown Detailed Reason')
+
+                error_counter[error.get('type')] += 1
+                detail_msg = '{0:s}/{1:s}'.format(
+                    caused_by.get('type', 'Unknown Detailed Type'),
+                    ' '.join(caused_reason.split()[:5])
+                )
+                error_detail_counter[detail_msg] += 1
+
+                error_msg = '<{0:s}> {1:s} [{2:s}/{3:s}]'.format(
+                    error.get('type', 'Unknown Type'),
+                    error.get('reason', 'No reason given'),
+                    caused_by.get('type', 'Unknown Type'),
+                    caused_reason,
+                )
+                return_dict['errors'].append(error_msg)
+                es_logger.error(
+                    'Unable to upload document: {0:s} to index {1:s}- [{2:d}] {3:s}'.format(
+                        doc_id, index_name, status_code, error_msg))
+
+        return_dict['error_types'] = error_counter
+        return_dict['error_details'] = error_detail_counter
+
+        return return_dict
 
     @property
     def version(self):

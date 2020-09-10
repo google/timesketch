@@ -73,6 +73,20 @@ def _parse_tag_field(row):
     return [row]
 
 
+def _scrub_special_tags(dict_obj):
+    """Remove Elastic specific fields from a dict."""
+    if '_id' in dict_obj:
+        _ = dict_obj.pop('_id')
+    if '_type' in dict_obj:
+        _ = dict_obj.pop('_type')
+    if '_index' in dict_obj:
+        _ = dict_obj.pop('_index')
+    if '_source' in dict_obj:
+        _ = dict_obj.pop('_source')
+    if 'label' in dict_obj:
+        _ = dict_obj.pop('label')
+
+
 def read_and_validate_csv(file_handle, delimiter=','):
     """Generator for reading a CSV file.
 
@@ -119,6 +133,8 @@ def read_and_validate_csv(file_handle, delimiter=','):
                 row['timestamp'] = str(normalized_timestamp)
                 if 'tag' in row:
                     row['tag'] = [x for x in _parse_tag_field(row['tag']) if x]
+
+                _scrub_special_tags(row)
             except ValueError:
                 continue
 
@@ -210,6 +226,7 @@ def read_and_validate_jsonl(file_handle):
             if 'tag' in linedict:
                 linedict['tag'] = [
                     x for x in _parse_tag_field(linedict['tag']) if x]
+            _scrub_special_tags(linedict)
             yield linedict
 
         except ValueError as e:

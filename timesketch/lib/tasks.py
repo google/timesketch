@@ -96,7 +96,7 @@ def _set_timeline_status(index_name, status, error_msg=None):
         searchindex.set_status(status)
 
         # Update description if there was a failure in ingestion
-        if error_msg and status == 'fail':
+        if error_msg: # and status == 'fail':
             # TODO: Don't overload the description field.
             searchindex.description = error_msg
 
@@ -512,12 +512,38 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
 
     # Reason for the broad exception catch is that we want to capture
     # all possible errors and exit the task.
+    final_counter = 0
+    error_msg = ''
+    error_count = 0
     try:
         es.create_index(index_name=index_name, doc_type=event_type)
         for event in read_and_validate(file_handle):
             es.import_event(index_name, event_type, event)
+            final_counter += 1
         # Import the remaining events
-        es.flush_queued_events()
+        results = es.flush_queued_events()
+        errors = results.get('errors_in_upload', False)
+        if errors:
+            error_count = len(results.get('errors', []))
+            total_count = int(results.get('number_of_events', 0))
+
+            error_types = results.get('error_types')
+            if error_types:
+                top_type = error_types.most_common()[0][0]
+            else:
+                top_type = 'Unknown Reasons'
+
+            error_details = results.get('error_details')
+            if error_details:
+                top_details = error_details.most_common()[0][0]
+            else:
+                top_details = 'Unknown Reasons'
+
+            error_msg = (
+                '{0:d} out of {1:d} events imported. Most common error type '
+                'is "{2:s}" with the detail of "{3:s}"').format(
+                    total_count - error_count, total_count,
+                    top_type, top_details)
 
     except errors.DataIngestionError as e:
         _set_timeline_status(index_name, status='fail', error_msg=str(e))
@@ -535,8 +561,19 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
         logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         return None
 
+    if error_count:
+        logger.info(
+            'Index timeline: [{0:s}] to index [{1:s}] - {2:d} out of {3:d} '
+            'events imported (in total {3:d} errors were discovered) '.format(
+                timeline_name, index_name, (final_counter - error_count),
+                final_counter, error_count))
+    else:
+        logger.info(
+            'Index timeline: [{0:s}] to index [{1:s}] - {2:d} '
+            'events imported.'.format(timeline_name, index_name, final_counter))
+
     # Set status to ready when done
-    _set_timeline_status(index_name, status='ready')
+    _set_timeline_status(index_name, status='ready', error_msg=error_msg)
 
     return index_name
 
