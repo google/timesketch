@@ -11,11 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Version information for Timesketch Import Client."""
+"""End to end test module."""
 
-__version__ = '20200907'
-
-
-def get_version():
-    """Returns the version information."""
-    return __version__
+# Register all tests by importing them.
+from . import query_test
