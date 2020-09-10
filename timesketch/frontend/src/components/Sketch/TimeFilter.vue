@@ -117,7 +117,7 @@ export default {
       this.startDateTime = startDateTimeMoment.format(dateTimeTemplate)
       this.endDateTime = endDateTimeMoment.format(dateTimeTemplate)
 
-      // Focus next input on enter
+      // Change focus to the 'endDateTime' input
       event.target.parentNode.parentNode.parentNode.getElementsByClassName('input')[1].focus()
 
     },
