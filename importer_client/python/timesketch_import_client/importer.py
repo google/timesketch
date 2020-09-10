@@ -119,6 +119,9 @@ class ImportStreamer(object):
 
             if date:
                 my_dict['datetime'] = date
+        else:
+            my_dict['datetime'] = utils.get_datestring_from_value(
+                my_dict['datetime'])
 
         # We don't want to include any columns that start with an underscore.
         underscore_columns = [x for x in my_dict if x.startswith('_')]
@@ -174,6 +177,9 @@ class ImportStreamer(object):
             if 'timestamp' in data_frame:
                 data_frame['datetime'] = data_frame['timestamp'].dt.strftime(
                     '%Y-%m-%dT%H:%M:%S%z')
+        else:
+            date = pandas.to_datetime(data_frame['datetime'], utc=True)
+            data_frame['datetime'] = date.dt.strftime('%Y-%m-%dT%H:%M:%S%z')
 
         # We don't want to include any columns that start with an underscore.
         columns = list(
