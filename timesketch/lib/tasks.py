@@ -522,8 +522,8 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
             final_counter += 1
         # Import the remaining events
         results = es.flush_queued_events()
-        errors = results.get('errors_in_upload', False)
-        if errors:
+        errors_in_upload = results.get('errors_in_upload', False)
+        if errors_in_upload:
             error_count = len(results.get('errors', []))
             total_count = int(results.get('number_of_events', 0))
 
@@ -564,7 +564,7 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
     if error_count:
         logger.info(
             'Index timeline: [{0:s}] to index [{1:s}] - {2:d} out of {3:d} '
-            'events imported (in total {3:d} errors were discovered) '.format(
+            'events imported (in total {4:d} errors were discovered) '.format(
                 timeline_name, index_name, (final_counter - error_count),
                 final_counter, error_count))
     else:

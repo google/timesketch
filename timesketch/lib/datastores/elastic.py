@@ -640,24 +640,24 @@ class ElasticsearchDataStore(object):
             self.import_counter['events'] += 1
 
             if self.import_counter['events'] % int(flush_interval) == 0:
-                try:
-                    self.client.bulk(body=self.import_events)
-                except (ConnectionTimeout, socket.timeout):
-                    # TODO: Add a retry here.
-                    es_logger.error('Unable to add events', exc_info=True)
+                _ = self.flush_queued_events()
                 self.import_events = []
         else:
             # Import the remaining events in the queue.
             if self.import_events:
-                try:
-                    self.client.bulk(body=self.import_events)
-                except (ConnectionTimeout, socket.timeout):
-                    # TODO: Add a retry here.
-                    es_logger.error('Unable to add events', exc_info=True)
+                _ = self.flush_queued_events()
 
         return self.import_counter['events']
 
     def flush_queued_events(self):
+        """Flush all queued events.
+
+        Returns:
+            dict: A dict object that contains the number of events
+                that were sent to Elastic as well as information
+                on whether there were any errors, and what the
+                details of these errors if any.
+        """
         if not self.import_events:
             return {}
 
@@ -665,7 +665,12 @@ class ElasticsearchDataStore(object):
             'number_of_events': len(self.import_events) / 2,
         }
 
-        results = self.client.bulk(body=self.import_events)
+        try:
+            results = self.client.bulk(body=self.import_events)
+        except (ConnectionTimeout, socket.timeout):
+            # TODO: Add a retry here.
+            es_logger.error('Unable to add events', exc_info=True)
+
         errors_in_upload = results.get('errors', False)
         return_dict['errors_in_upload'] = errors_in_upload
         error_counter = Counter()
@@ -685,7 +690,8 @@ class ElasticsearchDataStore(object):
                 doc_id = index.get('_id', '')
                 caused_by = error.get('caused_by', {})
 
-                caused_reason = caused_by.get('reason', 'Unkown Detailed Reason')
+                caused_reason = caused_by.get(
+                    'reason', 'Unkown Detailed Reason')
 
                 error_counter[error.get('type')] += 1
                 detail_msg = '{0:s}/{1:s}'.format(
@@ -702,12 +708,14 @@ class ElasticsearchDataStore(object):
                 )
                 return_dict['errors'].append(error_msg)
                 es_logger.error(
-                    'Unable to upload document: {0:s} to index {1:s}- [{2:d}] {3:s}'.format(
+                    'Unable to upload document: {0:s} to index {1:s} - '
+                    '[{2:d}] {3:s}'.format(
                         doc_id, index_name, status_code, error_msg))
 
         return_dict['error_types'] = error_counter
         return_dict['error_details'] = error_detail_counter
 
+        self.import_events = []
         return return_dict
 
     @property
