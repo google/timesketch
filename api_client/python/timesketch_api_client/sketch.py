@@ -1234,11 +1234,20 @@ class Sketch(resource.BaseResource):
         meta['total_number_of_events_sent_by_client'] = len(events)
         return meta
 
-    def search_by_label(self, label_name, as_pandas=False):
+    def search_by_label(
+            self, label_name, return_fields=None, max_entries=None,
+            as_pandas=False):
         """Searches for all events containing a given label.
 
         Args:
             label_name: A string representing the label to search for.
+            return_fields (str): A comma separated string with a list of fields
+                that should be included in the response. Optional and defaults
+                to None.
+            max_entries (int): Optional integer denoting a best effort to limit
+                the output size to the number of events. Events are read in,
+                10k at a time so there may be more events in the answer back
+                than this number denotes, this is a best effort.
             as_pandas: Optional bool that determines if the results should
                 be returned back as a dictionary or a Pandas DataFrame.
 
@@ -1271,7 +1280,8 @@ class Sketch(resource.BaseResource):
             }
         }
         return self.explore(
-            query_dsl=json.dumps({'query': query}), as_pandas=as_pandas)
+            query_dsl=json.dumps({'query': query}), return_fields=return_fields,
+            max_entries=max_entries, as_pandas=as_pandas)
 
     def add_event(
             self, message, date, timestamp_desc, attributes=None,
