@@ -83,8 +83,6 @@ def _scrub_special_tags(dict_obj):
         _ = dict_obj.pop('_index')
     if '_source' in dict_obj:
         _ = dict_obj.pop('_source')
-    if 'label' in dict_obj:
-        _ = dict_obj.pop('label')
 
 
 def read_and_validate_csv(file_handle, delimiter=','):

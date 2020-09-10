@@ -91,12 +91,11 @@ def _set_timeline_status(index_name, status, error_msg=None):
     """
     searchindices = SearchIndex.query.filter_by(index_name=index_name).all()
 
-    # Set status
     for searchindex in searchindices:
         searchindex.set_status(status)
 
-        # Update description if there was a failure in ingestion
-        if error_msg: # and status == 'fail':
+        # Update description if there was a failure in ingestion.
+        if error_msg:
             # TODO: Don't overload the description field.
             searchindex.description = error_msg
 
