@@ -181,6 +181,13 @@ class ImportStreamer(object):
             date = pandas.to_datetime(data_frame['datetime'], utc=True)
             data_frame['datetime'] = date.dt.strftime('%Y-%m-%dT%H:%M:%S%z')
 
+        # TODO: Support labels in uploads/imports.
+        if 'label' in data_frame:
+            del data_frame['label']
+            logger.warning(
+                'Labels cannot be imported at this time. Therefore the '
+                'label column was dropped from the dataset.')
+
         # We don't want to include any columns that start with an underscore.
         columns = list(
             data_frame.columns[~data_frame.columns.str.contains('^_')])
