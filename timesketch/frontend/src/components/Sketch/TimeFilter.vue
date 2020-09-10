@@ -16,13 +16,12 @@ limitations under the License.
 <template>
 
   <div>
-
     <div class="field is-horizontal">
       <div class="field-body">
 
         <div class="field">
           <p class="control">
-            <input v-on:keyup.enter="formatDateTime" class="input" v-model="startDateTime" type="text" placeholder="2019-07-07T10:00:01">
+            <input class="input" v-model="startDateTime" type="text" placeholder="2019-07-07T10:00:01" v-on:keyup.enter="formatDateTime" v-on:blur="endDateTime || formatDateTime($event)">
           </p>
         </div>
 
@@ -30,7 +29,7 @@ limitations under the License.
 
         <div class="field">
           <p class="control">
-            <input class="input" v-model="endDateTime" type="text" placeholder="2019-07-07T10:00:01">
+            <input class="input" v-model="endDateTime" type="text" placeholder="2019-07-07T10:00:01" v-on:keyup.enter="selectedChip ? update($event) : submit($event)">
           </p>
         </div>
       </div>
@@ -47,7 +46,8 @@ limitations under the License.
             </a>
           </p>
           <p class="control">
-            <button :disabled="!(startDateTime && endDateTime)" class="button is-success is-outlined" v-on:click="submit">+ Add time range</button>
+            <button v-if="selectedChip" :disabled="!(startDateTime && endDateTime)" class="button is-success is-outlined" v-on:click="update">Update</button>
+            <button v-else :disabled="!(startDateTime && endDateTime)" class="button is-success is-outlined" v-on:click="submit">+ Add time range</button>
           </p>
         </div>
     </div>
@@ -57,15 +57,16 @@ limitations under the License.
 
 <script>
 export default {
+  props: ['start', 'end', 'selectedChip'],
   data () {
     return {
-      startDateTime: '',
-      endDateTime: '',
-      chip: null
+      startDateTime: this.start,
+      endDateTime: this.end,
+      chip: this.selectedChip
     }
   },
   methods: {
-    formatDateTime: function () {
+    formatDateTime: function (event) {
       const startDateTimeString = this.startDateTime
       let endDateTimeString = ''
       let dateTimeTemplate = 'YYYY-MM-DDTHH:mm:ss'
@@ -116,6 +117,9 @@ export default {
       this.startDateTime = startDateTimeMoment.format(dateTimeTemplate)
       this.endDateTime = endDateTimeMoment.format(dateTimeTemplate)
 
+      // Focus next input on enter
+      event.target.parentNode.parentNode.parentNode.getElementsByClassName('input')[1].focus()
+
     },
     submit: function () {
       if (!(this.startDateTime && this.endDateTime)) {
@@ -130,6 +134,19 @@ export default {
       this.$emit('addChip', this.chip)
       this.startDateTime = ''
       this.endDateTime = ''
+
+      // Close the menu
+      this.$parent.$parent.isActive = false;
+    },
+    update: function() {
+      if (!(this.startDateTime && this.endDateTime)) {
+        return
+      }
+      this.chip['value'] = this.startDateTime + ',' + this.endDateTime;
+      this.$emit('updateChip', this.chip)
+
+      // Close the menu
+      this.$parent.$parent.isActive = false;
     }
   }
 }
