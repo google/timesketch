@@ -47,7 +47,7 @@ limitations under the License.
               <span class="icon is-small">
                 <i class="fas fa-save"></i>
               </span>
-              <span>Save</span>
+              <span>Save as view</span>
             </a>
 
             <span class="card-header-icon">
@@ -94,7 +94,11 @@ limitations under the License.
                     <br>
                     <br>
                     <b-switch type="is-info" v-model="activeStarFilter" v-on:input="toggleLabelChip('__ts_star')">
-                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Show only starred events
+                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>Show starred events
+                    </b-switch>
+                    <br>
+                    <b-switch type="is-info" v-model="activeCommentFilter" v-on:input="toggleLabelChip('__ts_comment')">
+                      <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-comment"></i></span>Show events with comments
                     </b-switch>
                   </b-dropdown-item>
                 </b-dropdown>
@@ -115,6 +119,7 @@ limitations under the License.
               <span v-for="(chip, index) in currentQueryFilter.chips" :key="index">
                 <span v-if="chip.type !== 'datetime_range'" class="tag is-light is-rounded" style="margin-right:7px;">
                   <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
+                  <span v-else-if="chip.value === '__ts_comment'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-comment"></i></span>
                   <span v-else-if="chip.type === 'label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
                   <span style="margin-right:7px;">{{ chip | filterChip }}</span>
                   <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
@@ -188,7 +193,7 @@ limitations under the License.
                 </div>
                 <div class="level-item">
                   <div v-if="eventList.objects.length" class="select is-small">
-                    <select v-model="currentQueryFilter.size" @change="search">
+                    <select v-model="currentQueryFilter.size" @change="resetPagination">
                       <option v-bind:value="currentQueryFilter.size">{{ currentQueryFilter.size }}</option>
                       <option value="10">10</option>
                       <option value="20">20</option>
@@ -201,12 +206,9 @@ limitations under the License.
                   </div>
                 </div>
                 <div class="level-item">
-                  <div v-if="eventList.objects.length" class="select is-small">
-                    <select v-model="currentQueryFilter.order" @change="search">
-                      <option value="desc">desc</option>
-                      <option value="asc">asc</option>
-                    </select>
-                  </div>
+                  <button v-if="eventList.objects.length" class="button is-small" style="border-radius: 4px;" v-on:click="changeSortOrder">
+                    {{ currentQueryFilter.order }}
+                  </button>
                 </div>
                 <div class="level-item">
                   <div v-if="eventList.objects.length">
@@ -215,17 +217,17 @@ limitations under the License.
                     <span class="icon is-small">
                       <i class="fas fa-table"></i>
                     </span>
-                        <span>Fields ({{ selectedFields.length }})</span>
+                        <span>Customize columns</span>
                       </button>
                       <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
                         <div v-bind:class="{ tsdropdown: expandFieldDropdown }" style="width:300px;">
-                          <multiselect style="display: block" v-if="meta.mappings" :options="meta.mappings" :value="selectedFieldsProxy" @open="expandFieldDropdown = true" @close="expandFieldDropdown = false" @input="updateSelectedFields" :multiple="true" :searchable="true" :close-on-select="false" label="field" track-by="field" placeholder="Add more fields ..."></multiselect>
+                          <multiselect style="display: block" v-if="meta.mappings" :options="meta.mappings" :value="selectedFieldsProxy" @open="expandFieldDropdown = true" @close="expandFieldDropdown = false" @input="updateSelectedFields" :multiple="true" :searchable="true" :close-on-select="false" label="field" track-by="field" placeholder="Add more columns ..."></multiselect>
                         </div>
                       </b-dropdown-item>
                       <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
                     <span v-if="selectedFields.length">
                       <br>
-                      <strong>Selected fields</strong>
+                      <strong>Selected columns</strong>
                       <br><br>
                     </span>
                         <div class="tags">
@@ -245,11 +247,23 @@ limitations under the License.
                         <b-switch type="is-info" v-model="displayOptions.showEmojis">
                           <span>Show emojis</span>
                         </b-switch>
+                        <br>
+                        <b-switch type="is-info" v-model="displayOptions.showMillis">
+                          <span>Show microseconds</span>
+                        </b-switch>
 
                       </b-dropdown-item>
                     </b-dropdown>
                   </div>
                 </div>
+
+                <div class="level-item">
+                  <button v-if="eventList.objects.length" class="button is-small" style="border-radius: 4px;" v-on:click="exportSearchResult">
+                    <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-file-export"></i></span>
+                    <span>Export to CSV</span>
+                  </button>
+                </div>
+
               </div>
             </nav>
 
@@ -316,9 +330,12 @@ export default {
       showSearch: true,
       searchInProgress: false,
       activeStarFilter: false,
+      activeCommentFilter: false,
       currentPage: 1,
       contextEvent: false,
       originalContext: false,
+      isFullPage: true,
+      loadingComponent: null,
       eventList: {
         meta: {},
         objects: []
@@ -342,7 +359,8 @@ export default {
       selectedEvents: {},
       displayOptions: {
         showTags: true,
-        showEmojis: true
+        showEmojis: true,
+        showMillis: false
       }
     }
   },
@@ -416,6 +434,28 @@ export default {
         this.eventList.meta = response.data.meta
       }).catch((e) => {})
     },
+    exportSearchResult: function () {
+      this.loadingOpen()
+      let formData = {
+        'query': this.currentQueryString,
+        'filter': this.currentQueryFilter,
+        'file_name': "export.zip"
+      }
+      ApiClient.exportSearchResult(this.sketchId, formData).then((response) => {
+        let fileURL = window.URL.createObjectURL(new Blob([response.data]));
+        let fileLink = document.createElement('a');
+        let fileName = 'export.zip'
+        fileLink.href = fileURL;
+        fileLink.setAttribute('download', fileName);
+        document.body.appendChild(fileLink);
+        fileLink.click();
+        this.loadingClose()
+      }).catch((e) => {
+        console.error(e)
+        this.loadingClose()
+      })
+
+    },
     searchView: function (viewId) {
       // Reset selected events.
       this.selectedEvents = {}
@@ -440,11 +480,15 @@ export default {
           this.currentQueryFilter.indices = allIndices
         }
         this.activeStarFilter = false
+        this.activeCommentFilter = false
         let chips = this.currentQueryFilter.chips
         if (chips) {
           for (let i = 0; i < chips.length; i++) {
             if (chips[i].value === '__ts_star') {
               this.activeStarFilter = true
+            }
+            if (chips[i].value === '__ts_comment') {
+              this.activeCommentFilter = true
             }
           }
         }
@@ -510,6 +554,9 @@ export default {
       if (chip.value === '__ts_star') {
         this.activeStarFilter = false
       }
+      if (chip.value === '__ts_comment') {
+        this.activeCommentFilter = false
+      }
       this.currentQueryFilter.chips.splice(chipIndex, 1)
       this.search()
     },
@@ -542,7 +589,15 @@ export default {
       this.addChip(chip)
     },
     paginate: function (pageNum) {
-      this.currentQueryFilter.from  = (pageNum * this.currentQueryFilter.size) - this.currentQueryFilter.size
+      this.currentQueryFilter.from  = ((pageNum * this.currentQueryFilter.size) - this.currentQueryFilter.size)
+      this.search()
+    },
+    resetPagination: function () {
+      // TODO: Can we keep position of the pagination when changing page size?
+      // We need to calculate the new position in the page range and it is not
+      // trivial with the current pagination UI component we use.
+      this.currentQueryFilter.from = 0
+      this.currentPage = 1
       this.search()
     },
     updateSelectedFields: function (value) {
@@ -579,8 +634,25 @@ export default {
 
       EventBus.$emit('toggleStar', this.selectedEvents)
 
+    },
+    changeSortOrder: function () {
+      if (this.currentQueryFilter.order === 'asc') {
+        this.currentQueryFilter.order = 'desc'
+      } else {
+        this.currentQueryFilter.order = 'asc'
+      }
+      this.search()
+    },
+    loadingOpen: function () {
+      this.loadingComponent = this.$buefy.loading.open({
+        container: this.isFullPage ? null : this.$refs.element.$el
+      })
+    },
+    loadingClose: function () {
+      this.loadingComponent.close()
     }
   },
+
   watch: {
     numEvents: function (newVal) {
       this.currentQueryFilter.size = newVal

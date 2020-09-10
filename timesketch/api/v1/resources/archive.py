@@ -33,13 +33,13 @@ from flask_restful import Resource
 import pandas as pd
 
 from timesketch import version
+from timesketch.api.v1 import export
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
-from timesketch.lib.stories import api_fetcher as story_api_fetcher
 from timesketch.lib.stories import manager as story_export_manager
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import Sketch
@@ -48,141 +48,11 @@ from timesketch.models.sketch import Sketch
 logger = logging.getLogger('timesketch.api_archive')
 
 
-def _export_aggregation(aggregation, sketch, zip_file):
-    """Export an aggregation from a sketch and write it to a ZIP file.
-
-    Args:
-        aggregation (timesketch.models.sketch.Aggregation): an aggregation
-            object.
-        sketch (timesketch.models.sketch.Sketch): a sketch object.
-        zip_file (ZipFile): a zip file handle that can be used to write
-            content to.
-    """
-    name = '{0:04d}_{1:s}'.format(aggregation.id, aggregation.name)
-    parameters = json.loads(aggregation.parameters)
-    result_obj, meta = utils.run_aggregator(
-        sketch.id, aggregator_name=aggregation.agg_type,
-        aggregator_parameters=parameters)
-
-    zip_file.writestr(
-        'aggregations/{0:s}.meta'.format(name), data=json.dumps(meta))
-
-    html = result_obj.to_chart(
-        chart_name=meta.get('chart_type'),
-        chart_title=aggregation.name,
-        color=meta.get('chart_color'),
-        interactive=True, as_html=True)
-    zip_file.writestr(
-        'aggregations/{0:s}.html'.format(name), data=html)
-
-    string_io = io.StringIO()
-    data_frame = result_obj.to_pandas()
-    data_frame.to_csv(string_io, index=False)
-    string_io.seek(0)
-    zip_file.writestr(
-        'aggregations/{0:s}.csv'.format(name), data=string_io.read())
-
-
-def _export_aggregation_group(group, sketch, zip_file):
-    """Export an aggregation group from a sketch and write it to a ZIP file.
-
-    Args:
-        group (timesketch.models.sketch.AggregationGroup): an aggregation
-            group object.
-        sketch (timesketch.models.sketch.Sketch): a sketch object.
-        zip_file (ZipFile): a zip file handle that can be used to write
-            content to.
-    """
-    name = '{0:04d}_{1:s}'.format(group.id, group.name)
-    chart, _, meta = utils.run_aggregator_group(group, sketch_id=sketch.id)
-
-    zip_file.writestr(
-        'aggregation_groups/{0:s}.meta'.format(name), json.dumps(meta))
-    zip_file.writestr(
-        'aggregation_groups/{0:s}.html'.format(name), chart.to_html())
-
-
-def _export_story(story, sketch, story_exporter, zip_file):
-    """Export a story from a sketch into a ZIP file.
-
-    Args:
-        story (timesketch.models.sketch.Story): a story object.
-        sketch (timesketch.models.sketch.Sketch): a sketch object.
-        story_exporter (timesketch.lib.stories.StoryExporter): an instance of
-            a story exporter that can be used to export story content.
-        zip_file (ZipFile): a zip file handle that can be used to write
-            content to.
-    """
-    with story_exporter() as exporter:
-        data_fetcher = story_api_fetcher.ApiDataFetcher()
-        data_fetcher.set_sketch_id(sketch.id)
-
-        exporter.set_data_fetcher(data_fetcher)
-        exporter.from_string(story.content)
-        zip_file.writestr(
-            'stories/{0:04d}_{1:s}.html'.format(
-                story.id, story.title),
-            data=exporter.export_story())
-
-
-def _query_results_to_dataframe(result, sketch):
-    """Returns a data frame from a Elastic query result dict.
-
-    Args:
-        result (dict): a dict that contains the response from a
-            Elastic datastore search.
-        sketch (timesketch.models.sketch.Sketch): a sketch object.
-
-    Returns:
-        pd.DataFrame: a pandas DataFrame with the results from
-            the query.
-    """
-    lines = []
-    for event in result['hits']['hits']:
-        line = event['_source']
-        line.setdefault('label', [])
-        line['_id'] = event['_id']
-        line['_type'] = event['_type']
-        line['_index'] = event['_index']
-        try:
-            for label in line['timesketch_label']:
-                if sketch.id != label['sketch_id']:
-                    continue
-                line['label'].append(label['name'])
-            del line['timesketch_label']
-        except KeyError:
-            pass
-
-        lines.append(line)
-    data_frame = pd.DataFrame(lines)
-    del lines
-    return data_frame
-
-
-def _query_results_to_filehandle(result, sketch):
-    """Returns a data frame from a Elastic query result dict.
-
-    Args:
-        result (dict): a dict that contains the response from a
-            Elastic datastore search.
-        sketch (timesketch.models.sketch.Sketch): a sketch object.
-
-    Returns:
-        pd.DataFrame: a pandas DataFrame with the results from
-            the query.
-    """
-    fh = io.StringIO()
-    data_frame = _query_results_to_dataframe(result, sketch)
-    data_frame.to_csv(fh, index=False)
-    fh.seek(0)
-    return fh
-
-
 class SketchArchiveResource(resources.ResourceMixin, Resource):
     """Resource to archive a sketch."""
 
     DEFAULT_QUERY_FILTER = {
-        'size':10000,
+        'size': 10000,
         'terminate_after': 10000
     }
 
@@ -212,16 +82,22 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         Returns:
             A sketch in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        if current_user.admin:
+            sketch = Sketch.query.get(sketch_id)
+        else:
+            sketch = Sketch.query.get_with_acl(sketch_id)
+
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
         if not sketch.has_permission(current_user, 'read'):
-            abort(
-                HTTP_STATUS_CODE_FORBIDDEN, (
-                    'User does not have sufficient access rights to '
-                    'read the sketch.'))
+            if not current_user.admin:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN, (
+                        'User does not have sufficient access rights to '
+                        'read the sketch.'))
+
         meta = {
             'is_archived': sketch.get_status.status == 'archived',
             'sketch_id': sketch.id,
@@ -240,7 +116,11 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         Returns:
             A sketch in JSON (instance of flask.wrappers.Response)
         """
-        sketch = Sketch.query.get_with_acl(sketch_id)
+        if current_user.admin:
+            sketch = Sketch.query.get(sketch_id)
+        else:
+            sketch = Sketch.query.get_with_acl(sketch_id)
+
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
@@ -253,10 +133,11 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         action = form.get('action', '')
         if action == 'archive':
             if not sketch.has_permission(current_user, 'delete'):
-                abort(
-                    HTTP_STATUS_CODE_FORBIDDEN,
-                    'User does not have sufficient access rights to '
-                    'delete a sketch.')
+                if not current_user.admin:
+                    abort(
+                        HTTP_STATUS_CODE_FORBIDDEN,
+                        'User does not have sufficient access rights to '
+                        'delete a sketch.')
 
             return self._archive_sketch(sketch)
 
@@ -271,10 +152,11 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         if action == 'unarchive':
             if not sketch.has_permission(current_user, 'delete'):
-                abort(
-                    HTTP_STATUS_CODE_FORBIDDEN,
-                    'User does not have sufficient access rights to '
-                    'unarchive a sketch.')
+                if not current_user.admin:
+                    abort(
+                        HTTP_STATUS_CODE_FORBIDDEN,
+                        'User does not have sufficient access rights to '
+                        'unarchive a sketch.')
 
             return self._unarchive_sketch(sketch)
 
@@ -320,7 +202,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             query_dsl=json.dumps(query_dsl),
             indices=self.sketch_indices)
 
-        return _query_results_to_dataframe(result, sketch)
+        return export.query_results_to_dataframe(result, sketch)
 
     def _export_events_with_comments(self, sketch, zip_file):
         """Export all events that have comments and store in a ZIP file."""
@@ -373,7 +255,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             query_dsl='',
             indices=self.sketch_indices)
 
-        fh = _query_results_to_filehandle(result, sketch)
+        fh = export.query_results_to_filehandle(result, sketch)
         zip_file.writestr(
             'events/tagged_events.csv', data=fh.read())
 
@@ -426,16 +308,16 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             zip_file.writestr('METADATA', data=json.dumps(meta))
 
             for story in sketch.stories:
-                _export_story(story, sketch, story_exporter, zip_file)
+                export.export_story(story, sketch, story_exporter, zip_file)
 
             for aggregation in sketch.aggregations:
-                _export_aggregation(aggregation, sketch, zip_file)
+                export.export_aggregation(aggregation, sketch, zip_file)
 
             for view in sketch.views:
                 self._export_view(view, sketch, zip_file)
 
             for group in sketch.aggregationgroups:
-                _export_aggregation_group(group, sketch, zip_file)
+                export.export_aggregation_group(group, sketch, zip_file)
 
             self._export_events_with_comments(sketch, zip_file)
             self._export_starred_events(sketch, zip_file)
@@ -470,21 +352,62 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
         if not indices or '_all' in indices:
             indices = self.sketch_indices
 
+        # Ignoring the size limits in views to reduce the amount of queries
+        # needed to get all the data.
+        query_filter['terminate_after'] = 10000
+        query_filter['size'] = 10000
+
         query_dsl = view.query_dsl
         if query_dsl:
             query_dict = json.loads(query_dsl)
             if not query_dict:
                 query_dsl = None
 
-        # TODO (kiddi): Enable scrolling support.
         result = self.datastore.search(
             sketch_id=sketch.id,
             query_string=view.query_string,
             query_filter=query_filter,
             query_dsl=query_dsl,
+            enable_scroll=True,
             indices=indices)
 
-        fh = _query_results_to_filehandle(result, sketch)
+        scroll_id = result.get('_scroll_id', '')
+        if scroll_id:
+            data_frame = export.query_results_to_dataframe(result, sketch)
+
+            total_count = result.get(
+                'hits', {}).get('total', {}).get('value', 0)
+
+            if isinstance(total_count, str):
+                try:
+                    total_count = int(total_count, 10)
+                except ValueError:
+                    total_count = 0
+
+            event_count = len(result['hits']['hits'])
+
+            while event_count < total_count:
+                # pylint: disable=unexpected-keyword-arg
+                result = self.datastore.client.scroll(
+                    scroll_id=scroll_id, scroll='1m')
+                event_count += len(result['hits']['hits'])
+                add_frame = export.query_results_to_dataframe(result, sketch)
+                if add_frame.shape[0]:
+                    data_frame = pd.concat([data_frame, add_frame], sort=False)
+                else:
+                    logger.warning(
+                        'Data Frame returned from a search operation was '
+                        'empty, count {0:d} out of {1:d} total. Query is: '
+                        '"{2:s}"'.format(
+                            event_count, total_count,
+                            view.query_string or query_dsl))
+
+            fh = io.StringIO()
+            data_frame.to_csv(fh, index=False)
+            fh.seek(0)
+        else:
+            fh = export.query_results_to_filehandle(result, sketch)
+
         zip_file.writestr(
             'views/{0:s}.csv'.format(name), data=fh.read())
 

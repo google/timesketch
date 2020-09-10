@@ -49,7 +49,7 @@ class BaseChainPlugin(object):
         return True
 
     def build_chain(self, base_event, chain_id):
-        """Build chain from base event.
+        """Returns a chain of events from a base event.
 
         Args:
             base_event: the base event of the chain, used to construct further
@@ -57,24 +57,21 @@ class BaseChainPlugin(object):
             chain_id: a string with the chain UUID value.
 
         Returns:
-            An integer with the total number of discovered events.
+            A list of dicts with the chain and event attached.
         """
-        total_events = 0
+        events = []
         for event in self.get_chained_events(base_event):
-            chain_id_list = event.source.get('chain_id_list', [])
-            chain_id_list.append(chain_id)
-            chain_plugins = event.source.get('chain_plugins', [])
-            chain_plugins.append(self.NAME)
-
-            attributes = {
-                'chain_id_list': chain_id_list,
-                'chain_plugins': chain_plugins}
-
-            event.add_attributes(attributes)
-            event.add_emojis(self._EMOJIS)
-            event.commit()
-            total_events += 1
-        return total_events
+            chain = {
+                'chain_id': chain_id,
+                'plugin': self.NAME,
+                'is_base': False
+            }
+            events.append({
+                'event_id': event.event_id,
+                'event': event,
+                'chain': chain,
+            })
+        return events
 
     @abc.abstractmethod
     def get_chained_events(self, base_event):

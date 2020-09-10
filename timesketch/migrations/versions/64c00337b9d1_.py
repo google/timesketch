@@ -1,4 +1,4 @@
-"""Add description to SearchTemaplate
+"""Add description to SearchTemplate.
 
 Revision ID: 64c00337b9d1
 Revises: 6e69f2cfcac1

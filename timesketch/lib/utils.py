@@ -33,6 +33,7 @@ from flask import current_app
 
 from timesketch.lib import errors
 
+logger = logging.getLogger('timesketch.utils')
 
 # Set CSV field size limit to systems max value.
 csv.field_size_limit(sys.maxsize)
@@ -50,6 +51,26 @@ def random_color():
     hue %= 1
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
     return '{0:02X}{1:02X}{2:02X}'.format(rgb[0], rgb[1], rgb[2])
+
+
+def _parse_tag_field(row):
+    """Reading in a tag field and converting to a list of strings."""
+    if isinstance(row, (list, tuple)):
+        return row
+
+    if not isinstance(row, str):
+        row = str(row)
+
+    if row.startswith('[') and row.endswith(']'):
+        return json.loads(row)
+
+    if row == '-':
+        return []
+
+    if ',' in row:
+        return row.split(',')
+
+    return [row]
 
 
 def read_and_validate_csv(file_handle, delimiter=','):
@@ -96,13 +117,15 @@ def read_and_validate_csv(file_handle, delimiter=','):
                     time.mktime(parsed_datetime.utctimetuple()) * 1000000)
                 normalized_timestamp += parsed_datetime.microsecond
                 row['timestamp'] = str(normalized_timestamp)
+                if 'tag' in row:
+                    row['tag'] = [x for x in _parse_tag_field(row['tag']) if x]
             except ValueError:
                 continue
 
             yield row
     except csv.Error as e:
         error_string = 'Unable to read file, with error: {0!s}'.format(e)
-        logging.error(error_string)
+        logger.error(error_string)
         raise errors.DataIngestionError(error_string)
 
 
@@ -184,6 +207,9 @@ def read_and_validate_jsonl(file_handle):
                     'Missing field(s) at line {0:n}: {1:s}'.format(
                         lineno, ','.join(missing_fields)))
 
+            if 'tag' in linedict:
+                linedict['tag'] = [
+                    x for x in _parse_tag_field(linedict['tag']) if x]
             yield linedict
 
         except ValueError as e:

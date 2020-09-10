@@ -40,6 +40,9 @@ from timesketch.models.sketch import View
 from timesketch.models.sketch import Analysis
 
 
+logger = logging.getLogger('timesketch.analyzers')
+
+
 def _flush_datastore_decorator(func):
     """Decorator that flushes the bulk insert queue in the datastore."""
     def wrapper(self, *args, **kwargs):
@@ -91,7 +94,7 @@ def get_yaml_config(file_name):
             return yaml.safe_load(fh)
         except yaml.parser.ParserError as exception:
             # pylint: disable=logging-format-interpolation
-            logging.warning((
+            logger.warning((
                 'Unable to read in YAML config file, '
                 'with error: {0!s}').format(exception))
             return {}
@@ -702,6 +705,7 @@ class BaseIndexAnalyzer(object):
         """
         self.name = self.NAME
         self.index_name = index_name
+        self.timeline_name = ''
         self.datastore = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
@@ -711,7 +715,7 @@ class BaseIndexAnalyzer(object):
 
     def event_stream(
             self, query_string=None, query_filter=None, query_dsl=None,
-            indices=None, return_fields=None):
+            indices=None, return_fields=None, scroll=True):
         """Search ElasticSearch.
 
         Args:
@@ -720,6 +724,8 @@ class BaseIndexAnalyzer(object):
             query_dsl: Dictionary containing Elasticsearch DSL query.
             indices: List of indices to query.
             return_fields: List of fields to return.
+            scroll: Boolean determining whether we support scrolling searches
+                or not. Defaults to True.
 
         Returns:
             Generator of Event objects.
@@ -754,7 +760,8 @@ class BaseIndexAnalyzer(object):
             query_filter=query_filter,
             query_dsl=query_dsl,
             indices=indices,
-            return_fields=return_fields
+            return_fields=return_fields,
+            enable_scroll=scroll,
         )
         for event in event_generator:
             yield Event(event, self.datastore, sketch=self.sketch)
@@ -773,6 +780,7 @@ class BaseIndexAnalyzer(object):
         analysis.set_status('STARTED')
 
         timeline = analysis.timeline
+        self.timeline_name = timeline.name
         searchindex = timeline.searchindex
 
         counter = 0
@@ -783,7 +791,7 @@ class BaseIndexAnalyzer(object):
                 break
 
             if status == 'fail':
-                logging.error(
+                logger.error(
                     'Unable to run analyzer on a failed index ({0:s})'.format(
                         searchindex.index_name))
                 return 'Failed'
@@ -791,7 +799,7 @@ class BaseIndexAnalyzer(object):
             time.sleep(self.SECONDS_PER_WAIT)
             counter += 1
             if counter >= self.MAXIMUM_WAITS:
-                logging.error(
+                logger.error(
                     'Indexing has taken too long time, aborting run of '
                     'analyzer')
                 return 'Failed'
