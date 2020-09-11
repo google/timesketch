@@ -1,59 +1,86 @@
 ### Developers guide
 
-#### Python dependencies
-We use pip-tools and virtualenv for development. Pip-tools must be installed
-inside a virtualenv, installing it system-wide will cause issues.
-If you want to add a new python dependency, please add it to `requirements.in`
-and then run `pip-compile` to pin it's version in `requirements.txt`.
-Use `pip-sync` instead of `pip install -r requirements.txt` when possible.
-Use `pip-compile --upgrade` to keep dependencies up to date.
+It is recommended to develop Timesketch using a docker container. Refer to [Docker Readme](../docker/dev/README.md) for details on how to bring up the development container.
 
-#### Frontend dependencies
-Add Node.js 8.x repo
+Note: Exclamation mark `!` denotes commands that should run in the docker container shell, dollar sign `$` denotes commands to run in your local shell.
 
-    $ curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | sudo apt-key add -
-    $ echo "deb https://deb.nodesource.com/node_8.x $(lsb_release -s -c) main"  | sudo tee /etc/apt/sources.list.d/nodesource.list
+#### Frontend development
 
-Add Yarn repo
+First we need to get an interactive shell to the container to install the frontend modules:
+```
+$ docker exec -it $CONTAINER_ID bash
+```
+Then inside the container shell go to the Timesketch frontend directory. 
+```
+! cd /usr/local/src/timesketch/timesketch/frontend
+```
+Note that this directory in the container is mounted as volume from your local repo and mirrors changes to your local repo.
 
-    $ curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-    $ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-
-Install Node.js and Yarn
-
-    $ apt-get update && apt-get install nodejs yarn
-
-Cd to timesketch repository root (folder that contains `package.json` - on docker it is: `/usr/local/src/timesketch/timesketch/frontend`)
-and install Node.js packages (this will create `node_modules/` folder in the
-current directory and install packages from `package.json` there)
-
-    $ yarn install
+Install node dependencies
+```
+! npm install
+```
+This will create `node_modules/` folder from `package.json` in the frontend directory.
+```
+! yarn install
+```
 
 #### Running tests and linters
-The main entry point is `run_tests.py`. Please note that for testing and
-linting python/frontend code you need respectively python/frontend dependencies
-installed.
+
+The main entry point is `run_tests.py` in Timesketch root. Please note that for testing 
+and linting python/frontend code in your local environment you need respectively python/
+frontend dependencies installed.
 
 For more information:
-
-    $ run_tests.py --help
-
-To run frontend tests in watch mode, use
-
-    $ yarn run test:watch
-
+```
+! run_tests.py --help
+```
+To run frontend tests in watch mode, cd to `frontend` directory and use
+```
+! yarn run test --watch
+```
 To run TSLint in watch mode, use
-
-    $ yarn run lint:watch
+```
+! yarn run lint --watch
+```
 
 #### Building Timesketch frontend
+
 To build frontend files and put bundles in `timesketch/static/dist/`, use
-
-    $ yarn run build
-
+```
+! yarn run build
+```
 To watch for changes in code and rebuild automatically, use
+```
+! yarn run build --watch
+```
+This is what you would normally use when making changes to the frontend.
+Changes are not instantaneous, it takes a couple of seconds to rebuild. It's best to
+keep this interactive shell to your container running so you can monitor the re-build.
 
-    $ yarn run build:watch
+Don't forget to refresh page if your browser doesn't automatically load the changes.
 
 #### Packaging
+
 Before pushing package to PyPI, make sure you build the frontend before.
+
+#### Local development
+
+You may work on the frontend for your local environment for integration with your IDE or other reasons. This is not recommended however as it may cause clashes with your installed NodeJS.
+
+Add Node.js 8.x repo
+```
+$ curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | sudo apt-key add -
+$ echo "deb https://deb.nodesource.com/node_8.x $(lsb_release -s -c) main"  | sudo tee /etc/apt/sources.list.d/nodesource.list
+```
+Add Yarn repo
+```
+$ curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+$ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+```
+Install Node.js and Yarn
+```
+$ apt-get update && apt-get install nodejs yarn
+```
+After that you would run the same steps as with docker container to install frontend 
+dependencies and build/test.
