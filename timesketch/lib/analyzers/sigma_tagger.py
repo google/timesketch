@@ -128,12 +128,11 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                                 tagged_events_counter = self.run_sigma_rule(
                                     sigma_rule, tag_name)
                                 tags_applied[tag_name] += tagged_events_counter
-                            except elasticsearch.TransportError \
-                                    as es_TransportError:
+                            except elasticsearch.TransportError as e:
                                 logger.error(
                                     'Timeout generating rule in file {0:s}: '
                                     '{1!s} waiting for 10 seconds'.format(
-                                        rule_file_path, es_TransportError))
+                                        rule_file_path, e), exc_info=True)
                                 time.sleep(10) # waiting 10 seconds
 
         total_tagged_events = sum(tags_applied.values())
