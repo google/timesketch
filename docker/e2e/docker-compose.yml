@@ -10,8 +10,8 @@ services:
       - ELASTIC_PORT=9200
       - REDIS_ADDRESS=redis
       - REDIS_PORT=6379
-      - TIMESKETCH_USER=${TIMESKETCH_USER}
-      - TIMESKETCH_PASSWORD=${TIMESKETCH_PASSWORD}
+      - TIMESKETCH_USER=test
+      - TIMESKETCH_PASSWORD=test
     build:
       context: ../../
       dockerfile: ./docker/e2e/Dockerfile
@@ -32,7 +32,7 @@ services:
     # uncomment the following lines to control JVM memory utilization
     # in smaller deployments with minimal resources
     #  - ES_JAVA_OPTS= -Xms1g -Xmx1g # 1G min/1G max
-    image: elasticsearch:7.6.0
+    image: elasticsearch:${ELASTICSEARCH_VERSION}
     ports:
       - "9200:9200"
       - "9300:9300"
