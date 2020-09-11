@@ -6,6 +6,7 @@ from requests.exceptions import ConnectionError
 
 from commands.config import config_group
 from commands.timelines import timelines_group
+from commands.views import views_group
 from commands.explore import explore_group
 from commands.analysis import analysis_group
 
@@ -51,11 +52,17 @@ class TimesketchCli(object):
 
     @property
     def output(self):
-        return self.config_assistant.get_config('output')
+        output_format = self.config_assistant.get_config('output')
+        if not output_format:
+            self.config_assistant.set_config('output', 'tabular')
+            self.config_assistant.save_config()
+            output_format = 'tabular'
+        return output_format
 
     @output.setter
     def output(self, output_format):
-        supported_formats = ['tabular', 'csv']
+        supported_formats = ['text', 'csv', 'tabular']
+
         if output_format not in supported_formats:
             click.echo(
                 'Unsupported format. Choose between {}'.format(', '.join(
@@ -72,12 +79,27 @@ class TimesketchCli(object):
               help='Specify which sketch to work in.')
 @click.pass_context
 def cli(ctx, sketch):
+    """
+    Timesketch CLI client.
+
+    This tool provides similar features as the web client does.
+    It operates within the context of a sketch so you either need to
+    provide an existing sketch or create a new one.
+
+    Basic options for editing the sketch is provided, e.g re-naming and
+    changing the description as well as archiving and exporting. For
+    other actions not available in this CLI client the web client should be
+    used.
+
+    For detailed help on each command, run  <command> --help
+    """
     ctx.obj = TimesketchCli(sketch)
 
 
 # Register all commands.
 cli.add_command(config_group)
 cli.add_command(timelines_group)
+cli.add_command(views_group)
 cli.add_command(explore_group)
 cli.add_command(analysis_group)
 

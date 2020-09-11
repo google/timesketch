@@ -2,7 +2,7 @@ import click
 import time
 
 
-@click.group('analysis')
+@click.group('analysis', help='Run and list analyzers.')
 @click.pass_obj
 def analysis_group(unused_state):
     pass

@@ -1,7 +1,7 @@
 import click
 
 
-@click.group('config')
+@click.group('config', help='Configure the tool.')
 @click.pass_obj
 def config_group(state):
     pass
