@@ -23,6 +23,7 @@ import os
 import time
 import uuid
 
+import numpy
 import pandas
 
 from timesketch_api_client import timeline
@@ -54,6 +55,7 @@ class ImportStreamer(object):
         self._dict_config_loaded = False
         self._csv_delimiter = None
         self._data_lines = []
+        self._data_type = None
         self._datetime_field = None
         self._format_string = None
         self._index = uuid.uuid4().hex
@@ -93,6 +95,8 @@ class ImportStreamer(object):
             my_dict['message'] = format_string.format(**my_dict)
 
         _ = my_dict.setdefault('timestamp_desc', self._timestamp_desc)
+        if self._data_type:
+            _ = my_dict.setdefault('data_type', self._data_type)
 
         if 'datetime' not in my_dict:
             date = ''
@@ -116,6 +120,9 @@ class ImportStreamer(object):
 
             if date:
                 my_dict['datetime'] = date
+        else:
+            my_dict['datetime'] = utils.get_datestring_from_value(
+                my_dict['datetime'])
 
         # We don't want to include any columns that start with an underscore.
         underscore_columns = [x for x in my_dict if x.startswith('_')]
@@ -140,6 +147,9 @@ class ImportStreamer(object):
 
         if 'timestamp_desc' not in data_frame:
             data_frame['timestamp_desc'] = self._timestamp_desc
+
+        if self._data_type and 'data_type' not in data_frame:
+            data_frame['data_type'] = self._data_type
 
         if 'datetime' not in data_frame:
             if self._datetime_field and self._datetime_field in data_frame:
@@ -168,6 +178,23 @@ class ImportStreamer(object):
             if 'timestamp' in data_frame:
                 data_frame['datetime'] = data_frame['timestamp'].dt.strftime(
                     '%Y-%m-%dT%H:%M:%S%z')
+                data_frame['timestamp'] = data_frame[
+                    'timestamp'].astype(numpy.int64) / 1e9
+        else:
+            try:
+                date = pandas.to_datetime(data_frame['datetime'], utc=True)
+                data_frame['datetime'] = date.dt.strftime('%Y-%m-%dT%H:%M:%S%z')
+            except Exception:  # pylint: disable=broad-except
+                logger.error(
+                    'Unable to change datetime, is it badly formed?',
+                    exc_info=True)
+
+        # TODO: Support labels in uploads/imports.
+        if 'label' in data_frame:
+            del data_frame['label']
+            logger.warning(
+                'Labels cannot be imported at this time. Therefore the '
+                'label column was dropped from the dataset.')
 
         # We don't want to include any columns that start with an underscore.
         columns = list(
@@ -592,6 +619,10 @@ class ImportStreamer(object):
     def set_csv_delimiter(self, delimiter):
         """Set the CSV delimiter for CSV file parsing."""
         self._csv_delimiter = delimiter
+
+    def set_data_type(self, data_type):
+        """Sets the column where the data_type is defined in."""
+        self._data_type = data_type
 
     def set_datetime_column(self, column):
         """Sets the column where the timestamp is defined in."""

@@ -64,7 +64,7 @@ limitations under the License.
       <div class="container">
         <b-tabs v-model="activeTab">
 
-          <b-tab-item label="My sketches" :disabled="!mySketches.length">
+            <b-tab-item label="My sketches" :disabled="!mySketches.length">
               <div class="card">
                 <div class="card-content">
                   <ts-sketch-list :sketches="mySketches"></ts-sketch-list>
@@ -113,6 +113,8 @@ export default {
       myArchivedSketches: [],
       sharedSketches: [],
       loading: true,
+      isFullPage: true,
+      loadingComponent: null,
       search: ''
     }
   },
@@ -123,7 +125,20 @@ export default {
       })
     }
   },
+  methods: {
+    loadingOpen: function () {
+      this.loading = true
+      this.loadingComponent = this.$buefy.loading.open({
+        container: this.isFullPage ? null : this.$refs.element.$el
+      })
+    },
+    loadingClose: function () {
+      this.loading = false
+      this.loadingComponent.close()
+    }
+  },
   created: function () {
+    this.loadingOpen()
     this.$store.dispatch('resetState')
     ApiClient.getSketchList().then((response) => {
       let sketches = response.data.objects
@@ -138,7 +153,7 @@ export default {
         return sketch.user !== currentUser
       })
       this.allSketches = sketches
-      this.loading = false
+      this.loadingClose()
     }).catch((e) => {
       console.error(e)
     })
