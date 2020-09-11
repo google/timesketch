@@ -38,4 +38,4 @@ class TimelineTest(unittest.TestCase):
         self.assertIsInstance(timeline, timeline_lib.Timeline)
         self.assertEqual(timeline.id, 1)
         self.assertEqual(timeline.name, 'test')
-        self.assertEqual(timeline.index, 'test')
+        self.assertEqual(timeline.index_name, 'test')

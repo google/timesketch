@@ -771,7 +771,16 @@ class Sketch(resource.BaseResource):
         if self.is_archived():
             raise RuntimeError('Unable to query an archived sketch.')
 
-        if not query_filter:
+        if query_filter:
+            stop_size = query_filter.get('size', 0)
+            terminate_after = query_filter.get('size', 0)
+            if terminate_after and (terminate_after < stop_size):
+                stop_size = terminate_after
+
+            scrolling = bool(stop_size < self.DEFAULT_SIZE_LIMIT)
+        else:
+            scrolling = True
+            stop_size = 0
             query_filter = {
                 'time_start': None,
                 'time_end': None,
@@ -803,7 +812,7 @@ class Sketch(resource.BaseResource):
             'filter': query_filter,
             'dsl': query_dsl,
             'fields': return_fields,
-            'enable_scroll': True,
+            'enable_scroll': scrolling,
             'file_name': file_name,
         }
 
@@ -828,6 +837,9 @@ class Sketch(resource.BaseResource):
         while count > 0:
             if max_entries and total_count >= max_entries:
                 break
+            if stop_size and total_count >= stop_size:
+                break
+
             more_response = self.api.session.post(resource_url, json=form_data)
             if not error.check_return_status(more_response, logger):
                 error.error_message(
