@@ -14,7 +14,8 @@ You do not have to install Timesketch or any docker for that.
 To be able to run it, you need a python environment with some requirements
 installed.
 
-A good guide to install a venv is published by github [here](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/26/python-virtual-env/)
+A good guide to install a venv is published by github 
+[here](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/26/python-virtual-env/)
 
 ```
 python3 analyzer_run.py
@@ -25,7 +26,8 @@ analyzer_run.py: error: the following arguments are required: PATH_TO_ANALYZER, 
 ### create your sample data
 
 You can create your sample data either in CSV or JSONL with the same format
-that Timesketch can ingest. To learn more about that visit [CreateTimelineFromJSONorCSV](CreateTimelineFromJSONorCSV.md) 
+that Timesketch can ingest. To learn more about that visit 
+[CreateTimelineFromJSONorCSV](CreateTimelineFromJSONorCSV.md) 
 
 ### use existing sample data
 
@@ -94,5 +96,8 @@ Result from analyzer run:
 
 ### Remark
 
-Do not try to run analyzer_run.py in your docker instance of Timesketch
+* Do not try to run analyzer_run.py in your docker instance of Timesketch
 as it will mix certain things with the actual installed Timesketch instance.
+
+* Analyzer_run does not actually execute the ES query. Instead all event data 
+passed to the script are assumed to "match" the analyzer.
