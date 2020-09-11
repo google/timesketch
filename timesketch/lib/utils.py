@@ -38,6 +38,9 @@ logger = logging.getLogger('timesketch.utils')
 # Set CSV field size limit to systems max value.
 csv.field_size_limit(sys.maxsize)
 
+# Fields to scrub from timelines.
+FIELDS_TO_REMOVE = ['_id', '_type', '_index', '_source']
+
 
 def random_color():
     """Generates a random color.
@@ -71,6 +74,13 @@ def _parse_tag_field(row):
         return row.split(',')
 
     return [row]
+
+
+def _scrub_special_tags(dict_obj):
+    """Remove Elastic specific fields from a dict."""
+    for field in FIELDS_TO_REMOVE:
+        if field in dict_obj:
+            _ = dict_obj.pop(field)
 
 
 def read_and_validate_csv(file_handle, delimiter=','):
@@ -119,6 +129,8 @@ def read_and_validate_csv(file_handle, delimiter=','):
                 row['timestamp'] = str(normalized_timestamp)
                 if 'tag' in row:
                     row['tag'] = [x for x in _parse_tag_field(row['tag']) if x]
+
+                _scrub_special_tags(row)
             except ValueError:
                 continue
 
@@ -210,6 +222,7 @@ def read_and_validate_jsonl(file_handle):
             if 'tag' in linedict:
                 linedict['tag'] = [
                     x for x in _parse_tag_field(linedict['tag']) if x]
+            _scrub_special_tags(linedict)
             yield linedict
 
         except ValueError as e:
