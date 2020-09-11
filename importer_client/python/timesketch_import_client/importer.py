@@ -179,7 +179,7 @@ class ImportStreamer(object):
                 data_frame['datetime'] = data_frame['timestamp'].dt.strftime(
                     '%Y-%m-%dT%H:%M:%S%z')
                 data_frame['timestamp'] = data_frame[
-                    'timestamp'].astype(np.int64) / 1e9
+                    'timestamp'].astype(numpy.int64) / 1e9
         else:
             try:
                 date = pandas.to_datetime(data_frame['datetime'], utc=True)
