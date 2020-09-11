@@ -18,6 +18,7 @@ import os
 import json
 import logging
 
+import numpy
 import pandas
 
 from . import analyzer
@@ -172,6 +173,10 @@ class Sketch(resource.BaseResource):
             except pandas.errors.OutOfBoundsDatetime:
                 pass
         elif 'timestamp' in data_frame:
+            if data_frame['timestamp'].dtype != numpy.int64:
+                data_frame['timestamp'] = data_frame['timestamp'].astype(
+                    numpy.int64)
+
             try:
                 data_frame['datetime'] = pandas.to_datetime(
                     data_frame.timestamp / 1e6, utc=True, unit='s')
