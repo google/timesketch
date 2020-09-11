@@ -23,6 +23,7 @@ import os
 import time
 import uuid
 
+import numpy
 import pandas
 
 from timesketch_api_client import timeline
@@ -177,6 +178,8 @@ class ImportStreamer(object):
             if 'timestamp' in data_frame:
                 data_frame['datetime'] = data_frame['timestamp'].dt.strftime(
                     '%Y-%m-%dT%H:%M:%S%z')
+                data_frame['timestamp'] = data_frame[
+                    'timestamp'].astype(np.int64) / 1e9
         else:
             try:
                 date = pandas.to_datetime(data_frame['datetime'], utc=True)
