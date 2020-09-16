@@ -335,7 +335,7 @@ class ConfigAssistant:
         }
         config['cli'] = {
             'sketch': self._config.get('sketch', ''),
-            'output': self._config.get('output', 'tabular')
+            'output_format': self._config.get('output_format', 'tabular')
         }
 
         if 'cred_key' in self._config:

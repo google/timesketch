@@ -4,11 +4,15 @@ import sys
 
 from requests.exceptions import ConnectionError
 
-from commands.config import config_group
-from commands.timelines import timelines_group
-from commands.views import views_group
-from commands.explore import explore_group
-from commands.analysis import analysis_group
+from timesketch_cli_client.commands.config import config_group
+from timesketch_cli_client.commands.timelines import timelines_group
+from timesketch_cli_client.commands.views import views_group
+from timesketch_cli_client.commands.explore import explore_group
+from timesketch_cli_client.commands.analyze import analysis_group
+from timesketch_cli_client.commands.sketch import sketch_group
+from timesketch_cli_client.commands.importer import importer
+
+from .definitions import DEFAULT_OUTPUT_FORMAT
 
 
 class TimesketchCli(object):
@@ -17,7 +21,7 @@ class TimesketchCli(object):
         try:
             self.api = timesketch_config.get_client()
         except ConnectionError:
-            print('No connection to server. Is it running?')
+            click.echo('No connection to server. Is it running?')
             sys.exit(1)
 
         self.config_assistant = timesketch_config.ConfigAssistant()
@@ -40,37 +44,18 @@ class TimesketchCli(object):
         try:
             active_sketch.name
         except KeyError:
-            print('No such sketch or you don\'t have permission to access it')
             sys.exit(1)
 
         return active_sketch
 
-    @sketch.setter
-    def sketch(self, sketch_id):
-        self.config_assistant.set_config('sketch', sketch_id)
-        self.config_assistant.save_config()
-
     @property
-    def output(self):
-        output_format = self.config_assistant.get_config('output')
-        if not output_format:
-            self.config_assistant.set_config('output', 'tabular')
+    def output_format(self):
+        _output_format = self.config_assistant.get_config('output_format')
+        if not _output_format:
+            self.config_assistant.set_config('output', DEFAULT_OUTPUT_FORMAT)
             self.config_assistant.save_config()
-            output_format = 'tabular'
-        return output_format
-
-    @output.setter
-    def output(self, output_format):
-        supported_formats = ['text', 'csv', 'tabular']
-
-        if output_format not in supported_formats:
-            click.echo(
-                'Unsupported format. Choose between {}'.format(', '.join(
-                    supported_formats)))
-            sys.exit(1)
-
-        self.config_assistant.set_config('output', output_format)
-        self.config_assistant.save_config()
+            _output_format = DEFAULT_OUTPUT_FORMAT
+        return _output_format
 
 
 @click.group(context_settings={'help_option_names': ['-h', '--help']})
@@ -102,6 +87,8 @@ cli.add_command(timelines_group)
 cli.add_command(views_group)
 cli.add_command(explore_group)
 cli.add_command(analysis_group)
+cli.add_command(sketch_group)
+cli.add_command(importer)
 
 
 if __name__ == '__main__':
