@@ -23,6 +23,7 @@ import os
 import time
 import uuid
 
+import numpy
 import pandas
 
 from timesketch_api_client import timeline
@@ -119,6 +120,9 @@ class ImportStreamer(object):
 
             if date:
                 my_dict['datetime'] = date
+        else:
+            my_dict['datetime'] = utils.get_datestring_from_value(
+                my_dict['datetime'])
 
         # We don't want to include any columns that start with an underscore.
         underscore_columns = [x for x in my_dict if x.startswith('_')]
@@ -174,6 +178,23 @@ class ImportStreamer(object):
             if 'timestamp' in data_frame:
                 data_frame['datetime'] = data_frame['timestamp'].dt.strftime(
                     '%Y-%m-%dT%H:%M:%S%z')
+                data_frame['timestamp'] = data_frame[
+                    'timestamp'].astype(numpy.int64) / 1e9
+        else:
+            try:
+                date = pandas.to_datetime(data_frame['datetime'], utc=True)
+                data_frame['datetime'] = date.dt.strftime('%Y-%m-%dT%H:%M:%S%z')
+            except Exception:  # pylint: disable=broad-except
+                logger.error(
+                    'Unable to change datetime, is it badly formed?',
+                    exc_info=True)
+
+        # TODO: Support labels in uploads/imports.
+        if 'label' in data_frame:
+            del data_frame['label']
+            logger.warning(
+                'Labels cannot be imported at this time. Therefore the '
+                'label column was dropped from the dataset.')
 
         # We don't want to include any columns that start with an underscore.
         columns = list(

@@ -34,6 +34,7 @@ limitations under the License.
                 <li>Original name: {{ timeline.searchindex.name }}</li>
                 <li>Added by: {{ timeline.searchindex.user.username }}</li>
                 <li>Added: {{ timeline.searchindex.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
+                <li v-if="timelineStatus === 'ready' && (timeline.searchindex.description !== '' && timeline.searchindex.description !== timeline.name)">Import errors: <b>{{ timeline.searchindex.description }}</b></li>
               </ul>
 
               <span v-if="timelineStatus === 'fail'">
