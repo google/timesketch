@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <div>
     <span v-for="timeline in sketch.active_timelines" :key="timeline.id" class="tag is-medium" style="cursor: pointer; margin-right: 7px;margin-bottom:7px;" v-bind:style="timelineColor(timeline)" v-on:click="toggleIndex(timeline.searchindex.index_name)">
-      {{ timeline.name }} <span v-if="indexIsEnabled(timeline.searchindex.index_name) && countPerIndex" class="tag is-small" style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);">{{ countPerIndex[timeline.searchindex.index_name] || '0' }}</span>
+      {{ timeline.name }} <span v-if="indexIsEnabled(timeline.searchindex.index_name) && countPerIndex" class="tag is-small" style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.3);color:#333;">{{ countPerIndex[timeline.searchindex.index_name] || '0' }}</span>
     </span>
     <div v-if="sketch.active_timelines.length > 3" style="margin-top:7px;">
       <span style="text-decoration: underline; cursor: pointer; margin-right: 10px;" v-on:click="enableAllIndices">Enable all</span>
@@ -26,8 +26,15 @@ limitations under the License.
 </template>
 
 <script>
+import EventBus from "../../main"
+
 export default {
   props: ['currentQueryFilter', 'countPerIndex'],
+  data () {
+    return {
+      isDarkTheme: false,
+    }
+  },
   computed: {
     sketch () {
       return this.$store.state.sketch
@@ -35,17 +42,26 @@ export default {
   },
   methods: {
     timelineColor (timeline) {
+      this.isDarkTheme = localStorage.theme === 'dark'
       let indexName = timeline.searchindex.index_name
-      let color = timeline.color
-      if (!color.startsWith('#')) {
-        color = '#' + color
+      let backgroundColor = timeline.color
+      if (!backgroundColor.startsWith('#')) {
+        backgroundColor = '#' + backgroundColor
       }
       // Grey out the index if it is not selected.
       if (!this.currentQueryFilter.indices.includes(indexName)) {
-        color = '#f5f5f5'
+        backgroundColor = '#f5f5f5'
+      }
+
+      if (this.isDarkTheme) {
+        return {
+          'background-color': backgroundColor,
+          'filter': 'grayscale(25%)',
+          'color': '#333'
+        }
       }
       return {
-        'background-color': color
+        'background-color': backgroundColor
       }
     },
     toggleIndex: function (indexName) {
@@ -73,6 +89,9 @@ export default {
     },
     indexIsEnabled: function (index) {
       return this.currentQueryFilter.indices.includes(index)
+    },
+    toggleTheme: function () {
+      this.isDarkTheme =! this.isDarkTheme
     }
   },
   created: function () {
@@ -83,6 +102,7 @@ export default {
       })
       this.currentQueryFilter.indices = allIndices
     }
+    EventBus.$on('isDarkTheme', this.toggleTheme)
   }
 }
 </script>

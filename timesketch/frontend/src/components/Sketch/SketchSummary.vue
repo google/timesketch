@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <div>
     <h4 class="title is-4" :contenteditable="meta.permissions.write" v-text="sketch.name" @blur="onEditTitle" @keydown.enter.prevent="onEditTitle"></h4>
-    <p :contenteditable="meta.permissions.write" v-text="sketch.description" @blur="onEditDescription" @keydown.enter.prevent="onEditDescription"></p>
+    <p style="max-width:75ch;" :contenteditable="meta.permissions.write" v-text="sketch.description" @blur="onEditDescription" @keydown.enter.prevent="onEditDescription"></p>
   </div>
 </template>
 
