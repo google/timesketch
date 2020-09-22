@@ -127,7 +127,7 @@ def read_and_validate_csv(file_handle, delimiter=','):
                 logger.warning(
                     'Row missing a datetime object, skipping [{0:s}]'.format(
                         ','.join([str(x).replace(
-                            '\n','').strip() for x in row.values()])))
+                            '\n', '').strip() for x in row.values()])))
                 continue
             try:
                 # normalize datetime to ISO 8601 format if it's not the case.
