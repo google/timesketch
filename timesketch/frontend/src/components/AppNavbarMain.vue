@@ -24,23 +24,67 @@ limitations under the License.
       </router-link>
     </div>
     <div class="navbar-end">
+      <div class="navbar-item">
+        <b-switch
+          v-model="isDarkTheme"
+          v-on:input="switchTheme"
+          size="is-small"
+          passive-type='is-warning'
+          type='is-dark'>
+          Dark Mode
+        </b-switch>
+      </div>
+
       <div class="navbar-item" style="color: #ffffff;">
         {{ currentUser }}
       </div>
       <div class="navbar-item">
         <a href="/logout" style="color:#fff;">Logout</a>
       </div>
+
+
     </div>
   </nav>
 </template>
 
 <script>
+import EventBus from "../main"
+
 export default {
   name: 'ts-navbar-main',
+  data () {
+    return {
+      isDarkTheme: null,
+    }
+  },
+
+
   computed: {
     currentUser () {
       return this.$store.state.currentUser
     }
+  },
+  methods: {
+    switchTheme () {
+      let element = document.body
+      switch (element.dataset.theme) {
+        case "light":
+          element.dataset.theme = "dark"
+          localStorage.theme = 'dark'
+          this.isDarkTheme = true
+          EventBus.$emit('isDarkTheme', true)
+          break
+        case "dark":
+          element.dataset.theme = "light"
+          localStorage.theme = 'light'
+          this.isDarkTheme = false
+          EventBus.$emit('isDarkTheme', false)
+          break
+      }
+    }
+  },
+  created () {
+    this.isDarkTheme = localStorage.theme === 'dark'
   }
 }
 </script>
@@ -48,7 +92,6 @@ export default {
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
   .navbar {
-      background: #0070bd;
       padding-left: 32px;
       padding-right: 32px;
   }
