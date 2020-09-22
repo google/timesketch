@@ -71,7 +71,7 @@ limitations under the License.
               </p>
 
               <p class="control">
-                <b-dropdown trap-focus aria-role="menu">
+                <b-dropdown trap-focus aria-role="menu" ref="NewTimeFilter">
                   <a class="button is-text" slot="trigger" role="button">
                     <span>+ Time range</span>
                   </a>
@@ -79,7 +79,7 @@ limitations under the License.
                     <strong>Add time range</strong>
                     <br>
                     <br>
-                    <ts-explore-filter-time @addChip="addChip"></ts-explore-filter-time>
+                    <ts-explore-filter-time @addChip="addChip" @hideDropdown="hideDropdown('NewTimeFilter')"></ts-explore-filter-time>
                   </b-dropdown-item>
                 </b-dropdown>
               </p>
@@ -107,9 +107,9 @@ limitations under the License.
             </div>
 
             <div class="tags" style="margin-bottom: 5px;">
-              <span v-for="(chip, index) in currentQueryFilter.chips" :key="chip">
+              <span v-for="(chip, index) in currentQueryFilter.chips" :key="index + chip.value">
                 <span v-if="chip.type === 'datetime_range'" class="tag is-light is-rounded" style="margin-right:7px;">
-                  <b-dropdown trap-focus aria-role="menu">
+                  <b-dropdown trap-focus aria-role="menu" ref="TimeFilters">
                     <span slot="trigger" role="button">
                       <span class="icon is-small" style="margin-right:7px;"><i class="fas fa-clock"></i></span> <span>{{ chip.value.split(',')[0] }}</span> <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]">&rarr; {{ chip.value.split(',')[1] }}</span>
                       <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
@@ -118,7 +118,7 @@ limitations under the License.
                       <strong>Update time range</strong>
                       <br>
                       <br>
-                      <ts-explore-filter-time @updateChip="updateChip(index, $event)" :selectedChip="chip" :start="chip.value.split(',')[0]" :end="chip.value.split(',')[1]"></ts-explore-filter-time>
+                      <ts-explore-filter-time @updateChip="updateChip(chip, index)" @hideDropdown="hideDropdown(index)" :selectedChip="chip" :start="chip.value.split(',')[0]" :end="chip.value.split(',')[1]"></ts-explore-filter-time>
                     </b-dropdown-item>
                   </b-dropdown>
                 </span>
@@ -409,6 +409,14 @@ export default {
     }
   },
   methods: {
+    hideDropdown: function(index) {
+      if (isNaN(index)) {
+        this.$refs[index].isActive = false
+      }
+      else {
+        this.$refs.TimeFilters[index].isActive = false
+      }
+    },
     search: function () {
       if (this.contextEvent) {
         // Scroll to the context box in the UI
@@ -570,7 +578,7 @@ export default {
       this.currentQueryFilter.chips.splice(chipIndex, 1)
       this.search()
     },
-    updateChip: function(chipIndex, chip) {
+    updateChip: function(chip, chipIndex) {
       // Replace the chip at the given index
       this.currentQueryFilter.chips.splice(chipIndex, 1, chip)
       this.search()
