@@ -118,6 +118,17 @@ def read_and_validate_csv(file_handle, delimiter=','):
                 ','.join(missing_fields)))
     try:
         for row in reader:
+            # There is a condition in which the CSV reader can read a
+            # single lines as multiple, causing issues with importing.
+            # TODO: Swap the CSV library for the user of pandas.
+            if not row:
+                continue
+            if not row['datetime']:
+                logger.warning(
+                    'Row missing a datetime object, skipping [{0:s}]'.format(
+                        ','.join([str(x).replace(
+                            '\n','').strip() for x in row.values()])))
+                continue
             try:
                 # normalize datetime to ISO 8601 format if it's not the case.
                 parsed_datetime = parser.parse(row['datetime'])
