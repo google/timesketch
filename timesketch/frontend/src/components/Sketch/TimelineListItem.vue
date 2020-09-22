@@ -118,7 +118,7 @@ limitations under the License.
             <span class="icon is-small">
               <i :class="[isOpen ? 'fas fa-minus-circle' : 'fas fa-plus-circle']"></i>
             </span>
-            <span>Show data types</span>
+            <span>Data types</span>
           </button>
         </span>
         <ts-analyzer-list-dropdown :timeline="timeline" @newAnalysisSession="setAnalysisSession($event)"></ts-analyzer-list-dropdown>
@@ -142,7 +142,7 @@ limitations under the License.
 
     <span v-if="timelineStatus === 'ready'" class="is-size-7">
       Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
-      <span class="tag is-small" :title="meta.stats[timeline.searchindex.index_name]['count'] + ' events in index'">{{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }}</span>
+      <span class="is-small" :title="meta.stats[timeline.searchindex.index_name]['count'] + ' events in index'">({{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }})</span>
       <b-collapse :open="isOpen" class="panel" animation="slide">
         <div class="small-top-margin">
           <ul>
@@ -173,8 +173,6 @@ limitations under the License.
       Unknown status: {{ timelineStatus }}
     </span>
 
-    <br>
-
     <div v-show="showAnalysisDetail">
       <ts-analyzer-session-detail :timeline="timeline" :session-id="analysisSessionId" @closeDetail="showAnalysisDetail = false"></ts-analyzer-session-detail>
     </div>
@@ -196,6 +194,8 @@ import ApiClient from '../../utils/RestApiClient'
 import TsAnalyzerListDropdown from './AnalyzerListDropdown'
 import TsAnalyzerSessionDetail from './AnalyzerSessionDetail'
 import TsAnalyzerHistory from './AnalyzerHistory'
+
+import EventBus from "../../main"
 
 export default {
   components: {
@@ -219,7 +219,8 @@ export default {
       showAnalysisHistory: false,
       timelineStatus: null,
       autoRefresh: false,
-      isOpen: false
+      isOpen: false,
+      isDarkTheme: false
     }
   },
   computed: {
@@ -230,12 +231,19 @@ export default {
       return this.$store.state.meta
     },
     timelineColorStyle () {
-      let hexColor = this.newColor || this.timeline.color
-      if (!hexColor.startsWith('#')) {
-        hexColor = '#' + hexColor
+      let backgroundColor = this.newColor || this.timeline.color
+      if (!backgroundColor.startsWith('#')) {
+        backgroundColor = '#' + backgroundColor
+      }
+      if (this.isDarkTheme) {
+        return {
+          'background-color': backgroundColor,
+          'filter': 'grayscale(25%)',
+          'color': '#333'
+        }
       }
       return {
-        'background-color': hexColor
+        'background-color': backgroundColor
       }
     }
   },
@@ -281,6 +289,9 @@ export default {
         searchQuery += 'data_type:"' + dt + '"'
       }
       this.$router.push({name: 'SketchExplore', query: { index: index, q: searchQuery }})
+    },
+    toggleTheme: function () {
+      this.isDarkTheme =! this.isDarkTheme
     }
   },
   mounted () {
@@ -293,6 +304,9 @@ export default {
     })
   },
   created () {
+    this.isDarkTheme = localStorage.theme === 'dark';
+    EventBus.$on('isDarkTheme', this.toggleTheme)
+
     this.initialColor = {
       hex: this.timeline.color
     }
