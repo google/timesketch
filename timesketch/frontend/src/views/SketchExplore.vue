@@ -43,13 +43,6 @@ limitations under the License.
               <span style="margin-left:10px;">Search</span>
             </span>
 
-            <a style="margin-top:10px;" class="button is-rounded is-small" v-on:click="showCreateViewModal = !showCreateViewModal">
-              <span class="icon is-small">
-                <i class="fas fa-save"></i>
-              </span>
-              <span>Save as view</span>
-            </a>
-
             <span class="card-header-icon">
               <span class="icon">
                 <i class="fas fa-angle-down" v-if="!showSearch" aria-hidden="true"></i>
@@ -71,8 +64,17 @@ limitations under the License.
               </p>
 
               <p class="control">
+                <a class="button is-rounded is-small" v-on:click="showCreateViewModal = !showCreateViewModal">
+                  <span class="icon is-small">
+                    <i class="fas fa-save"></i>
+                  </span>
+                  <span>Save</span>
+                </a>
+              </p>
+
+              <p class="control">
                 <b-dropdown trap-focus aria-role="menu" ref="NewTimeFilter">
-                  <a class="button is-text" slot="trigger" role="button">
+                  <a class="button is-rounded is-small" slot="trigger" role="button">
                     <span>+ Time range</span>
                   </a>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
@@ -86,8 +88,8 @@ limitations under the License.
 
               <p class="control">
                 <b-dropdown trap-focus aria-role="menu">
-                  <a class="button is-text" slot="trigger" role="button">
-                    <span>+ Filter</span>
+                  <a class="button is-rounded is-small" slot="trigger" role="button">
+                    <span>+ Labels</span>
                   </a>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
                     <strong>Add filter</strong>

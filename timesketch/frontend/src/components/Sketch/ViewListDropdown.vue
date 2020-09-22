@@ -16,8 +16,8 @@ limitations under the License.
 <template>
   <div class="dropdown" v-bind:class="{'is-active': viewListDropdownActive}">
     <div class="dropdown-trigger">
-      <a class="button" v-bind:class="{'is-rounded': isRounded}" aria-haspopup="true" aria-controls="dropdown-menu" v-on:click="viewListDropdownActive = !viewListDropdownActive">
-        <span>{{ title || 'Views' }}</span>
+      <a class="button is-small" v-bind:class="{'is-rounded': isRounded}" aria-haspopup="true" aria-controls="dropdown-menu" v-on:click="viewListDropdownActive = !viewListDropdownActive">
+        <span>{{ title || 'Saved Searches' }}</span>
         <span class="icon is-small">
           <i class="fas fa-angle-down" aria-hidden="true"></i>
         </span>
