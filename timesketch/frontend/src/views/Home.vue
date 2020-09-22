@@ -45,7 +45,7 @@ limitations under the License.
 
     <div v-if="mySketches.length || sharedSketches.length" class="section">
       <div class="container" style="margin-bottom: 15px;">
-        <input v-model="search" class="ts-search-input" type="text" placeholder="Search" style="background: #ffffff;" autofocus>
+        <input v-model="search" class="ts-home-search-input" type="text" placeholder="Search" autofocus>
       </div>
     </div>
 

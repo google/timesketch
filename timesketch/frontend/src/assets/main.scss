@@ -13,25 +13,119 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+:root {
+    --font-color-dark: #333333;
+    --font-color-grey: #c9c9c9;
+    --font-color-light: #fafafa;
+    --search-input-light: #ffffff;
+    --search-input-dark: #464646;
+}
+
+[data-theme=light] {
+    --background-color: linear-gradient(90deg, rgba(249,249,249,1) 11%, rgba(241,241,241,1) 100%);
+    --default-font-color: var(--font-color-dark);
+    --default-link-color: var(--font-color-dark);
+    --default-title-font-color: var(--font-color-dark);
+    --navbar-background: #0070bd;
+    --navbar-font-color: var(--font-color-light);
+    --tabs-link-color: var(--font-color-dark);
+    --tabs-link-hover-color: var(--font-color-dark);
+    --tabs-link-active-color: var(--font-color-dark);
+    --tabs-link-active-border-bottom-color: var(--font-color-dark);
+    --tabs-link-hover-border-bottom-color: var(--font-color-dark);
+    --tabs-border-bottom-color: var(--font-color-light);
+    --card-background-color: hsl(0, 0%, 100%);
+    --card-font-color: hsl(0, 0%, 29%);
+    --search-input-home: var(--search-input-light);
+    --search-input-explore: #f9f9f9;
+    --search-input-font-color: var(--font-color-dark);
+    --button-greyscale: grayscale(0%);
+    --timeline-name-column-background: #f1f1f1;
+    --timeline-name-column-font-color: #999999;
+    --table-cell-border-color: #f5f5f5;
+    --time-bubble-background-color: #f5f5f5;
+    --time-bubble-font-color: #666666;
+    --content-list-hover-color: #fcfcfc;
+    --login-page-background-color: var(--navbar-background);
+    --card-title-font-color: var(--font-color-dark);
+    --button-font-color: var(--font-color-dark);
+    --form-label-font-color: var(--font-color-dark);
+    --message-header-background-color: rgba(229, 229, 229, 0.84);
+    --message-header-font-color: #333333;
+    --message-background-color: #f9f9f9;
+    --markdown-body-font-color: var(--font-color-dark);
+}
+
+[data-theme=dark] {
+    --background-color: #303030;
+    --default-font-color: var(--font-color-light);
+    --default-link-color: var(--font-color-light);
+    --default-title-font-color: var(--font-color-light);
+    --navbar-background: #212121;
+    --navbar-font-color: var(--font-color-light);
+    --tabs-link-color: var(--font-color-light);
+    --tabs-link-hover-color: var(--font-color-light);
+    --tabs-link-active-color: var(--font-color-light);
+    --tabs-link-active-border-bottom-color: var(--font-color-light);
+    --tabs-link-hover-border-bottom-color: var(--font-color-light);
+    --tabs-border-bottom-color: var(--font-color-dark);
+    --card-background-color: #424242;
+    --card-font-color: #fafafa;
+    --search-input-home: var(--search-input-dark);
+    --search-input-explore: var(--search-input-dark);
+    --search-input-font-color: var(--font-color-light);
+    --button-greyscale: grayscale(25%);
+    --timeline-name-column-background: #666666;
+    --timeline-name-column-font-color: #d9d9d9;
+    --table-background-color: #424242;
+    --table-head-cell-color: #fafafa;
+    --table-color: #fafafa;
+    --table-cell-border-color: #f5f5f5;
+    --time-bubble-background-color: #666666;
+    --time-bubble-font-color: #d9d9d9;
+    --content-list-hover-color: #494949;
+    --login-page-background-color: var(--background-color);
+    --navbar-item-link-color: #fafafa;
+    --card-title-font-color: var(--font-color-light);
+    --button-font-color: var(--font-color-light);
+    --form-label-font-color: var(--font-color-light);
+    --message-header-background-color: var(--background-color);
+    --message-header-font-color: var(--font-color-light);
+    --message-background-color: #3c3c3c;
+    --markdown-body-font-color: var(--font-color-light)
+}
+
 // Customize Bulma
 $family-primary: Arial, sans-serif;
 $body-size: 15px;
 $card-shadow: 0 0 1px rgba(0,0,0,0.15);
 $card-header-shadow: none;
 $section-padding: 15px 15px 0 15px;
-$tabs-link-active-border-bottom-color: hsl(0, 0%, 29%);
-$tabs-link-active-color: hsl(0, 0%, 21%);
-
-$message-header-background-color: rgba(229, 229, 229, 0.84);
-$message-header-color: #333333;
-$message-background-color: #f9f9f9;
-
-// Button colors
 $info: #0070bd;
 $success: #41ad49;
-
-$table-cell-border: 1px solid #f5f5f5;
 $table-cell-padding: 10px;
+
+// Support light/dark themes
+$tabs-link-color: var(--tabs-link-color);
+$tabs-link-hover-color: var(--tabs-link-hover-color);
+$tabs-link-active-color: var(--tabs-link-active-color);
+$tabs-link-active-border-bottom-color: var(--tabs-link-active-border-bottom-color);
+$tabs-link-hover-border-bottom-color: var(--tabs-link-hover-border-bottom-color);
+$tabs-border-bottom-color: var(--tabs-border-bottom-color);
+$button-text-color: var(--button-font-color);
+$button-text-hover-color: var(--button-font-color);
+$button-text-hover-background-color: transparent;
+$table-background-color: var(--table-background-color);
+$table-head-cell-color: var(--table-head-cell-color);
+$table-cell-border: 1px solid var(--table-cell-border-color);
+$table-color: var(--table-color);
+$table-cell-border:0;
+$title-color: var(--default-title-font-color);
+$navbar-item-color: var(--navbar-item-link-color);
+$label-color: var(--form-label-font-color);
+$message-header-background-color: var(--message-header-background-color);
+$message-header-color: var(--message-header-font-color);
+$message-background-color: var(--message-background-color);
 
 // Font Awesome
 $fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
@@ -48,19 +142,26 @@ html, body {
 }
 
 body {
-    background: linear-gradient(90deg, rgba(249,249,249,1) 11%, rgba(241,241,241,1) 100%);
+    background: var(--background-color);
+    color: var(--default-font-color);
 }
 
 .login-page {
-    background: #0070bd;
+    background: var(--login-page-background-color);
 }
 
 .card {
     border-radius: 5px;
+    background-color: var(--card-background-color);
+    color: var(--card-font-color);
 }
 
 .card-header {
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid transparent;
+}
+
+.card-header-title {
+    color: var(--card-title-font-color);
 }
 
 .ts-timeline-color-box {
@@ -84,7 +185,7 @@ ul.content-list>li {
 }
 
 ul.content-list>li:hover {
-    background: #fcfcfc;
+    background: var(--content-list-hover-color);
 }
 
 ul.content-list>li:last-child { border-bottom: none; }
@@ -95,6 +196,56 @@ ul.content-list>li:last-child { border-bottom: none; }
     font-size: 1.2em;
     border-radius: 5px;
     padding: 15px;
-    background: #f9f9f9;
+    background: var(--search-input-explore);
+    color: var(--search-input-font-color);
     width: 100%;
-  }
+}
+
+.ts-home-search-input {
+    outline: none;
+    border: none;
+    font-size: 1.2em;
+    border-radius: 5px;
+    padding: 15px;
+    background: var(--search-input-home);
+    width: 100%;
+}
+
+a, a:hover {
+    color: var(--link-color);
+}
+
+.button {
+    filter: var(--button-greyscale);
+}
+
+.ts-dropdown-button, .ts-dropdown-button:hover {
+    color: var(--button-font-color)
+}
+
+.navbar {
+    background: var(--navbar-background);
+    color: var(--navbar-font-color);
+}
+
+.ts-timeline-name-column-color {
+  background: var(--timeline-name-column-background);
+  color: var(--timeline-name-column-font-color);
+}
+
+// Time bubble
+.ts-time-bubble-color {
+  background: var(--time-bubble-background-color)
+}
+
+.ts-time-bubble-color h5 {
+  color: var(--time-bubble-font-color);
+}
+
+.ts-time-bubble-vertical-line-color {
+  background: var(--time-bubble-background-color);
+}
+
+.ts-markdown-body-color {
+    color: var(--markdown-body-font-color);
+}

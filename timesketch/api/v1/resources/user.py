@@ -147,12 +147,12 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             for permission in permission_list:
                 sketch.revoke_permission(permission=permission, user=user)
 
-        for group in form.get('remove_groups', []):
-            group = Group.query.filter_by(name=group).first()
+        for group_name in form.get('remove_groups', []):
+            group = Group.query.filter_by(name=group_name).first()
             permission_list = permissions or all_permissions.get(
-                'group/{0:s}'.format(username), [])
+                'group/{0:s}'.format(group_name), [])
             for permission in permission_list:
-                sketch.revoke_permission(permission=permission, user=user)
+                sketch.revoke_permission(permission=permission, group=group)
 
         public = form.get('public')
         if public == 'true':

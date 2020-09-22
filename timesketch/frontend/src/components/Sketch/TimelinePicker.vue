@@ -26,8 +26,15 @@ limitations under the License.
 </template>
 
 <script>
+import EventBus from "../../main"
+
 export default {
   props: ['currentQueryFilter', 'countPerIndex'],
+  data () {
+    return {
+      isDarkTheme: false,
+    }
+  },
   computed: {
     sketch () {
       return this.$store.state.sketch
@@ -35,17 +42,26 @@ export default {
   },
   methods: {
     timelineColor (timeline) {
+      this.isDarkTheme = localStorage.theme === 'dark'
       let indexName = timeline.searchindex.index_name
-      let color = timeline.color
-      if (!color.startsWith('#')) {
-        color = '#' + color
+      let backgroundColor = timeline.color
+      if (!backgroundColor.startsWith('#')) {
+        backgroundColor = '#' + backgroundColor
       }
       // Grey out the index if it is not selected.
       if (!this.currentQueryFilter.indices.includes(indexName)) {
-        color = '#f5f5f5'
+        backgroundColor = '#f5f5f5'
+      }
+
+      if (this.isDarkTheme) {
+        return {
+          'background-color': backgroundColor,
+          'filter': 'grayscale(25%)',
+          'color': '#333'
+        }
       }
       return {
-        'background-color': color
+        'background-color': backgroundColor
       }
     },
     toggleIndex: function (indexName) {
@@ -73,6 +89,9 @@ export default {
     },
     indexIsEnabled: function (index) {
       return this.currentQueryFilter.indices.includes(index)
+    },
+    toggleTheme: function () {
+      this.isDarkTheme =! this.isDarkTheme
     }
   },
   created: function () {
@@ -83,6 +102,7 @@ export default {
       })
       this.currentQueryFilter.indices = allIndices
     }
+    EventBus.$on('isDarkTheme', this.toggleTheme)
   }
 }
 </script>
