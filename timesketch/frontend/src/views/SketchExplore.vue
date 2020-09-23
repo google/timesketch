@@ -24,7 +24,7 @@ limitations under the License.
     <b-modal :active.sync="showCreateViewModal" :width="640" scroll="keep">
       <div class="card">
         <header class="card-header">
-          <p class="card-header-title">Create new view</p>
+          <p class="card-header-title">Save search</p>
         </header>
         <div class="card-content">
           <div class="content">
@@ -54,13 +54,13 @@ limitations under the License.
           <div class="card-content" v-if="showSearch">
 
             <form v-on:submit.prevent="search" style="width:100%;">
-              <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus>
+              <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus required>
             </form>
 
             <div class="field is-grouped" style="margin-top:15px; margin-bottom: 25px;">
 
               <p class="control">
-                <ts-view-list-dropdown @setActiveView="searchView" is-rounded="true"></ts-view-list-dropdown>
+                <ts-view-list-dropdown @setActiveView="searchView" @clearSearch="clearSearch" :view-from-url="params.viewId" :is-rounded="true" :is-small="true"></ts-view-list-dropdown>
               </p>
 
               <p class="control">
@@ -89,7 +89,7 @@ limitations under the License.
               <p class="control">
                 <b-dropdown trap-focus aria-role="menu">
                   <a class="button is-rounded is-small" slot="trigger" role="button">
-                    <span>+ Labels</span>
+                    <span>+ Filters</span>
                   </a>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
                     <strong>Add filter</strong>
@@ -139,7 +139,7 @@ limitations under the License.
               </span>
             </div>
 
-            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateQueryFilter="updateQueryFilter($event)" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index"></ts-explore-timeline-picker>
+            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateSelectedIndices="updateSelectedIndices($event)" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index"></ts-explore-timeline-picker>
           </div>
         </div>
       </div>
@@ -323,6 +323,28 @@ import TsExploreSessionChart from '../components/Sketch/SessionChart'
 import TsSketchExploreAggregation from "../components/Sketch/Aggregation"
 import EventBus from "../main"
 
+const defaultQueryFilter = () => {
+  return {
+    'from': 0,
+    'time_start': null,
+    'time_end': null,
+    'terminate_after': 40,
+    'size': 40,
+    'indices': ['_all'],
+    'order': 'asc',
+    'chips': [],
+  }
+}
+
+const emptyEventList = () => {
+  return {
+    'meta': {
+      'count_per_index': {}
+    },
+    'objects': []
+  }
+}
+
 export default {
   components: {
     TsSketchExploreAggregation,
@@ -354,17 +376,7 @@ export default {
       },
       currentQueryString: "",
       previousQueryString: "",
-      currentQueryFilter: {
-        'from': 0,
-        'time_start': null,
-        'time_end': null,
-        'terminate_after': 40,
-        'size': 40,
-        'indices': ['_all'],
-        'order': 'asc',
-        'chips': [],
-        'fields': []
-      },
+      currentQueryFilter: defaultQueryFilter(),
       selectedFields: [{field: 'message', type: 'text'}],
       selectedFieldsProxy: [],
       expandFieldDropdown: false,
@@ -373,7 +385,8 @@ export default {
         showTags: true,
         showEmojis: true,
         showMillis: false
-      }
+      },
+      openSidebar: false
     }
   },
   computed: {
@@ -420,6 +433,10 @@ export default {
       }
     },
     search: function () {
+      if (!this.currentQueryString) {
+        return
+      }
+
       if (this.contextEvent) {
         // Scroll to the context box in the UI
         this.$scrollTo('#context', 200, {offset: -300})
@@ -428,10 +445,7 @@ export default {
       // Reset selected events.
       this.selectedEvents = {}
 
-      this.eventList = {
-        meta: {},
-        objects: []
-      }
+      this.eventList = emptyEventList()
 
       // Reset pagination when a new query string is entered.
       if (this.previousQueryString !== this.currentQueryString) {
@@ -565,6 +579,17 @@ export default {
     updateQueryFilter: function (filter) {
       this.currentQueryFilter = filter
       this.search()
+    },
+    updateSelectedIndices: function (indices) {
+      this.currentQueryFilter.indices = indices
+      this.search()
+    },
+    clearSearch: function () {
+      this.currentQueryString = ''
+      this.currentQueryFilter = defaultQueryFilter()
+      this.eventList = emptyEventList()
+      this.$router.replace({'query': null})
+      EventBus.$emit('clearSearch')
     },
     toggleCreateViewModal: function () {
       this.showCreateViewModal = !this.showCreateViewModal
@@ -750,6 +775,10 @@ export default {
 
 .tsdropdown {
   min-height: 330px;
+}
+
+.b-sidebar .sidebar-content {
+  width:560px;
 }
 
 </style>

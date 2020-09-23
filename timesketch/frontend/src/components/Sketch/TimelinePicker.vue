@@ -18,7 +18,7 @@ limitations under the License.
     <span v-for="timeline in sketch.active_timelines" :key="timeline.id" class="tag is-medium has-text-left" style="cursor: pointer; margin-right: 7px;margin-bottom:7px;" v-bind:style="timelineColor(timeline)" v-on:click="toggleIndex(timeline.searchindex.index_name)">
       {{ timeline.name }} <span class="tag is-small" style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);min-width:50px;"><span v-if="indexIsEnabled(timeline.searchindex.index_name)">{{ countPerIndex[timeline.searchindex.index_name] | compactNumber }}</span></span>
     </span>
-    <div v-if="sketch.active_timelines.length > 3" style="margin-top:7px;">
+    <div v-if="sketch.active_timelines.length > 1" style="margin-top:7px;">
       <span style="text-decoration: underline; cursor: pointer; margin-right: 10px;" v-on:click="enableAllIndices">Enable all</span>
       <span style="text-decoration: underline; cursor: pointer;" v-on:click="disableAllIndices">Disable all</span>
     </div>
@@ -33,6 +33,8 @@ export default {
   data () {
     return {
       isDarkTheme: false,
+      allTimelines: [],
+      selectedTimelines: []
     }
   },
   computed: {
@@ -49,7 +51,7 @@ export default {
         backgroundColor = '#' + backgroundColor
       }
       // Grey out the index if it is not selected.
-      if (!this.currentQueryFilter.indices.includes(indexName)) {
+      if (!this.selectedTimelines.includes(indexName)) {
         backgroundColor = '#f5f5f5'
       }
 
@@ -65,44 +67,53 @@ export default {
       }
     },
     toggleIndex: function (indexName) {
-      let newArray = this.currentQueryFilter.indices.slice()
+      let newArray = this.selectedTimelines.slice()
       let index = newArray.indexOf(indexName)
       if (index === -1) {
         newArray.push(indexName)
       } else {
         newArray.splice(index, 1)
       }
-      this.currentQueryFilter.indices = newArray
-      this.$emit('updateQueryFilter', this.currentQueryFilter)
+      this.selectedTimelines = newArray
+      this.$emit('updateSelectedIndices', this.selectedTimelines)
     },
-    enableAllIndices: function () {
+    setAllIndices: function () {
       let allIndices = []
       this.sketch.active_timelines.forEach(function (timeline) {
         allIndices.push(timeline.searchindex.index_name)
       })
-      this.currentQueryFilter.indices = allIndices
-      this.$emit('updateQueryFilter', this.currentQueryFilter)
+      this.selectedTimelines = allIndices
+    },
+    enableAllIndices: function () {
+      this.setAllIndices()
+      this.$emit('updateSelectedIndices', this.selectedTimelines)
     },
     disableAllIndices: function () {
-      this.currentQueryFilter.indices = []
-      this.$emit('updateQueryFilter', this.currentQueryFilter)
+      this.selectedTimelines = []
+      this.$emit('updateSelectedIndices', this.selectedTimelines)
     },
     indexIsEnabled: function (index) {
-      return this.currentQueryFilter.indices.includes(index)
+      return this.selectedTimelines.includes(index)
     },
     toggleTheme: function () {
       this.isDarkTheme =! this.isDarkTheme
     }
   },
   created: function () {
-    if (this.currentQueryFilter.indices.includes('_all')) {
-      let allIndices = []
-      this.sketch.active_timelines.forEach(function (timeline) {
-        allIndices.push(timeline.searchindex.index_name)
-      })
-      this.currentQueryFilter.indices = allIndices
-    }
     EventBus.$on('isDarkTheme', this.toggleTheme)
+    EventBus.$on('clearSearch', this.enableAllIndices)
+
+    let timelines = []
+    this.sketch.active_timelines.forEach(function (timeline) {
+      timelines.push(timeline.searchindex.index_name)
+    })
+    this.allTimelines = timelines
+
+    if (this.currentQueryFilter.indices.includes('_all')) {
+      this.selectedTimelines = this.allTimelines
+    } else {
+      this.selectedTimelines = this.currentQueryFilter.indices
+    }
   }
 }
 </script>

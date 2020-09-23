@@ -89,7 +89,7 @@ limitations under the License.
                       </button>
                     </p>
                     <p class="control" v-if="meta.views.length">
-                      <ts-view-list-dropdown @setActiveView="addViewComponent($event, index)" :is-rounded="true" :title="'+ Saved view'"></ts-view-list-dropdown>
+                      <ts-view-list-dropdown @setActiveView="addViewComponent($event, index)" :is-rounded="true" :is-small="false" :title="'+ Saved search'"></ts-view-list-dropdown>
                     </p>
                     <p class="control" v-if="allAggregations">
                       <ts-aggregation-list-dropdown @addAggregation="addAggregationComponent($event, index)" :is-rounded="true" :title="'+ Aggregation'" :aggregations="allAggregations" ></ts-aggregation-list-dropdown>

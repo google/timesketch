@@ -36,6 +36,8 @@
     --tabs-border-bottom-color: var(--font-color-light);
     --card-background-color: hsl(0, 0%, 100%);
     --card-font-color: hsl(0, 0%, 29%);
+    --card-accent-background-color: #f5f5f5;
+    --card-accent-font-color: var(--font-color-dark);
     --search-input-home: var(--search-input-light);
     --search-input-explore: #f9f9f9;
     --search-input-font-color: var(--font-color-dark);
@@ -53,6 +55,7 @@
     --message-header-background-color: rgba(229, 229, 229, 0.84);
     --message-header-font-color: #333333;
     --message-background-color: #f9f9f9;
+    --message-body-color: var(--font-color-dark);
     --markdown-body-font-color: var(--font-color-dark);
 }
 
@@ -71,6 +74,8 @@
     --tabs-border-bottom-color: var(--font-color-dark);
     --card-background-color: #424242;
     --card-font-color: #fafafa;
+    --card-accent-background-color: #494949;
+    --card-accent-font-color: var(--font-color-light);
     --search-input-home: var(--search-input-dark);
     --search-input-explore: var(--search-input-dark);
     --search-input-font-color: var(--font-color-light);
@@ -91,8 +96,9 @@
     --form-label-font-color: var(--font-color-light);
     --message-header-background-color: var(--background-color);
     --message-header-font-color: var(--font-color-light);
-    --message-background-color: #3c3c3c;
-    --markdown-body-font-color: var(--font-color-light)
+    --message-background-color: #363636;
+    --message-body-color: var(--font-color-light);
+    --markdown-body-font-color: var(--font-color-light);
 }
 
 // Customize Bulma
@@ -126,6 +132,8 @@ $label-color: var(--form-label-font-color);
 $message-header-background-color: var(--message-header-background-color);
 $message-header-color: var(--message-header-font-color);
 $message-background-color: var(--message-background-color);
+$message-body-color: var(--message-body-color);
+
 
 // Font Awesome
 $fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
@@ -158,6 +166,11 @@ body {
 
 .card-header {
     border-bottom: 1px solid transparent;
+}
+
+.card-accent-background {
+    background-color: var(--card-accent-background-color);
+    color: var(--card-accent-font-color);
 }
 
 .card-header-title {
