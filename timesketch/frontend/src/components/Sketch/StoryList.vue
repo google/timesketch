@@ -63,22 +63,4 @@ export default {
 </script>
 
 <!-- CSS scoped to this component only -->
-<style scoped lang="scss">
-  ul.content-list {
-      list-style: none;
-  }
-
-  ul.content-list>li {
-      padding-top: 15px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid #eee;
-      display: block;
-      margin: 0;
-  }
-
-  ul.content-list>li:hover {
-      background: #fcfcfc;
-  }
-
-  ul.content-list>li:last-child { border-bottom: none; }
-</style>
+<style scoped lang="scss"></style>
