@@ -134,7 +134,7 @@ from the network traffic to Timesketch.
 from scapy import all as scapy_all
 ...
 
-packets = scapy_all.rdpcap(fh)
+packets = scapy_all.rdpcap(~/Downloads/SomeRandomDocument.pcap)
 
 with importer.ImportStreamer() as streamer:
   streamer.set_sketch(my_sketch)
