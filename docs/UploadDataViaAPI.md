@@ -1,7 +1,7 @@
 # Create Timeline From Other Sources
 
 Not all data comes in a good [CSV or JSONL
-format](docs/CreateTimelineFromJSONorCSV.md) that can be imported
+format](CreateTimelineFromJSONorCSV.md) that can be imported
 directly into Timesketch. Your data may lie in a SQL database, Excel sheet, or
 even in CSV/JSON but it does not have the correct fields in it. In those cases
 it might be beneficial to have a separate importer in Timesketch that can deal
@@ -94,7 +94,7 @@ Timestamp What  URL Results
 
 Here we have a data frame that we may want to add to our Timesketch instance.
 What is missing here are few of the necessary columns, see
-[documentation](docs/CreateTimelineFromJSONorCSV.md). We don't really need to
+[documentation](CreateTimelineFromJSONorCSV.md). We don't really need to
 add them here, we can do that all in our upload stream. Let's start by
 connecting to a Timesketch instance.
 
