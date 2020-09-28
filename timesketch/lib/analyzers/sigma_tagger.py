@@ -4,18 +4,19 @@ from __future__ import unicode_literals
 import logging
 import os
 import time
+import codecs
 import elasticsearch
-
 
 from sigma.backends import elasticsearch as sigma_elasticsearch
 import sigma.configuration as sigma_configuration
 from sigma.parser import collection as sigma_collection
 from timesketch.lib.analyzers import utils
 
-
-
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
+
+
+logger = logging.getLogger('timesketch.analyzers.sigma_tagger')
 
 
 class SigmaPlugin(interface.BaseSketchAnalyzer):
@@ -38,7 +39,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         """
         super(SigmaPlugin, self).__init__(index_name, sketch_id)
         sigma_config_path = interface.get_config_path(self._CONFIG_FILE)
-        logging.debug('[sigma] Loading config from {0!s}'.format(
+        logger.debug('[sigma] Loading config from {0!s}'.format(
             sigma_config_path))
         with open(sigma_config_path, 'r') as sigma_config_file:
             sigma_config = sigma_config_file.read()
@@ -55,14 +56,14 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
             int: number of events tagged.
         """
         return_fields = []
-        tagged_events = 0
+        tagged_events_counter = 0
         events = self.event_stream(
             query_string=query, return_fields=return_fields)
         for event in events:
             event.add_tags(['sigma_{0:s}'.format(tag_name)])
             event.commit()
-            tagged_events += 1
-        return tagged_events
+            tagged_events_counter += 1
+        return tagged_events_counter
 
     def run(self):
         """Entry point for the analyzer.
@@ -74,7 +75,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
             self.sigma_config, {})
         tags_applied = {}
 
-        simple_counter = 0
+        sigma_rule_counter = 0
 
         rules_path = os.path.join(os.path.dirname(__file__), self._RULES_PATH)
 
@@ -89,7 +90,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
 
                     # if a sub dir is found, append it to be scanned for rules
                     if os.path.isdir(os.path.join(rules_path, rule_filename)):
-                        logging.error(
+                        logger.error(
                             'this is a directory, skipping: {0:s}'.format(
                                 rule_filename))
                         continue
@@ -98,49 +99,49 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                     tags_applied[tag_name] = 0
                     rule_file_path = os.path.join(dirpath, rule_filename)
                     rule_file_path = os.path.abspath(rule_file_path)
-                    logging.info('[sigma] Reading rules from {0!s}'.format(
+                    logger.info('[sigma] Reading rules from {0!s}'.format(
                         rule_file_path))
-                    with open(rule_file_path, 'r') as rule_file:
+                    with codecs.open(rule_file_path, 'r', encoding='utf-8',
+                                     errors='replace') as rule_file:
                         try:
                             rule_file_content = rule_file.read()
                             parser = sigma_collection.SigmaCollectionParser(
                                 rule_file_content, self.sigma_config, None)
                             parsed_sigma_rules = parser.generate(sigma_backend)
                         except NotImplementedError as exception:
-                            logging.error(
+                            logger.error(
                                 'Error generating rule in file {0:s}: {1!s}'
                                 .format(rule_file_path, exception))
                             continue
 
                         for sigma_rule in parsed_sigma_rules:
                             try:
-                                simple_counter += 1
+                                sigma_rule_counter += 1
                                 # TODO Investigate how to handle .keyword
                                 # fields in Sigma.
                                 # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
                                 sigma_rule = sigma_rule\
                                     .replace(".keyword:", ":")
-                                logging.info(
+                                logger.info(
                                     '[sigma] Generated query {0:s}'
                                     .format(sigma_rule))
-                                sum_of_tagged_events = self.run_sigma_rule(
+                                tagged_events_counter = self.run_sigma_rule(
                                     sigma_rule, tag_name)
-                                tags_applied[tag_name] += sum_of_tagged_events
-                            except elasticsearch.TransportError \
-                                    as es_TransportError:
-                                logging.error(
+                                tags_applied[tag_name] += tagged_events_counter
+                            except elasticsearch.TransportError as e:
+                                logger.error(
                                     'Timeout generating rule in file {0:s}: '
                                     '{1!s} waiting for 10 seconds'.format(
-                                        rule_file_path, es_TransportError))
+                                        rule_file_path, e), exc_info=True)
                                 time.sleep(10) # waiting 10 seconds
 
         total_tagged_events = sum(tags_applied.values())
         output_string = 'Applied {0:d} tags\n'.format(total_tagged_events)
-        for tag_name, sum_of_tagged_events in tags_applied.items():
+        for tag_name, tagged_events_counter in tags_applied.items():
             output_string += '* {0:s}: {1:d}\n'.format(
-                tag_name, sum_of_tagged_events)
+                tag_name, tagged_events_counter)
 
-        if simple_counter > 0:
+        if sigma_rule_counter > 0:
             view = self.sketch.add_view(
                 view_name='Sigma Rule matches', analyzer_name=self.NAME,
                 query_string='tag:"sigma*"')
@@ -163,7 +164,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                 'analyzer takes Events and matches them with Sigma rules.'
                 'In this timeline the analyzer discovered {0:d} '
                 'Sigma tags.\n\nThis is a summary of '
-                'it\'s findings.'.format(simple_counter))
+                'it\'s findings.'.format(sigma_rule_counter))
             story.add_text(
                 'The top 20 most commonly discovered tags were:')
             story.add_aggregation(agg_obj)

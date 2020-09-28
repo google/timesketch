@@ -1,0 +1,15 @@
+name: timesketch-end-to-end
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up infrastructure with docker-compose
+        run: docker-compose -f docker/e2e/docker-compose.yml up -d
+        env:
+          ELASTICSEARCH_VERSION: 7.6.2
+      - name: Run e2e tests
+        run: docker-compose -f docker/e2e/docker-compose.yml exec -T timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py

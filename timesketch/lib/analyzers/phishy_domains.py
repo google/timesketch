@@ -16,6 +16,9 @@ from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import utils
 
 
+logger = logging.getLogger('timesketch.analyzers.phishy_domains')
+
+
 class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for phishy domains."""
 
@@ -49,7 +52,7 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         # TODO: remove that after a 6 months, this following check is to ensure
         # compatibility of the config file.
         if len(self.domain_scoring_exclude_domains) == 0:
-            logging.warning(
+            logger.warning(
                 'Warning, DOMAIN_ANALYZER_WHITELISTED_DOMAINS has been '
                 'deprecated. Please update timesketch.conf.')
             self.domain_scoring_exclude_domains = current_app.config.get(

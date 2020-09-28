@@ -18,6 +18,7 @@ import json
 import logging
 
 from . import error
+from . import index
 from . import resource
 
 
@@ -84,6 +85,25 @@ class Timeline(resource.BaseResource):
 
     @property
     def index(self):
+        """Property that returns index object.
+
+        Returns:
+            Index (instance of SearchIndex) object.
+        """
+        timeline = self.lazyload_data()
+        objects = timeline.get('objects')
+        if not objects:
+            return None
+
+        index_dict = objects[0].get('searchindex', {})
+
+        return index.SearchIndex(
+            index_dict.get('id'),
+            api=self.api,
+            searchindex_name=index_dict.get('index_name'))
+
+    @property
+    def index_name(self):
         """Property that returns index name.
 
         Returns:
@@ -102,7 +122,7 @@ class Timeline(resource.BaseResource):
         Returns:
             String with the timeline status.
         """
-        data = self.data
+        data = self.lazyload_data(refresh_cache=True)
         timeline_object = data.get('objects', [{}])[0]
         status_list = timeline_object.get('status')
 

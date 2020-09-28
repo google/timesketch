@@ -166,6 +166,9 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + /stories/ + storyId + '/', formData)
   },
+  deleteStory (sketchId, storyId) {
+  	return RestApiClient.delete('/sketches/' + sketchId + /stories/ + storyId + '/')
+  },
   // Saved views
   getView (sketchId, viewId) {
     return RestApiClient.get('/sketches/' + sketchId + '/views/' + viewId + '/')
@@ -185,6 +188,9 @@ export default {
   // Search
   search (sketchId, formData) {
     return RestApiClient.post('/sketches/' + sketchId + '/explore/', formData)
+  },
+  exportSearchResult (sketchId, formData) {
+    return RestApiBlobClient.post('/sketches/' + sketchId + '/explore/', formData)
   },
   getAggregations (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/aggregation/')

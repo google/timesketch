@@ -19,6 +19,11 @@ limitations under the License.
       <li style="padding:10px;border-bottom:none;" v-for="story in sketch.stories" :key="story.id">
         <div>
           <router-link :to="{ name: 'SketchStoryContent', params: {sketchId: sketch.id, storyId: story.id}}"><strong>{{ story.title }}</strong></router-link>
+          <div class="field is-grouped is-pulled-right" style="margin-top:10px;">
+            <p class="control">
+              <button v-on:click="remove(story)" class="button is-small is-rounded is-danger is-outlined">Remove</button>
+            </p>
+          </div>
           <br>
           <span class="is-size-7">Last activity {{ story.updated_at | moment("YYYY-MM-DD HH:mm") }}</span>
         </div>
@@ -28,10 +33,22 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from '../../utils/RestApiClient'
+
 export default {
   data () {
     return {
       stories: []
+    }
+  },
+  methods: {
+    remove(story) {
+      ApiClient.deleteStory(this.sketch.id, story.id)
+        .then((response) => {
+          this.$store.dispatch('updateSketch', this.sketch.id)
+        }).catch((e) => {
+          console.error(e)
+        })
     }
   },
   computed: {
@@ -46,22 +63,4 @@ export default {
 </script>
 
 <!-- CSS scoped to this component only -->
-<style scoped lang="scss">
-  ul.content-list {
-      list-style: none;
-  }
-
-  ul.content-list>li {
-      padding-top: 15px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid #eee;
-      display: block;
-      margin: 0;
-  }
-
-  ul.content-list>li:hover {
-      background: #fcfcfc;
-  }
-
-  ul.content-list>li:last-child { border-bottom: none; }
-</style>
+<style scoped lang="scss"></style>

@@ -34,6 +34,7 @@ limitations under the License.
                 <li>Original name: {{ timeline.searchindex.name }}</li>
                 <li>Added by: {{ timeline.searchindex.user.username }}</li>
                 <li>Added: {{ timeline.searchindex.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
+                <li v-if="timelineStatus === 'ready' && (timeline.searchindex.description !== '' && timeline.searchindex.description !== timeline.name)">Import errors: <b>{{ timeline.searchindex.description }}</b></li>
               </ul>
 
               <span v-if="timelineStatus === 'fail'">
@@ -112,6 +113,14 @@ limitations under the License.
         </button>
       </p>
       <p v-if="timelineStatus === 'ready'" class="control">
+        <span style="margin-right:7px;">
+          <button class="button is-small is-rounded is-outlined" @click="isOpen = !isOpen" :disabled="meta.stats[timeline.searchindex.index_name]['data_types'].length === 0">
+            <span class="icon is-small">
+              <i :class="[isOpen ? 'fas fa-minus-circle' : 'fas fa-plus-circle']"></i>
+            </span>
+            <span>Data types</span>
+          </button>
+        </span>
         <ts-analyzer-list-dropdown :timeline="timeline" @newAnalysisSession="setAnalysisSession($event)"></ts-analyzer-list-dropdown>
       </p>
       <p v-if="timelineStatus === 'ready' && !isCompact" class="control">
@@ -133,7 +142,26 @@ limitations under the License.
 
     <span v-if="timelineStatus === 'ready'" class="is-size-7">
       Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
-      <span class="tag is-small" :title="meta.stats[timeline.searchindex.index_name]['count'] + ' events in index'">{{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }}</span>
+      <span class="is-small" :title="meta.stats[timeline.searchindex.index_name]['count'] + ' events in index'">({{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }})</span>
+      <b-collapse :open="isOpen" class="panel" animation="slide">
+        <div class="small-top-margin">
+          <ul>
+            <li v-for="dt in meta.stats[timeline.searchindex.index_name]['data_types']" :key="dt.data_type">
+              <input type="checkbox" class="checkbox-margin" :id="dt.data_type" :value="dt.data_type" v-model="checkedDataTypes">
+                <label :for="dt.data_type">
+                  <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: { index: timeline.searchindex.index_name, q: 'data_type:&quot;'+dt.data_type+'&quot;' }}">{{ dt.data_type }} </router-link>
+                </label>
+              <span class="tag is-small" :title="dt.count + ' events in index'">{{ dt.count | compactNumber }}</span>
+            </li>
+          </ul>
+          <a class="button is-rounded is-small small-top-margin checkbox-margin" @click="openFilteredTimeline(timeline.searchindex.index_name, checkedDataTypes)" :disabled="checkedDataTypes.length === 0">
+            <span class="icon is-small">
+              <i class="fas fa-check-square"></i>
+            </span>
+            <span>Open Filtered</span>
+          </a>
+        </div>
+      </b-collapse>
     </span>
     <span v-else-if="timelineStatus === 'fail'" class="is-size-7">
       ERROR: <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline">Click here for details</span>
@@ -144,8 +172,6 @@ limitations under the License.
     <span v-else class="is-size-7">
       Unknown status: {{ timelineStatus }}
     </span>
-
-    <br>
 
     <div v-show="showAnalysisDetail">
       <ts-analyzer-session-detail :timeline="timeline" :session-id="analysisSessionId" @closeDetail="showAnalysisDetail = false"></ts-analyzer-session-detail>
@@ -169,6 +195,8 @@ import TsAnalyzerListDropdown from './AnalyzerListDropdown'
 import TsAnalyzerSessionDetail from './AnalyzerSessionDetail'
 import TsAnalyzerHistory from './AnalyzerHistory'
 
+import EventBus from "../../main"
+
 export default {
   components: {
     'color-picker': Chrome,
@@ -179,6 +207,7 @@ export default {
   props: ['timeline', 'controls', 'isCompact'],
   data () {
     return {
+      checkedDataTypes: [],
       initialColor: {},
       newColor: '',
       newTimelineName: '',
@@ -189,7 +218,9 @@ export default {
       showAnalysisDetail: false,
       showAnalysisHistory: false,
       timelineStatus: null,
-      autoRefresh: false
+      autoRefresh: false,
+      isOpen: false,
+      isDarkTheme: false
     }
   },
   computed: {
@@ -200,12 +231,19 @@ export default {
       return this.$store.state.meta
     },
     timelineColorStyle () {
-      let hexColor = this.newColor || this.timeline.color
-      if (!hexColor.startsWith('#')) {
-        hexColor = '#' + hexColor
+      let backgroundColor = this.newColor || this.timeline.color
+      if (!backgroundColor.startsWith('#')) {
+        backgroundColor = '#' + backgroundColor
+      }
+      if (this.isDarkTheme) {
+        return {
+          'background-color': backgroundColor,
+          'filter': 'grayscale(25%)',
+          'color': '#333'
+        }
       }
       return {
-        'background-color': hexColor
+        'background-color': backgroundColor
       }
     }
   },
@@ -237,6 +275,23 @@ export default {
         }
         this.$store.dispatch('updateSketch', this.$store.state.sketch.id)
       }).catch((e) => {})
+    },
+    openFilteredTimeline: function (index, dataTypes) {
+      if (dataTypes.length === 0) {
+        return false;
+      }
+      let searchQuery = ''
+      for (let i = 0; i < dataTypes.length; i++) {
+        const dt = dataTypes[i];
+        if (i != 0) {
+          searchQuery += ' OR '
+        }
+        searchQuery += 'data_type:"' + dt + '"'
+      }
+      this.$router.push({name: 'SketchExplore', query: { index: index, q: searchQuery }})
+    },
+    toggleTheme: function () {
+      this.isDarkTheme =! this.isDarkTheme
     }
   },
   mounted () {
@@ -249,6 +304,9 @@ export default {
     })
   },
   created () {
+    this.isDarkTheme = localStorage.theme === 'dark';
+    EventBus.$on('isDarkTheme', this.toggleTheme)
+
     this.initialColor = {
       hex: this.timeline.color
     }
@@ -295,10 +353,17 @@ export default {
 .vc-sketch {
   box-shadow: none;
 }
-
 .blink {
   animation: blinker 1s linear infinite;
 }
+.checkbox-margin {
+  margin-left: 10px;
+  margin-right: 6px;
+}
+.small-top-margin {
+  margin-top: 4px;
+}
+
 
 @keyframes blinker {
   50% {

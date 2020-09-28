@@ -228,11 +228,10 @@ class Sketch(resource.BaseResource):
         }
         response = self.api.session.post(resource_url, json=data)
 
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
-            raise RuntimeError(
-                'Unable to create view, error code: {0:d} - {1!s} '
-                '{2!s}'.format(
-                    response.status_code, response.reason, response.text))
+        status = error.check_return_status(response, logger)
+        if not status:
+            error.error_message(
+                response, 'Unable to create view', error=RuntimeError)
 
         response_json = error.get_response_json(response, logger)
         view_dict = response_json.get('objects', [{}])[0]
@@ -247,6 +246,9 @@ class Sketch(resource.BaseResource):
 
         Args:
             title: the title of the story.
+
+        Raises:
+            RuntimeError: if a story wasn't created for some reason.
 
         Returns:
             A story object (instance of Story) for the newly
@@ -264,6 +266,12 @@ class Sketch(resource.BaseResource):
         }
 
         response = self.api.session.post(resource_url, json=data)
+
+        status = error.check_return_status(response, logger)
+        if not status:
+            error.error_message(
+                response, 'Unable to create a story', error=RuntimeError)
+
         response_json = error.get_response_json(response, logger)
         story_dict = response_json.get('objects', [{}])[0]
         return story.Story(
@@ -617,7 +625,7 @@ class Sketch(resource.BaseResource):
 
         sketch = self.lazyload_data()
         views = []
-        for view in sketch['meta']['views']:
+        for view in sketch['meta'].get('views', []):
             view_obj = view_lib.View(
                 view_id=view['id'],
                 view_name=view['name'],
@@ -723,7 +731,8 @@ class Sketch(resource.BaseResource):
                 view=None,
                 return_fields=None,
                 as_pandas=False,
-                max_entries=None):
+                max_entries=None,
+                file_name=''):
         """Explore the sketch.
 
         Args:
@@ -740,10 +749,16 @@ class Sketch(resource.BaseResource):
                 the output size to the number of events. Events are read in,
                 10k at a time so there may be more events in the answer back
                 than this number denotes, this is a best effort.
+            file_name (str): Optional filename, if provided the results of
+                the query will be exported to a ZIP file instead of being
+                returned back as a dict or a pandas DataFrame. The ZIP file
+                will contain a METADATA file and a CSV with the results from
+                the query.
 
         Returns:
             Dictionary with query results or a pandas DataFrame if as_pandas
-            is set to True.
+            is set to True. If file_name is provided then no value will be
+            returned.
 
         Raises:
             ValueError: if unable to query for the results.
@@ -756,7 +771,16 @@ class Sketch(resource.BaseResource):
         if self.is_archived():
             raise RuntimeError('Unable to query an archived sketch.')
 
-        if not query_filter:
+        if query_filter:
+            stop_size = query_filter.get('size', 0)
+            terminate_after = query_filter.get('size', 0)
+            if terminate_after and (terminate_after < stop_size):
+                stop_size = terminate_after
+
+            scrolling = bool(stop_size < self.DEFAULT_SIZE_LIMIT)
+        else:
+            scrolling = True
+            stop_size = 0
             query_filter = {
                 'time_start': None,
                 'time_end': None,
@@ -788,7 +812,8 @@ class Sketch(resource.BaseResource):
             'filter': query_filter,
             'dsl': query_dsl,
             'fields': return_fields,
-            'enable_scroll': True,
+            'enable_scroll': scrolling,
+            'file_name': file_name,
         }
 
         response = self.api.session.post(resource_url, json=form_data)
@@ -796,6 +821,11 @@ class Sketch(resource.BaseResource):
             error.error_message(
                 response, message='Unable to query results',
                 error=ValueError)
+
+        if file_name:
+            with open(file_name, 'wb') as fw:
+                fw.write(response.content)
+            return True
 
         response_json = error.get_response_json(response, logger)
 
@@ -807,6 +837,9 @@ class Sketch(resource.BaseResource):
         while count > 0:
             if max_entries and total_count >= max_entries:
                 break
+            if stop_size and total_count >= stop_size:
+                break
+
             more_response = self.api.session.post(resource_url, json=form_data)
             if not error.check_return_status(more_response, logger):
                 error.error_message(
@@ -1201,11 +1234,20 @@ class Sketch(resource.BaseResource):
         meta['total_number_of_events_sent_by_client'] = len(events)
         return meta
 
-    def search_by_label(self, label_name, as_pandas=False):
+    def search_by_label(
+            self, label_name, return_fields=None, max_entries=None,
+            as_pandas=False):
         """Searches for all events containing a given label.
 
         Args:
             label_name: A string representing the label to search for.
+            return_fields (str): A comma separated string with a list of fields
+                that should be included in the response. Optional and defaults
+                to None.
+            max_entries (int): Optional integer denoting a best effort to limit
+                the output size to the number of events. Events are read in,
+                10k at a time so there may be more events in the answer back
+                than this number denotes, this is a best effort.
             as_pandas: Optional bool that determines if the results should
                 be returned back as a dictionary or a Pandas DataFrame.
 
@@ -1217,19 +1259,19 @@ class Sketch(resource.BaseResource):
                 'Unable to search for labels in an archived sketch.')
 
         query = {
-            "nested": {
-                "path": "timesketch_label",
-                "query": {
-                    "bool": {
-                        "must": [
+            'nested': {
+                'path': 'timesketch_label',
+                'query': {
+                    'bool': {
+                        'must': [
                             {
-                                "term": {
-                                    "timesketch_label.name": label_name
+                                'term': {
+                                    'timesketch_label.name': label_name
                                 }
                             },
                             {
-                                "term": {
-                                    "timesketch_label.sketch_id": self.id
+                                'term': {
+                                    'timesketch_label.sketch_id': self.id
                                 }
                             }
                         ]
@@ -1238,7 +1280,8 @@ class Sketch(resource.BaseResource):
             }
         }
         return self.explore(
-            query_dsl=json.dumps({'query': query}), as_pandas=as_pandas)
+            query_dsl=json.dumps({'query': query}), return_fields=return_fields,
+            max_entries=max_entries, as_pandas=as_pandas)
 
     def add_event(
             self, message, date, timestamp_desc, attributes=None,
@@ -1247,7 +1290,8 @@ class Sketch(resource.BaseResource):
 
         Args:
             message: A string that will be used as the message string.
-            date: A string with the timestamp of the message.
+            date: A string with the timestamp of the message. This should be
+                in a human readable format, eg: "2020-09-03T22:52:21".
             timestamp_desc : Description of the timestamp.
             attributes: A dict of extra attributes to add to the event.
             tags: A list of strings to include as tags.
@@ -1372,7 +1416,8 @@ class Sketch(resource.BaseResource):
             self.api.api_root, self.id)
 
         response = self.api.session.post(resource_url, json=form_data)
-        if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
+        status = error.check_return_status(response, logger)
+        if not status:
             error.error_message(
                 response, message='Failed exporting the sketch',
                 error=RuntimeError)

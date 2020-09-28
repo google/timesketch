@@ -52,6 +52,24 @@ def _get_message(response):
     return response_dict.get('message', str(response_dict))
 
 
+def _get_reason(response):
+    """Return the reason from a response.
+
+    Args:
+        response (requests.Response): a response object from a HTTP
+            request.
+
+    Returns:
+        str: a string with the reason field extracted from the
+            response.reason.
+    """
+    reason = response.reason
+    if isinstance(reason, bytes):
+        return reason.decode('utf-8')
+
+    return reason
+
+
 def get_response_json(response, logger):
     """Return the JSON object from a response, logging any errors.
 
@@ -67,9 +85,9 @@ def get_response_json(response, logger):
     """
     status = response.status_code in definitions.HTTP_STATUS_CODE_20X
     if not status:
+        reason = _get_reason(response)
         logger.warning('Failed response: [{0:d}] {2:s} {1:s}'.format(
-            response.status_code, response.reason.decode('utf-8'),
-            _get_message(response)))
+            response.status_code, reason, _get_message(response)))
 
     try:
         return response.json()
@@ -85,8 +103,8 @@ def error_message(response, message=None, error=RuntimeError):
         message = 'Unknown error, with error: '
     text = _get_message(response)
 
-    raise error('{0:s}, with error [{1:d}] {2!s} {3:s}'.format(
-        message, response.status_code, response.reason, text))
+    raise error('{0:s}, with error [{1:d}] {2:s} {3:s}'.format(
+        message, response.status_code, _get_reason(response), text))
 
 
 def check_return_status(response, logger):

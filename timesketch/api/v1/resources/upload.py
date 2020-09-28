@@ -82,7 +82,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             # Create the search index in the Timesketch database
             searchindex = SearchIndex.get_or_create(
                 name=timeline_name,
-                description=timeline_name,
+                description='',
                 user=current_user,
                 index_name=index_name)
             searchindex.grant_permission(permission='read', user=current_user)
