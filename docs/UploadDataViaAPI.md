@@ -94,7 +94,7 @@ Timestamp What  URL Results
 
 Here we have a data frame that we may want to add to our Timesketch instance.
 What is missing here are few of the necessary columns, see
-[documentation]((docs/CreateTimelineFromJSONorCSV.md). We don't really need to
+[documentation](docs/CreateTimelineFromJSONorCSV.md). We don't really need to
 add them here, we can do that all in our upload stream. Let's start by
 connecting to a Timesketch instance.
 
