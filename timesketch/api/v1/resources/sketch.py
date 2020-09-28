@@ -290,6 +290,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                 'description': view.description,
                 'id': view.id,
                 'query': view.query_string,
+                'filter': view.query_filter,
                 'user': username,
                 'created_at': view.created_at,
                 'updated_at': view.updated_at

@@ -262,3 +262,11 @@ a, a:hover {
 .ts-markdown-body-color {
     color: var(--markdown-body-font-color);
 }
+
+.button.is-small {
+    border-radius: 4px;
+}
+
+.pagination-previous, .pagination-next, .pagination-link {
+    color: var(--default-font-color);
+}

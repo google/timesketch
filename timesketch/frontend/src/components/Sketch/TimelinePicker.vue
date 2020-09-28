@@ -15,10 +15,10 @@ limitations under the License.
 -->
 <template>
   <div>
-    <span v-for="timeline in sketch.active_timelines" :key="timeline.id" class="tag is-medium has-text-left" style="cursor: pointer; margin-right: 7px;margin-bottom:7px;" v-bind:style="timelineColor(timeline)" v-on:click="toggleIndex(timeline.searchindex.index_name)">
-      {{ timeline.name }} <span class="tag is-small" style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);min-width:50px;"><span v-if="indexIsEnabled(timeline.searchindex.index_name)">{{ countPerIndex[timeline.searchindex.index_name] | compactNumber }}</span></span>
+    <span v-for="timeline in activeTimelines" :key="timeline.id" class="tag is-medium has-text-left" style="cursor: pointer; margin-right: 7px;margin-bottom:7px;" v-bind:style="timelineColor(timeline)" v-on:click="toggleIndex(timeline.searchindex.index_name)">
+      {{ timeline.name }} <span class="tag is-small" style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);min-width:50px;"><span v-if="indexIsEnabled(timeline.searchindex.index_name) && countPerIndex">{{ countPerIndex[timeline.searchindex.index_name] | compactNumber }}</span></span>
     </span>
-    <div v-if="sketch.active_timelines.length > 1" style="margin-top:7px;">
+    <div v-if="activeTimelines.length > 3" style="margin-top:7px;">
       <span style="text-decoration: underline; cursor: pointer; margin-right: 10px;" v-on:click="enableAllIndices">Enable all</span>
       <span style="text-decoration: underline; cursor: pointer;" v-on:click="disableAllIndices">Disable all</span>
     </div>
@@ -29,17 +29,11 @@ limitations under the License.
 import EventBus from "../../main"
 
 export default {
-  props: ['currentQueryFilter', 'countPerIndex'],
+  props: ['activeTimelines', 'currentQueryFilter', 'countPerIndex'],
   data () {
     return {
       isDarkTheme: false,
-      allTimelines: [],
       selectedTimelines: []
-    }
-  },
-  computed: {
-    sketch () {
-      return this.$store.state.sketch
     }
   },
   methods: {
@@ -79,7 +73,7 @@ export default {
     },
     setAllIndices: function () {
       let allIndices = []
-      this.sketch.active_timelines.forEach(function (timeline) {
+      this.activeTimelines.forEach(function (timeline) {
         allIndices.push(timeline.searchindex.index_name)
       })
       this.selectedTimelines = allIndices
@@ -104,13 +98,12 @@ export default {
     EventBus.$on('clearSearch', this.enableAllIndices)
 
     let timelines = []
-    this.sketch.active_timelines.forEach(function (timeline) {
+    this.activeTimelines.forEach(function (timeline) {
       timelines.push(timeline.searchindex.index_name)
     })
-    this.allTimelines = timelines
 
     if (this.currentQueryFilter.indices.includes('_all')) {
-      this.selectedTimelines = this.allTimelines
+      this.selectedTimelines = timelines
     } else {
       this.selectedTimelines = this.currentQueryFilter.indices
     }
