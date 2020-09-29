@@ -36,11 +36,6 @@ limitations under the License.
         </div>
       </div>
     </div>
-
-    <a v-if="queryHasChanged" v-on:click="$emit('updateView', activeView)" class="button is-small is-warning" style="margin-left:10px;">
-      <span>Update saved search</span>
-    </a>
-
   </div>
 </template>
 
@@ -53,7 +48,6 @@ export default {
     return {
       viewListDropdownActive: false,
       activeView: null,
-      queryHasChanged: false,
       title: '',
     }
   },
@@ -63,29 +57,31 @@ export default {
       this.title = view.name
       this.viewListDropdownActive = false
       this.activeView = view
-      this.queryHasChanged = false
+      this.$emit('updateView', {'view': this.activeView, 'edited': false})
     },
     clearSearch: function (view) {
       this.$emit('clearSearch')
       this.title = ''
       this.viewListDropdownActive = false
       this.activeView = null
-      this.queryHasChanged = false
-    },
-    foobar: function () {
+      this.$emit('updateView', {'view': null, 'edited': false})
 
+    },
+    updateActiveView: function () {
+      this.activeView.query = this.currentQueryString
+      this.activeView.filter = JSON.stringify(this.currentQueryFilter)
+    },
+    compareView: function () {
       if (!this.activeView) {
         return
       }
-
-      if (this.currentQueryString === '') {
-        return
-      }
-
       let queryMatch = this.currentQueryString === this.activeView.query
       let filterMatch = JSON.stringify(this.currentQueryFilter) === JSON.stringify(JSON.parse(this.activeView.filter))
-      console.log('Change: ', !filterMatch || !queryMatch)
-      this.queryHasChanged = !queryMatch || !filterMatch
+      if (!queryMatch || !filterMatch) {
+        this.$emit('updateView', {'view': this.activeView, 'edited': true})
+      } else {
+        this.$emit('updateView', {'view': this.activeView, 'edited': false})
+      }
     }
   },
   computed: {
@@ -94,7 +90,8 @@ export default {
     }
   },
   created: function () {
-    EventBus.$on('newSearch', this.foobar)
+    EventBus.$on('newSearch', this.compareView)
+    EventBus.$on('savedUpdatedView', this.updateActiveView)
     let queryViewId = this.$route.query.view
     if (queryViewId) {
       let view =  this.meta.views.filter(function(view) {

@@ -60,7 +60,16 @@ limitations under the License.
             <div class="field is-grouped" style="margin-top:15px; margin-bottom: 25px;">
 
               <p class="control">
-                <ts-view-list-dropdown @setActiveView="searchView" @clearSearch="clearSearch" @updateView="updateView($event)" :current-query-string="currentQueryString" :current-query-filter="currentQueryFilter" :view-from-url="params.viewId" :is-rounded="false" :is-small="true"></ts-view-list-dropdown>
+                <ts-view-list-dropdown @setActiveView="searchView" @clearSearch="clearSearch" @updateView="updateView($event)" :current-query-string="currentQueryString" :current-query-filter="currentQueryFilter" :view-from-url="params.viewId" :is-rounded="false" :is-small="true" :key="viewListDropdownKey"></ts-view-list-dropdown>
+              </p>
+
+              <p class="control" v-if="activeView">
+                <span v-on:click="saveUpdatedView()" class="button is-small" v-bind:class="{ 'is-success': showUpdateViewControls}" :disabled="!showUpdateViewControls">
+                  <span class="icon is-small">
+                    <i class="fas fa-save"></i>
+                  </span>
+                  <span>Save changes</span>
+                </span>
               </p>
 
               <p class="control">
@@ -386,7 +395,9 @@ export default {
       showAggregations: false,
       showFilterCard: true,
       showSearch: true,
+      showUpdateViewControls: false,
       searchInProgress: false,
+      activeView: null,
       activeStarFilter: false,
       activeCommentFilter: false,
       currentPage: 1,
@@ -394,6 +405,7 @@ export default {
       originalContext: false,
       isFullPage: true,
       loadingComponent: null,
+      viewListDropdownKey: 0,
       eventList: {
         meta: {},
         objects: []
@@ -612,11 +624,20 @@ export default {
       this.currentQueryFilter.indices = indices
       this.search()
     },
-    updateView: function (view) {
+    updateView: function (viewObject) {
+      this.showUpdateViewControls = viewObject.edited
+      this.activeView = viewObject.view
+    },
+    saveUpdatedView: function () {
+      if (!this.showUpdateViewControls) {
+        return
+      }
       this.$buefy.toast.open('Saved search has been updated')
-      ApiClient.updateView(this.sketchId, view.id, this.currentQueryString, this.currentQueryFilter)
-        .then((response) => {})
-        .catch((e) => {})
+      ApiClient.updateView(this.sketchId, this.activeView.id, this.currentQueryString, this.currentQueryFilter)
+       .then((response) => {})
+       .catch((e) => {})
+      this.showUpdateViewControls = false
+      EventBus.$emit('savedUpdatedView')
     },
     clearSearch: function () {
       this.currentQueryString = ''
