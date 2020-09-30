@@ -554,3 +554,37 @@ class AnalysisSession(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         super(AnalysisSession, self).__init__()
         self.user = user
         self.sketch = sketch
+
+
+class Attribute(BaseModel):
+    """Implements the attribute model."""
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    name = Column(UnicodeText())
+    value_type = Column(UnicodeText())
+    value_string = Column(UnicodeText())
+    value_int = Column(Integer())
+
+    def __init__(
+            self, user, sketch, name, value_type,
+            value_string='', value_int=0):
+        """Initialize the AnalysisSession object.
+
+        Args:
+            user (User): The user who created the aggregation
+            sketch (Sketch): The sketch that the aggregation is bound to
+            name (str): the name of the attribute.
+            value_type (str): a string that denotes the type, can be either
+                "string" or "int".
+            value_string (str): if value_type is set to "string" then this
+                variable holds the value.
+            value_int (int): if value_type is set to "int" then this variable
+                hols the value.
+        """
+        super(Attribute, self).__init__()
+        self.user = user
+        self.sketch = sketch
+        self.name = name
+        self.value_type = value_type
+        self.value_string = value_string
+        self.value_int = value_int
