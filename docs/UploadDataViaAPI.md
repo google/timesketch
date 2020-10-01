@@ -166,7 +166,7 @@ then uploaded to Timesketch.
 
 ## JSON
 
-Adding a JSON entry is identicial to the dict method, except that the each
+Adding a JSON entry is identical to the dict method, except that the each
 entry is stored as a separate JSON object (one entry is only a single line).
 
 Let's look at an example:
