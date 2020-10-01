@@ -26,7 +26,7 @@ limitations under the License.
       icon-prev="chevron-left"
       icon-next="chevron-right">
       <template slot-scope="props">
-        <b-table-column field="name" label="Name">
+        <b-table-column field="name" label="">
           <router-link :to="{ name: 'SketchOverview', params: {sketchId: props.row.id } }"><strong>{{ props.row.name }}</strong></router-link>
         </b-table-column>
         <b-table-column field="status">
