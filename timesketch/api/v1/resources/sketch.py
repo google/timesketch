@@ -115,6 +115,26 @@ class SketchListResource(resources.ResourceMixin, Resource):
 class SketchResource(resources.ResourceMixin, Resource):
     """Resource to get a sketch."""
 
+    def _add_label(self, sketch, label):
+        """Add a label to the sketch."""
+        if sketch.has_label(label):
+            logger.warning(
+                'Unable to apply the label [{0:s}] to sketch {1:d}, '
+                'already exists.'.format(label, sketch.id))
+            return False
+        sketch.add_label(label, user=current_user)
+        return True
+
+    def _remove_label(self, sketch, label):
+        """Removes a label to the sketch."""
+        if not sketch.has_label(label):
+            logger.warning(
+                'Unable to remove the label [{0:s}] to sketch {1:d}, '
+                'label does not exist.'.format(label, sketch.id))
+            return False
+        sketch.remove_label(label)
+        return True
+
     def _get_sketch_for_admin(self, sketch):
         """Returns a limited sketch view for adminstrators.
 
@@ -352,24 +372,50 @@ class SketchResource(resources.ResourceMixin, Resource):
         Returns:
             A sketch in JSON (instance of flask.wrappers.Response)
         """
-        form = forms.NameDescriptionForm.build(request)
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
-        if not form.validate_on_submit():
-            abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, (
-                    'Unable to rename sketch, '
-                    'unable to validate form data'))
-
         if not sketch.has_permission(current_user, 'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have write access controls on sketch.')
 
-        sketch.name = form.name.data
-        sketch.description = form.description.data
-        db_session.add(sketch)
-        db_session.commit()
+        form = request.json
+        if not form:
+            form = request.data
+
+        update_object = False
+        name = form.get('name', '')
+        if name:
+            sketch.name = name
+            update_object = True
+
+        description = form.get('description', '')
+        if description:
+            sketch.description = description
+            update_object = True
+
+        labels = form.get('labels', [])
+        label_action = form.get('label_action', 'add')
+        if label_action not in ('add', 'remove'):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Label actions needs to be either "add" or "remove", '
+                'not [{0:s}]'.format(label_action))
+
+        if labels and isinstance(labels, (tuple, list)):
+            for label in labels:
+                if label_action == 'add':
+                    changed = self._add_label(sketch=sketch, label=label)
+                elif label_action == 'remove':
+                    changed = self._remove_label(sketch=sketch, label=label)
+
+                if changed:
+                    update_object = True
+
+        if update_object:
+            db_session.add(sketch)
+            db_session.commit()
+
         return self.to_json(sketch, status_code=HTTP_STATUS_CODE_CREATED)
