@@ -89,9 +89,12 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
             if public:
                 searchindex.grant_permission(permission='read', user=None)
 
-            # Create the index in Elasticsearch
-            self.datastore.create_index(
-                index_name=es_index_name, doc_type='generic_event')
+            datastore = self.datastore
+
+            if not datastore.client.indices.exist(index=es_index_name):
+                # Create the index in Elasticsearch
+                self.datastore.create_index(
+                    index_name=es_index_name, doc_type='generic_event')
 
             db_session.add(searchindex)
             db_session.commit()

@@ -433,22 +433,33 @@ class TimesketchApi(object):
         return index.SearchIndex(searchindex_id, api=self)
 
     def get_or_create_searchindex(self,
-                                  searchindex_name,
+                                  searchindex_name=None,
                                   es_index_name=None,
                                   public=False):
         """Create a new searchindex.
 
         Args:
             searchindex_name: Name of the searchindex in Timesketch.
+                If not provided a random one will be generated.
             es_index_name: Name of the index in Elasticsearch.
+                If not provided a random one will be generated.
             public: Boolean indicating if the searchindex should be public.
 
         Returns:
             Instance of a SearchIndex object and a boolean indicating if the
             object was created.
         """
+        if not es_index_name and not searchindex_name:
+            logger.error(
+                'Either the ES index name or the search index name need to be'
+                'provided.')
+            return None, False
+
         if not es_index_name:
             es_index_name = uuid.uuid4().hex
+
+        if not searchindex_name:
+            searchindex_name = uuid.uuid4().hex
 
         resource_url = '{0:s}/searchindices/'.format(self.api_root)
         form_data = {
