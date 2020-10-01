@@ -10,7 +10,7 @@ Since early 2020 Timesketch has Sigma support implemented. Sigma can be used as 
 
 ### Install rules
 
-Timesketch deliberatly does not provide a set of Sigma rules, as those would add complexity to maintain.
+Timesketch deliberately does not provide a set of Sigma rules, as those would add complexity to maintain.
 Instead we recommend to clone https://github.com/Neo23x0/sigma to /data/sigma.
 This directory will not be catched by git. 
                                                                                                      
