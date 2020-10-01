@@ -118,6 +118,57 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
         return self.to_json(searchindex)
 
     @login_required
+    def post(self, searchindex_id):
+        """Handles POST request to the resource.
+
+        Returns:
+            A search index in JSON (instance of flask.wrappers.Response)
+        """
+        form = request.json
+        if not form:
+            form = request.data
+
+        if not searchindex_id:
+          abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Need to define a search index ID')
+
+        searchindex = SearchIndex.query.get_with_acl(searchindex_id)
+        if not searchindex:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No searchindex found with this ID.')
+
+        if not searchindex.has_permission(current_user, 'write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN, (
+                    'User does not have sufficient access rights to '
+                    'edit the search index.'))
+
+        if searchindex.get_status.status == 'deleted':
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Search index is marked deleted, unable to continue.')
+
+        change_db = False
+        new_status = form.get('status', '')
+        valid_status = ('ready', 'fail', 'processing', 'timeout')
+        if new_status and new_status in valid_status:
+            searchindex.set_status(status=new_status)
+            change_db = True
+
+        description = form.get('description', '')
+        if description:
+            searchindex.description = description
+            change_db = True
+
+        if change_db:
+            db_session.add(searchindex)
+            db_session.commit()
+
+        return self.to_json(searchindex)
+
+    @login_required
     def delete(self, searchindex_id):
         """Handles DELETE request to the resource."""
         searchindex = SearchIndex.query.get_with_acl(searchindex_id)

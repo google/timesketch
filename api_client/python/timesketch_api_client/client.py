@@ -435,7 +435,8 @@ class TimesketchApi(object):
     def get_or_create_searchindex(self,
                                   searchindex_name=None,
                                   es_index_name=None,
-                                  public=False):
+                                  public=False,
+                                  status=''):
         """Create a new searchindex.
 
         Args:
@@ -444,6 +445,9 @@ class TimesketchApi(object):
             es_index_name: Name of the index in Elasticsearch.
                 If not provided a random one will be generated.
             public: Boolean indicating if the searchindex should be public.
+            status: Optional string, if provided will be used as a status
+                for the searchindex, valid options are: 'ready', 'fail',
+                'processing', 'timeout'.
 
         Returns:
             Instance of a SearchIndex object and a boolean indicating if the
@@ -478,6 +482,16 @@ class TimesketchApi(object):
         metadata_dict = response_dict['meta']
         created = metadata_dict.get('created', False)
         searchindex_id = response_dict['objects'][0]['id']
+
+        if status:
+            resource_url = '{0:s}/searchindices/{1:d}/'.format(
+                self.api_root, searchindex_id)
+            data = {
+                'status': status,
+            }
+            response = self.session.post(resource_url, json=data)
+            _ = error.check_return_status(response, logger)
+
         return self.get_searchindex(searchindex_id), created
 
     def list_searchindices(self):
