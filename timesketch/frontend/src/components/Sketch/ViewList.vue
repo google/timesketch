@@ -27,7 +27,12 @@ limitations under the License.
         </span>
         <div v-if="controls" class="field is-grouped is-pulled-right" style="margin-top: -15px;">
           <p class="control">
-            <button v-on:click="remove(view, index)" class="button is-small is-rounded is-danger is-outlined">Remove</button>
+            <button v-on:click="remove(view, index)" class="button is-small is-rounded is-danger">
+              <span class="icon is-small">
+                <i class="fas fa-trash"></i>
+              </span>
+              <span>Remove</span>
+            </button>
           </p>
         </div>
       </li>

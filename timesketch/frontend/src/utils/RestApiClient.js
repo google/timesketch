@@ -182,6 +182,13 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + /views/, formData)
   },
+  updateView (sketchId, viewId, queryString, queryFilter) {
+    let formData = {
+      query: queryString,
+      filter: queryFilter,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /views/ + viewId + '/', formData)
+  },
   deleteView (sketchId, viewId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/views/' + viewId + '/')
   },
