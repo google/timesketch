@@ -781,7 +781,7 @@ export default {
 
 .chip-disabled {
   text-decoration: line-through;
-  opacity: 50%;
+  opacity: 0.5;
 }
 
 </style>
