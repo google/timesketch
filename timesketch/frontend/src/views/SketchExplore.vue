@@ -412,9 +412,17 @@ export default {
       return Object.keys(this.selectedEvents).length
     },
     timeChips: function () {
+      // Support old views that is missing the chips attribute.
+      if (!this.currentQueryFilter.chips) {
+        this.currentQueryFilter.chips = []
+      }
       return this.currentQueryFilter.chips.filter(chip => chip.type === 'datetime_range')
     },
     filterChips: function () {
+      // Support old views that is missing the chips attribute.
+      if (!this.currentQueryFilter.chips) {
+        this.currentQueryFilter.chips = []
+      }
       return this.currentQueryFilter.chips.filter(chip => chip.type !== 'datetime_range')
     }
   },
