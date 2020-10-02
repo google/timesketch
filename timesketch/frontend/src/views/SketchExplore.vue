@@ -91,7 +91,7 @@ limitations under the License.
                   <b-dropdown trap-focus aria-role="menu" ref="TimeFilters">
                     <span slot="trigger" role="button" class="is-small is-outlined">
                       <div class="tags" style="margin-bottom: 5px; margin-right:7px;">
-                        <span class="tag is-rounded" style="cursor: pointer;" v-bind:class="{ 'chip-disabled': !chip.active}">
+                        <span class="tag is-rounded" style="cursor: pointer;" v-bind:class="{ 'chip-disabled': chip.active === false}">
                           <span v-if="index > 0" style="margin-right: 7px;font-size: 0.7em; cursor: default;">OR</span>
                           <span @click.stop="toggleChip(chip, index)">
                             <span class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></span>
@@ -101,7 +101,6 @@ limitations under the License.
                           <span class="fas fa-edit" style="margin-left:7px;"></span>
                           <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
                         </span>
-                        <!--<span class="tag is-delete is-rounded" v-on:click="removeChip(index)"></span>-->
                       </div>
                     </span>
                     <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
@@ -117,7 +116,7 @@ limitations under the License.
             <!-- Filters -->
             <div class="tags">
               <span v-for="(chip, index) in filterChips" :key="index">
-                <span class="tag is-light is-rounded" style="margin-right:7px; cursor: pointer;" v-bind:class="{ 'chip-disabled': !chip.active}" @click.stop="toggleChip(chip, index)">
+                <span class="tag is-light is-rounded" style="margin-right:7px; cursor: pointer;" v-bind:class="{ 'chip-disabled': chip.active === false}" @click.stop="toggleChip(chip, index)">
                   <span v-if="index === 0 && timeChips.length" style="margin-right: 7px;font-size: 0.7em;">AND</span>
                   <span v-if="index > 0" style="margin-right: 7px;font-size: 0.7em;">OR</span>
                   <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
@@ -592,6 +591,10 @@ export default {
       this.$router.replace({'query': null})
     },
     toggleChip: function (chip) {
+      // Treat undefined as active to support old chip formats.
+      if (chip.active === undefined) {
+        chip.active = true
+      }
       chip.active = !chip.active
       this.search()
     },
