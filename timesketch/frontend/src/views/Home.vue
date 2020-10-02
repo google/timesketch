@@ -53,7 +53,7 @@ limitations under the License.
       <div class="container">
         <div class="card">
           <div class="card-content">
-            <p v-if="!filteredList.length" class="subtitle">No search results</p>
+            <p v-if="!filteredList.length">No search results</p>
             <ts-sketch-list v-if="filteredList.length" :sketches="filteredList"></ts-sketch-list>
           </div>
         </div>
@@ -62,33 +62,35 @@ limitations under the License.
 
     <div v-if="mySketches.length && !search" class="section">
       <div class="container">
-        <b-tabs v-model="activeTab">
+        <div class="card">
+          <div class="card-content">
+            <b-tabs v-model="activeTab">
+                <b-tab-item label="My sketches" :disabled="!mySketches.length">
+                  <div class="card">
+                    <div class="card-content">
+                      <ts-sketch-list :sketches="mySketches"></ts-sketch-list>
+                    </div>
+                  </div>
+                </b-tab-item>
 
-            <b-tab-item label="My sketches" :disabled="!mySketches.length">
-              <div class="card">
-                <div class="card-content">
-                  <ts-sketch-list :sketches="mySketches"></ts-sketch-list>
-                </div>
-              </div>
-            </b-tab-item>
+                <b-tab-item label="Shared with me" :disabled="!sharedSketches.length">
+                  <div class="card">
+                    <div class="card-content">
+                      <ts-sketch-list :sketches="sharedSketches"></ts-sketch-list>
+                    </div>
+                  </div>
+                </b-tab-item>
 
-            <b-tab-item label="Shared with me" :disabled="!sharedSketches.length">
-              <div class="card">
-                <div class="card-content">
-                  <ts-sketch-list :sketches="sharedSketches"></ts-sketch-list>
-                </div>
-              </div>
-            </b-tab-item>
-
-            <b-tab-item label="Archived" :disabled="!myArchivedSketches.length">
-              <div class="card">
-                <div class="card-content">
-                  <ts-sketch-list :sketches="myArchivedSketches"></ts-sketch-list>
-                </div>
-              </div>
-            </b-tab-item>
-
-        </b-tabs>
+                <b-tab-item label="Archived" :disabled="!myArchivedSketches.length">
+                  <div class="card">
+                    <div class="card-content">
+                      <ts-sketch-list :sketches="myArchivedSketches"></ts-sketch-list>
+                    </div>
+                  </div>
+                </b-tab-item>
+            </b-tabs>
+          </div>
+        </div>
       </div>
     </div>
 

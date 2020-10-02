@@ -66,11 +66,13 @@ class SketchListResource(resources.ResourceMixin, Resource):
             List of sketches (instance of flask.wrappers.Response)
         """
         if current_user.admin:
-            filtered_sketches = Sketch.query.all()
+            sketch_query = Sketch.query
         else:
-            filtered_sketches = Sketch.all_with_acl().filter(
-                not_(Sketch.Status.status == 'deleted'),
-                Sketch.Status.parent).order_by(Sketch.updated_at.desc()).all()
+            sketch_query = Sketch.all_with_acl()
+
+        filtered_sketches = sketch_query.filter(
+            not_(Sketch.Status.status == 'deleted'),
+            Sketch.Status.parent).order_by(Sketch.updated_at.desc()).all()
 
         # Just return a subset of the sketch objects to reduce the amount of
         # data returned.
@@ -310,6 +312,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                 'description': view.description,
                 'id': view.id,
                 'query': view.query_string,
+                'filter': view.query_filter,
                 'user': username,
                 'created_at': view.created_at,
                 'updated_at': view.updated_at

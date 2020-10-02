@@ -20,7 +20,7 @@ limitations under the License.
         <td colspan="5" style="padding: 0">
           <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
           <div class="ts-time-bubble ts-time-bubble-color">
-            <h5><b>{{ deltaDays }}</b><br>days</h5>
+            <h5><b>{{ deltaDays | compactNumber }}</b><br>days</h5>
           </div>
           <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
         </td>
