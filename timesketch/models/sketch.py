@@ -299,7 +299,8 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             'terminate_after': DEFAULT_LIMIT,
             'indices': [],
             'exclude': [],
-            'order': 'asc'
+            'order': 'asc',
+            'chips': []
         }
         # If not provided, get the saved filter from the view
         if not query_filter:
