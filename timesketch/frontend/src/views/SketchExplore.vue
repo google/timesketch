@@ -113,7 +113,6 @@ limitations under the License.
                     <span slot="trigger" role="button" class="is-small is-outlined">
                       <div class="tags has-addons" style="margin-bottom: 5px; margin-right:7px;">
                         <a :class="'tag is-rounded has-no-underline ' + chipColor(chip)">
-                        <!-- <a class="tag is-link is-rounded" style="Text-Decoration: None !important;"> -->
                           <a @click.stop="toggleChip(chip, index)">
                             <a class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></a>
                             <a>{{ chip.value.split(',')[0] }}</a>
