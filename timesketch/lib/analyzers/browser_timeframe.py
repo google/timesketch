@@ -251,7 +251,7 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
 
             story.add_text(
                 '## Browser Timeframe Analyzer\n\nThe browser timeframe '
-                'analyzer discovered {0:d} browser events that ocurred '
+                'analyzer discovered {0:d} browser events that occurred '
                 'outside of the typical browsing window of this browser '
                 'history ({1:s}), or around {2:0.2f}%  of the {3:d} total '
                 'events.\n\nThe analyzer determines the activity hours by '
