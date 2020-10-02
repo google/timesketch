@@ -591,6 +591,10 @@ export default {
       this.$router.replace({'query': null})
     },
     toggleChip: function (chip) {
+      // Treat undefined as active to support old chip formats.
+      if (chip.active === undefined) {
+        chip.active = true
+      }
       chip.active = !chip.active
       this.search()
     },
