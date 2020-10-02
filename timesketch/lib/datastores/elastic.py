@@ -211,6 +211,10 @@ class ElasticsearchDataStore(object):
             }
 
             for chip in query_filter['chips']:
+                # Exclude chips that the user disabled
+                if not chip.get('active', True):
+                    continue
+
                 if chip['type'] == 'label':
                     labels.append(chip['value'])
 
