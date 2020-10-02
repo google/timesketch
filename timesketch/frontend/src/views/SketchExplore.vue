@@ -111,14 +111,22 @@ limitations under the License.
             </div>
 
             <!-- Time range filters -->
-            <div class="tags" style="margin-bottom: 5px;">
+            <div class="field is-grouped is-grouped-multiline">
               <span v-for="(chip, index) in timeChips" :key="index + chip.value">
-                <span class="tag is-light is-rounded" style="margin-right:7px;cursor: pointer;">
-                  <span v-if="index > 0" style="margin-right: 7px;font-size: 0.7em; cursor: default;">OR</span>
+                <span v-if="index > 0" style="margin-right: 7px;font-size: 0.7em; cursor: default;">OR</span>
                   <b-dropdown trap-focus aria-role="menu" ref="TimeFilters">
-                    <span slot="trigger" role="button">
-                      <span class="icon is-small" style="margin-right:7px;"><i class="fas fa-clock"></i></span> <span>{{ chip.value.split(',')[0] }}</span> <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]">&rarr; {{ chip.value.split(',')[1] }}</span>
-                      <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
+                    <span slot="trigger" role="button" class="is-small is-outlined">
+                      <div class="tags has-addons" style="margin-bottom: 5px; margin-right:7px;">
+                        <a :class="'tag is-rounded has-no-underline ' + chipColor(chip)">
+                          <a @click.stop="toggleChip(chip, index)">
+                            <a class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></a>
+                            <a>{{ chip.value.split(',')[0] }}</a>
+                            <a v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</a>
+                          </a>
+                          <a class="fas fa-edit" style="margin-left:7px;"></a>
+                        </a>
+                        <a class="tag is-delete is-rounded" v-on:click="removeChip(index)"></a>
+                      </div>
                     </span>
                     <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
                       <strong>Update time range</strong>
@@ -127,7 +135,6 @@ limitations under the License.
                       <ts-explore-filter-time @updateChip="updateChip(chip, index)" @hideDropdown="hideDropdown(index)" :selectedChip="chip" :start="chip.value.split(',')[0]" :end="chip.value.split(',')[1]"></ts-explore-filter-time>
                     </b-dropdown-item>
                   </b-dropdown>
-                </span>
               </span>
             </div>
 
@@ -567,13 +574,15 @@ export default {
         'field': '',
         'value': newStartDate + ',' + startDateTimeMoment.format(dateTimeTemplate),
         'type': 'datetime_range',
-        'operator': 'must'
+        'operator': 'must',
+        'active' : true
       }
       let endChip = {
         'field': '',
         'value': startDateTimeMoment.format(dateTimeTemplate) + ',' + newEndDate,
         'type': 'datetime_range',
-        'operator': 'must'
+        'operator': 'must',
+        'active' : true
       }
       // TODO: Use chips instead
       this.currentQueryString = '* OR ' + '_id:' + this.contextEvent._id
@@ -608,6 +617,13 @@ export default {
       this.$router.replace({'query': null})
       EventBus.$emit('clearSearch')
     },
+    chipColor: function (chip) {
+      return chip.active ? 'is-link' : ''
+    },
+    toggleChip: function (chip) {
+      chip.active = !chip.active
+      this.search()
+    },
     removeChip: function (chipIndex) {
       let chip = this.currentQueryFilter.chips[chipIndex]
       if (chip.value === '__ts_star') {
@@ -639,7 +655,8 @@ export default {
         'field': '',
         'value': labelName,
         'type': 'label',
-        'operator': 'must'
+        'operator': 'must',
+        'active' : true
       }
       let chips = this.currentQueryFilter.chips
       if (chips) {
@@ -791,8 +808,8 @@ export default {
   min-height: 330px;
 }
 
-.b-sidebar .sidebar-content {
-  width:560px;
+.has-no-underline {
+  text-decoration: None !important;
 }
 
 </style>

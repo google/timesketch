@@ -64,7 +64,7 @@ Click the little star symbol in the Event List to star an event. Stared events c
 
 Views are saved search queries. Those can either be created by the User, by API or via Analyzers.
 
-To create a view from the Web Ui, click the *Save as view* button on the top right of the Search fiels in the Explore Tab of a sketch.
+To create a view from the Web Ui, click the *Save as view* button on the top right of the Search fields in the Explore Tab of a sketch.
 
 ## Insights / Aggegations
 

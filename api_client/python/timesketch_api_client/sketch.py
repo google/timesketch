@@ -58,7 +58,6 @@ class Sketch(resource.BaseResource):
         self.id = sketch_id
         self.api = api
         self._archived = None
-        self._labels = []
         self._sketch_name = sketch_name
         self._resource_uri = 'sketches/{0:d}'.format(self.id)
         super(Sketch, self).__init__(api=api, resource_uri=self._resource_uri)
@@ -79,22 +78,17 @@ class Sketch(resource.BaseResource):
     @property
     def labels(self):
         """Property that returns the sketch labels."""
-        if self._labels:
-            return self._labels
-
-        data = self.lazyload_data()
+        data = self.lazyload_data(refresh_cache=True)
         objects = data.get('objects', [])
         if not objects:
-            return self._labels
+            return []
 
         sketch_data = objects[0]
         label_string = sketch_data.get('label_string', '')
         if label_string:
-            self._labels = json.loads(label_string)
-        else:
-            self._labels = []
+            return json.loads(label_string)
 
-        return self._labels
+        return []
 
     @property
     def name(self):
@@ -108,6 +102,26 @@ class Sketch(resource.BaseResource):
             self._sketch_name = sketch['objects'][0]['name']
         return self._sketch_name
 
+    @name.setter
+    def name(self, name_value):
+        """Change the name of the sketch to a new value."""
+        if not isinstance(name_value, str):
+            logger.error('Unable to change the name to a non string value')
+            return
+
+        resource_url = '{0:s}/sketches/{1:d}/'.format(
+            self.api.api_root, self.id)
+
+        data = {
+            'name': name_value,
+        }
+        response = self.api.session.post(resource_url, json=data)
+        _ = error.check_return_status(response, logger)
+
+        # Force the new name to be re-loaded.
+        self._sketch_name = ''
+        _ = self.lazyload_data(refresh_cache=True)
+
     @property
     def description(self):
         """Property that returns sketch description.
@@ -117,6 +131,25 @@ class Sketch(resource.BaseResource):
         """
         sketch = self.lazyload_data()
         return sketch['objects'][0]['description']
+
+    @description.setter
+    def description(self, description_value):
+        """Change the sketch description to a new value."""
+        if not isinstance(description_value, str):
+            logger.error('Unable to change the name to a non string value')
+            return
+
+        resource_url = '{0:s}/sketches/{1:d}/'.format(
+            self.api.api_root, self.id)
+
+        data = {
+            'description': description_value,
+        }
+        response = self.api.session.post(resource_url, json=data)
+        _ = error.check_return_status(response, logger)
+
+        # Force the new description to be re-loaded.
+        _ = self.lazyload_data(refresh_cache=True)
 
     @property
     def status(self):
@@ -179,6 +212,67 @@ class Sketch(resource.BaseResource):
                 pass
 
         return data_frame
+
+    def add_sketch_label(self, label):
+        """Add a label to the sketch.
+
+        Args:
+            label (str): A string with the label to add to the sketch.
+
+        Returns:
+            bool: A boolean to indicate whether the label was successfully
+                  added to the sketch.
+        """
+        if label in self.labels:
+            logger.error(
+                'Label [{0:s}] already applied to sketch.'.format(label))
+            return False
+
+        resource_url = '{0:s}/sketches/{1:d}/'.format(
+            self.api.api_root, self.id)
+
+        data = {
+            'labels': [label],
+            'label_action': 'add',
+        }
+        response = self.api.session.post(resource_url, json=data)
+
+        status = error.check_return_status(response, logger)
+        if not status:
+            logger.error('Unable to add the label to the sketch.')
+
+        return status
+
+    def remove_sketch_label(self, label):
+        """Remove a label from the sketch.
+
+        Args:
+            label (str): A string with the label to remove from the sketch.
+
+        Returns:
+            bool: A boolean to indicate whether the label was successfully
+                  removed from the sketch.
+        """
+        if label not in self.labels:
+            logger.error(
+                'Unable to remove label [{0:s}], not a label '
+                'attached to this sketch.'.format(label))
+            return False
+
+        resource_url = '{0:s}/sketches/{1:d}/'.format(
+            self.api.api_root, self.id)
+
+        data = {
+            'labels': [label],
+            'label_action': 'remove',
+        }
+        response = self.api.session.post(resource_url, json=data)
+
+        status = error.check_return_status(response, logger)
+        if not status:
+            logger.error('Unable to remove the label from the sketch.')
+
+        return status
 
     def create_view(
             self, name, query_string='', query_dsl='', query_filter=None):
