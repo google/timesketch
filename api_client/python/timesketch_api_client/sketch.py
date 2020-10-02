@@ -76,6 +76,19 @@ class Sketch(resource.BaseResource):
         return json.loads(permission_string)
 
     @property
+    def my_acl(self):
+        """Property that returns back the ACL for the current user."""
+        data = self.lazyload_data()
+        objects = data.get('objects')
+        if not objects:
+            return []
+        data_object = objects[0]
+        permission_string = data_object.get('my_permissions')
+        if not permission_string:
+            return []
+        return json.loads(permission_string)
+
+    @property
     def labels(self):
         """Property that returns the sketch labels."""
         data = self.lazyload_data(refresh_cache=True)
