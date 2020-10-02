@@ -23,30 +23,30 @@ limitations under the License.
             </header>
             <div class="card-content">
               <div class="content">
-                <ts-create-view-form @toggleCreateViewModal="showCreateViewModal = !showCreateViewModal" :sketchId="sketchId" :currentQueryString="currentQueryString" :currentQueryFilter="currentQueryFilter"></ts-create-view-form>
+                <ts-create-view-form @setActiveView="setActiveView($event)" :sketchId="sketchId" :currentQueryString="currentQueryString" :currentQueryFilter="currentQueryFilter"></ts-create-view-form>
               </div>
             </div>
           </div>
         </b-modal>
 
-        {{activeView}}
+        <b-dropdown ref="dropdown" animation="none" aria-role="menu">
 
-        <b-dropdown ref="dropdown" aria-role="menu">
-
-          <a class="button ts-search-dropdown" slot="trigger" slot-scope="{ active }">
-            <b-icon icon="save" style="margin-right: 7px; font-size: 0.6em;"></b-icon>
-            <span v-if="activeView" style="margin-right: 7px;">{{ activeView.name }}</span>
+          <a class="button" v-bind:class="{ 'is-rounded': isSimple, 'ts-search-dropdown': !isSimple}" slot="trigger" slot-scope="{ active }">
+            <b-icon v-if="!isSimple" icon="save" style="margin-right: 7px; font-size: 0.6em;"></b-icon>
+            <span v-if="activeView" style="margin-right: 7px;">{{ isSimple ? '+ Saved search' : activeView.name }}</span>
+            <span v-if="isSimple">+ Saved search</span>
             <b-icon :icon="active ? 'chevron-up' : 'chevron-down'" style="font-size: 0.6em;"></b-icon>
           </a>
 
           <div class="modal-card" style="width:500px;color: var(--font-color-dark);">
             <section class="modal-card-body">
-              <p>
-                Save search query and filters that you want to use again.
-              </p>
-              <hr>
+              <div v-if="!isSimple">
+                <p>
+                  Save search query and filters that you want to use again.
+                </p>
+                <hr>
+              </div>
               <div v-if="meta.views.length">
-                <b>Saved searches</b>
                 <b-dropdown-item v-on:click="setActiveView(view)" v-for="view in meta.views" :key="view.id">
                   <span>{{ view.name }}</span>
                 </b-dropdown-item>
@@ -54,12 +54,24 @@ limitations under the License.
               </section>
             </div>
 
-          <footer class="modal-card-foot">
-            <button class="button" style="border-radius: 5px;" @click="clearSearch" v-if="activeView">Clear</button>
-            <button class="button" style="border-radius: 5px;" @click="updateView" v-if="activeView">Save changes</button>
-            <button class="button is-info" style="border-radius: 5px;" @click="showCreateViewModal = !showCreateViewModal" v-if="activeView">Save as new</button>
-            <button class="button is-info" style="border-radius: 5px;" @click="showCreateViewModal = !showCreateViewModal" v-if="!activeView">Save search</button>
-          </footer>
+          <div class="level footer" v-if="!isSimple">
+            <div class="level-left">
+              <div class="level-item">
+                <button class="button is-text" style="color: var(--font-color-dark); text-decoration: none;" @click="clearSearch" v-if="activeView">Clear</button>
+              </div>
+            </div>
+            <div class="level-right">
+              <div class="level-item">
+                <button class="button level-item" style="border-radius: 5px;" @click="updateView" v-if="activeView" :disabled="!currentQueryString">Save changes</button>
+              </div>
+              <div class="level-item">
+                <button class="button is-info level-item" style="border-radius: 5px;" :disabled="!currentQueryString" @click="saveView">
+                  <b-icon icon="save" size="is-small"></b-icon>
+                  <span>{{ activeView ? 'Save as new': 'Save current search' }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
 
         </b-dropdown>
 
@@ -67,7 +79,6 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from "../../main"
 import ApiClient from "../../utils/RestApiClient"
 import TsCreateViewForm from './CreateViewForm'
 
@@ -75,28 +86,27 @@ export default {
   components: {
     TsCreateViewForm
   },
-  props: ['currentQueryString', 'currentQueryFilter', 'isRounded', 'isSmall', 'sketchId'],
+  props: ['currentQueryString', 'currentQueryFilter', 'isSimple', 'sketchId'],
   data () {
     return {
       activeView: null,
-      title: '',
       showCreateViewModal: false
     }
   },
   methods: {
     setActiveView: function (view) {
       this.$emit('setActiveView', view)
-      this.title = view.name
+      this.showCreateViewModal = false
       this.activeView = view
-      this.$emit('updateView', {'view': this.activeView, 'edited': false})
     },
     clearSearch: function (view) {
       this.$emit('clearSearch')
-      this.title = ''
       this.activeView = null
       this.$refs.dropdown.toggle()
-      this.$emit('updateView', {'view': null, 'edited': false})
-
+    },
+    saveView: function () {
+      this.showCreateViewModal = true
+      this.$refs.dropdown.toggle()
     },
     updateView: function () {
       if (!this.activeView) {
@@ -110,18 +120,6 @@ export default {
          this.$buefy.toast.open('Saved search has been updated')
        })
        .catch((e) => {})
-    },
-    compareView: function () {
-      if (!this.activeView) {
-        return
-      }
-      let queryMatch = this.currentQueryString === this.activeView.query
-      let filterMatch = JSON.stringify(this.currentQueryFilter) === JSON.stringify(JSON.parse(this.activeView.filter))
-      if (!queryMatch || !filterMatch) {
-        this.$emit('updateView', {'view': this.activeView, 'edited': true})
-      } else {
-        this.$emit('updateView', {'view': this.activeView, 'edited': false})
-      }
     }
   },
   computed: {
@@ -130,7 +128,6 @@ export default {
     }
   },
   created: function () {
-    EventBus.$on('newSearch', this.compareView)
     let queryViewId = this.$route.query.view
     if (queryViewId) {
       let view =  this.meta.views.filter(function(view) {
@@ -147,4 +144,11 @@ export default {
 .button:focus, .button.is-focused {
   border-color: transparent;
 }
+
+.footer {
+  background: #f5f5f5;
+  border-top: solid 1px #d1d1d1;
+  padding: 15px;
+}
+
 </style>

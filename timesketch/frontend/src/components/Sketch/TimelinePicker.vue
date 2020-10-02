@@ -41,23 +41,31 @@ export default {
       this.isDarkTheme = localStorage.theme === 'dark'
       let indexName = timeline.searchindex.index_name
       let backgroundColor = timeline.color
+      let textDecoration = 'none'
+      let opacity = '100%'
       if (!backgroundColor.startsWith('#')) {
         backgroundColor = '#' + backgroundColor
       }
       // Grey out the index if it is not selected.
       if (!this.selectedTimelines.includes(indexName)) {
-        backgroundColor = '#f5f5f5'
+        backgroundColor = '#d2d2d2'
+        textDecoration = 'line-through'
+        opacity = '50%'
       }
 
       if (this.isDarkTheme) {
         return {
           'background-color': backgroundColor,
+          'text-decoration': textDecoration,
+          'opacity': opacity,
           'filter': 'grayscale(25%)',
-          'color': '#333'
+          'color': '#333333'
         }
       }
       return {
-        'background-color': backgroundColor
+        'background-color': backgroundColor,
+        'text-decoration': textDecoration,
+        'opacity': opacity,
       }
     },
     toggleIndex: function (indexName) {

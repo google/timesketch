@@ -42,7 +42,7 @@ limitations under the License.
 
               <div class="field has-addons">
                 <div class="control">
-                  <ts-view-list-dropdown @setActiveView="searchView" @clearSearch="clearSearch" @updateView="updateView($event)" :current-query-string="currentQueryString" :current-query-filter="currentQueryFilter" :view-from-url="params.viewId" :is-rounded="false" :is-small="true" :sketch-id="sketchId"></ts-view-list-dropdown>
+                  <ts-view-list-dropdown @setActiveView="searchView" @clearSearch="clearSearch" :current-query-string="currentQueryString" :current-query-filter="currentQueryFilter" :view-from-url="params.viewId" :sketch-id="sketchId"></ts-view-list-dropdown>
                 </div>
                 <div class="control" style="width: 100%;">
                   <input @keyup.enter="search" v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus required>
@@ -50,31 +50,6 @@ limitations under the License.
               </div>
 
             <div class="field is-grouped" style="margin-top:15px; margin-bottom: 25px;">
-
-              <!--
-              <p class="control">
-                <ts-view-list-dropdown @setActiveView="searchView" @clearSearch="clearSearch" @updateView="updateView($event)" :current-query-string="currentQueryString" :current-query-filter="currentQueryFilter" :view-from-url="params.viewId" :is-rounded="false" :is-small="true"></ts-view-list-dropdown>
-              </p>
-
-              <p class="control" v-if="activeView">
-                <span v-on:click="saveUpdatedView()" class="button is-small" v-bind:class="{ 'is-success': showUpdateViewControls}" :disabled="!showUpdateViewControls">
-                  <span class="icon is-small">
-                    <i class="fas fa-save"></i>
-                  </span>
-                  <span>Save changes</span>
-                </span>
-              </p>
-
-              <p class="control">
-                <a class="button is-small" v-on:click="showCreateViewModal = !showCreateViewModal">
-                  <span class="icon is-small">
-                    <i class="fas fa-save"></i>
-                  </span>
-                  <span>Save search</span>
-                </a>
-              </p>
-              -->
-
               <p class="control">
                 <b-dropdown trap-focus aria-role="menu" ref="NewTimeFilter">
                   <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
@@ -113,19 +88,20 @@ limitations under the License.
             <!-- Time range filters -->
             <div class="field is-grouped is-grouped-multiline">
               <span v-for="(chip, index) in timeChips" :key="index + chip.value">
-                <span v-if="index > 0" style="margin-right: 7px;font-size: 0.7em; cursor: default;">OR</span>
                   <b-dropdown trap-focus aria-role="menu" ref="TimeFilters">
                     <span slot="trigger" role="button" class="is-small is-outlined">
-                      <div class="tags has-addons" style="margin-bottom: 5px; margin-right:7px;">
-                        <a :class="'tag is-rounded has-no-underline ' + chipColor(chip)">
-                          <a @click.stop="toggleChip(chip, index)">
-                            <a class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></a>
-                            <a>{{ chip.value.split(',')[0] }}</a>
-                            <a v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</a>
-                          </a>
-                          <a class="fas fa-edit" style="margin-left:7px;"></a>
-                        </a>
-                        <a class="tag is-delete is-rounded" v-on:click="removeChip(index)"></a>
+                      <div class="tags" style="margin-bottom: 5px; margin-right:7px;">
+                        <span class="tag is-rounded" style="cursor: pointer;" v-bind:class="{ 'chip-disabled': !chip.active}">
+                          <span v-if="index > 0" style="margin-right: 7px;font-size: 0.7em; cursor: default;">OR</span>
+                          <span @click.stop="toggleChip(chip, index)">
+                            <span class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></span>
+                            <span>{{ chip.value.split(',')[0] }}</span>
+                            <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</span>
+                          </span>
+                          <span class="fas fa-edit" style="margin-left:7px;"></span>
+                          <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
+                        </span>
+                        <!--<span class="tag is-delete is-rounded" v-on:click="removeChip(index)"></span>-->
                       </div>
                     </span>
                     <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
@@ -141,7 +117,7 @@ limitations under the License.
             <!-- Filters -->
             <div class="tags">
               <span v-for="(chip, index) in filterChips" :key="index">
-                <span class="tag is-light is-rounded" style="margin-right:7px;">
+                <span class="tag is-light is-rounded" style="margin-right:7px; cursor: pointer;" v-bind:class="{ 'chip-disabled': !chip.active}" @click.stop="toggleChip(chip, index)">
                   <span v-if="index === 0 && timeChips.length" style="margin-right: 7px;font-size: 0.7em;">AND</span>
                   <span v-if="index > 0" style="margin-right: 7px;font-size: 0.7em;">OR</span>
                   <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
@@ -162,7 +138,7 @@ limitations under the License.
 
 
     <!-- Aggregations -->
-    <ts-sketch-explore-aggregation :show-aggregations="showAggregations"></ts-sketch-explore-aggregation>
+    <ts-sketch-explore-aggregation></ts-sketch-explore-aggregation>
     <!-- End Aggregations -->
 
     <section class="section" id="context" v-show="contextEvent">
@@ -374,7 +350,6 @@ export default {
     return {
       params: {},
       showCreateViewModal: false,
-      showAggregations: false,
       showFilterCard: true,
       showSearch: true,
       searchInProgress: false,
@@ -615,10 +590,6 @@ export default {
       this.currentQueryFilter = defaultQueryFilter()
       this.eventList = emptyEventList()
       this.$router.replace({'query': null})
-      EventBus.$emit('clearSearch')
-    },
-    chipColor: function (chip) {
-      return chip.active ? 'is-link' : ''
     },
     toggleChip: function (chip) {
       chip.active = !chip.active
@@ -808,8 +779,9 @@ export default {
   min-height: 330px;
 }
 
-.has-no-underline {
-  text-decoration: None !important;
+.chip-disabled {
+  text-decoration: line-through;
+  opacity: 50%;
 }
 
 </style>

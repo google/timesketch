@@ -98,7 +98,7 @@ import TsSketchExploreAggregatorListDropdown from './AggregatorListDropdown'
 import TsTableChart from './TableChart'
 
 export default {
-  props: ['showAggregations'],
+  //props: [],
   components: {
     TsDynamicForm,
     TsVegaLiteChart,
@@ -115,7 +115,8 @@ export default {
       showSaveModal: false,
       aggregationName: '',
       chartType: '',
-      chartData: {}
+      chartData: {},
+      showAggregations: false
     }
   },
   computed: {
