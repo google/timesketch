@@ -106,13 +106,23 @@ limitations under the License.
 
             </div>
 
-            <div class="tags" style="margin-bottom: 5px;">
+            <div class="field is-grouped is-grouped-multiline">
               <span v-for="(chip, index) in currentQueryFilter.chips" :key="index + chip.value">
-                <span v-if="chip.type === 'datetime_range'" class="tag is-light is-rounded" style="margin-right:7px;">
+                <span v-if="chip.type === 'datetime_range'" class="control">
                   <b-dropdown trap-focus aria-role="menu" ref="TimeFilters">
-                    <span slot="trigger" role="button">
-                      <span class="icon is-small" style="margin-right:7px;"><i class="fas fa-clock"></i></span> <span>{{ chip.value.split(',')[0] }}</span> <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]">&rarr; {{ chip.value.split(',')[1] }}</span>
-                      <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
+                    <span slot="trigger" role="button" class="is-small is-outlined">
+                      <div class="tags has-addons" style="margin-bottom: 5px; margin-right:7px;">
+                        <a :class="'tag is-rounded has-no-underline ' + chipColor(chip)">
+                        <!-- <a class="tag is-link is-rounded" style="Text-Decoration: None !important;"> -->
+                          <a @click.stop="toggleChip(chip, index)">
+                            <a class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></a>
+                            <a>{{ chip.value.split(',')[0] }}</a>
+                            <a v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</a>
+                          </a>
+                          <a class="fas fa-edit" style="margin-left:7px;"></a>
+                        </a>
+                        <a class="tag is-delete is-rounded" v-on:click="removeChip(index)"></a>
+                      </div>
                     </span>
                     <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
                       <strong>Update time range</strong>
@@ -534,13 +544,15 @@ export default {
         'field': '',
         'value': newStartDate + ',' + startDateTimeMoment.format(dateTimeTemplate),
         'type': 'datetime_range',
-        'operator': 'must'
+        'operator': 'must',
+        'active' : true
       }
       let endChip = {
         'field': '',
         'value': startDateTimeMoment.format(dateTimeTemplate) + ',' + newEndDate,
         'type': 'datetime_range',
-        'operator': 'must'
+        'operator': 'must',
+        'active' : true
       }
       // TODO: Use chips instead
       this.currentQueryString = '* OR ' + '_id:' + this.contextEvent._id
@@ -566,6 +578,13 @@ export default {
     },
     toggleCreateViewModal: function () {
       this.showCreateViewModal = !this.showCreateViewModal
+    },
+    chipColor: function (chip) {
+      return chip.active ? 'is-link' : ''
+    },
+    toggleChip: function (chip) {
+      chip.active = !chip.active
+      this.search()
     },
     removeChip: function (chipIndex) {
       let chip = this.currentQueryFilter.chips[chipIndex]
@@ -598,7 +617,8 @@ export default {
         'field': '',
         'value': labelName,
         'type': 'label',
-        'operator': 'must'
+        'operator': 'must',
+        'active' : true
       }
       let chips = this.currentQueryFilter.chips
       if (chips) {
@@ -748,6 +768,10 @@ export default {
 
 .tsdropdown {
   min-height: 330px;
+}
+
+.has-no-underline {
+  Text-Decoration: None !important;
 }
 
 </style>
