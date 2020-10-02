@@ -15,61 +15,101 @@ limitations under the License.
 -->
 <template>
   <div>
-    <div class="dropdown" v-bind:class="{'is-active': viewListDropdownActive}">
-      <div class="dropdown-trigger">
-        <a class="button" v-bind:class="{'is-rounded': isRounded, 'is-small': isSmall}" aria-haspopup="true" aria-controls="dropdown-menu" v-on:click="viewListDropdownActive = !viewListDropdownActive">
-          <span>{{ title || 'Saved searches' }}</span>
-          <span class="icon is-small">
-            <i class="fas fa-angle-down" aria-hidden="true"></i>
-          </span>
-        </a>
-      </div>
-      <div class="dropdown-menu" id="dropdown-menu" role="menu">
-        <div class="dropdown-content">
-          <span class="dropdown-item" v-if="meta.views && meta.views.length < 1">No saved searches</span>
-          <span class="dropdown-item" v-if="title">
-            <button class="button is-small is-rounded is-fullwidth" @click="clearSearch">Clear</button>
-          </span>
-          <a class="dropdown-item" v-on:click="setActiveView(view)" v-for="view in meta.views" :key="view.id">
-            <span>{{ view.name }}</span>
+
+        <b-modal :active.sync="showCreateViewModal" :width="640" scroll="keep">
+          <div class="card">
+            <header class="card-header">
+              <p class="card-header-title">Save search</p>
+            </header>
+            <div class="card-content">
+              <div class="content">
+                <ts-create-view-form @toggleCreateViewModal="showCreateViewModal = !showCreateViewModal" :sketchId="sketchId" :currentQueryString="currentQueryString" :currentQueryFilter="currentQueryFilter"></ts-create-view-form>
+              </div>
+            </div>
+          </div>
+        </b-modal>
+
+        {{activeView}}
+
+        <b-dropdown ref="dropdown" aria-role="menu">
+
+          <a class="button ts-search-dropdown" slot="trigger" slot-scope="{ active }">
+            <b-icon icon="save" style="margin-right: 7px; font-size: 0.6em;"></b-icon>
+            <span v-if="activeView" style="margin-right: 7px;">{{ activeView.name }}</span>
+            <b-icon :icon="active ? 'chevron-up' : 'chevron-down'" style="font-size: 0.6em;"></b-icon>
           </a>
-        </div>
-      </div>
-    </div>
+
+          <div class="modal-card" style="width:500px;color: var(--font-color-dark);">
+            <section class="modal-card-body">
+              <p>
+                Save search query and filters that you want to use again.
+              </p>
+              <hr>
+              <div v-if="meta.views.length">
+                <b>Saved searches</b>
+                <b-dropdown-item v-on:click="setActiveView(view)" v-for="view in meta.views" :key="view.id">
+                  <span>{{ view.name }}</span>
+                </b-dropdown-item>
+              </div>
+              </section>
+            </div>
+
+          <footer class="modal-card-foot">
+            <button class="button" style="border-radius: 5px;" @click="clearSearch" v-if="activeView">Clear</button>
+            <button class="button" style="border-radius: 5px;" @click="updateView" v-if="activeView">Save changes</button>
+            <button class="button is-info" style="border-radius: 5px;" @click="showCreateViewModal = !showCreateViewModal" v-if="activeView">Save as new</button>
+            <button class="button is-info" style="border-radius: 5px;" @click="showCreateViewModal = !showCreateViewModal" v-if="!activeView">Save search</button>
+          </footer>
+
+        </b-dropdown>
+
   </div>
 </template>
 
 <script>
 import EventBus from "../../main"
+import ApiClient from "../../utils/RestApiClient"
+import TsCreateViewForm from './CreateViewForm'
 
 export default {
-  props: ['currentQueryString', 'currentQueryFilter', 'isRounded', 'isSmall'],
+  components: {
+    TsCreateViewForm
+  },
+  props: ['currentQueryString', 'currentQueryFilter', 'isRounded', 'isSmall', 'sketchId'],
   data () {
     return {
-      viewListDropdownActive: false,
       activeView: null,
       title: '',
+      showCreateViewModal: false
     }
   },
   methods: {
     setActiveView: function (view) {
       this.$emit('setActiveView', view)
       this.title = view.name
-      this.viewListDropdownActive = false
       this.activeView = view
       this.$emit('updateView', {'view': this.activeView, 'edited': false})
     },
     clearSearch: function (view) {
       this.$emit('clearSearch')
       this.title = ''
-      this.viewListDropdownActive = false
       this.activeView = null
+      this.$refs.dropdown.toggle()
       this.$emit('updateView', {'view': null, 'edited': false})
 
     },
-    updateActiveView: function () {
+    updateView: function () {
+      if (!this.activeView) {
+        return
+      }
+      this.$refs.dropdown.toggle()
       this.activeView.query = this.currentQueryString
       this.activeView.filter = JSON.stringify(this.currentQueryFilter)
+      ApiClient.updateView(this.sketchId, this.activeView.id, this.currentQueryString, this.currentQueryFilter)
+       .then((response) => {
+         this.$buefy.toast.open('Saved search has been updated')
+       })
+       .catch((e) => {})
     },
     compareView: function () {
       if (!this.activeView) {
@@ -91,7 +131,6 @@ export default {
   },
   created: function () {
     EventBus.$on('newSearch', this.compareView)
-    EventBus.$on('savedUpdatedView', this.updateActiveView)
     let queryViewId = this.$route.query.view
     if (queryViewId) {
       let view =  this.meta.views.filter(function(view) {
@@ -104,4 +143,8 @@ export default {
 </script>
 
 <!-- CSS scoped to this component only -->
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.button:focus, .button.is-focused {
+  border-color: transparent;
+}
+</style>

@@ -47,7 +47,7 @@ limitations under the License.
           <header class="card-header" v-on:click="showAggregations = !showAggregations" style="cursor: pointer">
             <span class="card-header-title">
               <span class="icon is-small"><i class="fas fa-chart-bar"></i></span>
-              <span style="margin-left:10px;">Insights</span>
+              <span style="margin-left:10px;">Aggregations</span>
             </span>
             <span class="card-header-icon">
               <span class="icon">

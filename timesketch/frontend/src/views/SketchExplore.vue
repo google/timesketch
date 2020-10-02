@@ -21,19 +21,6 @@ limitations under the License.
         </div>
     </section>
 
-    <b-modal :active.sync="showCreateViewModal" :width="640" scroll="keep">
-      <div class="card">
-        <header class="card-header">
-          <p class="card-header-title">Save search</p>
-        </header>
-        <div class="card-content">
-          <div class="content">
-            <ts-create-view-form @toggleCreateViewModal="toggleCreateViewModal" :sketchId="sketchId" :currentQueryString="currentQueryString" :currentQueryFilter="currentQueryFilter"></ts-create-view-form>
-          </div>
-        </div>
-      </div>
-    </b-modal>
-
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
@@ -53,14 +40,20 @@ limitations under the License.
 
           <div class="card-content" v-if="showSearch">
 
-            <form v-on:submit.prevent="search" style="width:100%;">
-              <input v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus required>
-            </form>
+              <div class="field has-addons">
+                <div class="control">
+                  <ts-view-list-dropdown @setActiveView="searchView" @clearSearch="clearSearch" @updateView="updateView($event)" :current-query-string="currentQueryString" :current-query-filter="currentQueryFilter" :view-from-url="params.viewId" :is-rounded="false" :is-small="true" :sketch-id="sketchId"></ts-view-list-dropdown>
+                </div>
+                <div class="control" style="width: 100%;">
+                  <input @keyup.enter="search" v-model="currentQueryString" class="ts-search-input" type="text" placeholder="Search" autofocus required>
+                </div>
+              </div>
 
             <div class="field is-grouped" style="margin-top:15px; margin-bottom: 25px;">
 
+              <!--
               <p class="control">
-                <ts-view-list-dropdown @setActiveView="searchView" @clearSearch="clearSearch" @updateView="updateView($event)" :current-query-string="currentQueryString" :current-query-filter="currentQueryFilter" :view-from-url="params.viewId" :is-rounded="false" :is-small="true" :key="viewListDropdownKey"></ts-view-list-dropdown>
+                <ts-view-list-dropdown @setActiveView="searchView" @clearSearch="clearSearch" @updateView="updateView($event)" :current-query-string="currentQueryString" :current-query-filter="currentQueryFilter" :view-from-url="params.viewId" :is-rounded="false" :is-small="true"></ts-view-list-dropdown>
               </p>
 
               <p class="control" v-if="activeView">
@@ -80,10 +73,11 @@ limitations under the License.
                   <span>Save search</span>
                 </a>
               </p>
+              -->
 
               <p class="control">
                 <b-dropdown trap-focus aria-role="menu" ref="NewTimeFilter">
-                  <a class="button is-rounded is-small" slot="trigger" role="button">
+                  <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
                     <span>+ Time range</span>
                   </a>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
@@ -97,7 +91,7 @@ limitations under the License.
 
               <p class="control">
                 <b-dropdown trap-focus aria-role="menu">
-                  <a class="button is-rounded is-small" slot="trigger" role="button">
+                  <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
                     <span>+ Filters</span>
                   </a>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
@@ -114,72 +108,55 @@ limitations under the License.
                   </b-dropdown-item>
                 </b-dropdown>
               </p>
+            </div>
 
+            <!-- Time range filters -->
+            <div class="tags" style="margin-bottom: 5px;">
+              <span v-for="(chip, index) in timeChips" :key="index + chip.value">
+                <span class="tag is-light is-rounded" style="margin-right:7px;cursor: pointer;">
+                  <span v-if="index > 0" style="margin-right: 7px;font-size: 0.7em; cursor: default;">OR</span>
+                  <b-dropdown trap-focus aria-role="menu" ref="TimeFilters">
+                    <span slot="trigger" role="button">
+                      <span class="icon is-small" style="margin-right:7px;"><i class="fas fa-clock"></i></span> <span>{{ chip.value.split(',')[0] }}</span> <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]">&rarr; {{ chip.value.split(',')[1] }}</span>
+                      <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
+                    </span>
+                    <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
+                      <strong>Update time range</strong>
+                      <br>
+                      <br>
+                      <ts-explore-filter-time @updateChip="updateChip(chip, index)" @hideDropdown="hideDropdown(index)" :selectedChip="chip" :start="chip.value.split(',')[0]" :end="chip.value.split(',')[1]"></ts-explore-filter-time>
+                    </b-dropdown-item>
+                  </b-dropdown>
+                </span>
+              </span>
             </div>
+
+            <!-- Filters -->
+            <div class="tags">
+              <span v-for="(chip, index) in filterChips" :key="index">
+                <span class="tag is-light is-rounded" style="margin-right:7px;">
+                  <span v-if="index === 0 && timeChips.length" style="margin-right: 7px;font-size: 0.7em;">AND</span>
+                  <span v-if="index > 0" style="margin-right: 7px;font-size: 0.7em;">OR</span>
+                  <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
+                  <span v-else-if="chip.value === '__ts_comment'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-comment"></i></span>
+                  <span v-else-if="chip.type === 'label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
+                  <span style="margin-right:7px;">{{ chip | filterChip }}</span>
+                  <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
+                </span>
+              </span>
             </div>
+            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateSelectedIndices="updateSelectedIndices($event)" :active-timelines="sketch.active_timelines" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index"></ts-explore-timeline-picker>
+
+          </div>
+
         </div>
       </div>
     </section>
 
-              <section class="section">
-      <div class="container is-fluid">
 
-            <div class="card">
-          <header class="card-header" v-on:click="showFilterCard = !showFilterCard" style="cursor: pointer">
-            <span class="card-header-title">
-              <span class="icon is-small"><i class="fas fa-filter"></i></span>
-              <span style="margin-left:10px;">Filters</span>
-            </span>
-            <span class="card-header-icon">
-              <span class="icon">
-                <i class="fas fa-angle-down" v-if="!showFilterCard" aria-hidden="true"></i>
-                <i class="fas fa-angle-up" v-if="showFilterCard" aria-hidden="true"></i>
-              </span>
-            </span>
-          </header>
-
-              <div class="card-content" v-show="showFilterCard">
-                <div class="tags" style="margin-bottom: 5px;">
-                  <span v-for="(chip, index) in currentQueryFilter.chips" :key="index + chip.value">
-                    <span v-if="chip.type === 'datetime_range'" class="tag is-light is-rounded" style="margin-right:7px;">
-                      <b-dropdown trap-focus aria-role="menu" ref="TimeFilters">
-                        <span slot="trigger" role="button">
-                          <span class="icon is-small" style="margin-right:7px;"><i class="fas fa-clock"></i></span> <span>{{ chip.value.split(',')[0] }}</span> <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]">&rarr; {{ chip.value.split(',')[1] }}</span>
-                          <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
-                        </span>
-                        <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                          <strong>Update time range</strong>
-                          <br>
-                          <br>
-                          <ts-explore-filter-time @updateChip="updateChip(chip, index)" @hideDropdown="hideDropdown(index)" :selectedChip="chip" :start="chip.value.split(',')[0]" :end="chip.value.split(',')[1]"></ts-explore-filter-time>
-                        </b-dropdown-item>
-                      </b-dropdown>
-                    </span>
-                  </span>
-                </div>
-
-                <div class="tags">
-                  <span v-for="(chip, index) in currentQueryFilter.chips" :key="index">
-                    <span v-if="chip.type !== 'datetime_range'" class="tag is-light is-rounded" style="margin-right:7px;">
-                      <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
-                      <span v-else-if="chip.value === '__ts_comment'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-comment"></i></span>
-                      <span v-else-if="chip.type === 'label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
-                      <span style="margin-right:7px;">{{ chip | filterChip }}</span>
-                      <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
-                    </span>
-                  </span>
-                </div>
-                <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateSelectedIndices="updateSelectedIndices($event)" :active-timelines="sketch.active_timelines" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index"></ts-explore-timeline-picker>
-              </div>
-            </div>
-
-
-        </div>
-    </section>
-
-    <!-- Insights -->
+    <!-- Aggregations -->
     <ts-sketch-explore-aggregation :show-aggregations="showAggregations"></ts-sketch-explore-aggregation>
-    <!-- End Insights -->
+    <!-- End Aggregations -->
 
     <section class="section" id="context" v-show="contextEvent">
       <div class="container is-fluid">
@@ -347,7 +324,6 @@ limitations under the License.
 <script>
 import ApiClient from '../utils/RestApiClient'
 import TsViewListDropdown from '../components/Sketch/ViewListDropdown'
-import TsCreateViewForm from '../components/Sketch/CreateViewForm'
 import TsSketchExploreEventList from '../components/Sketch/EventList'
 import TsExploreTimelinePicker from '../components/Sketch/TimelinePicker'
 import TsExploreFilterTime from '../components/Sketch/TimeFilter'
@@ -381,7 +357,6 @@ export default {
   components: {
     TsSketchExploreAggregation,
     TsViewListDropdown,
-    TsCreateViewForm,
     TsSketchExploreEventList,
     TsExploreTimelinePicker,
     TsExploreFilterTime,
@@ -395,9 +370,7 @@ export default {
       showAggregations: false,
       showFilterCard: true,
       showSearch: true,
-      showUpdateViewControls: false,
       searchInProgress: false,
-      activeView: null,
       activeStarFilter: false,
       activeCommentFilter: false,
       currentPage: 1,
@@ -405,7 +378,6 @@ export default {
       originalContext: false,
       isFullPage: true,
       loadingComponent: null,
-      viewListDropdownKey: 0,
       eventList: {
         meta: {},
         objects: []
@@ -421,8 +393,7 @@ export default {
         showTags: true,
         showEmojis: true,
         showMillis: false
-      },
-      openSidebar: false
+      }
     }
   },
   computed: {
@@ -457,6 +428,12 @@ export default {
     },
     numSelectedEvents () {
       return Object.keys(this.selectedEvents).length
+    },
+    timeChips: function () {
+      return this.currentQueryFilter.chips.filter(chip => chip.type === 'datetime_range')
+    },
+    filterChips: function () {
+      return this.currentQueryFilter.chips.filter(chip => chip.type !== 'datetime_range')
     }
   },
   methods: {
@@ -624,30 +601,12 @@ export default {
       this.currentQueryFilter.indices = indices
       this.search()
     },
-    updateView: function (viewObject) {
-      this.showUpdateViewControls = viewObject.edited
-      this.activeView = viewObject.view
-    },
-    saveUpdatedView: function () {
-      if (!this.showUpdateViewControls) {
-        return
-      }
-      this.$buefy.toast.open('Saved search has been updated')
-      ApiClient.updateView(this.sketchId, this.activeView.id, this.currentQueryString, this.currentQueryFilter)
-       .then((response) => {})
-       .catch((e) => {})
-      this.showUpdateViewControls = false
-      EventBus.$emit('savedUpdatedView')
-    },
     clearSearch: function () {
       this.currentQueryString = ''
       this.currentQueryFilter = defaultQueryFilter()
       this.eventList = emptyEventList()
       this.$router.replace({'query': null})
       EventBus.$emit('clearSearch')
-    },
-    toggleCreateViewModal: function () {
-      this.showCreateViewModal = !this.showCreateViewModal
     },
     removeChip: function (chipIndex) {
       let chip = this.currentQueryFilter.chips[chipIndex]

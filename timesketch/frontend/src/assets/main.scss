@@ -207,11 +207,21 @@ ul.content-list>li:last-child { border-bottom: none; }
     outline: none;
     border: none;
     font-size: 1.2em;
-    border-radius: 5px;
-    padding: 15px;
+    border-radius: 0 5px 5px 0;
+    padding: 25px;
+    height: 34px;
     background: var(--search-input-explore);
     color: var(--search-input-font-color);
     width: 100%;
+}
+
+.button.ts-search-dropdown {
+    outline: 0;
+    border: none;
+    border-radius: 5px 0 0 5px;
+    padding: 25px;
+    background: var(--card-accent-background-color);
+    color: var(--search-input-font-color);
 }
 
 .ts-home-search-input {

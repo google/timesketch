@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.7.2",
+    "@fortawesome/fontawesome-svg-core": "^1.2.31",
     "@fortawesome/free-solid-svg-icons": "^5.7.2",
+    "@fortawesome/vue-fontawesome": "^2.0.0",
     "axios": "^0.18.0",
     "buefy": "^0.8.15",
     "bulma": "^0.7.4",
