@@ -74,28 +74,24 @@ def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
         logger.error('Rule file not found')
         return False
 
-    try:
-        path, rule_filename = os.path.split(rule_file_path)
+    path, rule_filename = os.path.split(rule_file_path)
 
-        with codecs.open(rule_file_path, 'r', encoding='utf-8') as rule_file:
-            try:
-                rule_file_content = rule_file.read()
-                parser = sigma_collection.SigmaCollectionParser(
-                    rule_file_content, sigma_config, None)
-                parsed_sigma_rules = parser.generate(sigma_backend)
-            except NotImplementedError:
-                logger.error('{0:s} Error with file {1:s}'
+    with codecs.open(rule_file_path, 'r', encoding='utf-8') as rule_file:
+        try:
+            rule_file_content = rule_file.read()
+            parser = sigma_collection.SigmaCollectionParser(
+                rule_file_content, sigma_config, None)
+            parsed_sigma_rules = parser.generate(sigma_backend)
+        except NotImplementedError:
+            logger.error('{0:s} Error with file {1:s}'
+            .format(rule_filename, rule_file_path), exc_info=True)
+            return False
+        except (sigma.parser.exceptions.SigmaParseError, TypeError):
+            logger.error(
+                '{0:s} Error with file {1:s} '
+                'you should not use this rule in Timesketch '
                 .format(rule_filename, rule_file_path), exc_info=True)
-                return False
-            except (sigma.parser.exceptions.SigmaParseError, TypeError):
-                logger.error(
-                    '{0:s} Error with file {1:s} '
-                    'you should not use this rule in Timesketch '
-                    .format(rule_filename, rule_file_path), exc_info=True)
-                return False
-    except FileNotFoundError:
-        logger.error('Rule file not found')
-        return False
+            return False
 
     return True
 
