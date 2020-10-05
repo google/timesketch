@@ -223,3 +223,4 @@ if __name__ == '__main__':
         logging.info('### You can import the following rules ###')
         for goodrule in sigma_verified_rules:
             logging.info(goodrule)
+            
