@@ -62,24 +62,33 @@ limitations under the License.
 
     <div v-if="mySketches.length && !search" class="section">
       <div class="container">
-        <p class="subtitle">My sketches</p>
-        <div class="card">
-          <div class="card-content">
-            <ts-sketch-list :sketches="mySketches"></ts-sketch-list>
-          </div>
-        </div>
-      </div>
-    </div>
+        <b-tabs v-model="activeTab">
 
-    <div v-if="sharedSketches.length && !search" class="section">
-      <div v-if="mySketches.length" style="margin-top:15px;"></div>
-      <div class="container">
-        <p class="subtitle">Shared with me</p>
-        <div class="card">
-          <div class="card-content">
-            <ts-sketch-list :sketches="sharedSketches"></ts-sketch-list>
-          </div>
-        </div>
+          <b-tab-item label="My sketches" :disabled="!mySketches.length">
+              <div class="card">
+                <div class="card-content">
+                  <ts-sketch-list :sketches="mySketches"></ts-sketch-list>
+                </div>
+              </div>
+            </b-tab-item>
+
+            <b-tab-item label="Shared with me" :disabled="!sharedSketches.length">
+              <div class="card">
+                <div class="card-content">
+                  <ts-sketch-list :sketches="sharedSketches"></ts-sketch-list>
+                </div>
+              </div>
+            </b-tab-item>
+
+            <b-tab-item label="Archived" :disabled="!myArchivedSketches.length">
+              <div class="card">
+                <div class="card-content">
+                  <ts-sketch-list :sketches="myArchivedSketches"></ts-sketch-list>
+                </div>
+              </div>
+            </b-tab-item>
+
+        </b-tabs>
       </div>
     </div>
 
@@ -101,6 +110,7 @@ export default {
       showSketchCreateModal: false,
       allSketches: [],
       mySketches: [],
+      myArchivedSketches: [],
       sharedSketches: [],
       loading: true,
       search: ''
@@ -119,7 +129,10 @@ export default {
       let sketches = response.data.objects
       let currentUser = response.data.meta.current_user
       this.mySketches = sketches.filter(function (sketch) {
-        return sketch.user === currentUser
+        return sketch.user === currentUser && sketch.status !== 'archived'
+      })
+      this.myArchivedSketches = sketches.filter(function (sketch) {
+        return sketch.user === currentUser && sketch.status === 'archived'
       })
       this.sharedSketches = sketches.filter(function (sketch) {
         return sketch.user !== currentUser

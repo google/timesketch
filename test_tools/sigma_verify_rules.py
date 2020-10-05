@@ -117,6 +117,7 @@ def run_verifier(rules_path, config_file_path):
             - sigma_verified_rules with rules that can be added
             - sigma_rules_with_problems with rules that should not be added
     """
+
     if not os.path.isdir(rules_path):
         raise IOError('Rules not found at path: {0:s}'.format(
             rules_path))

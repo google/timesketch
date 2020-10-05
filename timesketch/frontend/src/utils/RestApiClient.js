@@ -186,6 +186,9 @@ export default {
   search (sketchId, formData) {
     return RestApiClient.post('/sketches/' + sketchId + '/explore/', formData)
   },
+  exportSearchResult (sketchId, formData) {
+    return RestApiBlobClient.post('/sketches/' + sketchId + '/explore/', formData)
+  },
   getAggregations (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/aggregation/')
   },

@@ -10,6 +10,9 @@ from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers import utils
 
 
+logger = logging.getLogger('timesketch.analyzers.domain')
+
+
 class DomainSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Domain."""
 
@@ -76,14 +79,14 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
             domain_20th_percentile = int(numpy.percentile(
                 domain_count_array, 20))
         except IndexError:
-            logging.warning('Unable to calculate the 20th percentile.')
+            logger.warning('Unable to calculate the 20th percentile.')
             domain_20th_percentile = 0
 
         try:
             domain_85th_percentile = int(numpy.percentile(
                 domain_count_array, 85))
         except IndexError:
-            logging.warning('Unable to calculate the 85th percentile.')
+            logger.warning('Unable to calculate the 85th percentile.')
             highest_count_domain = domain_counter.most_common(1)
             if highest_count_domain:
                 _, highest_count = highest_count_domain[0]

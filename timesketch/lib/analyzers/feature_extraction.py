@@ -11,6 +11,7 @@ from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
 
 
+logger = logging.getLogger('timesketch.analyzers.feature')
 RE_FLAGS = [
     're.ASCII',
     're.IGNORECASE',
@@ -162,12 +163,12 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         attribute = config.get('attribute')
 
         if not attribute:
-            logging.warning('No attribute defined.')
+            logger.warning('No attribute defined.')
             return ''
 
         store_as = config.get('store_as')
         if not store_as:
-            logging.warning('No attribute defined to store results in.')
+            logger.warning('No attribute defined to store results in.')
             return ''
 
         tags = config.get('tags', [])
@@ -175,7 +176,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         expression_string = config.get('re')
         expression_flags = config.get('re_flags')
         if not expression_string:
-            logging.warning('No regular expression defined.')
+            logger.warning('No regular expression defined.')
             return ''
 
         if expression_flags:
@@ -184,7 +185,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
                 try:
                     flags.add(getattr(re, flag))
                 except AttributeError:
-                    logging.warning('Unknown regular expression flag defined.')
+                    logger.warning('Unknown regular expression flag defined.')
                     return ''
             re_flag = sum(flags)
         else:
@@ -194,7 +195,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             expression = re.compile(expression_string, flags=re_flag)
         except re.error as exception:
             # pylint: disable=logging-format-interpolation
-            logging.warning((
+            logger.warning((
                 'Regular expression failed to compile, with '
                 'error: {0!s}').format(exception))
             return ''
