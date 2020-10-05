@@ -137,6 +137,7 @@ def run_verifier(rules_path, config_file_path):
 
         if 'deprecated' in [x.lower for x in dirnames]:
             dirnames.remove('deprecated')
+            logger.error("deprecated in folder / filename found - ignored")
 
         for rule_filename in files:
             if not rule_filename.lower().endswith(RULE_EXTENSIONS):
@@ -223,4 +224,3 @@ if __name__ == '__main__':
         logging.info('### You can import the following rules ###')
         for goodrule in sigma_verified_rules:
             logging.info(goodrule)
-            
