@@ -33,7 +33,7 @@ from sigma.backends import elasticsearch as sigma_elasticsearch
 from sigma.parser import collection as sigma_collection
 
 logger = logging.getLogger('timesketch.test_tool.sigma-verify')
-logging.basicConfig(level=os.environ.get('LOGLEVEL', 'ERROR'))
+logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
 
 RULE_EXTENSIONS = ('yml', 'yaml')
 
@@ -66,8 +66,13 @@ def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
             true: rule_file_path contains a valid sigma rule
             false: rule_file_path does not contain a valid sigma rule
     """
+
     logger.debug('[sigma] Reading rules from {0:s}'.format(
         rule_file_path))
+
+    if os.path.isfile(rule_file_path) == False:
+        logger.error('Rule file not found')
+        return False
 
     try:
         path, rule_filename = os.path.split(rule_file_path)
