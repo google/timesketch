@@ -226,7 +226,8 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
 
         tagged_events, _ = data_frame_outside.shape
         if tagged_events:
-            story = self.sketch.add_story(utils.BROWSER_STORY_TITLE)
+            story = self.sketch.add_story('{0:s} - {1:s}'.format(
+                utils.BROWSER_STORY_TITLE, self.timeline_name))
             story.add_text(
                 utils.BROWSER_STORY_HEADER, skip_if_exists=True)
 
@@ -252,20 +253,20 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
                 '## Browser Timeframe Analyzer\n\nThe browser timeframe '
                 'analyzer discovered {0:d} browser events that ocurred '
                 'outside of the typical browsing window of this browser '
-                'history, or around {1:0.2f}%  of the {2:d} total events.'
-                '\n\nThe analyzer determines the activity hours by finding '
-                'the frequency of browsing events per hour, and then '
+                'history ({1:s}), or around {2:0.2f}%  of the {3:d} total '
+                'events.\n\nThe analyzer determines the activity hours by '
+                'finding the frequency of browsing events per hour, and then '
                 'discovering the longest block of most active hours before '
                 'proceeding with flagging all events outside of that time '
                 'period. This information can be used by other analyzers '
                 'or by manually looking for other activity within the '
                 'inactive time period to find unusual actions.\n\n'
                 'The hours considered to be active hours are the hours '
-                'between {3:02d} and {4:02d} (hours in UTC) and the '
+                'between {4:02d} and {5:02d} (hours in UTC) and the '
                 'threshold used to determine if an hour was considered to be '
-                'active was: {5:0.2f}.'.format(
-                    tagged_events, percent, total_count, first, last,
-                    threshold))
+                'active was: {6:0.2f}.'.format(
+                    tagged_events, self.timeline_name, percent, total_count,
+                    first, last, threshold))
 
             group = self.sketch.add_aggregation_group(
                 name='Browser Activity Per Hour',
@@ -274,12 +275,14 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
 
             params = {
                 'data': aggregation.to_dict(orient='records'),
-                'title': 'Browser Activity Per Hour',
+                'title': 'Browser Activity Per Hour ({0:s})'.format(
+                    self.timeline_name),
                 'field': 'hour',
                 'order_field': 'hour',
             }
             agg_obj = self.sketch.add_aggregation(
-                name='Browser Activity Per Hour', agg_name='manual_feed',
+                name='Browser Activity Per Hour ({0:s})'.format(
+                    self.timeline_name), agg_name='manual_feed',
                 agg_params=params, chart_type='barchart',
                 description='Created by the browser timeframe analyzer',
                 label='informational')
@@ -288,13 +291,15 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
             lines = [{'hour': x, 'count': threshold} for x in range(0, 24)]
             params = {
                 'data': lines,
-                'title': 'Browser Timeframe Threshold',
+                'title': 'Browser Timeframe Threshold ({0:s})'.format(
+                    self.timeline_name),
                 'field': 'hour',
                 'order_field': 'hour',
                 'chart_color': 'red',
             }
             agg_line = self.sketch.add_aggregation(
-                name='Browser Activity Per Hour', agg_name='manual_feed',
+                name='Browser Activity Per Hour ({0:s})'.format(
+                    self.timeline_name), agg_name='manual_feed',
                 agg_params=params, chart_type='linechart',
                 description='Created by the browser timeframe analyzer',
                 label='informational')

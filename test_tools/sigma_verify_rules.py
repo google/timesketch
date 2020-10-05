@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """A tool to test sigma rules.
+
 This tool can be used to verify your rules before running an analyzer.
 It also does not require you to have a full blown Timesketch instance.
 Default this tool will show only the rules that cause problems.
@@ -31,11 +32,15 @@ import sigma.configuration as sigma_configuration
 from sigma.backends import elasticsearch as sigma_elasticsearch
 from sigma.parser import collection as sigma_collection
 
+logger = logging.getLogger('timesketch.test_tool.sigma-verify')
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'ERROR'))
 
+RULE_EXTENSIONS = ('yml', 'yaml')
 
 def get_codepath():
     """Return the absolute path to where the tool is run from."""
+    # TODO: move this function to a library as it is duplicate to WebUI
+
     path = __file__
     if path.startswith(os.path.sep):
         return path
@@ -60,43 +65,32 @@ def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
         Returns:
             true: rule_file_path contains a valid sigma rule
             false: rule_file_path does not contain a valid sigma rule
-        """
-
-    logging.debug('[sigma] Reading rules from {0:s}'.format(
+    """
+    logger.debug('[sigma] Reading rules from {0:s}'.format(
         rule_file_path))
 
-    path, rule_filename = os.path.split(rule_file_path)
+    try:
+        path, rule_filename = os.path.split(rule_file_path)
 
-    with codecs.open(rule_file_path, 'r', encoding="utf-8") as rule_file:
-        try:
-            rule_file_content = rule_file.read()
-            parser = sigma_collection.SigmaCollectionParser(
-                rule_file_content, sigma_config, None)
-
-            # trying to get the sigma rule id
-            for element in parser.parsers:
-                logging.info('Rule Id: {0:s}'.format(element.parsedyaml['id']))
-            parsed_sigma_rules = parser.generate(sigma_backend)
-            for sigma_rule in parsed_sigma_rules:
-                # TODO Investigate how to handle .keyword
-                # fields in Sigma.
-                # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
-                sigma_rule = sigma_rule \
-                    .replace(".keyword:", ":")
-                logging.info(
-                    '{0:s} Generated query {1:s}'
-                        .format(rule_file_path, sigma_rule))
-        except (NotImplementedError) as e:
-            logging.info(
-                '{0:s} Error with file {1:s}: {2!s}'.format
-                (rule_filename, rule_file_path, e))
-            return False
-        except (sigma.parser.exceptions.SigmaParseError, TypeError) as e:
-            logging.info(
-                '{0:s} Error with file {1:s} '
-                'you should not use this rule in Timesketch: {2!s}'
-                .format(rule_filename, rule_file_path, e))
-            return False
+        with codecs.open(rule_file_path, 'r', encoding="utf-8") as rule_file:
+            try:
+                rule_file_content = rule_file.read()
+                parser = sigma_collection.SigmaCollectionParser(
+                    rule_file_content, sigma_config, None)
+                parsed_sigma_rules = parser.generate(sigma_backend)
+            except NotImplementedError:
+                logger.error('{0:s} Error with file {1:s}'
+                .format(rule_filename, rule_file_path), exc_info=True)
+                return False
+            except (sigma.parser.exceptions.SigmaParseError, TypeError):
+                logger.error(
+                    '{0:s} Error with file {1:s} '
+                    'you should not use this rule in Timesketch '
+                    .format(rule_filename, rule_file_path), exc_info=True)
+                return False
+    except FileNotFoundError:
+        logger.error('Rule file not found')
+        return False
 
     return True
 
@@ -117,7 +111,6 @@ def run_verifier(rules_path, config_file_path):
             - sigma_verified_rules with rules that can be added
             - sigma_rules_with_problems with rules that should not be added
     """
-
     if not os.path.isdir(rules_path):
         raise IOError('Rules not found at path: {0:s}'.format(
             rules_path))
@@ -137,18 +130,16 @@ def run_verifier(rules_path, config_file_path):
 
     for dirpath, dirnames, files in os.walk(rules_path):
 
-        if 'deprecated' in dirnames:
+        if 'deprecated' in [x.lower for x in dirnames]:
             dirnames.remove('deprecated')
 
-        rule_extensions = ('yml', 'yaml')
-
         for rule_filename in files:
-            if not rule_filename.lower().endswith(rule_extensions):
+            if not rule_filename.lower().endswith(RULE_EXTENSIONS):
                 continue
 
             # If a sub dir is found, skip it
             if os.path.isdir(os.path.join(rules_path, rule_filename)):
-                logging.debug(
+                logger.debug(
                     'Directory found, skipping: {0:s}'.format(rule_filename))
                 continue
 
@@ -158,7 +149,7 @@ def run_verifier(rules_path, config_file_path):
             if verify_rules_file(rule_file_path, sigma_config, sigma_backend):
                 return_verified_rules.append(rule_file_path)
             else:
-                logging.info('File did not work{0:s}'.format(rule_file_path))
+                logger.info('File did not work{0:s}'.format(rule_file_path))
                 return_rules_with_problems.append(rule_file_path)
 
     return return_verified_rules, return_rules_with_problems
@@ -199,10 +190,10 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if options.debug:
-        logging.getLogger().setLevel(logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
 
     if options.info:
-        logging.getLogger().setLevel(logging.INFO)
+        logger.setLevel(logging.INFO)
 
     if not os.path.isfile(options.config_file_path):
         print('Config file not found.')

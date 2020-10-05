@@ -715,7 +715,7 @@ class BaseIndexAnalyzer(object):
 
     def event_stream(
             self, query_string=None, query_filter=None, query_dsl=None,
-            indices=None, return_fields=None):
+            indices=None, return_fields=None, scroll=True):
         """Search ElasticSearch.
 
         Args:
@@ -724,6 +724,8 @@ class BaseIndexAnalyzer(object):
             query_dsl: Dictionary containing Elasticsearch DSL query.
             indices: List of indices to query.
             return_fields: List of fields to return.
+            scroll: Boolean determining whether we support scrolling searches
+                or not. Defaults to True.
 
         Returns:
             Generator of Event objects.
@@ -758,7 +760,8 @@ class BaseIndexAnalyzer(object):
             query_filter=query_filter,
             query_dsl=query_dsl,
             indices=indices,
-            return_fields=return_fields
+            return_fields=return_fields,
+            enable_scroll=scroll,
         )
         for event in event_generator:
             yield Event(event, self.datastore, sketch=self.sketch)

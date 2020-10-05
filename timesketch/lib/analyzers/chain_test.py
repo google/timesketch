@@ -1,6 +1,8 @@
 """Tests for Chain analyzer."""
 from __future__ import unicode_literals
 
+import uuid
+
 import mock
 
 from timesketch.lib import emojis
@@ -15,6 +17,7 @@ class FakeEvent(object):
     """Fake event object."""
 
     def __init__(self, source_dict):
+        self.event_id = uuid.uuid4().hex
         self.attributes = {}
         self.emojis = []
         self.source = source_dict
@@ -34,7 +37,7 @@ class FakeAnalyzer(chain.ChainSketchPlugin):
     """Fake analyzer object used for "finding events"."""
 
     def event_stream(self, query_string=None, query_filter=None, query_dsl=None,
-                     indices=None, return_fields=None):
+                     indices=None, return_fields=None, scroll=True):
         """Yields few test events."""
         event_one = FakeEvent({
             'url': 'http://minsida.biz',
@@ -126,14 +129,16 @@ class TestChainAnalyzer(testlib.BaseTest):
         analyzer_result = analyzer.run()
         expected_result = (
             '3 base events annotated with a chain UUID for 3 chains '
-            'for a total of 9 events.')
+            'for a total of 9 events. [fake_chain] 9')
         self.assertEqual(analyzer_result, expected_result)
 
         link_emoji = emojis.get_emoji('LINK')
         for event in plugin.ALL_EVENTS:
             attributes = event.attributes
-            self.assertEqual(
-                attributes.get('chain_plugins', []), ['fake_chain'])
+            chains = attributes.get('chains', [])
+            for event_chain in chains:
+                plugin = event_chain.get('plugin', '')
+                self.assertEqual(plugin, 'fake_chain')
 
             event_emojis = event.emojis
             self.assertEqual(len(event_emojis), 1)

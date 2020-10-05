@@ -19,20 +19,21 @@ class TestSigmaVerifyRules(unittest.TestCase):
         "../data/sigma_config.yaml", None))
 
     def test_run_verifier(self):
-        self.assertRaises(IOError, run_verifier, 
+        self.assertRaises(IOError, run_verifier,
         '../data/sigma_config.yaml', '../data/sigma/rules/')
 
         config = './data/sigma_config.yaml'
         rules = './data/sigma/rules/'
 
-        sigma_verified_rules, sigma_rules_with_problems = run_verifier(config_file_path=config, rules_path=rules)
-        
+        sigma_ok_rules, sigma_pro_rules = run_verifier(
+            config_file_path=config, rules_path=rules)
+
         found = False
-        for verified_rule in sigma_verified_rules:
+        for verified_rule in sigma_ok_rules:
             if 'lnx_susp_zenmap' in verified_rule:
                 found = True
-        
+
         self.assertTrue(found)
-        
+
 if __name__ == '__main__':
     unittest.main()

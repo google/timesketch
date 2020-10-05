@@ -771,7 +771,16 @@ class Sketch(resource.BaseResource):
         if self.is_archived():
             raise RuntimeError('Unable to query an archived sketch.')
 
-        if not query_filter:
+        if query_filter:
+            stop_size = query_filter.get('size', 0)
+            terminate_after = query_filter.get('size', 0)
+            if terminate_after and (terminate_after < stop_size):
+                stop_size = terminate_after
+
+            scrolling = bool(stop_size < self.DEFAULT_SIZE_LIMIT)
+        else:
+            scrolling = True
+            stop_size = 0
             query_filter = {
                 'time_start': None,
                 'time_end': None,
@@ -803,7 +812,7 @@ class Sketch(resource.BaseResource):
             'filter': query_filter,
             'dsl': query_dsl,
             'fields': return_fields,
-            'enable_scroll': True,
+            'enable_scroll': scrolling,
             'file_name': file_name,
         }
 
@@ -828,6 +837,9 @@ class Sketch(resource.BaseResource):
         while count > 0:
             if max_entries and total_count >= max_entries:
                 break
+            if stop_size and total_count >= stop_size:
+                break
+
             more_response = self.api.session.post(resource_url, json=form_data)
             if not error.check_return_status(more_response, logger):
                 error.error_message(
@@ -1222,11 +1234,20 @@ class Sketch(resource.BaseResource):
         meta['total_number_of_events_sent_by_client'] = len(events)
         return meta
 
-    def search_by_label(self, label_name, as_pandas=False):
+    def search_by_label(
+            self, label_name, return_fields=None, max_entries=None,
+            as_pandas=False):
         """Searches for all events containing a given label.
 
         Args:
             label_name: A string representing the label to search for.
+            return_fields (str): A comma separated string with a list of fields
+                that should be included in the response. Optional and defaults
+                to None.
+            max_entries (int): Optional integer denoting a best effort to limit
+                the output size to the number of events. Events are read in,
+                10k at a time so there may be more events in the answer back
+                than this number denotes, this is a best effort.
             as_pandas: Optional bool that determines if the results should
                 be returned back as a dictionary or a Pandas DataFrame.
 
@@ -1259,7 +1280,8 @@ class Sketch(resource.BaseResource):
             }
         }
         return self.explore(
-            query_dsl=json.dumps({'query': query}), as_pandas=as_pandas)
+            query_dsl=json.dumps({'query': query}), return_fields=return_fields,
+            max_entries=max_entries, as_pandas=as_pandas)
 
     def add_event(
             self, message, date, timestamp_desc, attributes=None,
@@ -1268,7 +1290,8 @@ class Sketch(resource.BaseResource):
 
         Args:
             message: A string that will be used as the message string.
-            date: A string with the timestamp of the message.
+            date: A string with the timestamp of the message. This should be
+                in a human readable format, eg: "2020-09-03T22:52:21".
             timestamp_desc : Description of the timestamp.
             attributes: A dict of extra attributes to add to the event.
             tags: A list of strings to include as tags.
