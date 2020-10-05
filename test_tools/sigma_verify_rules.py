@@ -77,7 +77,7 @@ def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
     try:
         path, rule_filename = os.path.split(rule_file_path)
 
-        with codecs.open(rule_file_path, 'r', encoding="utf-8") as rule_file:
+        with codecs.open(rule_file_path, 'r', encoding='utf-8') as rule_file:
             try:
                 rule_file_content = rule_file.read()
                 parser = sigma_collection.SigmaCollectionParser(
@@ -137,7 +137,7 @@ def run_verifier(rules_path, config_file_path):
 
         if 'deprecated' in [x.lower for x in dirnames]:
             dirnames.remove('deprecated')
-            logger.info("deprecated in folder / filename found - ignored")
+            logger.info('deprecated in folder / filename found - ignored')
 
         for rule_filename in files:
             if not rule_filename.lower().endswith(RULE_EXTENSIONS):
