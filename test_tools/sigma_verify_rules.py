@@ -137,7 +137,7 @@ def run_verifier(rules_path, config_file_path):
 
         if 'deprecated' in [x.lower for x in dirnames]:
             dirnames.remove('deprecated')
-            logger.error("deprecated in folder / filename found - ignored")
+            logger.info("deprecated in folder / filename found - ignored")
 
         for rule_filename in files:
             if not rule_filename.lower().endswith(RULE_EXTENSIONS):
