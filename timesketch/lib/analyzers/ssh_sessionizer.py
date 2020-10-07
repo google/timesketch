@@ -13,14 +13,15 @@ SSH_PATTERN = re.compile(r'^\[sshd\] \[(?P<process_id>\d+)\]:')
 
 # pylint: disable=line-too-long
 # Pattern for message of SSH events for successful connection to port:
-# '[sshd] [{process_id}]: Connection from {client_ip} port {client_port} on {host_ip} port {host_port}'
+# '[sshd] [{process_id}]: Connection from {client_ip} port {client_port} on {host_ip} port {host_port} rdomain {rdomain}'
 #
 # The SSH_CONNECTION_PATTERN is compatible with IPv4
 # TODO Change the pattern to be compatible also with IPv6
 SSH_CONNECTION_PATTERN = \
     re.compile(r'^\[sshd\] \[(?P<process_id>\d+)\]: Connection from ' + \
     r'(?P<client_ip>(\d{1,3}\.){3}\d{1,3}) port (?P<client_port>\d+) on ' + \
-    r'(?P<host_ip>(\d{1,3}\.){3}\d{1,3}) port (?P<host_port>\d+)$')
+    r'(?P<host_ip>(\d{1,3}\.){3}\d{1,3}) port (?P<host_port>\d+) (rdomain)? ' + \
+    r'(?P<rdomain>(.*))$')
 
 
 class SSHSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
