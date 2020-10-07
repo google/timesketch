@@ -31,7 +31,7 @@ The code is easy to maintain and understand. As a developer you'll sometimes fin
 With the code review process we ensure that at least two eyes looked over the code in hopes of finding potential bugs or errors (before they become bugs and errors). This also improves the overall code quality and makes sure that every developer knows to (largely) expect the same coding style.
 
 #### Style guide
-We primarily follow the [Google Python Style Guide](https://google-styleguide.googlecode.com/svn/trunk/pyguide.html). Various Timesketch specific additions/variations are:
+We primarily follow the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html). Various Timesketch specific additions/variations are:
 
 * Quote strings as ' or """ instead of "
 * Textual strings should be Unicode strings and hence defined as u'string'
