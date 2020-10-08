@@ -49,17 +49,18 @@ limitations under the License.
                 </div>
               </div>
 
-            <div class="field is-grouped" style="margin-top:15px; margin-bottom: 25px;">
+            <div class="field is-grouped">
+
               <p class="control">
                 <b-dropdown trap-focus aria-role="menu" ref="NewTimeFilter">
                   <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
-                    <span>+ Time range</span>
+                    <span>+ Add Time range</span>
                   </a>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
                     <strong>Add time range</strong>
                     <br>
                     <br>
-                    <ts-explore-filter-time @addChip="addChip" @hideDropdown="hideDropdown('NewTimeFilter')"></ts-explore-filter-time>
+                    <ts-explore-filter-time @addChip="addChip" @hideDropdown="hideDropdown"></ts-explore-filter-time>
                   </b-dropdown-item>
                 </b-dropdown>
               </p>
@@ -67,7 +68,7 @@ limitations under the License.
               <p class="control">
                 <b-dropdown trap-focus aria-role="menu">
                   <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
-                    <span>+ Filters</span>
+                    <span>+ Add Filter</span>
                   </a>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
                     <strong>Add filter</strong>
@@ -86,47 +87,60 @@ limitations under the License.
             </div>
 
             <!-- Time range filters -->
-            <div class="field is-grouped is-grouped-multiline">
+            <div class="tags" style="margin-bottom:-5px;">
               <span v-for="(chip, index) in timeChips" :key="index + chip.value">
-                  <b-dropdown trap-focus aria-role="menu" ref="TimeFilters">
-                    <span slot="trigger" role="button" class="is-small is-outlined">
-                      <div class="tags" style="margin-bottom: 5px; margin-right:7px;">
-                        <span class="tag is-rounded" style="cursor: pointer;" v-bind:class="{ 'chip-disabled': chip.active === false}">
+                <b-dropdown trap-focus aria-role="menu" ref="TimeFilters">
+                  <span slot="trigger" role="button" class="is-small is-outlined">
+                    <div class="tags" style="margin-bottom: 5px; margin-right:7px;">
+                      <span class="tag" style="cursor: pointer;" v-bind:class="{ 'chip-disabled': chip.active === false}">
+                        <span @click.stop="toggleChip(chip)">
                           <span v-if="index > 0" style="margin-right: 7px;font-size: 0.7em; cursor: default;">OR</span>
-                          <span @click.stop="toggleChip(chip, index)">
-                            <span class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></span>
-                            <span>{{ chip.value.split(',')[0] }}</span>
-                            <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</span>
-                          </span>
-                          <span class="fas fa-edit" style="margin-left:7px;"></span>
-                          <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
+                          <span class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></span>
+                          <span>{{ chip.value.split(',')[0] }}</span>
+                          <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</span>
                         </span>
-                      </div>
-                    </span>
-                    <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                      <strong>Update time range</strong>
-                      <br>
-                      <br>
-                      <ts-explore-filter-time @updateChip="updateChip(chip, index)" @hideDropdown="hideDropdown(index)" :selectedChip="chip" :start="chip.value.split(',')[0]" :end="chip.value.split(',')[1]"></ts-explore-filter-time>
-                    </b-dropdown-item>
-                  </b-dropdown>
+                        <span class="fas fa-edit" style="margin-left:7px;"></span>
+                        <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(chip)"></button>
+                      </span>
+                    </div>
+                  </span>
+                  <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
+                    <strong>Update time range</strong>
+                    <br>
+                    <br>
+                    <ts-explore-filter-time @updateChip="updateChip($event, chip)" :selectedChip="chip" :start="chip.value.split(',')[0]" :end="chip.value.split(',')[1]"></ts-explore-filter-time>
+                  </b-dropdown-item>
+                </b-dropdown>
               </span>
             </div>
 
-            <!-- Filters -->
+            <!-- Labels -->
+            <div class="tags" style="margin-bottom:-1px;">
+              <span v-for="(chip, index) in labelChips" :key="index + chip.value">
+                <span v-if="chip.type === 'label'" class="tag is-light" style="margin-right:7px; cursor: pointer;" v-bind:class="{ 'chip-disabled': chip.active === false}" @click="toggleChip(chip, index)">
+                    <span v-if="index > 0" style="margin-right: 7px;font-size: 0.7em; cursor: default;">OR</span>
+                    <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
+                    <span v-else-if="chip.value === '__ts_comment'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-comment"></i></span>
+                    <span v-else-if="chip.type === 'label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
+                    <span style="margin-right:7px;">{{ chip | filterChip }}</span>
+                    <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(chip)"></button>
+                  </span>
+              </span>
+            </div>
+
+            <!-- Attribute filters-->
             <div class="tags">
-              <span v-for="(chip, index) in filterChips" :key="index">
-                <span class="tag is-light is-rounded" style="margin-right:7px; cursor: pointer;" v-bind:class="{ 'chip-disabled': chip.active === false}" @click.stop="toggleChip(chip, index)">
-                  <span v-if="index === 0 && timeChips.length" style="margin-right: 7px;font-size: 0.7em;">AND</span>
-                  <span v-if="index > 0" style="margin-right: 7px;font-size: 0.7em;">OR</span>
-                  <span v-if="chip.value === '__ts_star'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-star" style="color:#ffe300;-webkit-text-stroke-width: 1px;-webkit-text-stroke-color: silver;"></i></span>
-                  <span v-else-if="chip.value === '__ts_comment'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-comment"></i></span>
-                  <span v-else-if="chip.type === 'label'" style="margin-right:7px;" class="icon is-small"><i class="fas fa-tag"></i></span>
+              <span v-for="(chip, index) in termChips" :key="index + chip.value">
+                <span v-if="chip.type === 'term'" class="tag is-light" style="margin-right:7px; cursor: pointer;" v-bind:class="{ 'chip-disabled': chip.active === false, 'is-danger': chip.operator === 'must_not'}" @click="toggleChip(chip, index)">
+                  <span v-if="index > 0" style="margin-right: 7px;font-size: 0.7em; cursor: default;">AND</span>
+                  <span v-if="chip.operator === 'must_not'" style="font-weight:bold; margin-right: 7px;font-size: 0.7em; cursor: default;">NOT</span>
                   <span style="margin-right:7px;">{{ chip | filterChip }}</span>
-                  <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
+                  <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(chip)"></button>
                 </span>
               </span>
             </div>
+
+
             <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateSelectedIndices="updateSelectedIndices($event)" :active-timelines="sketch.active_timelines" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index"></ts-explore-timeline-picker>
 
           </div>
@@ -413,18 +427,16 @@ export default {
     timeChips: function () {
       return this.currentQueryFilter.chips.filter(chip => chip.type === 'datetime_range')
     },
-    filterChips: function () {
-      return this.currentQueryFilter.chips.filter(chip => chip.type !== 'datetime_range')
-    }
+    labelChips: function () {
+      return this.currentQueryFilter.chips.filter(chip => chip.type === 'label')
+    },
+    termChips: function () {
+      return this.currentQueryFilter.chips.filter(chip => chip.type === 'term')
+    },
   },
   methods: {
-    hideDropdown: function(index) {
-      if (isNaN(index)) {
-        this.$refs[index].isActive = false
-      }
-      else {
-        this.$refs.TimeFilters[index].isActive = false
-      }
+    hideDropdown: function() {
+      this.$refs['NewTimeFilter'].isActive = false
     },
     search: function (emitEvent=true) {
       if (!this.currentQueryString) {
@@ -598,8 +610,8 @@ export default {
       chip.active = !chip.active
       this.search()
     },
-    removeChip: function (chipIndex) {
-      let chip = this.currentQueryFilter.chips[chipIndex]
+    removeChip: function (chip) {
+      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === chip.value);
       if (chip.value === '__ts_star') {
         this.activeStarFilter = false
       }
@@ -609,9 +621,10 @@ export default {
       this.currentQueryFilter.chips.splice(chipIndex, 1)
       this.search()
     },
-    updateChip: function(chip, chipIndex) {
+    updateChip: function(newChip, oldChip) {
       // Replace the chip at the given index
-      this.currentQueryFilter.chips.splice(chipIndex, 1, chip)
+      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === oldChip.value);
+      this.currentQueryFilter.chips.splice(chipIndex, 1, newChip)
       this.search()
     },
     addChip: function (chip) {
@@ -621,7 +634,6 @@ export default {
         this.currentQueryFilter.chips = []
       }
       this.currentQueryFilter.chips.push(chip)
-      this.showFilters = false
       this.search()
     },
     toggleLabelChip: function (labelName) {
@@ -786,5 +798,4 @@ export default {
   text-decoration: line-through;
   opacity: 0.5;
 }
-
 </style>

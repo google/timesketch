@@ -27,7 +27,7 @@ limitations under the License.
       </tr>
 
       <!-- The event -->
-      <tr class="ts-shadow-on-hover">
+      <tr class="ts-shadow-on-hover-OFF">
 
         <!-- Timeline color (set the color for the timeline) -->
         <td v-bind:style="timelineColor">
@@ -47,6 +47,15 @@ limitations under the License.
             <span v-if="displayControls" class="icon control" style="cursor: pointer;" v-on:click="searchContext">
               <i class="fas fa-search" style="color: #d3d3d3;"></i>
             </span>
+            <span class="icon control">
+                <b-dropdown ref="labelDropdown" trap-focus aria-role="menu">
+                  <b-icon icon="tag" size="is-small" slot="trigger"></b-icon>
+                  <b-dropdown-item custom :focusable="true" style="min-width: 500px; padding: 30px;">
+                    <input v-model="labelToAdd"></input>
+                    <button v-on:click="saveLabel(labelToAdd)" class="button is-small">Save</button>
+                  </b-dropdown-item>
+                </b-dropdown>
+            </span>
           </div>
         </td>
 
@@ -58,6 +67,7 @@ limitations under the License.
                 <span v-if="displayOptions.showEmojis" v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji" :title="meta.emojis[emoji]">{{ emoji }}</span>
                 <span style="margin-left:10px;"></span>
                 <span v-if="displayOptions.showTags" v-for="tag in event._source.tag" :key="tag" class="tag is-rounded" style="margin-right:5px;background:#d1d1d1;">{{ tag }}</span>
+                <span v-if="displayOptions.showTags" v-for="label in event._source.label" :key="label" class="tag is-rounded" style="margin-right:5px;background:#d1d1d1;">{{ label }}</span>
               </span>
               <span style="word-break: break-word;" :title="event._source[field.field]">
                 {{ event._source[field.field] }}
@@ -120,6 +130,7 @@ limitations under the License.
   import ApiClient from '../../utils/RestApiClient'
   import TsSketchExploreEventListRowDetail from './EventListRowDetail'
   import EventBus from "../../main"
+  import { ToastProgrammatic as Toast } from 'buefy'
 
   export default {
   components: {
@@ -133,7 +144,8 @@ limitations under the License.
       isSelected: false,
       isDarkTheme: false,
       comment: '',
-      comments: []
+      comments: [],
+      labelToAdd: null
     }
   },
   computed: {
@@ -246,6 +258,14 @@ limitations under the License.
         this.comments.push(response.data.objects[0][0])
         this.comment = ''
       }).catch((e) => {})
+    },
+    saveLabel: function (label) {
+      this.event._source.label.push(label)
+      ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event]).then((response) => {
+      }).catch((e) => {
+        Toast.open('Error adding label')
+        this.event._source.label = this.event._source.label.filter(e => e !== label)
+      })
     },
     searchContext: function () {
       this.$emit('searchContext', this.event)

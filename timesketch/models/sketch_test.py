@@ -109,7 +109,8 @@ class SketchModelTest(ModelBaseTest):
             'terminate_after': DEFAULT_LIMIT,
             'indices': [],
             'exclude': [],
-            'order': 'asc'
+            'order': 'asc',
+            'chips': []
         }
         test_filter = dict(indices=[])
         test_filter_json = json.dumps(test_filter)

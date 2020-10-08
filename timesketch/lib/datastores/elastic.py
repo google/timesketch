@@ -38,12 +38,16 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 es_logger = logging.getLogger('timesketch.elasticsearch')
 es_logger.setLevel(logging.WARNING)
 
-ADD_LABEL_SCRIPT = """
+UPDATE_LABEL_SCRIPT = """
 if (ctx._source.timesketch_label == null) {
     ctx._source.timesketch_label = new ArrayList()
 }
-if( ! ctx._source.timesketch_label.contains (params.timesketch_label)) {
-    ctx._source.timesketch_label.add(params.timesketch_label)
+if (params.remove == true) {
+    ctx._source.timesketch_label.removeIf(label -> label.name == params.timesketch_label.name && label.sketch_id == params.timesketch_label.sketch_id);
+} else {
+    if( ! ctx._source.timesketch_label.contains (params.timesketch_label)) {
+        ctx._source.timesketch_label.add(params.timesketch_label)
+    }
 }
 """
 
@@ -51,14 +55,8 @@ TOGGLE_LABEL_SCRIPT = """
 if (ctx._source.timesketch_label == null) {
     ctx._source.timesketch_label = new ArrayList()
 }
-if(ctx._source.timesketch_label.contains(params.timesketch_label)) {
-    for (int i = 0; i < ctx._source.timesketch_label.size(); i++) {
-      if (ctx._source.timesketch_label[i] == params.timesketch_label) {
-        ctx._source.timesketch_label.remove(i)
-      }
-      i++;
-    }
-} else {
+boolean removedLabel = ctx._source.timesketch_label.removeIf(label -> label.name == params.timesketch_label.name && label.sketch_id == params.timesketch_label.sketch_id);
+if (!removedLabel) {
     ctx._source.timesketch_label.add(params.timesketch_label)
 }
 """
@@ -468,7 +466,8 @@ class ElasticsearchDataStore(object):
         return result.get('count', 0)
 
     def set_label(self, searchindex_id, event_id, event_type, sketch_id,
-                  user_id, label, toggle=False, single_update=True):
+                  user_id, label, toggle=False, remove=False,
+                  single_update=True):
         """Set label on event in the datastore.
 
         Args:
@@ -478,9 +477,9 @@ class ElasticsearchDataStore(object):
             sketch_id: Integer of sketch primary key
             user_id: Integer of user primary key
             label: String with the name of the label
+            remove: Optional boolean value if the label should be removed
             toggle: Optional boolean value if the label should be toggled
             single_update: Boolean if the label should be indexed immediately.
-            (add/remove). The default is False.
 
         Returns:
             Dict with updated document body, or None if this is a single update.
@@ -489,13 +488,14 @@ class ElasticsearchDataStore(object):
         update_body = {
             'script': {
                 'lang': 'painless',
-                'source': ADD_LABEL_SCRIPT,
+                'source': UPDATE_LABEL_SCRIPT,
                 'params': {
                     'timesketch_label': {
                         'name': str(label),
                         'user_id': user_id,
                         'sketch_id': sketch_id
-                    }
+                    },
+                    remove: remove
                 }
             }
         }
@@ -521,6 +521,11 @@ class ElasticsearchDataStore(object):
                 doc_type=event_type,
                 id=event_id,
                 body=doc)
+
+        try:
+            print(doc['_source']['timesketch_label'])
+        except KeyError:
+            pass
 
         self.client.update(
             index=searchindex_id,
