@@ -341,7 +341,8 @@ class SketchResource(resources.ResourceMixin, Resource):
                 x for x, y in analyzer_manager.AnalysisManager.get_analyzers()
             ],
             mappings=list(mappings),
-            stats=stats_per_index
+            stats=stats_per_index,
+            labels=self.datastore.get_sketch_labels(sketch.id, sketch_indices)
         )
         return self.to_json(sketch, meta=meta)
 

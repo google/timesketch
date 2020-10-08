@@ -81,6 +81,13 @@ limitations under the License.
                     <b-switch type="is-info" v-model="activeCommentFilter" v-on:input="toggleLabelChip('__ts_comment')">
                       <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-comment"></i></span>Show events with comments
                     </b-switch>
+                    <br>
+                    <div v-for="(count, label) in meta.labels" :key="label">
+                      <b-switch type="is-info" v-on:input="toggleLabelChip(label)">
+                        {{ label }} ({{ count }})
+                      </b-switch>
+                      <br>
+                    </div>
                   </b-dropdown-item>
                 </b-dropdown>
               </p>

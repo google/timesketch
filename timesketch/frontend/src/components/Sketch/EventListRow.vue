@@ -66,8 +66,8 @@ limitations under the License.
               <span v-if="index === 0">
                 <span v-if="displayOptions.showEmojis" v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji" :title="meta.emojis[emoji]">{{ emoji }}</span>
                 <span style="margin-left:10px;"></span>
-                <span v-if="displayOptions.showTags" v-for="tag in event._source.tag" :key="tag" class="tag is-rounded" style="margin-right:5px;background:#d1d1d1;">{{ tag }}</span>
-                <span v-if="displayOptions.showTags" v-for="label in event._source.label" :key="label" class="tag is-rounded" style="margin-right:5px;background:#d1d1d1;">{{ label }}</span>
+                <span v-if="displayOptions.showTags" v-for="tag in event._source.tag" :key="tag" class="tag is-small is-light" style="margin-right:5px; border:1px solid #d1d1d1;">{{ tag }}</span>
+                <span v-if="displayOptions.showTags" v-for="label in filteredLabels" :key="label" class="tag is-small is-light" style="margin-right:5px; border:1px solid #d1d1d1;">{{ label }}</span>
               </span>
               <span style="word-break: break-word;" :title="event._source[field.field]">
                 {{ event._source[field.field] }}
@@ -233,6 +233,10 @@ limitations under the License.
       eventData['_type'] = this.event._type
       eventData['isSelected'] = this.isSelected
       return eventData
+    },
+    filteredLabels () {
+      console.log(this.event._source.label)
+      return this.event._source.label.filter(label => !label.startsWith('__'))
     }
   },
   methods: {

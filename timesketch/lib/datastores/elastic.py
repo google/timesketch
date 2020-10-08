@@ -413,6 +413,53 @@ class ElasticsearchDataStore(object):
             for event in result['hits']['hits']:
                 yield event
 
+    def get_sketch_labels(self, sketch_id, indices):
+        """Aggregate labels for a sketch.
+
+        Args:
+            sketch_id: The Sketch ID
+            indices: List of indices to aggregate on
+
+        Returns:
+            Dictionary with label names and number of events per label.
+        """
+        query_filter = {
+            "query": {
+                "nested": {
+                    "query": {
+                        "bool": {
+                            "must": [{
+                                "term": {
+                                    "timesketch_label.sketch_id": sketch_id
+                                }
+                            }]
+                        }
+                    },
+                    "path": "timesketch_label"
+                }
+            },
+            "aggs": {
+                "nested": {
+                    "nested": {
+                        "path": "timesketch_label"
+                    },
+                    "aggs": {
+                        "labels": {
+                            "terms": {"field": "timesketch_label.name.keyword"}}
+                    }
+                }
+            }
+        }
+        labels = {}
+        result = self.client.search(index=indices, body=query_filter, size=0)
+        buckets = result['aggregations']['nested']['labels']['buckets']
+        for bucket in buckets:
+            # Filter out special labels like __ts_star etc.
+            if bucket['key'].startswith('__'):
+                continue
+            labels[bucket['key']] = bucket['doc_count']
+        return labels
+
     def get_event(self, searchindex_id, event_id):
         """Get one event from the datastore.
 
