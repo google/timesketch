@@ -18,7 +18,7 @@ analyzers that generate specific vega specs (or altair charts) that
 are not yet supported by other aggregators and/or charts. This can
 also be used by those manually generating charts in notebooks.
 
-This analyzer is not useful for UI and therefore is "hidden" from
+This aggregator is not useful for UI and therefore is "hidden" from
 views.
 """
 from __future__ import unicode_literals
