@@ -27,7 +27,7 @@ limitations under the License.
       </tr>
 
       <!-- The event -->
-      <tr class="ts-shadow-on-hover-OFF">
+      <tr>
 
         <!-- Timeline color (set the color for the timeline) -->
         <td v-bind:style="timelineColor">

@@ -269,13 +269,11 @@ export default {
       showShareModal: false,
       isFullPage: true,
       loadingComponent: null,
-      isArchived: false,
-      isDarkTheme: false
+      isArchived: false
     }
   },
   computed: {
     sketch () {
-      this.isDarkTheme = localStorage.theme === 'dark'
       return this.$store.state.sketch
     },
     meta () {
