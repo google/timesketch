@@ -69,7 +69,8 @@ export default {
           'field': field,
           'value': value,
           'type': 'term',
-          'operator': operator
+          'operator': operator,
+          'active': true
         }
       this.$emit('addChip', chip)
     }

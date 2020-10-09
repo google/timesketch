@@ -44,7 +44,7 @@ limitations under the License.
           </b-tooltip>
 
           <b-dropdown v-if="meta.permissions.write" aria-role="list" position="is-bottom-left">
-            <a class="button" style="background:transparent;border:none;" slot="trigger" slot-scope="{ active }">
+            <a class="button ts-dropdown-button" style="background:transparent;border:none;" slot="trigger" slot-scope="{ active }">
               <span class="icon is-small">
                 <i :class="active ? 'fas fa-angle-up' : 'fas fa-angle-down'"></i>
               </span>
@@ -199,7 +199,7 @@ limitations under the License.
           <div class="column" v-if="meta.views && meta.views.length ? meta.views.length: false">
             <div class="card has-min-height">
               <header class="card-header">
-                <p class="card-header-title">Views</p>
+                <p class="card-header-title">Saved searches</p>
                 <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
                   <p class="control">
                     <router-link class="button is-rounded is-small" :to="{ name: 'SketchManageViews' }">
@@ -224,7 +224,7 @@ limitations under the License.
                 <p class="card-header-title">Stories</p>
               </header>
               <div class="card-content" style="padding:5px;">
-                <ts-sketch-story-list></ts-sketch-story-list>
+                <ts-sketch-story-list :controls="false"></ts-sketch-story-list>
               </div>
             </div>
           </div>

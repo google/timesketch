@@ -15,15 +15,14 @@ limitations under the License.
 -->
 <template>
     <tbody>
-
       <!-- Time bubbles -->
       <tr v-if="deltaDays > 0">
         <td colspan="5" style="padding: 0">
-          <div class="ts-time-bubble-vertical-line"></div>
-          <div class="ts-time-bubble">
-            <h5><b>{{ deltaDays }}</b><br>days</h5>
+          <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
+          <div class="ts-time-bubble ts-time-bubble-color">
+            <h5><b>{{ deltaDays | compactNumber }}</b><br>days</h5>
           </div>
-          <div class="ts-time-bubble-vertical-line"></div>
+          <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
         </td>
       </tr>
 
@@ -68,7 +67,7 @@ limitations under the License.
         </td>
 
         <!-- Timeline name -->
-        <td class="ts-timeline-name-column">
+        <td class="ts-timeline-name-column ts-timeline-name-column-color">
           <span :title="timelineName">
             {{ timelineName }}
           </span>
@@ -81,13 +80,10 @@ limitations under the License.
         <td colspan="5">
           <div style="max-width: 600px; border:1px solid #f5f5f5; border-radius: 4px; padding:10px; margin-bottom: 20px;">
             <article  class="media" v-for="comment in comments" :key="comment.created_at">
-              <figure class="media-left">
-                <div class="ts-avatar-circle"></div>
-              </figure>
               <div class="media-content">
                 <div class="content">
                   <p>
-                    <strong>{{ comment.user.username }}</strong> <small style="margin-left: 10px;">{{ comment.created_at | moment("ll") }}</small>
+                    {{ comment.user.username }} <small style="margin-left: 10px;">{{ comment.created_at | moment("ll") }}</small>
                     <br>
                     {{ comment.comment }}
                   </p>
@@ -135,6 +131,7 @@ limitations under the License.
       showDetail: false,
       isStarred: false,
       isSelected: false,
+      isDarkTheme: false,
       comment: '',
       comments: []
     }
@@ -147,24 +144,49 @@ limitations under the License.
       return this.$store.state.meta
     },
     timelineColor () {
-      let hexColor = this.timeline(this.event._index).color
-      if (!hexColor.startsWith('#')) {
-        hexColor = '#' + hexColor
+      let backgroundColor = this.timeline(this.event._index).color
+      if (!backgroundColor.startsWith('#')) {
+        backgroundColor = '#' + backgroundColor
+      }
+      if (this.isDarkTheme) {
+        return {
+          'background-color': backgroundColor,
+          'filter': 'grayscale(25%)',
+          'color': '#333'
+        }
       }
       return {
-        'background-color': hexColor
+        'background-color': backgroundColor
       }
     },
     fieldColumnColor () {
-      let hexColor = '#f5f5f5'
-      if (this.isStarred) {
-        hexColor = '#fff4b3'
+      let backgroundColor = '#f5f5f5'
+      let fontColor = '#333'
+
+      if (this.isDarkTheme) {
+        backgroundColor = '#494949'
+        fontColor = '#fafafa'
       }
+
+      if (this.isStarred) {
+        backgroundColor = '#fff4b3'
+        fontColor = '#333'
+      }
+
       if (this.isSelected) {
-        hexColor = '#c3ecff'
+        backgroundColor = '#c3ecff'
+        fontColor = '#333'
+      }
+
+      if (this.isDarkTheme) {
+        return {
+          'background-color': backgroundColor,
+          'color': fontColor,
+        }
       }
       return {
-        'background-color': hexColor
+        'background-color': backgroundColor,
+        'color': fontColor,
       }
     },
     datetimeFormat () {
@@ -242,6 +264,9 @@ limitations under the License.
       } else {
         this.selectEvent()
       }
+    },
+    toggleTheme: function () {
+      this.isDarkTheme =! this.isDarkTheme
     }
   },
   beforeDestroy () {
@@ -253,6 +278,9 @@ limitations under the License.
     EventBus.$on('selectEvent', this.selectEvent)
     EventBus.$on('clearSelectedEvents', this.unSelectEvent)
     EventBus.$on('toggleStar', this.toggleStarOnSelect)
+    EventBus.$on('isDarkTheme', this.toggleTheme)
+
+    this.isDarkTheme = localStorage.theme === 'dark';
 
     if (this.event._source.label.indexOf('__ts_star') > -1) {
         this.isStarred = true
@@ -303,10 +331,8 @@ limitations under the License.
 }
 
 .ts-timeline-name-column {
-  background: #f1f1f1;
   font-size: 0.8em;
   font-weight: bold;
-  color: #999999;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -318,7 +344,6 @@ limitations under the License.
 .ts-time-bubble {
   width: 60px;
   height: 60px;
-  background: #f5f5f5;
   border-radius: 30px;
   position: relative;
   margin: 0 0 0 45px;
@@ -331,28 +356,17 @@ limitations under the License.
   left: 50%;
   transform: translate(-50%, -50%);
   margin: 0;
-  color: #666;
 }
 
 .ts-time-bubble-vertical-line {
   width: 2px;
   height: 20px;
-  background: #f5f5f5;
   margin: 0 0 0 75px;
 }
 
 .ts-shadow-on-hover:hover {
   opacity:0.999999;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.24);
-}
-
-.ts-avatar-circle {
-  width: 48px;
-  height: 48px;
-  background-color: #f5f5f5;
-  border-radius: 50%;
-  -webkit-border-radius: 50%;
-  -moz-border-radius: 50%;
 }
 
 </style>
