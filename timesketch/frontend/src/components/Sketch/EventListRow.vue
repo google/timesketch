@@ -44,16 +44,61 @@ limitations under the License.
               <i class="fas fa-star" v-if="isStarred" style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"></i>
               <i class="fas fa-star" v-if="!isStarred" style="color: #d3d3d3;"></i>
             </span>
-            <span v-if="displayControls" class="icon control" style="cursor: pointer;" v-on:click="searchContext">
+            <span v-if="displayControls" class="icon control" style="margin-right: 3px; cursor: pointer;" v-on:click="searchContext">
               <i class="fas fa-search" style="color: #d3d3d3;"></i>
             </span>
             <span class="icon control">
-                <b-dropdown ref="labelDropdown" trap-focus aria-role="menu">
-                  <b-icon icon="tag" size="is-small" slot="trigger"></b-icon>
-                  <b-dropdown-item custom :focusable="true" style="min-width: 500px; padding: 30px;">
-                    <input v-model="labelToAdd"></input>
-                    <button v-on:click="addLabel(labelToAdd)" class="button is-small">Save</button>
-                  </b-dropdown-item>
+                <b-dropdown ref="labelDropdown" aria-role="list">
+                  <i class="fas fa-tag" style="color: #d3d3d3;" slot="trigger"></i>
+                  <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
+                    <section class="modal-card-body">
+                      <b-dropdown-item custom :focusable="false">
+                        <span v-if="filteredLabelsToAdd.length">
+                          <b>Label as:</b>
+                          <br><br>
+                          <div class="level" style="margin-bottom: 5px;" v-for="(label) in filteredLabelsToAdd" :key="label">
+                            <div class="level-left">
+                              <div class="field">
+                                <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label">
+                                  {{ label }}
+                                </b-checkbox>
+                              </div>
+                            </div>
+                          </div>
+                          <hr>
+                        </span>
+
+                        <span v-if="event._source.label.length">
+                          <i class="fas fa-trash" style="margin-right: 7px;"></i>
+                          <b>Remove:</b>
+                          <br><br>
+                          <div class="level" style="margin-bottom: 5px;" v-for="(label) in event._source.label" :key="label">
+                            <div class="level-left">
+                              <div class="field">
+                                <b-checkbox type="is-danger" v-model="labelsToRemove" :native-value="label">
+                                  {{ label }}
+                                </b-checkbox>
+                              </div>
+                            </div>
+                          </div>
+                          <hr>
+                        </span>
+                        <div class="field is-grouped">
+                          <p class="control is-expanded">
+                            <input class="input" v-model="labelToAdd" placeholder="Create new"></input>
+                          </p>
+                          <p class="control">
+                            <button v-on:click="addLabels(labelToAdd)" class="button">Save</button>
+                          </p>
+                        </div>
+                      </b-dropdown-item>
+                    </section>
+                    <section class="modal-card-foot">
+                      <b-dropdown-item>
+                        <button v-if="selectedLabels.length || labelsToRemove.length" class="button is-info" v-on:click="addLabels()" :disabled="labelToAdd !== null && labelToAdd !== ''">Apply</button>
+                      </b-dropdown-item>
+                    </section>
+                  </div>
                 </b-dropdown>
             </span>
           </div>
@@ -145,7 +190,9 @@ limitations under the License.
       isDarkTheme: false,
       comment: '',
       comments: [],
-      labelToAdd: null
+      labelToAdd: null,
+      selectedLabels: [],
+      labelsToRemove: []
     }
   },
   computed: {
@@ -236,6 +283,12 @@ limitations under the License.
     },
     filteredLabels () {
       return this.event._source.label.filter(label => !label.startsWith('__'))
+    },
+    filteredLabelsToAdd () {
+      return this.meta.labels.filter(label => this.event._source.label.indexOf(label) === -1)
+    },
+    filteredLabelsToRemove () {
+      return this.meta.labels.filter(label => this.event._source.label.indexOf(label) !== -1)
     }
   },
   methods: {
@@ -262,14 +315,38 @@ limitations under the License.
         this.comment = ''
       }).catch((e) => {})
     },
-    addLabel: function (label) {
-      this.event._source.label.push(label)
-      ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event]).then((response) => {
-        this.$emit('addLabel', label)
-      }).catch((e) => {
-        Toast.open('Error adding label')
-        this.event._source.label = this.event._source.label.filter(e => e !== label)
+    addLabels: function (labels) {
+      if (labels === undefined) {
+        labels = this.selectedLabels
+      }
+      if (!Array.isArray(labels)) {
+        labels = [labels]
+      }
+
+      labels.forEach((label) => {
+        if (this.event._source.label.indexOf(label) === -1) {
+          this.event._source.label.push(label)
+          ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event]).then((response) => {
+            this.$emit('addLabel', label)
+          }).catch((e) => {
+            Toast.open('Error adding label')
+            this.event._source.label = this.event._source.label.filter(e => e !== label)
+          })
+        }
       })
+
+      if (this.labelsToRemove.length) {
+        this.labelsToRemove.forEach((label) => {
+          ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event], true).then((response) => {
+          }).catch((e) => {})
+          this.event._source.label = this.event._source.label.filter(e => e !== label)
+        })
+        this.labelsToRemove = []
+      }
+
+      this.selectedLabels = []
+      this.labelToAdd = null
+      this.$refs.labelDropdown.toggle()
     },
     searchContext: function () {
       this.$emit('searchContext', this.event)

@@ -102,9 +102,7 @@ limitations under the License.
                         <button class="button is-info" v-on:click="updateLabelChips()">Apply</button>
                       </b-dropdown-item>
                     </section>
-
                   </div>
-
                 </b-dropdown>
 
               </p>
