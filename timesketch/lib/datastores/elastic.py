@@ -412,6 +412,7 @@ class ElasticsearchDataStore(object):
             for event in result['hits']['hits']:
                 yield event
 
+    # pylint: disable=line-too-long
     def get_sketch_labels(self, sketch_id, indices):
         """Aggregate labels for a sketch.
 
@@ -457,7 +458,9 @@ class ElasticsearchDataStore(object):
                 }
             }
         }
+
         labels = []
+        # pylint: disable=unexpected-keyword-arg
         result = self.client.search(
             index=indices, body=label_aggregation, size=0)
         buckets = result['aggregations']['nested']['inner']['labels']['buckets']
