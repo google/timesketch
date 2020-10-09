@@ -32,6 +32,8 @@ limitations under the License.
       <div class="container is-fluid">
         <ts-navbar-secondary currentAppContext="sketch" currentPage="overview">
 
+          <span v-for="label in meta.sketch_labels" :key="label" style="margin-right:10px; color: var(--default-font-color);font-size: 0.7em">{{  label }}</span>
+
           <b-tooltip v-if="meta.collaborators" :label="shareTooltip" position="is-bottom" type="is-white">
             <a v-if="meta.permissions.write" class="button is-info is-rounded" style="margin-right:10px;" v-on:click="showShareModal = !showShareModal">
                 <span class="icon is-small">
@@ -267,11 +269,13 @@ export default {
       showShareModal: false,
       isFullPage: true,
       loadingComponent: null,
-      isArchived: false
+      isArchived: false,
+      isDarkTheme: false
     }
   },
   computed: {
     sketch () {
+      this.isDarkTheme = localStorage.theme === 'dark'
       return this.$store.state.sketch
     },
     meta () {
@@ -395,4 +399,6 @@ export default {
     justify-content: center;
     align-items: center;
   }
+
+
 </style>
