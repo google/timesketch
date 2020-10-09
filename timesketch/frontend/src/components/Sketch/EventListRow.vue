@@ -52,7 +52,7 @@ limitations under the License.
                   <b-icon icon="tag" size="is-small" slot="trigger"></b-icon>
                   <b-dropdown-item custom :focusable="true" style="min-width: 500px; padding: 30px;">
                     <input v-model="labelToAdd"></input>
-                    <button v-on:click="saveLabel(labelToAdd)" class="button is-small">Save</button>
+                    <button v-on:click="addLabel(labelToAdd)" class="button is-small">Save</button>
                   </b-dropdown-item>
                 </b-dropdown>
             </span>
@@ -235,7 +235,6 @@ limitations under the License.
       return eventData
     },
     filteredLabels () {
-      console.log(this.event._source.label)
       return this.event._source.label.filter(label => !label.startsWith('__'))
     }
   },
@@ -263,9 +262,10 @@ limitations under the License.
         this.comment = ''
       }).catch((e) => {})
     },
-    saveLabel: function (label) {
+    addLabel: function (label) {
       this.event._source.label.push(label)
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event]).then((response) => {
+        this.$emit('addLabel', label)
       }).catch((e) => {
         Toast.open('Error adding label')
         this.event._source.label = this.event._source.label.filter(e => e !== label)

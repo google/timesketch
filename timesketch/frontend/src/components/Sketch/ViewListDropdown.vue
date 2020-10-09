@@ -52,7 +52,7 @@ limitations under the License.
                 </b-dropdown-item>
               </div>
               </section>
-            </div>
+          </div>
 
           <div class="level footer" v-if="!isSimple">
             <div class="level-left">
@@ -94,12 +94,15 @@ export default {
     }
   },
   methods: {
-    setActiveView: function (view) {
-      this.$emit('setActiveView', view)
+    setActiveView: function (view, doSearch=true) {
       this.showCreateViewModal = false
       this.activeView = view
+      if (doSearch) {
+        this.$emit('setActiveView', view)
+      }
+
     },
-    clearSearch: function (view) {
+    clearSearch: function () {
       this.$emit('clearSearch')
       this.activeView = null
       this.$refs.dropdown.toggle()
@@ -133,7 +136,7 @@ export default {
       let view =  this.meta.views.filter(function(view) {
         return view.id === parseInt(queryViewId);
       })
-      this.setActiveView(view[0])
+      this.setActiveView(view[0], false)
     }
   }
 }

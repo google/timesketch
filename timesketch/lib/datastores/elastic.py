@@ -93,8 +93,7 @@ class ElasticsearchDataStore(object):
         """
         label_query = {
             'bool': {
-                'should': [],
-                'minimum_should_match': 1
+                'must': []
             }
         }
 
@@ -105,7 +104,7 @@ class ElasticsearchDataStore(object):
                         'bool': {
                             'must': [{
                                 'term': {
-                                    'timesketch_label.name': label
+                                    'timesketch_label.name.keyword': label
                                 }
                             }, {
                                 'term': {
@@ -117,7 +116,7 @@ class ElasticsearchDataStore(object):
                     'path': 'timesketch_label'
                 }
             }
-            label_query['bool']['should'].append(nested_query)
+            label_query['bool']['must'].append(nested_query)
         return label_query
 
     @staticmethod
@@ -421,43 +420,52 @@ class ElasticsearchDataStore(object):
             indices: List of indices to aggregate on
 
         Returns:
-            Dictionary with label names and number of events per label.
+            List with label names.
         """
-        query_filter = {
-            "query": {
-                "nested": {
-                    "query": {
-                        "bool": {
-                            "must": [{
-                                "term": {
-                                    "timesketch_label.sketch_id": sketch_id
-                                }
-                            }]
-                        }
-                    },
-                    "path": "timesketch_label"
-                }
-            },
+        # This is a workaround to return all labels by setting the max buckets
+        # to something big. If a sketch has more than this amount of labels
+        # the list will be incomplete but it should be uncommon to have >10k
+        # labels in a sketch.
+        max_labels = 10000
+        label_aggregation = {
             "aggs": {
                 "nested": {
                     "nested": {
                         "path": "timesketch_label"
                     },
                     "aggs": {
-                        "labels": {
-                            "terms": {"field": "timesketch_label.name.keyword"}}
+                        "inner": {
+                            "filter": {
+                                "bool": {
+                                    "must": [{
+                                        "term": {
+                                            "timesketch_label.sketch_id": sketch_id
+                                        }
+                                    }]
+                                }
+                            },
+                            "aggs": {
+                                "labels": {
+                                    "terms": {
+                                        "size": max_labels,
+                                        "field": "timesketch_label.name.keyword"
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
-        labels = {}
-        result = self.client.search(index=indices, body=query_filter, size=0)
-        buckets = result['aggregations']['nested']['labels']['buckets']
+        labels = []
+        result = self.client.search(
+            index=indices, body=label_aggregation, size=0)
+        buckets = result['aggregations']['nested']['inner']['labels']['buckets']
         for bucket in buckets:
             # Filter out special labels like __ts_star etc.
             if bucket['key'].startswith('__'):
                 continue
-            labels[bucket['key']] = bucket['doc_count']
+            labels.append(bucket['key'])
         return labels
 
     def get_event(self, searchindex_id, event_id):
@@ -568,11 +576,6 @@ class ElasticsearchDataStore(object):
                 doc_type=event_type,
                 id=event_id,
                 body=doc)
-
-        try:
-            print(doc['_source']['timesketch_label'])
-        except KeyError:
-            pass
 
         self.client.update(
             index=searchindex_id,
