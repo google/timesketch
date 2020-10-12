@@ -75,7 +75,7 @@ class ApiDataFetcher(interface.DataFetcher):
         index = parameters.pop('index', None)
         aggregator = agg_class(sketch_id=self._sketch_id, index=index)
 
-        chart_type = parameters.pop('supported_charts', None)
+        _ = parameters.pop('supported_charts', None)
         chart_color = parameters.pop('chart_color', 'N/A')
         chart_title = parameters.pop('chart_title', 'N/A')
 
