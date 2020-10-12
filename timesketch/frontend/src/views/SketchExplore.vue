@@ -85,8 +85,8 @@ limitations under the License.
                             <span style="margin-right:5px;" class="icon is-small"><i class="fas fa-comment"></i></span>Show events with comments
                           </b-checkbox>
                         </div>
-                        <hr v-if="meta.labels.length">
-                        <div class="level" style="margin-bottom: 5px;" v-for="(label) in meta.labels" :key="label">
+                        <hr v-if="meta.filter_labels.length">
+                        <div class="level" style="margin-bottom: 5px;" v-for="(label) in meta.filter_labels" :key="label">
                           <div class="level-left">
                             <div class="field">
                               <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label">
@@ -675,8 +675,8 @@ export default {
       })
     },
     updateLabelList: function (label) {
-      if (this.meta.labels.indexOf(label) === -1) {
-        this.meta.labels.push(label)
+      if (this.meta.filter_labels.indexOf(label) === -1) {
+        this.meta.filter_labels.push(label)
       }
     },
     paginate: function (pageNum) {

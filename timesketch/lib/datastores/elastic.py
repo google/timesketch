@@ -412,8 +412,7 @@ class ElasticsearchDataStore(object):
             for event in result['hits']['hits']:
                 yield event
 
-    # pylint: disable=line-too-long
-    def get_sketch_labels(self, sketch_id, indices):
+    def get_filter_labels(self, sketch_id, indices):
         """Aggregate labels for a sketch.
 
         Args:
@@ -428,28 +427,30 @@ class ElasticsearchDataStore(object):
         # the list will be incomplete but it should be uncommon to have >10k
         # labels in a sketch.
         max_labels = 10000
+
+        # pylint: disable=line-too-long
         label_aggregation = {
-            "aggs": {
-                "nested": {
-                    "nested": {
-                        "path": "timesketch_label"
+            'aggs': {
+                'nested': {
+                    'nested': {
+                        'path': 'timesketch_label'
                     },
-                    "aggs": {
-                        "inner": {
-                            "filter": {
-                                "bool": {
-                                    "must": [{
-                                        "term": {
-                                            "timesketch_label.sketch_id": sketch_id
+                    'aggs': {
+                        'inner': {
+                            'filter': {
+                                'bool': {
+                                    'must': [{
+                                        'term': {
+                                            'timesketch_label.sketch_id': sketch_id
                                         }
                                     }]
                                 }
                             },
-                            "aggs": {
-                                "labels": {
-                                    "terms": {
-                                        "size": max_labels,
-                                        "field": "timesketch_label.name.keyword"
+                            'aggs': {
+                                'labels': {
+                                    'terms': {
+                                        'size': max_labels,
+                                        'field': 'timesketch_label.name.keyword'
                                     }
                                 }
                             }

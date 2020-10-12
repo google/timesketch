@@ -285,10 +285,10 @@ limitations under the License.
       return this.event._source.label.filter(label => !label.startsWith('__'))
     },
     filteredLabelsToAdd () {
-      return this.meta.labels.filter(label => this.event._source.label.indexOf(label) === -1)
+      return this.meta.filter_labels.filter(label => this.event._source.label.indexOf(label) === -1)
     },
     filteredLabelsToRemove () {
-      return this.meta.labels.filter(label => this.event._source.label.indexOf(label) !== -1)
+      return this.meta.filter_labels.filter(label => this.event._source.label.indexOf(label) !== -1)
     }
   },
   methods: {

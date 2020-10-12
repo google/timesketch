@@ -342,7 +342,8 @@ class SketchResource(resources.ResourceMixin, Resource):
             ],
             mappings=list(mappings),
             stats=stats_per_index,
-            labels=self.datastore.get_sketch_labels(sketch.id, sketch_indices),
+            filter_labels=self.datastore.get_filter_labels(
+                sketch.id, sketch_indices),
             sketch_labels=[label.label for label in sketch.labels]
         )
         return self.to_json(sketch, meta=meta)
