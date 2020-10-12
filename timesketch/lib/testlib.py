@@ -195,7 +195,7 @@ class MockDataStore(object):
         return self.event_dict
 
     @staticmethod
-    def get_sketch_labels(sketch_id, indices):
+    def get_filter_labels(sketch_id, indices):
         """Mock returning a single event from the datastore.
 
         Returns:
