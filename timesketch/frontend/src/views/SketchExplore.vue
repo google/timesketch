@@ -86,6 +86,7 @@ limitations under the License.
             </div>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
             <div class="field is-grouped is-grouped-multiline">
               <span v-for="(chip, index) in currentQueryFilter.chips" :key="index + chip.value">
                 <span v-if="chip.type === 'datetime_range'" class="control">
@@ -102,6 +103,8 @@ limitations under the License.
                         </a>
                         <a class="tag is-delete is-rounded" v-on:click="removeChip(index)"></a>
 =======
+=======
+>>>>>>> upstream/master
             <!-- Time range filters -->
             <div class="field is-grouped is-grouped-multiline">
               <span v-for="(chip, index) in timeChips" :key="index + chip.value">
@@ -118,6 +121,9 @@ limitations under the License.
                           <span class="fas fa-edit" style="margin-left:7px;"></span>
                           <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
                         </span>
+<<<<<<< HEAD
+>>>>>>> upstream/master
+=======
 >>>>>>> upstream/master
                       </div>
                     </span>
@@ -615,6 +621,7 @@ export default {
       }
       chip.active = !chip.active
       this.search()
+<<<<<<< HEAD
     },
     chipColor: function (chip) {
       return chip.active ? 'is-link' : ''
@@ -622,6 +629,8 @@ export default {
     toggleChip: function (chip) {
       chip.active = !chip.active
       this.search()
+=======
+>>>>>>> upstream/master
     },
     removeChip: function (chipIndex) {
       let chip = this.currentQueryFilter.chips[chipIndex]
@@ -808,8 +817,14 @@ export default {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 .has-no-underline {
   Text-Decoration: None !important;
+=======
+.chip-disabled {
+  text-decoration: line-through;
+  opacity: 0.5;
+>>>>>>> upstream/master
 =======
 .chip-disabled {
   text-decoration: line-through;
