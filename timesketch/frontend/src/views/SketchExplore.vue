@@ -85,26 +85,6 @@ limitations under the License.
               </p>
             </div>
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-            <div class="field is-grouped is-grouped-multiline">
-              <span v-for="(chip, index) in currentQueryFilter.chips" :key="index + chip.value">
-                <span v-if="chip.type === 'datetime_range'" class="control">
-                  <b-dropdown trap-focus aria-role="menu" ref="TimeFilters">
-                    <span slot="trigger" role="button" class="is-small is-outlined">
-                      <div class="tags has-addons" style="margin-bottom: 5px; margin-right:7px;">
-                        <a :class="'tag is-rounded has-no-underline ' + chipColor(chip)">
-                          <a @click.stop="toggleChip(chip, index)">
-                            <a class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></a>
-                            <a>{{ chip.value.split(',')[0] }}</a>
-                            <a v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</a>
-                          </a>
-                          <a class="fas fa-edit" style="margin-left:7px;"></a>
-                        </a>
-                        <a class="tag is-delete is-rounded" v-on:click="removeChip(index)"></a>
-=======
-=======
->>>>>>> upstream/master
             <!-- Time range filters -->
             <div class="field is-grouped is-grouped-multiline">
               <span v-for="(chip, index) in timeChips" :key="index + chip.value">
@@ -121,10 +101,6 @@ limitations under the License.
                           <span class="fas fa-edit" style="margin-left:7px;"></span>
                           <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(index)"></button>
                         </span>
-<<<<<<< HEAD
->>>>>>> upstream/master
-=======
->>>>>>> upstream/master
                       </div>
                     </span>
                     <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
@@ -621,16 +597,6 @@ export default {
       }
       chip.active = !chip.active
       this.search()
-<<<<<<< HEAD
-    },
-    chipColor: function (chip) {
-      return chip.active ? 'is-link' : ''
-    },
-    toggleChip: function (chip) {
-      chip.active = !chip.active
-      this.search()
-=======
->>>>>>> upstream/master
     },
     removeChip: function (chipIndex) {
       let chip = this.currentQueryFilter.chips[chipIndex]
@@ -816,20 +782,9 @@ export default {
   min-height: 330px;
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-.has-no-underline {
-  Text-Decoration: None !important;
-=======
 .chip-disabled {
   text-decoration: line-through;
   opacity: 0.5;
->>>>>>> upstream/master
-=======
-.chip-disabled {
-  text-decoration: line-through;
-  opacity: 0.5;
->>>>>>> upstream/master
 }
 
 </style>
