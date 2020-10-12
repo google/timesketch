@@ -216,6 +216,8 @@ class EventAnnotationForm(BaseForm):
     annotation = StringField('Annotation', validators=[DataRequired()])
     annotation_type = StringField('Type', validators=[DataRequired()])
     events = StringField('Events', validators=[DataRequired()])
+    remove = BooleanField(
+        'Remove', false_values={False, 'false', ''}, default=False)
 
 
 class StoryForm(BaseForm):
