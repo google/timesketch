@@ -194,6 +194,15 @@ class MockDataStore(object):
         """
         return self.event_dict
 
+    @staticmethod
+    def get_filter_labels(sketch_id, indices):
+        """Mock returning a single event from the datastore.
+
+        Returns:
+            A list with label.
+        """
+        return []
+
     def set_label(self,
                   searchindex_id,
                   event_id,

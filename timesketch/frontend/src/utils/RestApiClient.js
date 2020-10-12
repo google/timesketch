@@ -137,11 +137,12 @@ export default {
     }
     return RestApiClient.get('/sketches/' + sketchId + '/event/', params)
   },
-  saveEventAnnotation (sketchId, annotationType, annotation, events) {
+  saveEventAnnotation (sketchId, annotationType, annotation, events, remove=false) {
     let formData = {
       annotation: annotation,
       annotation_type: annotationType,
       events: events,
+      remove: remove
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/annotate/', formData)
   },
@@ -166,6 +167,9 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + /stories/ + storyId + '/', formData)
   },
+  deleteStory (sketchId, storyId) {
+  	return RestApiClient.delete('/sketches/' + sketchId + /stories/ + storyId + '/')
+  },
   // Saved views
   getView (sketchId, viewId) {
     return RestApiClient.get('/sketches/' + sketchId + '/views/' + viewId + '/')
@@ -178,6 +182,13 @@ export default {
       dsl: ''
     }
     return RestApiClient.post('/sketches/' + sketchId + /views/, formData)
+  },
+  updateView (sketchId, viewId, queryString, queryFilter) {
+    let formData = {
+      query: queryString,
+      filter: queryFilter,
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /views/ + viewId + '/', formData)
   },
   deleteView (sketchId, viewId) {
     return RestApiClient.delete('/sketches/' + sketchId + '/views/' + viewId + '/')

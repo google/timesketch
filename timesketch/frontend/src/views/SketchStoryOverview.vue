@@ -56,7 +56,7 @@ limitations under the License.
                 <span>Create a new story</span>
               </a>
             </div>
-            <ts-story-list></ts-story-list>
+            <ts-story-list :controls="true"></ts-story-list>
           </div>
         </div>
       </div>

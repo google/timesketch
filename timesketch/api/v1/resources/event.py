@@ -610,6 +610,8 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                 toggle = False
                 if '__ts_star' or '__ts_hidden' in form.annotation.data:
                     toggle = True
+                if form.remove.data:
+                    toggle = True
                 self.datastore.set_label(
                     searchindex_id,
                     event_id,

@@ -25,6 +25,32 @@ import Multiselect from 'vue-multiselect'
 import router from './router'
 import store from './store'
 
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import {
+  faChevronUp,
+  faChevronDown,
+  faSave,
+  faUserEdit,
+  faAngleLeft,
+  faAngleRight,
+  faArrowUp,
+  faArrowDown,
+  faTag
+} from '@fortawesome/free-solid-svg-icons'
+library.add(
+  faChevronUp,
+  faChevronDown,
+  faSave,
+  faUserEdit,
+  faAngleLeft,
+  faAngleRight,
+  faArrowUp,
+  faArrowDown,
+  faTag
+)
+Vue.component('font-awesome-icon', FontAwesomeIcon)
+
 require('./assets/main.scss')
 require('./utils/RegisterAppComponents')
 require('./utils/RegisterAppFilters')
@@ -36,9 +62,15 @@ const EventBus = new Vue();
 export default EventBus;
 
 Vue.use(require('vue-moment'))
-Vue.use(Buefy)
+
+Vue.use(Buefy, {
+  defaultIconComponent: 'font-awesome-icon',
+  defaultIconPack: 'fas',
+});
+
 Vue.use(VueScrollTo)
 Vue.component('multiselect', Multiselect)
+
 
 // Disable warning during development
 Vue.config.productionTip = false

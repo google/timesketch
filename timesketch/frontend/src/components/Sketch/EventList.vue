@@ -35,6 +35,7 @@ limitations under the License.
                                       :display-controls="true"
                                       v-bind:id="event._id"
                                       @addChip="$emit('addChip', $event)"
+                                      @addLabel="$emit('addLabel', $event)"
                                       @searchContext="$emit('searchContext', $event)">
     </ts-sketch-explore-event-list-row>
   </table>

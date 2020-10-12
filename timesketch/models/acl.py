@@ -174,6 +174,21 @@ class AccessControlMixin(object):
         return ace
 
     @property
+    def my_permissions(self):
+        """Return a string with the permissions of the current user."""
+        has_permissions = []
+
+        permissions = ['read', 'write', 'delete']
+        for permission in permissions:
+            if self.has_permission(user=current_user, permission=permission):
+                has_permissions.append(permission)
+
+        if current_user.admin:
+            has_permissions.append('admin')
+
+        return json.dumps(has_permissions)
+
+    @property
     def all_permissions(self):
         """Return a string with all object permissions."""
         return json.dumps(self.get_all_permissions())

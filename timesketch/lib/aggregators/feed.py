@@ -62,7 +62,7 @@ class ManualFeedAggregation(interface.BaseAggregator):
 
     # pylint: disable=arguments-differ
     def run(
-            self, data, title='', supported_charts='tables', field=None,
+            self, data, title='', supported_charts='table', field=None,
             order_field='count'):
         """Run the aggregation.
 

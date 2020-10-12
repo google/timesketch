@@ -15,20 +15,19 @@ limitations under the License.
 -->
 <template>
     <tbody>
-
       <!-- Time bubbles -->
       <tr v-if="deltaDays > 0">
         <td colspan="5" style="padding: 0">
-          <div class="ts-time-bubble-vertical-line"></div>
-          <div class="ts-time-bubble">
-            <h5><b>{{ deltaDays }}</b><br>days</h5>
+          <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
+          <div class="ts-time-bubble ts-time-bubble-color">
+            <h5><b>{{ deltaDays | compactNumber }}</b><br>days</h5>
           </div>
-          <div class="ts-time-bubble-vertical-line"></div>
+          <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
         </td>
       </tr>
 
       <!-- The event -->
-      <tr class="ts-shadow-on-hover">
+      <tr>
 
         <!-- Timeline color (set the color for the timeline) -->
         <td v-bind:style="timelineColor">
@@ -45,8 +44,62 @@ limitations under the License.
               <i class="fas fa-star" v-if="isStarred" style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"></i>
               <i class="fas fa-star" v-if="!isStarred" style="color: #d3d3d3;"></i>
             </span>
-            <span v-if="displayControls" class="icon control" style="cursor: pointer;" v-on:click="searchContext">
+            <span v-if="displayControls" class="icon control" style="margin-right: 3px; cursor: pointer;" v-on:click="searchContext">
               <i class="fas fa-search" style="color: #d3d3d3;"></i>
+            </span>
+            <span class="icon control">
+                <b-dropdown ref="labelDropdown" aria-role="list">
+                  <i class="fas fa-tag" style="color: #d3d3d3;" slot="trigger"></i>
+                  <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
+                    <section class="modal-card-body">
+                      <b-dropdown-item custom :focusable="false">
+                        <span v-if="filteredLabelsToAdd.length">
+                          <b>Label as:</b>
+                          <br><br>
+                          <div class="level" style="margin-bottom: 5px;" v-for="(label) in filteredLabelsToAdd" :key="label">
+                            <div class="level-left">
+                              <div class="field">
+                                <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label">
+                                  {{ label }}
+                                </b-checkbox>
+                              </div>
+                            </div>
+                          </div>
+                          <hr>
+                        </span>
+
+                        <span v-if="event._source.label.length">
+                          <i class="fas fa-trash" style="margin-right: 7px;"></i>
+                          <b>Remove:</b>
+                          <br><br>
+                          <div class="level" style="margin-bottom: 5px;" v-for="(label) in event._source.label" :key="label">
+                            <div class="level-left">
+                              <div class="field">
+                                <b-checkbox type="is-danger" v-model="labelsToRemove" :native-value="label">
+                                  {{ label }}
+                                </b-checkbox>
+                              </div>
+                            </div>
+                          </div>
+                          <hr>
+                        </span>
+                        <div class="field is-grouped">
+                          <p class="control is-expanded">
+                            <input class="input" v-model="labelToAdd" placeholder="Create new"></input>
+                          </p>
+                          <p class="control">
+                            <button v-on:click="addLabels(labelToAdd)" class="button">Save</button>
+                          </p>
+                        </div>
+                      </b-dropdown-item>
+                    </section>
+                    <section class="modal-card-foot">
+                      <b-dropdown-item>
+                        <button v-if="selectedLabels.length || labelsToRemove.length" class="button is-info" v-on:click="addLabels()" :disabled="labelToAdd !== null && labelToAdd !== ''">Apply</button>
+                      </b-dropdown-item>
+                    </section>
+                  </div>
+                </b-dropdown>
             </span>
           </div>
         </td>
@@ -58,7 +111,8 @@ limitations under the License.
               <span v-if="index === 0">
                 <span v-if="displayOptions.showEmojis" v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji" :title="meta.emojis[emoji]">{{ emoji }}</span>
                 <span style="margin-left:10px;"></span>
-                <span v-if="displayOptions.showTags" v-for="tag in event._source.tag" :key="tag" class="tag is-rounded" style="margin-right:5px;background:#d1d1d1;">{{ tag }}</span>
+                <span v-if="displayOptions.showTags" v-for="tag in event._source.tag" :key="tag" class="tag is-small is-light" style="margin-right:5px; border:1px solid #d1d1d1;">{{ tag }}</span>
+                <span v-if="displayOptions.showTags" v-for="label in filteredLabels" :key="label" class="tag is-small is-light" style="margin-right:5px; border:1px solid #d1d1d1;">{{ label }}</span>
               </span>
               <span style="word-break: break-word;" :title="event._source[field.field]">
                 {{ event._source[field.field] }}
@@ -68,7 +122,7 @@ limitations under the License.
         </td>
 
         <!-- Timeline name -->
-        <td class="ts-timeline-name-column">
+        <td class="ts-timeline-name-column ts-timeline-name-column-color">
           <span :title="timelineName">
             {{ timelineName }}
           </span>
@@ -81,13 +135,10 @@ limitations under the License.
         <td colspan="5">
           <div style="max-width: 600px; border:1px solid #f5f5f5; border-radius: 4px; padding:10px; margin-bottom: 20px;">
             <article  class="media" v-for="comment in comments" :key="comment.created_at">
-              <figure class="media-left">
-                <div class="ts-avatar-circle"></div>
-              </figure>
               <div class="media-content">
                 <div class="content">
                   <p>
-                    <strong>{{ comment.user.username }}</strong> <small style="margin-left: 10px;">{{ comment.created_at | moment("ll") }}</small>
+                    {{ comment.user.username }} <small style="margin-left: 10px;">{{ comment.created_at | moment("ll") }}</small>
                     <br>
                     {{ comment.comment }}
                   </p>
@@ -124,6 +175,7 @@ limitations under the License.
   import ApiClient from '../../utils/RestApiClient'
   import TsSketchExploreEventListRowDetail from './EventListRowDetail'
   import EventBus from "../../main"
+  import { ToastProgrammatic as Toast } from 'buefy'
 
   export default {
   components: {
@@ -135,8 +187,12 @@ limitations under the License.
       showDetail: false,
       isStarred: false,
       isSelected: false,
+      isDarkTheme: false,
       comment: '',
-      comments: []
+      comments: [],
+      labelToAdd: null,
+      selectedLabels: [],
+      labelsToRemove: []
     }
   },
   computed: {
@@ -147,24 +203,49 @@ limitations under the License.
       return this.$store.state.meta
     },
     timelineColor () {
-      let hexColor = this.timeline(this.event._index).color
-      if (!hexColor.startsWith('#')) {
-        hexColor = '#' + hexColor
+      let backgroundColor = this.timeline(this.event._index).color
+      if (!backgroundColor.startsWith('#')) {
+        backgroundColor = '#' + backgroundColor
+      }
+      if (this.isDarkTheme) {
+        return {
+          'background-color': backgroundColor,
+          'filter': 'grayscale(25%)',
+          'color': '#333'
+        }
       }
       return {
-        'background-color': hexColor
+        'background-color': backgroundColor
       }
     },
     fieldColumnColor () {
-      let hexColor = '#f5f5f5'
-      if (this.isStarred) {
-        hexColor = '#fff4b3'
+      let backgroundColor = '#f5f5f5'
+      let fontColor = '#333'
+
+      if (this.isDarkTheme) {
+        backgroundColor = '#494949'
+        fontColor = '#fafafa'
       }
+
+      if (this.isStarred) {
+        backgroundColor = '#fff4b3'
+        fontColor = '#333'
+      }
+
       if (this.isSelected) {
-        hexColor = '#c3ecff'
+        backgroundColor = '#c3ecff'
+        fontColor = '#333'
+      }
+
+      if (this.isDarkTheme) {
+        return {
+          'background-color': backgroundColor,
+          'color': fontColor,
+        }
       }
       return {
-        'background-color': hexColor
+        'background-color': backgroundColor,
+        'color': fontColor,
       }
     },
     datetimeFormat () {
@@ -199,6 +280,15 @@ limitations under the License.
       eventData['_type'] = this.event._type
       eventData['isSelected'] = this.isSelected
       return eventData
+    },
+    filteredLabels () {
+      return this.event._source.label.filter(label => !label.startsWith('__'))
+    },
+    filteredLabelsToAdd () {
+      return this.meta.filter_labels.filter(label => this.event._source.label.indexOf(label) === -1)
+    },
+    filteredLabelsToRemove () {
+      return this.meta.filter_labels.filter(label => this.event._source.label.indexOf(label) !== -1)
     }
   },
   methods: {
@@ -225,6 +315,39 @@ limitations under the License.
         this.comment = ''
       }).catch((e) => {})
     },
+    addLabels: function (labels) {
+      if (labels === undefined) {
+        labels = this.selectedLabels
+      }
+      if (!Array.isArray(labels)) {
+        labels = [labels]
+      }
+
+      labels.forEach((label) => {
+        if (this.event._source.label.indexOf(label) === -1) {
+          this.event._source.label.push(label)
+          ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event]).then((response) => {
+            this.$emit('addLabel', label)
+          }).catch((e) => {
+            Toast.open('Error adding label')
+            this.event._source.label = this.event._source.label.filter(e => e !== label)
+          })
+        }
+      })
+
+      if (this.labelsToRemove.length) {
+        this.labelsToRemove.forEach((label) => {
+          ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event], true).then((response) => {
+          }).catch((e) => {})
+          this.event._source.label = this.event._source.label.filter(e => e !== label)
+        })
+        this.labelsToRemove = []
+      }
+
+      this.selectedLabels = []
+      this.labelToAdd = null
+      this.$refs.labelDropdown.toggle()
+    },
     searchContext: function () {
       this.$emit('searchContext', this.event)
     },
@@ -242,6 +365,9 @@ limitations under the License.
       } else {
         this.selectEvent()
       }
+    },
+    toggleTheme: function () {
+      this.isDarkTheme =! this.isDarkTheme
     }
   },
   beforeDestroy () {
@@ -253,6 +379,9 @@ limitations under the License.
     EventBus.$on('selectEvent', this.selectEvent)
     EventBus.$on('clearSelectedEvents', this.unSelectEvent)
     EventBus.$on('toggleStar', this.toggleStarOnSelect)
+    EventBus.$on('isDarkTheme', this.toggleTheme)
+
+    this.isDarkTheme = localStorage.theme === 'dark';
 
     if (this.event._source.label.indexOf('__ts_star') > -1) {
         this.isStarred = true
@@ -303,10 +432,8 @@ limitations under the License.
 }
 
 .ts-timeline-name-column {
-  background: #f1f1f1;
   font-size: 0.8em;
   font-weight: bold;
-  color: #999999;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -318,7 +445,6 @@ limitations under the License.
 .ts-time-bubble {
   width: 60px;
   height: 60px;
-  background: #f5f5f5;
   border-radius: 30px;
   position: relative;
   margin: 0 0 0 45px;
@@ -331,28 +457,17 @@ limitations under the License.
   left: 50%;
   transform: translate(-50%, -50%);
   margin: 0;
-  color: #666;
 }
 
 .ts-time-bubble-vertical-line {
   width: 2px;
   height: 20px;
-  background: #f5f5f5;
   margin: 0 0 0 75px;
 }
 
 .ts-shadow-on-hover:hover {
   opacity:0.999999;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.24);
-}
-
-.ts-avatar-circle {
-  width: 48px;
-  height: 48px;
-  background-color: #f5f5f5;
-  border-radius: 50%;
-  -webkit-border-radius: 50%;
-  -moz-border-radius: 50%;
 }
 
 </style>
