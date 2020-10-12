@@ -317,8 +317,8 @@ class Sketch(resource.BaseResource):
             query_filter = {
                 'time_start': None,
                 'time_end': None,
-                'size': self.DEFAULT_SIZE_LIMIT,
-                'terminate_after': self.DEFAULT_SIZE_LIMIT,
+                'size': 100,
+                'terminate_after': 100,
                 'indices': '_all',
                 'order': 'asc'
             }
