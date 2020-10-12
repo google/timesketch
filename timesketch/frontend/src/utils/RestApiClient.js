@@ -137,11 +137,12 @@ export default {
     }
     return RestApiClient.get('/sketches/' + sketchId + '/event/', params)
   },
-  saveEventAnnotation (sketchId, annotationType, annotation, events) {
+  saveEventAnnotation (sketchId, annotationType, annotation, events, remove=false) {
     let formData = {
       annotation: annotation,
       annotation_type: annotationType,
       events: events,
+      remove: remove
     }
     return RestApiClient.post('/sketches/' + sketchId + '/event/annotate/', formData)
   },
