@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div class="card" style="margin-top:15px;">
-    <header class="card-header" style="background-color: #eaeaea;">
+  <div class="card card-accent-background" style="margin-top:15px;">
+    <header class="card-header">
       <p class="card-header-title">
         {{ messageTitle }}
       </p>
@@ -23,7 +23,7 @@ limitations under the License.
         <span class="delete" v-on:click="$emit('closeDetail')"></span>
       </span>
     </header>
-    <div class="card-content" style="background-color: #f7f7f7;">
+    <div class="card-content">
       <table class="table is-fullwidth">
         <colgroup>
           <col span="1" style="width: 5%;">

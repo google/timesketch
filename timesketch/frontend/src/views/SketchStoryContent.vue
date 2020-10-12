@@ -27,7 +27,7 @@ limitations under the License.
         <div class="card">
           <div class="card-content" style="padding:50px;">
 
-            <div class="markdown-body" style="margin-bottom:20px;padding-left:10px">
+            <div class="markdown-body ts-markdown-body-color" style="margin-bottom:20px;padding-left:10px">
               <h1>{{ title }}</h1>
             </div>
 
@@ -45,7 +45,7 @@ limitations under the License.
                   </div>
                   <transition name="fade">
                     <div class="column" v-if="obj.content">
-                      <div v-html="toHtml(obj.content)" class="markdown-body" style="max-height: 600px;overflow: auto"></div>
+                      <div v-html="toHtml(obj.content)" class="markdown-body" style="max-height: 600px;overflow: auto;"></div>
                     </div>
                   </transition>
                 </div>
@@ -89,7 +89,7 @@ limitations under the License.
                       </button>
                     </p>
                     <p class="control" v-if="meta.views.length">
-                      <ts-view-list-dropdown @setActiveView="addViewComponent($event, index)" :is-rounded="true" :title="'+ Saved view'"></ts-view-list-dropdown>
+                      <ts-view-list-dropdown @setActiveView="addViewComponent($event, index)" :is-simple="true" :title="'+ Saved search'"></ts-view-list-dropdown>
                     </p>
                     <p class="control" v-if="allAggregations">
                       <ts-aggregation-list-dropdown @addAggregation="addAggregationComponent($event, index)" :is-rounded="true" :title="'+ Aggregation'" :aggregations="allAggregations" ></ts-aggregation-list-dropdown>
@@ -258,12 +258,12 @@ export default {
 .markdown-body {
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
-  color: #24292e;
   line-height: 1.5;
   font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol;
   font-size: 16px;
   line-height: 1.5;
   word-wrap: break-word;
+  max-width: 75ch;
 }
 
 .markdown-body details {
