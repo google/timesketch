@@ -170,6 +170,7 @@ class ResourceMixin(object):
         'label_string': fields.String,
         'status': fields.Nested(status_fields),
         'all_permissions': fields.String,
+        'my_permissions': fields.String,
         'created_at': fields.DateTime,
         'updated_at': fields.DateTime
     }
