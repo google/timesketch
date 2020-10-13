@@ -465,7 +465,7 @@ class ElasticsearchDataStore(object):
         result = self.client.search(index=indices, body=aggregation, size=0)
         buckets = result.get(
             'aggregations', {}).get('nested', {}).get('inner', {}).get(
-            'labels', {}).get('buckets', [])
+                'labels', {}).get('buckets', [])
         for bucket in buckets:
             # Filter out special labels like __ts_star etc.
             if bucket['key'].startswith('__'):
