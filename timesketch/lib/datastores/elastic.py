@@ -429,7 +429,7 @@ class ElasticsearchDataStore(object):
         max_labels = 10000
 
         # pylint: disable=line-too-long
-        label_aggregation = {
+        aggregation = {
             'aggs': {
                 'nested': {
                     'nested': {
@@ -462,9 +462,10 @@ class ElasticsearchDataStore(object):
 
         labels = []
         # pylint: disable=unexpected-keyword-arg
-        result = self.client.search(
-            index=indices, body=label_aggregation, size=0)
-        buckets = result['aggregations']['nested']['inner']['labels']['buckets']
+        result = self.client.search(index=indices, body=aggregation, size=0)
+        buckets = result.get(
+            'aggregations', {}).get('nested', {}).get('inner', {}).get(
+            'labels', {}).get('buckets', [])
         for bucket in buckets:
             # Filter out special labels like __ts_star etc.
             if bucket['key'].startswith('__'):
