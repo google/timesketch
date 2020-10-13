@@ -287,6 +287,10 @@ class ConfigAssistant:
         for name, value in timesketch_config.items():
             self.set_config(name, value)
 
+        if 'cli' not in config.sections():
+            logger.warning('No timesketch section in the config')
+            return
+
         cli_config = config['cli']
         for name, value in cli_config.items():
             self.set_config(name, value)

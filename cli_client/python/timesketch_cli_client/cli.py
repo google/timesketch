@@ -75,8 +75,8 @@ class TimesketchCli(object):
 
 @click.group(context_settings={'help_option_names': ['-h', '--help']})
 @click.version_option(version='0.0.1')
-@click.option('--sketch', type=int, default=None,
-              help='Specify which sketch to work in.')
+@click.option(
+    '--sketch', type=int, default=None, help='Specify which sketch to work in.')
 @click.pass_context
 def cli(ctx, sketch):
     """

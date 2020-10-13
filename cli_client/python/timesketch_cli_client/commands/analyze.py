@@ -40,7 +40,7 @@ def run_analyzer(sketch, analyzer, timelines):
 
 @click.group('analyze')
 def analysis_group():
-    """Analyze timelines."""
+    """Analyze your timelines."""
     pass
 
 
@@ -53,7 +53,7 @@ def analysis_group():
     help='The id of the timeline you want to analyze.')
 @click.pass_context
 def run(ctx, analyzer_name, timeline_id):
-    """Run analyzer on one or more timelines."""
+    """Run an analyzer on one or more timelines."""
     sketch = ctx.obj.sketch
     timelines = []
     if timeline_id == 'all':

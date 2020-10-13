@@ -21,13 +21,13 @@ from timesketch_cli_client.definitions import SUPPORTED_OUTPUT_FORMATS
 
 @click.group('config')
 def config_group():
-    """Configure the tool."""
+    """Configuration for this CLI tool."""
     pass
 
 
 @config_group.group('set')
 def set_group():
-    """Set config parameters."""
+    """Set configuration parameters."""
     pass
 
 
@@ -40,7 +40,7 @@ def set_sketch(ctx, sketch_id):
     ctx.obj.config_assistant.save_config()
 
 
-@set_group.command('output-format')
+@set_group.command('output')
 @click.argument('output_format')
 @click.pass_context
 def set_output_format(ctx, output_format):

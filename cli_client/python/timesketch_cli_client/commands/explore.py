@@ -19,6 +19,11 @@ import json
 
 
 def _create_empty_chip():
+    """Default empty chip.
+
+    Returns:
+        A dict with default values.
+    """
     return {
         'field': '',
         'value': '',
@@ -27,9 +32,18 @@ def _create_empty_chip():
     }
 
 
-def get_filter_chip(values, type):
+def get_filter_chips(values, chip_type):
+    """Create filter chips.
+
+    Args:
+        values: One or more filter values.
+        chip_type: The type of chip (one of: label, datetime_range)
+
+    Returns:
+        List of filter chips.
+    """
     chips = []
-    if type == 'label':
+    if chip_type == 'label':
         for label in values:
             if label in ['star', 'comment']:
                 label = '__ts_{}'.format(label)
@@ -37,7 +51,7 @@ def get_filter_chip(values, type):
             chip['value'] = label
             chip['type'] = 'label'
             chips.append(chip)
-    elif type == 'datetime_range':
+    elif chip_type == 'datetime_range':
         for time_range in values:
             if isinstance(time_range, str):
                 time_range = (time_range, time_range)
@@ -49,6 +63,17 @@ def get_filter_chip(values, type):
 
 
 def search(sketch, query_string, query_filter, return_fields):
+    """Send the search request to the server.
+
+    Args:
+        sketch: The sketch object.
+        query_string: Elasticsearch query string.
+        query_filter: Elasticsearch query filter dict.
+        return_fields: List of fields to return in the server response.
+
+    Returns:
+        Pandas DataFrame with search results.
+    """
     dataframe = sketch.explore(
         query_string=query_string, query_filter=query_filter,
         return_fields=return_fields, as_pandas=True)
@@ -56,6 +81,16 @@ def search(sketch, query_string, query_filter, return_fields):
 
 
 def format_output(dataframe, output_format, show_headers):
+    """Format search result output.
+
+    Args:
+        dataframe: Pandas DataFrame with search results.
+        output_format: The format to use.
+        show_headers: Boolean indicating if header row should be displayed.
+
+    Returns:
+        Search results in the requested output format.
+    """
     result = None
 
     if output_format == 'text':
@@ -73,6 +108,12 @@ def format_output(dataframe, output_format, show_headers):
 
 
 def describe_query(query_string, query_filter):
+    """Print details of a search query nd filter.
+
+    Args:
+        query_string: Elasticsearch query string.
+        query_filter: Elasticsearch query filter dict.
+    """
     click.echo('Query string: {}'.format(query_string))
     click.echo('Filter: {}'.format(json.dumps(query_filter, indent=2)))
 
@@ -80,43 +121,43 @@ def describe_query(query_string, query_filter):
 @click.command('explore')
 @click.option(
     '--query', '-q', default='*',
-    help='Search query in Elasticsearch query string format.')
+    help='Search query in Elasticsearch query string format')
 @click.option(
     '--time', 'times', multiple=True,
-    help='Datetime filter (e.g. 2020-01-01T12:00).')
+    help='Datetime filter (e.g. 2020-01-01T12:00)')
 @click.option(
     '--time-range', 'time_ranges', multiple=True, nargs=2,
-    help='Datetime range filter (e.g: 2020-01-01 2020-02-01).')
+    help='Datetime range filter (e.g: 2020-01-01 2020-02-01)')
 @click.option(
     '--label', 'labels', multiple=True,
-    help='Filter events with label.')
+    help='Filter events with label')
 @click.option(
     '--header/--no-header', default=True,
-    help='Toggle header information (default is to show).')
+    help='Toggle header information (default is to show)')
 @click.option(
-    '--output-format', 'format_',
-    help='Set output format (overrides global setting).')
+    '--output', 'output',
+    help='Set output format (overrides global setting)')
 @click.option(
     '--return-fields', 'return_fields', default='',
-    help='What event fields to show.')
+    help='What event fields to show')
 @click.option(
     '--order', default='asc',
-    help='Order the output (asc/desc) based on the time field.')
+    help='Order the output (asc/desc) based on the time field')
 @click.option(
     '--limit', type=int, default=40,
-    help='Limit amount of events to show (default: 40).')
-@click.option('--view', help='Query and filter from saved view.')
+    help='Limit amount of events to show (default: 40)')
+@click.option('--view', help='Query and filter from saved view')
 @click.option(
     '--describe', is_flag=True, default=False,
-    help='Show the query and filter then exit.')
+    help='Show the query and filter then exit')
 @click.pass_context
-def explore_group(ctx, query, times, time_ranges, labels, header, format_,
+def explore_group(ctx, query, times, time_ranges, labels, header, output,
                   return_fields, order, limit, view, describe):
     """Search and explore."""
     sketch = ctx.obj.sketch
     output_format = ctx.obj.output_format
-    if format_:
-        output_format = format_
+    if output:
+        output_format = output
 
     new_line = True
     if output_format == 'csv':
@@ -143,15 +184,15 @@ def explore_group(ctx, query, times, time_ranges, labels, header, format_,
         return
 
     if time_ranges:
-        chips = get_filter_chip(time_ranges, type='datetime_range')
+        chips = get_filter_chips(time_ranges, chip_type='datetime_range')
         query_filter['chips'].extend(chips)
 
     if times:
-        chips = get_filter_chip(times, type='datetime_range')
+        chips = get_filter_chips(times, chip_type='datetime_range')
         query_filter['chips'].extend(chips)
 
     if labels:
-        chips = get_filter_chip(labels, type='label')
+        chips = get_filter_chips(labels, chip_type='label')
         query_filter['chips'].extend(chips)
 
     if describe:
