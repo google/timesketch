@@ -152,7 +152,11 @@ This will return back a pandas DataFrame with the search results.
 
 Another example search query:
 ```
-data = sketch.explore('192.168.0.1 AND NOT timestamp_desc:foobar', as_pandas=True,return_fields='datetime,message,timestamp_desc')
+data = sketch.explore(
+       '192.168.0.1 AND NOT timestamp_desc:foobar',
+       as_pandas=True,
+       return_fields='datetime,message,timestamp_desc'
+)
 ```
 
 This will return back a pandas DataFrame with the search results limited to the columns.
