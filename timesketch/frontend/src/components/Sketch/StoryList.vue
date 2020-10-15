@@ -21,7 +21,12 @@ limitations under the License.
           <router-link :to="{ name: 'SketchStoryContent', params: {sketchId: sketch.id, storyId: story.id}}"><strong>{{ story.title }}</strong></router-link>
           <div class="field is-grouped is-pulled-right" style="margin-top:10px;">
             <p class="control">
-              <button v-on:click="remove(story)" class="button is-small is-rounded is-danger is-outlined">Remove</button>
+              <button v-if="controls" v-on:click="remove(story)" class="button is-small is-rounded is-danger">
+                <span class="icon is-small">
+                  <i class="fas fa-trash"></i>
+                </span>
+                <span>Remove</span>
+              </button>
             </p>
           </div>
           <br>
@@ -36,6 +41,7 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
+  props: ['controls'],
   data () {
     return {
       stories: []

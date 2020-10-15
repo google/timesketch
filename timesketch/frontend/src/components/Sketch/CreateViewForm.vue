@@ -23,7 +23,7 @@ limitations under the License.
     </div>
     <div class="field">
       <div class="control">
-        <input class="button is-success" type="submit" value="Save" v-on:click="toggleCreateViewModal">
+        <input class="button is-success" type="submit" value="Save">
       </div>
     </div>
   </form>
@@ -50,13 +50,11 @@ export default {
     submitForm: function () {
       ApiClient.createView(this.sketchId, this.viewName, this.currentQueryString, this.currentQueryFilter).then((response) => {
         let newView = response.data.objects[0]
+        this.$emit('setActiveView', newView)
         this.$store.state.meta.views.push(newView)
         this.clearFormData()
         this.$router.push({ name: 'SketchExplore', query: { view: newView.id } })
       }).catch((e) => {})
-    },
-    toggleCreateViewModal: function () {
-      this.$emit('toggleCreateViewModal')
     }
   }
 }
