@@ -25,7 +25,11 @@ def timelines_group():
 @timelines_group.command('list')
 @click.pass_context
 def list_timelines(ctx):
-    """List all timelines in the sketch."""
+    """List all timelines in the sketch.
+
+    Args:
+        ctx: Click CLI context object.
+    """
     sketch = ctx.obj.sketch
     for timeline in sketch.list_timelines():
         click.echo('{} {}'.format(timeline.id, timeline.name))
@@ -34,8 +38,13 @@ def list_timelines(ctx):
 @timelines_group.command('describe')
 @click.argument('timeline_id', type=int, required=False)
 @click.pass_context
-def describe(ctx, timeline_id):
-    """Show details for a timeline."""
+def describe_timeline(ctx, timeline_id):
+    """Show details for a timeline.
+
+    Args:
+        ctx: Click CLI context object.
+        timeline_id: Timeline ID from argument.
+    """
     sketch = ctx.obj.sketch
     timeline = sketch.get_timeline(timeline_id=timeline_id)
     if not timeline:

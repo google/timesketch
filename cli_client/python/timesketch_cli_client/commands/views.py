@@ -26,7 +26,11 @@ def views_group():
 @views_group.command('list')
 @click.pass_context
 def list_views(ctx):
-    """List saved views in the sketch."""
+    """List saved views in the sketch.
+
+    Args:
+        ctx: Click CLI context object.
+    """
     sketch = ctx.obj.sketch
     for view in sketch.list_views():
         click.echo('{} {}'.format(view.id, view.name))
@@ -35,8 +39,13 @@ def list_views(ctx):
 @views_group.command('describe')
 @click.argument('view_id', type=int, required=False)
 @click.pass_context
-def describe(ctx, view_id):
-    """Show details for a view."""
+def describe_view(ctx, view_id):
+    """Show details for a view.
+
+    Args:
+        ctx: Click CLI context object.
+        view_id: View ID from argument.
+    """
     sketch = ctx.obj.sketch
     view = sketch.get_view(view_id=view_id)
     if not view:

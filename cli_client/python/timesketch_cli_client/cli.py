@@ -31,7 +31,18 @@ from .definitions import DEFAULT_OUTPUT_FORMAT
 
 
 class TimesketchCli(object):
+    """Timesketch CLI state object.
+
+    Attributes:
+        sketch_from_flag: Sketch ID if provided by flag
+        config_assistant: Instance of ConfigAssistant
+    """
     def __init__(self, sketch_from_flag=None):
+        """Initialize the state object.
+
+        Args:
+            sketch_from_flag: Sketch ID if provided by flag.
+        """
         self.sketch_from_flag = sketch_from_flag
         try:
             self.api = timesketch_config.get_client()
@@ -44,7 +55,11 @@ class TimesketchCli(object):
 
     @property
     def sketch(self):
+        """Sketch object from the API client.
 
+        Returns:
+            Sketch object.
+        """
         active_sketch = None
         sketch_from_config = self.config_assistant.get_config('sketch')
 
@@ -65,18 +80,22 @@ class TimesketchCli(object):
 
     @property
     def output_format(self):
-        _output_format = self.config_assistant.get_config('output_format')
-        if not _output_format:
+        """Get or set the default output format.
+
+        Returns:
+            Output format as a string.
+        """
+        output_format = self.config_assistant.get_config('output_format')
+        if not output_format:
             self.config_assistant.set_config('output', DEFAULT_OUTPUT_FORMAT)
             self.config_assistant.save_config()
-            _output_format = DEFAULT_OUTPUT_FORMAT
-        return _output_format
+            output_format = DEFAULT_OUTPUT_FORMAT
+        return output_format
 
 
 @click.group(context_settings={'help_option_names': ['-h', '--help']})
 @click.version_option(version='0.0.1')
-@click.option(
-    '--sketch', type=int, default=None, help='Specify which sketch to work in.')
+@click.option('--sketch', type=int, default=None, help='Sketch to work in.')
 @click.pass_context
 def cli(ctx, sketch):
     """

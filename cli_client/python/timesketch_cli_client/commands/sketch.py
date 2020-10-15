@@ -25,7 +25,11 @@ def sketch_group():
 @sketch_group.command('list')
 @click.pass_context
 def list_sketches(ctx):
-    """List all sketches."""
+    """List all sketches.
+
+    Args:
+        ctx: Click CLI context object.
+    """
     api_client = ctx.obj.api
     for sketch in api_client.list_sketches():
         click.echo('{} {}'.format(sketch.id, sketch.name))
@@ -33,8 +37,12 @@ def list_sketches(ctx):
 
 @sketch_group.command('describe')
 @click.pass_context
-def describe(ctx):
-    """Show info about a sketch."""
+def describe_sketch(ctx):
+    """Show info about a sketch.
+
+    Args:
+        ctx: Click CLI context object.
+    """
     sketch = ctx.obj.sketch
     click.echo('Name: {}'.format(sketch.name))
     click.echo('Description: {}'.format(sketch.description))
@@ -48,7 +56,13 @@ def describe(ctx):
     help='Description of the sketch (optional)')
 @click.pass_context
 def create_sketch(ctx, name, description):
-    """Create a new sketch."""
+    """Create a new sketch.
+
+    Args:
+        ctx: Click CLI context object.
+        name: Name of the sketch to create.
+        description: Description of the sketch to create.
+    """
     api_client = ctx.obj.api
     if not description:
         description = name

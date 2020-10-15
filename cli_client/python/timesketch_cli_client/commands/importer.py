@@ -24,7 +24,13 @@ from timesketch_import_client import importer as import_client
 @click.argument('file_path', type=click.Path(exists=True))
 @click.pass_context
 def importer(ctx, name, file_path):
-    """Import timeline."""
+    """Import timeline.
+
+    Args:
+        ctx: Click CLI context object.
+        name: Name of the timeline to create.
+        file_path: File path to the file to import.
+    """
     sketch = ctx.obj.sketch
     if not name:
         name = click.format_filename(file_path, shorten=True)

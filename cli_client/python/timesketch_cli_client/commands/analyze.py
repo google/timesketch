@@ -20,24 +20,6 @@ import sys
 from timesketch_api_client import error
 
 
-def run_analyzer(sketch, analyzer, timelines):
-    for timeline in timelines:
-        click.echo('Running analyzer [{}] on timeline [{}]: '.format(
-            analyzer, timeline.name), nl=False)
-        try:
-            session = sketch.run_analyzer(
-                analyzer_name=analyzer, timeline_id=timeline.id)
-            while True:
-                status = session.status.split()[2]
-                # TODO: Do something with other statuses?
-                if status == 'DONE':
-                    click.echo(session.results)
-                    break
-                time.sleep(3)
-        except error.UnableToRunAnalyzer:
-            sys.exit(1)
-
-
 @click.group('analyze')
 def analysis_group():
     """Analyze your timelines."""
@@ -52,8 +34,14 @@ def analysis_group():
     '--timeline', 'timeline_id', required=True,
     help='The id of the timeline you want to analyze.')
 @click.pass_context
-def run(ctx, analyzer_name, timeline_id):
-    """Run an analyzer on one or more timelines."""
+def run_analyzer(ctx, analyzer_name, timeline_id):
+    """Run an analyzer on one or more timelines.
+
+   Args:
+       ctx: Click CLI context object.
+       analyzer_name: Name of the analyzer to run.
+       timeline_id: Timeline ID of the timeline to analyze.
+    """
     sketch = ctx.obj.sketch
     timelines = []
     if timeline_id == 'all':
@@ -62,13 +50,31 @@ def run(ctx, analyzer_name, timeline_id):
         timeline = sketch.get_timeline(timeline_id=int(timeline_id))
         timelines.append(timeline)
 
-    run_analyzer(sketch, analyzer_name, timelines)
+    for timeline in timelines:
+        click.echo('Running analyzer [{}] on timeline [{}]: '.format(
+            analyzer_name, timeline.name), nl=False)
+        try:
+            session = sketch.run_analyzer(
+                analyzer_name=analyzer_name, timeline_id=timeline.id)
+            while True:
+                status = session.status.split()[2]
+                # TODO: Do something with other statuses?
+                if status == 'DONE':
+                    click.echo(session.results)
+                    break
+                time.sleep(3)
+        except error.UnableToRunAnalyzer:
+            sys.exit(1)
 
 
 @analysis_group.command('list')
 @click.pass_context
 def list_analyzers(ctx):
-    """List all available analyzers."""
+    """List all available analyzers.
+
+    Args:
+        ctx: Click CLI context object.
+    """
     sketch = ctx.obj.sketch
     for analyzer in sketch.list_available_analyzers():
         click.echo(analyzer)
