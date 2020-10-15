@@ -947,6 +947,10 @@ class Sketch(resource.BaseResource):
             if stop_size and total_count >= stop_size:
                 break
 
+            if not scroll_id:
+                logger.debug('No scroll ID, will stop.')
+                break
+
             more_response = self.api.session.post(resource_url, json=form_data)
             if not error.check_return_status(more_response, logger):
                 error.error_message(
