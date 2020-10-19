@@ -1,0 +1,24 @@
+# Use the official Docker Hub Ubuntu 18.04 base image
+FROM ubuntu:18.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    python3-pip \
+    python3-wheel \
+    python3-setuptools \
+    python3-psycopg2 \
+    wget \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install Timesketch
+RUN wget https://raw.githubusercontent.com/google/timesketch/master/requirements.txt
+RUN pip3 install -r requirements.txt
+RUN pip3 install https://github.com/google/timesketch/archive/master.zip
+
+# Install Plaso
+RUN add-apt-repository -y ppa:gift/stable
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    plaso-tools \
+  && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /tmp/
