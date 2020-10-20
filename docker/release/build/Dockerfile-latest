@@ -22,8 +22,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # Copy the entrypoint script into the container
-COPY entrypoint.sh /
-RUN chmod a+x /entrypoint.sh
+COPY docker-entrypoint.sh /
+RUN chmod a+x /docker-entrypoint.sh
 
 # Load the entrypoint script to be run later
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/docker-entrypoint.sh"]

@@ -5,18 +5,18 @@ services:
     environment:
       - NUM_WSGI_WORKERS=${NUM_WSGI_WORKERS}
     restart: always
-    command: web
+    command: timesketch-web
     volumes:
-      - ../etc:/etc/timesketch/
+      - ../etc/timesketch:/etc/timesketch/
       - ../upload:/usr/share/timesketch/upload/
       - ../logs:/var/log/timesketch/
 
   timesketch-worker:
     image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:${TIMESKETCH_VERSION}
     restart: always
-    command: worker
+    command: timesketch-worker
     volumes:
-      - ../etc:/etc/timesketch/
+      - ../etc/timesketch:/etc/timesketch/
       - ../upload:/usr/share/timesketch/upload/
       - ../logs:/var/log/timesketch/
 
