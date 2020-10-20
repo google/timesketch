@@ -5,7 +5,7 @@ if [ "$1" = "web" ]; then
   NUM_WSGI_WORKERS="${NUM_WSGI_WORKERS:-4}"
   gunicorn --bind 0.0.0.0:5000 --log-file /var/log/timesketch/wsgi.log \
            --error-logfile /var/log/timesketch/wsgi_error.log --log-level info \
-           --capture-output --timeout 600 --limit-request-line, 8190 \
+           --capture-output --timeout 600 --limit-request-line 8190 \
            --workers ${NUM_WSGI_WORKERS} timesketch.wsgi:application
 elif [ "$1" = "worker" ]; then
   celery -A timesketch.lib.tasks worker \
