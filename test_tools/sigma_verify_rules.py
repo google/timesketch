@@ -131,7 +131,7 @@ def run_verifier(rules_path, config_file_path):
 
     for dirpath, dirnames, files in os.walk(rules_path):
 
-        if 'deprecated' in [x.lower for x in dirnames]:
+        if 'deprecated' in [x.lower() for x in dirnames]:
             dirnames.remove('deprecated')
             logger.info('deprecated in folder / filename found - ignored')
 
