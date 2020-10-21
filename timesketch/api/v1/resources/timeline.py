@@ -15,6 +15,7 @@
 
 import codecs
 import json
+import logging
 import uuid
 import six
 
@@ -36,6 +37,9 @@ from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
+
+
+logger = logging.getLogger('timesketch.timeline_api')
 
 
 class TimelineListResource(resources.ResourceMixin, Resource):
@@ -265,9 +269,14 @@ class TimelineResource(resources.ResourceMixin, Resource):
                         self._remove_label(timeline=timeline, label=label))
                 changed = any(changes)
 
-            if changed:
-                db_session.add(timeline)
-                db_session.commit()
+            if not changed:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Label [{0:s}] not {1:s}'.format(
+                        ', '.join(labels), label_action))
+
+            db_session.add(timeline)
+            db_session.commit()
             return HTTP_STATUS_CODE_OK
 
         timeline.name = form.name.data
