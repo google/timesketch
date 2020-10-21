@@ -317,8 +317,8 @@ class Sketch(resource.BaseResource):
             query_filter = {
                 'time_start': None,
                 'time_end': None,
-                'size': self.DEFAULT_SIZE_LIMIT,
-                'terminate_after': self.DEFAULT_SIZE_LIMIT,
+                'size': 100,
+                'terminate_after': 100,
                 'indices': '_all',
                 'order': 'asc'
             }
@@ -945,6 +945,10 @@ class Sketch(resource.BaseResource):
             if max_entries and total_count >= max_entries:
                 break
             if stop_size and total_count >= stop_size:
+                break
+
+            if not scroll_id:
+                logger.debug('No scroll ID, will stop.')
                 break
 
             more_response = self.api.session.post(resource_url, json=form_data)
