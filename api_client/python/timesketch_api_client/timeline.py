@@ -132,6 +132,67 @@ class Timeline(resource.BaseResource):
         status = status_list[0]
         return status.get('status')
 
+    def add_timeline_label(self, label):
+        """Add a label to the timelinne.
+
+        Args:
+            label (str): A string with the label to add to the timeline.
+
+        Returns:
+            bool: A boolean to indicate whether the label was successfully
+                  added to the timeline.
+        """
+        if label in self.labels:
+            logger.error(
+                'Label [{0:s}] already applied to timeline.'.format(label))
+            return False
+
+        resource_url = '{0:s}/{1:s}'.format(
+            self.api.api_root, self.resource_uri)
+
+        data = {
+            'labels': [label],
+            'label_action': 'add',
+        }
+        response = self.api.session.post(resource_url, json=data)
+
+        status = error.check_return_status(response, logger)
+        if not status:
+            logger.error('Unable to add the label to the timeline.')
+
+        return status
+
+    def remove_timeline_label(self, label):
+        """Remove a label from the timeline.
+
+        Args:
+            label (str): A string with the label to remove from the timeline.
+
+        Returns:
+            bool: A boolean to indicate whether the label was successfully
+                  removed from the timeline.
+        """
+        if label not in self.labels:
+            logger.error(
+                'Unable to remove label [{0:s}], not a label '
+                'attached to this timeline.'.format(label))
+            return False
+
+        resource_url = '{0:s}/{1:s}'.format(
+            self.api.api_root, self.resource_uri)
+
+        data = {
+            'labels': [label],
+            'label_action': 'remove',
+        }
+        response = self.api.session.post(resource_url, json=data)
+
+        status = error.check_return_status(response, logger)
+        if not status:
+            logger.error('Unable to remove the label from the sketch.')
+
+        return status
+
     def delete(self):
         """Deletes the timeline."""
         resource_url = '{0:s}/{1:s}'.format(

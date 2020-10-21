@@ -14,6 +14,7 @@
 """Timeline resources for version 1 of the Timesketch API."""
 
 import codecs
+import json
 import uuid
 import six
 
@@ -143,6 +144,26 @@ class TimelineListResource(resources.ResourceMixin, Resource):
 class TimelineResource(resources.ResourceMixin, Resource):
     """Resource to get timeline."""
 
+    def _add_label(self, timeline, label):
+        """Add a label to the timeline."""
+        if timeline.has_label(label):
+            logger.warning(
+                'Unable to apply the label [{0:s}] to timeline {1:s}, '
+                'already exists.'.format(label, timeline.name))
+            return False
+        timeline.add_label(label, user=current_user)
+        return True
+
+    def _remove_label(self, timeline, label):
+        """Removes a label from a timeline."""
+        if not timeline.has_label(label):
+            logger.warning(
+                'Unable to remove the label [{0:s}] from timeline {1:s}, '
+                'label does not exist.'.format(label, timeline.name))
+            return False
+        timeline.remove_label(label)
+        return True
+
     @login_required
     def get(self, sketch_id, timeline_id):
         """Handles GET request to the resource.
@@ -156,6 +177,10 @@ class TimelineResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
         timeline = Timeline.query.get(timeline_id)
+
+        if not timeline:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No Timeline found with this ID.')
 
         # Check that this timeline belongs to the sketch
         if timeline.sketch_id != sketch.id:
@@ -184,7 +209,10 @@ class TimelineResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
         timeline = Timeline.query.get(timeline_id)
-        form = forms.TimelineForm.build(request)
+        if not timeline:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No timeline found with this ID.')
 
         # Check that this timeline belongs to the sketch
         if timeline.sketch_id != sketch.id:
@@ -201,6 +229,40 @@ class TimelineResource(resources.ResourceMixin, Resource):
         if not form.validate_on_submit():
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+
+        form = forms.TimelineForm.build(request)
+
+        if form.labels.data:
+            label_string = form.labels.data
+            label_action = form.label_action.data
+            if label_string:
+                labels = json.loads(label_string)
+            else:
+                labels = []
+            if not isinstance(labels, (list, tuple)):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST, (
+                        'Label needs to be a JSON string that '
+                        'converts a list of strings'))
+            if not all([isinstance(x, str) for x in labels]):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST, (
+                        'Label needs to be a JSON string that '
+                        'converts a list of strings (not all strings)'))
+            if label_action not in ('add', 'remove'):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Label action needs to be either add or remove.')
+
+            changed = False
+            if label_action == 'add':
+                changed = self._add_label(timeline=timeline, label=label)
+            elif label_action == 'remove':
+                changed = self._remove_label(timeline=timeline, label=label)
+            if changed:
+                db_session.add(timeline)
+                db_session.commit()
+            return HTTP_STATUS_CODE_OK
 
         timeline.name = form.name.data
         timeline.description = form.description.data
