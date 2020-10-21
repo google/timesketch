@@ -126,7 +126,7 @@ class CreateTimelineForm(BaseForm):
 
 class TimelineForm(NameDescriptionForm):
     """Form to edit a timeline."""
-    labels = StringField('Label', validators=[Optional()])
+    labels = StringField('Labels', validators=[Optional()])
     label_action = StringField('LabelAction', validators=[Optional()])
     color = StringField(
         'Color',

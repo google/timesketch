@@ -177,7 +177,7 @@ class Timeline(resource.BaseResource):
             'name': self.name,
             'description': self.description,
             'color': self.color,
-            'labels': [label],
+            'labels': json.dumps([label]),
             'label_action': 'add',
         }
         response = self.api.session.post(resource_url, json=data)
@@ -211,7 +211,7 @@ class Timeline(resource.BaseResource):
             'name': self.name,
             'description': self.description,
             'color': self.color,
-            'labels': [label],
+            'labels': json.dumps([label]),
             'label_action': 'remove',
         }
         response = self.api.session.post(resource_url, json=data)

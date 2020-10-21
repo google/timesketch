@@ -233,21 +233,19 @@ class TimelineResource(resources.ResourceMixin, Resource):
 
         if form.labels.data:
             label_string = form.labels.data
-            label_action = form.label_action.data
-            if label_string:
-                labels = json.loads(label_string)
-            else:
-                labels = []
+            labels = json.loads(label_string)
             if not isinstance(labels, (list, tuple)):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST, (
                         'Label needs to be a JSON string that '
-                        'converts a list of strings'))
+                        'converts a list of strings [{}] {}'.format(type(labels), labels)))
             if not all([isinstance(x, str) for x in labels]):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST, (
                         'Label needs to be a JSON string that '
                         'converts a list of strings (not all strings)'))
+
+            label_action = form.label_action.data
             if label_action not in ('add', 'remove'):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
@@ -255,9 +253,18 @@ class TimelineResource(resources.ResourceMixin, Resource):
 
             changed = False
             if label_action == 'add':
-                changed = self._add_label(timeline=timeline, label=label)
+                changes = []
+                for label in labels:
+                    changes.append(
+                        self._add_label(timeline=timeline, label=label))
+                changed = any(changes)
             elif label_action == 'remove':
-                changed = self._remove_label(timeline=timeline, label=label)
+                changes = []
+                for label in labels:
+                    changes.append(
+                        self._remove_label(timeline=timeline, label=label))
+                changed = any(changes)
+
             if changed:
                 db_session.add(timeline)
                 db_session.commit()
