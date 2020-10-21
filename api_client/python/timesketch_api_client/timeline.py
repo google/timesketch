@@ -45,6 +45,7 @@ class Timeline(resource.BaseResource):
         """
         self.id = timeline_id
         self._labels = []
+        self._color = ''
         self._name = name
         self._searchindex = searchindex
         resource_uri = 'sketches/{0:d}/timelines/{1:d}/'.format(
@@ -70,6 +71,28 @@ class Timeline(resource.BaseResource):
             self._labels = []
 
         return self._labels
+
+    @property
+    def color(self):
+        """Property that returns timeline color.
+
+        Returns:
+            Color name as string.
+        """
+        if not self._color:
+            timeline = self.lazyload_data()
+            self._color = timeline['objects'][0]['color']
+        return self._color
+
+    @property
+    def description(self):
+        """Property that returns timeline description.
+
+        Returns:
+            Description as string.
+        """
+        timeline = self.lazyload_data()
+        return timeline['objects'][0]['description']
 
     @property
     def name(self):
@@ -151,6 +174,9 @@ class Timeline(resource.BaseResource):
             self.api.api_root, self.resource_uri)
 
         data = {
+            'name': self.name,
+            'description': self.description,
+            'color': self.color,
             'labels': [label],
             'label_action': 'add',
         }
@@ -182,6 +208,9 @@ class Timeline(resource.BaseResource):
             self.api.api_root, self.resource_uri)
 
         data = {
+            'name': self.name,
+            'description': self.description,
+            'color': self.color,
             'labels': [label],
             'label_action': 'remove',
         }

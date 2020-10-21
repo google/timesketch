@@ -226,11 +226,10 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'The user does not have write permission on the sketch.')
 
+        form = forms.TimelineForm.build(request)
         if not form.validate_on_submit():
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
-
-        form = forms.TimelineForm.build(request)
 
         if form.labels.data:
             label_string = form.labels.data
