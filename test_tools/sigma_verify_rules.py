@@ -70,7 +70,7 @@ def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
     logger.debug('[sigma] Reading rules from {0:s}'.format(
         rule_file_path))
 
-    if os.path.isfile(rule_file_path) == False:
+    if not os.path.isfile(rule_file_path):
         logger.error('Rule file not found')
         return False
 
