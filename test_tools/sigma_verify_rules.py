@@ -124,8 +124,8 @@ def run_verifier(rules_path, config_file_path):
     with open(sigma_config_path, 'r') as sigma_config_file:
         sigma_config_con = sigma_config_file.read()
     sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_con)
-    sigma_backend = sigma_elasticsearch.\
-        ElasticsearchQuerystringBackend(sigma_config, {})
+    sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(
+        sigma_config, {})
     return_verified_rules = []
     return_rules_with_problems = []
 
