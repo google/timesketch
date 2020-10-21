@@ -124,7 +124,7 @@ def run_verifier(rules_path, config_file_path):
     with open(sigma_config_path, 'r') as sigma_config_file:
         sigma_config_con = sigma_config_file.read()
     sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_con)
-    sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(
+    backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(
         sigma_config, {})
     return_verified_rules = []
     return_rules_with_problems = []
@@ -148,7 +148,7 @@ def run_verifier(rules_path, config_file_path):
             rule_file_path = os.path.join(dirpath, rule_filename)
             rule_file_path = os.path.abspath(rule_file_path)
 
-            if verify_rules_file(rule_file_path, sigma_config, sigma_backend):
+            if verify_rules_file(rule_file_path, sigma_config, backend):
                 return_verified_rules.append(rule_file_path)
             else:
                 logger.info('File did not work{0:s}'.format(rule_file_path))
