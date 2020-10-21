@@ -83,14 +83,14 @@ def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
                 rule_file_content, sigma_config, None)
             parsed_sigma_rules = parser.generate(sigma_backend)
         except NotImplementedError:
-            logger.error('{0:s} Error with file {1:s}'
-            .format(rule_filename, rule_file_path), exc_info=True)
+            logger.error('{0:s} Error with file {1:s}'.format(
+                rule_filename, rule_file_path), exc_info=True)
             return False
         except (sigma.parser.exceptions.SigmaParseError, TypeError):
             logger.error(
                 '{0:s} Error with file {1:s} '
-                'you should not use this rule in Timesketch '
-                .format(rule_filename, rule_file_path), exc_info=True)
+                'you should not use this rule in Timesketch '.format(
+                    rule_filename, rule_file_path), exc_info=True)
             return False
 
     return True
