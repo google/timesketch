@@ -263,6 +263,12 @@ class TimelineResource(resources.ResourceMixin, Resource):
                         self._add_label(timeline=timeline, label=label))
                 changed = any(changes)
             elif label_action == 'remove':
+                if not sketch.has_permission(
+                        user=current_user, permission='delete'):
+                    abort(
+                        HTTP_STATUS_CODE_FORBIDDEN,
+                        'The user does not have delete permission on sketch.')
+
                 changes = []
                 for label in labels:
                     changes.append(
