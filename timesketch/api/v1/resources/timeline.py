@@ -242,12 +242,12 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST, (
                         'Label needs to be a JSON string that '
-                        'converts a list of strings [{}] {}'.format(type(labels), labels)))
+                        'converts to a list of strings.'))
             if not all([isinstance(x, str) for x in labels]):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST, (
                         'Label needs to be a JSON string that '
-                        'converts a list of strings (not all strings)'))
+                        'converts to a list of strings (not all strings)'))
 
             label_action = form.label_action.data
             if label_action not in ('add', 'remove'):
