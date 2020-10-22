@@ -21,6 +21,7 @@ from flask import current_app
 from flask import url_for
 
 from sqlalchemy import Column
+from sqlalchemy import Enum
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import Unicode
@@ -50,7 +51,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     events = relationship('Event', backref='sketch', lazy='select')
     stories = relationship('Story', backref='sketch', lazy='select')
     aggregations = relationship('Aggregation', backref='sketch', lazy='select')
-    attributes = relationship('Attribute', backref='sketch', lazy='select')
+    attributes = relationship(
+        'AttributeContainer', backref='sketch', lazy='select')
     aggregationgroups = relationship(
         'AggregationGroup', backref='sketch', lazy='select')
     analysis = relationship('Analysis', backref='sketch', lazy='select')
@@ -557,35 +559,53 @@ class AnalysisSession(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.sketch = sketch
 
 
-class Attribute(BaseModel):
-    """Implements the attribute model."""
+class AttributeContainer(BaseModel):
+    """Implements the attribute container model."""
     user_id = Column(Integer, ForeignKey('user.id'))
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     name = Column(UnicodeText())
-    value_type = Column(UnicodeText())
-    value_string = Column(UnicodeText())
-    value_int = Column(Integer())
+    attributes = relationship(
+        'Attribute', backref='attributecontainer', lazy='select')
 
     def __init__(
-            self, user, sketch, name, value_type,
-            value_string='', value_int=0):
-        """Initialize the AnalysisSession object.
+        self, user, sketch, name):
+        """Initialize the AttributeContainer object.
 
         Args:
             user (User): The user who created the aggregation
             sketch (Sketch): The sketch that the aggregation is bound to
             name (str): the name of the attribute.
-            value_type (str): a string that denotes the type, can be either
-                "string" or "int".
-            value_string (str): if value_type is set to "string" then this
-                variable holds the value.
-            value_int (int): if value_type is set to "int" then this variable
-                hols the value.
         """
-        super(Attribute, self).__init__()
+        super(AttributeContainer, self).__init__()
         self.user = user
         self.sketch = sketch
         self.name = name
-        self.value_type = value_type
-        self.value_string = value_string
-        self.value_int = value_int
+
+
+class Attribute(BaseModel):
+    """Implements the attribute model."""
+    user_id = Column(Integer, ForeignKey('user.id'))
+    attributecontainer_id = Column(
+        Integer, ForeignKey('attributecontainer.id'))
+    value = Column(UnicodeText())
+    ontology = Column(UnicodeText())
+
+    def __init__(
+            self, user, attributecontainer, value, ontology):
+        """Initialize the Attribute object.
+
+        Args:
+            user (User): The user who created the aggregation
+            attributecontainer (AttributeContainer): The attribute container
+                this attribute is bound to.
+            value (str): a string that contains the value for the attribute.
+                The ontology couold influence how this will be cast when
+                interpreted.
+            ontology (str): The ontology of the value, The values that can
+                be used are defined in timesketch/lib/ontology.py (ONTOLOGY).
+        """
+        super(Attribute, self).__init__()
+        self.user = user
+        self.attributecontainer = attributecontainer
+        self.value = value
+        self.ontology = ontology
