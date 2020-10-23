@@ -564,21 +564,25 @@ class AttributeContainer(BaseModel):
     user_id = Column(Integer, ForeignKey('user.id'))
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     name = Column(UnicodeText())
+    ontology = Column(UnicodeText())
     attributes = relationship(
         'Attribute', backref='attributecontainer', lazy='select')
 
-    def __init__(self, user, sketch, name):
+    def __init__(self, user, sketch, name, ontology):
         """Initialize the AttributeContainer object.
 
         Args:
             user (User): The user who created the aggregation
             sketch (Sketch): The sketch that the aggregation is bound to
             name (str): the name of the attribute.
+            ontology (str): The ontology of the value, The values that can
+                be used are defined in timesketch/lib/ontology.py (ONTOLOGY).
         """
         super(AttributeContainer, self).__init__()
         self.user = user
         self.sketch = sketch
         self.name = name
+        self.ontology = ontology
 
 
 class Attribute(BaseModel):
@@ -587,10 +591,9 @@ class Attribute(BaseModel):
     attributecontainer_id = Column(
         Integer, ForeignKey('attributecontainer.id'))
     value = Column(UnicodeText())
-    ontology = Column(UnicodeText())
 
     def __init__(
-            self, user, attributecontainer, value, ontology):
+            self, user, attributecontainer, value):
         """Initialize the Attribute object.
 
         Args:
@@ -600,11 +603,8 @@ class Attribute(BaseModel):
             value (str): a string that contains the value for the attribute.
                 The ontology couold influence how this will be cast when
                 interpreted.
-            ontology (str): The ontology of the value, The values that can
-                be used are defined in timesketch/lib/ontology.py (ONTOLOGY).
         """
         super(Attribute, self).__init__()
         self.user = user
         self.attributecontainer = attributecontainer
         self.value = value
-        self.ontology = ontology

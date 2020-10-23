@@ -138,10 +138,17 @@ class AttributeResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     'All values needs to be stored as strings.')
 
+            for container in sketch.attributes:
+                if container.name == name:
+                    return abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        'Unable to add the attribute, it already exists.')
+
             container = AttributeContainer(
                 user=current_user,
                 sketch=sketch,
-                name=name)
+                name=name,
+                ontology=ontology)
             db_session.add(container)
             db_session.commit()
 
@@ -149,8 +156,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
                 attribute = Attribute(
                     user=current_user,
                     attributecontainer=container,
-                    value=value,
-                    ontology=ontology)
+                    value=value)
                 container.attributes.append(attribute)
                 db_session.add(attribute)
                 db_session.commit()

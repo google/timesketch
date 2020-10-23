@@ -52,26 +52,20 @@ def get_sketch_attributes(sketch):
             continue
         name = container.name
         container_attributes = []
-        ontology_set = set()
+        ontology_string = container.ontology
+        ontology_dict = ontology_def.get(ontology_string, {})
+        cast_as_str = ontology_dict.get('cast_as', 'str')
+
         for attribute in container.attributes:
-            ontology_string = attribute.ontology
-            ontology_set.add(ontology_string)
-            ontology_dict = ontology_def.get(ontology_string, {})
-            cast_as_str = ontology_dict.get('cast_as', 'str')
             value = ontology.cast_variable(attribute.value, cast_as_str)
             container_attributes.append(value)
 
-        if len(ontology_set) > 1:
-            logger.error(
-                'There should only be a single ontology per attribute')
-
-        ontology_use = list(ontology_set)[0]
         if len(container_attributes) == 1:
             attributes.append(
-                (name, container_attributes[0], ontology_use))
+                (name, container_attributes[0], ontology_string))
         else:
             attributes.append(
-                (name, container_attributes, ontology_use))
+                (name, container_attributes, ontology_string))
     return attributes
 
 
