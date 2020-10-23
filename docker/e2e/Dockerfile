@@ -36,6 +36,8 @@ RUN pip3 install timesketch-import-client
 # Copy Timesketch config files into /etc/timesketch
 RUN mkdir /etc/timesketch
 RUN cp /tmp/timesketch/data/timesketch.conf /etc/timesketch/
+RUN cp /tmp/timesketch/data/ontology.yaml /etc/timesketch/
+RUN cp /tmp/timesketch/data/tags.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/features.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
 
