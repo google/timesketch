@@ -233,6 +233,73 @@ class Sketch(resource.BaseResource):
         sketch = self.lazyload_data()
         return sketch['objects'][0]['status'][0]['status']
 
+    def add_attribute_list(self, name, values, ontology='text'):
+        """Add an attribute to the sketch.
+
+        Args:
+            name (str): The name of the attribute.
+            values (list): A list of string values of the attribute.
+            ontology (str): The ontology (matches with
+                timesketch/lib/ontology.py:ONTOLOGY), which defines
+                how the attribute is interpreted.
+
+        Raises:
+            ValueError: If any of the parameters are of the wrong type.
+
+        Returns:
+            Boolean value whether the attribute was successfully
+            added or not.
+        """
+        if not isinstance(name, str):
+            raise ValueError('Name needs to be a string.')
+
+        if not isinstance(values, (list, tuple)):
+            if any([not isinstance(x, str) for x in values]):
+                raise ValueError('All values need to be a string.')
+
+        if not isinstance(ontology, str):
+            raise ValueError('Ontology needs to be a string.')
+
+        resource_url = '{0:s}/sketches/{1:d}/attribute/'.format(
+            self.api.api_root, self.id)
+
+        data = {
+            'name': name,
+            'values': values,
+            'ontology': ontology,
+            'action': 'post',
+        }
+        response = self.api.session.post(resource_url, json=data)
+
+        status = error.check_return_status(response, logger)
+        if not status:
+            logger.error('Unable to add the attribute to the sketch.')
+
+        return status
+
+    def add_attribute(self, name, value, ontology='text'):
+        """Add an attribute to the sketch.
+
+        Args:
+            name (str): The name of the attribute.
+            value (str): Value of the attribute, stored as a string.
+            ontology (str): The ontology (matches with
+                timesketch/lib/ontology.py:ONTOLOGY), which defines
+                how the attribute is interpreted.
+
+        Raises:
+            ValueError: If any of the parameters are of the wrong type.
+
+        Returns:
+            Boolean value whether the attribute was successfully
+            added or not.
+        """
+        if not isinstance(name, str):
+            raise ValueError('Name needs to be a string.')
+
+        return self.add_attribute_list(
+            name=name, values=[value], ontology=ontology)
+
     def add_sketch_label(self, label):
         """Add a label to the sketch.
 
@@ -260,6 +327,38 @@ class Sketch(resource.BaseResource):
         status = error.check_return_status(response, logger)
         if not status:
             logger.error('Unable to add the label to the sketch.')
+
+        return status
+
+    def remove_attribute(self, name):
+        """Remove an attribute from the sketch.
+
+        Args:
+            name (str): The name of the attribute.
+
+        Raises:
+            ValueError: If any of the parameters are of the wrong type.
+
+        Returns:
+            Boolean value whether the attribute was successfully
+            removed or not.
+        """
+        if not isinstance(name, str):
+            raise ValueError('Name needs to be a string.')
+
+        resource_url = '{0:s}/sketches/{1:d}/attribute/'.format(
+            self.api.api_root, self.id)
+
+        data = {
+            'name': name,
+            'ontology': 'text',
+            'action': 'delete',
+        }
+        response = self.api.session.post(resource_url, json=data)
+
+        status = error.check_return_status(response, logger)
+        if not status:
+            logger.error('Unable to remove the attriubute from the sketch.')
 
         return status
 

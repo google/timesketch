@@ -23,6 +23,7 @@ from flask import jsonify
 
 import altair as alt
 
+from timesketch.lib import ontology
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 
@@ -39,6 +40,26 @@ def bad_request(message):
     response = jsonify({'message': message})
     response.status_code = HTTP_STATUS_CODE_BAD_REQUEST
     return response
+
+
+def get_sketch_attributes(sketch):
+    """Returns a list of attributes of a sketch."""
+    attributes = []
+    for container in sketch.attributes:
+        if container.sketch_id != sketch.id:
+            continue
+        name = container.name
+        container_attributes = []
+        for attribute in container.attributes:
+            ontology_dict = ontology.ONTOLOGY.get(attribute.ontology, {})
+            cast_as = ontology_dict.get('cast_as', str)
+            container_attribtes.append(cast_as(attribute.value))
+
+        if len(container_attributes) == 1:
+            attributes.append((name, container_attributes[0]))
+        else:
+            attributes.append((name, container_attributes))
+    return attributes
 
 
 def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None,
