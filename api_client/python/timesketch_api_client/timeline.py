@@ -44,7 +44,7 @@ class Timeline(resource.BaseResource):
             searchindex: The Elasticsearch index name (optional)
         """
         self.id = timeline_id
-        self._labels = []
+        self._color = ''
         self._name = name
         self._searchindex = searchindex
         resource_uri = 'sketches/{0:d}/timelines/{1:d}/'.format(
@@ -54,22 +54,39 @@ class Timeline(resource.BaseResource):
     @property
     def labels(self):
         """Property that returns the timeline labels."""
-        if self._labels:
-            return self._labels
-
-        data = self.lazyload_data()
+        data = self.lazyload_data(refresh_cache=True)
         objects = data.get('objects', [])
         if not objects:
-            return self._labels
+            return []
 
         timeline_data = objects[0]
         label_string = timeline_data.get('label_string', '')
         if label_string:
-            self._labels = json.loads(label_string)
-        else:
-            self._labels = []
+            return json.loads(label_string)
 
-        return self._labels
+        return []
+
+    @property
+    def color(self):
+        """Property that returns timeline color.
+
+        Returns:
+            Color name as string.
+        """
+        if not self._color:
+            timeline = self.lazyload_data()
+            self._color = timeline['objects'][0]['color']
+        return self._color
+
+    @property
+    def description(self):
+        """Property that returns timeline description.
+
+        Returns:
+            Description as string.
+        """
+        timeline = self.lazyload_data()
+        return timeline['objects'][0]['description']
 
     @property
     def name(self):
@@ -131,6 +148,73 @@ class Timeline(resource.BaseResource):
 
         status = status_list[0]
         return status.get('status')
+
+    def add_timeline_label(self, label):
+        """Add a label to the timelinne.
+
+        Args:
+            label (str): A string with the label to add to the timeline.
+
+        Returns:
+            bool: A boolean to indicate whether the label was successfully
+                  added to the timeline.
+        """
+        if label in self.labels:
+            logger.error(
+                'Label [{0:s}] already applied to timeline.'.format(label))
+            return False
+
+        resource_url = '{0:s}/{1:s}'.format(
+            self.api.api_root, self.resource_uri)
+
+        data = {
+            'name': self.name,
+            'description': self.description,
+            'color': self.color,
+            'labels': json.dumps([label]),
+            'label_action': 'add',
+        }
+        response = self.api.session.post(resource_url, json=data)
+
+        status = error.check_return_status(response, logger)
+        if not status:
+            logger.error('Unable to add the label to the timeline.')
+
+        return status
+
+    def remove_timeline_label(self, label):
+        """Remove a label from the timeline.
+
+        Args:
+            label (str): A string with the label to remove from the timeline.
+
+        Returns:
+            bool: A boolean to indicate whether the label was successfully
+                  removed from the timeline.
+        """
+        if label not in self.labels:
+            logger.error(
+                'Unable to remove label [{0:s}], not a label '
+                'attached to this timeline.'.format(label))
+            return False
+
+        resource_url = '{0:s}/{1:s}'.format(
+            self.api.api_root, self.resource_uri)
+
+        data = {
+            'name': self.name,
+            'description': self.description,
+            'color': self.color,
+            'labels': json.dumps([label]),
+            'label_action': 'remove',
+        }
+        response = self.api.session.post(resource_url, json=data)
+
+        status = error.check_return_status(response, logger)
+        if not status:
+            logger.error('Unable to remove the label from the sketch.')
+
+        return status
 
     def delete(self):
         """Deletes the timeline."""

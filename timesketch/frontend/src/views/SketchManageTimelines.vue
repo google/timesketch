@@ -36,17 +36,16 @@ limitations under the License.
       </div>
     </section>
 
-    <!-- Timelines to add -->
+
+     <!-- Timelines to add -->
     <section v-if="meta.permissions.write" class="section">
       <div class="container is-fluid">
         <div class="card" style="min-height:160px;">
           <header class="card-header">
             <p class="card-header-title">Add Timelines</p>
           </header>
-
           <div class="card-content">
-
-            <b-message type="is-success">
+            <b-message>
               <p>
                 Upload a new timeline or choose an existing one from the list below. You can upload either a Plaso storage file, JSONL, or a CSV file.
                 <br>
@@ -55,24 +54,6 @@ limitations under the License.
               <br>
               <ts-upload-timeline-form></ts-upload-timeline-form>
             </b-message>
-
-            <ul class="content-list" v-if="availableSearchIndices.length">
-              <transition-group name="list" tag="p">
-                <li style="padding:10px;" v-for="searchindex in availableSearchIndices" :key="searchindex.id">
-                  <div class="ts-timeline-color-box is-pulled-left has-text-centered" style="background-color:#f5f5f5;cursor:pointer;" v-on:click="addTimelineToSketch(searchindex)">
-                    <span style="margin-top:10px;color:#d1d1d1;" class="icon"><i class="fas fa-plus"></i></span>
-                  </div>
-                  <div class="is-pulled-right" style="margin-top:10px;">
-                    <button v-on:click="addTimelineToSketch(searchindex)" class="button is-small is-rounded is-success is-outlined">Add</button>
-                  </div>
-                    <strong>{{ searchindex.name }}</strong>
-                    <br>
-                    <span class="is-size-7">
-                      Created {{ searchindex.updated_at | moment("YYYY-MM-DD HH:mm") }}
-                    </span>
-                </li>
-              </transition-group>
-            </ul>
           </div>
           <div class="card-content" v-if="!availableSearchIndices.length">
             <p style="color:#777; font-weight: bold">No timelines available</p>
@@ -80,6 +61,43 @@ limitations under the License.
         </div>
       </div>
     </section>
+
+    <section v-if="meta.permissions.write" class="section">
+      <div class="container is-fluid">
+        <b-collapse class="card" animation="slide" aria-id="contentIdForA11y3" :open="false">
+            <div slot="trigger" class="card-header" role="button" aria-controls="contentIdForA11y3">
+              <p class="card-header-title">Library of old timelines</p>
+            </div>
+            <div class="card-content">
+                <div class="content">
+                  <ul class="content-list" v-if="availableSearchIndices.length">
+                    <transition-group name="list" tag="p">
+                      <li style="padding:10px;" v-for="searchindex in availableSearchIndices" :key="searchindex.id">
+                        <div class="ts-timeline-color-box is-pulled-left has-text-centered" style="background-color:#f5f5f5;cursor:pointer;" v-on:click="addTimelineToSketch(searchindex)">
+                          <span style="margin-top:10px;color:#777;" class="icon"><i class="fas fa-plus"></i></span>
+                        </div>
+                        <div class="is-pulled-right" style="margin-top:10px;">
+                          <button v-on:click="addTimelineToSketch(searchindex)" class="button is-small is-rounded is-success">
+                            <span class="icon is-small">
+                              <i class="fas fa-plus"></i>
+                            </span>
+                            <span>Add to sketch</span>
+                          </button>
+                        </div>
+                          <span style="font-weight: bold">{{ searchindex.name }}</span>
+                          <br>
+                          <span class="is-size-7">
+                            Created {{ searchindex.updated_at | moment("YYYY-MM-DD HH:mm") }}
+                          </span>
+                      </li>
+                    </transition-group>
+                  </ul>
+                </div>
+            </div>
+        </b-collapse>
+      </div>
+    </section>
+
   </div>
 </template>
 

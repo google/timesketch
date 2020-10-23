@@ -132,7 +132,12 @@ limitations under the License.
         </button>
       </p>
       <p v-if="meta.permissions.write && !isCompact" class="control">
-        <button v-on:click="remove(timeline)" class="button is-small is-rounded is-danger is-outlined">Remove</button>
+        <button v-on:click="remove(timeline)" class="button is-small is-rounded is-danger">
+          <span class="icon is-small">
+            <i class="fas fa-trash"></i>
+          </span>
+          <span>Remove</span>
+        </button>
       </p>
     </div>
 

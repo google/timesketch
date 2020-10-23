@@ -150,6 +150,17 @@ data = sketch.explore('google.com', as_pandas=True)
 
 This will return back a pandas DataFrame with the search results.
 
+Another example search query:
+```
+data = sketch.explore(
+       '192.168.0.1 AND NOT timestamp_desc:foobar',
+       as_pandas=True,
+       return_fields='datetime,message,timestamp_desc'
+)
+```
+
+This will return back a pandas DataFrame with the search results limited to the columns.
+
 ### Aggregations
 
 Another option to explore the data is via aggregations. To get a list of available aggregators use:

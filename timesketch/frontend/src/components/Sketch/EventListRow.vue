@@ -20,14 +20,14 @@ limitations under the License.
         <td colspan="5" style="padding: 0">
           <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
           <div class="ts-time-bubble ts-time-bubble-color">
-            <h5><b>{{ deltaDays }}</b><br>days</h5>
+            <h5><b>{{ deltaDays | compactNumber }}</b><br>days</h5>
           </div>
           <div class="ts-time-bubble-vertical-line ts-time-bubble-vertical-line-color"></div>
         </td>
       </tr>
 
       <!-- The event -->
-      <tr class="ts-shadow-on-hover">
+      <tr>
 
         <!-- Timeline color (set the color for the timeline) -->
         <td v-bind:style="timelineColor">
@@ -44,8 +44,62 @@ limitations under the License.
               <i class="fas fa-star" v-if="isStarred" style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"></i>
               <i class="fas fa-star" v-if="!isStarred" style="color: #d3d3d3;"></i>
             </span>
-            <span v-if="displayControls" class="icon control" style="cursor: pointer;" v-on:click="searchContext">
+            <span v-if="displayControls" class="icon control" style="margin-right: 3px; cursor: pointer;" v-on:click="searchContext">
               <i class="fas fa-search" style="color: #d3d3d3;"></i>
+            </span>
+            <span class="icon control">
+                <b-dropdown ref="labelDropdown" aria-role="list">
+                  <i class="fas fa-tag" style="color: #d3d3d3;" slot="trigger"></i>
+                  <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
+                    <section class="modal-card-body">
+                      <b-dropdown-item custom :focusable="false">
+                        <span v-if="filteredLabelsToAdd.length">
+                          <b>Label as:</b>
+                          <br><br>
+                          <div class="level" style="margin-bottom: 5px;" v-for="(label) in filteredLabelsToAdd" :key="label">
+                            <div class="level-left">
+                              <div class="field">
+                                <b-checkbox type="is-info" v-model="selectedLabels" :native-value="label">
+                                  {{ label }}
+                                </b-checkbox>
+                              </div>
+                            </div>
+                          </div>
+                          <hr>
+                        </span>
+
+                        <span v-if="event._source.label.length">
+                          <i class="fas fa-trash" style="margin-right: 7px;"></i>
+                          <b>Remove:</b>
+                          <br><br>
+                          <div class="level" style="margin-bottom: 5px;" v-for="(label) in event._source.label" :key="label">
+                            <div class="level-left">
+                              <div class="field">
+                                <b-checkbox type="is-danger" v-model="labelsToRemove" :native-value="label">
+                                  {{ label }}
+                                </b-checkbox>
+                              </div>
+                            </div>
+                          </div>
+                          <hr>
+                        </span>
+                        <div class="field is-grouped">
+                          <p class="control is-expanded">
+                            <input class="input" v-model="labelToAdd" placeholder="Create new"></input>
+                          </p>
+                          <p class="control">
+                            <button v-on:click="addLabels(labelToAdd)" class="button">Save</button>
+                          </p>
+                        </div>
+                      </b-dropdown-item>
+                    </section>
+                    <section class="modal-card-foot">
+                      <b-dropdown-item>
+                        <button v-if="selectedLabels.length || labelsToRemove.length" class="button is-info" v-on:click="addLabels()" :disabled="labelToAdd !== null && labelToAdd !== ''">Apply</button>
+                      </b-dropdown-item>
+                    </section>
+                  </div>
+                </b-dropdown>
             </span>
           </div>
         </td>
@@ -57,7 +111,8 @@ limitations under the License.
               <span v-if="index === 0">
                 <span v-if="displayOptions.showEmojis" v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji" :title="meta.emojis[emoji]">{{ emoji }}</span>
                 <span style="margin-left:10px;"></span>
-                <span v-if="displayOptions.showTags" v-for="tag in event._source.tag" :key="tag" class="tag is-rounded" style="margin-right:5px;background:#d1d1d1;">{{ tag }}</span>
+                <span v-if="displayOptions.showTags" v-for="tag in event._source.tag" :key="tag" class="tag is-small is-light" style="margin-right:5px; border:1px solid #d1d1d1;">{{ tag }}</span>
+                <span v-if="displayOptions.showTags" v-for="label in filteredLabels" :key="label" class="tag is-small is-light" style="margin-right:5px; border:1px solid #d1d1d1;">{{ label }}</span>
               </span>
               <span style="word-break: break-word;" :title="event._source[field.field]">
                 {{ event._source[field.field] }}
@@ -120,6 +175,7 @@ limitations under the License.
   import ApiClient from '../../utils/RestApiClient'
   import TsSketchExploreEventListRowDetail from './EventListRowDetail'
   import EventBus from "../../main"
+  import { ToastProgrammatic as Toast } from 'buefy'
 
   export default {
   components: {
@@ -133,7 +189,10 @@ limitations under the License.
       isSelected: false,
       isDarkTheme: false,
       comment: '',
-      comments: []
+      comments: [],
+      labelToAdd: null,
+      selectedLabels: [],
+      labelsToRemove: []
     }
   },
   computed: {
@@ -221,6 +280,15 @@ limitations under the License.
       eventData['_type'] = this.event._type
       eventData['isSelected'] = this.isSelected
       return eventData
+    },
+    filteredLabels () {
+      return this.event._source.label.filter(label => !label.startsWith('__'))
+    },
+    filteredLabelsToAdd () {
+      return this.meta.filter_labels.filter(label => this.event._source.label.indexOf(label) === -1)
+    },
+    filteredLabelsToRemove () {
+      return this.meta.filter_labels.filter(label => this.event._source.label.indexOf(label) !== -1)
     }
   },
   methods: {
@@ -246,6 +314,39 @@ limitations under the License.
         this.comments.push(response.data.objects[0][0])
         this.comment = ''
       }).catch((e) => {})
+    },
+    addLabels: function (labels) {
+      if (labels === undefined) {
+        labels = this.selectedLabels
+      }
+      if (!Array.isArray(labels)) {
+        labels = [labels]
+      }
+
+      labels.forEach((label) => {
+        if (this.event._source.label.indexOf(label) === -1) {
+          this.event._source.label.push(label)
+          ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event]).then((response) => {
+            this.$emit('addLabel', label)
+          }).catch((e) => {
+            Toast.open('Error adding label')
+            this.event._source.label = this.event._source.label.filter(e => e !== label)
+          })
+        }
+      })
+
+      if (this.labelsToRemove.length) {
+        this.labelsToRemove.forEach((label) => {
+          ApiClient.saveEventAnnotation(this.sketch.id, 'label', label, [this.event], true).then((response) => {
+          }).catch((e) => {})
+          this.event._source.label = this.event._source.label.filter(e => e !== label)
+        })
+        this.labelsToRemove = []
+      }
+
+      this.selectedLabels = []
+      this.labelToAdd = null
+      this.$refs.labelDropdown.toggle()
     },
     searchContext: function () {
       this.$emit('searchContext', this.event)

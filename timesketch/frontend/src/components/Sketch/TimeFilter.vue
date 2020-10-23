@@ -135,7 +135,8 @@ export default {
           'field': '',
           'value': this.startDateTime + ',' + this.endDateTime,
           'type': 'datetime_range',
-          'operator': 'must'
+          'operator': 'must',
+          'active' : true
         }
       this.$emit('addChip', this.chip)
       this.startDateTime = ''

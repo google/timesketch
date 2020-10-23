@@ -14,6 +14,8 @@
 """Timeline resources for version 1 of the Timesketch API."""
 
 import codecs
+import json
+import logging
 import uuid
 import six
 
@@ -35,6 +37,9 @@ from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
+
+
+logger = logging.getLogger('timesketch.timeline_api')
 
 
 class TimelineListResource(resources.ResourceMixin, Resource):
@@ -143,6 +148,26 @@ class TimelineListResource(resources.ResourceMixin, Resource):
 class TimelineResource(resources.ResourceMixin, Resource):
     """Resource to get timeline."""
 
+    def _add_label(self, timeline, label):
+        """Add a label to the timeline."""
+        if timeline.has_label(label):
+            logger.warning(
+                'Unable to apply the label [{0:s}] to timeline {1:s}, '
+                'already exists.'.format(label, timeline.name))
+            return False
+        timeline.add_label(label, user=current_user)
+        return True
+
+    def _remove_label(self, timeline, label):
+        """Removes a label from a timeline."""
+        if not timeline.has_label(label):
+            logger.warning(
+                'Unable to remove the label [{0:s}] from timeline {1:s}, '
+                'label does not exist.'.format(label, timeline.name))
+            return False
+        timeline.remove_label(label)
+        return True
+
     @login_required
     def get(self, sketch_id, timeline_id):
         """Handles GET request to the resource.
@@ -156,6 +181,10 @@ class TimelineResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
         timeline = Timeline.query.get(timeline_id)
+
+        if not timeline:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No Timeline found with this ID.')
 
         # Check that this timeline belongs to the sketch
         if timeline.sketch_id != sketch.id:
@@ -184,7 +213,10 @@ class TimelineResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
         timeline = Timeline.query.get(timeline_id)
-        form = forms.TimelineForm.build(request)
+        if not timeline:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No timeline found with this ID.')
 
         # Check that this timeline belongs to the sketch
         if timeline.sketch_id != sketch.id:
@@ -198,9 +230,60 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'The user does not have write permission on the sketch.')
 
+        form = forms.TimelineForm.build(request)
         if not form.validate_on_submit():
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data.')
+
+        if form.labels.data:
+            label_string = form.labels.data
+            labels = json.loads(label_string)
+            if not isinstance(labels, (list, tuple)):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST, (
+                        'Label needs to be a JSON string that '
+                        'converts to a list of strings.'))
+            if not all([isinstance(x, str) for x in labels]):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST, (
+                        'Label needs to be a JSON string that '
+                        'converts to a list of strings (not all strings)'))
+
+            label_action = form.label_action.data
+            if label_action not in ('add', 'remove'):
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Label action needs to be either add or remove.')
+
+            changed = False
+            if label_action == 'add':
+                changes = []
+                for label in labels:
+                    changes.append(
+                        self._add_label(timeline=timeline, label=label))
+                changed = any(changes)
+            elif label_action == 'remove':
+                if not sketch.has_permission(
+                        user=current_user, permission='delete'):
+                    abort(
+                        HTTP_STATUS_CODE_FORBIDDEN,
+                        'The user does not have delete permission on sketch.')
+
+                changes = []
+                for label in labels:
+                    changes.append(
+                        self._remove_label(timeline=timeline, label=label))
+                changed = any(changes)
+
+            if not changed:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Label [{0:s}] not {1:s}'.format(
+                        ', '.join(labels), label_action))
+
+            db_session.add(timeline)
+            db_session.commit()
+            return HTTP_STATUS_CODE_OK
 
         timeline.name = form.name.data
         timeline.description = form.description.data

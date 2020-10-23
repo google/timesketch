@@ -13,7 +13,7 @@ docker-compose up -d
 
 The provided container definition runs Timesketch in development mode as a volume from your cloned repo. Any changes you make will appear in Timesketch automatically.
 
-If you see the folowing message you can continue
+If you see the following message you can continue
 
 ```
 Timesketch development server is ready!
