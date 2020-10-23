@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """This module holds utility functions for the version 1 of the API."""
-
-from __future__ import unicode_literals
-
+import logging
 import json
 import time
 
@@ -26,6 +24,9 @@ import altair as alt
 from timesketch.lib import ontology
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+
+
+logger = logging.getLogger('timesketch.api_utils')
 
 
 def bad_request(message):
@@ -51,18 +52,26 @@ def get_sketch_attributes(sketch):
             continue
         name = container.name
         container_attributes = []
+        ontology_set = set()
         for attribute in container.attributes:
-            ontology_dict = ontology_def.get(attribute.ontology, {})
+            ontology_string = attribute.ontology
+            ontology_set.add(ontology_string)
+            ontology_dict = ontology_def.get(ontology_string, {})
             cast_as_str = ontology_dict.get('cast_as', 'str')
             value = ontology.cast_variable(attribute.value, cast_as_str)
             container_attributes.append(value)
 
+        if len(ontology_set) > 1:
+            logger.error(
+                'There should only be a single ontology per attribute')
+
+        ontology_use = list(ontology_set)[0]
         if len(container_attributes) == 1:
             attributes.append(
-                (name, container_attributes[0], attribute.ontology))
+                (name, container_attributes[0], ontology_use))
         else:
             attributes.append(
-                (name, container_attributes, attribute.ontology))
+                (name, container_attributes, ontology_use))
     return attributes
 
 

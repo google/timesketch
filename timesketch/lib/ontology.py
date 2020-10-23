@@ -13,8 +13,6 @@
 # limitations under the License.
 """Ontology for attributes as well as related functions."""
 
-import yaml
-
 from timesketch.lib.analyzers import interface
 
 
