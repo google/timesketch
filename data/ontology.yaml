@@ -21,3 +21,10 @@ url.bad:
         cast_as: str
         description: "URL related to a sketch."
 
+float:
+        cast_as: float
+        description: "Float."
+
+bool:
+        case_as: bool
+        description: "Boolean, True or False values."
