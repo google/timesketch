@@ -13,17 +13,40 @@
 # limitations under the License.
 """Ontology for attributes as well as related functions."""
 
+import yaml
 
-# Define the ontology that is available for Timesketch.
-ONTOLOGY = {
-    'text': {
-        'cast_as': str,
-        'description': 'Free flowing text.'},
-    'url.safe': {
-        'cast_as': str,
-        'description': 'Safe URL that can be visited.'},
-    'url.bad': {
-        'cast_as': str,
-        'description': 'URL related to a sketch.'},
-}
+from timesketch.lib.analyzers import interface
 
+
+def ontology():
+    """Return a dict with the ontology definitions."""
+    return interface.get_yaml_config('ontology.yaml')
+
+
+def cast_variable(value, cast_as_str):
+    """Cast a variable and return it.
+
+    Args:
+      value (str): Value as a string.
+      cast_as_str (str): The type to cast it as.
+
+    Returns:
+      The value cast as cast_as_str defines.
+    """
+    if cast_as_str == 'str':
+        return value
+
+    if cast_as_str == 'int':
+        return int(value)
+
+    if cast_as_str == 'float':
+        return float(value)
+
+    if cast_as_str == 'bool':
+        return bool(value == 'True')
+
+    # TODO: Support more casting.
+    return value
+
+
+ONTOLOGY = ontology()

@@ -21,7 +21,6 @@ from flask import current_app
 from flask import url_for
 
 from sqlalchemy import Column
-from sqlalchemy import Enum
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import Unicode
@@ -568,8 +567,7 @@ class AttributeContainer(BaseModel):
     attributes = relationship(
         'Attribute', backref='attributecontainer', lazy='select')
 
-    def __init__(
-        self, user, sketch, name):
+    def __init__(self, user, sketch, name):
         """Initialize the AttributeContainer object.
 
         Args:

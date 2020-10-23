@@ -15,7 +15,6 @@
 
 import logging
 
-from flask import jsonify
 from flask import request
 from flask import abort
 from flask_restful import Resource
@@ -131,7 +130,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
                     'Missing values from the request.')
 
             if not isinstance(values, (list, tuple)):
-               return abort(
+                return abort(
                     HTTP_STATUS_CODE_BAD_REQUEST, 'Values needs to be a list.')
 
             if any([not isinstance(x, str) for x in values]):

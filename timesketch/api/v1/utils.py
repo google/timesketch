@@ -45,20 +45,24 @@ def bad_request(message):
 def get_sketch_attributes(sketch):
     """Returns a list of attributes of a sketch."""
     attributes = []
+    ontology_def = ontology.ONTOLOGY
     for container in sketch.attributes:
         if container.sketch_id != sketch.id:
             continue
         name = container.name
         container_attributes = []
         for attribute in container.attributes:
-            ontology_dict = ontology.ONTOLOGY.get(attribute.ontology, {})
-            cast_as = ontology_dict.get('cast_as', str)
-            container_attribtes.append(cast_as(attribute.value))
+            ontology_dict = ontology_def.get(attribute.ontology, {})
+            cast_as_str = ontology_dict.get('cast_as', 'str')
+            value = ontology.cast_variable(attribute.value, cast_as_str)
+            container_attributes.append(value)
 
         if len(container_attributes) == 1:
-            attributes.append((name, container_attributes[0]))
+            attributes.append(
+                (name, container_attributes[0], attribute.ontology))
         else:
-            attributes.append((name, container_attributes))
+            attributes.append(
+                (name, container_attributes, attribute.ontology))
     return attributes
 
 

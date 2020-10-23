@@ -240,8 +240,8 @@ class Sketch(resource.BaseResource):
             name (str): The name of the attribute.
             values (list): A list of string values of the attribute.
             ontology (str): The ontology (matches with
-                timesketch/lib/ontology.py:ONTOLOGY), which defines
-                how the attribute is interpreted.
+                /etc/ontology.yaml), which defines how the attribute
+                is interpreted.
 
         Raises:
             ValueError: If any of the parameters are of the wrong type.
@@ -284,7 +284,7 @@ class Sketch(resource.BaseResource):
             name (str): The name of the attribute.
             value (str): Value of the attribute, stored as a string.
             ontology (str): The ontology (matches with
-                timesketch/lib/ontology.py:ONTOLOGY), which defines
+                /etc/timesketch/ontology.yaml), which defines
                 how the attribute is interpreted.
 
         Raises:
