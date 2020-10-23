@@ -253,3 +253,20 @@ Command:
 ```shell
 tsctl similarity_score
 ```
+
+### Upgrade DB After Schema Change
+
+
+After changin the schema for the database a revision file needs to be generated.
+To generate the file use the command:
+
+
+```shell
+tsctl db revision --autogenerate -m "attributes"
+```
+
+And the to upgrade the database
+
+```shell
+tsctl db upgrade
+```
