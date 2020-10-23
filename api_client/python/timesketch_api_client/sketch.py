@@ -77,6 +77,13 @@ class Sketch(resource.BaseResource):
         return json.loads(permission_string)
 
     @property
+    def attributes(self):
+        """Property that returns the sketch attributes."""
+        data = self.lazyload_data()
+        meta = data.get('meta', {})
+        return meta.get('attributes', [])
+
+    @property
     def labels(self):
         """Property that returns the sketch labels."""
         if self._labels:

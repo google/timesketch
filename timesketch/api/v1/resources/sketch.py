@@ -31,6 +31,7 @@ from sqlalchemy import not_
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
 from timesketch.lib import forms
+from timesketch.lib import ontology
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -296,6 +297,22 @@ class SketchResource(resources.ResourceMixin, Resource):
             }
             views.append(view)
 
+        attributes = []
+        for container in sketch.attributes:
+            if container.sketch_id != sketch.id:
+                continue
+            name = container.name
+            container_attributes = []
+            for attribute in container.attributes:
+                ontology_dict = ontology.ONTOLOGY.get(attribute.ontology, {})
+                cast_as = ontology_dict.get('cast_as', str)
+                container_attribtes.append(cast_as(attribute.value))
+
+            if len(container_attributes) == 1:
+                attributes.append((name, container_attributes[0]))
+            else:
+                attributes.append((name, container_attributes))
+
         meta = dict(
             aggregators=aggregators,
             views=views,
@@ -317,6 +334,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             analyzers=[
                 x for x, y in analyzer_manager.AnalysisManager.get_analyzers()
             ],
+            attributes=attributes,
             mappings=list(mappings),
             stats=stats_per_index
         )
