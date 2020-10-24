@@ -28,6 +28,11 @@ logsources:
       data_type:
         - "apache:access"
         - "iis:log:line"
+  santa:
+    category: osx_santa
+    conditions:
+      data_type:
+        - "filesystem:santa:entry"
   shell:
     service: shell
     conditions:
@@ -35,6 +40,12 @@ logsources:
         - "shell:zsh:history"
         - "bash:history:command"
         - "apt:history:line"
+        - "selinux:line"
+  selinux:
+    service: selinux
+    conditions:
+      data_type:
+        - "selinux:line"
   winprefetch:
     service: winprefetch
     conditions:
