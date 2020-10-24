@@ -52,7 +52,7 @@ def init_db():
     """Initialize the database based on the implemented models. This will setup
     the database on the first run.
     """
-    #BaseModel.metadata.create_all(bind=engine)
+    BaseModel.metadata.create_all(bind=engine)
     BaseModel.query = db_session.query_property()
     return BaseModel
 
