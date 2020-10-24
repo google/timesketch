@@ -260,13 +260,13 @@ tsctl similarity_score
 After changin the schema for the database a revision file needs to be generated.
 To generate the file use the command:
 
-
 ```shell
-tsctl db revision --autogenerate -m "attributes"
+tsctl db stamp head
+tsctl db upgrade
 ```
 
-And the to upgrade the database
+This makes sure that the database is current. Then create a revision file:
 
 ```shell
-tsctl db upgrade
+tsctl db migrate -m "<message>"
 ```
