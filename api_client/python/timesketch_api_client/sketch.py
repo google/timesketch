@@ -134,6 +134,19 @@ class Sketch(resource.BaseResource):
         meta = data.get('meta', {})
         return meta.get('attributes', [])
 
+
+    @property
+    def attributes_table(self):
+        """Property that returns the sketch attributes as a data frame."""
+        data = self.lazyload_data()
+        meta = data.get('meta', {})
+        attributes = meta.get('attributes', [])
+
+        data_frame = pandas.DataFrame(attributes)
+        data_frame.columns = ['name', 'attributes', 'ontology']
+
+        return data_frame
+
     @property
     def description(self):
         """Property that returns sketch description.
