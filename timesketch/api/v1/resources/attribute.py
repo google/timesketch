@@ -39,7 +39,7 @@ logger = logging.getLogger('timesketch.sketch_api')
 class AttributeResource(resources.ResourceMixin, Resource):
     """Resource for sketch attributes."""
 
-    def _check_form_entry(self, form, key_to_check):
+    def _validate_form_entry(self, form, key_to_check):
         """Check a form value and return an error string if applicable.
 
         Args:
