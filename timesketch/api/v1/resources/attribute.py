@@ -108,7 +108,7 @@ class AttributeResource(resources.ResourceMixin, Resource):
                 'sketch without any data submitted.')
 
         for check in ['name', 'ontology']:
-            error_message = self._check_form_entry(form, check)
+            error_message = self._validate_form_entry(form, check)
             if error_message:
                 return abort(
                     HTTP_STATUS_CODE_BAD_REQUEST, error_message)
