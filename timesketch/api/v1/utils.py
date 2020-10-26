@@ -57,7 +57,11 @@ def get_sketch_attributes(sketch):
         cast_as_str = ontology_dict.get('cast_as', 'str')
 
         for attribute in container.attributes:
-            value = ontology.cast_variable(attribute.value, cast_as_str)
+            try:
+                value = ontology.cast_variable(attribute.value, cast_as_str)
+            except TypeError:
+                value = 'Unable to cast'
+
             container_attributes.append(value)
 
         if len(container_attributes) == 1:

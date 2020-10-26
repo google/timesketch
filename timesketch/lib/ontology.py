@@ -28,9 +28,16 @@ def cast_variable(value, cast_as_str):
       value (str): Value as a string.
       cast_as_str (str): The type to cast it as.
 
+    Raises
+      TypeError: If the value isn't already a string.
+
     Returns:
       The value cast as cast_as_str defines.
     """
+    if not isinstance(value, str):
+        raise TypeError('Value needs to be a string, not {0!s}'.format(
+            type(value)))
+
     if cast_as_str == 'str':
         return value
 
