@@ -50,8 +50,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     events = relationship('Event', backref='sketch', lazy='select')
     stories = relationship('Story', backref='sketch', lazy='select')
     aggregations = relationship('Aggregation', backref='sketch', lazy='select')
-    attributes = relationship(
-        'AttributeContainer', backref='sketch', lazy='select')
+    attributes = relationship('Attribute', backref='sketch', lazy='select')
     aggregationgroups = relationship(
         'AggregationGroup', backref='sketch', lazy='select')
     analysis = relationship('Analysis', backref='sketch', lazy='select')
@@ -559,17 +558,17 @@ class AnalysisSession(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         self.sketch = sketch
 
 
-class AttributeContainer(BaseModel):
-    """Implements the attribute container model."""
+class Attribute(BaseModel):
+    """Implements the attribute model."""
     user_id = Column(Integer, ForeignKey('user.id'))
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     name = Column(UnicodeText())
     ontology = Column(UnicodeText())
-    attributes = relationship(
-        'Attribute', backref='attributecontainer', lazy='select')
+    values = relationship(
+        'AttributeValue', backref='attribute', lazy='select')
 
     def __init__(self, user, sketch, name, ontology):
-        """Initialize the AttributeContainer object.
+        """Initialize the Attribute object.
 
         Args:
             user (User): The user who created the attribute
@@ -578,33 +577,31 @@ class AttributeContainer(BaseModel):
             ontology (str): The ontology of the value, The values that can
                 be used are defined in timesketch/lib/ontology.py (ONTOLOGY).
         """
-        super(AttributeContainer, self).__init__()
+        super(Attribute, self).__init__()
         self.user = user
         self.sketch = sketch
         self.name = name
         self.ontology = ontology
 
 
-class Attribute(BaseModel):
-    """Implements the attribute model."""
+class AttributeValue(BaseModel):
+    """Implements the attribute value model."""
     user_id = Column(Integer, ForeignKey('user.id'))
-    attributecontainer_id = Column(
-        Integer, ForeignKey('attributecontainer.id'))
+    attribute_id = Column(Integer, ForeignKey('attribute.id'))
     value = Column(UnicodeText())
 
     def __init__(
-            self, user, attributecontainer, value):
-        """Initialize the Attribute object.
+            self, user, attribute, value):
+        """Initialize the Attribute value object.
 
         Args:
-            user (User): The user who created the attribute
-            attributecontainer (AttributeContainer): The attribute container
-                this attribute is bound to.
+            user (User): The user who created the attribute value.
+            attribute (Attribute): The attribute this value is bound to.
             value (str): a string that contains the value for the attribute.
-                The ontology couold influence how this will be cast when
+                The ontology could influence how this will be cast when
                 interpreted.
         """
-        super(Attribute, self).__init__()
+        super(AttributeValue, self).__init__()
         self.user = user
-        self.attributecontainer = attributecontainer
+        self.attribute = attribute
         self.value = value

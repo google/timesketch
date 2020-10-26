@@ -28,8 +28,8 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import db_session
-from timesketch.models.sketch import AttributeContainer
 from timesketch.models.sketch import Attribute
+from timesketch.models.sketch import AttributeValue
 from timesketch.models.sketch import Sketch
 
 
@@ -138,30 +138,30 @@ class AttributeResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     'All values needs to be stored as strings.')
 
-            for container in sketch.attributes:
-                if container.name == name:
+            for attribute in sketch.attributes:
+                if attribute.name == name:
                     return abort(
                         HTTP_STATUS_CODE_BAD_REQUEST,
                         'Unable to add the attribute, it already exists.')
 
-            container = AttributeContainer(
+            attribute = Attribute(
                 user=current_user,
                 sketch=sketch,
                 name=name,
                 ontology=ontology)
-            db_session.add(container)
+            db_session.add(attribute)
             db_session.commit()
 
             for value in values:
-                attribute = Attribute(
+                attribute_value = AttributeValue(
                     user=current_user,
-                    attributecontainer=container,
+                    attribute=attribute,
                     value=value)
-                container.attributes.append(attribute)
-                db_session.add(attribute)
+                attribute.values.append(attribute_value)
+                db_session.add(attribute_value)
                 db_session.commit()
 
-            db_session.add(container)
+            db_session.add(attribute)
             db_session.commit()
 
             return HTTP_STATUS_CODE_OK
@@ -170,12 +170,16 @@ class AttributeResource(resources.ResourceMixin, Resource):
             return abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to proceed.')
 
-        for container in sketch.attributes:
-            if container.name != name:
+        for attribute in sketch.attributes:
+            if attribute.name != name:
                 continue
-            for attribute in container.attributes:
-                container.attributes.remove(attribute)
-            sketch.attributes.remove(container)
+            for value in attribute.values:
+                attribute.values.remove(value)
+            sketch.attributes.remove(attribute)
             db_session.commit()
 
-        return HTTP_STATUS_CODE_OK
+            return HTTP_STATUS_CODE_OK
+
+        return abort(
+            HTTP_STATUS_CODE_BAD_REQUEST,
+            'Unable to delete the attribute, couldn\'t find it.')

@@ -47,29 +47,29 @@ def get_sketch_attributes(sketch):
     """Returns a list of attributes of a sketch."""
     attributes = []
     ontology_def = ontology.ONTOLOGY
-    for container in sketch.attributes:
-        if container.sketch_id != sketch.id:
+    for attribute in sketch.attributes:
+        if attribute.sketch_id != sketch.id:
             continue
-        name = container.name
-        container_attributes = []
-        ontology_string = container.ontology
+        name = attribute.name
+        attribute_values = []
+        ontology_string = attribute.ontology
         ontology_dict = ontology_def.get(ontology_string, {})
         cast_as_str = ontology_dict.get('cast_as', 'str')
 
-        for attribute in container.attributes:
+        for attr_value in attribute.values:
             try:
-                value = ontology.cast_variable(attribute.value, cast_as_str)
+                value = ontology.cast_variable(attr_value.value, cast_as_str)
             except TypeError:
                 value = 'Unable to cast'
 
-            container_attributes.append(value)
+            attribute_values.append(value)
 
-        if len(container_attributes) == 1:
+        if len(attribute_values) == 1:
             attributes.append(
-                (name, container_attributes[0], ontology_string))
+                (name, attribute_values[0], ontology_string))
         else:
             attributes.append(
-                (name, container_attributes, ontology_string))
+                (name, attribute_values, ontology_string))
     return attributes
 
 
