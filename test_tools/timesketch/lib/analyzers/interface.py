@@ -486,6 +486,24 @@ class Sketch(object):
         view = VIEW_OBJECT(1, name)
         return view
 
+    def add_sketch_attribute(self, name, values, ontology='text'):
+        """Add an attribute to the sketch.
+
+        Args:
+            name (str): The name of the attribute
+            values (list): A list of strings, which contains the values of the
+                attribute.
+            ontology (str): Ontology of the attribute, matches with
+                data/ontology.yaml.
+        """
+        params = {
+            'name': name,
+            'values': values,
+            'ontology': ontology,
+        }
+        change = SKETCH_CHANGE('ADD', 'sketch_attribute', params)
+        self.updates.append(change)
+
     def add_story(self, title):
         """Add a story to the Sketch.
 

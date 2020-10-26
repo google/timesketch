@@ -404,6 +404,41 @@ class Sketch(object):
         db_session.commit()
         return view
 
+    def add_sketch_attribute(self, name, values, ontology='text'):
+        """Add an attribute to the sketch.
+
+        Args:
+            name (str): The name of the attribute
+            values (list): A list of strings, which contains the values of the
+                attribute.
+            ontology (str): Ontology of the attribute, matches with
+                data/ontology.yaml.
+        """
+        # Check first whether the attribute already exists.
+        attribute = Attribute.query.filter_by(name=name).first()
+
+        if not attribute:
+            attribute = Attribute(
+                user=None,
+                sketch=self.sql_sketch,
+                name=name,
+                ontology=ontology)
+            db_session.add(attribute)
+            db_session.commit()
+
+        for value in values:
+            attribute_value = AttributeValue(
+                user=None,
+                attribute=attribute,
+                value=value)
+
+            attribute.values.append(attribute_value)
+            db_session.add(attribute_value)
+            db_session.commit()
+
+        db_session.add(attribute)
+        db_session.commit()
+
     def add_story(self, title):
         """Add a story to the Sketch.
 
