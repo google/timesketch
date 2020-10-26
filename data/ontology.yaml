@@ -19,7 +19,11 @@ url.safe:
 
 url.bad:
         cast_as: str
-        description: "URL related to a sketch."
+        description: "URL related to a sketch, can morph into a search."
+
+domain:
+        cast_as: str
+        description: "Domain related to a sketch, can morp into a search."
 
 float:
         cast_as: float
