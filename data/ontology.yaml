@@ -7,7 +7,7 @@
 
 text:
         cast_as: str
-        description: "Free flowing text."
+        description: "Free form text."
 
 int:
         case_as: int

@@ -572,8 +572,8 @@ class AttributeContainer(BaseModel):
         """Initialize the AttributeContainer object.
 
         Args:
-            user (User): The user who created the aggregation
-            sketch (Sketch): The sketch that the aggregation is bound to
+            user (User): The user who created the attribute
+            sketch (Sketch): The sketch that the attribute is bound to
             name (str): the name of the attribute.
             ontology (str): The ontology of the value, The values that can
                 be used are defined in timesketch/lib/ontology.py (ONTOLOGY).
@@ -597,7 +597,7 @@ class Attribute(BaseModel):
         """Initialize the Attribute object.
 
         Args:
-            user (User): The user who created the aggregation
+            user (User): The user who created the attribute
             attributecontainer (AttributeContainer): The attribute container
                 this attribute is bound to.
             value (str): a string that contains the value for the attribute.

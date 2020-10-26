@@ -1,4 +1,4 @@
-"""Attributes
+"""Support for sketch attributes
 
 Revision ID: fc7bc5c66c63
 Revises: c380f6dff0bd
