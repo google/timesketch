@@ -31,6 +31,8 @@ from timesketch.lib import definitions
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models import db_session
 from timesketch.models.sketch import Aggregation
+from timesketch.models.sketch import Attribute
+from timesketch.models.sketch import AttributeValue
 from timesketch.models.sketch import AggregationGroup as SQLAggregationGroup
 from timesketch.models.sketch import Event as SQLEvent
 from timesketch.models.sketch import Sketch as SQLSketch
@@ -403,6 +405,41 @@ class Sketch(object):
         db_session.add(view)
         db_session.commit()
         return view
+
+    def add_sketch_attribute(self, name, values, ontology='text'):
+        """Add an attribute to the sketch.
+
+        Args:
+            name (str): The name of the attribute
+            values (list): A list of strings, which contains the values of the
+                attribute.
+            ontology (str): Ontology of the attribute, matches with
+                data/ontology.yaml.
+        """
+        # Check first whether the attribute already exists.
+        attribute = Attribute.query.filter_by(name=name).first()
+
+        if not attribute:
+            attribute = Attribute(
+                user=None,
+                sketch=self.sql_sketch,
+                name=name,
+                ontology=ontology)
+            db_session.add(attribute)
+            db_session.commit()
+
+        for value in values:
+            attribute_value = AttributeValue(
+                user=None,
+                attribute=attribute,
+                value=value)
+
+            attribute.values.append(attribute_value)
+            db_session.add(attribute_value)
+            db_session.commit()
+
+        db_session.add(attribute)
+        db_session.commit()
 
     def add_story(self, title):
         """Add a story to the Sketch.

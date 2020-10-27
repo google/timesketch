@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """This module holds utility functions for the version 1 of the API."""
-
-from __future__ import unicode_literals
-
+import logging
 import json
 import time
 
@@ -23,8 +21,12 @@ from flask import jsonify
 
 import altair as alt
 
+from timesketch.lib import ontology
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+
+
+logger = logging.getLogger('timesketch.api_utils')
 
 
 def bad_request(message):
@@ -39,6 +41,36 @@ def bad_request(message):
     response = jsonify({'message': message})
     response.status_code = HTTP_STATUS_CODE_BAD_REQUEST
     return response
+
+
+def get_sketch_attributes(sketch):
+    """Returns a list of attributes of a sketch."""
+    attributes = []
+    ontology_def = ontology.ONTOLOGY
+    for attribute in sketch.attributes:
+        if attribute.sketch_id != sketch.id:
+            continue
+        name = attribute.name
+        attribute_values = []
+        ontology_string = attribute.ontology
+        ontology_dict = ontology_def.get(ontology_string, {})
+        cast_as_str = ontology_dict.get('cast_as', 'str')
+
+        for attr_value in attribute.values:
+            try:
+                value = ontology.cast_variable(attr_value.value, cast_as_str)
+            except TypeError:
+                value = 'Unable to cast'
+
+            attribute_values.append(value)
+
+        if len(attribute_values) == 1:
+            attributes.append(
+                (name, attribute_values[0], ontology_string))
+        else:
+            attributes.append(
+                (name, attribute_values, ontology_string))
+    return attributes
 
 
 def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None,
