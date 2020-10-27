@@ -297,7 +297,9 @@ class TimesketchApi(object):
         if auth_mode == 'http-basic':
             session.auth = (username, password)
 
-        session.verify = verify  # Depending if SSL cert is verifiable
+        # SSL Cert verification is turned on by default.
+        if not verify:
+            session.verify = False
 
         # Get and set CSRF token and authenticate the session if appropriate.
         self._set_csrf_token(session)

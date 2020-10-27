@@ -14,7 +14,7 @@
 """Version information for Timesketch API Client."""
 
 
-__version__ = '20201023'
+__version__ = '20201027'
 
 
 def get_version():

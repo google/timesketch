@@ -130,20 +130,24 @@ class Sketch(resource.BaseResource):
     @property
     def attributes(self):
         """Property that returns the sketch attributes."""
-        data = self.lazyload_data()
+        data = self.lazyload_data(refresh_cache=True)
         meta = data.get('meta', {})
-        return meta.get('attributes', [])
+        return_dict = {}
+        for items in meta.get('attributes', []):
+            name, values, ontology = items
+            return_dict[name] = (values, ontology)
 
+        return return_dict
 
     @property
     def attributes_table(self):
         """Property that returns the sketch attributes as a data frame."""
-        data = self.lazyload_data()
+        data = self.lazyload_data(refresh_cache=True)
         meta = data.get('meta', {})
         attributes = meta.get('attributes', [])
 
         data_frame = pandas.DataFrame(attributes)
-        data_frame.columns = ['name', 'attributes', 'ontology']
+        data_frame.columns = ['attribute', 'values', 'ontology']
 
         return data_frame
 
