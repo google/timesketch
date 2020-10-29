@@ -1,8 +1,6 @@
 from timesketch.lib.graphs.interface import BaseGraph
 from timesketch.lib.graphs import manager
-import json
 import networkx as nx
-from networkx.readwrite.json_graph import cytoscape_data
 
 
 class WinLoginsGraph(BaseGraph):
@@ -19,18 +17,20 @@ class WinLoginsGraph(BaseGraph):
 
         # Generator of events based on your query.
         events = self.event_stream(
-            query_string=query, return_fields=return_fields, indices=['7ec551b2f04f4eb09d68ad395dde2e43'])
+            query_string=query, return_fields=return_fields, indices=['_all'])
 
-        G = nx.DiGraph()
+        graph = nx.DiGraph()
         for event in events:
             computer_name = event['_source'].get('computer_name')
             username = event['_source'].get('username')
             logon_type = event['_source'].get('logon_type')
-            G.add_node(computer_name)
-            G.add_node(username)
-            G.add_edge(username, computer_name, logon_type=logon_type)
+            graph.add_node(computer_name, label=computer_name, type='computer')
+            graph.add_node(username, label=username, type='username')
+            graph.add_edge(username, computer_name, label=logon_type)
 
-        print(json.dumps(cytoscape_data(G), indent=2))
+        cytoscape_json = nx.readwrite.json_graph.cytoscape_data(graph)
+        #return cytoscape_json.get('elements', [])
+        return graph
 
 
 manager.GraphManager.register_graph(WinLoginsGraph)

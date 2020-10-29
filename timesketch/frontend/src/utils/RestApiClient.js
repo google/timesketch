@@ -260,5 +260,8 @@ export default {
   },
   getLoggedInUser () {
     return RestApiClient.get('/users/me/')
+  },
+  getGraph (sketchId) {
+    return  RestApiClient.get('/sketches/' + sketchId + /graph/)
   }
 }
