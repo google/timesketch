@@ -157,15 +157,19 @@ class ExploreResource(resources.ResourceMixin, Resource):
             result = self.datastore.client.scroll(
                 scroll_id=scroll_id, scroll='1m')
         else:
-            result = self.datastore.search(
-                sketch_id,
-                form.query.data,
-                query_filter,
-                query_dsl,
-                indices,
-                aggregations=index_stats_agg,
-                return_fields=return_fields,
-                enable_scroll=enable_scroll)
+            try:
+                result = self.datastore.search(
+                    sketch_id,
+                    form.query.data,
+                    query_filter,
+                    query_dsl,
+                    indices,
+                    aggregations=index_stats_agg,
+                    return_fields=return_fields,
+                    enable_scroll=enable_scroll)
+            except ValueError as e:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST, e)
 
         # Get number of matching documents per index.
         count_per_index = {}
