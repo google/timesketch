@@ -491,6 +491,7 @@ class Story(resource.BaseResource):
                     group_obj.from_store(block.group_id)
                     block.feed(group_obj)
                 self._blocks.append(block)
+                index += 1
         return self._blocks
 
     @property

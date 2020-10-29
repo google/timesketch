@@ -126,6 +126,8 @@ class CreateTimelineForm(BaseForm):
 
 class TimelineForm(NameDescriptionForm):
     """Form to edit a timeline."""
+    labels = StringField('Labels', validators=[Optional()])
+    label_action = StringField('LabelAction', validators=[Optional()])
     color = StringField(
         'Color',
         validators=[DataRequired(),
@@ -216,6 +218,8 @@ class EventAnnotationForm(BaseForm):
     annotation = StringField('Annotation', validators=[DataRequired()])
     annotation_type = StringField('Type', validators=[DataRequired()])
     events = StringField('Events', validators=[DataRequired()])
+    remove = BooleanField(
+        'Remove', false_values={False, 'false', ''}, default=False)
 
 
 class StoryForm(BaseForm):

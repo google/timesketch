@@ -64,7 +64,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         # Check if search index already exists.
         searchindex = SearchIndex.query.filter_by(
             name=timeline_name,
-            description=timeline_name,
             user=current_user,
             index_name=index_name).first()
 
