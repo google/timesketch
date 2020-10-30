@@ -56,6 +56,12 @@ def get_client(config_dict=None, config_path='', token_password=''):
     try:
         configure_missing_parameters(assistant, token_password)
         return assistant.get_client(token_password=token_password)
+    except (RuntimeError, requests.ConnectionError) as e:
+        logger.error(
+            'Unable to connect to the Timesketch server, are you '
+            'connected to the network? Is the timesketch server '
+            'running and accessible from your host? The error '
+            'message is %s', e)
     except IOError as e:
         logger.error('Unable to get a client, with error: %s', e)
         logger.error(
@@ -64,12 +70,6 @@ def get_client(config_dict=None, config_path='', token_password=''):
             'credential section in ~/.timesketchrc or to remove '
             'both files. Or you could have supplied a wrong '
             'password to undecrypt the token file.')
-    except RuntimeError, requests.ConnectionError as e:
-        logger.error(
-            'Unable to connect to the Timesketch server, are you '
-            'connected to the network? Is the timesketch server '
-            'running and accessible from your host? The error '
-            'message is %s', e)
 
 
 def configure_missing_parameters(config_assistant, token_password=''):
