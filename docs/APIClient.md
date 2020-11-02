@@ -4,7 +4,7 @@ The API client is a set of Python libraries that can be used to interact with th
 care of setting up authentication, sending the API calls to the server, error handling, and presentation.
 
 This documentation will give an overview for the most common use cases of the API client. Some available methods will not be covered in this documentation
-whereas others will be documented further in a notebook. (TODO: Create a notebook and link to it here).
+whereas others will be documented further in a notebook (e.g. [colab-timesketch-demo notebook](/notebooks/colab-timesketch-demo.ipynb)).
  
 ## Basic Connections
 
@@ -216,3 +216,7 @@ The sketch object can be used to do several other actions that are not documente
 + Delete a sketch
 + Export the sketch data
 + Run analyzers on the sketch.
+
+## Examples
+
+There are several examples using the API client in the [notebooks folder](../notebooks/) in the Github repository.
