@@ -50,6 +50,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     events = relationship('Event', backref='sketch', lazy='select')
     stories = relationship('Story', backref='sketch', lazy='select')
     aggregations = relationship('Aggregation', backref='sketch', lazy='select')
+    attributes = relationship('Attribute', backref='sketch', lazy='select')
     aggregationgroups = relationship(
         'AggregationGroup', backref='sketch', lazy='select')
     analysis = relationship('Analysis', backref='sketch', lazy='select')
@@ -555,3 +556,52 @@ class AnalysisSession(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         super(AnalysisSession, self).__init__()
         self.user = user
         self.sketch = sketch
+
+
+class Attribute(BaseModel):
+    """Implements the attribute model."""
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    name = Column(UnicodeText())
+    ontology = Column(UnicodeText())
+    values = relationship(
+        'AttributeValue', backref='attribute', lazy='select')
+
+    def __init__(self, user, sketch, name, ontology):
+        """Initialize the Attribute object.
+
+        Args:
+            user (User): The user who created the attribute
+            sketch (Sketch): The sketch that the attribute is bound to
+            name (str): the name of the attribute.
+            ontology (str): The ontology of the value, The values that can
+                be used are defined in timesketch/lib/ontology.py (ONTOLOGY).
+        """
+        super(Attribute, self).__init__()
+        self.user = user
+        self.sketch = sketch
+        self.name = name
+        self.ontology = ontology
+
+
+class AttributeValue(BaseModel):
+    """Implements the attribute value model."""
+    user_id = Column(Integer, ForeignKey('user.id'))
+    attribute_id = Column(Integer, ForeignKey('attribute.id'))
+    value = Column(UnicodeText())
+
+    def __init__(
+            self, user, attribute, value):
+        """Initialize the Attribute value object.
+
+        Args:
+            user (User): The user who created the attribute value.
+            attribute (Attribute): The attribute this value is bound to.
+            value (str): a string that contains the value for the attribute.
+                The ontology could influence how this will be cast when
+                interpreted.
+        """
+        super(AttributeValue, self).__init__()
+        self.user = user
+        self.attribute = attribute
+        self.value = value

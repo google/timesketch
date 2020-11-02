@@ -24,6 +24,7 @@ from .resources.aggregation import AggregationResource
 from .resources.analysis import AnalysisResource
 from .resources.analysis import AnalyzerRunResource
 from .resources.analysis import AnalyzerSessionResource
+from .resources.attribute import AttributeResource
 from .resources.explore import ExploreResource
 from .resources.event import EventResource
 from .resources.event import EventAnnotationResource
@@ -78,6 +79,7 @@ API_ROUTES = [
     (EventAnnotationResource, '/sketches/<int:sketch_id>/event/annotate/'),
     (EventCreateResource, '/sketches/<int:sketch_id>/event/create/'),
     (ViewListResource, '/sketches/<int:sketch_id>/views/'),
+    (AttributeResource, '/sketches/<int:sketch_id>/attribute/'),
     (ViewResource, '/sketches/<int:sketch_id>/views/<int:view_id>/'),
     (SearchTemplateListResource, '/searchtemplate/'),
     (SearchTemplateResource, '/searchtemplate/<int:searchtemplate_id>/'),
