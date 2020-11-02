@@ -741,7 +741,7 @@ class Sketch(resource.BaseResource):
         """Return a stored aggregation group.
 
         Args:
-            goup_id: id of the stored aggregation group.
+            group_id: id of the stored aggregation group.
 
         Returns:
             An aggregation group object (instance of AggregationGroup)
