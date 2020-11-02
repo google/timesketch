@@ -29,7 +29,7 @@ limitations under the License.
           v-model="isDarkTheme"
           v-on:input="switchTheme"
           size="is-small"
-          passive-type='is-warning'
+          passive-type='is-dark'
           type='is-dark'>
           Dark Mode
         </b-switch>

@@ -33,7 +33,7 @@ class WinServiceGraph(BaseGraph):
             graph.add_edge(service_name, computer_name, label=service_type)
 
         cytoscape_json = nx.readwrite.json_graph.cytoscape_data(graph)
-        #return cytoscape_json.get('elements', [])
-        return graph
+        return cytoscape_json.get('elements', [])
+
 
 manager.GraphManager.register_graph(WinServiceGraph)

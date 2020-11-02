@@ -14,7 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
+  <div>
+    <section class="section">
+        <div class="container is-fluid">
+          <ts-navbar-secondary currentAppContext="sketch" currentPage="graph"></ts-navbar-secondary>
+        </div>
+    </section>
     <ts-graph></ts-graph>
+  </div>
 </template>
 
 <script>

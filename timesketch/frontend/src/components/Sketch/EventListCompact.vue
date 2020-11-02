@@ -21,13 +21,14 @@ limitations under the License.
       <th v-for="(field, index) in selectedFields" :key="index">{{ field.field }}</th>
       <th width="150">Timeline name</th>
     </thead>
-    <ts-sketch-explore-event-list-row v-for="(event, index) in eventList.objects"
-                                      :key="index"
-                                      :event="event"
-                                      :prevEvent="eventList.objects[index - 1]"
-                                      :selected-fields="selectedFields"
-                                      :display-options="displayOptions"
-                                      :display-controls="false">
+    <ts-sketch-explore-event-list-row
+      v-for="(event, index) in eventList.objects"
+      :key="index"
+      :event="event"
+      :prevEvent="eventList.objects[index - 1]"
+      :selected-fields="selectedFields"
+      :display-options="displayOptions"
+      :display-controls="false">
     </ts-sketch-explore-event-list-row>
   </table>
 </template>
@@ -40,11 +41,9 @@ export default {
   components: {
     TsSketchExploreEventListRow
   },
-  props: ['view'],
+  props: ['view', 'queryString', 'queryFilter'],
   data () {
     return {
-      queryString: '',
-      queryFilter: {},
       eventList: [],
       selectedFields: [],
       displayOptions: {
@@ -62,11 +61,17 @@ export default {
     }
   },
   methods: {
-    search: function () {
-      let formData = {
-        'query': this.queryString,
-        'filter': this.queryFilter
+    search: function (queryString, queryFilter={}) {
+      if (!Object.keys(queryFilter).length) {
+        queryFilter = {}
+        this.selectedFields = [{field: 'message', type: 'text'}]
       }
+
+      let formData = {
+        'query': queryString,
+        'filter': queryFilter
+      }
+
       ApiClient.search(this.sketch.id, formData).then((response) => {
         this.eventList = response.data
       }).catch((e) => {})
@@ -74,18 +79,28 @@ export default {
     searchView: function (viewId) {
       ApiClient.getView(this.sketch.id, viewId).then((response) => {
         let view = response.data.objects[0]
-        this.queryString = view.query_string
-        this.queryFilter = JSON.parse(view.query_filter)
-        if (!this.queryFilter.fields || !this.queryFilter.fields.length) {
-          this.queryFilter.fields = [{field: 'message', type: 'text'}]
+        let queryString = view.query_string
+        let queryFilter = JSON.parse(view.query_filter)
+        if (!queryFilter.fields || !queryFilter.fields.length) {
+          queryFilter.fields = [{field: 'message', type: 'text'}]
         }
-        this.selectedFields = this.queryFilter.fields
-        this.search()
+        this.selectedFields = queryFilter.fields
+        this.search(queryString, queryFilter)
       }).catch((e) => {})
     }
   },
   created: function () {
-    this.searchView(this.view.id)
+    if (this.view) {
+      this.searchView(this.view.id)
+    }
+    if (this.queryString) {
+      this.search(this.queryString)
+    }
+  },
+  watch: {
+    queryString: function (queryString) {
+      this.search(queryString)
+    }
   }
 }
 </script>

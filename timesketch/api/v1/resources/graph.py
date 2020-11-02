@@ -16,13 +16,16 @@ import logging
 
 from flask_restful import Resource
 from flask_login import login_required
+
+from flask import abort
 from flask import jsonify
 from flask import request
 
 from timesketch.lib.graphs import manager
 from timesketch.api.v1 import resources
-from timesketch.models.sketch import SearchIndex
+from timesketch.models.sketch import Sketch
 
+from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
 logger = logging.getLogger('timesketch.graph_api')
 
@@ -48,15 +51,19 @@ class GraphResource(resources.ResourceMixin, Resource):
     """Resource to get a graph."""
 
     @login_required
-    def get(self, sketch_id):
+    def post(self, sketch_id):
         """Handles POST request to the resource.
 
         Returns:
             Graph in JSON (instance of flask.wrappers.Response)
         """
-        #form = request.json
-        #graph_name = form.get('name')
-        graph_class = manager.GraphManager.get_graph('winmulti')
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        form = request.json
+        graph_name = form.get('graph_name')
+        graph_class = manager.GraphManager.get_graph(graph_name)
         graph = graph_class()
         result = graph.generate()
         return jsonify(result)

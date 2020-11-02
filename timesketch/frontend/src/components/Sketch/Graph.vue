@@ -14,54 +14,109 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-    <section class="section" style="min-height: 100%;">
+  <div>
+
+    <b-sidebar :fullheight="true" :right="true" v-model="sidebarOpen" :can-cancel="true">
+      <section class="section">
+          <div style="padding: 30px">
+            <div class="card">
+              <div class="card-content">
+                <header class="card-header">
+                  <span class="card-header-title">Graph view settings</span>
+                </header>
+                <p>Transparency for unselected elements</p>
+                <b-slider class="is-rounded" type="is-info" :custom-formatter="val => val + '%'" v-model="fadeOpacity" v-on:input="changeOpacity"></b-slider>
+              </div>
+            </div>
+          </div>
+      </section>
+    </b-sidebar>
+
+    <section class="section">
       <div class="container is-fluid">
         <div class="card">
-          <header class="card-header" style="cursor: pointer">
-            <span class="card-header-title">
-              <span class="icon is-small"><i class="fas fa-network-wired"></i></span>
-              <span style="margin-left:10px;">Graph</span>
-            </span>
-            <span class="card-header-icon">
-              <span class="icon">
-                <i class="fas fa-angle-down" aria-hidden="true"></i>
-                <i class="fas fa-angle-up" aria-hidden="true"></i>
-              </span>
+          <header class="card-header">
+            <span class="card-header-title">Available graphs</span>
+          </header>
+          <div class="card-content">
+            <div class="field is-grouped">
+              <p class="control" v-for="graph in graphs" :key="graph">
+                <button class="button is-rounded" v-on:click="buildGraph(graph)">{{ graph }}</button>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="container is-fluid">
+
+        <div class="card">
+          <header class="card-header">
+            <span class="card-header-title" v-if="currentGraph">{{ currentGraph }}</span>
+            <span class="card-header-icon" v-if="currentGraph">
+              <button class="button is-small" @click="sidebarOpen = true"><i class="fas fa-cog"></i>Settings</button>
             </span>
           </header>
-          <button class="button" v-on:click="setConfig">Build graph</button>
-          <button class="button" v-on:click="showGraph = false">Hide</button>
-
-          <input class="input" v-model="filterString" v-on:keyup="filterGraphByInput"></input>
-
-          <div class="card-content" >
+          <div class="card-content">
+            <div class="field" v-if="currentGraph">
+              <div class="control" style="width: 100%;">
+                <input class="ts-search-input" v-model="filterString" v-on:keyup="filterGraphByInput" placeholder="Filter nodes and edges"></input>
+              </div>
+            </div>
             <cytoscape
+              ref="cyRef"
               v-if="showGraph"
               v-on:select="filterGraphBySelection($event)"
-              v-on:unselect="filterGraphBySelection($event)"
+              v-on:unselect="unSelectAllElements($event)"
               v-on:tap="unSelectAllElements($event)"
               :config="config"
               :preConfig="preConfig"
               :afterCreated="afterCreated">
+              <cy-element
+                v-for="def in elements"
+                :key="def.data.id"
+                :definition="def">
+              </cy-element>
             </cytoscape>
           </div>
         </div>
       </div>
     </section>
+    <section class="section" v-if="edgeQueryString">
+      <div class="container is-fluid">
+        <div class="card">
+          <div class="card-content">
+            <ts-event-list-compact :queryString="edgeQueryString"></ts-event-list-compact>
+          </div>
+        </div>
+      </div>
+    </section>
+    <br>
+  </div>
 </template>
 
 <script>
 import spread from "cytoscape-spread"
 import ApiClient from "../../utils/RestApiClient"
-
-let resolveCy = null
-export const cyPromise = new Promise(resolve => (resolveCy = resolve))
+import TsEventListCompact from "./EventListCompact"
 
 export default {
+  components: {
+    TsEventListCompact
+  },
   data() {
     return {
-      showGraph: false,
+      showGraph: true,
+      sidebarOpen: false,
       filterString: '',
+      graphs: [],
+      currentGraph: '',
+      selectedGraphs: [],
+      fadeOpacity: 7,
+      showOpacitySlider: false,
+      elements: [],
+      edgeQueryString: '',
       config: {
         style: [
           {
@@ -140,30 +195,8 @@ export default {
         ],
         layout: {
           name: "spread",
-          prelayout: {
-            name: 'cose',
-            animate: false,
-            animationThreshold: 250,
-            animationDuration: 1000,
-            refresh: 20,
-            fit: true,
-            padding: 30,
-            boundingBox: undefined,
-            randomize: true,
-            componentSpacing: 200,
-            nodeRepulsion: 400000,
-            nodeOverlap: 10,
-            idealEdgeLength: 10,
-            edgeElasticity: 100,
-            nestingFactor: 5,
-            gravity: 50,
-            numIter: 1000,
-            initialTemp: 200,
-            coolingFactor: 0.95,
-            minTemp: 1.0,
-            weaver: false,
-            nodeDimensionsIncludeLabels: false,
-          }
+          animate: false,
+          prelayout: false
         },
 
         // interaction options:
@@ -192,23 +225,27 @@ export default {
         wheelSensitivity: 1,
         pixelRatio: 'auto',
 
-        elements: null
       }
     }
   },
   computed: {
     sketch () {
         return this.$store.state.sketch
-    },
-    indices () {
-        return this.$store.state.currentQueryFilter.indices
     }
   },
   methods: {
-    setConfig: function () {
-      ApiClient.getGraph(this.sketch.id)
-        .then((response) => {
-          this.config.elements = response.data
+    buildGraph: function (graphName) {
+      this.showGraph = false
+      ApiClient.getGraph(this.sketch.id, graphName).then((response) => {
+          let elements = []
+          response.data['nodes'].forEach((element) => {
+            elements.push({data: element.data, group:'nodes'})
+          })
+          response.data['edges'].forEach((element) => {
+            elements.push({data: element.data, group:'edges'})
+          })
+          this.elements = elements
+          this.currentGraph = graphName
           this.showGraph = true
         }).catch((e) => {
           console.error(e)
@@ -223,7 +260,7 @@ export default {
         return
       }
 
-      // Build the neighborhood
+      // Build a neighborhood of nodes and edges.
       neighborhood = neighborhood.add(selected.filter('node').neighborhood())
       neighborhood = neighborhood.add(selected.filter('edge').connectedNodes())
       neighborhood = neighborhood.add(selected)
@@ -231,6 +268,24 @@ export default {
       // Highlight the matched nodes/edges
       this.cy.elements().addClass('faded')
       neighborhood.removeClass('faded')
+      this.showOpacitySlider = true
+
+      // Build ES query to show edge events.
+      // TODO: Consider using chips filters instead of query string.
+      let e = []
+      this.edgeQueryString = []
+      neighborhood.forEach((element, idx) => {
+        let esIndex = element.data().es_index
+        let esDocId = element.data().es_doc_id
+        if (element.group() === 'edges') {
+          if (idx > 1 && e.length) {
+            e.push(' OR ')
+          }
+          e.push('(_index:' + esIndex + ' AND _id:"' + esDocId + '")')
+        }
+      })
+      this.edgeQueryString = e.join(" ")
+
     },
     filterGraphBySelection: function (event) {
       let selected = event.cy.filter(':selected')
@@ -241,27 +296,60 @@ export default {
       this.cy.elements().unselect()
 
       // This is the collection of matched nodes/edges
-      let selected = this.cy.elements().filter(ele => ele.data('label').toLowerCase().includes(this.filterString))
+      let selected = this.cy.elements()
+        .filter(ele => ele.data('label')
+          .toLowerCase()
+          .includes(this.filterString))
 
       // Build the neighborhood
       this.showNeighborhood(selected)
     },
     unSelectAllElements: function (event) {
       this.cy.elements().removeClass('faded')
+      this.showOpacitySlider = false
     },
+    changeOpacity: function () {
+      this.cy.style()
+        .selector('.faded')
+        .style({
+          'opacity': this.fadeOpacity / 100
+        }).update()
+    },
+    // vue-cytoscape life-cycle hook, runs before graph is created.
     preConfig (cytoscape) {
       cytoscape.use(spread)
+      document.getElementById("cytoscape-div")
+        .style.minHeight=window.innerHeight -700 + "px";
     },
-    afterCreated (cy) {
-      this.cy = cy
+    // vue-cytoscape life-cycle hook, runs after graph is created, but before
+    // events has been added.
+    async afterCreated(cy=null) {
+      // Add Cytoscape "cy" objects to this component instance.
+      if (cy !== null) {
+          this.cy = cy
+      } else {
+          cy = this.cy
+      }
+      await cy
+      // Run the layout to render the graph elements.
+      cy.layout(this.config.layout).run()
     }
+  },
+  created() {
+    ApiClient.getGraphList()
+      .then((response) => {
+        this.graphs = response.data
+      }).catch((e) => {
+      console.error(e)
+    })
   }
 }
 </script>
+<style lang="scss">
 
-<!-- CSS scoped to this component only -->
-<style scoped lang="scss">
-.element.style {
-  height: 100%;
+.b-sidebar .sidebar-content {
+  width:40%;
+  background-color: #f5f5f5;
 }
+
 </style>
