@@ -103,6 +103,38 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             'optional': True,
         },
         {
+            'name': 'store_type_list',
+            'type': 'ts-dynamic-form-boolean',
+            'label': 'List type of the field to store the extracted results in, default is text',
+            'placeholder': 'Store results as field type list',
+            'default_value': False,
+            'optional': True,
+        },
+        {
+            'name': 'overwrite_store_as',
+            'type': 'ts-dynamic-form-boolean',
+            'label': 'Overwrite the field to store if already exist',
+            'placeholder': 'Overwrite the field to store',
+            'default_value': True,
+            'optional': True,
+        },
+        {
+            'name': 'overwrite_and_merge_store_as',
+            'type': 'ts-dynamic-form-boolean',
+            'label': 'Overwrite the field to store and merge value if already exist',
+            'placeholder': 'Overwrite the field to store and merge value',
+            'default_value': False,
+            'optional': True,
+        },
+        {
+            'name': 'keep_multimatch',
+            'type': 'ts-dynamic-form-boolean',
+            'label': 'Keep multi match datas',
+            'placeholder': 'Keep multi match',
+            'default_value': False,
+            'optional': True,
+        },
+        {
             'name': 'aggregate',
             'type': 'ts-dynamic-form-boolean',
             'label': 'Should results be aggregated if there is a match',
@@ -161,6 +193,10 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         query = config.get('query_string')
         query_dsl = config.get('query_dsl')
         attribute = config.get('attribute')
+        store_type_list = config.get('store_type_list', False)
+        keep_multimatch = config.get('keep_multimatch', False)
+        overwrite_store_as = config.get('overwrite_store_as', True)
+        overwrite_and_merge_store_as = config.get('overwrite_and_merge_store_as', False)
 
         if not attribute:
             logger.warning('No attribute defined.')
@@ -203,7 +239,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         emoji_names = config.get('emojis', [])
         emojis_to_add = [emojis.get_emoji(x) for x in emoji_names]
 
-        return_fields = [attribute]
+        return_fields = [attribute,store_as]
 
         events = self.event_stream(
             query_string=query, query_dsl=query_dsl,
@@ -229,7 +265,43 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
                 continue
 
             event_counter += 1
-            event.add_attributes({store_as: result[0]})
+            #verify if store_as exist
+            store_type = event.source.get(store_as)
+            if store_type and not overwrite_store_as:
+                continue
+            if isinstance(store_type, six.text_type):
+                store_type_list = False
+            elif isinstance(store_type, (list, tuple)):
+                store_type_list = True
+            if store_type_list:
+                if keep_multimatch:
+                    if store_type and overwrite_and_merge_store_as:
+                        #don't add duplicate value
+                        resultList = list(set(store_type) | set(result))
+                        event.add_attributes({store_as: resultList})
+                    else:
+                        event.add_attributes({store_as: result})
+                else:
+                    if overwrite_and_merge_store_as and store_type and result[0] in store_type:
+                        continue
+                    event.add_attributes({store_as: [result[0]]})
+            else:
+                if keep_multimatch:
+                    #TODO: add option to choice join char
+                    if store_type and overwrite_and_merge_store_as:
+                        resultList=[]
+                        for elem_match in result:
+                            if elem_match not in store_type:
+                                resultList.append(elem_match)
+                        if not resultList:
+                            continue
+                        event.add_attributes({store_as: store_type+','+','.join(resultList)})
+                    else:
+                        event.add_attributes({store_as: ','.join(result)})
+                else:
+                    if overwrite_and_merge_store_as and store_type and result[0] in store_type:
+                        continue
+                    event.add_attributes({store_as: result[0]})
             event.add_emojis(emojis_to_add)
             event.add_tags(tags)
 
