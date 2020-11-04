@@ -52,7 +52,12 @@ class ViewListResource(resources.ResourceMixin, Resource):
         # Default to user supplied data
         view_name = form.name.data
         query_string = form.query.data
-        query_filter = json.dumps(form.filter.data, ensure_ascii=False)
+
+        query_filter_dict = form.filter.data
+        # Stripping potential pagination from views before saving it.
+        if 'from' in query_filter_dict:
+            del query_filter_dict['from']
+        query_filter = json.dumps(query_filter_dict, ensure_ascii=False)
         query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
 
         if isinstance(query_filter, tuple):
@@ -269,7 +274,13 @@ class ViewResource(resources.ResourceMixin, Resource):
                   'User does not have write access controls on sketch.')
         view = View.query.get(view_id)
         view.query_string = form.query.data
-        view.query_filter = json.dumps(form.filter.data, ensure_ascii=False)
+
+        query_filter = form.filter.data
+        # Stripping potential pagination from views before saving it.
+        if 'from' in query_filter:
+            del query_filter['from']
+        view.query_filter = json.dumps(query_filter, ensure_ascii=False)
+
         view.query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
         view.user = current_user
         view.sketch = sketch

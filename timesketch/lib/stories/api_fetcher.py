@@ -69,9 +69,16 @@ class ApiDataFetcher(interface.DataFetcher):
 
         if not agg_class:
             return pd.DataFrame()
-        aggregator = agg_class(sketch_id=self._sketch_id)
+
         parameter_string = aggregation.parameters
         parameters = json.loads(parameter_string)
+        index = parameters.pop('index', None)
+        aggregator = agg_class(sketch_id=self._sketch_id, index=index)
+
+        _ = parameters.pop('supported_charts', None)
+        chart_color = parameters.pop('chart_color', 'N/A')
+        chart_title = parameters.pop('chart_title', 'N/A')
+
         data = {
             'aggregation': aggregator.run(**parameters),
             'name': aggregation.name,
@@ -79,6 +86,8 @@ class ApiDataFetcher(interface.DataFetcher):
             'agg_type': aggregation.agg_type,
             'parameters': parameters,
             'chart_type': aggregation.chart_type,
+            'chart_title': chart_title,
+            'chart_color': chart_color,
             'user': aggregation.user,
         }
         return data
@@ -117,14 +126,20 @@ class ApiDataFetcher(interface.DataFetcher):
             if not agg_class:
                 continue
 
-            aggregator_obj = agg_class(sketch_id=self._sketch_id)
+
+
+            index = aggregator_parameters.pop('index', None)
+            aggregator_obj = agg_class(sketch_id=self._sketch_id, index=index)
             chart_type = aggregator_parameters.pop('supported_charts', None)
             color = aggregator_parameters.pop('chart_color', '')
+            chart_title = aggregator_parameters.pop('chart_title', None)
             result_obj = aggregator_obj.run(**aggregator_parameters)
+
+            title = chart_title or aggregator_obj.chart_title
 
             chart = result_obj.to_chart(
                 chart_name=chart_type,
-                chart_title=aggregator_obj.chart_title,
+                chart_title=title,
                 as_chart=True, interactive=True, color=color)
 
             if result_chart is None:
