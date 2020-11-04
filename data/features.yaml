@@ -14,6 +14,10 @@
 #       tags: []
 #       create_view: False
 #       aggregate: False
+#       overwrite_store_as: True
+#       overwrite_and_merge_store_as: False
+#       store_type_list: False
+#       keep_multimatch: False
 #
 # Each definition needs to define either a query_string or a query_dsl.
 #
