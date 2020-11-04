@@ -17,6 +17,7 @@ from __future__ import unicode_literals
 import configparser
 import logging
 import os
+import requests
 
 from google.auth.transport import requests as auth_requests
 
@@ -39,14 +40,36 @@ def get_client(config_dict=None, config_path='', token_password=''):
             not supplied a default path will be used.
         token_password (str): an optional password to decrypt
             the credential token file.
+
+    Returns:
+        A timesketch client (TimesketchApi) or None if not possible.
     """
     assistant = ConfigAssistant()
-    assistant.load_config_file(config_path)
-    if config_dict:
-        assistant.load_config_dict(config_dict)
+    try:
+        assistant.load_config_file(config_path)
+        if config_dict:
+            assistant.load_config_dict(config_dict)
+    except IOError as e:
+        logger.error('Unable to load the config file, is it valid?')
+        logger.error('Error: %s', e)
 
-    configure_missing_parameters(assistant, token_password)
-    return assistant.get_client(token_password=token_password)
+    try:
+        configure_missing_parameters(assistant, token_password)
+        return assistant.get_client(token_password=token_password)
+    except (RuntimeError, requests.ConnectionError) as e:
+        logger.error(
+            'Unable to connect to the Timesketch server, are you '
+            'connected to the network? Is the timesketch server '
+            'running and accessible from your host? The error '
+            'message is %s', e)
+    except IOError as e:
+        logger.error('Unable to get a client, with error: %s', e)
+        logger.error(
+            'If the issue is in the credentials then one solution '
+            'is to remove the ~/.timesketch.token file and the '
+            'credential section in ~/.timesketchrc or to remove '
+            'both files. Or you could have supplied a wrong '
+            'password to undecrypt the token file.')
 
 
 def configure_missing_parameters(config_assistant, token_password=''):
