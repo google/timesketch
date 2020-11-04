@@ -65,5 +65,5 @@ class GraphResource(resources.ResourceMixin, Resource):
         graph_name = form.get('graph_name')
         graph_class = manager.GraphManager.get_graph(graph_name)
         graph = graph_class()
-        result = graph.generate().to_json()
-        return jsonify(result)
+        cytoscape_json = graph.generate().to_cytoscape()
+        return jsonify(cytoscape_json)

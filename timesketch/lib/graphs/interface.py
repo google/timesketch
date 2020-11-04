@@ -29,55 +29,86 @@ GRAPH_TYPES = {
 
 
 class Graph(object):
+    """Graph object with helper methods.
+
+    Attributes:
+        nx_instance: Networkx graph object.
+    """
     def __init__(self, graph_type):
+        """Initialize Graph object.
+
+        Args:
+            graph_type: (str) Name of graph type.
+        """
         _nx_graph_class = GRAPH_TYPES.get(graph_type)
         self.nx_instance = _nx_graph_class()
-        self.nodes = {}
-        self.edges = {}
+        self._nodes = {}
+        self._edges = {}
 
     def add_node(self, label, attributes):
+        """Add node to graph.
+
+        Args:
+            label: (str) Label for the node.
+            attributes: (dict) Attributes to add to node.
+
+        Returns:
+              Instance of Node object.
+        """
         node = Node(label, attributes)
-        self.nodes[node.id] = node
+        self._nodes[node.id] = node
         return node
 
     def add_edge(self, source, target, label, event, attributes=None):
+        """Add edge to graph.
 
+        Args:
+            source: (Node) Node to use as source.
+            target: (Node) Node to use as target.
+            label: (str) Label for the node.
+            event: (dict): Elasticsearch event.
+            attributes: (dict) Attributes to add to node.
+        """
         edge_id_string = ''.join([source.id, target.id, label])
         edge_id = hashlib.md5(edge_id_string.encode('utf-8')).hexdigest()
 
         try:
-            edge = self.edges[edge_id]
+            edge = self._edges[edge_id]
         except KeyError:
             edge = Edge(source, target, label, attributes)
 
-        if edge.event_counter < 500:
+        if edge.counter < 500:
             index = event.get('_index')
             doc_id = event.get('_id')
             events = edge.attributes.get('events', {})
             doc_ids = events.get(index, [])
             doc_ids.append(doc_id)
-            edge.event_counter += 1
+            edge.counter += 1
             events[index] = doc_ids
             edge.add_attribute('events', events)
 
-        self.edges[edge_id] = edge
+        self._edges[edge_id] = edge
 
     def commit(self):
-        for node_id, node in self.nodes.items():
-            print('Adding node: ', node.label)
+        """Commit all nodes and edges to the networkx graph object."""
+        for node_id, node in self._nodes.items():
             self.nx_instance.add_node(
                 node_id, label=node.label, **node.attributes)
 
-        for edge_id, edge in self.edges.items():
-            label = edge.label + ' ({0:d})'.format(edge.event_counter)
-            print('Adding edge: ({}) --[{}]--> ({})'.format(edge.source.label, label, edge.target.label))
+        for edge_id, edge in self._edges.items():
+            label = edge.label + ' ({0:d})'.format(edge.counter)
             self.nx_instance.add_edge(
                 edge.source.id, edge.target.id, label=label,
                 **edge.attributes)
 
-    def to_json(self):
-        _json = nx.readwrite.json_graph.cytoscape_data(self.nx_instance)
-        return _json.get('elements', [])
+    def to_cytoscape(self):
+        """Output graph in Cytoscape JSON format.
+
+        Returns:
+            Graph in Cytoscape JSON format.
+        """
+        cy_json = nx.readwrite.json_graph.cytoscape_data(self.nx_instance)
+        return cy_json.get('elements', [])
 
 
 class BaseGraphElement(object):
@@ -99,15 +130,17 @@ class BaseGraphElement(object):
 
 
 class Node(BaseGraphElement):
+    """Graph node object."""
     def __init__(self, label='', attributes=None):
         super(Node, self).__init__(label, attributes)
 
 
 class Edge(BaseGraphElement):
+    """Graph edge object."""
     def __init__(self, source, target, label='', attributes=None):
         self.source = source
         self.target = target
-        self.event_counter = 0
+        self.counter = 0
         super(Edge, self).__init__(label, attributes)
 
 
@@ -117,12 +150,15 @@ class BaseGraphPlugin(object):
     # Name that the graph will be registered as.
     NAME = 'name'
 
+    # Display name (used in the UI)
+    DISPLAY_NAME = 'display_name'
+
     # Type of graph. See NetworkX documentation for details:
     # https://networkx.org/documentation/stable/reference/classes/index.html
     GRAPH_TYPE = 'DiGraph'
 
     def __init__(self):
-        """Initialize the chart object.
+        """Initialize the graph object.
 
         Args:
 
@@ -134,6 +170,7 @@ class BaseGraphPlugin(object):
             port=current_app.config['ELASTIC_PORT'])
         self.graph = Graph(self.GRAPH_TYPE)
 
+    # TODO: Refactor this to reuse across analyzers and graphs.
     def event_stream(
             self, query_string=None, query_filter=None, query_dsl=None,
             indices=None, return_fields=None, scroll=True):

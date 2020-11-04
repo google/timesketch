@@ -20,6 +20,7 @@ from timesketch.lib.graphs import manager
 class MockGraph(object):
     """Mock graph class."""
     NAME = 'MockGraph'
+    DISPLAY_NAME = 'MockGraph'
 
 
 class TestGraphManager(BaseTest):
@@ -28,7 +29,7 @@ class TestGraphManager(BaseTest):
     manager.GraphManager.clear_registration()
     manager.GraphManager.register_graph(MockGraph)
 
-    def test_get_graph(self):
+    def test_get_graphs(self):
         """Test to get graph class objects."""
         graphs = manager.GraphManager.get_graphs()
         graph_list = list(graphs)
@@ -36,7 +37,7 @@ class TestGraphManager(BaseTest):
         graph_name, graph_class = first_graph_tuple
         self.assertIsInstance(graph_list, list)
         self.assertIsInstance(first_graph_tuple, tuple)
-        self.assertEqual(graph_class, MockChart)
+        self.assertEqual(graph_class, MockGraph)
         self.assertEqual(graph_name, 'mockgraph')
 
     def test_get_graph(self):
