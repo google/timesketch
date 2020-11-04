@@ -224,6 +224,17 @@ limitations under the License.
             <div class="card has-min-height">
               <header class="card-header">
                 <p class="card-header-title">Stories</p>
+                <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
+                  <p class="control">
+                    <router-link class="button is-rounded is-small" :to="{ name: 'SketchStoryOverview' }">
+                      <span class="icon is-small">
+                        <i class="fas fa-cog"></i>
+                      </span>
+                      <span>Manage</span>
+                    </router-link>
+                  </p>
+                </div>
+
               </header>
               <div class="card-content" style="padding:5px;">
                 <ts-sketch-story-list :controls="false"></ts-sketch-story-list>

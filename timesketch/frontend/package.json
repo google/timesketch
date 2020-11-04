@@ -1,5 +1,5 @@
 {
-  "name": "Timesketch",
+  "name": "timesketch",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -15,7 +15,7 @@
     "@fortawesome/vue-fontawesome": "^2.0.0",
     "axios": "^0.18.0",
     "buefy": "^0.9.4",
-    "bulma": "^0.7.4",
+    "bulma": "^0.9.1",
     "cytoscape-spread": "^3.0.0",
     "lodash": "^4.17.11",
     "marked": "^1.1.1",

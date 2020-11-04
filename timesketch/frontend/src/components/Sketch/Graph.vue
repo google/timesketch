@@ -15,84 +15,94 @@ limitations under the License.
 -->
 <template>
   <div>
-
-    <b-sidebar :fullheight="true" :right="true" v-model="sidebarOpen" :can-cancel="true">
-      <section class="section">
-          <div style="padding: 30px">
-            <div class="card">
+    <section class="section">
+      <div class="container is-fluid">
+        <div class="columns">
+          <div class="column">
+            <div class="card" v-if="!currentGraph" style="min-height: 620px;">
+              <header class="card-header" style="border-bottom: 0;">
+                <span class="card-header-title">Select a graph to get started</span>
+              </header>
               <div class="card-content">
-                <header class="card-header">
-                  <span class="card-header-title">Graph view settings</span>
-                </header>
-                <p>Transparency for unselected elements</p>
-                <b-slider class="is-rounded" type="is-info" :custom-formatter="val => val + '%'" v-model="fadeOpacity" v-on:input="changeOpacity"></b-slider>
+                <div class="field is-grouped">
+                  <div class="field" v-for="(displayName, graphName) in graphs" :key="graph">
+                    <button class="button is-rounded" v-on:click="buildGraph(graphName)">{{ displayName }}</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" v-if="currentGraph" style="min-height: 620px;">
+              <header class="card-header" style="border-bottom: 0;">
+                <span class="card-header-title"><span v-if="currentGraph">{{ currentGraph }}</span></span>
+                <input class="ts-search-input" v-if="currentGraph" v-model="filterString" v-on:keyup="filterGraphByInput" style="border-radius: 0; padding:25px;" placeholder="Filter nodes and edges"></input>
+
+                <span class="card-header-icon">
+                    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body>
+                      <button class="button is-outlined is-rounded is-small" slot="trigger" :disabled="!currentGraph">
+                        <span class="icon is-small">
+                          <i class="fas fa-cog"></i>
+                        </span>
+                        <span>Settings</span>
+                      </button>
+                      <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
+                        <div class="modal-card" style="width:500px; min-height: 300px;">
+                          <br>
+                          <p>Transparency for unselected elements</p>
+                          <b-slider class="is-rounded" type="is-info" :custom-formatter="val => val + '%'" v-model="fadeOpacity" v-on:input="changeOpacity"></b-slider>
+                        </div>
+                      </b-dropdown-item>
+                  </b-dropdown>
+                </span>
+
+              </header>
+              <div class="card-content">
+                <cytoscape
+                  ref="cyRef"
+                  v-if="showGraph"
+                  v-on:select="filterGraphBySelection($event)"
+                  v-on:unselect="unSelectAllElements($event)"
+                  v-on:tap="unSelectAllElements($event)"
+                  :config="config"
+                  :preConfig="preConfig"
+                  :afterCreated="afterCreated">
+                  <cy-element
+                    v-for="def in elements"
+                    :key="def.data.id"
+                    :definition="def">
+                  </cy-element>
+                </cytoscape>
               </div>
             </div>
           </div>
-      </section>
-    </b-sidebar>
 
-    <section class="section">
-      <div class="container is-fluid">
-        <div class="card">
-          <header class="card-header">
-            <span class="card-header-title">Available graphs</span>
-          </header>
-          <div class="card-content">
-            <div class="field is-grouped">
-              <p class="control" v-for="graph in graphs" :key="graph">
-                <button class="button is-rounded" v-on:click="buildGraph(graph)">{{ graph }}</button>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-    <section class="section">
-      <div class="container is-fluid">
-
-        <div class="card">
-          <header class="card-header">
-            <span class="card-header-title" v-if="currentGraph">{{ currentGraph }}</span>
-            <span class="card-header-icon" v-if="currentGraph">
-              <button class="button is-small" @click="sidebarOpen = true"><i class="fas fa-cog"></i>Settings</button>
-            </span>
-          </header>
-          <div class="card-content">
-            <div class="field" v-if="currentGraph">
-              <div class="control" style="width: 100%;">
-                <input class="ts-search-input" v-model="filterString" v-on:keyup="filterGraphByInput" placeholder="Filter nodes and edges"></input>
+          <div class="column is-one-fifth" v-if="currentGraph">
+            <div class="card" style="height: 100%;">
+              <header class="card-header" style="border-bottom: 0;">
+                <span class="card-header-title">Available graphs</span>
+              </header>
+              <div class="card-content">
+                  <div v-for="(displayName, graphName) in graphs" :key="graph" style="margin-bottom: 7px;">
+                    <button class="button is-rounded is-fullwidth" v-on:click="buildGraph(graphName)">{{ displayName }}</button>
+                  </div>
               </div>
             </div>
-            <cytoscape
-              ref="cyRef"
-              v-if="showGraph"
-              v-on:select="filterGraphBySelection($event)"
-              v-on:unselect="unSelectAllElements($event)"
-              v-on:tap="unSelectAllElements($event)"
-              :config="config"
-              :preConfig="preConfig"
-              :afterCreated="afterCreated">
-              <cy-element
-                v-for="def in elements"
-                :key="def.data.id"
-                :definition="def">
-              </cy-element>
-            </cytoscape>
           </div>
         </div>
       </div>
     </section>
-    <section class="section" v-if="edgeQueryString">
+    <section class="section" v-if="edgeQuery">
       <div class="container is-fluid">
         <div class="card">
+          <header class="card-header">
+            <span class="card-header-title">Events for selected edges</span>
+          </header>
           <div class="card-content">
-            <ts-event-list-compact :queryString="edgeQueryString"></ts-event-list-compact>
+            <ts-event-list-compact v-if="edgeQuery" :query-dsl="edgeQuery"></ts-event-list-compact>
           </div>
         </div>
       </div>
     </section>
-    <br>
   </div>
 </template>
 
@@ -100,6 +110,7 @@ limitations under the License.
 import spread from "cytoscape-spread"
 import ApiClient from "../../utils/RestApiClient"
 import TsEventListCompact from "./EventListCompact"
+import EventBus from "../../main"
 
 export default {
   components: {
@@ -108,15 +119,14 @@ export default {
   data() {
     return {
       showGraph: true,
-      sidebarOpen: false,
       filterString: '',
       graphs: [],
       currentGraph: '',
       selectedGraphs: [],
       fadeOpacity: 7,
-      showOpacitySlider: false,
       elements: [],
-      edgeQueryString: '',
+      edgeQuery: '',
+      maxEvents: 500,
       config: {
         style: [
           {
@@ -169,7 +179,7 @@ export default {
               'curve-style': 'bezier',
               'control-point-step-size': 70,
               'target-arrow-shape': 'triangle',
-              'font-size': 10,
+              'font-size': 11,
               'text-rotation': 'autorotate',
               'text-outline-width': 3,
               'text-outline-color': '#FFFFFF',
@@ -224,7 +234,6 @@ export default {
         motionBlurOpacity: 0.2,
         wheelSensitivity: 1,
         pixelRatio: 'auto',
-
       }
     }
   },
@@ -236,6 +245,7 @@ export default {
   methods: {
     buildGraph: function (graphName) {
       this.showGraph = false
+      this.edgeQuery = ''
       ApiClient.getGraph(this.sketch.id, graphName).then((response) => {
           let elements = []
           response.data['nodes'].forEach((element) => {
@@ -268,25 +278,34 @@ export default {
       // Highlight the matched nodes/edges
       this.cy.elements().addClass('faded')
       neighborhood.removeClass('faded')
-      this.showOpacitySlider = true
 
-      // Build ES query to show edge events.
-      // TODO: Consider using chips filters instead of query string.
-      let e = []
-      this.edgeQueryString = []
-      neighborhood.forEach((element, idx) => {
-        let esIndex = element.data().es_index
-        let esDocId = element.data().es_doc_id
-        if (element.group() === 'edges') {
-          if (idx > 1 && e.length) {
-            e.push(' OR ')
+      // Build Elasticsearch query DSL to fetch edge events.
+      let queryDsl = {
+        'query': {
+          'bool': {
+            'should': []
           }
-          e.push('(_index:' + esIndex + ' AND _id:"' + esDocId + '")')
+        },
+        'size': this.maxEvents
+      }
+      neighborhood.forEach((element) => {
+        if (element.group() === 'edges') {
+          Object.keys(element.data().events).forEach((index) => {
+            let boolMustQuery = {
+              'bool': {
+                'must': [
+                    {'ids': {'values': element.data().events[index]}},
+                    {'term': {'_index': {'value': index}}}
+                  ]
+              }
+            }
+            queryDsl.query.bool.should.push(boolMustQuery)
+          })
         }
       })
-      this.edgeQueryString = e.join(" ")
-
+      this.edgeQuery = queryDsl
     },
+
     filterGraphBySelection: function (event) {
       let selected = event.cy.filter(':selected')
       this.showNeighborhood(selected)
@@ -306,7 +325,7 @@ export default {
     },
     unSelectAllElements: function (event) {
       this.cy.elements().removeClass('faded')
-      this.showOpacitySlider = false
+      this.edgeQuery = null
     },
     changeOpacity: function () {
       this.cy.style()
@@ -318,11 +337,8 @@ export default {
     // vue-cytoscape life-cycle hook, runs before graph is created.
     preConfig (cytoscape) {
       cytoscape.use(spread)
-      document.getElementById("cytoscape-div")
-        .style.minHeight=window.innerHeight -700 + "px";
     },
-    // vue-cytoscape life-cycle hook, runs after graph is created, but before
-    // events has been added.
+    // vue-cytoscape life-cycle hook, runs after graph is created.
     async afterCreated(cy=null) {
       // Add Cytoscape "cy" objects to this component instance.
       if (cy !== null) {
@@ -331,25 +347,37 @@ export default {
           cy = this.cy
       }
       await cy
+      this.setTheme()
       // Run the layout to render the graph elements.
       cy.layout(this.config.layout).run()
+    },
+    setTheme: function () {
+      this.isDarkTheme = localStorage.theme === 'dark'
+      if (this.isDarkTheme) {
+        this.cy.style()
+          .selector('edge')
+          .style({
+            'color': '#f5f5f5',
+            'text-outline-color': '#545454'
+          }).update()
+      } else {
+        this.cy.style()
+          .selector('edge')
+          .style({
+            'color': '#333333',
+            'text-outline-color': '#FFFFFF'
+          }).update()
+      }
     }
   },
   created() {
-    ApiClient.getGraphList()
-      .then((response) => {
+    ApiClient.getGraphList().then((response) => {
         this.graphs = response.data
       }).catch((e) => {
-      console.error(e)
+        console.error(e)
     })
+    EventBus.$on('isDarkTheme', this.setTheme)
   }
 }
 </script>
-<style lang="scss">
-
-.b-sidebar .sidebar-content {
-  width:40%;
-  background-color: #f5f5f5;
-}
-
-</style>
+<style lang="scss"></style>

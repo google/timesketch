@@ -149,7 +149,8 @@ class ElasticsearchDataStore(object):
         """
 
         if query_dsl:
-            query_dsl = json.loads(query_dsl)
+            if not isinstance(query_dsl, dict):
+                query_dsl = json.loads(query_dsl)
             # Remove any aggregation coming from user supplied Query DSL.
             # We have no way to display this data in a good way today.
             if query_dsl.get('aggregations', None):

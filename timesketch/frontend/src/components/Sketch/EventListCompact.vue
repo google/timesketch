@@ -41,7 +41,7 @@ export default {
   components: {
     TsSketchExploreEventListRow
   },
-  props: ['view', 'queryString', 'queryFilter'],
+  props: ['view', 'queryDsl', 'queryFilter'],
   data () {
     return {
       eventList: [],
@@ -61,14 +61,14 @@ export default {
     }
   },
   methods: {
-    search: function (queryString, queryFilter={}) {
+    search: function (queryDsl, queryFilter={}) {
       if (!Object.keys(queryFilter).length) {
         queryFilter = {}
         this.selectedFields = [{field: 'message', type: 'text'}]
       }
 
       let formData = {
-        'query': queryString,
+        'dsl': queryDsl,
         'filter': queryFilter
       }
 
@@ -79,13 +79,13 @@ export default {
     searchView: function (viewId) {
       ApiClient.getView(this.sketch.id, viewId).then((response) => {
         let view = response.data.objects[0]
-        let queryString = view.query_string
+        let queryDsl = view.query_string
         let queryFilter = JSON.parse(view.query_filter)
         if (!queryFilter.fields || !queryFilter.fields.length) {
           queryFilter.fields = [{field: 'message', type: 'text'}]
         }
         this.selectedFields = queryFilter.fields
-        this.search(queryString, queryFilter)
+        this.search(queryDsl, queryFilter)
       }).catch((e) => {})
     }
   },
@@ -93,13 +93,13 @@ export default {
     if (this.view) {
       this.searchView(this.view.id)
     }
-    if (this.queryString) {
-      this.search(this.queryString)
+    if (this.queryDsl) {
+      this.search(this.queryDsl)
     }
   },
   watch: {
-    queryString: function (queryString) {
-      this.search(queryString)
+    queryDsl: function (queryDsl) {
+      this.search(queryDsl)
     }
   }
 }
