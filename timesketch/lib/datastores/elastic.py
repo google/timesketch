@@ -564,11 +564,14 @@ class ElasticsearchDataStore(object):
                 exc_info=True)
             return 0
         fields_list = []
-        if indices[0] in result and \
-           'mappings' in result[indices[0]] and \
-           'properties' in result[indices[0]]['mappings']:
-            fields_list = \
-                [k for k,v in result[indices[0]]['mappings']['properties'].items()]
+        if not indices[0] in result:
+            return []
+        if not 'mappings' in result[indices[0]]:
+            return []
+        if 'properties' in result[indices[0]]['mappings']:
+            fields_list = list(
+                result[indices[0]]['mappings']['properties'].keys()
+            )
         return fields_list
 
     def set_label(self, searchindex_id, event_id, event_type, sketch_id,
