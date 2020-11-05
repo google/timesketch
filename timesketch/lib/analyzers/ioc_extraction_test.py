@@ -42,7 +42,7 @@ class TestIOCExtractionPlugin(BaseTest):
     # TODO: Add tests for the ioc extraction.
     def test_config(self):
         """Tests that the config file is valid."""
-        config_file = os.path.join('data', 'ioc.yaml')
+        config_file = os.path.join('data', 'ioc_extract.yaml')
         self.assertTrue(os.path.isfile(config_file))
 
         with open(config_file) as fh:
