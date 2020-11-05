@@ -23,6 +23,7 @@
     - [Browser Timeframe Analyzer](#browser-timeframe-analyzer)
     - [Chain analyzer](#chain-analyzer)
     - [Domain Analyzer](#domain-analyzer)
+    - [IOC Extraction Analyzer](#ioc-analyzer)
     - [Windows EVTX Sessionizer](#windows-evtx-sessionizer)
     - [Windows EVTX Gap analyzer](#windows-evtx-gap-analyzer)
     - [Safebrowsing Analyzer](#safebrowsing-analyzer)
@@ -201,6 +202,12 @@ The Domain Analyzer extracts domain and Top Level Domain (TLD) info from events 
 It will also add information about:
 
 - Known CDN providers (based on Timesketch config)
+
+#### IOC Extraction Analyzer
+
+The IOC extraction Analyzer check IOC from database (json) in all fieldnames content specified. Config file is "ioc_extract.yaml".
+
+You can use before "Feature Extraction Analyzer" to extract pattern (ip, url, hash, ...) in specified fields.
 
 #### Windows EVTX Sessionizer
 
