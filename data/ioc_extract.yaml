@@ -1,0 +1,66 @@
+# Config file for the ioc extraction analyzer.
+# A ioc extraction definition looks like this:
+# name:
+#       # IOC DB
+#       path_file_ioc:
+#       # Mandatory fields.
+#       attributes: []
+#       store_as:
+#       # Optional fields.
+#       attributes_contains: []
+#       match_re:
+#       re_flags: []
+#       tags: []
+#
+# Each definition needs to give IOC file (json format). Json sample:
+# ['ioc1', 'ioc2', 'iocx']
+# IOC DB can be make with script to collect IOC from MISP 
+# or other Threat Intel
+#
+# re_match is a regex to avoid false positive. By default is:
+# '([^a-zA-Z0-9]|^)$value$([^a-zA-Z0-9]|$)'
+# ex without re_match: '127.0.0.1' match '127.0.0.12'
+# ex with re_match by default: '127.0.0.1' not match '127.0.0.12'
+#
+# re_flags is a list of flags as strings from the re module. These include:
+# - DEBUG
+# - DOTALL
+# - IGNORECASE
+# - LOCALE
+# - MULTILINE
+# - TEMPLATE
+# - UNICODE
+# - VERBOSE
+#
+# The fields tags are optional.
+#
+# The attributes_contains allows you to retrieve the fields 
+# by a partial name. Ex: 'url' partial name can select 'proxy_url'.
+#
+# The field store_as defines the name of the attribute the ioc found
+# stored as.
+#
+# The feature ioc works in the way that collect all events content attributes
+# field and field contains attributes_contains partial name. 
+# The regular expression contains ioc db is run against the attributes, 
+# if match then add ioc value in store_as field.
+# The first value extracted is then stored inside the "store_as" attribute.
+# If there are tags defined they are also applied to that event.
+# ------------------------------------------------------------------------
+
+# IOC TYPE:
+domain:
+        path_file_ioc: '/etc/timesketch/ioc/domain.json'
+        attributes: ['domain', 'tld']
+        attributes_contains: ['domain']
+        match_re: '([^a-zA-Z0-9]|^)$value$([^a-zA-Z0-9]|$)'
+        store_as: 'ioc'
+        tags: ['ioc_domain']
+        
+# hostname:
+# ipv4:
+# email_address:
+# user_agent:
+# url:
+# hash_md5:
+# filename:
