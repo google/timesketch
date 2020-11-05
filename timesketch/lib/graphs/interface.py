@@ -13,12 +13,13 @@
 # limitations under the License.
 """Interface for graphs."""
 
-from flask import current_app
-from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+import hashlib
 
+from flask import current_app
 import networkx as nx
 
-import hashlib
+from timesketch.lib.datastores.elastic import ElasticsearchDataStore
+
 
 GRAPH_TYPES = {
     'Graph': nx.Graph,
@@ -73,9 +74,6 @@ class Graph(object):
         edge_id_string = ''.join([source.id, target.id, label]).lower()
         edge_id = hashlib.md5(edge_id_string.encode('utf-8')).hexdigest()
 
-        #try:
-        #    edge = self._edges[edge_id]
-        #except KeyError:
         edge = Edge(source, target, label, attributes)
 
         if edge.counter < 500:
@@ -96,7 +94,7 @@ class Graph(object):
             self.nx_instance.add_node(
                 node_id, label=node.label, **node.attributes)
 
-        for edge_id, edge in self._edges.items():
+        for _, edge in self._edges.items():
             label = edge.label + ' ({0:d})'.format(edge.counter)
             self.nx_instance.add_edge(
                 edge.source.id, edge.target.id, label=label,
@@ -196,6 +194,9 @@ class BaseGraphPlugin(object):
         if not (query_string or query_dsl):
             raise ValueError('Both query_string and query_dsl are missing')
 
+        if not query_filter:
+            query_filter = {}
+
         return_fields = list(set(return_fields))
 
         # Refresh the index to make sure it is searchable.
@@ -204,7 +205,7 @@ class BaseGraphPlugin(object):
 
         event_generator = self.datastore.search_stream(
             query_string=query_string,
-            query_filter={},
+            query_filter=query_filter,
             query_dsl=query_dsl,
             indices=indices,
             return_fields=return_fields,
