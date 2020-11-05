@@ -1,7 +1,7 @@
 ## Docker for development
 
 You can run Timesketch on Docker in development mode.
-Make sure to follow the docker [post-install](https://docs.docker.com/engine/install/linux-postinstall/) to run without superuser. If not then make sure to execute all `docker` commands here as superuser.
+Make sure to follow the docker [post-install](https://docs.docker.com/engine/install/linux-postinstall/) to run without superuser. If not then make sure to execute all `docker` commands here as *superuser*.
 
 NOTE: It is not recommended to try to run on a system with less than 8 GB of RAM.
 
@@ -21,7 +21,7 @@ Timesketch development server is ready!
 ### Find out container ID for the timesketch container
 
 ```
-CONTAINER_ID="$(sudo docker container list -f name=dev_timesketch -q)"
+CONTAINER_ID="$(docker container list -f name=dev_timesketch -q)"
 ```
 In the output look for CONTAINER ID for the timesketch container
 
