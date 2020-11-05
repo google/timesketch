@@ -170,8 +170,8 @@ class IOCExtractionSketchPlugin(interface.BaseSketchAnalyzer):
 
         tags = config.get('tags', [])
 
-        expression_string = \
-            config.get('match_re', '([^a-zA-Z0-9]|^)$value$([^a-zA-Z0-9]|$)')
+        expression_string = config.get(
+            'match_re', '([^a-zA-Z0-9]|^)$value$([^a-zA-Z0-9]|$)')
         expression_flags = config.get('re_flags')
 
         if expression_flags:
