@@ -542,6 +542,35 @@ class ElasticsearchDataStore(object):
             return 0
         return result.get('count', 0)
 
+    def fields_list(self, indices):
+        """Return list of fields name.
+        Args:
+            indices: List of indice.
+        Returns:
+            List of fields name of documents.
+        """
+        if not indices:
+            return []
+        if len(indices) != 1:
+            es_logger.warning(
+                'You must use only one index name for get fields name'
+            )
+            return []
+        try:
+            result = self.client.indices.get_mapping(index=indices)
+        except (NotFoundError, RequestError):
+            es_logger.error(
+                'Unable to find indexes (index not found)',
+                exc_info=True)
+            return 0
+        fields_list = []
+        if indices[0] in result and \
+           'mappings' in result[indices[0]] and \
+           'properties' in result[indices[0]]['mappings']:
+            fields_list = \
+                [k for k,v in result[indices[0]]['mappings']['properties'].items()]
+        return fields_list
+
     def set_label(self, searchindex_id, event_id, event_type, sketch_id,
                   user_id, label, toggle=False, remove=False,
                   single_update=True):
