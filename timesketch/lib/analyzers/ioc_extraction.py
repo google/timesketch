@@ -191,9 +191,10 @@ class IOCExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             list_fieldnames = self.get_fields_list()
             if list_fieldnames:
                 for fieldname in list_fieldnames:
-                    if [(elm) for elm in attributes_contains if elm in fieldname]:
-                        if fieldname not in attributes_list:
-                            attributes_list.append(fieldname)
+                    for elm in attributes_contains:
+                        if elm in fieldname:
+                            if fieldname not in attributes_list:
+                                attributes_list.append(fieldname)
         return_fields = attributes_list + [store_as]
 
         query = ''
@@ -230,7 +231,7 @@ class IOCExtractionSketchPlugin(interface.BaseSketchAnalyzer):
                 attributes_fmt.append(attribute_value)
             for ioc in ioc_db:
                 try:
-                    expression_tmp = expression_string.replace('$value$',ioc)
+                    expression_tmp = expression_string.replace('$value$', ioc)
                     expression = re.compile(expression_tmp, flags=re_flag)
                 except re.error as exception:
                     # pylint: disable=logging-format-interpolation
@@ -238,7 +239,7 @@ class IOCExtractionSketchPlugin(interface.BaseSketchAnalyzer):
                         'Regular expression failed to compile, with '
                         'error: {0!s}').format(exception))
                     return ''
-                for attribute in attributes_fmt :
+                for attribute in attributes_fmt:
                     if expression.match(attribute):
                         if ioc not in add_ioc:
                             add_ioc.append(ioc)
