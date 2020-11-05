@@ -56,7 +56,8 @@ class Graph(object):
               Instance of Node object.
         """
         node = Node(label, attributes)
-        self._nodes[node.id] = node
+        if node.id not in self._nodes:
+            self._nodes[node.id] = node
         return node
 
     def add_edge(self, source, target, label, event, attributes=None):
@@ -69,13 +70,13 @@ class Graph(object):
             event: (dict): Elasticsearch event.
             attributes: (dict) Attributes to add to node.
         """
-        edge_id_string = ''.join([source.id, target.id, label])
+        edge_id_string = ''.join([source.id, target.id, label]).lower()
         edge_id = hashlib.md5(edge_id_string.encode('utf-8')).hexdigest()
 
-        try:
-            edge = self._edges[edge_id]
-        except KeyError:
-            edge = Edge(source, target, label, attributes)
+        #try:
+        #    edge = self._edges[edge_id]
+        #except KeyError:
+        edge = Edge(source, target, label, attributes)
 
         if edge.counter < 500:
             index = event.get('_index')
@@ -119,6 +120,7 @@ class BaseGraphElement(object):
 
     @staticmethod
     def id_from_label(label):
+        label = label.lower()
         return hashlib.md5(label.encode('utf-8')).hexdigest()
 
     def add_label(self, label):
@@ -155,7 +157,7 @@ class BaseGraphPlugin(object):
 
     # Type of graph. See NetworkX documentation for details:
     # https://networkx.org/documentation/stable/reference/classes/index.html
-    GRAPH_TYPE = 'DiGraph'
+    GRAPH_TYPE = 'MultiDiGraph'
 
     def __init__(self):
         """Initialize the graph object.

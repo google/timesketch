@@ -42,7 +42,7 @@ class WinServiceGraph(BaseGraphPlugin):
 
             # Create nodes
             computer = self.graph.add_node(computer_name, {'type': 'computer'})
-            user = self.graph.add_node(username, {'type': 'username'})
+            user = self.graph.add_node(username, {'type': 'user'})
             service = self.graph.add_node(service_name, {
                 'type': 'winservice', 'image_path': image_path
             })

@@ -39,7 +39,7 @@ class WinLoginsGraph(BaseGraphPlugin):
             logon_type = event['_source'].get('logon_type')
 
             computer = self.graph.add_node(computer_name, {'type': 'computer'})
-            user = self.graph.add_node(username, {'type': 'username'})
+            user = self.graph.add_node(username, {'type': 'user'})
             self.graph.add_edge(user, computer, logon_type, event)
 
         # Commit all nodes and edges to the graph object.

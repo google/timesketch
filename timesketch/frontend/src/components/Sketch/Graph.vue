@@ -159,7 +159,7 @@ export default {
             }
           },
           {
-            selector: "node[type = 'username']",
+            selector: "node[type = 'user']",
             style: {
               'background-color': '#FF756E',
               'text-outline-color': '#FF756E',
@@ -170,6 +170,20 @@ export default {
             style: {
               'background-color': '#6992f3',
               'text-outline-color': '#ffffff',
+            }
+          },
+          {
+            selector: "node[type = 'file']",
+            style: {
+              'background-color': '#82b578',
+              'text-outline-color': '#2b2b2b',
+            }
+          },
+          {
+            selector: "node[type = 'winservice']",
+            style: {
+              'background-color': '#9d8f35',
+              'text-outline-color': '#2b2b2b',
             }
           },
           {
