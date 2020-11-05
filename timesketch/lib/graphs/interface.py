@@ -131,8 +131,7 @@ class BaseGraphElement(object):
 
 class Node(BaseGraphElement):
     """Graph node object."""
-    def __init__(self, label='', attributes=None):
-        super(Node, self).__init__(label, attributes)
+    pass
 
 
 class Edge(BaseGraphElement):
