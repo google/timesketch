@@ -43,6 +43,18 @@
 # create an aggregation of the results and store it (ATM this does
 # nothing, but once aggregations are supported it will).
 #
+# The overwrite_store_as is an optional boolean that determines if
+# we want to overwrite the field store_as if it already exists.
+#
+# The overwrite_and_merge_store_as is an optional boolean that determines 
+# if we want to overwrite the field store_as and merge the existing values.
+#
+# The store_type_list is an optional boolean that determines if we want to
+# store the extracted data in List type (default is text).
+#
+# The keep_multimatch is an optional boolean that determines if we want to
+# store all matching results (default store first result).
+#
 # The feature extraction works in the way that the query is run, and
 # the regular expression is run against the attribute to extract a value.
 # The first value extracted is then stored inside the "store_as" attribute.
