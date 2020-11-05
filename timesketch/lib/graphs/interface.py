@@ -131,7 +131,7 @@ class BaseGraphElement(object):
 
 class Node(BaseGraphElement):
     """Graph node object."""
-    pass
+    # Placeholder until more logic is implemented for Nodes.
 
 
 class Edge(BaseGraphElement):
