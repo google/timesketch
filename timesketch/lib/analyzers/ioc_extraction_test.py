@@ -13,18 +13,18 @@ class TestIOCExtractionPlugin(BaseTest):
 
     def _config_validation(self, config):
         """Validate that all items of a config are valid."""
-        query = config.get('path_file_ioc')
+        path_file_ioc = config.get('path_file_ioc')
         self.assertIsNotNone(path_file_ioc)
         self.assertIsInstance(path_file_ioc, str)
 
         attributes = config.get('attributes')
-        if tags:
+        if attributes:
             self.assertIsInstance(attributes, (list, tuple))
 
         attributes_contains = config.get('attributes_contains')
         if attributes_contains:
-            self.assertIsInstance(attributes, (list, tuple))
-    
+            self.assertIsInstance(attributes_contains, (list, tuple))
+
         store_as = config.get('store_as')
         self.assertIsNotNone(store_as)
 
