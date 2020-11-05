@@ -750,6 +750,28 @@ class BaseIndexAnalyzer(object):
         if not hasattr(self, 'sketch'):
             self.sketch = None
 
+    def get_fields_list(
+            self, indices=None):
+        """Indices get_mapping ElasticSearch.
+
+        Args:
+            indices: List of indices to query.
+
+        Returns:
+            List of fields name in index.
+        """
+        if not indices:
+            indices = [self.index_name]
+
+        # Refresh the index to make sure it is searchable.
+        for index in indices:
+            self.datastore.client.indices.refresh(index=index)
+
+        list_fieldnames = self.datastore.fields_list(
+            indices=indices
+        )
+        return list_fieldnames
+
     def event_stream(
             self, query_string=None, query_filter=None, query_dsl=None,
             indices=None, return_fields=None, scroll=True):
