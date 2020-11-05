@@ -178,6 +178,57 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
 
         return ', '.join(return_strings)
 
+    @staticmethod
+    def _get_attribute_value(
+            current_val,
+            extracted_value,
+            keep_multi,
+            merge_values,
+            type_list):
+        """Return value to store.
+        Args:
+            current_val: current value of store_as.
+            extracted_value: values matched from regexp (type list).
+            keep_multi: choise if you keep all match from regex (type boolean).
+            merge_values: choise if you merge value from extracted
+                 and current (type boolean).
+            type_list: choise if you store values in list type(type boolean).
+        Returns:
+            Value to store
+        """
+        new_value = None
+        if not current_val:
+            merge_values = False
+        if len(extracted_value) == 1:
+            keep_multi = False
+        if type_list:
+            if merge_values:
+                if keep_multi:
+                    new_value = list(set(current_val) | set(extracted_value))
+                elif extracted_value[0] not in current_val:
+                    new_value = current_val + [extracted_value[0]]
+            else:
+                if keep_multi:
+                    new_value = extracted_value
+                else:
+                    new_value = [extracted_value[0]]
+        else:
+            if merge_values:
+                if keep_multi:
+                    add_list = []
+                    for elem_match in extracted_value:
+                        if elem_match not in current_val:
+                            add_list.append(elem_match)
+                    new_value = current_val + ',' + ','.join(add_list)
+                elif extracted_value[0] not in current_val:
+                    new_value = current_val + ',' + extracted_value[0]
+            else:
+                if keep_multi:
+                    new_value = ','.join(extracted_value)
+                else:
+                    new_value = extracted_value[0]
+        return new_value
+
     def extract_feature(self, name, config):
         """Extract features from events.
 
@@ -196,8 +247,8 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         store_type_list = config.get('store_type_list', False)
         keep_multimatch = config.get('keep_multimatch', False)
         overwrite_store_as = config.get('overwrite_store_as', True)
-        overwrite_and_merge_store_as = \
-            config.get('overwrite_and_merge_store_as', False)
+        overwrite_and_merge_store_as = config.get(
+            'overwrite_and_merge_store_as', False)
 
         if not attribute:
             logger.warning('No attribute defined.')
@@ -266,46 +317,23 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
                 continue
 
             event_counter += 1
-            store_type = event.source.get(store_as)
-            if store_type and not overwrite_store_as:
+            store_as_current_val = event.source.get(store_as)
+            if store_as_current_val and not overwrite_store_as:
                 continue
-            if isinstance(store_type, six.text_type):
+            if isinstance(store_as_current_val, six.text_type):
                 store_type_list = False
-            elif isinstance(store_type, (list, tuple)):
+            elif isinstance(store_as_current_val, (list, tuple)):
                 store_type_list = True
-            if store_type_list:
-                if keep_multimatch:
-                    if store_type and overwrite_and_merge_store_as:
-                        result_list = list(set(store_type) | set(result))
-                        event.add_attributes({store_as: result_list})
-                    else:
-                        event.add_attributes({store_as: result})
-                else:
-                    if overwrite_and_merge_store_as and \
-                       store_type and \
-                       result[0] in store_type:
-                        continue
-                    event.add_attributes({store_as: [result[0]]})
-            else:
-                if keep_multimatch:
-                    if store_type and overwrite_and_merge_store_as:
-                        result_list = []
-                        for elem_match in result:
-                            if elem_match not in store_type:
-                                result_list.append(elem_match)
-                        if not result_list:
-                            continue
-                        event.add_attributes({store_as: store_type +
-                                                        ',' +
-                                                        ','.join(result_list)})
-                    else:
-                        event.add_attributes({store_as: ','.join(result)})
-                else:
-                    if overwrite_and_merge_store_as and \
-                       store_type and \
-                       result[0] in store_type:
-                        continue
-                    event.add_attributes({store_as: result[0]})
+            new_value = self._get_attribute_value(
+                store_as_current_val,
+                result,
+                keep_multimatch,
+                overwrite_and_merge_store_as,
+                store_type_list
+                )
+            if not new_value:
+                continue
+            event.add_attributes({store_as: new_value})
             event.add_emojis(emojis_to_add)
             event.add_tags(tags)
 
