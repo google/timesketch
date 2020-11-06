@@ -1003,11 +1003,12 @@ class Sketch(resource.BaseResource):
 
         if query_filter:
             stop_size = query_filter.get('size', 0)
-            terminate_after = query_filter.get('size', 0)
+            terminate_after = query_filter.get('terminate_after', 0)
             if terminate_after and (terminate_after < stop_size):
                 stop_size = terminate_after
 
-            scrolling = bool(stop_size < self.DEFAULT_SIZE_LIMIT)
+            scrolling = not bool(stop_size and (
+                stop_size < self.DEFAULT_SIZE_LIMIT))
         else:
             scrolling = True
             stop_size = 0
