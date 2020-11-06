@@ -6,6 +6,7 @@ import re
 import yaml
 
 from timesketch.lib import emojis
+from timesketch.lib.analyzers import feature_extraction
 from timesketch.lib.testlib import BaseTest
 
 
@@ -65,3 +66,115 @@ class TestFeatureExtractionPlugin(BaseTest):
             self.assertIsInstance(key, str)
             self.assertIsInstance(value, dict)
             self._config_validation(value)
+
+    def test_get_attribute_value(self):
+        """Test function _get_attribute_value()."""
+        analyzer = feature_extraction.FeatureExtractionSketchPlugin('test_index', 1)
+        #list, merge, multi
+        current_val = ['hello']
+        extracted_value = ['hello']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            True,
+            True,
+            True)
+
+        self.assertEqual(new_val, ['hello'])
+
+        current_val = ['hello']
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            True,
+            True,
+            True)
+
+        self.assertEqual(new_val, ['hello', 'hello2', 'hello3'])
+
+        current_val = ['hello']
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            False,
+            True,
+            True)
+
+        self.assertEqual(new_val, ['hello', 'hello2'])
+
+        current_val = ['hello']
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            False,
+            False,
+            True)
+
+        self.assertEqual(new_val, ['hello2'])
+
+        current_val = ['hello']
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            True,
+            False,
+            True)
+
+        self.assertEqual(new_val, ['hello2', 'hello3'])
+
+        current_val = 'hello'
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            True,
+            True,
+            False)
+
+        self.assertEqual(new_val, 'hello,hello2,hello3')
+
+        current_val = 'hello'
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            False,
+            True,
+            False)
+
+        self.assertEqual(new_val, 'hello,hello2')
+
+        current_val = 'hello'
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            True,
+            False,
+            False)
+
+        self.assertEqual(new_val, 'hello2,hello3')
+
+        current_val = 'hello'
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            False,
+            False,
+            False)
+
+        self.assertEqual(new_val, 'hello2')
