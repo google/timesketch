@@ -41,7 +41,7 @@ ELASTIC_PORT=9200
 REDIS_ADDRESS="redis"
 REDIS_PORT=6379
 GITHUB_BASE_URL="https://raw.githubusercontent.com/google/timesketch/docker-refactor"
-ELASTIC_MEM_USE_GB=$(cat /proc/meminfo | grep MemTotal | awk '{printf "%.0f", ($2 / 1000000)}')
+ELASTIC_MEM_USE_GB=$(cat /proc/meminfo | grep MemTotal | awk '{printf "%.0f", ($2 / 1000000 / 2)}')
 
 # Docker compose and configuration
 curl -s $GITHUB_BASE_URL/docker/release/docker-compose.yml > timesketch/docker-compose.yml
@@ -71,8 +71,7 @@ sed -i 's#^CELERY_RESULT_BACKEND =.*#CELERY_RESULT_BACKEND = \x27redis://'$REDIS
 # Set up the Postgres connection
 sed -i 's#postgresql://<USERNAME>:<PASSWORD>@localhost#postgresql://'$POSTGRES_USER':'$POSTGRES_PASSWORD'@'$POSTGRES_ADDRESS':'$POSTGRES_PORT'#' timesketch/etc/timesketch/timesketch.conf
 
-sed -i 's#^POSTGRES_PASSWORD=\x27\x27#POSTGRES_PASSWORD=\x27'$POSTGRES_PASSWORD'\x27#' timesketch/config.env
+sed -i 's#^POSTGRES_PASSWORD=#POSTGRES_PASSWORD='$POSTGRES_PASSWORD'#' timesketch/config.env
+sed -i 's#^ELASTIC_MEM_USE_GB=#ELASTIC_MEM_USE_GB='$ELASTIC_MEM_USE_GB'#' timesketch/config.env
 
-sed -i 's#^ELASTIC_MEM_USE_GB=8#ELASTIC_MEM_USE_GB='$ELASTIC_MEM_USE_GB'#' timesketch/config.env
-
-ln -s timesketch/config.env timesketch/.env
+ln -s ./config.env ./timesketch/.env
