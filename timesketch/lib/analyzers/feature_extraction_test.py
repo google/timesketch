@@ -1,11 +1,11 @@
 """Tests for FeatureExtractionPlugin."""
 from __future__ import unicode_literals
 
-import mock
-
 import os
 import re
 import yaml
+
+import mock
 
 from timesketch.lib import emojis
 from timesketch.lib.analyzers import feature_extraction
@@ -76,7 +76,8 @@ class TestFeatureExtractionPlugin(BaseTest):
         MockDataStore)
     def test_get_attribute_value(self):
         """Test function _get_attribute_value()."""
-        analyzer = feature_extraction.FeatureExtractionSketchPlugin('test_index', 1)
+        analyzer = feature_extraction.FeatureExtractionSketchPlugin(
+            'test_index', 1)
         #list, merge, multi
         current_val = ['hello']
         extracted_value = ['hello']
