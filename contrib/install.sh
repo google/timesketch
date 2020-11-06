@@ -74,3 +74,5 @@ sed -i 's#postgresql://<USERNAME>:<PASSWORD>@localhost#postgresql://'$POSTGRES_U
 sed -i 's#^POSTGRES_PASSWORD=\x27\x27#POSTGRES_PASSWORD=\x27'$POSTGRES_PASSWORD'\x27#' timesketch/config.env
 
 sed -i 's#^ELASTIC_MEM_USE_GB=8#ELASTIC_MEM_USE_GB='$ELASTIC_MEM_USE_GB'#' timesketch/config.env
+
+ln -s timesketch/config.env timesketch/.env
