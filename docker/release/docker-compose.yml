@@ -7,18 +7,20 @@ services:
     restart: always
     command: timesketch-web
     volumes:
-      - ../etc/timesketch:/etc/timesketch/
-      - ../upload:/usr/share/timesketch/upload/
-      - ../logs:/var/log/timesketch/
+      - ./etc/timesketch:/etc/timesketch/
+      - ./upload:/usr/share/timesketch/upload/
+      - ./logs:/var/log/timesketch/
 
   timesketch-worker:
     image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:${TIMESKETCH_VERSION}
+    environment:
+      - WORKER_LOG_LEVEL=${WORKER_LOG_LEVEL}
     restart: always
     command: timesketch-worker
     volumes:
-      - ../etc/timesketch:/etc/timesketch/
-      - ../upload:/usr/share/timesketch/upload/
-      - ../logs:/var/log/timesketch/
+      - ./etc/timesketch:/etc/timesketch/
+      - ./upload:/usr/share/timesketch/upload/
+      - ./logs:/var/log/timesketch/
 
   elasticsearch:
     image: elasticsearch:${ELASTIC_VERSION}
@@ -29,7 +31,7 @@ services:
       - ES_JAVA_OPTS=-Xms${ELASTIC_MEM_USE_GB}g -Xmx${ELASTIC_MEM_USE_GB}g
     restart: always
     volumes:
-      - ../data/elasticsearch:/usr/share/elasticsearch/data/
+      - ./data/elasticsearch:/usr/share/elasticsearch/data/
 
   postgres:
     image: postgres:${POSTGRES_VERSION}
@@ -38,7 +40,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     restart: always
     volumes:
-      - ../data/postgresql:/var/lib/postgresql/data
+      - ./data/postgresql:/var/lib/postgresql/data
 
   redis:
     image: redis:${REDIS_VERSION}
@@ -52,5 +54,4 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ../etc/nginx.conf:/etc/nginx/nginx.conf
-      - /etc/letsencrypt:/etc/letsencrypt/
+      - ./etc/nginx.conf:/etc/nginx/nginx.conf

@@ -9,5 +9,6 @@ if [ "$1" = "timesketch-web" ]; then
            --workers ${NUM_WSGI_WORKERS} timesketch.wsgi:application
 elif [ "$1" = "timesketch-worker" ]; then
   celery -A timesketch.lib.tasks worker \
-         --logfile=/var/log/timesketch/worker.log --loglevel=info
+         --logfile=/var/log/timesketch/worker.log \
+         --loglevel="${WORKER_LOG_LEVEL}"
 fi

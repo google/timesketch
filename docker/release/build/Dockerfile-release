@@ -1,9 +1,7 @@
 # Use the official Docker Hub Ubuntu 18.04 base image
 FROM ubuntu:18.04
-MAINTAINER Timesketch <timesketch-dev@googlegroups.com>
 
-# Create container with:
-# docker build --no-cache --build-arg PPA_TRACK="[dev|stable]"
+MAINTAINER Timesketch <timesketch-dev@googlegroups.com>
 
 ARG PPA_TRACK=stable
 
