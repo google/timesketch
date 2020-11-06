@@ -1,6 +1,8 @@
 """Tests for FeatureExtractionPlugin."""
 from __future__ import unicode_literals
 
+import mock
+
 import os
 import re
 import yaml
@@ -9,6 +11,7 @@ from timesketch.lib import emojis
 from timesketch.lib.analyzers import feature_extraction
 from timesketch.lib.testlib import BaseTest
 
+from timesketch.lib.testlib import MockDataStore
 
 class TestFeatureExtractionPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
@@ -67,6 +70,10 @@ class TestFeatureExtractionPlugin(BaseTest):
             self.assertIsInstance(value, dict)
             self._config_validation(value)
 
+    # Mock the Elasticsearch datastore.
+    @mock.patch(
+        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        MockDataStore)
     def test_get_attribute_value(self):
         """Test function _get_attribute_value()."""
         analyzer = feature_extraction.FeatureExtractionSketchPlugin('test_index', 1)
