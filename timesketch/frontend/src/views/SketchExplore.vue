@@ -54,10 +54,10 @@ limitations under the License.
               <p class="control">
                 <b-dropdown trap-focus aria-role="menu" ref="NewTimeFilter">
                   <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
-                    <span>+ Add time range</span>
+                    <span>+ Time filter</span>
                   </a>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                    <strong>Add time range</strong>
+                    <strong>Create time filter</strong>
                     <br>
                     <br>
                     <ts-explore-filter-time @addChip="addChip" @hideDropdown="hideDropdown"></ts-explore-filter-time>
@@ -108,7 +108,7 @@ limitations under the License.
               </p>
             </div>
 
-            <!-- Time range filters -->
+            <!-- Time filters -->
             <div class="tags" style="margin-bottom:-5px;">
               <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
                 <b-dropdown trap-focus aria-role="menu" ref="TimeFilters">
@@ -119,7 +119,7 @@ limitations under the License.
                           <span v-if="index > 0" class="chip-operator-label">OR</span>
                           <span class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></span>
                           <span>{{ chip.value.split(',')[0] }}</span>
-                          <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</span>
+                          <span v-if="chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</span>
                         </span>
                         <span class="fas fa-edit" style="margin-left:7px;"></span>
                         <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(chip)"></button>
@@ -127,10 +127,10 @@ limitations under the License.
                     </div>
                   </span>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                    <strong>Update time range</strong>
+                    <strong>Update time filter</strong>
                     <br>
                     <br>
-                    <ts-explore-filter-time @updateChip="updateChip($event, chip)" :selectedChip="chip" :start="chip.value.split(',')[0]" :end="chip.value.split(',')[1]"></ts-explore-filter-time>
+                    <ts-explore-filter-time :selectedChip="chip" @updateChip="updateChip($event, chip)" @hideDropdown="hideDropdown"></ts-explore-filter-time>
                   </b-dropdown-item>
                 </b-dropdown>
               </span>
@@ -444,7 +444,7 @@ export default {
       return this.currentQueryFilter.chips.filter(chip => chip.type === 'label' || chip.type === 'term')
     },
     timeFilterChips: function () {
-      return this.currentQueryFilter.chips.filter(chip => chip.type === 'datetime_range')
+      return this.currentQueryFilter.chips.filter(chip => chip.type.startsWith('datetime'))
     }
   },
   methods: {
@@ -800,9 +800,9 @@ export default {
 </script>
 
 <style lang="scss">
-  .dropdown-menu {
-    box-shadow: 0 30px 30px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
-  }
+.dropdown-menu {
+  box-shadow: 0 30px 30px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+}
 
 .multiselect,
 .multiselect__input,
