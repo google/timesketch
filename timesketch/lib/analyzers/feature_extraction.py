@@ -214,6 +214,9 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             return [extracted_value[0]]
         if merge_values and keep_multi:
             extended_list = [x for x in extracted_value if x not in current_val]
+            extended_list = [x for x in extracted_value if not re.match(
+                f"(^|[^0-9a-zA-Z]){x}([^0-9a-zA-Z]|$)", current_val)
+                            ]
             extended_string = ','.join(extended_list)
             return f'{current_val},{extended_string}'
         if merge_values:
