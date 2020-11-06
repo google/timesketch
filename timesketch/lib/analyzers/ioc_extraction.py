@@ -192,7 +192,7 @@ class IOCExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             if list_fieldnames:
                 for fieldname in list_fieldnames:
                     attributes_list += [x for x in attributes_contains if x in fieldname)]
-            attributes_list = list(set(attributes_list))
+                attributes_list = list(set(attributes_list))
         return_fields = attributes_list + [store_as]
 
         query = ''
