@@ -145,7 +145,7 @@ class IOCExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         with open(path_file_ioc) as json_file:
             try:
                 ioc_db = json.load(json_file)
-            except Exception as exception:
+            except json.JSONDecodeError as exception:
                 logger.warning((
                     'File IOC error to parse: '
                     '{0!s}').format(exception))
