@@ -87,6 +87,7 @@ class TestFeatureExtractionPlugin(BaseTest):
             True,
             True,
             True)
+        new_val.sort()
 
         self.assertEqual(new_val, ['hello'])
 
@@ -99,6 +100,7 @@ class TestFeatureExtractionPlugin(BaseTest):
             True,
             True,
             True)
+        new_val.sort()
 
         self.assertEqual(new_val, ['hello', 'hello2', 'hello3'])
 
@@ -111,6 +113,7 @@ class TestFeatureExtractionPlugin(BaseTest):
             False,
             True,
             True)
+        new_val.sort()
 
         self.assertEqual(new_val, ['hello', 'hello2'])
 
@@ -123,6 +126,7 @@ class TestFeatureExtractionPlugin(BaseTest):
             False,
             False,
             True)
+        new_val.sort()
 
         self.assertEqual(new_val, ['hello2'])
 
@@ -135,6 +139,7 @@ class TestFeatureExtractionPlugin(BaseTest):
             True,
             False,
             True)
+        new_val.sort()
 
         self.assertEqual(new_val, ['hello2', 'hello3'])
 
