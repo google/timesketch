@@ -204,13 +204,13 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             keep_multi = False
         if type_list:
             if merge_values and keep_multi:
-                return list(set(current_val) | set(extracted_value))
+                return sorted(list(set(current_val) | set(extracted_value)))
             if merge_values:
                 if extracted_value[0] not in current_val:
                     current_val.append(extracted_value[0])
-                return current_val
+                return sorted(current_val)
             if keep_multi:
-                return extracted_value
+                return sorted(extracted_value)
             return [extracted_value[0]]
         if merge_values and keep_multi:
             extended_list = [x for x in extracted_value if x not in current_val]
