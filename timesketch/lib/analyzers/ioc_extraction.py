@@ -191,8 +191,8 @@ class IOCExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         if attributes_contains:
             list_fieldnames = self.get_fields_list()
         if list_fieldnames:
-            for fieldname in list_fieldnames:
-                attributes_list += [x for x in attributes_contains if x in fieldname]
+            for fn in list_fieldnames:
+                attributes_list += [x for x in attributes_contains if x in fn]
             attributes_list = list(set(attributes_list))
         return_fields = attributes_list + [store_as]
 
