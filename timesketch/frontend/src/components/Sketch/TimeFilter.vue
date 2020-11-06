@@ -30,14 +30,14 @@ limitations under the License.
         <div>-</div>
         <div class="field" style="margin: 0px;">
           <p class="control" style="width: 40px; margin-left: 2px;">
-            <input class="input" ref="offsetMinusInput" v-model.number="offsetMinus" type="text" style="width:90%;" :disabled="!isSelected('interval')"
+            <input class="input" ref="offsetMinusInput" v-model.trim="offsetMinus" type="text" style="width:90%;" :disabled="!isSelected('interval')"
             v-on:change="offsetMinus && formatDateTime()" v-on:keyup.enter="submit()" v-on:keyup.up="offsetMinus++" v-on:keyup.down="offsetMinus--">
           </p>
         </div>
         <div>+</div>
         <div class="field" style="margin: 0px;">
           <p class="control" style="width: 40px; margin-left: 2px;">
-            <input class="input" ref="offsetPlusInput" v-model.number="offsetPlus" type="text" style="width:90%;" :disabled="!isSelected('interval')"
+            <input class="input" ref="offsetPlusInput" v-model.trim="offsetPlus" type="text" style="width:90%;" :disabled="!isSelected('interval')"
             v-on:change="offsetPlus && formatDateTime()" v-on:keyup.enter="submit()" v-on:keyup.up="offsetPlus++" v-on:keyup.down="offsetPlus--">
           </p>
         </div>
