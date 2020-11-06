@@ -310,7 +310,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             result = expression.findall(attribute_value)
             if not result:
                 continue
-            result=list(set(result))
+            result = list(set(result))
 
             event_counter += 1
             store_as_current_val = event.source.get(store_as)
