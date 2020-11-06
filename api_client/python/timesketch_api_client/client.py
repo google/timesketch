@@ -22,6 +22,7 @@ import uuid
 import bs4
 import requests
 # pylint: disable=redefined-builtin
+from altair.examples.multiline_tooltip import rules
 from requests.exceptions import ConnectionError
 import webbrowser
 
@@ -36,6 +37,7 @@ from . import error
 from . import index
 from . import sketch
 from . import version
+from . import sigma
 
 
 logger = logging.getLogger('timesketch_api.client')
@@ -493,3 +495,27 @@ class TimesketchApi(object):
             return
         request = google.auth.transport.requests.Request()
         self.credentials.credential.refresh(request)
+
+
+    def list_sigma_rules(self):
+        """Get a dict of all sigma rules that the user has access to.
+
+        Returns:
+            dict of Sigma objects instances.
+        """
+
+        sigma_rules = []
+        response = self.fetch_resource_data('sigma/')
+        return response
+       
+
+    def get_sigma_rule(self, rule_uuid):
+        """Get a sigma rule.
+
+        Args:
+            rule_uuid: UUID of the Sigma rule.
+
+        Returns:
+            Instance of a Sigma object.
+        """
+        return sigma.Sigma(rule_uuid, api=self)

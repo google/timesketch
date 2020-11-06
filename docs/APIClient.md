@@ -203,6 +203,32 @@ aggregation.name = 'TopDomains'
 aggregation.save()
 ```
 
+### Sigma rules
+
+### Get a single rule
+
+To get a Sigma rule that is stored on the server via uuid of the rule:
+
+```
+rule = ts.get_sigma_rule("5266a592-b793-11ea-b3de-0242ac130004")
+```
+
+An example rule return is:
+
+```JSON
+{'title': 'Suspicious Installation of Zenmap', 'id': '5266a592-b793-11ea-b3de-0242ac130004', 'description': 'Detects suspicious installation of Zenmap', 'references': ['https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'], 'author': 'Alexander Jaeger', 'date': '2020/06/26', 'modified': '2020/06/26', 'logsource': {'product': 'linux', 'service': 'shell'}, 'detection': {'keywords': ['*apt-get install zmap*'], 'condition': 'keywords'}, 'falsepositives': ['Unknown'], 'level': 'high', 'es_query': '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ zmap*")', 'file_name': 'lnx_susp_zenmap'}
+```
+
+### Get a list of rules
+
+Another option to explore Sigma rules is via the `list_sigma_rules` function.
+To get a list of available Sigma rules use:
+
+```python
+ts.list_sigma_rules()
+```
+
+
 ### Other Options
 
 The sketch object can be used to do several other actions that are not documented in this first document, such as:

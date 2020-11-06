@@ -53,6 +53,8 @@ from .resources.user import UserListResource
 from .resources.user import GroupListResource
 from .resources.user import CollaboratorResource
 from .resources.user import LoggedInUserResource
+from .resources.sigma import SigmaResource
+from .resources.sigma import SigmaListResource
 
 
 # Disable error for long line. Readability is more important than line
@@ -96,5 +98,7 @@ API_ROUTES = [
     (GroupListResource, '/groups/'),
     (CollaboratorResource, '/sketches/<int:sketch_id>/collaborators/'),
     (VersionResource, '/version/'),
+    (SigmaListResource, '/sigma/'),
+    (SigmaResource, '/sigma/<string:rule_uuid>/'),
     (LoggedInUserResource, '/users/me/')
 ]
