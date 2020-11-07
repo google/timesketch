@@ -1,98 +1,121 @@
-### Note: If you are upgrading from a previous Timesketch release, please see the [upgrading guide](Upgrading.md) instead.
+# Install Timesketch with Docker
 
-# Install Timesketch from scratch
+#### Overview
+Guide on how to install Timesketch using Docker. Docker images are automatically built whenever the main branch is updated or a new release is tagged.
 
-NOTE: It is not recommended to try to run on a system with less than 8 GB of RAM.
+You will need:
+* Machine with Ubuntu 20.04 installed.
+* At least 8GB RAM, but more the better.
+* Domain name registered and configure for the machine (for SSL)
 
-#### Install Ubuntu
+This guide setup the following services:
+* Timesketch server
+* Timesketch importer/analysis worker
+* PostgreSQL
+* Elasticsearch
+* Redis
+* Nginx
 
-This installation guide is based on Ubuntu 18.04LTS Server edition. Follow the installation guide for Ubuntu and install the base system.
-After the installation is done, login and update the system.
+NOTE: This guide sets up  single node Elasticsearch cluster. This is OK for smaller installations but in order to scale and have better performance you need to setup a multi node Elasticsearch cluster. This is out of scope for this guide but the official documentation will get you started:
+https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html  
 
-    $ sudo apt-get update
-    $ sudo apt-get dist-upgrade
+#### 1. Install Docker and docker-compose
 
-#### Install Elasticsearch
+Follow the official installation instructions for Docker on Ubuntu:
+https://docs.docker.com/engine/install/ubuntu/ 
 
-Install apt-get HTTPS support
+#### 2. Choose location for Timesketch data
+You can choose to host the Timeksetch data directory anywhere but note that by default it will host Elasticsearch and PostgreSQL data in this directory so make sure you have enough disk space available.
 
-    $ sudo apt-get install apt-transport-https
+    # cd /opt
 
-Install the latest Elasticsearch 7 release:
+#### 3. Download deployment helper script
+We have created a helper script to get you started with all necessary configuration.
+Download the script here:
 
-    $ sudo wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
-    $ sudo echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
-    $ sudo apt-get update
-    $ sudo apt-get install elasticsearch
+    # curl -s -O https://raw.githubusercontent.com/google/timesketch/master/contrib/deploy_timesketch.sh
 
-**Configure Elasticsearch**
+#### 4. Run deployment script
 
-This is up to your specific environment, but if you run elasticsearch on the same host as Timesketch you should lock it down to only listen to localhost.
-The configuration for Elasticsearch is located in `/etc/elasticsearch/elasticsearch.yml`
+    # ./install_timesketch.sh
+    
+Example output:
 
-Make sure that Elasticsearch is started on boot:
+    * Setting vm.max_map_count for Elasticsearch
+    * Setting default config parameters..OK
+    * Setting Elasticsearch memory allocation to 8GB
+    * Fetching configuration files..OK
+    * Edit configuration files..OK
+    * Installation done.
 
-    /bin/systemctl daemon-reload
-    /bin/systemctl enable elasticsearch.service
-    /bin/systemctl start elasticsearch.service
+#### 5. Start the system
 
-Make sure that Elasticsearch is running:
+    # cd timesketch
+    # docker-compose up -d
 
-    /bin/systemctl status elasticsearch.service
+#### 6. Create the first user
 
-#### Install PostgreSQL
+    # docker-compose exec timesketch-web tsctl add_user --username <USERNAME>
 
-    $ sudo apt-get install postgresql python3-psycopg2
+#### 7. Enable TLS
+It is out of scope for the deployment script to setup certificates but here are pointers on how to use Let's Encrypt.
 
-**Configure PostgreSQL**
+1. You need to configure a DNS name for the server. Use your DNS provider instructions.
+2. Make sure your webserver is reachable on port 80.
+3. Follow the official guide to install and run Let's Encrypt on Ubuntu:
+https://certbot.eff.org/lets-encrypt/ubuntufocal-other
 
-    $ sudo vim /etc/postgresql/10/main/pg_hba.conf
+When Let's Encrypt has been installed and you have generated certificates (located in /etc/letsencrypt) it is time to reconfigure Nginx.
 
-Configure PostgreSQL to allow the timesketch user to authenticate and use the database:
+Edit timesketch/etc/nginx.conf (HOSTNAME is the DNS name of your server):
 
-    local   all             timesketch                              md5
+    events {
+            worker_connections 768;
+    }
+    
+    http {
+        server {
+          listen 80;
+          listen [::]:80;
+          listen 443 ssl;
+          ssl_certificate /etc/letsencrypt/live/<HOSTNAME>>/fullchain.pem;
+          ssl_certificate_key /etc/letsencrypt/live/<HOSTNAME>>/privkey.pem;
+          client_max_body_size 0m;
+        
+          location / {        
+            proxy_buffer_size       128k;
+            proxy_buffers           4 256k;
+            proxy_busy_buffers_size 256k;
+            proxy_pass http://timesketch-web:5000;
+            proxy_set_header Host $host;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+          }
+          if ($scheme != "https") {
+            return 301 https://$host$request_uri;
+          }
+        }
+    } 
 
-Then you need to restart PostgreSQL:
+Make the certificate and key available to the Nginx Docker container. Edit timesketch/docker-compose.yml and mount /etc/letsencrypt:
 
-    $ sudo /etc/init.d/postgresql restart
+    ...
 
-Create the Timesketch PostgreSQL database and user:
+    nginx:
+      image: nginx:${NGINX_VERSION}
+      restart: always
+      ports:
+        - "80:80"
+        - "443:443"
+      volumes:
+        - ./etc/nginx.conf:/etc/nginx/nginx.conf
+        - /etc/letsencrypt:/etc/letsencrypt/
 
-    $ sudo -u postgres createuser -d -P -R -S timesketch
-    $ sudo -u postgres createdb -O timesketch timesketch
+Restart the system:
 
-#### Install Timesketch
+    # docker-compose down
+    # docker-compose up -d
+    
+Congratulations, your Timesketch system is operational and ready to use. 
 
-Now it is time to install Timesketch. First we need to install some dependencies:
-
-    $ sudo apt-get install python3-pip python3-dev libffi-dev
-
-Then install Timesketch itself:
-
-    $ sudo pip3 install timesketch
-
-**Configure Timesketch**
-
-Copy the configuration file to `/etc/timesketch/` and configure it. The file is well commented and it should be pretty straight forward.
-
-    $ mkdir /etc/timesketch
-    $ sudo cp /usr/local/share/timesketch/timesketch.conf /etc/timesketch/
-    $ sudo chmod 600 /etc/timesketch/timesketch.conf
-
-Generate a secret key and configure `SECRET_KEY` in `/etc/timesketch/timesketch.conf`
-
-    $ openssl rand -base64 32
-
-In the timesketch.conf file, edit the following using the username and password you used in the previous step:
-
-    SQLALCHEMY_DATABASE_URI = u'postgresql://<USERNAME>:<PASSWORD>@localhost/timesketch'
-
-Add the first user
-
-    $ tsctl add_user -u <username>
-
-Start the HTTP server (**NOTE: This is unencrypted. Use SSL for production deployments**):
-
-    $ tsctl runserver -h 0.0.0.0 -p 5000
-
-Go to `http://<SERVER IP>:5000/`
+    https://<HOSTNAME>
