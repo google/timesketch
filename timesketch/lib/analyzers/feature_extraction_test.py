@@ -78,16 +78,15 @@ class TestFeatureExtractionPlugin(BaseTest):
         """Test function _get_attribute_value()."""
         analyzer = feature_extraction.FeatureExtractionSketchPlugin(
             'test_index', 1)
-        #list, merge, multi
         current_val = ['hello']
         extracted_value = ['hello']
         # pylint: disable=protected-access
         new_val = analyzer._get_attribute_value(
-            current_val,
-            extracted_value,
-            True,
-            True,
-            True)
+            current_val=current_val,
+            extracted_value=extracted_value,
+            keep_multi=True,
+            merge_values=True,
+            type_list=True)
         new_val.sort()
 
         self.assertEqual(new_val, ['hello'])
