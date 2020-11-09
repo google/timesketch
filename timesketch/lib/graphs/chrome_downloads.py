@@ -28,12 +28,16 @@ class ChromeDownloadsGraph(BaseGraphPlugin):
     DISPLAY_NAME = 'Chrome downloads'
 
     def generate(self):
+        """Generate the graph.
+
+        Returns:
+            Graph object instance.
+        """
         query = 'data_type:"chrome:history:file_downloaded"'
         return_fields = [
             'hostname', 'received_bytes', 'full_path', 'url'
         ]
 
-        # Generator of events based on your query.
         chrome_events = self.event_stream(
             query_string=query, return_fields=return_fields, indices=['_all'])
 
@@ -83,7 +87,6 @@ class ChromeDownloadsGraph(BaseGraphPlugin):
                 self.graph.add_edge(
                     computer, executable, 'Executed', prefetch_event)
 
-        # Commit all nodes and edges to the graph object.
         self.graph.commit()
 
         return self.graph

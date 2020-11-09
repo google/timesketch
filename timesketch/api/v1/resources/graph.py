@@ -41,9 +41,8 @@ class GraphListResource(resources.ResourceMixin, Resource):
             List of graphs in JSON (instance of flask.wrappers.Response)
         """
         graphs = manager.GraphManager.get_graphs()
-        graph_names = {}
-        for graph_name, graph_class in graphs:
-            graph_names[graph_name] = graph_class().DISPLAY_NAME
+        graph_names = {name: graph_class().DISPLAY_NAME for name, graph_class in
+                       graphs}
         return jsonify(graph_names)
 
 

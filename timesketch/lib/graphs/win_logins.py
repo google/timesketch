@@ -24,12 +24,16 @@ class WinLoginsGraph(BaseGraphPlugin):
     DISPLAY_NAME = 'Windows logins'
 
     def generate(self):
+        """Generate the graph.
+
+        Returns:
+            Graph object instance.
+        """
         query = 'tag:logon-event'
         return_fields = [
             'computer_name', 'username', 'logon_type', 'logon_process'
         ]
 
-        # Generator of events based on your query.
         events = self.event_stream(
             query_string=query, return_fields=return_fields, indices=['_all'])
 
@@ -42,7 +46,6 @@ class WinLoginsGraph(BaseGraphPlugin):
             user = self.graph.add_node(username, {'type': 'user'})
             self.graph.add_edge(user, computer, logon_type, event)
 
-        # Commit all nodes and edges to the graph object.
         self.graph.commit()
 
         return self.graph

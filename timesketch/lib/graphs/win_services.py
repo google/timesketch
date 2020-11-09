@@ -24,10 +24,14 @@ class WinServiceGraph(BaseGraphPlugin):
     DISPLAY_NAME = 'Windows services'
 
     def generate(self):
+        """Generate the graph.
+
+        Returns:
+            Graph object instance.
+        """
         query = 'event_identifier:7045'
         return_fields = ['computer_name', 'username', 'strings']
 
-        # Generator of events based on your query.
         events = self.event_stream(
             query_string=query, return_fields=return_fields, indices=['_all'])
 
@@ -40,18 +44,15 @@ class WinServiceGraph(BaseGraphPlugin):
             service_type = event_strings[2]
             start_type = event_strings[3]
 
-            # Create nodes
             computer = self.graph.add_node(computer_name, {'type': 'computer'})
             user = self.graph.add_node(username, {'type': 'user'})
             service = self.graph.add_node(service_name, {
                 'type': 'winservice', 'image_path': image_path
             })
 
-            # Create edges
             self.graph.add_edge(user, service, start_type, event)
             self.graph.add_edge(service, computer, service_type, event)
 
-        # Commit all nodes and edges to the graph object.
         self.graph.commit()
 
         return self.graph

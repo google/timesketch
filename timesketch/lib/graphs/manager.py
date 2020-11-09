@@ -14,7 +14,7 @@
 """This file contains a class for managing graphs."""
 
 
-class GraphManager(object):
+class GraphManager:
     """The graph manager."""
 
     _class_registry = {}
@@ -25,7 +25,7 @@ class GraphManager(object):
 
         Yields:
             tuple: containing:
-                unicode: the uniquely identifying name of the graph
+                str: the uniquely identifying name of the graph
                 type: the graph class.
         """
         for graph_name, graph_class in iter(cls._class_registry.items()):
@@ -36,7 +36,7 @@ class GraphManager(object):
         """Retrieves a class object of a specific graph.
 
         Args:
-            graph_name (unicode): name of the graph to retrieve.
+            graph_name (str): name of the graph to retrieve.
 
         Returns:
             Instance of Graph class object.

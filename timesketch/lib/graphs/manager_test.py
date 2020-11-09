@@ -17,7 +17,7 @@ from timesketch.lib.testlib import BaseTest
 from timesketch.lib.graphs import manager
 
 
-class MockGraph(object):
+class MockGraph:
     """Mock graph class."""
     NAME = 'MockGraph'
     DISPLAY_NAME = 'MockGraph'

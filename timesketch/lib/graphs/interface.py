@@ -28,8 +28,10 @@ GRAPH_TYPES = {
     'MultiDiGraph': nx.MultiDiGraph
 }
 
+MAX_EVENTS_PER_EDGE = 500
 
-class Graph(object):
+
+class Graph:
     """Graph object with helper methods.
 
     Attributes:
@@ -76,15 +78,15 @@ class Graph(object):
 
         edge = Edge(source, target, label, attributes)
 
-        if edge.counter < 500:
+        if edge.node_counter < MAX_EVENTS_PER_EDGE:
             index = event.get('_index')
             doc_id = event.get('_id')
             events = edge.attributes.get('events', {})
             doc_ids = events.get(index, [])
             doc_ids.append(doc_id)
-            edge.counter += 1
+            edge.node_counter += 1
             events[index] = doc_ids
-            edge.add_attribute('events', events)
+            edge.set_attribute('events', events)
 
         self._edges[edge_id] = edge
 
@@ -95,7 +97,7 @@ class Graph(object):
                 node_id, label=node.label, **node.attributes)
 
         for _, edge in self._edges.items():
-            label = edge.label + ' ({0:d})'.format(edge.counter)
+            label = edge.label + ' ({0:d})'.format(edge.node_counter)
             self.nx_instance.add_edge(
                 edge.source.id, edge.target.id, label=label,
                 **edge.attributes)
@@ -110,63 +112,106 @@ class Graph(object):
         return cy_json.get('elements', [])
 
 
-class BaseGraphElement(object):
+class BaseGraphElement:
+    """Base class for graph elements.
+
+    Attributes:
+        label (str): Node/Edge label to show in the UI.
+        attributes (dict): Attributed to add to the node/edge.
+        id (str): Uniq value generated from the label.
+    """
     def __init__(self, label='', attributes=None):
+        """Initialize the base element object.
+
+        Args:
+            label (str): Node/Edge label to show in the UI.
+            attributes (dict): Attributes to add to the node/edge.
+        """
         self.label = label
         self.attributes = attributes or {}
         self.id = self.id_from_label(label)
 
     @staticmethod
     def id_from_label(label):
+        """Generate ID for node/edge.
+
+        Args:
+            label (str): Node or edge label.
+
+        Returns:
+            MD5 hash (str): MD5 hash of the provided label.
+        """
         label = label.lower()
         return hashlib.md5(label.encode('utf-8')).hexdigest()
 
-    def add_label(self, label):
-        self.label = label
-        self.id = self.id_from_label(label)
+    def set_attribute(self, key, value):
+        """Add or replace an attribute to the element.
 
-    def add_attribute(self, key, value):
+        Args:
+            key (str): Attribute key.
+            value (str): Attribute value.
+        """
         self.attributes[key] = value
 
 
 class Node(BaseGraphElement):
     """Graph node object."""
-    # Placeholder until more logic is implemented for Nodes.
+    # TODO: Add logic for Nodes when needed.
 
 
 class Edge(BaseGraphElement):
-    """Graph edge object."""
+    """Graph edge object.
+
+    Attributes:
+        source (Node): Node to add as source node.
+        target (Node): Node to add as target node.
+        node_counter (int): Counter for number of nodes referenced for the edge.
+    """
     def __init__(self, source, target, label='', attributes=None):
+        """Initialize the Edge object.
+
+        Args:
+            label (str): Node/Edge label to show in the UI.
+            attributes (dict): Attributes to add to the edge.
+        """
         self.source = source
         self.target = target
-        self.counter = 0
+        self.node_counter = 0
         super(Edge, self).__init__(label, attributes)
 
 
-class BaseGraphPlugin(object):
-    """Base class for a graph."""
+class BaseGraphPlugin:
+    """Base class for a graph.
 
+    Attributes:
+        datastore (ElasticsearchDataStore): Elasticsearch datastore object.
+        graph (nx.Graph): NetworkX Graph object.
+    """
     # Name that the graph will be registered as.
     NAME = 'name'
 
     # Display name (used in the UI)
     DISPLAY_NAME = 'display_name'
 
-    # Type of graph. See NetworkX documentation for details:
+    # Type of graph. There are four supported types: Undirected Graph,
+    # Undirected Multi Graph, Directed Graph, Directed  Multi Graph.
+    # If you have multiple edges between nodes you need to use the multi graphs.
+    #
+    # See NetworkX documentation for details:
     # https://networkx.org/documentation/stable/reference/classes/index.html
     GRAPH_TYPE = 'MultiDiGraph'
 
     def __init__(self):
         """Initialize the graph object.
 
-        Args:
-
         Raises:
-            RuntimeError if values or encoding is missing from data.
+            KeyError if graph type specified is not supported.
         """
         self.datastore = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
+        if not GRAPH_TYPES.get(self.GRAPH_TYPE):
+            raise KeyError(f'Graph type {self.GRAPH_TYPE} is not supported')
         self.graph = Graph(self.GRAPH_TYPE)
 
     # TODO: Refactor this to reuse across analyzers and graphs.
