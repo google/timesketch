@@ -26,25 +26,33 @@ https://docs.docker.com/engine/install/ubuntu/
 
 #### 2. Install docker-compose
     
+```shell
     $ sudo apt-get install docker-compose
+```
 
 #### 3. Download deployment helper script
 We have created a helper script to get you started with all necessary configuration.
 Download the script here:
 
+```shell
     $ curl -s -O https://raw.githubusercontent.com/google/timesketch/master/contrib/deploy_timesketch.sh
     $ chmod 755 deploy_timesketch.sh
+```
 
 #### 4. Choose location for Timesketch data
 You can choose to host the Timeksetch data directory anywhere but note that by default it will host Elasticsearch and PostgreSQL data in this directory so make sure you have enough disk space available.
 
 Example:
-    
+
+```shell    
     $ cd /opt
+```
 
 #### 5. Run deployment script
 
+```shell
     $ sudo ~/deploy_timesketch.sh
+```    
     
 Example output:
 
@@ -57,12 +65,16 @@ Example output:
 
 #### 6. Start the system
 
+```shell
     $ cd timesketch
     $ sudo docker-compose up -d
+```
 
 #### 7. Create the first user
 
+```shell
     $ sudo docker-compose exec timesketch-web tsctl add_user --username <USERNAME>
+```
 
 #### 8. Enable TLS
 It is out of scope for the deployment script to setup certificates but here are pointers on how to use Let's Encrypt.
@@ -76,6 +88,7 @@ When Let's Encrypt has been installed and you have generated certificates (locat
 
 Edit timesketch/etc/nginx.conf (HOSTNAME is the DNS name of your server):
 
+```
     events {
             worker_connections 768;
     }
@@ -103,9 +116,11 @@ Edit timesketch/etc/nginx.conf (HOSTNAME is the DNS name of your server):
           }
         }
     } 
+```
 
 Make the certificate and key available to the Nginx Docker container. Edit timesketch/docker-compose.yml and mount /etc/letsencrypt:
 
+```
     ...
 
     nginx:
@@ -117,12 +132,15 @@ Make the certificate and key available to the Nginx Docker container. Edit times
       volumes:
         - ./etc/nginx.conf:/etc/nginx/nginx.conf
         - /etc/letsencrypt:/etc/letsencrypt/
+```
 
 Restart the system:
 
+```shell
     # docker-compose down
     # docker-compose up -d
-    
+ ```
+ 
 Congratulations, your Timesketch system is operational and ready to use. 
 
     https://<HOSTNAME>
