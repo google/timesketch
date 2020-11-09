@@ -24,20 +24,24 @@ https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html
 Follow the official installation instructions for Docker on Ubuntu:
 https://docs.docker.com/engine/install/ubuntu/ 
 
-#### 2. Choose location for Timesketch data
-You can choose to host the Timeksetch data directory anywhere but note that by default it will host Elasticsearch and PostgreSQL data in this directory so make sure you have enough disk space available.
+Install docker-compose
+    
+    $ sudo apt-get install docker-compose
 
-    # cd /opt
-
-#### 3. Download deployment helper script
+#### 2. Download deployment helper script
 We have created a helper script to get you started with all necessary configuration.
 Download the script here:
 
-    # curl -s -O https://raw.githubusercontent.com/google/timesketch/master/contrib/deploy_timesketch.sh
+    $ curl -s -O https://raw.githubusercontent.com/google/timesketch/master/contrib/deploy_timesketch.sh
+
+#### 3. Choose location for Timesketch data
+You can choose to host the Timeksetch data directory anywhere but note that by default it will host Elasticsearch and PostgreSQL data in this directory so make sure you have enough disk space available.
+
+    $ cd /opt
 
 #### 4. Run deployment script
 
-    # ./install_timesketch.sh
+    # sudo ~/install_timesketch.sh
     
 Example output:
 
