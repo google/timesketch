@@ -113,109 +113,115 @@ class IOCExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         config = self._config or interface.get_yaml_config(self.CONFIG_FILE)
         if not config:
             return 'Unable to parse the config file.'
+        query, ret_fields, ioc_db = self.parse_config(config)
+        if not query or not ret_fields:
+            return 'Error to make query'
+        if not ioc_db:
+            return 'Error to parse config'
+        logger.info((
+                            'Return field '
+                            'error: {0!s}').format(ret_fields))
+        return self.extract_ioc(query, ret_fields, ioc_db)
 
-        return_strings = []
-        for name, ioc_config in iter(config.items()):
-            ioc_string = self.extract_ioc(name, ioc_config)
-            if ioc_string:
-                return_strings.append(ioc_string)
-
-        return ', '.join(return_strings)
-
-    def extract_ioc(self, name, config):
-        """Extract IOC from events.
+    def parse_config(self, ioc_config):
+        """Create IOC DB and make request
 
         Args:
-            name: String with the name describing the feature to be extracted.
             config: A dict that contains the configuration for the ioc
                 extraction. See data/ioc.yaml for fields and further
                 documentation of what needs to be defined.
 
         Returns:
+            query: A string that contains elastic query to return
+                events check ioc against.
+            return_fields: A list that contains names of field to return
+                from elastic request to check ioc against.
+            ioc_db: A dict contains extracted config and IOC files
+        """
+        ioc_db = []
+        query = ""
+        return_fields = []
+        list_fieldnames = self.get_fields_list()
+        for name, config in iter(ioc_config.items()):
+            elm = {'name': name, 'found': 0}
+            path_file_ioc = config.get('path_file_ioc')
+            if not path_file_ioc:
+                logger.warning('No path for file IOC defined.')
+                continue
+            if not os.path.isfile(path_file_ioc):
+                logger.warning('file IOC defined not exists.')
+                return ''
+            elm['ioc'] = None
+            with open(path_file_ioc) as json_file:
+                try:
+                    elm['ioc'] = json.load(json_file)
+                    if not isinstance(elm['ioc'], (list, tuple)):
+                        continue
+                    if not elm['ioc']:
+                        continue
+                except json.JSONDecodeError as exception:
+                    logger.warning((
+                        'File IOC error to parse: '
+                        '{0!s}').format(exception))
+                    continue
+            elm['store_as'] = config.get('store_as')
+            if not elm['store_as']:
+                logger.warning('No attribute defined to store results in.')
+                continue
+            elm['attributes'] = config.get('attributes')
+            attri_contains = config.get('attributes_contains')
+            if attri_contains:
+                for fn in list_fieldnames:
+                    elm['attributes'] += [x for x in attri_contains if x in fn]
+            elm['attributes'] = list(set(elm['attributes']))
+            if not elm['attributes']:
+                logger.warning('No attributes defined.')
+                continue
+            elm['tags'] = config.get('tags', [])
+            elm['regexp'] = config.get(
+                'match_re', '([^a-zA-Z0-9]|^)$value$([^a-zA-Z0-9]|$)')
+            regexp_flags = config.get('re_flags')
+            elm['re_flag'] = 0
+            if regexp_flags:
+                flags = set()
+                for flag in regexp_flags:
+                    try:
+                        flags.add(getattr(re, flag))
+                    except AttributeError:
+                        logger.warning(
+                            'Unknown regular expression flag defined.')
+                        continue
+                elm['re_flag'] = sum(flags)
+            return_fields += elm['attributes'] + [elm['store_as']]
+            ioc_db.append(elm)
+            for attribute in elm['attributes']:
+                if query:
+                    query += ' AND '
+                query += '_exists_:'+attribute
+        return query, return_fields, ioc_db
+
+    def extract_ioc(self, query, ret_fields, ioc_db):
+        """Extract IOC from events.
+
+        Args:
+            query: A string that contains elastic query to return
+                events check ioc against.
+            return_fields: A list that contains names of field to return
+                from elastic request to check ioc against.
+            ioc_db: A dict contains extracted config and IOC files
+
+        Returns:
             String with summary of the analyzer result.
         """
-        path_file_ioc = config.get('path_file_ioc')
-        if not path_file_ioc:
-            logger.warning('No path for file IOC defined.')
-            return ''
-        if not os.path.isfile(path_file_ioc):
-            logger.warning('file IOC defined not exists.')
-            return ''
-        ioc_db = None
-        with open(path_file_ioc) as json_file:
-            try:
-                ioc_db = json.load(json_file)
-            except json.JSONDecodeError as exception:
-                logger.warning((
-                    'File IOC error to parse: '
-                    '{0!s}').format(exception))
-                return ''
-        if not ioc_db:
-            logger.warning('No data IOC in file IOC defined.')
-            return ''
-        if not isinstance(ioc_db, (list, tuple)):
-            logger.warning('IOC data doesnt list type.')
-            return ''
-
-        attributes = config.get('attributes')
-        attributes_contains = config.get('attributes_contains')
-        if not attributes and not attributes_contains:
-            logger.warning('No attributes defined.')
-            return ''
-
-        store_as = config.get('store_as')
-        if not store_as:
-            logger.warning('No attribute defined to store results in.')
-            return ''
-
-        tags = config.get('tags', [])
-
-        expression_string = config.get(
-            'match_re', '([^a-zA-Z0-9]|^)$value$([^a-zA-Z0-9]|$)')
-        expression_flags = config.get('re_flags')
-
-        if expression_flags:
-            flags = set()
-            for flag in expression_flags:
-                try:
-                    flags.add(getattr(re, flag))
-                except AttributeError:
-                    logger.warning('Unknown regular expression flag defined.')
-                    return ''
-            re_flag = sum(flags)
-        else:
-            re_flag = 0
-
-        attributes_list = attributes
-        list_fieldnames = None
-        if attributes_contains:
-            list_fieldnames = self.get_fields_list()
-        if list_fieldnames:
-            for fn in list_fieldnames:
-                attributes_list += [x for x in attributes_contains if x in fn]
-            attributes_list = list(set(attributes_list))
-        return_fields = attributes_list + [store_as]
-
-        query = ''
-        for attribute in attributes_list:
-            if query:
-                query += ' AND '
-            query += '_exists_:'+attribute
         events = self.event_stream(
             query_string=query, query_dsl='',
-            return_fields=return_fields)
+            return_fields=ret_fields)
 
-        event_counter = 0
         for event in events:
-            add_ioc = []
-            ioc_field = event.source.get(store_as)
-            if ioc_field and not isinstance(ioc_field, (list, tuple)):
-                logger.warning('IOC field exist but not list type')
-                continue
-            if ioc_field:
-                add_ioc = ioc_field
-            attributes_fmt = []
-            for attribute in attributes_list:
+            value_store = {}
+            tags_store = []
+            attributes_fmt = {}
+            for attribute in ret_fields:
                 attribute_field = event.source.get(attribute)
                 if isinstance(attribute_field, six.text_type):
                     attribute_value = attribute_field
@@ -227,32 +233,49 @@ class IOCExtractionSketchPlugin(interface.BaseSketchAnalyzer):
                     attribute_value = None
                 if not attribute_value:
                     continue
-                attributes_fmt.append(attribute_value)
-            for ioc in ioc_db:
-                try:
-                    expression_tmp = expression_string.replace('$value$', ioc)
-                    expression = re.compile(expression_tmp, flags=re_flag)
-                except re.error as exception:
-                    # pylint: disable=logging-format-interpolation
-                    logger.warning((
-                        'Regular expression failed to compile, with '
-                        'error: {0!s}').format(exception))
-                    return ''
-                for attribute in attributes_fmt:
-                    if expression.match(attribute):
-                        if ioc not in add_ioc:
-                            add_ioc.append(ioc)
-                        break
-            if add_ioc:
-                event_counter += 1
-                event.add_attributes({store_as: add_ioc})
-                event.add_tags(tags)
-
+                attributes_fmt[attribute] = attribute_value
+            for elm in ioc_db:
+                ioc_field = event.source.get(elm['store_as'])
+                if ioc_field and not isinstance(ioc_field, (list, tuple)):
+                    logger.warning('IOC field exist but not list type')
+                    continue
+                if ioc_field:
+                    if elm['store_as'] in value_store:
+                        value_store[elm['store_as']] += ioc_field
+                    else:
+                        value_store[elm['store_as']] = ioc_field
+                elif not elm['store_as'] in value_store:
+                    value_store[elm['store_as']] = []
+                for ioc in elm['ioc']:
+                    try:
+                        regexp_tmp = elm['regexp'].replace(
+                            '$value$', ioc)
+                        regexp = re.compile(regexp_tmp, flags=elm['re_flag'])
+                    except re.error as exception:
+                        # pylint: disable=logging-format-interpolation
+                        logger.warning((
+                            'Regular expression failed to compile, with '
+                            'error: {0!s}').format(exception))
+                        continue
+                    for attribute in elm['attributes']:
+                        if not attribute in attributes_fmt:
+                            continue
+                        if regexp.match(attributes_fmt[attribute]):
+                            tags_store += elm['tags']
+                            elm['found'] += 1
+                            if ioc not in value_store[elm['store_as']]:
+                                value_store[elm['store_as']].append(ioc)
+                            break
+            if value_store:
+                event.add_attributes(value_store)
+                event.add_tags(list(set(tags_store)))
                 # Commit the event to the datastore.
                 event.commit()
-
-        return 'IOC extraction [{0:s}] extracted {1:d} ioc.'.format(
-            name, event_counter)
-
+        ret_string = 'IOC extraction'
+        for elm in ioc_db:
+            ret_string += ' [{0:s}] extracted {1:d} ioc.'.format(
+                elm['name'], elm['found'])
+        #format result:
+        return ret_string
 
 manager.AnalysisManager.register_analyzer(IOCExtractionSketchPlugin)
