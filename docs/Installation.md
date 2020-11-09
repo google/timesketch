@@ -19,30 +19,30 @@ This guide setup the following services:
 NOTE: This guide sets up  single node Elasticsearch cluster. This is OK for smaller installations but in order to scale and have better performance you need to setup a multi node Elasticsearch cluster. This is out of scope for this guide but the official documentation will get you started:
 https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html  
 
-#### 1. Install Docker and docker-compose
+#### 1. Install Docker
 
 Follow the official installation instructions for Docker on Ubuntu:
 https://docs.docker.com/engine/install/ubuntu/ 
 
-Install docker-compose
+#### 2. Install docker-compose
     
     $ sudo apt-get install docker-compose
 
-#### 2. Download deployment helper script
+#### 3. Download deployment helper script
 We have created a helper script to get you started with all necessary configuration.
 Download the script here:
 
     $ curl -s -O https://raw.githubusercontent.com/google/timesketch/master/contrib/deploy_timesketch.sh
     $ chmod 755 deploy_timesketch.sh
 
-#### 3. Choose location for Timesketch data
+#### 4. Choose location for Timesketch data
 You can choose to host the Timeksetch data directory anywhere but note that by default it will host Elasticsearch and PostgreSQL data in this directory so make sure you have enough disk space available.
 
 Example:
     
     $ cd /opt
 
-#### 4. Run deployment script
+#### 5. Run deployment script
 
     $ sudo ~/deploy_timesketch.sh
     
@@ -55,16 +55,16 @@ Example output:
     * Edit configuration files..OK
     * Installation done.
 
-#### 5. Start the system
+#### 6. Start the system
 
     $ cd timesketch
     $ sudo docker-compose up -d
 
-#### 6. Create the first user
+#### 7. Create the first user
 
     $ sudo docker-compose exec timesketch-web tsctl add_user --username <USERNAME>
 
-#### 7. Enable TLS
+#### 8. Enable TLS
 It is out of scope for the deployment script to setup certificates but here are pointers on how to use Let's Encrypt.
 
 1. You need to configure a DNS name for the server. Use your DNS provider instructions.
