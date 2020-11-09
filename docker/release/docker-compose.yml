@@ -1,0 +1,57 @@
+version: '3.7'
+services:
+  timesketch-web:
+    image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:${TIMESKETCH_VERSION}
+    environment:
+      - NUM_WSGI_WORKERS=${NUM_WSGI_WORKERS}
+    restart: always
+    command: timesketch-web
+    volumes:
+      - ./etc/timesketch:/etc/timesketch/
+      - ./upload:/usr/share/timesketch/upload/
+      - ./logs:/var/log/timesketch/
+
+  timesketch-worker:
+    image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:${TIMESKETCH_VERSION}
+    environment:
+      - WORKER_LOG_LEVEL=${WORKER_LOG_LEVEL}
+    restart: always
+    command: timesketch-worker
+    volumes:
+      - ./etc/timesketch:/etc/timesketch/
+      - ./upload:/usr/share/timesketch/upload/
+      - ./logs:/var/log/timesketch/
+
+  elasticsearch:
+    image: elasticsearch:${ELASTIC_VERSION}
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - TAKE_FILE_OWNERSHIP=1
+      - ES_JAVA_OPTS=-Xms${ELASTIC_MEM_USE_GB}g -Xmx${ELASTIC_MEM_USE_GB}g
+    restart: always
+    volumes:
+      - ./data/elasticsearch:/usr/share/elasticsearch/data/
+
+  postgres:
+    image: postgres:${POSTGRES_VERSION}
+    environment:
+      - POSTGRES_USER=timesketch
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    restart: always
+    volumes:
+      - ./data/postgresql:/var/lib/postgresql/data
+
+  redis:
+    image: redis:${REDIS_VERSION}
+    command: "redis-server"
+    restart: always
+
+  nginx:
+    image: nginx:${NGINX_VERSION}
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./etc/nginx.conf:/etc/nginx/nginx.conf
