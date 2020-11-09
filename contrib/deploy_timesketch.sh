@@ -24,7 +24,7 @@ fi
 # Exit early if a timesketch directory already exists.
 if [ -d "./timesketch" ]; then
   echo "ERROR: Timesketch directory already exist."
-  echo 1
+  exit 1
 fi
 
 # Exit early if docker is not available.
@@ -35,7 +35,7 @@ if [ "$(systemctl is-active docker)" != "active" ]; then
 fi
 
 # Exit early if docker-compose is not installed.
-if [ ! command -v docker-compose ]; then
+if ! command -v docker-compose; then
   echo "ERROR: docker-compose is not installed."
   exit 1
 fi
