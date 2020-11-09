@@ -119,8 +119,8 @@ class IOCExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         if not ioc_db:
             return 'Error to parse config'
         logger.info((
-                            'Return field '
-                            'error: {0!s}').format(ret_fields))
+            'Return field '
+            'error: {0!s}').format(ret_fields))
         return self.extract_ioc(query, ret_fields, ioc_db)
 
     def parse_config(self, ioc_config):
@@ -275,7 +275,6 @@ class IOCExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         for elm in ioc_db:
             ret_string += ' [{0:s}] extracted {1:d} ioc.'.format(
                 elm['name'], elm['found'])
-        #format result:
         return ret_string
 
 manager.AnalysisManager.register_analyzer(IOCExtractionSketchPlugin)
