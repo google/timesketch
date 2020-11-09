@@ -33,15 +33,18 @@ We have created a helper script to get you started with all necessary configurat
 Download the script here:
 
     $ curl -s -O https://raw.githubusercontent.com/google/timesketch/master/contrib/deploy_timesketch.sh
+    $ chmod 755 deploy_timesketch.sh
 
 #### 3. Choose location for Timesketch data
 You can choose to host the Timeksetch data directory anywhere but note that by default it will host Elasticsearch and PostgreSQL data in this directory so make sure you have enough disk space available.
 
+Example:
+    
     $ cd /opt
 
 #### 4. Run deployment script
 
-    # sudo ~/install_timesketch.sh
+    $ sudo ~/deploy_timesketch.sh
     
 Example output:
 
@@ -54,12 +57,12 @@ Example output:
 
 #### 5. Start the system
 
-    # cd timesketch
-    # docker-compose up -d
+    $ cd timesketch
+    $ sudo docker-compose up -d
 
 #### 6. Create the first user
 
-    # docker-compose exec timesketch-web tsctl add_user --username <USERNAME>
+    $ sudo docker-compose exec timesketch-web tsctl add_user --username <USERNAME>
 
 #### 7. Enable TLS
 It is out of scope for the deployment script to setup certificates but here are pointers on how to use Let's Encrypt.
