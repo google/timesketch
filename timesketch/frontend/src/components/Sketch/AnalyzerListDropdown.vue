@@ -14,23 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus>
-    <button class="button is-outlined is-rounded is-small" slot="trigger">
-      <span class="icon is-small">
-        <i class="fas fa-play-circle"></i>
-      </span>
-      <span>Analyze</span>
-    </button>
-    <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
-      <div class="modal-card" style="width:300px;">
-        <div class="field" v-for="analyzer in sortedAnalyzerList()">
-          <b-checkbox v-model="selectedAnalyzers" :native-value="analyzer" type="is-info">{{ analyzer }}</b-checkbox>
+    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body :scrollable="true" :max-height="300">
+      <button class="button is-outlined is-rounded is-small" slot="trigger">
+        <span class="icon is-small">
+          <i class="fas fa-play-circle"></i>
+        </span>
+        <span>Analyze</span>
+      </button>
+      <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
+        <div class="modal-card" style="width:300px;">
+          <div class="field" v-for="analyzer in sortedAnalyzerList()">
+            <b-checkbox v-model="selectedAnalyzers" :native-value="analyzer" type="is-info">{{ analyzer }}</b-checkbox>
+          </div>
+          <button class="button is-success" v-on:click="runAnalyzers" :disabled="!selectedAnalyzers.length">Run</button>
         </div>
-        <button v-if="selectedAnalyzers.length" class="button is-success" v-on:click="runAnalyzers">Run</button>
-      </div>
-    </b-dropdown-item>
+      </b-dropdown-item>
   </b-dropdown>
-
 </template>
 
 <script>
