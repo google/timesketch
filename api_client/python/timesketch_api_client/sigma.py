@@ -28,7 +28,7 @@ logger = logging.getLogger('timesketch_api.sigma')
 class Sigma(resource.BaseResource):
 
 
-    def __init__(self, rule_uuid, api, ):
+    def __init__(self, rule_uuid, api ):
         """Initializes the Sigma object.
 
         Args:
@@ -52,8 +52,12 @@ class Sigma(resource.BaseResource):
         """Returns a pandas DataFrame."""
         panda_list = []
         data = self.lazyload_data()
-        for entry in data.get('objects', []):
+        #panda_list = pandas.DataFrame(data)
+        #for entry in data.get('objects', []):
             #for bucket in self._get_aggregation_buckets(entry):
-            panda_list.append(entry)
-        return False
-        return pandas.DataFrame(panda_list)
+        #    panda_list.append(entry)
+        
+        #dates = pandas.date_range('20130101', periods=6)
+        return pandas.DataFrame(data)
+        #return False
+        #return pandas.DataFrame(panda_list)

@@ -228,6 +228,9 @@ To get a list of available Sigma rules use:
 ts.list_sigma_rules()
 ```
 
+The output can be:
++ A pandas DataFrame if the `as_pandas=True` is set
++ A python dict (default behavior)
 
 ### Other Options
 
