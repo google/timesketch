@@ -47,8 +47,7 @@ class GraphManager:
         try:
             graph_class = cls._class_registry[graph_name.lower()]
         except KeyError:
-            raise KeyError(
-                'No such graph type: {0:s}'.format(graph_name.lower()))
+            raise KeyError(f'No such graph type: {graph_name.lower()}')
         return graph_class
 
     @classmethod
@@ -65,8 +64,7 @@ class GraphManager:
         """
         graph_name = graph_class.NAME.lower()
         if graph_name in cls._class_registry:
-            raise KeyError('Class already set for name: {0:s}.'.format(
-                graph_class.NAME))
+            raise KeyError(f'Class already set for name: {graph_class.NAME}.')
         cls._class_registry[graph_name] = graph_class
 
     @classmethod

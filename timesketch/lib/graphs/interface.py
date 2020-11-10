@@ -97,7 +97,7 @@ class Graph:
                 node_id, label=node.label, **node.attributes)
 
         for _, edge in self._edges.items():
-            label = edge.label + ' ({0:d})'.format(edge.node_counter)
+            label = edge.label + f' ({edge.node_counter})'
             self.nx_instance.add_edge(
                 edge.source.id, edge.target.id, label=label,
                 **edge.attributes)
