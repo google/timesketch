@@ -33,6 +33,7 @@ limitations under the License.
             </div>
 
             <div class="card" v-if="currentGraph" style="min-height: 620px;">
+
               <header class="card-header" style="border-bottom: 0;">
                 <span class="card-header-title" style="min-width: 170px;"><span v-if="currentGraph">{{ graphs[currentGraph] }}</span></span>
                 <input class="ts-search-input" v-if="currentGraph" v-model="filterString" v-on:keyup="filterGraphByInput" style="border-radius: 0; padding:25px;" placeholder="Filter nodes and edges"></input>
@@ -61,9 +62,10 @@ limitations under the License.
                   <div class="lds-ripple"><div></div><div></div></div>
                   <div style="position: absolute; margin-top:120px;">Generating graph: <b>{{graphs[currentGraph]}}</b></div>
                 </b-loading>
+                <div class="no-data" v-if="!elements.length && !isLoading">Empty graph</div>
                 <cytoscape
                   ref="cyRef"
-                  v-if="showGraph"
+                  v-if="elements.length && !isLoading"
                   v-on:select="filterGraphBySelection($event)"
                   v-on:unselect="unSelectAllElements($event)"
                   v-on:tap="unSelectAllElements($event)"
@@ -412,7 +414,7 @@ export default {
 }
 .lds-ripple div {
   position: absolute;
-  border: 4px solid #fff;
+  border: 4px solid var(--spinner-color);
   opacity: 1;
   border-radius: 50%;
   animation: lds-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
@@ -435,6 +437,13 @@ export default {
     height: 72px;
     opacity: 0;
   }
+}
+
+.no-data {
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  display: flex;
 }
 
 </style>
