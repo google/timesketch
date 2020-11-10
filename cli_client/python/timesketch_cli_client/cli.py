@@ -46,8 +46,9 @@ class TimesketchCli(object):
         self.sketch_from_flag = sketch_from_flag
         try:
             self.api = timesketch_config.get_client()
+            if not self.api:
+                raise ConnectionError
         except ConnectionError:
-            click.echo('No connection to server. Is it running?')
             sys.exit(1)
 
         self.config_assistant = timesketch_config.ConfigAssistant()

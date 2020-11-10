@@ -311,7 +311,7 @@ class ConfigAssistant:
             self.set_config(name, value)
 
         if 'cli' not in config.sections():
-            logger.warning('No timesketch section in the config')
+            logger.warning('No cli section in the config')
             return
 
         cli_config = config['cli']

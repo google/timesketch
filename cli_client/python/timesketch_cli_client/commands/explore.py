@@ -77,6 +77,12 @@ def search(sketch, query_string, query_filter, return_fields):
     dataframe = sketch.explore(
         query_string=query_string, query_filter=query_filter,
         return_fields=return_fields, as_pandas=True)
+
+    # Label is being set regardless of return_fields. Remove if it is not in
+    # the list of requested fields.
+    if 'label' not in return_fields:
+        dataframe = dataframe.drop(columns=['label'])
+
     return dataframe
 
 
@@ -92,7 +98,6 @@ def format_output(dataframe, output_format, show_headers):
         Search results in the requested output format.
     """
     result = None
-
     if output_format == 'text':
         result = dataframe.to_string(index=False, header=show_headers)
     elif output_format == 'csv':
