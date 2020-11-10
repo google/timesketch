@@ -66,7 +66,7 @@ ELASTIC_ADDRESS="elasticsearch"
 ELASTIC_PORT=9200
 REDIS_ADDRESS="redis"
 REDIS_PORT=6379
-GITHUB_BASE_URL="https://raw.githubusercontent.com/google/timesketch/docker-refactor"
+GITHUB_BASE_URL="https://raw.githubusercontent.com/google/timesketch/master"
 ELASTIC_MEM_USE_GB=$(cat /proc/meminfo | grep MemTotal | awk '{printf "%.0f", ($2 / 1000000 / 2)}')
 echo "OK"
 echo "* Setting Elasticsearch memory allocation to ${ELASTIC_MEM_USE_GB}GB"
