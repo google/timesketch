@@ -44,5 +44,5 @@ then
 
 elif test "${TARGET}" = "dockerfile";
 then
-	cd docker/build && docker build --build-arg PPA_TRACK="dev" -f Dockerfile-prod .
+	cd docker/release/build && docker build --build-arg PPA_TRACK="dev" -f Dockerfile-release .
 fi

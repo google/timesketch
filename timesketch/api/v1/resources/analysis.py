@@ -46,10 +46,6 @@ class AnalysisResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
-        if not sketch:
-            abort(
-                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
-
         if not sketch.has_permission(current_user, 'read'):
             abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
@@ -125,10 +121,11 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
-        if not sketch.has_permission(current_user, 'read'):
+
+        if not sketch.has_permission(current_user, 'write'):
             return abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
-                'User does not have read permission on the sketch.')
+                'User does not have write permission on the sketch.')
 
         form = request.json
         if not form:

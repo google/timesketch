@@ -337,20 +337,37 @@ class ElasticsearchDataStore(object):
         # The argument " _source_include" changed to "_source_includes" in
         # ES version 7. This check add support for both version 6 and 7 clients.
         # pylint: disable=unexpected-keyword-arg
-        if self.version.startswith('6'):
-            _search_result = self.client.search(
-                body=query_dsl,
-                index=list(indices),
-                search_type=search_type,
-                _source_include=return_fields,
-                scroll=scroll_timeout)
-        else:
-            _search_result = self.client.search(
-                body=query_dsl,
-                index=list(indices),
-                search_type=search_type,
-                _source_includes=return_fields,
-                scroll=scroll_timeout)
+        try:
+            if self.version.startswith('6'):
+                _search_result = self.client.search(
+                    body=query_dsl,
+                    index=list(indices),
+                    search_type=search_type,
+                    _source_include=return_fields,
+                    scroll=scroll_timeout)
+            else:
+                _search_result = self.client.search(
+                    body=query_dsl,
+                    index=list(indices),
+                    search_type=search_type,
+                    _source_includes=return_fields,
+                    scroll=scroll_timeout)
+        except RequestError as e:
+            root_cause = e.info.get('error', {}).get('root_cause')
+            if root_cause:
+                error_items = []
+                for cause in root_cause:
+                    error_items.append(
+                        '[{0:s}] {1:s}'.format(
+                            cause.get('type', ''), cause.get('reason', '')))
+                cause = ', '.join(error_items)
+            else:
+                cause = str(e)
+
+            es_logger.error(
+                'Unable to run search query: {0:s}'.format(cause),
+                exc_info=True)
+            raise ValueError(cause)
 
         return _search_result
 
