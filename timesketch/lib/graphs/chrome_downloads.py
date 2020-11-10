@@ -39,7 +39,7 @@ class ChromeDownloadsGraph(BaseGraphPlugin):
         ]
 
         chrome_events = self.event_stream(
-            query_string=query, return_fields=return_fields, indices=['_all'])
+            query_string=query, return_fields=return_fields)
 
         for chrome_event in chrome_events:
             computer_name = chrome_event['_source'].get('hostname', '')
@@ -80,7 +80,6 @@ class ChromeDownloadsGraph(BaseGraphPlugin):
             prefetch_events = self.event_stream(
                 query_string=prefetch_query,
                 return_fields=prefetch_return_fields,
-                indices=['_all'],
                 scroll=False
             )
             for prefetch_event in prefetch_events:

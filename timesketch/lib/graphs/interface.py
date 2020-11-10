@@ -201,8 +201,11 @@ class BaseGraphPlugin:
     # https://networkx.org/documentation/stable/reference/classes/index.html
     GRAPH_TYPE = 'MultiDiGraph'
 
-    def __init__(self):
+    def __init__(self, sketch=None):
         """Initialize the graph object.
+
+        Args:
+            sketch (Sketch): Sketch object.
 
         Raises:
             KeyError if graph type specified is not supported.
@@ -213,6 +216,16 @@ class BaseGraphPlugin:
         if not GRAPH_TYPES.get(self.GRAPH_TYPE):
             raise KeyError(f'Graph type {self.GRAPH_TYPE} is not supported')
         self.graph = Graph(self.GRAPH_TYPE)
+        self.sketch = sketch
+
+    def _get_all_sketch_indices(self):
+        """List all indices in the Sketch.
+        Returns:
+            List of index names.
+        """
+        active_timelines = self.sketch.active_timelines
+        indices = [t.searchindex.index_name for t in active_timelines]
+        return indices
 
     # TODO: Refactor this to reuse across analyzers and graphs.
     def event_stream(
@@ -238,14 +251,14 @@ class BaseGraphPlugin:
         if not (query_string or query_dsl):
             raise ValueError('Both query_string and query_dsl are missing')
 
+        # Query all sketch indices if none are specified.
+        if not indices:
+            indices = self._get_all_sketch_indices()
+
         if not query_filter:
             query_filter = {}
 
         return_fields = list(set(return_fields))
-
-        # Refresh the index to make sure it is searchable.
-        for index in indices:
-            self.datastore.client.indices.refresh(index=index)
 
         event_generator = self.datastore.search_stream(
             query_string=query_string,

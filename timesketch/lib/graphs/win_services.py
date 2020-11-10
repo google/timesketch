@@ -33,7 +33,7 @@ class WinServiceGraph(BaseGraphPlugin):
         return_fields = ['computer_name', 'username', 'strings']
 
         events = self.event_stream(
-            query_string=query, return_fields=return_fields, indices=['_all'])
+            query_string=query, return_fields=return_fields)
 
         for event in events:
             computer_name = event['_source'].get('computer_name')
