@@ -260,5 +260,14 @@ export default {
   },
   getLoggedInUser () {
     return RestApiClient.get('/users/me/')
+  },
+  getGraph (sketchId, graphName) {
+    let formData = {
+      graph_name: graphName
+    }
+    return  RestApiClient.post('/sketches/' + sketchId + /graph/, formData)
+  },
+  getGraphList () {
+    return  RestApiClient.get('/graphs/')
   }
 }
