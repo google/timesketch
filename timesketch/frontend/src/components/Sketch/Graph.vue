@@ -33,8 +33,9 @@ limitations under the License.
             </div>
 
             <div class="card" v-if="currentGraph" style="min-height: 620px;">
+
               <header class="card-header" style="border-bottom: 0;">
-                <span class="card-header-title"><span v-if="currentGraph">{{ currentGraph }}</span></span>
+                <span class="card-header-title" style="min-width: 170px;"><span v-if="currentGraph">{{ graphs[currentGraph] }}</span></span>
                 <input class="ts-search-input" v-if="currentGraph" v-model="filterString" v-on:keyup="filterGraphByInput" style="border-radius: 0; padding:25px;" placeholder="Filter nodes and edges"></input>
 
                 <span class="card-header-icon">
@@ -57,9 +58,14 @@ limitations under the License.
 
               </header>
               <div class="card-content">
+                <b-loading :is-full-page="false" v-model="isLoading" :can-cancel="false">
+                  <div class="lds-ripple"><div></div><div></div></div>
+                  <div style="position: absolute; margin-top:120px;">Generating graph: <b>{{graphs[currentGraph]}}</b></div>
+                </b-loading>
+                <div class="no-data" v-if="!elements.length && !isLoading">Empty graph</div>
                 <cytoscape
                   ref="cyRef"
-                  v-if="showGraph"
+                  v-if="elements.length && !isLoading"
                   v-on:select="filterGraphBySelection($event)"
                   v-on:unselect="unSelectAllElements($event)"
                   v-on:tap="unSelectAllElements($event)"
@@ -83,7 +89,7 @@ limitations under the License.
               </header>
               <div class="card-content">
                   <div v-for="(displayName, graphName) in graphs" :key="graph" style="margin-bottom: 7px;">
-                    <button class="button is-rounded is-fullwidth" v-on:click="buildGraph(graphName)">{{ displayName }}</button>
+                    <button class="button is-rounded is-fullwidth" v-on:click="buildGraph(graphName)" :disabled="isLoading">{{ displayName }}</button>
                   </div>
               </div>
             </div>
@@ -119,8 +125,9 @@ export default {
   data() {
     return {
       showGraph: true,
+      isLoading: false,
       filterString: '',
-      graphs: [],
+      graphs: {},
       currentGraph: '',
       selectedGraphs: [],
       fadeOpacity: 7,
@@ -258,7 +265,9 @@ export default {
   },
   methods: {
     buildGraph: function (graphName) {
+      this.currentGraph = graphName
       this.showGraph = false
+      this.isLoading = true
       this.edgeQuery = ''
       ApiClient.getGraph(this.sketch.id, graphName).then((response) => {
           let elements = []
@@ -271,6 +280,7 @@ export default {
           this.elements = elements
           this.currentGraph = graphName
           this.showGraph = true
+          this.isLoading = false
         }).catch((e) => {
           console.error(e)
         })
@@ -394,4 +404,46 @@ export default {
   }
 }
 </script>
-<style lang="scss"></style>
+<style lang="scss">
+
+.lds-ripple {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-ripple div {
+  position: absolute;
+  border: 4px solid var(--spinner-color);
+  opacity: 1;
+  border-radius: 50%;
+  animation: lds-ripple 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+.lds-ripple div:nth-child(2) {
+  animation-delay: -0.5s;
+}
+@keyframes lds-ripple {
+  0% {
+    top: 36px;
+    left: 36px;
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+  100% {
+    top: 0px;
+    left: 0px;
+    width: 72px;
+    height: 72px;
+    opacity: 0;
+  }
+}
+
+.no-data {
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  display: flex;
+}
+
+</style>

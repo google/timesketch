@@ -58,6 +58,7 @@
     --message-background-color: #f9f9f9;
     --message-body-color: var(--font-color-dark);
     --markdown-body-font-color: var(--font-color-dark);
+    --spinner-color: #333333;
 }
 
 [data-theme=dark] {
@@ -101,6 +102,7 @@
     --message-background-color: #363636;
     --message-body-color: var(--font-color-light);
     --markdown-body-font-color: var(--font-color-light);
+    --spinner-color: #ffffff;
 }
 
 // Customize Bulma
