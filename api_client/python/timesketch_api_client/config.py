@@ -58,12 +58,12 @@ class ConfigAssistant:
     ])
 
     CONFIG_ORDERING = {
-      'host_uri': 1,
-      'auth_mode': 2,
-      'username': 3,
-      'client_id': 4,
-      'client_secret': 5,
-      'password': 6,
+        'host_uri': 1,
+        'auth_mode': 2,
+        'username': 3,
+        'client_id': 4,
+        'client_secret': 5,
+        'password': 6,
     }
 
     CONFIG_HINTS = {
