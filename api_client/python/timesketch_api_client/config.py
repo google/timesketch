@@ -167,7 +167,7 @@ class ConfigAssistant:
         needed_set = self.CLIENT_NEEDED
         auth_mode = self._config.get('auth_mode', '')
         if auth_mode.startswith('oauth'):
-            return needed_set.union(self.OAUTH_CLIENT_NEEDED)
+            needed_set = needed_set.union(self.OAUTH_CLIENT_NEEDED)
         configured_set = set(self._config.keys())
         return list(needed_set.difference(configured_set))
 
