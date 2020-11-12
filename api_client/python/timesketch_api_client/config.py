@@ -418,9 +418,15 @@ def configure_missing_parameters(
         return None
 
     username = config_assistant.get_config('username')
+    if choice:
+        value = cli_input.ask_question(
+            'What is the username?',
+            input_type=str, default=username)
+        if value:
+            username = value
     password = cli_input.ask_question(
         'Password for user {0:s}'.format(username), input_type=str,
-        hide_input=True)
+        hide_input=True, default='***')
     credentials = ts_credentials.TimesketchPwdCredentials()
     credentials.credential = {
         'username': username,
