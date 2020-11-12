@@ -424,6 +424,8 @@ def configure_missing_parameters(
             input_type=str, default=username)
         if value:
             username = value
+            config_assistant.set_config('username', value)
+
     password = cli_input.ask_question(
         'Password for user {0:s}'.format(username), input_type=str,
         hide_input=True, default='***')
