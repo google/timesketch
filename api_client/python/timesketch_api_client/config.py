@@ -94,8 +94,8 @@ class ConfigAssistant:
         return self._config[name]
 
     def get_client(
-            self, token_password: Optional[Text] = ''
-            ) -> Optional[client.TimesketchApi]:
+            self, token_password: Optional[Text] = '') -> Optional[
+                client.TimesketchApi]:
         """Returns a Timesketch API client if possible.
 
         Args:
