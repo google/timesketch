@@ -176,6 +176,70 @@ def mock_response(*args, **kwargs):
         }]
     }
 
+    sigma_list = {
+        'meta': {
+            'current_user': 'dev'
+        },
+        'objects': [
+            {
+                'author': 'Alexander Jaeger',
+                'date': '2020/06/26',
+                'description': 'Detects suspicious installation of Zenmap',
+                'detection': {
+                    'condition': 'keywords',
+                    'keywords': ['*apt-get install zmap*']
+                    },
+                'falsepositives': ['Unknown'],
+                'id': '5266a592-b793-11ea-b3de-0242ac130004',
+                'level': 'high',
+                'logsource': {
+                    'product': 'linux', 'service': 'shell'
+                    },
+                'modified': '2020/06/26',
+                'references': ['https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'],
+                'title': 'Suspicious Installation of Zenmap'
+            },{
+                'author': 'Alexander Jaeger',
+                'date': '2020/11/10',
+                'description': 'Detects suspicious installation of foobar',
+                'detection': {
+                    'condition': 'keywords',
+                    'keywords': ['*apt-get install foobar*']
+                    },
+                'falsepositives': ['Unknown'],
+                'id': '776bdd11-f3aa-436e-9d03-9d6159e9814e',
+                'level': 'high',
+                'logsource': {
+                    'product': 'linux', 'service': 'shell'
+                    },
+                'modified': '2020/06/26',
+                'references': ['https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'],
+                'title': 'Suspicious Installation of Zenmap'
+                }
+        ]
+    }
+
+    sigma_rule = {
+        'title': 'Suspicious Installation of Zenmap',
+        'id': '5266a592-b793-11ea-b3de-0242ac130004',
+        'description': 'Detects suspicious installation of Zenmap',
+        'references': ['https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'],
+        'author': 'Alexander Jaeger',
+        'date': '2020/06/26',
+        'modified': '2020/06/26',
+        'logsource': {
+            'product': 'linux', 'service': 'shell'
+            },
+        'detection': {
+            'keywords': ['*apt-get install zmap*'],
+            'condition': 'keywords'
+            },
+        'falsepositives': ['Unknown'],
+        'level': 'high',
+        'es_query': '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ zmap*")',
+        'file_name': 'lnx_susp_zenmap'
+    }
+
     # Register API endpoints to the correct mock response data.
     url_router = {
         'http://127.0.0.1':
@@ -194,6 +258,10 @@ def mock_response(*args, **kwargs):
         MockResponse(json_data=story_data),
         'http://127.0.0.1/api/v1/sketches/1/archive/':
         MockResponse(json_data=archive_data),
+        'http://127.0.0.1/api/v1/sigma/5266a592-b793-11ea-b3de-0242ac130004':
+        MockResponse(json_data=sigma_rule),
+        'http://127.0.0.1/api/v1/sigma/':
+        MockResponse(json_data=sigma_list),
     }
 
     if kwargs.get('empty', False):

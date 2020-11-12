@@ -497,16 +497,30 @@ class TimesketchApi(object):
         self.credentials.credential.refresh(request)
 
 
-    def list_sigma_rules(self):
+    def list_sigma_rules(self, as_pandas=False):
         """Get a dict of all sigma rules that the user has access to.
+        
+        Args:
+            as_pandas: Boolean indicating that the results will be returned
+                as a Pandas DataFrame instead of a list of dicts.
 
         Returns:
-            dict of Sigma objects instances.
+            A list with dict objects with the information about sigma rule,
+            unless as_pandas is set, then the function returns a DataFrame
+            object.
         """
 
         sigma_rules = []
         response = self.fetch_resource_data('sigma/')
-        return response
+
+        if not as_pandas:
+            return response
+
+        recs = response['objects']
+        rules_pandas = pandas.DataFrame.from_records(recs)
+
+        return rules_pandas
+
        
 
     def get_sigma_rule(self, rule_uuid):
