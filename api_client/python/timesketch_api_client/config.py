@@ -57,6 +57,15 @@ class ConfigAssistant:
         'client_secret',
     ])
 
+    CONFIG_ORDERING = {
+      'host_uri': 1,
+      'auth_mode': 2,
+      'username': 3,
+      'client_id': 4,
+      'client_secret': 5,
+      'password': 6,
+    }
+
     CONFIG_HINTS = {
         'host_uri': 'URL of the Timesketch server',
         'username': 'The username of the Timesketch user',
@@ -169,7 +178,9 @@ class ConfigAssistant:
         if auth_mode.startswith('oauth'):
             needed_set = needed_set.union(self.OAUTH_CLIENT_NEEDED)
         configured_set = set(self._config.keys())
-        return sorted(list(needed_set.difference(configured_set)))
+        return sorted(
+            list(needed_set.difference(configured_set)),
+            key=lambda x: self.CONFIG_ORDERING.get(x, 100))
 
     def has_config(self, name: Text) -> bool:
         """Returns a boolean indicating whether a config parameter is set.
