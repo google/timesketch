@@ -169,7 +169,7 @@ class ConfigAssistant:
         if auth_mode.startswith('oauth'):
             needed_set = needed_set.union(self.OAUTH_CLIENT_NEEDED)
         configured_set = set(self._config.keys())
-        return list(needed_set.difference(configured_set))
+        return sorted(list(needed_set.difference(configured_set)))
 
     def has_config(self, name: Text) -> bool:
         """Returns a boolean indicating whether a config parameter is set.
