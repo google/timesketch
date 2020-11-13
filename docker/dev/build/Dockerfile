@@ -28,10 +28,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # Install NodeJS and Yarn to build the frontend
-RUN curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -
-RUN VERSION=node_8.x && \
-    DISTRO="$(lsb_release -s -c)" && \
-    echo "deb https://deb.nodesource.com/$VERSION $DISTRO main" > /etc/apt/sources.list.d/nodesource.list
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list
 RUN apt-get update && apt-get install -y --no-install-recommends \
