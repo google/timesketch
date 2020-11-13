@@ -36,11 +36,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # Install test dependencies for Timesketch
-COPY ../../../requirements.txt /timesketch-requirements.txt
+COPY ./requirements.txt /timesketch-requirements.txt
 RUN pip3 install -r /timesketch-requirements.txt
 
 # Install test dependencies for Timesketch
-COPY ../../../test_requirements.txt /timesketch-test-requirements.txt
+COPY ./test_requirements.txt /timesketch-test-requirements.txt
 RUN pip3 install -r /timesketch-test-requirements.txt
 
 # Copy the entrypoint script into the container
