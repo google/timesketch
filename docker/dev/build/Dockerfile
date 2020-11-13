@@ -23,11 +23,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install Plaso
 RUN add-apt-repository -y ppa:gift/stable
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3-plaso \
     plaso-tools \
   && rm -rf /var/lib/apt/lists/*
 
-# Install NodeJS and Yarn to build the frontend
+# Install NodeJS and Yarn for frontend development
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -44,7 +43,7 @@ COPY ./test_requirements.txt /timesketch-test-requirements.txt
 RUN pip3 install -r /timesketch-test-requirements.txt
 
 # Copy the entrypoint script into the container
-COPY docker-entrypoint.sh /
+COPY ./docker/dev/build/docker-entrypoint.sh /
 RUN chmod a+x /docker-entrypoint.sh
 
 # Load the entrypoint script to be run later
