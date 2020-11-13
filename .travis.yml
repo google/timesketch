@@ -4,27 +4,11 @@ os: linux
 dist: bionic
 jobs:
   include:
-  - name: "Ubuntu Bionic (18.04) (Docker) with Python 3.6 using GIFT PPA"
-    env: UBUNTU_VERSION="18.04"
-    group: edge
-    language: python
-    python: 3.6
-    services:
-    - docker
   - name: "Ubuntu Focal (20.04) (Docker) with Python 3.8 using GIFT PPA"
     env: UBUNTU_VERSION="20.04"
     group: edge
     language: python
     python: 3.8
-    services:
-    - docker
-  - name: "Ubuntu Bionic (18.04) (Docker) with Python 3.6 using PyPI"
-    env:
-    - TARGET="pypi"
-    - UBUNTU_VERSION="18.04"
-    group: edge
-    language: python
-    python: 3.6
     services:
     - docker
   - name: "Ubuntu Focal (20.04) (Docker) with Python 3.8 using PyPI"
@@ -34,15 +18,6 @@ jobs:
     group: edge
     language: python
     python: 3.8
-    services:
-    - docker
-  - name: "Ubuntu Focal (20.04) (Docker) with Python 3.6 (tox)"
-    env:
-    - TOXENV="py36"
-    - UBUNTU_VERSION="20.04"
-    group: edge
-    language: python
-    python: 3.6
     services:
     - docker
   - name: "Ubuntu Focal (20.04) (Docker) with Python 3.7 (tox)"
