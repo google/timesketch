@@ -27,7 +27,7 @@ long_description = (
     'instance.\n\n'
     'The API is feature complete with the Timesketch UI and allows you to '
     'do all operations that can be done in the UI, providing ways to '
-    'integrate Timesketch into other products, such as Jupyter/Colab.\n\n'
+    'integrate Timesketch into other products such as Jupyter/Colab.\n\n'
     'To see how it works in action, try the colab notebook that is accessible '
     'from here: https://colab.research.google.com/github/google/timesketch/'
     'blob/master/notebooks/colab-timesketch-demo.ipynb')
