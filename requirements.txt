@@ -15,7 +15,6 @@ flask_wtf==0.14.2
 google-auth==1.7.0
 google_auth_oauthlib==0.4.1
 gunicorn==19.10.0  # Note: Last version to support py2
-neo4jrestclient==2.1.1
 numpy==1.19.0
 oauthlib==3.1.0
 pandas==1.1.3

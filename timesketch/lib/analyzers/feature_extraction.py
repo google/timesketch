@@ -103,6 +103,38 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             'optional': True,
         },
         {
+            'name': 'store_type_list',
+            'type': 'ts-dynamic-form-boolean',
+            'label': 'Store extracted result in type List',
+            'placeholder': 'Store results as field type list',
+            'default_value': False,
+            'optional': True,
+        },
+        {
+            'name': 'overwrite_store_as',
+            'type': 'ts-dynamic-form-boolean',
+            'label': 'Overwrite the field to store if already exist',
+            'placeholder': 'Overwrite the field to store',
+            'default_value': True,
+            'optional': True,
+        },
+        {
+            'name': 'overwrite_and_merge_store_as',
+            'type': 'ts-dynamic-form-boolean',
+            'label': 'Overwrite the field to store and merge value if exist',
+            'placeholder': 'Overwrite the field to store and merge value',
+            'default_value': False,
+            'optional': True,
+        },
+        {
+            'name': 'keep_multimatch',
+            'type': 'ts-dynamic-form-boolean',
+            'label': 'Keep multi match datas',
+            'placeholder': 'Keep multi match',
+            'default_value': False,
+            'optional': True,
+        },
+        {
             'name': 'aggregate',
             'type': 'ts-dynamic-form-boolean',
             'label': 'Should results be aggregated if there is a match',
@@ -124,7 +156,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
                 loaded up.
         """
         self.index_name = index_name
-        super(FeatureExtractionSketchPlugin, self).__init__(
+        super().__init__(
             index_name, sketch_id)
         self._config = config
 
@@ -146,6 +178,52 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
 
         return ', '.join(return_strings)
 
+    @staticmethod
+    def _get_attribute_value(
+            current_val,
+            extracted_value,
+            keep_multi,
+            merge_values,
+            type_list):
+        """Returns the attribute value as it should be stored.
+
+        Args:
+            current_val: current value of store_as.
+            extracted_value: values matched from regexp (type list).
+            keep_multi: choise if you keep all match from regex (type boolean).
+            merge_values: choise if you merge value from extracted
+                 and current (type boolean).
+            type_list: choise if you store values in list type(type boolean).
+
+        Returns:
+            Value to store
+        """
+        if not current_val:
+            merge_values = False
+        if len(extracted_value) == 1:
+            keep_multi = False
+        if type_list:
+            if merge_values and keep_multi:
+                return sorted(list(set(current_val) | set(extracted_value)))
+            if merge_values:
+                if extracted_value[0] not in current_val:
+                    current_val.append(extracted_value[0])
+                return sorted(current_val)
+            if keep_multi:
+                return sorted(extracted_value)
+            return [extracted_value[0]]
+        if merge_values and keep_multi:
+            list_cur = current_val.split(',')
+            merge_list = sorted(list(set(list_cur) | set(extracted_value)))
+            return ','.join(merge_list)
+        if merge_values:
+            if extracted_value[0] in current_val:
+                return current_val
+            return f'{current_val},{extracted_value[0]}'
+        if keep_multi:
+            return ','.join(extracted_value)
+        return extracted_value[0]
+
     def extract_feature(self, name, config):
         """Extract features from events.
 
@@ -161,6 +239,11 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         query = config.get('query_string')
         query_dsl = config.get('query_dsl')
         attribute = config.get('attribute')
+        store_type_list = config.get('store_type_list', False)
+        keep_multimatch = config.get('keep_multimatch', False)
+        overwrite_store_as = config.get('overwrite_store_as', True)
+        overwrite_and_merge_store_as = config.get(
+            'overwrite_and_merge_store_as', False)
 
         if not attribute:
             logger.warning('No attribute defined.')
@@ -203,7 +286,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
         emoji_names = config.get('emojis', [])
         emojis_to_add = [emojis.get_emoji(x) for x in emoji_names]
 
-        return_fields = [attribute]
+        return_fields = [attribute, store_as]
 
         events = self.event_stream(
             query_string=query, query_dsl=query_dsl,
@@ -227,9 +310,26 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
             result = expression.findall(attribute_value)
             if not result:
                 continue
+            result = list(set(result))
 
             event_counter += 1
-            event.add_attributes({store_as: result[0]})
+            store_as_current_val = event.source.get(store_as)
+            if store_as_current_val and not overwrite_store_as:
+                continue
+            if isinstance(store_as_current_val, six.text_type):
+                store_type_list = False
+            elif isinstance(store_as_current_val, (list, tuple)):
+                store_type_list = True
+            new_value = self._get_attribute_value(
+                store_as_current_val,
+                result,
+                keep_multimatch,
+                overwrite_and_merge_store_as,
+                store_type_list
+                )
+            if not new_value:
+                continue
+            event.add_attributes({store_as: new_value})
             event.add_emojis(emojis_to_add)
             event.add_tags(tags)
 
