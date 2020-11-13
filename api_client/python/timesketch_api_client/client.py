@@ -68,7 +68,7 @@ class TimesketchApi(object):
                  verify=True,
                  client_id='',
                  client_secret='',
-                 auth_mode='timesketch',
+                 auth_mode='userpass',
                  create_session=True):
         """Initializes the TimesketchApi object.
 
@@ -79,8 +79,8 @@ class TimesketchApi(object):
             verify: Verify server SSL certificate.
             client_id: The client ID if OAUTH auth is used.
             client_secret: The OAUTH client secret if OAUTH is used.
-            auth_mode: The authentication mode to use. Defaults to 'timesketch'
-                Supported values are 'timesketch' (Timesketch login form),
+            auth_mode: The authentication mode to use. Defaults to 'userpass'
+                Supported values are 'userpass' (username/password combo),
                 'http-basic' (HTTP Basic authentication) and oauth.
             create_session: Boolean indicating whether the client object
                 should create a session object. If set to False the
@@ -104,11 +104,11 @@ class TimesketchApi(object):
             self.session = self._create_session(
                 username, password, verify=verify, client_id=client_id,
                 client_secret=client_secret, auth_mode=auth_mode)
-        except ConnectionError:
-            raise ConnectionError('Timesketch server unreachable')
+        except ConnectionError as exc:
+            raise ConnectionError('Timesketch server unreachable') from exc
         except RuntimeError as e:
             raise RuntimeError(
-                'Unable to connect to server, with error: {0!s}'.format(e))
+                'Unable to connect to server, error: {0!s}'.format(e)) from e
 
     @property
     def version(self):
@@ -277,7 +277,7 @@ class TimesketchApi(object):
             client_id: The client ID if OAUTH auth is used.
             client_secret: The OAUTH client secret if OAUTH is used.
             auth_mode: The authentication mode to use. Supported values are
-                'timesketch' (Timesketch login form), 'http-basic'
+                'userpass' (username/password combo), 'http-basic'
                 (HTTP Basic authentication) and oauth.
 
         Returns:
@@ -303,7 +303,7 @@ class TimesketchApi(object):
 
         # Get and set CSRF token and authenticate the session if appropriate.
         self._set_csrf_token(session)
-        if auth_mode == 'timesketch':
+        if auth_mode == 'userpass':
             self._authenticate_session(session, username, password)
 
         return session

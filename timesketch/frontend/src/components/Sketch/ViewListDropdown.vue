@@ -29,7 +29,7 @@ limitations under the License.
           </div>
         </b-modal>
 
-        <b-dropdown ref="dropdown" animation="none" aria-role="menu">
+        <b-dropdown ref="dropdown" animation="none" aria-role="menu" append-to-body>
 
           <a class="button" v-bind:class="{ 'is-rounded': isSimple, 'ts-search-dropdown': !isSimple}" slot="trigger" slot-scope="{ active }">
             <b-icon v-if="!isSimple" icon="save" style="margin-right: 7px; font-size: 0.6em;"></b-icon>
