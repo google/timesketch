@@ -371,7 +371,16 @@ class Aggregation(resource.BaseResource):
                 self.api.api_root, self._sketch.id)
 
         response = self.api.session.post(resource_url, json=data)
-        return error.check_return_status(response, logger)
+        if not error.check_return_status(response, logger):
+            return 'Unable to save the aggregation'
+
+        response_json = response.json()
+        objects = response_json.get('objects')
+        if not objects:
+            return 'Unable to determine ID of saved object.'
+        agg_data = objects[0]
+        self._aggregator_data = agg_data
+        return 'Saved aggregation to ID: {0:d}'.format(self.id)
 
 
 class AggregationGroup(resource.BaseResource):
