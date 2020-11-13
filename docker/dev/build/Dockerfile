@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install Plaso
 RUN add-apt-repository -y ppa:gift/stable
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python-plaso \
+    python3-plaso \
     plaso-tools \
   && rm -rf /var/lib/apt/lists/*
 
