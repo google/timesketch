@@ -610,30 +610,31 @@ class AttributeValue(BaseModel):
 
 
 class GraphCache(BaseModel):
-    """Implements the graph model."""
-    user_id = Column(Integer, ForeignKey('user.id'))
+    """Implements the graph cache model."""
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     graph_filter = Column(UnicodeText())
-    plugin = Column(UnicodeText())
-    elements = Column(UnicodeText())
+    graph_plugin = Column(UnicodeText())
+    graph_elements = Column(UnicodeText())
     num_nodes = Column(Integer)
     num_edges = Column(Integer)
 
-    def __init__(self, user, sketch, graph_filter=None, plugin=None,
-                 elements=None, num_nodes=None, num_edges=None):
+    def __init__(self, sketch, graph_filter=None, graph_plugin=None,
+                 graph_elements=None, num_nodes=None, num_edges=None):
         """Initialize the Attribute object.
 
         Args:
-            user (User): The user who created the attribute
-            sketch (Sketch): The sketch that the attribute is bound to
-            name (str): the name of the attribute.
+            sketch (Sketch): The sketch that the graph is bound to.
+            graph_filter (dict): Filters used when generating the graph.
+            graph_plugin (str): Name of the graph plugin that was used.
+            graph_elements (str): Graph in json string format.
+            num_nodes (int): Number of nodes in the graph.
+            num_edges (int): Number of edges in the graph.
         """
         super(GraphCache, self).__init__()
-        self.user = user
         self.sketch = sketch
         self.graph_filter = graph_filter
-        self.plugin = plugin
-        self.elements = elements
+        self.graph_plugin = graph_plugin
+        self.graph_elements = graph_elements
         self.num_nodes = num_nodes
         self.num_edges = num_edges
 
@@ -644,25 +645,31 @@ class Graph(LabelMixin, CommentMixin, BaseModel):
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     name = Column(UnicodeText())
     description = Column(UnicodeText())
-    elements = Column(UnicodeText())
-    thumbnail = Column(UnicodeText())
+    graph_elements = Column(UnicodeText())
+    graph_thumbnail = Column(UnicodeText())
     num_nodes = Column(Integer)
     num_edges = Column(Integer)
 
-    def __init__(self, user, sketch, name, description=None, elements=None, thumbnail=None, num_nodes=None, num_edges=None):
+    def __init__(self, user, sketch, name, description=None, thumbnail=None,
+                 graph_elements=None, num_nodes=None, num_edges=None):
         """Initialize the Attribute object.
 
         Args:
-            user (User): The user who created the attribute
-            sketch (Sketch): The sketch that the attribute is bound to
-            name (str): the name of the attribute.
+            user (User): The user who created the graph.
+            sketch (Sketch): The sketch that the graph is bound to.
+            name (str): Name of the graph.
+            description (str): Description of the graph.
+            thumbnail (str): Image of graph in Base64 format.
+            graph_elements (str): Graph in json string format.
+            num_nodes (int): Number of nodes in the graph.
+            num_edges (int): Number of edges in the graph.
         """
         super(Graph, self).__init__()
         self.user = user
         self.sketch = sketch
         self.name = name
         self.description = description
-        self.elements = elements
         self.thumbnail = thumbnail
+        self.graph_elements = graph_elements
         self.num_nodes = num_nodes
         self.num_edges = num_edges

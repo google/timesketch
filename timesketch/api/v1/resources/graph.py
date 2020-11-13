@@ -68,7 +68,7 @@ class GraphListResource(resources.ResourceMixin, Resource):
 
         graph = Graph(
             user=current_user, sketch=sketch, name=str(today),
-            elements=json.dumps(elements))
+            graph_elements=json.dumps(elements))
         db_session.add(graph)
         db_session.commit()
 
@@ -131,15 +131,16 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
         form = request.json
-        plugin = form.get('plugin')
+        plugin_name = form.get('plugin')
 
-        cache = GraphCache.query.filter_by(sketch=sketch, plugin=plugin).first()
-        #if cache:
-        #    return jsonify(json.loads(cache.elements))
-        #else:
-        #cache = GraphCache(user=current_user, sketch=sketch, plugin=plugin)
+        cache = GraphCache.query.filter_by(
+            sketch=sketch, graph_plugin=plugin_name).first()
+        if cache:
+            return jsonify(json.loads(cache.elements))
+        else:
+            cache = GraphCache(sketch=sketch, graph_plugin=plugin_name)
 
-        graph_class = manager.GraphManager.get_graph(plugin)
+        graph_class = manager.GraphManager.get_graph(plugin_name)
         graph = graph_class(sketch=sketch)
         cytoscape_json = graph.generate().to_cytoscape()
 
