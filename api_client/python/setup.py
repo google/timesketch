@@ -21,10 +21,23 @@ from setuptools import setup
 from timesketch_api_client import version
 
 
+long_description = (
+    'The Timesketch API client provides you with a set of Python libraries '
+    'to connect to your Timesketch (https://github.com/google/timesketch) '
+    'instance.\n\n'
+    'The API is feature complete with the Timesketch UI and allows you to '
+    'do all operations that can be done in the UI, providing ways to '
+    'integrate Timesketch into other products, such as Jupyter/Colab.\n\n'
+    'To see how it works in action, try the colab notebook that is accessible '
+    'from here: https://colab.research.google.com/github/google/timesketch/'
+    'blob/master/notebooks/colab-timesketch-demo.ipynb')
+
+
 setup(
     name='timesketch-api-client',
     version=version.get_version(),
     description='Timesketch API client',
+    long_description=long_description,
     license='Apache License, Version 2.0',
     url='http://www.timesketch.org/',
     maintainer='Timesketch development team',
