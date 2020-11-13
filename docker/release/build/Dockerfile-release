@@ -1,15 +1,11 @@
 # Use the official Docker Hub Ubuntu 18.04 base image
-FROM ubuntu:20.04
+FROM ubuntu:18.04
 
 MAINTAINER Timesketch <timesketch-dev@googlegroups.com>
 
 ARG PPA_TRACK=stable
 
 ENV DEBIAN_FRONTEND=noninteractive
-
-# Prevent needing to configure debian packages, stopping the setup of
-# the docker container.
-RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 RUN apt-get -y update
 RUN apt-get -y install apt-transport-https apt-utils
