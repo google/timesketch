@@ -189,6 +189,16 @@ class ResourceMixin(object):
         'updated_at': fields.DateTime
     }
 
+    graph_fields = {
+        'id': fields.Integer,
+        'user': fields.Nested(user_fields),
+        'created_at': fields.DateTime,
+        'updated_at': fields.DateTime,
+        'name': fields.String,
+        'description': fields.String,
+        'thumbnail': fields.String,
+    }
+
     fields_registry = {
         'aggregation': aggregation_fields,
         'aggregationgroup': aggregation_group_fields,
@@ -199,6 +209,7 @@ class ResourceMixin(object):
         'searchtemplate': searchtemplate_fields,
         'view': view_fields,
         'user': user_fields,
+        'graph': graph_fields,
         'group': group_fields,
         'sketch': sketch_fields,
         'story': story_fields,

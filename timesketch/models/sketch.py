@@ -51,6 +51,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     stories = relationship('Story', backref='sketch', lazy='select')
     aggregations = relationship('Aggregation', backref='sketch', lazy='select')
     attributes = relationship('Attribute', backref='sketch', lazy='select')
+    graphs = relationship('Graph', backref='sketch', lazy='select')
+    graphcaches = relationship('GraphCache', backref='sketch', lazy='select')
     aggregationgroups = relationship(
         'AggregationGroup', backref='sketch', lazy='select')
     analysis = relationship('Analysis', backref='sketch', lazy='select')
@@ -605,3 +607,62 @@ class AttributeValue(BaseModel):
         self.user = user
         self.attribute = attribute
         self.value = value
+
+
+class GraphCache(BaseModel):
+    """Implements the graph model."""
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    graph_filter = Column(UnicodeText())
+    plugin = Column(UnicodeText())
+    elements = Column(UnicodeText())
+    num_nodes = Column(Integer)
+    num_edges = Column(Integer)
+
+    def __init__(self, user, sketch, graph_filter=None, plugin=None,
+                 elements=None, num_nodes=None, num_edges=None):
+        """Initialize the Attribute object.
+
+        Args:
+            user (User): The user who created the attribute
+            sketch (Sketch): The sketch that the attribute is bound to
+            name (str): the name of the attribute.
+        """
+        super(GraphCache, self).__init__()
+        self.user = user
+        self.sketch = sketch
+        self.graph_filter = graph_filter
+        self.plugin = plugin
+        self.elements = elements
+        self.num_nodes = num_nodes
+        self.num_edges = num_edges
+
+
+class Graph(LabelMixin, CommentMixin, BaseModel):
+    """Implements the graph model."""
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    name = Column(UnicodeText())
+    description = Column(UnicodeText())
+    elements = Column(UnicodeText())
+    thumbnail = Column(UnicodeText())
+    num_nodes = Column(Integer)
+    num_edges = Column(Integer)
+
+    def __init__(self, user, sketch, name, description=None, elements=None, thumbnail=None, num_nodes=None, num_edges=None):
+        """Initialize the Attribute object.
+
+        Args:
+            user (User): The user who created the attribute
+            sketch (Sketch): The sketch that the attribute is bound to
+            name (str): the name of the attribute.
+        """
+        super(Graph, self).__init__()
+        self.user = user
+        self.sketch = sketch
+        self.name = name
+        self.description = description
+        self.elements = elements
+        self.thumbnail = thumbnail
+        self.num_nodes = num_nodes
+        self.num_edges = num_edges

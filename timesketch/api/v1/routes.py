@@ -55,6 +55,8 @@ from .resources.user import CollaboratorResource
 from .resources.user import LoggedInUserResource
 from .resources.graph import GraphListResource
 from .resources.graph import GraphResource
+from .resources.graph import GraphCacheListResource
+from .resources.graph import GraphCacheResource
 
 
 # Disable error for long line. Readability is more important than line
@@ -99,6 +101,8 @@ API_ROUTES = [
     (CollaboratorResource, '/sketches/<int:sketch_id>/collaborators/'),
     (VersionResource, '/version/'),
     (LoggedInUserResource, '/users/me/'),
-    (GraphListResource, '/graphs/'),
-    (GraphResource, '/sketches/<int:sketch_id>/graph/')
+    (GraphListResource, '/sketches/<int:sketch_id>/graphs/'),
+    (GraphResource, '/sketches/<int:sketch_id>/graphs/<int:graph_id>/'),
+    (GraphCacheListResource, '/graphs/'),
+    (GraphCacheResource, '/sketches/<int:sketch_id>/graph/'),
 ]

@@ -25,21 +25,26 @@ limitations under the License.
               </header>
               <div class="card-content">
                 <div class="field is-grouped">
-                  <div class="field" v-for="(displayName, graphName) in graphs" :key="graph">
+                  <div class="field" v-for="(displayName, graphName) in graphs" :key="graphName">
                     <button class="button is-rounded" v-on:click="buildGraph(graphName)">{{ displayName }}</button>
+                  </div>
+                </div>
+                <div class="field is-grouped">
+                  <div class="field" v-for="graph in savedGraphs" :key="graph.id">
+                    <button class="button is-rounded" v-on:click="buildSavedGraph(graph)">{{ graph.name }}</button>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="card" v-if="currentGraph" style="min-height: 620px;">
+            <div class="card" v-if="currentGraph" style="min-height: 700px;">
 
               <header class="card-header" style="border-bottom: 0;">
-                <span class="card-header-title" style="min-width: 170px;"><span v-if="currentGraph">{{ graphs[currentGraph] }}</span></span>
+                <span class="card-header-title" style="min-width: 170px;"><span v-if="currentGraph">{{ currentGraph }}</span></span>
                 <input class="ts-search-input" v-if="currentGraph" v-model="filterString" v-on:keyup="filterGraphByInput" style="border-radius: 0; padding:25px;" placeholder="Filter nodes and edges"></input>
 
                 <span class="card-header-icon">
-                    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body>
+                  <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body>
                       <button class="button is-outlined is-rounded is-small" slot="trigger" :disabled="!currentGraph">
                         <span class="icon is-small">
                           <i class="fas fa-cog"></i>
@@ -54,18 +59,21 @@ limitations under the License.
                         </div>
                       </b-dropdown-item>
                   </b-dropdown>
+
+                  <button class="button is-small" v-on:click="saveSelection">Dump json</button>
+
                 </span>
 
               </header>
               <div class="card-content">
                 <b-loading :is-full-page="false" v-model="isLoading" :can-cancel="false">
                   <div class="lds-ripple"><div></div><div></div></div>
-                  <div style="position: absolute; margin-top:120px;">Generating graph: <b>{{graphs[currentGraph]}}</b></div>
+                  <div style="position: absolute; margin-top:120px;">Generating graph: <b>{{currentGraph}}</b></div>
                 </b-loading>
-                <div class="no-data" v-if="!elements.length && !isLoading">Empty graph</div>
+                <div class="no-data" v-if="!elements.length && showGraph">Empty graph</div>
                 <cytoscape
                   ref="cyRef"
-                  v-if="elements.length && !isLoading"
+                  v-if="elements.length && showGraph"
                   v-on:select="filterGraphBySelection($event)"
                   v-on:unselect="unSelectAllElements($event)"
                   v-on:tap="unSelectAllElements($event)"
@@ -83,13 +91,16 @@ limitations under the License.
           </div>
 
           <div class="column is-one-fifth" v-if="currentGraph">
-            <div class="card" style="height: 100%;">
+            <div class="card" style="overflow: scroll">
               <header class="card-header" style="border-bottom: 0;">
                 <span class="card-header-title">Available graphs</span>
               </header>
               <div class="card-content">
-                  <div v-for="(displayName, graphName) in graphs" :key="graph" style="margin-bottom: 7px;">
+                  <div v-for="(displayName, graphName) in graphs" :key="graphName" style="margin-bottom: 7px;">
                     <button class="button is-rounded is-fullwidth" v-on:click="buildGraph(graphName)" :disabled="isLoading">{{ displayName }}</button>
+                  </div>
+                  <div v-for="graph in savedGraphs" :key="graph.id" style="margin-bottom: 7px;">
+                    <button class="button is-rounded is-fullwidth" v-on:click="buildSavedGraph(graph)">{{ graph.name }}</button>
                   </div>
               </div>
             </div>
@@ -128,6 +139,7 @@ export default {
       isLoading: false,
       filterString: '',
       graphs: {},
+      savedGraphs: [],
       currentGraph: '',
       selectedGraphs: [],
       fadeOpacity: 7,
@@ -253,7 +265,6 @@ export default {
         textureOnViewport: false,
         motionBlur: false,
         motionBlurOpacity: 0.2,
-        wheelSensitivity: 1,
         pixelRatio: 'auto',
       }
     }
@@ -265,11 +276,17 @@ export default {
   },
   methods: {
     buildGraph: function (graphName) {
+      this.config.layout.name = 'spread'
       this.currentGraph = graphName
       this.showGraph = false
-      this.isLoading = true
+      this.elements = []
+      this.loadingTimeout = setTimeout(()=>{
+        if (!this.elements.length) {
+          this.isLoading = true
+        }
+      },600)
       this.edgeQuery = ''
-      ApiClient.getGraph(this.sketch.id, graphName).then((response) => {
+      ApiClient.generateGraphFromPlugin(this.sketch.id, graphName).then((response) => {
           let elements = []
           response.data['nodes'].forEach((element) => {
             elements.push({data: element.data, group:'nodes'})
@@ -277,27 +294,65 @@ export default {
           response.data['edges'].forEach((element) => {
             elements.push({data: element.data, group:'edges'})
           })
+          clearTimeout(this.loadingTimeout)
           this.elements = elements
-          this.currentGraph = graphName
           this.showGraph = true
           this.isLoading = false
+
         }).catch((e) => {
           console.error(e)
         })
     },
-    showNeighborhood: function (selected) {
+    buildSavedGraph: function (savedGraph) {
+      this.config.layout.name = 'preset'
+      this.currentGraph = savedGraph.name
+      this.showGraph = false
+      this.elements = []
+      this.loadingTimeout = setTimeout(()=>{
+        if (!this.elements.length) {
+          this.isLoading = true
+        }
+      },600)
+      this.edgeQuery = ''
+      ApiClient.getSavedGraph(this.sketch.id, savedGraph.id).then((response) => {
+        let elements = JSON.parse(response.data['objects'][0].elements)
+        let nodes = elements.filter(ele => ele.group === 'nodes')
+        let edges = elements.filter(ele => ele.group === 'edges')
+        let orderedElements = []
+        nodes.forEach((node) => {
+          node.selected = false
+          orderedElements.push(node)
+        })
+        edges.forEach((edge) => {
+          edge.selected = false
+          orderedElements.push(edge)
+        })
+        clearTimeout(this.loadingTimeout)
+        this.elements = orderedElements
+        this.showGraph = true
+        this.isLoading = false
+      }).catch((e) => {
+        console.error(e)
+      })
+    },
+    buildNeighborhood: function (selected) {
       // Build a new collection to use as the neighborhood
       let neighborhood = this.cy.collection()
-
-      if (selected.length === 0) {
-        this.cy.elements().removeClass('faded')
-        return
-      }
 
       // Build a neighborhood of nodes and edges.
       neighborhood = neighborhood.add(selected.filter('node').neighborhood())
       neighborhood = neighborhood.add(selected.filter('edge').connectedNodes())
       neighborhood = neighborhood.add(selected)
+
+      return neighborhood
+    },
+    showNeighborhood: function (selected) {
+      let neighborhood = this.buildNeighborhood(selected)
+
+      if (selected.length === 0) {
+        this.cy.elements().removeClass('faded')
+        return
+      }
 
       // Highlight the matched nodes/edges
       this.cy.elements().addClass('faded')
@@ -329,9 +384,18 @@ export default {
       })
       this.edgeQuery = queryDsl
     },
-
+    saveSelection: function () {
+      let selected = this.cy.filter(':selected')
+      let neighborhood = this.buildNeighborhood(selected)
+      let elements = neighborhood.jsons()
+      this.showGraph = false
+      this.elements = elements
+      this.currentGraph = 'manual'
+      this.showGraph = true
+      ApiClient.saveGraph(this.sketch.id, elements).then((response) => {})
+    },
     filterGraphBySelection: function (event) {
-      let selected = event.cy.filter(':selected')
+      let selected = this.cy.filter(':selected')
       this.showNeighborhood(selected)
     },
     filterGraphByInput: function () {
@@ -352,6 +416,9 @@ export default {
       this.edgeQuery = null
     },
     changeOpacity: function () {
+      if (!this.cy) {
+        return
+      }
       this.cy.style()
         .selector('.faded')
         .style({
@@ -395,8 +462,13 @@ export default {
     }
   },
   created() {
-    ApiClient.getGraphList().then((response) => {
+    ApiClient.getGraphPluginList().then((response) => {
         this.graphs = response.data
+      }).catch((e) => {
+        console.error(e)
+    })
+    ApiClient.getSavedGraphList(this.sketch.id).then((response) => {
+        this.savedGraphs = response.data['objects'][0]
       }).catch((e) => {
         console.error(e)
     })
