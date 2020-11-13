@@ -40,7 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 #RUN pip3 install -r /timesketch-requirements.txt
 
 # Copy the entrypoint script into the container
-COPY docker/dev/docker-entrypoint.sh /docker-entrypoint.sh
+COPY docker-entrypoint.sh /
 RUN chmod a+x /docker-entrypoint.sh
 
 # Load the entrypoint script to be run later

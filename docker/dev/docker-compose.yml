@@ -3,7 +3,7 @@ services:
   timesketch:
     image: us-docker.pkg.dev/osdfir-registry/timesketch/dev:latest
     ports:
-            - "127.0.0.1:5000:5000"
+      - "127.0.0.1:5000:5000"
     links:
       - elasticsearch
       - postgres
