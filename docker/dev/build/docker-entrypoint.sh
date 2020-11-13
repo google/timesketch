@@ -3,6 +3,9 @@
 # Run the container the default way
 if [ "$1" = 'timesketch' ]; then
 
+  # Install test dependencies
+  pip3 install -r /usr/local/src/timesketch/requirements.txt
+
   # Install Timesketch in editable mode from volume
   pip3 install -e /usr/local/src/timesketch/
 
