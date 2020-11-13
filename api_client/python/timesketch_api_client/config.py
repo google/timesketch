@@ -71,7 +71,7 @@ class ConfigAssistant:
         'username': 'The username of the Timesketch user',
         'password': 'Password of the chosen user.',
         'auth_mode': (
-            'Authentication mode, valid choices are: "timesketch" '
+            'Authentication mode, valid choices are: "userpass" '
             '(user/pass) or "oauth"'),
         'client_id': 'OAUTH Client identification.',
         'client_secret': 'The OAUTH client secret',
@@ -114,7 +114,12 @@ class ConfigAssistant:
         if self.missing:
             return None
 
-        auth_mode = self._config.get('auth_mode', 'timesketch')
+        auth_mode = self._config.get('auth_mode', 'userpass')
+        # TODO: Remove shortly, temporary due to change of
+        # 'timesketch' to 'userpass'
+        if auth_mode == 'timesketch':
+            auth_mode = 'userpass'
+
         credential_storage = crypto.CredentialStorage()
         credentials = credential_storage.load_credentials(
             config_assistant=self, password=token_password)
@@ -272,13 +277,20 @@ class ConfigAssistant:
             file_path = os.path.join(home_path, self.RC_FILENAME)
 
         config = configparser.ConfigParser()
+
+        # TODO: Remove this, temporary here to transition from the use of
+        # timesketch to the auth mode of userpass.
+        auth_mode = self._config.get('auth_mode', 'userpass')
+        if auth_mode == 'timesketch':
+            auth_mode = 'userpass'
+
         config['timesketch'] = {
             'host_uri': self._config.get('host_uri'),
             'username': self._config.get('username'),
             'verify': self._config.get('verify', True),
             'client_id': self._config.get('client_id', ''),
             'client_secret': self._config.get('client_secret', ''),
-            'auth_mode': self._config.get('auth_mode', 'timesketch')
+            'auth_mode': auth_mode,
         }
 
         if 'cred_key' in self._config:
@@ -416,7 +428,7 @@ def configure_missing_parameters(
     # Check if we are using username/password and we don't have credentials
     # saved.
     auth_mode = config_assistant.get_config('auth_mode')
-    if auth_mode != 'timesketch':
+    if auth_mode != 'userpass':
         return None
 
     choice = False
