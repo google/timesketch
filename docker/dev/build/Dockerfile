@@ -1,6 +1,10 @@
 # Use the official Docker Hub Ubuntu 20.04 base image
 FROM ubuntu:20.04
 
+# Prevent needing to configure debian packages, stopping the setup of
+# the docker container.
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common \
     apt-transport-https \
