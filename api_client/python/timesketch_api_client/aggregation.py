@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client library."""
-from __future__ import unicode_literals
-
+import getpass
 import json
 import logging
 
@@ -44,6 +43,7 @@ class Aggregation(resource.BaseResource):
         self._sketch = sketch
         self._aggregator_data = {}
         self._labels = []
+        self._username = ''
         self._parameters = {}
         self.aggregator_name = ''
         self.chart_color = ''
@@ -52,7 +52,7 @@ class Aggregation(resource.BaseResource):
         self.view = None
         self.type = None
         resource_uri = 'sketches/{0:d}/aggregation/explore/'.format(sketch.id)
-        super(Aggregation, self).__init__(api, resource_uri)
+        super().__init__(api, resource_uri)
 
     def _get_aggregation_buckets(self, entry, name=''):
         """Yields all buckets from an aggregation result object.
@@ -107,6 +107,7 @@ class Aggregation(resource.BaseResource):
 
         self.aggregator_name = aggregator_name
         self.chart_color = parameters.get('chart_color', '')
+        self._parameters = parameters
 
         form_data = {
             'aggregator_name': aggregator_name,
@@ -154,6 +155,8 @@ class Aggregation(resource.BaseResource):
             parameters = {}
 
         self._parameters = parameters
+
+        self._username = data.get('user', {}).get('username', 'System')
         self.resource_data = self._run_aggregator(
             aggregator_name=self.aggregator_name, parameters=parameters,
             chart_type=chart_type)
@@ -168,6 +171,7 @@ class Aggregation(resource.BaseResource):
             self.api.api_root, self._sketch.id)
 
         self.aggregator_name = 'DSL'
+        self._username = getpass.getuser()
         self.type = 'DSL'
 
         form_data = {
@@ -195,6 +199,7 @@ class Aggregation(resource.BaseResource):
         """
         self.type = 'aggregator_run'
         self._parameters = aggregator_parameters
+        self._username = getpass.getuser()
 
         self.resource_data = self._run_aggregator(
             aggregator_name, aggregator_parameters, view_id, chart_type)
@@ -213,6 +218,18 @@ class Aggregation(resource.BaseResource):
 
         # TODO: Implement a method to refresh cache.
         return self.resource_data
+
+    @property
+    def parameters(self):
+        """Property that returns the parameters of the aggregation."""
+        return self._parameters
+
+    @property
+    def user(self):
+        """Property that returns the username of who ran the aggregation."""
+        if not self._username:
+            return 'System'
+        return self._username
 
     @property
     def title(self):
@@ -354,7 +371,16 @@ class Aggregation(resource.BaseResource):
                 self.api.api_root, self._sketch.id)
 
         response = self.api.session.post(resource_url, json=data)
-        return error.check_return_status(response, logger)
+        if not error.check_return_status(response, logger):
+            return 'Unable to save the aggregation'
+
+        response_json = response.json()
+        objects = response_json.get('objects')
+        if not objects:
+            return 'Unable to determine ID of saved object.'
+        agg_data = objects[0]
+        self._aggregator_data = agg_data
+        return 'Saved aggregation to ID: {0:d}'.format(self.id)
 
 
 class AggregationGroup(resource.BaseResource):
@@ -368,7 +394,7 @@ class AggregationGroup(resource.BaseResource):
         """Initialize the aggregation group."""
         resource_uri = 'sketches/{0:d}/aggregation/group/'.format(
             sketch.id)
-        super(AggregationGroup, self).__init__(api, resource_uri)
+        super().__init__(api, resource_uri)
 
         self.id = None
         self._name = 'N/A'
