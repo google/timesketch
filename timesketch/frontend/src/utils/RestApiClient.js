@@ -261,17 +261,20 @@ export default {
   getLoggedInUser () {
     return RestApiClient.get('/users/me/')
   },
-  generateGraphFromPlugin (sketchId, graphPlugin) {
+  generateGraphFromPlugin (sketchId, graphPlugin, currentIndices, refresh) {
     let formData = {
-      plugin: graphPlugin
+      plugin: graphPlugin,
+      filter: {indices: currentIndices},
+      refresh: refresh
     }
     return  RestApiClient.post('/sketches/' + sketchId + /graph/, formData)
   },
   getGraphPluginList () {
     return  RestApiClient.get('/graphs/')
   },
-  saveGraph (sketchId, elements) {
+  saveGraph (sketchId, name, elements) {
     let formData = {
+      'name': name,
       'elements': elements
     }
     return  RestApiClient.post('/sketches/' + sketchId + /graphs/, formData)

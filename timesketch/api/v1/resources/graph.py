@@ -53,24 +53,23 @@ class GraphListResource(resources.ResourceMixin, Resource):
         graphs = sketch.graphs
         return self.to_json(graphs)
 
-    @staticmethod
-    def post(sketch_id):
+    def post(self, sketch_id):
         """Handles POST request to the resource."""
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
         form = request.json
+        name = form.get('name')
         elements = form.get('elements')
 
-        from datetime import date
-        today = date.today()
-
         graph = Graph(
-            user=current_user, sketch=sketch, name=str(today),
+            user=current_user, sketch=sketch, name=str(name),
             graph_elements=json.dumps(elements))
         db_session.add(graph)
         db_session.commit()
+
+        return self.to_json(graph)
 
 
 class GraphResource(resources.ResourceMixin, Resource):
@@ -95,7 +94,7 @@ class GraphResource(resources.ResourceMixin, Resource):
                 'Graph does not belong to this sketch.')
 
         response = self.to_json(graph).json
-        response['objects'][0]['elements'] = graph.elements
+        response['objects'][0]['elements'] = graph.graph_elements
 
         return jsonify(response)
 
@@ -110,10 +109,18 @@ class GraphCacheListResource(resources.ResourceMixin, Resource):
         Returns:
             List of graphs in JSON (instance of flask.wrappers.Response)
         """
-        graphs = manager.GraphManager.get_graphs()
-        graph_names = {name: graph_class().DISPLAY_NAME for name, graph_class in
-                       graphs}
-        return jsonify(graph_names)
+        graph_plugins = manager.GraphManager.get_graphs()
+        graphs = []
+        for name, graph_class in graph_plugins:
+            graph_instance = graph_class()
+            graph_plugin = {
+                'name': name,
+                'display_name': graph_instance.DISPLAY_NAME,
+                'description': graph_instance.DESCRIPTION
+            }
+            graphs.append(graph_plugin)
+
+        return jsonify(graphs)
 
 
 class GraphCacheResource(resources.ResourceMixin, Resource):
@@ -130,21 +137,39 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
+        sketch_indices = [
+            timeline.searchindex.index_name
+            for timeline in sketch.active_timelines
+        ]
+
         form = request.json
         plugin_name = form.get('plugin')
+        graph_filter = form.get('filter')
+        refresh = form.get('refresh')
 
-        cache = GraphCache.query.filter_by(
-            sketch=sketch, graph_plugin=plugin_name).first()
-        if cache:
-            return jsonify(json.loads(cache.elements))
-        else:
-            cache = GraphCache(sketch=sketch, graph_plugin=plugin_name)
+        cache = GraphCache.get_or_create(
+            sketch=sketch, graph_plugin=plugin_name)
+
+        # If any timelines have been added/removed from the sketch then refresh
+        # the cache.
+        if cache.graph_filter:
+            _filter = json.loads(cache.graph_filter)
+            cache_indices = _filter.get('indices', [])
+            if set(sketch_indices) ^ set(cache_indices):
+                refresh = True
+
+        if cache.graph_elements and not refresh:
+            return self.to_json(cache)
 
         graph_class = manager.GraphManager.get_graph(plugin_name)
         graph = graph_class(sketch=sketch)
         cytoscape_json = graph.generate().to_cytoscape()
 
-        cache.elements = json.dumps(cytoscape_json)
-        db_session.add(cache)
-        db_session.commit()
-        return jsonify(cytoscape_json)
+        if cytoscape_json:
+            cache.graph_elements = json.dumps(cytoscape_json)
+            cache.graph_filter = json.dumps(graph_filter)
+            cache.update_modification_time()
+            db_session.add(cache)
+            db_session.commit()
+
+        return self.to_json(cache)
