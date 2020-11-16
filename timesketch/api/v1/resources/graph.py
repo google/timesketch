@@ -153,10 +153,10 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
         # If any timelines have been added/removed from the sketch then refresh
         # the cache.
         if cache.graph_config:
-            graph_config = json.loads(cache.graph_config)
-            graph_filter = graph_config.get('filter', {})
-            filter_indices = graph_filter.get('indices', [])
-            if set(sketch_indices) ^ set(filter_indices):
+            cache_graph_config = json.loads(cache.graph_config)
+            cache_graph_filter = cache_graph_config.get('filter', {})
+            cache_filter_indices = cache_graph_filter.get('indices', [])
+            if set(sketch_indices) ^ set(cache_filter_indices):
                 refresh = True
 
         if cache.graph_elements and not refresh:
@@ -168,7 +168,7 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
 
         if cytoscape_json:
             cache.graph_elements = json.dumps(cytoscape_json)
-            cache.graph_filter = json.dumps(graph_filter)
+            cache.graph_config = json.dumps(graph_config)
             cache.update_modification_time()
             db_session.add(cache)
             db_session.commit()
