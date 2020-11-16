@@ -30,7 +30,6 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Graph
 from timesketch.models.sketch import GraphCache
 
-
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
 logger = logging.getLogger('timesketch.graph_api')
