@@ -620,7 +620,7 @@ class GraphCache(BaseModel):
 
     def __init__(self, sketch, graph_filter=None, graph_plugin=None,
                  graph_elements=None, num_nodes=None, num_edges=None):
-        """Initialize the Attribute object.
+        """Initialize the GraphCache object.
 
         Args:
             sketch (Sketch): The sketch that the graph is bound to.
@@ -652,7 +652,7 @@ class Graph(LabelMixin, CommentMixin, BaseModel):
 
     def __init__(self, user, sketch, name, description=None, thumbnail=None,
                  graph_elements=None, num_nodes=None, num_edges=None):
-        """Initialize the Attribute object.
+        """Initialize the Graph object.
 
         Args:
             user (User): The user who created the graph.
