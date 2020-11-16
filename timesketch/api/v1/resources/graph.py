@@ -149,8 +149,7 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
         cache = GraphCache.get_or_create(
             sketch=sketch, graph_plugin=plugin_name)
 
-        # If any timelines have been added/removed from the sketch then refresh
-        # the cache.
+        # Refresh cache if timelines have been added/removed from the sketch.
         if cache.graph_config:
             cache_graph_config = json.loads(cache.graph_config)
             cache_graph_filter = cache_graph_config.get('filter', {})
