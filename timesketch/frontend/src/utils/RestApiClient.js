@@ -264,7 +264,11 @@ export default {
   generateGraphFromPlugin (sketchId, graphPlugin, currentIndices, refresh) {
     let formData = {
       plugin: graphPlugin,
-      filter: {indices: currentIndices},
+      config: {
+        filter: {
+          indices: currentIndices
+        }
+      },
       refresh: refresh
     }
     return  RestApiClient.post('/sketches/' + sketchId + /graph/, formData)
@@ -285,5 +289,4 @@ export default {
   getSavedGraph (sketchId, graphId) {
     return  RestApiClient.get('/sketches/' + sketchId + /graphs/ + graphId + '/')
   },
-
 }

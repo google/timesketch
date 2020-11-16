@@ -1,4 +1,4 @@
-"""Adding AggregationGroups to the Aggregation DB.
+"""Add AggregationGroup model
 
 Revision ID: 58754b577173
 Revises: 64c00337b9d1

@@ -1,13 +1,13 @@
 """Add Graph and GraphCache models
 
-Revision ID: f58568a90c62
+Revision ID: 654121a84a33
 Revises: fc7bc5c66c63
-Create Date: 2020-11-13 14:57:21.742571
+Create Date: 2020-11-16 21:02:36.249989
 
 """
 
 # revision identifiers, used by Alembic.
-revision = 'f58568a90c62'
+revision = '654121a84a33'
 down_revision = 'fc7bc5c66c63'
 
 from alembic import op
@@ -24,6 +24,7 @@ def upgrade():
     sa.Column('sketch_id', sa.Integer(), nullable=True),
     sa.Column('name', sa.UnicodeText(), nullable=True),
     sa.Column('description', sa.UnicodeText(), nullable=True),
+    sa.Column('graph_config', sa.UnicodeText(), nullable=True),
     sa.Column('graph_elements', sa.UnicodeText(), nullable=True),
     sa.Column('graph_thumbnail', sa.UnicodeText(), nullable=True),
     sa.Column('num_nodes', sa.Integer(), nullable=True),
@@ -37,8 +38,8 @@ def upgrade():
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('sketch_id', sa.Integer(), nullable=True),
-    sa.Column('graph_filter', sa.UnicodeText(), nullable=True),
     sa.Column('graph_plugin', sa.UnicodeText(), nullable=True),
+    sa.Column('graph_config', sa.UnicodeText(), nullable=True),
     sa.Column('graph_elements', sa.UnicodeText(), nullable=True),
     sa.Column('num_nodes', sa.Integer(), nullable=True),
     sa.Column('num_edges', sa.Integer(), nullable=True),

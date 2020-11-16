@@ -137,25 +137,26 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
+        form = request.json
+        plugin_name = form.get('plugin')
+        graph_config = form.get('config')
+        refresh = form.get('refresh')
+
         sketch_indices = [
             timeline.searchindex.index_name
             for timeline in sketch.active_timelines
         ]
-
-        form = request.json
-        plugin_name = form.get('plugin')
-        graph_filter = form.get('filter')
-        refresh = form.get('refresh')
 
         cache = GraphCache.get_or_create(
             sketch=sketch, graph_plugin=plugin_name)
 
         # If any timelines have been added/removed from the sketch then refresh
         # the cache.
-        if cache.graph_filter:
-            _filter = json.loads(cache.graph_filter)
-            cache_indices = _filter.get('indices', [])
-            if set(sketch_indices) ^ set(cache_indices):
+        if cache.graph_config:
+            graph_config = json.loads(cache.graph_config)
+            graph_filter = graph_config.get('filter', {})
+            filter_indices = graph_filter.get('indices', [])
+            if set(sketch_indices) ^ set(filter_indices):
                 refresh = True
 
         if cache.graph_elements and not refresh:
