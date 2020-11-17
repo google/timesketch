@@ -3,6 +3,10 @@
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google/timesketch/blob/master/notebooks/colab-timesketch-demo.ipynb)
 [![Open In Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/google/timesketch/master?urlpath=%2Flab)
 [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Digital%20Forensic%20Timeline%20Analysis&url=https://github.com/google/timesketch/&via=jberggren&hashtags=dfir)
+![](https://github.com/google/timesketch/workflows/timesketch-end-to-end/badge.svg)
+![](https://github.com/google/timesketch/workflows/pipenv%20unittests/badge.svg)
+![](https://github.com/google/timesketch/workflows/ppa%20unittests/badge.svg)
+
 
 ## Table of Contents
 1. [About Timesketch](#about-timesketch)
