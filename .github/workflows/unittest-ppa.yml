@@ -42,6 +42,7 @@ jobs:
             python3-sigmatools python3-six python3-sqlalchemy python3-tabulate python3-toolz \
             python3-tz python3-urllib3 python3-vine python3-werkzeug python3-wtforms\
             python3-xlrd python3-xmltodict python3-yaml python3-zipp python3-networkx
+        sudo ln -s /usr/bin/nosetests3 /usr/bin/nosetests
     - name: Test with unittest
       run: |
         python run_tests.py
