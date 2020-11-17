@@ -70,7 +70,7 @@ class BaseBlock:
         """Remove block from index."""
         self._story.remove_block(self.index)
 
-    def feed(self):
+    def feed(self, data):
         """Feed data into the block."""
         self._data = data
 
