@@ -7,7 +7,7 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-focal
     strategy:
       matrix:
         os: [ubuntu-latest]
