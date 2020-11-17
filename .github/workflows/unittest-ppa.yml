@@ -1,0 +1,31 @@
+name: ppa unittests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        add-apt-repository ppa:gift/dev
+        add-apt-repository ppa:gift/pylint3
+        apt-get update
+        apt-get install python3-distutils pylint
+        apt-get build-dep timesketch
+    - name: Test with unittest
+      run: |
+        pipenv run python run_tests.py
