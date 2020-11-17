@@ -42,4 +42,4 @@ jobs:
             python3-xlrd python3-xmltodict python3-yaml python3-zipp python3-networkx
     - name: Test with unittest
       run: |
-        pipenv run python run_tests.py
+        python run_tests.py
