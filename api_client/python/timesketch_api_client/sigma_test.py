@@ -41,7 +41,9 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertIsNotNone(True)
         self.assertIsNotNone(self.rule)
 
+        # TODO this test doe snot work at the moment
         data = json.loads(self.rule)
+
         self.assertEqual(data['title'], 'Suspicious Installation of Zenmap', "Title of the rule does not match") 
 
         
