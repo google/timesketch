@@ -121,8 +121,11 @@ limitations under the License.
                           <span>{{ chip.value.split(',')[0] }}</span>
                           <span v-if="chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</span>
                         </span>
-                        <span class="fas fa-edit" style="margin-left:7px;"></span>
-                        <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(chip)"></button>
+                        <span class="fa-stack fa-lg" style="margin-left:5px; width:20px;">
+                          <i class="fas fa-circle fa-stack-1x can-change-background" style="transform:scale(1.1);"></i>
+                          <i class="fas fa-edit fa-stack-1x fa-inverse" style="transform:scale(0.7);"></i>
+                        </span>
+                        <button class="delete is-small" style="margin-left:5px" v-on:click="removeChip(index)"></button>
                       </span>
                     </div>
                   </span>
@@ -628,7 +631,7 @@ export default {
     },
     updateChip: function(newChip, oldChip) {
       // Replace the chip at the given index
-      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === oldChip.value);
+      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === oldChip.value && c.type == oldChip.type);
       this.currentQueryFilter.chips.splice(chipIndex, 1, newChip)
       this.search()
     },
@@ -833,5 +836,13 @@ export default {
   margin-right: 7px;
   font-size: 0.7em;
   cursor: default;
+}
+
+.can-change-background {
+  color: rgba(10, 10, 10, 0.2);
+}
+
+.can-change-background:hover {
+  color: rgba(10, 10, 10, 0.3);
 }
 </style>

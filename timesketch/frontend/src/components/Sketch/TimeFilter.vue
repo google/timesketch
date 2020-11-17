@@ -20,8 +20,8 @@ limitations under the License.
     <div class="field is-horizontal">
       <div class="field-body" style="display:flex; align-items:center;">
 
-        <b-radio v-model="radio" native-value="interval"></b-radio>
-        <div class="field">
+        <b-radio v-model="radio" native-value="interval" @input="formatDateTime()"></b-radio>
+        <div class="field" style="margin-left: 5px;">
           <p class="control">
             <input class="input" ref="offsetStartInput" v-model.trim="offsetStart" type="text" :disabled="!isSelected('interval')" :placeholder="getPlaceholder('interval')"
             v-on:change="offsetStart && formatDateTime()" v-on:keyup.enter="submit()">
@@ -42,7 +42,7 @@ limitations under the License.
           </p>
         </div>
         <div> </div>
-        <div class="field">
+        <div class="field" style="margin-right: 5px;">
           <p class="control">
             <span class="select">
               <select v-model="selectedInterval" :disabled="!isSelected('interval')" v-on:change="offsetStart && formatDateTime()">
@@ -58,17 +58,17 @@ limitations under the License.
     <div class="field is-horizontal">
       <div class="field-body" style="display:flex; align-items:center;">
 
-        <b-radio v-model="radio" native-value="range"></b-radio>
-        <div class="field">
+        <b-radio v-model="radio" native-value="range" @input="formatDateTime()"></b-radio>
+        <div class="field" style="margin:5px;">
           <p class="control">
             <input class="input" ref="startInput" v-model.trim="startDateTime" type="text" :disabled="!isSelected('range')" :placeholder="getPlaceholder('range')"
-            v-on:change="startDateTime && formatDateTime()" v-on:keyup.enter="endDateTime ? submit() : jumpTo('endInput')">
+            v-on:change="startDateTime && formatDateTime()" v-on:keyup.enter="endDateTime ? submit() : formatDateTime(skipCheck=true) && jumpTo('endInput')">
           </p>
         </div>
 
-        <span style="margin-right:10px;">&rarr;</span>
+        <div>&rarr;</div>
 
-        <div class="field">
+        <div class="field" style="margin:5px;">
           <p class="control">
             <input class="input" ref="endInput" v-model.trim="endDateTime" type="text" :disabled="!isSelected('range')" :placeholder="getPlaceholder('range')"
             v-on:change="endDateTime && formatDateTime()" v-on:keyup.enter="submit()">
@@ -81,7 +81,7 @@ limitations under the License.
     <div class="field is-horizontal">
       <div class="field is-grouped">
         <p class="control">
-          <button :disabled="!hasAllInputs()" class="button is-success" v-on:click="submit">{{ selectedChip ? 'Update' : 'Create' }}</button>
+          <button :disabled="!ready" class="button is-success" v-on:click="submit">{{ selectedChip ? 'Update' : 'Create' }}</button>
         </p>
       </div>
     </div>
@@ -96,7 +96,7 @@ export default {
     return {
       startDateTime: '',
       endDateTime: '',
-      chip: this.selectedChip,
+      chip: '',
       radio: 'interval',
       offsetStart: '',
       offsetMinus: 5,
@@ -108,14 +108,19 @@ export default {
         {'text': 'Day', 'value': 'd'},
       ],
       selectedInterval: 'm',
+      ready: false,
+      now: this.$moment.utc().format('YYYY-MM-DD[T]hh:mm:ss'),
     }
   },
   created: function () {
-    if (!this.chip) {
+    if (!this.selectedChip) {
       return
     }
 
-    // Restoring values from the chip
+    // Clone the object to avoid mutating it
+    this.chip = {...this.selectedChip}
+
+    // Restoring the component's state from the chip
     if (this.chip.type === 'datetime_range') {
       this.radio = 'range'
       let range = this.chip.value.split(',')
@@ -147,23 +152,21 @@ export default {
       return false
     },
     getPlaceholder: function (radioName) {
-      return (this.radio == radioName) ? '2019-07-07T10:00:01' : ''
+      return (this.radio == radioName) ? this.now : ''
     },
     getOffsetDateTime: function () {
        return `${this.offsetStart} -${this.offsetMinus}${this.selectedInterval} +${this.offsetPlus}${this.selectedInterval}`
     },
-    formatDateTime: function () {
+    formatDateTime: function (skipCheck = false) {
+      this.ready = false;
+
       // Exit early if user inputs are missing
-      if (!this.hasAllInputs()) {
+      if (!skipCheck && !this.hasAllInputs()) {
         return false
       }
 
-      if (this.isSelected('interval')) {
-        this.startDateTime = this.getOffsetDateTime()
-      }
-
+      const startDateTimeString = this.isSelected('interval') ? this.getOffsetDateTime() : this.startDateTime
       let dateTimeTemplate = 'YYYY-MM-DDTHH:mm:ss'
-      const startDateTimeString = this.startDateTime
       let endDateTimeString = this.endDateTime
 
       // Parse offset given by user. Eg. "2020-02-02 01:01:01 +10m -5m"
@@ -172,11 +175,11 @@ export default {
 
       if (offsetRegexpMatch != null) {
         const startDateTimeMoment = this.$moment.utc(offsetRegexpMatch[1])
-        this.startDateTime = startDateTimeMoment.format(dateTimeTemplate)
-        this.endDateTime = startDateTimeMoment.format(dateTimeTemplate)
         if (!startDateTimeMoment.isValid()) {
           return false
         }
+        this.startDateTime = startDateTimeMoment.format(dateTimeTemplate)
+        this.endDateTime = startDateTimeMoment.format(dateTimeTemplate)
 
         offsetRegexpMatch = offsetRegexpMatch.slice(2) // To simplify the loop below we remove the first 2 entries (full match and the 1st match)
         while (offsetRegexpMatch.length) {
@@ -187,15 +190,16 @@ export default {
 
           // Calculate time range
           // Warning: add() and subtract() mutate the object, hence we clone it first
-          if (startDateTimeOffset === '+') {
-            this.endDateTime = startDateTimeMoment.clone().add(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
-          } else if (startDateTimeOffset === '-') {
+          if (startDateTimeOffset === '-') {
             this.startDateTime = startDateTimeMoment.clone().subtract(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
+          } else if (startDateTimeOffset === '+') {
+            this.endDateTime = startDateTimeMoment.clone().add(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
           } else if (startDateTimeOffset === '-+' || startDateTimeOffset === '+-') {
             this.startDateTime = startDateTimeMoment.clone().subtract(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
             this.endDateTime = startDateTimeMoment.clone().add(startDateTimeOffsetCount, startDateTimeOffsetInterval).format(dateTimeTemplate)
           }
         }
+        this.ready = true
         return true
       }
 
@@ -225,6 +229,7 @@ export default {
         return false
       }
 
+      this.ready = true
       return true
     },
     submit: function () {
@@ -274,7 +279,7 @@ export default {
       this.$emit('hideDropdown')
     },
     resetInterface: function() {
-      Object.assign(this.$data, this.$options.data()) // Credits to https://stackoverflow.com/a/38174780
+      Object.assign(this.$data, this.$options.data.apply(this))
     },
     isSelected: function(radioName) {
       return this.radio === radioName
