@@ -193,6 +193,9 @@ class BaseGraphPlugin:
     # Display name (used in the UI)
     DISPLAY_NAME = 'display_name'
 
+    # Description of the plugin (used in the UI)
+    DESCRIPTION = 'description'
+
     # Type of graph. There are four supported types: Undirected Graph,
     # Undirected Multi Graph, Directed Graph, Directed  Multi Graph.
     # If you have multiple edges between nodes you need to use the multi graphs.
