@@ -31,12 +31,14 @@ from timesketch.models.sketch import Graph
 from timesketch.models.sketch import GraphCache
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
+from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 
 logger = logging.getLogger('timesketch.graph_api')
 
 
 class GraphListResource(resources.ResourceMixin, Resource):
-    """Resource to get all graphs."""
+    """Resource to get all saved graphs for a sketch."""
 
     @login_required
     def get(self, sketch_id):
@@ -57,6 +59,10 @@ class GraphListResource(resources.ResourceMixin, Resource):
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        if not sketch.has_permission(current_user, 'write'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have write access on sketch.')
 
         form = request.json
         name = form.get('name')
@@ -82,14 +88,16 @@ class GraphResource(resources.ResourceMixin, Resource):
             List of graphs in JSON (instance of flask.wrappers.Response)
         """
         sketch = Sketch.query.get_with_acl(sketch_id)
-        graph = Graph.query.get(graph_id)
-
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
 
+        graph = Graph.query.get(graph_id)
+        if not graph:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No graph found with this ID.')
+
         if not sketch.id == graph.sketch.id:
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
+                HTTP_STATUS_CODE_BAD_REQUEST,
                 'Graph does not belong to this sketch.')
 
         response = self.to_json(graph).json
@@ -98,8 +106,8 @@ class GraphResource(resources.ResourceMixin, Resource):
         return jsonify(response)
 
 
-class GraphCacheListResource(resources.ResourceMixin, Resource):
-    """Resource to get all graphs."""
+class GraphPluginListResource(resources.ResourceMixin, Resource):
+    """Resource to get all graph plugins."""
 
     @login_required
     def get(self):
@@ -111,11 +119,10 @@ class GraphCacheListResource(resources.ResourceMixin, Resource):
         graph_plugins = manager.GraphManager.get_graphs()
         graphs = []
         for name, graph_class in graph_plugins:
-            graph_instance = graph_class()
             graph_plugin = {
                 'name': name,
-                'display_name': graph_instance.DISPLAY_NAME,
-                'description': graph_instance.DESCRIPTION
+                'display_name': graph_class.DISPLAY_NAME,
+                'description': graph_class.DESCRIPTION
             }
             graphs.append(graph_plugin)
 
@@ -123,7 +130,7 @@ class GraphCacheListResource(resources.ResourceMixin, Resource):
 
 
 class GraphCacheResource(resources.ResourceMixin, Resource):
-    """Resource to get a graph."""
+    """Resource to get a cached graph."""
 
     @login_required
     def post(self, sketch_id):
@@ -152,10 +159,12 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
         # Refresh cache if timelines have been added/removed from the sketch.
         if cache.graph_config:
             cache_graph_config = json.loads(cache.graph_config)
-            cache_graph_filter = cache_graph_config.get('filter', {})
-            cache_filter_indices = cache_graph_filter.get('indices', [])
-            if set(sketch_indices) ^ set(cache_filter_indices):
-                refresh = True
+            if cache_graph_config:
+                cache_graph_config = json.loads(cache.graph_config)
+                cache_graph_filter = cache_graph_config.get('filter', {})
+                cache_filter_indices = cache_graph_filter.get('indices', [])
+                if set(sketch_indices) ^ set(cache_filter_indices):
+                    refresh = True
 
         if cache.graph_elements and not refresh:
             return self.to_json(cache)

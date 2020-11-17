@@ -55,7 +55,7 @@ from .resources.user import CollaboratorResource
 from .resources.user import LoggedInUserResource
 from .resources.graph import GraphListResource
 from .resources.graph import GraphResource
-from .resources.graph import GraphCacheListResource
+from .resources.graph import GraphPluginListResource
 from .resources.graph import GraphCacheResource
 
 
@@ -103,6 +103,6 @@ API_ROUTES = [
     (LoggedInUserResource, '/users/me/'),
     (GraphListResource, '/sketches/<int:sketch_id>/graphs/'),
     (GraphResource, '/sketches/<int:sketch_id>/graphs/<int:graph_id>/'),
-    (GraphCacheListResource, '/graphs/'),
+    (GraphPluginListResource, '/graphs/'),
     (GraphCacheResource, '/sketches/<int:sketch_id>/graph/'),
 ]
