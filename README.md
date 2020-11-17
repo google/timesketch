@@ -6,8 +6,6 @@
 [![Version API](https://img.shields.io/pypi/v/timesketch_api_client?label=api_client&style=plastic)](https://pypi.python.org/pypi/timesketch_api_client)
 [![Version Import](https://img.shields.io/pypi/v/timesketch_import_client?label=import_client&style=plastic)](https://pypi.python.org/pypi/timesketch_import_client)
 
-[![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Digital%20Forensic%20Timeline%20Analysis&url=https://github.com/google/timesketch/&via=jberggren&hashtags=dfir)
-
 ![](https://github.com/google/timesketch/workflows/timesketch-end-to-end/badge.svg)
 ![](https://github.com/google/timesketch/workflows/pipenv%20unittests/badge.svg)
 ![](https://github.com/google/timesketch/workflows/ppa%20unittests/badge.svg)
@@ -27,16 +25,10 @@ Timesketch is an open source tool for collaborative forensic timeline analysis. 
 ## Getting started
 
 #### Installation
-* [Install Timesketch manually](docs/Installation.md)
-* [Use Docker](docker/)
-* [Upgrade from existing installation](docs/Upgrading.md)
+* [Install Timesketch](docs/Installation.md)
 
 #### Adding timelines
-* [Create timeline from JSON/JSONL/CSV file](docs/CreateTimelineFromJSONorCSV.md)
-* [Create timeline from Plaso file](docs/CreateTimelineFromPlaso.md)
-* [Enable Plaso upload via HTTP](docs/EnablePlasoUpload.md)
 * [Use the API client to upload data](docs/UploadDataViaAPI.md)
-* [Import other data](docs/CreateTimeLineFromOtherData.md)
 
 #### Using Timesketch
 * [Users guide](docs/Users-Guide.md)
