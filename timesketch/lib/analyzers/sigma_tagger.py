@@ -117,11 +117,6 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                         for sigma_rule in parsed_sigma_rules:
                             try:
                                 sigma_rule_counter += 1
-                                # TODO Investigate how to handle .keyword
-                                # fields in Sigma.
-                                # https://github.com/google/timesketch/issues/1199#issuecomment-639475885
-                                sigma_rule = sigma_rule\
-                                    .replace(".keyword:", ":")
                                 logger.info(
                                     '[sigma] Generated query {0:s}'
                                     .format(sigma_rule))

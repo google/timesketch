@@ -25,22 +25,20 @@ limitations under the License.
       icon-pack="fas"
       icon-prev="chevron-left"
       icon-next="chevron-right">
-      <template slot-scope="props">
-        <b-table-column field="name" label="Name">
-          <router-link :to="{ name: 'SketchOverview', params: {sketchId: props.row.id } }"><strong>{{ props.row.name }}</strong></router-link>
-        </b-table-column>
-        <b-table-column field="status">
+      <b-table-column field="name" label="Name" v-slot="props">
+        <router-link :to="{ name: 'SketchOverview', params: {sketchId: props.row.id } }"><strong>{{ props.row.name }}</strong></router-link>
+      </b-table-column>
+      <b-table-column field="status" v-slot="props">
           <span v-if="props.row.status === 'archived'">
             <b-tag>{{ props.row.status }}</b-tag>
           </span>
-        </b-table-column>
-        <b-table-column field="user" label="Created by" width="200">
-          {{ props.row.user }}
-        </b-table-column>
-        <b-table-column field="updated_at" label="Last activity" width="200">
-          {{ new Date(props.row.updated_at) | moment("YYYY-MM-DD HH:mm") }}
-        </b-table-column>
-      </template>
+      </b-table-column>
+      <b-table-column field="user" label="Created by" width="200" v-slot="props">
+        {{ props.row.user }}
+      </b-table-column>
+      <b-table-column field="updated_at" label="Last activity" width="200" v-slot="props">
+        {{ new Date(props.row.updated_at) | moment("YYYY-MM-DD HH:mm") }}
+      </b-table-column>
 
       <template slot="bottom-left">
         <div class="has-text-right">

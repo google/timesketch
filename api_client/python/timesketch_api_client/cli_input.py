@@ -13,9 +13,18 @@
 # limitations under the License.
 """CLI assistance for importer tools."""
 
-import click
+from typing import Any
+from typing import Callable
+from typing import Optional
+from typing import Text
 
-def ask_question(question, input_type, default=None, hide_input=False):
+import getpass
+
+
+def ask_question(
+        question: Text, input_type: Callable[[Text], Any],
+        default: Optional[Any] = None,
+        hide_input: Optional[bool] = False) -> Any:
     """Presents the user with a prompt with a default return value and a type.
 
     Args:
@@ -28,13 +37,26 @@ def ask_question(question, input_type, default=None, hide_input=False):
     Returns:
         object: The value (type of input_type) that is ready by the user.
     """
+    if hide_input:
+        if default:
+            hint = '**'
+        else:
+            hint = ''
+
+        return getpass.getpass(f'{question} [{hint}] ')
+
     if default:
-        return click.prompt(
-            question, type=input_type, default=default, hide_input=hide_input)
-    return click.prompt(question, type=input_type, hide_input=hide_input)
+        ask = f'{question} [{default}]'
+    else:
+        ask = question
+
+    answer = input(f'{ask}: ')
+    return input_type(answer)
 
 
-def confirm_choice(choice, default=True, abort=True):
+def confirm_choice(
+        choice: Text, default: Optional[bool] = True,
+        abort: Optional[bool] = True) -> bool:
     """Returns a bool from a yes/no question presented to the end user.
 
     Args:
@@ -44,7 +66,33 @@ def confirm_choice(choice, default=True, abort=True):
         abort (bool): if the program should abort if the user answer to the
             confirm prompt is no. The default is an abort.
 
+    Raises:
+        RuntimeError: If abort is set to True and the choice is no.
+
     Returns:
         bool: False if the user entered no, True if the user entered yes
     """
-    return click.confirm(choice, abort=abort, default=default)
+    if default:
+        hint = 'Y/n'
+    else:
+        hint = 'y/N'
+    answer = input(f'{choice} [{hint}]: ')
+
+    value = None
+    if answer.lower() in ['y', 'yes']:
+        value = True
+
+    if answer.lower() in ['n', 'no']:
+        value = False
+
+    if not answer:
+        value = default
+
+    if value is None:
+        print('Invalid answer')
+        return confirm_choice(choice=choice, default=default, abort=abort)
+
+    if abort and not value:
+        raise RuntimeError('Aborting')
+
+    return value

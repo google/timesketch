@@ -50,6 +50,7 @@
     --content-list-hover-color: #fcfcfc;
     --login-page-background-color: var(--navbar-background);
     --card-title-font-color: var(--font-color-dark);
+    --card-header-border-color: #f5f5f5;
     --button-font-color: var(--font-color-dark);
     --form-label-font-color: var(--font-color-dark);
     --message-header-background-color: rgba(229, 229, 229, 0.84);
@@ -57,6 +58,7 @@
     --message-background-color: #f9f9f9;
     --message-body-color: var(--font-color-dark);
     --markdown-body-font-color: var(--font-color-dark);
+    --spinner-color: #333333;
 }
 
 [data-theme=dark] {
@@ -72,7 +74,7 @@
     --tabs-link-active-border-bottom-color: var(--font-color-light);
     --tabs-link-hover-border-bottom-color: var(--font-color-light);
     --tabs-border-bottom-color: var(--font-color-dark);
-    --card-background-color: #424242;
+    --card-background-color: #545454;
     --card-font-color: #fafafa;
     --card-accent-background-color: #494949;
     --card-accent-font-color: var(--font-color-light);
@@ -92,6 +94,7 @@
     --login-page-background-color: var(--background-color);
     --navbar-item-link-color: #fafafa;
     --card-title-font-color: var(--font-color-light);
+    --card-header-border-color: #848484;
     --button-font-color: var(--font-color-light);
     --form-label-font-color: var(--font-color-light);
     --message-header-background-color: var(--background-color);
@@ -99,6 +102,7 @@
     --message-background-color: #363636;
     --message-body-color: var(--font-color-light);
     --markdown-body-font-color: var(--font-color-light);
+    --spinner-color: #ffffff;
 }
 
 // Customize Bulma
@@ -165,7 +169,7 @@ body {
 }
 
 .card-header {
-    border-bottom: 1px solid transparent;
+    border-bottom: 1px solid var(--card-header-border-color);
 }
 
 .card-accent-background {

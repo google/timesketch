@@ -25,6 +25,8 @@ import Multiselect from 'vue-multiselect'
 import router from './router'
 import store from './store'
 
+import VueCytoscape from 'vue-cytoscape'
+
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import {
@@ -62,6 +64,8 @@ const EventBus = new Vue();
 export default EventBus;
 
 Vue.use(require('vue-moment'))
+
+Vue.use(VueCytoscape)
 
 Vue.use(Buefy, {
   defaultIconComponent: 'font-awesome-icon',
