@@ -44,6 +44,12 @@ class TimesketchSigmaTest(unittest.TestCase):
         # TODO this test doe snot work at the moment
         data = json.loads(self.rule)
 
-        self.assertEqual(data['title'], 'Suspicious Installation of Zenmap', "Title of the rule does not match") 
+        title = data.description['title']
 
-        
+        print(title)
+
+        self.assertEqual(
+            title,'Suspicious Installation of Zenmap', "Title of the rule does not match") 
+
+    def test_sigma_rules(self):
+        '''Testing the Sigma rules list'''

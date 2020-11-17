@@ -27,6 +27,10 @@ import codecs
 import yaml
 
 from timesketch.api.v1 import resources
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
+from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
+from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
 from sigma.backends import elasticsearch as sigma_elasticsearch
@@ -55,13 +59,20 @@ class SigmaListResource(resources.ResourceMixin, Resource):
         sigma_rules = []
         
         # TODO: that should be part of the Timesketch config.
-        _CONFIG_FILE = current_app.config['SIGMA_CONFIG']
-        _CONFIG_FILE = '../../../../data/sigma_config.yaml'
+        try:
+            _CONFIG_FILE = current_app.config['SIGMA_CONFIG']
+        except KeyError:
+            logger.error("SIGMA_CONFIG not found in config file")
+            _CONFIG_FILE = '../../../../data/sigma_config.yaml'
 
         # Path to the directory containing the Sigma Rules to run, relative to
         # this file.
-        _RULES_PATH = current_app.config['SIGMA_RULES_FOLDER']
-        _RULES_PATH = '../../../../data/sigma/rules/'
+        # TODO check if get is better for getting the key errors
+        try:
+            _RULES_PATH = current_app.config['SIGMA_RULES_FOLDER']
+        except KeyError:
+            logger.error("SIGMA_RULES_FOLDER not found in config file")
+            _RULES_PATH = '../../../../data/sigma/rules/'
 
         sigma_config_path = os.path.join(os.path.dirname(__file__), _CONFIG_FILE)
 
@@ -127,15 +138,21 @@ class SigmaResource(resources.ResourceMixin, Resource):
 
         logger.info(rule_uuid)
 
-        _CONFIG_FILE = current_app.config['SIGMA_CONFIG']
-        _CONFIG_FILE = '../../../../data/sigma_config.yaml'
-        logger.info(_CONFIG_FILE)
+        # TODO: that should be part of the Timesketch config.
+        try:
+            _CONFIG_FILE = current_app.config['SIGMA_CONFIG']
+        except KeyError:
+            logger.error("SIGMA_CONFIG not found in config file")
+            _CONFIG_FILE = '../../../../data/sigma_config.yaml'
 
-        # TODO: FIX the Config and rules path
         # Path to the directory containing the Sigma Rules to run, relative to
         # this file.
-        _RULES_PATH = current_app.config['SIGMA_RULES_FOLDER']
-        _RULES_PATH = '../../../../data/sigma/rules/'
+        # TODO check if get is better for getting the key errors
+        try:
+            _RULES_PATH = current_app.config['SIGMA_RULES_FOLDER']
+        except KeyError:
+            logger.error("SIGMA_RULES_FOLDER not found in config file")
+            _RULES_PATH = '../../../../data/sigma/rules/'
 
         sigma_config_path = os.path.join(os.path.dirname(__file__), _CONFIG_FILE)
 
@@ -171,36 +188,34 @@ class SigmaResource(resources.ResourceMixin, Resource):
                     with codecs.open(rule_file_path, 'r', encoding='utf-8',errors='replace') as rule_file:
                         try:
                             rule_file_content = rule_file.read()
-                            rule_yaml_data =yaml.safe_load(rule_file_content)
+                            rule_yaml_data = yaml.safe_load(rule_file_content)
+
                             parser = sigma_collection.SigmaCollectionParser(
                                 rule_file_content, sigma_config, None)
                             parsed_sigma_rules = parser.generate(sigma_backend)
-                            logger.info(parsed_sigma_rules)
 
                             # parse the rule
                             sigma_rule_value = ''
                             for sigma_rule in parsed_sigma_rules:
-                                sigma_rule = sigma_rule\
-                                    .replace(".keyword:", ":")
                                 logger.info(
                                     '[sigma] Generated query {0:s}'
                                     .format(sigma_rule))
                                 sigma_rule_value = sigma_rule
-                                break
-
-                            logger.info(sigma_rule_value)
                             
                             if rule_uuid == rule_yaml_data['id']:
                                 return_value = rule_yaml_data
-                                # append the actual rule
                                 return_value.update({"es_query":sigma_rule_value})
-                                #append the filename
                                 return_value.update({"file_name":tag_name})
+                                logger.info("found the right rule")
+                                return return_value
                         
                         except NotImplementedError as exception:
                             logger.error(
                                 'Error generating rule in file {0:s}: {1!s}'
                                 .format(rule_file_path, exception))
                             continue
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No sigma rule found with this ID.')
 
-        return return_value
+        
