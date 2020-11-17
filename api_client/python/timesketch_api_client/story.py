@@ -12,12 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client library."""
-from __future__ import annotations
-
-from typing import Any
-from typing import Dict
-from typing import Text
-
 import json
 import logging
 
@@ -38,7 +32,7 @@ class BaseBlock:
     # A string representation of the type of block.
     TYPE = ''
 
-    def __init__(self, story: Story, index: Text):
+    def __init__(self, story, index):
         """Initialize the base block."""
         self.index = index
         self._story = story
@@ -46,22 +40,22 @@ class BaseBlock:
         self._data = None
 
     @property
-    def data(self) -> Dict[Text, Any]:
+    def data(self):
         """Returns the building block."""
         return self.to_dict()
 
     @data.setter
-    def data(self, data: Any):
+    def data(self, data):
         """Feeds data to the block."""
         self._data = data
         self._story.commit()
 
     @property
-    def json(self) -> Dict[Text, Any]:
+    def json(self):
         """Returns the building block."""
         return self.to_dict()
 
-    def _get_base(self) -> Dict[Text, Any]:
+    def _get_base(self):
         """Returns a base building block."""
         return {
             'componentName': '',
@@ -76,11 +70,11 @@ class BaseBlock:
         """Remove block from index."""
         self._story.remove_block(self.index)
 
-    def feed(self, data: Any):
+    def feed(self):
         """Feed data into the block."""
         self._data = data
 
-    def from_dict(self, data_dict: Dict[Text, Any]):
+    def from_dict(self, data_dict):
         """Feed a block from a block dict."""
         raise NotImplementedError
 
@@ -96,7 +90,7 @@ class BaseBlock:
         self._story.move_to(self, new_index)
         self.index = new_index
 
-    def to_dict(self) -> Dict[Text, Any]:
+    def to_dict(self):
         """Returns a dict with the block data.
 
         Raises:
@@ -118,36 +112,36 @@ class ViewBlock(BaseBlock):
 
     TYPE = 'view'
 
-    def __init__(self, story: Story, index: Text):
+    def __init__(self, story, index):
         super().__init__(story, index)
         self._view_id = 0
         self._view_name = ''
 
     @property
-    def view(self) -> view.View:
+    def view(self):
         """Returns the view."""
         return self._data
 
     @view.setter
-    def view(self, new_view: view.View):
+    def view(self, new_view):
         """Sets a new view to the block."""
         self.data = new_view
 
     @property
-    def view_id(self) -> int:
+    def view_id(self):
         """Returns the view ID."""
         if self._data and hasattr(self._data, 'id'):
             return self._data.id
         return self._view_id
 
     @property
-    def view_name(self) -> Text:
+    def view_name(self):
         """Returns the view name."""
         if self._data and hasattr(self._data, 'name'):
             return self._data.name
         return self._view_name
 
-    def from_dict(self, data_dict: Dict[Text, Any]):
+    def from_dict(self, data_dict):
         """Feed a block from a block dict."""
         props = data_dict.get('componentProps', {})
         view_dict = props.get('view')
@@ -157,7 +151,7 @@ class ViewBlock(BaseBlock):
         self._view_id = view_dict.get('id', 0)
         self._view_name = view_dict.get('name', '')
 
-    def to_dict(self) -> Dict[Text, Any]:
+    def to_dict(self):
         """Returns a dict with the block data.
 
         Raises:
@@ -191,23 +185,23 @@ class TextBlock(BaseBlock):
     TYPE = 'text'
 
     @property
-    def text(self) -> Text:
+    def text(self):
         """Returns the text."""
         if not self._data:
             return ''
         return self._data
 
     @text.setter
-    def text(self, new_text: Text):
+    def text(self, new_text):
         """Sets a new text to the block."""
         self.data = new_text
 
-    def from_dict(self, data_dict: Dict[Text, Any]):
+    def from_dict(self, data_dict):
         """Feed a block from a block dict."""
         text = data_dict.get('content', '')
         self.feed(text)
 
-    def to_dict(self) -> Dict[Text, Any]:
+    def to_dict(self):
         """Returns a dict with the block data.
 
         Raises:
@@ -234,7 +228,7 @@ class AggregationBlock(BaseBlock):
 
     TYPE = 'aggregation'
 
-    def __init__(self, story: Story, index: Text):
+    def __init__(self, story, index):
         super().__init__(story, index)
         self._agg_id = 0
         self._agg_name = ''
@@ -242,39 +236,39 @@ class AggregationBlock(BaseBlock):
         self._chart_type = 'table'
 
     @property
-    def aggregation(self) -> aggregation.Aggregation:
+    def aggregation(self):
         """Returns the aggregation object."""
         if self._data:
             return self._data
         return None
 
     @aggregation.setter
-    def aggregation(self, agg_obj: aggregation.Aggregation):
+    def aggregation(self, agg_obj):
         """Set the aggregation object."""
         self._data = agg_obj
 
     @property
-    def agg_name(self) -> Text:
+    def agg_name(self):
         """Returns the aggregation name."""
         return self._agg_name
 
     @property
-    def agg_id(self) -> int:
+    def agg_id(self):
         """Returns the aggregation ID."""
         return self._agg_id
 
     @property
-    def chart_type(self) -> Text:
+    def chart_type(self):
         """Returns the aggregation type."""
         return self._chart_type
 
     @chart_type.setter
-    def chart_type(self, new_type: Text):
+    def chart_type(self, new_type):
         """Sets the aggregation type."""
         self._chart_type = new_type
 
     @property
-    def table(self) -> pd.DataFrame:
+    def table(self):
         """Returns a table view, as a pandas DataFrame."""
         if not self._data:
             return pd.DataFrame()
