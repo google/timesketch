@@ -1,9 +1,12 @@
 # Timesketch
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google/timesketch/blob/master/notebooks/colab-timesketch-demo.ipynb)
+[![Open In Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/google/timesketch/master?urlpath=%2Flab)
+
+
 [![Version](https://img.shields.io/pypi/v/timesketch.svg)](https://pypi.python.org/pypi/timesketch)
 [![Version API](https://img.shields.io/pypi/v/timesketch_api_client.svg)](https://pypi.python.org/pypi/timesketch_api_client)
 [![Version Import](https://img.shields.io/pypi/v/timesketch_import_client.svg)](https://pypi.python.org/pypi/timesketch_import_client)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/google/timesketch/blob/master/notebooks/colab-timesketch-demo.ipynb)
-[![Open In Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/google/timesketch/master?urlpath=%2Flab)
+
 [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Digital%20Forensic%20Timeline%20Analysis&url=https://github.com/google/timesketch/&via=jberggren&hashtags=dfir)
 
 ![](https://github.com/google/timesketch/workflows/timesketch-end-to-end/badge.svg)
