@@ -36,13 +36,18 @@ class WinServiceGraph(BaseGraphPlugin):
             query_string=query, return_fields=return_fields)
 
         for event in events:
-            computer_name = event['_source'].get('computer_name')
-            username = event['_source'].get('username')
-            event_strings = event['_source'].get('strings')
-            service_name = event_strings[0]
-            image_path = event_strings[1]
-            service_type = event_strings[2]
-            start_type = event_strings[3]
+            computer_name = event['_source'].get('computer_name', 'UNKNOWN')
+            username = event['_source'].get('username', 'UNKNOWN')
+            event_strings = event['_source'].get('strings', [])
+
+            # Skip event if we don't have enough data to build the graph.
+            try:
+                service_name = event_strings[0]
+                image_path = event_strings[1]
+                service_type = event_strings[2]
+                start_type = event_strings[3]
+            except IndexError:
+                continue
 
             computer = self.graph.add_node(computer_name, {'type': 'computer'})
             user = self.graph.add_node(username, {'type': 'user'})
