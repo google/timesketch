@@ -25,7 +25,7 @@ jobs:
         sudo add-apt-repository ppa:gift/pylint3
         sudo apt-get update
         sudo apt-get -y install python3-distutils pylint
-        sudo apt-get -y install timesketch
+        sudo apt-get -y install timesketch-server
     - name: Test with unittest
       run: |
         pipenv run python run_tests.py
