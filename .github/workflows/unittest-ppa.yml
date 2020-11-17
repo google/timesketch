@@ -21,11 +21,11 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        add-apt-repository ppa:gift/dev
-        add-apt-repository ppa:gift/pylint3
-        apt-get update
-        apt-get install python3-distutils pylint
-        apt-get build-dep timesketch
+        sudo add-apt-repository ppa:gift/dev
+        sudo add-apt-repository ppa:gift/pylint3
+        sudo apt-get update
+        sudo apt-get install python3-distutils pylint
+        sudo apt-get build-dep timesketch
     - name: Test with unittest
       run: |
         pipenv run python run_tests.py
