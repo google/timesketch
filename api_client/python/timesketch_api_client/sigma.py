@@ -27,7 +27,6 @@ logger = logging.getLogger('timesketch_api.sigma')
 
 class Sigma(resource.BaseResource):
 
-
     def __init__(self, rule_uuid, api ):
         """Initializes the Sigma object.
 
