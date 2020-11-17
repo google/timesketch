@@ -1,8 +1,0 @@
-[Unit]
-Description=Timesketch socket
-
-[Socket]
-ListenStream=/run/timesketch/socket
-
-[Install]
-WantedBy=sockets.target
