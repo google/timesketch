@@ -16,11 +16,11 @@ from __future__ import unicode_literals
 
 import json
 import logging
+import pandas
 
 from . import error
 from . import index
 from . import resource
-import pandas
 
 logger = logging.getLogger('timesketch_api.sigma')
 
@@ -36,37 +36,45 @@ class Sigma(resource.BaseResource):
         """
         self.rule_uuid = rule_uuid
         self._resource_uri = 'sigma/{0:s}'.format(self.rule_uuid)
-        self.data = self.lazyload_data()
+        #self.sigma_data = self.lazyload_data()
         super(Sigma, self).__init__(
             api=api, resource_uri=self._resource_uri)
             
 
-    # TODO rename that property to something more accurate, as it does not return the description but the whole thing.
+    # TODO rename that property to something more accurate, 
+    # as it does not return the description but the whole thing.
     @property
     def description(self):
         """Returns the object dict from the resources dict."""
-        #data = self.lazyload_data()
+        sigma_data = self.lazyload_data()
 
-        return self.data
+        return self.sigma_data
 
     @property
     def es_query(self):
-        """Returns the object dict from the resources dict."""
-        
+        """Returns the elastic search query."""
+        sigma_data = self.lazyload_data()
 
-        return self.data['es_query']
+        return sigma_data['es_query']
+
+    @property
+    def title(self):
+        """Returns the sigma rule title."""
+        sigma_data = self.lazyload_data()
+
+        return sigma_data['title']
+    
+    @property
+    def id(self):
+        """Returns the sigma rule id."""
+        sigma_data = self.lazyload_data()
+
+        return sigma_data['id']
 
     # TODO the below is not working yet
     def to_pandas(self):
         """Returns a pandas DataFrame."""
         panda_list = []
         data = self.lazyload_data()
-        #panda_list = pandas.DataFrame(data)
-        #for entry in data.get('objects', []):
-            #for bucket in self._get_aggregation_buckets(entry):
-        #    panda_list.append(entry)
-        
-        #dates = pandas.date_range('20130101', periods=6)
+
         return pandas.DataFrame(data)
-        #return False
-        #return pandas.DataFrame(panda_list)

@@ -34,22 +34,22 @@ class TimesketchSigmaTest(unittest.TestCase):
         """Setup test case."""
         self.api_client = client.TimesketchApi(
             'http://127.0.0.1', 'test', 'test')
-        self.rule = self.api_client.get_sigma_rule("5266a592-b793-11ea-b3de-0242ac130004")
+        self.rule = self.api_client.get_sigma_rule(
+            "5266a592-b793-11ea-b3de-0242ac130004")
         self.rules = self.api_client.list_sigma_rules()
 
     def test_sigma_rule(self):
+        """Test single Sigma rule."""
         self.assertIsNotNone(True)
         self.assertIsNotNone(self.rule)
 
-        # TODO this test doe snot work at the moment
-        data = json.loads(self.rule)
-
-        title = data.description['title']
-
-        print(title)
-
         self.assertEqual(
-            title,'Suspicious Installation of Zenmap', "Title of the rule does not match") 
+            self.rule.title, 'Suspicious Installation of Zenmap',
+             "Title of the rule does not match") 
+        self.assertEqual(
+            self.rule.id, '5266a592-b793-11ea-b3de-0242ac130004',
+             "Id of the rule does not match") 
 
     def test_sigma_rules(self):
         '''Testing the Sigma rules list'''
+        # TODO test something

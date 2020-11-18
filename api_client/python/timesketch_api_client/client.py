@@ -509,8 +509,6 @@ class TimesketchApi(object):
             unless as_pandas is set, then the function returns a DataFrame
             object.
         """
-
-        sigma_rules = []
         response = self.fetch_resource_data('sigma/')
 
         if not as_pandas:

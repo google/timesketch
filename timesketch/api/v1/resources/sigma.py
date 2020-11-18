@@ -85,7 +85,6 @@ class SigmaListResource(resources.ResourceMixin, Resource):
         
         rules_path = os.path.join(os.path.dirname(__file__), _RULES_PATH)
 
-
         for dirpath, dirnames, files in os.walk(rules_path):
 
             if 'deprecated' in dirnames:
@@ -218,5 +217,4 @@ class SigmaResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'No sigma rule found withcool  this ID.')
-
-        
+    
