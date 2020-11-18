@@ -58,7 +58,11 @@ class Graph:
         Returns:
               Instance of Node object.
         """
+        if not attributes:
+            attributes = {}
+
         node = Node(label, attributes)
+        node.set_attribute('id', node.id)
         if node.id not in self._nodes:
             self._nodes[node.id] = node
         return node
@@ -73,8 +77,10 @@ class Graph:
             event: (dict): Elasticsearch event.
             attributes: (dict) Attributes to add to node.
         """
-        edge_id_string = ''.join([source.id, target.id, label]).lower()
-        edge_id = hashlib.md5(edge_id_string.encode('utf-8')).hexdigest()
+        if not attributes:
+            attributes = {}
+
+        attributes['id'] = ''.join([source.id, target.id, label]).lower()
 
         edge = Edge(source, target, label, attributes)
 
@@ -88,7 +94,7 @@ class Graph:
             events[index] = doc_ids
             edge.set_attribute('events', events)
 
-        self._edges[edge_id] = edge
+        self._edges[edge.id] = edge
 
     def commit(self):
         """Commit all nodes and edges to the networkx graph object."""
@@ -129,20 +135,16 @@ class BaseGraphElement:
         """
         self.label = label
         self.attributes = attributes or {}
-        self.id = self.id_from_label(label)
+        self.id = self._generate_id()
 
-    @staticmethod
-    def id_from_label(label):
+    def _generate_id(self):
         """Generate ID for node/edge.
-
-        Args:
-            label (str): Node or edge label.
 
         Returns:
             MD5 hash (str): MD5 hash of the provided label.
         """
-        label = label.lower()
-        return hashlib.md5(label.encode('utf-8')).hexdigest()
+        id_string = self.attributes.get('id', self.label)
+        return hashlib.md5(id_string.encode('utf-8')).hexdigest()
 
     def set_attribute(self, key, value):
         """Add or replace an attribute to the element.
