@@ -80,7 +80,8 @@ class SigmaListResource(resources.ResourceMixin, Resource):
             sigma_config_file = sigma_config_file.read()
         sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
     
-        sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(sigma_config, {})
+        sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(
+            sigma_config, {})
         
         rules_path = os.path.join(os.path.dirname(__file__), _RULES_PATH)
 
@@ -216,6 +217,6 @@ class SigmaResource(resources.ResourceMixin, Resource):
                             continue
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                'No sigma rule found with this ID.')
+                'No sigma rule found withcool  this ID.')
 
         
