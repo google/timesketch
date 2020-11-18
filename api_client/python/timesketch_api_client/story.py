@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client library."""
-from __future__ import unicode_literals
-
 import json
 import logging
 
@@ -28,7 +26,7 @@ from . import view
 logger = logging.getLogger('timesketch_api.story')
 
 
-class BaseBlock(object):
+class BaseBlock:
     """Base block object."""
 
     # A string representation of the type of block.
@@ -115,7 +113,7 @@ class ViewBlock(BaseBlock):
     TYPE = 'view'
 
     def __init__(self, story, index):
-        super(ViewBlock, self).__init__(story, index)
+        super().__init__(story, index)
         self._view_id = 0
         self._view_name = ''
 
@@ -231,11 +229,11 @@ class AggregationBlock(BaseBlock):
     TYPE = 'aggregation'
 
     def __init__(self, story, index):
-        super(AggregationBlock, self).__init__(story, index)
+        super().__init__(story, index)
         self._agg_id = 0
         self._agg_name = ''
-        self._agg_type = 'table'
         self._agg_dict = {}
+        self._chart_type = 'table'
 
     @property
     def aggregation(self):
@@ -260,14 +258,14 @@ class AggregationBlock(BaseBlock):
         return self._agg_id
 
     @property
-    def agg_type(self):
+    def chart_type(self):
         """Returns the aggregation type."""
-        return self._agg_type
+        return self._chart_type
 
-    @agg_type.setter
-    def agg_type(self, new_type):
+    @chart_type.setter
+    def chart_type(self, new_type):
         """Sets the aggregation type."""
-        self._agg_type = new_type
+        self._chart_type = new_type
 
     @property
     def table(self):
@@ -296,7 +294,7 @@ class AggregationBlock(BaseBlock):
 
         self._agg_id = agg_dict.get('id', 0)
         self._agg_name = agg_dict.get('name', '')
-        self._agg_type = agg_dict.get('chart_type', 'table')
+        self._chart_type = agg_dict.get('chart_type', 'table')
         self._agg_dict = agg_dict
 
     def to_dict(self):
@@ -309,28 +307,48 @@ class AggregationBlock(BaseBlock):
         Returns:
             A dict with the block data.
         """
-        if not self._data:
+        if not (self._data or self._agg_dict):
             raise ValueError('No data has been fed to the block.')
 
         aggregation_obj = self._data
-        if not hasattr(aggregation_obj, 'id'):
-            raise TypeError('Aggregation object is not correctly formed.')
+        if aggregation_obj:
+            if not hasattr(aggregation_obj, 'id'):
+                raise TypeError('Aggregation object is not correctly formed.')
 
-        if not hasattr(aggregation_obj, 'name'):
-            raise TypeError('Aggregation object is not correctly formed.')
+            if not hasattr(aggregation_obj, 'name'):
+                raise TypeError('Aggregation object is not correctly formed.')
+
+            name = aggregation_obj.name
+            description = aggregation_obj.description
+            agg_id = aggregation_obj.id
+            meta = aggregation_obj.data.get('meta', {})
+            agg_type = meta.get('name', '')
+            created_at = ''
+            updated_at = ''
+            parameters = json.dumps(aggregation_obj.parameters)
+            user = aggregation_obj.user
+        else:
+            name = self._agg_name
+            description = self._agg_dict.get('description', '')
+            agg_id = self._agg_id
+            agg_type = self._agg_dict.get('agg_type')
+            created_at = self._agg_dict.get('created_at')
+            updated_at = self._agg_dict.get('updated_at')
+            parameters = self._agg_dict.get('parameters', '{}')
+            user = self._agg_dict.get('user', {})
 
         aggregation_block = self._get_base()
         aggregation_block['componentName'] = 'TsAggregationCompact'
         aggregation_block['componentProps']['aggregation'] = {
-            'id': aggregation_obj.id,
-            'name': aggregation_obj.name,
-            'chart_type': self._agg_type,
-            'agg_type': self._agg_dict.get('agg_type'),
-            'description': self._agg_dict.get('description'),
-            'created_at': self._agg_dict.get('created_at'),
-            'updated_at': self._agg_dict.get('updated_at'),
-            'parameters': self._agg_dict.get('parameters', {}),
-            'user': self._agg_dict.get('user', {}),
+            'id': agg_id,
+            'name': name,
+            'chart_type': self.chart_type,
+            'agg_type': agg_type,
+            'description': description,
+            'created_at': created_at,
+            'updated_at': updated_at,
+            'parameters': parameters,
+            'user': user,
         }
 
         return aggregation_block
@@ -342,7 +360,7 @@ class AggregationGroupBlock(BaseBlock):
     TYPE = 'aggregation_group'
 
     def __init__(self, story, index):
-        super(AggregationGroupBlock, self).__init__(story, index)
+        super().__init__(story, index)
         self._group_id = 0
         self._group_name = ''
 
@@ -449,7 +467,7 @@ class Story(resource.BaseResource):
 
         resource_uri = 'sketches/{0:d}/stories/{1:d}/'.format(
             sketch.id, self.id)
-        super(Story, self).__init__(api, resource_uri)
+        super().__init__(api, resource_uri)
 
     @property
     def blocks(self):
@@ -481,8 +499,8 @@ class Story(resource.BaseResource):
                     block.feed(agg_obj)
 
                     # Defaults to a table view.
-                    if not block.agg_type:
-                        block.agg_type = 'table'
+                    if not block.chart_type:
+                        block.chart_type = 'table'
                 elif name == 'TsAggregationGroupCompact':
                     block = AggregationGroupBlock(self, index)
                     block.from_dict(content_block)
@@ -534,12 +552,12 @@ class Story(resource.BaseResource):
         self.commit()
         self.reset()
 
-    def add_aggregation(self, agg_obj, agg_type='table', index=-1):
+    def add_aggregation(self, agg_obj, chart_type='table', index=-1):
         """Adds an aggregation object to the story.
 
         Args:
             agg_obj: an aggregation object (instance of aggregation.Aggregation)
-            agg_type (str): string indicating the type of aggregation, can be:
+            chart_type (str): string indicating the type of aggregation, can be:
                 "table" or the name of the chart to be used, eg "barcharct",
                 "hbarchart". Defaults to "table".
             index: an integer, if supplied determines where the new
@@ -563,7 +581,7 @@ class Story(resource.BaseResource):
 
         agg_block = AggregationBlock(self, index)
         agg_block.feed(agg_obj)
-        agg_block.agg_type = agg_type
+        agg_block.chart_type = chart_type
 
         return self._add_block(agg_block, index)
 

@@ -52,7 +52,7 @@ limitations under the License.
             <div class="field is-grouped">
 
               <p class="control">
-                <b-dropdown trap-focus aria-role="menu" ref="NewTimeFilter">
+                <b-dropdown trap-focus append-to-body aria-role="menu" ref="NewTimeFilter">
                   <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
                     <span>+ Add time range</span>
                   </a>
@@ -66,7 +66,7 @@ limitations under the License.
               </p>
 
               <p class="control">
-                <b-dropdown trap-focus aria-role="menu">
+                <b-dropdown trap-focus append-to-body aria-role="menu">
 
                   <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
                     <span>+ Add label filter</span>

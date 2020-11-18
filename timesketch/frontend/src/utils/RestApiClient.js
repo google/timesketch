@@ -260,5 +260,33 @@ export default {
   },
   getLoggedInUser () {
     return RestApiClient.get('/users/me/')
-  }
+  },
+  generateGraphFromPlugin (sketchId, graphPlugin, currentIndices, refresh) {
+    let formData = {
+      plugin: graphPlugin,
+      config: {
+        filter: {
+          indices: currentIndices
+        }
+      },
+      refresh: refresh
+    }
+    return  RestApiClient.post('/sketches/' + sketchId + /graph/, formData)
+  },
+  getGraphPluginList () {
+    return  RestApiClient.get('/graphs/')
+  },
+  saveGraph (sketchId, name, elements) {
+    let formData = {
+      'name': name,
+      'elements': elements
+    }
+    return  RestApiClient.post('/sketches/' + sketchId + /graphs/, formData)
+  },
+  getSavedGraphList (sketchId) {
+    return  RestApiClient.get('/sketches/' + sketchId + /graphs/)
+  },
+  getSavedGraph (sketchId, graphId) {
+    return  RestApiClient.get('/sketches/' + sketchId + /graphs/ + graphId + '/')
+  },
 }

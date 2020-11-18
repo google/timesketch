@@ -135,7 +135,7 @@ class Event(object):
             self.index_name = event['_index']
             self.source = event.get('_source', None)
         except KeyError as e:
-            raise KeyError('Malformed event: {0!s}'.format(e))
+            raise KeyError('Malformed event: {0!s}'.format(e)) from e
 
     def _update(self, event):
         """Update event attributes to add.
@@ -162,7 +162,7 @@ class Event(object):
 
         self.datastore.import_event(
             self.index_name, self.event_type, event_id=self.event_id,
-            event=event_to_commit)
+            event=event_to_commit, flush_interval=1)
         self.updated_event = {}
 
     def add_attributes(self, attributes):
@@ -882,7 +882,7 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             sketch_id: Sketch ID.
         """
         self.sketch = Sketch(sketch_id=sketch_id)
-        super(BaseSketchAnalyzer, self).__init__(index_name)
+        super().__init__(index_name)
 
     def event_pandas(
             self, query_string=None, query_filter=None, query_dsl=None,

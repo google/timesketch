@@ -55,6 +55,10 @@ from .resources.user import CollaboratorResource
 from .resources.user import LoggedInUserResource
 from .resources.sigma import SigmaResource
 from .resources.sigma import SigmaListResource
+from .resources.graph import GraphListResource
+from .resources.graph import GraphResource
+from .resources.graph import GraphPluginListResource
+from .resources.graph import GraphCacheResource
 
 
 # Disable error for long line. Readability is more important than line
@@ -101,4 +105,9 @@ API_ROUTES = [
     (SigmaListResource, '/sigma/'),
     (SigmaResource, '/sigma/<string:rule_uuid>/'),
     (LoggedInUserResource, '/users/me/')
+    (LoggedInUserResource, '/users/me/'),
+    (GraphListResource, '/sketches/<int:sketch_id>/graphs/'),
+    (GraphResource, '/sketches/<int:sketch_id>/graphs/<int:graph_id>/'),
+    (GraphPluginListResource, '/graphs/'),
+    (GraphCacheResource, '/sketches/<int:sketch_id>/graph/'),
 ]
