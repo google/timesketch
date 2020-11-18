@@ -107,7 +107,7 @@ class SigmaListResource(resources.ResourceMixin, Resource):
                     with codecs.open(rule_file_path, 'r', encoding='utf-8',errors='replace') as rule_file:
                                 try:
                                     rule_file_content = rule_file.read()
-                                    rule_yaml_data =yaml.safe_load(rule_file_content)
+                                    rule_yaml_data = yaml.safe_load(rule_file_content)
                                     sigma_rules.append(rule_yaml_data)
                                 except NotImplementedError as exception:
                                     logger.error(
