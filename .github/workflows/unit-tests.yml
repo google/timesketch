@@ -6,13 +6,11 @@ on:
 
 jobs:
   pip:
-
     runs-on: ubuntu-20.04
     strategy:
       matrix:
         os: [ubuntu-20.04]
         python-version: [3.7, 3.8]
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -29,13 +27,11 @@ jobs:
         pipenv run python run_tests.py
 
   ppa:
-
     runs-on: ubuntu-20.04
     strategy:
       matrix:
         os: [ubuntu-20.04]
         python-version: [3.7, 3.8]
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
