@@ -190,3 +190,103 @@ class TestFeatureExtractionPlugin(BaseTest):
             False)
 
         self.assertEqual(new_val, 'hello2')
+
+    # Mock the Elasticsearch datastore.
+    @mock.patch(
+        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        MockDataStore)
+    def test_check_ioc(self):
+        """Test function _check_ioc()."""
+        analyzer = feature_extraction.FeatureExtractionSketchPlugin(
+            'test_index', 1)
+        ioc_db = {
+            'a': None,
+            'b': 'b|source:http://b',
+            'c': 'c|source:http://c'
+            }
+        data = ['a', 'c', 'd', 'e']
+        cur_ioc = ['c']
+        cur_ctx = ['c|source:http://c']
+        # pylint: disable=protected-access
+        ioc, ctx = analyzer._check_ioc(
+            ioc_db=ioc_db,
+            data=data,
+            cur_ioc=cur_ioc,
+            cur_ctx= cur_ctx)
+
+        self.assertEqual(ioc, ['a', 'c'])
+        self.assertEqual(
+            ctx,
+            [
+                'c|source:http://c'
+            ]
+            )
+
+        ioc_db = {
+            'a': None,
+            'b': 'b|source:http://b',
+            'c': 'c|source:http://c'
+            }
+        data = ['a', 'c', 'd', 'e']
+        cur_ioc = None
+        cur_ctx = None
+        # pylint: disable=protected-access
+        ioc, ctx = analyzer._check_ioc(
+            ioc_db=ioc_db,
+            data=data,
+            cur_ioc=cur_ioc,
+            cur_ctx= cur_ctx)
+
+        self.assertEqual(ioc, ['a', 'c'])
+        self.assertEqual(
+            ctx,
+            [
+                'c|source:http://c'
+            ]
+            )
+
+        ioc_db = {
+            'a': None,
+            'b': 'b|source:http://b',
+            'c': 'c|source:http://c'
+            }
+        data = ['a', 'c', 'd', 'e']
+        cur_ioc = "field already used"
+        cur_ctx = None
+        # pylint: disable=protected-access
+        ioc, ctx = analyzer._check_ioc(
+            ioc_db=ioc_db,
+            data=data,
+            cur_ioc=cur_ioc,
+            cur_ctx= cur_ctx)
+
+        self.assertEqual(ioc, ['a', 'c'])
+        self.assertEqual(
+            ctx,
+            [
+                'c|source:http://c'
+            ]
+            )
+
+        ioc_db = {
+            'a': None,
+            'b': 'b|source:http://b',
+            'c': 'c|source:http://c'
+            }
+        data = "a,b,c,d,e"
+        cur_ioc = "field already used"
+        cur_ctx = None
+        # pylint: disable=protected-access
+        ioc, ctx = analyzer._check_ioc(
+            ioc_db=ioc_db,
+            data=data,
+            cur_ioc=cur_ioc,
+            cur_ctx= cur_ctx)
+
+        self.assertEqual(ioc, ['a', 'c'])
+        self.assertEqual(
+            ctx,
+            [
+                'c|source:http://c'
+            ]
+            )
