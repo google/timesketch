@@ -1,18 +1,37 @@
-name: ppa unittests
+name: unit-tests
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
-  build:
-
+  pip:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-20.04]
         python-version: [3.7, 3.8]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        pip install pipenv
+        pipenv install -d
+        pipenv install -r test_requirements.txt
+    - name: Run unit tests
+      run: |
+        pipenv run python run_tests.py
 
+  ppa:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+        python-version: [3.7, 3.8]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -43,6 +62,6 @@ jobs:
             python3-tz python3-urllib3 python3-vine python3-werkzeug python3-wtforms\
             python3-xlrd python3-xmltodict python3-yaml python3-zipp python3-networkx
         sudo ln -s /usr/bin/nosetests3 /usr/bin/nosetests
-    - name: Test with unittest
+    - name: Run unit tests
       run: |
         python run_tests.py
