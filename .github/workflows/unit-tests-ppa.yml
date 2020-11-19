@@ -43,6 +43,6 @@ jobs:
             python3-tz python3-urllib3 python3-vine python3-werkzeug python3-wtforms\
             python3-xlrd python3-xmltodict python3-yaml python3-zipp python3-networkx
         sudo ln -s /usr/bin/nosetests3 /usr/bin/nosetests
-    - name: Test with unittest
+    - name: Run unit tests
       run: |
         python run_tests.py
