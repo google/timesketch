@@ -20,7 +20,7 @@ limitations under the License.
     <div class="field is-horizontal">
       <div class="field-body" style="display:flex; align-items:center;">
 
-        <b-radio v-model="radio" native-value="interval" @input="formatDateTime()"></b-radio>
+        <b-radio v-model="radio" native-value="interval" @input="formatDateTime()" type="is-info"></b-radio>
         <div class="field" style="margin-left: 5px;">
           <p class="control">
             <input class="input" ref="offsetStartInput" v-model.trim="offsetStart" type="text" :disabled="!isSelected('interval')" :placeholder="getPlaceholder('interval')"
@@ -58,7 +58,7 @@ limitations under the License.
     <div class="field is-horizontal">
       <div class="field-body" style="display:flex; align-items:center;">
 
-        <b-radio v-model="radio" native-value="range" @input="formatDateTime()"></b-radio>
+        <b-radio v-model="radio" native-value="range" @input="formatDateTime()" type="is-info"></b-radio>
         <div class="field" style="margin:5px;">
           <p class="control">
             <input class="input" ref="startInput" v-model.trim="startDateTime" type="text" :disabled="!isSelected('range')" :placeholder="getPlaceholder('range')"
