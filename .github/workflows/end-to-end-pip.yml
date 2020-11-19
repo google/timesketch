@@ -1,9 +1,9 @@
-name: end-to-end
+name: end-to-end-pip
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
-  test:
+  end-to-end-pip:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2

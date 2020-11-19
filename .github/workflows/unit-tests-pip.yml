@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  build:
+  unit-tests-pip:
 
     runs-on: ubuntu-20.04
     strategy:
