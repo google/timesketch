@@ -24,6 +24,7 @@ from uuid import uuid4
 
 import six
 
+from dateutil import parser, relativedelta
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConnectionTimeout
 from elasticsearch.exceptions import NotFoundError
@@ -133,6 +134,50 @@ class ElasticsearchDataStore(object):
         query_dict = {'query': {'ids': {'values': events_list}}}
         return query_dict
 
+    @staticmethod
+    def _convert_to_time_range(interval):
+        """Convert an interval timestamp into start and end dates.
+
+        Args:
+            interval: Time frame representation
+
+        Returns:
+            Start timestamp in string format.
+            End timestamp in string format.
+        """
+        # return ('2018-12-05T00:00:00', '2018-12-05T23:59:59')
+        TS_FORMAT = '%Y-%m-%dT%H:%M:%S'
+        get_digits = lambda s: int(''.join(filter(str.isdigit, s)))
+        get_alpha = lambda s: ''.join(filter(str.isalpha, s))
+
+        ts_parts = interval.split(' ')
+        # The start date could be 1 or 2 first items
+        start = ' '.join(ts_parts[0:len(ts_parts)-2])
+        minus = get_digits(ts_parts[-2])
+        plus = get_digits(ts_parts[-1])
+        interval = get_alpha(ts_parts[-1])
+
+        start_ts = parser.parse(start)
+
+        rd = relativedelta.relativedelta
+        if interval == 's':
+            start_range = start_ts - rd(seconds=minus)
+            end_range = start_ts + rd(seconds=plus)
+        elif interval == 'm':
+            start_range = start_ts - rd(minutes=minus)
+            end_range = start_ts + rd(minutes=plus)
+        elif interval == 'h':
+            start_range = start_ts - rd(hours=minus)
+            end_range = start_ts + rd(hours=plus)
+        elif interval == 'd':
+            start_range = start_ts - rd(days=minus)
+            end_range = start_ts + rd(days=plus)
+        else:
+            raise RuntimeError('Unable to parse the timestamp: '
+                               + str(interval))
+
+        return start_range.strftime(TS_FORMAT), end_range.strftime(TS_FORMAT)
+
     def build_query(self, sketch_id, query_string, query_filter, query_dsl=None,
                     aggregations=None):
         """Build Elasticsearch DSL query.
@@ -231,10 +276,8 @@ class ElasticsearchDataStore(object):
                     elif chip['operator'] == 'must_not':
                         must_not_filters.append(term_filter)
 
-                elif chip['type'] == 'datetime_range':
-                    start = chip['value'].split(',')[0]
-                    end = chip['value'].split(',')[1]
-                    range_filter = {
+                elif chip['type'].startswith('datetime'):
+                    range_filter = lambda start, end: {
                         'range': {
                             'datetime': {
                                 'gte': start,
@@ -242,7 +285,14 @@ class ElasticsearchDataStore(object):
                             }
                         }
                     }
-                    datetime_ranges['bool']['should'].append(range_filter)
+                    if chip['type'] == 'datetime_range':
+                        start, end = chip['value'].split(',')
+                    elif chip['type'] == 'datetime_interval':
+                        start, end = self._convert_to_time_range(chip['value'])
+                    else:
+                        continue
+                    datetime_ranges['bool']['should'].append(
+                        range_filter(start, end))
 
             label_filter = self._build_labels_query(sketch_id, labels)
             must_filters.append(label_filter)
