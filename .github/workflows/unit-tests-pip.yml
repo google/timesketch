@@ -1,4 +1,4 @@
-name: pipenv unittests
+name: unit-tests-pip
 
 on:
   pull_request:
@@ -7,10 +7,10 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-20.04]
         python-version: [3.7, 3.8]
 
     steps:

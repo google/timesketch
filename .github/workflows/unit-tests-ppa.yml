@@ -1,4 +1,4 @@
-name: ppa unittests
+name: unit-tests-ppa
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-20.04]
         python-version: [3.7, 3.8]
 
     steps:
