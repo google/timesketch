@@ -273,7 +273,7 @@ class TestFeatureExtractionPlugin(BaseTest):
             'b': 'b|source:http://b',
             'c': 'c|source:http://c'
             }
-        data = "a,b,c,d,e"
+        data = "a,c,d,e"
         cur_ioc = "field already used"
         cur_ctx = None
         # pylint: disable=protected-access
