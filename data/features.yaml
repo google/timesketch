@@ -18,6 +18,8 @@
 #       overwrite_and_merge_store_as: False
 #       store_type_list: False
 #       keep_multimatch: False
+#       ioc_tag: []
+#       ioc_path:
 #
 # Each definition needs to define either a query_string or a query_dsl.
 #
@@ -54,6 +56,13 @@
 #
 # The keep_multimatch is an optional boolean that determines if we want to
 # store all matching results (default store first result).
+#
+# The ioc_path is an optional file path that contains ioc list to check 
+# on extracted data. The file content should be ioc line by line, and you
+# can to use optionnal info context if you add comment after symbol '|'.
+# E.G. my_ioc.com|source:https://threat_intel_website
+#
+# The ioc_tags is optional, you can add tags if ioc matched.
 #
 # The feature extraction works in the way that the query is run, and
 # the regular expression is run against the attribute to extract a value.
