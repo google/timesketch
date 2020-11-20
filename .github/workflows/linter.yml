@@ -13,7 +13,18 @@ jobs:
         python-version: [3.7, 3.8]
 
     steps:
-      - name: Linting
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        pip install pipenv pylint
+        pip install -r test_requirements.txt
+        pip install -r requirements.txt
+        pip install -e .
+    - name: Linting
         # You may pin to the exact commit or the version.
         # uses: vcoder4c/git_pylint@3948daa70d5ca7ac8189af106f578ada112e5938
         uses: vcoder4c/git_pylint@v1
