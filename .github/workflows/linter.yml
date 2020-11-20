@@ -13,18 +13,7 @@ jobs:
         python-version: [3.7, 3.8]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        pip install pipenv pylint
-        pip install -r test_requirements.txt
-        pip install -r requirements.txt
-        pip install -e .
-    - name: Run pylint on timesketch
-      run: |
-        git config pull.rebase false && git fetch -p origin master
-        for FILE in `git --no-pager diff origin/master --name-only | grep \.py$`; do echo "Running linter against ${FILE}"; pipenv run pylint --rcfile=.pylintrc ${FILE}; done
+      - name: Linting
+        # You may pin to the exact commit or the version.
+        # uses: vcoder4c/git_pylint@3948daa70d5ca7ac8189af106f578ada112e5938
+        uses: vcoder4c/git_pylint@v1
