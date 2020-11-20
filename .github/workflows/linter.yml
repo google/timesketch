@@ -26,5 +26,5 @@ jobs:
         pip install -e .
     - name: Run pylint on timesketch
       run: |
-        git config pull.rebase false && git pull origin master
+        git config pull.rebase false && git fetch -p origin master
         for FILE in `git --no-pager diff origin/master -name-only | grep \.py$`; do echo "Running linter against ${FILE}"; pipenv run pylint --rcfile=.pylintrc ${FILE}; done
