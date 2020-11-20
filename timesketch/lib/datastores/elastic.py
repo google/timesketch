@@ -857,7 +857,9 @@ class ElasticsearchDataStore(object):
                         'Unable to upload document: {0:s} to index {1:s} - '
                         '[{2:d}] {3:s}'.format(
                             doc_id, index_name, status_code, error_msg))
-                except Exception as e:
+                # We need to catch all exceptions here, since this is a crucial
+                # call that we do not want to break operation.
+                except Exception as e:  # pylint: disable=broad-except
                     es_logger.error(
                         'Unable to upload document, and unable to log the '
                         'error itself.', exc_info=True)
