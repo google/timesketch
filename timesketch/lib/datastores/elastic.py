@@ -75,7 +75,7 @@ class ElasticsearchDataStore(object):
 
     def __init__(self, host='127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
-        super(ElasticsearchDataStore, self).__init__()
+        super().__init__()
         self._error_container = {}
         self.client = Elasticsearch([{'host': host, 'port': port}])
         self.import_counter = Counter()
@@ -418,7 +418,7 @@ class ElasticsearchDataStore(object):
             es_logger.error(
                 'Unable to run search query: {0:s}'.format(cause),
                 exc_info=True)
-            raise ValueError(cause)
+            raise ValueError(cause) from e
 
         return _search_result
 
@@ -688,8 +688,9 @@ class ElasticsearchDataStore(object):
             try:
                 self.client.indices.create(
                     index=index_name, body={'mappings': _document_mapping})
-            except ConnectionError:
-                raise RuntimeError('Unable to connect to Timesketch backend.')
+            except ConnectionError as e:
+                raise RuntimeError(
+                    'Unable to connect to Timesketch backend.') from e
             except RequestError:
                 index_exists = self.client.indices.exists(index_name)
                 es_logger.warning(
@@ -718,7 +719,7 @@ class ElasticsearchDataStore(object):
             except ConnectionError as e:
                 raise RuntimeError(
                     'Unable to connect to Timesketch backend: {}'.format(e)
-                )
+                ) from e
 
     def import_event(self, index_name, event_type, event=None, event_id=None,
                      flush_interval=DEFAULT_FLUSH_INTERVAL):
@@ -832,7 +833,7 @@ class ElasticsearchDataStore(object):
 
                 error = index.get('error', {})
                 status_code = index.get('status', 0)
-                doc_id = index.get('_id', '')
+                doc_id = index.get('_id', '(unable to get doc id)')
                 caused_by = error.get('caused_by', {})
 
                 caused_reason = caused_by.get(
@@ -852,10 +853,17 @@ class ElasticsearchDataStore(object):
                     caused_reason,
                 )
                 error_list.append(error_msg)
-                es_logger.error(
-                    'Unable to upload document: {0:s} to index {1:s} - '
-                    '[{2:d}] {3:s}'.format(
-                        doc_id, index_name, status_code, error_msg))
+                try:
+                    es_logger.error(
+                        'Unable to upload document: {0:s} to index {1:s} - '
+                        '[{2:d}] {3:s}'.format(
+                            doc_id, index_name, status_code, error_msg))
+                # We need to catch all exceptions here, since this is a crucial
+                # call that we do not want to break operation.
+                except Exception:  # pylint: disable=broad-except
+                    es_logger.error(
+                        'Unable to upload document, and unable to log the '
+                        'error itself.', exc_info=True)
 
         return_dict['error_container'] = self._error_container
 
