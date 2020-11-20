@@ -111,7 +111,7 @@ limitations under the License.
             <!-- Time filters -->
             <div class="tags" style="margin-bottom:-5px;">
               <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
-                <b-dropdown trap-focus aria-role="menu" ref="TimeFilters">
+                <b-dropdown trap-focus append-to-body aria-role="menu" ref="TimeFilters">
                   <span slot="trigger" role="button" class="is-small is-outlined">
                     <div class="tags" style="margin-bottom: 5px; margin-right:7px;">
                       <span class="tag" style="cursor: pointer;" v-bind:class="{ 'chip-disabled': chip.active === false}">
