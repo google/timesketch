@@ -25,6 +25,6 @@ jobs:
         pip install -r requirements.txt
         pip install -e .
     - name: Linting
-        # You may pin to the exact commit or the version.
-        # uses: vcoder4c/git_pylint@3948daa70d5ca7ac8189af106f578ada112e5938
-        uses: vcoder4c/git_pylint@v1
+      # You may pin to the exact commit or the version.
+      # uses: vcoder4c/git_pylint@3948daa70d5ca7ac8189af106f578ada112e5938
+      uses: vcoder4c/git_pylint@v1
