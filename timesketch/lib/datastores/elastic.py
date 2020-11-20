@@ -832,7 +832,7 @@ class ElasticsearchDataStore(object):
 
                 error = index.get('error', {})
                 status_code = index.get('status', 0)
-                doc_id = index.get('_id', '')
+                doc_id = index.get('_id', '(unable to get doc id)')
                 caused_by = error.get('caused_by', {})
 
                 caused_reason = caused_by.get(
@@ -852,10 +852,15 @@ class ElasticsearchDataStore(object):
                     caused_reason,
                 )
                 error_list.append(error_msg)
-                es_logger.error(
-                    'Unable to upload document: {0:s} to index {1:s} - '
-                    '[{2:d}] {3:s}'.format(
-                        doc_id, index_name, status_code, error_msg))
+                try:
+                    es_logger.error(
+                        'Unable to upload document: {0:s} to index {1:s} - '
+                        '[{2:d}] {3:s}'.format(
+                            doc_id, index_name, status_code, error_msg))
+                except Exception as e:
+                    es_logger.error(
+                        'Unable to upload document, and unable to log the '
+                        'error itself.', exc_info=True)
 
         return_dict['error_container'] = self._error_container
 
