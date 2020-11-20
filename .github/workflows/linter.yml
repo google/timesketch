@@ -26,4 +26,4 @@ jobs:
         pip install -e .
     - name: Run pylint on timesketch
       run: |
-        echo $PWD && for FILE in `git diff --name-only master | grep \.py$`; do echo "Running linter against ${FILE}"; pipenv run pylint --rcfile=.pylintrc ${FILE}; done
+        echo `git branch` && for FILE in `git diff --name-only master | grep \.py$`; do echo "Running linter against ${FILE}"; pipenv run pylint --rcfile=.pylintrc ${FILE}; done
