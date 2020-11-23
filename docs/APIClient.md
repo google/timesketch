@@ -211,6 +211,7 @@ To get a Sigma rule that is stored on the server via uuid of the rule:
 
 ```
 rule = ts.get_sigma_rule("5266a592-b793-11ea-b3de-0242ac130004")
+rule.data()
 ```
 
 An example rule return is:
