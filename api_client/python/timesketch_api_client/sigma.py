@@ -26,6 +26,14 @@ logger = logging.getLogger('timesketch_api.sigma')
 
 
 class Sigma(resource.BaseResource):
+    """Timesketch sigma object.
+
+    A sigma object in Timesketch is a collection of one or more rules.
+
+    Attributes:
+        rule_uuid: The ID of the rule.
+    """
+
 
     def __init__(self, rule_uuid, api ):
         """Initializes the Sigma object.
