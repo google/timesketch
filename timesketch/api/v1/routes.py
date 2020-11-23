@@ -104,10 +104,9 @@ API_ROUTES = [
     (VersionResource, '/version/'),
     (SigmaListResource, '/sigma/'),
     (SigmaResource, '/sigma/<string:rule_uuid>/'),
-    (LoggedInUserResource, '/users/me/')
     (LoggedInUserResource, '/users/me/'),
     (GraphListResource, '/sketches/<int:sketch_id>/graphs/'),
     (GraphResource, '/sketches/<int:sketch_id>/graphs/<int:graph_id>/'),
     (GraphPluginListResource, '/graphs/'),
-    (GraphCacheResource, '/sketches/<int:sketch_id>/graph/'),
+    (GraphCacheResource, '/sketches/<int:sketch_id>/graph/')
 ]
