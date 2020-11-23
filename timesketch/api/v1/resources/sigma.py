@@ -84,7 +84,6 @@ class SigmaListResource(resources.ResourceMixin, Resource):
                                 rule_filename))
                         continue
 
-                    tag_name, _ = rule_filename.rsplit('.')
                     rule_file_path = os.path.join(dirpath, rule_filename)
                     rule_file_path = os.path.abspath(rule_file_path)
 
