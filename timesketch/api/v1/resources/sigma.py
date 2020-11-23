@@ -135,14 +135,15 @@ class SigmaResource(resources.ResourceMixin, Resource):
             logger.error("SIGMA_RULES_FOLDER not found in config file")
             _RULES_PATH = '../../../../data/sigma/rules/'
 
+        # TODO remove that dir traversal thing below
         sigma_config_path = os.path.join(os.path.dirname(__file__), _CONFIG_FILE)
 
         with open(sigma_config_path, 'r') as sigma_config_file:
             sigma_config_file = sigma_config_file.read()
         sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
-    
+
         sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(sigma_config, {})
-        
+
         rules_path = os.path.join(os.path.dirname(__file__), _RULES_PATH)
 
         return_value = None
@@ -166,7 +167,9 @@ class SigmaResource(resources.ResourceMixin, Resource):
                     rule_file_path = os.path.join(dirpath, rule_filename)
                     rule_file_path = os.path.abspath(rule_file_path)
 
-                    with codecs.open(rule_file_path, 'r', encoding='utf-8',errors='replace') as rule_file:
+                    with codecs.open(
+                        rule_file_path, 'r', encoding='utf-8', errors='replace') as rule_file:
+                        
                         try:
                             rule_file_content = rule_file.read()
                             rule_yaml_data = yaml.safe_load(rule_file_content)
@@ -182,14 +185,14 @@ class SigmaResource(resources.ResourceMixin, Resource):
                                     '[sigma] Generated query {0:s}'
                                     .format(sigma_rule))
                                 sigma_rule_value = sigma_rule
-                            
+
                             if rule_uuid == rule_yaml_data['id']:
                                 return_value = rule_yaml_data
                                 return_value.update({"es_query":sigma_rule_value})
                                 return_value.update({"file_name":tag_name})
                                 logger.info("found the right rule")
                                 return return_value
-                        
+
                         except NotImplementedError as exception:
                             logger.error(
                                 'Error generating rule in file {0:s}: {1!s}'
