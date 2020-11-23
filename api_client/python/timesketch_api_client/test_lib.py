@@ -178,7 +178,8 @@ def mock_response(*args, **kwargs):
 
     sigma_list = {
         'meta': {
-            'current_user': 'dev'
+            'current_user': 'dev',
+            'rules_count': 2
         },
         'objects': [
             {

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for the Timesketch API client"""
 from __future__ import unicode_literals
 
 import unittest
@@ -40,7 +41,7 @@ class TimesketchSigmaTest(unittest.TestCase):
 
     def test_sigma_rule(self):
         """Test single Sigma rule."""
-        self.assertIsNotNone(True)
+
         self.assertIsNotNone(self.rule)
 
         self.assertEqual(
@@ -52,4 +53,6 @@ class TimesketchSigmaTest(unittest.TestCase):
 
     def test_sigma_rules(self):
         '''Testing the Sigma rules list'''
-        # TODO test something
+
+        self.assertIsNotNone(self.rules)
+        self.assertEqual(self.rules['meta']['rules_count'], 2)
