@@ -268,4 +268,3 @@ def mock_response(*args, **kwargs):
         return MockResponse(text_data=empty_data)
 
     return url_router.get(args[0], MockResponse(None, 404))
-    
