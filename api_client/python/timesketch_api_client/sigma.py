@@ -32,7 +32,7 @@ class Sigma(resource.BaseResource):
     """
 
 
-    def __init__(self, rule_uuid, api ):
+    def __init__(self, rule_uuid, api):
         """Initializes the Sigma object.
 
         Args:
@@ -52,7 +52,7 @@ class Sigma(resource.BaseResource):
 
         if not sigma_data:
             return []
-        
+
         return_value = sigma_data.get('es_query')
 
         if not return_value:
@@ -74,7 +74,7 @@ class Sigma(resource.BaseResource):
             return []
 
         return title
-    
+
     @property
     def id(self):
         """Returns the sigma rule id."""
@@ -82,7 +82,7 @@ class Sigma(resource.BaseResource):
         
         if not sigma_data:
             return []
-            
+
         rule_uuid = sigma_data.get('id')
 
         if not rule_uuid:
