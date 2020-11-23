@@ -44,8 +44,9 @@ class Sigma(resource.BaseResource):
         """
         self.rule_uuid = rule_uuid
         self._resource_uri = 'sigma/{0:s}'.format(self.rule_uuid)
-        super(Sigma, self).__init__(
+        super().__init__(
             api=api, resource_uri=self._resource_uri)
+
 
     @property
     def es_query(self):
