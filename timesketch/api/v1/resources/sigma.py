@@ -65,8 +65,6 @@ class SigmaListResource(resources.ResourceMixin, Resource):
             logger.error("SIGMA_RULES_FOLDER not found in config file")
             _RULES_PATH = '../../../../data/sigma/rules/'
 
-        sigma_config_path = os.path.join(os.path.dirname(__file__), _CONFIG_FILE)
-
         rules_path = os.path.join(os.path.dirname(__file__), _RULES_PATH)
 
         for dirpath, dirnames, files in os.walk(rules_path):
@@ -98,8 +96,8 @@ class SigmaListResource(resources.ResourceMixin, Resource):
                                         .format(rule_file_path, exception))
                                     continue
         
-        # TODO: is that actually needed?
-        meta = {'current_user': current_user.username}
+        # TODO: add more useful things to the meta information
+        meta = {'current_user': current_user.username, 'rules_count': len(sigma_rules)}
         return jsonify({'objects': sigma_rules, 'meta': meta})
 
 
@@ -159,7 +157,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
                     print(rule_filename)
                     # if a sub dir is found, append it to be scanned for rules
                     if os.path.isdir(os.path.join(rules_path, rule_filename)):
-                        logger.error(
+                        logger.debug(
                             'this is a directory, skipping: {0:s}'.format(
                                 rule_filename))
                         continue
