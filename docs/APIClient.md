@@ -209,12 +209,17 @@ aggregation.save()
 
 To get a Sigma rule that is stored on the server via uuid of the rule:
 
-```
+```python
 rule = ts.get_sigma_rule("5266a592-b793-11ea-b3de-0242ac130004")
+```
+
+Returns an object, where you can do something like that:
+
+```python
 rule.data()
 ```
 
-An example rule return is:
+To get this:
 
 ```JSON
 {'title': 'Suspicious Installation of Zenmap', 'id': '5266a592-b793-11ea-b3de-0242ac130004', 'description': 'Detects suspicious installation of Zenmap', 'references': ['https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'], 'author': 'Alexander Jaeger', 'date': '2020/06/26', 'modified': '2020/06/26', 'logsource': {'product': 'linux', 'service': 'shell'}, 'detection': {'keywords': ['*apt-get install zmap*'], 'condition': 'keywords'}, 'falsepositives': ['Unknown'], 'level': 'high', 'es_query': '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ zmap*")', 'file_name': 'lnx_susp_zenmap'}
