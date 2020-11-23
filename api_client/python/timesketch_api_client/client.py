@@ -22,7 +22,6 @@ import uuid
 import bs4
 import requests
 # pylint: disable=redefined-builtin
-from altair.examples.multiline_tooltip import rules
 from requests.exceptions import ConnectionError
 import webbrowser
 
@@ -514,8 +513,8 @@ class TimesketchApi(object):
         if not as_pandas:
             return response
 
-        recs = response['objects']
-        rules_pandas = pandas.DataFrame.from_records(recs)
+        records = response['objects']
+        rules_pandas = pandas.DataFrame.from_records(records)
 
         return rules_pandas
 
@@ -549,7 +548,7 @@ class TimesketchApi(object):
         if not as_pandas:
             return response
 
-        recs = response['objects']
-        rules_pandas = pandas.DataFrame.from_records(recs)
+        records = response['objects']
+        rules_pandas = pandas.DataFrame.from_records(records)
 
         return rules_pandas
