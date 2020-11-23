@@ -46,10 +46,10 @@ class TimesketchSigmaTest(unittest.TestCase):
 
         self.assertEqual(
             self.rule.title, 'Suspicious Installation of Zenmap',
-             "Title of the rule does not match") 
+                "Title of the rule does not match") 
         self.assertEqual(
             self.rule.id, '5266a592-b793-11ea-b3de-0242ac130004',
-             "Id of the rule does not match") 
+                "Id of the rule does not match") 
 
     def test_sigma_rules(self):
         '''Testing the Sigma rules list'''
