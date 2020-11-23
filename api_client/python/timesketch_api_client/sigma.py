@@ -14,12 +14,9 @@
 """Timesketch API sigma library."""
 from __future__ import unicode_literals
 
-import json
 import logging
 import pandas
 
-from . import error
-from . import index
 from . import resource
 
 logger = logging.getLogger('timesketch_api.sigma')
@@ -95,7 +92,6 @@ class Sigma(resource.BaseResource):
 
     def to_pandas(self):
         """Returns a pandas DataFrame."""
-        panda_list = []
         sigma_data = self.data
 
         if not sigma_data:

@@ -196,9 +196,9 @@ def mock_response(*args, **kwargs):
                     'product': 'linux', 'service': 'shell'
                     },
                 'modified': '2020/06/26',
-                'references': ['https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'],
+                'references': ['httpx://foobar.com'],
                 'title': 'Suspicious Installation of Zenmap'
-            },{
+            }, {
                 'author': 'Alexander Jaeger',
                 'date': '2020/11/10',
                 'description': 'Detects suspicious installation of foobar',
@@ -213,7 +213,7 @@ def mock_response(*args, **kwargs):
                     'product': 'linux', 'service': 'shell'
                     },
                 'modified': '2020/06/26',
-                'references': ['https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'],
+                'references': ['httpx://foobar.com'],
                 'title': 'Suspicious Installation of Zenmap'
                 }
         ]
@@ -223,7 +223,7 @@ def mock_response(*args, **kwargs):
         'title': 'Suspicious Installation of Zenmap',
         'id': '5266a592-b793-11ea-b3de-0242ac130004',
         'description': 'Detects suspicious installation of Zenmap',
-        'references': ['https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'],
+        'references': ['httpx://foobar.com'],
         'author': 'Alexander Jaeger',
         'date': '2020/06/26',
         'modified': '2020/06/26',
@@ -236,7 +236,7 @@ def mock_response(*args, **kwargs):
             },
         'falsepositives': ['Unknown'],
         'level': 'high',
-        'es_query': '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ zmap*")',
+        'es_query': '("*apt\\-get\\ install\\ zmap*")',
         'file_name': 'lnx_susp_zenmap'
     }
 
