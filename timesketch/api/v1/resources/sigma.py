@@ -40,7 +40,6 @@ from sigma.parser import collection as sigma_collection
 
 # TODO maybe do that moving forward and move code from here to the model
 #from timesketch.models.sigma import Sigma
-from timesketch.lib.analyzers import interface
 
 import logging
 
