@@ -60,10 +60,9 @@ class Sigma(resource.BaseResource):
 
         return sigma_data['id']
 
-    # TODO the below is not working yet
     def to_pandas(self):
         """Returns a pandas DataFrame."""
         panda_list = []
-        data = self.lazyload_data()
+        sigma_data = self.lazyload_data()
 
-        return pandas.DataFrame(data)
+        return pandas.DataFrame(sigma_data)
