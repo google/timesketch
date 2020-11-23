@@ -36,19 +36,8 @@ class Sigma(resource.BaseResource):
         """
         self.rule_uuid = rule_uuid
         self._resource_uri = 'sigma/{0:s}'.format(self.rule_uuid)
-        #self.sigma_data = self.lazyload_data()
         super(Sigma, self).__init__(
             api=api, resource_uri=self._resource_uri)
-            
-
-    # TODO rename that property to something more accurate, 
-    # as it does not return the description but the whole thing.
-    @property
-    def description(self):
-        """Returns the object dict from the resources dict."""
-        sigma_data = self.lazyload_data()
-
-        return self.sigma_data
 
     @property
     def es_query(self):
