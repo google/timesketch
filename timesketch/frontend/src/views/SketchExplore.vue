@@ -54,10 +54,10 @@ limitations under the License.
               <p class="control">
                 <b-dropdown trap-focus append-to-body aria-role="menu" ref="NewTimeFilter">
                   <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
-                    <span>+ Add time range</span>
+                    <span>+ Time filter</span>
                   </a>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                    <strong>Add time range</strong>
+                    <strong>Create time filter</strong>
                     <br>
                     <br>
                     <ts-explore-filter-time @addChip="addChip" @hideDropdown="hideDropdown"></ts-explore-filter-time>
@@ -108,10 +108,10 @@ limitations under the License.
               </p>
             </div>
 
-            <!-- Time range filters -->
+            <!-- Time filters -->
             <div class="tags" style="margin-bottom:-5px;">
               <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
-                <b-dropdown trap-focus aria-role="menu" ref="TimeFilters">
+                <b-dropdown trap-focus append-to-body aria-role="menu" ref="TimeFilters">
                   <span slot="trigger" role="button" class="is-small is-outlined">
                     <div class="tags" style="margin-bottom: 5px; margin-right:7px;">
                       <span class="tag" style="cursor: pointer;" v-bind:class="{ 'chip-disabled': chip.active === false}">
@@ -119,18 +119,21 @@ limitations under the License.
                           <span v-if="index > 0" class="chip-operator-label">OR</span>
                           <span class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></span>
                           <span>{{ chip.value.split(',')[0] }}</span>
-                          <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</span>
+                          <span v-if="chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</span>
                         </span>
-                        <span class="fas fa-edit" style="margin-left:7px;"></span>
-                        <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(chip)"></button>
+                        <span class="fa-stack fa-lg" style="margin-left:5px; width:20px;">
+                          <i class="fas fa-circle fa-stack-1x can-change-background" style="transform:scale(1.1);"></i>
+                          <i class="fas fa-edit fa-stack-1x fa-inverse" style="transform:scale(0.7);"></i>
+                        </span>
+                        <button class="delete is-small" style="margin-left:5px" v-on:click="removeChip(index)"></button>
                       </span>
                     </div>
                   </span>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                    <strong>Update time range</strong>
+                    <strong>Update time filter</strong>
                     <br>
                     <br>
-                    <ts-explore-filter-time @updateChip="updateChip($event, chip)" :selectedChip="chip" :start="chip.value.split(',')[0]" :end="chip.value.split(',')[1]"></ts-explore-filter-time>
+                    <ts-explore-filter-time :selectedChip="chip" @updateChip="updateChip($event, chip)" @hideDropdown="hideDropdown"></ts-explore-filter-time>
                   </b-dropdown-item>
                 </b-dropdown>
               </span>
@@ -444,7 +447,7 @@ export default {
       return this.currentQueryFilter.chips.filter(chip => chip.type === 'label' || chip.type === 'term')
     },
     timeFilterChips: function () {
-      return this.currentQueryFilter.chips.filter(chip => chip.type === 'datetime_range')
+      return this.currentQueryFilter.chips.filter(chip => chip.type.startsWith('datetime'))
     }
   },
   methods: {
@@ -628,7 +631,7 @@ export default {
     },
     updateChip: function(newChip, oldChip) {
       // Replace the chip at the given index
-      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === oldChip.value);
+      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === oldChip.value && c.type == oldChip.type);
       this.currentQueryFilter.chips.splice(chipIndex, 1, newChip)
       this.search()
     },
@@ -800,9 +803,9 @@ export default {
 </script>
 
 <style lang="scss">
-  .dropdown-menu {
-    box-shadow: 0 30px 30px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
-  }
+.dropdown-menu {
+  box-shadow: 0 30px 30px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+}
 
 .multiselect,
 .multiselect__input,
@@ -833,5 +836,13 @@ export default {
   margin-right: 7px;
   font-size: 0.7em;
   cursor: default;
+}
+
+.can-change-background {
+  color: rgba(10, 10, 10, 0.2);
+}
+
+.can-change-background:hover {
+  color: rgba(10, 10, 10, 0.3);
 }
 </style>
