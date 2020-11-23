@@ -50,27 +50,54 @@ class Sigma(resource.BaseResource):
     @property
     def es_query(self):
         """Returns the elastic search query."""
-        sigma_data = self.lazyload_data()
+        sigma_data = self.data
 
-        return sigma_data['es_query']
+        if not sigma_data:
+            return []
+        
+        return_value = sigma_data.get('es_query')
+
+        if not return_value:
+            return []
+
+        return return_value
 
     @property
     def title(self):
         """Returns the sigma rule title."""
-        sigma_data = self.lazyload_data()
+        sigma_data = self.data
 
-        return sigma_data['title']
+        if not sigma_data:
+            return []
+
+        title = sigma_data.get('title')
+
+        if not title:
+            return []
+
+        return title
     
     @property
     def id(self):
         """Returns the sigma rule id."""
-        sigma_data = self.lazyload_data()
+        sigma_data = self.data
+        
+        if not sigma_data:
+            return []
+            
+        rule_uuid = sigma_data.get('id')
 
-        return sigma_data['id']
+        if not rule_uuid:
+            return []
+
+        return rule_uuid
 
     def to_pandas(self):
         """Returns a pandas DataFrame."""
         panda_list = []
-        sigma_data = self.lazyload_data()
+        sigma_data = self.data
+
+        if not sigma_data:
+            return []
 
         return pandas.DataFrame(sigma_data)
