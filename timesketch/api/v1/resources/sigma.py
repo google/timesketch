@@ -21,7 +21,6 @@ from flask_login import current_user
 from flask import jsonify
 from flask import current_app
 
-import six
 import os
 import codecs
 import yaml
@@ -56,13 +55,6 @@ class SigmaListResource(resources.ResourceMixin, Resource):
             Dict of sigma rules
         """
         sigma_rules = []
-        
-        # TODO: that should be part of the Timesketch config.
-        try:
-            _CONFIG_FILE = current_app.config['SIGMA_CONFIG']
-        except KeyError:
-            logger.error("SIGMA_CONFIG not found in config file")
-            _CONFIG_FILE = '../../../../data/sigma_config.yaml'
 
         # Path to the directory containing the Sigma Rules to run, relative to
         # this file.
@@ -75,13 +67,6 @@ class SigmaListResource(resources.ResourceMixin, Resource):
 
         sigma_config_path = os.path.join(os.path.dirname(__file__), _CONFIG_FILE)
 
-        with open(sigma_config_path, 'r') as sigma_config_file:
-            sigma_config_file = sigma_config_file.read()
-        sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
-    
-        sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(
-            sigma_config, {})
-        
         rules_path = os.path.join(os.path.dirname(__file__), _RULES_PATH)
 
         for dirpath, dirnames, files in os.walk(rules_path):
@@ -124,7 +109,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
 
     def __init__(self):
     
-        super(SigmaResource, self).__init__()
+        super().__init__()
         
 
     @login_required
