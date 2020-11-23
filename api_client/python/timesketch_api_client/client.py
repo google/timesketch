@@ -529,26 +529,3 @@ class TimesketchApi(object):
             Instance of a Sigma object.
         """
         return sigma.Sigma(rule_uuid, api=self)
-
-
-    def get_sigma_rule_as_json(self, rule_uuid, as_pandas=False):
-        """Get a sigma rule.
-
-        Args:
-            rule_uuid: UUID of the Sigma rule.
-
-        Returns:
-            Instance of a Sigma object.
-        """
-
-
-        sigma_rules = []
-        response = self.fetch_resource_data('sigma/{0:s}'.format(rule_uuid))
-
-        if not as_pandas:
-            return response
-
-        records = response['objects']
-        rules_pandas = pandas.DataFrame.from_records(records)
-
-        return rules_pandas
