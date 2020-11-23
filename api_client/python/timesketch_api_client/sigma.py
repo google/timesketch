@@ -79,7 +79,7 @@ class Sigma(resource.BaseResource):
     def id(self):
         """Returns the sigma rule id."""
         sigma_data = self.data
-        
+
         if not sigma_data:
             return []
 
