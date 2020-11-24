@@ -58,10 +58,6 @@ class SigmaListResource(resources.ResourceMixin, Resource):
 class SigmaResource(resources.ResourceMixin, Resource):
     """Resource to get a Sigma rule."""
 
-    def __init__(self):
-
-        super().__init__()
-
     @login_required
     def get(self, rule_uuid):
         """Handles GET request to the resource.
