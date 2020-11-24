@@ -89,6 +89,4 @@ class SigmaResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sigma rule found with this ID.')
 
-        else:
-            return return_rule
-            
+        return return_rule

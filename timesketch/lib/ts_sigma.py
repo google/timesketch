@@ -173,3 +173,5 @@ def get_sigma_rule(filepath):
                 logger.error(
                     'Error generating rule in file {0:s}: {1!s}'
                     .format(abs_path, exception))
+
+    return None
