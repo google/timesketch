@@ -91,3 +91,4 @@ class SigmaResource(resources.ResourceMixin, Resource):
 
         else:
             return return_rule
+            
