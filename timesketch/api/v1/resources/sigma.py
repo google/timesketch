@@ -77,9 +77,7 @@ class SigmaListResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND,
                 err)
 
-        rules_path = os.path.join(os.path.dirname(__file__), _RULES_PATH)
-
-        for dirpath, dirnames, files in os.walk(rules_path):
+        for dirpath, dirnames, files in os.walk(_RULES_PATH):
 
             if 'deprecated' in dirnames:
                 dirnames.remove('deprecated')
@@ -88,7 +86,7 @@ class SigmaListResource(resources.ResourceMixin, Resource):
                 if rule_filename.lower().endswith('yml'):
                     print(rule_filename)
                     # if a sub dir is found, append it to be scanned for rules
-                    if os.path.isdir(os.path.join(rules_path, rule_filename)):
+                    if os.path.isdir(os.path.join(dirpath, rule_filename)):
                         logger.error(
                             'this is a directory, skipping: {0:s}'.format(
                                 rule_filename))
@@ -187,7 +185,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
                 if rule_filename.lower().endswith('yml'):
                     print(rule_filename)
                     # if a sub dir is found, append it to be scanned for rules
-                    if os.path.isdir(os.path.join(_RULES_PATH, rule_filename)):
+                    if os.path.isdir(os.path.join(dirpath, rule_filename)):
                         logger.debug(
                             'this is a directory, skipping: {0:s}'.format(
                                 rule_filename))
