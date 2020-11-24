@@ -15,27 +15,16 @@
 
 import logging
 
-import sigma.configuration as sigma_configuration
-from sigma.backends import elasticsearch as sigma_elasticsearch
-from sigma.parser import collection as sigma_collection
-import timesketch.lib.ts_sigma as ts_sigma_lib
-
 from flask import abort
 from flask import jsonify
 from flask_restful import Resource
 from flask_login import login_required
 from flask_login import current_user
 
+import timesketch.lib.ts_sigma as ts_sigma_lib
 
 from timesketch.api.v1 import resources
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
-from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-
-
-
 
 logger = logging.getLogger('timesketch.api.sigma')
 
