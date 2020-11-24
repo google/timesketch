@@ -49,7 +49,7 @@ class Timeline(resource.BaseResource):
         self._searchindex = searchindex
         resource_uri = 'sketches/{0:d}/timelines/{1:d}/'.format(
             sketch_id, self.id)
-        super(Timeline, self).__init__(api, resource_uri)
+        super().__init__(api, resource_uri)
 
     @property
     def labels(self):

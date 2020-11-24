@@ -41,7 +41,7 @@ from . import version
 logger = logging.getLogger('timesketch_api.client')
 
 
-class TimesketchApi(object):
+class TimesketchApi:
     """Timesketch API object
 
     Attributes:

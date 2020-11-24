@@ -39,7 +39,7 @@ class View(resource.BaseResource):
         self.id = view_id
         self.name = view_name
         resource_uri = 'sketches/{0:d}/views/{1:d}/'.format(sketch_id, self.id)
-        super(View, self).__init__(api, resource_uri)
+        super().__init__(api, resource_uri)
 
     def _get_top_level_attribute(self, name, default_value=None, refresh=False):
         """Returns a top level attribute from a view object.

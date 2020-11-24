@@ -60,7 +60,7 @@ class Sketch(resource.BaseResource):
         self._archived = None
         self._sketch_name = sketch_name
         self._resource_uri = 'sketches/{0:d}'.format(self.id)
-        super(Sketch, self).__init__(api=api, resource_uri=self._resource_uri)
+        super().__init__(api=api, resource_uri=self._resource_uri)
 
     def _build_pandas_dataframe(self, search_response, return_fields=None):
         """Return a Pandas DataFrame from a query result dict.

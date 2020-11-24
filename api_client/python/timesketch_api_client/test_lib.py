@@ -20,7 +20,7 @@ import json
 def mock_session():
     """Mock HTTP requests session."""
 
-    class MockHeaders(object):
+    class MockHeaders:
         """Mock requests HTTP headers."""
 
         # pylint: disable=unused-argument
@@ -29,7 +29,7 @@ def mock_session():
             """Mock header update method."""
             return
 
-    class MockSession(object):
+    class MockSession:
         """Mock HTTP requests session."""
 
         def __init__(self):
@@ -58,7 +58,7 @@ def mock_session():
 def mock_response(*args, **kwargs):
     """Mocks HTTP response."""
 
-    class MockResponse(object):
+    class MockResponse:
         """Mock HTTP response object."""
 
         def __init__(self, json_data=None, text_data=None, status_code=200):

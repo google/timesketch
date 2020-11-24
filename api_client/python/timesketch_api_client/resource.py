@@ -15,7 +15,7 @@
 from __future__ import unicode_literals
 
 
-class BaseResource(object):
+class BaseResource:
     """Base resource object."""
 
     def __init__(self, api, resource_uri):
