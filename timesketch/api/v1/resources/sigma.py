@@ -13,17 +13,14 @@
 # limitations under the License.
 """Sigma resources for version 1 of the Timesketch API."""
 
-import os
-import codecs
-import yaml
+import logging
+
 import sigma.configuration as sigma_configuration
-import timesketch.lib.sigma as ts_sigma_lib
+import timesketch.lib.ts_sigma as ts_sigma_lib
 
 from flask import abort
 from flask import jsonify
-from flask import current_app
 from flask_restful import Resource
-from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
 
@@ -38,7 +35,6 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from sigma.backends import elasticsearch as sigma_elasticsearch
 from sigma.parser import collection as sigma_collection
 
-import logging
 
 logger = logging.getLogger('timesketch.api.sigma')
 
@@ -63,8 +59,9 @@ class SigmaListResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND,
                 err)
 
-        sigma_rules = ts_sigma_lib.get_sigma_rules_for_folder(_RULES_PATH)
-        meta = {'current_user': current_user.username, 'rules_count': len(sigma_rules)}
+        sigma_rules = ts_sigma_lib.get_sigma_rules(_RULES_PATH)
+        meta = {'current_user': current_user.username,
+                'rules_count': len(sigma_rules)}
         return jsonify({'objects': sigma_rules, 'meta': meta})
 
 
@@ -84,8 +81,6 @@ class SigmaResource(resources.ResourceMixin, Resource):
         """
 
         try:
-            sigma_config = ts_sigma_lib.get_sigma_config_file()
-            sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(sigma_config, {})
             _RULES_PATH = ts_sigma_lib.get_sigma_rules_path()
 
         except ValueError as err:
@@ -94,14 +89,13 @@ class SigmaResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND,
                 err)
 
-        sigma_rules = ts_sigma_lib.get_sigma_rules_for_folder(_RULES_PATH)
+        sigma_rules = ts_sigma_lib.get_sigma_rules(_RULES_PATH)
 
         for rule in sigma_rules:
             logger.info(rule)
             if rule_uuid == rule['id']:
                 logger.info("found the right rule")
                 return rule
-        
+
         abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
-                'No sigma rule found withcool this ID.')
+            HTTP_STATUS_CODE_NOT_FOUND, 'No sigma rule found with this ID.')
