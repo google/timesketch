@@ -63,38 +63,7 @@ class SigmaListResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND,
                 err)
 
-        for dirpath, dirnames, files in os.walk(_RULES_PATH):
-
-            if 'deprecated' in dirnames:
-                dirnames.remove('deprecated')
-
-            for rule_filename in files:
-                if rule_filename.lower().endswith('yml'):
-                    print(rule_filename)
-                    # if a sub dir is found, append it to be scanned for rules
-                    if os.path.isdir(os.path.join(dirpath, rule_filename)):
-                        logger.error(
-                            'this is a directory, skipping: {0:s}'.format(
-                                rule_filename))
-                        continue
-
-                    rule_file_path = os.path.join(dirpath, rule_filename)
-                    rule_file_path = os.path.abspath(rule_file_path)
-
-                    with codecs.open(
-                        rule_file_path, 'r', encoding='utf-8',errors='replace') as rule_file:
-                        try:
-                            rule_file_content = rule_file.read()
-                            rule_yaml_data = yaml.safe_load(rule_file_content)
-                            rule_yaml_data.update({"es_query":"aaa"})
-                            sigma_rules.append(rule_yaml_data)
-                        except NotImplementedError as exception:
-                            logger.error(
-                                'Error generating rule in file {0:s}: {1!s}'
-                                .format(rule_file_path, exception))
-                            continue
-        
-        # TODO: add more useful things to the meta information
+        sigma_rules = ts_sigma_lib.get_sigma_rules_for_folder(_RULES_PATH)
         meta = {'current_user': current_user.username, 'rules_count': len(sigma_rules)}
         return jsonify({'objects': sigma_rules, 'meta': meta})
 
@@ -114,14 +83,9 @@ class SigmaResource(resources.ResourceMixin, Resource):
             JSON sigma rule
         """
 
-        logger.info(rule_uuid)
-
         try:
-
             sigma_config = ts_sigma_lib.get_sigma_config_file()
-            
             sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(sigma_config, {})
-
             _RULES_PATH = ts_sigma_lib.get_sigma_rules_path()
 
         except ValueError as err:
@@ -130,60 +94,14 @@ class SigmaResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND,
                 err)
 
-        return_value = None
+        sigma_rules = ts_sigma_lib.get_sigma_rules_for_folder(_RULES_PATH)
 
-        for dirpath, dirnames, files in os.walk(_RULES_PATH):
-            logger.info(dirpath)
-            if 'deprecated' in dirnames:
-                dirnames.remove('deprecated')
-
-            for rule_filename in files:
-                if rule_filename.lower().endswith('yml'):
-                    print(rule_filename)
-                    # if a sub dir is found, append it to be scanned for rules
-                    if os.path.isdir(os.path.join(dirpath, rule_filename)):
-                        logger.debug(
-                            'this is a directory, skipping: {0:s}'.format(
-                                rule_filename))
-                        continue
-
-                    tag_name, _ = rule_filename.rsplit('.')
-                    rule_file_path = os.path.join(dirpath, rule_filename)
-                    rule_file_path = os.path.abspath(rule_file_path)
-
-                    with codecs.open(
-                        rule_file_path, 'r', encoding='utf-8', errors='replace') as file:
-                        
-                        try:
-                            rule_file_content = file.read()
-                            # TODO the safe load still has problems with --- in a rule file
-                            rule_yaml_data = yaml.safe_load(rule_file_content)
-
-                            parser = sigma_collection.SigmaCollectionParser(
-                                rule_file_content, sigma_config, None)
-                            parsed_sigma_rules = parser.generate(sigma_backend)
-
-                            sigma_es_query = ''
-                            # TODO check if that loop is actually needed or if every instance created here only has one query anyway.
-                            for sigma_rule in parsed_sigma_rules:
-                                logger.info(
-                                    '[sigma] Generated query {0:s}'
-                                    .format(sigma_rule))
-                                sigma_es_query = sigma_rule
-
-                            if rule_uuid == rule_yaml_data['id']:
-                                return_value = rule_yaml_data
-                                return_value.update({"es_query":sigma_es_query})
-                                return_value.update({"file_name":tag_name})
-                                logger.info("found the right rule")
-                                return return_value
-
-                        except NotImplementedError as exception:
-                            # Only one rule caused problems, okay to continue.
-                            logger.error(
-                                'Error generating rule in file {0:s}: {1!s}'
-                                .format(rule_file_path, exception))
-                            continue
-            abort(
+        for rule in sigma_rules:
+            logger.info(rule)
+            if rule_uuid == rule['id']:
+                logger.info("found the right rule")
+                return rule
+        
+        abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'No sigma rule found withcool this ID.')
