@@ -16,6 +16,8 @@
 import logging
 
 import sigma.configuration as sigma_configuration
+from sigma.backends import elasticsearch as sigma_elasticsearch
+from sigma.parser import collection as sigma_collection
 import timesketch.lib.ts_sigma as ts_sigma_lib
 
 from flask import abort
@@ -32,8 +34,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
-from sigma.backends import elasticsearch as sigma_elasticsearch
-from sigma.parser import collection as sigma_collection
+
 
 
 logger = logging.getLogger('timesketch.api.sigma')
