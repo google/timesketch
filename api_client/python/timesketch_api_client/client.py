@@ -498,7 +498,7 @@ class TimesketchApi(object):
 
     def list_sigma_rules(self, as_pandas=False):
         """Get a dict of all sigma rules that the user has access to.
-        
+
         Args:
             as_pandas: Boolean indicating that the results will be returned
                 as a Pandas DataFrame instead of a list of dicts.
