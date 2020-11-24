@@ -66,6 +66,8 @@ class SigmaResource(resources.ResourceMixin, Resource):
             JSON sigma rule
         """
 
+        return_rule = None
+
         try:
             _RULES_PATH = ts_sigma_lib.get_sigma_rules_path()
 
@@ -81,8 +83,11 @@ class SigmaResource(resources.ResourceMixin, Resource):
             logger.info(rule)
             if rule_uuid == rule['id']:
                 logger.info("found the right rule")
-                return rule
+                return_rule = rule
 
-        abort(
-            HTTP_STATUS_CODE_NOT_FOUND, 'No sigma rule found with this ID.')
-        return None
+        if return_rule = None:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sigma rule found with this ID.')
+
+        else:
+            return return_rule
