@@ -17,7 +17,7 @@ import os
 import codecs
 import yaml
 import sigma.configuration as sigma_configuration
-
+import timesketch.lib.sigma as ts_sigma_lib
 
 from flask import abort
 from flask import jsonify
@@ -55,21 +55,7 @@ class SigmaListResource(resources.ResourceMixin, Resource):
         sigma_rules = []
 
         try:
-            _RULES_PATH = current_app.config.get('SIGMA_RULES_FOLDER')
-
-            if not _RULES_PATH:
-                raise ValueError(
-                    'SIGMA_RULES_FOLDER not found in config file')
-
-            if not os.path.isdir(_RULES_PATH):
-                raise ValueError(
-                    'Unable to open dir: [{0:s}], it does not exist.'.format(
-                    _RULES_PATH))
-
-            if not os.access(_RULES_PATH, os.R_OK):
-                raise ValueError(
-                    'Unable to open dir: [{0:s}], cannot open it for '
-                    'read, please check permissions.'.format(_RULES_PATH))
+            _RULES_PATH = ts_sigma_lib.get_sigma_rules_path()
 
         except ValueError as err:
             logger.error("OS error: {0}".format(err))
@@ -100,6 +86,7 @@ class SigmaListResource(resources.ResourceMixin, Resource):
                         try:
                             rule_file_content = rule_file.read()
                             rule_yaml_data = yaml.safe_load(rule_file_content)
+                            rule_yaml_data.update({"es_query":"aaa"})
                             sigma_rules.append(rule_yaml_data)
                         except NotImplementedError as exception:
                             logger.error(
@@ -130,43 +117,12 @@ class SigmaResource(resources.ResourceMixin, Resource):
         logger.info(rule_uuid)
 
         try:
-            _CONFIG_FILE = current_app.config.get('SIGMA_CONFIG')
 
-            if not _CONFIG_FILE:
-                raise ValueError(
-                    'SIGMA_CONFIG not found in config file')
-
-            if not os.path.isfile(_CONFIG_FILE):
-                raise ValueError(
-                    'Unable to open file: [{0:s}], it does not exist.'.format(
-                    _CONFIG_FILE))
-
-            if not os.access(_CONFIG_FILE, os.R_OK):
-                raise ValueError(
-                    'Unable to open file: [{0:s}], cannot open it for '
-                    'read, please check permissions.'.format(_CONFIG_FILE))
-
-            with open(_CONFIG_FILE, 'r') as config_file:
-                sigma_config_file = config_file.read()
-
-            sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
+            sigma_config = ts_sigma_lib.get_sigma_config_file()
+            
             sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(sigma_config, {})
 
-            _RULES_PATH = current_app.config.get('SIGMA_RULES_FOLDER')
-
-            if not _RULES_PATH:
-                raise ValueError(
-                    'SIGMA_RULES_FOLDER not found in config file')
-
-            if not os.path.isdir(_RULES_PATH):
-                raise ValueError(
-                    'Unable to open dir: [{0:s}], it does not exist.'.format(
-                    _RULES_PATH))
-
-            if not os.access(_RULES_PATH, os.R_OK):
-                raise ValueError(
-                    'Unable to open dir: [{0:s}], cannot open it for '
-                    'read, please check permissions.'.format(_RULES_PATH))
+            _RULES_PATH = ts_sigma_lib.get_sigma_rules_path()
 
         except ValueError as err:
             logger.error("OS error: {0}".format(err))
@@ -231,4 +187,3 @@ class SigmaResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'No sigma rule found withcool this ID.')
-    
