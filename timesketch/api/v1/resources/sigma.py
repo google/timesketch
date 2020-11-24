@@ -13,17 +13,20 @@
 # limitations under the License.
 """Sigma resources for version 1 of the Timesketch API."""
 
+import os
+import codecs
+import yaml
+import sigma.configuration as sigma_configuration
+
+
 from flask import abort
+from flask import jsonify
+from flask import current_app
 from flask_restful import Resource
 from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
-from flask import jsonify
-from flask import current_app
 
-import os
-import codecs
-import yaml
 
 from timesketch.api.v1 import resources
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
@@ -33,12 +36,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
 from sigma.backends import elasticsearch as sigma_elasticsearch
-import sigma.configuration as sigma_configuration
 from sigma.parser import collection as sigma_collection
-
-
-# TODO maybe do that moving forward and move code from here to the model
-#from timesketch.models.sigma import Sigma
 
 import logging
 
@@ -56,14 +54,28 @@ class SigmaListResource(resources.ResourceMixin, Resource):
         """
         sigma_rules = []
 
-        # Path to the directory containing the Sigma Rules to run, relative to
-        # this file.
-        # TODO check if get is better for getting the key errors
         try:
-            _RULES_PATH = current_app.config['SIGMA_RULES_FOLDER']
-        except KeyError:
-            logger.error("SIGMA_RULES_FOLDER not found in config file")
-            _RULES_PATH = '../../../../data/sigma/rules/'
+            _RULES_PATH = current_app.config.get('SIGMA_RULES_FOLDER')
+
+            if not _RULES_PATH:
+                raise ValueError(
+                    'SIGMA_RULES_FOLDER not found in config file')
+
+            if not os.path.isdir(_RULES_PATH):
+                raise ValueError(
+                    'Unable to open dir: [{0:s}], it does not exist.'.format(
+                    _RULES_PATH))
+
+            if not os.access(_RULES_PATH, os.R_OK):
+                raise ValueError(
+                    'Unable to open dir: [{0:s}], cannot open it for '
+                    'read, please check permissions.'.format(_RULES_PATH))
+
+        except ValueError as err:
+            logger.error("OS error: {0}".format(err))
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                err)
 
         rules_path = os.path.join(os.path.dirname(__file__), _RULES_PATH)
 
@@ -85,16 +97,17 @@ class SigmaListResource(resources.ResourceMixin, Resource):
                     rule_file_path = os.path.join(dirpath, rule_filename)
                     rule_file_path = os.path.abspath(rule_file_path)
 
-                    with codecs.open(rule_file_path, 'r', encoding='utf-8',errors='replace') as rule_file:
-                                try:
-                                    rule_file_content = rule_file.read()
-                                    rule_yaml_data = yaml.safe_load(rule_file_content)
-                                    sigma_rules.append(rule_yaml_data)
-                                except NotImplementedError as exception:
-                                    logger.error(
-                                        'Error generating rule in file {0:s}: {1!s}'
-                                        .format(rule_file_path, exception))
-                                    continue
+                    with codecs.open(
+                        rule_file_path, 'r', encoding='utf-8',errors='replace') as rule_file:
+                        try:
+                            rule_file_content = rule_file.read()
+                            rule_yaml_data = yaml.safe_load(rule_file_content)
+                            sigma_rules.append(rule_yaml_data)
+                        except NotImplementedError as exception:
+                            logger.error(
+                                'Error generating rule in file {0:s}: {1!s}'
+                                .format(rule_file_path, exception))
+                            continue
         
         # TODO: add more useful things to the meta information
         meta = {'current_user': current_user.username, 'rules_count': len(sigma_rules)}
@@ -105,9 +118,8 @@ class SigmaResource(resources.ResourceMixin, Resource):
     """Resource to get a Sigma rule."""
 
     def __init__(self):
-    
+
         super().__init__()
-        
 
     @login_required
     def get(self, rule_uuid):
@@ -119,37 +131,55 @@ class SigmaResource(resources.ResourceMixin, Resource):
 
         logger.info(rule_uuid)
 
-        # TODO: that should be part of the Timesketch config.
         try:
-            _CONFIG_FILE = current_app.config['SIGMA_CONFIG']
-        except KeyError:
-            logger.error("SIGMA_CONFIG not found in config file")
-            _CONFIG_FILE = '../../../../data/sigma_config.yaml'
+            _CONFIG_FILE = current_app.config.get('SIGMA_CONFIG')
 
-        # Path to the directory containing the Sigma Rules to run, relative to
-        # this file.
-        # TODO check if get is better for getting the key errors
-        try:
-            _RULES_PATH = current_app.config['SIGMA_RULES_FOLDER']
-        except KeyError:
-            logger.error("SIGMA_RULES_FOLDER not found in config file")
-            _RULES_PATH = '../../../../data/sigma/rules/'
+            if not _CONFIG_FILE:
+                raise ValueError(
+                    'SIGMA_CONFIG not found in config file')
 
-        # TODO remove that dir traversal thing below
-        sigma_config_path = os.path.join(os.path.dirname(__file__), _CONFIG_FILE)
+            if not os.path.isfile(_CONFIG_FILE):
+                raise ValueError(
+                    'Unable to open file: [{0:s}], it does not exist.'.format(
+                    _CONFIG_FILE))
 
-        with open(sigma_config_path, 'r') as sigma_config_file:
-            sigma_config_file = sigma_config_file.read()
-        sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
+            if not os.access(_CONFIG_FILE, os.R_OK):
+                raise ValueError(
+                    'Unable to open file: [{0:s}], cannot open it for '
+                    'read, please check permissions.'.format(_CONFIG_FILE))
 
-        sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(sigma_config, {})
+            with open(_CONFIG_FILE, 'r') as config_file:
+                sigma_config_file = config_file.read()
 
-        rules_path = os.path.join(os.path.dirname(__file__), _RULES_PATH)
+            sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
+            sigma_backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(sigma_config, {})
+
+            _RULES_PATH = current_app.config.get('SIGMA_RULES_FOLDER')
+
+            if not _RULES_PATH:
+                raise ValueError(
+                    'SIGMA_RULES_FOLDER not found in config file')
+
+            if not os.path.isdir(_RULES_PATH):
+                raise ValueError(
+                    'Unable to open dir: [{0:s}], it does not exist.'.format(
+                    _RULES_PATH))
+
+            if not os.access(_RULES_PATH, os.R_OK):
+                raise ValueError(
+                    'Unable to open dir: [{0:s}], cannot open it for '
+                    'read, please check permissions.'.format(_RULES_PATH))
+
+        except ValueError as err:
+            logger.error("OS error: {0}".format(err))
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                err)
 
         return_value = None
 
-        for dirpath, dirnames, files in os.walk(rules_path):
-
+        for dirpath, dirnames, files in os.walk(_RULES_PATH):
+            logger.info(dirpath)
             if 'deprecated' in dirnames:
                 dirnames.remove('deprecated')
 
@@ -157,7 +187,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
                 if rule_filename.lower().endswith('yml'):
                     print(rule_filename)
                     # if a sub dir is found, append it to be scanned for rules
-                    if os.path.isdir(os.path.join(rules_path, rule_filename)):
+                    if os.path.isdir(os.path.join(_RULES_PATH, rule_filename)):
                         logger.debug(
                             'this is a directory, skipping: {0:s}'.format(
                                 rule_filename))
@@ -168,37 +198,39 @@ class SigmaResource(resources.ResourceMixin, Resource):
                     rule_file_path = os.path.abspath(rule_file_path)
 
                     with codecs.open(
-                        rule_file_path, 'r', encoding='utf-8', errors='replace') as rule_file:
+                        rule_file_path, 'r', encoding='utf-8', errors='replace') as file:
                         
                         try:
-                            rule_file_content = rule_file.read()
+                            rule_file_content = file.read()
+                            # TODO the safe load still has problems with --- in a rule file
                             rule_yaml_data = yaml.safe_load(rule_file_content)
 
                             parser = sigma_collection.SigmaCollectionParser(
                                 rule_file_content, sigma_config, None)
                             parsed_sigma_rules = parser.generate(sigma_backend)
 
-                            # parse the rule
-                            sigma_rule_value = ''
+                            sigma_es_query = ''
+                            # TODO check if that loop is actually needed or if every instance created here only has one query anyway.
                             for sigma_rule in parsed_sigma_rules:
                                 logger.info(
                                     '[sigma] Generated query {0:s}'
                                     .format(sigma_rule))
-                                sigma_rule_value = sigma_rule
+                                sigma_es_query = sigma_rule
 
                             if rule_uuid == rule_yaml_data['id']:
                                 return_value = rule_yaml_data
-                                return_value.update({"es_query":sigma_rule_value})
+                                return_value.update({"es_query":sigma_es_query})
                                 return_value.update({"file_name":tag_name})
                                 logger.info("found the right rule")
                                 return return_value
 
                         except NotImplementedError as exception:
+                            # Only one rule caused problems, okay to continue.
                             logger.error(
                                 'Error generating rule in file {0:s}: {1!s}'
                                 .format(rule_file_path, exception))
                             continue
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                'No sigma rule found withcool  this ID.')
+                'No sigma rule found withcool this ID.')
     
