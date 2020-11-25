@@ -1,0 +1,323 @@
+# Copyright 2019 Google Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Timesketch API search object."""
+import datetime
+import getpass
+import json
+import logging
+
+import altair
+import pandas
+
+from . import error
+from . import resource
+
+
+logger = logging.getLogger('timesketch_api.search')
+
+
+class Search(resource.SketchResource):
+    """Search object.
+
+    Attributes:
+    """
+
+    def __init__(self, sketch, api):
+        resource_uri = f'sketches/{sketch.id}/explore/'
+        super().__init__(
+            sketch=sketch, api=api, resource_uri=resource_uri)
+        self._name = ''
+        self._description = ''
+        self._query_string = ''
+        self._query_filter = {}
+        self._query_dsl = ''
+        self._searchtemplate = ''
+        self._aggregations = ''
+        self._created_at = ''
+        self._updated_at = ''
+        self._return_fields = ''
+        self._raw_response = None
+
+    def _execute_query(self, scrolling=False, file_name=''):
+        form_data = {
+            'query': self._query_string,
+            'filter': self._query_filter,
+            'dsl': self._query_dsl,
+            'fields': self._return_fields,
+            'enable_scroll': scrolling,
+            'file_name': file_name,
+        }
+
+        response = self.api.session.post(self.resource_url, json=form_data)
+        if not error.check_return_status(response, logger):
+            error.error_message(
+                response, message='Unable to query results',
+                error=ValueError)
+
+        if file_name:
+            with open(file_name, 'wb') as fw:
+                fw.write(response.content)
+            return True
+
+        response_json = error.get_response_json(response, logger)
+
+        scroll_id = response_json.get('meta', {}).get('scroll_id', '')
+        form_data['scroll_id'] = scroll_id
+
+        count = len(response_json.get('objects', []))
+        total_count = count
+        while count > 0:
+            if max_entries and total_count >= max_entries:
+                break
+            if stop_size and total_count >= stop_size:
+                break
+
+            if not scroll_id:
+                logger.debug('No scroll ID, will stop.')
+                break
+
+            more_response = self.api.session.post(resource_url, json=form_data)
+            if not error.check_return_status(more_response, logger):
+                error.error_message(
+                    response, message='Unable to query results',
+                    error=ValueError)
+            more_response_json = error.get_response_json(more_response, logger)
+            count = len(more_response_json.get('objects', []))
+            total_count += count
+            response_json['objects'].extend(
+                more_response_json.get('objects', []))
+            more_meta = more_response_json.get('meta', {})
+            added_time = more_meta.get('es_time', 0)
+            response_json['meta']['es_time'] += added_time
+
+        total_elastic_count = response_json.get(
+            'meta', {}).get('es_total_count', 0)
+        if total_elastic_count != total_count:
+            logger.info(
+                f'{total_count} results were returned, but '
+                f'{total_elastic_count} records matched the search query')
+
+        self._raw_response = response_json
+
+    def from_store(self, search_id):
+        """Initialize the search object from a stored search.
+
+        Args:
+            search_id: integer value for the stored
+                search (primary key).
+        """
+        resource_uri = f'sketches/{self._sketch.id}/views/{search_id}/'
+        resource_data = self.api.fetch_resource_data(resource_uri)
+
+        data = resource_data.get('objects', [None])[0]
+        if not data:
+            logger.error('Unable to get any data back from a saved search.')
+            return
+
+        self._object_data = data
+        self._resource_id = search_id
+
+        label_string = data.get('label_string', '')
+        if label_string:
+            self._labels = json.loads(label_string)
+        else:
+            self._labels = []
+
+        self._username = data.get('user', {}).get('username', 'System')
+
+        self._name = data.get('name', '')
+        self._description = data.get('description', '')
+        self._query_string = data.get('query_string', '')
+        self._query_filter = data.get('query_filter', {})
+        self._query_dsl = data.get('query_dsl', '')
+        self._searchtemplate = data.get('searchtemplate', 0)
+        self._aggregations = data.get('aggregation', 0)
+        self._created_at = data.get('created_at', '')
+        self._updated_at = data.get('updated_at', '')
+        self.resource_data = data
+
+    def from_explore(
+            self,
+            query_string=None,
+            query_dsl=None,
+            query_filter=None,
+            return_fields=None,
+            as_pandas=False,
+            max_entries=None,
+            file_name='',
+            **kwargs):
+        """Explore the sketch.
+
+        Args:
+            query_string (str): Elasticsearch query string.
+            query_dsl (str): Elasticsearch query DSL as JSON string.
+            query_filter (dict): Filter for the query as a dict.
+            return_fields (str): A comma separated string with a list of fields
+                that should be included in the response. Optional and defaults
+                to None.
+            as_pandas (bool): Optional bool that determines if the results
+                should be returned back as a dictionary or a Pandas DataFrame.
+            max_entries (int): Optional integer denoting a best effort to limit
+                the output size to the number of events. Events are read in,
+                10k at a time so there may be more events in the answer back
+                than this number denotes, this is a best effort.
+            file_name (str): Optional filename, if provided the results of
+                the query will be exported to a ZIP file instead of being
+                returned back as a dict or a pandas DataFrame. The ZIP file
+                will contain a METADATA file and a CSV with the results from
+                the query.
+            kwargs (dict[str, object]): Depending on the resource they may require
+                different sets of arguments to be able to run a raw API request.
+
+        Returns:
+            Dictionary with query results or a pandas DataFrame if as_pandas
+            is set to True. If file_name is provided then no value will be
+            returned.
+
+        Raises:
+            ValueError: if unable to query for the results.
+            RuntimeError: if the query is missing needed values, or if the
+                sketch is archived.
+        """
+        super().from_explore(**kwargs)
+        if not (query_string or query_filter or query_dsl):
+            raise RuntimeError('You need to supply a query')
+
+        self._username = getpass.getuser()
+
+        self._query_string = query_string
+        self._query_dsl = query_dsl
+        #self._searchtemplate = data.get('searchtemplate', 0)
+        #self._aggregations = data.get('aggregation', 0)
+
+        self._created_at = datetime.datetime.now(
+            datetime.timezone.utc).isoformat()
+        self._updated_at = self._created_at
+        self.resource_data = {}
+
+        if query_filter:
+            stop_size = query_filter.get('size', 0)
+            terminate_after = query_filter.get('terminate_after', 0)
+            if terminate_after and (terminate_after < stop_size):
+                stop_size = terminate_after
+
+            scrolling = not bool(stop_size and (
+                stop_size < self.DEFAULT_SIZE_LIMIT))
+        else:
+            scrolling = True
+            stop_size = 0
+            query_filter = {
+                'time_start': None,
+                'time_end': None,
+                'size': self.DEFAULT_SIZE_LIMIT,
+                'terminate_after': self.DEFAULT_SIZE_LIMIT,
+                'indices': '_all',
+                'order': 'asc'
+            }
+
+        if not isinstance(query_filter, dict):
+            raise ValueError(
+                'Unable to query with a query filter that isn\'t a dict.')
+
+        if as_pandas:
+            query_filter.setdefault('size', self.DEFAULT_SIZE_LIMIT)
+            query_filter.setdefault('terminate_after', self.DEFAULT_SIZE_LIMIT)
+
+        self._query_filter = query_filter
+
+    def to_dict(self):
+        """Returns a dict."""
+        if not self._raw_response:
+          self._execute_query()
+
+        return self._raw_response
+
+    def to_pandas(self):
+        """Returns a pandas DataFrame."""
+        return_list = []
+        timelines = {}
+        for timeline_obj in self.list_timelines():
+            timelines[timeline_obj.index] = timeline_obj.name
+
+        return_field_list = []
+        if return_fields:
+            if return_fields.startswith('\''):
+                return_fields = return_fields[1:]
+            if return_fields.endswith('\''):
+                return_fields = return_fields[:-1]
+            return_field_list = return_fields.split(',')
+
+        for result in search_response.get('objects', []):
+            source = result.get('_source', {})
+            if not return_fields or '_id' in return_field_list:
+                source['_id'] = result.get('_id')
+            if not return_fields or '_type' in return_field_list:
+                source['_type'] = result.get('_type')
+            if not return_fields or '_index' in return_field_list:
+                source['_index'] = result.get('_index')
+            if not return_fields or '_source' in return_field_list:
+                source['_source'] = timelines.get(result.get('_index'))
+
+            return_list.append(source)
+
+        data_frame = pandas.DataFrame(return_list)
+        if 'datetime' in data_frame:
+            try:
+                data_frame['datetime'] = pandas.to_datetime(data_frame.datetime)
+            except pandas.errors.OutOfBoundsDatetime:
+                pass
+        elif 'timestamp' in data_frame:
+            try:
+                data_frame['datetime'] = pandas.to_datetime(
+                    data_frame.timestamp / 1e6, utc=True, unit='s')
+            except pandas.errors.OutOfBoundsDatetime:
+                pass
+
+        return data_frame
+
+    def save(self):
+        """Save the aggregation in the database."""
+        # TODO: FIX THIS
+        data = {
+            'name': self.name,
+            'description': self.description,
+            'agg_type': self.aggregator_name,
+            'parameters': self._parameters,
+            'chart_type': self.chart_type,
+        }
+        if self.view:
+            data['view_id'] = self.view
+        if self._labels:
+            data['labels'] = json.dumps(self._labels)
+
+        if self._resource_id:
+            resource_url = '{0:s}/sketches/{1:d}/aggregation/{2:d}/'.format(
+                self.api.api_root, self._sketch.id, self._resource_id)
+        else:
+            resource_url = '{0:s}/sketches/{1:d}/aggregation/'.format(
+                self.api.api_root, self._sketch.id)
+
+        response = self.api.session.post(resource_url, json=data)
+        if not error.check_return_status(response, logger):
+            return 'Unable to save the aggregation'
+
+        response_json = response.json()
+        objects = response_json.get('objects')
+        if not objects:
+            return 'Unable to determine ID of saved object.'
+        agg_data = objects[0]
+        self._object_data = agg_data
+        self._resouce_id = agg_data.get('id', -1)
+        return 'Saved aggregation to ID: {0:d}'.format(self._resource_id)
+
