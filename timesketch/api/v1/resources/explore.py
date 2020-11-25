@@ -152,14 +152,12 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 file_object, mimetype='zip',
                 attachment_filename=file_name)
 
-        print(query_dsl, form.query.data)
-
         if scroll_id:
             # pylint: disable=unexpected-keyword-arg
             result = self.datastore.client.scroll(
                 scroll_id=scroll_id, scroll='1m')
         else:
-            #try:
+            try:
                 result = self.datastore.search(
                     sketch_id,
                     form.query.data,
@@ -169,10 +167,9 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     aggregations=index_stats_agg,
                     return_fields=return_fields,
                     enable_scroll=enable_scroll)
-            #except ValueError as e:
-            #    print("ERROR", e)
-            #    abort(
-            #        HTTP_STATUS_CODE_BAD_REQUEST, e)
+            except ValueError as e:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST, e)
 
         # Get number of matching documents per index.
         count_per_index = {}
