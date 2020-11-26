@@ -229,7 +229,7 @@ limitations under the License.
                 </div>
                 <div class="level-item">
                   <div v-if="eventList.objects.length" class="select is-small">
-                    <select v-model="currentQueryFilter.size" @change="resetPagination">
+                    <select v-model="currentQueryFilter.size" @change="search">
                       <option v-bind:value="currentQueryFilter.size">{{ currentQueryFilter.size }}</option>
                       <option value="10">10</option>
                       <option value="20">20</option>
@@ -396,7 +396,6 @@ export default {
         objects: []
       },
       currentQueryString: "",
-      previousQueryString: "",
       currentQueryFilter: defaultQueryFilter(),
       selectedFields: [{field: 'message', type: 'text'}],
       selectedFieldsProxy: [],
@@ -454,7 +453,7 @@ export default {
     hideDropdown: function() {
       this.$refs['NewTimeFilter'].isActive = false
     },
-    search: function (emitEvent=true) {
+    search: function (emitEvent=true, resetPagination=true) {
       if (!this.currentQueryString) {
         return
       }
@@ -469,13 +468,14 @@ export default {
 
       this.eventList = emptyEventList()
 
-      // Reset pagination when a new query string is entered.
-      if (this.previousQueryString !== this.currentQueryString) {
-        this.currentQueryFilter.from = 0
-      }
 
-      // Save the query string for later check if pagination should be reset.
-      this.previousQueryString = this.currentQueryString
+      if (resetPagination) {
+        // TODO: Can we keep position of the pagination when changing page size?
+        // We need to calculate the new position in the page range and it is not
+        // trivial with the current pagination UI component we use.
+        this.currentQueryFilter.from = 0
+        this.currentPage = 1
+      }
 
       // Update with selected fields
       this.currentQueryFilter.fields = this.selectedFields
@@ -684,15 +684,7 @@ export default {
     },
     paginate: function (pageNum) {
       this.currentQueryFilter.from  = ((pageNum * this.currentQueryFilter.size) - this.currentQueryFilter.size)
-      this.search()
-    },
-    resetPagination: function () {
-      // TODO: Can we keep position of the pagination when changing page size?
-      // We need to calculate the new position in the page range and it is not
-      // trivial with the current pagination UI component we use.
-      this.currentQueryFilter.from = 0
-      this.currentPage = 1
-      this.search()
+      this.search(true, false)
     },
     updateSelectedFields: function (value) {
       // If we haven't fetched the field before, do an new search.
