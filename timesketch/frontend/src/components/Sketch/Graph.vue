@@ -54,12 +54,29 @@ limitations under the License.
                         </span>
                         <span>Settings</span>
                       </button>
-                      <div class="modal-card" style="width:350px;color: var(--font-color-dark);">
+                      <div class="modal-card" style="width:500px;color: var(--font-color-dark);">
+
                         <section class="modal-card-body">
+
                           <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
-                              <strong>Transparency for unselected elements</strong>
+                            <b-field label="Transparency for unselected elements">
                               <b-slider class="is-rounded" type="is-info" :custom-formatter="val => val + '%'" v-model="fadeOpacity" v-on:input="changeOpacity"></b-slider>
+                            </b-field>
+
+                            <b-field label="Layout type">
+                              <b-radio v-for="layout in layouts" :key="layout" v-model="layoutName" :native-value="layout" type="is-info" v-on:input="buildGraph({name: currentGraph})" :disabled="!hasGraphCache">
+                                <span>{{ layout }}</span>
+                              </b-radio>
+                            </b-field>
+
+                            <b-field label="Edge style">
+                              <b-radio v-for="edge in edgeStyles" :key="edge" v-model="edgeStyle" :native-value="edge" type="is-info" v-on:input="buildGraph({name: currentGraph})" :disabled="!hasGraphCache">
+                                <span>{{ edge }}</span>
+                              </b-radio>
+                            </b-field>
+
                           </b-dropdown-item>
+
                         </section>
                       </div>
                   </b-dropdown>
@@ -175,6 +192,7 @@ limitations under the License.
 
 <script>
 import spread from "cytoscape-spread"
+import dagre from "cytoscape-dagre"
 import ApiClient from "../../utils/RestApiClient"
 import TsEventListCompact from "./EventListCompact"
 import EventBus from "../../main"
@@ -201,6 +219,10 @@ export default {
       edgeQuery: '',
       maxEvents: 500,
       saveAsName: '',
+      layouts: ['spread', 'dagre', 'circle', 'concentric', 'breadthfirst'],
+      layoutName: 'spread',
+      edgeStyles: ['bezier', 'taxi'],
+      edgeStyle: 'bezier',
       config: {
         style: [
           {
@@ -292,9 +314,10 @@ export default {
           }
         ],
         layout: {
-          name: "spread",
+          name: '',
           animate: false,
-          prelayout: false
+          prelayout: false,
+          spacingFactor: 2
         },
 
         // interaction options:
@@ -335,7 +358,11 @@ export default {
   methods: {
     buildGraph: function (graphPlugin, refresh=false) {
       this.$refs.graphDropdown.toggle()
-      this.config.layout.name = 'spread'
+      this.config.layout.name = this.layoutName
+
+      let edgeStyle = this.config.style.filter(selector => selector.selector === 'edge')
+      edgeStyle[0].style['curve-style'] = this.edgeStyle
+
       this.currentGraph = graphPlugin.name
       this.showGraph = false
       this.elements = []
@@ -510,6 +537,7 @@ export default {
     // vue-cytoscape life-cycle hook, runs before graph is created.
     preConfig (cytoscape) {
       cytoscape.use(spread)
+      cytoscape.use(dagre)
       this.resizeCanvas()
     },
     // vue-cytoscape life-cycle hook, runs after graph is created.
