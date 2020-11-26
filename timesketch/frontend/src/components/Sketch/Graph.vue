@@ -15,17 +15,37 @@ limitations under the License.
 -->
 <template>
 <div>
+
     <section class="section">
-      <div class="container is-fluid">
+      <div class="container is-fluid" style="height: 75vh;" ref="graphContainer">
 
-        <div class="columns">
-          <div class="column">
-
-            <div class="card" style="min-height: 700px;">
+            <div class="card" style="height: 100%;">
               <header class="card-header" style="border-bottom: 0;">
-                <span class="card-header-title" style="min-width: 170px;"><span v-if="currentGraph">{{ currentGraph }}</span></span>
+                <span class="card-header-title" style="min-width: 170px;">
+                  <strong>{{ currentGraph }}</strong>
+                </span>
                 <input class="ts-search-input" v-if="currentGraph" v-model="filterString" v-on:keyup="filterGraphByInput" style="border-radius: 0; padding:25px;" placeholder="Filter nodes and edges"></input>
-                <span class="card-header-icon" v-if="currentGraph">
+                <span class="card-header-icon">
+
+                  <b-dropdown ref="graphDropdown" position="is-bottom-left" aria-role="menu" trap-focus append-to-body>
+                      <button class="button is-info is-rounded is-small" slot="trigger">
+                        <span>Select graph</span>
+                      </button>
+                      <div class="modal-card" style="width:350px;color: var(--font-color-dark);">
+                        <section class="modal-card-body">
+
+                          <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
+                            <div v-for="graphPlugin in graphs" :key="graphPlugin.name" style="margin-bottom: 7px;">
+                              <button class="button is-rounded is-fullwidth" v-on:click="buildGraph(graphPlugin)" :disabled="isLoading">{{ graphPlugin.display_name }}</button>
+                            </div>
+                            <div v-for="savedGraph in savedGraphs" :key="savedGraph.id" style="margin-bottom: 7px;">
+                              <button class="button is-rounded is-fullwidth" v-on:click="buildSavedGraph(savedGraph)">{{ savedGraph.name }}</button>
+                            </div>
+                          </b-dropdown-item>
+
+                        </section>
+                      </div>
+                  </b-dropdown>
 
                   <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body>
                       <button class="button is-outlined is-rounded is-small" slot="trigger" :disabled="!currentGraph">
@@ -74,6 +94,13 @@ limitations under the License.
                     <span>Refresh</span>
                   </button>
 
+                  <button class="button is-outlined is-rounded is-small" style="margin-left:7px;" v-on:click="cy.fit()">
+                    <span class="icon is-small">
+                      <i class="fas fa-sync-alt"></i>
+                    </span>
+                    <span>Fit</span>
+                  </button>
+
                 </span>
               </header>
               <div class="card-content">
@@ -108,8 +135,9 @@ limitations under the License.
             </div>
           </div>
 
+          <!--
           <div class="column is-one-fifth">
-            <div class="card">
+            <div class="card" style="height: 100%">
               <header class="card-header" style="border-bottom: 0;">
                 <span class="card-header-title">Available graphs</span>
               </header>
@@ -123,13 +151,13 @@ limitations under the License.
               </div>
             </div>
           </div>
-        </div>
+          --->
 
-      </div>
     </section>
 
-    <section class="section" v-if="edgeQuery">
+    <section class="section">
       <div class="container is-fluid">
+
         <div class="card">
           <header class="card-header">
             <span class="card-header-title">Events for selected edges</span>
@@ -138,9 +166,11 @@ limitations under the License.
             <ts-event-list-compact v-if="edgeQuery" :query-dsl="edgeQuery"></ts-event-list-compact>
           </div>
         </div>
+
       </div>
     </section>
   </div>
+
 </template>
 
 <script>
@@ -149,6 +179,7 @@ import ApiClient from "../../utils/RestApiClient"
 import TsEventListCompact from "./EventListCompact"
 import EventBus from "../../main"
 import SessionChart from "./SessionChart"
+import _ from 'lodash'
 
 export default {
   components: {
@@ -303,6 +334,7 @@ export default {
   },
   methods: {
     buildGraph: function (graphPlugin, refresh=false) {
+      this.$refs.graphDropdown.toggle()
       this.config.layout.name = 'spread'
       this.currentGraph = graphPlugin.name
       this.showGraph = false
@@ -338,6 +370,7 @@ export default {
       })
     },
     buildSavedGraph: function (savedGraph) {
+      this.$refs.graphDropdown.toggle()
       this.config.layout.name = 'preset'
       this.currentGraph = savedGraph.name
       this.currentGraphCache = {}
@@ -465,9 +498,19 @@ export default {
           'opacity': this.fadeOpacity / 100
         }).update()
     },
+    resizeCanvas: function () {
+      let canvasHeight = this.$refs.graphContainer.clientHeight - 100;
+      let canvasWidth = this.$refs.graphContainer.clientWidth - 100;
+      let canvas = document.getElementById("cytoscape-div")
+      canvas.style.minHeight = canvasHeight + "px";
+      canvas.style.height = canvasHeight + "px";
+      canvas.style.minWidth = canvasWidth + "px";
+      canvas.style.width = canvasWidth + "px";
+    },
     // vue-cytoscape life-cycle hook, runs before graph is created.
     preConfig (cytoscape) {
       cytoscape.use(spread)
+      this.resizeCanvas()
     },
     // vue-cytoscape life-cycle hook, runs after graph is created.
     async afterCreated(cy=null) {
@@ -479,6 +522,7 @@ export default {
       }
       await cy
       this.setTheme()
+
       // Run the layout to render the graph elements.
       cy.layout(this.config.layout).run()
     },
@@ -502,6 +546,10 @@ export default {
     }
   },
   created() {
+    //window.addEventListener("resize", this.resizeCanvas);
+    window.addEventListener('resize', _.debounce(() => {
+      this.resizeCanvas()
+    }, 250))
     ApiClient.getGraphPluginList().then((response) => {
         this.graphs = response.data
       }).catch((e) => {
