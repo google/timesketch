@@ -11,20 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Timesketch Sigma lib functions.
-"""
+"""Timesketch Sigma lib functions."""
 
 import os
 import codecs
 import logging
 import yaml
 
+from flask import current_app
+
 import sigma.configuration as sigma_configuration
 
 from sigma.backends import elasticsearch as sigma_es
 from sigma.parser import collection as sigma_collection
-
-from flask import current_app
 
 logger = logging.getLogger('timesketch.lib.sigma')
 
@@ -32,29 +31,26 @@ logger = logging.getLogger('timesketch.lib.sigma')
 def get_sigma_config_file():
     """Get a sigma.configuration.SigmaConfiguration object.
 
-        Args:
-            None
-
         Returns:
             A sigma.configuration.SigmaConfiguration object
     """
-    _CONFIG_FILE = current_app.config.get('SIGMA_CONFIG')
+    config_file = current_app.config.get('SIGMA_CONFIG')
 
-    if not _CONFIG_FILE:
+    if not config_file:
         raise ValueError(
             'SIGMA_CONFIG not found in config file')
 
-    if not os.path.isfile(_CONFIG_FILE):
+    if not os.path.isfile(config_file):
         raise ValueError(
             'Unable to open file: [{0:s}], it does not exist.'.format(
-                _CONFIG_FILE))
+                config_file))
 
-    if not os.access(_CONFIG_FILE, os.R_OK):
+    if not os.access(config_file, os.R_OK):
         raise ValueError(
             'Unable to open file: [{0:s}], cannot open it for '
-            'read, please check permissions.'.format(_CONFIG_FILE))
+            'read, please check permissions.'.format(config_file))
 
-    with open(_CONFIG_FILE, 'r') as config_file:
+    with open(config_file, 'r') as config_file:
         sigma_config_file = config_file.read()
 
     sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
@@ -64,49 +60,45 @@ def get_sigma_config_file():
 def get_sigma_rules_path():
     """Get the path for Sigma rules.
 
-        Args:
-            None
-
         Returns:
-            A string
+            A string to the Sigma rules
     """
-
     # TODO: Add functionality to have multiple paths for rule files.
-    _RULES_PATH = current_app.config.get('SIGMA_RULES_FOLDER')
+    rules_path = current_app.config.get('SIGMA_RULES_FOLDER')
 
-    if not _RULES_PATH:
+    if not rules_path:
         raise ValueError(
             'SIGMA_RULES_FOLDER not found in config file')
 
-    if not os.path.isdir(_RULES_PATH):
+    if not os.path.isdir(rules_path):
         raise ValueError(
             'Unable to open dir: [{0:s}], it does not exist.'.format(
-                _RULES_PATH))
+                rules_path))
 
-    if not os.access(_RULES_PATH, os.R_OK):
+    if not os.access(rules_path, os.R_OK):
         raise ValueError(
             'Unable to open dir: [{0:s}], cannot open it for '
-            'read, please check permissions.'.format(_RULES_PATH))
+            'read, please check permissions.'.format(rules_path))
 
-    return _RULES_PATH
+    return rules_path
 
 
 def get_sigma_rules(rule_folder):
+    """Returns the Sigma rules for a folder including subfolders.
 
+        Returns:
+            A array of Sigma rules as JSON
+    """
     return_array = []
 
     for dirpath, dirnames, files in os.walk(rule_folder):
-        # TODO: lowercase the folder name in case a folder is named dePreCatEd
-        if 'deprecated' in dirnames:
+        if 'deprecated' in [x.lower() for x in dirnames]:
             dirnames.remove('deprecated')
 
         for rule_filename in files:
-            if rule_filename.lower().endswith('yml'):
-                # if a sub dir is found, append it to be scanned for rules
+            if rule_filename.lower().endswith('.yml'):
+                # if a sub dir is found, do not try to parse it.
                 if os.path.isdir(os.path.join(dirpath, rule_filename)):
-                    logger.info(
-                        'this is a directory, skipping: {0:s}'.format(
-                            rule_filename))
                     continue
 
                 rule_file_path = os.path.join(dirpath, rule_filename)
@@ -125,27 +117,21 @@ def get_sigma_rule(filepath):
         Returns:
             Json representation of the parsed rule
         """
-
-
-    logger.info("get_sigma_rule with arg: {0:s}".format(filepath))
+    logger.info('get_sigma_rule with arg: {0:s}'.format(filepath))
     sigma_config = get_sigma_config_file()
 
     sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_config, {})
 
-    if filepath.lower().endswith('yml'):
-        # if a sub dir is found, append it to be scanned for rules
+    if filepath.lower().endswith('.yml'):
+        # if a sub dir is found, nothing can be parsed
         if os.path.isdir(filepath):
-            logger.info(
-                'this is a directory, skipping: {0:s}'.format(
-                    filepath))
-            return False
+            return None
 
         tag_name, _ = filepath.rsplit('.')
         abs_path = os.path.abspath(filepath)
 
         with codecs.open(
                 abs_path, 'r', encoding='utf-8', errors='replace') as file:
-
             try:
                 rule_file_content = file.read()
                 # TODO the safe load still has problems with --- in a rule file
@@ -155,23 +141,26 @@ def get_sigma_rule(filepath):
                     rule_file_content, sigma_config, None)
                 parsed_sigma_rules = parser.generate(sigma_backend)
 
-                sigma_es_query = ''
-                for sigma_rule in parsed_sigma_rules:
-                    logger.info(
-                        '[sigma] Generated query {0:s}'
-                        .format(sigma_rule))
-                    sigma_es_query = sigma_rule
-
-                rule_yaml_data.update(
-                    {"es_query":sigma_es_query})
-                rule_yaml_data.update(
-                    {"file_name":tag_name})
-
-                return rule_yaml_data
-
             except NotImplementedError as exception:
                 logger.error(
                     'Error generating rule in file {0:s}: {1!s}'
                     .format(abs_path, exception))
+                return None
+
+            sigma_es_query = ''
+            for sigma_rule in parsed_sigma_rules:
+                logger.info(
+                    '[sigma] Generated query {0:s}'
+                    .format(sigma_rule))
+                sigma_es_query = sigma_rule
+
+            rule_yaml_data.update(
+                {'es_query':sigma_es_query})
+            rule_yaml_data.update(
+                {'file_name':tag_name})
+
+            return rule_yaml_data
+
+
 
     return None
