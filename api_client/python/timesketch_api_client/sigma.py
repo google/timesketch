@@ -21,7 +21,6 @@ from . import resource
 
 logger = logging.getLogger('timesketch_api.sigma')
 
-
 class Sigma(resource.BaseResource):
     """Timesketch sigma object.
 
@@ -36,14 +35,14 @@ class Sigma(resource.BaseResource):
         """Initializes the Sigma object.
 
         Args:
-            searchindex_id: Primary key ID of the searchindex.
-            searchindex_name: Name of the searchindex (optional).
+            rule_uuid: Id of the sigma rule.
+            api: An instance of TimesketchApi object.
+
         """
         self.rule_uuid = rule_uuid
         self._resource_uri = 'sigma/{0:s}'.format(self.rule_uuid)
         super().__init__(
             api=api, resource_uri=self._resource_uri)
-
 
     @property
     def es_query(self):
@@ -51,14 +50,9 @@ class Sigma(resource.BaseResource):
         sigma_data = self.data
 
         if not sigma_data:
-            return []
+            return None
 
-        return_value = sigma_data.get('es_query')
-
-        if not return_value:
-            return []
-
-        return return_value
+        return sigma_data.get('es_query', None)
 
     @property
     def title(self):
@@ -66,14 +60,9 @@ class Sigma(resource.BaseResource):
         sigma_data = self.data
 
         if not sigma_data:
-            return []
+            return None
 
-        title = sigma_data.get('title')
-
-        if not title:
-            return []
-
-        return title
+        return sigma_data.get('title', None)
 
     @property
     def id(self):
@@ -81,14 +70,9 @@ class Sigma(resource.BaseResource):
         sigma_data = self.data
 
         if not sigma_data:
-            return []
+            return None
 
-        rule_uuid = sigma_data.get('id')
-
-        if not rule_uuid:
-            return []
-
-        return rule_uuid
+        return sigma_data.get('id', None)
 
     def to_pandas(self):
         """Returns a pandas DataFrame."""
