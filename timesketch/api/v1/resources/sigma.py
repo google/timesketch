@@ -28,8 +28,9 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
 logger = logging.getLogger('timesketch.api.sigma')
 
+
 class SigmaListResource(resources.ResourceMixin, Resource):
-    """Resource to get list of users."""
+    """Resource to get list of Sigma rules."""
 
     @login_required
     def get(self):
@@ -41,15 +42,16 @@ class SigmaListResource(resources.ResourceMixin, Resource):
         sigma_rules = []
 
         try:
-            _RULES_PATH = ts_sigma_lib.get_sigma_rules_path()
+            rules_path = ts_sigma_lib.get_sigma_rules_path()
 
-        except ValueError as err:
-            logger.error("OS error: {0}".format(err))
+        except ValueError:
+            logger.error('OS Error, unable to get the path to the Sigma rules',
+                         exc_info=True)
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                err)
+                'OS Error, unable to get the path to the Sigma rules')
 
-        sigma_rules = ts_sigma_lib.get_sigma_rules(_RULES_PATH)
+        sigma_rules = ts_sigma_lib.get_sigma_rules(rules_path)
         meta = {'current_user': current_user.username,
                 'rules_count': len(sigma_rules)}
         return jsonify({'objects': sigma_rules, 'meta': meta})
@@ -62,27 +64,28 @@ class SigmaResource(resources.ResourceMixin, Resource):
     def get(self, rule_uuid):
         """Handles GET request to the resource.
 
+        Args:
+            rule_uuid: uuid of the sigma rule
+
         Returns:
             JSON sigma rule
         """
-
         return_rule = None
-
         try:
-            _RULES_PATH = ts_sigma_lib.get_sigma_rules_path()
+            rules_path = ts_sigma_lib.get_sigma_rules_path()
 
-        except ValueError as err:
-            logger.error("OS error: {0}".format(err))
+        except ValueError:
+            logger.error('OS Error, unable to get the path to the Sigma rules',
+                         exc_info=True)
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                err)
+                'OS Error, unable to get the path to the Sigma rules')
 
-        sigma_rules = ts_sigma_lib.get_sigma_rules(_RULES_PATH)
+        sigma_rules = ts_sigma_lib.get_sigma_rules(rules_path)
 
         for rule in sigma_rules:
             logger.info(rule)
             if rule_uuid == rule['id']:
-                logger.info("found the right rule")
                 return_rule = rule
 
         if return_rule is None:
