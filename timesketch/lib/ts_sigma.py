@@ -24,6 +24,7 @@ import sigma.configuration as sigma_configuration
 
 from sigma.backends import elasticsearch as sigma_es
 from sigma.parser import collection as sigma_collection
+from sigma.parser import exceptions as sigma_exceptions
 
 logger = logging.getLogger('timesketch.lib.sigma')
 
@@ -133,13 +134,13 @@ def get_sigma_rule(filepath):
         with codecs.open(
                 abs_path, 'r', encoding='utf-8', errors='replace') as file:
             try:
-                rule_file_content = file.read()
-                # TODO the safe load still has problems with --- in a rule file
-                rule_yaml_data = yaml.safe_load(rule_file_content)
-
-                parser = sigma_collection.SigmaCollectionParser(
-                    rule_file_content, sigma_config, None)
-                parsed_sigma_rules = parser.generate(sigma_backend)
+                rule_return = {}
+                rule_yaml_data = yaml.safe_load_all(file.read())
+                for doc in rule_yaml_data:
+                    rule_return.update(doc)
+                    parser = sigma_collection.SigmaCollectionParser(
+                        str(doc), sigma_config, None)
+                    parsed_sigma_rules = parser.generate(sigma_backend)
 
             except NotImplementedError as exception:
                 logger.error(
@@ -147,20 +148,28 @@ def get_sigma_rule(filepath):
                     .format(abs_path, exception))
                 return None
 
+            except sigma_exceptions.SigmaParseError as exception:
+                logger.error(
+                    'Sigma parsing error generating rule in file {0:s}: {1!s}'
+                    .format(abs_path, exception))
+                return None
+
+            except yaml.parser.ParserError as exception:
+                logger.error(
+                    'Yaml parsing error generating rule in file {0:s}: {1!s}'
+                    .format(abs_path, exception))
+                return None
+
             sigma_es_query = ''
+
             for sigma_rule in parsed_sigma_rules:
-                logger.info(
-                    '[sigma] Generated query {0:s}'
-                    .format(sigma_rule))
                 sigma_es_query = sigma_rule
 
-            rule_yaml_data.update(
+            rule_return.update(
                 {'es_query':sigma_es_query})
-            rule_yaml_data.update(
+            rule_return.update(
                 {'file_name':tag_name})
 
-            return rule_yaml_data
-
-
+            return rule_return
 
     return None

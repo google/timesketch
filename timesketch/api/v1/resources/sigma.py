@@ -84,9 +84,9 @@ class SigmaResource(resources.ResourceMixin, Resource):
         sigma_rules = ts_sigma_lib.get_sigma_rules(rules_path)
 
         for rule in sigma_rules:
-            logger.info(rule)
-            if rule_uuid == rule['id']:
-                return_rule = rule
+            if rule is not None:
+                if rule_uuid == rule.get('id'):
+                    return_rule = rule
 
         if return_rule is None:
             abort(
