@@ -31,7 +31,7 @@ limitations under the License.
             </router-link>
           </li>
           <li v-bind:class="{'is-active': currentPage === 'graph'}">
-            <router-link :to="{ name: 'SketchGraph' }">
+            <router-link :to="{ name: 'SketchGraphOverview' }">
               <span class="icon is-small"><i class="fas fa-project-diagram" aria-hidden="true"></i></span>
               <span>Graph</span>
             </router-link>
