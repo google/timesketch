@@ -32,6 +32,7 @@ class Search(resource.SketchResource):
 
     Attributes:
     """
+    DEFAULT_SIZE_LIMIT = 10000
 
     def __init__(self, sketch, api):
         resource_uri = f'sketches/{sketch.id}/explore/'
@@ -49,7 +50,17 @@ class Search(resource.SketchResource):
         self._return_fields = ''
         self._raw_response = None
 
+    def _add_date_chip(self, start_time, end_time):
+        """Add a chip. TODO."""
+        date_string = f'{start_time},{end_time}'
+        self._query_filter.setdefault('chips', [])
+        self._query_filter['chips'].append({
+            'field': '',
+            'type': 'datetime_range',
+            'value': date_string})
+
     def _execute_query(self, scrolling=False, file_name=''):
+        """Missing DOCSTRING."""
         form_data = {
             'query': self._query_string,
             'filter': self._query_filter,
@@ -110,6 +121,81 @@ class Search(resource.SketchResource):
 
         self._raw_response = response_json
 
+    @property
+    def query_filter(self):
+        """Property that returns the query filter."""
+        if not self._query_filter:
+            self._query_filter = {
+                'time_start': None,
+                'time_end': None,
+                'size': 100,
+                'terminate_after': 100,
+                'indices': '_all',
+                'order': 'asc',
+                'chips': [],
+            }
+        return self._query_filter
+
+    @query_filter.setter
+    def query_filter(self, new_filter):
+        """Make changes to the query filter."""
+        self._query_filter = new_filter
+        self.save()
+
+    @property
+    def name(self):
+        """Property that returns the query name."""
+        return self._name
+
+    @name.setter
+    def name(self, new_name):
+        """Make changes to the saved search name."""
+        self._name = new_name
+        self.save()
+
+    @property
+    def description(self):
+        """Property that returns back the description of the saved search."""
+        return self._description
+
+    @description.setter
+    def description(self, new_description):
+        """Make changes to the saved search description field."""
+        self._description = new_description
+        self.save()
+
+    @property
+    def query_string(self):
+        """Property that returns back the query string."""
+        return self._query_string
+
+    @query_string.setter
+    def query_string(self, new_query_string):
+        """Make changes to the query string of a saved search."""
+        self._query_string = new_query_string
+        self.save()
+
+    @property
+    def created_at(self):
+        """Property that returns back the creation time of a search."""
+        return self._created_at
+
+    @property
+    def updated_at(self):
+        """Property that returns back the updated time of a search."""
+        return self._updated_at
+
+    @property
+    def query_dsl(self):
+        """Property that returns back the query DSL."""
+        return self._query_dsl
+
+    @query_dsl.setter
+    def query_dsl(self, new_query_dsl):
+        """Make changes to the query DSL of the search."""
+        self._query_dsl = new_query_dsl
+        self.commit()
+
     def from_store(self, search_id):
         """Initialize the search object from a stored search.
 
@@ -125,26 +211,23 @@ class Search(resource.SketchResource):
             logger.error('Unable to get any data back from a saved search.')
             return
 
-        self._object_data = data
-        self._resource_id = search_id
-
         label_string = data.get('label_string', '')
         if label_string:
             self._labels = json.loads(label_string)
         else:
             self._labels = []
 
-        self._username = data.get('user', {}).get('username', 'System')
-
-        self._name = data.get('name', '')
-        self._description = data.get('description', '')
-        self._query_string = data.get('query_string', '')
-        self._query_filter = data.get('query_filter', {})
-        self._query_dsl = data.get('query_dsl', '')
-        self._searchtemplate = data.get('searchtemplate', 0)
         self._aggregations = data.get('aggregation', 0)
         self._created_at = data.get('created_at', '')
+        self._description = data.get('description', '')
+        self._name = data.get('name', '')
+        self._query_dsl = data.get('query_dsl', '')
+        self._query_filter = data.get('query_filter', {})
+        self._query_string = data.get('query_string', '')
+        self._resource_id = search_id
+        self._searchtemplate = data.get('searchtemplate', 0)
         self._updated_at = data.get('updated_at', '')
+        self._username = data.get('user', {}).get('username', 'System')
         self.resource_data = data
 
     def from_explore(
@@ -153,7 +236,6 @@ class Search(resource.SketchResource):
             query_dsl=None,
             query_filter=None,
             return_fields=None,
-            as_pandas=False,
             max_entries=None,
             file_name='',
             **kwargs):
@@ -166,8 +248,6 @@ class Search(resource.SketchResource):
             return_fields (str): A comma separated string with a list of fields
                 that should be included in the response. Optional and defaults
                 to None.
-            as_pandas (bool): Optional bool that determines if the results
-                should be returned back as a dictionary or a Pandas DataFrame.
             max_entries (int): Optional integer denoting a best effort to limit
                 the output size to the number of events. Events are read in,
                 10k at a time so there may be more events in the answer back
@@ -180,11 +260,6 @@ class Search(resource.SketchResource):
             kwargs (dict[str, object]): Depending on the resource they may require
                 different sets of arguments to be able to run a raw API request.
 
-        Returns:
-            Dictionary with query results or a pandas DataFrame if as_pandas
-            is set to True. If file_name is provided then no value will be
-            returned.
-
         Raises:
             ValueError: if unable to query for the results.
             RuntimeError: if the query is missing needed values, or if the
@@ -195,9 +270,12 @@ class Search(resource.SketchResource):
             raise RuntimeError('You need to supply a query')
 
         self._username = getpass.getuser()
+        self._name = 'From Explore'
+        self._description = 'From Explore'
 
         self._query_string = query_string
         self._query_dsl = query_dsl
+        self._return_fields = return_fields
         #self._searchtemplate = data.get('searchtemplate', 0)
         #self._aggregations = data.get('aggregation', 0)
 
@@ -230,10 +308,6 @@ class Search(resource.SketchResource):
             raise ValueError(
                 'Unable to query with a query filter that isn\'t a dict.')
 
-        if as_pandas:
-            query_filter.setdefault('size', self.DEFAULT_SIZE_LIMIT)
-            query_filter.setdefault('terminate_after', self.DEFAULT_SIZE_LIMIT)
-
         self._query_filter = query_filter
 
     def to_dict(self):
@@ -245,12 +319,16 @@ class Search(resource.SketchResource):
 
     def to_pandas(self):
         """Returns a pandas DataFrame."""
+        if not self._raw_response:
+          self._execute_query()
+
         return_list = []
         timelines = {}
-        for timeline_obj in self.list_timelines():
+        for timeline_obj in self._sketch.list_timelines():
             timelines[timeline_obj.index] = timeline_obj.name
 
         return_field_list = []
+        return_fields = self._return_fields
         if return_fields:
             if return_fields.startswith('\''):
                 return_fields = return_fields[1:]
@@ -258,7 +336,7 @@ class Search(resource.SketchResource):
                 return_fields = return_fields[:-1]
             return_field_list = return_fields.split(',')
 
-        for result in search_response.get('objects', []):
+        for result in self._raw_response.get('objects', []):
             source = result.get('_source', {})
             if not return_fields or '_id' in return_field_list:
                 source['_id'] = result.get('_id')
@@ -287,26 +365,49 @@ class Search(resource.SketchResource):
         return data_frame
 
     def save(self):
-        """Save the aggregation in the database."""
-        # TODO: FIX THIS
-        data = {
-            'name': self.name,
-            'description': self.description,
-            'agg_type': self.aggregator_name,
-            'parameters': self._parameters,
-            'chart_type': self.chart_type,
-        }
+        """Save the search in the database."""
+
         if self.view:
             data['view_id'] = self.view
         if self._labels:
             data['labels'] = json.dumps(self._labels)
 
         if self._resource_id:
-            resource_url = '{0:s}/sketches/{1:d}/aggregation/{2:d}/'.format(
-                self.api.api_root, self._sketch.id, self._resource_id)
+            resource_url = (
+                f'{self.api.api_root}/sketches/{self._sketch.id}/views/'
+                f'{self._resource_id}/')
         else:
-            resource_url = '{0:s}/sketches/{1:d}/aggregation/'.format(
-                self.api.api_root, self._sketch.id)
+            resource_url = (
+                f'{self.api.api_root}/sketches/{self._sketch.id}/views/')
+
+        data = {
+            'name': self.name,
+            'description': 
+            'query': self.query_string,
+            'filter': self.query_filter,
+            'dsl': self.query_dsl,
+        }
+        response = self.api.session.post(resource_url, json=data)
+
+        """
+    new_searchtemplate = BooleanField(
+        'Create search template',
+        false_values={False, 'false', ''},
+        default=False)
+    from_searchtemplate_id = IntegerField('Create from search template')
+        """
+        status = error.check_return_status(response, logger)
+        if not status:
+            error.error_message(
+                response, 'Unable to create view', error=RuntimeError)
+
+        response_json = error.get_response_json(response, logger)
+        view_dict = response_json.get('objects', [{}])[0]
+        return view_lib.View(
+            view_id=view_dict.get('id'),
+            view_name=name,
+            sketch_id=self.id,
+            api=self.api)
 
         response = self.api.session.post(resource_url, json=data)
         if not error.check_return_status(response, logger):
@@ -317,7 +418,6 @@ class Search(resource.SketchResource):
         if not objects:
             return 'Unable to determine ID of saved object.'
         agg_data = objects[0]
-        self._object_data = agg_data
         self._resouce_id = agg_data.get('id', -1)
         return 'Saved aggregation to ID: {0:d}'.format(self._resource_id)
 

@@ -273,12 +273,27 @@ class ViewResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have write access controls on sketch.')
         view = View.query.get(view_id)
+
+        if not view:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No view found with this ID.')
+
+        if view.sketch.id != sketch.id:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to update view, view not attached to sketch.')
+
         view.query_string = form.query.data
+        description = form.description.data
+        if description:
+            view.description = description
 
         query_filter = form.filter.data
+
         # Stripping potential pagination from views before saving it.
         if 'from' in query_filter:
             del query_filter['from']
+
         view.query_filter = json.dumps(query_filter, ensure_ascii=False)
 
         view.query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)

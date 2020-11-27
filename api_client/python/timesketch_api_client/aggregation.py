@@ -40,7 +40,6 @@ class Aggregation(resource.SketchResource):
     """
 
     def __init__(self, sketch, api):
-        self._object_data = {}
         self._parameters = {}
         self.aggregator_name = ''
         self.chart_color = ''
@@ -135,7 +134,7 @@ class Aggregation(resource.SketchResource):
         if not data:
             return
 
-        self._object_data = data
+        self.resource_data = data
         self.aggregator_name = data.get('agg_type')
         self.type = 'stored'
 
@@ -248,17 +247,17 @@ class Aggregation(resource.SketchResource):
     @property
     def description(self):
         """Property that returns the description string."""
-        return self._object_data.get('description', '')
+        return self.resource_data.get('description', '')
 
     @description.setter
     def description(self, description):
         """Set the description of an aggregation."""
-        self._object_data['description'] = description
+        self.resource_data['description'] = description
 
     @property
     def name(self):
         """Property that returns the name of the aggregation."""
-        name = self._object_data.get('name')
+        name = self.resource_data.get('name')
         if name:
             return name
         return self.aggregator_name
@@ -266,7 +265,7 @@ class Aggregation(resource.SketchResource):
     @name.setter
     def name(self, name):
         """Set the name of the aggregation."""
-        self._object_data['name'] = name
+        self.resource_data['name'] = name
 
     def add_label(self, label):
         """Add a label to the aggregation.
@@ -347,7 +346,7 @@ class Aggregation(resource.SketchResource):
         if not objects:
             return 'Unable to determine ID of saved object.'
         agg_data = objects[0]
-        self._object_data = agg_data
+        self.resource_data = agg_data
         self._resouce_id = agg_data.get('id', -1)
         return 'Saved aggregation to ID: {0:d}'.format(self._resource_id)
 

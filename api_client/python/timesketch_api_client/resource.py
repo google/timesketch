@@ -68,15 +68,84 @@ class SketchResource(BaseResource):
         super().__init__(api, resource_uri)
 
         self._labels = []
-        self._object_data = {}
         self._resource_id = -1
         self._sketch = sketch
         self._username = ''
+
+    def _get_top_level_attribute(self, name, default_value=None, refresh=False):
+        """Returns a top level attribute from a resource object.
+
+        Args:
+            name: String with the attribute name.
+            default_value: The default value if the attribute does not exit,
+                defaults to None.
+            refresh: If set to True then the data will be refreshed.
+
+        Returns:
+            The dict value of the key "name".
+        """
+        resource = self.lazyload_data(refresh_cache=refresh)
+        resource_objects = resource.get('objects')
+        if not resource_objects:
+            return default_value
+
+        if not len(resource_objects) == 1:
+            return default_value
+
+        first_object = resource_objects[0]
+        return first_object.get(name, default_value)
+
+    def add_label(self, label):
+        """Add a label to the resource.
+
+        Args:
+            label (str): string with the label information.
+        """
+        if label in self._labels:
+            return
+        self._labels.append(label)
+        self.save()
+
+    def commit():
+        """Calls the save function if the object has already been saved."""
+        if self._resource_id == -1:
+            return
+        self.save()
+
+    def delete(self):
+        """Deletes the resource from the list of stored resources."""
+        raise NotImplementedError
 
     @property
     def dict(self):
         """Property that returns back a Dict with the results."""
         return self.to_dict()
+
+    def from_explore(self, **kwargs):
+        """Initialize the resource object by running a raw API request.
+
+        The API request functionality should be implemented by other functions
+        that inherit this as a base class.
+
+        Args:
+            kwargs (dict[str, object]): Depending on the resource they may require
+                different sets of arguments to be able to run a raw API request.
+
+        Raises:
+            ValueError: If there are any unused keyword arguments passed to
+                the function.
+        """
+        if kwargs:
+            raise ValueError('Unused keyword arguments: {0:s}.'.format(
+                ', '.join(kwargs.keys())))
+
+    def from_store(self, resource_id):
+        """Initialize the resource object from a stored resource.
+
+        Args:
+            resource_id: integer value for the stored resource (primary key).
+        """
+        raise NotImplementedError
 
     @property
     def id(self):
@@ -104,47 +173,6 @@ class SketchResource(BaseResource):
         if not self._username:
             return 'System'
         return self._username
-
-    def add_label(self, label):
-        """Add a label to the resource.
-
-        Args:
-            label (str): string with the label information.
-        """
-        if label in self._labels:
-            return
-        self._labels.append(label)
-        self.save()
-
-    def delete(self):
-        """Deletes the resource from the list of stored resources."""
-        raise NotImplementedError
-
-    def from_store(self, resource_id):
-        """Initialize the resource object from a stored resource.
-
-        Args:
-            resource_id: integer value for the stored resource (primary key).
-        """
-        raise NotImplementedError
-
-    def from_explore(self, **kwargs):
-        """Initialize the resource object by running a raw API request.
-
-        The API request functionality should be implemented by other functions
-        that inherit this as a base class.
-
-        Args:
-            kwargs (dict[str, object]): Depending on the resource they may require
-                different sets of arguments to be able to run a raw API request.
-
-        Raises:
-            ValueError: If there are any unused keyword arguments passed to
-                the function.
-        """
-        if kwargs:
-            raise ValueError('Unused keyword arguments: {0:s}.'.format(
-                ', '.join(kwargs.keys())))
 
     def to_dict(self):
         """Returns a dict."""
