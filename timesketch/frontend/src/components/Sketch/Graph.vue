@@ -15,38 +15,35 @@ limitations under the License.
 -->
 <template>
 <div>
-
     <section class="section">
       <div class="container is-fluid" style="height: 75vh;" ref="graphContainer">
-
             <div class="card" style="height: 100%;">
               <header class="card-header" style="border-bottom: 0;">
-                <span class="card-header-title" style="min-width: 170px;">
-                  <strong>{{ currentGraph }}</strong>
-                </span>
+
+                <div v-if="currentGraph">
+                <b-dropdown aria-role="list">
+
+                  <a class="button ts-search-dropdown" style="background-color: transparent;" slot="trigger" slot-scope="{ active }">
+                    <span class="icon is-small" style="margin-right: 10px; margin-top:2px; font-size: 0.6em;">
+                      <i class="fas fa-project-diagram"></i>
+                    </span>
+                    <div v-if="currentGraph" style="margin-right: 7px;"><strong>{{ currentGraph }}</strong></div>
+                    <b-icon :icon="active ? 'chevron-up' : 'chevron-down'" style="font-size: 0.6em;"></b-icon>
+                  </a>
+
+                  <b-dropdown-item v-for="graphPlugin in graphs" :key="graphPlugin.name" v-on:click="buildGraph(graphPlugin)">
+                    <router-link :to="{ name: 'SketchGraphExplore', query: {plugin: graphPlugin.name}}">{{ graphPlugin.display_name }}</router-link>
+                  </b-dropdown-item>
+                  <b-dropdown-item v-for="savedGraph in savedGraphs" :key="savedGraph.id" v-on:click="buildSavedGraph(savedGraph)">
+                    <router-link :to="{ name: 'SketchGraphExplore', query: {graph: savedGraph.id}}">{{ savedGraph.name }}</router-link>
+                  </b-dropdown-item>
+                </b-dropdown>
+
+                </div>
+
                 <input class="ts-search-input" v-if="currentGraph" v-model="filterString" v-on:keyup="filterGraphByInput" style="border-radius: 0; padding:25px;" placeholder="Filter nodes and edges"></input>
-                <span class="card-header-icon">
 
-                  <b-dropdown ref="graphDropdown" position="is-bottom-left" aria-role="menu" trap-focus append-to-body>
-                      <button class="button is-info is-rounded is-small" slot="trigger">
-                        <span>Select graph</span>
-                      </button>
-                      <div class="modal-card" style="width:350px;color: var(--font-color-dark);">
-                        <section class="modal-card-body">
-
-                          <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
-                            <div v-for="graphPlugin in graphs" :key="graphPlugin.name" style="margin-bottom: 7px;">
-                              <button class="button is-rounded is-fullwidth" v-on:click="buildGraph(graphPlugin)" :disabled="isLoading">{{ graphPlugin.display_name }}</button>
-                            </div>
-                            <div v-for="savedGraph in savedGraphs" :key="savedGraph.id" style="margin-bottom: 7px;">
-                              <button class="button is-rounded is-fullwidth" v-on:click="buildSavedGraph(savedGraph)">{{ savedGraph.name }}</button>
-                            </div>
-                          </b-dropdown-item>
-
-                        </section>
-                      </div>
-                  </b-dropdown>
-
+                <span class="card-header-icon" v-if="currentGraph">
                   <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body>
                       <button class="button is-outlined is-rounded is-small" slot="trigger" :disabled="!currentGraph">
                         <span class="icon is-small">
@@ -55,9 +52,7 @@ limitations under the License.
                         <span>Settings</span>
                       </button>
                       <div class="modal-card" style="width:500px;color: var(--font-color-dark);">
-
                         <section class="modal-card-body">
-
                           <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
                             <b-field label="Transparency for unselected elements">
                               <b-slider class="is-rounded" type="is-info" :custom-formatter="val => val + '%'" v-model="fadeOpacity" v-on:input="changeOpacity"></b-slider>
@@ -74,9 +69,7 @@ limitations under the License.
                                 <span>{{ edge }}</span>
                               </b-radio>
                             </b-field>
-
                           </b-dropdown-item>
-
                         </section>
                       </div>
                   </b-dropdown>
@@ -108,14 +101,14 @@ limitations under the License.
                     <span class="icon is-small">
                       <i class="fas fa-sync-alt"></i>
                     </span>
-                    <span>Refresh</span>
+                    <span>Refresh cache</span>
                   </button>
 
                   <button class="button is-outlined is-rounded is-small" style="margin-left:7px;" v-on:click="cy.fit()">
                     <span class="icon is-small">
-                      <i class="fas fa-sync-alt"></i>
+                      <i class="fas fa-eye"></i>
                     </span>
-                    <span>Fit</span>
+                    <span>Fit to canvas</span>
                   </button>
 
                 </span>
@@ -126,7 +119,6 @@ limitations under the License.
                   <div style="position: absolute; margin-top:120px;">Generating graph: <b>{{currentGraph}}</b></div>
                 </b-loading>
                 <div class="no-data" v-if="!elements.length && showGraph && currentGraph">Empty graph</div>
-                <div class="no-data" v-if="!currentGraph">Click on a graph from the list to the right to get started.</div>
                 <cytoscape
                   ref="cyRef"
                   v-if="elements.length && showGraph"
@@ -151,30 +143,10 @@ limitations under the License.
               </div>
             </div>
           </div>
-
-          <!--
-          <div class="column is-one-fifth">
-            <div class="card" style="height: 100%">
-              <header class="card-header" style="border-bottom: 0;">
-                <span class="card-header-title">Available graphs</span>
-              </header>
-              <div class="card-content">
-                  <div v-for="graphPlugin in graphs" :key="graphPlugin.name" style="margin-bottom: 7px;">
-                    <button class="button is-rounded is-fullwidth" v-on:click="buildGraph(graphPlugin)" :disabled="isLoading">{{ graphPlugin.display_name }}</button>
-                  </div>
-                  <div v-for="savedGraph in savedGraphs" :key="savedGraph.id" style="margin-bottom: 7px;">
-                    <button class="button is-rounded is-fullwidth" v-on:click="buildSavedGraph(savedGraph)">{{ savedGraph.name }}</button>
-                  </div>
-              </div>
-            </div>
-          </div>
-          --->
-
     </section>
 
-    <section class="section">
+    <section class="section" v-if="edgeQuery">
       <div class="container is-fluid">
-
         <div class="card">
           <header class="card-header">
             <span class="card-header-title">Events for selected edges</span>
@@ -183,7 +155,6 @@ limitations under the License.
             <ts-event-list-compact v-if="edgeQuery" :query-dsl="edgeQuery"></ts-event-list-compact>
           </div>
         </div>
-
       </div>
     </section>
   </div>
@@ -357,13 +328,17 @@ export default {
   },
   methods: {
     buildGraph: function (graphPlugin, refresh=false) {
-      this.$refs.graphDropdown.toggle()
       this.config.layout.name = this.layoutName
 
       let edgeStyle = this.config.style.filter(selector => selector.selector === 'edge')
       edgeStyle[0].style['curve-style'] = this.edgeStyle
 
-      this.currentGraph = graphPlugin.name
+      if (typeof graphPlugin === 'object') {
+        this.currentGraph = graphPlugin.name
+      } else {
+        this.currentGraph = graphPlugin
+      }
+
       this.showGraph = false
       this.elements = []
       this.loadingTimeout = setTimeout(()=>{
@@ -376,7 +351,7 @@ export default {
       this.sketch.timelines.forEach((timeline) => {
         currentIndices.push(timeline.searchindex.index_name)
       })
-      ApiClient.generateGraphFromPlugin(this.sketch.id, graphPlugin.name, currentIndices, refresh).then((response) => {
+      ApiClient.generateGraphFromPlugin(this.sketch.id, this.currentGraph, currentIndices, refresh).then((response) => {
         let graphCache = response.data['objects'][0]
         let elementsCache = JSON.parse(graphCache.graph_elements)
         let elements = []
@@ -397,7 +372,6 @@ export default {
       })
     },
     buildSavedGraph: function (savedGraph) {
-      this.$refs.graphDropdown.toggle()
       this.config.layout.name = 'preset'
       this.currentGraph = savedGraph.name
       this.currentGraphCache = {}
@@ -409,7 +383,16 @@ export default {
         }
       },600)
       this.edgeQuery = ''
-      ApiClient.getSavedGraph(this.sketch.id, savedGraph.id).then((response) => {
+
+      let graphId = ''
+      if (typeof savedGraph === 'object') {
+        graphId = savedGraph.id
+      } else {
+        graphId = savedGraph
+      }
+
+      ApiClient.getSavedGraph(this.sketch.id, graphId).then((response) => {
+        this.currentGraph = response.data['objects'][0].name
         let elements = JSON.parse(response.data['objects'][0].elements)
         let nodes = elements.filter(ele => ele.group === 'nodes')
         let edges = elements.filter(ele => ele.group === 'edges')
@@ -574,7 +557,6 @@ export default {
     }
   },
   created() {
-    //window.addEventListener("resize", this.resizeCanvas);
     window.addEventListener('resize', _.debounce(() => {
       this.resizeCanvas()
     }, 250))
@@ -592,6 +574,19 @@ export default {
         console.error(e)
     })
     EventBus.$on('isDarkTheme', this.setTheme)
+
+    this.params = {
+      graphId: this.$route.query.graph,
+      pluginName: this.$route.query.plugin
+    }
+
+    if (this.params.graphId) {
+      this.buildSavedGraph(this.params.graphId)
+    }
+
+    if (this.params.pluginName) {
+      this.buildGraph(this.params.pluginName)
+    }
   }
 }
 </script>
