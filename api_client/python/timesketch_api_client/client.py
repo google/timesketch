@@ -495,7 +495,6 @@ class TimesketchApi(object):
         request = google.auth.transport.requests.Request()
         self.credentials.credential.refresh(request)
 
-
     def list_sigma_rules(self, as_pandas=False):
         """Get a dict of all sigma rules that the user has access to.
 
@@ -504,7 +503,7 @@ class TimesketchApi(object):
                 as a Pandas DataFrame instead of a list of dicts.
 
         Returns:
-            A list with dict objects with the information about sigma rule,
+            A list with dicts with the information about sigma rule,
             unless as_pandas is set, then the function returns a DataFrame
             object.
         """
@@ -514,10 +513,13 @@ class TimesketchApi(object):
             return response
 
         records = response['objects']
+
+        if not records:
+            raise ValueError('No rules found.')
+
         rules_pandas = pandas.DataFrame.from_records(records)
 
         return rules_pandas
-
 
     def get_sigma_rule(self, rule_uuid):
         """Get a sigma rule.
