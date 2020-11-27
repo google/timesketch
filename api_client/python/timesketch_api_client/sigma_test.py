@@ -17,7 +17,6 @@ from __future__ import unicode_literals
 import unittest
 import mock
 
-# TODO remove config
 from . import test_lib
 from . import client
 
@@ -48,7 +47,7 @@ class TimesketchSigmaTest(unittest.TestCase):
 
     def test_sigma_rules(self):
         '''Testing the Sigma rules list'''
-        
+
         rules = self.api_client.list_sigma_rules()
         self.assertIsNotNone(rules)
         self.assertEqual(rules['meta']['rules_count'], 2)
