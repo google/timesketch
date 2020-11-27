@@ -22,7 +22,6 @@ from . import test_lib
 from . import client
 
 
-
 class TimesketchSigmaTest(unittest.TestCase):
     """Test Sigma."""
 
@@ -31,24 +30,25 @@ class TimesketchSigmaTest(unittest.TestCase):
         """Setup test case."""
         self.api_client = client.TimesketchApi(
             'http://127.0.0.1', 'test', 'test')
-        self.rule = self.api_client.get_sigma_rule(
-            "5266a592-b793-11ea-b3de-0242ac130004")
-        self.rules = self.api_client.list_sigma_rules()
 
     def test_sigma_rule(self):
         """Test single Sigma rule."""
 
-        self.assertIsNotNone(self.rule)
+        rule = self.api_client.get_sigma_rule(
+            '5266a592-b793-11ea-b3de-0242ac130004')
+
+        self.assertIsNotNone(rule)
 
         self.assertEqual(
-            self.rule.title, 'Suspicious Installation of Zenmap',
-            "Title of the rule does not match")
+            rule.title, 'Suspicious Installation of Zenmap',
+            'Title of the rule does not match')
         self.assertEqual(
-            self.rule.id, '5266a592-b793-11ea-b3de-0242ac130004',
-            "Id of the rule does not match")
+            rule.id, '5266a592-b793-11ea-b3de-0242ac130004',
+            'Id of the rule does not match')
 
     def test_sigma_rules(self):
         '''Testing the Sigma rules list'''
-
-        self.assertIsNotNone(self.rules)
-        self.assertEqual(self.rules['meta']['rules_count'], 2)
+        
+        rules = self.api_client.list_sigma_rules()
+        self.assertIsNotNone(rules)
+        self.assertEqual(rules['meta']['rules_count'], 2)
