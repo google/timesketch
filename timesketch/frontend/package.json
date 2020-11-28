@@ -16,6 +16,7 @@
     "axios": "^0.18.0",
     "buefy": "^0.9.4",
     "bulma": "^0.9.1",
+    "cytoscape-dagre": "^2.3.1",
     "cytoscape-spread": "^3.0.0",
     "lodash": "^4.17.11",
     "marked": "^1.1.1",
