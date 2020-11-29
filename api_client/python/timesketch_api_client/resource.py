@@ -14,8 +14,6 @@
 """Timesketch API client library."""
 import json
 
-from __future__ import unicode_literals
-
 
 class BaseResource:
     """Base resource object."""
@@ -128,8 +126,9 @@ class SketchResource(BaseResource):
         that inherit this as a base class.
 
         Args:
-            kwargs (dict[str, object]): Depending on the resource they may require
-                different sets of arguments to be able to run a raw API request.
+            kwargs (dict[str, object]): Depending on the resource they may
+                require different sets of arguments to be able to run a raw
+                API request.
 
         Raises:
             ValueError: If there are any unused keyword arguments passed to
