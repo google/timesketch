@@ -163,7 +163,7 @@ class Search(resource.SketchResource):
 
     def delete(self):
         """Implement this TODO."""
-        pass
+        return False
 
     @property
     def description(self):

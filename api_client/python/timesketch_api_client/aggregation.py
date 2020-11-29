@@ -120,6 +120,7 @@ class Aggregation(resource.SketchResource):
 
         return error.get_response_json(response, logger)
 
+    # pylint: disable=arguments-differ
     def from_store(self, aggregation_id):
         """Initialize the aggregation object from a stored aggregation.
 
@@ -158,7 +159,8 @@ class Aggregation(resource.SketchResource):
             aggregator_name=self.aggregator_name, parameters=parameters,
             chart_type=chart_type)
 
-    def from_explore(self, aggregate_dsl, **kwargs)
+    # pylint: disable=arguments-differ
+    def from_explore(self, aggregate_dsl, **kwargs):
         """Initialize the aggregation object by running an aggregation DSL.
 
         Args:
@@ -347,8 +349,12 @@ class Aggregation(resource.SketchResource):
             return 'Unable to determine ID of saved object.'
         agg_data = objects[0]
         self.resource_data = agg_data
-        self._resouce_id = agg_data.get('id', -1)
+        self._resource_id = agg_data.get('id', -1)
         return 'Saved aggregation to ID: {0:d}'.format(self._resource_id)
+
+    def delete(self):
+        """DELETE TODO."""
+        #Todo : Implement
 
 
 class AggregationGroup(resource.SketchResource):
@@ -358,7 +364,7 @@ class AggregationGroup(resource.SketchResource):
         """Initialize the aggregation group."""
         resource_uri = 'sketches/{0:d}/aggregation/group/'.format(
             sketch.id)
-        super().__init__(api=api, resource_uri=resouce_uri, sketch=sketch)
+        super().__init__(api=api, resource_uri=resource_uri, sketch=sketch)
 
         self._name = 'N/A'
         self._description = 'N/A'
@@ -370,6 +376,10 @@ class AggregationGroup(resource.SketchResource):
         """Return a string representation of the group."""
         return '[{0:d}] {1:s} - {2:s}'.format(
             self._resource_id, self._name, self._description)
+
+    def to_dict(self):
+        """TODO."""
+        # TODO: Implement.
 
     @property
     def chart(self):
@@ -478,6 +488,7 @@ class AggregationGroup(resource.SketchResource):
             agg_obj.from_store(agg_id)
             self._aggregations.append(agg_obj)
 
+    # pylint: disable=arguments-differ
     def from_store(self, group_id):
         """Feed group data from a group ID.
 
