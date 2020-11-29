@@ -353,8 +353,17 @@ class Aggregation(resource.SketchResource):
         return 'Saved aggregation to ID: {0:d}'.format(self._resource_id)
 
     def delete(self):
-        """DELETE TODO."""
-        #Todo : Implement
+        """Deletes the aggregation from the store."""
+        if not self._resource_id:
+            logger.warning(
+                'Unable to delete the aggregation, it does not appear to be '
+                'saved in the first place.')
+            return False
+
+        resource_uri = '{0:s}/sketches/{1:d}/aggregation/{2:d}/'.format(
+            self.api.api_root, self._sketch.id, self._resource_id)
+        response = self.api.session.delete(resource_uri)
+        return error.check_return_status(response, logger)
 
 
 class AggregationGroup(resource.SketchResource):

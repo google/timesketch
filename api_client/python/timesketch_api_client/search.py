@@ -26,11 +26,99 @@ from . import resource
 logger = logging.getLogger('timesketch_api.search')
 
 
-class Search(resource.SketchResource):
-    """Search object.
+class Chip:
+    """Class for the a search chip."""
 
-    Attributes:
-    """
+    # The type of a chip that is defiend.
+    CHIP_TYPE = ''
+
+    # The chip value defines what property or attribute of the
+    # chip class will be used to generate the chip value.
+    CHIP_VALUE = ''
+
+    # The value of the chip field.
+    CHIP_FIELD = ''
+
+    @property
+    def chip(self):
+        """A property that returns the chip value."""
+        return {
+            'field': self.CHIP_FIELD,
+            'type': self.CHIP_TYPE,
+            'value': getattr(self, self.CHIP_VALUE, ''),
+        }
+
+
+class DateRangeChip(Chip):
+    """A date chip."""
+
+    TYPE = 'datetime_range'
+
+    _DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
+
+    def __init__(self):
+        super().__init__()
+        self._start_date = None
+        self._end_date = None
+
+    def add_end(self, end_time):
+        try:
+            dt = datetime.datetime.strptime(end_time, self._DATE_FORMAT)
+        except ValueError as exc:
+            logger.error(
+                'Unable to add date chip, wrong date format', exc_info=True)
+            raise ValueError('Wrong date format') from exc
+        self._end_date = dt
+
+    def add_start(self, start_time):
+        try:
+            dt = datetime.datetime.strptime(start_time, self._DATE_FORMAT)
+        except ValueError as exc:
+            logger.error(
+                'Unable to add date chip, wrong date format', exc_info=True)
+            raise ValueError('Wrong date format') from exc
+        self._start_date = dt
+
+    @property
+    def end_time(self):
+        """Property that returns the end time of a range."""
+        if not self._end_date:
+            return ''
+        return self._end_date.strftime(self._DATE_FORMAT)
+
+    @end_time.setter
+    def end_time(self, end_time):
+        """Sets the new end time."""
+        self.add_end(end_time)
+
+    @property
+    def date_range(self):
+        """Property that returns back the range."""
+        return f'{self.start_time},{self.end_time}'
+
+    @date_range.setter
+    def date_range(self, date_range):
+        """Sets the new range of the date range chip."""
+        start_time, end_time = date_range.split(',')
+        self.add_start(start_time)
+        self.add_end(end_time)
+
+    @property
+    def start_time(self):
+        """Property that returns the start time of a range."""
+        if not self._start_date:
+            return ''
+        return self._start_date.strftime(self._DATE_FORMAT)
+
+    @start_time.setter
+    def start_time(self, start_time):
+        """Sets the new start time of a range."""
+        self.add_start(start_time)
+
+
+class Search(resource.SketchResource):
+    """Search object."""
+
     DEFAULT_SIZE_LIMIT = 10000
 
     def __init__(self, sketch, api):
@@ -38,6 +126,7 @@ class Search(resource.SketchResource):
         super().__init__(
             sketch=sketch, api=api, resource_uri=resource_uri)
         self._name = ''
+        self._chips = []
         self._description = ''
         self._query_string = ''
         self._query_filter = {}
@@ -51,19 +140,9 @@ class Search(resource.SketchResource):
         self._return_fields = ''
         self._raw_response = None
 
-    def _add_date_chip(self, start_time, end_time):
-        """Add a chip. TODO."""
-        date_string = f'{start_time},{end_time}'
-        self._query_filter.setdefault('chips', [])
-        self._query_filter['chips'].append({
-            'field': '',
-            'type': 'datetime_range',
-            'value': date_string})
-
     def _execute_query(self, scrolling=True, file_name=''):
         """Missing DOCSTRING."""
-        query_filter = self._query_filter
-
+        query_filter = self.query_filter
         if query_filter:
             stop_size = query_filter.get('size', 0)
             terminate_after = query_filter.get('terminate_after', 0)
@@ -150,6 +229,17 @@ class Search(resource.SketchResource):
 
         self._raw_response = response_json
 
+    def add_chip(self, chip):
+        """Add a chip to the ..."""
+        self._chips.append(chip)
+
+    def add_date_range(self, start_time, end_time):
+        """Add docstring."""
+        chip = DateRangeChip()
+        chip.start_time = start_time
+        chip.end_time = end_time
+        self._chips.append(chip)
+
     @property
     def name(self):
         """Property that returns the query name."""
@@ -162,8 +252,18 @@ class Search(resource.SketchResource):
         self.commit()
 
     def delete(self):
-        """Implement this TODO."""
-        return False
+        """Deletes the aggregation from the store."""
+        if not self._resource_id:
+            logger.warning(
+                'Unable to delete the saved search, it does not appear to be '
+                'saved in the first place.')
+            return False
+
+        resource_url = (
+            f'{self.api.api_root}/sketches/{self._sketch.id}/views/'
+            f'{self._resource_id}/')
+        response = self.api.session.delete(resource_url)
+        return error.check_return_status(response, logger)
 
     @property
     def description(self):
@@ -205,7 +305,13 @@ class Search(resource.SketchResource):
                 'order': 'asc',
                 'chips': [],
             }
-        return self._query_filter
+        query_filter = self._query_filter
+        if self._chips:
+            if 'chips' in query_filter:
+                query_filter['chips'].extend([x.chip for x in self._chips])
+            else:
+                query_filter['chips'] = [x.chip for x in self._chips]
+        return query_filter
 
     @query_filter.setter
     def query_filter(self, query_filter):
