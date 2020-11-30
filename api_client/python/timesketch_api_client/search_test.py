@@ -58,5 +58,3 @@ class SearchTest(unittest.TestCase):
 
         objects = search_dict.get('objects', [])
         self.assertEqual(len(objects), 1)
-
-
