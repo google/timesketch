@@ -34,7 +34,6 @@ class SketchTest(unittest.TestCase):
         self.sketch = self.api_client.get_sketch(1)
 
     # TODO: Add test for upload()
-    # TODO: Add test for explore()
 
     def test_get_searches(self):
         """Test to get a search."""

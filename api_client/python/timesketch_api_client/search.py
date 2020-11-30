@@ -243,7 +243,7 @@ class DateRangeChip(Chip):
     @end_time.setter
     def end_time(self, end_time):
         """Sets the new end time."""
-        self.add_end(end_time)
+        self.add_end_time(end_time)
 
     @property
     def date_range(self):
@@ -254,8 +254,8 @@ class DateRangeChip(Chip):
     def date_range(self, date_range):
         """Sets the new range of the date range chip."""
         start_time, end_time = date_range.split(',')
-        self.add_start(start_time)
-        self.add_end(end_time)
+        self.add_start_time(start_time)
+        self.add_end_time(end_time)
 
     @property
     def start_time(self):
@@ -267,7 +267,7 @@ class DateRangeChip(Chip):
     @start_time.setter
     def start_time(self, start_time):
         """Sets the new start time of a range."""
-        self.add_start(start_time)
+        self.add_start_time(start_time)
 
 
 class LabelChip(Chip):
@@ -369,34 +369,21 @@ class Search(resource.SketchResource):
                 the results will be stored in the search object.
         """
         query_filter = self.query_filter
-        if query_filter:
-            stop_size = query_filter.get('size', 0)
-            terminate_after = query_filter.get('terminate_after', 0)
-            if terminate_after and (terminate_after < stop_size):
-                stop_size = terminate_after
-
-            scrolling = not bool(stop_size and (
-                stop_size < self.DEFAULT_SIZE_LIMIT))
-        else:
-            stop_size = 0
-            query_filter = {
-                'time_start': None,
-                'time_end': None,
-                'size': self.DEFAULT_SIZE_LIMIT,
-                'terminate_after': self.DEFAULT_SIZE_LIMIT,
-                'indices': '_all',
-                'order': 'asc',
-                'chips': [],
-            }
-
         if not isinstance(query_filter, dict):
             raise ValueError(
                 'Unable to query with a query filter that isn\'t a dict.')
 
-        self._query_filter = query_filter
+        stop_size = query_filter.get('size', 0)
+        terminate_after = query_filter.get('terminate_after', 0)
+        if terminate_after and (terminate_after < stop_size):
+            stop_size = terminate_after
+
+        scrolling = not bool(stop_size and (
+            stop_size < self.DEFAULT_SIZE_LIMIT))
+
         form_data = {
             'query': self._query_string,
-            'filter': self._query_filter,
+            'filter': query_filter,
             'dsl': self._query_dsl,
             'fields': self._return_fields,
             'enable_scroll': scrolling,
@@ -460,6 +447,7 @@ class Search(resource.SketchResource):
     def add_chip(self, chip):
         """Add a chip to the ..."""
         self._chips.append(chip)
+        self.commit()
 
     def add_date_range(self, start_time, end_time):
         """Add a date range chip to the search query.
@@ -474,6 +462,16 @@ class Search(resource.SketchResource):
         chip.start_time = start_time
         chip.end_time = end_time
         self.add_chip(chip)
+
+    @property
+    def chips(self):
+        """Property that returns all the chips in the search object."""
+        return self._chips
+
+    def commit(self):
+        """Commit changes to the search object."""
+        self._raw_response = None
+        super().commit()
 
     @property
     def created_at(self):
@@ -653,11 +651,7 @@ class Search(resource.SketchResource):
                 'chips': [],
             }
         query_filter = self._query_filter
-        if self._chips:
-            if 'chips' in query_filter:
-                query_filter['chips'].extend([x.chip for x in self._chips])
-            else:
-                query_filter['chips'] = [x.chip for x in self._chips]
+        query_filter['chips'] = [x.chip for x in self._chips]
         return query_filter
 
     @query_filter.setter
@@ -675,6 +669,22 @@ class Search(resource.SketchResource):
     def query_string(self, query_string):
         """Make changes to the query string of a saved search."""
         self._query_string = query_string
+        self.commit()
+
+    def remove_chip(self, chip_index):
+        """Remove a chip from the saved search."""
+        chip_len = len(self._chips)
+        if chip_index > (chip_len + 1):
+            raise ValueError(
+                f'Unable to remove chip, only {chip_len} chips stored '
+                f'(no index {chip_index})')
+
+        try:
+            _ = self._chips.pop(chip_index)
+        except IndexError as exc:
+            raise ValueError(
+                f'Unable to remove index {chip_index}, out of range') from exc
+
         self.commit()
 
     @property
@@ -710,11 +720,11 @@ class Search(resource.SketchResource):
 
         data = {
             'name': self.name,
-            'description': self._description,
+            'description': self.description,
             'query': self.query_string,
             'filter': self.query_filter,
             'dsl': self.query_dsl,
-            'labels': json.loads(self.labels),
+            'labels': json.dumps(self.labels),
         }
         response = self.api.session.post(resource_url, json=data)
         status = error.check_return_status(response, logger)

@@ -66,7 +66,7 @@ class SketchResource(BaseResource):
         super().__init__(api, resource_uri)
 
         self._labels = []
-        self._resource_id = -1
+        self._resource_id = 0
         self._sketch = sketch
         self._username = ''
 

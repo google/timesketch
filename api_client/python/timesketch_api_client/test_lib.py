@@ -111,6 +111,32 @@ def mock_response(*args, **kwargs):
         }]
     }
 
+    view_data_1 = {
+        'id': 1,
+        'name': 'test',
+        'description': 'meant for testing purposes only.',
+        'user': {'username': 'gisli'},
+        'query_string': 'test:"foobar"',
+        'query_dsl': '',
+        'searchtemplate': '',
+        'aggregation': '',
+        'created_at': '2020-11-30T15:17:29',
+        'updated_at': '2020-11-30T15:17:29',
+    }
+
+    view_data_2 = {
+        'id': 2,
+        'name': 'more test',
+        'description': 'really meant for testing purposes only.',
+        'user': {'username': 'eirikur'},
+        'query_string': 'test:"bar"',
+        'query_dsl': '',
+        'searchtemplate': '',
+        'aggregation': '',
+        'created_at': '2020-11-30T15:17:29',
+        'updated_at': '2020-11-30T15:17:29',
+    }
+
     sketch_list_data = {
         'meta': {'es_time': 324},
         'objects': sketch_data['objects']}
@@ -184,6 +210,10 @@ def mock_response(*args, **kwargs):
         MockResponse(json_data=sketch_list_data),
         'http://127.0.0.1/api/v1/sketches/1':
         MockResponse(json_data=sketch_data),
+        'http://127.0.0.1/api/v1/sketches/1/views/1/':
+        MockResponse(json_data=view_data_1),
+        'http://127.0.0.1/api/v1/sketches/1/views/2/':
+        MockResponse(json_data=view_data_2),
         'http://127.0.0.1/api/v1/sketches/1/timelines/1':
         MockResponse(json_data=timeline_data),
         'http://127.0.0.1/api/v1/sketches/1/explore/':
