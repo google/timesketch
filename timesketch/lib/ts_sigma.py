@@ -59,27 +59,27 @@ def get_sigma_config_file():
     return sigma_config
 
 def get_sigma_rules_path():
-    """Get the path for Sigma rules.
+    """Get Sigma rules paths.
 
         Returns:
-            A string to the Sigma rules
+            A list of strings to the Sigma rules
     """
-    # TODO: Add functionality to have multiple paths for rule files.
-    rules_path = current_app.config.get('SIGMA_RULES_FOLDER')
+    rules_path = current_app.config.get('SIGMA_RULES_FOLDERS', [])
 
     if not rules_path:
         raise ValueError(
-            'SIGMA_RULES_FOLDER not found in config file')
+            'SIGMA_RULES_FOLDERS not found in config file')
 
-    if not os.path.isdir(rules_path):
-        raise ValueError(
-            'Unable to open dir: [{0:s}], it does not exist.'.format(
-                rules_path))
+    for folder in rules_path:
+        if not os.path.isdir(folder):
+            raise ValueError(
+                'Unable to open dir: [{0:s}], it does not exist.'.format(
+                    folder))
 
-    if not os.access(rules_path, os.R_OK):
-        raise ValueError(
-            'Unable to open dir: [{0:s}], cannot open it for '
-            'read, please check permissions.'.format(rules_path))
+        if not os.access(folder, os.R_OK):
+            raise ValueError(
+                'Unable to open dir: [{0:s}], cannot open it for '
+                'read, please check permissions.'.format(folder))
 
     return rules_path
 
@@ -87,6 +87,8 @@ def get_sigma_rules_path():
 def get_sigma_rules(rule_folder):
     """Returns the Sigma rules for a folder including subfolders.
 
+        Args:
+            rule_folder: folder to be checked for rules
         Returns:
             A array of Sigma rules as JSON
     """
@@ -107,6 +109,22 @@ def get_sigma_rules(rule_folder):
                 return_array.append(parsed_rule)
 
     return return_array
+
+def get_all_sigma_rules():
+    """Returns all Sigma rules
+
+    Returns:
+        A array of Sigma rules
+    """
+
+    sigma_rules = []
+
+    rules_paths = get_sigma_rules_path()
+
+    for folder in rules_paths:
+        sigma_rules.append(get_sigma_rules(folder))
+
+    return sigma_rules
 
 
 def get_sigma_rule(filepath):

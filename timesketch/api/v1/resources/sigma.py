@@ -42,7 +42,7 @@ class SigmaListResource(resources.ResourceMixin, Resource):
         sigma_rules = []
 
         try:
-            rules_path = ts_sigma_lib.get_sigma_rules_path()
+            sigma_rules = ts_sigma_lib.get_all_sigma_rules()
 
         except ValueError:
             logger.error('OS Error, unable to get the path to the Sigma rules',
@@ -51,7 +51,6 @@ class SigmaListResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'OS Error, unable to get the path to the Sigma rules')
 
-        sigma_rules = ts_sigma_lib.get_sigma_rules(rules_path)
         meta = {'current_user': current_user.username,
                 'rules_count': len(sigma_rules)}
         return jsonify({'objects': sigma_rules, 'meta': meta})
@@ -72,7 +71,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
         """
         return_rule = None
         try:
-            rules_path = ts_sigma_lib.get_sigma_rules_path()
+            sigma_rules = ts_sigma_lib.get_all_sigma_rules()
 
         except ValueError:
             logger.error('OS Error, unable to get the path to the Sigma rules',
@@ -80,8 +79,6 @@ class SigmaResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'OS Error, unable to get the path to the Sigma rules')
-
-        sigma_rules = ts_sigma_lib.get_sigma_rules(rules_path)
 
         for rule in sigma_rules:
             if rule is not None:
