@@ -106,7 +106,8 @@ def get_sigma_rules(rule_folder):
 
                 rule_file_path = os.path.join(dirpath, rule_filename)
                 parsed_rule = get_sigma_rule(rule_file_path)
-                return_array.append(parsed_rule)
+                if parsed_rule:
+                    return_array.append(parsed_rule)
 
     return return_array
 
@@ -122,7 +123,7 @@ def get_all_sigma_rules():
     rules_paths = get_sigma_rules_path()
 
     for folder in rules_paths:
-        sigma_rules.append(get_sigma_rules(folder))
+        sigma_rules.extend(get_sigma_rules(folder))
 
     return sigma_rules
 

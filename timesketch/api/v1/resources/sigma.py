@@ -21,7 +21,7 @@ from flask_restful import Resource
 from flask_login import login_required
 from flask_login import current_user
 
-import timesketch.lib.ts_sigma as ts_sigma_lib
+import timesketch.lib.sigma as ts_sigma_lib
 
 from timesketch.api.v1 import resources
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
