@@ -621,7 +621,7 @@ class Story(resource.BaseResource):
         """
         self.add_saved_search(view_obj, index)
 
-    def add_saved_search(self, search_obj, index=-1)
+    def add_saved_search(self, search_obj, index=-1):
         """Add a saved search to the story.
 
         Args:
@@ -731,7 +731,7 @@ class Story(resource.BaseResource):
                 string_list.append(block.text)
             elif block.TYPE == 'view':
                 search_obj = block.view
-                data_frame = view.as_pandas()
+                data_frame = search_obj.to_pandas()
                 string_list.append(data_frame.to_string(index=False))
             elif block.TYPE == 'aggregation':
                 agg_obj = self._sketch.get_aggregation(block.agg_id)

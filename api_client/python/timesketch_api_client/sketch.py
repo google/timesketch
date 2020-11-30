@@ -446,6 +446,7 @@ class Sketch(resource.BaseResource):
             query_dsl=query_dsl,
             query_filter=query_filter
         )
+        search_obj.name = name
         search_obj.save()
         return search_obj
 
@@ -861,7 +862,7 @@ class Sketch(resource.BaseResource):
             search_obj = search.Search(
                 sketch=self,
                 api=self.api)
-            search_obj.from_store(view.get('id'))
+            search_obj.from_store(saved_search.get('id'))
             searches.append(search_obj)
 
         return searches
@@ -964,7 +965,8 @@ class Sketch(resource.BaseResource):
                 return_fields=None,
                 as_pandas=False,
                 max_entries=None,
-                file_name=''):
+                file_name='',
+                as_object=False):
         """Explore the sketch.
 
         Args:
@@ -1020,7 +1022,7 @@ class Sketch(resource.BaseResource):
                 query_string=query_string,
                 query_dsl=query_dsl,
                 query_filter=query_filter,
-                return_fields=return_fields
+                return_fields=return_fields,
                 max_entries=max_entries
             )
         if as_object:

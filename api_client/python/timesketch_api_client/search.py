@@ -385,7 +385,7 @@ class Search(resource.SketchResource):
                 'size': self.DEFAULT_SIZE_LIMIT,
                 'terminate_after': self.DEFAULT_SIZE_LIMIT,
                 'indices': '_all',
-                'order': 'asc'
+                'order': 'asc',
                 'chips': [],
             }
 
