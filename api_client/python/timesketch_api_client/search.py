@@ -67,13 +67,15 @@ class Chip:
         }
 
     def set_include(self):
-        """Set the chip so that the filter """
+        """Configure the chip so the content needs to be included in results."""
         self._operator = 'must'
 
     def set_exclude(self):
+        """Configure the chip so content needs to be excluded in results."""
         self._operator = 'must_not'
 
     def set_optional(self):
+        """Configure the chip so the content is optional in results."""
         self._operator = 'should'
 
     def set_active(self):
@@ -94,6 +96,7 @@ class DateIntervalChip(Chip):
     _DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
     def __init__(self):
+        """Initialize the chip."""
         super().__init__()
         self._date = None
         self._before = 5
@@ -101,7 +104,20 @@ class DateIntervalChip(Chip):
         self._unit = 'm'
 
     def add_interval(self, before, after=None, unit='m'):
-        """Add in the interval."""
+        """Set the interval of the chip.
+
+        Args:
+            before (int): the number of units that should be included
+                before the date.
+            after (int): optional number of units after the date. If not
+                provided the value of before is used.
+            unit (str): optional string with the unit of interval. This can
+                be s for seconds, m for minutes, d for days and h for hours.
+                The default value is m (minutes).
+
+        Raises:
+            ValueError if the unit is not correctly formed.
+        """
         if after is None:
             after = before
 
@@ -170,7 +186,7 @@ class DateIntervalChip(Chip):
 
 
 class DateRangeChip(Chip):
-    """A date chip."""
+    """A date range chip."""
 
     CHIP_TYPE = 'datetime_range'
     CHIP_VALUE = 'date_range'
@@ -178,11 +194,20 @@ class DateRangeChip(Chip):
     _DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
     def __init__(self):
+        """Initialize the date range."""
         super().__init__()
         self._start_date = None
         self._end_date = None
 
-    def add_end(self, end_time):
+    def add_end_time(self, end_time):
+        """Add an end time to the range.
+
+        Args:
+            end_time (str): date string using the format '%Y-%m-%dT%H:%M:%s'
+
+        Raises:
+            ValueError: if the date format is incorrectly formatted.
+        """
         try:
             dt = datetime.datetime.strptime(end_time, self._DATE_FORMAT)
         except ValueError as exc:
@@ -191,7 +216,15 @@ class DateRangeChip(Chip):
             raise ValueError('Wrong date format') from exc
         self._end_date = dt
 
-    def add_start(self, start_time):
+    def add_start_time(self, start_time):
+        """Add a start time to the range.
+
+        Args:
+            start_time (str): date string using the format '%Y-%m-%dT%H:%M:%s'
+
+        Raises:
+            ValueError: if the date format is incorrectly formatted.
+        """
         try:
             dt = datetime.datetime.strptime(start_time, self._DATE_FORMAT)
         except ValueError as exc:
@@ -308,23 +341,33 @@ class Search(resource.SketchResource):
         resource_uri = f'sketches/{sketch.id}/explore/'
         super().__init__(
             sketch=sketch, api=api, resource_uri=resource_uri)
-        self._name = ''
-        self._chips = []
-        self._description = ''
-        self._query_string = ''
-        self._query_filter = {}
-        self._query_dsl = ''
-        self._searchtemplate = ''
+
         self._aggregations = ''
+        self._chips = []
         self._created_at = ''
-        self._scrolling = True
+        self._description = ''
         self._max_entries = self.DEFAULT_SIZE_LIMIT
-        self._updated_at = ''
-        self._return_fields = ''
+        self._name = ''
+        self._query_dsl = ''
+        self._query_filter = {}
+        self._query_string = ''
         self._raw_response = None
+        self._return_fields = ''
+        self._scrolling = True
+        self._searchtemplate = ''
+        self._updated_at = ''
 
     def _execute_query(self, scrolling=True, file_name=''):
-        """Missing DOCSTRING."""
+        """Execute an explore request and store the results.
+
+        Args:
+            scrolling (bool): optional bool that indicates whether
+                scrolling support is enabled on the Elastic query.
+                Defaults to true.
+            file_name (str): optional file path to a filename that
+                all the results will be dumped in. If not provided
+                the results will be stored in the search object.
+        """
         query_filter = self.query_filter
         if query_filter:
             stop_size = query_filter.get('size', 0)
@@ -343,6 +386,7 @@ class Search(resource.SketchResource):
                 'terminate_after': self.DEFAULT_SIZE_LIMIT,
                 'indices': '_all',
                 'order': 'asc'
+                'chips': [],
             }
 
         if not isinstance(query_filter, dict):
@@ -418,25 +462,26 @@ class Search(resource.SketchResource):
         self._chips.append(chip)
 
     def add_date_range(self, start_time, end_time):
-        """Add docstring."""
+        """Add a date range chip to the search query.
+
+        Args:
+            start_time (str): a string with the start time of the range,
+                the format should be '%Y-%m-%dT%H:%M:%S'
+            end_time (str): a string with the end time of the range,
+                the format should be '%Y-%m-%dT%H:%M:%S'
+        """
         chip = DateRangeChip()
         chip.start_time = start_time
         chip.end_time = end_time
-        self._chips.append(chip)
+        self.add_chip(chip)
 
     @property
-    def name(self):
-        """Property that returns the query name."""
-        return self._name
-
-    @name.setter
-    def name(self, name):
-        """Make changes to the saved search name."""
-        self._name = name
-        self.commit()
+    def created_at(self):
+        """Property that returns back the creation time of a search."""
+        return self._created_at
 
     def delete(self):
-        """Deletes the aggregation from the store."""
+        """Deletes the saved search from the store."""
         if not self._resource_id:
             logger.warning(
                 'Unable to delete the saved search, it does not appear to be '
@@ -459,115 +504,6 @@ class Search(resource.SketchResource):
         """Make changes to the saved search description field."""
         self._description = description
         self.commit()
-
-    @property
-    def max_entries(self):
-        """Return the maximum number of entries in the return value."""
-        return self._max_entries
-
-    @max_entries.setter
-    def max_entries(self, max_entries):
-        """Make changes to the max entries of return values."""
-        self._max_entries = max_entries
-        self.commit()
-
-    @property
-    def return_size(self):
-        """Return the maximum number of entries in the return value."""
-        return self.max_entries
-
-    @property
-    def query_filter(self):
-        """Property that returns the query filter."""
-        if not self._query_filter:
-            self._query_filter = {
-                'time_start': None,
-                'time_end': None,
-                'size': self._max_entries,
-                'terminate_after': self._max_entries,
-                'indices': '_all',
-                'order': 'asc',
-                'chips': [],
-            }
-        query_filter = self._query_filter
-        if self._chips:
-            if 'chips' in query_filter:
-                query_filter['chips'].extend([x.chip for x in self._chips])
-            else:
-                query_filter['chips'] = [x.chip for x in self._chips]
-        return query_filter
-
-    @query_filter.setter
-    def query_filter(self, query_filter):
-        """Make changes to the query filter."""
-        self._query_filter = query_filter
-        self.commit()
-
-    @property
-    def query_string(self):
-        """Property that returns back the query string."""
-        return self._query_string
-
-    @query_string.setter
-    def query_string(self, query_string):
-        """Make changes to the query string of a saved search."""
-        self._query_string = query_string
-        self.commit()
-
-    @property
-    def created_at(self):
-        """Property that returns back the creation time of a search."""
-        return self._created_at
-
-    @property
-    def updated_at(self):
-        """Property that returns back the updated time of a search."""
-        return self._updated_at
-
-    @property
-    def query_dsl(self):
-        """Property that returns back the query DSL."""
-        return self._query_dsl
-
-    @query_dsl.setter
-    def query_dsl(self, query_dsl):
-        """Make changes to the query DSL of the search."""
-        self._query_dsl = query_dsl
-        self.commit()
-
-    def from_store(self, search_id):  # pylint: disable=arguments-differ
-        """Initialize the search object from a stored search.
-
-        Args:
-            search_id: integer value for the stored
-                search (primary key).
-        """
-        resource_uri = f'sketches/{self._sketch.id}/views/{search_id}/'
-        resource_data = self.api.fetch_resource_data(resource_uri)
-
-        data = resource_data.get('objects', [None])[0]
-        if not data:
-            logger.error('Unable to get any data back from a saved search.')
-            return
-
-        label_string = data.get('label_string', '')
-        if label_string:
-            self._labels = json.loads(label_string)
-        else:
-            self._labels = []
-
-        self._aggregations = data.get('aggregation', 0)
-        self._created_at = data.get('created_at', '')
-        self._description = data.get('description', '')
-        self._name = data.get('name', '')
-        self._query_dsl = data.get('query_dsl', '')
-        self._query_filter = data.get('query_filter', {})
-        self._query_string = data.get('query_string', '')
-        self._resource_id = search_id
-        self._searchtemplate = data.get('searchtemplate', 0)
-        self._updated_at = data.get('updated_at', '')
-        self._username = data.get('user', {}).get('username', 'System')
-        self.resource_data = data
 
     def from_explore(  # pylint: disable=arguments-differ
             self,
@@ -624,6 +560,123 @@ class Search(resource.SketchResource):
 
         self.resource_data = {}
 
+    def from_store(self, search_id):  # pylint: disable=arguments-differ
+        """Initialize the search object from a stored search.
+
+        Args:
+            search_id: integer value for the stored
+                search (primary key).
+        """
+        resource_uri = f'sketches/{self._sketch.id}/views/{search_id}/'
+        resource_data = self.api.fetch_resource_data(resource_uri)
+
+        data = resource_data.get('objects', [None])[0]
+        if not data:
+            logger.error('Unable to get any data back from a saved search.')
+            return
+
+        label_string = data.get('label_string', '')
+        if label_string:
+            self._labels = json.loads(label_string)
+        else:
+            self._labels = []
+
+        self._aggregations = data.get('aggregation', 0)
+        self._created_at = data.get('created_at', '')
+        self._description = data.get('description', '')
+        self._name = data.get('name', '')
+        self._query_dsl = data.get('query_dsl', '')
+        self._query_filter = data.get('query_filter', {})
+        self._query_string = data.get('query_string', '')
+        self._resource_id = search_id
+        self._searchtemplate = data.get('searchtemplate', 0)
+        self._updated_at = data.get('updated_at', '')
+        self._username = data.get('user', {}).get('username', 'System')
+        self.resource_data = data
+
+    @property
+    def max_entries(self):
+        """Return the maximum number of entries in the return value."""
+        return self._max_entries
+
+    @max_entries.setter
+    def max_entries(self, max_entries):
+        """Make changes to the max entries of return values."""
+        self._max_entries = max_entries
+        self.commit()
+
+    @property
+    def name(self):
+        """Property that returns the query name."""
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        """Make changes to the saved search name."""
+        self._name = name
+        self.commit()
+
+    def order_ascending(self):
+        """Set the order of objects returned back ascending."""
+        # Trigger a creation of a query filter if it does not exist.
+        _ = self.query_filter
+        self._query_filter['order'] = 'asc'
+
+    def order_descending(self):
+        """Set the order of objects returned back descending."""
+        # Trigger a creation of a query filter if it does not exist.
+        _ = self.query_filter
+        self._query_filter['order'] = 'desc'
+
+    @property
+    def query_dsl(self):
+        """Property that returns back the query DSL."""
+        return self._query_dsl
+
+    @query_dsl.setter
+    def query_dsl(self, query_dsl):
+        """Make changes to the query DSL of the search."""
+        self._query_dsl = query_dsl
+        self.commit()
+
+    @property
+    def query_filter(self):
+        """Property that returns the query filter."""
+        if not self._query_filter:
+            self._query_filter = {
+                'time_start': None,
+                'time_end': None,
+                'size': self._max_entries,
+                'terminate_after': self._max_entries,
+                'indices': '_all',
+                'order': 'asc',
+                'chips': [],
+            }
+        query_filter = self._query_filter
+        if self._chips:
+            if 'chips' in query_filter:
+                query_filter['chips'].extend([x.chip for x in self._chips])
+            else:
+                query_filter['chips'] = [x.chip for x in self._chips]
+        return query_filter
+
+    @query_filter.setter
+    def query_filter(self, query_filter):
+        """Make changes to the query filter."""
+        self._query_filter = query_filter
+        self.commit()
+
+    @property
+    def query_string(self):
+        """Property that returns back the query string."""
+        return self._query_string
+
+    @query_string.setter
+    def query_string(self, query_string):
+        """Make changes to the query string of a saved search."""
+        self._query_string = query_string
+        self.commit()
+
     @property
     def return_fields(self):
         """Property that returns the return_fields."""
@@ -636,20 +689,59 @@ class Search(resource.SketchResource):
         self.commit()
 
     @property
+    def return_size(self):
+        """Return the maximum number of entries in the return value."""
+        return self._max_entries
+
+    @return_size.setter
+    def return_size(self, return_size):
+        """Make changes to the maximum number of entries in the return."""
+        self._max_entries = return_size
+
+    def save(self):
+        """Save the search in the database."""
+        if self._resource_id:
+            resource_url = (
+                f'{self.api.api_root}/sketches/{self._sketch.id}/views/'
+                f'{self._resource_id}/')
+        else:
+            resource_url = (
+                f'{self.api.api_root}/sketches/{self._sketch.id}/views/')
+
+        data = {
+            'name': self.name,
+            'description': self._description,
+            'query': self.query_string,
+            'filter': self.query_filter,
+            'dsl': self.query_dsl,
+            'labels': json.loads(self.labels),
+        }
+        response = self.api.session.post(resource_url, json=data)
+        status = error.check_return_status(response, logger)
+        if not status:
+            error.error_message(
+                response, 'Unable to save search', error=RuntimeError)
+
+        response_json = error.get_response_json(response, logger)
+        search_dict = response_json.get('objects', [{}])[0]
+        self._resource_id = search_dict.get('id', 0)
+        return f'Saved search to ID: {self._resource_id}'
+
+    @property
     def scrolling(self):
         """Returns whether scrolling is enabled or not."""
         return self._scrolling
 
-    def enable_scrolling(self):
-        """Enable scrolling."""
-        self._scrolling = True
-
-    def disable_scrolling(self):
+    def scrolling_disable(self):
         """"Disables scrolling."""
         self._scrolling = False
 
+    def scrolling_enable(self):
+        """Enable scrolling."""
+        self._scrolling = True
+
     def to_dict(self):
-        """Returns a dict."""
+        """Returns a dict with the respone of the query."""
         if not self._raw_response:
             self._execute_query(scrolling=self.scrolling)
 
@@ -669,7 +761,7 @@ class Search(resource.SketchResource):
         return self._execute_query(scrolling=True, file_name=file_name)
 
     def to_pandas(self):
-        """Returns a pandas DataFrame."""
+        """Returns a pandas DataFrame with the response of the query."""
         if not self._raw_response:
             self._execute_query(scrolling=self.scrolling)
 
@@ -715,31 +807,7 @@ class Search(resource.SketchResource):
 
         return data_frame
 
-    def save(self):
-        """Save the search in the database."""
-        if self._resource_id:
-            resource_url = (
-                f'{self.api.api_root}/sketches/{self._sketch.id}/views/'
-                f'{self._resource_id}/')
-        else:
-            resource_url = (
-                f'{self.api.api_root}/sketches/{self._sketch.id}/views/')
-
-        data = {
-            'name': self.name,
-            'description': self._description,
-            'query': self.query_string,
-            'filter': self.query_filter,
-            'dsl': self.query_dsl,
-            'labels': json.loads(self.labels),
-        }
-        response = self.api.session.post(resource_url, json=data)
-        status = error.check_return_status(response, logger)
-        if not status:
-            error.error_message(
-                response, 'Unable to save search', error=RuntimeError)
-
-        response_json = error.get_response_json(response, logger)
-        search_dict = response_json.get('objects', [{}])[0]
-        self._resource_id = search_dict.get('id', 0)
-        return f'Saved search to ID: {self._resource_id}'
+    @property
+    def updated_at(self):
+        """Property that returns back the updated time of a search."""
+        return self._updated_at

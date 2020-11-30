@@ -15,8 +15,12 @@
 from __future__ import unicode_literals
 
 import json
+import logging
 
 from . import resource
+
+
+logger = logging.getLogger('timesketch_api.view')
 
 
 class View(resource.BaseResource):
@@ -36,6 +40,9 @@ class View(resource.BaseResource):
             sketch_id: ID of a sketch.
             api: Instance of a TimesketchApi object.
         """
+        logger.info(
+            'View objects will be deprecated soon, consider transitioning '
+            'into using the search.Search object instead')
         self.id = view_id
         self.name = view_name
         resource_uri = 'sketches/{0:d}/views/{1:d}/'.format(sketch_id, self.id)

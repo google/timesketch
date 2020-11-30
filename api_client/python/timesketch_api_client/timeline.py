@@ -29,7 +29,7 @@ class Timeline(resource.BaseResource):
     """Timeline object.
 
     Attributes:
-        id: Primary key of the view.
+        id: Primary key of the timeline.
     """
 
     def __init__(self, timeline_id, sketch_id, api, name=None,

@@ -36,7 +36,8 @@ class Aggregation(resource.SketchResource):
         chart_type: the type of chart that will be generated
             from this aggregation object.
         type: the type of aggregation object.
-        view: a view ID if the aggregation is tied to a specific view.
+        search_id: a search ID if the aggregation is tied to a specific
+            saved search.
     """
 
     def __init__(self, sketch, api):
@@ -45,7 +46,7 @@ class Aggregation(resource.SketchResource):
         self.chart_color = ''
         self.chart_type = ''
         self.chart_title = ''
-        self.view = None
+        self.search_id = None
         self.type = None
         resource_uri = 'sketches/{0:d}/aggregation/explore/'.format(sketch.id)
         super().__init__(
@@ -76,13 +77,14 @@ class Aggregation(resource.SketchResource):
                     yield bucket
 
     def _run_aggregator(
-            self, aggregator_name, parameters, view_id=None, chart_type=None):
+            self, aggregator_name, parameters, search_id=None, chart_type=None):
         """Run an aggregator class.
 
         Args:
             aggregator_name: the name of the aggregator class.
             parameters: a dict with the parameters for the aggregation class.
-            view_id: an optional integer value with a primary key to a view.
+            search_id: an optional integer value with a primary key to a
+                saved search.
             chart_type: string with the chart type.
 
         Returns:
@@ -99,8 +101,8 @@ class Aggregation(resource.SketchResource):
         if chart_type:
             self.chart_type = chart_type
 
-        if view_id:
-            self.view = view_id
+        if search_id:
+            self.search_id = search_id
 
         self.aggregator_name = aggregator_name
         self.chart_color = parameters.get('chart_color', '')
@@ -110,7 +112,7 @@ class Aggregation(resource.SketchResource):
             'aggregator_name': aggregator_name,
             'aggregator_parameters': parameters,
             'chart_type': chart_type,
-            'view_id': view_id,
+            'view_id': search_id,
         }
 
         response = self.api.session.post(resource_url, json=form_data)
@@ -187,14 +189,15 @@ class Aggregation(resource.SketchResource):
 
     def from_aggregator_run(
             self, aggregator_name, aggregator_parameters,
-            view_id=None, chart_type=None):
+            search_id=None, chart_type=None):
         """Initialize the aggregation object by running an aggregator class.
 
         Args:
             aggregator_name: name of the aggregator class to run.
             aggregator_parameters: a dict with the parameters of the aggregator
                 class.
-            view_id: an optional integer value with a primary key to a view.
+            search_id: an optional integer value with a primary key to a saved
+                search.
             chart_type: optional string with the chart type.
         """
         self.type = 'aggregator_run'
@@ -202,7 +205,7 @@ class Aggregation(resource.SketchResource):
         self._username = getpass.getuser()
 
         self.resource_data = self._run_aggregator(
-            aggregator_name, aggregator_parameters, view_id, chart_type)
+            aggregator_name, aggregator_parameters, search_id, chart_type)
 
     def lazyload_data(self, refresh_cache=False):
         """Load resource data once and cache the result.
@@ -327,8 +330,8 @@ class Aggregation(resource.SketchResource):
             'parameters': self._parameters,
             'chart_type': self.chart_type,
         }
-        if self.view:
-            data['view_id'] = self.view
+        if self.search_id:
+            data['view_id'] = self.search_id
         if self._labels:
             data['labels'] = json.dumps(self._labels)
 

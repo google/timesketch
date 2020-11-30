@@ -25,9 +25,9 @@ from . import aggregation
 from . import definitions
 from . import error
 from . import resource
+from . import search
 from . import story
 from . import timeline
-from . import view as view_lib
 
 
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
@@ -426,50 +426,28 @@ class Sketch(resource.BaseResource):
             ValueError: if neither query_string nor query_dsl is provided or
                 if query_filter is not a dict.
             RuntimeError: if a view wasn't created for some reason.
+
+        Returns:
+            A search.Search object that has been saved to the database.
         """
+        logger.warning(
+            'View objects will be deprecated shortly, use search.Search '
+            'and call the search_obj.save() function to save a search.')
+
         if not (query_string or query_dsl):
             raise ValueError('You need to supply a query string or a dsl')
 
         if self.is_archived():
             raise RuntimeError('Unable create a view on an archived sketch.')
 
-        resource_url = '{0:s}/sketches/{1:d}/views/'.format(
-            self.api.api_root, self.id)
-
-        if not query_filter:
-            query_filter = {
-                'time_start': None,
-                'time_end': None,
-                'size': 100,
-                'terminate_after': 100,
-                'indices': '_all',
-                'order': 'asc'
-            }
-
-        if not isinstance(query_filter, dict):
-            raise ValueError(
-                'Unable to query with a query filter that isn\'t a dict.')
-
-        data = {
-            'name': name,
-            'query': query_string,
-            'filter': query_filter,
-            'dsl': query_dsl,
-        }
-        response = self.api.session.post(resource_url, json=data)
-
-        status = error.check_return_status(response, logger)
-        if not status:
-            error.error_message(
-                response, 'Unable to create view', error=RuntimeError)
-
-        response_json = error.get_response_json(response, logger)
-        view_dict = response_json.get('objects', [{}])[0]
-        return view_lib.View(
-            view_id=view_dict.get('id'),
-            view_name=name,
-            sketch_id=self.id,
-            api=self.api)
+        search_obj = search.Search(sketch=self, api=self.api)
+        search_obj.from_explore(
+            query_string=query_string,
+            query_dsl=query_dsl,
+            query_filter=query_filter
+        )
+        search_obj.save()
+        return search_obj
 
     def create_story(self, title):
         """Create a story object.
@@ -787,7 +765,23 @@ class Sketch(resource.BaseResource):
         return None
 
     def get_view(self, view_id=None, view_name=None):
-        """Returns a view object that is stored in the sketch.
+        """Returns a saved search object that is stored in the sketch.
+
+        Args:
+            view_id: an integer indicating the ID of the saved search to
+                be fetched. Defaults to None.
+            view_name: a string with the name of the saved search. Optional
+                and defaults to None.
+
+        Returns:
+            A search object (instance of search.Search) if one is found.
+            Returns a None if neiter view_id or view_name is defined or if
+            the search does not exist.
+        """
+        return self.get_saved_search(search_id=view_id, search_name=view_name)
+
+    def get_saved_search(self, search_id=None, search_name=None):
+        """Returns a saved search object that is stored in the sketch.
 
         Args:
             view_id: an integer indicating the ID of the view to
@@ -796,22 +790,22 @@ class Sketch(resource.BaseResource):
                 and defaults to None.
 
         Returns:
-            A view object (instance of View) if one is found. Returns
-            a None if neiter view_id or view_name is defined or if
-            the view does not exist.
+            A search object (instance of search.Search) if one is found.
+            Returns a None if neiter search_id or search_name is defined or if
+            the search does not exist.
         """
         if self.is_archived():
             raise RuntimeError(
-                'Unable to get views on an archived sketch.')
+                'Unable to get saved searches on an archived sketch.')
 
-        if view_id is None and view_name is None:
+        if search_id is None and search_name is None:
             return None
 
-        for view in self.list_views():
-            if view_id and view_id == view.id:
-                return view
-            if view_name and view_name.lower() == view.name.lower():
-                return view
+        for search_obj in self.list_saved_searches():
+            if search_id and search_id == search_obj.id:
+                return search_obj
+            if search_name and search_name.lower() == search_obj.name.lower():
+                return search_obj
         return None
 
     def list_stories(self):
@@ -847,22 +841,30 @@ class Sketch(resource.BaseResource):
         """List all saved views for this sketch.
 
         Returns:
-            List of views (instances of View objects)
+            List of search object (instance of search.Search).
+        """
+        return self.list_saved_searches()
+
+    def list_saved_searches(self):
+        """List all saved searches for this sketch.
+
+        Returns:
+            List of search object (instance of search.Search).
         """
         if self.is_archived():
             raise RuntimeError(
-                'Unable to list views on an archived sketch.')
+                'Unable to list saved searches on an archived sketch.')
 
         sketch = self.lazyload_data()
-        views = []
-        for view in sketch['meta'].get('views', []):
-            view_obj = view_lib.View(
-                view_id=view['id'],
-                view_name=view['name'],
-                sketch_id=self.id,
+        searches = []
+        for saved_search in sketch['meta'].get('views', []):
+            search_obj = search.Search(
+                sketch=self,
                 api=self.api)
-            views.append(view_obj)
-        return views
+            search_obj.from_store(view.get('id'))
+            searches.append(search_obj)
+
+        return searches
 
     def list_timelines(self):
         """List all timelines for this sketch.
@@ -984,10 +986,14 @@ class Sketch(resource.BaseResource):
                 returned back as a dict or a pandas DataFrame. The ZIP file
                 will contain a METADATA file and a CSV with the results from
                 the query.
+            as_object (bool): Optional bool that determines whether the
+                function will return a search object back instead of raw
+                results.
 
         Returns:
-            Dictionary with query results or a pandas DataFrame if as_pandas
-            is set to True. If file_name is provided then no value will be
+            Dictionary with query results, a pandas DataFrame if as_pandas
+            is set to True or a search.Search object if as_object is set
+            to True. If file_name is provided then no value will be
             returned.
 
         Raises:
@@ -1001,105 +1007,32 @@ class Sketch(resource.BaseResource):
         if self.is_archived():
             raise RuntimeError('Unable to query an archived sketch.')
 
-        if query_filter:
-            stop_size = query_filter.get('size', 0)
-            terminate_after = query_filter.get('terminate_after', 0)
-            if terminate_after and (terminate_after < stop_size):
-                stop_size = terminate_after
-
-            scrolling = not bool(stop_size and (
-                stop_size < self.DEFAULT_SIZE_LIMIT))
-        else:
-            scrolling = True
-            stop_size = 0
-            query_filter = {
-                'time_start': None,
-                'time_end': None,
-                'size': self.DEFAULT_SIZE_LIMIT,
-                'terminate_after': self.DEFAULT_SIZE_LIMIT,
-                'indices': '_all',
-                'order': 'asc'
-            }
-
-        if not isinstance(query_filter, dict):
-            raise ValueError(
-                'Unable to query with a query filter that isn\'t a dict.')
+        search_obj = search.Search(sketch=self, api=self.api)
 
         if view:
-            if view.query_string:
-                query_string = view.query_string
-            query_filter = view.query_filter
-            query_dsl = view.query_dsl
+            logger.warning(
+                'View objects will be deprecated soon, use search.Search '
+                'objects instead.')
+            search_obj.from_store(view.id)
 
-        if as_pandas:
-            query_filter.setdefault('size', self.DEFAULT_SIZE_LIMIT)
-            query_filter.setdefault('terminate_after', self.DEFAULT_SIZE_LIMIT)
-
-        resource_url = '{0:s}/sketches/{1:d}/explore/'.format(
-            self.api.api_root, self.id)
-
-        form_data = {
-            'query': query_string,
-            'filter': query_filter,
-            'dsl': query_dsl,
-            'fields': return_fields,
-            'enable_scroll': scrolling,
-            'file_name': file_name,
-        }
-
-        response = self.api.session.post(resource_url, json=form_data)
-        if not error.check_return_status(response, logger):
-            error.error_message(
-                response, message='Unable to query results',
-                error=ValueError)
+        else:
+            search_obj.from_explore(
+                query_string=query_string,
+                query_dsl=query_dsl,
+                query_filter=query_filter,
+                return_fields=return_fields
+                max_entries=max_entries
+            )
+        if as_object:
+            return search_obj
 
         if file_name:
-            with open(file_name, 'wb') as fw:
-                fw.write(response.content)
-            return True
-
-        response_json = error.get_response_json(response, logger)
-
-        scroll_id = response_json.get('meta', {}).get('scroll_id', '')
-        form_data['scroll_id'] = scroll_id
-
-        count = len(response_json.get('objects', []))
-        total_count = count
-        while count > 0:
-            if max_entries and total_count >= max_entries:
-                break
-            if stop_size and total_count >= stop_size:
-                break
-
-            if not scroll_id:
-                logger.debug('No scroll ID, will stop.')
-                break
-
-            more_response = self.api.session.post(resource_url, json=form_data)
-            if not error.check_return_status(more_response, logger):
-                error.error_message(
-                    response, message='Unable to query results',
-                    error=ValueError)
-            more_response_json = error.get_response_json(more_response, logger)
-            count = len(more_response_json.get('objects', []))
-            total_count += count
-            response_json['objects'].extend(
-                more_response_json.get('objects', []))
-            more_meta = more_response_json.get('meta', {})
-            added_time = more_meta.get('es_time', 0)
-            response_json['meta']['es_time'] += added_time
-
-        total_elastic_count = response_json.get(
-            'meta', {}).get('es_total_count', 0)
-        if total_elastic_count != total_count:
-            logger.info(
-                '{0:d} results were returned, but {1:d} records matched the '
-                'search query'.format(total_count, total_elastic_count))
+            return search_obj.to_file(file_name)
 
         if as_pandas:
-            return self._build_pandas_dataframe(response_json, return_fields)
+            return search_obj.to_pandas()
 
-        return response_json
+        return search_obj.to_dict()
 
     def list_available_analyzers(self):
         """Returns a list of available analyzers."""
