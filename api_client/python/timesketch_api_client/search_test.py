@@ -80,3 +80,56 @@ class SearchTest(unittest.TestCase):
         }
         self.assertEqual(chip.chip, expected_chip)
 
+    def test_label_chip(self):
+        """Test label chip."""
+        chip = search.LabelChip()
+        chip.label = 'foobar'
+
+        expected_chip = {
+            'active': True,
+            'field': '',
+            'type': 'label',
+            'operator': 'must',
+            'value': 'foobar'
+        }
+        self.assertEqual(chip.chip, expected_chip)
+
+    def test_term_chip(self):
+        """Test term chip."""
+        chip = search.TermChip()
+        chip.field = 'foobar'
+        chip.query = '2fold'
+
+        expected_chip = {
+            'active': True,
+            'field': 'foobar',
+            'type': 'term',
+            'operator': 'must',
+            'value': '2fold'
+        }
+        self.assertEqual(chip.chip, expected_chip)
+
+    def test_date_interval(self):
+        """Test date interval chip."""
+        chip = search.DateIntervalChip()
+        with self.assertRaises(ValueError):
+            chip.date = '20 minutes'
+
+        date_string = '2020-11-30T12:12:12'
+        chip.date = date_string
+
+        expected_chip = {
+            'active': True,
+            'field': '',
+            'type': 'datetime_interval',
+            'operator': 'must',
+            'value': f'{date_string} -5m +5m'
+        }
+        self.assertEqual(chip.chip, expected_chip)
+
+        chip.unit = 'h'
+        chip.before = 1
+        chip.after = 6
+        expected_chip['value'] = f'{date_string} -1h +6h'
+
+        self.assertEqual(chip.chip, expected_chip)
