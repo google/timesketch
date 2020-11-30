@@ -18,6 +18,7 @@ import unittest
 import mock
 
 from . import client
+from . import search
 from . import view as view_lib
 from . import test_lib
 
@@ -35,6 +36,6 @@ class ViewTest(unittest.TestCase):
     def test_view(self):
         """Test View object."""
         view = self.sketch.list_views()[0]
-        self.assertIsInstance(view, view_lib.View)
+        self.assertIsInstance(view, search.Search)
         self.assertEqual(view.id, 1)
         self.assertEqual(view.name, 'test')

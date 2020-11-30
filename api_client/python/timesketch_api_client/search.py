@@ -709,7 +709,24 @@ class Search(resource.SketchResource):
         self._max_entries = return_size
 
     def save(self):
-        """Save the search in the database."""
+        """Save the search in the database.
+
+        Raises:
+            ValueError: if there are values missing in order to save the query.
+        """
+        if not self.name:
+            raise ValueError(
+                'No name for the query saved. Please select a name first.')
+
+        if not (self.query_string or self.query_dsl):
+            raise ValueError(
+                'Need to have either a query DSL or a query string to be '
+                'able to save the search.')
+
+        if not self.description:
+            logger.warning(
+                'No description selected for search, saving without one')
+
         if self._resource_id:
             resource_url = (
                 f'{self.api.api_root}/sketches/{self._sketch.id}/views/'

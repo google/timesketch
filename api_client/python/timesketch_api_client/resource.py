@@ -106,7 +106,7 @@ class SketchResource(BaseResource):
 
     def commit(self):
         """Calls the save function if the object has already been saved."""
-        if self._resource_id == -1:
+        if not self._resource_id:
             return
         self.save()
 
