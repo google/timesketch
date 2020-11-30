@@ -27,7 +27,7 @@ logger = logging.getLogger('timesketch_api.search')
 
 
 class Chip:
-    """Class for the a search chip."""
+    """Class definition for a query filter chip."""
 
     # The type of a chip that is defiend.
     CHIP_TYPE = ''
@@ -39,20 +39,141 @@ class Chip:
     # The value of the chip field.
     CHIP_FIELD = ''
 
+    def __init__(self):
+        """Initialize the chip."""
+        self._active = True
+        self._operator = 'must'
+        self._chip_field = self.CHIP_FIELD
+
+    @property
+    def active(self):
+        """A property that returns whether the chip is active or not."""
+        return self._active
+
+    @active.setter
+    def active(self, active):
+        """Decide whether the chip is active or disabled."""
+        self._active = bool(active)
+
     @property
     def chip(self):
         """A property that returns the chip value."""
         return {
-            'field': self.CHIP_FIELD,
+            'field': self._chip_field,
             'type': self.CHIP_TYPE,
+            'operator': self._operator,
+            'active': self._active,
             'value': getattr(self, self.CHIP_VALUE, ''),
         }
+
+    def set_include(self):
+        """Set the chip so that the filter """
+        self._operator = 'must'
+
+    def set_exclude(self):
+        self._operator = 'must_not'
+
+    def set_optional(self):
+        self._operator = 'should'
+
+    def set_active(self):
+        """Set the chip as active."""
+        self._active = True
+
+    def set_disable(self):
+        """Disable the chip."""
+        self._active = False
+
+
+class DateIntervalChip(Chip):
+    """A date interval chip."""
+
+    CHIP_TYPE = 'datetime_interval'
+    CHIP_VALUE = 'interval'
+
+    _DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
+
+    def __init__(self):
+        super().__init__()
+        self._date = None
+        self._before = 5
+        self._after = 5
+        self._unit = 'm'
+
+    def add_interval(self, before, after=None, unit='m'):
+        """Add in the interval."""
+        if after is None:
+            after = before
+
+        self.unit = unit
+
+        self._before = before
+        self._after = after
+
+    @property
+    def after(self):
+        """Property that returns the time interval after the date."""
+        return self._after
+
+    @after.setter
+    def after(self, after):
+        """Make changes to the time interval after the date."""
+        self._after = after
+
+    @property
+    def before(self):
+        """Property that returns the time interval before the date."""
+        return self._before
+
+    @before.setter
+    def before(self, before):
+        """Make changes to the time interval before the date."""
+        self._before = before
+
+    @property
+    def date(self):
+        """Property that returns back the date."""
+        if not self._date:
+            return ''
+        return self._date.strftime(self._DATE_FORMAT)
+
+    @date.setter
+    def date(self, date):
+        """Make changes to the date."""
+        try:
+            dt = datetime.datetime.strptime(date, self._DATE_FORMAT)
+        except ValueError as exc:
+            logger.error(
+                'Unable to add date chip, wrong date format', exc_info=True)
+            raise ValueError('Wrong date format') from exc
+        self._date = dt
+
+    @property
+    def interval(self):
+        """A property that returns back the full interval."""
+        return (
+            f'{self.date} -{self.before}{self.unit} +{self.after}{self.unit}')
+
+    @property
+    def unit(self):
+        """Property that returns back the unit used."""
+        return self._unit
+
+    @unit.setter
+    def unit(self, unit):
+        """Make changes to the unit."""
+        if unit not in ('s', 'm', 'd', 'h'):
+            raise ValueError(
+                'Unable to add interval, needs to be one of: '
+                's (seconds), m (minutes), h (hours) or d (days)')
+        self._unit = unit
 
 
 class DateRangeChip(Chip):
     """A date chip."""
 
-    TYPE = 'datetime_range'
+    CHIP_TYPE = 'datetime_range'
+    CHIP_VALUE = 'date_range'
 
     _DATE_FORMAT = '%Y-%m-%dT%H:%M:%S'
 
@@ -116,6 +237,68 @@ class DateRangeChip(Chip):
         self.add_start(start_time)
 
 
+class LabelChip(Chip):
+    """Label chip."""
+
+    CHIP_TYPE = 'label'
+    CHIP_VALUE = 'label'
+
+    def __init__(self):
+        """Initialize the chip."""
+        super().__init__()
+        self._label = ''
+
+    @property
+    def label(self):
+        """Property that returns back the label."""
+        return self._label
+
+    @label.setter
+    def label(self, label):
+        """Make changes to the label."""
+        self._label = label
+
+    def use_comment_label(self):
+        """Use the comment label."""
+        self._label = '__ts_comment'
+
+    def use_star_label(self):
+        """Use the star label."""
+        self._label = '__ts_star'
+
+
+class TermChip(Chip):
+    """Term chip definition."""
+
+    CHIP_TYPE = 'term'
+    CHIP_VALUE = 'query'
+
+    def __init__(self):
+        """Initialize the chip."""
+        super().__init__()
+        self._query = ''
+
+    @property
+    def field(self):
+        """Property that returns back the field used to match against."""
+        return self._chip_field
+
+    @field.setter
+    def field(self, field):
+        """Make changes to the field used to match against."""
+        self._chip_field = field
+
+    @property
+    def query(self):
+        """Property that returns back the query."""
+        return self._query
+
+    @query.setter
+    def query(self, query):
+        """Make changes to the query."""
+        self._query = query
+
+
 class Search(resource.SketchResource):
     """Search object."""
 
@@ -176,7 +359,8 @@ class Search(resource.SketchResource):
             'file_name': file_name,
         }
 
-        response = self.api.session.post(self.resource_url, json=form_data)
+        response = self.api.session.post(
+            f'{self.api.api_root}/{self.resource_uri}', json=form_data)
         if not error.check_return_status(response, logger):
             error.error_message(
                 response, message='Unable to query results',
@@ -205,7 +389,7 @@ class Search(resource.SketchResource):
                 break
 
             more_response = self.api.session.post(
-                self.resource_url, json=form_data)
+                f'{self.api.api_root}/{self.resource_uri}', json=form_data)
             if not error.check_return_status(more_response, logger):
                 error.error_message(
                     response, message='Unable to query results',
