@@ -118,7 +118,6 @@ def get_sigma_rule(filepath):
         Returns:
             Json representation of the parsed rule
         """
-    logger.info('get_sigma_rule with arg: {0:s}'.format(filepath))
     sigma_config = get_sigma_config_file()
 
     sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_config, {})
@@ -128,7 +127,7 @@ def get_sigma_rule(filepath):
         if os.path.isdir(filepath):
             return None
 
-        tag_name, _ = filepath.rsplit('.')
+        #tag_name, _ = filepath.rsplit('.')
         abs_path = os.path.abspath(filepath)
 
         with codecs.open(
@@ -168,7 +167,7 @@ def get_sigma_rule(filepath):
             rule_return.update(
                 {'es_query':sigma_es_query})
             rule_return.update(
-                {'file_name':tag_name})
+                {'file_name':os.path.basename(filepath)})
 
             return rule_return
 
