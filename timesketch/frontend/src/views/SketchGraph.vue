@@ -1,5 +1,5 @@
 <!--
-Copyright 2019 Google Inc. All rights reserved.
+Copyright 2020 Google Inc. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,26 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div>
-    <section class="section">
-        <div class="container is-fluid">
-          <ts-navbar-secondary currentAppContext="sketch" currentPage="graph"></ts-navbar-secondary>
-        </div>
-    </section>
-    <ts-graph></ts-graph>
-  </div>
+  <router-view></router-view>
 </template>
-
-<script>
-import TsGraph from "../components/Sketch/Graph"
-
-export default {
-  components: {TsGraph},
-  props: ['sketchId'],
-  computed: {
-    sketch () {
-      return this.$store.state.sketch
-    }
-  }
-}
-</script>
