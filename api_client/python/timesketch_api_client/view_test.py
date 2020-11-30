@@ -19,7 +19,6 @@ import mock
 
 from . import client
 from . import search
-from . import view as view_lib
 from . import test_lib
 
 

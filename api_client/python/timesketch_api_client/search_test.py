@@ -58,3 +58,25 @@ class SearchTest(unittest.TestCase):
 
         objects = search_dict.get('objects', [])
         self.assertEqual(len(objects), 1)
+
+    def test_range_chip(self):
+        """Test date range chip."""
+        chip = search.DateRangeChip()
+        chip.start_time = '2020-11-30T12:12:12'
+        chip.end_time = '2020-11-30T12:45:12'
+
+        self.assertEqual(
+            chip.date_range, '2020-11-30T12:12:12,2020-11-30T12:45:12')
+
+        with self.assertRaises(ValueError):
+            chip.start_time = '20bar'
+
+        expected_chip = {
+            'active': True,
+            'field': '',
+            'type': 'datetime_range',
+            'operator': 'must',
+            'value': '2020-11-30T12:12:12,2020-11-30T12:45:12',
+        }
+        self.assertEqual(chip.chip, expected_chip)
+
