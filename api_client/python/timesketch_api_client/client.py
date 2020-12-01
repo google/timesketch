@@ -518,12 +518,12 @@ class TimesketchApi:
             raise ValueError('No rules found.')
 
         if not as_pandas:
-            for index_dict in response['objects']:
-                rule_uuid = index_dict['id']
-                title = index_dict['title']
-                es_query = index_dict['es_query']
-                file_name = index_dict['file_name']
-                description = index_dict['description']
+            for rule_dict in response['objects']:
+                rule_uuid = rule_dict['id']
+                title = rule_dict['title']
+                es_query = rule_dict['es_query']
+                file_name = rule_dict['file_name']
+                description = rule_dict['description']
                 index_obj = sigma.Sigma(
                     rule_uuid, api=self, es_query=es_query, file_name=file_name,
                     title=title, description=description)
