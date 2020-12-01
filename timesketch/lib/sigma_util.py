@@ -134,7 +134,6 @@ def get_all_sigma_rules():
         ValueError: If SIGMA_RULES_FOLDERS is not found in the config file.
             or the folders are not readabale.
     """
-
     sigma_rules = []
 
     rules_paths = get_sigma_rules_path()
