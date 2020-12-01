@@ -50,4 +50,9 @@ class TimesketchSigmaTest(unittest.TestCase):
 
         rules = self.api_client.list_sigma_rules()
         self.assertIsNotNone(rules)
-        self.assertEqual(rules['meta']['rules_count'], 2)
+
+        rule1 = rules[0]
+
+        self.assertEqual(
+            rule1.title, 'Suspicious Installation of Zenmap',
+            'Title of the rule does not match')

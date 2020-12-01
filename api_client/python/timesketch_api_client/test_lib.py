@@ -244,7 +244,8 @@ def mock_response(*args, **kwargs):
                 'es_query': '("*apt\\-get\\ install\\ zmap*")',
                 'modified': '2020/06/26',
                 'references': ['httpx://foobar.com'],
-                'title': 'Suspicious Installation of Zenmap'
+                'title': 'Suspicious Installation of Zenmap',
+                'file_name': 'lnx_susp_zenmap'
             }, {
                 'author': 'Alexander Jaeger',
                 'date': '2020/11/10',
@@ -262,7 +263,8 @@ def mock_response(*args, **kwargs):
                 'es_query': '("*apt\\-get\\ install\\ foo*")',
                 'modified': '2020/06/26',
                 'references': ['httpx://foobar.com'],
-                'title': 'Suspicious Installation of Zenmap'
+                'title': 'Suspicious Installation of Zenmap',
+                'file_name': 'lnx_susp_zenmap'
                 }
         ]
     }
