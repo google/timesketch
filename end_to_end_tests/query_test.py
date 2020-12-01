@@ -13,6 +13,8 @@
 # limitations under the License.
 """End to end tests of Timesketch query functionality."""
 
+from timesketch_api_client import search
+
 from . import interface
 from . import manager
 
@@ -22,18 +24,16 @@ class QueryTest(interface.BaseEndToEndTest):
 
     NAME = 'query_test'
 
-    def __init__(self):
-        """Initialize the test."""
-        super(QueryTest, self).__init__()
-
     def setup(self):
         """Import test timeline."""
         self.import_timeline('evtx.plaso')
 
     def test_wildcard_query(self):
         """Wildcard query over all data in the sketch."""
-        response_json = self.sketch.explore(query_string="*")
-        count = response_json.get('meta', {}).get('es_total_count', 0)
+        search_obj = search.Search(self.sketch)
+        search_obj.query_string = '*'
+        data_frame = search_obj.table
+        count = len(data_frame)
         self.assertions.assertEqual(count, 3205)
 
 
