@@ -5,7 +5,7 @@ care of setting up authentication, sending the API calls to the server, error ha
 
 This documentation will give an overview for the most common use cases of the API client. Some available methods will not be covered in this documentation
 whereas others will be documented further in a notebook (e.g. [colab-timesketch-demo notebook](/notebooks/colab-timesketch-demo.ipynb)).
- 
+
 ## Basic Connections
 
 The API client defines a config library specifically intended to help with setting up all configuration for connecting to Timesketch, including
@@ -83,56 +83,69 @@ Each of these properties can be accessed using `sketch.<PROPERTY>`, eg. `sketch.
 
 The sketch object has several ways to explore data, via aggregations or searches.
 
-### Views
+### Saved Searches
 
-To list all the views use the `list_views` function. This functions returns a View object for all views. An example overview would be:
-
-```
-for view in sketch.list_views():
-  print('{0:03d} - {1:s} [{2:s}]'.format(view.id, view.name, view.user))
-```
-
-It is also possible to create a new view:
+To list all saved searches, use the `list_saved_searches` function of the sketch
+object. This functions returns a `search.Search` object for all saved searches.
+An example overview would be:
 
 ```
-view = sketch.create_view(name, query_string='', query_dsl='', query_filter=None)
+for saved_search in sketch.list_saved_searches():
+  print('{0:03d} - {1:s} [{2:s}]'.format(saved_search.id, saved_search.name, saved_search.user))
 ```
 
-Which can be as simple as:
+To get a particular saved search:
 
 ```
-view = sketch.create_view('Google mentions', query_string='google.com')
+saved_search = sketch.get_saved_search(search_id=<SEARCH_ID>)
 ```
 
-To get a view that has been saved:
+or
 
 ```
-view = sketch.get_view(view_id=<VIEW_ID>)
+saved_search = sketch.get_saved_search(search_name=<SEARCH_NAME>)
 ```
 
-or 
+A search object can be used like this:
 
 ```
-view = sketch.get_view(view_name=<VIEW_NAME>)
+data = saved_search.table
 ```
 
-A view object can be used like this:
-
-```
-data = sketch.explore(view=view, as_pandas=True)
-```
-
-The results will be a pandas DataFrame that contains all the records from a view.
+The results will be a pandas DataFrame that contains all the records from the
+saved search.
 
 ### Search Query
 
-To search in the API client the function `sketch.explore` is used. It will accept several parameters, such as a view object if that is available
-or a free flowing query string (same as in the UI) or a raw Elastic query DSL.
+To search in the API client a search object is used. It will accept several
+parameters or configurations, for instances a free flowing query string
+(same as in the UI) or a raw Elastic query DSL. It can also support search
+chips.
 
 The output can be:
-+ A pandas DataFrame if the `as_pandas=True` is set
-+ A python dict (default behavior)
-+ All output stored to a file if the parameter `file_name='FILEPATH.zip'` is supplied.
++ A pandas DataFrame.
++ A python dict.
++ Stored in a ZIP file.
+
+A search object is created from a sketch object.
+
+```
+from timesketch_api_client import search
+...
+
+search_obj = search.Search(sketch=sketch, api=sketch.api)
+```
+
+From there several options are possible:
+
++ Restore a saved search using `from_store(<SEARCH_ID>)`
++ Use the `from_explore` function that provides several parameters
++ Individually set the needed parameters.
+
+The first thing you 
+
+I AM HERE, HAVEN'T 
+
 
 There are also other parameters to the explore function that are worth a mention:
 + **query_filter**: possible to customize the query filter, to limit search results, include extra fields in the results, etc
