@@ -336,7 +336,7 @@ class Search(resource.SketchResource):
 
     DEFAULT_SIZE_LIMIT = 10000
 
-    def __init__(self, sketch, api):
+    def __init__(self, sketch):
         resource_uri = f'sketches/{sketch.id}/explore/'
         super().__init__(sketch=sketch, resource_uri=resource_uri)
 
