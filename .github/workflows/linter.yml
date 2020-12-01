@@ -24,6 +24,8 @@ jobs:
         pip install -r test_requirements.txt
         pip install -r requirements.txt
         pip install -e .
+        pip install -e api_client/python
+        pip install -e importer_client/python
     - name: Run linter
       run: |
         git config pull.rebase false && git fetch -p origin master
