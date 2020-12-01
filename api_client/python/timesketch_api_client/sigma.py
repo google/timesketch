@@ -15,7 +15,6 @@
 from __future__ import unicode_literals
 
 import logging
-import pandas
 
 from . import resource
 
@@ -74,12 +73,3 @@ class Sigma(resource.BaseResource):
             return None
 
         return sigma_data.get('id', None)
-
-    def to_pandas(self):
-        """Returns a pandas DataFrame."""
-        sigma_data = self.data
-
-        if not sigma_data:
-            return pandas.DataFrame()
-
-        return pandas.DataFrame(sigma_data)
