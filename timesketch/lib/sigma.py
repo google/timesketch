@@ -32,8 +32,12 @@ logger = logging.getLogger('timesketch.lib.sigma')
 def get_sigma_config_file():
     """Get a sigma.configuration.SigmaConfiguration object.
 
-        Returns:
-            A sigma.configuration.SigmaConfiguration object
+    Returns:
+        A sigma.configuration.SigmaConfiguration object
+
+    Raises:
+        ValueError: If SIGMA_CONFIG is not found in the config file.
+            or the Sigma config file is not readabale.
     """
     config_file = current_app.config.get('SIGMA_CONFIG')
 
@@ -61,8 +65,12 @@ def get_sigma_config_file():
 def get_sigma_rules_path():
     """Get Sigma rules paths.
 
-        Returns:
-            A list of strings to the Sigma rules
+    Returns:
+        A list of strings to the Sigma rules
+
+    Raises:
+        ValueError: If SIGMA_RULES_FOLDERS is not found in the config file.
+            or the folders are not readabale.
     """
     rules_path = current_app.config.get('SIGMA_RULES_FOLDERS', [])
 
@@ -87,10 +95,15 @@ def get_sigma_rules_path():
 def get_sigma_rules(rule_folder):
     """Returns the Sigma rules for a folder including subfolders.
 
-        Args:
-            rule_folder: folder to be checked for rules
-        Returns:
-            A array of Sigma rules as JSON
+    Args:
+        rule_folder: folder to be checked for rules
+
+    Returns:
+        A array of Sigma rules as JSON
+
+    Raises:
+        ValueError: If SIGMA_RULES_FOLDERS is not found in the config file.
+            or the folders are not readabale.
     """
     return_array = []
 
@@ -116,6 +129,10 @@ def get_all_sigma_rules():
 
     Returns:
         A array of Sigma rules
+
+    Raises:
+        ValueError: If SIGMA_RULES_FOLDERS is not found in the config file.
+            or the folders are not readabale.
     """
 
     sigma_rules = []
@@ -131,13 +148,19 @@ def get_all_sigma_rules():
 def get_sigma_rule(filepath):
     """ Returns a JSON represenation for a rule
 
-        Args:
-            filepath: path to the sigma rule to be parsed
+    Args:
+        filepath: path to the sigma rule to be parsed
 
-        Returns:
-            Json representation of the parsed rule
-        """
-    sigma_config = get_sigma_config_file()
+    Returns:
+        Json representation of the parsed rule
+    """
+    try:
+        sigma_config = get_sigma_config_file()
+    except ValueError as e:
+        logger.error(
+            'Problem reading the Sigma config {0:s}: '
+            .format(e), exc_info=True)
+        return None
 
     sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_config, {})
 
@@ -146,7 +169,6 @@ def get_sigma_rule(filepath):
         if os.path.isdir(filepath):
             return None
 
-        #tag_name, _ = filepath.rsplit('.')
         abs_path = os.path.abspath(filepath)
 
         with codecs.open(

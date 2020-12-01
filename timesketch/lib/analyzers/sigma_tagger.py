@@ -48,31 +48,16 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         """
 
         tags_applied = {}
-
         sigma_rule_counter = 0
-
-        try:
-            rules_path = ts_sigma_lib.get_sigma_rules_path()
-
-        except ValueError:
-            logger.error('OS Error, unable to get the path to the Sigma rules',
-                         exc_info=True)
-            return False
-
-        sigma_rules = ts_sigma_lib.get_sigma_rules(rules_path)
+        sigma_rules = ts_sigma_lib.get_all_sigma_rules()
 
         if sigma_rules is None:
-            logger.error('error rule is none')
+            logger.error('No  Sigma rules found. Check SIGMA_RULES_FOLDERS')
 
-        problem_string = 'Problematic rules:\n'
+        problem_string = []
 
         for rule in sigma_rules:
-            if rule is None:
-                logger.error('error rule is none')
-                continue
             tags_applied[rule.get('file_name')] = 0
-            logger.debug("Rule : {0:s} with query {1:s}".format(
-                rule.get('id'), rule.get('file_name')))
             try:
                 sigma_rule_counter += 1
                 tagged_events_counter = self.run_sigma_rule(
@@ -83,16 +68,18 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                     'Timeout executing search for {0:s}: '
                     '{1!s} waiting for 10 seconds'.format(
                         rule.get('file_name'), e), exc_info=True)
-                time.sleep(10) # waiting 10 seconds
+                # this is caused by to many ES queries in short time range
+                # thus waiting for 10 seconds before sending the next one.
+                time.sleep(1)
             # This except block is by purpose very broad as one bad rule could
             # otherwise stop the whole analyzer run
             # it might be an option to write the problematic rules to the output
-            except:
+            except: # pylint: disable=W0702
                 logger.error(
                     'Problem with rule in file {0:s}: '.format(
                         rule.get('file_name')), exc_info=True)
-                problem_string += '* {0:s}\n'.format(
-                    rule.get('file_name'))
+                problem_string.append('* {0:s}\n'.format(
+                    rule.get('file_name')))
                 continue
 
         total_tagged_events = sum(tags_applied.values())
@@ -114,7 +101,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                 agg_params=agg_params, view_id=view.id, chart_type='hbarchart',
                 description='Created by the Sigma analyzer')
 
-            story = self.sketch.add_story("Sigma Rule hits")
+            story = self.sketch.add_story('Sigma Rule hits')
             story.add_text(
                 utils.SIGMA_STORY_HEADER, skip_if_exists=True)
 
@@ -131,7 +118,8 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                 'And an overview of all the discovered search terms:')
             story.add_view(view)
 
-        output_string += '\n{0:s}'.format(problem_string)
+        output_string += '\n Problematic rules:'
+        output_string += ''.join(problem_string)
 
         return output_string
 

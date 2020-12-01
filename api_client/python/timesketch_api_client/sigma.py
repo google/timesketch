@@ -21,6 +21,7 @@ from . import resource
 
 logger = logging.getLogger('timesketch_api.sigma')
 
+
 class Sigma(resource.BaseResource):
     """Timesketch sigma object.
 
@@ -40,7 +41,7 @@ class Sigma(resource.BaseResource):
 
         """
         self.rule_uuid = rule_uuid
-        self._resource_uri = 'sigma/{0:s}'.format(self.rule_uuid)
+        self._resource_uri = f'sigma/{self.rule_uuid}'
         super().__init__(
             api=api, resource_uri=self._resource_uri)
 
@@ -79,6 +80,6 @@ class Sigma(resource.BaseResource):
         sigma_data = self.data
 
         if not sigma_data:
-            return []
+            return pandas.DataFrame()
 
         return pandas.DataFrame(sigma_data)

@@ -517,9 +517,7 @@ class TimesketchApi(object):
         if not records:
             raise ValueError('No rules found.')
 
-        rules_pandas = pandas.DataFrame.from_records(records)
-
-        return rules_pandas
+        return pandas.DataFrame.from_records(records)
 
     def get_sigma_rule(self, rule_uuid):
         """Get a sigma rule.
