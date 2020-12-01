@@ -9,7 +9,7 @@ from timesketch.lib.analyzers import utils
 
 from timesketch.lib.analyzers import interface
 from timesketch.lib.analyzers import manager
-import timesketch.lib.sigma as ts_sigma_lib
+import timesketch.lib.sigma_util as ts_sigma_lib
 
 
 logger = logging.getLogger('timesketch.analyzers.sigma_tagger')
