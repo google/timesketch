@@ -24,10 +24,6 @@ class QueryTest(interface.BaseEndToEndTest):
 
     NAME = 'query_test'
 
-    def __init__(self):
-        """Initialize the test."""
-        super().__init__()
-
     def setup(self):
         """Import test timeline."""
         self.import_timeline('evtx.plaso')
