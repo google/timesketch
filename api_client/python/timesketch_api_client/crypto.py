@@ -158,9 +158,10 @@ class CredentialStorage:
                 password = config_assistant.get_config('cred_key')
                 if not isinstance(password, bytes):
                     password = bytes(password, 'utf-8')
-            except KeyError:
+            except KeyError as exc:
                 raise IOError(
-                    'Not able to determine encryption key from config.')
+                    'Not able to determine encryption key from '
+                    'config.') from exc
         else:
             raise IOError(
                 'Neither password nor a configuration assistant passed to '
@@ -176,11 +177,11 @@ class CredentialStorage:
             except fernet.InvalidSignature as e:
                 raise IOError(
                     'Unable to decrypt data, signature is not correct: '
-                    '{0!s}'.format(e))
+                    '{0!s}'.format(e)) from e
             except fernet.InvalidToken as e:
                 raise IOError(
                     'Unable to decrypt data, password wrong? (error '
-                    '{0!s})'.format(e))
+                    '{0!s})'.format(e)) from e
 
             # TODO: Implement a manager.
             cred_obj = credentials.TimesketchPwdCredentials()
