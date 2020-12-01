@@ -30,10 +30,10 @@ class SearchTest(unittest.TestCase):
             'http://127.0.0.1', 'test', 'test')
         self.sketch = self.api_client.get_sketch(1)
 
-    def test_from_store(self):
+    def test_from_saved(self):
         """Test fetching object from store."""
         search_obj = search.Search(sketch=self.sketch)
-        search_obj.from_store(1)
+        search_obj.from_saved(1)
 
         self.assertIsInstance(search_obj, search.Search)
         self.assertEqual(search_obj.id, 1)
@@ -43,7 +43,7 @@ class SearchTest(unittest.TestCase):
         self.assertEqual(query_filter.get('chips'), [])
         self.assertIsNone(query_filter.get('time_start', 'AA'))
 
-    def test_from_explore(self):
+    def test_from_manual(self):
         """Test fetching data."""
         search_obj = search.Search(sketch=self.sketch)
         search_obj.query_string = '*'

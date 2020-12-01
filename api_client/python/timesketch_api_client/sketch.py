@@ -441,7 +441,7 @@ class Sketch(resource.BaseResource):
             raise RuntimeError('Unable create a view on an archived sketch.')
 
         search_obj = search.Search(sketch=self)
-        search_obj.from_explore(
+        search_obj.from_manual(
             query_string=query_string,
             query_dsl=query_dsl,
             query_filter=query_filter
@@ -576,8 +576,7 @@ class Sketch(resource.BaseResource):
         for group_dict in data.get('objects', []):
             if not group_dict.get('id'):
                 continue
-            group = aggregation.AggregationGroup(
-                sketch=self, api=self.api)
+            group = aggregation.AggregationGroup(sketch=self)
             group.from_dict(group_dict)
             groups.append(group)
         return groups
@@ -640,9 +639,8 @@ class Sketch(resource.BaseResource):
                 if any(x in exclude_labels for x in labels):
                     continue
 
-            aggregation_obj = aggregation.Aggregation(
-                sketch=self, api=self.api)
-            aggregation_obj.from_store(aggregation_id=agg_id)
+            aggregation_obj = aggregation.Aggregation(sketch=self)
+            aggregation_obj.from_saved(aggregation_id=agg_id)
             aggregations.append(aggregation_obj)
         return aggregations
 
@@ -860,7 +858,7 @@ class Sketch(resource.BaseResource):
         searches = []
         for saved_search in sketch['meta'].get('views', []):
             search_obj = search.Search(sketch=self)
-            search_obj.from_store(saved_search.get('id'))
+            search_obj.from_saved(saved_search.get('id'))
             searches.append(search_obj)
 
         return searches
@@ -1013,10 +1011,10 @@ class Sketch(resource.BaseResource):
             logger.warning(
                 'View objects will be deprecated soon, use search.Search '
                 'objects instead.')
-            search_obj.from_store(view.id)
+            search_obj.from_saved(view.id)
 
         else:
-            search_obj.from_explore(
+            search_obj.from_manual(
                 query_string=query_string,
                 query_dsl=query_dsl,
                 query_filter=query_filter,
@@ -1212,8 +1210,8 @@ class Sketch(resource.BaseResource):
             raise RuntimeError(
                 'You need to supply an aggregation query DSL string.')
 
-        aggregation_obj = aggregation.Aggregation(sketch=self, api=self.api)
-        aggregation_obj.from_explore(aggregate_dsl)
+        aggregation_obj = aggregation.Aggregation(sketch=self)
+        aggregation_obj.from_manual(aggregate_dsl)
 
         return aggregation_obj
 
@@ -1254,9 +1252,7 @@ class Sketch(resource.BaseResource):
             raise RuntimeError(
                 'Unable to run an aggregator on an archived sketch.')
 
-        aggregation_obj = aggregation.Aggregation(
-            sketch=self,
-            api=self.api)
+        aggregation_obj = aggregation.Aggregation(sketch=self)
         aggregation_obj.from_aggregator_run(
             aggregator_name=aggregator_name,
             aggregator_parameters=aggregator_parameters

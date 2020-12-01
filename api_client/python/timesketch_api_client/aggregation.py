@@ -40,7 +40,7 @@ class Aggregation(resource.SketchResource):
             saved search.
     """
 
-    def __init__(self, sketch, api):
+    def __init__(self, sketch):
         self._parameters = {}
         self.aggregator_name = ''
         self.chart_color = ''
@@ -50,7 +50,7 @@ class Aggregation(resource.SketchResource):
         self.type = None
         resource_uri = 'sketches/{0:d}/aggregation/explore/'.format(sketch.id)
         super().__init__(
-            sketch=sketch, api=api, resource_uri=resource_uri)
+            sketch=sketch, resource_uri=resource_uri)
 
     def _get_aggregation_buckets(self, entry, name=''):
         """Yields all buckets from an aggregation result object.
@@ -123,8 +123,8 @@ class Aggregation(resource.SketchResource):
         return error.get_response_json(response, logger)
 
     # pylint: disable=arguments-differ
-    def from_store(self, aggregation_id):
-        """Initialize the aggregation object from a stored aggregation.
+    def from_saved(self, aggregation_id):
+        """Initialize the aggregation object from a saved aggregation.
 
         Args:
             aggregation_id: integer value for the stored
@@ -162,13 +162,13 @@ class Aggregation(resource.SketchResource):
             chart_type=chart_type)
 
     # pylint: disable=arguments-differ
-    def from_explore(self, aggregate_dsl, **kwargs):
+    def from_manual(self, aggregate_dsl, **kwargs):
         """Initialize the aggregation object by running an aggregation DSL.
 
         Args:
             aggregate_dsl: Elasticsearch aggregation query DSL string.
         """
-        super().from_explore(**kwargs)
+        super().from_manual(**kwargs)
         resource_url = '{0:s}/sketches/{1:d}/aggregation/explore/'.format(
             self.api.api_root, self._sketch.id)
 
@@ -372,11 +372,11 @@ class Aggregation(resource.SketchResource):
 class AggregationGroup(resource.SketchResource):
     """Aggregation Group object."""
 
-    def __init__(self, sketch, api):
+    def __init__(self, sketch):
         """Initialize the aggregation group."""
         resource_uri = 'sketches/{0:d}/aggregation/group/'.format(
             sketch.id)
-        super().__init__(api=api, resource_uri=resource_uri, sketch=sketch)
+        super().__init__(resource_uri=resource_uri, sketch=sketch)
 
         self._name = 'N/A'
         self._description = 'N/A'
@@ -497,12 +497,12 @@ class AggregationGroup(resource.SketchResource):
 
         self._aggregations = []
         for agg_id in aggs:
-            agg_obj = Aggregation(self._sketch, self.api)
-            agg_obj.from_store(agg_id)
+            agg_obj = Aggregation(self._sketch)
+            agg_obj.from_saved(agg_id)
             self._aggregations.append(agg_obj)
 
     # pylint: disable=arguments-differ
-    def from_store(self, group_id):
+    def from_saved(self, group_id):
         """Feed group data from a group ID.
 
         Args:

@@ -557,11 +557,11 @@ class Search(resource.SketchResource):
 
         self.resource_data = {}
 
-    def from_store(self, search_id):  # pylint: disable=arguments-differ
-        """Initialize the search object from a stored search.
+    def from_saved(self, search_id):  # pylint: disable=arguments-differ
+        """Initialize the search object from a saved search.
 
         Args:
-            search_id: integer value for the stored
+            search_id: integer value for the saved
                 search (primary key).
         """
         resource_uri = f'sketches/{self._sketch.id}/views/{search_id}/'

@@ -488,13 +488,13 @@ class Story(resource.BaseResource):
                     block = ViewBlock(self, index)
                     block.from_dict(content_block)
                     search_obj = search.Search(sketch=self._sketch)
-                    search_obj.from_store(block.view_id)
+                    search_obj.from_saved(block.view_id)
                     block.feed(search_obj)
                 elif name == 'TsAggregationCompact':
                     block = AggregationBlock(self, index)
                     block.from_dict(content_block)
-                    agg_obj = aggregation.Aggregation(self._sketch, self._api)
-                    agg_obj.from_store(block.agg_id)
+                    agg_obj = aggregation.Aggregation(self._sketch)
+                    agg_obj.from_saved(block.agg_id)
                     block.feed(agg_obj)
 
                     # Defaults to a table view.
@@ -503,9 +503,8 @@ class Story(resource.BaseResource):
                 elif name == 'TsAggregationGroupCompact':
                     block = AggregationGroupBlock(self, index)
                     block.from_dict(content_block)
-                    group_obj = aggregation.AggregationGroup(
-                        self._sketch, self._api)
-                    group_obj.from_store(block.group_id)
+                    group_obj = aggregation.AggregationGroup(self._sketch)
+                    group_obj.from_saved(block.group_id)
                     block.feed(group_obj)
                 self._blocks.append(block)
                 index += 1

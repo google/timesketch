@@ -118,7 +118,7 @@ class SketchResource(BaseResource):
         """Property that returns back a Dict with the results."""
         return self.to_dict()
 
-    def from_explore(self, **kwargs):
+    def from_manual(self, **kwargs):
         """Initialize the resource object by running a raw API request.
 
         The API request functionality should be implemented by other functions
@@ -137,11 +137,11 @@ class SketchResource(BaseResource):
             raise ValueError('Unused keyword arguments: {0:s}.'.format(
                 ', '.join(kwargs.keys())))
 
-    def from_store(self, resource_id):
-        """Initialize the resource object from a stored resource.
+    def from_saved(self, resource_id):
+        """Initialize the resource object from a saved resource.
 
         Args:
-            resource_id: integer value for the stored resource (primary key).
+            resource_id: integer value for the saved resource (primary key).
         """
         raise NotImplementedError
 
