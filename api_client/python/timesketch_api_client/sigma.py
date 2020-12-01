@@ -50,9 +50,9 @@ class Sigma(resource.BaseResource):
         sigma_data = self.data
 
         if not sigma_data:
-            return None
+            return ''
 
-        return sigma_data.get('es_query', None)
+        return sigma_data.get('es_query', '')
 
     @property
     def title(self):
@@ -60,9 +60,9 @@ class Sigma(resource.BaseResource):
         sigma_data = self.data
 
         if not sigma_data:
-            return None
+            return ''
 
-        return sigma_data.get('title', None)
+        return sigma_data.get('title', '')
 
     @property
     def id(self):
@@ -70,6 +70,6 @@ class Sigma(resource.BaseResource):
         sigma_data = self.data
 
         if not sigma_data:
-            return None
+            return ''
 
-        return sigma_data.get('id', None)
+        return sigma_data.get('id', '')
