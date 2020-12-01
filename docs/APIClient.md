@@ -203,7 +203,7 @@ To find a list of all the possible configuration options.
 
 #### Chips
 
-Chips are the the "+ Time filter" or "+ Add label filter", etc elements you can
+Chips are the "+ Time filter" or "+ Add label filter", etc elements you can
 see in the UI. There are several chips available:
 
 + DateIntervalChip

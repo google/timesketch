@@ -1,4 +1,4 @@
-# Copyright 2019 Google Inc. All rights reserved.
+# Copyright 2020 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -357,14 +357,14 @@ class Search(resource.SketchResource):
         self._updated_at = ''
 
     def _execute_query(self, scrolling=True, file_name=''):
-        """Execute an explore request and store the results.
+        """Execute a search request and store the results.
 
         Args:
             scrolling (bool): optional bool that indicates whether
                 scrolling support is enabled on the Elastic query.
                 Defaults to true.
             file_name (str): optional file path to a filename that
-                all the results will be dumped in. If not provided
+                all the results will be saved to. If not provided
                 the results will be stored in the search object.
         """
         query_filter = self.query_filter
