@@ -55,6 +55,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
             logger.error('No  Sigma rules found. Check SIGMA_RULES_FOLDERS')
 
         problem_string = []
+        output_string = []
 
         for rule in sigma_rules:
             tags_applied[rule.get('file_name')] = 0
@@ -70,11 +71,11 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                         rule.get('file_name'), e), exc_info=True)
                 # this is caused by to many ES queries in short time range
                 # thus waiting for 10 seconds before sending the next one.
-                time.sleep(1)
+                time.sleep(10)
             # This except block is by purpose very broad as one bad rule could
             # otherwise stop the whole analyzer run
             # it might be an option to write the problematic rules to the output
-            except: # pylint: disable=W0702
+            except: # pylint: disable=bare-except
                 logger.error(
                     'Problem with rule in file {0:s}: '.format(
                         rule.get('file_name')), exc_info=True)
@@ -83,10 +84,10 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                 continue
 
         total_tagged_events = sum(tags_applied.values())
-        output_string = 'Applied {0:d} tags\n'.format(total_tagged_events)
+        output_string.append('Applied {0:d} tags\n'.format(total_tagged_events))
         for tag_name, tagged_events_counter in tags_applied.items():
-            output_string += '* {0:s}: {1:d}\n'.format(
-                tag_name, tagged_events_counter)
+            output_string.append('* {0:s}: {1:d}\n'.format(
+                tag_name, tagged_events_counter))
 
         if sigma_rule_counter > 0:
             view = self.sketch.add_view(
@@ -118,8 +119,8 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                 'And an overview of all the discovered search terms:')
             story.add_view(view)
 
-        output_string += '\n Problematic rules:'
-        output_string += ''.join(problem_string)
+        output_string.append('\n Problematic rules:')
+        output_string.append(''.join(problem_string))
 
         return output_string
 
