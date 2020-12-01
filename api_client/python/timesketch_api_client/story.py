@@ -487,8 +487,7 @@ class Story(resource.BaseResource):
                 elif name == 'TsViewEventList':
                     block = ViewBlock(self, index)
                     block.from_dict(content_block)
-                    search_obj = search.Search(
-                        sketch=self._sketch, api=self._api)
+                    search_obj = search.Search(sketch=self._sketch)
                     search_obj.from_store(block.view_id)
                     block.feed(search_obj)
                 elif name == 'TsAggregationCompact':

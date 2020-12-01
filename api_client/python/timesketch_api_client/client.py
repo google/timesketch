@@ -95,6 +95,7 @@ class TimesketchApi:
         self.api_root = '{0:s}/api/v1'.format(host_uri)
         self.credentials = None
         self._flow = None
+        self._username = username
 
         if not create_session:
             self.session = None
@@ -109,6 +110,11 @@ class TimesketchApi:
         except RuntimeError as e:
             raise RuntimeError(
                 'Unable to connect to server, error: {0!s}'.format(e)) from e
+
+    @property
+    def current_user(self):
+        """Property that returns the username that is logged in."""
+        return self._username
 
     @property
     def version(self):

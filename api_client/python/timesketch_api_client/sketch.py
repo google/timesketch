@@ -440,7 +440,7 @@ class Sketch(resource.BaseResource):
         if self.is_archived():
             raise RuntimeError('Unable create a view on an archived sketch.')
 
-        search_obj = search.Search(sketch=self, api=self.api)
+        search_obj = search.Search(sketch=self)
         search_obj.from_explore(
             query_string=query_string,
             query_dsl=query_dsl,
@@ -859,9 +859,7 @@ class Sketch(resource.BaseResource):
         sketch = self.lazyload_data()
         searches = []
         for saved_search in sketch['meta'].get('views', []):
-            search_obj = search.Search(
-                sketch=self,
-                api=self.api)
+            search_obj = search.Search(sketch=self)
             search_obj.from_store(saved_search.get('id'))
             searches.append(search_obj)
 
@@ -1009,7 +1007,7 @@ class Sketch(resource.BaseResource):
         if self.is_archived():
             raise RuntimeError('Unable to query an archived sketch.')
 
-        search_obj = search.Search(sketch=self, api=self.api)
+        search_obj = search.Search(sketch=self)
 
         if view:
             logger.warning(

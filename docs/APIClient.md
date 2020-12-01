@@ -133,7 +133,7 @@ A search object is created from a sketch object.
 from timesketch_api_client import search
 ...
 
-search_obj = search.Search(sketch=sketch, api=sketch.api)
+search_obj = search.Search(sketch=sketch)
 ```
 
 From there several options are possible:

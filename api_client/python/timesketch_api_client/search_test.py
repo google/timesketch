@@ -32,8 +32,7 @@ class SearchTest(unittest.TestCase):
 
     def test_from_store(self):
         """Test fetching object from store."""
-        search_obj = search.Search(
-            sketch=self.sketch, api=self.api_client)
+        search_obj = search.Search(sketch=self.sketch)
         search_obj.from_store(1)
 
         self.assertIsInstance(search_obj, search.Search)
@@ -46,8 +45,7 @@ class SearchTest(unittest.TestCase):
 
     def test_from_explore(self):
         """Test fetching data."""
-        search_obj = search.Search(
-            sketch=self.sketch, api=self.api_client)
+        search_obj = search.Search(sketch=self.sketch)
         search_obj.query_string = '*'
         df = search_obj.table
         self.assertEqual(len(df), 1)

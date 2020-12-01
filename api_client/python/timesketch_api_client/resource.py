@@ -55,15 +55,14 @@ class BaseResource:
 class SketchResource(BaseResource):
     """Sketch resource object."""
 
-    def __init__(self, resource_uri, sketch, api):
+    def __init__(self, resource_uri, sketch):
         """Initialize the sketch resource object.
 
         Args:
             resource_uri: The URI part of the API resource to call.
             sketch: The sketch object of the sketch this resource is tied to.
-            api: An instance of TimesketchApi object.
         """
-        super().__init__(api, resource_uri)
+        super().__init__(sketch.api, resource_uri)
 
         self._labels = []
         self._resource_id = 0

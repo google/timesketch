@@ -13,7 +13,6 @@
 # limitations under the License.
 """Timesketch API search object."""
 import datetime
-import getpass
 import json
 import logging
 
@@ -537,7 +536,7 @@ class Search(resource.SketchResource):
         if not (query_string or query_filter or query_dsl):
             raise RuntimeError('You need to supply a query')
 
-        self._username = getpass.getuser()
+        self._username = self.api.current_user
         self._name = 'From Explore'
         self._description = 'From Explore'
 
