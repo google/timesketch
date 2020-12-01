@@ -338,8 +338,7 @@ class Search(resource.SketchResource):
 
     def __init__(self, sketch, api):
         resource_uri = f'sketches/{sketch.id}/explore/'
-        super().__init__(
-            sketch=sketch, api=api, resource_uri=resource_uri)
+        super().__init__(sketch=sketch, resource_uri=resource_uri)
 
         self._aggregations = ''
         self._chips = []

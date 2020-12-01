@@ -16,6 +16,8 @@
 from . import interface
 from . import manager
 
+from timesketch_api_client import search
+
 
 class QueryTest(interface.BaseEndToEndTest):
     """End to end tests for query functionality."""
@@ -32,8 +34,10 @@ class QueryTest(interface.BaseEndToEndTest):
 
     def test_wildcard_query(self):
         """Wildcard query over all data in the sketch."""
-        response_json = self.sketch.explore(query_string="*")
-        count = response_json.get('meta', {}).get('es_total_count', 0)
+        search_obj = search.Search(self.sketch)
+        search_obj.query_string = '*'
+        data_frame = search_obj.table
+        count = len(data_frame)
         self.assertions.assertEqual(count, 3205)
 
 
