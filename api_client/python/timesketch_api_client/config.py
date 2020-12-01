@@ -303,7 +303,7 @@ class ConfigAssistant:
         # Read in other sections in the config file as well.
         try:
             _ = config.read([file_path])
-        except configparser.MissingSectionHeaderError as exc:
+        except configparser.MissingSectionHeaderError:
             pass
 
         # TODO: Remove this, temporary here to transition from the use of
