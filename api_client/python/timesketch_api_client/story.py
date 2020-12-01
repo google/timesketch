@@ -20,7 +20,7 @@ import pandas as pd
 from . import aggregation
 from . import error
 from . import resource
-from . import view
+from . import search
 
 
 logger = logging.getLogger('timesketch_api.story')
@@ -487,15 +487,14 @@ class Story(resource.BaseResource):
                 elif name == 'TsViewEventList':
                     block = ViewBlock(self, index)
                     block.from_dict(content_block)
-                    view_obj = view.View(
-                        block.view_id, block.view_name, self._sketch.id,
-                        self._api)
-                    block.feed(view_obj)
+                    search_obj = search.Search(sketch=self._sketch)
+                    search_obj.from_saved(block.view_id)
+                    block.feed(search_obj)
                 elif name == 'TsAggregationCompact':
                     block = AggregationBlock(self, index)
                     block.from_dict(content_block)
-                    agg_obj = aggregation.Aggregation(self._sketch, self._api)
-                    agg_obj.from_store(block.agg_id)
+                    agg_obj = aggregation.Aggregation(self._sketch)
+                    agg_obj.from_saved(block.agg_id)
                     block.feed(agg_obj)
 
                     # Defaults to a table view.
@@ -504,9 +503,8 @@ class Story(resource.BaseResource):
                 elif name == 'TsAggregationGroupCompact':
                     block = AggregationGroupBlock(self, index)
                     block.from_dict(content_block)
-                    group_obj = aggregation.AggregationGroup(
-                        self._sketch, self._api)
-                    group_obj.from_store(block.group_id)
+                    group_obj = aggregation.AggregationGroup(self._sketch)
+                    group_obj.from_saved(block.group_id)
                     block.feed(group_obj)
                 self._blocks.append(block)
                 index += 1
@@ -568,7 +566,7 @@ class Story(resource.BaseResource):
             Boolean that indicates whether block was successfully added.
 
         Raises:
-            TypeError: if the view object is not of the correct type.
+            TypeError: if the aggregation object is not of the correct type.
         """
         if not hasattr(agg_obj, 'id'):
             raise TypeError('Aggregation object is not correctly formed.')
@@ -619,17 +617,34 @@ class Story(resource.BaseResource):
         Raises:
             TypeError: if the view object is not of the correct type.
         """
-        if not hasattr(view_obj, 'id'):
+        self.add_saved_search(view_obj, index)
+
+    def add_saved_search(self, search_obj, index=-1):
+        """Add a saved search to the story.
+
+        Args:
+            search_obj: a search object (instance of search.Search)
+            index: an integer, if supplied determines where the new
+                block will be added. If not supplied it will be
+                appended at the end.
+
+        Returns:
+            Boolean that indicates whether block was successfully added.
+
+        Raises:
+            TypeError: if the search object is not of the correct type.
+        """
+        if not hasattr(search_obj, 'id'):
             raise TypeError('View object is not correctly formed.')
 
-        if not hasattr(view_obj, 'name'):
+        if not hasattr(search_obj, 'name'):
             raise TypeError('View object is not correctly formed.')
 
         if index == -1:
             index = len(self._blocks)
 
         view_block = ViewBlock(self, index)
-        view_block.feed(view_obj)
+        view_block.feed(search_obj)
 
         return self._add_block(view_block, index)
 
@@ -713,8 +728,8 @@ class Story(resource.BaseResource):
             if block.TYPE == 'text':
                 string_list.append(block.text)
             elif block.TYPE == 'view':
-                data_frame = self._sketch.explore(
-                    view=block.view, as_pandas=True)
+                search_obj = block.view
+                data_frame = search_obj.to_pandas()
                 string_list.append(data_frame.to_string(index=False))
             elif block.TYPE == 'aggregation':
                 agg_obj = self._sketch.get_aggregation(block.agg_id)

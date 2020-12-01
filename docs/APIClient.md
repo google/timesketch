@@ -5,7 +5,7 @@ care of setting up authentication, sending the API calls to the server, error ha
 
 This documentation will give an overview for the most common use cases of the API client. Some available methods will not be covered in this documentation
 whereas others will be documented further in a notebook (e.g. [colab-timesketch-demo notebook](/notebooks/colab-timesketch-demo.ipynb)).
- 
+
 ## Basic Connections
 
 The API client defines a config library specifically intended to help with setting up all configuration for connecting to Timesketch, including
@@ -83,83 +83,231 @@ Each of these properties can be accessed using `sketch.<PROPERTY>`, eg. `sketch.
 
 The sketch object has several ways to explore data, via aggregations or searches.
 
-### Views
+### Saved Searches
 
-To list all the views use the `list_views` function. This functions returns a View object for all views. An example overview would be:
-
-```
-for view in sketch.list_views():
-  print('{0:03d} - {1:s} [{2:s}]'.format(view.id, view.name, view.user))
-```
-
-It is also possible to create a new view:
+To list all saved searches, use the `list_saved_searches` function of the sketch
+object. This functions returns a `search.Search` object for all saved searches.
+An example overview would be:
 
 ```
-view = sketch.create_view(name, query_string='', query_dsl='', query_filter=None)
+for saved_search in sketch.list_saved_searches():
+  print('{0:03d} - {1:s} [{2:s}]'.format(saved_search.id, saved_search.name, saved_search.user))
 ```
 
-Which can be as simple as:
+To get a particular saved search:
 
 ```
-view = sketch.create_view('Google mentions', query_string='google.com')
+saved_search = sketch.get_saved_search(search_id=<SEARCH_ID>)
 ```
 
-To get a view that has been saved:
+or
 
 ```
-view = sketch.get_view(view_id=<VIEW_ID>)
+saved_search = sketch.get_saved_search(search_name=<SEARCH_NAME>)
 ```
 
-or 
+A search object can be used like this:
 
 ```
-view = sketch.get_view(view_name=<VIEW_NAME>)
+data = saved_search.table
 ```
 
-A view object can be used like this:
-
-```
-data = sketch.explore(view=view, as_pandas=True)
-```
-
-The results will be a pandas DataFrame that contains all the records from a view.
+The results will be a pandas DataFrame that contains all the records from the
+saved search.
 
 ### Search Query
 
-To search in the API client the function `sketch.explore` is used. It will accept several parameters, such as a view object if that is available
-or a free flowing query string (same as in the UI) or a raw Elastic query DSL.
+To search in the API client a search object is used. It will accept several
+parameters or configurations, for instances a free flowing query string
+(same as in the UI) or a raw Elastic query DSL. It can also support search
+chips.
 
 The output can be:
-+ A pandas DataFrame if the `as_pandas=True` is set
-+ A python dict (default behavior)
-+ All output stored to a file if the parameter `file_name='FILEPATH.zip'` is supplied.
++ A pandas DataFrame.
++ A python dict.
++ Stored in a ZIP file.
 
-There are also other parameters to the explore function that are worth a mention:
-+ **query_filter**: possible to customize the query filter, to limit search results, include extra fields in the results, etc
-+ **return_fields**: A comma separated string that contains a list of the fields/columns you want returned. By default only
-a limited set of columns are returned. To expand on that use this variable to list up the columns you need.
-+ **max_entries**: an integer that determines the maximum amount of entries you want returned back. The default value here is 10k
-events. There may be a bit more events returned than this number determines, it is a best effort but should be used if you don't want
-all the events returned back, only a fraction of them.
-
-An example of a search query:
+A search object is created from a sketch object.
 
 ```
-data = sketch.explore('google.com', as_pandas=True)
+from timesketch_api_client import search
+...
+
+search_obj = search.Search(sketch=sketch)
 ```
 
-This will return back a pandas DataFrame with the search results.
+From there several options are possible:
 
-Another example search query:
++ Restore a saved search using `from_saved(<SEARCH_ID>)`
++ Use the `from_manual` function that provides several parameters
++ Individually set the needed parameters.
+
+The first thing you need to do after creating the object is to configure the
+search parameters:
+
+#### Retrieve a Stored Search
+
+To retrieve a stored search used the `from_saved`:
+
 ```
-data = sketch.explore(
-       '192.168.0.1 AND NOT timestamp_desc:foobar',
-       as_pandas=True,
-       return_fields='datetime,message,timestamp_desc'
-)
+search_obj.from_saved(<SEARCH_ID>)
 ```
 
-This will return back a pandas DataFrame with the search results limited to the columns.
+#### Configure using the Explore Function
+
+It is also possible to configure the search object using the `from_manual`
+function.
+
+```
+search_obj.from_manual(
+    query_string, query_dsl, query_filter,
+    return_fields, max_entries)
+```
+
+All of these parameters are optional, but in order for the search object to
+be able to query for results you need to provide either `query_string` or
+the `query_dsl`.
+
++ **query_string**: This is the Elastic query string, the same one as you would
+provide in the UI.
++ **query_dsl**: This is an Elastic Query DSL string. Please see the official
+documentation about how it is structured.
++ **return_fields**: This is a comma separated string with all the fields you
+want to be included in the returned value. If you want all fields returned you
+can use the wildcard '\*'.
++ **max_entries**: By default the search object returns 10k records maximum. You
+may want to either reduce that or increase it. If the search has the potential
+to return more than 10k records a log record will be added indicating how many
+records there could be, so that the search can be repeated by increasing the max
+entries.
+
+#### Configure Manually
+
+All of the configurations that are present in the `from_manual` function are
+also directly available in the object itself, and can be set directly.
+
+```
+search_obj.query_string = 'my search'
+search_obj.max_entries = 10000000
+search_obj.return_fields = 'datetime,timestamp_desc,data_type,message,domain,url'
+```
+
+There are also other configurations possible. In Jupyter/Colab notebook you can
+always do
+
+```
+search_obj.*?
+```
+
+To find a list of all the possible configuration options.
+
+#### Chips
+
+Chips are the "+ Time filter" or "+ Add label filter", etc elements you can
+see in the UI. There are several chips available:
+
++ DateIntervalChip
++ DateRangeChip
++ TermChip
++ LabelChip
+
+To add a chip to a search object simply use the `add_chip` function:
+
+```
+search_obj.add_chip(label_chip)
+```
+
+To view the existing chips:
+
+```
+[c.chip for c in search_obj.chips]
+```
+
+Or
+```
+search_obj.query_filter
+```
+
+Chips can also be removed using the `search_obj.remove_chip(chip_index)`
+function.
+
+Each chip will have their own way of configuring it, let's take an example of a
+date range chip.
+
+```
+range_chip = search.DateRangeChip()
+range_chip.start_time = '2013-09-20T22:20:47'
+range_chip.end_time = '2013-09-20T22:59:47'
+search_obj.add_chip(range_chip)
+```
+
+For an interval chip:
+
+```
+interval_chip = search.DateIntervalChip()
+interval_chip.date = '2013-09-20T22:39:47'
+interval_chip.before = 10
+interval_chip.after = 10
+interval_chip.unit = 'm'
+
+search_obj.add_chip(interval_chip)
+```
+
+Or a label chip:
+```
+label_chip = search.LabelChip()
+label_chip.label = 'foobar'
+search_obj.add_chip(label_chip)
+```
+
+Label chips can also be used to filter out all starred events, or events with
+comments. For that use:
+
+```
+label_chip.use_comment_label()
+```
+
+or
+
+```
+label_chip.use_star_label()
+```
+
+#### Get The Results
+
+Once you have constructed your search object, you may want to explore the
+results.
+
+To get the results as:
++ a pandas DataFrame use: `search_obj.table`
++ a dict, use `search_obj.dict`
++ a JSON string, use `search_obj.json`
+
+Or if you want to store the results as a file:
+
+```
+search_obj.to_file('/tmp/myresults.zip')
+```
+
+(use the ZIP ending, since the resulting file will be a ZIP file with both the
+results as a CSV file and a METADATA file.
+
+
+#### Store a Search
+
+If you want to store the search query in the datastore, to make it accessible
+later on, or visible in the UI you can use the `save` function. First create a
+name and a description and then save the object.
+
+```
+search_obj.name = 'My First Saved Search'
+search_obj.description = 'This saves all my work'
+search_obj.save()
+```
+
+After you save it, each time you make a change to the search the change gets
+updated in the datastore. You can also call `save()` or `commit()` on the object
+to make sure it was saved.
 
 ### Aggregations
 

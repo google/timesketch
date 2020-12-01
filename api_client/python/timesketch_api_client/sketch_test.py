@@ -18,9 +18,9 @@ import unittest
 import mock
 
 from . import client
+from . import search
 from . import test_lib
 from . import timeline as timeline_lib
-from . import view as view_lib
 
 
 class SketchTest(unittest.TestCase):
@@ -34,14 +34,13 @@ class SketchTest(unittest.TestCase):
         self.sketch = self.api_client.get_sketch(1)
 
     # TODO: Add test for upload()
-    # TODO: Add test for explore()
 
-    def test_get_views(self):
-        """Test to get a view."""
-        views = self.sketch.list_views()
-        self.assertIsInstance(views, list)
-        self.assertEqual(len(views), 2)
-        self.assertIsInstance(views[0], view_lib.View)
+    def test_get_searches(self):
+        """Test to get a search."""
+        searches = self.sketch.list_saved_searches()
+        self.assertIsInstance(searches, list)
+        self.assertEqual(len(searches), 2)
+        self.assertIsInstance(searches[0], search.Search)
 
     def test_get_timelines(self):
         """Test to get a timeline."""

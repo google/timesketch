@@ -36,7 +36,7 @@ class AnalyzerResult(resource.BaseResource):
         resource_uri = (
             '{0:s}/sketches/{1:d}/timelines/{2:d}/analysis/').format(
                 api.api_root, sketch_id, timeline_id)
-        super(AnalyzerResult, self).__init__(api, resource_uri)
+        super().__init__(api, resource_uri)
 
     def _fetch_data(self):
         """Returns a dict with the analyzer results."""

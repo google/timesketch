@@ -20,7 +20,7 @@ import json
 def mock_session():
     """Mock HTTP requests session."""
 
-    class MockHeaders(object):
+    class MockHeaders:
         """Mock requests HTTP headers."""
 
         # pylint: disable=unused-argument
@@ -29,7 +29,7 @@ def mock_session():
             """Mock header update method."""
             return
 
-    class MockSession(object):
+    class MockSession:
         """Mock HTTP requests session."""
 
         def __init__(self):
@@ -58,7 +58,7 @@ def mock_session():
 def mock_response(*args, **kwargs):
     """Mocks HTTP response."""
 
-    class MockResponse(object):
+    class MockResponse:
         """Mock HTTP response object."""
 
         def __init__(self, json_data=None, text_data=None, status_code=200):
@@ -111,6 +111,36 @@ def mock_response(*args, **kwargs):
         }]
     }
 
+    view_data_1 = {
+        'objects': [{
+            'id': 1,
+            'name': 'test',
+            'description': 'meant for testing purposes only.',
+            'user': {'username': 'gisli'},
+            'query_string': 'test:"foobar"',
+            'query_dsl': '',
+            'searchtemplate': '',
+            'aggregation': '',
+            'created_at': '2020-11-30T15:17:29',
+            'updated_at': '2020-11-30T15:17:29',
+        }],
+    }
+
+    view_data_2 = {
+        'objects': [{
+            'id': 2,
+            'name': 'more test',
+            'description': 'really meant for testing purposes only.',
+            'user': {'username': 'eirikur'},
+            'query_string': 'test:"bar"',
+            'query_dsl': '',
+            'searchtemplate': '',
+            'aggregation': '',
+            'created_at': '2020-11-30T15:17:29',
+            'updated_at': '2020-11-30T15:17:29',
+        }],
+    }
+
     sketch_list_data = {
         'meta': {'es_time': 324},
         'objects': sketch_data['objects']}
@@ -123,7 +153,22 @@ def mock_response(*args, **kwargs):
             'id': 1,
             'name': 'test',
             'searchindex': {
+                'id': 1234,
                 'index_name': 'test'
+            }
+        }]
+    }
+
+    more_timeline_data = {
+        'meta': {
+            'es_time': 12,
+        },
+        'objects': [{
+            'id': 2,
+            'name': 'more_test',
+            'searchindex': {
+                'id': 42,
+                'index_name': 'even_more_test'
             }
         }]
     }
@@ -249,8 +294,14 @@ def mock_response(*args, **kwargs):
         MockResponse(json_data=sketch_list_data),
         'http://127.0.0.1/api/v1/sketches/1':
         MockResponse(json_data=sketch_data),
-        'http://127.0.0.1/api/v1/sketches/1/timelines/1':
+        'http://127.0.0.1/api/v1/sketches/1/views/1/':
+        MockResponse(json_data=view_data_1),
+        'http://127.0.0.1/api/v1/sketches/1/views/2/':
+        MockResponse(json_data=view_data_2),
+        'http://127.0.0.1/api/v1/sketches/1/timelines/1/':
         MockResponse(json_data=timeline_data),
+        'http://127.0.0.1/api/v1/sketches/1/timelines/2/':
+        MockResponse(json_data=more_timeline_data),
         'http://127.0.0.1/api/v1/sketches/1/explore/':
         MockResponse(json_data=timeline_data),
         'http://127.0.0.1/api/v1/sketches/1/stories/':

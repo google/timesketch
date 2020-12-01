@@ -149,13 +149,16 @@ class ViewListResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to save view, not able to validate form data.')
+
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
         if not sketch.has_permission(current_user, 'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have write access controls on sketch.')
+
         view = self.create_view_from_form(sketch, form)
         return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
 
@@ -272,16 +275,36 @@ class ViewResource(resources.ResourceMixin, Resource):
         if not sketch.has_permission(current_user, 'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have write access controls on sketch.')
+
         view = View.query.get(view_id)
+        if not view:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No view found with this ID.')
+
+        if view.sketch.id != sketch.id:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to update view, view not attached to sketch.')
+
         view.query_string = form.query.data
+        description = form.description.data
+        if description:
+            view.description = description
 
         query_filter = form.filter.data
+
         # Stripping potential pagination from views before saving it.
         if 'from' in query_filter:
             del query_filter['from']
+
         view.query_filter = json.dumps(query_filter, ensure_ascii=False)
 
         view.query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
+
+        name = form.name.data
+        if name:
+            view.name = name
+
         view.user = current_user
         view.sketch = sketch
 
