@@ -503,21 +503,19 @@ class TimesketchApi(object):
                 as a Pandas DataFrame instead of a list of dicts.
 
         Returns:
-            A list with dicts with the information about sigma rule,
+            A list with dicts with the information about each sigma rule,
             unless as_pandas is set, then the function returns a DataFrame
             object.
         """
         response = self.fetch_resource_data('sigma/')
 
-        if not as_pandas:
-            return response
-
-        records = response['objects']
-
-        if not records:
+        if not response:
             raise ValueError('No rules found.')
 
-        return pandas.DataFrame.from_records(records)
+        if not as_pandas:
+            return response        
+
+        return pandas.DataFrame.from_records(response['objects'])
 
     def get_sigma_rule(self, rule_uuid):
         """Get a sigma rule.
