@@ -13,10 +13,10 @@
 # limitations under the License.
 """End to end tests of Timesketch query functionality."""
 
+from timesketch_api_client import search
+
 from . import interface
 from . import manager
-
-from timesketch_api_client import search
 
 
 class QueryTest(interface.BaseEndToEndTest):
@@ -26,7 +26,7 @@ class QueryTest(interface.BaseEndToEndTest):
 
     def __init__(self):
         """Initialize the test."""
-        super(QueryTest, self).__init__()
+        super().__init__()
 
     def setup(self):
         """Import test timeline."""
