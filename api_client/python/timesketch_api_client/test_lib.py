@@ -241,7 +241,7 @@ def mock_response(*args, **kwargs):
                 'logsource': {
                     'product': 'linux', 'service': 'shell'
                     },
-                'es_query': '("*apt\\-get\\ install\\ zmap*")'
+                'es_query': '("*apt\\-get\\ install\\ zmap*")',
                 'modified': '2020/06/26',
                 'references': ['httpx://foobar.com'],
                 'title': 'Suspicious Installation of Zenmap'
@@ -259,7 +259,7 @@ def mock_response(*args, **kwargs):
                 'logsource': {
                     'product': 'linux', 'service': 'shell'
                     },
-                'es_query': '("*apt\\-get\\ install\\ foo*")'
+                'es_query': '("*apt\\-get\\ install\\ foo*")',
                 'modified': '2020/06/26',
                 'references': ['httpx://foobar.com'],
                 'title': 'Suspicious Installation of Zenmap'
