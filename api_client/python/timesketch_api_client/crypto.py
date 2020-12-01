@@ -40,12 +40,15 @@ class CredentialStorage:
     # Length of the salt.
     SALT_LENGTH = 16
 
-    def __init__(self):
+    def __init__(self, file_path=''):
         """Initialize the class."""
         self._user = getpass.getuser()
-        home_path = os.path.expanduser('~')
-        self._filepath = os.path.join(
-            home_path, self.DEFAULT_CREDENTIAL_FILENAME)
+        if file_path:
+            self._filepath = file_path
+        else:
+            home_path = os.path.expanduser('~')
+            self._filepath = os.path.join(
+                home_path, self.DEFAULT_CREDENTIAL_FILENAME)
 
     def _get_key(self, salt, password):
         """Returns an encryption key.

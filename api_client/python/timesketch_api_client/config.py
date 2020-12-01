@@ -120,7 +120,8 @@ class ConfigAssistant:
         if auth_mode == 'timesketch':
             auth_mode = 'userpass'
 
-        credential_storage = crypto.CredentialStorage()
+        file_path = self._config.get('token_file_path', '')
+        credential_storage = crypto.CredentialStorage(file_path=file_path)
         credentials = credential_storage.load_credentials(
             config_assistant=self, password=token_password)
 
@@ -198,13 +199,20 @@ class ConfigAssistant:
         """
         return name.lower() in self._config
 
-    def load_config_file(self, config_file_path: Optional[Text] = ''):
+    def load_config_file(
+            self, config_file_path: Optional[Text] = '',
+            section: Optional[Text] = 'timesketch'):
         """Load the config from file.
 
         Args:
             config_file_path (str): Full path to the configuration file,
                 if not supplied the default path will be used, which is
                 the file RC_FILENAME inside the user's home directory.
+            section (str): The configuration section to read from. This
+                is optional and defaults to timesketch. This can be
+                useful if you have mutiple Timesketch servers to connect to,
+                with each one of them having a separate section in the config
+                file.
 
         Raises:
           IOError if the file does not exist or config does not load.
@@ -235,11 +243,11 @@ class ConfigAssistant:
             logger.warning('No config read')
             return
 
-        if 'timesketch' not in config.sections():
-            logger.warning('No timesketch section in the config')
+        if section not in config.sections():
+            logger.warning('No %s section in the config', section)
             return
 
-        timesketch_config = config['timesketch']
+        timesketch_config = config[section]
         for name, value in timesketch_config.items():
             self.set_config(name, value)
 
@@ -264,13 +272,23 @@ class ConfigAssistant:
                 continue
             self.set_config(key, value)
 
-    def save_config(self, file_path: Optional[Text] = ''):
+    def save_config(
+            self, file_path: Optional[Text] = '',
+            section: Optional[Text] = 'timesketch',
+            token_file_path: Optional[Text] = ''):
         """Save the current config to a file.
 
         Args:
             file_path (str): A full path to the location where the
                 configuration file is to be stored. If not provided the
                 default location will be used.
+            section (str): The configuration section to write to. This
+                is optional and defaults to timesketch. This can be
+                useful if you have mutiple Timesketch servers to connect to,
+                with each one of them having a separate section in the config
+                file.
+            token_file_path (str): Optional path to the location of the token
+                file.
         """
         if not file_path:
             home_path = os.path.expanduser('~')
@@ -278,13 +296,23 @@ class ConfigAssistant:
 
         config = configparser.ConfigParser()
 
+        if not os.path.isfile(file_path):
+            fw = open(file_path, 'a')
+            fw.close()
+
+        # Read in other sections in the config file as well.
+        try:
+            _ = config.read([file_path])
+        except configparser.MissingSectionHeaderError as exc:
+            pass
+
         # TODO: Remove this, temporary here to transition from the use of
         # timesketch to the auth mode of userpass.
         auth_mode = self._config.get('auth_mode', 'userpass')
         if auth_mode == 'timesketch':
             auth_mode = 'userpass'
 
-        config['timesketch'] = {
+        config[section] = {
             'host_uri': self._config.get('host_uri'),
             'username': self._config.get('username'),
             'verify': self._config.get('verify', True),
@@ -292,12 +320,14 @@ class ConfigAssistant:
             'client_secret': self._config.get('client_secret', ''),
             'auth_mode': auth_mode,
         }
+        if token_file_path:
+            config[section]['token_file_path'] = token_file_path
 
         if 'cred_key' in self._config:
             cred_key = self._config.get('cred_key')
             if isinstance(cred_key, bytes):
                 cred_key = cred_key.decode('utf-8')
-            config['timesketch']['cred_key'] = cred_key
+            config[section]['cred_key'] = cred_key
 
         with open(file_path, 'w') as fw:
             config.write(fw)
@@ -315,6 +345,7 @@ class ConfigAssistant:
 def get_client(
         config_dict: Optional[Dict[Text, Any]] = None,
         config_path: Optional[Text] = '',
+        config_section: Optional[Text] = 'timesketch',
         token_password: Optional[Text] = '',
         confirm_choices: Optional[bool] = False
         ) -> Optional[client.TimesketchApi]:
@@ -325,6 +356,11 @@ def get_client(
             the client.
         config_path (str): optional path to the configuration file, if
             not supplied a default path will be used.
+        config_section (str): The configuration section to read from. This
+            is optional and defaults to timesketch. This can be
+            useful if you have mutiple Timesketch servers to connect to,
+            with each one of them having a separate section in the config
+            file.
         token_password (str): an optional password to decrypt
             the credential token file.
         confirm_choices (bool): an optional bool. if set to the user is given
@@ -336,7 +372,7 @@ def get_client(
     """
     assistant = ConfigAssistant()
     try:
-        assistant.load_config_file(config_path)
+        assistant.load_config_file(config_path, section=config_section)
         if config_dict:
             assistant.load_config_dict(config_dict)
     except IOError as e:
@@ -344,7 +380,11 @@ def get_client(
         logger.error('Error: %s', e)
 
     try:
-        configure_missing_parameters(assistant, token_password, confirm_choices)
+        configure_missing_parameters(
+            config_assistant=assistant,
+            token_password=token_password,
+            confirm_choices=confirm_choices,
+            config_section=config_section)
         return assistant.get_client(token_password=token_password)
     except (RuntimeError, requests.ConnectionError) as e:
         logger.error(
@@ -365,7 +405,8 @@ def get_client(
 def configure_missing_parameters(
         config_assistant: ConfigAssistant,
         token_password: Optional[Text] = '',
-        confirm_choices: Optional[bool] = False):
+        confirm_choices: Optional[bool] = False,
+        config_section: Optional[Text] = 'timesketch'):
     """Fill in missing configuration for a config assistant.
 
     This function will take in a configuration assistant object and check
@@ -383,6 +424,11 @@ def configure_missing_parameters(
         confirm_choices (bool): an optional bool. if set to the user is given
             a choice to change the value for all already configured parameters.
             This defaults to False.
+        config_section (str): The configuration section to read from. This
+            is optional and defaults to timesketch. This can be
+            useful if you have mutiple Timesketch servers to connect to,
+            with each one of them having a separate section in the config
+            file.
     """
     just_configured = []
 
@@ -420,8 +466,13 @@ def configure_missing_parameters(
             if value:
                 config_assistant.set_config(field, value)
 
-    config_assistant.save_config()
-    credential_storage = crypto.CredentialStorage()
+    try:
+        file_path = config_assistant.get_config('token_file_path')
+    except KeyError:
+        file_path = ''
+    config_assistant.save_config(
+        section=config_section, token_file_path=file_path)
+    credential_storage = crypto.CredentialStorage(file_path=file_path)
     credentials = credential_storage.load_credentials(
         config_assistant=config_assistant, password=token_password)
 
@@ -457,9 +508,10 @@ def configure_missing_parameters(
         'username': username,
         'password': password
     }
-    cred_storage = crypto.CredentialStorage()
+    cred_storage = crypto.CredentialStorage(file_path=file_path)
     cred_storage.save_credentials(
         credentials, password=token_password,
         config_assistant=config_assistant)
-    config_assistant.save_config()
+    config_assistant.save_config(
+        section=config_section, token_file_path=file_path)
     return None
