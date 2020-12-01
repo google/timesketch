@@ -31,15 +31,21 @@ class Sigma(resource.BaseResource):
     """
 
 
-    def __init__(self, rule_uuid, api):
+    def __init__(self, rule_uuid, api, es_query=None,
+                 file_name=None, title=None, description=None):
         """Initializes the Sigma object.
 
         Args:
             rule_uuid: Id of the sigma rule.
             api: An instance of TimesketchApi object.
+            #TODO: update the args
 
         """
         self.rule_uuid = rule_uuid
+        self._description = description
+        self._es_query = es_query
+        self._file_name = file_name
+        self._title = title
         self._resource_uri = f'sigma/{self.rule_uuid}'
         super().__init__(
             api=api, resource_uri=self._resource_uri)
