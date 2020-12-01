@@ -138,8 +138,8 @@ search_obj = search.Search(sketch=sketch)
 
 From there several options are possible:
 
-+ Restore a saved search using `from_store(<SEARCH_ID>)`
-+ Use the `from_explore` function that provides several parameters
++ Restore a saved search using `from_saved(<SEARCH_ID>)`
++ Use the `from_manual` function that provides several parameters
 + Individually set the needed parameters.
 
 The first thing you need to do after creating the object is to configure the
@@ -147,19 +147,19 @@ search parameters:
 
 #### Retrieve a Stored Search
 
-To retrieve a stored search used the `from_store`:
+To retrieve a stored search used the `from_saved`:
 
 ```
-search_obj.from_store(<SEARCH_ID>)
+search_obj.from_saved(<SEARCH_ID>)
 ```
 
 #### Configure using the Explore Function
 
-It is also possible to configure the search object using the `from_explore`
+It is also possible to configure the search object using the `from_manual`
 function.
 
 ```
-search_obj.from_explore(
+search_obj.from_manual(
     query_string, query_dsl, query_filter,
     return_fields, max_entries)
 ```
@@ -183,7 +183,7 @@ entries.
 
 #### Configure Manually
 
-All of the configurations that are present in the `from_explore` function are
+All of the configurations that are present in the `from_manual` function are
 also directly available in the object itself, and can be set directly.
 
 ```
