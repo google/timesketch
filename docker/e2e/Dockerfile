@@ -27,7 +27,7 @@ RUN pip3 install -r requirements.txt
 
 # Install timesketch from the current branch (In the context of CI platform)
 ADD . /tmp/timesketch
-RUN pip3 install /tmp/timesketch && pip3 install /tmp/timesketch/api_client/python \
+RUN pip3 install /tmp/timesketch && pip3 install /tmp/timesketch/api_client/python && \
     pip3 install /tmp/timesketch/importer_client/python
 
 # Copy Timesketch config files into /etc/timesketch
