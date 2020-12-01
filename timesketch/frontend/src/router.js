@@ -24,6 +24,8 @@ import SketchManageViews from "./views/SketchManageViews"
 import SketchManageTimelines from "./views/SketchManageTimelines"
 import SketchExplore from './views/SketchExplore'
 import SketchGraph from './views/SketchGraph'
+import SketchGraphOverview from './views/SketchGraphOverview'
+import SketchGraphExplore from './views/SketchGraphExplore'
 import SketchStory from './views/SketchStory'
 import SketchStoryOverview from './views/SketchStoryOverview'
 import SketchStoryContent from './views/SketchStoryContent'
@@ -55,9 +57,20 @@ const routes = [
       },
       {
         path: 'graph',
-        name: 'SketchGraph',
         component: SketchGraph,
-        props: true
+        props: true,
+        children: [
+          {
+            path: '',
+            name: 'SketchGraphOverview',
+            component: SketchGraphOverview
+          },
+          {
+            path: 'explore',
+            name: 'SketchGraphExplore',
+            component: SketchGraphExplore,
+            props: true
+          }]
       },
       {
         path: 'story',
