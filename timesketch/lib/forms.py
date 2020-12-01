@@ -153,6 +153,7 @@ class TogglePublic(BaseForm):
 class SaveViewForm(BaseForm):
     """Form used to save a view."""
     name = StringField('Name')
+    description = StringField('Description', validators=[Optional()])
     query = StringField('Query')
     filter = StringField('Filter')
     dsl = StringField('DSL')

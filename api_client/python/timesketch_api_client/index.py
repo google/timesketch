@@ -43,7 +43,7 @@ class SearchIndex(resource.BaseResource):
         self._labels = []
         self._searchindex_name = searchindex_name
         self._resource_uri = 'searchindices/{0:d}'.format(self.id)
-        super(SearchIndex, self).__init__(
+        super().__init__(
             api=api, resource_uri=self._resource_uri)
 
     def _get_object_dict(self):

@@ -51,6 +51,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     stories = relationship('Story', backref='sketch', lazy='select')
     aggregations = relationship('Aggregation', backref='sketch', lazy='select')
     attributes = relationship('Attribute', backref='sketch', lazy='select')
+    graphs = relationship('Graph', backref='sketch', lazy='select')
+    graphcaches = relationship('GraphCache', backref='sketch', lazy='select')
     aggregationgroups = relationship(
         'AggregationGroup', backref='sketch', lazy='select')
     analysis = relationship('Analysis', backref='sketch', lazy='select')
@@ -605,3 +607,73 @@ class AttributeValue(BaseModel):
         self.user = user
         self.attribute = attribute
         self.value = value
+
+
+class Graph(LabelMixin, CommentMixin, BaseModel):
+    """Implements the graph model."""
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    name = Column(UnicodeText())
+    description = Column(UnicodeText())
+    graph_config = Column(UnicodeText())
+    graph_elements = Column(UnicodeText())
+    graph_thumbnail = Column(UnicodeText())
+    num_nodes = Column(Integer)
+    num_edges = Column(Integer)
+
+    def __init__(self, user, sketch, name, description=None, graph_config=None,
+                 graph_elements=None, graph_thumbnail=None, num_nodes=None,
+                 num_edges=None):
+        """Initialize the Graph object.
+
+        Args:
+            user (User): The user who created the graph.
+            sketch (Sketch): The sketch that the graph is bound to.
+            name (str): Name of the graph.
+            description (str): Description of the graph.
+            graph_config (dict): Config used when generating the graph.
+            graph_elements (str): Graph in json string format.
+            graph_thumbnail (str): Image of graph in Base64 format.
+            num_nodes (int): Number of nodes in the graph.
+            num_edges (int): Number of edges in the graph.
+        """
+        super(Graph, self).__init__()
+        self.user = user
+        self.sketch = sketch
+        self.name = name
+        self.description = description
+        self.graph_config = graph_config
+        self.graph_elements = graph_elements
+        self.graph_thumbnail = graph_thumbnail
+        self.num_nodes = num_nodes
+        self.num_edges = num_edges
+
+
+class GraphCache(BaseModel):
+    """Implements the graph cache model."""
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    graph_plugin = Column(UnicodeText())
+    graph_config = Column(UnicodeText())
+    graph_elements = Column(UnicodeText())
+    num_nodes = Column(Integer)
+    num_edges = Column(Integer)
+
+    def __init__(self, sketch, graph_plugin=None, graph_config=None,
+                 graph_elements=None, num_nodes=None, num_edges=None):
+        """Initialize the GraphCache object.
+
+        Args:
+            sketch (Sketch): The sketch that the graph is bound to.
+            graph_plugin (str): Name of the graph plugin that was used.
+            graph_config (dict): Config used when generating the graph.
+            graph_elements (str): Graph in json string format.
+            num_nodes (int): Number of nodes in the graph.
+            num_edges (int): Number of edges in the graph.
+        """
+        super(GraphCache, self).__init__()
+        self.sketch = sketch
+        self.graph_plugin = graph_plugin
+        self.graph_config = graph_config
+        self.graph_elements = graph_elements
+        self.num_nodes = num_nodes
+        self.num_edges = num_edges
