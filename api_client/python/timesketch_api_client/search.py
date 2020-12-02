@@ -65,6 +65,10 @@ class Chip:
             'value': getattr(self, self.CHIP_VALUE, ''),
         }
 
+    def from_dict(self, chip_dict):
+        """Configure the chip from a dictionary."""
+        raise NotImplementedError
+
     def set_include(self):
         """Configure the chip so the content needs to be included in results."""
         self._operator = 'must'
@@ -163,6 +167,17 @@ class DateIntervalChip(Chip):
             raise ValueError('Wrong date format') from exc
         self._date = dt
 
+    def from_dict(self, chip_dict):
+        """Configure the chip from a dictionary."""
+        value = chip_dict.get('value')
+        if not value:
+            return
+        date, before, after = value.split()
+        self.unit = before[-1]
+        self.date = date
+        self.before = int(before[1:-1])
+        self.after = int(after[1:-1])
+
     @property
     def interval(self):
         """A property that returns back the full interval."""
@@ -256,6 +271,15 @@ class DateRangeChip(Chip):
         self.add_start_time(start_time)
         self.add_end_time(end_time)
 
+    def from_dict(self, chip_dict):
+        """Configure the chip from a dictionary."""
+        chip_value = chip_dict.get('value')
+        if not chip_value:
+            return
+        start, end = chip_value.split(',')
+        self.start_time = start
+        self.end_time = end
+
     @property
     def start_time(self):
         """Property that returns the start time of a range."""
@@ -279,6 +303,14 @@ class LabelChip(Chip):
         """Initialize the chip."""
         super().__init__()
         self._label = ''
+
+    def from_dict(self, chip_dict):
+        """Configure the chip from a dictionary."""
+        chip_value = chip_dict.get('value')
+        if not chip_value:
+            return
+
+        self.label = chip_value
 
     @property
     def label(self):
@@ -320,6 +352,15 @@ class TermChip(Chip):
         """Make changes to the field used to match against."""
         self._chip_field = field
 
+    def from_dict(self, chip_dict):
+        """Configure the term chip from a dictionary."""
+        chip_value = chip_dict.get('value')
+        if not chip_value:
+            return
+
+        self.field = chip_dict.get('field')
+        self.query = chip_value
+
     @property
     def query(self):
         """Property that returns back the query."""
@@ -360,35 +401,25 @@ class Search(resource.SketchResource):
         chips = query_filter.get('chips', [])
         if not chips:
             return
+
         for chip_dict in chips:
             chip_type = chip_dict.get('type')
-            value = chip_dict.get('value')
             if not chip_type:
                 continue
 
+            chip = None
             if chip_type == 'datetime_interval':
                 chip = DateIntervalChip()
-                date, before, after = value.split()
-                unit = before[-1]
-                chip.unit = unit
-                chip.date = date
-                chip.before = int(before[1:-1])
-                chip.after = int(after[1:-1])
-
             elif chip_type == 'datetime_range':
                 chip = DateRangeChip()
-                start, end = value.split(',')
-                chip.start_time = start
-                chip.end_time = end
-
             elif chip_type == 'label':
                 chip = LabelChip()
-                chip.label = value
-
             elif chip_type == 'term':
                 chip = TermChip()
-                chip.field = chip_dict.get('field')
-                chip.query = value
+
+            if not chip:
+                continue
+            chip.from_dict(chip_dict)
 
             active = chip_dict.get('active', True)
             chip.active = active
