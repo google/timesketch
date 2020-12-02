@@ -584,6 +584,9 @@ class Search(resource.SketchResource):
         self._name = 'From Explore'
         self._description = 'From Explore'
 
+        if query_filter:
+          self.query_filter = query_filter
+
         self._query_string = query_string
         self._query_dsl = query_dsl
         self._return_fields = return_fields
@@ -627,7 +630,9 @@ class Search(resource.SketchResource):
         self._description = data.get('description', '')
         self._name = data.get('name', '')
         self._query_dsl = data.get('query_dsl', '')
-        self._query_filter = data.get('query_filter', {})
+        query_filter = data.get('query_filter', {}
+        if query_filter:
+            self.query_filter = query_filter
         self._query_string = data.get('query_string', '')
         self._resource_id = search_id
         self._searchtemplate = data.get('searchtemplate', 0)
@@ -701,6 +706,7 @@ class Search(resource.SketchResource):
     def query_filter(self, query_filter):
         """Make changes to the query filter."""
         self._query_filter = query_filter
+        self._extract_chips(query_filter)
         self.commit()
 
     @property
