@@ -547,10 +547,10 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
     es = ElasticsearchDataStore(
         host=current_app.config['ELASTIC_HOST'],
         port=current_app.config['ELASTIC_PORT'],
-        user=current_app.config['ELASTIC_USER'],
-        password=current_app.config['ELASTIC_PASSWORD'],
-        ssl=current_app.config['ELASTIC_SSL'],
-        verify=current_app.config['ELASTIC_VERIFY_CERTS']
+        user=current_app.config.get('ELASTIC_USER', None),
+        password=current_app.config.get('ELASTIC_PASSWORD', None),
+        ssl=current_app.config.get('ELASTIC_SSL', None),
+        verify=current_app.config.get('ELASTIC_VERIFY_CERTS', None)
     )
 
     # Reason for the broad exception catch is that we want to capture
