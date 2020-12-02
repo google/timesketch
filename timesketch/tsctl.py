@@ -249,7 +249,7 @@ class AddSearchIndex(Command):
             user=current_app.config.get('ELASTIC_USER', None),
             password=current_app.config.get('ELASTIC_PASSWORD', None),
             ssl=current_app.config.get('ELASTIC_SSL', None),
-            verify=current_app.config.get('ELASTIC_VERIFY_CERTS', None)
+            verify=current_app.config.get('ELASTIC_VERIFY_CERTS', True)
         )
         user = User.query.filter_by(username=username).first()
         if not user:
@@ -298,7 +298,7 @@ class PurgeTimeline(Command):
             user=current_app.config.get('ELASTIC_USER', None),
             password=current_app.config.get('ELASTIC_PASSWORD', None),
             ssl=current_app.config.get('ELASTIC_SSL', None),
-            verify=current_app.config.get('ELASTIC_VERIFY_CERTS', None)
+            verify=current_app.config.get('ELASTIC_VERIFY_CERTS', True)
         )
 
         timelines = Timeline.query.filter_by(searchindex=searchindex).all()

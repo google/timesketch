@@ -43,7 +43,7 @@ class ApiDataFetcher(interface.DataFetcher):
             user=current_app.config.get('ELASTIC_USER', None),
             password=current_app.config.get('ELASTIC_PASSWORD', None),
             ssl=current_app.config.get('ELASTIC_SSL', None),
-            verify=current_app.config.get('ELASTIC_VERIFY_CERTS', None)
+            verify=current_app.config.get('ELASTIC_VERIFY_CERTS', True)
         )
 
     def get_aggregation(self, agg_dict):
