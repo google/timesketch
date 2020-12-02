@@ -246,7 +246,7 @@ def mock_response(*args, **kwargs):
                 'references': ['httpx://foobar.com'],
                 'title': 'Suspicious Installation of Zenmap',
                 'file_name': 'lnx_susp_zenmap',
-                'file_relpath' : '/etc/timesketch/data/sigma2/sigma/rules/'
+                'file_relpath' : '/linux/syslog/foobar/'
 
             }, {
                 'author': 'Alexander Jaeger',
@@ -267,7 +267,7 @@ def mock_response(*args, **kwargs):
                 'references': ['httpx://foobar.com'],
                 'title': 'Suspicious Installation of Zenmap',
                 'file_name': 'lnx_susp_zenmap',
-                'file_relpath' : '/etc/timesketch/data/sigma2/sigma/rules/'
+                'file_relpath' : '/windows/foobar/'
                 }
         ]
     }
@@ -291,7 +291,7 @@ def mock_response(*args, **kwargs):
         'level': 'high',
         'es_query': '("*apt\\-get\\ install\\ zmap*")',
         'file_name': 'lnx_susp_zenmap',
-        'file_relpath' : '/etc/timesketch/data/sigma2/sigma/rules/'
+        'file_relpath' : '/linux/syslog/foobar/'
     }
 
     # Register API endpoints to the correct mock response data.

@@ -502,37 +502,42 @@ class TimesketchApi:
         self.credentials.credential.refresh(request)
 
     def list_sigma_rules(self, as_pandas=False):
-        """Get a dict of all sigma rules that the user has access to.
+        """Get a list of sigma objects.
 
         Args:
             as_pandas: Boolean indicating that the results will be returned
                 as a Pandas DataFrame instead of a list of dicts.
 
         Returns:
-            List of Sigme rule object instances.
+            List of Sigme rule object instances or a pandas Dataframe with all
+            rules if as_pandas is True.
+
+        Raises:
+            ValueError: If no rules are found.
         """
-        indices = []
+        rules = []
         response = self.fetch_resource_data('sigma/')
 
         if not response:
             raise ValueError('No rules found.')
 
-        if not as_pandas:
-            for rule_dict in response['objects']:
-                rule_uuid = rule_dict['id']
-                title = rule_dict['title']
-                es_query = rule_dict['es_query']
-                file_name = rule_dict['file_name']
-                description = rule_dict['description']
-                file_relpath = rule_dict['file_relpath']
-                index_obj = sigma.Sigma(
-                    rule_uuid, api=self, es_query=es_query, file_name=file_name,
-                    title=title, description=description,
-                    file_relpath=file_relpath)
-                indices.append(index_obj)
-            return indices
+        if as_pandas:
+            return pandas.DataFrame.from_records(response.get('objects'))
 
-        return pandas.DataFrame.from_records(response.get('objects'))
+        for rule_dict in response['objects']:
+            rule_uuid = rule_dict.get('id')
+            title = rule_dict.get('title')
+            es_query = rule_dict.get('es_query')
+            file_name = rule_dict.get('file_name')
+            description = rule_dict.get('description')
+            file_relpath = rule_dict.get('file_relpath')
+            index_obj = sigma.Sigma(
+                rule_uuid, api=self, es_query=es_query, file_name=file_name,
+                title=title, description=description,
+                file_relpath=file_relpath)
+            rules.append(index_obj)
+        return rules
+
 
     def get_sigma_rule(self, rule_uuid):
         """Get a sigma rule.

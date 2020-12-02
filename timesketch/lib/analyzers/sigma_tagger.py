@@ -54,8 +54,8 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
         if sigma_rules is None:
             logger.error('No  Sigma rules found. Check SIGMA_RULES_FOLDERS')
 
-        problem_string = []
-        output_string = []
+        problem_strings = []
+        output_strings = []
 
         for rule in sigma_rules:
             tags_applied[rule.get('file_name')] = 0
@@ -79,14 +79,14 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                 logger.error(
                     'Problem with rule in file {0:s}: '.format(
                         rule.get('file_name')), exc_info=True)
-                problem_string.append('* {0:s}\n'.format(
+                problem_strings.append('* {0:s}'.format(
                     rule.get('file_name')))
                 continue
 
         total_tagged_events = sum(tags_applied.values())
-        output_string.append('Applied {0:d} tags\n'.format(total_tagged_events))
+        output_strings.append('Applied {0:d} tags'.format(total_tagged_events))
         for tag_name, tagged_events_counter in tags_applied.items():
-            output_string.append('* {0:s}: {1:d}\n'.format(
+            output_strings.append('* {0:s}: {1:d}'.format(
                 tag_name, tagged_events_counter))
 
         if sigma_rule_counter > 0:
@@ -119,10 +119,10 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
                 'And an overview of all the discovered search terms:')
             story.add_view(view)
 
-        output_string.append('\n Problematic rules:')
-        output_string.append(''.join(problem_string))
+        output_strings.append('Problematic rules:')
+        output_strings.extend(problem_strings)
 
-        return output_string
+        return '\n'.join(output_strings)
 
 
 class RulesSigmaPlugin(SigmaPlugin):

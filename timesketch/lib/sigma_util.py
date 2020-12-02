@@ -124,6 +124,7 @@ def get_sigma_rules(rule_folder):
 
     return return_array
 
+
 def get_all_sigma_rules():
     """Returns all Sigma rules
 
