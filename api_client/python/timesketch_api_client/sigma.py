@@ -32,13 +32,18 @@ class Sigma(resource.BaseResource):
 
 
     def __init__(self, rule_uuid, api, es_query=None,
-                 file_name=None, title=None, description=None):
+                 file_name=None, title=None, description=None,
+                 file_relpath=None):
         """Initializes the Sigma object.
 
         Args:
             rule_uuid: Id of the sigma rule.
             api: An instance of TimesketchApi object.
-            #TODO: update the args
+            es_query: Elastic Search query of the rule
+            file_name: File name of the rule
+            title: Title of the rule
+            description: Description of the rule
+            file_relpath: path of the file relative to the config value
 
         """
         self.rule_uuid = rule_uuid
@@ -46,6 +51,7 @@ class Sigma(resource.BaseResource):
         self._es_query = es_query
         self._file_name = file_name
         self._title = title
+        self._file_relpath = file_relpath
         self._resource_uri = f'sigma/{self.rule_uuid}'
         super().__init__(
             api=api, resource_uri=self._resource_uri)
@@ -79,3 +85,13 @@ class Sigma(resource.BaseResource):
             return ''
 
         return sigma_data.get('id', '')
+
+    @property
+    def file_relpath(self):
+        """Returns the relative filepath of the rule."""
+        sigma_data = self.data
+
+        if not sigma_data:
+            return ''
+
+        return sigma_data.get('file_relpath', '')

@@ -209,6 +209,13 @@ def get_sigma_rule(filepath):
             rule_return.update(
                 {'file_name':os.path.basename(filepath)})
 
+            # in case multiple folders are in the config, need to remove them
+            for rule_path in get_sigma_rules_path():
+                file_relpath = os.path.relpath(filepath, rule_path)
+
+            rule_return.update(
+                {'file_relpath':file_relpath})
+
             return rule_return
 
     return None

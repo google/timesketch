@@ -524,9 +524,11 @@ class TimesketchApi:
                 es_query = rule_dict['es_query']
                 file_name = rule_dict['file_name']
                 description = rule_dict['description']
+                file_relpath = rule_dict['file_relpath']
                 index_obj = sigma.Sigma(
                     rule_uuid, api=self, es_query=es_query, file_name=file_name,
-                    title=title, description=description)
+                    title=title, description=description,
+                    file_relpath=file_relpath)
                 indices.append(index_obj)
             return indices
 

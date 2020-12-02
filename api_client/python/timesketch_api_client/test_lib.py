@@ -245,7 +245,9 @@ def mock_response(*args, **kwargs):
                 'modified': '2020/06/26',
                 'references': ['httpx://foobar.com'],
                 'title': 'Suspicious Installation of Zenmap',
-                'file_name': 'lnx_susp_zenmap'
+                'file_name': 'lnx_susp_zenmap',
+                'file_relpath' : '/etc/timesketch/data/sigma2/sigma/rules/'
+
             }, {
                 'author': 'Alexander Jaeger',
                 'date': '2020/11/10',
@@ -264,7 +266,8 @@ def mock_response(*args, **kwargs):
                 'modified': '2020/06/26',
                 'references': ['httpx://foobar.com'],
                 'title': 'Suspicious Installation of Zenmap',
-                'file_name': 'lnx_susp_zenmap'
+                'file_name': 'lnx_susp_zenmap',
+                'file_relpath' : '/etc/timesketch/data/sigma2/sigma/rules/'
                 }
         ]
     }
@@ -287,7 +290,8 @@ def mock_response(*args, **kwargs):
         'falsepositives': ['Unknown'],
         'level': 'high',
         'es_query': '("*apt\\-get\\ install\\ zmap*")',
-        'file_name': 'lnx_susp_zenmap'
+        'file_name': 'lnx_susp_zenmap',
+        'file_relpath' : '/etc/timesketch/data/sigma2/sigma/rules/'
     }
 
     # Register API endpoints to the correct mock response data.
