@@ -355,6 +355,51 @@ class Search(resource.SketchResource):
         self._searchtemplate = ''
         self._updated_at = ''
 
+    def _extract_chips(self, query_filter):
+        """Extract chips from a query_filter."""
+        chips = query_filter.get('chips', [])
+        if not chips:
+            return
+        for chip_dict in chips:
+            chip_type = chip_dict.get('type')
+            value = chip_dict.get('value')
+            if not chip_type:
+                continue
+
+            if chip_type == 'datetime_interval':
+              chip = DateIntervalChip()
+              date, before, after = value.split()
+              unit = before[-1]
+              chip.unit = unit
+              chip.before = int(before[1:-1])
+              chip.after = int(after[1:-1])
+
+            elif chip_type == 'datetime_range':
+              chip = DateRangeChip()
+              start, end = value.split(',')
+              chip.start_time = start
+              chip.end_time = end
+
+            elif chip_type == 'label':
+              chip = LabelChip()
+              chip.label = value
+
+            elif chip_type == 'term':
+              chip = TermChip()
+              chip.field = chip_dict.get('field')
+              chip.query = value
+
+            active = chip_dict.get('active', True)
+            chip.active = active
+
+            operator = chip_dict.get('operator', 'must')
+            if operator == 'must':
+              chip.set_include()
+            elif operator == 'must_not':
+              chip.set_exclude()
+
+            self.add_chip(chip)
+
     def _execute_query(self, scrolling=True, file_name=''):
         """Execute a search request and store the results.
 
@@ -501,7 +546,7 @@ class Search(resource.SketchResource):
         self._description = description
         self.commit()
 
-    def from_explore(  # pylint: disable=arguments-differ
+    def from_manual(  # pylint: disable=arguments-differ
             self,
             query_string=None,
             query_dsl=None,
@@ -531,7 +576,7 @@ class Search(resource.SketchResource):
             RuntimeError: if the query is missing needed values, or if the
                 sketch is archived.
         """
-        super().from_explore(**kwargs)
+        super().from_manual(**kwargs)
         if not (query_string or query_filter or query_dsl):
             raise RuntimeError('You need to supply a query')
 
