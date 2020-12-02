@@ -65,6 +65,10 @@ class Chip:
             'value': getattr(self, self.CHIP_VALUE, ''),
         }
 
+    def from_dict(self, chip_dict):
+        """Configure the chip from a dictionary."""
+        raise NotImplementedError
+
     def set_include(self):
         """Configure the chip so the content needs to be included in results."""
         self._operator = 'must'
@@ -163,6 +167,17 @@ class DateIntervalChip(Chip):
             raise ValueError('Wrong date format') from exc
         self._date = dt
 
+    def from_dict(self, chip_dict):
+        """Configure the chip from a dictionary."""
+        value = chip_dict.get('value')
+        if not value:
+            return
+        date, before, after = value.split()
+        self.unit = before[-1]
+        self.date = date
+        self.before = int(before[1:-1])
+        self.after = int(after[1:-1])
+
     @property
     def interval(self):
         """A property that returns back the full interval."""
@@ -256,6 +271,15 @@ class DateRangeChip(Chip):
         self.add_start_time(start_time)
         self.add_end_time(end_time)
 
+    def from_dict(self, chip_dict):
+        """Configure the chip from a dictionary."""
+        chip_value = chip_dict.get('value')
+        if not chip_value:
+            return
+        start, end = chip_value.split(',')
+        self.start_time = start
+        self.end_time = end
+
     @property
     def start_time(self):
         """Property that returns the start time of a range."""
@@ -279,6 +303,14 @@ class LabelChip(Chip):
         """Initialize the chip."""
         super().__init__()
         self._label = ''
+
+    def from_dict(self, chip_dict):
+        """Configure the chip from a dictionary."""
+        chip_value = chip_dict.get('value')
+        if not chip_value:
+            return
+
+        self.label = chip_value
 
     @property
     def label(self):
@@ -320,6 +352,15 @@ class TermChip(Chip):
         """Make changes to the field used to match against."""
         self._chip_field = field
 
+    def from_dict(self, chip_dict):
+        """Configure the term chip from a dictionary."""
+        chip_value = chip_dict.get('value')
+        if not chip_value:
+            return
+
+        self.field = chip_dict.get('field')
+        self.query = chip_value
+
     @property
     def query(self):
         """Property that returns back the query."""
@@ -354,6 +395,42 @@ class Search(resource.SketchResource):
         self._scrolling = True
         self._searchtemplate = ''
         self._updated_at = ''
+
+    def _extract_chips(self, query_filter):
+        """Extract chips from a query_filter."""
+        chips = query_filter.get('chips', [])
+        if not chips:
+            return
+
+        for chip_dict in chips:
+            chip_type = chip_dict.get('type')
+            if not chip_type:
+                continue
+
+            chip = None
+            if chip_type == 'datetime_interval':
+                chip = DateIntervalChip()
+            elif chip_type == 'datetime_range':
+                chip = DateRangeChip()
+            elif chip_type == 'label':
+                chip = LabelChip()
+            elif chip_type == 'term':
+                chip = TermChip()
+
+            if not chip:
+                continue
+            chip.from_dict(chip_dict)
+
+            active = chip_dict.get('active', True)
+            chip.active = active
+
+            operator = chip_dict.get('operator', 'must')
+            if operator == 'must':
+                chip.set_include()
+            elif operator == 'must_not':
+                chip.set_exclude()
+
+            self.add_chip(chip)
 
     def _execute_query(self, scrolling=True, file_name=''):
         """Execute a search request and store the results.
@@ -501,7 +578,7 @@ class Search(resource.SketchResource):
         self._description = description
         self.commit()
 
-    def from_explore(  # pylint: disable=arguments-differ
+    def from_manual(  # pylint: disable=arguments-differ
             self,
             query_string=None,
             query_dsl=None,
@@ -531,13 +608,16 @@ class Search(resource.SketchResource):
             RuntimeError: if the query is missing needed values, or if the
                 sketch is archived.
         """
-        super().from_explore(**kwargs)
+        super().from_manual(**kwargs)
         if not (query_string or query_filter or query_dsl):
             raise RuntimeError('You need to supply a query')
 
         self._username = self.api.current_user
         self._name = 'From Explore'
         self._description = 'From Explore'
+
+        if query_filter:
+            self.query_filter = query_filter
 
         self._query_string = query_string
         self._query_dsl = query_dsl
@@ -582,7 +662,9 @@ class Search(resource.SketchResource):
         self._description = data.get('description', '')
         self._name = data.get('name', '')
         self._query_dsl = data.get('query_dsl', '')
-        self._query_filter = data.get('query_filter', {})
+        query_filter = data.get('query_filter', '')
+        if query_filter:
+            self.query_filter = json.loads(query_filter)
         self._query_string = data.get('query_string', '')
         self._resource_id = search_id
         self._searchtemplate = data.get('searchtemplate', 0)
@@ -655,7 +737,13 @@ class Search(resource.SketchResource):
     @query_filter.setter
     def query_filter(self, query_filter):
         """Make changes to the query filter."""
+        if isinstance(query_filter, str):
+            query_filter = json.loads(query_filter)
+
+        if not isinstance(query_filter, dict):
+            raise ValueError('Query filter needs to be a dict.')
         self._query_filter = query_filter
+        self._extract_chips(query_filter)
         self.commit()
 
     @property
