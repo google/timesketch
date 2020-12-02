@@ -367,37 +367,37 @@ class Search(resource.SketchResource):
                 continue
 
             if chip_type == 'datetime_interval':
-              chip = DateIntervalChip()
-              date, before, after = value.split()
-              unit = before[-1]
-              chip.unit = unit
-              chip.date = date
-              chip.before = int(before[1:-1])
-              chip.after = int(after[1:-1])
+                chip = DateIntervalChip()
+                date, before, after = value.split()
+                unit = before[-1]
+                chip.unit = unit
+                chip.date = date
+                chip.before = int(before[1:-1])
+                chip.after = int(after[1:-1])
 
             elif chip_type == 'datetime_range':
-              chip = DateRangeChip()
-              start, end = value.split(',')
-              chip.start_time = start
-              chip.end_time = end
+                chip = DateRangeChip()
+                start, end = value.split(',')
+                chip.start_time = start
+                chip.end_time = end
 
             elif chip_type == 'label':
-              chip = LabelChip()
-              chip.label = value
+                chip = LabelChip()
+                chip.label = value
 
             elif chip_type == 'term':
-              chip = TermChip()
-              chip.field = chip_dict.get('field')
-              chip.query = value
+                chip = TermChip()
+                chip.field = chip_dict.get('field')
+                chip.query = value
 
             active = chip_dict.get('active', True)
             chip.active = active
 
             operator = chip_dict.get('operator', 'must')
             if operator == 'must':
-              chip.set_include()
+                chip.set_include()
             elif operator == 'must_not':
-              chip.set_exclude()
+                chip.set_exclude()
 
             self.add_chip(chip)
 
@@ -586,7 +586,7 @@ class Search(resource.SketchResource):
         self._description = 'From Explore'
 
         if query_filter:
-          self.query_filter = query_filter
+            self.query_filter = query_filter
 
         self._query_string = query_string
         self._query_dsl = query_dsl
