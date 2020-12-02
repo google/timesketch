@@ -245,7 +245,12 @@ class AddSearchIndex(Command):
         """Create the SearchIndex."""
         es = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+            port=current_app.config['ELASTIC_PORT'],
+            user=current_app.config['ELASTIC_USER'],
+            password=current_app.config['ELASTIC_PASSWORD'],
+            ssl=current_app.config['ELASTIC_SSL'],
+            verify=current_app.config['ELASTIC_VERIFY_CERTS']
+        )
         user = User.query.filter_by(username=username).first()
         if not user:
             sys.stderr.write('User does not exist\n')
@@ -289,7 +294,12 @@ class PurgeTimeline(Command):
 
         es = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+            port=current_app.config['ELASTIC_PORT'],
+            user=current_app.config['ELASTIC_USER'],
+            password=current_app.config['ELASTIC_PASSWORD'],
+            ssl=current_app.config['ELASTIC_SSL'],
+            verify=current_app.config['ELASTIC_VERIFY_CERTS']
+        )
 
         timelines = Timeline.query.filter_by(searchindex=searchindex).all()
         sketches = [

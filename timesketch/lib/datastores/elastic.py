@@ -73,11 +73,17 @@ class ElasticsearchDataStore(object):
     DEFAULT_FROM = 0
     DEFAULT_STREAM_LIMIT = 5000 # Max events to return when streaming results
 
-    def __init__(self, host='127.0.0.1', port=9200):
+    def __init__(self, host='127.0.0.1', port=9200, user=None, password=None, ssl=False, verify=False):
         """Create a Elasticsearch client."""
         super().__init__()
         self._error_container = {}
-        self.client = Elasticsearch([{'host': host, 'port': port}])
+        if ssl:
+            self.client = Elasticsearch([{'host': host, 'port': port}],
+                                    http_auth = (user, password),
+                                    use_ssl= ssl,
+                                    verify_certs = verify)
+        else:
+            self.client = Elasticsearch([{'host': host, 'port': port}])
         self.import_counter = Counter()
         self.import_events = []
 

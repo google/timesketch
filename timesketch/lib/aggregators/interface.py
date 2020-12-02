@@ -156,7 +156,12 @@ class BaseAggregator(object):
 
         self.elastic = Elasticsearch(
             host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'])
+            port=current_app.config['ELASTIC_PORT'],
+            user=current_app.config.get('ELASTIC_USER', None),
+            password=current_app.config.get('ELASTIC_PASSWORD', None),
+            ssl=current_app.config.get('ELASTIC_SSL', None),
+            verify=current_app.config.get('ELASTIC_VERIFY_CERTS', None)
+        )
         self.field = ''
         self.index = index
         self.sketch = SQLSketch.query.get(sketch_id)
