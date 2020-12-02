@@ -1,4 +1,4 @@
-# Sigma Analyser in Timesketch
+# Sigma
 
 ## What is Sigma
 
@@ -7,13 +7,14 @@ See description at the [Sigma Github repository](https://github.com/Neo23x0/sigm
 ## Sigma in Timesketch
 
 Since early 2020 Timesketch has Sigma support implemented. Sigma can be used as an analyser.
+The other option is to use Sigma via the API and the API client.
 
 ### Install rules
 
 Timesketch deliberately does not provide a set of Sigma rules, as those would add complexity to maintain.
-Instead we recommend to clone https://github.com/Neo23x0/sigma to /data/sigma.
-This directory will not be catched by git. 
-                                                                                                     
+Instead we recommend to clone [github.com/Neo23x0/sigma](https://github.com/Neo23x0/sigma) to /data/sigma.
+This directory will not be catched by git.
+
 ```shell
 cd data
 git clone https://github.com/Neo23x0/sigma
@@ -110,3 +111,59 @@ You should NOT import the following rules
 ../timesketch/data/sigma/rules/linux/reverse_shell.yaml
 ../timesketch/data/sigma/rules/linux/recon_commands.yaml
 ```
+
+## Toubleshooting
+
+### How to find issues
+
+#### Logs
+
+In the celery logs, while running the sigma analyzer, you will see something like that:
+
+```shell
+result: Applied 0 tags
+* win_apt_carbonpaper_turla.yml: 0
+...
+* win_syskey_registry_access.yml: 0
+Problematic rules:
+XXXX
+```
+
+The XXX here is the "problem" and you should note those rules. Once you note and identified those rules, it is recommended to take the id and attempt a API call like the following:
+
+```python
+from timesketch_api_client import config
+ts = config.get_client()
+rule = ts.get_sigma_rule("c0478ead-5336-46c2-bd5e-b4c84bc3a36e")
+print(rule.es_query)
+```
+
+Where the ID is the id of your problematic rule. This will hopefully give you more insight from the web server logs of what caused the problem. E.g.
+"Aggregations not implemented for this backend"
+It is then recommended to move those rules to a separate folder, maybe even creating a small shell script that does that for you once you pull upstream rules from the Sigma repository.
+
+### How to verify issues
+
+#### Timesketch API / logs
+
+If you have doubt if a rule does work, take the uuid and run python code mentioned above.
+
+#### sigmac
+
+Another option is to run the rule against the official sigma client with the Timesketch sigma mapping file.
+
+For our example from above:
+
+```shell
+sigma/tools/sigma$ python3 sigmac.py -t es-qs --config ../../../sigma_config.yaml ../../rules/windows/image_load/sysmon_mimikatz_inmemory_detection.yml
+An unsupported feature is required for this Sigma rule (../../rules/windows/image_load/sysmon_mimikatz_inmemory_detection.yml): Aggregations not implemented for this backend
+Feel free to contribute for fun and fame, this is open source :) -> https://github.com/Neo23x0/sigma
+```
+
+### What to do with problematic rules
+
+To reduce load on the system it is recommended to not keep the rules in the directory, as it will cause the exception every time the rules folders are parsed (a lot!).
+
+The parser is made to ignore "deprecated" folders. So you could move the problematic rules to your rules folder in a subfolder /deprecated/.
+
+If the rules do not contain any sensitive content, you could also open an issue in the timesketch project and or in the upstream sigma project and explain your issue (best case: provide your timesketch sigma config and the rule file so it can be verified).
