@@ -371,6 +371,7 @@ class Search(resource.SketchResource):
               date, before, after = value.split()
               unit = before[-1]
               chip.unit = unit
+              chip.date = date
               chip.before = int(before[1:-1])
               chip.after = int(after[1:-1])
 
@@ -630,9 +631,9 @@ class Search(resource.SketchResource):
         self._description = data.get('description', '')
         self._name = data.get('name', '')
         self._query_dsl = data.get('query_dsl', '')
-        query_filter = data.get('query_filter', {}
+        query_filter = data.get('query_filter', '')
         if query_filter:
-            self.query_filter = query_filter
+            self.query_filter = json.loads(query_filter)
         self._query_string = data.get('query_string', '')
         self._resource_id = search_id
         self._searchtemplate = data.get('searchtemplate', 0)
@@ -705,6 +706,11 @@ class Search(resource.SketchResource):
     @query_filter.setter
     def query_filter(self, query_filter):
         """Make changes to the query filter."""
+        if isinstance(query_filter, str):
+            query_filter = json.loads(query_filter)
+
+        if not isinstance(query_filter, dict):
+            raise ValueError('Query filter needs to be a dict.')
         self._query_filter = query_filter
         self._extract_chips(query_filter)
         self.commit()
