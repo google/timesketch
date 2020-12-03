@@ -448,13 +448,9 @@ class Search(resource.SketchResource):
             raise ValueError(
                 'Unable to query with a query filter that isn\'t a dict.')
 
-        stop_size = query_filter.get('size', 0)
-        terminate_after = query_filter.get('terminate_after', 0)
-        if terminate_after and (terminate_after < stop_size):
-            stop_size = terminate_after
-
+        stop_size = self._max_entries
         scrolling = not bool(stop_size and (
-            stop_size < self.DEFAULT_SIZE_LIMIT))
+            stop_size <= self.DEFAULT_SIZE_LIMIT))
 
         form_data = {
             'query': self._query_string,
@@ -486,8 +482,6 @@ class Search(resource.SketchResource):
         total_count = count
         while count > 0:
             if self._max_entries and total_count >= self._max_entries:
-                break
-            if stop_size and total_count >= stop_size:
                 break
 
             if not scroll_id:
@@ -681,6 +675,10 @@ class Search(resource.SketchResource):
     def max_entries(self, max_entries):
         """Make changes to the max entries of return values."""
         self._max_entries = max_entries
+        if max_entries < self.DEFAULT_SIZE_LIMIT:
+            _ = self.query_filter
+            self._query_filter['size'] = max_entries
+            self._query_filter['terminate_after'] = max_entries
         self.commit()
 
     @property
@@ -724,8 +722,8 @@ class Search(resource.SketchResource):
             self._query_filter = {
                 'time_start': None,
                 'time_end': None,
-                'size': self._max_entries,
-                'terminate_after': self._max_entries,
+                'size': self.DEFAULT_SIZE_LIMIT,
+                'terminate_after': self.DEFAULT_SIZE_LIMIT,
                 'indices': '_all',
                 'order': 'asc',
                 'chips': [],
@@ -738,7 +736,10 @@ class Search(resource.SketchResource):
     def query_filter(self, query_filter):
         """Make changes to the query filter."""
         if isinstance(query_filter, str):
-            query_filter = json.loads(query_filter)
+            try:
+                query_filter = json.loads(query_filter)
+            except json.JSONDecodeError as exc:
+                raise ValueError('Unable to parse the string as JSON') from exc
 
         if not isinstance(query_filter, dict):
             raise ValueError('Query filter needs to be a dict.')
