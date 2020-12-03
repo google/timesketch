@@ -56,8 +56,8 @@ def get_sigma_config_file(config_file=None):
             'Unable to open file: [{0:s}], cannot open it for '
             'read, please check permissions.'.format(config_file_path))
 
-    with open(config_file_path, 'r') as config_file:
-        sigma_config_file = config_file.read()
+    with open(config_file_path, 'r') as config_file_read:
+        sigma_config_file = config_file_read.read()
 
     sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
 
