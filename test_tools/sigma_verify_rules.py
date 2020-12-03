@@ -17,8 +17,8 @@ This tool can be used to verify your rules before running an analyzer.
 It also does not require you to have a full blown Timesketch instance.
 Default this tool will show only the rules that cause problems.
 Example way of running the tool:
-$ PYTHONPATH=. python3 test_tools/sigma_verify_rules.py --config_file 
-../data/sigma_config.yaml  --config_file data/sigma_config.yaml 
+$ PYTHONPATH=. python3 test_tools/sigma_verify_rules.py --config_file
+../data/sigma_config.yaml  --config_file data/sigma_config.yaml
 --debug data/sigma/rules/windows/ --move data/sigma/rules/problematic/
 """
 
