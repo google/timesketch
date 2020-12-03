@@ -21,6 +21,7 @@ from flask import current_app
 import pandas
 
 from timesketch.lib.charts import manager as chart_manager
+from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models.sketch import Sketch as SQLSketch
 
 
@@ -154,20 +155,9 @@ class BaseAggregator(object):
         if not sketch_id and not index:
             raise RuntimeError('Need at least sketch_id or index')
 
-        host = current_app.config['ELASTIC_HOST']
-        port = current_app.config['ELASTIC_PORT']
-        user = current_app.config.get('ELASTIC_USER', None)
-        password = current_app.config.get('ELASTIC_PASSWORD', None)
-        ssl = current_app.config.get('ELASTIC_SSL', False)
-        verify = current_app.config.get('ELASTIC_VERIFY_CERTS', True)
-
-        if ssl:
-            self.elastic = Elasticsearch([{'host': host, 'port': port}],
-                                         http_auth=(user, password),
-                                         use_ssl=ssl,
-                                         verify_certs=verify)
-        else:
-            self.elastic = Elasticsearch([{'host': host, 'port': port}])
+        self.elastic = ElasticsearchDataStore(
+            host=current_app.config['ELASTIC_HOST'],
+            port=current_app.config['ELASTIC_PORT'])
 
         self.field = ''
         self.index = index
@@ -210,7 +200,7 @@ class BaseAggregator(object):
         field_type = None
 
         # Get the mapping for the field.
-        mapping = self.elastic.indices.get_field_mapping(
+        mapping = self.elastic.get_field_mapping(
             index=self.index, fields=field_name)
 
         # The returned structure is nested so we need to unpack it.
@@ -249,7 +239,7 @@ class BaseAggregator(object):
             Elasticsearch aggregation result.
         """
         # pylint: disable=unexpected-keyword-arg
-        aggregation = self.elastic.search(
+        aggregation = self.elastic.aggregation_shim(
             index=self.index, body=aggregation_spec, size=0)
         return aggregation
 

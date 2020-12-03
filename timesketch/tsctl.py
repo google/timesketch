@@ -246,7 +246,6 @@ class AddSearchIndex(Command):
         es = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
-
         user = User.query.filter_by(username=username).first()
         if not user:
             sys.stderr.write('User does not exist\n')
