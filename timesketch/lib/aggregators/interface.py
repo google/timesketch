@@ -154,11 +154,11 @@ class BaseAggregator(object):
         if not sketch_id and not index:
             raise RuntimeError('Need at least sketch_id or index')
 
-        host = current_app.config['ELASTIC_HOST'],
-        port = current_app.config['ELASTIC_PORT'],
-        user = current_app.config.get('ELASTIC_USER', None),
-        password = current_app.config.get('ELASTIC_PASSWORD', None),
-        ssl = current_app.config.get('ELASTIC_SSL', False),
+        host = current_app.config['ELASTIC_HOST']
+        port = current_app.config['ELASTIC_PORT']
+        user = current_app.config.get('ELASTIC_USER', None)
+        password = current_app.config.get('ELASTIC_PASSWORD', None)
+        ssl = current_app.config.get('ELASTIC_SSL', False)
         verify = current_app.config.get('ELASTIC_VERIFY_CERTS', True)
 
         if ssl:
