@@ -29,7 +29,7 @@ from sigma.parser import exceptions as sigma_exceptions
 logger = logging.getLogger('timesketch.lib.sigma')
 
 
-def get_sigma_config_file():
+def get_sigma_config_file(config_file=None):
     """Get a sigma.configuration.SigmaConfiguration object.
 
     Returns:
@@ -39,7 +39,8 @@ def get_sigma_config_file():
         ValueError: If SIGMA_CONFIG is not found in the config file.
             or the Sigma config file is not readabale.
     """
-    config_file = current_app.config.get('SIGMA_CONFIG')
+    if config_file is None:
+        config_file = current_app.config.get('SIGMA_CONFIG')
 
     if not config_file:
         raise ValueError(
@@ -72,7 +73,11 @@ def get_sigma_rules_path():
         ValueError: If SIGMA_RULES_FOLDERS is not found in the config file.
             or the folders are not readabale.
     """
-    rules_path = current_app.config.get('SIGMA_RULES_FOLDERS', [])
+    try:
+        rules_path = current_app.config.get('SIGMA_RULES_FOLDERS', [])
+    except RuntimeError:
+        # TODO: make that more flexible I have no idea what to best return here
+        return ['/']
 
     if not rules_path:
         raise ValueError(
@@ -92,11 +97,12 @@ def get_sigma_rules_path():
     return rules_path
 
 
-def get_sigma_rules(rule_folder):
+def get_sigma_rules(rule_folder, sigma_config=None):
     """Returns the Sigma rules for a folder including subfolders.
 
     Args:
         rule_folder: folder to be checked for rules
+        sigma_config: optional: pass a Sigma config object
 
     Returns:
         A array of Sigma rules as JSON
@@ -118,7 +124,7 @@ def get_sigma_rules(rule_folder):
                     continue
 
                 rule_file_path = os.path.join(dirpath, rule_filename)
-                parsed_rule = get_sigma_rule(rule_file_path)
+                parsed_rule = get_sigma_rule(rule_file_path, sigma_config)
                 if parsed_rule:
                     return_array.append(parsed_rule)
 
@@ -145,17 +151,19 @@ def get_all_sigma_rules():
     return sigma_rules
 
 
-def get_sigma_rule(filepath):
+def get_sigma_rule(filepath, sigma_config=None):
     """ Returns a JSON represenation for a rule
 
     Args:
         filepath: path to the sigma rule to be parsed
+        sigma_config: optional: pass a Sigma config object
 
     Returns:
         Json representation of the parsed rule
     """
     try:
-        sigma_config = get_sigma_config_file()
+        if sigma_config is None:
+            sigma_config = get_sigma_config_file()
     except ValueError as e:
         logger.error(
             'Problem reading the Sigma config {0:s}: '
@@ -186,18 +194,21 @@ def get_sigma_rule(filepath):
                 logger.error(
                     'Error generating rule in file {0:s}: {1!s}'
                     .format(abs_path, exception))
+                move_problematic_rule(filepath, str(exception))
                 return None
 
             except sigma_exceptions.SigmaParseError as exception:
                 logger.error(
                     'Sigma parsing error generating rule in file {0:s}: {1!s}'
                     .format(abs_path, exception))
+                move_problematic_rule(filepath, str(exception))
                 return None
 
             except yaml.parser.ParserError as exception:
                 logger.error(
                     'Yaml parsing error generating rule in file {0:s}: {1!s}'
                     .format(abs_path, exception))
+                move_problematic_rule(filepath, str(exception))
                 return None
 
             sigma_es_query = ''
@@ -220,3 +231,29 @@ def get_sigma_rule(filepath):
             return rule_return
 
     return None
+
+def move_problematic_rule(filepath, reason=None):
+    """ Moves a problematic rule to a subfolder so it is not used again
+
+    Args:
+        filepath: path to the sigma rule that caused problems
+
+    Returns:
+        Nothing
+    """
+    try:
+        bar_rules_folder = current_app.config.get('SIGMA_BAD_RULES')
+    except RuntimeError:
+        #Not called from a Flask App - returning
+        return
+
+    logging.info('Moving the rule: {0:s} to {1:s}'.format(
+        filepath, bar_rules_folder))
+
+    file_object = open('{0:s}debug.log'.format(bar_rules_folder), 'a')
+    file_object.write('{0:s}\n{1:s}\n\n'.format(filepath, reason))
+    file_object.close()
+
+    os.makedirs(bar_rules_folder, exist_ok=True)
+    os.rename(filepath, '{0:s}{1:s}'.format(
+        bar_rules_folder, os.path.basename(filepath)))
