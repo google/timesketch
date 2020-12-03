@@ -154,14 +154,21 @@ class BaseAggregator(object):
         if not sketch_id and not index:
             raise RuntimeError('Need at least sketch_id or index')
 
-        self.elastic = Elasticsearch(
-            host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'],
-            user=current_app.config.get('ELASTIC_USER', None),
-            password=current_app.config.get('ELASTIC_PASSWORD', None),
-            ssl=current_app.config.get('ELASTIC_SSL', None),
-            verify=current_app.config.get('ELASTIC_VERIFY_CERTS', True)
-        )
+        host = current_app.config['ELASTIC_HOST'],
+        port = current_app.config['ELASTIC_PORT'],
+        user = current_app.config.get('ELASTIC_USER', None),
+        password = current_app.config.get('ELASTIC_PASSWORD', None),
+        ssl = current_app.config.get('ELASTIC_SSL', False),
+        verify = current_app.config.get('ELASTIC_VERIFY_CERTS', True)
+
+        if ssl:
+            self.elastic = Elasticsearch([{'host': host, 'port': port}],
+                                         http_auth=(user, password),
+                                         use_ssl=ssl,
+                                         verify_certs=verify)
+        else:
+            self.elastic = Elasticsearch([{'host': host, 'port': port}])
+
         self.field = ''
         self.index = index
         self.sketch = SQLSketch.query.get(sketch_id)

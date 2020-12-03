@@ -79,9 +79,9 @@ class ElasticsearchDataStore(object):
         self._error_container = {}
         if ssl:
             self.client = Elasticsearch([{'host': host, 'port': port}],
-                                    http_auth = (user, password),
-                                    use_ssl= ssl,
-                                    verify_certs = verify)
+                                        http_auth = (user, password),
+                                        use_ssl= ssl,
+                                        verify_certs = verify)
         else:
             self.client = Elasticsearch([{'host': host, 'port': port}])
         self.import_counter = Counter()

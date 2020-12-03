@@ -45,6 +45,10 @@ class TestConfig(object):
     WTF_CSRF_ENABLED = False
     ELASTIC_HOST = None
     ELASTIC_PORT = None
+    ELASTIC_USER = None
+    ELASTIC_PASSWORD = None
+    ELASTIC_SSL = False
+    ELASTIC_VERIFY_CERTS = True
     LABELS_TO_PREVENT_DELETION = ['protected', 'magic']
     UPLOAD_ENABLED = False
     GRAPH_BACKEND_ENABLED = False
@@ -156,7 +160,7 @@ class MockDataStore(object):
         'timed_out': False
     }
 
-    def __init__(self, host, port):
+    def __init__(self, host, port, user='user', password='password', ssl=False, verify=True):
         """Initialize the datastore.
         Args:
             host: Hostname or IP address to the datastore
@@ -165,6 +169,10 @@ class MockDataStore(object):
         self.client = MockElasticClient()
         self.host = host
         self.port = port
+        self.user = user
+        self.password = password
+        self.ssl = ssl
+        self.verify = verify
         # Dictionary containing event dictionaries.
         self.event_store = {}
 
