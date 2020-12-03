@@ -392,7 +392,7 @@ class Search(resource.SketchResource):
         self._query_string = ''
         self._raw_response = None
         self._return_fields = ''
-        self._scrolling = True
+        self._scrolling = None
         self._searchtemplate = ''
         self._updated_at = ''
 
@@ -432,13 +432,10 @@ class Search(resource.SketchResource):
 
             self.add_chip(chip)
 
-    def _execute_query(self, scrolling=True, file_name=''):
+    def _execute_query(self, file_name=''):
         """Execute a search request and store the results.
 
         Args:
-            scrolling (bool): optional bool that indicates whether
-                scrolling support is enabled on the Elastic query.
-                Defaults to true.
             file_name (str): optional file path to a filename that
                 all the results will be saved to. If not provided
                 the results will be stored in the search object.
@@ -448,13 +445,12 @@ class Search(resource.SketchResource):
             raise ValueError(
                 'Unable to query with a query filter that isn\'t a dict.')
 
-        stop_size = query_filter.get('size', 0)
-        terminate_after = query_filter.get('terminate_after', 0)
-        if terminate_after and (terminate_after < stop_size):
-            stop_size = terminate_after
-
+        stop_size = self._max_entries
         scrolling = not bool(stop_size and (
             stop_size < self.DEFAULT_SIZE_LIMIT))
+
+        if self.scrolling is not None:
+            scrolling = self.scrolling
 
         form_data = {
             'query': self._query_string,
@@ -475,7 +471,7 @@ class Search(resource.SketchResource):
         if file_name:
             with open(file_name, 'wb') as fw:
                 fw.write(response.content)
-            return True
+            return
 
         response_json = error.get_response_json(response, logger)
 
@@ -486,8 +482,6 @@ class Search(resource.SketchResource):
         total_count = count
         while count > 0:
             if self._max_entries and total_count >= self._max_entries:
-                break
-            if stop_size and total_count >= stop_size:
                 break
 
             if not scroll_id:
@@ -681,6 +675,10 @@ class Search(resource.SketchResource):
     def max_entries(self, max_entries):
         """Make changes to the max entries of return values."""
         self._max_entries = max_entries
+        if max_entries < self.DEFAULT_SIZE_LIMIT:
+            _ = self.query_filter
+            self._query_filter['size'] = max_entries
+            self._query_filter['terminate_after'] = max_entries
         self.commit()
 
     @property
@@ -724,8 +722,8 @@ class Search(resource.SketchResource):
             self._query_filter = {
                 'time_start': None,
                 'time_end': None,
-                'size': self._max_entries,
-                'terminate_after': self._max_entries,
+                'size': self.DEFAULT_SIZE_LIMIT,
+                'terminate_after': self.DEFAULT_SIZE_LIMIT,
                 'indices': '_all',
                 'order': 'asc',
                 'chips': [],
@@ -738,7 +736,10 @@ class Search(resource.SketchResource):
     def query_filter(self, query_filter):
         """Make changes to the query filter."""
         if isinstance(query_filter, str):
-            query_filter = json.loads(query_filter)
+            try:
+                query_filter = json.loads(query_filter)
+            except json.JSONDecodeError as exc:
+                raise ValueError('Unable to parse the string as JSON') from exc
 
         if not isinstance(query_filter, dict):
             raise ValueError('Query filter needs to be a dict.')
@@ -856,7 +857,7 @@ class Search(resource.SketchResource):
     def to_dict(self):
         """Returns a dict with the respone of the query."""
         if not self._raw_response:
-            self._execute_query(scrolling=self.scrolling)
+            self._execute_query()
 
         return self._raw_response
 
@@ -871,12 +872,16 @@ class Search(resource.SketchResource):
         Returns:
             Boolean that determines if it was successful.
         """
-        return self._execute_query(scrolling=True, file_name=file_name)
+        old_scrolling = self.scrolling
+        self._scrolling = True
+        self._execute_query(file_name=file_name)
+        self._scrolling = old_scrolling
+        return True
 
     def to_pandas(self):
         """Returns a pandas DataFrame with the response of the query."""
         if not self._raw_response:
-            self._execute_query(scrolling=self.scrolling)
+            self._execute_query()
 
         return_list = []
         timelines = {}
