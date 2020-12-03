@@ -160,7 +160,8 @@ class MockDataStore(object):
         'timed_out': False
     }
 
-    def __init__(self, host, port, user='user', password='password', ssl=False, verify=True):
+    def __init__(self, host, port, user='user',
+                 password='password', ssl=False, verify=True):
         """Initialize the datastore.
         Args:
             host: Hostname or IP address to the datastore
