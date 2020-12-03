@@ -15,7 +15,6 @@
 
 from __future__ import unicode_literals
 
-from elasticsearch import Elasticsearch
 from flask import current_app
 
 import pandas
@@ -238,7 +237,7 @@ class BaseAggregator(object):
         Returns:
             Elasticsearch aggregation result.
         """
-        # pylint: disable=unexpected-keyword-arg
+        # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
         aggregation = self.elastic.aggregation_shim(
             index=self.index, body=aggregation_spec, size=0)
         return aggregation
