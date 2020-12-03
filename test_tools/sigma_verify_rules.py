@@ -22,7 +22,6 @@ $ PYTHONPATH=. python3 test_tools/sigma_verify_rules.py --config_file
 --debug data/sigma/rules/windows/ --move data/sigma/rules/problematic/
 """
 
-
 import logging
 import os
 import argparse
