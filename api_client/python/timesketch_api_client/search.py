@@ -449,8 +449,8 @@ class Search(resource.SketchResource):
         scrolling = not bool(stop_size and (
             stop_size < self.DEFAULT_SIZE_LIMIT))
 
-        if self.scrolling:
-            scrolling = True
+        if self.scrolling is not None:
+            scrolling = self.scrolling
 
         form_data = {
             'query': self._query_string,
