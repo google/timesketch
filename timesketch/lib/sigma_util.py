@@ -40,23 +40,23 @@ def get_sigma_config_file(config_file=None):
             or the Sigma config file is not readabale.
     """
     if config_file is None:
-        config_file = current_app.config.get('SIGMA_CONFIG')
+        config_file_path = current_app.config.get('SIGMA_CONFIG')
 
     if not config_file:
         raise ValueError(
             'SIGMA_CONFIG not found in config file')
 
-    if not os.path.isfile(config_file):
+    if not os.path.isfile(config_file_path):
         raise ValueError(
             'Unable to open file: [{0:s}], it does not exist.'.format(
-                config_file))
+                config_file_path))
 
-    if not os.access(config_file, os.R_OK):
+    if not os.access(config_file_path, os.R_OK):
         raise ValueError(
             'Unable to open file: [{0:s}], cannot open it for '
-            'read, please check permissions.'.format(config_file))
+            'read, please check permissions.'.format(config_file_path))
 
-    with open(config_file, 'r') as config_file:
+    with open(config_file_path, 'r') as config_file:
         sigma_config_file = config_file.read()
 
     sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
