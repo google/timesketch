@@ -392,7 +392,7 @@ class Search(resource.SketchResource):
         self._query_string = ''
         self._raw_response = None
         self._return_fields = ''
-        self._scrolling = True
+        self._scrolling = None
         self._searchtemplate = ''
         self._updated_at = ''
 
@@ -432,13 +432,10 @@ class Search(resource.SketchResource):
 
             self.add_chip(chip)
 
-    def _execute_query(self, scrolling=True, file_name=''):
+    def _execute_query(self, file_name=''):
         """Execute a search request and store the results.
 
         Args:
-            scrolling (bool): optional bool that indicates whether
-                scrolling support is enabled on the Elastic query.
-                Defaults to true.
             file_name (str): optional file path to a filename that
                 all the results will be saved to. If not provided
                 the results will be stored in the search object.
@@ -450,7 +447,10 @@ class Search(resource.SketchResource):
 
         stop_size = self._max_entries
         scrolling = not bool(stop_size and (
-            stop_size <= self.DEFAULT_SIZE_LIMIT))
+            stop_size < self.DEFAULT_SIZE_LIMIT))
+
+        if self.scrolling is not None:
+            scrolling = self.scrolling
 
         form_data = {
             'query': self._query_string,
@@ -471,7 +471,7 @@ class Search(resource.SketchResource):
         if file_name:
             with open(file_name, 'wb') as fw:
                 fw.write(response.content)
-            return True
+            return
 
         response_json = error.get_response_json(response, logger)
 
@@ -857,7 +857,7 @@ class Search(resource.SketchResource):
     def to_dict(self):
         """Returns a dict with the respone of the query."""
         if not self._raw_response:
-            self._execute_query(scrolling=self.scrolling)
+            self._execute_query()
 
         return self._raw_response
 
@@ -872,12 +872,16 @@ class Search(resource.SketchResource):
         Returns:
             Boolean that determines if it was successful.
         """
-        return self._execute_query(scrolling=True, file_name=file_name)
+        old_scrolling = self.scrolling
+        self._scrolling = True
+        self._execute_query(file_name=file_name)
+        self._scrolling = old_scrolling
+        return True
 
     def to_pandas(self):
         """Returns a pandas DataFrame with the response of the query."""
         if not self._raw_response:
-            self._execute_query(scrolling=self.scrolling)
+            self._execute_query()
 
         return_list = []
         timelines = {}
