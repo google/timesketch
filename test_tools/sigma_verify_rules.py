@@ -17,21 +17,17 @@ This tool can be used to verify your rules before running an analyzer.
 It also does not require you to have a full blown Timesketch instance.
 Default this tool will show only the rules that cause problems.
 Example way of running the tool:
-  $ python3 sigma_verify_rules.py --config_file ../data/sigma_config.yaml 
-  --debug ../data/sigma/rules/windows/ --move ../data/sigma/rules/problematic/
+$ python3 sigma_verify_rules.py --config_file ../data/sigma_config.yaml
+--debug ../data/sigma/rules/windows/ --move ../data/sigma/rules/problematic/
 """
-
 
 
 import logging
 import os
 import argparse
 import sys
-# TODO: not sure if there is a better way
-sys.path.append('../timesketch/lib/')
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-import sigma_util as ts_sigma_lib
 
+from timesketch.lib import sigma_util
 
 logger = logging.getLogger('timesketch.test_tool.sigma-verify')
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
@@ -60,7 +56,7 @@ def run_verifier(rules_path, config_file_path):
         raise IOError('Config file path not found at path: {0:s}'.format(
             config_file_path))
 
-    sigma_config = ts_sigma_lib.get_sigma_config_file(
+    sigma_config = sigma_util.get_sigma_config_file(
         config_file=config_file_path)
 
     return_verified_rules = []
@@ -77,7 +73,7 @@ def run_verifier(rules_path, config_file_path):
                     continue
 
                 rule_file_path = os.path.join(dirpath, rule_filename)
-                parsed_rule = ts_sigma_lib.get_sigma_rule(
+                parsed_rule = sigma_util.get_sigma_rule(
                     rule_file_path, sigma_config)
                 if parsed_rule:
                     return_verified_rules.append(rule_file_path)
