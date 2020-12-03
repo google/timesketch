@@ -28,7 +28,7 @@ import os
 import argparse
 import sys
 
-from timesketch.lib import sigma_util
+from timesketch.lib import sigma_util# pylint: disable=no-name-in-module
 
 logger = logging.getLogger('timesketch.test_tool.sigma-verify')
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
