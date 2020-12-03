@@ -232,8 +232,7 @@ class ResourceMixin(object):
         """
         return ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT']
-        )
+            port=current_app.config['ELASTIC_PORT'])
 
     def to_json(self,
                 model,

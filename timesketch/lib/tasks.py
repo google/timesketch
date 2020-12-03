@@ -546,8 +546,7 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
 
     es = ElasticsearchDataStore(
         host=current_app.config['ELASTIC_HOST'],
-        port=current_app.config['ELASTIC_PORT']
-    )
+        port=current_app.config['ELASTIC_PORT'])
 
     # Reason for the broad exception catch is that we want to capture
     # all possible errors and exit the task.

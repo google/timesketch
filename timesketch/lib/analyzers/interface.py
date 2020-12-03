@@ -745,8 +745,7 @@ class BaseIndexAnalyzer(object):
         self.timeline_name = ''
         self.datastore = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT']
-        )
+            port=current_app.config['ELASTIC_PORT'])
 
         if not hasattr(self, 'sketch'):
             self.sketch = None

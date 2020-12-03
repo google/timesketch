@@ -39,8 +39,7 @@ class ApiDataFetcher(interface.DataFetcher):
         super(ApiDataFetcher, self).__init__()
         self._datastore = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT']
-        )
+            port=current_app.config['ELASTIC_PORT'])
 
     def get_aggregation(self, agg_dict):
         """Returns an aggregation object from an aggregation dict.
