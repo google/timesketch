@@ -17,7 +17,8 @@ This tool can be used to verify your rules before running an analyzer.
 It also does not require you to have a full blown Timesketch instance.
 Default this tool will show only the rules that cause problems.
 Example way of running the tool:
-  $ sigma_verify_rules.py --config_file ../data/sigma_config.yaml ../data/linux/
+  $ python3 sigma_verify_rules.py --config_file ../data/sigma_config.yaml 
+  --debug ../data/sigma/rules/windows/ --move ../data/sigma/rules/problematic/
 """
 
 
@@ -85,6 +86,31 @@ def run_verifier(rules_path, config_file_path):
 
     return return_verified_rules, return_rules_with_problems
 
+
+def move_problematic_rule(filepath, move_to_path, reason=""):
+    """ Moves a problematic rule to a subfolder so it is not used again
+
+    Args:
+        filepath: path to the sigma rule that caused problems
+        move_to_path: path to move the problematic rules to
+        reason (optional): reason why file is moved
+
+    Returns:
+        Nothing
+    """
+
+    logging.info('Moving the rule: {0:s} to {1:s}'.format(
+        filepath, move_to_path))
+
+    os.makedirs(move_to_path, exist_ok=True)
+    file_object = open('{0:s}debug.log'.format(move_to_path), 'a')
+    file_object.write('{0:s}\n{1:s}\n\n'.format(filepath, reason))
+    file_object.close()
+    os.rename(filepath, '{0:s}{1:s}'.format(
+        move_to_path, os.path.basename(filepath)))
+
+
+
 if __name__ == '__main__':
 
     description = (
@@ -110,6 +136,11 @@ if __name__ == '__main__':
         '--debug', action='store_true', help='print debug messages ')
     arguments.add_argument(
         '--info', action='store_true', help='print info messages ')
+    arguments.add_argument(
+        '--move', dest='move_to_path', action='store',
+        default='', type=str, help=(
+            'Path to the file containing the config data to feed sigma '
+        ))
     try:
         options = arguments.parse_args()
     except UnicodeEncodeError:
@@ -139,6 +170,10 @@ if __name__ == '__main__':
         print('### You should NOT import the following rules ###')
         print('### To get the reason per rule, re-run with --info###')
         for badrule in sigma_rules_with_problems:
+            if options.move_to_path:
+                move_problematic_rule(
+                    badrule, options.move_to_path,
+                    "sigma_verify_rules.py found an issue")
             print(badrule)
 
     if len(sigma_verified_rules) > 0:

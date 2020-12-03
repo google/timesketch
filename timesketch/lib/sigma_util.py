@@ -194,21 +194,18 @@ def get_sigma_rule(filepath, sigma_config=None):
                 logger.error(
                     'Error generating rule in file {0:s}: {1!s}'
                     .format(abs_path, exception))
-                move_problematic_rule(filepath, str(exception))
                 return None
 
             except sigma_exceptions.SigmaParseError as exception:
                 logger.error(
                     'Sigma parsing error generating rule in file {0:s}: {1!s}'
                     .format(abs_path, exception))
-                move_problematic_rule(filepath, str(exception))
                 return None
 
             except yaml.parser.ParserError as exception:
                 logger.error(
                     'Yaml parsing error generating rule in file {0:s}: {1!s}'
                     .format(abs_path, exception))
-                move_problematic_rule(filepath, str(exception))
                 return None
 
             sigma_es_query = ''
@@ -231,29 +228,3 @@ def get_sigma_rule(filepath, sigma_config=None):
             return rule_return
 
     return None
-
-def move_problematic_rule(filepath, reason=None):
-    """ Moves a problematic rule to a subfolder so it is not used again
-
-    Args:
-        filepath: path to the sigma rule that caused problems
-
-    Returns:
-        Nothing
-    """
-    try:
-        bar_rules_folder = current_app.config.get('SIGMA_BAD_RULES')
-    except RuntimeError:
-        #Not called from a Flask App - returning
-        return
-
-    logging.info('Moving the rule: {0:s} to {1:s}'.format(
-        filepath, bar_rules_folder))
-
-    file_object = open('{0:s}debug.log'.format(bar_rules_folder), 'a')
-    file_object.write('{0:s}\n{1:s}\n\n'.format(filepath, reason))
-    file_object.close()
-
-    os.makedirs(bar_rules_folder, exist_ok=True)
-    os.rename(filepath, '{0:s}{1:s}'.format(
-        bar_rules_folder, os.path.basename(filepath)))
