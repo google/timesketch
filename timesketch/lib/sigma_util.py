@@ -220,3 +220,59 @@ def get_sigma_rule(filepath):
             return rule_return
 
     return None
+
+def get_sigma_rule_by_text(rule_text, sigma_config):
+    """ Returns a JSON represenation for a rule
+
+    Args:
+        rule_text: Text of the sigma rule to be parsed
+        sigma_config: config file object
+
+    Returns:
+        Json representation of the parsed rule
+    """
+
+    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_config, {})
+
+    rule_return = {}
+
+    try:
+        parser = sigma_collection.SigmaCollectionParser(
+                        rule_text, sigma_config, None)
+        parsed_sigma_rules = parser.generate(sigma_backend)
+        rule_yaml_data = yaml.safe_load_all(rule_text)
+        for doc in rule_yaml_data:
+            rule_return.update(doc)
+
+    except NotImplementedError as exception:
+        logger.error(
+            'Error generating rule in file {0!s}'
+            .format(exception))
+        return None
+
+    except sigma_exceptions.SigmaParseError as exception:
+        logger.error(
+            'Sigma parsing error generating rule {0!s}'
+            .format(exception))
+        return None
+
+    except yaml.parser.ParserError as exception:
+        logger.error(
+            'Yaml parsing error generating rule in {0!s}'
+            .format(exception))
+        return None
+
+    sigma_es_query = ''
+
+    for sigma_rule in parsed_sigma_rules:
+        sigma_es_query = sigma_rule
+
+    rule_return.update(
+        {'es_query':sigma_es_query})
+    rule_return.update(
+        {'file_name':'N/A'})
+
+    rule_return.update(
+        {'file_relpath':'N/A'})
+
+    return rule_return
