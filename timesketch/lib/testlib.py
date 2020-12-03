@@ -160,8 +160,7 @@ class MockDataStore(object):
         'timed_out': False
     }
 
-    def __init__(self, host, port, user='user',
-                 password='password', ssl=False, verify=True):
+    def __init__(self, host, port):
         """Initialize the datastore.
         Args:
             host: Hostname or IP address to the datastore
@@ -170,10 +169,6 @@ class MockDataStore(object):
         self.client = MockElasticClient()
         self.host = host
         self.port = port
-        self.user = user
-        self.password = password
-        self.ssl = ssl
-        self.verify = verify
         # Dictionary containing event dictionaries.
         self.event_store = {}
 

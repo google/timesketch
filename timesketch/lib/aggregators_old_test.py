@@ -25,7 +25,6 @@ class TestAggregators(BaseTest):
 
     def test_heatmap(self):
         """Test to get heatmap data."""
-        es_client = MockDataStore('127.0.0,1', 4711, user='user',
-                                  password='password', ssl=False, verify=True)
+        es_client = MockDataStore('127.0.0,1', 4711)
         h = heatmap(es_client, 1, 'test', {}, [], ['all'])
         self.assertIsInstance(h, list)

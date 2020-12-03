@@ -39,11 +39,7 @@ class ApiDataFetcher(interface.DataFetcher):
         super(ApiDataFetcher, self).__init__()
         self._datastore = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
-            port=current_app.config['ELASTIC_PORT'],
-            user=current_app.config.get('ELASTIC_USER', None),
-            password=current_app.config.get('ELASTIC_PASSWORD', None),
-            ssl=current_app.config.get('ELASTIC_SSL', None),
-            verify=current_app.config.get('ELASTIC_VERIFY_CERTS', True)
+            port=current_app.config['ELASTIC_PORT']
         )
 
     def get_aggregation(self, agg_dict):
