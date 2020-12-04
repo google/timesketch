@@ -32,6 +32,9 @@ logger = logging.getLogger('timesketch.lib.sigma')
 def get_sigma_config_file(config_file=None):
     """Get a sigma.configuration.SigmaConfiguration object.
 
+    Args:
+        config_file: Optional path to a config file
+
     Returns:
         A sigma.configuration.SigmaConfiguration object
 
@@ -39,7 +42,9 @@ def get_sigma_config_file(config_file=None):
         ValueError: If SIGMA_CONFIG is not found in the config file.
             or the Sigma config file is not readabale.
     """
-    if config_file is None:
+    if config_file:
+        config_file_path = config_file
+    else:
         config_file_path = current_app.config.get('SIGMA_CONFIG')
 
     if not config_file:
@@ -76,8 +81,8 @@ def get_sigma_rules_path():
     try:
         rules_path = current_app.config.get('SIGMA_RULES_FOLDERS', [])
     except RuntimeError:
-        # TODO: make that more flexible I have no idea what to best return here
-        return ['/']
+        raise ValueError(
+            'SIGMA_RULES_FOLDERS not found in config file')
 
     if not rules_path:
         raise ValueError(
@@ -102,7 +107,8 @@ def get_sigma_rules(rule_folder, sigma_config=None):
 
     Args:
         rule_folder: folder to be checked for rules
-        sigma_config: optional: pass a Sigma config object
+        sigma_config: optional argument to pass a 
+                sigma.configuration.SigmaConfiguration object
 
     Returns:
         A array of Sigma rules as JSON
@@ -156,7 +162,8 @@ def get_sigma_rule(filepath, sigma_config=None):
 
     Args:
         filepath: path to the sigma rule to be parsed
-        sigma_config: optional: pass a Sigma config object
+        sigma_config: optional argument to pass a 
+                sigma.configuration.SigmaConfiguration object
 
     Returns:
         Json representation of the parsed rule
