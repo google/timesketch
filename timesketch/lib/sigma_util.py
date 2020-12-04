@@ -80,9 +80,9 @@ def get_sigma_rules_path():
     """
     try:
         rules_path = current_app.config.get('SIGMA_RULES_FOLDERS', [])
-    except RuntimeError:
+    except RuntimeError as e:
         raise ValueError(
-            'SIGMA_RULES_FOLDERS not found in config file')
+            'SIGMA_RULES_FOLDERS not found in config file') from e
 
     if not rules_path:
         raise ValueError(
