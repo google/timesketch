@@ -220,7 +220,7 @@ def get_sigma_rule(filepath):
 
     return None
 
-def get_sigma_rule_by_text(rule_text, sigma_config):
+def get_sigma_rule_by_text(rule_text, sigma_config=None):
     """ Returns a JSON represenation for a rule
 
     Args:
@@ -230,6 +230,8 @@ def get_sigma_rule_by_text(rule_text, sigma_config):
     Returns:
         Json representation of the parsed rule
     """
+    if sigma_config is None:
+        sigma_config = get_sigma_config_file()
 
     sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_config, {})
 

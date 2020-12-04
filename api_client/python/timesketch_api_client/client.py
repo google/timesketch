@@ -549,3 +549,27 @@ class TimesketchApi:
             Instance of a Sigma object.
         """
         return sigma.Sigma(rule_uuid, api=self)
+
+    def get_sigma_rule_by_text(self, rule_text):
+        """Returns a Sigma Object based on a text POST.
+
+        Args:
+            rule_text: Full Sigma rule text.
+
+        Returns:
+            Instance of a Sigma object.
+        """
+        if not rule_text:
+            raise ValueError('Rule text given.')
+
+        try:
+            sigma_rule = ts_sigma_lib.get_sigma_rule_by_text(rule_text)
+
+        except ValueError:
+            logger.error('OS Error, unable to get the path to the Sigma rules',
+                         exc_info=True)
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'OS Error, unable to get the path to the Sigma rules')
+
+        return sigma_rule

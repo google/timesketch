@@ -20,6 +20,38 @@ import mock
 from . import test_lib
 from . import client
 
+MOCK_SIGMA_RULE = """
+title: Suspicious Installation of Zenmap
+id: 5266a592-b793-11ea-b3de-0242ac130004
+description: Detects suspicious installation of Zenmap
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2020/06/26
+logsource:
+    product: linux
+    service: shell
+detection:
+    keywords:
+        # Generic suspicious commands
+        - '*apt-get install zmap*'
+    condition: keywords
+falsepositives:
+    - Unknown
+level: high
+"""
+
+MOCK_SIGMA_RULE_ERROR1 = """
+title: Suspicious Foobar
+id: 5266a592-b793-11ea-b3de-0242ac130004
+description: Detects suspicious installation of Zenmap
+references:
+    - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
+author: Alexander Jaeger
+date: 2020/06/26
+modified: 2020/06/26
+"""
 
 class TimesketchSigmaTest(unittest.TestCase):
     """Test Sigma."""
@@ -55,4 +87,11 @@ class TimesketchSigmaTest(unittest.TestCase):
 
         self.assertEqual(
             rule1.title, 'Suspicious Installation of Zenmap',
+            'Title of the rule does not match')
+
+    def test_get_sigma_rule_by_text(self):
+        rule = self.api_client.get_sigma_rule_by_text(MOCK_SIGMA_RULE)
+
+        self.assertEqual(
+            rule.title, 'Suspicious Installation of Zenmap',
             'Title of the rule does not match')

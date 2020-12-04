@@ -80,7 +80,7 @@ class TestSigmaUtilLib(BaseTest):
         self.assertIn('b793', rule.get('id'))
 
         self.assertIsNone(sigma_util.get_sigma_rule_by_text(
-                          MOCK_SIGMA_RULE_ERROR1, sigma_config))
+            MOCK_SIGMA_RULE_ERROR1, sigma_config))
 
 
     def test_get_sigma_config_file(self):
