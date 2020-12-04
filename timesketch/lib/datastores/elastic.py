@@ -884,15 +884,6 @@ class ElasticsearchDataStore(object):
         self.import_events = []
         return return_dict
 
-    def get_field_mapping(self, index, fields):
-        """Get Elasticsearch Field Mapping
-
-        Returns:
-            ElasticSearch Field Mapping as json object.
-        """
-        return self.client.indices.get_field_mapping(index=index,
-                                                     fields=fields)
-
     @property
     def version(self):
         """Get Elasticsearch version.

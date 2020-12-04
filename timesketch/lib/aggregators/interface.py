@@ -199,7 +199,7 @@ class BaseAggregator(object):
         field_type = None
 
         # Get the mapping for the field.
-        mapping = self.elastic.get_field_mapping(
+        mapping = self.elastic.client.indices.get_field_mapping(
             index=self.index, fields=field_name)
 
         # The returned structure is nested so we need to unpack it.
