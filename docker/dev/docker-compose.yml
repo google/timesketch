@@ -48,3 +48,14 @@ services:
   redis:
     image: redis
     restart: always
+
+  notebook:
+    image: us-docker.pkg.dev/osdfir-registry/picatrix/picatrix:latest
+    ports:
+      - 8899:8899
+    restart: on-failure
+    network: "host"
+    volumes:
+      - ../:/usr/local/src/picatrix/:ro
+      - /tmp/:/usr/local/src/picadata/
+
