@@ -107,7 +107,7 @@ def get_sigma_rules(rule_folder, sigma_config=None):
 
     Args:
         rule_folder: folder to be checked for rules
-        sigma_config: optional argument to pass a 
+        sigma_config: optional argument to pass a
                 sigma.configuration.SigmaConfiguration object
 
     Returns:
@@ -169,15 +169,22 @@ def get_sigma_rule(filepath, sigma_config=None):
         Json representation of the parsed rule
     """
     try:
-        if sigma_config is None:
-            sigma_config = get_sigma_config_file()
+        if sigma_config:
+            sigma_config_obj = sigma_config
+        else:
+            sigma_config_obj = get_sigma_config_file()
     except ValueError as e:
         logger.error(
             'Problem reading the Sigma config {0:s}: '
             .format(e), exc_info=True)
         return None
 
-    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_config, {})
+    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_config_obj, {})
+
+    try:
+        sigma_rules_paths = get_sigma_rules_path()
+    except ValueError:
+        sigma_rules_paths = None
 
     if filepath.lower().endswith('.yml'):
         # if a sub dir is found, nothing can be parsed
@@ -226,8 +233,11 @@ def get_sigma_rule(filepath, sigma_config=None):
                 {'file_name':os.path.basename(filepath)})
 
             # in case multiple folders are in the config, need to remove them
-            for rule_path in get_sigma_rules_path():
-                file_relpath = os.path.relpath(filepath, rule_path)
+            if sigma_rules_paths:
+                for rule_path in sigma_rules_paths:
+                    file_relpath = os.path.relpath(filepath, rule_path)
+            else:
+                file_relpath = 'N/A'
 
             rule_return.update(
                 {'file_relpath':file_relpath})

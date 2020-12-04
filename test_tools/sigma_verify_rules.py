@@ -49,6 +49,9 @@ def run_verifier(rules_path, config_file_path):
             - sigma_verified_rules with rules that can be added
             - sigma_rules_with_problems with rules that should not be added
     """
+    if not config_file_path:
+        raise IOError('no config_file_path given')
+
     if not os.path.isdir(rules_path):
         raise IOError('Rules not found at path: {0:s}'.format(
             rules_path))
@@ -83,27 +86,27 @@ def run_verifier(rules_path, config_file_path):
     return return_verified_rules, return_rules_with_problems
 
 
-def move_problematic_rule(filepath, move_to_path, reason=""):
+def move_problematic_rule(filepath, move_to_path, reason=None):
     """ Moves a problematic rule to a subfolder so it is not used again
 
     Args:
         filepath: path to the sigma rule that caused problems
         move_to_path: path to move the problematic rules to
-        reason (optional): reason why file is moved
-
-    Returns:
-        Nothing
+        reason: optional reason why file is moved
     """
-
     logging.info('Moving the rule: {0:s} to {1:s}'.format(
         filepath, move_to_path))
-
-    os.makedirs(move_to_path, exist_ok=True)
-    file_object = open('{0:s}debug.log'.format(move_to_path), 'a')
-    file_object.write('{0:s}\n{1:s}\n\n'.format(filepath, reason))
-    file_object.close()
-    os.rename(filepath, '{0:s}{1:s}'.format(
-        move_to_path, os.path.basename(filepath)))
+    try:
+        os.makedirs(move_to_path, exist_ok=True)
+        debug_path = os.path.join(move_to_path, 'debug.log')
+        
+        with open(debug_path, 'a') as file_objec:
+            file_object.write('{0:s}\n{1:s}\n\n'.format(filepath, reason))
+        
+        os.rename(filepath, '{0:s}{1:s}'.format(
+            move_to_path, os.path.basename(filepath)))
+    except OSError:
+        logger.error("OS Error - no rules moved")
 
 
 
@@ -169,7 +172,7 @@ if __name__ == '__main__':
             if options.move_to_path:
                 move_problematic_rule(
                     badrule, options.move_to_path,
-                    "sigma_verify_rules.py found an issue")
+                    'sigma_verify_rules.py found an issue')
             print(badrule)
 
     if len(sigma_verified_rules) > 0:
