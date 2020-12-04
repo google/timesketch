@@ -99,10 +99,10 @@ def move_problematic_rule(filepath, move_to_path, reason=None):
     try:
         os.makedirs(move_to_path, exist_ok=True)
         debug_path = os.path.join(move_to_path, 'debug.log')
-        
+
         with open(debug_path, 'a') as file_objec:
-            file_object.write('{0:s}\n{1:s}\n\n'.format(filepath, reason))
-        
+            file_objec.write('{0:s}\n{1:s}\n\n'.format(filepath, reason))
+
         os.rename(filepath, '{0:s}{1:s}'.format(
             move_to_path, os.path.basename(filepath)))
     except OSError:
