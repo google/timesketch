@@ -238,7 +238,7 @@ class BaseAggregator(object):
             Elasticsearch aggregation result.
         """
         # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
-        aggregation = self.elastic.aggregation_shim(
+        aggregation = self.elastic.client.search(
             index=self.index, body=aggregation_spec, size=0)
         return aggregation
 

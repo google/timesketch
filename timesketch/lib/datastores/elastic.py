@@ -893,20 +893,6 @@ class ElasticsearchDataStore(object):
         return self.client.indices.get_field_mapping(index=index,
                                                      fields=fields)
 
-    def aggregation_shim(self, index, aggregation_spec):
-        """Shim ahead of moving the Helper method 'elastic_aggregation'
-        Helper method to execute aggregation in Elasticsearch.
-
-        Args:
-            aggregation_spec: Dict with Elasticsearch aggregation spec.
-
-        Returns:
-            Elasticsearch aggregation result.
-        """
-        # pylint: disable=unexpected-keyword-arg
-        return self.client.search(
-            index=index, body=aggregation_spec, size=0)
-
     @property
     def version(self):
         """Get Elasticsearch version.
