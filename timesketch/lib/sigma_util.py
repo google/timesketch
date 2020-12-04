@@ -156,10 +156,9 @@ def get_sigma_rule(filepath):
     """
     try:
         sigma_config = get_sigma_config_file()
-    except ValueError as e:
+    except ValueError:
         logger.error(
-            'Problem reading the Sigma config {0:s}: '
-            .format(e), exc_info=True)
+            'Problem reading the Sigma config', exc_info=True)
         return None
 
     sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_config, {})
