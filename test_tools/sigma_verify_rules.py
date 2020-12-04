@@ -17,83 +17,20 @@ This tool can be used to verify your rules before running an analyzer.
 It also does not require you to have a full blown Timesketch instance.
 Default this tool will show only the rules that cause problems.
 Example way of running the tool:
-  $ sigma_verify_rules.py --config_file ../data/sigma_config.yaml ../data/linux/
+$ PYTHONPATH=. python3 test_tools/sigma_verify_rules.py --config_file
+../data/sigma_config.yaml  --config_file data/sigma_config.yaml
+--debug data/sigma/rules/windows/ --move data/sigma/rules/problematic/
 """
-
 
 import logging
 import os
 import argparse
 import sys
-import codecs
-import sigma.parser.exceptions
-import sigma.configuration as sigma_configuration
 
-from sigma.backends import elasticsearch as sigma_elasticsearch
-from sigma.parser import collection as sigma_collection
+from timesketch.lib import sigma_util# pylint: disable=no-name-in-module
 
 logger = logging.getLogger('timesketch.test_tool.sigma-verify')
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
-
-RULE_EXTENSIONS = ('yml', 'yaml')
-
-def get_codepath():
-    """Return the absolute path to where the tool is run from."""
-    # TODO: move this function to a library as it is duplicate to WebUI
-
-    path = __file__
-    if path.startswith(os.path.sep):
-        return path
-
-    dirname = os.path.dirname(path)
-    for sys_path in sys.path:
-        if sys_path.endswith(dirname):
-            return sys_path
-    return dirname
-
-def verify_rules_file(rule_file_path, sigma_config, sigma_backend):
-    """Verifies a given file path contains a valid sigma rule.
-
-        Args:
-            rule_file_path: the path to the rules.
-            sigma_config: config to use
-            sigma_backend: A sigma.backends instance
-
-        Raises:
-            None
-
-        Returns:
-            true: rule_file_path contains a valid sigma rule
-            false: rule_file_path does not contain a valid sigma rule
-    """
-
-    logger.debug('[sigma] Reading rules from {0:s}'.format(
-        rule_file_path))
-
-    if not os.path.isfile(rule_file_path):
-        logger.error('Rule file not found')
-        return False
-
-    path, rule_filename = os.path.split(rule_file_path)
-
-    with codecs.open(rule_file_path, 'r', encoding='utf-8') as rule_file:
-        try:
-            rule_file_content = rule_file.read()
-            parser = sigma_collection.SigmaCollectionParser(
-                rule_file_content, sigma_config, None)
-            parsed_sigma_rules = parser.generate(sigma_backend)
-        except NotImplementedError:
-            logger.error('{0:s} Error with file {1:s}'.format(
-                rule_filename, rule_file_path), exc_info=True)
-            return False
-        except (sigma.parser.exceptions.SigmaParseError, TypeError):
-            logger.error(
-                '{0:s} Error with file {1:s} '
-                'you should not use this rule in Timesketch '.format(
-                    rule_filename, rule_file_path), exc_info=True)
-            return False
-
-    return True
 
 
 def run_verifier(rules_path, config_file_path):
@@ -112,6 +49,9 @@ def run_verifier(rules_path, config_file_path):
             - sigma_verified_rules with rules that can be added
             - sigma_rules_with_problems with rules that should not be added
     """
+    if not config_file_path:
+        raise IOError('No config_file_path given')
+
     if not os.path.isdir(rules_path):
         raise IOError('Rules not found at path: {0:s}'.format(
             rules_path))
@@ -119,51 +59,59 @@ def run_verifier(rules_path, config_file_path):
         raise IOError('Config file path not found at path: {0:s}'.format(
             config_file_path))
 
-    sigma_config_path = config_file_path
+    sigma_config = sigma_util.get_sigma_config_file(
+        config_file=config_file_path)
 
-    with open(sigma_config_path, 'r') as sigma_config_file:
-        sigma_config_con = sigma_config_file.read()
-    sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_con)
-    backend = sigma_elasticsearch.ElasticsearchQuerystringBackend(
-        sigma_config, {})
     return_verified_rules = []
     return_rules_with_problems = []
 
     for dirpath, dirnames, files in os.walk(rules_path):
-
         if 'deprecated' in [x.lower() for x in dirnames]:
             dirnames.remove('deprecated')
-            logger.info('deprecated in folder / filename found - ignored')
 
         for rule_filename in files:
-            if not rule_filename.lower().endswith(RULE_EXTENSIONS):
-                continue
+            if rule_filename.lower().endswith('.yml'):
+                # if a sub dir is found, do not try to parse it.
+                if os.path.isdir(os.path.join(dirpath, rule_filename)):
+                    continue
 
-            # If a sub dir is found, skip it
-            if os.path.isdir(os.path.join(rules_path, rule_filename)):
-                logger.debug(
-                    'Directory found, skipping: {0:s}'.format(rule_filename))
-                continue
-
-            rule_file_path = os.path.join(dirpath, rule_filename)
-            rule_file_path = os.path.abspath(rule_file_path)
-
-            if verify_rules_file(rule_file_path, sigma_config, backend):
-                return_verified_rules.append(rule_file_path)
-            else:
-                logger.info('File did not work{0:s}'.format(rule_file_path))
-                return_rules_with_problems.append(rule_file_path)
+                rule_file_path = os.path.join(dirpath, rule_filename)
+                parsed_rule = sigma_util.get_sigma_rule(
+                    rule_file_path, sigma_config)
+                if parsed_rule:
+                    return_verified_rules.append(rule_file_path)
+                else:
+                    return_rules_with_problems.append(rule_file_path)
 
     return return_verified_rules, return_rules_with_problems
 
 
-if __name__ == '__main__':
-    code_path = get_codepath()
-    # We want to ensure our mocked libraries get loaded first.
-    sys.path.insert(0, code_path)
+def move_problematic_rule(filepath, move_to_path, reason=None):
+    """ Moves a problematic rule to a subfolder so it is not used again
 
+    Args:
+        filepath: path to the sigma rule that caused problems
+        move_to_path: path to move the problematic rules to
+        reason: optional reason why file is moved
+    """
+    logging.info('Moving the rule: {0:s} to {1:s}'.format(
+        filepath, move_to_path))
+    try:
+        os.makedirs(move_to_path, exist_ok=True)
+        debug_path = os.path.join(move_to_path, 'debug.log')
+
+        with open(debug_path, 'a') as file_objec:
+            file_objec.write(f'{filepath}\n{reason}\n\n')
+
+        base_path = os.path.basename(filepath)
+        os.rename(filepath, f'{move_to_path}{base_path}')
+    except OSError:
+        logger.error('OS Error - no rules moved')
+
+
+if __name__ == '__main__':
     description = (
-        'Mock an sigma analyzer run. This tool is intended for developers '
+        'Mock an sigma parser run. This tool is intended for developers '
         'of sigma rules as well as Timesketch server admins. '
         'The tool can also be used for automatic testing to make sure the '
         'rules are still working as intended.')
@@ -185,6 +133,11 @@ if __name__ == '__main__':
         '--debug', action='store_true', help='print debug messages ')
     arguments.add_argument(
         '--info', action='store_true', help='print info messages ')
+    arguments.add_argument(
+        '--move', dest='move_to_path', action='store',
+        default='', type=str, help=(
+            'Path to the file containing the config data to feed sigma '
+        ))
     try:
         options = arguments.parse_args()
     except UnicodeEncodeError:
@@ -214,6 +167,10 @@ if __name__ == '__main__':
         print('### You should NOT import the following rules ###')
         print('### To get the reason per rule, re-run with --info###')
         for badrule in sigma_rules_with_problems:
+            if options.move_to_path:
+                move_problematic_rule(
+                    badrule, options.move_to_path,
+                    'sigma_verify_rules.py found an issue')
             print(badrule)
 
     if len(sigma_verified_rules) > 0:
