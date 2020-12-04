@@ -186,62 +186,62 @@ def get_sigma_rule(filepath, sigma_config=None):
     except ValueError:
         sigma_rules_paths = None
 
-    if filepath.lower().endswith('.yml'):
-        # if a sub dir is found, nothing can be parsed
-        if os.path.isdir(filepath):
+    if not filepath.lower().endswith('.yml'):
+        return None
+
+    # if a sub dir is found, nothing can be parsed
+    if os.path.isdir(filepath):
+        return None
+
+    abs_path = os.path.abspath(filepath)
+
+    with codecs.open(
+            abs_path, 'r', encoding='utf-8', errors='replace') as file:
+        try:
+            rule_return = {}
+            rule_yaml_data = yaml.safe_load_all(file.read())
+            for doc in rule_yaml_data:
+                rule_return.update(doc)
+                parser = sigma_collection.SigmaCollectionParser(
+                    str(doc), sigma_config, None)
+                parsed_sigma_rules = parser.generate(sigma_backend)
+
+        except NotImplementedError as exception:
+            logger.error(
+                'Error generating rule in file {0:s}: {1!s}'
+                .format(abs_path, exception))
             return None
 
-        abs_path = os.path.abspath(filepath)
+        except sigma_exceptions.SigmaParseError as exception:
+            logger.error(
+                'Sigma parsing error generating rule in file {0:s}: {1!s}'
+                .format(abs_path, exception))
+            return None
 
-        with codecs.open(
-                abs_path, 'r', encoding='utf-8', errors='replace') as file:
-            try:
-                rule_return = {}
-                rule_yaml_data = yaml.safe_load_all(file.read())
-                for doc in rule_yaml_data:
-                    rule_return.update(doc)
-                    parser = sigma_collection.SigmaCollectionParser(
-                        str(doc), sigma_config, None)
-                    parsed_sigma_rules = parser.generate(sigma_backend)
+        except yaml.parser.ParserError as exception:
+            logger.error(
+                'Yaml parsing error generating rule in file {0:s}: {1!s}'
+                .format(abs_path, exception))
+            return None
 
-            except NotImplementedError as exception:
-                logger.error(
-                    'Error generating rule in file {0:s}: {1!s}'
-                    .format(abs_path, exception))
-                return None
+        sigma_es_query = ''
 
-            except sigma_exceptions.SigmaParseError as exception:
-                logger.error(
-                    'Sigma parsing error generating rule in file {0:s}: {1!s}'
-                    .format(abs_path, exception))
-                return None
+        for sigma_rule in parsed_sigma_rules:
+            sigma_es_query = sigma_rule
 
-            except yaml.parser.ParserError as exception:
-                logger.error(
-                    'Yaml parsing error generating rule in file {0:s}: {1!s}'
-                    .format(abs_path, exception))
-                return None
+        rule_return.update(
+            {'es_query':sigma_es_query})
+        rule_return.update(
+            {'file_name':os.path.basename(filepath)})
 
-            sigma_es_query = ''
+        # in case multiple folders are in the config, need to remove them
+        if sigma_rules_paths:
+            for rule_path in sigma_rules_paths:
+                file_relpath = os.path.relpath(filepath, rule_path)
+        else:
+            file_relpath = 'N/A'
 
-            for sigma_rule in parsed_sigma_rules:
-                sigma_es_query = sigma_rule
+        rule_return.update(
+            {'file_relpath':file_relpath})
 
-            rule_return.update(
-                {'es_query':sigma_es_query})
-            rule_return.update(
-                {'file_name':os.path.basename(filepath)})
-
-            # in case multiple folders are in the config, need to remove them
-            if sigma_rules_paths:
-                for rule_path in sigma_rules_paths:
-                    file_relpath = os.path.relpath(filepath, rule_path)
-            else:
-                file_relpath = 'N/A'
-
-            rule_return.update(
-                {'file_relpath':file_relpath})
-
-            return rule_return
-
-    return None
+        return rule_return
