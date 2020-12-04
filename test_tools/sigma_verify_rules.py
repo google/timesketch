@@ -50,7 +50,7 @@ def run_verifier(rules_path, config_file_path):
             - sigma_rules_with_problems with rules that should not be added
     """
     if not config_file_path:
-        raise IOError('no config_file_path given')
+        raise IOError('No config_file_path given')
 
     if not os.path.isdir(rules_path):
         raise IOError('Rules not found at path: {0:s}'.format(
@@ -101,17 +101,15 @@ def move_problematic_rule(filepath, move_to_path, reason=None):
         debug_path = os.path.join(move_to_path, 'debug.log')
 
         with open(debug_path, 'a') as file_objec:
-            file_objec.write('{0:s}\n{1:s}\n\n'.format(filepath, reason))
+            file_objec.write(f'{filepath}\n{reason}\n\n')
 
-        os.rename(filepath, '{0:s}{1:s}'.format(
-            move_to_path, os.path.basename(filepath)))
+        base_path = os.path.basename(filepath)
+        os.rename(filepath, f'{move_to_path}{base_path}')
     except OSError:
-        logger.error("OS Error - no rules moved")
-
+        logger.error('OS Error - no rules moved')
 
 
 if __name__ == '__main__':
-
     description = (
         'Mock an sigma parser run. This tool is intended for developers '
         'of sigma rules as well as Timesketch server admins. '
