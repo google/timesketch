@@ -50,9 +50,7 @@ services:
     restart: always
 
   notebook:
-    build:
-      context: ../../
-      dockerfile: ./docker/dev/Dockerfile
+    image: us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest
     ports:
       - 8844:8844
     restart: on-failure
