@@ -56,6 +56,6 @@ services:
     restart: on-failure
     network_mode: "host"
     volumes:
-      - ../../:/usr/local/src/picatrix/:ro
+      - ../../:/usr/local/src/timesketch/:ro
       - /tmp/:/usr/local/src/picadata/
 
