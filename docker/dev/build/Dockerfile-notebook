@@ -6,8 +6,8 @@ ENV VIRTUAL_ENV=/home/picatrix/picenv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 ENV JUPYTER_PORT=8844
 
-COPY --chown=1000:1000 docker/dev/timesketchrc /home/picatrix/.timesketchrc
-COPY --chown=1000:1000 docker/dev/timesketch_token /home/picatrix/.timesketch.token
+COPY --chown=1000:1000 docker/dev/build/timesketchrc /home/picatrix/.timesketchrc
+COPY --chown=1000:1000 docker/dev/build/timesketch_token /home/picatrix/.timesketch.token
 COPY --chown=1000:1000 . /home/picatrix/code
 
 RUN sed -i -e "s/c.NotebookApp.token = 'picatrix'/c.NotebookApp.token = 'timesketch'/g" /home/picatrix/.jupyter/jupyter_notebook_config.py && \
