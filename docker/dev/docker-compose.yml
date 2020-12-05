@@ -50,12 +50,14 @@ services:
     restart: always
 
   notebook:
-    image: us-docker.pkg.dev/osdfir-registry/picatrix/picatrix:latest
+    build:
+      context: ../../
+      dockerfile: ./docker/dev/Dockerfile
     ports:
-      - 8899:8899
+      - 8844:8844
     restart: on-failure
-    network: "host"
+    network_mode: "host"
     volumes:
-      - ../:/usr/local/src/picatrix/:ro
+      - ../../:/usr/local/src/picatrix/:ro
       - /tmp/:/usr/local/src/picadata/
 

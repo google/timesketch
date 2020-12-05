@@ -1,0 +1,22 @@
+FROM us-docker.pkg.dev/osdfir-registry/picatrix/picatrix:latest
+
+USER picatrix
+
+ENV VIRTUAL_ENV=/home/picatrix/picenv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV JUPYTER_PORT=8844
+
+COPY --chown=1000:1000 docker/dev/timesketchrc /home/picatrix/.timesketchrc
+COPY --chown=1000:1000 docker/dev/timesketch_token /home/picatrix/.timesketch.token
+COPY --chown=1000:1000 . /home/picatrix/code
+
+RUN sed -i -e "s/c.NotebookApp.token = 'picatrix'/c.NotebookApp.token = 'timesketch'/g" /home/picatrix/.jupyter/jupyter_notebook_config.py && \
+    sed -i -e "s/c.NotebookApp.port = 8899/c.NotebookApp.port = 8844/g" /home/picatrix/.jupyter/jupyter_notebook_config.py && \
+    pip install -e /home/picatrix/code/api_client/python && \
+    pip install -e /home/picatrix/code/importer_client/python/
+
+WORKDIR /usr/local/src/picadata/
+EXPOSE 8844
+
+# Run jupyter.
+ENTRYPOINT ["jupyter", "notebook"]
