@@ -103,6 +103,6 @@ def generate_query_button():
             'records'))
         utils.ipython_bind_global('search_obj', search_obj)
         display(Markdown(
-            'Results are stored in the attribe **search_obj**'))
+            'Results are stored in the **search_obj**'))
 
     button.on_click(_click_function)
