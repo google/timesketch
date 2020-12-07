@@ -162,7 +162,7 @@ Feel free to contribute for fun and fame, this is open source :) -> https://gith
 
 ### What to do with problematic rules
 
-To reduce load on the system it is recommended to not keep the rules in the directory, as it will cause the exception every time the rules folders are parsed (a lot!).
+To reduce load on the system it is recommended to not keep the problematic rules in the directory, as it will cause the exception every time the rules folders are parsed (a lot!).
 
 The parser is made to ignore "deprecated" folders. So you could move the problematic rules to your rules folder in a subfolder /deprecated/.
 
