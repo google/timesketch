@@ -132,12 +132,12 @@ class Aggregation(resource.SketchResource):
         """
         resource_uri = 'sketches/{0:d}/aggregation/{1:d}/'.format(
             self._sketch.id, aggregation_id)
+        self._resource_id = aggregation_id
         resource_data = self.api.fetch_resource_data(resource_uri)
         data = resource_data.get('objects', [None])[0]
         if not data:
             return
 
-        self.resource_data = data
         self.aggregator_name = data.get('agg_type')
         self.type = 'stored'
 
@@ -252,17 +252,24 @@ class Aggregation(resource.SketchResource):
     @property
     def description(self):
         """Property that returns the description string."""
-        return self.resource_data.get('description', '')
+        data = self.resource_data
+        meta = data.get('meta', {})
+        return meta.get('description', '')
 
     @description.setter
     def description(self, description):
         """Set the description of an aggregation."""
-        self.resource_data['description'] = description
+        if 'meta' not in self.resource_data:
+            return
+        meta = self.resource_data.get('meta')
+        meta['description'] = description
 
     @property
     def name(self):
         """Property that returns the name of the aggregation."""
-        name = self.resource_data.get('name')
+        data = self.resource_data
+        meta = data.get('meta', {})
+        name = meta.get('name')
         if name:
             return name
         return self.aggregator_name
@@ -270,7 +277,10 @@ class Aggregation(resource.SketchResource):
     @name.setter
     def name(self, name):
         """Set the name of the aggregation."""
-        self.resource_data['name'] = name
+        if 'meta' not in self.resource_data:
+            return
+        meta = self.resource_data.get('meta')
+        meta['name'] = name
 
     def add_label(self, label):
         """Add a label to the aggregation.
@@ -351,7 +361,6 @@ class Aggregation(resource.SketchResource):
         if not objects:
             return 'Unable to determine ID of saved object.'
         agg_data = objects[0]
-        self.resource_data = agg_data
         self._resource_id = agg_data.get('id', 0)
         return 'Saved aggregation to ID: {0:d}'.format(self._resource_id)
 

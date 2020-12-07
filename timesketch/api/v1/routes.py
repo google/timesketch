@@ -53,6 +53,8 @@ from .resources.user import UserListResource
 from .resources.user import GroupListResource
 from .resources.user import CollaboratorResource
 from .resources.user import LoggedInUserResource
+from .resources.sigma import SigmaResource
+from .resources.sigma import SigmaListResource
 from .resources.graph import GraphListResource
 from .resources.graph import GraphResource
 from .resources.graph import GraphPluginListResource
@@ -100,9 +102,11 @@ API_ROUTES = [
     (GroupListResource, '/groups/'),
     (CollaboratorResource, '/sketches/<int:sketch_id>/collaborators/'),
     (VersionResource, '/version/'),
+    (SigmaListResource, '/sigma/'),
+    (SigmaResource, '/sigma/<string:rule_uuid>/'),
     (LoggedInUserResource, '/users/me/'),
     (GraphListResource, '/sketches/<int:sketch_id>/graphs/'),
     (GraphResource, '/sketches/<int:sketch_id>/graphs/<int:graph_id>/'),
     (GraphPluginListResource, '/graphs/'),
-    (GraphCacheResource, '/sketches/<int:sketch_id>/graph/'),
+    (GraphCacheResource, '/sketches/<int:sketch_id>/graph/')
 ]

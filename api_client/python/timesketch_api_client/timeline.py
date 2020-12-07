@@ -46,6 +46,7 @@ class Timeline(resource.BaseResource):
         self.id = timeline_id
         self._color = ''
         self._name = name
+        self._description = ''
         self._searchindex = searchindex
         resource_uri = 'sketches/{0:d}/timelines/{1:d}/'.format(
             sketch_id, self.id)
@@ -85,8 +86,16 @@ class Timeline(resource.BaseResource):
         Returns:
             Description as string.
         """
-        timeline = self.lazyload_data()
-        return timeline['objects'][0]['description']
+        if not self._description:
+            timeline = self.lazyload_data()
+            self._description = timeline['objects'][0]['description']
+        return self._description
+
+    @description.setter
+    def description(self, description):
+        """Change the timeline description."""
+        self._description = description
+        self._commit()
 
     @property
     def name(self):
@@ -99,6 +108,12 @@ class Timeline(resource.BaseResource):
             timeline = self.lazyload_data()
             self._name = timeline['objects'][0]['name']
         return self._name
+
+    @name.setter
+    def name(self, name):
+        """Change the name of the timeline."""
+        self._name = name
+        self._commit()
 
     @property
     def index(self):
@@ -148,6 +163,24 @@ class Timeline(resource.BaseResource):
 
         status = status_list[0]
         return status.get('status')
+
+    def _commit(self):
+        """Commit changes to the timeline."""
+        resource_url = '{0:s}/{1:s}'.format(
+            self.api.api_root, self.resource_uri)
+
+        data = {
+            'name': self.name,
+            'description': self.description,
+            'color': self.color,
+        }
+        response = self.api.session.post(resource_url, json=data)
+
+        status = error.check_return_status(response, logger)
+        if not status:
+            logger.error('Unable to commit changes to the timeline.')
+
+        return status
 
     def add_timeline_label(self, label):
         """Add a label to the timelinne.

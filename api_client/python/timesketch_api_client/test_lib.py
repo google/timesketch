@@ -221,6 +221,79 @@ def mock_response(*args, **kwargs):
         }]
     }
 
+    sigma_list = {
+        'meta': {
+            'current_user': 'dev',
+            'rules_count': 2
+        },
+        'objects': [
+            {
+                'author': 'Alexander Jaeger',
+                'date': '2020/06/26',
+                'description': 'Detects suspicious installation of Zenmap',
+                'detection': {
+                    'condition': 'keywords',
+                    'keywords': ['*apt-get install zmap*']
+                    },
+                'falsepositives': ['Unknown'],
+                'id': '5266a592-b793-11ea-b3de-0242ac130004',
+                'level': 'high',
+                'logsource': {
+                    'product': 'linux', 'service': 'shell'
+                    },
+                'es_query': '("*apt\\-get\\ install\\ zmap*")',
+                'modified': '2020/06/26',
+                'references': ['httpx://foobar.com'],
+                'title': 'Suspicious Installation of Zenmap',
+                'file_name': 'lnx_susp_zenmap',
+                'file_relpath' : '/linux/syslog/foobar/'
+
+            }, {
+                'author': 'Alexander Jaeger',
+                'date': '2020/11/10',
+                'description': 'Detects suspicious installation of foobar',
+                'detection': {
+                    'condition': 'keywords',
+                    'keywords': ['*apt-get install foobar*']
+                    },
+                'falsepositives': ['Unknown'],
+                'id': '776bdd11-f3aa-436e-9d03-9d6159e9814e',
+                'level': 'high',
+                'logsource': {
+                    'product': 'linux', 'service': 'shell'
+                    },
+                'es_query': '("*apt\\-get\\ install\\ foo*")',
+                'modified': '2020/06/26',
+                'references': ['httpx://foobar.com'],
+                'title': 'Suspicious Installation of Zenmap',
+                'file_name': 'lnx_susp_zenmap',
+                'file_relpath' : '/windows/foobar/'
+                }
+        ]
+    }
+
+    sigma_rule = {
+        'title': 'Suspicious Installation of Zenmap',
+        'id': '5266a592-b793-11ea-b3de-0242ac130004',
+        'description': 'Detects suspicious installation of Zenmap',
+        'references': ['httpx://foobar.com'],
+        'author': 'Alexander Jaeger',
+        'date': '2020/06/26',
+        'modified': '2020/06/26',
+        'logsource': {
+            'product': 'linux', 'service': 'shell'
+            },
+        'detection': {
+            'keywords': ['*apt-get install zmap*'],
+            'condition': 'keywords'
+            },
+        'falsepositives': ['Unknown'],
+        'level': 'high',
+        'es_query': '("*apt\\-get\\ install\\ zmap*")',
+        'file_name': 'lnx_susp_zenmap',
+        'file_relpath' : '/linux/syslog/foobar/'
+    }
+
     # Register API endpoints to the correct mock response data.
     url_router = {
         'http://127.0.0.1':
@@ -245,6 +318,10 @@ def mock_response(*args, **kwargs):
         MockResponse(json_data=story_data),
         'http://127.0.0.1/api/v1/sketches/1/archive/':
         MockResponse(json_data=archive_data),
+        'http://127.0.0.1/api/v1/sigma/5266a592-b793-11ea-b3de-0242ac130004':
+        MockResponse(json_data=sigma_rule),
+        'http://127.0.0.1/api/v1/sigma/':
+        MockResponse(json_data=sigma_list),
     }
 
     if kwargs.get('empty', False):

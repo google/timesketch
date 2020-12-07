@@ -65,6 +65,10 @@ class Chip:
             'value': getattr(self, self.CHIP_VALUE, ''),
         }
 
+    def from_dict(self, chip_dict):
+        """Configure the chip from a dictionary."""
+        raise NotImplementedError
+
     def set_include(self):
         """Configure the chip so the content needs to be included in results."""
         self._operator = 'must'
@@ -163,6 +167,17 @@ class DateIntervalChip(Chip):
             raise ValueError('Wrong date format') from exc
         self._date = dt
 
+    def from_dict(self, chip_dict):
+        """Configure the chip from a dictionary."""
+        value = chip_dict.get('value')
+        if not value:
+            return
+        date, before, after = value.split()
+        self.unit = before[-1]
+        self.date = date
+        self.before = int(before[1:-1])
+        self.after = int(after[1:-1])
+
     @property
     def interval(self):
         """A property that returns back the full interval."""
@@ -256,6 +271,15 @@ class DateRangeChip(Chip):
         self.add_start_time(start_time)
         self.add_end_time(end_time)
 
+    def from_dict(self, chip_dict):
+        """Configure the chip from a dictionary."""
+        chip_value = chip_dict.get('value')
+        if not chip_value:
+            return
+        start, end = chip_value.split(',')
+        self.start_time = start
+        self.end_time = end
+
     @property
     def start_time(self):
         """Property that returns the start time of a range."""
@@ -279,6 +303,14 @@ class LabelChip(Chip):
         """Initialize the chip."""
         super().__init__()
         self._label = ''
+
+    def from_dict(self, chip_dict):
+        """Configure the chip from a dictionary."""
+        chip_value = chip_dict.get('value')
+        if not chip_value:
+            return
+
+        self.label = chip_value
 
     @property
     def label(self):
@@ -320,6 +352,15 @@ class TermChip(Chip):
         """Make changes to the field used to match against."""
         self._chip_field = field
 
+    def from_dict(self, chip_dict):
+        """Configure the term chip from a dictionary."""
+        chip_value = chip_dict.get('value')
+        if not chip_value:
+            return
+
+        self.field = chip_dict.get('field')
+        self.query = chip_value
+
     @property
     def query(self):
         """Property that returns back the query."""
@@ -351,17 +392,50 @@ class Search(resource.SketchResource):
         self._query_string = ''
         self._raw_response = None
         self._return_fields = ''
-        self._scrolling = True
+        self._scrolling = None
         self._searchtemplate = ''
         self._updated_at = ''
 
-    def _execute_query(self, scrolling=True, file_name=''):
+    def _extract_chips(self, query_filter):
+        """Extract chips from a query_filter."""
+        chips = query_filter.get('chips', [])
+        if not chips:
+            return
+
+        for chip_dict in chips:
+            chip_type = chip_dict.get('type')
+            if not chip_type:
+                continue
+
+            chip = None
+            if chip_type == 'datetime_interval':
+                chip = DateIntervalChip()
+            elif chip_type == 'datetime_range':
+                chip = DateRangeChip()
+            elif chip_type == 'label':
+                chip = LabelChip()
+            elif chip_type == 'term':
+                chip = TermChip()
+
+            if not chip:
+                continue
+            chip.from_dict(chip_dict)
+
+            active = chip_dict.get('active', True)
+            chip.active = active
+
+            operator = chip_dict.get('operator', 'must')
+            if operator == 'must':
+                chip.set_include()
+            elif operator == 'must_not':
+                chip.set_exclude()
+
+            self.add_chip(chip)
+
+    def _execute_query(self, file_name=''):
         """Execute a search request and store the results.
 
         Args:
-            scrolling (bool): optional bool that indicates whether
-                scrolling support is enabled on the Elastic query.
-                Defaults to true.
             file_name (str): optional file path to a filename that
                 all the results will be saved to. If not provided
                 the results will be stored in the search object.
@@ -371,13 +445,12 @@ class Search(resource.SketchResource):
             raise ValueError(
                 'Unable to query with a query filter that isn\'t a dict.')
 
-        stop_size = query_filter.get('size', 0)
-        terminate_after = query_filter.get('terminate_after', 0)
-        if terminate_after and (terminate_after < stop_size):
-            stop_size = terminate_after
-
+        stop_size = self._max_entries
         scrolling = not bool(stop_size and (
             stop_size < self.DEFAULT_SIZE_LIMIT))
+
+        if self.scrolling is not None:
+            scrolling = self.scrolling
 
         form_data = {
             'query': self._query_string,
@@ -398,7 +471,7 @@ class Search(resource.SketchResource):
         if file_name:
             with open(file_name, 'wb') as fw:
                 fw.write(response.content)
-            return True
+            return
 
         response_json = error.get_response_json(response, logger)
 
@@ -409,8 +482,6 @@ class Search(resource.SketchResource):
         total_count = count
         while count > 0:
             if self._max_entries and total_count >= self._max_entries:
-                break
-            if stop_size and total_count >= stop_size:
                 break
 
             if not scroll_id:
@@ -501,7 +572,7 @@ class Search(resource.SketchResource):
         self._description = description
         self.commit()
 
-    def from_explore(  # pylint: disable=arguments-differ
+    def from_manual(  # pylint: disable=arguments-differ
             self,
             query_string=None,
             query_dsl=None,
@@ -531,13 +602,16 @@ class Search(resource.SketchResource):
             RuntimeError: if the query is missing needed values, or if the
                 sketch is archived.
         """
-        super().from_explore(**kwargs)
+        super().from_manual(**kwargs)
         if not (query_string or query_filter or query_dsl):
             raise RuntimeError('You need to supply a query')
 
         self._username = self.api.current_user
         self._name = 'From Explore'
         self._description = 'From Explore'
+
+        if query_filter:
+            self.query_filter = query_filter
 
         self._query_string = query_string
         self._query_dsl = query_dsl
@@ -582,7 +656,9 @@ class Search(resource.SketchResource):
         self._description = data.get('description', '')
         self._name = data.get('name', '')
         self._query_dsl = data.get('query_dsl', '')
-        self._query_filter = data.get('query_filter', {})
+        query_filter = data.get('query_filter', '')
+        if query_filter:
+            self.query_filter = json.loads(query_filter)
         self._query_string = data.get('query_string', '')
         self._resource_id = search_id
         self._searchtemplate = data.get('searchtemplate', 0)
@@ -599,6 +675,10 @@ class Search(resource.SketchResource):
     def max_entries(self, max_entries):
         """Make changes to the max entries of return values."""
         self._max_entries = max_entries
+        if max_entries < self.DEFAULT_SIZE_LIMIT:
+            _ = self.query_filter
+            self._query_filter['size'] = max_entries
+            self._query_filter['terminate_after'] = max_entries
         self.commit()
 
     @property
@@ -642,8 +722,8 @@ class Search(resource.SketchResource):
             self._query_filter = {
                 'time_start': None,
                 'time_end': None,
-                'size': self._max_entries,
-                'terminate_after': self._max_entries,
+                'size': self.DEFAULT_SIZE_LIMIT,
+                'terminate_after': self.DEFAULT_SIZE_LIMIT,
                 'indices': '_all',
                 'order': 'asc',
                 'chips': [],
@@ -655,7 +735,16 @@ class Search(resource.SketchResource):
     @query_filter.setter
     def query_filter(self, query_filter):
         """Make changes to the query filter."""
+        if isinstance(query_filter, str):
+            try:
+                query_filter = json.loads(query_filter)
+            except json.JSONDecodeError as exc:
+                raise ValueError('Unable to parse the string as JSON') from exc
+
+        if not isinstance(query_filter, dict):
+            raise ValueError('Query filter needs to be a dict.')
         self._query_filter = query_filter
+        self._extract_chips(query_filter)
         self.commit()
 
     @property
@@ -768,7 +857,7 @@ class Search(resource.SketchResource):
     def to_dict(self):
         """Returns a dict with the respone of the query."""
         if not self._raw_response:
-            self._execute_query(scrolling=self.scrolling)
+            self._execute_query()
 
         return self._raw_response
 
@@ -783,12 +872,16 @@ class Search(resource.SketchResource):
         Returns:
             Boolean that determines if it was successful.
         """
-        return self._execute_query(scrolling=True, file_name=file_name)
+        old_scrolling = self.scrolling
+        self._scrolling = True
+        self._execute_query(file_name=file_name)
+        self._scrolling = old_scrolling
+        return True
 
     def to_pandas(self):
         """Returns a pandas DataFrame with the response of the query."""
         if not self._raw_response:
-            self._execute_query(scrolling=self.scrolling)
+            self._execute_query()
 
         return_list = []
         timelines = {}

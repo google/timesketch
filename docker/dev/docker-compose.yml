@@ -48,3 +48,14 @@ services:
   redis:
     image: redis
     restart: always
+
+  notebook:
+    image: us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest
+    ports:
+      - 8844:8844
+    restart: on-failure
+    network_mode: "host"
+    volumes:
+      - ../../:/usr/local/src/timesketch/:ro
+      - /tmp/:/usr/local/src/picadata/
+
