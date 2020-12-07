@@ -12,7 +12,7 @@ The other option is to use Sigma via the API and the API client.
 ### Install rules
 
 Timesketch deliberately does not provide a set of Sigma rules, as those would add complexity to maintain.
-Instead we recommend to clone [github.com/Neo23x0/sigma](https://github.com/Neo23x0/sigma) to /data/sigma.
+To use the official community rules you can clone [github.com/Neo23x0/sigma](https://github.com/Neo23x0/sigma) to /data/sigma.
 This directory will not be catched by git.
 
 ```shell
