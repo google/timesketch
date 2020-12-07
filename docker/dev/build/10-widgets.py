@@ -36,7 +36,7 @@ def generate_connect_button(click_function = None):
   def _click_function(b):
       with output:
           timesketch_set_active_sketch_func(str(sketch_field.value))
-          sketch = %timesketch_get_sketch
+          sketch = timesketch_get_sketch_func()
           print(f'Connected to sketch: {sketch.id}:{sketch.name}')
 
   if click_function:
