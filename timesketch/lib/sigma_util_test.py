@@ -85,10 +85,23 @@ class TestSigmaUtilLib(BaseTest):
 
     def test_get_sigma_config_file(self):
         """Test getting sigma config file"""
-        # TODO write tests
+        self.assertRaises(ValueError, sigma_util.get_sigma_config_file, None)
 
     def test_get_sigma_rule(self):
         """Test getting sigma rule from file"""
 
+        config_file = './data/sigma_config.yaml'
+
+        with open(config_file, 'r') as config_file:
+            sigma_config_file = config_file.read()
+
+            sigma_config = sigma_configuration.SigmaConfiguration(
+                sigma_config_file)
+
         filepath = './data/sigma/rules/lnx_susp_zenmap.yml'
-        self.assertRaises(ValueError, sigma_util.get_sigma_rule(filepath))
+
+        rule = sigma_util.get_sigma_rule(filepath, sigma_config)
+
+        self.assertIsNotNone(rule)
+        self.assertIn('zmap', rule.get('es_query'))
+        self.assertIn('b793', rule.get('id'))
