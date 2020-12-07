@@ -27,6 +27,8 @@ import pytz
 
 from IPython.display import Markdown
 
+from timesketch_api_client import search
+
 
 # TODO: Generalize and move to picatrix.
 def generate_connect_button(click_function = None):
