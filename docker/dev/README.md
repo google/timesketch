@@ -103,3 +103,9 @@ And the importer client:
 
 Just remember to restart the kernel runtime in order for the changes to be
 active.
+
+To update the docker image run:
+
+```shell
+$ sudo docker image pull us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest
+```
