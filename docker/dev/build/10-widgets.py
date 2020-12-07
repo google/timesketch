@@ -85,16 +85,22 @@ def generate_query_button():
     display(button)
 
     def _click_function(_):
-        sketch = timesketch_get_sketch_func()
-        search_obj = search.Search(sketch)
-        if start_time_form.value and end_time_form.value:
-            date_chip = search.DateRangeChip()
-            date_chip.start_time = start_time_form.value.strftime('%Y-%m-%dT%H:%M:%S')
-            date_chip.end_time = end_time_form.value.strftime('%Y-%m-%dT%H:%M:%S')
-            search_obj.add_chip(date_chip)
-        search_obj.query_string = query_string_form.value
-        display(Markdown(f'Query **executed** - returned: {len(search_obj.table)} records'))
-        utils.ipython_bind_global('search_obj', search_obj)
-        display(Markdown('Results are stored in the attribe **search_obj**'))
+        with output:
+            sketch = timesketch_get_sketch_func()
+            search_obj = search.Search(sketch)
+            if start_time_form.value and end_time_form.value:
+                date_chip = search.DateRangeChip()
+                date_chip.start_time = start_time_form.value.strftime(
+                    '%Y-%m-%dT%H:%M:%S')
+                date_chip.end_time = end_time_form.value.strftime(
+                    '%Y-%m-%dT%H:%M:%S')
+                search_obj.add_chip(date_chip)
+            search_obj.query_string = query_string_form.value
+            display(Markdown(
+                f'Query **executed** - returned: {len(search_obj.table)} '
+                'records'))
+            utils.ipython_bind_global('search_obj', search_obj)
+            display(Markdown(
+                'Results are stored in the attribe **search_obj**'))
 
     button.on_click(_click_function)
