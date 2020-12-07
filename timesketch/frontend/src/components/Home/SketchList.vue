@@ -67,13 +67,23 @@ limitations under the License.
 </template>
 
 <script>
+import ApiClient from "../../utils/RestApiClient"
+
 export default {
-  props: ['sketches'],
+  props: ['scope'],
   data () {
     return {
+      sketches: [],
       perPage: 20
     }
   },
+  created() {
+      ApiClient.getSketchList(this.scope).then((response) => {
+        this.sketches = response.data.objects
+    }).catch((e) => {
+      console.error(e)
+    })
+  }
 }
 </script>
 

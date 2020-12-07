@@ -16,12 +16,21 @@ limitations under the License.
 <template>
   <div>
 
+    <ts-navbar-main>
+      <template v-slot:center>
+        <input v-model="search" class="ts-home-input" type="text" placeholder="Search for investigations" autofocus>
+      </template>
+    </ts-navbar-main>
+
     <!-- Secondary navigation -->
-    <section class="section">
+    <section class="section" style="margin-top:20px; margin-bottom: 20px;">
       <div class="container">
-        <ts-navbar-secondary>
-          <button v-if="mySketches.length || sharedSketches.length" class="button is-success is-rounded" v-on:click="showSketchCreateModal = !showSketchCreateModal"><strong>+ Sketch</strong></button>
-        </ts-navbar-secondary>
+          <button class="button is-success" v-on:click="showSketchCreateModal = !showSketchCreateModal">
+            <span class="icon is-small">
+              <i class="fas fa-plus-circle"></i>
+            </span>
+            <strong>New investigation</strong>
+          </button>
       </div>
     </section>
 
@@ -38,16 +47,12 @@ limitations under the License.
       </div>
     </b-modal>
 
+    <!--
     <div v-if="!loading && !mySketches.length && !sharedSketches.length" class="has-text-centered">
       <h1 class="title">Welcome to Timesketch</h1>
       <button class="button is-success is-rounded" v-on:click="showSketchCreateModal = !showSketchCreateModal"><strong>Create sketch</strong></button>
     </div>
-
-    <div v-if="mySketches.length || sharedSketches.length" class="section">
-      <div class="container" style="margin-bottom: 15px;">
-        <input v-model="search" class="ts-home-search-input" type="text" placeholder="Search" autofocus>
-      </div>
-    </div>
+    -->
 
     <div v-if="search" class="section">
       <div class="container">
@@ -60,7 +65,38 @@ limitations under the License.
       </div>
     </div>
 
-    <div v-if="mySketches.length && !search" class="section">
+    <section class="section">
+      <div class="container">
+        <div class="card">
+          <header class="card-header">
+            <div class="card-header-title">
+              My investigations
+            </div>
+          </header>
+          <div class="card-content">
+            <ts-sketch-list scope="user"></ts-sketch-list>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="card">
+          <header class="card-header">
+            <div class="card-header-title">
+              Shared with me
+            </div>
+          </header>
+          <div class="card-content">
+            <ts-sketch-list scope="shared"></ts-sketch-list>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!--
+    <div v-if="allSketches.length && !search" class="section">
       <div class="container">
         <div class="card">
           <div class="card-content">
@@ -93,6 +129,7 @@ limitations under the License.
         </div>
       </div>
     </div>
+    -->
 
   </div>
 </template>
@@ -101,9 +138,11 @@ limitations under the License.
 import ApiClient from '../utils/RestApiClient'
 import TsSketchList from '../components/Home/SketchList'
 import TsCreateSketchForm from '../components/Home/CreateSketchForm'
+import TsNavbarMain from "../components/AppNavbarMain"
 
 export default {
   components: {
+    TsNavbarMain,
     TsSketchList,
     TsCreateSketchForm
   },
@@ -140,25 +179,9 @@ export default {
     }
   },
   created: function () {
-    this.loadingOpen()
+    //this.loadingOpen()
     this.$store.dispatch('resetState')
-    ApiClient.getSketchList().then((response) => {
-      let sketches = response.data.objects
-      let currentUser = response.data.meta.current_user
-      this.mySketches = sketches.filter(function (sketch) {
-        return sketch.user === currentUser && sketch.status !== 'archived'
-      })
-      this.myArchivedSketches = sketches.filter(function (sketch) {
-        return sketch.user === currentUser && sketch.status === 'archived'
-      })
-      this.sharedSketches = sketches.filter(function (sketch) {
-        return sketch.user !== currentUser
-      })
-      this.allSketches = sketches
-      this.loadingClose()
-    }).catch((e) => {
-      console.error(e)
-    })
+    document.title = 'Timesketch'
   }
 }
 </script>

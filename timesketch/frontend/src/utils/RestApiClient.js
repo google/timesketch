@@ -59,8 +59,13 @@ RestApiClient.interceptors.response.use(function (response) {
 
 export default {
   // Sketch
-  getSketchList () {
-    return RestApiClient.get('/sketches/')
+  getSketchList (scope) {
+    let params = {
+      params: {
+        scope: scope,
+      }
+    }
+    return RestApiClient.get('/sketches/', params)
   },
   getSketch (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/')

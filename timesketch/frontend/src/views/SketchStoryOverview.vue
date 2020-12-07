@@ -16,14 +16,20 @@ limitations under the License.
 <template>
   <div>
 
+    <ts-navbar-main>
+      <template v-slot:left>
+        {{ sketch.name }}
+      </template>
+    </ts-navbar-main>
+
     <section class="section">
       <div class="container is-fluid">
         <ts-navbar-secondary currentAppContext="sketch" currentPage="stories">
-          <a v-if="sketch.stories.length" class="button is-success is-rounded" style="margin-right:7px;" v-on:click="showCreateStoryModal = !showCreateStoryModal">
+          <a v-if="sketch.stories.length" class="button is-success" style="margin-right:7px;" v-on:click="showCreateStoryModal = !showCreateStoryModal">
               <span class="icon is-small">
-                <i class="fas fa-plus"></i>
+                <i class="fas fa-plus-circle"></i>
               </span>
-            <span>Story</span>
+            <span>Create story</span>
           </a>
         </ts-navbar-secondary>
       </div>
@@ -68,9 +74,11 @@ limitations under the License.
 <script>
 import TsStoryList from '../components/Sketch/StoryList'
 import TsStoryCreateForm from '../components/Sketch/CreateStoryForm'
+import TsNavbarMain from "../components/AppNavbarMain"
 
 export default {
   components: {
+    TsNavbarMain,
     TsStoryList,
     TsStoryCreateForm
   },

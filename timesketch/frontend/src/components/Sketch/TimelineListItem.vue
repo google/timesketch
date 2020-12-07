@@ -117,7 +117,7 @@ limitations under the License.
         <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body :scrollable="true" :max-height="300">
           <button class="button is-outlined is-rounded is-small" slot="trigger">
             <span class="icon is-small">
-              <i class="fas fa-play-circle"></i>
+              <i class="fas fa-info-circle"></i>
             </span>
             <span>Data types</span>
           </button>

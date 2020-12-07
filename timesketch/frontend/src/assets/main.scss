@@ -62,11 +62,11 @@
 }
 
 [data-theme=dark] {
-    --background-color: #303030;
+    --background-color: #2d2d2d;
     --default-font-color: var(--font-color-light);
     --default-link-color: var(--font-color-light);
     --default-title-font-color: var(--font-color-light);
-    --navbar-background: #212121;
+    --navbar-background: #242424;
     --navbar-font-color: var(--font-color-light);
     --tabs-link-color: var(--font-color-light);
     --tabs-link-hover-color: var(--font-color-light);
@@ -87,7 +87,7 @@
     --table-background-color: #424242;
     --table-head-cell-color: #fafafa;
     --table-color: #fafafa;
-    --table-cell-border-color: #f5f5f5;
+    --table-cell-border-color: #818181;
     --time-bubble-background-color: #666666;
     --time-bubble-font-color: #d9d9d9;
     --content-list-hover-color: #494949;
@@ -115,6 +115,10 @@ $info: #0070bd;
 $success: #41ad49;
 $table-cell-padding: 10px;
 
+$box-shadow: 0px;
+$box-color: var(--default-font-color);
+$box-background-color: var(--card-background-color);
+
 // Support light/dark themes
 $tabs-link-color: var(--tabs-link-color);
 $tabs-link-hover-color: var(--tabs-link-hover-color);
@@ -129,7 +133,7 @@ $table-background-color: var(--table-background-color);
 $table-head-cell-color: var(--table-head-cell-color);
 $table-cell-border: 1px solid var(--table-cell-border-color);
 $table-color: var(--table-color);
-$table-cell-border:0;
+//$table-cell-border:0;
 $title-color: var(--default-title-font-color);
 $navbar-item-color: var(--navbar-item-link-color);
 $label-color: var(--form-label-font-color);
@@ -217,6 +221,16 @@ ul.content-list>li:last-child { border-bottom: none; }
     background: var(--search-input-explore);
     color: var(--search-input-font-color);
     width: 100%;
+}
+
+.ts-home-input {
+    outline: none;
+    border: none;
+    border-radius: 5px;
+    background: var(--search-input-explore);
+    color: var(--search-input-font-color);
+    padding: 10px;
+    width: 50%;
 }
 
 .button.ts-search-dropdown {

@@ -53,10 +53,7 @@ class SketchListResource(resources.ResourceMixin, Resource):
     def __init__(self):
         super(SketchListResource, self).__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument(
-            'name', type=six.text_type, required=True)
-        self.parser.add_argument(
-            'description', type=six.text_type, required=False)
+        self.parser.add_argument('scope', type=str, required=False)
 
     @login_required
     def get(self):
@@ -65,19 +62,39 @@ class SketchListResource(resources.ResourceMixin, Resource):
         Returns:
             List of sketches (instance of flask.wrappers.Response)
         """
+        args = self.parser.parse_args()
+        scope = args.get('scope', None)
+
         if current_user.admin:
             sketch_query = Sketch.query
         else:
             sketch_query = Sketch.all_with_acl()
 
-        filtered_sketches = sketch_query.filter(
+        base_filter = sketch_query.filter(
             not_(Sketch.Status.status == 'deleted'),
-            Sketch.Status.parent).order_by(Sketch.updated_at.desc()).all()
+            not_(Sketch.Status.status == 'archived'),
+            Sketch.Status.parent).order_by(Sketch.updated_at.desc())
 
+        base_filter_with_archived = sketch_query.filter(
+            not_(Sketch.Status.status == 'deleted'),
+            Sketch.Status.parent).order_by(Sketch.updated_at.desc())
+
+        filtered_sketches = base_filter_with_archived
+
+        if scope == 'user':
+            filtered_sketches = base_filter.filter_by(user=current_user)
+        elif scope == 'archived':
+            filtered_sketches = sketch_query.filter(
+                Sketch.status.any(status='archived'))
+        elif scope == 'shared':
+            filtered_sketches = base_filter.filter(Sketch.user != current_user)
+
+        results = filtered_sketches.paginate(page=1, per_page=20)
+        #results = results.next()
         # Just return a subset of the sketch objects to reduce the amount of
         # data returned.
         sketches = []
-        for sketch in filtered_sketches:
+        for sketch in results.items:
             sketches.append({
                 'name': sketch.name,
                 'updated_at': str(sketch.updated_at),
