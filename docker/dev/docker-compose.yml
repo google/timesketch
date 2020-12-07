@@ -9,6 +9,7 @@ services:
       - elasticsearch
       - postgres
       - redis
+      - notebook
     environment:
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password
@@ -52,10 +53,8 @@ services:
   notebook:
     image: us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest
     ports:
-      - 8844:8844
+      - "127.0.0.1:8844:8844"
     restart: on-failure
-    network_mode: "host"
     volumes:
       - ../../:/usr/local/src/timesketch/:ro
       - /tmp/:/usr/local/src/picadata/
-

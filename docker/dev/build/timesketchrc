@@ -1,9 +1,8 @@
 [timesketch]
-host_uri = http://localhost:5000
+host_uri = http://timesketch:5000
 username = dev
 verify = True
 client_id = 
 client_secret = 
 auth_mode = userpass
 cred_key = oqyymP-6FS9IY-Id-5nieXMzIajJ7NWx9Ndm_r7K0xg=
-
