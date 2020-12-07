@@ -12,6 +12,7 @@ COPY --chown=1000:1000 docker/dev/build/timesketchrc /home/picatrix/.timesketchr
 COPY --chown=1000:1000 docker/dev/build/timesketch_token /home/picatrix/.timesketch.token
 COPY --chown=1000:1000 . /home/picatrix/code
 COPY --chown=1000:1000 docker/dev/build/snippets.json /home/picatrix/.local/share/jupyter/nbextensions/snippets/snippets.json
+COPY --chown=1000:1000 docker/dev/build/10-widgets.py /home/picatrix/.ipython/profile_default/startup/10-widgets.py
 
 RUN sed -i -e "s/c.NotebookApp.token = 'picatrix'/c.NotebookApp.token = 'timesketch'/g" /home/picatrix/.jupyter/jupyter_notebook_config.py && \
     sed -i -e "s/c.NotebookApp.port = 8899/c.NotebookApp.port = 8844/g" /home/picatrix/.jupyter/jupyter_notebook_config.py && \
