@@ -47,7 +47,6 @@ def generate_connect_button(click_function = None):
                     f'Connected to sketch: {sketch.id}: **{sketch.name}**'))
                 valid = widgets.Valid(value=True, description='Connected')
                 display(valid)
-                display(Markdown('Sketch saved to a **sketch** attribute.'))
             except KeyError:
                 display(Markdown('**Unable to connect to sketch.**'))
                 invalid = widgets.Valid(value=False, description='Connected')

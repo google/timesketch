@@ -1,31 +1,31 @@
 {
   "snippets": [
     {
-      "name": "example initial import",
+      "name": "Example initial import",
       "code" : [
         "from timesketch_api_client import search",
-        "from picatrix.lib import state",
-        "import pandas as pd",
-        "import numpy as np",
+        "from picatrix.lib import state as state_lib",
         "import altair as alt",
-        "state_obj = state.State()"
+        "import numpy as np",
+        "import pandas as pd",
+        "state = state_lib.state()"
       ]
     },
     {
-      "name": "select a sketch using magics",
+      "name": "Select a sketch using magics",
       "code" : [
         "%timesketch_set_active_sketch 1"
       ]
     },
     {
-      "name" : "select a sketch using a button and a form",
+      "name" : "Select a sketch using a button and a form",
       "code" : [
         "# Execute cell in order to generate button.",
         "generate_connect_button()"
       ]
     },
     {
-      "name": "search with date range filter",
+      "name": "Search with date range filter",
       "code" : [
         "sketch = %timesketch_get_sketch",
         "search_obj = search.Search(sketch)",
@@ -35,6 +35,32 @@
         "search_obj.add_chip(date_chip)",
         "search_obj.query_string = '*'",
         "df = search_obj.table"
+      ]
+    },
+    {
+      "name": "Run an example aggregation.",
+      "code" : [
+        "sketch = %timesketch_get_sketch",
+        "params = {",
+        "    'field': 'domain',",
+        "    'limit': 10,",
+        "    'supported_charts': 'hbarchart',",
+        "    'chart_title': 'Top 10 Domains'",
+        "}",
+        " ",
+        "agg = sketch.run_aggregator(",
+        "    aggregator_name='field_bucket', aggregator_parameters=params)",
+        " ",
+        "# You can get the aggregation data as a chart or a dataframe",
+        "agg.chart",
+        " ",
+        "# Enable this to get the results as a table",
+        "# agg.table",
+        " ",
+        "# To save the aggregation you need to create a name and a title.",
+        "# agg.name = 'Top 10 Domains'",
+        "# agg.title = 'Top 10 Domains'",
+        "# agg.save()"
       ]
     }
   ]
