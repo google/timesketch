@@ -16,9 +16,14 @@
 These are temporary functions until they have been generalized
 and implemented in picatrix.
 """
+
 # pylint: disable=undefined-variable
 # pylint: disable=import-error
+from picatrix.lib import utils
+
+import ipydatetime
 import ipywidgets as widgets
+
 from IPython.display import Markdown
 
 
@@ -56,3 +61,40 @@ def generate_connect_button(click_function = None):
         button.on_click(click_function)
     else:
         button.on_click(_click_function)
+
+
+def generate_query_button():
+    """Generates a button and form to query Timesketch data."""
+    button = widgets.Button(description='Query Timesketch')
+    output = widgets.Output()
+
+    query_string_form = widgets.Text(
+        value='*',
+        placeholder='Type something',
+        description='Query String:',
+        disabled=False
+    )
+
+    start_time_form = ipydatetime.DatetimePicker(tzinfo=pytz.utc)
+    end_time_form = ipydatetime.DatetimePicker(tzinfo=pytz.utc)
+
+    display(Markdown('## Query A Sketch'))
+    display(query_string_form)
+    display(Markdown('Start time: '), start_time_form)
+    display(Markdown('End time: '), end_time_form)
+    display(button)
+
+    def _click_function(_):
+        sketch = timesketch_get_sketch_func()
+        search_obj = search.Search(sketch)
+        if start_time_form.value and end_time_form.value:
+            date_chip = search.DateRangeChip()
+            date_chip.start_time = start_time_form.value.strftime('%Y-%m-%dT%H:%M:%S')
+            date_chip.end_time = end_time_form.value.strftime('%Y-%m-%dT%H:%M:%S')
+            search_obj.add_chip(date_chip)
+        search_obj.query_string = query_string_form.value
+        display(Markdown(f'Query **executed** - returned: {len(search_obj.table)} records'))
+        utils.ipython_bind_global('search_obj', search_obj)
+        display(Markdown('Results are stored in the attribe **search_obj**'))
+
+    button.on_click(_click_function)
