@@ -20,6 +20,7 @@
     {
       "name" : "select a sketch using a button and a form",
       "code" : [
+        "# Execute cell in order to generate button.",
         "generate_connect_button()"
       ]
     },
