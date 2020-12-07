@@ -25,6 +25,13 @@
       ]
     },
     {
+      "name" : "Query a sketch using a button and a form",
+      "code" : [
+        "# Execute cell in order to generate button.",
+        "generate_query_button()"
+      ]
+    },
+    {
       "name": "Search with date range filter",
       "code" : [
         "sketch = %timesketch_get_sketch",

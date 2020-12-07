@@ -18,7 +18,10 @@ RUN sed -i -e "s/c.NotebookApp.token = 'picatrix'/c.NotebookApp.token = 'timeske
     sed -i -e "s/c.NotebookApp.port = 8899/c.NotebookApp.port = 8844/g" /home/picatrix/.jupyter/jupyter_notebook_config.py && \
     pip install -e /home/picatrix/code/api_client/python && \
     pip install -e /home/picatrix/code/importer_client/python/ && \
-    jupyter nbextension enable snippets/main
+    jupyter nbextension enable snippets/main && \
+    pip install ipydatetime && \
+    jupyter nbextension install --user --py ipydatetime && \
+    jupyter nbextension enable --user --py ipydatetime
 
 WORKDIR /usr/local/src/picadata/
 EXPOSE 8844
