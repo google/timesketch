@@ -17,6 +17,7 @@ These are temporary functions until they have been generalized
 and implemented in picatrix.
 """
 # pylint: disable=undefined-variable
+# pylint: disable=import-error
 import ipywidgets as widgets
 
 
