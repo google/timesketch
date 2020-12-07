@@ -19,6 +19,7 @@ and implemented in picatrix.
 # pylint: disable=undefined-variable
 # pylint: disable=import-error
 import ipywidgets as widgets
+from IPython.display import Markdown
 
 
 # TODO: Generalize and move to picatrix.
@@ -33,13 +34,24 @@ def generate_connect_button(click_function = None):
         disabled=False
     )
 
+    display(Markdown('## Connect to a sketch'))
+    display(Markdown('Select a sketch to connect to.'))
     display(sketch_field, button, output)
 
     def _click_function(_):
         with output:
             timesketch_set_active_sketch_func(str(sketch_field.value))
             sketch = timesketch_get_sketch_func()
-            print(f'Connected to sketch: {sketch.id}:{sketch.name}')
+            try:
+                display(Markdown(
+                    f'Connected to sketch: {sketch.id}: **{sketch.name}**'))
+                valid = widgets.Valid(value=True, description='Connected')
+                display(valid)
+                display(Markdown('Sketch saved to a **sketch** attribute.'))
+            except KeyError:
+                display(Markdown('**Unable to connect to sketch.**'))
+                invalid = widgets.Valid(value=False, description='Connected')
+                display(invalid)
 
     if click_function:
         button.on_click(click_function)
