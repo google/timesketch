@@ -24,7 +24,7 @@ limitations under the License.
       </router-link>
     </div>
 
-    <div class="navbar-item" style="margin-left: 40px;">
+    <div class="navbar-item" style="margin-left: 20px;">
       <slot name="left"></slot>
     </div>
 

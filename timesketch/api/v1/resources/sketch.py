@@ -16,7 +16,6 @@
 import logging
 
 import elasticsearch
-import six
 
 from flask import jsonify
 from flask import request
@@ -42,6 +41,7 @@ from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
+from timesketch.models.sketch import View
 
 
 logger = logging.getLogger('timesketch.sketch_api')
@@ -54,6 +54,8 @@ class SketchListResource(resources.ResourceMixin, Resource):
         super(SketchListResource, self).__init__()
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('scope', type=str, required=False)
+        self.parser.add_argument('page', type=int, required=False)
+        self.parser.add_argument('search_query', type=str, required=False)
 
     @login_required
     def get(self):
@@ -64,6 +66,8 @@ class SketchListResource(resources.ResourceMixin, Resource):
         """
         args = self.parser.parse_args()
         scope = args.get('scope', None)
+        page = args.get('page', 1)
+        search_query = args.get('search_query', None)
 
         if current_user.admin:
             sketch_query = Sketch.query
@@ -80,30 +84,58 @@ class SketchListResource(resources.ResourceMixin, Resource):
             Sketch.Status.parent).order_by(Sketch.updated_at.desc())
 
         filtered_sketches = base_filter_with_archived
+        sketches = []
+        return_sketches = []
+        num_hits = 0
 
-        if scope == 'user':
+        if scope == 'recent':
+            views = View.query.filter_by(
+                user=current_user, name='').order_by(
+                View.updated_at.desc()).limit(3)
+            sketches = [view.sketch for view in views]
+            num_hits = len(sketches)
+        elif scope == 'user':
             filtered_sketches = base_filter.filter_by(user=current_user)
         elif scope == 'archived':
             filtered_sketches = sketch_query.filter(
                 Sketch.status.any(status='archived'))
         elif scope == 'shared':
             filtered_sketches = base_filter.filter(Sketch.user != current_user)
+        elif scope == 'search':
+            filtered_sketches = base_filter_with_archived.filter(
+                Sketch.name.like(f'%{search_query}%'))
 
-        results = filtered_sketches.paginate(page=1, per_page=20)
-        #results = results.next()
-        # Just return a subset of the sketch objects to reduce the amount of
-        # data returned.
-        sketches = []
-        for sketch in results.items:
-            sketches.append({
-                'name': sketch.name,
-                'updated_at': str(sketch.updated_at),
-                'user': sketch.user.username,
+        if not sketches:
+            pagination = filtered_sketches.paginate(page=page, per_page=3)
+            sketches = pagination.items
+            num_hits = pagination.total
+
+        for sketch in sketches:
+            # Last time a user did a query in the sketch, indicating activity.
+            try:
+                last_activity = View.query.filter_by(
+                    sketch=sketch, name='').order_by(
+                    View.updated_at.desc()).first().updated_at
+            except AttributeError:
+                last_activity = ''
+
+            # Return a subset of the sketch objects to reduce the amount of
+            # data sent to the client.
+            return_sketches.append({
                 'id': sketch.id,
+                'name': sketch.name,
+                'description': sketch.description,
+                'created_at': str(sketch.created_at),
+                'last_activity': str(last_activity),
+                'user': sketch.user.username,
                 'status': sketch.get_status.status
             })
-        meta = {'current_user': current_user.username}
-        return jsonify({'objects': sketches, 'meta': meta})
+
+        meta = {
+            'current_user': current_user.username,
+            'num_hits': num_hits
+        }
+        return jsonify({'objects': return_sketches, 'meta': meta})
 
     @login_required
     def post(self):

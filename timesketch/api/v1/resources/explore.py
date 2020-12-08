@@ -202,6 +202,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
         view.query_string = form.query.data
         view.query_filter = json.dumps(query_filter, ensure_ascii=False)
         view.query_dsl = json.dumps(query_dsl, ensure_ascii=False)
+        view.update_modification_time()
         db_session.add(view)
         db_session.commit()
 

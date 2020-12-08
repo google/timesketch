@@ -48,6 +48,7 @@
     --time-bubble-background-color: #f5f5f5;
     --time-bubble-font-color: #666666;
     --content-list-hover-color: #fcfcfc;
+    --content-list-border-color: #EEEEEE;
     --login-page-background-color: var(--navbar-background);
     --card-title-font-color: var(--font-color-dark);
     --card-header-border-color: #f5f5f5;
@@ -90,7 +91,8 @@
     --table-cell-border-color: #818181;
     --time-bubble-background-color: #666666;
     --time-bubble-font-color: #d9d9d9;
-    --content-list-hover-color: #494949;
+    --content-list-hover-color: #696969;
+    --content-list-border-color: #696969;
     --login-page-background-color: var(--background-color);
     --navbar-item-link-color: #fafafa;
     --card-title-font-color: var(--font-color-light);
@@ -200,7 +202,7 @@ ul.content-list {
 ul.content-list>li {
     padding-top: 5px;
     padding-bottom: 5px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--content-list-border-color);
     display: block;
     margin: 0;
 }
@@ -229,7 +231,7 @@ ul.content-list>li:last-child { border-bottom: none; }
     border-radius: 5px;
     background: var(--search-input-explore);
     color: var(--search-input-font-color);
-    padding: 10px;
+    padding: 13px;
     width: 50%;
 }
 
