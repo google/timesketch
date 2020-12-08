@@ -235,3 +235,8 @@ class SearchIndexForm(BaseForm):
     es_index_name = StringField('Index', validators=[DataRequired()])
     public = BooleanField(
         'Public', false_values={False, 'false', ''}, default=False)
+
+class SigmaRuleForm(BaseForm):
+    """Form to handle a sigma rule."""
+    title = StringField('Title', validators=[])
+    content = StringField('Content', validators=[], widget=widgets.TextArea())
