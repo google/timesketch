@@ -31,6 +31,7 @@ logger = logging.getLogger('timesketch.lib.sigma')
 
 def get_sigma_config_file(config_file=None):
     """Get a sigma.configuration.SigmaConfiguration object.
+
     Args:
         config_file: Optional path to a config file
     Returns:
@@ -75,7 +76,11 @@ def get_sigma_rules_path():
         ValueError: If SIGMA_RULES_FOLDERS is not found in the config file.
             or the folders are not readabale.
     """
-    rules_path = current_app.config.get('SIGMA_RULES_FOLDERS', [])
+    try:
+        rules_path = current_app.config.get('SIGMA_RULES_FOLDERS', [])
+    except RuntimeError as e:
+        raise ValueError(
+            'SIGMA_RULES_FOLDERS not found in config file') from e
 
     if not rules_path:
         raise ValueError(
@@ -168,6 +173,18 @@ def get_sigma_rule(filepath, sigma_config=None):
         return None
 
     sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
+
+    try:
+        sigma_rules_paths = get_sigma_rules_path()
+    except ValueError:
+        sigma_rules_paths = None
+
+    if not filepath.lower().endswith('.yml'):
+        return None
+
+    # if a sub dir is found, nothing can be parsed
+    if os.path.isdir(filepath):
+        return None
 
     try:
         sigma_rules_paths = get_sigma_rules_path()

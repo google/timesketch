@@ -32,6 +32,7 @@ from elasticsearch.exceptions import RequestError
 # pylint: disable=redefined-builtin
 from elasticsearch.exceptions import ConnectionError
 from flask import abort
+from flask import current_app
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 
@@ -77,7 +78,20 @@ class ElasticsearchDataStore(object):
         """Create a Elasticsearch client."""
         super().__init__()
         self._error_container = {}
-        self.client = Elasticsearch([{'host': host, 'port': port}])
+
+        self.user = current_app.config.get('ELASTIC_USER', 'user')
+        self.password = current_app.config.get('ELASTIC_PASSWORD', 'pass')
+        self.ssl = current_app.config.get('ELASTIC_SSL', False)
+        self.verify = current_app.config.get('ELASTIC_VERIFY_CERTS', True)
+
+        if self.ssl:
+            self.client = Elasticsearch([{'host': host, 'port': port}],
+                                        http_auth=(self.user, self.password),
+                                        use_ssl=self.ssl,
+                                        verify_certs=self.verify)
+        else:
+            self.client = Elasticsearch([{'host': host, 'port': port}])
+
         self.import_counter = Counter()
         self.import_events = []
 
