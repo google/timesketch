@@ -17,6 +17,7 @@ from __future__ import unicode_literals
 import json
 import logging
 
+from . import analyzer
 from . import error
 from . import index
 from . import resource
@@ -48,6 +49,7 @@ class Timeline(resource.BaseResource):
         self._name = name
         self._description = ''
         self._searchindex = searchindex
+        self._sketch_id = sketch_id
         resource_uri = 'sketches/{0:d}/timelines/{1:d}/'.format(
             sketch_id, self.id)
         super().__init__(api, resource_uri)
@@ -146,6 +148,71 @@ class Timeline(resource.BaseResource):
             index_name = timeline['objects'][0]['searchindex']['index_name']
             self._searchindex = index_name
         return self._searchindex
+
+    def run_analyzer(self, analyzer_name, analyzer_kwargs=None)
+        """Run an analyzer on a timeline.
+
+        Args:
+            analyzer_name: the name of the analyzer class to run against the
+                timeline.
+            analyzer_kwargs: optional dict with parameters for the analyzer.
+                This is optional and just for those analyzers that can accept
+                further parameters.
+
+        Raises:
+            error.UnableToRunAnalyzer: if not able to run the analyzer.
+
+        Returns:
+            If the analyzer runs successfully return back an AnalyzerResult
+            object.
+        """
+        # TODO IMPLEMENT IS_ARCHIVED
+        if self.is_archived():
+            raise error.UnableToRunAnalyzer(
+                'Unable to run an analyzer on an archived timeline.')
+
+        resource_url = '{0:s}/sketches/{1:d}/analyzer/'.format(
+            self.api.api_root, self._sketch_id)
+
+        # The analyzer_kwargs is expected to be a dict with the key
+        # being the analyzer name, and the value being the key/value dict
+        # with parameters for the analyzer.
+        if analyzer_kwargs:
+            if not isinstance(analyzer_kwargs, dict):
+                raise error.UnableToRunAnalyzer(
+                    'Unable to run analyzer, analyzer kwargs needs to be a '
+                    'dict')
+            if analyzer_name not in analyzer_kwargs:
+                analyzer_kwargs = {analyzer_name: analyzer_kwargs}
+
+        data = {
+            'timeline_id': self.id,
+            'analyzer_names': [analyzer_name],
+            'analyzer_kwargs': analyzer_kwargs,
+        }
+        response = self.api.session.post(resource_url, json=data)
+
+        if not error.check_return_status(response, logger):
+            raise error.UnableToRunAnalyzer('[{0:d}] {1!s} {2!s}'.format(
+                response.status_code, response.reason, response.text))
+
+        data = error.get_response_json(response, logger)
+        objects = data.get('objects', [])
+        if not objects:
+            raise error.UnableToRunAnalyzer(
+                'No session data returned back, analyzer may have run but '
+                'unable to verify, please verify manually.')
+
+        session_id = objects[0].get('analysis_session')
+        if not session_id:
+            raise error.UnableToRunAnalyzer(
+                'Analyzer may have run, but there is no session ID to '
+                'verify that it has. Please verify manually.')
+
+        session = analyzer.AnalyzerResult(
+            timeline_id=self.id, session_id=session_id,
+            sketch_id=self._sketch_id, api=self.api)
+        return session
 
     @property
     def status(self):
