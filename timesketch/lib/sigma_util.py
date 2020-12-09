@@ -45,10 +45,6 @@ def get_sigma_config_file(config_file=None):
     else:
         config_file_path = current_app.config.get('SIGMA_CONFIG')
 
-    if not config_file:
-        raise ValueError(
-            'SIGMA_CONFIG not found in config file')
-
     if not os.path.isfile(config_file_path):
         raise ValueError(
             'Unable to open file: [{0:s}], it does not exist.'.format(
@@ -63,6 +59,10 @@ def get_sigma_config_file(config_file=None):
         sigma_config_file = config_file_read.read()
 
     sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
+
+    if not sigma_config:
+        raise ValueError(
+            'SIGMA_CONFIG not found in config file')
 
     return sigma_config
 
