@@ -72,6 +72,8 @@ class Sigma(resource.BaseResource):
         sigma_data = self.data
 
         if not sigma_data:
+            self.lazyload_data()
+            print("title not set yet")
             return ''
 
         return sigma_data.get('title', '')
@@ -99,9 +101,12 @@ class Sigma(resource.BaseResource):
     def from_rule(self, rule_uuid):
         # TODO: Write docstring
         self.rule_uuid = rule_uuid
-        self._resource_uri = f'sigma/{self.rule_uuid}'
+        self._resource_uri = f'sigma/{rule_uuid}'
+        self.resource_uri = f'sigma/{rule_uuid}'
+        super().__init__(
+            api=self.api, resource_uri=self._resource_uri)
+
         self.lazyload_data()
-        #if not self._description:
 
     def from_text(self, rule_text):
         return rule_text

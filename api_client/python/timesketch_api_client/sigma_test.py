@@ -65,10 +65,14 @@ class TimesketchSigmaTest(unittest.TestCase):
     def test_sigma_rule(self):
         """Test single Sigma rule."""
 
+        # not sure which is the better way to do things here.
         rule = self.api_client.get_sigma_rule(
-            '5266a592-b793-11ea-b3de-0242ac130004')
-
+            rule_uuid='5266a592-b793-11ea-b3de-0242ac130004')
+        rule.from_rule('5266a592-b793-11ea-b3de-0242ac130004')
         self.assertIsNotNone(rule)
+
+        print(rule.__dict__)
+        print(f'title: {rule.title} id: {rule.id}')
 
         self.assertEqual(
             rule.title, 'Suspicious Installation of Zenmap',
@@ -76,6 +80,8 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertEqual(
             rule.id, '5266a592-b793-11ea-b3de-0242ac130004',
             'Id of the rule does not match')
+        self.assertIn('zmap', rule.es_query, 'ES_Query does not match')
+        self.assertIn('b793', rule.id)
 
     def test_sigma_rules(self):
         '''Testing the Sigma rules list'''
@@ -84,17 +90,23 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertIsNotNone(rules)
 
         rule1 = rules[0]
-        print(rule1)
 
         self.assertEqual(
-            rule1.title, 'Suspicious Installation of Zenmap',
-            'Title of the rule does not match')
+            rule1.title, 'Suspicious Installation of Zenmap', 
+            'Title of the rule does not match: ')
+        self.assertIn('zmap', rule1.es_query, 'ES_Query does not match')
+        self.assertIn('b793', rule1.id)
 
     def test_get_sigma_rule_by_text(self):
-        # TODO
-        #rule = self.api_client.get_sigma_rule_by_text(MOCK_SIGMA_RULE)
+        rule = self.api_client.get_sigma_rule_by_text(MOCK_SIGMA_RULE)
+        self.assertIsNotNone(rule)
+
+
+        # TODO: Make that hapopen once the API actually returns what is expected
+        #  here
+        #self.assertIn('zmap', rule.es_query, 'ES_Query does not match')
+        #self.assertIn('Zenmap', rule.title, 'Title does not match')
 
         #self.assertEqual(
         #    rule.title, 'Suspicious Installation of Zenmap',
         #    'Title of the rule does not match')
-        self.assertIsNotNone('ASD')

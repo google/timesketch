@@ -17,6 +17,7 @@ import logging
 
 from flask import abort
 from flask import jsonify
+from flask import request
 from flask_restful import Resource
 from flask_login import login_required
 from flask_login import current_user
@@ -25,6 +26,8 @@ import timesketch.lib.sigma_util as ts_sigma_lib
 
 from timesketch.api.v1 import resources
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.lib import forms
 
 logger = logging.getLogger('timesketch.api.sigma')
 
@@ -90,3 +93,39 @@ class SigmaResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sigma rule found with this ID.')
 
         return return_rule
+
+class SigmaByTextResource(resources.ResourceMixin, Resource):
+    """Resource to get list of Sigma rules."""
+
+    @login_required
+    def post(self):
+        """Handles POST request to the resource.
+
+        Returns:
+            JSON sigma rule
+        """
+        form = forms.SigmaRuleForm.build(request)
+        # optional: do we want to have a title at this point?
+        title = form.title.data
+        logger.debug(title)
+        content = form.content.data
+
+        if not form.validate_on_submit():
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data')
+
+        try:
+            sigma_rule = ts_sigma_lib.get_sigma_rule_by_text(content)
+
+        except ValueError:
+            # TODO: make better responses here with different scenarios.
+            logger.error('Parsing error',
+                         exc_info=True)
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'OS Error, unable to get the path to the Sigma rules')
+
+        if sigma_rule is None:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sigma was parsed')
+
+        return sigma_rule

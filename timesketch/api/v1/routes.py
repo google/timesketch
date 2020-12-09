@@ -55,6 +55,7 @@ from .resources.user import CollaboratorResource
 from .resources.user import LoggedInUserResource
 from .resources.sigma import SigmaResource
 from .resources.sigma import SigmaListResource
+from .resources.sigma import SigmaByTextResource
 from .resources.graph import GraphListResource
 from .resources.graph import GraphResource
 from .resources.graph import GraphPluginListResource
@@ -104,6 +105,7 @@ API_ROUTES = [
     (VersionResource, '/version/'),
     (SigmaListResource, '/sigma/'),
     (SigmaResource, '/sigma/<string:rule_uuid>/'),
+    (SigmaByTextResource, '/sigma_by_text/'),
     (LoggedInUserResource, '/users/me/'),
     (GraphListResource, '/sketches/<int:sketch_id>/graphs/'),
     (GraphResource, '/sketches/<int:sketch_id>/graphs/<int:graph_id>/'),
