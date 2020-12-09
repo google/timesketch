@@ -150,9 +150,9 @@ class Timeline(resource.BaseResource):
         return self._searchindex
 
     def is_archived(self):
-        """Return a boolean indicating whether the timeline has been archived."""
-        resource_url = '{0:s}/sketches/{1:d}/archive/'.format(
-            self.api.api_root, self._sketch_id)
+        """Return a boolean indicating whether the timeline is archived."""
+        resource_url = (
+            f'{self.api.api_root}/sketches/{self._sketch_id}/archive/')
         response = self.api.session.get(resource_url)
         data = error.get_response_json(response, logger)
         meta = data.get('meta', {})
