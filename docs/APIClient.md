@@ -14,10 +14,19 @@ if information is missing (and subsequently storing the results of those questio
 
 An example use of the config client:
 
-```
+```python
 from timesketch_api_client import config
 
 ts_client = config.get_client()
+```
+
+If the configuration file has more than a single section you can define which
+section to use:
+
+```python
+from timesketch_api_client import config
+
+ts_client = config.get_client(config_section='my_section')
 ```
 
 To be able to take advantage of the config client, the user needs to be running this from the command line or in a way where questions can be asked
@@ -370,7 +379,26 @@ rule.data()
 To get this:
 
 ```JSON
-{'title': 'Suspicious Installation of Zenmap', 'id': '5266a592-b793-11ea-b3de-0242ac130004', 'description': 'Detects suspicious installation of Zenmap', 'references': ['https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'], 'author': 'Alexander Jaeger', 'date': '2020/06/26', 'modified': '2020/06/26', 'logsource': {'product': 'linux', 'service': 'shell'}, 'detection': {'keywords': ['*apt-get install zmap*'], 'condition': 'keywords'}, 'falsepositives': ['Unknown'], 'level': 'high', 'es_query': '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ zmap*")', 'file_name': 'lnx_susp_zenmap'}
+{
+  'title': 'Suspicious Installation of Zenmap',
+  'id': '5266a592-b793-11ea-b3de-0242ac130004',
+  'description': 'Detects suspicious installation of Zenmap',
+  'references': ['https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'],
+  'author': 'Alexander Jaeger',
+  'date': '2020/06/26',
+  'modified': '2020/06/26',
+  'logsource': {
+    'product': 'linux',
+    'service': 'shell'
+  },
+  'detection': {
+    'keywords': ['*apt-get install zmap*'],
+    'condition': 'keywords'
+  },
+  'falsepositives': ['Unknown'],
+  'level': 'high',
+  'es_query': '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ zmap*")', 'file_name': 'lnx_susp_zenmap'
+}
 ```
 
 ### Get a list of rules

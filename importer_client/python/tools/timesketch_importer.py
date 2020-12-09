@@ -192,6 +192,11 @@ def main(args=None):
         dest='timeline_name', default='', help=(
             'String that will be used as the timeline name.'))
     config_group.add_argument(
+        '--config_section', '--config-section', action='store', type=str,
+        dest='config_section', default='', help=(
+            'The config section in the RC file that will be used to '
+            'define server information.'))
+    config_group.add_argument(
         '--index-name', '--index_name', action='store', type=str, default='',
         dest='index_name', help=(
             'If the data should be imported into a specific timeline the '
@@ -246,11 +251,17 @@ def main(args=None):
             options.path))
         sys.exit(1)
 
+    config_section = options.config_section
     assistant = config.ConfigAssistant()
-    assistant.load_config_file()
+    assistant.load_config_file(section=config_section)
     assistant.load_config_dict(vars(options))
 
-    cred_storage = crypto.CredentialStorage()
+    try:
+        file_path = assistant.get_config('token_file_path')
+    except KeyError:
+        file_path = ''
+
+    cred_storage = crypto.CredentialStorage(file_path=file_path)
     token_password = ''
     if options.cred_prompt:
         token_password = cli_input.ask_question(
@@ -304,6 +315,7 @@ def main(args=None):
         logger.info('Saving Credentials.')
         cred_storage.save_credentials(
             credentials, password=token_password,
+            file_path=file_path,
             config_assistant=assistant)
 
     # Gather all questions that are missing.
@@ -318,12 +330,14 @@ def main(args=None):
 
     logger.info('Client created.')
     logger.info('Saving TS config.')
-    assistant.save_config()
+    assistant.save_config(
+        section=config_section, token_file_path=file_path)
 
     if ts_client.credentials:
         logger.info('Saving Credentials.')
         cred_storage.save_credentials(
             ts_client.credentials, password=token_password,
+            file_path=file_path,
             config_assistant=assistant)
 
     sketch_id = options.sketch_id
