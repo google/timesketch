@@ -1101,8 +1101,8 @@ class Sketch(resource.BaseResource):
                 'Unable to run an analyzer, not able to find a timeline.')
 
         timeline_obj = timeline.Timeline(
-            timeline_id=timeline_id
-            sketch_id=self._sketch_id,
+            timeline_id=timeline_id,
+            sketch_id=self.id,
             api=self.api)
 
         return timeline_obj.run_analyzer(

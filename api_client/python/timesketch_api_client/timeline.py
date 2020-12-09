@@ -149,7 +149,21 @@ class Timeline(resource.BaseResource):
             self._searchindex = index_name
         return self._searchindex
 
-    def run_analyzer(self, analyzer_name, analyzer_kwargs=None)
+    def is_archived(self):
+        """Return a boolean indicating whether the timeline has been archived."""
+        resource_url = '{0:s}/sketches/{1:d}/archive/'.format(
+            self.api.api_root, self._sketch_id)
+        response = self.api.session.get(resource_url)
+        data = error.get_response_json(response, logger)
+        meta = data.get('meta', {})
+        sketch_is_archived = meta.get('is_archived', False)
+
+        timeline_dict = meta.get('timelines')
+        if not timeline_dict:
+            return sketch_is_archived
+        return timeline_dict.get(self.index_name)
+
+    def run_analyzer(self, analyzer_name, analyzer_kwargs=None):
         """Run an analyzer on a timeline.
 
         Args:
@@ -166,7 +180,6 @@ class Timeline(resource.BaseResource):
             If the analyzer runs successfully return back an AnalyzerResult
             object.
         """
-        # TODO IMPLEMENT IS_ARCHIVED
         if self.is_archived():
             raise error.UnableToRunAnalyzer(
                 'Unable to run an analyzer on an archived timeline.')
