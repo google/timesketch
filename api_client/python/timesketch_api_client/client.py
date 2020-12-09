@@ -548,7 +548,10 @@ class TimesketchApi:
         Returns:
             Instance of a Sigma object.
         """
-        return sigma.Sigma(rule_uuid, api=self)
+        sigma_obj = sigma.Sigma(api=self)
+        sigma_obj.from_rule(rule_uuid)
+
+        return sigma_obj
 
     def get_sigma_rule_by_text(self, rule_text):
         """Returns a Sigma Object based on a text POST.
@@ -563,10 +566,11 @@ class TimesketchApi:
             raise ValueError('Rule text given.')
 
         try:
-            sigma_rule = None #sigma_util.get_sigma_rule_by_text(rule_text)
+            sigma_obj = sigma.Sigma(api=self)
+            sigma_obj.from_text(rule_text)
 
         except ValueError:
             logger.error('OS Error, unable to get the path to the Sigma rules',
                          exc_info=True)
 
-        return sigma_rule
+        return sigma_obj
