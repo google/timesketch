@@ -84,6 +84,7 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertIsNotNone(rules)
 
         rule1 = rules[0]
+        print(rule1)
 
         self.assertEqual(
             rule1.title, 'Suspicious Installation of Zenmap',

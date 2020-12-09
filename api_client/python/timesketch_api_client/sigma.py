@@ -31,7 +31,7 @@ class Sigma(resource.BaseResource):
     """
 
 
-    def __init__(self, rule_uuid, api, es_query=None,
+    def __init__(self, rule_uuid=None, api=None, es_query=None,
                  file_name=None, title=None, description=None,
                  file_relpath=None):
         """Initializes the Sigma object.
@@ -95,3 +95,13 @@ class Sigma(resource.BaseResource):
             return ''
 
         return sigma_data.get('file_relpath', '')
+
+    def from_rule(self, rule_uuid):
+        # TODO: Write docstring
+        self.rule_uuid = rule_uuid
+        self._resource_uri = f'sigma/{self.rule_uuid}'
+        self.lazyload_data()
+        #if not self._description:
+
+    def from_text(self, rule_text):
+        return rule_text
