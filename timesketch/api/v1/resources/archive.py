@@ -57,7 +57,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
     }
 
     def __init__(self, **kwargs):
-        super(SketchArchiveResource, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._sketch = None
         self._sketch_indices = None
 
