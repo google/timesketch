@@ -85,7 +85,8 @@ class TestSigmaUtilLib(BaseTest):
 
     def test_get_sigma_config_file(self):
         """Test getting sigma config file"""
-        self.assertRaises(ValueError, sigma_util.get_sigma_config_file, None)
+        self.assertRaises(ValueError, sigma_util.get_sigma_config_file, '/foo')
+        self.assertIsNotNone(sigma_util.get_sigma_config_file())
 
     def test_get_sigma_rule(self):
         """Test getting sigma rule from file"""

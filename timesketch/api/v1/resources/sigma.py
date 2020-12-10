@@ -108,6 +108,7 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
         # optional: do we want to have a title at this point?
         title = form.title.data
         logger.debug(title)
+        print(title)
         content = form.content.data
 
         if not form.validate_on_submit():
@@ -122,7 +123,7 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
                          exc_info=True)
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
-                'OS Error, unable to get the path to the Sigma rules')
+                'Error unable to parse the provided Sigma rule')
 
         if sigma_rule is None:
             abort(

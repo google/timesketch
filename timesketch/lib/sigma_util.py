@@ -45,6 +45,11 @@ def get_sigma_config_file(config_file=None):
     else:
         config_file_path = current_app.config.get('SIGMA_CONFIG')
 
+    # this is mostly to be able to test cases via API where the test from
+    # API client
+    if not config_file_path:
+        config_file_path = './data/sigma_config.yaml'
+
     if not config_file_path:
         raise ValueError('No config_file_path set via param or config file')
 

@@ -360,3 +360,90 @@ class TimelineListResourceTest(BaseTest):
             data=json.dumps(data, ensure_ascii=False),
             content_type='application/json')
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+
+class SigmaResourceTest(BaseTest):
+    """Test Sigma resource."""
+    resource_url = '/api/v1/sigma/'
+    expected_response = {
+        'objects': {
+            'description': 'Detects suspicious installation of Zenmap',
+            'id': '5266a592-b793-11ea-b3de-0242ac130004',
+            'level': 'high',
+            'logsource': {
+                'product': 'linux', 'service': 'shell'
+                },
+            'title': 'Suspicious Installation of Zenmap',
+        }
+    }
+    def test_get_sigma_rule(self):
+        """Authenticated request to get an sigma rule."""
+        self.login()
+        response = self.client.get(self.resource_url +
+                                   '5266a592-b793-11ea-b3de-0242ac130004')
+        # TODO: write tests here
+        #self.assertDictContainsSubset(self.expected_response, response.json)
+        #self.assert308(response)
+
+
+
+class SigmaByTextResourceTest(BaseTest):
+    """Test Sigma by text resource."""
+
+    resource_url = '/api/v1/sigma_by_text/'
+    correct_rule = '''
+        title: Installation of foobar
+        id: bb1e0d1d-cd13-4b65-bf7e-69b4e740266b
+        description: Detects suspicious installation of foobar
+        references:
+            - https://samle.com/foobar
+        author: Alexander Jaeger
+        date: 2020/12/10
+        modified: 2020/12/10
+        logsource:
+            product: linux
+            service: shell
+        detection:
+            keywords:
+                # Generic suspicious commands
+                - '*apt-get install foobar*'
+            condition: keywords
+        falsepositives:
+            - Unknown
+        level: high
+        '''
+
+    expected_response = {
+                    'title': 'Installation of foobar',
+                    'id': 'bb1e0d1d-cd13-4b65-bf7e-69b4e740266b',
+                    'description': 'Detects suspicious installation of foobar',
+                    'references': ['https://samle.com/foobar'],
+                    'author': 'Alexander Jaeger',
+                    'date': '2020/12/10',
+                    'modified': '2020/12/10',
+                    'logsource': {'product': 'linux', 'service': 'shell'},
+                    'detection': {'keywords': ['*apt-get install foobar*'],
+                    'condition': 'keywords'},
+                    'falsepositives': ['Unknown'], 'level': 'high',
+                    'es_query':
+                        '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ foobar*")',
+                    'file_name': 'N/A',
+                    'file_relpath': 'N/A'
+    }
+
+    def test_get_sigma_rule(self):
+        """Authenticated request to get an sigma rule."""
+
+        self.login()
+
+        data = dict(title='test', content=self.correct_rule)
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type='application/json')
+        print(response.json)
+        
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertDictContainsSubset(self.expected_response, response.json)
+        self.assert200(response)

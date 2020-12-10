@@ -101,6 +101,7 @@ class Sigma(resource.BaseResource):
     def from_rule(self, rule_uuid):
         # TODO: Write docstring
         self.rule_uuid = rule_uuid
+        # TODO: not sure which one is the better one
         self._resource_uri = f'sigma/{rule_uuid}'
         self.resource_uri = f'sigma/{rule_uuid}'
         super().__init__(
