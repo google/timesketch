@@ -447,8 +447,6 @@ class SigmaByTextResourceTest(BaseTest):
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
             content_type='application/json')
-        print(response.json)
-        
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertDictContainsSubset(self.expected_response, response.json)

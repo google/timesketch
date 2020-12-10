@@ -92,7 +92,7 @@ class TimesketchSigmaTest(unittest.TestCase):
         rule1 = rules[0]
 
         self.assertEqual(
-            rule1.title, 'Suspicious Installation of Zenmap', 
+            rule1.title, 'Suspicious Installation of Zenmap',
             'Title of the rule does not match: ')
         self.assertIn('zmap', rule1.es_query, 'ES_Query does not match')
         self.assertIn('b793', rule1.id)
