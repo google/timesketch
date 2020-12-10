@@ -9,6 +9,11 @@ define([
 
     // will be called when the nbextension is loaded
     function load_extension() {
+        var ncells = Jupyter.notebook.ncells();
+        if (ncells > 1) {
+          return true;
+        }
+
         var new_cell = Jupyter.notebook.insert_cell_above('markdown', 0);
         new_cell.set_text('# Timesketch Notebook\nThis is a base notebook for connecting to a dev instance of Timesketch.\n**Remember to rename the notebook**.');
         new_cell.render();
