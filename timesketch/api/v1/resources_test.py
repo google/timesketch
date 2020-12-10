@@ -414,21 +414,27 @@ class SigmaByTextResourceTest(BaseTest):
         '''
 
     expected_response = {
-                    'title': 'Installation of foobar',
-                    'id': 'bb1e0d1d-cd13-4b65-bf7e-69b4e740266b',
-                    'description': 'Detects suspicious installation of foobar',
-                    'references': ['https://samle.com/foobar'],
-                    'author': 'Alexander Jaeger',
-                    'date': '2020/12/10',
-                    'modified': '2020/12/10',
-                    'logsource': {'product': 'linux', 'service': 'shell'},
-                    'detection': {'keywords': ['*apt-get install foobar*'],
-                    'condition': 'keywords'},
-                    'falsepositives': ['Unknown'], 'level': 'high',
-                    'es_query':
-                        '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ foobar*")',
-                    'file_name': 'N/A',
-                    'file_relpath': 'N/A'
+        'title': 'Installation of foobar',
+        'id': 'bb1e0d1d-cd13-4b65-bf7e-69b4e740266b',
+        'description': 'Detects suspicious installation of foobar',
+        'references': ['https://samle.com/foobar'],
+        'author': 'Alexander Jaeger',
+        'date': '2020/12/10',
+        'modified': '2020/12/10',
+        'logsource': {
+            'product': 'linux',
+            'service': 'shell'
+        },
+        'detection': {
+            'keywords': ['*apt-get install foobar*'],
+            'condition': 'keywords'
+        },
+        'falsepositives': ['Unknown'],
+        'level': 'high',
+        'es_query':
+            '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ foobar*")',# pylint: disable=line-too-long
+        'file_name': 'N/A',
+        'file_relpath': 'N/A'
     }
 
     def test_get_sigma_rule(self):
