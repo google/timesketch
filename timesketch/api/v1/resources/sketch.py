@@ -110,6 +110,7 @@ class SketchListResource(resources.ResourceMixin, Resource):
                 )
             )
 
+        # If no scope is set, fall back to returning all sketches.
         if not scope:
             sketches = filtered_sketches.all()
 
