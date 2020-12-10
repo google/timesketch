@@ -26,6 +26,7 @@ from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
 from sqlalchemy import not_
+from sqlalchemy import or_
 
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
@@ -103,7 +104,11 @@ class SketchListResource(resources.ResourceMixin, Resource):
             filtered_sketches = base_filter.filter(Sketch.user != current_user)
         elif scope == 'search':
             filtered_sketches = base_filter_with_archived.filter(
-                Sketch.name.like(f'%{search_query}%'))
+                or_(
+                    Sketch.name.ilike(f'%{search_query}%'),
+                    Sketch.description.ilike(f'%{search_query}%')
+                )
+            )
 
         if not sketches:
             pagination = filtered_sketches.paginate(page=page, per_page=3)

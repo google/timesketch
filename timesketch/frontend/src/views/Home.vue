@@ -47,13 +47,6 @@ limitations under the License.
       </div>
     </b-modal>
 
-    <!--
-    <div v-if="!loading && !mySketches.length && !sharedSketches.length" class="has-text-centered">
-      <h1 class="title">Welcome to Timesketch</h1>
-      <button class="button is-success is-rounded" v-on:click="showSketchCreateModal = !showSketchCreateModal"><strong>Create sketch</strong></button>
-    </div>
-    -->
-
     <section class="section" v-if="newSearchQuery">
       <div class="container">
         <div class="card">
@@ -76,7 +69,7 @@ limitations under the License.
         <div class="card">
           <header class="card-header">
             <div class="card-header-title">
-              Your recent activity
+              My recent activity
             </div>
           </header>
           <div class="card-content">

@@ -135,7 +135,6 @@ $table-background-color: var(--table-background-color);
 $table-head-cell-color: var(--table-head-cell-color);
 $table-cell-border: 1px solid var(--table-cell-border-color);
 $table-color: var(--table-color);
-//$table-cell-border:0;
 $title-color: var(--default-title-font-color);
 $navbar-item-color: var(--navbar-item-link-color);
 $label-color: var(--form-label-font-color);
@@ -166,6 +165,7 @@ body {
 
 .login-page {
     background: var(--login-page-background-color);
+    color: var(--default-font-color);
 }
 
 .card {

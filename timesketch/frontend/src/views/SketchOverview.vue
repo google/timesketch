@@ -163,10 +163,10 @@ limitations under the License.
             <div class="tile is-parent">
               <div class="tile is-child tile-box">
                 <header class="card-header">
-                  <p class="card-header-title is-uppercase">Metadata</p>
+                  <p class="card-header-title">Metadata</p>
                 </header>
                 <div style="padding:1.25em;">
-                  Creator: {{sketch.user.username}}
+                  Creator: {{ sketch.user.username }}
                 </div>
               </div>
             </div>
@@ -197,7 +197,7 @@ limitations under the License.
 
                   <div class="tile is-child tile-box" v-if="sketch.timelines && sketch.timelines.length ? sketch.timelines.length: false">
                     <header class="card-header">
-                      <p class="card-header-title is-uppercase">Timelines</p>
+                      <p class="card-header-title">Timelines</p>
                       <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
                         <p v-if="meta.permissions.write" class="control">
                           <button class="button is-success is-rounded is-small" v-on:click="showUploadTimelineModal = !showUploadTimelineModal">
@@ -222,22 +222,16 @@ limitations under the License.
                     </div>
                   </div>
 
-                  <div class="tile is-child tile-box">
+                  <div class="tile is-child tile-box" v-if="sketch.stories.length">
                     <header class="card-header">
-                      <p class="card-header-title is-uppercase">Stories</p>
+                      <p class="card-header-title">Stories</p>
                       <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
                         <p class="control">
-                          <a class="button is-success is-small" style="margin-right:7px;">
+                          <router-link class="button is-rounded is-small is-success" :to="{ name: 'SketchStoryOverview' }">
                               <span class="icon is-small">
                                 <i class="fas fa-plus-circle"></i>
                               </span>
                             <span>Create story</span>
-                          </a>
-                          <router-link class="button is-rounded is-small" :to="{ name: 'SketchStoryOverview' }">
-                              <span class="icon is-small">
-                                <i class="fas fa-cog"></i>
-                              </span>
-                            <span>Manage</span>
                           </router-link>
                         </p>
                       </div>
@@ -247,15 +241,37 @@ limitations under the License.
                       <ts-sketch-story-list :controls="false"></ts-sketch-story-list>
                     </div>
                   </div>
-
                 </div>
+
                 <div class="tile is-parent is-vertical">
 
-                  <div class="tile is-child tile-box">
+                  <div class="tile is-child tile-box" v-if="!meta.views.length && !sketch.graphs.length">
                     <header class="card-header">
-                      <p class="card-header-title is-uppercase">Saved searches</p>
+                      <p class="card-header-title">Get started!</p>
                       <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
-                        <p class="control">
+                      </div>
+                    </header>
+                    <div style="padding:1.25em;">
+                      <p>
+                        Welcome to your new investigation.
+                        You get started by navigating to the <router-link style="text-decoration: underline;" :to="{ name: 'SketchExplore' }">explore page</router-link> where you can navigate your timelines, use search queries,
+                        apply filters, view timeline data and save your search discoveries as new saved searches.
+                      </p>
+                      <br>
+                      <router-link class="button is-success" :to="{ name: 'SketchExplore' }">
+                        <span>Begin to explore your data</span>
+                        <span class="icon is-small">
+                          <i class="fas fa-chevron-circle-right"></i>
+                        </span>
+                      </router-link>
+                    </div>
+                  </div>
+
+                  <div class="tile is-child tile-box" v-if="meta.views.length">
+                    <header class="card-header">
+                      <p class="card-header-title">Saved searches</p>
+                      <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
+                        <p class="control" v-if="sketch.stories.length">
                           <router-link class="button is-rounded is-small" :to="{ name: 'SketchManageViews' }">
                             <span class="icon is-small">
                               <i class="fas fa-cog"></i>
@@ -271,22 +287,22 @@ limitations under the License.
                     </div>
                   </div>
 
-                  <div class="tile is-child tile-box">
+                  <div class="tile is-child tile-box" v-if="sketch.graphs.length">
                     <header class="card-header">
-                      <p class="card-header-title is-uppercase">Graphs</p>
+                      <p class="card-header-title">Saved graphs</p>
                       <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
                         <p class="control">
-                          <router-link class="button is-rounded is-small" :to="{ name: 'SketchGraphOverview' }">
+                          <router-link class="button is-rounded is-small is-success" :to="{ name: 'SketchGraphOverview' }">
+                            <span>Explore all graphs</span>
                             <span class="icon is-small">
-                              <i class="fas fa-cog"></i>
+                              <i class="fas fa-chevron-circle-right"></i>
                             </span>
-                            <span>Manage</span>
                           </router-link>
                         </p>
                       </div>
                     </header>
                     <div style="padding:1.25em;">
-                      No graphs saved yet
+                      <ts-graph-list></ts-graph-list>
                     </div>
                   </div>
 
@@ -294,8 +310,6 @@ limitations under the License.
               </div>
             </div>
           </div>
-
-
         </div>
       </section>
 
@@ -316,6 +330,8 @@ import TsUploadTimelineForm from '../components/Sketch/UploadForm'
 import TsSketchTimelinesManage from './SketchManageTimelines'
 import TsShareForm from '../components/Sketch/ShareForm'
 import SessionChart from "../components/Sketch/SessionChart"
+import TsGraphList from "../components/Sketch/GraphList"
+
 
 export default {
   components: {
@@ -328,6 +344,7 @@ export default {
     TsSketchStoryList,
     TsSketchTimelinesManage,
     TsShareForm,
+    TsGraphList
   },
   data () {
     return {
