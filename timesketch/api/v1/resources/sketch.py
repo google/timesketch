@@ -90,6 +90,9 @@ class SketchListResource(resources.ResourceMixin, Resource):
         num_hits = 0
 
         if scope == 'recent':
+            # Get list of sketches that the user has actively searched in.
+            # TODO: Make this cover more actions such as story updates etc.
+            # TODO: Right now we only return the top 3, make this configurable.
             views = View.query.filter_by(
                 user=current_user, name='').order_by(
                 View.updated_at.desc()).limit(3)
