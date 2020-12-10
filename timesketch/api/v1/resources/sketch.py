@@ -52,7 +52,7 @@ class SketchListResource(resources.ResourceMixin, Resource):
     """Resource for listing sketches."""
 
     def __init__(self):
-        super(SketchListResource, self).__init__()
+        super().__init__()
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('scope', type=str, required=False)
         self.parser.add_argument('page', type=int, required=False)
@@ -110,8 +110,11 @@ class SketchListResource(resources.ResourceMixin, Resource):
                 )
             )
 
+        if not scope:
+            sketches = filtered_sketches.all()
+
         if not sketches:
-            pagination = filtered_sketches.paginate(page=page, per_page=3)
+            pagination = filtered_sketches.paginate(page=page, per_page=20)
             sketches = pagination.items
             num_hits = pagination.total
 

@@ -18,7 +18,7 @@ limitations under the License.
 
     <ts-navbar-main>
       <template v-slot:center>
-        <input v-on:keyup.enter="search" v-model="searchQuery" class="ts-home-input" type="text" placeholder="Search for investigations by title" autofocus>
+        <input v-on:keyup.enter="search" v-model="searchQuery" class="ts-home-input" type="text" placeholder="Search for investigations" autofocus>
       </template>
     </ts-navbar-main>
 
