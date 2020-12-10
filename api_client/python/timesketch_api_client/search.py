@@ -884,9 +884,8 @@ class Search(resource.SketchResource):
             self._execute_query()
 
         return_list = []
-        timelines = {}
-        for timeline_obj in self._sketch.list_timelines():
-            timelines[timeline_obj.index] = timeline_obj.name
+        timelines = {
+            t.index_name: t.name for t in self._sketch.list_timelines()}
 
         return_field_list = []
         return_fields = self._return_fields
