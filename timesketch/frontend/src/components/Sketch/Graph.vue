@@ -135,7 +135,7 @@ limitations under the License.
                   </cy-element>
                 </cytoscape>
                 <span v-if="hasGraphCache">
-                  <span><i>Generated {{currentGraphCache.updated_at | moment("utc", "from", "now")}}</i></span>
+                  <span><i>Generated {{ $moment.utc(currentGraphCache.updated_at).local().fromNow() }}</i></span>
                   <a class="is-small" style="text-decoration: underline; margin-left:15px;" v-on:click="buildGraph({name: currentGraph}, true)">
                     <span>Refresh</span>
                   </a>

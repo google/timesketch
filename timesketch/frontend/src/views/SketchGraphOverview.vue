@@ -15,6 +15,13 @@ limitations under the License.
 -->
 <template>
   <div>
+
+    <ts-navbar-main>
+      <template v-slot:left>
+        {{ sketch.name }}
+      </template>
+    </ts-navbar-main>
+
     <section class="section">
       <div class="container is-fluid">
         <ts-navbar-secondary currentAppContext="sketch" currentPage="graph"></ts-navbar-secondary>
@@ -25,35 +32,13 @@ limitations under the License.
       <div class="container is-fluid">
         <div class="card">
           <div class="card-content">
-            <div class="notification is-warning">
-              <span class="title is-4">Timesketch Graphs</span>
-              <p>
-                This is a new <strong>experimental feature</strong> for graph visualisation of timeline data.
-                It consist of a server side plugin framework and an interactive frontend UI for exploring.
-              </p>
+            <div v-if="sketch.graphs.length">
+              <span class="title is-6 is-uppercase">Saved graphs</span>
+              <ts-graph-list></ts-graph-list>
+              <br><br>
             </div>
-            <br><br>
-            <span class="title is-6 is-uppercase">System generated</span>
-            <router-link :to="{ name: 'SketchGraphExplore', query: {plugin: graphPlugin.name}}" v-for="graphPlugin in graphs" :key="graphPlugin.name">
-              <ul class="content-list">
-                <li style="padding:10px;border-bottom:none;cursor:pointer;">
-                  <strong style="color: var(--default-font-color)">{{ graphPlugin.display_name }}</strong>
-                  <br>
-                  <span>{{ graphPlugin.description }}</span>
-                </li>
-              </ul>
-            </router-link>
-            <br><br>
-            <span class="title is-6 is-uppercase">Saved by users</span>
-                <router-link :to="{ name: 'SketchGraphExplore', query: {graph: savedGraph.id}}" v-for="savedGraph in savedGraphs" :key="savedGraph.id">
-                  <ul class="content-list">
-                  <li style="padding:10px;border-bottom:none;cursor:pointer;">
-                    <strong style="color: var(--default-font-color)">{{ savedGraph.name }}</strong>
-                    <br>
-                    <span>Created: {{ savedGraph.created_at | moment("YYYY-MM-DD HH:mm") }}</span>
-                  </li>
-                  </ul>
-                </router-link>
+            <span class="title is-6 is-uppercase">Graph plugins</span>
+            <ts-graph-plugin-list></ts-graph-plugin-list>
           </div>
         </div>
       </div>
@@ -63,36 +48,17 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from "../utils/RestApiClient"
+import TsGraphList from "../components/Sketch/GraphList"
+import TsGraphPluginList from "../components/Sketch/GraphPluginList"
+
 
 export default {
   props: ['sketchId'],
+  components: {TsGraphList, TsGraphPluginList},
   computed: {
     sketch () {
       return this.$store.state.sketch
     }
-  },
-  data() {
-    return {
-      graphs: {},
-      savedGraphs: [],
-    }
-  },
-  created() {
-    ApiClient.getGraphPluginList().then((response) => {
-        this.graphs = response.data
-      }).catch((e) => {
-        console.error(e)
-    })
-    ApiClient.getSavedGraphList(this.sketch.id).then((response) => {
-      let graphs = response.data['objects'][0]
-      if (graphs !== undefined) {
-        this.savedGraphs = response.data['objects'][0]
-      }
-      }).catch((e) => {
-        console.error(e)
-    })
-
   }
 }
 </script>

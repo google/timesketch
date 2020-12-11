@@ -14,7 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
+
   <div v-if="sketch.status">
+
+    <ts-navbar-main>
+      <template v-slot:left>
+        {{ sketch.name }}
+      </template>
+    </ts-navbar-main>
 
     <div v-if="isArchived" class="task-container columns is-multiline" style="margin-top:50px;">
       <div class="card column is-half is-offset-one-quarter has-text-centered" style="min-height: 300px; padding-top: 90px;">
@@ -28,224 +35,285 @@ limitations under the License.
     </div>
 
     <div v-if="!isArchived">
-    <section class="section">
-      <div class="container is-fluid">
-        <ts-navbar-secondary currentAppContext="sketch" currentPage="overview">
+      <section class="section">
+        <div class="container is-fluid">
+          <ts-navbar-secondary currentAppContext="sketch" currentPage="overview">
 
-          <span v-for="label in meta.sketch_labels" :key="label" style="margin-right:10px; color: var(--default-font-color);font-size: 0.7em">{{  label }}</span>
+            <span v-for="label in meta.sketch_labels" :key="label" style="margin-right:10px; color: var(--default-font-color);font-size: 0.7em">{{  label }}</span>
 
-          <b-tooltip v-if="meta.collaborators" :label="shareTooltip" position="is-bottom" type="is-white">
-            <a v-if="meta.permissions.write" class="button is-info is-rounded" style="margin-right:10px;" v-on:click="showShareModal = !showShareModal">
-                <span class="icon is-small">
-                  <i v-if="meta.permissions.public" class="fas fa-globe"></i>
-                  <i v-else-if="meta.collaborators.users.length ||  meta.collaborators.groups.length" class="fas fa-users"></i>
-                  <i v-else-if="!meta.permissions.public" class="fas fa-lock"></i>
-                </span>
-              <span>Share</span>
-            </a>
-          </b-tooltip>
-
-          <b-dropdown v-if="meta.permissions.write" aria-role="list" position="is-bottom-left">
-            <a class="button ts-dropdown-button" style="background:transparent;border:none;" slot="trigger" slot-scope="{ active }">
-              <span class="icon is-small">
-                <i :class="active ? 'fas fa-angle-up' : 'fas fa-angle-down'"></i>
-              </span>
-              <span>More</span>
-            </a>
-            <b-dropdown-item v-if="meta.permissions.delete" aria-role="listitem">
-              <a class="dropdown-item" v-on:click="showDeleteSketchModal = !showDeleteSketchModal">
-                <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-trash"></i></span>
-                <span>Delete</span>
+            <b-tooltip v-if="meta.collaborators" :label="shareTooltip" position="is-bottom" type="is-white">
+              <a v-if="meta.permissions.write" class="button is-info" style="margin-right:10px;" v-on:click="showShareModal = !showShareModal">
+                    <span class="icon is-small">
+                      <i v-if="meta.permissions.public" class="fas fa-globe"></i>
+                      <i v-else-if="meta.collaborators.users.length ||  meta.collaborators.groups.length" class="fas fa-users"></i>
+                      <i v-else-if="!meta.permissions.public" class="fas fa-lock"></i>
+                    </span>
+                <span>Share</span>
               </a>
-            </b-dropdown-item>
-            <b-dropdown-item v-if="meta.permissions.delete" aria-role="listitem">
-              <a class="dropdown-item" v-on:click="archiveSketch">
-                <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-archive"></i></span>
-                <span>Archive</span>
+            </b-tooltip>
+
+            <b-dropdown v-if="meta.permissions.write" aria-role="list" position="is-bottom-left">
+              <a class="button ts-dropdown-button" style="background:transparent;border:none;" slot="trigger" slot-scope="{ active }">
+                  <span class="icon is-small">
+                    <i :class="active ? 'fas fa-angle-up' : 'fas fa-angle-down'"></i>
+                  </span>
+                <span>More</span>
               </a>
-            </b-dropdown-item>
-            <b-dropdown-item v-if="meta.permissions.read" aria-role="listitem">
-              <a class="dropdown-item" v-on:click="exportSketch()">
-                <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-file-export"></i></span>
-                <span>Export</span>
-              </a>
-            </b-dropdown-item>
-          </b-dropdown>
-
-        </ts-navbar-secondary>
-      </div>
-    </section>
-
-    <b-modal :active.sync="showShareModal" :width="640" scroll="keep">
-      <div class="card">
-        <header class="card-header">
-          <p class="card-header-title">Share sketch</p>
-        </header>
-        <div class="card-content">
-          <div class="content">
-            <ts-share-form @closeShareModal="closeShareModal"></ts-share-form>
-          </div>
-        </div>
-      </div>
-    </b-modal>
-
-    <b-modal :active.sync="showUploadTimelineModal" :width="640" scroll="keep">
-      <div class="card">
-        <header class="card-header">
-          <p class="card-header-title">Upload new timeline</p>
-        </header>
-        <div class="card-content">
-          <div class="content">
-            <p>
-              Supported formats are Plaso storage file, JSONL, or a CSV file.
-              If you are uploading a CSV or JSONL file make sure to read the <a href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines" rel="noreferrer" target="_blank">documentation</a> to learn what columns are needed.
-            </p>
-            <ts-upload-timeline-form @toggleModal="showUploadTimelineModal = !showUploadTimelineModal"></ts-upload-timeline-form>
-          </div>
-        </div>
-      </div>
-    </b-modal>
-
-    <b-modal :active.sync="showDeleteSketchModal" :width="640" scroll="keep">
-      <div class="card">
-        <header class="card-header">
-          <p class="card-header-title">Delete sketch</p>
-        </header>
-        <div class="card-content">
-          <div class="content">
-            <p>Are you sure you want to delete this sketch?</p>
-            <div class="field is-grouped">
-              <p class="control">
-                <button class="button is-danger" v-on:click="deleteSketch">
+              <b-dropdown-item v-if="meta.permissions.delete" aria-role="listitem">
+                <a class="dropdown-item" v-on:click="showDeleteSketchModal = !showDeleteSketchModal">
                   <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-trash"></i></span>
                   <span>Delete</span>
-                </button>
-              </p>
-              <p class="control">
-                <button class="button" v-on:click="showDeleteSketchModal = !showDeleteSketchModal">
-                  <span>I changed my mind, keep the sketch!</span>
-                </button>
-              </p>
+                </a>
+              </b-dropdown-item>
+              <b-dropdown-item v-if="meta.permissions.delete" aria-role="listitem">
+                <a class="dropdown-item" v-on:click="archiveSketch">
+                  <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-archive"></i></span>
+                  <span>Archive</span>
+                </a>
+              </b-dropdown-item>
+              <b-dropdown-item v-if="meta.permissions.read" aria-role="listitem">
+                <a class="dropdown-item" v-on:click="exportSketch()">
+                  <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-file-export"></i></span>
+                  <span>Export</span>
+                </a>
+              </b-dropdown-item>
+            </b-dropdown>
+
+          </ts-navbar-secondary>
+        </div>
+      </section>
+
+      <b-modal :active.sync="showShareModal" :width="640" scroll="keep">
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title">Share sketch</p>
+          </header>
+          <div class="card-content">
+            <div class="content">
+              <ts-share-form @closeShareModal="closeShareModal"></ts-share-form>
             </div>
           </div>
         </div>
-      </div>
-    </b-modal>
+      </b-modal>
 
-    <!-- Title and description -->
-    <section class="section">
-      <div class="container is-fluid">
-        <div class="card" style="min-height: 200px;">
+      <b-modal :active.sync="showUploadTimelineModal" :width="640" scroll="keep">
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title">Upload new timeline</p>
+          </header>
           <div class="card-content">
-            <ts-sketch-summary :sketch="sketch"></ts-sketch-summary>
-            <br>
-            <b-field grouped group-multiline>
-              <div class="control" v-for="user in sortedUserList()" :key="user.name">
-                <b-tag attached size="is-medium">{{ user }}</b-tag>
-              </div>
-              <div class="control" v-for="group in sortedGroupList()" :key="group.name">
-                <b-tag attached size="is-medium">{{ group }}</b-tag>
-              </div>
-            </b-field>
+            <div class="content">
+              <p>
+                Supported formats are Plaso storage file, JSONL, or a CSV file.
+                If you are uploading a CSV or JSONL file make sure to read the <a href="https://github.com/google/timesketch/blob/master/docs/Users-Guide.md#adding-timelines" rel="noreferrer" target="_blank">documentation</a> to learn what columns are needed.
+              </p>
+              <ts-upload-timeline-form @toggleModal="showUploadTimelineModal = !showUploadTimelineModal"></ts-upload-timeline-form>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </b-modal>
 
-    <section class="section" v-if="sketch.active_timelines.length">
-      <div class="container is-fluid">
-        <div class="card" style="min-height: 100px;">
+      <b-modal :active.sync="showDeleteSketchModal" :width="640" scroll="keep">
+        <div class="card">
+          <header class="card-header">
+            <p class="card-header-title">Delete sketch</p>
+          </header>
           <div class="card-content">
-            <ts-sketch-metrics :timelines="sketch.active_timelines" :views="meta.views" :stories="sketch.stories" :count="count"></ts-sketch-metrics>
+            <div class="content">
+              <p>Are you sure you want to delete this sketch?</p>
+              <div class="field is-grouped">
+                <p class="control">
+                  <button class="button is-danger" v-on:click="deleteSketch">
+                    <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-trash"></i></span>
+                    <span>Delete</span>
+                  </button>
+                </p>
+                <p class="control">
+                  <button class="button" v-on:click="showDeleteSketchModal = !showDeleteSketchModal">
+                    <span>I changed my mind, keep the sketch!</span>
+                  </button>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </b-modal>
 
-    <!-- Timeline, Saved View and Stories lists-->
-    <section class="section" v-if="sketch.timelines && sketch.timelines.length ? sketch.timelines.length: false">
-      <div class="container is-fluid">
-        <div class="columns">
+      <!-- Title and description -->
+      <section class="section">
+        <div class="container is-fluid">
 
-          <!-- Timelines -->
-          <div class="column" v-if="sketch.timelines && sketch.timelines.length ? sketch.timelines.length: false">
-            <div class="card has-min-height">
-              <header class="card-header">
-                <p class="card-header-title">Timelines</p>
-                <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
-                  <p v-if="meta.permissions.write" class="control">
-                    <button class="button is-success is-rounded is-small" v-on:click="showUploadTimelineModal = !showUploadTimelineModal">
+          <div class="tile is-ancestor">
+            <div class="tile is-8 is-parent">
+              <div class="tile is-child tile-box">
+                <div class="card-content">
+                  <ts-sketch-summary :sketch="sketch"></ts-sketch-summary>
+                  <br>
+                  <b-field grouped group-multiline>
+                    <div class="control" v-for="user in sortedUserList()" :key="user.name">
+                      <b-tag attached size="is-medium">{{ user }}</b-tag>
+                    </div>
+                    <div class="control" v-for="group in sortedGroupList()" :key="group.name">
+                      <b-tag attached size="is-medium">{{ group }}</b-tag>
+                    </div>
+                  </b-field>
+                </div>
+              </div>
+            </div>
+            <div class="tile is-parent">
+              <div class="tile is-child tile-box">
+                <header class="card-header">
+                  <p class="card-header-title">Metadata</p>
+                </header>
+                <div style="padding:1.25em;">
+                  Creator: {{ sketch.user.username }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <section class="section" v-if="sketch.active_timelines.length">
+        <div class="container is-fluid">
+          <div class="tile-box">
+            <div style="padding:1.25em;">
+              <ts-sketch-metrics :timelines="sketch.active_timelines" :views="meta.views" :stories="sketch.stories" :count="count"></ts-sketch-metrics>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Timelines, Saved Views, Stories and Graphs lists-->
+      <section class="section" v-if="sketch.timelines && sketch.timelines.length ? sketch.timelines.length: false">
+        <div class="container is-fluid">
+
+          <div class="tile is-ancestor">
+            <div class="tile is-vertical is-12">
+              <div class="tile">
+
+                <div class="tile is-parent is-vertical">
+
+                  <div class="tile is-child tile-box" v-if="sketch.timelines && sketch.timelines.length ? sketch.timelines.length: false">
+                    <header class="card-header">
+                      <p class="card-header-title">Timelines</p>
+                      <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
+                        <p v-if="meta.permissions.write" class="control">
+                          <button class="button is-success is-rounded is-small" v-on:click="showUploadTimelineModal = !showUploadTimelineModal">
+                                <span class="icon is-small">
+                                  <i class="fas fa-upload"></i>
+                                </span>
+                            <span>Upload timeline</span>
+                          </button>
+                        </p>
+                        <p class="control">
+                          <router-link class="button is-rounded is-small" :to="{ name: 'SketchManageTimelines' }">
+                              <span class="icon is-small">
+                                <i class="fas fa-cog"></i>
+                              </span>
+                            <span>Manage</span>
+                          </router-link>
+                        </p>
+                      </div>
+                    </header>
+                    <div style="padding:1.25em;">
+                      <ts-timeline-list :timelines="sketch.timelines" :controls="true" :is-compact="true"></ts-timeline-list>
+                    </div>
+                  </div>
+
+                  <div class="tile is-child tile-box" v-if="sketch.stories.length">
+                    <header class="card-header">
+                      <p class="card-header-title">Stories</p>
+                      <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
+                        <p class="control">
+                          <router-link class="button is-rounded is-small is-success" :to="{ name: 'SketchStoryOverview' }">
+                              <span class="icon is-small">
+                                <i class="fas fa-plus-circle"></i>
+                              </span>
+                            <span>Create story</span>
+                          </router-link>
+                        </p>
+                      </div>
+                    </header>
+                    <div style="padding:1.25em;">
+                      <span v-if="!sketch.stories.length">No stories</span>
+                      <ts-sketch-story-list :controls="false"></ts-sketch-story-list>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="tile is-parent is-vertical">
+
+                  <div class="tile is-child tile-box" v-if="!meta.views.length && !sketch.graphs.length">
+                    <header class="card-header">
+                      <p class="card-header-title">Get started!</p>
+                      <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
+                      </div>
+                    </header>
+                    <div style="padding:1.25em;">
+                      <p>
+                        Welcome to your new investigation.
+                        You get started by navigating to the <router-link style="text-decoration: underline;" :to="{ name: 'SketchExplore' }">explore page</router-link> where you can navigate your timelines, use search queries,
+                        apply filters, view timeline data and save your search discoveries as new saved searches.
+                      </p>
+                      <br>
+                      <router-link class="button is-success" :to="{ name: 'SketchExplore' }">
+                        <span>Begin to explore your data</span>
                         <span class="icon is-small">
-                          <i class="fas fa-plus"></i>
+                          <i class="fas fa-chevron-circle-right"></i>
                         </span>
-                      <span>Timeline</span>
-                    </button>
-                  </p>
-                  <p class="control">
-                    <router-link class="button is-rounded is-small" :to="{ name: 'SketchManageTimelines' }">
-                      <span class="icon is-small">
-                        <i class="fas fa-cog"></i>
-                      </span>
-                      <span>Manage</span>
-                    </router-link>
-                  </p>
-                </div>
-              </header>
-              <div class="card-content" style="padding:5px;">
-                <ts-timeline-list :timelines="sketch.timelines" :controls="true" :is-compact="true"></ts-timeline-list>
-              </div>
-            </div>
-          </div>
+                      </router-link>
+                    </div>
+                  </div>
 
-          <!-- Saved views -->
-          <div class="column" v-if="meta.views && meta.views.length ? meta.views.length: false">
-            <div class="card has-min-height">
-              <header class="card-header">
-                <p class="card-header-title">Saved searches</p>
-                <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
-                  <p class="control">
-                    <router-link class="button is-rounded is-small" :to="{ name: 'SketchManageViews' }">
-                      <span class="icon is-small">
-                        <i class="fas fa-cog"></i>
-                      </span>
-                      <span>Manage</span>
-                    </router-link>
-                  </p>
-                </div>
-              </header>
-              <div class="card-content" style="padding:5px;">
-                <ts-saved-view-list :views="meta.views"></ts-saved-view-list>
-              </div>
-            </div>
-          </div>
+                  <div class="tile is-child tile-box" v-if="meta.views.length">
+                    <header class="card-header">
+                      <p class="card-header-title">Saved searches</p>
+                      <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
+                        <p class="control" v-if="sketch.stories.length">
+                          <router-link class="button is-rounded is-small" :to="{ name: 'SketchManageViews' }">
+                            <span class="icon is-small">
+                              <i class="fas fa-cog"></i>
+                            </span>
+                            <span>Manage</span>
+                          </router-link>
+                        </p>
+                      </div>
+                    </header>
+                    <div style="padding:1.25em;">
+                      <span v-if="!meta.views.length">No saved searches</span>
+                      <ts-saved-view-list :views="meta.views"></ts-saved-view-list>
+                    </div>
+                  </div>
 
-          <!-- Stories -->
-          <div class="column" v-if="sketch.stories && sketch.stories.length ? sketch.stories.length: false">
-            <div class="card has-min-height">
-              <header class="card-header">
-                <p class="card-header-title">Stories</p>
-                <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
-                  <p class="control">
-                    <router-link class="button is-rounded is-small" :to="{ name: 'SketchStoryOverview' }">
-                      <span class="icon is-small">
-                        <i class="fas fa-cog"></i>
-                      </span>
-                      <span>Manage</span>
-                    </router-link>
-                  </p>
-                </div>
+                  <div class="tile is-child tile-box" v-if="sketch.graphs.length">
+                    <header class="card-header">
+                      <p class="card-header-title">Saved graphs</p>
+                      <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
+                        <p class="control">
+                          <router-link class="button is-rounded is-small is-success" :to="{ name: 'SketchGraphOverview' }">
+                            <span>Explore all graphs</span>
+                            <span class="icon is-small">
+                              <i class="fas fa-chevron-circle-right"></i>
+                            </span>
+                          </router-link>
+                        </p>
+                      </div>
+                    </header>
+                    <div style="padding:1.25em;">
+                      <ts-graph-list></ts-graph-list>
+                    </div>
+                  </div>
 
-              </header>
-              <div class="card-content" style="padding:5px;">
-                <ts-sketch-story-list :controls="false"></ts-sketch-story-list>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <ts-sketch-timelines-manage v-if="!sketch.timelines.length" :hide-navigation="true"></ts-sketch-timelines-manage>
+      <ts-sketch-timelines-manage v-if="!sketch.timelines.length" :hide-navigation="true"></ts-sketch-timelines-manage>
 
     </div>
   </div>
@@ -261,9 +329,13 @@ import TsSketchStoryList from '../components/Sketch/StoryList'
 import TsUploadTimelineForm from '../components/Sketch/UploadForm'
 import TsSketchTimelinesManage from './SketchManageTimelines'
 import TsShareForm from '../components/Sketch/ShareForm'
+import SessionChart from "../components/Sketch/SessionChart"
+import TsGraphList from "../components/Sketch/GraphList"
+
 
 export default {
   components: {
+    SessionChart,
     TsSketchMetrics,
     TsSketchSummary,
     TsTimelineList,
@@ -272,6 +344,7 @@ export default {
     TsSketchStoryList,
     TsSketchTimelinesManage,
     TsShareForm,
+    TsGraphList
   },
   data () {
     return {
@@ -407,6 +480,12 @@ export default {
   .archive-card-content {
     justify-content: center;
     align-items: center;
+  }
+
+  .tile-box {
+    border-radius: 6px;
+    background-color: var(--card-background-color);
+    color: var(--default-font-color);
   }
 
 
