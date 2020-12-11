@@ -83,6 +83,9 @@ class ViewListResource(resources.ResourceMixin, Resource):
             if isinstance(query_filter, tuple):
                 query_filter = query_filter[0]
 
+        if not view_name:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'View name is missing.')
+
         # Create a new search template based on this view (only if requested by
         # the user).
         if form.new_searchtemplate.data:
