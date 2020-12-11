@@ -114,8 +114,7 @@ class Graph:
         Returns:
             Graph in Cytoscape JSON format.
         """
-        cy_json = nx.readwrite.json_graph.cytoscape_data(self.nx_instance)
-        return cy_json.get('elements', [])
+        return nx.readwrite.json_graph.cytoscape_data(self.nx_instance)
 
 
 class BaseGraphElement:
