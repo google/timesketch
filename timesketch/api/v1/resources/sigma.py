@@ -107,10 +107,9 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
         form = forms.SigmaRuleForm.build(request)
         # optional: do we want to have a title at this point?
         title = form.title.data
-        logger.debug(title)
-        print(title)
         content = form.content.data
 
+        print(f'Content passed: {content}')
         if not form.validate_on_submit():
             abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data')
 

@@ -71,9 +71,6 @@ class TimesketchSigmaTest(unittest.TestCase):
         rule.from_rule('5266a592-b793-11ea-b3de-0242ac130004')
         self.assertIsNotNone(rule)
 
-        print(rule.__dict__)
-        print(f'title: {rule.title} id: {rule.id}')
-
         self.assertEqual(
             rule.title, 'Suspicious Installation of Zenmap',
             'Title of the rule does not match')
@@ -100,13 +97,8 @@ class TimesketchSigmaTest(unittest.TestCase):
     def test_get_sigma_rule_by_text(self):
         rule = self.api_client.get_sigma_rule_by_text(MOCK_SIGMA_RULE)
         self.assertIsNotNone(rule)
+        print(rule.__dict__)
+        print(f'title: {rule.title} id: {rule.id}')
 
-
-        # TODO: Make that hapopen once the API actually returns what is expected
-        #  here
-        #self.assertIn('zmap', rule.es_query, 'ES_Query does not match')
-        #self.assertIn('Zenmap', rule.title, 'Title does not match')
-
-        #self.assertEqual(
-        #    rule.title, 'Suspicious Installation of Zenmap',
-        #    'Title of the rule does not match')
+        self.assertIn('zmap', rule.es_query, 'ES_Query does not match')
+        self.assertIn('Zenmap', rule.title, 'Title does not match')

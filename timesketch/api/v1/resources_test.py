@@ -435,7 +435,7 @@ class SigmaByTextResourceTest(BaseTest):
     }
 
     def test_get_sigma_rule(self):
-        """Authenticated request to get an sigma rule."""
+        """Authenticated request to get an sigma rule by text."""
 
         self.login()
 

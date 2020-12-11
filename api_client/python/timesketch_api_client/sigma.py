@@ -17,6 +17,7 @@ from __future__ import unicode_literals
 import logging
 
 from . import resource
+from . import error
 
 logger = logging.getLogger('timesketch_api.sigma')
 
@@ -99,6 +100,12 @@ class Sigma(resource.BaseResource):
         return sigma_data.get('file_relpath', '')
 
     def from_rule(self, rule_uuid):
+        """Get a Sigma object from a rule uuid.
+
+        Args:
+            rule_uuid: Id of the sigma rule.
+
+        """
         # TODO: Write docstring
         self.rule_uuid = rule_uuid
         # TODO: not sure which one is the better one
@@ -110,4 +117,22 @@ class Sigma(resource.BaseResource):
         self.lazyload_data()
 
     def from_text(self, rule_text):
-        return rule_text
+        """Get a Sigma object from a rule text.
+
+        Args:
+            rule_text: Rule text to be parsed.
+
+        """
+        resource_url = '{0:s}/sigma_by_text/'.format(self.api.api_root)
+        data = {'title': 'Get_Sigma_by_text', 'content': rule_text}
+        response = self.api.session.post(resource_url, data=data)
+        print(response.__dict__)
+        response_dict = error.get_response_json(response, logger)
+        #timeline_dict = response_dict['objects'][0]
+        #timeline_obj = sigma.Sigma(
+        #    timeline_id=timeline_dict['id'],
+        #    sketch_id=self.id,
+        #    api=self.api,
+        #    name=timeline_dict['name'],
+        #    searchindex=timeline_dict['searchindex']['index_name'])
+        return response_dict
