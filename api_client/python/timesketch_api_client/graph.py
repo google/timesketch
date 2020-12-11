@@ -32,6 +32,7 @@ class Graph(resource.SketchResource):
     """Graph object."""
 
     def __init__(self, sketch):
+        """Initialize the graph object."""
         resource_uri = f'sketches/{sketch.id}/graphs/'
         super().__init__(sketch=sketch, resource_uri=resource_uri)
 
@@ -47,19 +48,6 @@ class Graph(resource.SketchResource):
         if self._created_at:
             return self._created_at.isoformat()
         return self._created_at
-
-    @property
-    def graph(self):
-        """Property that returns back a graph object."""
-        if self._graph:
-            return self._graph
-
-        if not self.resource_data:
-            return nx.Graph()
-
-        graph_dict = copy.deepcopy(self.resource_data)
-        self._graph = nx.cytoscape_graph(graph_dict)
-        return self._graph
 
     def delete(self):
         """Deletes the saved graph from the store."""
@@ -78,6 +66,53 @@ class Graph(resource.SketchResource):
         return error.check_return_status(response, logger)
 
     @property
+    def draw(self):
+        """Property that returns back a drawing with the graph."""
+        if not self.graph:
+            return None
+
+        if not self.graph.size():
+            return None
+
+        data = self.data.get('elements', {})
+        nodes = data.get('nodes', [])
+
+        label_dict = {
+            x.get('data', {}).get('name', ''): x.get(
+                'data', {}).get('label', '') for x in nodes
+        }
+
+        edges = data.get('edges', [])
+        edge_dict = {
+            x.get('data', {}).get('name', ''): x.get(
+                'data', {}).get('label', '') for x in edges
+        }
+        label_dict.update(edge_dict)
+
+        label_keys = list(label_dict.keys())
+        for key in label_keys:
+            if not key:
+                _ = label_dict.pop(key)
+
+        return nx.draw(
+            self.graph, with_labels=True, labels=label_dict)
+
+    @property
+    def graph(self):
+        """Property that returns back a graph object."""
+        if self._graph:
+            return self._graph
+
+        if not self.resource_data:
+            return nx.Graph()
+
+        # It is necessary to do a deep copy, otherwise the upstream
+        # nx library modifies the resource data.
+        graph_dict = copy.deepcopy(self.resource_data)
+        self._graph = nx.cytoscape_graph(graph_dict)
+        return self._graph
+
+    @property
     def description(self):
         """Property that returns back the description of the saved search."""
         return self._description
@@ -88,25 +123,28 @@ class Graph(resource.SketchResource):
         self._description = description
         self.commit()
 
-    def from_manual(  # pylint: disable=arguments-differ
-            self,
-            **kwargs):
-        """Generate a new graph.
+    def from_manual(self, data, **kwargs):  # pylint: disable=arguments-differ
+        """Generate a new graph using a dictionary.
 
         Args:
+            data (dict): A dictionary of dictionaries adjacency representation.
             kwargs (dict[str, object]): Depending on the resource they may
                 require different sets of arguments to be able to run a raw
                 API request.
 
         Raises:
-            ValueError: if unable to query for the results.
-            RuntimeError: if the query is missing needed values, or if the
-                sketch is archived.
+            ValueError: If the import is not successful.
         """
-        # TODO: Implement
         super().from_manual(**kwargs)
-        self._resource_id = 0
-        self.resource_data = {}
+        if not isinstance(data, dict):
+            raise ValueError('Data needs to be a dict of dictionaries')
+
+        try:
+            graph = nx.from_dict_of_dicts(data)
+        except AttributeError as exc:
+            raise ValueError('Unable to generate a graph') from exc
+
+        self.from_graph(graph)
 
     def _parse_graph_dict(self, graph_dict):
         """Takes a dict object and constructs graph data from it."""
@@ -137,17 +175,24 @@ class Graph(resource.SketchResource):
                 otherwise the graph is pulled from the cache, if it exists.
                 Defaults to False, meaning it pulls from the cache if it
                 exists.
+
+        Raises:
+            ValueError: If the plugin doesn't exist or some issues came up
+                during processing.
         """
         plugin_names = [x.get('name', '') for x in self.plugins]
         if plugin_name.lower() not in plugin_names:
             raise ValueError(
                 f'Plugin [{plugin_name}] not part of the supported plugins.')
 
+        if plugin_config and not isinstance(plugin_config, dict):
+            raise ValueError('Plugin config needs to be a dict.')
+
         resource_url = f'{self.api.api_root}/sketches/{self._sketch.id}/graph/'
         data = {
             'plugin': plugin_name,
             'config': plugin_config,
-            'refresh': refresh
+            'refresh': bool(refresh),
         }
 
         response = self.api.session.post(resource_url, json=data)
@@ -166,6 +211,9 @@ class Graph(resource.SketchResource):
 
         Args:
             graph_id: integer value for the saved graph (primary key).
+
+        Raises:
+            ValueError: If issues came up during processing.
         """
         resource_id = f'sketches/{self._sketch.id}/graphs/{graph_id}/'
         data = self.api.fetch_resource_data(resource_id)
