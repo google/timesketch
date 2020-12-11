@@ -403,7 +403,7 @@ export default {
 
       ApiClient.getSavedGraph(this.sketch.id, graphId).then((response) => {
         this.currentGraph = response.data['objects'][0].name
-        let elements = JSON.parse(response.data['objects'][0].elements)
+        let elements = JSON.parse(response.data['objects'][0].graph_elements)
         let nodes = elements.filter(ele => ele.group === 'nodes')
         let edges = elements.filter(ele => ele.group === 'edges')
         let orderedElements = []
