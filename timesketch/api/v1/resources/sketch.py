@@ -16,7 +16,6 @@
 import logging
 
 import elasticsearch
-import six
 
 from flask import jsonify
 from flask import request
@@ -27,6 +26,7 @@ from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
 from sqlalchemy import not_
+from sqlalchemy import or_
 
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
@@ -42,6 +42,7 @@ from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
+from timesketch.models.sketch import View
 
 
 logger = logging.getLogger('timesketch.sketch_api')
@@ -51,12 +52,11 @@ class SketchListResource(resources.ResourceMixin, Resource):
     """Resource for listing sketches."""
 
     def __init__(self):
-        super(SketchListResource, self).__init__()
+        super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument(
-            'name', type=six.text_type, required=True)
-        self.parser.add_argument(
-            'description', type=six.text_type, required=False)
+        self.parser.add_argument('scope', type=str, required=False)
+        self.parser.add_argument('page', type=int, required=False)
+        self.parser.add_argument('search_query', type=str, required=False)
 
     @login_required
     def get(self):
@@ -65,28 +65,89 @@ class SketchListResource(resources.ResourceMixin, Resource):
         Returns:
             List of sketches (instance of flask.wrappers.Response)
         """
+        args = self.parser.parse_args()
+        scope = args.get('scope', None)
+        page = args.get('page', 1)
+        search_query = args.get('search_query', None)
+
         if current_user.admin:
             sketch_query = Sketch.query
         else:
             sketch_query = Sketch.all_with_acl()
 
-        filtered_sketches = sketch_query.filter(
+        base_filter = sketch_query.filter(
             not_(Sketch.Status.status == 'deleted'),
-            Sketch.Status.parent).order_by(Sketch.updated_at.desc()).all()
+            not_(Sketch.Status.status == 'archived'),
+            Sketch.Status.parent).order_by(Sketch.updated_at.desc())
 
-        # Just return a subset of the sketch objects to reduce the amount of
-        # data returned.
+        base_filter_with_archived = sketch_query.filter(
+            not_(Sketch.Status.status == 'deleted'),
+            Sketch.Status.parent).order_by(Sketch.updated_at.desc())
+
+        filtered_sketches = base_filter_with_archived
         sketches = []
-        for sketch in filtered_sketches:
-            sketches.append({
-                'name': sketch.name,
-                'updated_at': str(sketch.updated_at),
-                'user': sketch.user.username,
+        return_sketches = []
+        num_hits = 0
+
+        if scope == 'recent':
+            # Get list of sketches that the user has actively searched in.
+            # TODO: Make this cover more actions such as story updates etc.
+            # TODO: Right now we only return the top 3, make this configurable.
+            views = View.query.filter_by(
+                user=current_user, name='').order_by(
+                View.updated_at.desc()).limit(3)
+            sketches = [view.sketch for view in views]
+            num_hits = len(sketches)
+        elif scope == 'user':
+            filtered_sketches = base_filter.filter_by(user=current_user)
+        elif scope == 'archived':
+            filtered_sketches = sketch_query.filter(
+                Sketch.status.any(status='archived'))
+        elif scope == 'shared':
+            filtered_sketches = base_filter.filter(Sketch.user != current_user)
+        elif scope == 'search':
+            filtered_sketches = base_filter_with_archived.filter(
+                or_(
+                    Sketch.name.ilike(f'%{search_query}%'),
+                    Sketch.description.ilike(f'%{search_query}%')
+                )
+            )
+
+        # If no scope is set, fall back to returning all sketches.
+        if not scope:
+            sketches = filtered_sketches.all()
+
+        if not sketches:
+            pagination = filtered_sketches.paginate(page=page, per_page=20)
+            sketches = pagination.items
+            num_hits = pagination.total
+
+        for sketch in sketches:
+            # Last time a user did a query in the sketch, indicating activity.
+            try:
+                last_activity = View.query.filter_by(
+                    sketch=sketch, name='').order_by(
+                    View.updated_at.desc()).first().updated_at
+            except AttributeError:
+                last_activity = ''
+
+            # Return a subset of the sketch objects to reduce the amount of
+            # data sent to the client.
+            return_sketches.append({
                 'id': sketch.id,
+                'name': sketch.name,
+                'description': sketch.description,
+                'created_at': str(sketch.created_at),
+                'last_activity': str(last_activity),
+                'user': sketch.user.username,
                 'status': sketch.get_status.status
             })
-        meta = {'current_user': current_user.username}
-        return jsonify({'objects': sketches, 'meta': meta})
+
+        meta = {
+            'current_user': current_user.username,
+            'num_hits': num_hits
+        }
+        return jsonify({'objects': return_sketches, 'meta': meta})
 
     @login_required
     def post(self):

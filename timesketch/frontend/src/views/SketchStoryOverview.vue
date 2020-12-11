@@ -16,16 +16,15 @@ limitations under the License.
 <template>
   <div>
 
+    <ts-navbar-main>
+      <template v-slot:left>
+        {{ sketch.name }}
+      </template>
+    </ts-navbar-main>
+
     <section class="section">
       <div class="container is-fluid">
-        <ts-navbar-secondary currentAppContext="sketch" currentPage="stories">
-          <a v-if="sketch.stories.length" class="button is-success is-rounded" style="margin-right:7px;" v-on:click="showCreateStoryModal = !showCreateStoryModal">
-              <span class="icon is-small">
-                <i class="fas fa-plus"></i>
-              </span>
-            <span>Story</span>
-          </a>
-        </ts-navbar-secondary>
+        <ts-navbar-secondary currentAppContext="sketch" currentPage="stories"></ts-navbar-secondary>
       </div>
     </section>
 
@@ -44,17 +43,17 @@ limitations under the License.
 
     <section class="section">
       <div class="container is-fluid">
-        <div class="card">
+        <button class="button is-success" style="margin-right:7px;" v-on:click="showCreateStoryModal = !showCreateStoryModal">
+          <span class="icon is-small">
+            <i class="fas fa-plus-circle"></i>
+          </span>
+          <span>Create story</span>
+        </button>
+
+        <div class="card" style="margin-top: 20px;">
           <div class="card-content">
             <div v-if="!sketch.stories.length">
-              There are no stories in this sketch yet.
-              <br><br>
-              <a class="button is-success is-rounded" style="margin-right:7px;" v-on:click="showCreateStoryModal = !showCreateStoryModal">
-                <span class="icon is-small">
-                  <i class="fas fa-plus"></i>
-                </span>
-                <span>Create a new story</span>
-              </a>
+              There are no stories in this sketch yet
             </div>
             <ts-story-list :controls="true"></ts-story-list>
           </div>
@@ -68,9 +67,11 @@ limitations under the License.
 <script>
 import TsStoryList from '../components/Sketch/StoryList'
 import TsStoryCreateForm from '../components/Sketch/CreateStoryForm'
+import TsNavbarMain from "../components/AppNavbarMain"
 
 export default {
   components: {
+    TsNavbarMain,
     TsStoryList,
     TsStoryCreateForm
   },
