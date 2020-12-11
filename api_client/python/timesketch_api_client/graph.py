@@ -13,6 +13,7 @@
 # limitations under the License.
 """Timesketch API graph object."""
 import copy
+import datetime
 import json
 import logging
 
@@ -26,11 +27,6 @@ from . import resource
 
 logger = logging.getLogger('timesketch_api.graph')
 
-"""
-    (GraphListResource, '/sketches/<int:sketch_id>/graphs/'),
-    (GraphResource, '/sketches/<int:sketch_id>/graphs/<int:graph_id>/'),
-    (GraphPluginListResource, '/graphs/'),
-"""
 
 class Graph(resource.SketchResource):
     """Graph object."""
@@ -47,7 +43,7 @@ class Graph(resource.SketchResource):
 
     @property
     def created_at(self):
-        """Property that returns back the creation time of a search."""
+        """Property that returns back the creation time of a graph."""
         if self._created_at:
             return self._created_at.isoformat()
         return self._created_at
@@ -90,7 +86,7 @@ class Graph(resource.SketchResource):
     def description(self, description):
         """Make changes to the saved search description field."""
         self._description = description
-        self.save()
+        self.commit()
 
     def from_manual(  # pylint: disable=arguments-differ
             self,
@@ -185,6 +181,8 @@ class Graph(resource.SketchResource):
         self._name = graph_dict.get('name', 'No name')
         self._description = graph_dict.get('description', '')
         self._username = graph_dict.get('user', {}).get('username', 'System')
+        self._created_at = dateutil.parser.parse(
+            graph_dict.get('created_at', ''))
         self._updated_at = dateutil.parser.parse(
             graph_dict.get('updated_at', ''))
 
@@ -197,6 +195,9 @@ class Graph(resource.SketchResource):
         self._graph = graph_obj
         self._name = ''
         self._description = 'From a graph object.'
+        time = datetime.datetime.now(datetime.timezone.utc)
+        self._created_at = time
+        self._updated_at = time
 
     @property
     def name(self):
@@ -267,3 +268,10 @@ class Graph(resource.SketchResource):
         edge_df = pandas.DataFrame(edge_list)
         edge_df['type'] = 'edge'
         return pandas.concat([node_df, edge_df])
+
+    @property
+    def updated_at(self):
+        """Property that returns back the last updated time of a graph."""
+        if self._updated_at:
+            return self._updated_at.isoformat()
+        return self._updated_at

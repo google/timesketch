@@ -161,6 +161,7 @@ class ResourceMixin(object):
         'id': fields.Integer,
         'name': fields.String,
         'user': fields.Nested(user_fields),
+        'description': fields.String,
         'created_at': fields.DateTime,
         'updated_at': fields.DateTime
     }
