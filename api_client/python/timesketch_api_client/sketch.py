@@ -1075,20 +1075,6 @@ class Sketch(resource.BaseResource):
                 'Unable to run analyzer, need to define either '
                 'timeline ID or name')
 
-        resource_url = '{0:s}/sketches/{1:d}/analyzer/'.format(
-            self.api.api_root, self.id)
-
-        # The analyzer_kwargs is expected to be a dict with the key
-        # being the analyzer name, and the value being the key/value dict
-        # with parameters for the analyzer.
-        if analyzer_kwargs:
-            if not isinstance(analyzer_kwargs, dict):
-                raise error.UnableToRunAnalyzer(
-                    'Unable to run analyzer, analyzer kwargs needs to be a '
-                    'dict')
-            if analyzer_name not in analyzer_kwargs:
-                analyzer_kwargs = {analyzer_name: analyzer_kwargs}
-
         if timeline_name:
             sketch = self.lazyload_data(refresh_cache=True)
             timelines = []
@@ -1110,35 +1096,17 @@ class Sketch(resource.BaseResource):
 
             timeline_id = timelines[0]
 
-        data = {
-            'timeline_id': timeline_id,
-            'analyzer_names': [analyzer_name],
-            'analyzer_kwargs': analyzer_kwargs,
-        }
-
-        response = self.api.session.post(resource_url, json=data)
-
-        if not error.check_return_status(response, logger):
-            raise error.UnableToRunAnalyzer('[{0:d}] {1!s} {2!s}'.format(
-                response.status_code, response.reason, response.text))
-
-        data = error.get_response_json(response, logger)
-        objects = data.get('objects', [])
-        if not objects:
+        if not timeline_id:
             raise error.UnableToRunAnalyzer(
-                'No session data returned back, analyzer may have run but '
-                'unable to verify, please verify manually.')
+                'Unable to run an analyzer, not able to find a timeline.')
 
-        session_id = objects[0].get('analysis_session')
-        if not session_id:
-            raise error.UnableToRunAnalyzer(
-                'Analyzer may have run, but there is no session ID to '
-                'verify that it has. Please verify manually.')
+        timeline_obj = timeline.Timeline(
+            timeline_id=timeline_id,
+            sketch_id=self.id,
+            api=self.api)
 
-        session = analyzer.AnalyzerResult(
-            timeline_id=timeline_id, session_id=session_id,
-            sketch_id=self.id, api=self.api)
-        return session
+        return timeline_obj.run_analyzer(
+            analyzer_name=analyzer_name, analyzer_kwargs=analyzer_kwargs)
 
     def remove_acl(
             self, user_list=None, group_list=None, remove_public=False,

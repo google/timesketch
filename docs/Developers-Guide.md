@@ -44,6 +44,19 @@ To run TSLint in watch mode, use
 ! yarn run lint --watch
 ```
 
+To run a single test (there are multiple ways to do it), open a shell in the docker container:
+```
+docker exec -it $CONTAINER_ID /bin/bash
+```
+Switch to:
+```
+cd /usr/local/src/timesketch
+```
+And execute the single test
+```
+nosetests timesketch/lib/emojis_test.py -v
+```
+
 #### Building Timesketch frontend
 
 To build frontend files and put bundles in `timesketch/static/dist/`, use
