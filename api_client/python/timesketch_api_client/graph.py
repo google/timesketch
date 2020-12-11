@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API graph object."""
+import copy
 import json
 import logging
 
@@ -39,6 +40,7 @@ class Graph(resource.SketchResource):
         super().__init__(sketch=sketch, resource_uri=resource_uri)
 
         self._created_at = None
+        self._graph = None
         self._description = ''
         self._name = ''
         self._updated_at = None
@@ -53,10 +55,15 @@ class Graph(resource.SketchResource):
     @property
     def graph(self):
         """Property that returns back a graph object."""
+        if self._graph:
+            return self._graph
+
         if not self.resource_data:
             return nx.Graph()
 
-        return nx.cytoscape_graph(self.resource_data)
+        graph_dict = copy.deepcopy(self.resource_data)
+        self._graph = nx.cytoscape_graph(graph_dict)
+        return self._graph
 
     def delete(self):
         """Deletes the saved graph from the store."""
@@ -105,6 +112,24 @@ class Graph(resource.SketchResource):
         self._resource_id = 0
         self.resource_data = {}
 
+    def _parse_graph_dict(self, graph_dict):
+        """Takes a dict object and constructs graph data from it."""
+        graph_string = graph_dict.get('graph_elements')
+
+        if isinstance(graph_string, str):
+            try:
+                self.resource_data = json.loads(graph_string)
+            except json.JSONDecodeError as exc:
+                raise ValueError('Unable to read graph data') from exc
+        elif isinstance(graph_string, dict):
+            self.resource_data = graph_string
+        else:
+            raise ValueError('Graph elements missing or not of correct value.')
+
+        self._created_at = dateutil.parser.parse(
+            graph_dict.get('created_at', ''))
+        self._updated_at = dateutil.parser.parse(
+            graph_dict.get('updated_at', ''))
 
     def from_plugin(self, plugin_name, plugin_config=None, refresh=False):
         """Initialize the graph from a cached plugin graph.
@@ -137,31 +162,31 @@ class Graph(resource.SketchResource):
 
         response_json = error.get_response_json(response, logger)
         cache_dict = response_json.get('objects', [{}])[0]
-
-        graph_string = cache_dict.get('graph_elements', '')
-
-        try:
-            self.resource_data = json.loads(graph_string)
-        except json.JSONDecodeError as exc:
-            raise ValueError('Unable to read graph data') from exc
-
-        self._created_at = dateutil.parser.parse(
-            cache_dict.get('created_at', ''))
-        self._updated_at = dateutil.parser.parse(
-            cache_dict.get('updated_at', ''))
+        self._parse_graph_dict(cache_dict)
         self._description = f'Graph created from the {plugin_name} plugin.'
-
-        return cache_dict
 
     def from_saved(self, graph_id):  # pylint: disable=arguments-differ
         """Initialize the graph object from a saved graph.
 
         Args:
-            search_id: integer value for the saved
-                search (primary key).
+            graph_id: integer value for the saved graph (primary key).
         """
-        # TODO: Implement.
+        resource_id = f'sketches/{self._sketch.id}/graphs/{graph_id}/'
+        data = self.api.fetch_resource_data(resource_id)
+        objects = data.get('objects')
+        if not objects:
+            logger.warning(
+                'Unable to load saved graph with ID: %d, '
+                'are you sure it exists?', graph_id)
+        graph_dict = objects[0]
+        self._parse_graph_dict(graph_dict)
 
+        self._resource_id = graph_id
+        self._name = graph_dict.get('name', 'No name')
+        self._description = graph_dict.get('description', '')
+        self._username = graph_dict.get('user', {}).get('username', 'System')
+        self._updated_at = dateutil.parser.parse(
+            graph_dict.get('updated_at', ''))
 
     def from_graph(self, graph_obj):
         """Initialize from a networkx graph object."""
@@ -169,6 +194,7 @@ class Graph(resource.SketchResource):
             logger.warning('Unable to load graph from an empty graph object.')
             return
         self.resource_data = nx.cytoscape_data(graph_obj)
+        self._graph = graph_obj
         self._name = ''
         self._description = 'From a graph object.'
 
