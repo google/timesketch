@@ -178,7 +178,7 @@ class Edge(BaseGraphElement):
         self.source = source
         self.target = target
         self.node_counter = 0
-        super(Edge, self).__init__(label, attributes)
+        super().__init__(label, attributes)
 
 
 class BaseGraphPlugin:
