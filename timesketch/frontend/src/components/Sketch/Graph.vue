@@ -135,7 +135,7 @@ limitations under the License.
                   </cy-element>
                 </cytoscape>
                 <span v-if="hasGraphCache">
-                  <span><i>Generated {{currentGraphCache.updated_at | moment("utc", "from", "now")}}</i></span>
+                  <span><i>Generated {{ $moment.utc(currentGraphCache.updated_at).local().fromNow() }}</i></span>
                   <a class="is-small" style="text-decoration: underline; margin-left:15px;" v-on:click="buildGraph({name: currentGraph}, true)">
                     <span>Refresh</span>
                   </a>
@@ -355,11 +355,21 @@ export default {
         let graphCache = response.data['objects'][0]
         let elementsCache = JSON.parse(graphCache.graph_elements)
         let elements = []
-        elementsCache['nodes'].forEach((element) => {
-          elements.push({data: element.data, group:'nodes'})
+        let nodes
+        let edges
+
+        if ('elements' in elementsCache) {
+          nodes = elementsCache['elements']['nodes']
+          edges = elementsCache['elements']['edges']
+        } else {
+          nodes = elementsCache['nodes']
+          edges = elementsCache['edges']
+        }
+        nodes.forEach((node) => {
+          elements.push({data: node.data, group:'nodes'})
         })
-        elementsCache['edges'].forEach((element) => {
-          elements.push({data: element.data, group:'edges'})
+        edges.forEach((edge) => {
+          elements.push({data: edge.data, group:'edges'})
         })
         delete graphCache.graph_elements
         this.currentGraphCache = graphCache

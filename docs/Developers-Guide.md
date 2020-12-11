@@ -44,6 +44,19 @@ To run TSLint in watch mode, use
 ! yarn run lint --watch
 ```
 
+To run a single test (there are multiple ways to do it), open a shell in the docker container:
+```
+docker exec -it $CONTAINER_ID /bin/bash
+```
+Switch to:
+```
+cd /usr/local/src/timesketch
+```
+And execute the single test
+```
+nosetests timesketch/lib/emojis_test.py -v
+```
+
 #### Building Timesketch frontend
 
 To build frontend files and put bundles in `timesketch/static/dist/`, use
@@ -84,3 +97,35 @@ $ apt-get update && apt-get install nodejs yarn
 ```
 After that you would run the same steps as with docker container to install frontend 
 dependencies and build/test.
+
+
+#### Using Notebook
+
+The development container contains a jupyter notebook environment to expirement
+with the developer instance.
+
+To access the notebook access it in a browser using the URL:
+http://localhost:8844/?token=timesketch
+
+(you can also just access http://localhost:8844 and type in `timesketch` as the
+password).
+
+To get you started there are snippets you can use (look for the `snippets`
+drop-down menu and select the code snippet you want to test.
+
+To be able to use the notebook container using
+[colab](https://colab.research.google.com) start by creating a notebook and then
+click the little triangle/arrow button in the upper right corner to connect to a
+local runtime, see:
+
+![Connect to Local Runtime](images/colab_local_runtime.png)
+
+This will create a pop-up that you need to enter the URL for the local runtime.
+Use: http://localhost:8844/?token=timesketch as the URL.
+
+![Enter Local Runtime Information](images/notebook_connect.png)
+
+This will connect to the notebook container, where you can start executing code.
+
+![Running In Colab](images/colab_connected.png)
+

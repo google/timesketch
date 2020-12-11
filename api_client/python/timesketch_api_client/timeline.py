@@ -17,6 +17,7 @@ from __future__ import unicode_literals
 import json
 import logging
 
+from . import analyzer
 from . import error
 from . import index
 from . import resource
@@ -46,7 +47,9 @@ class Timeline(resource.BaseResource):
         self.id = timeline_id
         self._color = ''
         self._name = name
+        self._description = ''
         self._searchindex = searchindex
+        self._sketch_id = sketch_id
         resource_uri = 'sketches/{0:d}/timelines/{1:d}/'.format(
             sketch_id, self.id)
         super().__init__(api, resource_uri)
@@ -85,8 +88,16 @@ class Timeline(resource.BaseResource):
         Returns:
             Description as string.
         """
-        timeline = self.lazyload_data()
-        return timeline['objects'][0]['description']
+        if not self._description:
+            timeline = self.lazyload_data()
+            self._description = timeline['objects'][0]['description']
+        return self._description
+
+    @description.setter
+    def description(self, description):
+        """Change the timeline description."""
+        self._description = description
+        self._commit()
 
     @property
     def name(self):
@@ -99,6 +110,12 @@ class Timeline(resource.BaseResource):
             timeline = self.lazyload_data()
             self._name = timeline['objects'][0]['name']
         return self._name
+
+    @name.setter
+    def name(self, name):
+        """Change the name of the timeline."""
+        self._name = name
+        self._commit()
 
     @property
     def index(self):
@@ -132,6 +149,84 @@ class Timeline(resource.BaseResource):
             self._searchindex = index_name
         return self._searchindex
 
+    def is_archived(self):
+        """Return a boolean indicating whether the timeline is archived."""
+        resource_url = (
+            f'{self.api.api_root}/sketches/{self._sketch_id}/archive/')
+        response = self.api.session.get(resource_url)
+        data = error.get_response_json(response, logger)
+        meta = data.get('meta', {})
+        sketch_is_archived = meta.get('is_archived', False)
+
+        timeline_dict = meta.get('timelines')
+        if not timeline_dict:
+            return sketch_is_archived
+        return timeline_dict.get(self.index_name)
+
+    def run_analyzer(self, analyzer_name, analyzer_kwargs=None):
+        """Run an analyzer on a timeline.
+
+        Args:
+            analyzer_name: the name of the analyzer class to run against the
+                timeline.
+            analyzer_kwargs: optional dict with parameters for the analyzer.
+                This is optional and just for those analyzers that can accept
+                further parameters.
+
+        Raises:
+            error.UnableToRunAnalyzer: if not able to run the analyzer.
+
+        Returns:
+            If the analyzer runs successfully return back an AnalyzerResult
+            object.
+        """
+        if self.is_archived():
+            raise error.UnableToRunAnalyzer(
+                'Unable to run an analyzer on an archived timeline.')
+
+        resource_url = '{0:s}/sketches/{1:d}/analyzer/'.format(
+            self.api.api_root, self._sketch_id)
+
+        # The analyzer_kwargs is expected to be a dict with the key
+        # being the analyzer name, and the value being the key/value dict
+        # with parameters for the analyzer.
+        if analyzer_kwargs:
+            if not isinstance(analyzer_kwargs, dict):
+                raise error.UnableToRunAnalyzer(
+                    'Unable to run analyzer, analyzer kwargs needs to be a '
+                    'dict')
+            if analyzer_name not in analyzer_kwargs:
+                analyzer_kwargs = {analyzer_name: analyzer_kwargs}
+
+        data = {
+            'timeline_id': self.id,
+            'analyzer_names': [analyzer_name],
+            'analyzer_kwargs': analyzer_kwargs,
+        }
+        response = self.api.session.post(resource_url, json=data)
+
+        if not error.check_return_status(response, logger):
+            raise error.UnableToRunAnalyzer('[{0:d}] {1!s} {2!s}'.format(
+                response.status_code, response.reason, response.text))
+
+        data = error.get_response_json(response, logger)
+        objects = data.get('objects', [])
+        if not objects:
+            raise error.UnableToRunAnalyzer(
+                'No session data returned back, analyzer may have run but '
+                'unable to verify, please verify manually.')
+
+        session_id = objects[0].get('analysis_session')
+        if not session_id:
+            raise error.UnableToRunAnalyzer(
+                'Analyzer may have run, but there is no session ID to '
+                'verify that it has. Please verify manually.')
+
+        session = analyzer.AnalyzerResult(
+            timeline_id=self.id, session_id=session_id,
+            sketch_id=self._sketch_id, api=self.api)
+        return session
+
     @property
     def status(self):
         """Property that returns the timeline status.
@@ -148,6 +243,24 @@ class Timeline(resource.BaseResource):
 
         status = status_list[0]
         return status.get('status')
+
+    def _commit(self):
+        """Commit changes to the timeline."""
+        resource_url = '{0:s}/{1:s}'.format(
+            self.api.api_root, self.resource_uri)
+
+        data = {
+            'name': self.name,
+            'description': self.description,
+            'color': self.color,
+        }
+        response = self.api.session.post(resource_url, json=data)
+
+        status = error.check_return_status(response, logger)
+        if not status:
+            logger.error('Unable to commit changes to the timeline.')
+
+        return status
 
     def add_timeline_label(self, label):
         """Add a label to the timelinne.

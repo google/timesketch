@@ -36,6 +36,7 @@ from . import error
 from . import index
 from . import sketch
 from . import version
+from . import sigma
 
 
 logger = logging.getLogger('timesketch_api.client')
@@ -499,3 +500,52 @@ class TimesketchApi:
             return
         request = google.auth.transport.requests.Request()
         self.credentials.credential.refresh(request)
+
+    def list_sigma_rules(self, as_pandas=False):
+        """Get a list of sigma objects.
+
+        Args:
+            as_pandas: Boolean indicating that the results will be returned
+                as a Pandas DataFrame instead of a list of dicts.
+
+        Returns:
+            List of Sigme rule object instances or a pandas Dataframe with all
+            rules if as_pandas is True.
+
+        Raises:
+            ValueError: If no rules are found.
+        """
+        rules = []
+        response = self.fetch_resource_data('sigma/')
+
+        if not response:
+            raise ValueError('No rules found.')
+
+        if as_pandas:
+            return pandas.DataFrame.from_records(response.get('objects'))
+
+        for rule_dict in response['objects']:
+            rule_uuid = rule_dict.get('id')
+            title = rule_dict.get('title')
+            es_query = rule_dict.get('es_query')
+            file_name = rule_dict.get('file_name')
+            description = rule_dict.get('description')
+            file_relpath = rule_dict.get('file_relpath')
+            index_obj = sigma.Sigma(
+                rule_uuid, api=self, es_query=es_query, file_name=file_name,
+                title=title, description=description,
+                file_relpath=file_relpath)
+            rules.append(index_obj)
+        return rules
+
+
+    def get_sigma_rule(self, rule_uuid):
+        """Get a sigma rule.
+
+        Args:
+            rule_uuid: UUID of the Sigma rule.
+
+        Returns:
+            Instance of a Sigma object.
+        """
+        return sigma.Sigma(rule_uuid, api=self)

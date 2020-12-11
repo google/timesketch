@@ -114,8 +114,7 @@ class Graph:
         Returns:
             Graph in Cytoscape JSON format.
         """
-        cy_json = nx.readwrite.json_graph.cytoscape_data(self.nx_instance)
-        return cy_json.get('elements', [])
+        return nx.readwrite.json_graph.cytoscape_data(self.nx_instance)
 
 
 class BaseGraphElement:
@@ -179,7 +178,7 @@ class Edge(BaseGraphElement):
         self.source = source
         self.target = target
         self.node_counter = 0
-        super(Edge, self).__init__(label, attributes)
+        super().__init__(label, attributes)
 
 
 class BaseGraphPlugin:

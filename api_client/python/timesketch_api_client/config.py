@@ -243,6 +243,9 @@ class ConfigAssistant:
             logger.warning('No config read')
             return
 
+        if not section:
+            section = 'timesketch'
+
         if section not in config.sections():
             logger.warning('No %s section in the config', section)
             return
