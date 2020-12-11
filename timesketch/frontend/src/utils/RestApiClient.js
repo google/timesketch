@@ -294,6 +294,11 @@ export default {
     return  RestApiClient.get('/sketches/' + sketchId + /graphs/)
   },
   getSavedGraph (sketchId, graphId) {
-    return  RestApiClient.get('/sketches/' + sketchId + /graphs/ + graphId + '/')
+    let params = {
+      params: {
+        format: 'cytoscape'
+      }
+    }
+    return  RestApiClient.get('/sketches/' + sketchId + /graphs/ + graphId + '/', params)
   },
 }
