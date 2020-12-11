@@ -293,7 +293,7 @@ class Graph(resource.SketchResource):
         data = {
             'name': self.name,
             'description': self.description,
-            'elements': None,
+            'elements': self.resource_data,
         }
 
         response = self.api.session.post(resource_url, json=data)
