@@ -16,6 +16,7 @@ import logging
 import json
 
 from flask_restful import Resource
+from flask_restful import reqparse
 from flask_login import login_required
 from flask_login import current_user
 
@@ -78,7 +79,12 @@ class GraphListResource(resources.ResourceMixin, Resource):
 
 
 class GraphResource(resources.ResourceMixin, Resource):
-    """Resource to get all graphs."""
+    """Resource to get a saved graph."""
+
+    def __init__(self):
+        super().__init__()
+        self.parser = reqparse.RequestParser()
+        self.parser.add_argument('format', type=str, required=False)
 
     @login_required
     def get(self, sketch_id, graph_id):
@@ -87,6 +93,9 @@ class GraphResource(resources.ResourceMixin, Resource):
         Returns:
             List of graphs in JSON (instance of flask.wrappers.Response)
         """
+        args = self.parser.parse_args()
+        output_format = args.get('format', None)
+
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
@@ -100,8 +109,31 @@ class GraphResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Graph does not belong to this sketch.')
 
+        # If requested use a format suitable for the CytoscapeJS frontend.
+        if output_format == 'cytoscape':
+            response = self.to_json(graph).json
+            response['objects'][0]['graph_elements'] = graph.graph_elements
+            return jsonify(response)
+
+        # Reformat elements to work with networkx python library.
+        # TODO: Change frontend to save directed and multigraph attributes.
+        graph_elements = json.loads(graph.graph_elements)
+        formatted_graph = {
+            'data': [],
+            'directed': True,
+            'multigraph': True,
+            'elements': {
+                'nodes': [],
+                'edges': []
+            }
+        }
+        for element in graph_elements:
+            group = element['group']
+            element_data = {'data': element['data']}
+            formatted_graph['elements'][group].append(element_data)
+
         response = self.to_json(graph).json
-        response['objects'][0]['elements'] = graph.graph_elements
+        response['objects'][0]['graph_elements'] = formatted_graph
 
         return jsonify(response)
 
