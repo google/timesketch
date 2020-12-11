@@ -51,17 +51,16 @@ class Graph(resource.SketchResource):
 
     def delete(self):
         """Deletes the saved graph from the store."""
-        # TODO: Implement this in the API.
         if not self._resource_id:
             logger.warning(
                 'Unable to delete the saved graph, it does not appear to be '
                 'saved in the first place.')
             return False
 
-        # TODO: FIX THE RESOURCE URL
         resource_url = (
-            f'{self.api.api_root}/sketches/{self._sketch.id}/views/'
+            f'{self.api.api_root}/sketches/{self._sketch.id}/graphs/'
             f'{self._resource_id}/')
+
         response = self.api.session.delete(resource_url)
         return error.check_return_status(response, logger)
 
@@ -284,8 +283,6 @@ class Graph(resource.SketchResource):
                 'No description selected for graph, saving without one')
 
         if self._resource_id:
-            # pylint: disable=unused-variable
-            # TODO: Remove this when completed implemention.
             resource_url = (
                 f'{self.api.api_root}/sketches/{self._sketch.id}/graphs/'
                 f'{self._resource_id}/')
@@ -293,7 +290,23 @@ class Graph(resource.SketchResource):
             resource_url = (
                 f'{self.api.api_root}/sketches/{self._sketch.id}/graphs/')
 
-        return False
+        data = {
+            'name': self.name,
+            'description': self.description,
+            'elements': None,
+        }
+
+        response = self.api.session.post(resource_url, json=data)
+        status = error.check_return_status(response, logger)
+        if not status:
+            error.error_message(
+                response, 'Unable to save search', error=RuntimeError)
+
+        response_json = error.get_response_json(response, logger)
+
+        graph_dict = response_json.get('objects', [{}])[0]
+        self._resource_id = graph_dict.get('id', 0)
+        return f'Saved graph to ID: {self._resource_id}'
 
     def to_dict(self):
         """Returns a dict with the graph content."""
