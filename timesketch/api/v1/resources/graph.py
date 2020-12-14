@@ -198,6 +198,16 @@ class GraphResource(resources.ResourceMixin, Resource):
         if elements:
             graph.graph_elements = json.dumps(elements)
 
+        graph_config = form.get('graph_config')
+        graph_json = ''
+        if graph_config:
+            if isinstance(graph_config, dict):
+                graph_json = json.dumps(graph_config)
+            elif isinstance(graph_config, str):
+                graph_json = graph_config
+        if graph_json:
+            graph.graph_config = graph_json
+
         db_session.add(graph)
         db_session.commit()
 
