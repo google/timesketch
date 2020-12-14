@@ -34,7 +34,7 @@ class QueryTest(interface.BaseEndToEndTest):
         search_obj.query_string = '*'
         data_frame = search_obj.table
         count = len(data_frame)
-        self.assertions.assertEqual(count, 2002)
+        self.assertions.assertEqual(count, 3205)
 
 
 manager.EndToEndTestManager.register_test(QueryTest)
