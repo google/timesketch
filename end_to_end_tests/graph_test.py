@@ -36,7 +36,21 @@ class GraphTest(interface.BaseEndToEndTest):
 
         graph_obj = graph.Graph(self.sketch)
         graph_obj.from_plugin('winservice')
-        self.assertions.assertEqual(graph_obj.graph.size(), 10)
+        self.assertions.assertEqual(graph_obj.graph.size(), 12)
+
+        graph_obj.name = 'foobar'
+        graph_obj.description = 'this is it'
+
+        graph_obj.save()
+
+        _ = self.sketch.lazyload_data(refresh_cache=True)
+        graph_list = self.sketch.list_graphs()
+        self.assertions.assertEqual(len(graph_list), 1)
+        graph_saved = graph_list[0]
+        self.assertions.assertEqual(graph_saved.graph.size(), 12)
+        self.assertions.assertEqual(graph_saved.name, 'foobar')
+        self.assertions.assertEqual(graph_saved.description, 'this is it')
+
 
 
 manager.EndToEndTestManager.register_test(GraphTest)
