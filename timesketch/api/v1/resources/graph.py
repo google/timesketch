@@ -72,8 +72,8 @@ class GraphListResource(resources.ResourceMixin, Resource):
         name = form.get('name')
         description = form.get('description')
         elements = form.get('elements')
-
         graph_config = form.get('graph_config')
+
         if graph_config:
             graph_json = json.dumps(graph_config)
         else:
@@ -287,14 +287,15 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
         else:
             cache_config = cache.graph_config
 
+        if isinstance(cache_config, str):
+            cache_config = json.loads(cache_config)
+
         # Refresh cache if timelines have been added/removed from the sketch.
         if cache_config:
-            cache_graph_config = json.loads(cache_config)
-            if cache_graph_config:
-                cache_graph_filter = cache_graph_config.get('filter', {})
-                cache_filter_indices = cache_graph_filter.get('indices', [])
-                if set(sketch_indices) ^ set(cache_filter_indices):
-                    refresh = True
+            cache_graph_filter = cache_config.get('filter', {})
+            cache_filter_indices = cache_graph_filter.get('indices', [])
+            if set(sketch_indices) ^ set(cache_filter_indices):
+                refresh = True
 
         if cache.graph_elements and not refresh:
             return self.to_json(cache)

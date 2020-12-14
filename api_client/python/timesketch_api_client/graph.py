@@ -33,6 +33,16 @@ class Graph(resource.SketchResource):
 
     # Layout options.
     _GRAPH_LAYOUTS = {
+        'bipartite': nx.bipartite_layout,
+        'circular': nx.circular_layout,
+        'kamada': nx.kamada_kawai_layout,
+        'kamada_kawai': nx.kamada_kawai_layout,
+        'planar': nx.planar_layout,
+        'random': nx.random_layout,
+        'rescale': nx.rescale_layout,
+        'shell': nx.shell_layout,
+        'spectral': nx.spectral_layout,
+        'multipartite': nx.multipartite_layout,
         'spring': nx.spring_layout,
     }
 
@@ -100,9 +110,9 @@ class Graph(resource.SketchResource):
             if not key:
                 _ = label_dict.pop(key)
 
-        return nx.draw(
+        return nx.draw_networkx(
             self.graph, with_labels=True, labels=label_dict,
-            layout=self.layout(self.graph))
+            pos=self.layout)
 
     @property
     def graph(self):
@@ -124,7 +134,23 @@ class Graph(resource.SketchResource):
         """Property that returns the graph config."""
         if self._graph_config:
             return self._graph_config
-        # HERNA
+
+        self._graph_config = {
+            'filter': {
+                'indices': [
+                    t.index_name for t in self._sketch.list_timelines()],
+            },
+            'layout': self.layout
+        }
+        return self._graph_config
+
+    @graph_config.setter
+    def graph_config(self, graph_config):
+        """Change the graph config."""
+        if not isinstance(graph_config, dict):
+            raise ValueError('Graph config needs to be a dict.')
+
+        self._graph_config = graph_config
 
     @property
     def description(self):
@@ -172,9 +198,7 @@ class Graph(resource.SketchResource):
         elif isinstance(graph_string, dict):
             self.resource_data = graph_string
         else:
-            # HERNA
-            # raise ValueError('Graph elements missing or not of correct value.')
-            self.resource_data = graph_string
+            raise ValueError('Graph elements missing or not of correct value.')
 
         graph_config = graph_dict.get('graph_config')
         if graph_config:
@@ -215,7 +239,10 @@ class Graph(resource.SketchResource):
             'refresh': bool(refresh),
         }
         if plugin_config:
-            self._plugin_config = plugin_config
+            if isinstance(plugin_config, str):
+                self._graph_config = json.loads(plugin_config)
+            else:
+                self._graph_config = plugin_config
 
         response = self.api.session.post(resource_url, json=data)
         status = error.check_return_status(response, logger)
@@ -246,11 +273,6 @@ class Graph(resource.SketchResource):
                 'Unable to load saved graph with ID: %d, '
                 'are you sure it exists?', graph_id)
         graph_dict = objects[0]
-        # HERNA STARTS
-        self.herna(graph_dict, graph_id)
-
-    def herna(self, graph_dict, graph_id):
-        # HERNA ENDS
         self._parse_graph_dict(graph_dict)
 
         self._resource_id = graph_id
@@ -279,9 +301,23 @@ class Graph(resource.SketchResource):
     def layout(self):
         """Property that returns back the layout of the graph."""
         if self._layout:
-            return self._GRAPH_LAYOUTS.get(self._layout, 'spread')
+            return self._layout
 
-        return self._GRAPH_LAYOUTS.get('spread')
+        layout = self._GRAPH_LAYOUTS.get('spring')
+        self._layout = layout(self.graph)
+        return self._layout
+
+    @layout.setter
+    def layout(self, layout):
+        """Change the layout manually."""
+        if not isinstance(layout, dict):
+            raise ValueError('Layout needs to be a dict.')
+        self._layout = layout
+
+    @property
+    def layout_strings(self):
+        """Property that returns a list of potential layouts to use."""
+        return list(self._GRAPH_LAYOUTS.keys())
 
     @property
     def name(self):
@@ -335,13 +371,12 @@ class Graph(resource.SketchResource):
                 element['group'] = group
                 element_list.append(element)
 
-        element_dict = nx.cytoscape_data(self.graph)
         data = {
             'name': self.name,
+            'graph_config': self.graph_config,
             'description': self.description,
             'elements': element_list,
         }
-        return data
 
         response = self.api.session.post(resource_url, json=data)
         status = error.check_return_status(response, logger)
@@ -354,6 +389,12 @@ class Graph(resource.SketchResource):
         graph_dict = response_json.get('objects', [{}])[0]
         self._resource_id = graph_dict.get('id', 0)
         return f'Saved graph to ID: {self._resource_id}'
+
+    def set_layout_type(self, layout_string):
+        """Use a layout from the layout strings."""
+        layout = self._GRAPH_LAYOUTS.get(layout_string)
+        if layout:
+            self.layout = layout(self.graph)
 
     def to_dict(self):
         """Returns a dict with the graph content."""
