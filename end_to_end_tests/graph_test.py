@@ -35,7 +35,7 @@ class GraphTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(empty_list, [])
 
         graph_obj = graph.Graph(self.sketch)
-        graph_obj.from_plugin('winlogins')
+        graph_obj.from_plugin('winservice')
         self.assertions.assertEqual(graph_obj.graph.size(), 10)
 
 
