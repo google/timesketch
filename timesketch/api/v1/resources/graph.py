@@ -75,7 +75,14 @@ class GraphListResource(resources.ResourceMixin, Resource):
         graph_config = form.get('graph_config')
 
         if graph_config:
-            graph_json = json.dumps(graph_config)
+            if isinstance(graph_config, dict):
+                graph_json = json.dumps(graph_config)
+            elif isinstance(graph_config, str):
+                graph_json = graph_config
+            else:
+                graph_json = ''
+                logger.warning(
+                    'Graph config not of the correct value, not saving.')
         else:
             graph_json = ''
 

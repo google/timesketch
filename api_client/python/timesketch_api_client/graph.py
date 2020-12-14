@@ -19,6 +19,7 @@ import logging
 
 import dateutil.parser
 import pandas
+import numpy
 import networkx as nx
 
 from . import error
@@ -58,6 +59,15 @@ class Graph(resource.SketchResource):
         self._name = ''
         self._updated_at = None
         self._graph_config = {}
+
+    def _serialize(self, config_dict):
+        """Serialize a dictionary as JSON."""
+        for key, item in config_dict.get('layout', {}).items():
+            if not isinstance(item, numpy.ndarray):
+                continue
+            config_dict['layout'][key] = list(item)
+
+        return json.dumps(config_dict)
 
     @property
     def created_at(self):
@@ -373,7 +383,7 @@ class Graph(resource.SketchResource):
 
         data = {
             'name': self.name,
-            'graph_config': self.graph_config,
+            'graph_config': self._serialize(self.graph_config),
             'description': self.description,
             'elements': element_list,
         }
