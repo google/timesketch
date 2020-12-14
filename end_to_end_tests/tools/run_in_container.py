@@ -41,4 +41,4 @@ if __name__ == '__main__':
         counter['tests'], successful_tests, counter['errors']))
 
     if counter['errors']:
-      sys.exit(1)
+        sys.exit(1)
