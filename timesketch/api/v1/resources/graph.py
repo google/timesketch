@@ -68,13 +68,23 @@ class GraphListResource(resources.ResourceMixin, Resource):
                   'User does not have write access on sketch.')
 
         form = request.json
+
         name = form.get('name')
         description = form.get('description')
         elements = form.get('elements')
 
+        graph_config = form.get('graph_config')
+        if graph_config:
+            graph_json = json.dumps(graph_config)
+        else:
+            graph_json = ''
+
         graph = Graph(
             user=current_user, sketch=sketch, name=str(name),
-            description=description, graph_elements=json.dumps(elements))
+            graph_config=graph_json,
+            description=description,
+            graph_elements=json.dumps(elements))
+
         db_session.add(graph)
         db_session.commit()
 
@@ -137,6 +147,7 @@ class GraphResource(resources.ResourceMixin, Resource):
 
         response = self.to_json(graph).json
         response['objects'][0]['graph_elements'] = formatted_graph
+        response['objects'][0]['graph_config'] = graph.graph_config
 
         return jsonify(response)
 
@@ -271,11 +282,15 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
         cache = GraphCache.get_or_create(
             sketch=sketch, graph_plugin=plugin_name)
 
+        if graph_config:
+            cache_config = graph_config
+        else:
+            cache_config = cache.graph_config
+
         # Refresh cache if timelines have been added/removed from the sketch.
-        if cache.graph_config:
-            cache_graph_config = json.loads(cache.graph_config)
+        if cache_config:
+            cache_graph_config = json.loads(cache_config)
             if cache_graph_config:
-                cache_graph_config = json.loads(cache.graph_config)
                 cache_graph_filter = cache_graph_config.get('filter', {})
                 cache_filter_indices = cache_graph_filter.get('indices', [])
                 if set(sketch_indices) ^ set(cache_filter_indices):

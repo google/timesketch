@@ -169,6 +169,7 @@ class ResourceMixin(object):
     graphcache_fields = {
         'id': fields.Integer,
         'graph_elements': fields.String,
+        'graph_config': fields.String,
         'created_at': fields.DateTime,
         'updated_at': fields.DateTime
     }

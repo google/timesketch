@@ -31,6 +31,11 @@ logger = logging.getLogger('timesketch_api.graph')
 class Graph(resource.SketchResource):
     """Graph object."""
 
+    # Layout options.
+    _GRAPH_LAYOUTS = {
+        'spring': nx.spring_layout,
+    }
+
     def __init__(self, sketch):
         """Initialize the graph object."""
         resource_uri = f'sketches/{sketch.id}/graphs/'
@@ -39,8 +44,10 @@ class Graph(resource.SketchResource):
         self._created_at = None
         self._graph = None
         self._description = ''
+        self._layout = None
         self._name = ''
         self._updated_at = None
+        self._graph_config = {}
 
     @property
     def created_at(self):
@@ -94,7 +101,8 @@ class Graph(resource.SketchResource):
                 _ = label_dict.pop(key)
 
         return nx.draw(
-            self.graph, with_labels=True, labels=label_dict)
+            self.graph, with_labels=True, labels=label_dict,
+            layout=self.layout(self.graph))
 
     @property
     def graph(self):
@@ -110,6 +118,13 @@ class Graph(resource.SketchResource):
         graph_dict = copy.deepcopy(self.resource_data)
         self._graph = nx.cytoscape_graph(graph_dict)
         return self._graph
+
+    @property
+    def graph_config(self):
+        """Property that returns the graph config."""
+        if self._graph_config:
+            return self._graph_config
+        # HERNA
 
     @property
     def description(self):
@@ -157,7 +172,13 @@ class Graph(resource.SketchResource):
         elif isinstance(graph_string, dict):
             self.resource_data = graph_string
         else:
-            raise ValueError('Graph elements missing or not of correct value.')
+            # HERNA
+            # raise ValueError('Graph elements missing or not of correct value.')
+            self.resource_data = graph_string
+
+        graph_config = graph_dict.get('graph_config')
+        if graph_config:
+            self._graph_config = json.loads(graph_config)
 
         self._created_at = dateutil.parser.parse(
             graph_dict.get('created_at', ''))
@@ -193,6 +214,8 @@ class Graph(resource.SketchResource):
             'config': plugin_config,
             'refresh': bool(refresh),
         }
+        if plugin_config:
+            self._plugin_config = plugin_config
 
         response = self.api.session.post(resource_url, json=data)
         status = error.check_return_status(response, logger)
@@ -216,12 +239,18 @@ class Graph(resource.SketchResource):
         """
         resource_id = f'sketches/{self._sketch.id}/graphs/{graph_id}/'
         data = self.api.fetch_resource_data(resource_id)
+
         objects = data.get('objects')
         if not objects:
             logger.warning(
                 'Unable to load saved graph with ID: %d, '
                 'are you sure it exists?', graph_id)
         graph_dict = objects[0]
+        # HERNA STARTS
+        self.herna(graph_dict, graph_id)
+
+    def herna(self, graph_dict, graph_id):
+        # HERNA ENDS
         self._parse_graph_dict(graph_dict)
 
         self._resource_id = graph_id
@@ -245,6 +274,14 @@ class Graph(resource.SketchResource):
         time = datetime.datetime.now(datetime.timezone.utc)
         self._created_at = time
         self._updated_at = time
+
+    @property
+    def layout(self):
+        """Property that returns back the layout of the graph."""
+        if self._layout:
+            return self._GRAPH_LAYOUTS.get(self._layout, 'spread')
+
+        return self._GRAPH_LAYOUTS.get('spread')
 
     @property
     def name(self):
@@ -290,11 +327,21 @@ class Graph(resource.SketchResource):
             resource_url = (
                 f'{self.api.api_root}/sketches/{self._sketch.id}/graphs/')
 
+        cytoscape_json = nx.readwrite.json_graph.cytoscape_data(self.graph)
+        elements = cytoscape_json.get('elements', [])
+        element_list = []
+        for group in elements:
+            for element in elements[group]:
+                element['group'] = group
+                element_list.append(element)
+
+        element_dict = nx.cytoscape_data(self.graph)
         data = {
             'name': self.name,
             'description': self.description,
-            'elements': self.resource_data,
+            'elements': element_list,
         }
+        return data
 
         response = self.api.session.post(resource_url, json=data)
         status = error.check_return_status(response, logger)
