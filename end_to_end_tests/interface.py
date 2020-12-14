@@ -48,6 +48,7 @@ class BaseEndToEndTest(object):
         self.sketch = self.api.create_sketch(name=self.NAME)
         self.assertions = unittest.TestCase()
         self._counter = collections.Counter()
+        self._imported_files = []
 
     def import_timeline(self, filename):
         """Import a Plaso, CSV or JSONL file.
@@ -58,6 +59,8 @@ class BaseEndToEndTest(object):
         Raises:
             TimeoutError if import takes too long.
         """
+        if filename in self._imported_files:
+            return
         file_path = os.path.join(TEST_DATA_DIR, filename)
         print('Importing: {0:s}'.format(file_path))
 
@@ -82,6 +85,7 @@ class BaseEndToEndTest(object):
                 break
             retry_count += 1
             time.sleep(sleep_time_seconds)
+        self._imported_files.append(filename)
 
     def _get_test_methods(self):
         """Inspect class and list all methods that matches the criteria.
