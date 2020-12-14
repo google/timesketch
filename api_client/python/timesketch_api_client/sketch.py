@@ -24,6 +24,7 @@ from . import analyzer
 from . import aggregation
 from . import definitions
 from . import error
+from . import graph
 from . import resource
 from . import search
 from . import story
@@ -643,6 +644,30 @@ class Sketch(resource.BaseResource):
             aggregation_obj.from_saved(aggregation_id=agg_id)
             aggregations.append(aggregation_obj)
         return aggregations
+
+    def list_graphs(self):
+        """Returns a list of stored graphs."""
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to list graphs on an archived sketch.')
+
+        resource_uri = (
+            f'{self.api.api_root}/sketches/{self.id}/graphs/')
+
+        response = self.api.session.get(resource_uri)
+        response_json = error.get_response_json(response, logger)
+        objects = response_json.get('objects')
+        if not objects:
+            logger.warning('No graphs discovered.')
+            return []
+
+        return_list = []
+        graph_list = objects[0]
+        for graph_dict in graph_list:
+            graph_obj = graph.Graph(sketch=self)
+            graph_obj.from_saved(graph_dict.get('id'))
+            return_list.append(graph_obj)
+        return return_list
 
     def get_analyzer_status(self, as_sessions=False):
         """Returns a list of started analyzers and their status.
