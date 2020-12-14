@@ -19,10 +19,10 @@ from . import interface
 from . import manager
 
 
-class QueryTest(interface.BaseEndToEndTest):
+class GraphTest(interface.BaseEndToEndTest):
     """End to end tests for query functionality."""
 
-    NAME = 'query_test'
+    NAME = 'graph_test'
 
     def setup(self):
         """Import test timeline."""
@@ -39,4 +39,4 @@ class QueryTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(graph_obj.graph.size(), 10)
 
 
-manager.EndToEndTestManager.register_test(QueryTest)
+manager.EndToEndTestManager.register_test(GraphTest)
