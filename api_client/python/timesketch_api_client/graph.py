@@ -32,7 +32,8 @@ logger = logging.getLogger('timesketch_api.graph')
 class Graph(resource.SketchResource):
     """Graph object."""
 
-    # Layout options.
+    # This defines a list of layouts that are available
+    # for the graph.
     _GRAPH_LAYOUTS = {
         'bipartite': nx.bipartite_layout,
         'circular': nx.circular_layout,
@@ -60,8 +61,48 @@ class Graph(resource.SketchResource):
         self._updated_at = None
         self._graph_config = {}
 
+    def _parse_graph_dict(self, graph_dict):
+        """Takes a dict object and constructs graph data from it.
+
+        Args:
+            graph_dict (dict): a dict that contains graph elements, as
+                return back by the API.
+        """
+        graph_string = graph_dict.get('graph_elements')
+
+        if isinstance(graph_string, str):
+            try:
+                self.resource_data = json.loads(graph_string)
+            except json.JSONDecodeError as exc:
+                raise ValueError('Unable to read graph data') from exc
+        elif isinstance(graph_string, dict):
+            self.resource_data = graph_string
+        else:
+            raise ValueError('Graph elements missing or not of correct value.')
+
+        graph_config = graph_dict.get('graph_config')
+        if graph_config:
+            self._graph_config = json.loads(graph_config)
+
+        self._created_at = dateutil.parser.parse(
+            graph_dict.get('created_at', ''))
+        self._updated_at = dateutil.parser.parse(
+            graph_dict.get('updated_at', ''))
+
     def _serialize(self, config_dict):
-        """Serialize a dictionary as JSON."""
+        """Serialize a graph config dictionary as JSON.
+
+        Due to networkx's use of numpy.ndarray to describe
+        coordinates JSON is unable to serialize the dictionary.
+        It is therefore needed to convert the ndarray into lists
+        so that they can be serialized by JSON.
+
+        Args:
+            config_dict (dict): the graph config dictionary.
+
+        Returns:
+            A JSON serialized string with the dictionary's content.
+        """
         for key, item in config_dict.get('layout', {}).items():
             if not isinstance(item, numpy.ndarray):
                 continue
@@ -90,6 +131,17 @@ class Graph(resource.SketchResource):
 
         response = self.api.session.delete(resource_url)
         return error.check_return_status(response, logger)
+
+    @property
+    def description(self):
+        """Property that returns back the description of the saved search."""
+        return self._description
+
+    @description.setter
+    def description(self, description):
+        """Make changes to the saved search description field."""
+        self._description = description
+        self.commit()
 
     @property
     def draw(self):
@@ -162,16 +214,22 @@ class Graph(resource.SketchResource):
 
         self._graph_config = graph_config
 
-    @property
-    def description(self):
-        """Property that returns back the description of the saved search."""
-        return self._description
+    def from_graph(self, graph_obj):
+        """Initialize from a networkx graph object.
 
-    @description.setter
-    def description(self, description):
-        """Make changes to the saved search description field."""
-        self._description = description
-        self.commit()
+        Args:
+            graph_obj (nx.Graph): a graph object.
+        """
+        if not graph_obj.size():
+            logger.warning('Unable to load graph from an empty graph object.')
+            return
+        self.resource_data = nx.cytoscape_data(graph_obj)
+        self._graph = graph_obj
+        self._name = ''
+        self._description = 'From a graph object.'
+        time = datetime.datetime.now(datetime.timezone.utc)
+        self._created_at = time
+        self._updated_at = time
 
     def from_manual(self, data, **kwargs):  # pylint: disable=arguments-differ
         """Generate a new graph using a dictionary.
@@ -195,29 +253,6 @@ class Graph(resource.SketchResource):
             raise ValueError('Unable to generate a graph') from exc
 
         self.from_graph(graph)
-
-    def _parse_graph_dict(self, graph_dict):
-        """Takes a dict object and constructs graph data from it."""
-        graph_string = graph_dict.get('graph_elements')
-
-        if isinstance(graph_string, str):
-            try:
-                self.resource_data = json.loads(graph_string)
-            except json.JSONDecodeError as exc:
-                raise ValueError('Unable to read graph data') from exc
-        elif isinstance(graph_string, dict):
-            self.resource_data = graph_string
-        else:
-            raise ValueError('Graph elements missing or not of correct value.')
-
-        graph_config = graph_dict.get('graph_config')
-        if graph_config:
-            self._graph_config = json.loads(graph_config)
-
-        self._created_at = dateutil.parser.parse(
-            graph_dict.get('created_at', ''))
-        self._updated_at = dateutil.parser.parse(
-            graph_dict.get('updated_at', ''))
 
     def from_plugin(self, plugin_name, plugin_config=None, refresh=False):
         """Initialize the graph from a cached plugin graph.
@@ -293,19 +328,6 @@ class Graph(resource.SketchResource):
             graph_dict.get('created_at', ''))
         self._updated_at = dateutil.parser.parse(
             graph_dict.get('updated_at', ''))
-
-    def from_graph(self, graph_obj):
-        """Initialize from a networkx graph object."""
-        if not graph_obj.size():
-            logger.warning('Unable to load graph from an empty graph object.')
-            return
-        self.resource_data = nx.cytoscape_data(graph_obj)
-        self._graph = graph_obj
-        self._name = ''
-        self._description = 'From a graph object.'
-        time = datetime.datetime.now(datetime.timezone.utc)
-        self._created_at = time
-        self._updated_at = time
 
     @property
     def layout(self):
