@@ -646,7 +646,7 @@ class Sketch(resource.BaseResource):
         return aggregations
 
     def list_graphs(self):
-        """Returns a list of stored graphs FINISH."""
+        """Returns a list of stored graphs."""
         if self.is_archived():
             raise RuntimeError(
                 'Unable to list graphs on an archived sketch.')
