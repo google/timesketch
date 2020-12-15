@@ -107,6 +107,10 @@ class BaseModel(object):
     created_at = Column(DateTime(), default=func.now())
     updated_at = Column(DateTime(), default=func.now(), onupdate=func.now())
 
+    def update_modification_time(self):
+        """Set updated_at field to current time."""
+        self.updated_at = func.now()
+
     @classmethod
     def get_or_create(cls, **kwargs):
         """Get or create a database object.

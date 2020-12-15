@@ -1,5 +1,5 @@
 {
-  "name": "Timesketch",
+  "name": "timesketch",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -14,16 +14,19 @@
     "@fortawesome/free-solid-svg-icons": "^5.7.2",
     "@fortawesome/vue-fontawesome": "^2.0.0",
     "axios": "^0.18.0",
-    "buefy": "^0.8.15",
-    "bulma": "^0.7.4",
+    "buefy": "^0.9.4",
+    "bulma": "^0.9.1",
+    "cytoscape-dagre": "^2.3.1",
+    "cytoscape-spread": "^3.0.0",
     "lodash": "^4.17.11",
     "marked": "^1.1.1",
     "moment": "^2.24.0",
     "vega": "^5.4.0",
     "vega-embed": "^4.2.2",
     "vega-lite": "3.4.0",
-    "vue": "^2.6.6",
+    "vue": "^2.6.12",
     "vue-color": "^2.7.0",
+    "vue-cytoscape": "^1.0.8",
     "vue-moment": "^4.0.0",
     "vue-multiselect": "^2.1.6",
     "vue-router": "^3.0.2",
@@ -43,6 +46,6 @@
     "eslint-plugin-vue": "^5.0.0",
     "node-sass": "^4.9.0",
     "sass-loader": "^7.1.0",
-    "vue-template-compiler": "^2.5.21"
+    "vue-template-compiler": "^2.6.12"
   }
 }

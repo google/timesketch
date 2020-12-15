@@ -30,6 +30,12 @@ limitations under the License.
               <span>Explore</span>
             </router-link>
           </li>
+          <li v-bind:class="{'is-active': currentPage === 'graph'}">
+            <router-link :to="{ name: 'SketchGraphOverview' }">
+              <span class="icon is-small"><i class="fas fa-project-diagram" aria-hidden="true"></i></span>
+              <span>Graph</span>
+            </router-link>
+          </li>
           <li v-bind:class="{'is-active': currentPage === 'stories'}">
             <router-link :to="{ name: 'SketchStoryOverview' }">
               <span class="icon is-small"><i class="fas fa-book" aria-hidden="true"></i></span>

@@ -1,0 +1,33 @@
+name: pylint
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  linter:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+        python-version: [3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        pip install pylint
+        pip install -r test_requirements.txt
+        pip install -r requirements.txt
+        pip install -e .
+        pip install -e api_client/python
+        pip install -e importer_client/python
+    - name: Run linter
+      run: |
+        git config pull.rebase false && git fetch -p origin master
+        for FILE in `git --no-pager diff origin/master --name-only | grep \.py$`; do echo "Running linter against ${FILE}"; pylint --rcfile=.pylintrc ${FILE}; done
+        

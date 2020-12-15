@@ -146,6 +146,42 @@ class AggregationResource(resources.ResourceMixin, Resource):
 
         return self.to_json(aggregation, status_code=HTTP_STATUS_CODE_CREATED)
 
+    @login_required
+    def delete(self, sketch_id, aggregation_id):
+        """Handles DELETE request to the resource.
+
+        Args:
+            sketch_id: Integer primary key for a sketch database model.
+            group_id: Integer primary key for an aggregation group database
+                model.
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        aggregation = Aggregation.query.get(aggregation_id)
+        if not aggregation:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No aggregation found with this ID.')
+
+        if not sketch.has_permission(user=current_user, permission='write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'The user does not have write permission on the sketch.')
+
+        # Check that this aggregation belongs to the sketch
+        if aggregation.sketch_id != sketch.id:
+            msg = (
+                'The sketch ID ({0:d}) does not match with the aggregation '
+                'sketch ID ({1:d})'.format(sketch.id, aggregation.sketch_id))
+            abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
+
+        db_session.delete(aggregation)
+        db_session.commit()
+        return HTTP_STATUS_CODE_OK
+
 
 class AggregationInfoResource(resources.ResourceMixin, Resource):
     """Resource to get information about an aggregation class."""

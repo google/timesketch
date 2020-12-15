@@ -45,6 +45,10 @@ class TestConfig(object):
     WTF_CSRF_ENABLED = False
     ELASTIC_HOST = None
     ELASTIC_PORT = None
+    ELASTIC_USER = None
+    ELASTIC_PASSWORD = None
+    ELASTIC_SSL = False
+    ELASTIC_VERIFY_CERTS = True
     LABELS_TO_PREVENT_DELETION = ['protected', 'magic']
     UPLOAD_ENABLED = False
     GRAPH_BACKEND_ENABLED = False

@@ -5,9 +5,13 @@ import os
 import re
 import yaml
 
+import mock
+
 from timesketch.lib import emojis
+from timesketch.lib.analyzers import feature_extraction
 from timesketch.lib.testlib import BaseTest
 
+from timesketch.lib.testlib import MockDataStore
 
 class TestFeatureExtractionPlugin(BaseTest):
     """Tests the functionality of the analyzer."""
@@ -65,3 +69,124 @@ class TestFeatureExtractionPlugin(BaseTest):
             self.assertIsInstance(key, str)
             self.assertIsInstance(value, dict)
             self._config_validation(value)
+
+    # Mock the Elasticsearch datastore.
+    @mock.patch(
+        'timesketch.lib.analyzers.interface.ElasticsearchDataStore',
+        MockDataStore)
+    def test_get_attribute_value(self):
+        """Test function _get_attribute_value()."""
+        analyzer = feature_extraction.FeatureExtractionSketchPlugin(
+            'test_index', 1)
+        current_val = ['hello']
+        extracted_value = ['hello']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val=current_val,
+            extracted_value=extracted_value,
+            keep_multi=True,
+            merge_values=True,
+            type_list=True)
+        new_val.sort()
+
+        self.assertEqual(new_val, ['hello'])
+
+        current_val = ['hello']
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            True,
+            True,
+            True)
+        new_val.sort()
+
+        self.assertEqual(new_val, ['hello', 'hello2', 'hello3'])
+
+        current_val = ['hello']
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            False,
+            True,
+            True)
+        new_val.sort()
+
+        self.assertEqual(new_val, ['hello', 'hello2'])
+
+        current_val = ['hello']
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            False,
+            False,
+            True)
+        new_val.sort()
+
+        self.assertEqual(new_val, ['hello2'])
+
+        current_val = ['hello']
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            True,
+            False,
+            True)
+        new_val.sort()
+
+        self.assertEqual(new_val, ['hello2', 'hello3'])
+
+        current_val = 'hello'
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            True,
+            True,
+            False)
+
+        self.assertEqual(new_val, 'hello,hello2,hello3')
+
+        current_val = 'hello'
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            False,
+            True,
+            False)
+
+        self.assertEqual(new_val, 'hello,hello2')
+
+        current_val = 'hello'
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            True,
+            False,
+            False)
+
+        self.assertEqual(new_val, 'hello2,hello3')
+
+        current_val = 'hello'
+        extracted_value = ['hello2', 'hello3']
+        # pylint: disable=protected-access
+        new_val = analyzer._get_attribute_value(
+            current_val,
+            extracted_value,
+            False,
+            False,
+            False)
+
+        self.assertEqual(new_val, 'hello2')

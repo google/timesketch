@@ -36,12 +36,13 @@ from . import error
 from . import index
 from . import sketch
 from . import version
+from . import sigma
 
 
 logger = logging.getLogger('timesketch_api.client')
 
 
-class TimesketchApi(object):
+class TimesketchApi:
     """Timesketch API object
 
     Attributes:
@@ -68,7 +69,7 @@ class TimesketchApi(object):
                  verify=True,
                  client_id='',
                  client_secret='',
-                 auth_mode='timesketch',
+                 auth_mode='userpass',
                  create_session=True):
         """Initializes the TimesketchApi object.
 
@@ -79,8 +80,8 @@ class TimesketchApi(object):
             verify: Verify server SSL certificate.
             client_id: The client ID if OAUTH auth is used.
             client_secret: The OAUTH client secret if OAUTH is used.
-            auth_mode: The authentication mode to use. Defaults to 'timesketch'
-                Supported values are 'timesketch' (Timesketch login form),
+            auth_mode: The authentication mode to use. Defaults to 'userpass'
+                Supported values are 'userpass' (username/password combo),
                 'http-basic' (HTTP Basic authentication) and oauth.
             create_session: Boolean indicating whether the client object
                 should create a session object. If set to False the
@@ -95,6 +96,7 @@ class TimesketchApi(object):
         self.api_root = '{0:s}/api/v1'.format(host_uri)
         self.credentials = None
         self._flow = None
+        self._username = username
 
         if not create_session:
             self.session = None
@@ -104,11 +106,16 @@ class TimesketchApi(object):
             self.session = self._create_session(
                 username, password, verify=verify, client_id=client_id,
                 client_secret=client_secret, auth_mode=auth_mode)
-        except ConnectionError:
-            raise ConnectionError('Timesketch server unreachable')
+        except ConnectionError as exc:
+            raise ConnectionError('Timesketch server unreachable') from exc
         except RuntimeError as e:
             raise RuntimeError(
-                'Unable to connect to server, with error: {0!s}'.format(e))
+                'Unable to connect to server, error: {0!s}'.format(e)) from e
+
+    @property
+    def current_user(self):
+        """Property that returns the username that is logged in."""
+        return self._username
 
     @property
     def version(self):
@@ -277,7 +284,7 @@ class TimesketchApi(object):
             client_id: The client ID if OAUTH auth is used.
             client_secret: The OAUTH client secret if OAUTH is used.
             auth_mode: The authentication mode to use. Supported values are
-                'timesketch' (Timesketch login form), 'http-basic'
+                'userpass' (username/password combo), 'http-basic'
                 (HTTP Basic authentication) and oauth.
 
         Returns:
@@ -303,7 +310,7 @@ class TimesketchApi(object):
 
         # Get and set CSRF token and authenticate the session if appropriate.
         self._set_csrf_token(session)
-        if auth_mode == 'timesketch':
+        if auth_mode == 'userpass':
             self._authenticate_session(session, username, password)
 
         return session
@@ -493,3 +500,52 @@ class TimesketchApi(object):
             return
         request = google.auth.transport.requests.Request()
         self.credentials.credential.refresh(request)
+
+    def list_sigma_rules(self, as_pandas=False):
+        """Get a list of sigma objects.
+
+        Args:
+            as_pandas: Boolean indicating that the results will be returned
+                as a Pandas DataFrame instead of a list of dicts.
+
+        Returns:
+            List of Sigme rule object instances or a pandas Dataframe with all
+            rules if as_pandas is True.
+
+        Raises:
+            ValueError: If no rules are found.
+        """
+        rules = []
+        response = self.fetch_resource_data('sigma/')
+
+        if not response:
+            raise ValueError('No rules found.')
+
+        if as_pandas:
+            return pandas.DataFrame.from_records(response.get('objects'))
+
+        for rule_dict in response['objects']:
+            rule_uuid = rule_dict.get('id')
+            title = rule_dict.get('title')
+            es_query = rule_dict.get('es_query')
+            file_name = rule_dict.get('file_name')
+            description = rule_dict.get('description')
+            file_relpath = rule_dict.get('file_relpath')
+            index_obj = sigma.Sigma(
+                rule_uuid, api=self, es_query=es_query, file_name=file_name,
+                title=title, description=description,
+                file_relpath=file_relpath)
+            rules.append(index_obj)
+        return rules
+
+
+    def get_sigma_rule(self, rule_uuid):
+        """Get a sigma rule.
+
+        Args:
+            rule_uuid: UUID of the Sigma rule.
+
+        Returns:
+            Instance of a Sigma object.
+        """
+        return sigma.Sigma(rule_uuid, api=self)

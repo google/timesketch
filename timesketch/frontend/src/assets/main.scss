@@ -48,8 +48,10 @@
     --time-bubble-background-color: #f5f5f5;
     --time-bubble-font-color: #666666;
     --content-list-hover-color: #fcfcfc;
+    --content-list-border-color: #EEEEEE;
     --login-page-background-color: var(--navbar-background);
     --card-title-font-color: var(--font-color-dark);
+    --card-header-border-color: #f5f5f5;
     --button-font-color: var(--font-color-dark);
     --form-label-font-color: var(--font-color-dark);
     --message-header-background-color: rgba(229, 229, 229, 0.84);
@@ -57,14 +59,15 @@
     --message-background-color: #f9f9f9;
     --message-body-color: var(--font-color-dark);
     --markdown-body-font-color: var(--font-color-dark);
+    --spinner-color: #333333;
 }
 
 [data-theme=dark] {
-    --background-color: #303030;
+    --background-color: #2d2d2d;
     --default-font-color: var(--font-color-light);
     --default-link-color: var(--font-color-light);
     --default-title-font-color: var(--font-color-light);
-    --navbar-background: #212121;
+    --navbar-background: #242424;
     --navbar-font-color: var(--font-color-light);
     --tabs-link-color: var(--font-color-light);
     --tabs-link-hover-color: var(--font-color-light);
@@ -72,7 +75,7 @@
     --tabs-link-active-border-bottom-color: var(--font-color-light);
     --tabs-link-hover-border-bottom-color: var(--font-color-light);
     --tabs-border-bottom-color: var(--font-color-dark);
-    --card-background-color: #424242;
+    --card-background-color: #545454;
     --card-font-color: #fafafa;
     --card-accent-background-color: #494949;
     --card-accent-font-color: var(--font-color-light);
@@ -85,20 +88,23 @@
     --table-background-color: #424242;
     --table-head-cell-color: #fafafa;
     --table-color: #fafafa;
-    --table-cell-border-color: #f5f5f5;
+    --table-cell-border-color: #818181;
     --time-bubble-background-color: #666666;
     --time-bubble-font-color: #d9d9d9;
-    --content-list-hover-color: #494949;
+    --content-list-hover-color: #696969;
+    --content-list-border-color: #696969;
     --login-page-background-color: var(--background-color);
     --navbar-item-link-color: #fafafa;
     --card-title-font-color: var(--font-color-light);
+    --card-header-border-color: #848484;
     --button-font-color: var(--font-color-light);
-    --form-label-font-color: var(--font-color-light);
+    --form-label-font-color: var(--font-color-dark);
     --message-header-background-color: var(--background-color);
     --message-header-font-color: var(--font-color-light);
     --message-background-color: #363636;
     --message-body-color: var(--font-color-light);
     --markdown-body-font-color: var(--font-color-light);
+    --spinner-color: #ffffff;
 }
 
 // Customize Bulma
@@ -110,6 +116,10 @@ $section-padding: 15px 15px 0 15px;
 $info: #0070bd;
 $success: #41ad49;
 $table-cell-padding: 10px;
+
+$box-shadow: 0px;
+$box-color: var(--default-font-color);
+$box-background-color: var(--card-background-color);
 
 // Support light/dark themes
 $tabs-link-color: var(--tabs-link-color);
@@ -125,7 +135,6 @@ $table-background-color: var(--table-background-color);
 $table-head-cell-color: var(--table-head-cell-color);
 $table-cell-border: 1px solid var(--table-cell-border-color);
 $table-color: var(--table-color);
-$table-cell-border:0;
 $title-color: var(--default-title-font-color);
 $navbar-item-color: var(--navbar-item-link-color);
 $label-color: var(--form-label-font-color);
@@ -156,6 +165,7 @@ body {
 
 .login-page {
     background: var(--login-page-background-color);
+    color: var(--default-font-color);
 }
 
 .card {
@@ -165,7 +175,7 @@ body {
 }
 
 .card-header {
-    border-bottom: 1px solid transparent;
+    border-bottom: 1px solid var(--card-header-border-color);
 }
 
 .card-accent-background {
@@ -192,7 +202,7 @@ ul.content-list {
 ul.content-list>li {
     padding-top: 5px;
     padding-bottom: 5px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--content-list-border-color);
     display: block;
     margin: 0;
 }
@@ -213,6 +223,16 @@ ul.content-list>li:last-child { border-bottom: none; }
     background: var(--search-input-explore);
     color: var(--search-input-font-color);
     width: 100%;
+}
+
+.ts-home-input {
+    outline: none;
+    border: none;
+    border-radius: 5px;
+    background: var(--search-input-explore);
+    color: var(--search-input-font-color);
+    padding: 13px;
+    width: 50%;
 }
 
 .button.ts-search-dropdown {

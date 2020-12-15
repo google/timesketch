@@ -15,6 +15,13 @@ limitations under the License.
 -->
 <template>
   <div>
+
+    <ts-navbar-main>
+      <template v-slot:left>
+        {{ sketch.name }}
+      </template>
+    </ts-navbar-main>
+
     <section class="section">
         <div class="container is-fluid">
           <ts-navbar-secondary currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
@@ -52,12 +59,12 @@ limitations under the License.
             <div class="field is-grouped">
 
               <p class="control">
-                <b-dropdown trap-focus aria-role="menu" ref="NewTimeFilter">
+                <b-dropdown trap-focus append-to-body aria-role="menu" ref="NewTimeFilter">
                   <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
-                    <span>+ Add time range</span>
+                    <span>+ Time filter</span>
                   </a>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                    <strong>Add time range</strong>
+                    <strong>Create time filter</strong>
                     <br>
                     <br>
                     <ts-explore-filter-time @addChip="addChip" @hideDropdown="hideDropdown"></ts-explore-filter-time>
@@ -66,7 +73,7 @@ limitations under the License.
               </p>
 
               <p class="control">
-                <b-dropdown trap-focus aria-role="menu">
+                <b-dropdown trap-focus append-to-body aria-role="menu">
 
                   <a class="button is-text" style="text-decoration: none;" slot="trigger" role="button">
                     <span>+ Add label filter</span>
@@ -108,10 +115,10 @@ limitations under the License.
               </p>
             </div>
 
-            <!-- Time range filters -->
+            <!-- Time filters -->
             <div class="tags" style="margin-bottom:-5px;">
               <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
-                <b-dropdown trap-focus aria-role="menu" ref="TimeFilters">
+                <b-dropdown trap-focus append-to-body aria-role="menu" ref="TimeFilters">
                   <span slot="trigger" role="button" class="is-small is-outlined">
                     <div class="tags" style="margin-bottom: 5px; margin-right:7px;">
                       <span class="tag" style="cursor: pointer;" v-bind:class="{ 'chip-disabled': chip.active === false}">
@@ -119,18 +126,21 @@ limitations under the License.
                           <span v-if="index > 0" class="chip-operator-label">OR</span>
                           <span class="icon" style="margin-right:7px;"><i class="fas fa-clock"></i></span>
                           <span>{{ chip.value.split(',')[0] }}</span>
-                          <span v-if="chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</span>
+                          <span v-if="chip.type === 'datetime_range' && chip.value.split(',')[0] !== chip.value.split(',')[1]"> &rarr; {{ chip.value.split(',')[1] }}</span>
                         </span>
-                        <span class="fas fa-edit" style="margin-left:7px;"></span>
-                        <button style="margin-left:7px" class="delete is-small" v-on:click="removeChip(chip)"></button>
+                        <span class="fa-stack fa-lg" style="margin-left:5px; width:20px;">
+                          <i class="fas fa-circle fa-stack-1x can-change-background" style="transform:scale(1.1);"></i>
+                          <i class="fas fa-edit fa-stack-1x fa-inverse" style="transform:scale(0.7);"></i>
+                        </span>
+                        <button class="delete is-small" style="margin-left:5px" v-on:click="removeChip(index)"></button>
                       </span>
                     </div>
                   </span>
                   <b-dropdown-item custom :focusable="false" style="min-width: 500px; padding: 30px;">
-                    <strong>Update time range</strong>
+                    <strong>Update time filter</strong>
                     <br>
                     <br>
-                    <ts-explore-filter-time @updateChip="updateChip($event, chip)" :selectedChip="chip" :start="chip.value.split(',')[0]" :end="chip.value.split(',')[1]"></ts-explore-filter-time>
+                    <ts-explore-filter-time :selectedChip="chip" @updateChip="updateChip($event, chip)" @hideDropdown="hideDropdown"></ts-explore-filter-time>
                   </b-dropdown-item>
                 </b-dropdown>
               </span>
@@ -226,7 +236,7 @@ limitations under the License.
                 </div>
                 <div class="level-item">
                   <div v-if="eventList.objects.length" class="select is-small">
-                    <select v-model="currentQueryFilter.size" @change="resetPagination">
+                    <select v-model="currentQueryFilter.size" @change="search">
                       <option v-bind:value="currentQueryFilter.size">{{ currentQueryFilter.size }}</option>
                       <option value="10">10</option>
                       <option value="20">20</option>
@@ -393,7 +403,6 @@ export default {
         objects: []
       },
       currentQueryString: "",
-      previousQueryString: "",
       currentQueryFilter: defaultQueryFilter(),
       selectedFields: [{field: 'message', type: 'text'}],
       selectedFieldsProxy: [],
@@ -444,14 +453,14 @@ export default {
       return this.currentQueryFilter.chips.filter(chip => chip.type === 'label' || chip.type === 'term')
     },
     timeFilterChips: function () {
-      return this.currentQueryFilter.chips.filter(chip => chip.type === 'datetime_range')
+      return this.currentQueryFilter.chips.filter(chip => chip.type.startsWith('datetime'))
     }
   },
   methods: {
     hideDropdown: function() {
       this.$refs['NewTimeFilter'].isActive = false
     },
-    search: function (emitEvent=true) {
+    search: function (emitEvent=true, resetPagination=true) {
       if (!this.currentQueryString) {
         return
       }
@@ -466,13 +475,14 @@ export default {
 
       this.eventList = emptyEventList()
 
-      // Reset pagination when a new query string is entered.
-      if (this.previousQueryString !== this.currentQueryString) {
-        this.currentQueryFilter.from = 0
-      }
 
-      // Save the query string for later check if pagination should be reset.
-      this.previousQueryString = this.currentQueryString
+      if (resetPagination) {
+        // TODO: Can we keep position of the pagination when changing page size?
+        // We need to calculate the new position in the page range and it is not
+        // trivial with the current pagination UI component we use.
+        this.currentQueryFilter.from = 0
+        this.currentPage = 1
+      }
 
       // Update with selected fields
       this.currentQueryFilter.fields = this.selectedFields
@@ -628,7 +638,7 @@ export default {
     },
     updateChip: function(newChip, oldChip) {
       // Replace the chip at the given index
-      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === oldChip.value);
+      let chipIndex = this.currentQueryFilter.chips.findIndex(c => c.value === oldChip.value && c.type == oldChip.type);
       this.currentQueryFilter.chips.splice(chipIndex, 1, newChip)
       this.search()
     },
@@ -681,15 +691,7 @@ export default {
     },
     paginate: function (pageNum) {
       this.currentQueryFilter.from  = ((pageNum * this.currentQueryFilter.size) - this.currentQueryFilter.size)
-      this.search()
-    },
-    resetPagination: function () {
-      // TODO: Can we keep position of the pagination when changing page size?
-      // We need to calculate the new position in the page range and it is not
-      // trivial with the current pagination UI component we use.
-      this.currentQueryFilter.from = 0
-      this.currentPage = 1
-      this.search()
+      this.search(true, false)
     },
     updateSelectedFields: function (value) {
       // If we haven't fetched the field before, do an new search.
@@ -800,9 +802,9 @@ export default {
 </script>
 
 <style lang="scss">
-  .dropdown-menu {
-    box-shadow: 0 30px 30px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
-  }
+.dropdown-menu {
+  box-shadow: 0 30px 30px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+}
 
 .multiselect,
 .multiselect__input,
@@ -833,5 +835,13 @@ export default {
   margin-right: 7px;
   font-size: 0.7em;
   cursor: default;
+}
+
+.can-change-background {
+  color: rgba(10, 10, 10, 0.2);
+}
+
+.can-change-background:hover {
+  color: rgba(10, 10, 10, 0.3);
 }
 </style>

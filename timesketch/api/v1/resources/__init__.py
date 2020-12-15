@@ -157,6 +157,23 @@ class ResourceMixin(object):
         'updated_at': fields.DateTime
     }
 
+    graph_fields = {
+        'id': fields.Integer,
+        'name': fields.String,
+        'user': fields.Nested(user_fields),
+        'description': fields.String,
+        'created_at': fields.DateTime,
+        'updated_at': fields.DateTime
+    }
+
+    graphcache_fields = {
+        'id': fields.Integer,
+        'graph_elements': fields.String,
+        'graph_config': fields.String,
+        'created_at': fields.DateTime,
+        'updated_at': fields.DateTime
+    }
+
     sketch_fields = {
         'id': fields.Integer,
         'name': fields.String,
@@ -164,6 +181,7 @@ class ResourceMixin(object):
         'user': fields.Nested(user_fields),
         'timelines': fields.List(fields.Nested(timeline_fields)),
         'stories': fields.List(fields.Nested(story_fields)),
+        'graphs': fields.List(fields.Nested(graph_fields)),
         'aggregations': fields.Nested(aggregation_fields),
         'aggregationgroups': fields.Nested(aggregation_group_fields),
         'active_timelines': fields.List(fields.Nested(timeline_fields)),
@@ -199,6 +217,8 @@ class ResourceMixin(object):
         'searchtemplate': searchtemplate_fields,
         'view': view_fields,
         'user': user_fields,
+        'graph': graph_fields,
+        'graphcache': graphcache_fields,
         'group': group_fields,
         'sketch': sketch_fields,
         'story': story_fields,
