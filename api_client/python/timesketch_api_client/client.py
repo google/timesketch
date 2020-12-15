@@ -315,17 +315,18 @@ class TimesketchApi:
 
         return session
 
-    def fetch_resource_data(self, resource_uri):
+    def fetch_resource_data(self, resource_uri, params=None):
         """Make a HTTP GET request.
 
         Args:
             resource_uri: The URI to the resource to be fetched.
+            params: Dict of URL parameters to send in the GET request.
 
         Returns:
             Dictionary with the response data.
         """
         resource_url = '{0:s}/{1:s}'.format(self.api_root, resource_uri)
-        response = self.session.get(resource_url)
+        response = self.session.get(resource_url, params=params)
         return error.get_response_json(response, logger)
 
     def create_sketch(self, name, description=None):
@@ -414,21 +415,46 @@ class TimesketchApi:
 
         return pandas.DataFrame(lines)
 
-    def list_sketches(self):
+    def list_sketches(self, per_page=50, scope='user', include_archived=True):
         """Get a list of all open sketches that the user has access to.
 
-        Returns:
-            List of Sketch objects instances.
+        Args:
+            per_page: Number of items per page when paginating.
+            scope: What scope to get sketches as (e.g user, admin, shared)
+            include_archived: If archived sketches should be returned.
+
+        Yields:
+            Sketch objects instances.
         """
-        sketches = []
-        response = self.fetch_resource_data('sketches/')
-        for sketch_dict in response['objects']:
-            sketch_id = sketch_dict['id']
-            sketch_name = sketch_dict['name']
-            sketch_obj = sketch.Sketch(
-                sketch_id=sketch_id, api=self, sketch_name=sketch_name)
-            sketches.append(sketch_obj)
-        return sketches
+        url_params = {
+            'per_page': per_page,
+            'scope': scope,
+            'include_archived': include_archived
+        }
+        response = self.fetch_resource_data('sketches/', url_params)
+        meta = response['meta']
+
+        total_pages = meta.get('total_pages', 0)
+        current_page = meta.get('current_page')
+        while current_page <= total_pages:
+            next_page = meta.get('next_page')
+            if not next_page:
+                next_page = meta.get('current_page')
+            url_params = {
+                'per_page': per_page,
+                'page': next_page,
+                'scope': scope,
+                'include_archived': include_archived
+            }
+            response = self.fetch_resource_data('sketches/', params=url_params)
+            meta = response['meta']
+            for sketch_dict in response['objects']:
+                sketch_id = sketch_dict['id']
+                sketch_name = sketch_dict['name']
+                sketch_obj = sketch.Sketch(
+                    sketch_id=sketch_id, api=self, sketch_name=sketch_name)
+                yield sketch_obj
+            current_page += 1
 
     def get_searchindex(self, searchindex_id):
         """Get a searchindex.
