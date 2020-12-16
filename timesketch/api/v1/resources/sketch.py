@@ -76,6 +76,11 @@ class SketchListResource(resources.ResourceMixin, Resource):
         search_query = args.get('search_query', None)
         include_archived = args.get('include_archived', True)
 
+        if not page:
+            page = 1
+
+        print(page)
+
         if current_user.admin and scope == 'admin':
             sketch_query = Sketch.query
         else:

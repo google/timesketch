@@ -431,30 +431,26 @@ class TimesketchApi:
             'scope': scope,
             'include_archived': include_archived
         }
-        response = self.fetch_resource_data('sketches/', url_params)
-        meta = response['meta']
+        # Start with the first page
+        page = 1
+        has_next_page = True
 
-        total_pages = meta.get('total_pages', 0)
-        current_page = meta.get('current_page')
-        while current_page <= total_pages:
-            next_page = meta.get('next_page')
-            if not next_page:
-                next_page = meta.get('current_page')
-            url_params = {
-                'per_page': per_page,
-                'page': next_page,
-                'scope': scope,
-                'include_archived': include_archived
-            }
+        while has_next_page:
+            url_params['page'] = page
             response = self.fetch_resource_data('sketches/', params=url_params)
-            meta = response['meta']
+            meta = response.get('meta', {})
+
+            page = meta.get('next_page')
+            if not page:
+                page = meta.get('current_page')
+                has_next_page = False
+
             for sketch_dict in response['objects']:
                 sketch_id = sketch_dict['id']
                 sketch_name = sketch_dict['name']
                 sketch_obj = sketch.Sketch(
                     sketch_id=sketch_id, api=self, sketch_name=sketch_name)
                 yield sketch_obj
-            current_page += 1
 
     def get_searchindex(self, searchindex_id):
         """Get a searchindex.
