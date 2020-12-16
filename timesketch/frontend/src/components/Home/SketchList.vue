@@ -50,12 +50,12 @@ limitations under the License.
 
     <br>
     <b-pagination class="is-right"
-      v-if="numSketches > 20"
+      v-if="numSketches > 10"
       v-model="currentPage"
       @change="paginate"
       :total="numSketches"
       :simple="true"
-      :per-page="20"
+      :per-page="10"
       size="is-small">
     </b-pagination>
 
