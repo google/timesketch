@@ -445,7 +445,7 @@ class TimesketchApi:
                 page = meta.get('current_page')
                 has_next_page = False
 
-            for sketch_dict in response['objects']:
+            for sketch_dict in response.get('objects', []):
                 sketch_id = sketch_dict['id']
                 sketch_name = sketch_dict['name']
                 sketch_obj = sketch.Sketch(
