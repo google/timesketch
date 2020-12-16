@@ -23,7 +23,6 @@ import json
 import logging
 import random
 import smtplib
-import sys
 import time
 import codecs
 
@@ -92,7 +91,8 @@ def validate_csv_fields(mandatory_fields, data):
             RuntimeError: if there are missing fields.
     """
     parsed_fields = data.columns
-    missing_fields = [field for field in mandatory_fields if field not in parsed_fields]
+    missing_fields = [field for field in mandatory_fields
+                      if field not in parsed_fields]
     if missing_fields:
         raise RuntimeError(
             'Missing fields in CSV header: {0:s}'.format(
@@ -166,7 +166,8 @@ def read_and_validate_redline(file_handle):
     csv.register_dialect(
         'redlineDialect', delimiter=',', quoting=csv.QUOTE_ALL,
         skipinitialspace=True)
-    reader = pandas.read_csv(file_handle, delimiter=',', dialect='redlineDialect')
+    reader = pandas.read_csv(file_handle, delimiter=',',
+                             dialect='redlineDialect')
 
     validate_csv_fields(mandatory_fields, reader)
     for row in reader:
