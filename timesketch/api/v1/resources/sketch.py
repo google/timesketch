@@ -52,16 +52,23 @@ logger = logging.getLogger('timesketch.sketch_api')
 class SketchListResource(resources.ResourceMixin, Resource):
     """Resource for listing sketches."""
 
+    DEFAULT_SKETCHES_PER_PAGE = 10
+
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument('scope', type=str, required=False)
-        self.parser.add_argument('page', type=int, required=False, default=1)
         self.parser.add_argument(
-            'per_page', type=int, required=False, default=10)
-        self.parser.add_argument('search_query', type=str, required=False)
+            'scope', type=str, required=False, default='user')
         self.parser.add_argument(
-            'include_archived', type=inputs.boolean, required=False)
+            'page', type=int, required=False, default=1)
+        self.parser.add_argument(
+            'per_page', type=int, required=False,
+            default=self.DEFAULT_SKETCHES_PER_PAGE)
+        self.parser.add_argument(
+            'search_query', type=str, required=False, defaule=None)
+        self.parser.add_argument(
+            'include_archived', type=inputs.boolean, required=False,
+            default=False)
 
     @login_required
     def get(self):
@@ -71,11 +78,11 @@ class SketchListResource(resources.ResourceMixin, Resource):
             List of sketches (instance of flask.wrappers.Response)
         """
         args = self.parser.parse_args()
-        scope = args.get('scope', 'user')
-        page = args.get('page', 1)
-        per_page = args.get('per_page', 10)
-        search_query = args.get('search_query', None)
-        include_archived = args.get('include_archived', True)
+        scope = args.get('scope')
+        page = args.get('page')
+        per_page = args.get('per_page')
+        search_query = args.get('search_query')
+        include_archived = args.get('include_archived')
 
         if current_user.admin and scope == 'admin':
             sketch_query = Sketch.query
