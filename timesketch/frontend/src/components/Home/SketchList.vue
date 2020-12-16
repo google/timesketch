@@ -15,55 +15,6 @@ limitations under the License.
 -->
 <template>
   <div>
-    <!--
-    <b-table
-      :data="sketches"
-      :per-page="perPage"
-      paginated
-      pagination-simple
-      pagination-position="bottom"
-      default-sort-direction="desc"
-      icon-pack="fas"
-      icon-prev="chevron-left"
-      icon-next="chevron-right">
-      <b-table-column field="name" label="Name" v-slot="props">
-        <router-link :to="{ name: 'SketchOverview', params: {sketchId: props.row.id } }"><strong>{{ props.row.name }}</strong></router-link>
-      </b-table-column>
-      <b-table-column field="status" v-slot="props">
-          <span v-if="props.row.status === 'archived'">
-            <b-tag>{{ props.row.status }}</b-tag>
-          </span>
-      </b-table-column>
-      <b-table-column field="user" label="Created by" width="200" v-slot="props">
-        {{ props.row.user }}
-      </b-table-column>
-      <b-table-column field="updated_at" label="Last activity" width="200" v-slot="props">
-        {{ new Date(props.row.updated_at) | moment("YYYY-MM-DD HH:mm") }}
-      </b-table-column>
-
-      <template slot="bottom-left">
-        <div class="has-text-right">
-          <div class="level" >
-            <div class="level-left" style="margin-right: 10px;">
-              Rows per page:
-            </div>
-            <div class="level-right">
-              <b-select class="is-pulled-left" placeholder="Rows per page" v-model="perPage" size="is-small">
-                <option v-bind:value="perPage">{{ perPage }}</option>
-                <option value="20">20</option>
-                <option value="40">40</option>
-                <option value="80">80</option>
-                <option value="100">100</option>
-                <option value="200">200</option>
-                <option value="500">500</option>
-              </b-select>
-            </div>
-          </div>
-        </div>
-      </template>
-    </b-table>
-    -->
-
     <div v-if="!sketches.length">
       No {{ scope }} investigations found
     </div>
@@ -130,7 +81,7 @@ export default {
     getSketches: function () {
       ApiClient.getSketchList(this.scope, this.currentPage, this.searchQuery).then((response) => {
         this.sketches = response.data.objects
-        this.numSketches = response.data.meta.num_hits
+        this.numSketches = response.data.meta.total_items
       }).catch((e) => {
         console.error(e)
       })
