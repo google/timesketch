@@ -419,7 +419,7 @@ class TimesketchApi:
         """Get a list of all open sketches that the user has access to.
 
         Args:
-            per_page: Number of items per page when paginating.
+            per_page: Number of items per page when paginating. Default is 50.
             scope: What scope to get sketches as (e.g user, admin, shared)
             include_archived: If archived sketches should be returned.
 
@@ -442,7 +442,6 @@ class TimesketchApi:
 
             page = meta.get('next_page')
             if not page:
-                page = meta.get('current_page')
                 has_next_page = False
 
             for sketch_dict in response.get('objects', []):

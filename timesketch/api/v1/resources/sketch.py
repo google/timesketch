@@ -79,8 +79,6 @@ class SketchListResource(resources.ResourceMixin, Resource):
         if not page:
             page = 1
 
-        print(page)
-
         if current_user.admin and scope == 'admin':
             sketch_query = Sketch.query
         else:
