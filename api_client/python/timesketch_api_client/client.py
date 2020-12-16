@@ -420,7 +420,7 @@ class TimesketchApi:
 
         Args:
             per_page: Number of items per page when paginating. Default is 50.
-            scope: What scope to get sketches as (e.g user, admin, shared)
+            scope: What scope to get sketches as. Default to user.
             include_archived: If archived sketches should be returned.
 
         Yields:
