@@ -26,6 +26,8 @@ import smtplib
 import sys
 import time
 import codecs
+
+import pandas
 import six
 
 from dateutil import parser
@@ -34,9 +36,6 @@ from flask import current_app
 from timesketch.lib import errors
 
 logger = logging.getLogger('timesketch.utils')
-
-# Set CSV field size limit to systems max value.
-csv.field_size_limit(sys.maxsize)
 
 # Fields to scrub from timelines.
 FIELDS_TO_REMOVE = ['_id', '_type', '_index', '_source']
@@ -83,6 +82,23 @@ def _scrub_special_tags(dict_obj):
             _ = dict_obj.pop(field)
 
 
+def validate_csv_fields(mandatory_fields, data):
+    """Validate parsed CSV fields against mandatory fields.
+        Args:
+            mandatory_fields: a list of fields that must be present.
+            data: a DataFrame built from the ingested file.
+
+        Raises:
+            RuntimeError: if there are missing fields.
+    """
+    parsed_fields = data.columns
+    missing_fields = [field for field in mandatory_fields if field not in parsed_fields]
+    if missing_fields:
+        raise RuntimeError(
+            'Missing fields in CSV header: {0:s}'.format(
+                ','.join(missing_fields)))
+
+
 def read_and_validate_csv(file_handle, delimiter=','):
     """Generator for reading a CSV file.
 
@@ -101,79 +117,58 @@ def read_and_validate_csv(file_handle, delimiter=','):
     if not isinstance(delimiter, six.text_type):
         delimiter = codecs.decode(delimiter, 'utf8')
 
-    # Due to issues with python2.
-    if six.PY2:
-        delimiter = str(delimiter)
-
-    reader = csv.DictReader(file_handle, delimiter=delimiter)
-    csv_header = reader.fieldnames
-    missing_fields = []
-    # Validate the CSV header
-    for field in mandatory_fields:
-        if field not in csv_header:
-            missing_fields.append(field)
-    if missing_fields:
-        raise RuntimeError(
-            'Missing fields in CSV header: {0:s}'.format(
-                ','.join(missing_fields)))
     try:
-        for row in reader:
-            # There is a condition in which the CSV reader can read a
-            # single lines as multiple, causing issues with importing.
-            # TODO: Swap the CSV library for the user of pandas.
-            if not row:
-                continue
-            if not row['datetime']:
-                logger.warning(
-                    'Row missing a datetime object, skipping [{0:s}]'.format(
-                        ','.join([str(x).replace(
-                            '\n', '').strip() for x in row.values()])))
-                continue
-            try:
-                # normalize datetime to ISO 8601 format if it's not the case.
-                parsed_datetime = parser.parse(row['datetime'])
-                row['datetime'] = parsed_datetime.isoformat()
-
-                normalized_timestamp = int(
-                    time.mktime(parsed_datetime.utctimetuple()) * 1000000)
-                normalized_timestamp += parsed_datetime.microsecond
-                row['timestamp'] = str(normalized_timestamp)
-                if 'tag' in row:
-                    row['tag'] = [x for x in _parse_tag_field(row['tag']) if x]
-
-                _scrub_special_tags(row)
-            except ValueError:
-                continue
-
-            yield row
-    except csv.Error as e:
+        reader = pandas.read_csv(file_handle, sep=delimiter)
+    except pandas.errors.ParserError as e:
         error_string = 'Unable to read file, with error: {0!s}'.format(e)
         logger.error(error_string)
         raise errors.DataIngestionError(error_string)
+
+    validate_csv_fields(mandatory_fields, reader)
+    for row in reader:
+        if not row:
+            continue
+        if not row['datetime']:
+            logger.warning(
+                'Row missing a datetime object, skipping [{0:s}]'.format(
+                    ','.join([str(x).replace(
+                        '\n', '').strip() for x in row.values()])))
+            continue
+        try:
+            # Normalize datetime to ISO 8601 format if it's not the case.
+            parsed_datetime = parser.parse(row['datetime'])
+            row['datetime'] = parsed_datetime.isoformat()
+
+            normalized_timestamp = int(
+                time.mktime(parsed_datetime.utctimetuple()) * 1000000)
+            normalized_timestamp += parsed_datetime.microsecond
+            row['timestamp'] = str(normalized_timestamp)
+            if 'tag' in row:
+                row['tag'] = [x for x in _parse_tag_field(row['tag']) if x]
+
+            _scrub_special_tags(row)
+        except ValueError:
+            continue
+        yield row
 
 
 def read_and_validate_redline(file_handle):
     """Generator for reading a Redline CSV file.
     Args:
         file_handle: a file-like object containing the CSV content.
+
+    Raises:
+        RuntimeError: if there are missing fields.
     """
     # Columns that must be present in the CSV file
     mandatory_fields = ['Alert', 'Tag', 'Timestamp', 'Field', 'Summary']
 
     csv.register_dialect(
-        'myDialect', delimiter=',', quoting=csv.QUOTE_ALL,
+        'redlineDialect', delimiter=',', quoting=csv.QUOTE_ALL,
         skipinitialspace=True)
-    reader = csv.DictReader(file_handle, delimiter=',', dialect='myDialect')
+    reader = pandas.read_csv(file_handle, delimiter=',', dialect='redlineDialect')
 
-    csv_header = reader.fieldnames
-    missing_fields = []
-    # Validate the CSV header
-    for field in mandatory_fields:
-        if field not in csv_header:
-            missing_fields.append(field)
-    if missing_fields:
-        raise RuntimeError(
-            'Missing fields in CSV header: {0:s}'.format(missing_fields))
+    validate_csv_fields(mandatory_fields, reader)
     for row in reader:
         dt = parser.parse(row['Timestamp'])
         timestamp = int(time.mktime(dt.timetuple())) * 1000
@@ -189,9 +184,9 @@ def read_and_validate_redline(file_handle):
         row_to_yield["timestamp"] = timestamp
         row_to_yield["datetime"] = dt_iso_format
         row_to_yield["timestamp_desc"] = timestamp_desc
-        row_to_yield["alert"] = alert #extra field
+        row_to_yield["alert"] = alert  # Extra field
         tags = [tag]
-        row_to_yield["tag"] = tags # extra field
+        row_to_yield["tag"] = tags  # Extra field
 
         yield row_to_yield
 
