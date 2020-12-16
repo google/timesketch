@@ -48,7 +48,7 @@ class TimesketchApiTest(unittest.TestCase):
 
     def test_get_sketches(self):
         """Test to get a list of sketches."""
-        sketches = [sketch for sketch in self.api_client.list_sketches()]
+        sketches = list(self.api_client.list_sketches())
         self.assertIsInstance(sketches, list)
         self.assertEqual(len(sketches), 1)
         self.assertIsInstance(sketches[0], sketch_lib.Sketch)
