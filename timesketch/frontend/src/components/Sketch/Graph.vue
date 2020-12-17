@@ -21,7 +21,7 @@ limitations under the License.
               <header class="card-header" style="border-bottom: 0;">
 
                 <div v-if="currentGraph">
-                <b-dropdown aria-role="list">
+                <b-dropdown aria-role="list" append-to-body>
 
                   <a class="button ts-search-dropdown" style="background-color: transparent;" slot="trigger" slot-scope="{ active }">
                     <span class="icon is-small" style="margin-right: 10px; margin-top:2px; font-size: 0.6em;">
