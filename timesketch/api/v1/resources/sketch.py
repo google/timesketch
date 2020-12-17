@@ -230,6 +230,16 @@ class SketchResource(resources.ResourceMixin, Resource):
         sketch.remove_label(label)
         return True
 
+    def _get_last_activity(self, sketch):
+        """Returns a date string with the last activity from a sketch."""
+        try:
+            last_activity = View.query.filter_by(
+                sketch=sketch, name='').order_by(
+                View.updated_at.desc()).first().updated_at
+        except AttributeError:
+            return ''
+        return last_activity.isoformat()
+
     def _get_sketch_for_admin(self, sketch):
         """Returns a limited sketch view for adminstrators.
 
@@ -272,7 +282,10 @@ class SketchResource(resources.ResourceMixin, Resource):
             'updated_at': sketch.updated_at,
         }
 
-        meta = {'current_user': current_user.username}
+        meta = {
+            'current_user': current_user.username,
+            'last_activity': self._get_last_activity(sketch),
+        }
         return jsonify(
             {
                 'objects': [sketch_fields],
@@ -436,6 +449,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             attributes=utils.get_sketch_attributes(sketch),
             mappings=list(mappings),
             stats=stats_per_index,
+            last_activity=self._get_last_activity(sketch),
             filter_labels=self.datastore.get_filter_labels(
                 sketch.id, sketch_indices),
             sketch_labels=[label.label for label in sketch.labels]
