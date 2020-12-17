@@ -39,7 +39,7 @@ limitations under the License.
         icon-prev="chevron-left"
         icon-next="chevron-right"
         default-sort="created_at">
-        <b-table-column field="created_at" label="Date" width="150" sortable v-slot="props">
+        <b-table-column field="created_at" label="Date" width="150" sortable custom-sort="dateSort" v-slot="props">
           {{ new Date(props.row.created_at) | moment("YYYY-MM-DD HH:mm") }}
         </b-table-column>
 
@@ -78,6 +78,11 @@ export default {
     sketch () {
       return this.$store.state.sketch
     }
+  },
+  methods: {
+    dateSort(a, b, key) {
+      return a[key] - b[key];
+    },
   },
   created() {
     ApiClient.getSketchTimelineAnalysis(this.sketch.id, this.timeline.id).then((response) => {

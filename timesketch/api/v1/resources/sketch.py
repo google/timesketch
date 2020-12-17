@@ -23,6 +23,7 @@ from flask import abort
 from flask import current_app
 from flask_restful import Resource
 from flask_restful import reqparse
+from flask_restful import inputs
 from flask_login import login_required
 from flask_login import current_user
 from sqlalchemy import not_
@@ -51,12 +52,23 @@ logger = logging.getLogger('timesketch.sketch_api')
 class SketchListResource(resources.ResourceMixin, Resource):
     """Resource for listing sketches."""
 
+    DEFAULT_SKETCHES_PER_PAGE = 10
+
     def __init__(self):
         super().__init__()
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument('scope', type=str, required=False)
-        self.parser.add_argument('page', type=int, required=False)
-        self.parser.add_argument('search_query', type=str, required=False)
+        self.parser.add_argument(
+            'scope', type=str, required=False, default='user')
+        self.parser.add_argument(
+            'page', type=int, required=False, default=1)
+        self.parser.add_argument(
+            'per_page', type=int, required=False,
+            default=self.DEFAULT_SKETCHES_PER_PAGE)
+        self.parser.add_argument(
+            'search_query', type=str, required=False, default=None)
+        self.parser.add_argument(
+            'include_archived', type=inputs.boolean, required=False,
+            default=False)
 
     @login_required
     def get(self):
@@ -66,11 +78,13 @@ class SketchListResource(resources.ResourceMixin, Resource):
             List of sketches (instance of flask.wrappers.Response)
         """
         args = self.parser.parse_args()
-        scope = args.get('scope', None)
-        page = args.get('page', 1)
-        search_query = args.get('search_query', None)
+        scope = args.get('scope')
+        page = args.get('page')
+        per_page = args.get('per_page')
+        search_query = args.get('search_query')
+        include_archived = args.get('include_archived')
 
-        if current_user.admin:
+        if current_user.admin and scope == 'admin':
             sketch_query = Sketch.query
         else:
             sketch_query = Sketch.all_with_acl()
@@ -87,7 +101,14 @@ class SketchListResource(resources.ResourceMixin, Resource):
         filtered_sketches = base_filter_with_archived
         sketches = []
         return_sketches = []
-        num_hits = 0
+
+        has_next = False
+        has_prev = False
+        next_page = None
+        prev_page = None
+        current_page = 1
+        total_pages = 0
+        total_items = 0
 
         if scope == 'recent':
             # Get list of sketches that the user has actively searched in.
@@ -97,7 +118,14 @@ class SketchListResource(resources.ResourceMixin, Resource):
                 user=current_user, name='').order_by(
                 View.updated_at.desc()).limit(3)
             sketches = [view.sketch for view in views]
-            num_hits = len(sketches)
+            total_items = len(sketches)
+        elif scope == 'admin':
+            if not current_user.admin:
+                abort(HTTP_STATUS_CODE_FORBIDDEN, 'User is not an admin.')
+            if include_archived:
+                filtered_sketches = base_filter_with_archived
+            else:
+                filtered_sketches = base_filter
         elif scope == 'user':
             filtered_sketches = base_filter.filter_by(user=current_user)
         elif scope == 'archived':
@@ -113,14 +141,17 @@ class SketchListResource(resources.ResourceMixin, Resource):
                 )
             )
 
-        # If no scope is set, fall back to returning all sketches.
-        if not scope:
-            sketches = filtered_sketches.all()
-
         if not sketches:
-            pagination = filtered_sketches.paginate(page=page, per_page=20)
+            pagination = filtered_sketches.paginate(
+                page=page, per_page=per_page)
             sketches = pagination.items
-            num_hits = pagination.total
+            has_next = pagination.has_next
+            has_prev = pagination.has_prev
+            next_page = pagination.next_num
+            prev_page = pagination.prev_num
+            current_page = pagination.page
+            total_pages = pagination.pages
+            total_items = pagination.total
 
         for sketch in sketches:
             # Last time a user did a query in the sketch, indicating activity.
@@ -145,7 +176,13 @@ class SketchListResource(resources.ResourceMixin, Resource):
 
         meta = {
             'current_user': current_user.username,
-            'num_hits': num_hits
+            'has_next': has_next,
+            'has_prev': has_prev,
+            'next_page': next_page,
+            'prev_page': prev_page,
+            'current_page': current_page,
+            'total_pages': total_pages,
+            'total_items': total_items
         }
         return jsonify({'objects': return_sketches, 'meta': meta})
 

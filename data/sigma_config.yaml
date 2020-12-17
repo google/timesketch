@@ -60,6 +60,11 @@ logsources:
       source_name:
         - "Microsoft-Windows-Security-Auditing"
         - "Microsoft-Windows-Eventlog"
+  service_windows_system:
+    service: system
+    conditions:
+      source_name:
+        - "Microsoft-Windows-Eventlog"
   powershell:
     service: powershell
     conditions:
@@ -79,4 +84,54 @@ fieldmappings:
     Service: xml_string
     Message: xml_string
     keywords: xml_string # that might be wrong, only introduced during powershell stuff
-
+    Source: message
+    LogonType: xml_string
+    LogonProcessName: xml_string
+    LogonGuid: xml_string
+    SubjectDomainName: xml_string
+    SubjectUserName: xml_string
+    TargetUserSid: xml_string
+    TargetUserName: xml_String
+    TargetDomainName: xml_string
+    TargetLogonId: xml_string
+    AuthenticationPackageName: xml_string
+    WorkstationName: xml_string
+    LogonGuid: xml_string
+    TransmittedServices: xml_string
+    ProcessId: xml_string
+    IpAddress: xml_string
+    IpPort: xml_String #not sure if that mapping is used somewhere else
+    SourceNetworkAddress: xml_string
+    TargetOutboundUserName: xml_string
+    TargetOutboundDomainName: xml_string
+    Level: xml_string # this might also cause conflicts.
+    ServiceFileName: xml_string
+    ObjectValueName: xml_string
+    DestPort: xml_string
+    LayerRTID: xml_string
+    AccessMask: xml_string
+    ShareName: xml_string
+    RelativeTargetName: xml_string
+    AccountName: xml_string
+    PrivilegeList: xml_string
+    SubjectLogonId: xml_string
+    CallingProcessName: xml_string
+    SAMAccountName: xml_string
+    ObjectServer: xml_string
+    Properties: xml_string
+    HiveName: xml_string
+    AttributeLDAPDisplayName: xml_string
+    GroupName: xml_string
+    UserName: xml_string
+    DeviceDescription: xml_string
+    DeviceClassName: xml_string
+    TicketOptions: xml_string
+    TicketEncryptionType: xml_string
+    Properties: xml_string
+    SourceWorkstation: xml_string
+    DestinationAddress: xml_string
+    DestinationPort: xml_string
+    SourceAddress: xml_string
+    Keywords: xml_string
+    LDAPDisplayName: xml_string
+    AuditPolicyChanges: xml_string
