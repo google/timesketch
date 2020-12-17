@@ -28,6 +28,7 @@ from flask_login import current_user
 
 from timesketch.api.v1 import export
 from timesketch.api.v1 import resources
+from timesketch.api.v1 import utils
 from timesketch.lib import forms
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
@@ -197,12 +198,10 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # Update or create user state view. This is used in the UI to let
         # the user get back to the last state in the explore view.
-        view = View.get_or_create(
-            user=current_user, sketch=sketch, name='')
+        view = utils.update_sketch_last_activity(sketch, get_view_back=True)
         view.query_string = form.query.data
         view.query_filter = json.dumps(query_filter, ensure_ascii=False)
         view.query_dsl = json.dumps(query_dsl, ensure_ascii=False)
-        view.update_modification_time()
         db_session.add(view)
         db_session.commit()
 

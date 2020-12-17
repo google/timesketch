@@ -18,12 +18,15 @@ import time
 
 from flask import abort
 from flask import jsonify
+from flask_login import current_user
 
 import altair as alt
 
 from timesketch.lib import ontology
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.models import db_session
+from timesketch.models.sketch import View
 
 
 logger = logging.getLogger('timesketch.api_utils')
@@ -71,6 +74,41 @@ def get_sketch_attributes(sketch):
             attributes.append(
                 (name, attribute_values, ontology_string))
     return attributes
+
+
+def get_sketch_last_activity(self, sketch):
+    """Returns a date string with the last activity from a sketch."""
+    try:
+        last_activity = View.query.filter_by(
+            sketch=sketch, name='').order_by(
+            View.updated_at.desc()).first().updated_at
+    except AttributeError:
+        return ''
+    return last_activity.isoformat()
+
+
+def update_sketch_last_activity(sketch, get_view_back=False):
+    """Update the last activity date of a sketch.
+
+    Args:
+        sketch: a sketch object (sketch.Sketch).
+        get_view_back: an optional boolean that if True returns
+            back the view object for the last update. Defaults to False.
+
+    Returns:
+        If get_view_back is set to True it returns back the user view
+        object, otherwise None is returned.
+    """
+    view = View.get_or_create(
+        user=current_user, sketch=sketch, name='')
+    view.update_modification_time()
+
+    if get_view_back:
+        return view
+
+    db_session.add(view)
+    db_session.commit()
+    return None
 
 
 def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None,
