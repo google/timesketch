@@ -26,6 +26,7 @@ from flask import request
 
 from timesketch.lib.graphs import manager
 from timesketch.api.v1 import resources
+from timesketch.api.v1 import utils
 from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Graph
@@ -95,6 +96,9 @@ class GraphListResource(resources.ResourceMixin, Resource):
         db_session.add(graph)
         db_session.commit()
 
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return self.to_json(graph, status_code=HTTP_STATUS_CODE_CREATED)
 
 
@@ -156,6 +160,9 @@ class GraphResource(resources.ResourceMixin, Resource):
         response['objects'][0]['graph_elements'] = formatted_graph
         response['objects'][0]['graph_config'] = graph.graph_config
 
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return jsonify(response)
 
     @login_required
@@ -211,6 +218,9 @@ class GraphResource(resources.ResourceMixin, Resource):
         db_session.add(graph)
         db_session.commit()
 
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return self.to_json(graph, status_code=HTTP_STATUS_CODE_CREATED)
 
     @login_required
@@ -246,6 +256,10 @@ class GraphResource(resources.ResourceMixin, Resource):
 
         sketch.graphs.remove(graph)
         db_session.commit()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return HTTP_STATUS_CODE_OK
 
 
@@ -327,5 +341,8 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
             cache.update_modification_time()
             db_session.add(cache)
             db_session.commit()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
 
         return self.to_json(cache)

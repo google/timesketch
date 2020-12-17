@@ -24,7 +24,7 @@ from flask_login import login_required
 from flask_login import current_user
 
 from timesketch.api.v1 import resources
-from timesketch.api.v1.utils import run_aggregator_group
+from timesketch.api.v1 import utils
 from timesketch.lib import forms
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
@@ -78,6 +78,9 @@ class AggregationResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN, (
                     'A user state view can only be viewed by the user it '
                     'belongs to.'))
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
 
         return self.to_json(aggregation)
 
@@ -144,6 +147,9 @@ class AggregationResource(resources.ResourceMixin, Resource):
         db_session.add(aggregation)
         db_session.commit()
 
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return self.to_json(aggregation, status_code=HTTP_STATUS_CODE_CREATED)
 
     @login_required
@@ -180,6 +186,10 @@ class AggregationResource(resources.ResourceMixin, Resource):
 
         db_session.delete(aggregation)
         db_session.commit()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return HTTP_STATUS_CODE_OK
 
 
@@ -280,8 +290,13 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
                 'group sketch ID ({1:d})'.format(sketch.id, group.sketch_id))
             abort(HTTP_STATUS_CODE_FORBIDDEN, msg)
 
-        _, objects, meta = run_aggregator_group(group, sketch_id=sketch.id)
+        _, objects, meta = utils.run_aggregator_group(
+            group, sketch_id=sketch.id)
         schema = {'meta': meta, 'objects': objects}
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return jsonify(schema)
 
     @login_required
@@ -381,6 +396,10 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
 
         db_session.delete(group)
         db_session.commit()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return HTTP_STATUS_CODE_OK
 
 
@@ -499,6 +518,10 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
         result_keys = set(result.keys()) - self.REMOVE_FIELDS
         objects = [result[key] for key in result_keys]
         schema = {'meta': meta, 'objects': objects}
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return jsonify(schema)
 
 
@@ -526,6 +549,10 @@ class AggregationListResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have read access controls on sketch.')
         aggregations = sketch.get_named_aggregations
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return self.to_json(aggregations)
 
     @staticmethod
@@ -601,6 +628,10 @@ class AggregationListResource(resources.ResourceMixin, Resource):
                 'The user does not have write permission on the sketch.')
 
         aggregation = self.create_aggregation_from_form(sketch, form)
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return self.to_json(aggregation, status_code=HTTP_STATUS_CODE_CREATED)
 
 
@@ -646,6 +677,10 @@ class AggregationGroupListResource(resources.ResourceMixin, Resource):
             objects.append(group_dict)
         response = jsonify({'meta': meta, 'objects': objects})
         response.status_code = HTTP_STATUS_CODE_OK
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return response
 
     @login_required
@@ -703,6 +738,9 @@ class AggregationGroupListResource(resources.ResourceMixin, Resource):
         )
         db_session.add(aggregation_group)
         db_session.commit()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
 
         return self.to_json(
             aggregation_group, status_code=HTTP_STATUS_CODE_CREATED)

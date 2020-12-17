@@ -154,14 +154,6 @@ class SketchListResource(resources.ResourceMixin, Resource):
             total_items = pagination.total
 
         for sketch in sketches:
-            # Last time a user did a query in the sketch, indicating activity.
-            try:
-                last_activity = View.query.filter_by(
-                    sketch=sketch, name='').order_by(
-                    View.updated_at.desc()).first().updated_at
-            except AttributeError:
-                last_activity = ''
-
             # Return a subset of the sketch objects to reduce the amount of
             # data sent to the client.
             return_sketches.append({
@@ -169,7 +161,7 @@ class SketchListResource(resources.ResourceMixin, Resource):
                 'name': sketch.name,
                 'description': sketch.description,
                 'created_at': str(sketch.created_at),
-                'last_activity': str(last_activity),
+                'last_activity': utils.get_sketch_last_activity(sketch),
                 'user': sketch.user.username,
                 'status': sketch.get_status.status
             })
@@ -277,7 +269,10 @@ class SketchResource(resources.ResourceMixin, Resource):
             'updated_at': sketch.updated_at,
         }
 
-        meta = {'current_user': current_user.username}
+        meta = {
+            'current_user': current_user.username,
+            'last_activity': utils.get_sketch_last_activity(sketch),
+        }
         return jsonify(
             {
                 'objects': [sketch_fields],
@@ -428,6 +423,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             attributes=utils.get_sketch_attributes(sketch),
             mappings=list(mappings),
             stats=stats_per_index,
+            last_activity=utils.get_sketch_last_activity(sketch),
             filter_labels=self.datastore.get_filter_labels(
                 sketch.id, sketch_indices),
             sketch_labels=[label.label for label in sketch.labels]
