@@ -76,7 +76,7 @@ def get_sketch_attributes(sketch):
     return attributes
 
 
-def get_sketch_last_activity(self, sketch):
+def get_sketch_last_activity(sketch):
     """Returns a date string with the last activity from a sketch."""
     try:
         last_activity = View.query.filter_by(
