@@ -27,6 +27,7 @@ from flask_login import login_required
 from flask_login import current_user
 
 from timesketch.api.v1 import resources
+from timesketch.api.v1 import utils
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
@@ -297,4 +298,9 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to upload data, no file uploaded nor any events.')
+
+        if sketch:
+            # Update the last activity of a sketch.
+            utils.update_sketch_last_activity(sketch)
+
         return self._upload_events(events, form, sketch, index_name)
