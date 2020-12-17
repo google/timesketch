@@ -37,6 +37,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import View
 
 
 class ExploreResource(resources.ResourceMixin, Resource):
