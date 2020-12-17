@@ -340,11 +340,6 @@ class SketchResource(resources.ResourceMixin, Resource):
                     'limit': '100',
                     'field': 'data_type'
                 }
-                result_obj, _ = utils.run_aggregator(
-                    sketch.id, aggregator_name='field_bucket',
-                    aggregator_parameters=parameters,
-                    index=[index_name])
-                stats_per_index[index_name]['data_types'] = result_obj.values
 
         if not sketch_indices:
             mappings_settings = {}
