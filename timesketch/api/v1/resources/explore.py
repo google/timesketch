@@ -28,7 +28,6 @@ from flask_login import current_user
 
 from timesketch.api.v1 import export
 from timesketch.api.v1 import resources
-from timesketch.api.v1 import utils
 from timesketch.lib import forms
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
