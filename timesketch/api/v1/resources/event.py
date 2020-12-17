@@ -660,7 +660,7 @@ class CountEventsResource(resources.ResourceMixin, Resource):
             t.searchindex.index_name for t in sketch.active_timelines
             if t.get_status.status != 'archived'
         ]
-        count = self.datastore.count(indices)
-        meta = dict(count=count)
+        count, bytes_on_disk = self.datastore.count(indices)
+        meta = dict(count=count, bytes=bytes_on_disk)
         schema = dict(meta=meta, objects=[])
         return jsonify(schema)
