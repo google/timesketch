@@ -197,6 +197,17 @@ class Sketch(resource.BaseResource):
         return []
 
     @property
+    def last_activity(self):
+        """Property that returns the last activity.
+
+        Returns:
+            Sketch last activity as a string.
+        """
+        data = self.lazyload_data(refresh_cache=True)
+        meta = data.get('meta', {})
+        return meta.get('last_activity', '')
+
+    @property
     def my_acl(self):
         """Property that returns back the ACL for the current user."""
         data = self.lazyload_data()
