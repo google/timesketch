@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""View resources for version 1 of the Timesketch API."""
+"""Explore resources for version 1 of the Timesketch API."""
 
 import datetime
 import io
@@ -37,7 +37,6 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import View
 
 
 class ExploreResource(resources.ResourceMixin, Resource):
