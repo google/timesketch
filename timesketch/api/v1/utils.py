@@ -87,28 +87,14 @@ def get_sketch_last_activity(sketch):
     return last_activity.isoformat()
 
 
-def update_sketch_last_activity(sketch, get_view_back=False):
-    """Update the last activity date of a sketch.
-
-    Args:
-        sketch: a sketch object (sketch.Sketch).
-        get_view_back: an optional boolean that if True returns
-            back the view object for the last update. Defaults to False.
-
-    Returns:
-        If get_view_back is set to True it returns back the user view
-        object, otherwise None is returned.
-    """
+def update_sketch_last_activity(sketch):
+    """Update the last activity date of a sketch."""
     view = View.get_or_create(
         user=current_user, sketch=sketch, name='')
     view.update_modification_time()
 
-    if get_view_back:
-        return view
-
     db_session.add(view)
     db_session.commit()
-    return None
 
 
 def run_aggregator(sketch_id, aggregator_name, aggregator_parameters=None,
