@@ -48,7 +48,7 @@ limitations under the License.
               <i class="fas fa-search" style="color: #d3d3d3;"></i>
             </span>
             <span class="icon control">
-                <b-dropdown ref="labelDropdown" aria-role="list">
+                <b-dropdown ref="labelDropdown" aria-role="list" append-to-body>
                   <i class="fas fa-tag" style="color: #d3d3d3;" slot="trigger"></i>
                   <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
                     <section class="modal-card-body">
