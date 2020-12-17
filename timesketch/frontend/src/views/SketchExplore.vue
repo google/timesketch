@@ -255,7 +255,7 @@ limitations under the License.
                 </div>
                 <div class="level-item">
                   <div v-if="eventList.objects.length">
-                    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus :can-close="true">
+                    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body :can-close="true">
                       <button class="button is-outlined is-small" style="border-radius: 4px;" slot="trigger">
                     <span class="icon is-small">
                       <i class="fas fa-table"></i>
