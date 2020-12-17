@@ -609,9 +609,10 @@ class ElasticsearchDataStore(object):
             es_stats = {}
 
         doc_count_total = es_stats.get(
-            '_all', {}).get('primaries').get('docs', {}).get('count', 0)
+            '_all', {}).get('primaries', {}).get('docs', {}).get('count', 0)
         doc_bytes_total = es_stats.get(
-            '_all', {}).get('primaries').get('store').get('size_in_bytes', 0)
+            '_all', {}).get(
+            'primaries', {}).get('store', {}).get('size_in_bytes', 0)
 
         return doc_count_total, doc_bytes_total
 

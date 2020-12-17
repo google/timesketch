@@ -248,7 +248,7 @@ class EventResource(resources.ResourceMixin, Resource):
         event_id: The datastore event id as string
     """
     def __init__(self):
-        super(EventResource, self).__init__()
+        super().__init__()
         self.parser = reqparse.RequestParser()
         self.parser.add_argument(
             'searchindex_id', type=six.text_type, required=True)
