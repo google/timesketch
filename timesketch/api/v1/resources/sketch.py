@@ -335,12 +335,6 @@ class SketchResource(resources.ResourceMixin, Resource):
                     'bytes': bytes_on_disk
                 }
 
-                # Stats per data type in the index.
-                parameters = {
-                    'limit': '100',
-                    'field': 'data_type'
-                }
-
         if not sketch_indices:
             mappings_settings = {}
         else:
