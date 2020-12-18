@@ -80,8 +80,9 @@ class BaseEndToEndTest(object):
                 raise TimeoutError
             _ = timeline.lazyload_data(refresh_cache=True)
             status = timeline.status
+
             # TODO: Do something with other statuses? (e.g. failed)
-            if status == 'ready':
+            if status == 'ready' and timeline.index.status == 'ready':
                 break
             retry_count += 1
             time.sleep(sleep_time_seconds)
