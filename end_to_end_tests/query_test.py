@@ -13,6 +13,7 @@
 # limitations under the License.
 """End to end tests of Timesketch query functionality."""
 
+import pandas as pd
 from timesketch_api_client import search
 
 from . import interface
@@ -35,6 +36,36 @@ class QueryTest(interface.BaseEndToEndTest):
         data_frame = search_obj.table
         count = len(data_frame)
         self.assertions.assertEqual(count, 3205)
+
+    def test_specific_queries(self):
+        """Test few specific queries."""
+        search_obj = search.Search(self.sketch)
+        search_obj.query_string = 'message_identifier: "1073748864"'
+        search_obj.return_fields = 'computer_name,data_type,strings,user_sid'
+
+        data_frame = search_obj.table
+        self.assertions.assertEqual(len(data_frame), 204)
+
+        computers = list(data_frame.computer_name.unique())
+        self.assertions.assertEqual(len(computers), 1)
+        self.assertions.assertEqual(
+            computers[0], 'WKS-WIN764BITB.shieldbase.local')
+
+        def extract_strings(row):
+            strings = row.strings
+            return pd.Series({
+                'service': strings[0],
+                'state_from': strings[1],
+                'state_to': strings[2],
+                'by': strings[3]
+            })
+
+        strings_frame = data_frame.apply(extract_strings, axis=1)
+        services = set(strings_frame.service.unique())
+        expected_set = set([
+            'Background Intelligent Transfer Service',
+            'Windows Modules Installer'])
+        self.assertions.assertSetEqual(services, expected_set)
 
 
 manager.EndToEndTestManager.register_test(QueryTest)
