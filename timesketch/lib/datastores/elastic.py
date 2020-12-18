@@ -594,18 +594,27 @@ class ElasticsearchDataStore(object):
             indices: List of indices.
 
         Returns:
-            Number of documents.
+            Tuple containing number of documents and size on disk.
         """
         if not indices:
-            return 0
+            return 0, 0
+
         try:
-            result = self.client.count(index=indices)
-        except (NotFoundError, RequestError):
+            es_stats = self.client.indices.stats(
+                index=indices, metric='docs, store')
+        except NotFoundError:
             es_logger.error(
                 'Unable to count indexes (index not found)',
                 exc_info=True)
-            return 0
-        return result.get('count', 0)
+            es_stats = {}
+
+        doc_count_total = es_stats.get(
+            '_all', {}).get('primaries', {}).get('docs', {}).get('count', 0)
+        doc_bytes_total = es_stats.get(
+            '_all', {}).get(
+            'primaries', {}).get('store', {}).get('size_in_bytes', 0)
+
+        return doc_count_total, doc_bytes_total
 
     def set_label(self, searchindex_id, event_id, event_type, sketch_id,
                   user_id, label, toggle=False, remove=False,
