@@ -838,7 +838,7 @@ class Search(resource.SketchResource):
             use_mappings = []
             for field in self.return_fields.split(','):
                 field = field.strip().lower()
-                for map_entry in mapppings:
+                for map_entry in mappings:
                     if map_entry.get('field', '').lower() == field:
                         use_mappings.append(map_entry)
             query_filter['fields'] = use_mappings
