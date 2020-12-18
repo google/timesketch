@@ -13,8 +13,6 @@
 # limitations under the License.
 """End to end tests of Timesketch client functionality."""
 
-from timesketch_api_client import search
-
 from . import interface
 from . import manager
 
@@ -35,9 +33,9 @@ class ClientTest(interface.BaseEndToEndTest):
         new_sketch = self.api.create_sketch(
             name=sketch_name, description=sketch_description)
 
-        self.assertions.assertEqual(sketch.name, sketch_name)
+        self.assertions.assertEqual(new_sketch.name, sketch_name)
         self.assertions.assertEqual(
-            sketch.description, sketch_description)
+            new_sketch.description, sketch_description)
 
         first_sketch = self.api.get_sketch(1)
         self.assertions.assertEqual(

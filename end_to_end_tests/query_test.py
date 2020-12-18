@@ -67,5 +67,27 @@ class QueryTest(interface.BaseEndToEndTest):
             'Windows Modules Installer'])
         self.assertions.assertSetEqual(services, expected_set)
 
+        search_name = 'My First Search'
+        search_obj.name = search_name
+        search_obj.description = 'Can it be, is it really?'
+
+        search_obj.save()
+
+        _ = self.sketch.lazyload_data(refresh_cache=True)
+        saved_search = None
+        for search_obj in self.sketch.list_saved_searches():
+            if search_obj.name == search_name:
+                saved_search = search_obj
+                break
+
+        if search_obj is None:
+            raise RuntimeError('Unable to find the saved search.')
+        self.assertions.assertEqual(
+            saved_search.return_fields,
+            'computer_name,data_type,strings,user_sid')
+
+        self.assertions.assertEqual(
+            saved_search.query_string, 'message_identifier: "1073748864"')
+
 
 manager.EndToEndTestManager.register_test(QueryTest)
