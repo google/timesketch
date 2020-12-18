@@ -524,7 +524,11 @@ class TimesketchApi:
         """
         indices = []
         response = self.fetch_resource_data('searchindices/')
-        for index_dict in response['objects'][0]:
+        objects = response.get('objects')
+        if not objects:
+            return indices
+
+        for index_dict in objects[0]:
             index_id = index_dict['id']
             index_name = index_dict['name']
             index_obj = index.SearchIndex(
