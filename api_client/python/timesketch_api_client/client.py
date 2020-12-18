@@ -115,7 +115,24 @@ class TimesketchApi:
     @property
     def current_user(self):
         """Property that returns the username that is logged in."""
-        return self._username
+        data = self.fetch_resource_data('users/me/')
+        objects = data.get('objects')
+        if not objects:
+            return self._username
+
+        user_dict = objects[0]
+        user_strings = [
+            user_dict.get('username', self._username)]
+
+        if user_dict.get('active', True):
+            user_strings.append('[active]')
+        else:
+            user_strings.append('[inactive]')
+
+        if user_dict.get('admin', False):
+            user_strings.append('<is admin>')
+
+        return ' '.join(user_strings)
 
     @property
     def version(self):
