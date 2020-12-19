@@ -25,7 +25,7 @@ class ClientTest(interface.BaseEndToEndTest):
     def test_client(self):
         """Client tests."""
         expected_user = 'test [active]'
-        user = self.api.current_user
+        user = self.api.current_user.username
         self.assertions.assertEqual(user, expected_user)
 
         sketch_name = 'Testing'

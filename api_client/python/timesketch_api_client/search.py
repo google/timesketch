@@ -606,7 +606,7 @@ class Search(resource.SketchResource):
         if not (query_string or query_filter or query_dsl):
             raise RuntimeError('You need to supply a query')
 
-        self._username = self.api.current_user
+        self._username = self.api.current_user.username
         self._name = 'From Explore'
         self._description = 'From Explore'
 
