@@ -24,9 +24,11 @@ class ClientTest(interface.BaseEndToEndTest):
 
     def test_client(self):
         """Client tests."""
-        expected_user = 'test [active]'
-        user = self.api.current_user.username
-        self.assertions.assertEqual(user, expected_user)
+        expected_user = 'test'
+        user = self.api.current_user
+        self.assertions.assertEqual(user.username, expected_user)
+        self.assertions.assertEqual(user.is_admin, False)
+        self.assertions.assertEqual(user.is_active, True)
 
         sketch_name = 'Testing'
         sketch_description = 'This is truly a foobar'
