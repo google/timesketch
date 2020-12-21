@@ -52,5 +52,4 @@ class GraphTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(graph_saved.description, 'this is it')
 
 
-
 manager.EndToEndTestManager.register_test(GraphTest)

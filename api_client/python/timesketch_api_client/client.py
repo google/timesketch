@@ -35,6 +35,7 @@ from . import definitions
 from . import error
 from . import index
 from . import sketch
+from . import user
 from . import version
 from . import sigma
 
@@ -96,7 +97,6 @@ class TimesketchApi:
         self.api_root = '{0:s}/api/v1'.format(host_uri)
         self.credentials = None
         self._flow = None
-        self._username = username
 
         if not create_session:
             self.session = None
@@ -114,8 +114,8 @@ class TimesketchApi:
 
     @property
     def current_user(self):
-        """Property that returns the username that is logged in."""
-        return self._username
+        """Property that returns the user object of the logged in user."""
+        return user.User(self)
 
     @property
     def version(self):
@@ -507,7 +507,11 @@ class TimesketchApi:
         """
         indices = []
         response = self.fetch_resource_data('searchindices/')
-        for index_dict in response['objects'][0]:
+        response_objects = response.get('objects')
+        if not response_objects:
+            return indices
+
+        for index_dict in response_objects[0]:
             index_id = index_dict['id']
             index_name = index_dict['name']
             index_obj = index.SearchIndex(
