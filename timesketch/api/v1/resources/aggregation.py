@@ -19,6 +19,7 @@ import time
 from flask import jsonify
 from flask import request
 from flask import abort
+from flask_restful import marshal
 from flask_restful import Resource
 from flask_login import login_required
 from flask_login import current_user
@@ -292,7 +293,17 @@ class AggregationGroupResource(resources.ResourceMixin, Resource):
 
         _, objects, meta = utils.run_aggregator_group(
             group, sketch_id=sketch.id)
-        schema = {'meta': meta, 'objects': objects}
+
+        group_fields = self.fields_registry[group.__tablename__]
+        group_dict = marshal(group, group_fields)
+        group_dict['agg_ids'] = [a.id for a in group.aggregations]
+
+        objects[0].update(group_dict)
+
+        schema = {
+            'meta': meta,
+            'objects': objects
+        }
 
         # Update the last activity of a sketch.
         utils.update_sketch_last_activity(sketch)

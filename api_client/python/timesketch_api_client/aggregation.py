@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Timesketch API client library."""
+import datetime
 import getpass
 import json
 import logging
@@ -41,7 +42,9 @@ class Aggregation(resource.SketchResource):
     """
 
     def __init__(self, sketch):
+        self._created_at = ''
         self._parameters = {}
+        self._updated_at = ''
         self.aggregator_name = ''
         self.chart_color = ''
         self.chart_type = ''
@@ -51,6 +54,11 @@ class Aggregation(resource.SketchResource):
         resource_uri = 'sketches/{0:d}/aggregation/explore/'.format(sketch.id)
         super().__init__(
             sketch=sketch, resource_uri=resource_uri)
+
+    @property
+    def created_at(self):
+        """Returns a timestamp when the aggregation was created."""
+        return self._created_at
 
     def _get_aggregation_buckets(self, entry, name=''):
         """Yields all buckets from an aggregation result object.
@@ -141,6 +149,9 @@ class Aggregation(resource.SketchResource):
         self.aggregator_name = data.get('agg_type')
         self.type = 'stored'
 
+        self._created_at = data.get('created_at', '')
+        self._updated_at = data.get('updated_at', '')
+
         label_string = data.get('label_string', '')
         if label_string:
             self._labels = json.loads(label_string)
@@ -176,6 +187,10 @@ class Aggregation(resource.SketchResource):
         self._username = getpass.getuser()
         self.type = 'DSL'
 
+        date_now = datetime.datetime.now(datetime.timezone.utc)
+        self._created_at = date_now.isoformat()
+        self._updated_at = date_now.isoformat()
+
         form_data = {
             'aggregation_dsl': aggregate_dsl,
         }
@@ -203,6 +218,10 @@ class Aggregation(resource.SketchResource):
         self.type = 'aggregator_run'
         self._parameters = aggregator_parameters
         self._username = getpass.getuser()
+
+        date_now = datetime.datetime.now(datetime.timezone.utc)
+        self._created_at = date_now.isoformat()
+        self._updated_at = date_now.isoformat()
 
         self.resource_data = self._run_aggregator(
             aggregator_name, aggregator_parameters, search_id, chart_type)
@@ -313,6 +332,11 @@ class Aggregation(resource.SketchResource):
                 panda_list.append(bucket)
         return pandas.DataFrame(panda_list)
 
+    @property
+    def updated_at(self):
+        """Returns a timestamp when the aggregation was last updated."""
+        return self._updated_at
+
     def generate_chart(self):
         """Returns an altair Vega-lite chart."""
         if not self.chart_type:
@@ -388,15 +412,27 @@ class AggregationGroup(resource.SketchResource):
         super().__init__(resource_uri=resource_uri, sketch=sketch)
 
         self._name = 'N/A'
+        self._created_at = ''
         self._description = 'N/A'
         self._orientation = ''
         self._parameters = {}
         self._aggregations = []
+        self._updated_at = ''
 
     def __str__(self):
         """Return a string representation of the group."""
         return '[{0:d}] {1:s} - {2:s}'.format(
             self._resource_id, self._name, self._description)
+
+    @property
+    def created_at(self):
+        """Returns a timestamp when the aggregation group was created."""
+        return self._created_at
+
+    @property
+    def updated_at(self):
+        """Returns a timestamp when the aggregation group was updated."""
+        return self._updated_at
 
     def to_dict(self):
         """Returns the aggregation values as a dict."""
@@ -488,6 +524,9 @@ class AggregationGroup(resource.SketchResource):
         self._name = group_dict.get('name', '')
         self._description = group_dict.get('description', '')
 
+        self._created_at = group_dict.get('created_at', '')
+        self._updated_at = group_dict.get('updated_at', '')
+
         self._orientation = group_dict.get('orientation')
         if not self._orientation:
             raise TypeError('How a group is connected needs to be defined.')
@@ -500,7 +539,9 @@ class AggregationGroup(resource.SketchResource):
         if not aggs:
             raise TypeError('Group contains no aggregations')
 
-        aggs = json.loads(aggs)
+        if isinstance(aggs, str):
+            aggs = json.loads(aggs)
+
         if not isinstance(aggs, (list, tuple)):
             raise TypeError('Aggregations need to be a list.')
 
@@ -521,17 +562,18 @@ class AggregationGroup(resource.SketchResource):
             TypeError: if the group ID does not exist.
         """
         self._resource_id = group_id
-        resource_uri = 'sketches/{0:d}/aggregation/group/'.format(
-            self._sketch.id)
+        resource_uri = (
+            f'sketches/{self._sketch.id}/aggregation/group/{group_id}/')
         resource_data = self.api.fetch_resource_data(resource_uri)
-        for group_dict in resource_data.get('objects', []):
-            group_dict_id = group_dict.get('id')
-            if not group_dict_id:
-                continue
-            if group_dict_id == group_id:
-                self.from_dict(group_dict)
-                return
-        raise TypeError('Group ID not found.')
+
+        objects = resource_data.get('objects')
+        if not objects:
+            raise TypeError('Group ID not found.')
+
+        group_dict = objects[0]
+        group_dict['id'] = group_id
+        print(group_dict)
+        self.from_dict(group_dict)
 
     def generate_chart(self):
         """Returns an altair Vega-lite chart."""

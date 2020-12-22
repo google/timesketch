@@ -589,7 +589,7 @@ class Sketch(resource.BaseResource):
             if not group_dict.get('id'):
                 continue
             group = aggregation.AggregationGroup(sketch=self)
-            group.from_dict(group_dict)
+            group.from_saved(group_dict.get('id'))
             groups.append(group)
         return groups
 
