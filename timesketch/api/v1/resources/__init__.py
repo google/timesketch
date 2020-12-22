@@ -55,8 +55,8 @@ class ResourceMixin(object):
         'chart_type': fields.String,
         'label_string': fields.String,
         'user': fields.Nested(user_fields),
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
     }
 
     aggregation_group_fields = {
@@ -67,15 +67,15 @@ class ResourceMixin(object):
         'parameters': fields.String,
         'orientation': fields.String,
         'user': fields.Nested(user_fields),
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
     }
 
     status_fields = {
         'id': fields.Integer,
         'status': fields.String,
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
     }
 
     searchindex_fields = {
@@ -87,8 +87,8 @@ class ResourceMixin(object):
         'status': fields.Nested(status_fields),
         'label_string': fields.String,
         'deleted': fields.Boolean,
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
     }
 
     timeline_fields = {
@@ -101,8 +101,8 @@ class ResourceMixin(object):
         'label_string': fields.String,
         'searchindex': fields.Nested(searchindex_fields),
         'deleted': fields.Boolean,
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
     }
 
     analysis_fields = {
@@ -117,16 +117,16 @@ class ResourceMixin(object):
         'user': fields.Nested(user_fields),
         'timeline': fields.Nested(timeline_fields),
         'status': fields.Nested(status_fields),
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
     }
 
     analysis_session_fields = {
         'id': fields.Integer,
         'user': fields.Nested(user_fields),
         'analyses': fields.Nested(analysis_fields),
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
     }
 
     searchtemplate_fields = {
@@ -136,8 +136,8 @@ class ResourceMixin(object):
         'query_string': fields.String,
         'query_filter': fields.String,
         'query_dsl': fields.String,
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
     }
 
     view_fields = {
@@ -150,8 +150,8 @@ class ResourceMixin(object):
         'query_dsl': fields.String,
         'searchtemplate': fields.Nested(searchtemplate_fields),
         'aggregation': fields.Nested(aggregation_fields),
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
     }
 
     story_fields = {
@@ -159,8 +159,8 @@ class ResourceMixin(object):
         'title': fields.String,
         'content': fields.String,
         'user': fields.Nested(user_fields),
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
     }
 
     graph_fields = {
@@ -168,16 +168,16 @@ class ResourceMixin(object):
         'name': fields.String,
         'user': fields.Nested(user_fields),
         'description': fields.String,
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
     }
 
     graphcache_fields = {
         'id': fields.Integer,
         'graph_elements': fields.String,
         'graph_config': fields.String,
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
     }
 
     sketch_fields = {
@@ -195,22 +195,22 @@ class ResourceMixin(object):
         'status': fields.Nested(status_fields),
         'all_permissions': fields.String,
         'my_permissions': fields.String,
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
     }
 
     comment_fields = {
         'comment': fields.String,
         'user': fields.Nested(user_fields),
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
     }
 
     label_fields = {
         'name': fields.String,
         'user': fields.Nested(user_fields),
-        'created_at': fields.DateTime,
-        'updated_at': fields.DateTime
+        'created_at': fields.DateTime('iso8601'),
+        'updated_at': fields.DateTime('iso8601')
     }
 
     fields_registry = {
