@@ -39,6 +39,15 @@ logger = logging.getLogger('timesketch.utils')
 # Fields to scrub from timelines.
 FIELDS_TO_REMOVE = ['_id', '_type', '_index', '_source']
 
+# Number of rows processed at once when ingesting a CSV file.
+DEFAULT_CHUNK_SIZE = 10000
+
+# Columns that must be present in ingested timesketch files.
+TIMESKETCH_FIELDS = frozenset({'message', 'datetime', 'timestamp_desc'})
+
+# Columns that must be present in ingested redline files.
+REDLINE_FIELDS = frozenset({'Alert', 'Tag', 'Timestamp', 'Field', 'Summary'})
+
 
 def random_color():
     """Generates a random color.
@@ -81,87 +90,91 @@ def _scrub_special_tags(dict_obj):
             _ = dict_obj.pop(field)
 
 
-def validate_csv_fields(mandatory_fields, data):
+def _get_unix_time(date):
+    """Convert a Pandas Timestamp object to a UNIX time in microseconds"""
+    return str(time.mktime(
+        date.to_pydatetime().utctimetuple()) * 1e6 + date.microsecond)
+
+
+def _validate_csv_fields(mandatory_fields, data):
     """Validate parsed CSV fields against mandatory fields.
-        Args:
-            mandatory_fields: a list of fields that must be present.
-            data: a DataFrame built from the ingested file.
 
-        Raises:
-            RuntimeError: if there are missing fields.
+    Args:
+        mandatory_fields: a list of fields that must be present.
+        data: a DataFrame built from the ingested file.
+
+    Raises:
+        RuntimeError: if there are missing fields.
     """
-    parsed_fields = data.columns
-    missing_fields = [field for field in mandatory_fields
-                      if field not in parsed_fields]
-    if missing_fields:
-        raise RuntimeError(
-            'Missing fields in CSV header: {0:s}'.format(
-                ','.join(missing_fields)))
+    mandatory_set = set(mandatory_fields)
+    parsed_set = set(data.columns)
+
+    if mandatory_set.issubset(parsed_set):
+        return
+
+    raise RuntimeError('Missing fields in CSV header: {0:s}'.format(
+        ','.join(list(mandatory_set.difference(parsed_set)))))
 
 
-def read_and_validate_csv(file_handle, delimiter=','):
+def read_and_validate_csv(file_handle, delimiter=',',
+                          mandatory_fields=TIMESKETCH_FIELDS):
     """Generator for reading a CSV file.
 
     Args:
         file_handle: a file-like object containing the CSV content.
         delimiter: character used as a field separator, default: ','
+        mandatory_fields: list of fields that must be present in the CSV header.
 
     Raises:
         RuntimeError: when there are missing fields.
         DataIngestionError: when there are issues with the data ingestion.
     """
-    # Columns that must be present in the CSV file.
-    mandatory_fields = ['message', 'datetime', 'timestamp_desc']
-
     # Ensures delimiter is a string.
     if not isinstance(delimiter, six.text_type):
         delimiter = codecs.decode(delimiter, 'utf8')
 
+    header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
+    _validate_csv_fields(mandatory_fields, header_reader)
     try:
-        reader = pandas.read_csv(file_handle, sep=delimiter)
+        reader = pandas.read_csv(file_handle, sep=delimiter,
+                                 chunksize=DEFAULT_CHUNK_SIZE)
+        for chunk in reader:
+            skipped_rows = chunk[chunk['datetime'].isnull()]
+            for row in skipped_rows.iterrows():
+                logger.warning(
+                    'Row missing a datetime object, skipping [{0:s}]'.format(
+                        ','.join([str(x).replace(
+                            '\n', '').strip() for x in row.values()])))
+
+            # Normalize datetime to ISO 8601 format if it's not the case.
+            chunk['datetime'] = pandas.to_datetime(chunk['datetime'])
+
+            chunk['timestamp'] = chunk['datetime'].apply(_get_unix_time)
+            chunk['datetime'] = chunk['datetime'].apply(pandas.Timestamp
+                                                        .isoformat).astype(str)
+
+            if 'tag' in chunk:
+                chunk['tag'] = chunk['tag'].apply(
+                    lambda tag: [x for x in _parse_tag_field(tag) if x]
+                    if tag else None)
+            for _, row in chunk.iterrows():
+                _scrub_special_tags(row)
+                yield row
     except pandas.errors.ParserError as e:
         error_string = 'Unable to read file, with error: {0!s}'.format(e)
         logger.error(error_string)
-        raise errors.DataIngestionError(error_string)
-
-    validate_csv_fields(mandatory_fields, reader)
-    for row in reader:
-        if not row:
-            continue
-        if not row['datetime']:
-            logger.warning(
-                'Row missing a datetime object, skipping [{0:s}]'.format(
-                    ','.join([str(x).replace(
-                        '\n', '').strip() for x in row.values()])))
-            continue
-        try:
-            # Normalize datetime to ISO 8601 format if it's not the case.
-            parsed_datetime = parser.parse(row['datetime'])
-            row['datetime'] = parsed_datetime.isoformat()
-
-            normalized_timestamp = int(
-                time.mktime(parsed_datetime.utctimetuple()) * 1000000)
-            normalized_timestamp += parsed_datetime.microsecond
-            row['timestamp'] = str(normalized_timestamp)
-            if 'tag' in row:
-                row['tag'] = [x for x in _parse_tag_field(row['tag']) if x]
-
-            _scrub_special_tags(row)
-        except ValueError:
-            continue
-        yield row
+        raise errors.DataIngestionError(error_string) from e
 
 
 def read_and_validate_redline(file_handle):
     """Generator for reading a Redline CSV file.
+
     Args:
         file_handle: a file-like object containing the CSV content.
 
     Raises:
         RuntimeError: if there are missing fields.
     """
-    # Columns that must be present in the CSV file
-    mandatory_fields = ['Alert', 'Tag', 'Timestamp', 'Field', 'Summary']
 
     csv.register_dialect(
         'redlineDialect', delimiter=',', quoting=csv.QUOTE_ALL,
@@ -169,7 +182,7 @@ def read_and_validate_redline(file_handle):
     reader = pandas.read_csv(file_handle, delimiter=',',
                              dialect='redlineDialect')
 
-    validate_csv_fields(mandatory_fields, reader)
+    _validate_csv_fields(REDLINE_FIELDS, reader)
     for row in reader:
         dt = parser.parse(row['Timestamp'])
         timestamp = int(time.mktime(dt.timetuple())) * 1000
