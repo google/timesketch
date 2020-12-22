@@ -59,4 +59,4 @@ class TestUtils(BaseTest):
         """Test for ISO date compliance."""
         data_generator = read_and_validate_csv(TEST_CSV)
         for row in data_generator:
-            self.assertRegexpMatches(row['datetime'], ISO8601_REGEX)
+            self.assertRegex(row['datetime'], ISO8601_REGEX)
