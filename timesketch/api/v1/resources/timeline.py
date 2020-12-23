@@ -268,7 +268,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 changed = any(changes)
             elif label_action == 'remove':
                 if not sketch.has_permission(
-                        user=current_user, permission='delete'):
+                        user=current_user, permission='write'):
                     abort(
                         HTTP_STATUS_CODE_FORBIDDEN,
                         'The user does not have delete permission on sketch.')
