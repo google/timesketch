@@ -257,8 +257,6 @@ class SketchResource(resources.ResourceMixin, Resource):
             'user': {'username': current_user.username},
             'timelines': [],
             'stories': [],
-            'aggregations': [],
-            'aggregationgroups': [],
             'active_timelines': [],
             'label_string': sketch.label_string,
             'status': [{

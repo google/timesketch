@@ -581,11 +581,12 @@ class Sketch(resource.BaseResource):
             raise RuntimeError(
                 'Unable to list aggregation groups on an archived sketch.')
         groups = []
-        resource_url = '{0:s}/sketches/{1:d}/aggregation/group/'.format(
-            self.api.api_root, self.id)
-        response = self.api.session.get(resource_url)
-        data = error.get_response_json(response, logger)
+        data = self.api.fetch_resource_data(
+            f'sketches/{self.id}/aggregation/group/')
+
         for group_dict in data.get('objects', []):
+            print(group_dict)
+            print(type(group_dict))
             if not group_dict.get('id'):
                 continue
             group = aggregation.AggregationGroup(sketch=self)
@@ -611,8 +612,8 @@ class Sketch(resource.BaseResource):
             raise RuntimeError(
                 'Unable to list aggregations on an archived sketch.')
         aggregations = []
-        data = self.lazyload_data(refresh_cache=True)
 
+        data = self.api.fetch_resource_data(f'sketches/{self.id}/aggregation/')
         objects = data.get('objects')
         if not objects:
             return aggregations
@@ -620,22 +621,14 @@ class Sketch(resource.BaseResource):
         if not isinstance(objects, (list, tuple)):
             return aggregations
 
-        first_object = objects[0]
-        if not isinstance(first_object, dict):
+        object_list = objects[0]
+        if not isinstance(object_list, (list, tuple)):
             return aggregations
 
-        aggregation_groups = first_object.get('aggregationgroups')
-        if aggregation_groups:
-            aggregation_groups = aggregation_groups[0]
-            groups = [
-                x.get('id', 0) for x in aggregation_groups.get(
-                    'aggregations', [])]
-        else:
-            groups = tuple()
-
-        for aggregation_dict in first_object.get('aggregations', []):
+        for aggregation_dict in object_list:
             agg_id = aggregation_dict.get('id')
-            if agg_id in groups:
+            group_id = aggregation_dict.get('aggregationgroup_id')
+            if group_id:
                 continue
             label_string = aggregation_dict.get('label_string', '')
             if label_string:

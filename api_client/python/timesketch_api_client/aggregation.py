@@ -45,6 +45,7 @@ class Aggregation(resource.SketchResource):
         self._created_at = ''
         self._parameters = {}
         self._updated_at = ''
+        self._group_id = None
         self.aggregator_name = ''
         self.chart_color = ''
         self.chart_type = ''
@@ -151,6 +152,7 @@ class Aggregation(resource.SketchResource):
 
         self._created_at = data.get('created_at', '')
         self._updated_at = data.get('updated_at', '')
+        self._group_id = data.get('aggregationgroup_id')
 
         label_string = data.get('label_string', '')
         if label_string:
@@ -245,6 +247,14 @@ class Aggregation(resource.SketchResource):
     def parameters(self):
         """Property that returns the parameters of the aggregation."""
         return self._parameters
+
+    @property
+    def part_of_a_group(self):
+        """Property that returns bool indicating if the agg is part of a group."""
+        if self._group_id is None:
+            return False
+
+        return bool(self._group_id)
 
     @property
     def title(self):
@@ -425,6 +435,11 @@ class AggregationGroup(resource.SketchResource):
             self._resource_id, self._name, self._description)
 
     @property
+    def aggregations(self):
+        """Property that returns a list of aggregations in the group."""
+        return self._aggregations
+
+    @property
     def created_at(self):
         """Returns a timestamp when the aggregation group was created."""
         return self._created_at
@@ -572,7 +587,6 @@ class AggregationGroup(resource.SketchResource):
 
         group_dict = objects[0]
         group_dict['id'] = group_id
-        print(group_dict)
         self.from_dict(group_dict)
 
     def generate_chart(self):

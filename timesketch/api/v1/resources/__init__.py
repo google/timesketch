@@ -55,6 +55,7 @@ class ResourceMixin(object):
         'chart_type': fields.String,
         'label_string': fields.String,
         'user': fields.Nested(user_fields),
+        'aggregationgroup_id': fields.Integer,
         'created_at': fields.DateTime('iso8601'),
         'updated_at': fields.DateTime('iso8601')
     }
@@ -188,8 +189,6 @@ class ResourceMixin(object):
         'timelines': fields.List(fields.Nested(timeline_fields)),
         'stories': fields.List(fields.Nested(story_fields)),
         'graphs': fields.List(fields.Nested(graph_fields)),
-        'aggregations': fields.Nested(aggregation_fields),
-        'aggregationgroups': fields.Nested(aggregation_group_fields),
         'active_timelines': fields.List(fields.Nested(timeline_fields)),
         'label_string': fields.String,
         'status': fields.Nested(status_fields),
