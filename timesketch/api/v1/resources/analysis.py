@@ -179,9 +179,9 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
                 if fnmatch.fnmatch(correct_name, analyzer):
                     analyzers.append(correct_name)
 
-        return abort(
-            HTTP_STATUS_CODE_BAD_REQUEST,
-            ','.join(analyzers))
+        if not analyzers:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'No analyzers found to run.')
 
         # Import here to avoid circular imports.
         # pylint: disable=import-outside-toplevel

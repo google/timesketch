@@ -14,6 +14,7 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
+import fnmatch
 import json
 import logging
 
@@ -163,7 +164,8 @@ class Timeline(resource.BaseResource):
             return sketch_is_archived
         return timeline_dict.get(self.index_name)
 
-    def run_analyzer(self, analyzer_name, analyzer_kwargs=None):
+    def run_analyzer(
+            self, analyzer_name, analyzer_kwargs=None, ignore_previous=False):
         """Run an analyzer on a timeline.
 
         Args:
@@ -172,6 +174,9 @@ class Timeline(resource.BaseResource):
             analyzer_kwargs: optional dict with parameters for the analyzer.
                 This is optional and just for those analyzers that can accept
                 further parameters.
+            ignore_previous (bool): an optional bool, if set to True then
+                analyzer is run irrelevant on whether it has been previously
+                been run.
 
         Raises:
             error.UnableToRunAnalyzer: if not able to run the analyzer.
@@ -197,6 +202,22 @@ class Timeline(resource.BaseResource):
                     'dict')
             if analyzer_name not in analyzer_kwargs:
                 analyzer_kwargs = {analyzer_name: analyzer_kwargs}
+
+        if not ignore_previous:
+            response = self.api.fetch_resource_data(
+                f'sketches/{self._sketch_id}/timelines/{self.id}/analysis/')
+            analyzer_data = response.get('objects', [[]])
+            stop_running = False
+            for result in analyzer_data[0]:
+                result_analyzer = result.get('analyzer_name', 'N/A')
+                if fnmatch.fnmatch(result_analyzer, analyzer_name):
+                    logger.error(
+                        f'Analyzer {result_analyzer} has already been run on '
+                        f'the timeline, use "ignore_previous=True" to overwrite')
+                    stop_running = True
+
+            if stop_running:
+                return None
 
         data = {
             'timeline_id': self.id,
