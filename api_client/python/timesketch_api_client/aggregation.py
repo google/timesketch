@@ -249,8 +249,8 @@ class Aggregation(resource.SketchResource):
         return self._parameters
 
     @property
-    def part_of_a_group(self):
-        """Property that returns bool indicating if the agg is part of a group."""
+    def is_part_of_group(self):
+        """Property that returns whether an agg is part of a group or not."""
         if self._group_id is None:
             return False
 
