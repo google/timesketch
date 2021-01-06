@@ -855,11 +855,11 @@ class Sketch(resource.BaseResource):
         if timeline_id is None and timeline_name is None:
             return None
 
-        for _timeline in self.list_timelines():
-            if timeline_id and timeline_id == _timeline.id:
-                return _timeline
-            if timeline_name and timeline_name.lower() == _timeline.name.lower():
-                return _timeline
+        for timeline in self.list_timelines():
+            if timeline_id and timeline_id == timeline.id:
+                return timeline
+            if timeline_name and timeline_name.lower() == timeline.name.lower():
+                return timeline
         return None
 
     def list_stories(self):
