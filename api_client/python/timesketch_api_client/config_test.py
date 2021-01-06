@@ -31,6 +31,10 @@ auth_mode = oauth
 client_id = myidfoo
 client_secret = sdfa@$FAsASDF132
 verify = True
+
+'[cli]'
+'sketch ='
+'output_format = tabular'
     """
 
     def test_get_missing_config(self):
