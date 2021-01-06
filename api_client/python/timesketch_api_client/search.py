@@ -655,7 +655,7 @@ class Search(resource.SketchResource):
         self._created_at = data.get('created_at', '')
         self._description = data.get('description', '')
         self._name = data.get('name', '')
-        self._query_dsl = data.get('query_dsl', '')
+        self.query_dsl = data.get('query_dsl', '')
         query_filter = data.get('query_filter', '')
         if query_filter:
             filter_dict = json.loads(query_filter)
@@ -719,6 +719,13 @@ class Search(resource.SketchResource):
     @query_dsl.setter
     def query_dsl(self, query_dsl):
         """Make changes to the query DSL of the search."""
+        if query_dsl and isinstance(query_dsl, str):
+            query_dsl = json.loads(query_dsl)
+
+        # Special condition of an empty DSL.
+        if query_dsl == '""':
+            query_dsl = ''
+
         self._query_dsl = query_dsl
         self.commit()
 
