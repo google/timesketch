@@ -19,7 +19,6 @@ import click
 @click.group('sketch')
 def sketch_group():
     """Manage sketch."""
-    pass
 
 
 @sketch_group.command('list')

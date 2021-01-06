@@ -13,12 +13,12 @@
 # limitations under the License.
 """Timesketch CLI client."""
 
-from timesketch_api_client import config as timesketch_config
-import click
 import sys
+import click
 
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError as RequestConnectionError
 
+from timesketch_api_client import config as timesketch_config
 from timesketch_cli_client.commands.config import config_group
 from timesketch_cli_client.commands.timelines import timelines_group
 from timesketch_cli_client.commands.search import search_group
@@ -50,8 +50,8 @@ class TimesketchCli(object):
             try:
                 self.api = timesketch_config.get_client()
                 if not self.api:
-                    raise ConnectionError
-            except ConnectionError:
+                    raise RequestConnectionError
+            except RequestConnectionError:
                 sys.exit(1)
 
         self.config_assistant = timesketch_config.ConfigAssistant()
@@ -128,6 +128,6 @@ cli.add_command(analysis_group)
 cli.add_command(sketch_group)
 cli.add_command(importer)
 
-
+# pylint: disable=no-value-for-parameter
 if __name__ == '__main__':
     cli()

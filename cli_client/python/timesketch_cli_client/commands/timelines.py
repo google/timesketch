@@ -19,7 +19,6 @@ import click
 @click.group('timelines')
 def timelines_group():
     """Manage timelines."""
-    pass
 
 
 @timelines_group.command('list')

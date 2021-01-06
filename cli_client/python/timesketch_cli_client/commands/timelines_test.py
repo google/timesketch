@@ -13,8 +13,8 @@
 # limitations under the License.
 """Tests for timelines command."""
 
-import mock
 import unittest
+import mock
 
 from click.testing import CliRunner
 

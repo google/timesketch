@@ -13,8 +13,9 @@
 # limitations under the License.
 """Commands for explore and search."""
 
-import click
 import json
+
+import click
 from tabulate import tabulate
 
 from timesketch_api_client import search
@@ -61,7 +62,8 @@ def describe_query(search_obj):
     """
     click.echo('Query string: {}'.format(search_obj.query_string))
     click.echo('Return fields: {}'.format(search_obj.return_fields))
-    click.echo('Filter: {}'.format(json.dumps(search_obj.query_filter, indent=2)))
+    click.echo('Filter: {}'.format(
+        json.dumps(search_obj.query_filter, indent=2)))
 
 
 @click.command('search')
@@ -98,6 +100,7 @@ def describe_query(search_obj):
     '--describe', is_flag=True, default=False,
     help='Show the query and filter then exit')
 @click.pass_context
+# pylint: disable=too-many-arguments
 def search_group(ctx, query, times, time_ranges, labels, header, output,
                  return_fields, order, limit, saved_search, describe):
     """Search and explore."""
@@ -118,7 +121,8 @@ def search_group(ctx, query, times, time_ranges, labels, header, output,
         if describe:
             describe_query(search_obj)
             return
-        click.echo(format_output(search_obj, output_format, header), nl=new_line)
+        click.echo(format_output(
+            search_obj, output_format, header), nl=new_line)
         return
 
     # Construct the query from flags.
@@ -167,7 +171,6 @@ def search_group(ctx, query, times, time_ranges, labels, header, output,
 @click.group('saved-searches')
 def saved_searches_group():
     """Managed saved searches."""
-    pass
 
 
 @saved_searches_group.command('list')

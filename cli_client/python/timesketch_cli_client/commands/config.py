@@ -13,8 +13,9 @@
 # limitations under the License.
 """Commands for configure the CLI client."""
 
-import click
 import sys
+
+import click
 
 from timesketch_cli_client.definitions import SUPPORTED_OUTPUT_FORMATS
 
@@ -22,13 +23,11 @@ from timesketch_cli_client.definitions import SUPPORTED_OUTPUT_FORMATS
 @click.group('config')
 def config_group():
     """Configuration for this CLI tool."""
-    pass
 
 
 @config_group.group('set')
 def set_group():
     """Set configuration parameters."""
-    pass
 
 
 @set_group.command('sketch')
