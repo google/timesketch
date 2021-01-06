@@ -18,7 +18,7 @@ import click
 
 @click.group('timelines')
 def timelines_group():
-    """Manage your timelines."""
+    """Manage timelines."""
     pass
 
 

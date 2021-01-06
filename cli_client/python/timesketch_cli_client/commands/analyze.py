@@ -22,7 +22,7 @@ from timesketch_api_client import error
 
 @click.group('analyze')
 def analysis_group():
-    """Analyze your timelines."""
+    """Analyze timelines."""
     pass
 
 

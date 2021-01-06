@@ -18,7 +18,7 @@ import click
 
 @click.group('sketch')
 def sketch_group():
-    """Manage your sketch."""
+    """Manage sketch."""
     pass
 
 
