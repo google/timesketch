@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Analysis resources for version 1 of the Timesketch API."""
+import fnmatch
 
 from flask import jsonify
 from flask import request
@@ -170,13 +171,25 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     'Kwargs needs to be a dictionary of parameters.')
 
+        analyzers = []
+        all_analyzers = [
+            x for x, _ in analyzer_manager.AnalysisManager.get_analyzers()]
+        for analyzer in analyzer_names:
+            for correct_name in all_analyzers:
+                if fnmatch.fnmatch(correct_name, analyzer):
+                    analyzers.append(correct_name)
+
+        if not analyzers:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST, 'No analyzers found to run.')
+
         # Import here to avoid circular imports.
         # pylint: disable=import-outside-toplevel
         from timesketch.lib import tasks
         try:
             analyzer_group, session_id = tasks.build_sketch_analysis_pipeline(
                 sketch_id=sketch_id, searchindex_id=search_index.id,
-                user_id=current_user.id, analyzer_names=analyzer_names,
+                user_id=current_user.id, analyzer_names=analyzers,
                 analyzer_kwargs=analyzer_kwargs)
         except KeyError as e:
             return abort(
