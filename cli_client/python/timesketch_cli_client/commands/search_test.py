@@ -38,7 +38,7 @@ query_filter: {
 
 
 class SearchTest(unittest.TestCase):
-    """Test Search object."""
+    """Test Search."""
 
     @mock.patch('requests.Session', api_test_lib.mock_session)
     def setUp(self):
@@ -46,11 +46,13 @@ class SearchTest(unittest.TestCase):
         self.ctx = test_lib.get_cli_context()
 
     def test_list_saved_searches(self):
+        """Test to list saved searches."""
         runner = CliRunner()
         result = runner.invoke(saved_searches_group, ['list'], obj=self.ctx)
         assert result.output == '1 test\n2 more test\n'
 
     def test_describe_saved_search(self):
+        """Test to get details for a saved search."""
         runner = CliRunner()
         result = runner.invoke(
             saved_searches_group, ['describe', "1"], obj=self.ctx)

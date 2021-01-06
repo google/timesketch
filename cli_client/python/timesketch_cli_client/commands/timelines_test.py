@@ -25,7 +25,7 @@ from .timelines import timelines_group
 
 
 class TimelinesTest(unittest.TestCase):
-    """Test Sketch object."""
+    """Test Timelines."""
 
     @mock.patch('requests.Session', api_test_lib.mock_session)
     def setUp(self):
@@ -33,11 +33,13 @@ class TimelinesTest(unittest.TestCase):
         self.ctx = test_lib.get_cli_context()
 
     def test_list_timelines(self):
+        """Test to list timelines."""
         runner = CliRunner()
         result = runner.invoke(timelines_group, ['list'], obj=self.ctx)
         assert result.output == '1 test\n2 test\n'
 
     def test_describe_timeline(self):
+        """Test to get detail for a timeline."""
         runner = CliRunner()
         result = runner.invoke(timelines_group, ['describe', "1"], obj=self.ctx)
         assert result.output == 'Name: test\nIndex: test\n'
