@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""View resources for version 1 of the Timesketch API."""
+"""Explore resources for version 1 of the Timesketch API."""
 
 import datetime
 import io
@@ -197,12 +197,14 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # Update or create user state view. This is used in the UI to let
         # the user get back to the last state in the explore view.
+        # TODO: Add a call to utils.update_sketch_last_activity once new
+        # mechanism has been added, instead of relying on user views.
         view = View.get_or_create(
             user=current_user, sketch=sketch, name='')
+        view.update_modification_time()
         view.query_string = form.query.data
         view.query_filter = json.dumps(query_filter, ensure_ascii=False)
         view.query_dsl = json.dumps(query_dsl, ensure_ascii=False)
-        view.update_modification_time()
         db_session.add(view)
         db_session.commit()
 

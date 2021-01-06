@@ -154,14 +154,6 @@ class SketchListResource(resources.ResourceMixin, Resource):
             total_items = pagination.total
 
         for sketch in sketches:
-            # Last time a user did a query in the sketch, indicating activity.
-            try:
-                last_activity = View.query.filter_by(
-                    sketch=sketch, name='').order_by(
-                    View.updated_at.desc()).first().updated_at
-            except AttributeError:
-                last_activity = ''
-
             # Return a subset of the sketch objects to reduce the amount of
             # data sent to the client.
             return_sketches.append({
@@ -169,7 +161,7 @@ class SketchListResource(resources.ResourceMixin, Resource):
                 'name': sketch.name,
                 'description': sketch.description,
                 'created_at': str(sketch.created_at),
-                'last_activity': str(last_activity),
+                'last_activity': utils.get_sketch_last_activity(sketch),
                 'user': sketch.user.username,
                 'status': sketch.get_status.status
             })
@@ -277,7 +269,10 @@ class SketchResource(resources.ResourceMixin, Resource):
             'updated_at': sketch.updated_at,
         }
 
-        meta = {'current_user': current_user.username}
+        meta = {
+            'current_user': current_user.username,
+            'last_activity': utils.get_sketch_last_activity(sketch),
+        }
         return jsonify(
             {
                 'objects': [sketch_fields],
@@ -331,38 +326,14 @@ class SketchResource(resources.ResourceMixin, Resource):
             }
 
         if sketch_indices:
-            try:
-                es_stats = self.datastore.client.indices.stats(
-                    index=sketch_indices, metric='docs, store')
-            except elasticsearch.NotFoundError:
-                es_stats = {}
-                logger.error(
-                    'Unable to find index in datastore', exc_info=True)
-
             # Stats for index. Num docs per shard and size on disk.
-            for index_name, stats in es_stats.get('indices', {}).items():
-                doc_count_all_shards = stats.get(
-                    'total', {}).get('docs', {}).get('count', 0)
-                bytes_on_disk = stats.get(
-                    'total', {}).get('store', {}).get('size_in_bytes', 0)
-                num_shards = stats.get('_shards', {}).get('total', 1)
-                doc_count = int(doc_count_all_shards / num_shards)
-
+            for index_name in sketch_indices:
+                doc_count, bytes_on_disk = self.datastore.count(
+                    indices=index_name)
                 stats_per_index[index_name] = {
                     'count': doc_count,
                     'bytes': bytes_on_disk
                 }
-
-                # Stats per data type in the index.
-                parameters = {
-                    'limit': '100',
-                    'field': 'data_type'
-                }
-                result_obj, _ = utils.run_aggregator(
-                    sketch.id, aggregator_name='field_bucket',
-                    aggregator_parameters=parameters,
-                    index=[index_name])
-                stats_per_index[index_name]['data_types'] = result_obj.values
 
         if not sketch_indices:
             mappings_settings = {}
@@ -441,6 +412,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             attributes=utils.get_sketch_attributes(sketch),
             mappings=list(mappings),
             stats=stats_per_index,
+            last_activity=utils.get_sketch_last_activity(sketch),
             filter_labels=self.datastore.get_filter_labels(
                 sketch.id, sketch_indices),
             sketch_labels=[label.label for label in sketch.labels]

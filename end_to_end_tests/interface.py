@@ -40,6 +40,7 @@ class BaseEndToEndTest(object):
     """
 
     NAME = 'name'
+    _ANALYZERS_COMPLETE_SET = frozenset(['ERROR', 'DONE'])
 
     def __init__(self):
         """Initialize the end-to-end test object."""
@@ -80,8 +81,9 @@ class BaseEndToEndTest(object):
                 raise TimeoutError
             _ = timeline.lazyload_data(refresh_cache=True)
             status = timeline.status
+
             # TODO: Do something with other statuses? (e.g. failed)
-            if status == 'ready':
+            if status == 'ready' and timeline.index.status == 'ready':
                 break
             retry_count += 1
             time.sleep(sleep_time_seconds)
@@ -96,6 +98,46 @@ class BaseEndToEndTest(object):
         for name, func in inspect.getmembers(self, predicate=inspect.ismethod):
             if name.startswith('test_'):
                 yield name, func
+
+    def run_analyzer(self, timeline_name, analyzer_name):
+        """Run an analyzer on an imported timeline.
+
+        Args:
+            timeline_name (str): the name of the imported timeline.
+            analyzer_name (str): the name of the analyzer to run.
+        """
+        timeline = None
+        for time_obj in self.sketch.list_timelines():
+            if time_obj.name == timeline_name:
+                timeline = time_obj
+                break
+        if not timeline:
+            print(
+                f'Unable to run analyzer: {analyzer_name} on {timeline_name}, '
+                'didn\'t find the timeline, timeline name correct?')
+            return
+
+        results = timeline.run_analyzer(analyzer_name)
+
+        # Poll the analyzer status to see when analyzer completes it's run.
+        max_time_seconds = 600  # Timeout after 10 min
+        sleep_time_seconds = 5  # Sleep between API calls
+        max_retries = max_time_seconds / sleep_time_seconds
+        retry_count = 0
+
+        while True:
+            if retry_count >= max_retries:
+                raise TimeoutError('Unable to wait for analyzer run to end.')
+
+            status_set = set()
+            for line in results.status.split('\n'):
+                status_set.add(line.split()[-1])
+
+            if status_set.issubset(self._ANALYZERS_COMPLETE_SET):
+                break
+
+            retry_count += 1
+            time.sleep(sleep_time_seconds)
 
     def setup(self):
         """Setup function that is run before any tests.

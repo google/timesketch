@@ -37,8 +37,14 @@ logging.basicConfig(
 class ResourceMixin(object):
     """Mixin for API resources."""
     # Schemas for database model resources
-    user_fields = {'username': fields.String}
     group_fields = {'name': fields.String}
+
+    user_fields = {
+        'username': fields.String,
+        'admin':  fields.Boolean,
+        'active': fields.Boolean,
+        'groups': fields.Nested(group_fields),
+    }
 
     aggregation_fields = {
         'id': fields.Integer,

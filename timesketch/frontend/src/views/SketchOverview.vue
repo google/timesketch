@@ -52,7 +52,7 @@ limitations under the License.
               </a>
             </b-tooltip>
 
-            <b-dropdown v-if="meta.permissions.write" aria-role="list" position="is-bottom-left">
+            <b-dropdown v-if="meta.permissions.write" aria-role="list" append-to-body position="is-bottom-left">
               <a class="button ts-dropdown-button" style="background:transparent;border:none;" slot="trigger" slot-scope="{ active }">
                   <span class="icon is-small">
                     <i :class="active ? 'fas fa-angle-up' : 'fas fa-angle-down'"></i>
