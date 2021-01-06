@@ -212,8 +212,9 @@ class Timeline(resource.BaseResource):
                 result_analyzer = result.get('analyzer_name', 'N/A')
                 if fnmatch.fnmatch(result_analyzer, analyzer_name):
                     logger.error(
-                        f'Analyzer {result_analyzer} has already been run on '
-                        f'the timeline, use "ignore_previous=True" to overwrite')
+                        'Analyzer {0:s} has already been run on the timeline, '
+                        'use "ignore_previous=True" to overwrite'.format(
+                            result_analyzer))
                     stop_running = True
 
             if stop_running:

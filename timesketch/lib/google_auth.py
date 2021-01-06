@@ -210,7 +210,7 @@ def decode_jwt(encoded_jwt, public_key, algorithm, expected_audience):
     """
     try:
         decoded_jwt = jwt.decode(
-            encoded_jwt, public_key, algorithm=algorithm,
+            jwt=encoded_jwt, key=public_key, algorithms=[algorithm],
             audience=expected_audience)
         return decoded_jwt
     except (jwt.exceptions.InvalidTokenError,
