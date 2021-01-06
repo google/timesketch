@@ -1,4 +1,4 @@
-# Copyright 2020 Google Inc. All rights reserved.
+# Copyright 2021 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # limitations under the License.
 """Version information for the Timesketch CLI client."""
 
-__version__ = '20201015'
+__version__ = '20210106'
 
 
 def get_version():

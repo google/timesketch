@@ -18,10 +18,9 @@ import mock
 
 from click.testing import CliRunner
 
-from timesketch_api_client import test_lib
-from timesketch_api_client import client
+from timesketch_api_client import test_lib as api_test_lib
 
-from ..cli import TimesketchCli
+from .. import test_lib
 from .search import saved_searches_group
 
 
@@ -41,11 +40,10 @@ query_filter: {
 class SearchTest(unittest.TestCase):
     """Test Search object."""
 
-    @mock.patch('requests.Session', test_lib.mock_session)
+    @mock.patch('requests.Session', api_test_lib.mock_session)
     def setUp(self):
         """Setup test case."""
-        api_client = client.TimesketchApi('http://127.0.0.1', 'test', 'test')
-        self.ctx = TimesketchCli(api_client=api_client, sketch_from_flag=1)
+        self.ctx = test_lib.get_cli_context()
 
     def test_list_saved_searches(self):
         runner = CliRunner()

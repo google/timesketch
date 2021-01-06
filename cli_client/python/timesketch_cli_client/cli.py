@@ -1,4 +1,4 @@
-# Copyright 2020 Google Inc. All rights reserved.
+# Copyright 2021 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ from timesketch_cli_client.commands.sketch import sketch_group
 from timesketch_cli_client.commands.importer import importer
 
 from .definitions import DEFAULT_OUTPUT_FORMAT
+from .version import get_version
 
 
 class TimesketchCli(object):
@@ -37,7 +38,7 @@ class TimesketchCli(object):
         sketch_from_flag: Sketch ID if provided by flag
         config_assistant: Instance of ConfigAssistant
     """
-    def __init__(self, api_client=None, sketch_from_flag=None):
+    def __init__(self, api_client=None, sketch_from_flag=None, conf_file=None):
         """Initialize the state object.
 
         Args:
@@ -55,7 +56,10 @@ class TimesketchCli(object):
                 sys.exit(1)
 
         self.config_assistant = timesketch_config.ConfigAssistant()
-        self.config_assistant.load_config_file()
+        if conf_file:
+            self.config_assistant.load_config_file(conf_file)
+        else:
+            self.config_assistant.load_config_file()
 
     @property
     def sketch(self):
@@ -98,7 +102,7 @@ class TimesketchCli(object):
 
 
 @click.group(context_settings={'help_option_names': ['-h', '--help']})
-@click.version_option(version='0.0.1')
+@click.version_option(version=get_version(), prog_name='Timesketch CLI')
 @click.option('--sketch', type=int, default=None, help='Sketch to work in.')
 @click.pass_context
 def cli(ctx, sketch):
