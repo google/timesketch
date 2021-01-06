@@ -64,7 +64,7 @@ def describe_query(search_obj):
     click.echo('Filter: {}'.format(json.dumps(search_obj.query_filter, indent=2)))
 
 
-@click.command('explore')
+@click.command('search')
 @click.option(
     '--query', '-q', default='*',
     help='Search query in Elasticsearch query string format')
@@ -98,8 +98,8 @@ def describe_query(search_obj):
     '--describe', is_flag=True, default=False,
     help='Show the query and filter then exit')
 @click.pass_context
-def explore_group(ctx, query, times, time_ranges, labels, header, output,
-                  return_fields, order, limit, saved_search, describe):
+def search_group(ctx, query, times, time_ranges, labels, header, output,
+                 return_fields, order, limit, saved_search, describe):
     """Search and explore."""
     sketch = ctx.obj.sketch
     output_format = ctx.obj.output_format
@@ -162,3 +162,41 @@ def explore_group(ctx, query, times, time_ranges, labels, header, output,
         return
 
     click.echo(format_output(search_obj, output_format, header), nl=new_line)
+
+
+@click.group('saved-searches')
+def saved_searches_group():
+    """Managed saved searches."""
+    pass
+
+@saved_searches_group.command('list')
+@click.pass_context
+def list_saved_searches(ctx):
+    """List saved searches in the sketch.
+
+    Args:
+        ctx: Click CLI context object.
+    """
+    sketch = ctx.obj.sketch
+    for saved_search in sketch.list_views():
+        click.echo('{} {}'.format(saved_search.id, saved_search.name))
+
+
+@saved_searches_group.command('describe')
+@click.argument('search_id', type=int, required=False)
+@click.pass_context
+def describe_saved_search(ctx, search_id):
+    """Show details for a view.
+
+    Args:
+        ctx: Click CLI context object.
+        search_id: View ID from argument.
+    """
+    sketch = ctx.obj.sketch
+    saved_search = sketch.get_view(view_id=search_id)
+    if not saved_search:
+        click.echo('No such view')
+        return
+    click.echo('query_string: {}'.format(saved_search.query_string))
+    click.echo('query_filter: {}'.format(
+        json.dumps(saved_search.query_filter, indent=2)))

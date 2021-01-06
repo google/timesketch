@@ -21,8 +21,8 @@ from requests.exceptions import ConnectionError
 
 from timesketch_cli_client.commands.config import config_group
 from timesketch_cli_client.commands.timelines import timelines_group
-from timesketch_cli_client.commands.searches import saved_searches_group
-from timesketch_cli_client.commands.explore import explore_group
+from timesketch_cli_client.commands.search import search_group
+from timesketch_cli_client.commands.search import saved_searches_group
 from timesketch_cli_client.commands.analyze import analysis_group
 from timesketch_cli_client.commands.sketch import sketch_group
 from timesketch_cli_client.commands.importer import importer
@@ -119,8 +119,8 @@ def cli(ctx, sketch):
 # Register all commands.
 cli.add_command(config_group)
 cli.add_command(timelines_group)
+cli.add_command(search_group)
 cli.add_command(saved_searches_group)
-cli.add_command(explore_group)
 cli.add_command(analysis_group)
 cli.add_command(sketch_group)
 cli.add_command(importer)
