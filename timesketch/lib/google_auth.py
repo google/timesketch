@@ -75,7 +75,7 @@ def _fetch_public_keys(url):
     try:
         resp = requests.get(url)
     except requests.exceptions.RequestException as e:
-        raise JwtKeyError('Cannot fetch public keys: {}'.format(e))
+        raise JwtKeyError('Cannot fetch public keys: {}'.format(e)) from e
     if resp.status_code != HTTP_STATUS_CODE_OK:
         raise JwtKeyError(
             'Cannot fetch public keys: {}'.format(resp.status_code))
@@ -95,7 +95,7 @@ def _fetch_oauth2_discovery_document():
         resp = requests.get(DISCOVERY_URL)
     except requests.exceptions.RequestException as e:
         raise DiscoveryDocumentError(
-            'Cannot fetch discovery document: {}'.format(e))
+            'Cannot fetch discovery document: {}'.format(e)) from e
     if resp.status_code != HTTP_STATUS_CODE_OK:
         raise DiscoveryDocumentError(
             'Cannot fetch discovery_document: {}'.format(resp.status_code))
@@ -182,7 +182,7 @@ def get_encoded_jwt_over_https(code):
         encoded_jwt = response.json().get('id_token')
     except requests.exceptions.RequestException as e:
         raise JwtFetchError(
-            'Cannot fetch JWT: {}'.format(e))
+            'Cannot fetch JWT: {}'.format(e)) from e
     if response.status_code != HTTP_STATUS_CODE_OK:
         raise JwtFetchError(
             'Cannot fetch JWT: {}'.format(response.status_code))
@@ -210,12 +210,12 @@ def decode_jwt(encoded_jwt, public_key, algorithm, expected_audience):
     """
     try:
         decoded_jwt = jwt.decode(
-            encoded_jwt, public_key, algorithm=algorithm,
+            jwt=encoded_jwt, key=public_key, algorithms=[algorithm],
             audience=expected_audience)
         return decoded_jwt
     except (jwt.exceptions.InvalidTokenError,
             jwt.exceptions.InvalidKeyError) as e:
-        raise JwtValidationError('JWT validation error: {}'.format(e))
+        raise JwtValidationError('JWT validation error: {}'.format(e)) from e
 
     return None
 
@@ -253,15 +253,15 @@ def validate_jwt(decoded_jwt, expected_issuer, expected_domain=None):
         if expires_at < now:
             raise JwtValidationError('Token has expired')
     except KeyError as e:
-        raise JwtValidationError('Missing timestamp: {}'.format(e))
+        raise JwtValidationError('Missing timestamp: {}'.format(e)) from e
 
     # Check that the issuer of the token is correct.
     try:
         issuer = decoded_jwt['iss']
         if issuer != expected_issuer:
             raise JwtValidationError('Wrong issuer: {}'.format(issuer))
-    except KeyError:
-        raise JwtValidationError('Missing issuer')
+    except KeyError as e:
+        raise JwtValidationError('Missing issuer') from e
 
     if 'email' not in decoded_jwt:
         raise JwtValidationError('Missing email field in token')
@@ -272,7 +272,7 @@ def validate_jwt(decoded_jwt, expected_issuer, expected_domain=None):
             if not domain == expected_domain:
                 raise JwtValidationError('Wrong domain: {}'.format(domain))
         except KeyError as e:
-            raise JwtValidationError('Missing domain: {}'.format(e))
+            raise JwtValidationError('Missing domain: {}'.format(e)) from e
 
 
 def get_public_key_for_jwt(encoded_jwt, url):
