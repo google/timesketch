@@ -585,8 +585,6 @@ class Sketch(resource.BaseResource):
             f'sketches/{self.id}/aggregation/group/')
 
         for group_dict in data.get('objects', []):
-            print(group_dict)
-            print(type(group_dict))
             if not group_dict.get('id'):
                 continue
             group = aggregation.AggregationGroup(sketch=self)
