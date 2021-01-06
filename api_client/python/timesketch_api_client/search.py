@@ -719,7 +719,7 @@ class Search(resource.SketchResource):
     @query_dsl.setter
     def query_dsl(self, query_dsl):
         """Make changes to the query DSL of the search."""
-        if isinstance(query_dsl, str):
+        if query_dsl and isinstance(query_dsl, str):
             query_dsl = json.loads(query_dsl)
 
         # Special condition of an empty DSL.
