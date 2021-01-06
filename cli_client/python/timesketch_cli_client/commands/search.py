@@ -169,6 +169,7 @@ def saved_searches_group():
     """Managed saved searches."""
     pass
 
+
 @saved_searches_group.command('list')
 @click.pass_context
 def list_saved_searches(ctx):

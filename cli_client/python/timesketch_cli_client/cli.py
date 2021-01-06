@@ -37,19 +37,22 @@ class TimesketchCli(object):
         sketch_from_flag: Sketch ID if provided by flag
         config_assistant: Instance of ConfigAssistant
     """
-    def __init__(self, sketch_from_flag=None):
+    def __init__(self, api_client=None, sketch_from_flag=None):
         """Initialize the state object.
 
         Args:
             sketch_from_flag: Sketch ID if provided by flag.
         """
+        self.api = api_client
         self.sketch_from_flag = sketch_from_flag
-        try:
-            self.api = timesketch_config.get_client()
-            if not self.api:
-                raise ConnectionError
-        except ConnectionError:
-            sys.exit(1)
+
+        if not api_client:
+            try:
+                self.api = timesketch_config.get_client()
+                if not self.api:
+                    raise ConnectionError
+            except ConnectionError:
+                sys.exit(1)
 
         self.config_assistant = timesketch_config.ConfigAssistant()
         self.config_assistant.load_config_file()
