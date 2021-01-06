@@ -14,89 +14,30 @@
 """Commands for explore and search."""
 
 import click
-from tabulate import tabulate
 import json
+from tabulate import tabulate
+
+from timesketch_api_client import search
 
 
-def _create_empty_chip():
-    """Default empty chip.
-
-    Returns:
-        A dict with default values.
-    """
-    return {
-        'field': '',
-        'value': '',
-        'type': None,
-        'operator': 'must'
-    }
-
-
-def get_filter_chips(values, chip_type):
-    """Create filter chips.
-
-    Args:
-        values: One or more filter values.
-        chip_type: The type of chip (one of: label, datetime_range)
-
-    Returns:
-        List of filter chips.
-    """
-    chips = []
-    if chip_type == 'label':
-        for label in values:
-            if label in ['star', 'comment']:
-                label = '__ts_{}'.format(label)
-            chip = _create_empty_chip()
-            chip['value'] = label
-            chip['type'] = 'label'
-            chips.append(chip)
-    elif chip_type == 'datetime_range':
-        for time_range in values:
-            if isinstance(time_range, str):
-                time_range = (time_range, time_range)
-            chip = _create_empty_chip()
-            chip['value'] = '{},{}'.format(time_range[0], time_range[1])
-            chip['type'] = 'datetime_range'
-            chips.append(chip)
-    return chips
-
-
-def search(sketch, query_string, query_filter, return_fields):
-    """Send the search request to the server.
-
-    Args:
-        sketch: The sketch object.
-        query_string: Elasticsearch query string.
-        query_filter: Elasticsearch query filter dict.
-        return_fields: List of fields to return in the server response.
-
-    Returns:
-        Pandas DataFrame with search results.
-    """
-    dataframe = sketch.explore(
-        query_string=query_string, query_filter=query_filter,
-        return_fields=return_fields, as_pandas=True)
-
-    # Label is being set regardless of return_fields. Remove if it is not in
-    # the list of requested fields.
-    if 'label' not in return_fields:
-        dataframe = dataframe.drop(columns=['label'])
-
-    return dataframe
-
-
-def format_output(dataframe, output_format, show_headers):
+def format_output(search_obj, output_format, show_headers):
     """Format search result output.
 
     Args:
-        dataframe: Pandas DataFrame with search results.
+        search_obj: API Search object.
         output_format: The format to use.
         show_headers: Boolean indicating if header row should be displayed.
 
     Returns:
         Search results in the requested output format.
     """
+    dataframe = search_obj.to_pandas()
+
+    # Label is being set regardless of return_fields. Remove if it is not in
+    # the list of requested fields.
+    if 'label' not in search_obj.return_fields:
+        dataframe = dataframe.drop(columns=['label'])
+
     result = None
     if output_format == 'text':
         result = dataframe.to_string(index=False, header=show_headers)
@@ -112,15 +53,15 @@ def format_output(dataframe, output_format, show_headers):
     return result
 
 
-def describe_query(query_string, query_filter):
+def describe_query(search_obj):
     """Print details of a search query nd filter.
 
     Args:
-        query_string: Elasticsearch query string.
-        query_filter: Elasticsearch query filter dict.
+        search_obj: API Search object.
     """
-    click.echo('Query string: {}'.format(query_string))
-    click.echo('Filter: {}'.format(json.dumps(query_filter, indent=2)))
+    click.echo('Query string: {}'.format(search_obj.query_string))
+    click.echo('Return fields: {}'.format(search_obj.return_fields))
+    click.echo('Filter: {}'.format(json.dumps(search_obj.query_filter, indent=2)))
 
 
 @click.command('explore')
@@ -140,7 +81,7 @@ def describe_query(query_string, query_filter):
     '--header/--no-header', default=True,
     help='Toggle header information (default is to show)')
 @click.option(
-    '--output', 'output',
+    '--output-format', 'output',
     help='Set output format (overrides global setting)')
 @click.option(
     '--return-fields', 'return_fields', default='',
@@ -151,16 +92,19 @@ def describe_query(query_string, query_filter):
 @click.option(
     '--limit', type=int, default=40,
     help='Limit amount of events to show (default: 40)')
-@click.option('--view', help='Query and filter from saved view')
+@click.option(
+    '--saved-search', type=int, help='Query and filter from saved search')
 @click.option(
     '--describe', is_flag=True, default=False,
     help='Show the query and filter then exit')
 @click.pass_context
 def explore_group(ctx, query, times, time_ranges, labels, header, output,
-                  return_fields, order, limit, view, describe):
+                  return_fields, order, limit, saved_search, describe):
     """Search and explore."""
     sketch = ctx.obj.sketch
     output_format = ctx.obj.output_format
+    search_obj = search.Search(sketch=sketch)
+
     if output:
         output_format = output
 
@@ -168,41 +112,53 @@ def explore_group(ctx, query, times, time_ranges, labels, header, output,
     if output_format == 'csv':
         new_line = False
 
-    query_filter = {
-        'from': 0,
-        'terminate_after': limit,
-        'size': limit,
-        'indices': ['_all'],
-        'order': order,
-        'chips': [],
-    }
-
-    if view:
-        view = sketch.get_view(view_name=view)
-        query = view.query_string
-        query_filter = view.query_filter
+    # Construct query from saved search and return early.
+    if saved_search:
+        search_obj.from_saved(saved_search)
         if describe:
-            describe_query(query, query_filter)
+            describe_query(search_obj)
             return
-        result = search(sketch, query, query_filter, return_fields)
-        click.echo(format_output(result, output_format, header), nl=new_line)
+        click.echo(format_output(search_obj, output_format, header), nl=new_line)
         return
 
+    # Construct the query from flags.
+    search_obj.query_string = query
+    search_obj.return_fields = return_fields
+    search_obj.max_entries = limit
+
+    if order == 'asc':
+        search_obj.order_ascending()
+    elif order == 'desc':
+        search_obj.order_descending()
+
+    # TODO: Add term chips.
     if time_ranges:
-        chips = get_filter_chips(time_ranges, chip_type='datetime_range')
-        query_filter['chips'].extend(chips)
+        for time_range in time_ranges:
+            range_chip = search.DateRangeChip()
+            range_chip.start_time = time_range[0]
+            range_chip.end_time = time_range[1]
+            search_obj.add_chip(range_chip)
 
     if times:
-        chips = get_filter_chips(times, chip_type='datetime_range')
-        query_filter['chips'].extend(chips)
+        for time in times:
+            range_chip = search.DateRangeChip()
+            range_chip.start_time = time
+            range_chip.end_time = time
+            search_obj.add_chip(range_chip)
 
     if labels:
-        chips = get_filter_chips(labels, chip_type='label')
-        query_filter['chips'].extend(chips)
+        for label in labels:
+            label_chip = search.LabelChip()
+            if label == 'star':
+                label_chip.use_star_label()
+            elif label == 'comment':
+                label_chip.use_comment_label()
+            else:
+                label_chip.label = label
+            search_obj.add_chip(label_chip)
 
     if describe:
-        describe_query(query, query_filter)
+        describe_query(search_obj)
         return
 
-    result = search(sketch, query, query_filter, return_fields)
-    click.echo(format_output(result, output_format, header), nl=new_line)
+    click.echo(format_output(search_obj, output_format, header), nl=new_line)
