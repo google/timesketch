@@ -32,9 +32,9 @@ client_id = myidfoo
 client_secret = sdfa@$FAsASDF132
 verify = True
 
-'[cli]'
-'sketch ='
-'output_format = tabular'
+[cli]
+sketch =
+output_format = tabular
     """
 
     def test_get_missing_config(self):
@@ -68,12 +68,11 @@ verify = True
         config_obj = config.ConfigAssistant()
         with tempfile.NamedTemporaryFile(mode='w') as fw:
             fw.write(self.TEST_CONFIG)
-
             fw.seek(0)
             config_obj.load_config_file(fw.name)
         expected_fields = [
             'host_uri', 'auth_mode', 'verify', 'client_id',
-            'client_secret', 'username']
+            'client_secret', 'username', 'sketch', 'output_format']
         self.assertEqual(set(expected_fields), set(config_obj.parameters))
 
         self.assertEqual(config_obj.get_config('host_uri'), 'http://127.0.0.1')
