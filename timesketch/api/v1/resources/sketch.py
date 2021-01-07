@@ -386,9 +386,25 @@ class SketchResource(resources.ResourceMixin, Resource):
             }
             views.append(view)
 
+        stories = []
+        for story in sketch.stories:
+            if not story.user:
+                username = 'System'
+            else:
+                username = story.user.username
+            story = {
+                'id': story.id,
+                'title': story.title,
+                'user': username,
+                'created_at': story.created_at,
+                'updated_at': story.updated_at
+            }
+            stories.append(story)
+
         meta = dict(
             aggregators=aggregators,
             views=views,
+            stories=stories,
             searchtemplates=[{
                 'name': searchtemplate.name,
                 'id': searchtemplate.id

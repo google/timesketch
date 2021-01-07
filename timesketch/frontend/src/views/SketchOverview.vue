@@ -179,7 +179,7 @@ limitations under the License.
         <div class="container is-fluid">
           <div class="tile-box">
             <div style="padding:1.25em;">
-              <ts-sketch-metrics :timelines="sketch.active_timelines" :views="meta.views" :stories="sketch.stories" :count="count"></ts-sketch-metrics>
+              <ts-sketch-metrics :timelines="sketch.active_timelines" :views="meta.views" :stories="meta.stories" :count="count"></ts-sketch-metrics>
             </div>
           </div>
         </div>
@@ -222,7 +222,7 @@ limitations under the License.
                     </div>
                   </div>
 
-                  <div class="tile is-child tile-box" v-if="sketch.stories.length">
+                  <div class="tile is-child tile-box" v-if="meta.stories.length">
                     <header class="card-header">
                       <p class="card-header-title">Stories</p>
                       <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
@@ -237,7 +237,7 @@ limitations under the License.
                       </div>
                     </header>
                     <div style="padding:1.25em;">
-                      <span v-if="!sketch.stories.length">No stories</span>
+                      <span v-if="!meta.stories.length">No stories</span>
                       <ts-sketch-story-list :controls="false"></ts-sketch-story-list>
                     </div>
                   </div>
@@ -271,7 +271,7 @@ limitations under the License.
                     <header class="card-header">
                       <p class="card-header-title">Saved searches</p>
                       <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
-                        <p class="control" v-if="sketch.stories.length">
+                        <p class="control" v-if="meta.views.length">
                           <router-link class="button is-rounded is-small" :to="{ name: 'SketchManageViews' }">
                             <span class="icon is-small">
                               <i class="fas fa-cog"></i>
