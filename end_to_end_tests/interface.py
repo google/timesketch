@@ -87,6 +87,10 @@ class BaseEndToEndTest(object):
                 break
             retry_count += 1
             time.sleep(sleep_time_seconds)
+
+        # Adding in one more sleep for good measure (preventing flaky tests).
+        time.sleep(sleep_time_seconds)
+
         self._imported_files.append(filename)
 
     def _get_test_methods(self):
