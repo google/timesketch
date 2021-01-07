@@ -388,10 +388,14 @@ class SketchResource(resources.ResourceMixin, Resource):
 
         stories = []
         for story in sketch.stories:
+            if not story.user:
+                username = 'System'
+            else:
+                username = story.user.username
             story = {
                 'id': story.id,
                 'title': story.title,
-                'user': story.user.username,
+                'user': username,
                 'created_at': story.created_at,
                 'updated_at': story.updated_at
             }
