@@ -59,8 +59,15 @@ RestApiClient.interceptors.response.use(function (response) {
 
 export default {
   // Sketch
-  getSketchList () {
-    return RestApiClient.get('/sketches/')
+  getSketchList (scope, page, searchQuery) {
+    let params = {
+      params: {
+        scope: scope,
+        page: page,
+        search_query: searchQuery
+      }
+    }
+    return RestApiClient.get('/sketches/', params)
   },
   getSketch (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/')
@@ -287,6 +294,11 @@ export default {
     return  RestApiClient.get('/sketches/' + sketchId + /graphs/)
   },
   getSavedGraph (sketchId, graphId) {
-    return  RestApiClient.get('/sketches/' + sketchId + /graphs/ + graphId + '/')
+    let params = {
+      params: {
+        format: 'cytoscape'
+      }
+    }
+    return  RestApiClient.get('/sketches/' + sketchId + /graphs/ + graphId + '/', params)
   },
 }

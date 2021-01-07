@@ -24,6 +24,7 @@ from . import analyzer
 from . import aggregation
 from . import definitions
 from . import error
+from . import graph
 from . import resource
 from . import search
 from . import story
@@ -194,6 +195,17 @@ class Sketch(resource.BaseResource):
             return json.loads(label_string)
 
         return []
+
+    @property
+    def last_activity(self):
+        """Property that returns the last activity.
+
+        Returns:
+            Sketch last activity as a string.
+        """
+        data = self.lazyload_data(refresh_cache=True)
+        meta = data.get('meta', {})
+        return meta.get('last_activity', '')
 
     @property
     def my_acl(self):
@@ -569,15 +581,14 @@ class Sketch(resource.BaseResource):
             raise RuntimeError(
                 'Unable to list aggregation groups on an archived sketch.')
         groups = []
-        resource_url = '{0:s}/sketches/{1:d}/aggregation/group/'.format(
-            self.api.api_root, self.id)
-        response = self.api.session.get(resource_url)
-        data = error.get_response_json(response, logger)
+        data = self.api.fetch_resource_data(
+            f'sketches/{self.id}/aggregation/group/')
+
         for group_dict in data.get('objects', []):
             if not group_dict.get('id'):
                 continue
             group = aggregation.AggregationGroup(sketch=self)
-            group.from_dict(group_dict)
+            group.from_saved(group_dict.get('id'))
             groups.append(group)
         return groups
 
@@ -599,8 +610,8 @@ class Sketch(resource.BaseResource):
             raise RuntimeError(
                 'Unable to list aggregations on an archived sketch.')
         aggregations = []
-        data = self.lazyload_data(refresh_cache=True)
 
+        data = self.api.fetch_resource_data(f'sketches/{self.id}/aggregation/')
         objects = data.get('objects')
         if not objects:
             return aggregations
@@ -608,22 +619,14 @@ class Sketch(resource.BaseResource):
         if not isinstance(objects, (list, tuple)):
             return aggregations
 
-        first_object = objects[0]
-        if not isinstance(first_object, dict):
+        object_list = objects[0]
+        if not isinstance(object_list, (list, tuple)):
             return aggregations
 
-        aggregation_groups = first_object.get('aggregationgroups')
-        if aggregation_groups:
-            aggregation_groups = aggregation_groups[0]
-            groups = [
-                x.get('id', 0) for x in aggregation_groups.get(
-                    'aggregations', [])]
-        else:
-            groups = tuple()
-
-        for aggregation_dict in first_object.get('aggregations', []):
+        for aggregation_dict in object_list:
             agg_id = aggregation_dict.get('id')
-            if agg_id in groups:
+            group_id = aggregation_dict.get('aggregationgroup_id')
+            if group_id:
                 continue
             label_string = aggregation_dict.get('label_string', '')
             if label_string:
@@ -643,6 +646,30 @@ class Sketch(resource.BaseResource):
             aggregation_obj.from_saved(aggregation_id=agg_id)
             aggregations.append(aggregation_obj)
         return aggregations
+
+    def list_graphs(self):
+        """Returns a list of stored graphs."""
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to list graphs on an archived sketch.')
+
+        resource_uri = (
+            f'{self.api.api_root}/sketches/{self.id}/graphs/')
+
+        response = self.api.session.get(resource_uri)
+        response_json = error.get_response_json(response, logger)
+        objects = response_json.get('objects')
+        if not objects:
+            logger.warning('No graphs discovered.')
+            return []
+
+        return_list = []
+        graph_list = objects[0]
+        for graph_dict in graph_list:
+            graph_obj = graph.Graph(sketch=self)
+            graph_obj.from_saved(graph_dict.get('id'))
+            return_list.append(graph_obj)
+        return return_list
 
     def get_analyzer_status(self, as_sessions=False):
         """Returns a list of started analyzers and their status.

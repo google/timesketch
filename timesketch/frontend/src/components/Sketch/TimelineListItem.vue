@@ -114,10 +114,11 @@ limitations under the License.
       </p>
       <p v-if="timelineStatus === 'ready'" class="control">
 
+        <!-- Disabled 2020-12-17. Too expensive for large sketches. TODO: Refactor to do lazy loading instead.
         <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body :scrollable="true" :max-height="300">
           <button class="button is-outlined is-rounded is-small" slot="trigger">
             <span class="icon is-small">
-              <i class="fas fa-play-circle"></i>
+              <i class="fas fa-info-circle"></i>
             </span>
             <span>Data types</span>
           </button>
@@ -130,6 +131,7 @@ limitations under the License.
             </div>
           </b-dropdown-item>
         </b-dropdown>
+        -->
 
         <ts-analyzer-list-dropdown :timeline="timeline" @newAnalysisSession="setAnalysisSession($event)"></ts-analyzer-list-dropdown>
       </p>

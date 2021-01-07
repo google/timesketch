@@ -23,6 +23,15 @@ limitations under the License.
         <span style="color: #fff; margin-left: 7px; margin-top: 1px; font-size: 1.2em;">time<b>sketch</b></span>
       </router-link>
     </div>
+
+    <div class="navbar-item" style="margin-left: 20px;">
+      <slot name="left"></slot>
+    </div>
+
+    <div class="navbar-item navbar-center">
+      <slot name="center"></slot>
+    </div>
+
     <div class="navbar-end">
       <div class="navbar-item">
         <b-switch
@@ -34,15 +43,12 @@ limitations under the License.
           Dark Mode
         </b-switch>
       </div>
-
       <div class="navbar-item" style="color: #ffffff;">
         {{ currentUser }}
       </div>
       <div class="navbar-item">
         <a href="/logout" style="color:#fff;">Logout</a>
       </div>
-
-
     </div>
   </nav>
 </template>
@@ -92,16 +98,23 @@ export default {
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss">
   .navbar {
-      padding-left: 32px;
-      padding-right: 32px;
+    padding-left: 32px;
+    padding-right: 32px;
+    height: 67px;
   }
 
   .navbar-item {
-      padding-left: 0;
+    padding-left: 0;
   }
 
   .logo img {
-      width: 15px;
-      height: 17px;
+    width: 15px;
+    height: 17px;
+  }
+
+  .navbar-item.navbar-center {
+    flex-grow: 1;
+    flex-direction: column;
+    justify-content: center;
   }
 </style>

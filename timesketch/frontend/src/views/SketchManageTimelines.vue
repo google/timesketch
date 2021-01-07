@@ -15,6 +15,13 @@ limitations under the License.
 -->
 <template>
   <div>
+
+    <ts-navbar-main v-if="!hideNavigation">
+      <template v-slot:left>
+        {{ sketch.name }}
+      </template>
+    </ts-navbar-main>
+
     <section class="section" v-if="!hideNavigation">
       <div class="container is-fluid">
         <ts-navbar-secondary currentAppContext="sketch" currentPage=""></ts-navbar-secondary>

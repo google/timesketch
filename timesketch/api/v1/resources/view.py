@@ -23,6 +23,7 @@ from flask_login import login_required
 from flask_login import current_user
 
 from timesketch.api.v1 import resources
+from timesketch.api.v1 import utils
 from timesketch.lib import forms
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
@@ -82,6 +83,9 @@ class ViewListResource(resources.ResourceMixin, Resource):
             # compatible with SQLAlchemy.
             if isinstance(query_filter, tuple):
                 query_filter = query_filter[0]
+
+        if not view_name:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'View name is missing.')
 
         # Create a new search template based on this view (only if requested by
         # the user).
@@ -160,6 +164,10 @@ class ViewListResource(resources.ResourceMixin, Resource):
                   'User does not have write access controls on sketch.')
 
         view = self.create_view_from_form(sketch, form)
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
 
 
@@ -250,6 +258,10 @@ class ViewResource(resources.ResourceMixin, Resource):
                 'User does not have write permission on sketch.')
 
         view.set_status(status='deleted')
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return HTTP_STATUS_CODE_OK
 
     @login_required
@@ -313,4 +325,8 @@ class ViewResource(resources.ResourceMixin, Resource):
 
         db_session.add(view)
         db_session.commit()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)

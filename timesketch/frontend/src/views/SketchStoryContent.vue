@@ -16,6 +16,12 @@ limitations under the License.
 <template>
   <div>
 
+    <ts-navbar-main>
+      <template v-slot:left>
+        {{ sketch.name }}
+      </template>
+    </ts-navbar-main>
+
     <section class="section">
       <div class="container is-fluid">
         <ts-navbar-secondary currentAppContext="sketch" currentPage="stories"></ts-navbar-secondary>
@@ -92,7 +98,7 @@ limitations under the License.
                       <ts-view-list-dropdown @setActiveView="addViewComponent($event, index)" :is-simple="true" :title="'+ Saved search'"></ts-view-list-dropdown>
                     </p>
                     <p class="control" v-if="allAggregations">
-                      <ts-aggregation-list-dropdown @addAggregation="addAggregationComponent($event, index)" :is-rounded="true" :title="'+ Aggregation'" :aggregations="allAggregations" ></ts-aggregation-list-dropdown>
+                      <ts-aggregation-list-dropdown @addAggregation="addAggregationComponent($event, index)" :is-rounded="true" :aggregations="allAggregations" ></ts-aggregation-list-dropdown>
                     </p>
                   </div>
               </div>

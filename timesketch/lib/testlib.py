@@ -199,6 +199,18 @@ class MockDataStore(object):
         return self.event_dict
 
     @staticmethod
+    def count(indices):
+        """Mock returning a single event from the datastore.
+
+        Args:
+            indices: List of indices.
+
+        Returns:
+            A tuple with count and bytes.
+        """
+        return 1, 1
+
+    @staticmethod
     def get_filter_labels(sketch_id, indices):
         """Mock returning a single event from the datastore.
 

@@ -16,12 +16,21 @@ limitations under the License.
 <template>
   <div>
 
+    <ts-navbar-main>
+      <template v-slot:center>
+        <input v-on:keyup.enter="search" v-model="searchQuery" class="ts-home-input" type="text" placeholder="Search for investigations" autofocus>
+      </template>
+    </ts-navbar-main>
+
     <!-- Secondary navigation -->
-    <section class="section">
+    <section class="section" style="margin-top:20px; margin-bottom: 20px;">
       <div class="container">
-        <ts-navbar-secondary>
-          <button v-if="mySketches.length || sharedSketches.length" class="button is-success is-rounded" v-on:click="showSketchCreateModal = !showSketchCreateModal"><strong>+ Sketch</strong></button>
-        </ts-navbar-secondary>
+          <button class="button is-success" v-on:click="showSketchCreateModal = !showSketchCreateModal">
+            <span class="icon is-small">
+              <i class="fas fa-plus-circle"></i>
+            </span>
+            <strong>New investigation</strong>
+          </button>
       </div>
     </section>
 
@@ -38,72 +47,95 @@ limitations under the License.
       </div>
     </b-modal>
 
-    <div v-if="!loading && !mySketches.length && !sharedSketches.length" class="has-text-centered">
-      <h1 class="title">Welcome to Timesketch</h1>
-      <button class="button is-success is-rounded" v-on:click="showSketchCreateModal = !showSketchCreateModal"><strong>Create sketch</strong></button>
-    </div>
-
-    <div v-if="mySketches.length || sharedSketches.length" class="section">
-      <div class="container" style="margin-bottom: 15px;">
-        <input v-model="search" class="ts-home-search-input" type="text" placeholder="Search" autofocus>
-      </div>
-    </div>
-
-    <div v-if="search" class="section">
+    <section class="section" v-if="newSearchQuery">
       <div class="container">
         <div class="card">
+          <header class="card-header">
+            <div class="card-header-title">
+              Search results
+            </div>
+          </header>
           <div class="card-content">
-            <p v-if="!filteredList.length">No search results</p>
-            <ts-sketch-list v-if="filteredList.length" :sketches="filteredList"></ts-sketch-list>
+            <ts-sketch-list scope="search" :search-query="newSearchQuery"></ts-sketch-list>
+            <hr>
+            <button class="button is-info" v-on:click="newSearchQuery = ''">Back</button>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div v-if="mySketches.length && !search" class="section">
+    <section class="section" v-if="!newSearchQuery">
       <div class="container">
         <div class="card">
+          <header class="card-header">
+            <div class="card-header-title">
+              My recent activity
+            </div>
+          </header>
           <div class="card-content">
-            <b-tabs v-model="activeTab">
-                <b-tab-item label="My sketches" :disabled="!mySketches.length">
-                  <div class="card">
-                    <div class="card-content">
-                      <ts-sketch-list :sketches="mySketches"></ts-sketch-list>
-                    </div>
-                  </div>
-                </b-tab-item>
-
-                <b-tab-item label="Shared with me" :disabled="!sharedSketches.length">
-                  <div class="card">
-                    <div class="card-content">
-                      <ts-sketch-list :sketches="sharedSketches"></ts-sketch-list>
-                    </div>
-                  </div>
-                </b-tab-item>
-
-                <b-tab-item label="Archived" :disabled="!myArchivedSketches.length">
-                  <div class="card">
-                    <div class="card-content">
-                      <ts-sketch-list :sketches="myArchivedSketches"></ts-sketch-list>
-                    </div>
-                  </div>
-                </b-tab-item>
-            </b-tabs>
+            <ts-sketch-list scope="recent"></ts-sketch-list>
           </div>
         </div>
       </div>
-    </div>
+      <br>
+    </section>
+
+    <section class="section" v-if="!newSearchQuery">
+      <div class="container">
+        <div class="card">
+          <header class="card-header">
+            <div class="card-header-title">
+              My investigations
+            </div>
+          </header>
+          <div class="card-content">
+            <ts-sketch-list scope="user"></ts-sketch-list>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" v-if="!newSearchQuery">
+      <div class="container">
+        <div class="card">
+          <header class="card-header">
+            <div class="card-header-title">
+              Shared with me
+            </div>
+          </header>
+          <div class="card-content">
+            <ts-sketch-list scope="shared"></ts-sketch-list>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" v-if="!newSearchQuery">
+      <div class="container">
+        <div class="card">
+          <header class="card-header">
+            <div class="card-header-title">
+              Archived
+            </div>
+          </header>
+          <div class="card-content">
+            <ts-sketch-list scope="archived"></ts-sketch-list>
+          </div>
+        </div>
+      </div>
+    </section>
 
   </div>
 </template>
 
 <script>
-import ApiClient from '../utils/RestApiClient'
 import TsSketchList from '../components/Home/SketchList'
 import TsCreateSketchForm from '../components/Home/CreateSketchForm'
+import TsNavbarMain from "../components/AppNavbarMain"
 
 export default {
   components: {
+    TsNavbarMain,
     TsSketchList,
     TsCreateSketchForm
   },
@@ -117,7 +149,8 @@ export default {
       loading: true,
       isFullPage: true,
       loadingComponent: null,
-      search: ''
+      searchQuery: '',
+      newSearchQuery: ''
     }
   },
   computed: {
@@ -137,28 +170,14 @@ export default {
     loadingClose: function () {
       this.loading = false
       this.loadingComponent.close()
+    },
+    search: function () {
+      this.newSearchQuery = this.searchQuery
     }
   },
   created: function () {
-    this.loadingOpen()
     this.$store.dispatch('resetState')
-    ApiClient.getSketchList().then((response) => {
-      let sketches = response.data.objects
-      let currentUser = response.data.meta.current_user
-      this.mySketches = sketches.filter(function (sketch) {
-        return sketch.user === currentUser && sketch.status !== 'archived'
-      })
-      this.myArchivedSketches = sketches.filter(function (sketch) {
-        return sketch.user === currentUser && sketch.status === 'archived'
-      })
-      this.sharedSketches = sketches.filter(function (sketch) {
-        return sketch.user !== currentUser
-      })
-      this.allSketches = sketches
-      this.loadingClose()
-    }).catch((e) => {
-      console.error(e)
-    })
+    document.title = 'Timesketch'
   }
 }
 </script>

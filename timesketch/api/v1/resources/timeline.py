@@ -27,6 +27,7 @@ from flask_login import login_required
 from flask_login import current_user
 
 from timesketch.api.v1 import resources
+from timesketch.api.v1 import utils
 from timesketch.lib import forms
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
@@ -140,6 +141,9 @@ class TimelineListResource(resources.ResourceMixin, Resource):
                 pipeline = (tasks.run_sketch_init.s(
                     [searchindex.index_name]) | sketch_analyzer_group)
                 pipeline.apply_async()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
 
         return self.to_json(
             timeline, meta=metadata, status_code=return_code)
@@ -263,12 +267,6 @@ class TimelineResource(resources.ResourceMixin, Resource):
                         self._add_label(timeline=timeline, label=label))
                 changed = any(changes)
             elif label_action == 'remove':
-                if not sketch.has_permission(
-                        user=current_user, permission='delete'):
-                    abort(
-                        HTTP_STATUS_CODE_FORBIDDEN,
-                        'The user does not have delete permission on sketch.')
-
                 changes = []
                 for label in labels:
                     changes.append(
@@ -290,6 +288,9 @@ class TimelineResource(resources.ResourceMixin, Resource):
         timeline.color = form.color.data
         db_session.add(timeline)
         db_session.commit()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
 
         return HTTP_STATUS_CODE_OK
 
@@ -335,6 +336,10 @@ class TimelineResource(resources.ResourceMixin, Resource):
 
         sketch.timelines.remove(timeline)
         db_session.commit()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return HTTP_STATUS_CODE_OK
 
 
@@ -408,6 +413,9 @@ class TimelineCreateResource(resources.ResourceMixin, Resource):
         if timeline:
             return self.to_json(
                 timeline, status_code=HTTP_STATUS_CODE_CREATED)
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
 
         return self.to_json(
             searchindex, status_code=HTTP_STATUS_CODE_CREATED)

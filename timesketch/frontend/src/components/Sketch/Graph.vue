@@ -21,7 +21,7 @@ limitations under the License.
               <header class="card-header" style="border-bottom: 0;">
 
                 <div v-if="currentGraph">
-                <b-dropdown aria-role="list">
+                <b-dropdown aria-role="list" append-to-body>
 
                   <a class="button ts-search-dropdown" style="background-color: transparent;" slot="trigger" slot-scope="{ active }">
                     <span class="icon is-small" style="margin-right: 10px; margin-top:2px; font-size: 0.6em;">
@@ -135,7 +135,7 @@ limitations under the License.
                   </cy-element>
                 </cytoscape>
                 <span v-if="hasGraphCache">
-                  <span><i>Generated {{currentGraphCache.updated_at | moment("utc", "from", "now")}}</i></span>
+                  <span><i>Generated {{ $moment.utc(currentGraphCache.updated_at).local().fromNow() }}</i></span>
                   <a class="is-small" style="text-decoration: underline; margin-left:15px;" v-on:click="buildGraph({name: currentGraph}, true)">
                     <span>Refresh</span>
                   </a>
@@ -355,11 +355,21 @@ export default {
         let graphCache = response.data['objects'][0]
         let elementsCache = JSON.parse(graphCache.graph_elements)
         let elements = []
-        elementsCache['nodes'].forEach((element) => {
-          elements.push({data: element.data, group:'nodes'})
+        let nodes
+        let edges
+
+        if ('elements' in elementsCache) {
+          nodes = elementsCache['elements']['nodes']
+          edges = elementsCache['elements']['edges']
+        } else {
+          nodes = elementsCache['nodes']
+          edges = elementsCache['edges']
+        }
+        nodes.forEach((node) => {
+          elements.push({data: node.data, group:'nodes'})
         })
-        elementsCache['edges'].forEach((element) => {
-          elements.push({data: element.data, group:'edges'})
+        edges.forEach((edge) => {
+          elements.push({data: edge.data, group:'edges'})
         })
         delete graphCache.graph_elements
         this.currentGraphCache = graphCache
@@ -393,7 +403,7 @@ export default {
 
       ApiClient.getSavedGraph(this.sketch.id, graphId).then((response) => {
         this.currentGraph = response.data['objects'][0].name
-        let elements = JSON.parse(response.data['objects'][0].elements)
+        let elements = JSON.parse(response.data['objects'][0].graph_elements)
         let nodes = elements.filter(ele => ele.group === 'nodes')
         let edges = elements.filter(ele => ele.group === 'edges')
         let orderedElements = []

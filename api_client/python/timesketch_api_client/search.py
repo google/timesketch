@@ -606,7 +606,7 @@ class Search(resource.SketchResource):
         if not (query_string or query_filter or query_dsl):
             raise RuntimeError('You need to supply a query')
 
-        self._username = self.api.current_user
+        self._username = self.api.current_user.username
         self._name = 'From Explore'
         self._description = 'From Explore'
 
@@ -655,15 +655,22 @@ class Search(resource.SketchResource):
         self._created_at = data.get('created_at', '')
         self._description = data.get('description', '')
         self._name = data.get('name', '')
-        self._query_dsl = data.get('query_dsl', '')
+        self.query_dsl = data.get('query_dsl', '')
         query_filter = data.get('query_filter', '')
         if query_filter:
-            self.query_filter = json.loads(query_filter)
+            filter_dict = json.loads(query_filter)
+            if 'fields' in filter_dict:
+                fields = filter_dict.pop('fields')
+                return_fields = [x.get('field') for x in fields]
+                self.return_fields = ','.join(return_fields)
+
+            self.query_filter = filter_dict
         self._query_string = data.get('query_string', '')
         self._resource_id = search_id
         self._searchtemplate = data.get('searchtemplate', 0)
         self._updated_at = data.get('updated_at', '')
         self._username = data.get('user', {}).get('username', 'System')
+
         self.resource_data = data
 
     @property
@@ -712,6 +719,13 @@ class Search(resource.SketchResource):
     @query_dsl.setter
     def query_dsl(self, query_dsl):
         """Make changes to the query DSL of the search."""
+        if query_dsl and isinstance(query_dsl, str):
+            query_dsl = json.loads(query_dsl)
+
+        # Special condition of an empty DSL.
+        if query_dsl == '""':
+            query_dsl = ''
+
         self._query_dsl = query_dsl
         self.commit()
 
@@ -822,11 +836,25 @@ class Search(resource.SketchResource):
             resource_url = (
                 f'{self.api.api_root}/sketches/{self._sketch.id}/views/')
 
+        query_filter = self.query_filter
+        if self.return_fields:
+            sketch_data = self._sketch.data
+            sketch_meta = sketch_data.get('meta', {})
+            mappings = sketch_meta.get('mappings', [])
+
+            use_mappings = []
+            for field in self.return_fields.split(','):
+                field = field.strip().lower()
+                for map_entry in mappings:
+                    if map_entry.get('field', '').lower() == field:
+                        use_mappings.append(map_entry)
+            query_filter['fields'] = use_mappings
+
         data = {
             'name': self.name,
             'description': self.description,
             'query': self.query_string,
-            'filter': self.query_filter,
+            'filter': query_filter,
             'dsl': self.query_dsl,
             'labels': json.dumps(self.labels),
         }

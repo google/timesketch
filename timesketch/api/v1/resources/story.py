@@ -22,6 +22,7 @@ from flask_login import current_user
 from sqlalchemy import desc
 
 from timesketch.api.v1 import resources
+from timesketch.api.v1 import utils
 from timesketch.lib import forms
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
@@ -92,6 +93,9 @@ class StoryListResource(resources.ResourceMixin, Resource):
             title=title, content='[]', sketch=sketch, user=current_user)
         db_session.add(story)
         db_session.commit()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
         return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
 
 
@@ -218,6 +222,10 @@ class StoryResource(resources.ResourceMixin, Resource):
         story.content = form.get('content', '[]')
         db_session.add(story)
         db_session.commit()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return self.to_json(story, status_code=HTTP_STATUS_CODE_CREATED)
 
     @login_required
@@ -253,4 +261,8 @@ class StoryResource(resources.ResourceMixin, Resource):
 
         sketch.stories.remove(story)
         db_session.commit()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return HTTP_STATUS_CODE_OK

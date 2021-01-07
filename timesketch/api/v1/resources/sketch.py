@@ -16,7 +16,6 @@
 import logging
 
 import elasticsearch
-import six
 
 from flask import jsonify
 from flask import request
@@ -24,9 +23,11 @@ from flask import abort
 from flask import current_app
 from flask_restful import Resource
 from flask_restful import reqparse
+from flask_restful import inputs
 from flask_login import login_required
 from flask_login import current_user
 from sqlalchemy import not_
+from sqlalchemy import or_
 
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
@@ -42,6 +43,7 @@ from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
+from timesketch.models.sketch import View
 
 
 logger = logging.getLogger('timesketch.sketch_api')
@@ -50,13 +52,23 @@ logger = logging.getLogger('timesketch.sketch_api')
 class SketchListResource(resources.ResourceMixin, Resource):
     """Resource for listing sketches."""
 
+    DEFAULT_SKETCHES_PER_PAGE = 10
+
     def __init__(self):
-        super(SketchListResource, self).__init__()
+        super().__init__()
         self.parser = reqparse.RequestParser()
         self.parser.add_argument(
-            'name', type=six.text_type, required=True)
+            'scope', type=str, required=False, default='user')
         self.parser.add_argument(
-            'description', type=six.text_type, required=False)
+            'page', type=int, required=False, default=1)
+        self.parser.add_argument(
+            'per_page', type=int, required=False,
+            default=self.DEFAULT_SKETCHES_PER_PAGE)
+        self.parser.add_argument(
+            'search_query', type=str, required=False, default=None)
+        self.parser.add_argument(
+            'include_archived', type=inputs.boolean, required=False,
+            default=False)
 
     @login_required
     def get(self):
@@ -65,28 +77,106 @@ class SketchListResource(resources.ResourceMixin, Resource):
         Returns:
             List of sketches (instance of flask.wrappers.Response)
         """
-        if current_user.admin:
+        args = self.parser.parse_args()
+        scope = args.get('scope')
+        page = args.get('page')
+        per_page = args.get('per_page')
+        search_query = args.get('search_query')
+        include_archived = args.get('include_archived')
+
+        if current_user.admin and scope == 'admin':
             sketch_query = Sketch.query
         else:
             sketch_query = Sketch.all_with_acl()
 
-        filtered_sketches = sketch_query.filter(
+        base_filter = sketch_query.filter(
             not_(Sketch.Status.status == 'deleted'),
-            Sketch.Status.parent).order_by(Sketch.updated_at.desc()).all()
+            not_(Sketch.Status.status == 'archived'),
+            Sketch.Status.parent).order_by(Sketch.updated_at.desc())
 
-        # Just return a subset of the sketch objects to reduce the amount of
-        # data returned.
+        base_filter_with_archived = sketch_query.filter(
+            not_(Sketch.Status.status == 'deleted'),
+            Sketch.Status.parent).order_by(Sketch.updated_at.desc())
+
+        filtered_sketches = base_filter_with_archived
         sketches = []
-        for sketch in filtered_sketches:
-            sketches.append({
-                'name': sketch.name,
-                'updated_at': str(sketch.updated_at),
-                'user': sketch.user.username,
+        return_sketches = []
+
+        has_next = False
+        has_prev = False
+        next_page = None
+        prev_page = None
+        current_page = 1
+        total_pages = 0
+        total_items = 0
+
+        if scope == 'recent':
+            # Get list of sketches that the user has actively searched in.
+            # TODO: Make this cover more actions such as story updates etc.
+            # TODO: Right now we only return the top 3, make this configurable.
+            views = View.query.filter_by(
+                user=current_user, name='').order_by(
+                View.updated_at.desc()).limit(3)
+            sketches = [view.sketch for view in views]
+            total_items = len(sketches)
+        elif scope == 'admin':
+            if not current_user.admin:
+                abort(HTTP_STATUS_CODE_FORBIDDEN, 'User is not an admin.')
+            if include_archived:
+                filtered_sketches = base_filter_with_archived
+            else:
+                filtered_sketches = base_filter
+        elif scope == 'user':
+            filtered_sketches = base_filter.filter_by(user=current_user)
+        elif scope == 'archived':
+            filtered_sketches = sketch_query.filter(
+                Sketch.status.any(status='archived'))
+        elif scope == 'shared':
+            filtered_sketches = base_filter.filter(Sketch.user != current_user)
+        elif scope == 'search':
+            filtered_sketches = base_filter_with_archived.filter(
+                or_(
+                    Sketch.name.ilike(f'%{search_query}%'),
+                    Sketch.description.ilike(f'%{search_query}%')
+                )
+            )
+
+        if not sketches:
+            pagination = filtered_sketches.paginate(
+                page=page, per_page=per_page)
+            sketches = pagination.items
+            has_next = pagination.has_next
+            has_prev = pagination.has_prev
+            next_page = pagination.next_num
+            prev_page = pagination.prev_num
+            current_page = pagination.page
+            total_pages = pagination.pages
+            total_items = pagination.total
+
+        for sketch in sketches:
+            # Return a subset of the sketch objects to reduce the amount of
+            # data sent to the client.
+            return_sketches.append({
                 'id': sketch.id,
+                'name': sketch.name,
+                'description': sketch.description,
+                'created_at': str(sketch.created_at),
+                'last_activity': utils.get_sketch_last_activity(sketch),
+                'user': sketch.user.username,
                 'status': sketch.get_status.status
             })
-        meta = {'current_user': current_user.username}
-        return jsonify({'objects': sketches, 'meta': meta})
+
+        meta = {
+            'current_user': current_user.username,
+            'has_next': has_next,
+            'has_prev': has_prev,
+            'next_page': next_page,
+            'prev_page': prev_page,
+            'current_page': current_page,
+            'total_pages': total_pages,
+            'total_items': total_items
+        }
+        return jsonify({'objects': return_sketches, 'meta': meta})
 
     @login_required
     def post(self):
@@ -167,8 +257,6 @@ class SketchResource(resources.ResourceMixin, Resource):
             'user': {'username': current_user.username},
             'timelines': [],
             'stories': [],
-            'aggregations': [],
-            'aggregationgroups': [],
             'active_timelines': [],
             'label_string': sketch.label_string,
             'status': [{
@@ -179,7 +267,10 @@ class SketchResource(resources.ResourceMixin, Resource):
             'updated_at': sketch.updated_at,
         }
 
-        meta = {'current_user': current_user.username}
+        meta = {
+            'current_user': current_user.username,
+            'last_activity': utils.get_sketch_last_activity(sketch),
+        }
         return jsonify(
             {
                 'objects': [sketch_fields],
@@ -233,38 +324,14 @@ class SketchResource(resources.ResourceMixin, Resource):
             }
 
         if sketch_indices:
-            try:
-                es_stats = self.datastore.client.indices.stats(
-                    index=sketch_indices, metric='docs, store')
-            except elasticsearch.NotFoundError:
-                es_stats = {}
-                logger.error(
-                    'Unable to find index in datastore', exc_info=True)
-
             # Stats for index. Num docs per shard and size on disk.
-            for index_name, stats in es_stats.get('indices', {}).items():
-                doc_count_all_shards = stats.get(
-                    'total', {}).get('docs', {}).get('count', 0)
-                bytes_on_disk = stats.get(
-                    'total', {}).get('store', {}).get('size_in_bytes', 0)
-                num_shards = stats.get('_shards', {}).get('total', 1)
-                doc_count = int(doc_count_all_shards / num_shards)
-
+            for index_name in sketch_indices:
+                doc_count, bytes_on_disk = self.datastore.count(
+                    indices=index_name)
                 stats_per_index[index_name] = {
                     'count': doc_count,
                     'bytes': bytes_on_disk
                 }
-
-                # Stats per data type in the index.
-                parameters = {
-                    'limit': '100',
-                    'field': 'data_type'
-                }
-                result_obj, _ = utils.run_aggregator(
-                    sketch.id, aggregator_name='field_bucket',
-                    aggregator_parameters=parameters,
-                    index=[index_name])
-                stats_per_index[index_name]['data_types'] = result_obj.values
 
         if not sketch_indices:
             mappings_settings = {}
@@ -343,6 +410,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             attributes=utils.get_sketch_attributes(sketch),
             mappings=list(mappings),
             stats=stats_per_index,
+            last_activity=utils.get_sketch_last_activity(sketch),
             filter_labels=self.datastore.get_filter_labels(
                 sketch.id, sketch_indices),
             sketch_labels=[label.label for label in sketch.labels]

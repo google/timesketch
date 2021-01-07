@@ -14,38 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <div class="dropdown" v-bind:class="{'is-active': dropdownActive}">
-    <div class="dropdown-trigger">
-      <a class="button" v-bind:class="{'is-rounded': isRounded}" aria-haspopup="true" aria-controls="dropdown-menu" v-on:click="dropdownActive = !dropdownActive">
-        <span>{{ title || 'Aggregations' }}</span>
-        <span class="icon is-small">
-          <i class="fas fa-angle-down" aria-hidden="true"></i>
-        </span>
-      </a>
-    </div>
-    <div class="dropdown-menu" id="dropdown-menu" role="menu">
-      <div class="dropdown-content">
+  <b-dropdown ref="dropdown" animation="none" aria-role="menu" append-to-body>
+    <a class="button" v-bind:class="{ 'is-rounded': isRounded}" slot="trigger">
+      <span>+ Aggregation</span>
+      <b-icon :icon="active ? 'chevron-up' : 'chevron-down'" style="font-size: 0.6em;"></b-icon>
+    </a>
+    <div class="modal-card" style="width:500px;color: var(--font-color-dark);">
+      <section class="modal-card-body">
         <span class="dropdown-item" v-if="aggregations && aggregations.length < 1">No saved aggregations</span>
         <a class="dropdown-item" v-on:click="setActiveAggregation(agg)" v-for="agg in aggregations" :key="agg.id">
           <span>{{ agg.name }}</span>
         </a>
-      </div>
+      </section>
     </div>
-  </div>
+  </b-dropdown>
 </template>
 
 <script>
 export default {
-  props: ['isRounded', 'title', 'aggregations'],
-  data () {
-    return {
-      dropdownActive: false
-    }
-  },
+  props: ['isRounded', 'aggregations'],
   methods: {
     setActiveAggregation: function (aggregation) {
       this.$emit('addAggregation', aggregation)
-      this.viewListDropdownActive = false
     }
   }
 }
