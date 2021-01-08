@@ -14,6 +14,7 @@
 """Sigma resources for version 1 of the Timesketch API."""
 
 import logging
+import yaml
 
 from flask import abort
 from flask import jsonify
@@ -23,6 +24,7 @@ from flask_login import login_required
 from flask_login import current_user
 
 import timesketch.lib.sigma_util as ts_sigma_lib
+from sigma.parser import exceptions as sigma_exceptions
 
 from timesketch.api.v1 import resources
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
@@ -95,7 +97,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
         return return_rule
 
 class SigmaByTextResource(resources.ResourceMixin, Resource):
-    """Resource to get list of Sigma rules."""
+    """Resource to get a Sigma rule by text."""
 
     @login_required
     def post(self):
@@ -111,26 +113,44 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
 
         action = form.get('action', '')
 
-        #TODO remove the form below
-        form = forms.SigmaRuleForm.build(request)
-        # optional: do we want to have a title at this point?
-        title = form.title.data
-        content = form.content.data
-
-        print(f'Content passed: {content}')
-        if not form.validate_on_submit():
-            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Unable to validate form data')
+        if action is not 'post':
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Action needs to be "post"')
+        if action == 'post':
+            content = form.get('content')
+            if not content:
+                return abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Missing values from the request.')
 
         try:
             sigma_rule = ts_sigma_lib.get_sigma_rule_by_text(content)
 
         except ValueError:
-            # TODO: make better responses here with different scenarios.
             logger.error('Parsing error',
                          exc_info=True)
             abort(
-                HTTP_STATUS_CODE_NOT_FOUND,
+                HTTP_STATUS_CODE_BAD_REQUEST,
                 'Error unable to parse the provided Sigma rule')
+        except NotImplementedError as exception:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Error generating rule {0!s}'
+                .format(exception))
+
+        except sigma_exceptions.SigmaParseError as exception:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Sigma parsing error generating rule {0!s}'
+                .format(exception))
+
+        except yaml.parser.ParserError as exception:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Yaml parsing error generating rule in {0!s}'
+                .format(exception))
+
 
         if sigma_rule is None:
             abort(

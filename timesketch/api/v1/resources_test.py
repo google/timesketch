@@ -364,7 +364,7 @@ class TimelineListResourceTest(BaseTest):
 
 class SigmaResourceTest(BaseTest):
     """Test Sigma resource."""
-    resource_url = '/api/v1/sigma/'
+    resource_url = '/api/v1/sigma/rule/'
     expected_response = {
         'objects': {
             'description': 'Detects suspicious installation of Zenmap',
@@ -387,7 +387,7 @@ class SigmaResourceTest(BaseTest):
 class SigmaByTextResourceTest(BaseTest):
     """Test Sigma by text resource."""
 
-    resource_url = '/api/v1/sigma_by_text/'
+    resource_url = '/api/v1/sigma/text/'
     correct_rule = '''
         title: Installation of foobar
         id: bb1e0d1d-cd13-4b65-bf7e-69b4e740266b
@@ -409,7 +409,6 @@ class SigmaByTextResourceTest(BaseTest):
             - Unknown
         level: high
         '''
-
     expected_response = {
         'title': 'Installation of foobar',
         'id': 'bb1e0d1d-cd13-4b65-bf7e-69b4e740266b',
@@ -439,7 +438,7 @@ class SigmaByTextResourceTest(BaseTest):
 
         self.login()
 
-        data = dict(title='test', content=self.correct_rule)
+        data = dict(action='post', content=self.correct_rule)
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -448,3 +447,36 @@ class SigmaByTextResourceTest(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertDictContainsSubset(self.expected_response, response.json)
         self.assert200(response)
+
+        # wrong sigma rule
+        data = dict(action='post', content='foobar: asd')
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type='application/json')
+        data = json.loads(response.get_data(as_text=True))
+
+        self.assertIn('No detection definitions found', data['message'])
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+
+        # wrong action
+        data = dict(action='get', content=self.correct_rule)
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type='application/json')
+        data = json.loads(response.get_data(as_text=True))
+
+        self.assertIn('Action needs to be "post"', data['message'])
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+
+        # no content given
+        data = dict(action='post')
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type='application/json')
+        data = json.loads(response.get_data(as_text=True))
+
+        self.assertIn('Missing values from the request', data['message'])
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)

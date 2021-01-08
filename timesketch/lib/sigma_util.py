@@ -281,7 +281,7 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
 
     except NotImplementedError as exception:
         logger.error(
-            'Error generating rule in file {0!s}'
+            'Error generating rule {0!s}'
             .format(exception))
         raise
 
@@ -293,7 +293,7 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
 
     except yaml.parser.ParserError as exception:
         logger.error(
-            'Yaml parsing error generating rule in {0!s}'
+            'Yaml parsing error generating rule {0!s}'
             .format(exception))
         raise
 
