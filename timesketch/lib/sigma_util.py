@@ -273,7 +273,7 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
     # TODO check if input validation is needed / useful.
     try:
         parser = sigma_collection.SigmaCollectionParser(
-                        rule_text, sigma_config, None)
+            rule_text, sigma_config, None)
         parsed_sigma_rules = parser.generate(sigma_backend)
         rule_yaml_data = yaml.safe_load_all(rule_text)
         for doc in rule_yaml_data:
