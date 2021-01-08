@@ -104,6 +104,14 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
         Returns:
             JSON sigma rule
         """
+
+        form = request.json
+        if not form:
+            form = request.data
+
+        action = form.get('action', '')
+
+        #TODO remove the form below
         form = forms.SigmaRuleForm.build(request)
         # optional: do we want to have a title at this point?
         title = form.title.data

@@ -17,10 +17,11 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import sigma.configuration as sigma_configuration
+from sigma.parser import exceptions as sigma_exceptions
 
 from timesketch.lib.testlib import BaseTest
 import timesketch.lib.sigma_util as sigma_util
+
 
 
 MOCK_SIGMA_RULE = """
@@ -70,10 +71,10 @@ class TestSigmaUtilLib(BaseTest):
         self.assertIsNotNone(rule)
         self.assertIn('zmap', rule.get('es_query'))
         self.assertIn('b793', rule.get('id'))
-
-        self.assertIsNone(sigma_util.get_sigma_rule_by_text(
-            MOCK_SIGMA_RULE_ERROR1))
-
+        self.assertRaises(
+                        sigma_exceptions.SigmaParseError,
+                        sigma_util.get_sigma_rule_by_text,
+                        MOCK_SIGMA_RULE_ERROR1)
 
     def test_get_sigma_config_file(self):
         """Test getting sigma config file"""

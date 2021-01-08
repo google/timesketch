@@ -67,7 +67,8 @@ def get_sigma_config_file(config_file=None):
     try:
         sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
     except SigmaConfigParseError:
-        pass
+        logger.error('Parsing error with {0:s}'.format(sigma_config_file))
+        raise
 
     return sigma_config
 
@@ -165,7 +166,9 @@ def get_sigma_rule(filepath, sigma_config=None):
                 sigma.configuration.SigmaConfiguration object
     Returns:
         Json representation of the parsed rule
-        None: if any problems while parsing
+    Raises:
+        ValueError: Parsing error
+        IsADirectoryError: If a directory is passed as filepath
     """
     try:
         if sigma_config:
@@ -176,7 +179,7 @@ def get_sigma_rule(filepath, sigma_config=None):
         logger.error(
             'Problem reading the Sigma config {0:s}: '
             .format(e), exc_info=True)
-        return None
+        raise ValueError('Problem reading the Sigma config') from e
 
     sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
 
@@ -186,23 +189,11 @@ def get_sigma_rule(filepath, sigma_config=None):
         sigma_rules_paths = None
 
     if not filepath.lower().endswith('.yml'):
-        return None
+        raise ValueError(f'{filepath} does not end with .yml')
 
     # if a sub dir is found, nothing can be parsed
     if os.path.isdir(filepath):
-        return None
-
-    try:
-        sigma_rules_paths = get_sigma_rules_path()
-    except ValueError:
-        sigma_rules_paths = None
-
-    if not filepath.lower().endswith('.yml'):
-        return None
-
-    # if a sub dir is found, nothing can be parsed
-    if os.path.isdir(filepath):
-        return None
+        raise IsADirectoryError(f'{filepath} is a directory - must be a file')
 
     abs_path = os.path.abspath(filepath)
 
@@ -221,13 +212,13 @@ def get_sigma_rule(filepath, sigma_config=None):
             logger.error(
                 'Error generating rule in file {0:s}: {1!s}'
                 .format(abs_path, exception))
-            return None
+            raise
 
         except sigma_exceptions.SigmaParseError as exception:
             logger.error(
                 'Sigma parsing error generating rule in file {0:s}: {1!s}'
                 .format(abs_path, exception))
-            return None
+            raise
 
         except yaml.parser.ParserError as exception:
             logger.error(
@@ -274,6 +265,7 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
 
     rule_return = {}
 
+    # TODO check if input validation is needed / useful.
     try:
         parser = sigma_collection.SigmaCollectionParser(
                         rule_text, sigma_config, None)
@@ -286,19 +278,19 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
         logger.error(
             'Error generating rule in file {0!s}'
             .format(exception))
-        return None
+        raise
 
     except sigma_exceptions.SigmaParseError as exception:
         logger.error(
             'Sigma parsing error generating rule {0!s}'
             .format(exception))
-        return None
+        raise
 
     except yaml.parser.ParserError as exception:
         logger.error(
             'Yaml parsing error generating rule in {0!s}'
             .format(exception))
-        return None
+        raise
 
     sigma_es_query = ''
 

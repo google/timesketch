@@ -53,7 +53,7 @@ class Sigma(resource.BaseResource):
         self._file_name = file_name
         self._title = title
         self._file_relpath = file_relpath
-        self._resource_uri = f'sigma/{self.rule_uuid}'
+        self._resource_uri = f'sigma/rule/{self.rule_uuid}'
         super().__init__(
             api=api, resource_uri=self._resource_uri)
 
@@ -109,8 +109,8 @@ class Sigma(resource.BaseResource):
         # TODO: Write docstring
         self.rule_uuid = rule_uuid
         # TODO: not sure which one is the better one
-        self._resource_uri = f'sigma/{rule_uuid}'
-        self.resource_uri = f'sigma/{rule_uuid}'
+        self._resource_uri = f'sigma/rule/{rule_uuid}'
+        self.resource_uri = f'sigma/rule/{rule_uuid}'
         super().__init__(
             api=self.api, resource_uri=self._resource_uri)
 
@@ -123,11 +123,13 @@ class Sigma(resource.BaseResource):
             rule_text: Rule text to be parsed.
 
         """
-        resource_url = '{0:s}/sigma_by_text/'.format(self.api.api_root)
+        resource_url = '{0:s}/sigma/text/'.format(self.api.api_root)
         data = {'title': 'Get_Sigma_by_text', 'content': rule_text}
         response = self.api.session.post(resource_url, data=data)
-        print(response.__dict__)
+        #TODO remove that print statement
+        print(f'{resource_url} {data} {response.__dict__}')
         response_dict = error.get_response_json(response, logger)
+        # TODO remove those comments
         #timeline_dict = response_dict['objects'][0]
         #timeline_obj = sigma.Sigma(
         #    timeline_id=timeline_dict['id'],
