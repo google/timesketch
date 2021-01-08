@@ -25,6 +25,7 @@ import sigma.configuration as sigma_configuration
 from sigma.backends import elasticsearch as sigma_es
 from sigma.parser import collection as sigma_collection
 from sigma.parser import exceptions as sigma_exceptions
+from sigma.config.exceptions import SigmaConfigParseError
 
 logger = logging.getLogger('timesketch.lib.sigma')
 
@@ -39,16 +40,13 @@ def get_sigma_config_file(config_file=None):
     Raises:
         ValueError: If SIGMA_CONFIG is not found in the config file.
             or the Sigma config file is not readabale.
+        SigmaConfigParseError: If config file could not be parsed.
     """
     if config_file:
         config_file_path = config_file
     else:
-        config_file_path = current_app.config.get('SIGMA_CONFIG')
-
-    # this is mostly to be able to test cases via API where the test from
-    # API client
-    if not config_file_path:
-        config_file_path = './data/sigma_config.yaml'
+        config_file_path = current_app.config.get(
+            'SIGMA_CONFIG', './data/sigma_config.yaml')
 
     if not config_file_path:
         raise ValueError('No config_file_path set via param or config file')
@@ -66,11 +64,10 @@ def get_sigma_config_file(config_file=None):
     with open(config_file_path, 'r') as config_file_read:
         sigma_config_file = config_file_read.read()
 
-    sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
-
-    if not sigma_config:
-        raise ValueError(
-            'sigma_config is none - Error')
+    try:
+        sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
+    except SigmaConfigParseError:
+        pass
 
     return sigma_config
 
@@ -168,6 +165,7 @@ def get_sigma_rule(filepath, sigma_config=None):
                 sigma.configuration.SigmaConfiguration object
     Returns:
         Json representation of the parsed rule
+        None: if any problems while parsing
     """
     try:
         if sigma_config:

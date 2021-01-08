@@ -64,15 +64,7 @@ class TestSigmaUtilLib(BaseTest):
     def test_get_rule_by_text(self):
         """Test getting sigma rule by text."""
 
-        config_file = './data/sigma_config.yaml'
-
-        with open(config_file, 'r') as config_file:
-            sigma_config_file = config_file.read()
-
-            sigma_config = sigma_configuration.SigmaConfiguration(
-                sigma_config_file)
-
-        rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE, sigma_config)
+        rule = sigma_util.get_sigma_rule_by_text(MOCK_SIGMA_RULE)
 
         self.assertIsNotNone(MOCK_SIGMA_RULE)
         self.assertIsNotNone(rule)
@@ -80,7 +72,7 @@ class TestSigmaUtilLib(BaseTest):
         self.assertIn('b793', rule.get('id'))
 
         self.assertIsNone(sigma_util.get_sigma_rule_by_text(
-            MOCK_SIGMA_RULE_ERROR1, sigma_config))
+            MOCK_SIGMA_RULE_ERROR1))
 
 
     def test_get_sigma_config_file(self):
@@ -91,17 +83,9 @@ class TestSigmaUtilLib(BaseTest):
     def test_get_sigma_rule(self):
         """Test getting sigma rule from file"""
 
-        config_file = './data/sigma_config.yaml'
-
-        with open(config_file, 'r') as config_file:
-            sigma_config_file = config_file.read()
-
-            sigma_config = sigma_configuration.SigmaConfiguration(
-                sigma_config_file)
-
         filepath = './data/sigma/rules/lnx_susp_zenmap.yml'
 
-        rule = sigma_util.get_sigma_rule(filepath, sigma_config)
+        rule = sigma_util.get_sigma_rule(filepath)
 
         self.assertIsNotNone(rule)
         self.assertIn('zmap', rule.get('es_query'))
