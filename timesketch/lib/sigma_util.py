@@ -257,6 +257,11 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
 
     Returns:
         Json representation of the parsed rule
+    Raises:
+        sigma_exceptions.SigmaParseError: Issue with parsing the given rule
+        yaml.parser.ParserError: Not a correct YAML text provided
+        NotImplementedError: A feature in the provided Sigma rule is not
+            implemented in Sigma for Timesketch
     """
     if sigma_config is None:
         sigma_config = get_sigma_config_file()
@@ -301,7 +306,6 @@ def get_sigma_rule_by_text(rule_text, sigma_config=None):
         {'es_query':sigma_es_query})
     rule_return.update(
         {'file_name':'N/A'})
-
     rule_return.update(
         {'file_relpath':'N/A'})
 
