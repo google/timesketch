@@ -39,7 +39,7 @@ limitations under the License.
 
             <div v-for="(obj, index) in blocks" :key="index">
 
-              <div v-if="!obj.componentName" @mouseover="obj.isActive = true" @mouseleave="obj.isActive = false" v-bind:class="{ activeBlock: obj.isActive }" class="inactiveBlock" style="padding-left:10px;">
+              <div v-if="!obj.componentName" @mouseover="obj.isActive = true" @mouseleave="obj.isActive = false" v-bind:class="{ activeBlock: obj.isActive }" class="inactiveBlock" style="padding-left:10px;margin-top:10px;margin-bottom: 10px;">
 
                 <span v-if="obj.isActive" style="float:right;">
                   <button class="delete" v-on:click="deleteBlock(index)"></button>
@@ -66,7 +66,7 @@ limitations under the License.
                 <div v-on:dblclick="obj.edit = !obj.edit" class="markdown-body" v-if="!obj.edit" v-html="toHtml(obj.content)"></div>
               </div>
 
-              <div v-if="obj.componentName" @mouseover="obj.isActive = true" @mouseleave="obj.isActive = false">
+              <div style="margin-top:10px;margin-bottom: 10px;" v-if="obj.componentName" @mouseover="obj.isActive = true" @mouseleave="obj.isActive = false">
                 <article class="message">
                   <div class="message-header">
                     <p v-if="obj.componentName === 'TsViewEventList'">
@@ -86,7 +86,7 @@ limitations under the License.
                 </article>
               </div>
 
-              <div style="min-height:35px;margin-top:10px;margin-bottom:10px;" @mouseover="obj.showPanel = true" @mouseleave="obj.showPanel = false">
+              <div style="min-height:40px;" @mouseover="obj.showPanel = true" @mouseleave="obj.showPanel = false">
                 <div v-if="index === blocks.length - 1" style="padding-top:20px;"></div>
                   <div v-if="index === blocks.length - 1 || obj.showPanel || obj.isActive" class="field is-grouped">
                     <p class="control">
@@ -95,10 +95,10 @@ limitations under the License.
                       </button>
                     </p>
                     <p class="control" v-if="meta.views.length">
-                      <ts-view-list-dropdown @setActiveView="addViewComponent($event, index)" :is-simple="true" :title="'+ Saved search'"></ts-view-list-dropdown>
+                      <ts-view-list-dropdown @setActiveView="addViewComponent($event, index)" :is-simple="true" :is-last="index === blocks.length - 1" :title="'+ Saved search'"></ts-view-list-dropdown>
                     </p>
                     <p class="control" v-if="allAggregations">
-                      <ts-aggregation-list-dropdown @addAggregation="addAggregationComponent($event, index)" :is-rounded="true" :aggregations="allAggregations" ></ts-aggregation-list-dropdown>
+                      <ts-aggregation-list-dropdown @addAggregation="addAggregationComponent($event, index)" :is-rounded="true" :is-last="index === blocks.length - 1" :aggregations="allAggregations" ></ts-aggregation-list-dropdown>
                     </p>
                   </div>
               </div>
@@ -176,6 +176,7 @@ export default {
       this.save()
     },
     addViewComponent (event, index) {
+      this.showPanel = false
       let newIndex = index + 1
       let newBlock = defaultBlock()
       newBlock.componentName = 'TsViewEventList'
