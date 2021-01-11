@@ -29,7 +29,7 @@ limitations under the License.
           </div>
         </b-modal>
 
-        <b-dropdown ref="dropdown" animation="none" aria-role="menu" append-to-body>
+        <b-dropdown ref="dropdown" animation="none" aria-role="menu" :position="position" :append-to-body="!isSimple">
 
           <a class="button" v-bind:class="{ 'is-rounded': isSimple, 'ts-search-dropdown': !isSimple}" slot="trigger" slot-scope="{ active }">
             <b-icon v-if="!isSimple" icon="save" style="margin-right: 7px; font-size: 0.6em;"></b-icon>
@@ -86,11 +86,12 @@ export default {
   components: {
     TsCreateViewForm
   },
-  props: ['currentQueryString', 'currentQueryFilter', 'isSimple', 'sketchId'],
+  props: ['currentQueryString', 'currentQueryFilter', 'isSimple', 'isLast', 'sketchId'],
   data () {
     return {
       activeView: null,
-      showCreateViewModal: false
+      showCreateViewModal: false,
+      position: "is-bottom-right"
     }
   },
   methods: {
@@ -131,6 +132,9 @@ export default {
     }
   },
   created: function () {
+    if (this.isLast) {
+      this.position = 'is-top-right'
+    }
     let queryViewId = this.$route.query.view
     if (queryViewId) {
       let view =  this.meta.views.filter(function(view) {
