@@ -14,7 +14,7 @@ annotations, comments, tags and stars.
 
 The agenda will be posted on
 [Github](https://github.com/google/timesketch/tree/master/docs/events/2021_timesketch_summit.md)
-end of February.
+before the end of February.
 
 - Presentations: 16:00 - 19:00 UTC
 - Workshops: 19:00 - 22:00 UTC
