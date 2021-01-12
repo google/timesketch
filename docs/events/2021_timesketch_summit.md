@@ -49,5 +49,4 @@ If you have ideas outside of the suggested formats, feel free to reach out.
 ## Questions
 
 If you have any questions, please reach out to the team via 
-[slack in the Timesketch channel](https://github.com/open-source-dfir/slack) or
-via [Twitter](https://twitter.com/alexanderjaeger)
+[slack in the Timesketch channel](https://github.com/open-source-dfir/slack)
