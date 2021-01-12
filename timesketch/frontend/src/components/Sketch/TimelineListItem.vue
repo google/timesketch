@@ -18,7 +18,7 @@ limitations under the License.
   <div>
 
     <!-- Timeline detail modal -->
-    <b-modal :active.sync="showInfoModal" :width="1024" scroll="keep">
+    <b-modal v-if="controls" :active.sync="showInfoModal" :width="1024" scroll="keep">
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -50,7 +50,7 @@ limitations under the License.
     </b-modal>
 
     <!-- Timeline edit modal -->
-    <b-modal :active.sync="showEditModal" :width="640" scroll="keep">
+    <b-modal v-if="controls" :active.sync="showEditModal" :width="640" scroll="keep">
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -80,7 +80,7 @@ limitations under the License.
 
     <div v-if="timelineStatus === 'processing'" class="ts-timeline-color-box is-pulled-left blink" style="background-color: #f5f5f5;"></div>
     <div v-else-if="timelineStatus === 'fail'" v-on:click="showInfoModal =! showInfoModal" class="ts-timeline-color-box is-pulled-left" style="background-color: #f5f5f5;"></div>
-    <div v-else-if="timelineStatus === 'ready'" class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
+    <div v-else-if="timelineStatus === 'ready' && controls" class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
       <div class="dropdown-trigger">
         <div class="ts-timeline-color-box" v-bind:style="timelineColorStyle" v-on:click="colorPickerActive = !colorPickerActive"></div>
       </div>
@@ -92,8 +92,12 @@ limitations under the License.
         </div>
       </div>
     </div>
+    <div v-else-if="timelineStatus === 'ready'" class="ts-timeline-color-box is-pulled-left" v-bind:style="timelineColorStyle" v-on:click="colorPickerActive = !colorPickerActive"></div>
     <div v-else class="ts-timeline-color-box is-pulled-left" style="background-color: #f5f5f5;"></div>
 
+    <div v-if="!controls" class="field is-grouped is-pulled-right" style="margin-top:10px;">
+      <span class="is-size-7">{{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}</span>
+    </div>
 
     <div v-if="controls" class="field is-grouped is-pulled-right" style="margin-top:10px;">
       <p v-if="!isCompact" class="control">
@@ -104,7 +108,7 @@ limitations under the License.
           <span>Info</span>
         </button>
       </p>
-      <p v-if="meta.permissions.write && timelineStatus === 'ready' && !isCompact" class="control">
+      <p v-if="meta.permissions.write && timelineStatus === 'ready' && controls" class="control">
         <button class="button is-rounded is-small is-outlined" v-on:click="showEditModal = !showEditModal">
           <span class="icon is-small">
             <i class="fas fa-edit"></i>
@@ -113,7 +117,6 @@ limitations under the License.
         </button>
       </p>
       <p v-if="timelineStatus === 'ready'" class="control">
-
         <!-- Disabled 2020-12-17. Too expensive for large sketches. TODO: Refactor to do lazy loading instead.
         <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body :scrollable="true" :max-height="300">
           <button class="button is-outlined is-rounded is-small" slot="trigger">
@@ -132,10 +135,10 @@ limitations under the License.
           </b-dropdown-item>
         </b-dropdown>
         -->
-
-        <ts-analyzer-list-dropdown :timeline="timeline" @newAnalysisSession="setAnalysisSession($event)"></ts-analyzer-list-dropdown>
+        <ts-analyzer-list-dropdown v-if="controls" :timeline="timeline" @newAnalysisSession="setAnalysisSession($event)"></ts-analyzer-list-dropdown>
       </p>
-      <p v-if="timelineStatus === 'ready' && !isCompact" class="control">
+
+      <p v-if="timelineStatus === 'ready' && controls" class="control">
         <button class="button is-small is-rounded is-outlined" @click="showAnalysisHistory = !showAnalysisHistory">
           <span class="icon is-small">
             <i class="fas fa-history"></i>
@@ -143,7 +146,8 @@ limitations under the License.
           <span>History</span>
         </button>
       </p>
-      <p v-if="meta.permissions.write && !isCompact" class="control">
+
+      <p v-if="meta.permissions.write && controls" class="control">
         <button v-on:click="remove(timeline)" class="button is-small is-rounded is-danger">
           <span class="icon is-small">
             <i class="fas fa-trash"></i>
@@ -158,8 +162,7 @@ limitations under the License.
     <br>
 
     <span v-if="timelineStatus === 'ready'" class="is-size-7">
-      Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
-      <span class="is-small" :title="meta.stats[timeline.searchindex.index_name]['count'] + ' events in index'">({{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }})</span>
+      <span class="is-small" :title="meta.stats[timeline.searchindex.index_name]['count'] + ' events in index'">{{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }} events</span>
     </span>
 
     <span v-else-if="timelineStatus === 'fail'" class="is-size-7">

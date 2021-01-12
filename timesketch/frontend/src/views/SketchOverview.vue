@@ -218,7 +218,14 @@ limitations under the License.
                       </div>
                     </header>
                     <div style="padding:1.25em;">
-                      <ts-timeline-list :timelines="sketch.timelines" :controls="true" :is-compact="true"></ts-timeline-list>
+                      <ts-timeline-list :timelines="sketch.timelines" :controls="false" :is-compact="true"></ts-timeline-list>
+                      <ul v-if="sketch.timelines.length > 9" class="content-list">
+                        <li style="padding:10px;">
+                          <router-link :to="{ name: 'SketchManageTimelines' }">
+                            <span>There are {{ sketch.timelines.length - 10 }} more timelines in this sketch. <span style="text-decoration: underline">Click here to see them all</span></span>
+                          </router-link>
+                        </li>
+                      </ul>
                     </div>
                   </div>
 
