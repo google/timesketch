@@ -68,7 +68,7 @@ class TimesketchSigmaTest(unittest.TestCase):
         # not sure which is the better way to do things here.
         rule = self.api_client.get_sigma_rule(
             rule_uuid='5266a592-b793-11ea-b3de-0242ac130004')
-        rule.from_rule('5266a592-b793-11ea-b3de-0242ac130004')
+        rule.from_rule_uuid('5266a592-b793-11ea-b3de-0242ac130004')
         self.assertIsNotNone(rule)
 
         self.assertEqual(

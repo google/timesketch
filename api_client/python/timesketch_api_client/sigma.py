@@ -99,7 +99,7 @@ class Sigma(resource.BaseResource):
 
         return sigma_data.get('file_relpath', '')
 
-    def from_rule(self, rule_uuid):
+    def from_rule_uuid(self, rule_uuid):
         """Get a Sigma object from a rule uuid.
 
         Args:

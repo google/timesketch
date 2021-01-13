@@ -574,7 +574,7 @@ class TimesketchApi:
             Instance of a Sigma object.
         """
         sigma_obj = sigma.Sigma(api=self)
-        sigma_obj.from_rule(rule_uuid)
+        sigma_obj.from_rule_uuid(rule_uuid)
 
         return sigma_obj
 
