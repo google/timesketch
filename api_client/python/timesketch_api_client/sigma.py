@@ -32,31 +32,22 @@ class Sigma(resource.BaseResource):
     """
 
 
-    def __init__(self, rule_uuid=None, api=None, es_query=None,
-                 file_name=None, title=None, description=None,
-                 file_relpath=None):
+    def __init__(self, api):
         """Initializes the Sigma object.
 
         Args:
-            rule_uuid: Id of the sigma rule.
             api: An instance of TimesketchApi object.
-            es_query: Elastic Search query of the rule
-            file_name: File name of the rule
-            title: Title of the rule
-            description: Description of the rule
-            file_relpath: path of the file relative to the config value
 
         """
-        self.rule_uuid = rule_uuid
-        self._description = description
-        self._es_query = es_query
-        self._file_name = file_name
-        self._title = title
-        self._file_relpath = file_relpath
-        self._resource_uri = f'sigma/rule/{self.rule_uuid}'
+        self.api = api
+        self._rule_uuid = None
+        self._file_name = None
+        self._title = None
+        self._file_relpath = None
+        self._resource_uri = 'sigma/' # TODO: clarify: is that okay?
         super().__init__(
             api=api, resource_uri=self._resource_uri)
-
+    
     @property
     def es_query(self):
         """Returns the elastic search query."""
@@ -74,7 +65,6 @@ class Sigma(resource.BaseResource):
 
         if not sigma_data:
             self.lazyload_data()
-            print("title not set yet")
             return ''
 
         return sigma_data.get('title', '')
@@ -85,6 +75,7 @@ class Sigma(resource.BaseResource):
         sigma_data = self.data
 
         if not sigma_data:
+            self.lazyload_data()
             return ''
 
         return sigma_data.get('id', '')
@@ -99,6 +90,16 @@ class Sigma(resource.BaseResource):
 
         return sigma_data.get('file_relpath', '')
 
+    @property
+    def rule_uuid(self):
+        """Returns the elastic search query."""
+        sigma_data = self.data
+
+        if not sigma_data:
+            return ''
+
+        return sigma_data.get('id', '')
+
     def from_rule_uuid(self, rule_uuid):
         """Get a Sigma object from a rule uuid.
 
@@ -106,13 +107,11 @@ class Sigma(resource.BaseResource):
             rule_uuid: Id of the sigma rule.
 
         """
-        # TODO: Write docstring
-        self.rule_uuid = rule_uuid
+        self._rule_uuid = rule_uuid
         # TODO: not sure which one is the better one
-        self._resource_uri = f'sigma/rule/{rule_uuid}'
         self.resource_uri = f'sigma/rule/{rule_uuid}'
         super().__init__(
-            api=self.api, resource_uri=self._resource_uri)
+            api=self.api, resource_uri=self.resource_uri)
 
         self.lazyload_data()
 
@@ -126,8 +125,6 @@ class Sigma(resource.BaseResource):
         resource_url = '{0:s}/sigma/text/'.format(self.api.api_root)
         data = {'title': 'Get_Sigma_by_text', 'content': rule_text}
         response = self.api.session.post(resource_url, data=data)
-        #TODO remove that print statement
-        print(f'{resource_url} {data} {response.__dict__}')
         response_dict = error.get_response_json(response, logger)
         # TODO remove those comments
         #timeline_dict = response_dict['objects'][0]
