@@ -61,13 +61,15 @@ class Sigma(resource.BaseResource):
     @property
     def title(self):
         """Returns the sigma rule title."""
-        sigma_data = self.data
+        if self._title:
+            return self._title
 
-        if not sigma_data:
+        if not self.data:
             self.lazyload_data()
-            return ''
 
-        return sigma_data.get('title', '')
+        self._title = self.data.get('title', '')
+
+        return self._title
 
     @property
     def id(self):
