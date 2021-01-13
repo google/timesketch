@@ -579,23 +579,26 @@ class TimesketchApi:
         return sigma_obj
 
     def get_sigma_rule_by_text(self, rule_text):
-        """Returns a Sigma Object based on a text POST.
+        """Returns a Sigma Object based on a sigma rule.
 
         Args:
             rule_text: Full Sigma rule text.
 
         Returns:
             Instance of a Sigma object.
+
+        Raises:
+            ValueError: No Rule text given or issues parsing it.
         """
         if not rule_text:
-            raise ValueError('Rule text given.')
+            raise ValueError('No rule text given.')
 
         try:
             sigma_obj = sigma.Sigma(api=self)
             sigma_obj.from_text(rule_text)
 
         except ValueError:
-            logger.error('OS Error, unable to get the path to the Sigma rules',
+            logger.error('Parsing Error, unable to parse the Sigma rule',
                          exc_info=True)
 
         return sigma_obj
