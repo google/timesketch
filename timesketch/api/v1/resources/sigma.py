@@ -23,13 +23,14 @@ from flask_restful import Resource
 from flask_login import login_required
 from flask_login import current_user
 
-import timesketch.lib.sigma_util as ts_sigma_lib
 from sigma.parser import exceptions as sigma_exceptions
 
+import timesketch.lib.sigma_util as ts_sigma_lib
+
 from timesketch.api.v1 import resources
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
-from timesketch.lib import forms
 
 logger = logging.getLogger('timesketch.api.sigma')
 
@@ -94,7 +95,10 @@ class SigmaResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sigma rule found with this ID.')
 
-        return return_rule
+        meta = {'current_user': current_user.username,
+                'rules_count': len(sigma_rules)}
+        return jsonify({'objects': return_rule, 'meta': meta})
+        #return return_rule
 
 class SigmaByTextResource(resources.ResourceMixin, Resource):
     """Resource to get a Sigma rule by text."""
@@ -112,8 +116,8 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
             form = request.data
 
         action = form.get('action', '')
-
-        if action is not 'post':
+        
+        if action != 'post':
             return abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Action needs to be "post"')
@@ -155,5 +159,9 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
         if sigma_rule is None:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sigma was parsed')
+        # TODO: check and adjust tests as now meta is given back
+        return_code = HTTP_STATUS_CODE_OK
+        metadata = {'parsed': True}
 
-        return sigma_rule
+        return self.to_json(
+            sigma_rule, meta=metadata, status_code=return_code)

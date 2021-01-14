@@ -47,7 +47,7 @@ class Sigma(resource.BaseResource):
         self._resource_uri = 'sigma/' # TODO: clarify: is that okay?
         super().__init__(
             api=api, resource_uri=self._resource_uri)
-    
+
     @property
     def es_query(self):
         """Returns the elastic search query."""
@@ -64,11 +64,13 @@ class Sigma(resource.BaseResource):
         if self._title:
             return self._title
 
-        if not self.data:
-            self.lazyload_data()
-
-        self._title = self.data.get('title', '')
-
+        if not self.data or self.data is None:
+            self.lazyload_data(refresh_cache=True)
+     
+        try:
+            self._title = self.data.get('title', '')
+        except AttributeError: # in case self.data is Nonetype
+            self._title = ''
         return self._title
 
     @property
@@ -115,7 +117,7 @@ class Sigma(resource.BaseResource):
         super().__init__(
             api=self.api, resource_uri=self.resource_uri)
 
-        self.lazyload_data()
+        self.lazyload_data(refresh_cache=True)
 
     def from_text(self, rule_text):
         """Get a Sigma object from a rule text.
@@ -124,10 +126,13 @@ class Sigma(resource.BaseResource):
             rule_text: Rule text to be parsed.
 
         """
-        resource_url = '{0:s}/sigma/text/'.format(self.api.api_root)
+        print(rule_text)
+        self.resource_uri = '{0:s}/sigma/text/'.format(self.api.api_root)
         data = {'title': 'Get_Sigma_by_text', 'content': rule_text}
-        response = self.api.session.post(resource_url, data=data)
+        response = self.api.session.post(self.resource_uri, data=data)
         response_dict = error.get_response_json(response, logger)
+        print(f'dict: {response_dict}')
+
         # TODO remove those comments
         #timeline_dict = response_dict['objects'][0]
         #timeline_obj = sigma.Sigma(
