@@ -44,6 +44,7 @@ class Sigma(resource.BaseResource):
         self._file_name = None
         self._title = None
         self._file_relpath = None
+        self._es_query = None
         self._resource_uri = 'sigma/' # TODO: clarify: is that okay?
         super().__init__(
             api=api, resource_uri=self._resource_uri)
@@ -51,12 +52,17 @@ class Sigma(resource.BaseResource):
     @property
     def es_query(self):
         """Returns the elastic search query."""
-        sigma_data = self.data
+        if self._es_query:
+            return self._es_query
 
-        if not sigma_data:
-            return ''
-
-        return sigma_data.get('es_query', '')
+        if not self.data or self.data is None:
+            self.lazyload_data(refresh_cache=True)
+     
+        try:
+            self._es_query = self.data.get('es_query', '')
+        except AttributeError: # in case self.data is Nonetype
+            self._es_query = ''
+        return self._es_query
 
     @property
     def title(self):
@@ -133,12 +139,14 @@ class Sigma(resource.BaseResource):
         response_dict = error.get_response_json(response, logger)
         print(f'dict: {response_dict}')
 
-        # TODO remove those comments
-        #timeline_dict = response_dict['objects'][0]
-        #timeline_obj = sigma.Sigma(
-        #    timeline_id=timeline_dict['id'],
-        #    sketch_id=self.id,
-        #    api=self.api,
-        #    name=timeline_dict['name'],
-        #    searchindex=timeline_dict['searchindex']['index_name'])
+        objects = response_dict.get('objects')
+
+        if not objects:
+            logger.warning(
+                'Unable to parse rule with given text')
+
+        rule_dict = objects[0]
+        self._rule_uuid = '' # rule has no id, or maybe it has?
+        self._title = rule_dict.get('title', '')
+        self._es_query = rule_dict.get('es_query', '')
         return response_dict

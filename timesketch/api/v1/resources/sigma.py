@@ -98,7 +98,6 @@ class SigmaResource(resources.ResourceMixin, Resource):
         meta = {'current_user': current_user.username,
                 'rules_count': len(sigma_rules)}
         return jsonify({'objects': return_rule, 'meta': meta})
-        #return return_rule
 
 class SigmaByTextResource(resources.ResourceMixin, Resource):
     """Resource to get a Sigma rule by text."""
