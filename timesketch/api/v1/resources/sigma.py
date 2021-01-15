@@ -56,10 +56,10 @@ class SigmaListResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'OS Error, unable to get the path to the Sigma rules')
-
+        # TODO: idea for meta: add a list of folders that have been parsed
         meta = {'current_user': current_user.username,
                 'rules_count': len(sigma_rules)}
-        return jsonify({'objects': sigma_rules, 'meta': meta})
+        return jsonify({'objects': [sigma_rules], 'meta': meta})
 
 
 class SigmaResource(resources.ResourceMixin, Resource):
@@ -98,6 +98,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
         meta = {'current_user': current_user.username,
                 'rules_count': len(sigma_rules)}
         return jsonify({'objects': return_rule, 'meta': meta})
+
 
 class SigmaByTextResource(resources.ResourceMixin, Resource):
     """Resource to get a Sigma rule by text."""
@@ -159,7 +160,6 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sigma was parsed')
         # TODO: check and adjust tests as now meta is given back
-        return_code = HTTP_STATUS_CODE_OK
         metadata = {'parsed': True}
 
         return jsonify({'objects': sigma_rule, 'meta': metadata})

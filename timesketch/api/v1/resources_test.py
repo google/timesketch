@@ -376,6 +376,7 @@ class SigmaResourceTest(BaseTest):
             'title': 'Suspicious Installation of Zenmap',
         }
     }
+
     def test_get_sigma_rule(self):
         """Authenticated request to get an sigma rule."""
         self.login()
@@ -383,6 +384,47 @@ class SigmaResourceTest(BaseTest):
                                    '5266a592-b793-11ea-b3de-0242ac130004')
         self.assertIsNotNone(response)
 
+
+class SigmaListResourceTest(BaseTest):
+    """Test Sigma resource."""
+    resource_url = '/api/v1/sigma/'
+    expected_response = {
+        'meta': {
+            'current_user': 'test1', 'rules_count': 1
+            },
+            'objects':[[{
+                'author': 'Alexander Jaeger',
+                'date': '2020/06/26',
+                'description': 'Detects suspicious installation of Zenmap',
+                'detection': {
+                    'condition': 'keywords',
+                    'keywords': [
+                        '*apt-get install zmap*'
+                        ]
+                    },
+                    'es_query': '*apt\\-get\\ install\\ zmap*',
+                    'falsepositives': ['Unknown'],
+                    'file_name': 'lnx_susp_zenmap.yml',
+                    'file_relpath': 'lnx_susp_zenmap.yml',
+                    'id': '5266a592-b793-11ea-b3de-0242ac130004',
+                    'level': 'high',
+                    'logsource': {
+                        'product': 'linux',
+                        'service': 'shell'
+                    },
+                    'modified': '2020/06/26',
+                    'references': [
+                        'https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'
+                    ], 
+                    'title': 'Suspicious Installation of Zenmap'
+                }]]}
+    def test_get_sigma_rule_list(self):
+        self.login()
+        response = self.client.get(self.resource_url)
+        data = json.loads(response.get_data(as_text=True))
+        print(data)
+        self.assertDictContainsSubset(self.expected_response, response.json)
+        self.assertIsNotNone(response)
 
 class SigmaByTextResourceTest(BaseTest):
     """Test Sigma by text resource."""
@@ -435,7 +477,6 @@ class SigmaByTextResourceTest(BaseTest):
 
     def test_get_sigma_rule(self):
         """Authenticated request to get an sigma rule by text."""
-
         self.login()
 
         data = dict(action='post', content=self.correct_rule)
