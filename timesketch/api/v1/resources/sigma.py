@@ -162,5 +162,6 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
         return_code = HTTP_STATUS_CODE_OK
         metadata = {'parsed': True}
 
+        # TODO: rewrite that to use jsonify() instead
         return self.to_json(
             sigma_rule, meta=metadata, status_code=return_code)
