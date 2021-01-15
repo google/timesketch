@@ -392,32 +392,32 @@ class SigmaListResourceTest(BaseTest):
         'meta': {
             'current_user': 'test1', 'rules_count': 1
             },
-            'objects':[[{
-                'author': 'Alexander Jaeger',
-                'date': '2020/06/26',
-                'description': 'Detects suspicious installation of Zenmap',
-                'detection': {
-                    'condition': 'keywords',
-                    'keywords': [
-                        '*apt-get install zmap*'
-                        ]
-                    },
-                    'es_query': '*apt\\-get\\ install\\ zmap*',
-                    'falsepositives': ['Unknown'],
-                    'file_name': 'lnx_susp_zenmap.yml',
-                    'file_relpath': 'lnx_susp_zenmap.yml',
-                    'id': '5266a592-b793-11ea-b3de-0242ac130004',
-                    'level': 'high',
-                    'logsource': {
-                        'product': 'linux',
-                        'service': 'shell'
-                    },
-                    'modified': '2020/06/26',
-                    'references': [
-                        'https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'
-                    ],
-                    'title': 'Suspicious Installation of Zenmap'
-                }]]}
+        'objects':[[{
+            'author': 'Alexander Jaeger',
+            'date': '2020/06/26',
+            'description': 'Detects suspicious installation of Zenmap',
+            'detection': {
+                'condition': 'keywords',
+                'keywords': [
+                    '*apt-get install zmap*'
+                    ]
+                },
+            'es_query': '*apt\\-get\\ install\\ zmap*',
+            'falsepositives': ['Unknown'],
+            'file_name': 'lnx_susp_zenmap.yml',
+            'file_relpath': 'lnx_susp_zenmap.yml',
+            'id': '5266a592-b793-11ea-b3de-0242ac130004',
+            'level': 'high',
+            'logsource': {
+                'product': 'linux',
+                'service': 'shell'
+            },
+            'modified': '2020/06/26',
+            'references': [
+                'https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'
+            ],
+            'title': 'Suspicious Installation of Zenmap'
+        }]]}
     def test_get_sigma_rule_list(self):
         self.login()
         response = self.client.get(self.resource_url)
@@ -452,27 +452,34 @@ class SigmaByTextResourceTest(BaseTest):
         level: high
         '''
     expected_response = {
-        'title': 'Installation of foobar',
-        'id': 'bb1e0d1d-cd13-4b65-bf7e-69b4e740266b',
-        'description': 'Detects suspicious installation of foobar',
-        'references': ['https://samle.com/foobar'],
-        'author': 'Alexander Jaeger',
-        'date': '2020/12/10',
-        'modified': '2020/12/10',
-        'logsource': {
-            'product': 'linux',
-            'service': 'shell'
+        'meta': {
+            'parsed': True
         },
-        'detection': {
-            'keywords': ['*apt-get install foobar*'],
-            'condition': 'keywords'
-        },
-        'falsepositives': ['Unknown'],
-        'level': 'high',
-        'es_query':
-            '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ foobar*")',# pylint: disable=line-too-long
-        'file_name': 'N/A',
-        'file_relpath': 'N/A'
+        'objects':[
+            {
+                'title': 'Installation of foobar',
+                'id': 'bb1e0d1d-cd13-4b65-bf7e-69b4e740266b',
+                'description': 'Detects suspicious installation of foobar',
+                'references': ['https://samle.com/foobar'],
+                'author': 'Alexander Jaeger',
+                'date': '2020/12/10',
+                'modified': '2020/12/10',
+                'logsource': {
+                    'product': 'linux',
+                    'service': 'shell'
+                },
+                'detection': {
+                    'keywords': ['*apt-get install foobar*'],
+                    'condition': 'keywords'
+                },
+                'falsepositives': ['Unknown'],
+                'level': 'high',
+                'es_query':
+                    '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ foobar*")',# pylint: disable=line-too-long
+                'file_name': 'N/A',
+                'file_relpath': 'N/A'
+            }
+        ]
     }
 
     def test_get_sigma_rule(self):

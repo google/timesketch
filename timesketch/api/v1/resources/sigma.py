@@ -28,7 +28,6 @@ from sigma.parser import exceptions as sigma_exceptions
 import timesketch.lib.sigma_util as ts_sigma_lib
 
 from timesketch.api.v1 import resources
-from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 
@@ -141,19 +140,17 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
 
         except NotImplementedError as exception:
             logger.error(
-                'Sigma Parsing error: Feature in the rule provided is not implemented in this backend',
-                        exc_info=True)
+                'Sigma Parsing error: Feature in the rule provided is not implemented in this backend', exc_info=True) # pylint: disable=line-too-long
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Error generating rule {0!s}'
                 .format(exception))
 
         except sigma_exceptions.SigmaParseError as exception:
             logger.error(
-                'Sigma Parsing error: unknown error',
-                        exc_info=True)
+                'Sigma Parsing error: unknown error', exc_info=True)
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Sigma parsing error generating rule {0!s}'
+                'Sigma parsing error generating rule  with error: {0!s}'
                 .format(exception))
 
         except yaml.parser.ParserError as exception:
@@ -165,11 +162,9 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
                 'Sigma parsing error: invalid yaml provided {0!s}'
                 .format(exception))
 
-
         if sigma_rule is None:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sigma was parsed')
-        # TODO: check and adjust tests as now meta is given back
         metadata = {'parsed': True}
 
-        return jsonify({'objects': sigma_rule, 'meta': metadata})
+        return jsonify({'objects': [sigma_rule], 'meta': metadata})
