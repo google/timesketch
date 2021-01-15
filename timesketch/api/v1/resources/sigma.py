@@ -115,7 +115,7 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
             form = request.data
 
         action = form.get('action', '')
-        
+
         if action != 'post':
             return abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
@@ -161,7 +161,5 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
         # TODO: check and adjust tests as now meta is given back
         return_code = HTTP_STATUS_CODE_OK
         metadata = {'parsed': True}
-
-        # TODO: rewrite that to use jsonify() instead
-        return self.to_json(
-            sigma_rule, meta=metadata, status_code=return_code)
+        
+        return jsonify({'objects': sigma_rule, 'meta': metadata})
