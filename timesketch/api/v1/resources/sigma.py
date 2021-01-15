@@ -161,5 +161,5 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
         # TODO: check and adjust tests as now meta is given back
         return_code = HTTP_STATUS_CODE_OK
         metadata = {'parsed': True}
-        
+
         return jsonify({'objects': sigma_rule, 'meta': metadata})

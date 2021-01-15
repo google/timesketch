@@ -550,7 +550,6 @@ class TimesketchApi:
             return pandas.DataFrame.from_records(response.get('objects'))
 
         for rule_dict in response['objects']:
-            
             # TODO: fix that below to reflect only one arg for the _init method
             # this way it initialices the objects, but does
             #  not pull the data for each
