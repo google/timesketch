@@ -415,7 +415,7 @@ class SigmaListResourceTest(BaseTest):
                     'modified': '2020/06/26',
                     'references': [
                         'https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'
-                    ], 
+                    ],
                     'title': 'Suspicious Installation of Zenmap'
                 }]]}
     def test_get_sigma_rule_list(self):

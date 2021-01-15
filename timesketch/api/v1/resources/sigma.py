@@ -117,42 +117,52 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
 
         action = form.get('action', '')
 
+        # TODO: that can eventually go away since there are no other actions
         if action != 'post':
             return abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Action needs to be "post"')
-        if action == 'post':
-            content = form.get('content')
-            if not content:
-                return abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    'Missing values from the request.')
+
+        content = form.get('content')
+        if not content:
+            return abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Missing values from the request.')
 
         try:
             sigma_rule = ts_sigma_lib.get_sigma_rule_by_text(content)
 
         except ValueError:
-            logger.error('Parsing error',
+            logger.error('Sigma Parsing error with the user provided rule',
                          exc_info=True)
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Error unable to parse the provided Sigma rule')
+
         except NotImplementedError as exception:
+            logger.error(
+                'Sigma Parsing error: Feature in the rule provided is not implemented in this backend',
+                        exc_info=True)
             abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Error generating rule {0!s}'
+                HTTP_STATUS_CODE_BAD_REQUEST, 'Error generating rule {0!s}'
                 .format(exception))
 
         except sigma_exceptions.SigmaParseError as exception:
+            logger.error(
+                'Sigma Parsing error: unknown error',
+                        exc_info=True)
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Sigma parsing error generating rule {0!s}'
                 .format(exception))
 
         except yaml.parser.ParserError as exception:
+            logger.error(
+                'Sigma Parsing error: an invalid yml file has been provided',
+                        exc_info=True)
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Yaml parsing error generating rule in {0!s}'
+                'Sigma parsing error: invalid yaml provided {0!s}'
                 .format(exception))
 
 
