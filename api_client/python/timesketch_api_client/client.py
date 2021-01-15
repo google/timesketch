@@ -550,21 +550,18 @@ class TimesketchApi:
             return pandas.DataFrame.from_records(response.get('objects'))
 
         for rule_dict in response['objects']:
-            rule_uuid = rule_dict.get('id')
-            title = rule_dict.get('title')
-            es_query = rule_dict.get('es_query')
-            file_name = rule_dict.get('file_name')
-            description = rule_dict.get('description')
-            file_relpath = rule_dict.get('file_relpath')
+            
             # TODO: fix that below to reflect only one arg for the _init method
-            # this way it initialices the objects, but does not pull the data for each
+            # this way it initialices the objects, but does
+            #  not pull the data for each
             index_obj = sigma.Sigma(api=self)
-            """
-            index_obj = sigma.Sigma(
-                rule_uuid, api=self, es_query=es_query, file_name=file_name,
-                title=title, description=description,
-                file_relpath=file_relpath)
-            """
+            index_obj.rule_uuid = rule_dict.get('id')
+            index_obj.rule_uuid = rule_dict.get('id')
+            index_obj.title = rule_dict.get('title')
+            index_obj.es_query = rule_dict.get('es_query')
+            index_obj.file_name = rule_dict.get('file_name')
+            index_obj.description = rule_dict.get('description')
+            index_obj.file_relpath = rule_dict.get('file_relpath')
             rules.append(index_obj)
         return rules
 
