@@ -14,7 +14,6 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
-import fnmatch
 import json
 import logging
 
@@ -238,7 +237,7 @@ class Timeline(resource.BaseResource):
             self.api.api_root, self._sketch_id)
 
         if not ignore_previous:
-            all_names = set([x.lower() for x in analyzer_names])
+            all_names = {x.lower() for x in analyzer_names}
             done_names = set()
 
             response = self.api.fetch_resource_data(
