@@ -706,10 +706,10 @@ class Search(resource.SketchResource):
                 continue
 
             if index in timelines.values():
-              for index_name, timeline_name in timelines.items():
-                  if timeline_name == index:
-                      new_indices.append(index_name)
-                      break
+                for index_name, timeline_name in timelines.items():
+                    if timeline_name == index:
+                        new_indices.append(index_name)
+                        break
 
         if not new_indices:
             logger.warning('No valid indices found, not changin the value.')
