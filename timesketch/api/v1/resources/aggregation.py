@@ -16,6 +16,8 @@
 import json
 import time
 
+from elasticsearch.exceptions import NotFoundError
+
 from flask import jsonify
 from flask import request
 from flask import abort
@@ -482,7 +484,14 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             chart_title = aggregator_parameters.pop(
                 'chart_title', aggregator.chart_title)
             time_before = time.time()
-            result_obj = aggregator.run(**aggregator_parameters)
+            try:
+                result_obj = aggregator.run(**aggregator_parameters)
+            except NotFoundError:
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND,
+                    'Attempting to run an aggregation on a non-existing '
+                    'Elastic index, index: {0:s} and parameters: {1!s}'.format(
+                        index, aggregator_parameters))
             time_after = time.time()
 
             aggregator_description = aggregator.describe

@@ -162,7 +162,7 @@ class Event(object):
 
         self.datastore.import_event(
             self.index_name, self.event_type, event_id=self.event_id,
-            event=event_to_commit, flush_interval=1)
+            event=event_to_commit, flush_interval=10000)
         self.updated_event = {}
 
     def add_attributes(self, attributes):

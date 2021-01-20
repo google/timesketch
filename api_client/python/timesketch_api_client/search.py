@@ -385,6 +385,7 @@ class Search(resource.SketchResource):
         self._chips = []
         self._created_at = ''
         self._description = ''
+        self._indices = '_all'
         self._max_entries = self.DEFAULT_SIZE_LIMIT
         self._name = ''
         self._query_dsl = ''
@@ -674,6 +675,49 @@ class Search(resource.SketchResource):
         self.resource_data = data
 
     @property
+    def indices(self):
+        """Return the current set of indices used in the search."""
+        return self._indices
+
+    @indices.setter
+    def indices(self, indices):
+        """Make changes to the current set of indices."""
+        if not isinstance(indices, list):
+            logger.warning(
+                'Indices needs to be a list of strings (indices that were '
+                'passed in were not a list).')
+            return
+        if not all([isinstance(x, str) for x in indices]):
+            logger.warning(
+                'Indices needs to be a list of strings, not all entries '
+                'in the indices list are strings.')
+            return
+
+        # Indices here can be either a list of timeline names or a list of
+        # search indices. We need to verify that these exist before saving
+        # them.
+        timelines = {
+            t.index_name: t.name for t in self._sketch.list_timelines()}
+
+        new_indices = []
+        for index in indices:
+            if index in timelines:
+                new_indices.append(index)
+                continue
+
+            if index in timelines.values():
+              for index_name, timeline_name in timelines.items():
+                  if timeline_name == index:
+                      new_indices.append(index_name)
+                      break
+
+        if not new_indices:
+            logger.warning('No valid indices found, not changin the value.')
+            return
+
+        self._indices = new_indices
+
+    @property
     def max_entries(self):
         """Return the maximum number of entries in the return value."""
         return self._max_entries
@@ -738,12 +782,14 @@ class Search(resource.SketchResource):
                 'time_end': None,
                 'size': self.DEFAULT_SIZE_LIMIT,
                 'terminate_after': self.DEFAULT_SIZE_LIMIT,
-                'indices': '_all',
+                'indices': self.indices,
                 'order': 'asc',
                 'chips': [],
             }
+
         query_filter = self._query_filter
         query_filter['chips'] = [x.chip for x in self._chips]
+        query_filter['indices'] = self.indices
         return query_filter
 
     @query_filter.setter
