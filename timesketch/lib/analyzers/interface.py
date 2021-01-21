@@ -134,6 +134,7 @@ class Event(object):
             event: Dictionary of event from Elasticsearch.
             datastore: Instance of ElasticsearchDatastore.
             sketch: Optional instance of a Sketch object.
+            analyzer: Optional instance of a BaseIndexAnalyzer object.
 
         Raises:
             KeyError if event dictionary is missing mandatory fields.
