@@ -673,6 +673,10 @@ class ImportStreamer(object):
     @property
     def timeline(self):
         """Returns a timeline object."""
+        if not self._timeline_id:
+            logger.warning('No timeline ID has been stored as of yet.')
+            return None
+
         timeline_obj = timeline.Timeline(
             timeline_id=self._timeline_id,
             sketch_id=self._sketch.id,

@@ -107,13 +107,22 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
             if len(missing_records) > len(all_numbers) / 2:
                 # Let's rather calculate the ranges of records instead of
                 # missing records.
-                record_ranges = list(get_range(
-                    sorted(list(record_numbers)), sorted(list(all_numbers))))
+                if record_numbers:
+                    record_ranges = list(get_range(
+                        sorted(list(record_numbers)),
+                        sorted(list(all_numbers))))
+                else:
+                    record_ranges = []
 
                 record_gaps[source] = {'included': record_ranges}
             else:
-                record_gaps[source] = {'missing': list(get_range(
-                    sorted(list(missing_records)), sorted(list(all_numbers))))}
+                if missing_records:
+                    missing_ = list(get_range(
+                        sorted(list(missing_records)),
+                        sorted(list(all_numbers))))
+                else:
+                    missing_ = []
+                record_gaps[source] = {'missing': missing_}
 
         # 2. Find gaps in ranges of days with/without records.
         event_frame['datetime'] = pd.to_datetime(event_frame.datetime)
@@ -144,7 +153,10 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
         current_days = [int(day) for day in event_count.day.values]
         missing_days = list(set(all_days).difference(set(current_days)))
 
-        missing_ranges = list(get_range(missing_days, all_days))
+        if missing_days:
+            missing_ranges = list(get_range(missing_days, all_days))
+        else:
+            missing_ranges = []
 
         if not (missing_ranges and record_gaps):
             return (
