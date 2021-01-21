@@ -554,7 +554,7 @@ class ImportStreamer(object):
         try:
             json_obj = json.loads(json_entry)
         except json.JSONDecodeError as e:
-            raise TypeError('Data not as JSON, error: {0!s}'.format(e))
+            raise TypeError('Data not as JSON, error: {0!s}'.format(e)) from e
 
         json_dict = {}
         if isinstance(json_obj, (list, tuple)):
