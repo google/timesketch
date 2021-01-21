@@ -554,7 +554,7 @@ class ImportStreamer(object):
         try:
             json_obj = json.loads(json_entry)
         except json.JSONDecodeError as e:
-            raise TypeError('Data not as JSON, error: {0!s}'.format(e))
+            raise TypeError('Data not as JSON, error: {0!s}'.format(e)) from e
 
         json_dict = {}
         if isinstance(json_obj, (list, tuple)):
@@ -673,6 +673,10 @@ class ImportStreamer(object):
     @property
     def timeline(self):
         """Returns a timeline object."""
+        if not self._timeline_id:
+            logger.warning('No timeline ID has been stored as of yet.')
+            return None
+
         timeline_obj = timeline.Timeline(
             timeline_id=self._timeline_id,
             sketch_id=self._sketch.id,
