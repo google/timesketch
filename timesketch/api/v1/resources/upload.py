@@ -279,11 +279,13 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 abort(
                     HTTP_STATUS_CODE_NOT_FOUND,
                     'No sketch found with this ID.')
+
             if sketch.get_status.status == 'archived':
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     'Unable to upload a file to an archived sketch.')
 
+        # TODO REPLACE THIS WITH GET INDEX!
         index_name = form.get('index_name', uuid.uuid4().hex)
         if not isinstance(index_name, six.text_type):
             index_name = codecs.decode(index_name, 'utf-8')
