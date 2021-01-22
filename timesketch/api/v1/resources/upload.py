@@ -40,6 +40,69 @@ from timesketch.models.sketch import Timeline
 class UploadFileResource(resources.ResourceMixin, Resource):
     """Resource that processes uploaded files."""
 
+    def _get_index(
+            self, name, description, sketch, index_name='',
+            label='', extension=''):
+        """Returns a SearchIndex object to be used for uploads.
+
+        Args:
+            name: the name of the searchindex.
+            description: the description of the searchindex.
+            sketch: sketch object (instance of Sketch).
+            index_name: optional index name, if supplied and if it exists
+                then the index associated with that will be returned.
+            label: optional label of the data, if supplied will be used to
+                determine whether an already existing index can be
+                used or a new one created.
+            extension: optional file extension if a file is being uploaded,
+                if supplied and no label used, then the extension will be
+                used as a label.
+
+        Returns:
+            A SearchIndex object.
+        """
+        if index_name:
+            if not isinstance(index_name, six.text_type):
+                index_name = codecs.decode(index_name, 'utf-8')
+            searchindex = SearchIndex.query.filter_by(
+                name=name, index_name=index_name).first()
+            if searchindex and searchindex.has_permission(
+                    permission='write', user=current_user):
+                return searchindex
+
+        if extension and not label:
+            label = extension
+
+        if not label:
+            label = 'log'
+
+        timelines = Timeline.query.filter_by(
+            sketch=sketch).all()
+
+        indices = [t.searchindex for t in timelines]
+        for index in indices:
+            if index.has_label(label) and index.has_permission(
+                    permission='write', user=current_user):
+                return index
+
+        index_name = uuid.uuid4().hex
+        searchindex = SearchIndex.get_or_create(
+            name=name,
+            description=description,
+            user=current_user,
+            index_name=index_name)
+
+        searchindex.grant_permission(permission='read', user=current_user)
+        searchindex.grant_permission(permission='write', user=current_user)
+        searchindex.grant_permission(permission='delete', user=current_user)
+        searchindex.set_status('processing')
+        db_session.add(searchindex)
+        db_session.commit()
+
+        searchindex.add_label(label, user=current_user)
+
+        return searchindex
+
     def _upload_and_index(
             self, file_extension, timeline_name, index_name, sketch,
             enable_stream, file_path='', events='', meta=None):
@@ -62,6 +125,15 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             A timeline if created otherwise a search index in JSON (instance
             of flask.wrappers.Response)
         """
+        # HERNA - STILL NEEDS SOME FIXIN'
+        index = self._get_index(
+            name=timeline_name,
+            description=timeline_name,
+            sketch=sketch,
+            index_name=form.get('index_name', ''),
+            label=form.get('label', ''),
+            extension=file_extension)
+
         # Check if search index already exists.
         searchindex = SearchIndex.query.filter_by(
             name=timeline_name,
@@ -285,15 +357,9 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     'Unable to upload a file to an archived sketch.')
 
-        # TODO REPLACE THIS WITH GET INDEX!
-        index_name = form.get('index_name', uuid.uuid4().hex)
-        if not isinstance(index_name, six.text_type):
-            index_name = codecs.decode(index_name, 'utf-8')
-
         file_storage = request.files.get('file')
-
         if file_storage:
-            return self._upload_file(file_storage, form, sketch, index_name)
+            return self._upload_file(file_storage, form, sketch)
 
         events = form.get('events')
         if not events:
@@ -305,4 +371,4 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             # Update the last activity of a sketch.
             utils.update_sketch_last_activity(sketch)
 
-        return self._upload_events(events, form, sketch, index_name)
+        return self._upload_events(events, form, sketch)
