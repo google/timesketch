@@ -885,8 +885,13 @@ class Sketch(resource.BaseResource):
         searches = []
         for saved_search in sketch['meta'].get('views', []):
             search_obj = search.Search(sketch=self)
-            search_obj.from_saved(saved_search.get('id'))
-            searches.append(search_obj)
+            try:
+                search_obj.from_saved(saved_search.get('id'))
+                searches.append(search_obj)
+            except ValueError:
+                logger.error(
+                    'Unable to load a saved search with ID: {0:d}'.format(
+                        saved_search.get('id',0)), exc_info=True)
 
         return searches
 
