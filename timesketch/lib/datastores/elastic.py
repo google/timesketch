@@ -831,6 +831,7 @@ class ElasticsearchDataStore(object):
         except (ConnectionTimeout, socket.timeout):
             # TODO: Add a retry here.
             es_logger.error('Unable to add events', exc_info=True)
+            return {}
 
         errors_in_upload = results.get('errors', False)
         return_dict['errors_in_upload'] = errors_in_upload
