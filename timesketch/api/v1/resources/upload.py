@@ -30,6 +30,7 @@ from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
@@ -64,8 +65,10 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if index_name:
             if not isinstance(index_name, six.text_type):
                 index_name = codecs.decode(index_name, 'utf-8')
+
             searchindex = SearchIndex.query.filter_by(
                 name=name, index_name=index_name).first()
+
             if searchindex and searchindex.has_permission(
                     permission='write', user=current_user):
                 return searchindex
@@ -76,21 +79,21 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if not label:
             label = 'log'
 
-        timelines = Timeline.query.filter_by(
-            sketch=sketch).all()
+        if sketch:
+            timelines = Timeline.query.filter_by(
+                sketch=sketch).all()
 
-        indices = [t.searchindex for t in timelines]
-        for index in indices:
-            if index.has_label(label) and index.has_permission(
-                    permission='write', user=current_user):
-                return index
+            indices = [t.searchindex for t in timelines]
+            for index in indices:
+                if index.has_label(label) and index.has_permission(
+                        permission='write', user=current_user):
+                    return index
 
         index_name = uuid.uuid4().hex
         searchindex = SearchIndex.get_or_create(
             name=name,
             description=description,
-            user=current_user,
-            index_name=index_name)
+            user=current_user)
 
         searchindex.grant_permission(permission='read', user=current_user)
         searchindex.grant_permission(permission='write', user=current_user)
@@ -105,7 +108,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
     def _upload_and_index(
             self, file_extension, timeline_name, index_name, sketch,
-            enable_stream, file_path='', events='', meta=None):
+            enable_stream, label='', file_path='', events='', meta=None):
         """Creates a full pipeline for an uploaded file and returns the results.
 
         Args:
@@ -116,6 +119,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             sketch: Instance of timesketch.models.sketch.Sketch
             enable_stream: boolean indicating whether this is file is part of a
                            stream or not.
+            label: Optional string with a label for the search index.
             file_path: the path to the file to be uploaded (optional).
             events: a string with events to upload (optional).
             meta: optional dict with additional meta fields that will be
@@ -125,64 +129,37 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             A timeline if created otherwise a search index in JSON (instance
             of flask.wrappers.Response)
         """
-        # HERNA - STILL NEEDS SOME FIXIN'
-        index = self._get_index(
+        searchindex = self._get_index(
             name=timeline_name,
             description=timeline_name,
             sketch=sketch,
-            index_name=form.get('index_name', ''),
+            index_name=index_name,
             label=form.get('label', ''),
             extension=file_extension)
-
-        # Check if search index already exists.
-        searchindex = SearchIndex.query.filter_by(
-            name=timeline_name,
-            user=current_user,
-            index_name=index_name).first()
+        searchindex.set_status('processing')
 
         timeline = None
-
-        if searchindex:
-            searchindex.set_status('processing')
-            timeline = Timeline.query.filter_by(
-                name=searchindex.name,
-                description=searchindex.description,
-                sketch=sketch,
-                user=current_user,
-                searchindex=searchindex).first()
-        else:
-            # Create the search index in the Timesketch database
-            searchindex = SearchIndex.get_or_create(
+        if sketch:
+            sketch_id = sketch.id
+            timeline = Timeline.get_or_create(
                 name=timeline_name,
-                description='',
-                user=current_user,
-                index_name=index_name)
-            searchindex.grant_permission(permission='read', user=current_user)
-            searchindex.grant_permission(permission='write', user=current_user)
-            searchindex.grant_permission(
-                permission='delete', user=current_user)
-            searchindex.set_status('processing')
-            db_session.add(searchindex)
-            db_session.commit()
+                description=timeline_name,
+                sketch=sketch,
+                searchindex=searchindex)
+            timeline.set_status('processing')
+            sketch.timelines.append(timeline)
 
-            if sketch and sketch.has_permission(current_user, 'write'):
-                labels_to_prevent_deletion = current_app.config.get(
-                    'LABELS_TO_PREVENT_DELETION', [])
-                timeline = Timeline(
-                    name=searchindex.name,
-                    description=searchindex.description,
-                    sketch=sketch,
-                    user=current_user,
-                    searchindex=searchindex)
-                timeline.set_status('processing')
-                sketch.timelines.append(timeline)
-                for label in sketch.get_labels:
-                    if label not in labels_to_prevent_deletion:
-                        continue
-                    timeline.add_label(label)
-                    searchindex.add_label(label)
-                db_session.add(timeline)
-                db_session.commit()
+            labels_to_prevent_deletion = current_app.config.get(
+                'LABELS_TO_PREVENT_DELETION', [])
+            for sketch_label in sketch.get_labels:
+                if sketch_label not in labels_to_prevent_deletion:
+                    continue
+                timeline.add_label(sketch_label)
+                searchindex.add_label(sketch_label)
+            db_session.add(timeline)
+            db_session.commit()
+        else:
+            sketch_id = None
 
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
@@ -191,7 +168,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         pipeline = tasks.build_index_pipeline(
             file_path=file_path, events=events, timeline_name=timeline_name,
             index_name=index_name, file_extension=file_extension,
-            sketch_id=sketch.id, only_index=enable_stream)
+            sketch_id=sketch_id, only_index=enable_stream)
         pipeline.apply_async()
 
         # Return Timeline if it was created.
@@ -218,6 +195,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         """
         timeline_name = form.get('name', 'unknown_events')
         file_extension = 'jsonl'
+        label = form.get('label', '')
 
         return self._upload_and_index(
             events=events,
@@ -225,6 +203,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             timeline_name=timeline_name,
             index_name=index_name,
             sketch=sketch,
+            label=label,
             enable_stream=form.get('enable_stream', False))
 
     def _upload_file(self, file_storage, form, sketch, index_name):
@@ -267,6 +246,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             file_size = int(file_size)
         enable_stream = form.get('enable_stream', False)
 
+        label = form.get('label', '')
+
         if chunk_total_chunks is None:
             file_storage.save(file_path)
             return self._upload_and_index(
@@ -275,6 +256,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 timeline_name=timeline_name,
                 index_name=index_name,
                 sketch=sketch,
+                label=label,
                 enable_stream=enable_stream)
 
         # For file chunks we need the correct filepath, otherwise each chunk
@@ -322,6 +304,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             timeline_name=timeline_name,
             index_name=index_name,
             sketch=sketch,
+            label=label,
             enable_stream=enable_stream,
             meta=meta)
 
@@ -352,14 +335,25 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_NOT_FOUND,
                     'No sketch found with this ID.')
 
+        if sketch:
             if sketch.get_status.status == 'archived':
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     'Unable to upload a file to an archived sketch.')
 
+            if not sketch.has_permission(current_user, 'write'):
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    'Unable to upload data to a sketch, user does not have write access.')
+
+            utils.update_sketch_last_activity(sketch)
+
+        index_name = form.get('index_name', '')
         file_storage = request.files.get('file')
         if file_storage:
-            return self._upload_file(file_storage, form, sketch)
+            return self._upload_file(
+                file_storage=file_storage,
+                form=form, sketch=sketch, index_name=index_name)
 
         events = form.get('events')
         if not events:
@@ -367,8 +361,5 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to upload data, no file uploaded nor any events.')
 
-        if sketch:
-            # Update the last activity of a sketch.
-            utils.update_sketch_last_activity(sketch)
-
-        return self._upload_events(events, form, sketch)
+        return self._upload_events(
+            events=events, form=form, sketch=sketch, index_name=index_name)
