@@ -79,15 +79,14 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if not label:
             label = 'log'
 
-        if sketch:
-            timelines = Timeline.query.filter_by(
-                sketch=sketch).all()
+        timelines = Timeline.query.filter_by(
+            sketch=sketch).all()
 
-            indices = [t.searchindex for t in timelines]
-            for index in indices:
-                if index.has_label(label) and index.has_permission(
-                        permission='write', user=current_user):
-                    return index
+        indices = [t.searchindex for t in timelines]
+        for index in indices:
+            if index.has_label(label) and sketch.has_permission(
+                    permission='write', user=current_user):
+                return index
 
         index_name = uuid.uuid4().hex
         searchindex = SearchIndex.get_or_create(
@@ -99,6 +98,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         searchindex.grant_permission(permission='write', user=current_user)
         searchindex.grant_permission(permission='delete', user=current_user)
         searchindex.set_status('processing')
+
         db_session.add(searchindex)
         db_session.commit()
 
@@ -134,33 +134,36 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             description=timeline_name,
             sketch=sketch,
             index_name=index_name,
-            label=form.get('label', ''),
+            label=label,
             extension=file_extension)
         searchindex.set_status('processing')
 
-        timeline = None
-        if sketch:
-            sketch_id = sketch.id
-            timeline = Timeline.get_or_create(
-                name=timeline_name,
-                description=timeline_name,
-                sketch=sketch,
-                searchindex=searchindex)
-            timeline.set_status('processing')
-            sketch.timelines.append(timeline)
+        timeline = Timeline.get_or_create(
+            name=timeline_name,
+            description=timeline_name,
+            sketch=sketch,
+            searchindex=searchindex)
 
-            labels_to_prevent_deletion = current_app.config.get(
-                'LABELS_TO_PREVENT_DELETION', [])
-            for sketch_label in sketch.get_labels:
-                if sketch_label not in labels_to_prevent_deletion:
-                    continue
-                timeline.add_label(sketch_label)
-                searchindex.add_label(sketch_label)
-            db_session.add(timeline)
-            db_session.commit()
-        else:
-            sketch_id = None
+        if not timeline:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to get or create a new Timeline object.')
 
+        timeline.set_status('processing')
+        sketch.timelines.append(timeline)
+
+        labels_to_prevent_deletion = current_app.config.get(
+            'LABELS_TO_PREVENT_DELETION', [])
+        for sketch_label in sketch.get_labels:
+            if sketch_label not in labels_to_prevent_deletion:
+                continue
+            timeline.add_label(sketch_label)
+            searchindex.add_label(sketch_label)
+
+        db_session.add(timeline)
+        db_session.commit()
+
+        sketch_id = sketch.id
         # Start Celery pipeline for indexing and analysis.
         # Import here to avoid circular imports.
         # pylint: disable=import-outside-toplevel
@@ -171,14 +174,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             sketch_id=sketch_id, only_index=enable_stream)
         pipeline.apply_async()
 
-        # Return Timeline if it was created.
-        # pylint: disable=no-else-return
-        if timeline:
-            return self.to_json(
-                timeline, status_code=HTTP_STATUS_CODE_CREATED, meta=meta)
-
         return self.to_json(
-            searchindex, status_code=HTTP_STATUS_CODE_CREATED, meta=meta)
+            timeline, status_code=HTTP_STATUS_CODE_CREATED, meta=meta)
 
     def _upload_events(self, events, form, sketch, index_name):
         """Upload a file like object.
@@ -324,29 +321,33 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             form = request.form
 
         sketch_id = form.get('sketch_id', None)
+        if not sketch_id:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to upload data without supplying a '
+                'sketch to associated it with.')
+
         if not isinstance(sketch_id, int):
             sketch_id = int(sketch_id)
 
-        sketch = None
-        if sketch_id:
-            sketch = Sketch.query.get_with_acl(sketch_id)
-            if not sketch:
-                abort(
-                    HTTP_STATUS_CODE_NOT_FOUND,
-                    'No sketch found with this ID.')
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                'No sketch found with this ID.')
 
-        if sketch:
-            if sketch.get_status.status == 'archived':
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    'Unable to upload a file to an archived sketch.')
+        if sketch.get_status.status == 'archived':
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to upload a file to an archived sketch.')
 
-            if not sketch.has_permission(current_user, 'write'):
-                abort(
-                    HTTP_STATUS_CODE_FORBIDDEN,
-                    'Unable to upload data to a sketch, user does not have write access.')
+        if not sketch.has_permission(current_user, 'write'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'Unable to upload data to a sketch, user does not have '
+                'write access.')
 
-            utils.update_sketch_last_activity(sketch)
+        utils.update_sketch_last_activity(sketch)
 
         index_name = form.get('index_name', '')
         file_storage = request.files.get('file')
