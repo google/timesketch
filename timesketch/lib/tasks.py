@@ -195,7 +195,7 @@ def _get_index_analyzers():
 
 def build_index_pipeline(
         file_path='', events='', timeline_name='', index_name='',
-        file_extension='', sketch_id=None, only_index=False):
+        file_extension='', sketch_id=None, only_index=False, timeline_id=None):
     """Build a pipeline for index and analysis.
 
     Args:
@@ -211,6 +211,7 @@ def build_index_pipeline(
             analyzers. This is to be used when uploading data in chunks,
             we don't want to run the analyzers until all chunks have been
             uploaded.
+        timeline_id: Optional ID of the timeline object this data belongs to.
 
     Returns:
         Celery chain with indexing task (or single indexing task) and analyzer
@@ -225,7 +226,8 @@ def build_index_pipeline(
     searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
 
     index_task = index_task_class.s(
-        file_path, events, timeline_name, index_name, file_extension)
+        file_path, events, timeline_name, index_name, file_extension,
+        timeline_id)
 
     if only_index:
         return index_task
@@ -464,7 +466,8 @@ def run_sketch_analyzer(index_name, sketch_id, analysis_id, analyzer_name,
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
-def run_plaso(file_path, events, timeline_name, index_name, source_type):
+def run_plaso(
+        file_path, events, timeline_name, index_name, source_type, timeline_id):
     """Create a Celery task for processing Plaso storage file.
 
     Args:
@@ -473,6 +476,7 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type):
         timeline_name: Name of the Timesketch timeline.
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
+        timeline_id: ID of the timeline object this data belongs to.
 
     Returns:
         Name (str) of the index.
@@ -512,7 +516,8 @@ def run_plaso(file_path, events, timeline_name, index_name, source_type):
 
 
 @celery.task(track_started=True, base=SqlAlchemyTask)
-def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
+def run_csv_jsonl(
+        file_path, events, timeline_name, index_name, source_type, timeline_id):
     """Create a Celery task for processing a CSV or JSONL file.
 
     Args:
@@ -521,6 +526,7 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
         timeline_name: Name of the Timesketch timeline.
         index_name: Name of the datastore index.
         source_type: Type of file, csv or jsonl.
+        timeline_id: ID of the timeline object this data belongs to.
 
     Returns:
         Name (str) of the index.
@@ -556,7 +562,8 @@ def run_csv_jsonl(file_path, events, timeline_name, index_name, source_type):
     try:
         es.create_index(index_name=index_name, doc_type=event_type)
         for event in read_and_validate(file_handle):
-            es.import_event(index_name, event_type, event)
+            es.import_event(
+                index_name, event_type, event, timeline_id=timeline_id)
             final_counter += 1
 
         # Import the remaining events

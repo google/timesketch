@@ -171,7 +171,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         pipeline = tasks.build_index_pipeline(
             file_path=file_path, events=events, timeline_name=timeline_name,
             index_name=index_name, file_extension=file_extension,
-            sketch_id=sketch_id, only_index=enable_stream)
+            sketch_id=sketch_id, only_index=enable_stream,
+            timeline_id=timeline.id)
         pipeline.apply_async()
 
         return self.to_json(

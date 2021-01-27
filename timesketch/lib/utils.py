@@ -241,21 +241,35 @@ def read_and_validate_jsonl(file_handle):
                 'Error parsing JSON at line {0:n}: {1:s}'.format(lineno, e))
 
 
-def get_validated_indices(indices, sketch_indices):
+def get_validated_indices(indices, sketch_indices, sketch_timelines):
     """Exclude any deleted search index references.
 
     Args:
         indices: List of indices from the user
         sketch_indices: List of indices in the sketch
+        sketch_timelines: A dict with all the timelines in the sketch, with
+            timeline name as the key and the timeline ID as the value.
 
     Returns:
-        Set of indices with those removed that is not in the sketch
+        Tuple of two items:
+          Set of indices with those removed that is not in the sketch
+          Set of timeline IDs that should be part of the output.
     """
     exclude = set(indices) - set(sketch_indices)
+    timelines = set()
     if exclude:
         indices = [index for index in indices if index not in exclude]
+        for item in exclude:
+            timeline_id = sketch_timelines.get(item)
+            if timeline_id:
+                timelines.add(timeline_id)
 
-    return indices
+            if isinstance(item, str) and item.isdigit():
+                timeline_id = int(item)
+                if timeline_id in sketch_timelines.values():
+                    timelines.add(timeline_id)
+
+    return indices, timelines
 
 
 def send_email(subject, body, to_username, use_html=False):

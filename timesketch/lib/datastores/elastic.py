@@ -193,7 +193,7 @@ class ElasticsearchDataStore(object):
         return start_range.strftime(TS_FORMAT), end_range.strftime(TS_FORMAT)
 
     def build_query(self, sketch_id, query_string, query_filter, query_dsl=None,
-                    aggregations=None):
+                    aggregations=None, timeline_ids=None):
         """Build Elasticsearch DSL query.
 
         Args:
@@ -202,6 +202,8 @@ class ElasticsearchDataStore(object):
             query_filter: Dictionary containing filters to apply
             query_dsl: Dictionary containing Elasticsearch DSL query
             aggregations: Dict of Elasticsearch aggregations
+            timeline_ids: Optional list of IDs of Timeline objects that should
+                be queried as part of the search.
 
         Returns:
             Elasticsearch DSL query as a dictionary
@@ -257,6 +259,12 @@ class ElasticsearchDataStore(object):
         if query_string:
             query_dsl['query']['bool']['must'].append(
                 {'query_string': {'query': query_string}})
+
+        if timeline_ids and isinstance(timeline_ids, (list, tuple)):
+            timeline_add = [
+                f'__timeline_id:"{t}"' for t in timeline_ids if isinstance(
+                    t, int)]
+            query_dsl['query']['bool']['must'].extend(timeline_add)
 
         # New UI filters
         if query_filter.get('chips', None):
@@ -343,7 +351,7 @@ class ElasticsearchDataStore(object):
 
     def search(self, sketch_id, query_string, query_filter, query_dsl, indices,
                count=False, aggregations=None, return_fields=None,
-               enable_scroll=False):
+               enable_scroll=False, timeline_ids=None):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -358,6 +366,8 @@ class ElasticsearchDataStore(object):
             aggregations: Dict of Elasticsearch aggregations
             return_fields: List of fields to return
             enable_scroll: If Elasticsearch scroll API should be used
+            timeline_ids: Optional list of IDs of Timeline objects that should
+                be queried as part of the search.
 
         Returns:
             Set of event documents in JSON format
@@ -379,8 +389,10 @@ class ElasticsearchDataStore(object):
                 if event['index'] in indices
             }
 
-        query_dsl = self.build_query(sketch_id, query_string, query_filter,
-                                     query_dsl, aggregations)
+        query_dsl = self.build_query(
+            sketch_id=sketch_id, query_string=query_string,
+            query_filter=query_filter, query_dsl=query_dsl,
+            aggregations=aggregations, timeline_ids=timeline_ids)
 
         # Default search type for elasticsearch is query_then_fetch.
         search_type = 'query_then_fetch'
@@ -404,6 +416,9 @@ class ElasticsearchDataStore(object):
 
         # The argument " _source_include" changed to "_source_includes" in
         # ES version 7. This check add support for both version 6 and 7 clients.
+        print('DSL')
+        print(query_dsl)
+        print('DSL END')
         # pylint: disable=unexpected-keyword-arg
         try:
             if self.version.startswith('6'):
@@ -748,7 +763,7 @@ class ElasticsearchDataStore(object):
                 ) from e
 
     def import_event(self, index_name, event_type, event=None, event_id=None,
-                     flush_interval=DEFAULT_FLUSH_INTERVAL):
+                     flush_interval=DEFAULT_FLUSH_INTERVAL, timeline_id=None):
         """Add event to Elasticsearch.
 
         Args:
@@ -757,6 +772,9 @@ class ElasticsearchDataStore(object):
             event: Event dictionary
             event_id: Event Elasticsearch ID
             flush_interval: Number of events to queue up before indexing
+            timeline_id: Optional ID number of a Timeline object this event
+                belongs to. If supplied an additional field will be added to
+                the store indicating the timeline this belongs to.
         """
         if event:
             for k, v in event.items():
@@ -794,6 +812,9 @@ class ElasticsearchDataStore(object):
                 else:
                     event = {'doc': event}
                 header = update_header
+
+            if timeline_id:
+                event['__timeline_id'] = timeline_id
 
             self.import_events.append(header)
             self.import_events.append(event)

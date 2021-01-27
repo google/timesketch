@@ -96,6 +96,13 @@ class ExploreResource(resources.ResourceMixin, Resource):
             for t in sketch.timelines
             if t.get_status.status.lower() == 'ready'
         }
+
+        sketch_timelines = {
+            t.name: t.id
+            for t in sketch.timelines
+            if t.get_status.status.lower() == 'ready'
+        }
+
         if not query_filter:
             query_filter = {}
 
@@ -107,7 +114,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # Make sure that the indices in the filter are part of the sketch.
         # This will also remove any deleted timeline from the search result.
-        indices = get_validated_indices(indices, sketch_indices)
+        indices, timeline_ids = get_validated_indices(indices, sketch_indices)
 
         # Make sure we have a query string or star filter
         if not (form.query.data, query_filter.get('star'),
@@ -133,11 +140,12 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
             try:
                 result = self.datastore.search(
-                    sketch_id,
-                    form.query.data,
-                    query_filter,
-                    query_dsl,
-                    indices,
+                    sketch_id=sketch_id,
+                    query_string=form.query.data,
+                    query_filter=query_filter,
+                    query_dsl=query_dsl,
+                    indices=indices,
+                    timeline_ids=timeline_ids,
                     count=True)
             except ValueError as e:
                 abort(
@@ -182,14 +190,15 @@ class ExploreResource(resources.ResourceMixin, Resource):
         else:
             try:
                 result = self.datastore.search(
-                    sketch_id,
-                    form.query.data,
-                    query_filter,
-                    query_dsl,
-                    indices,
+                    sketch_id=sketch_id,
+                    query_string=form.query.data,
+                    query_filter=query_filter,
+                    query_dsl=query_dsl,
+                    indices=indices,
                     aggregations=index_stats_agg,
                     return_fields=return_fields,
-                    enable_scroll=enable_scroll)
+                    enable_scroll=enable_scroll,
+                    timeline_ids=timeline_ids)
             except ValueError as e:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST, e)
