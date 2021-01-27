@@ -138,8 +138,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
                     query_filter,
                     query_dsl,
                     indices,
-                    count=True,
-                    enable_scroll=True)
+                    count=True)
             except ValueError as e:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST, e)
