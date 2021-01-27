@@ -395,6 +395,7 @@ class Search(resource.SketchResource):
         self._return_fields = ''
         self._scrolling = None
         self._searchtemplate = ''
+        self._total_elastic_size = 0
         self._updated_at = ''
 
     def _extract_chips(self, query_filter):
@@ -504,13 +505,13 @@ class Search(resource.SketchResource):
             added_time = more_meta.get('es_time', 0)
             response_json['meta']['es_time'] += added_time
 
-        total_elastic_count = response_json.get(
+        self._total_elastic_size = response_json.get(
             'meta', {}).get('es_total_count', 0)
-        if total_elastic_count != total_count:
+        if self._total_elastic_size != total_count:
             logger.info(
                 '%d results were returned, but '
                 '%d records matched the search query',
-                total_count, total_elastic_count)
+                total_count, self._total_elastic_size)
 
         self._raw_response = response_json
 
@@ -572,6 +573,28 @@ class Search(resource.SketchResource):
         """Make changes to the saved search description field."""
         self._description = description
         self.commit()
+
+    @property
+    def expected_size(self):
+        """Property that returns the expected size of the search query."""
+        if self._total_elastic_size:
+            return self._total_elastic_size
+
+        # To get the total size of the query we first need to send a query
+        # so to minimize the cost we reduce the size to 10 entries.
+        max_entries = self._max_entries
+        scrolling = self.scrolling
+
+        self._max_entries = 10
+        self._scrolling = True
+
+        self._execute_query()
+
+        self._max_entries = max_entries
+        self._raw_response = None
+        self._scrolling = scrolling
+
+        return self._total_elastic_size
 
     def from_manual(  # pylint: disable=arguments-differ
             self,

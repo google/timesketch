@@ -117,9 +117,9 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # Aggregate hit count per index.
         index_stats_agg = {
-            "indices": {
-                "terms": {
-                    "field": "_index"
+            'indices': {
+                'terms': {
+                    'field': '_index'
                 }
             }
         }
