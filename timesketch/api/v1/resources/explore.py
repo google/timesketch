@@ -35,6 +35,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import db_session
+from timesketch.models.sketch import Event
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import View
 
@@ -114,7 +115,8 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # Make sure that the indices in the filter are part of the sketch.
         # This will also remove any deleted timeline from the search result.
-        indices, timeline_ids = get_validated_indices(indices, sketch_indices)
+        indices, timeline_ids = get_validated_indices(
+            indices, sketch_indices, sketch_timelines)
 
         # Make sure we have a query string or star filter
         if not (form.query.data, query_filter.get('star'),
@@ -213,6 +215,15 @@ class ExploreResource(resources.ResourceMixin, Resource):
         except KeyError:
             pass
 
+        comments = {}
+        if 'comment' in return_fields:
+            events = Event.query.filter_by(
+                sketch=sketch).all()
+            for event in events:
+                for comment in event.comments:
+                    comments.setdefault(event.document_id, [])
+                    comments[event.document_id].append(comment.comment)
+
         # Get labels for each event that matches the sketch.
         # Remove all other labels.
         for event in result['hits']['hits']:
@@ -226,6 +237,9 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 del event['_source']['timesketch_label']
             except KeyError:
                 pass
+
+            if 'comment' in return_fields:
+                event['_source']['comment'] = comments.get(event['_id'], [])
 
         # Update or create user state view. This is used in the UI to let
         # the user get back to the last state in the explore view.
