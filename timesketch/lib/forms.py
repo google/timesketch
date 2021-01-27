@@ -170,6 +170,8 @@ class ExploreForm(BaseForm):
     filter = StringField('Filter')
     dsl = StringField('DSL')
     fields = StringField('Fields', default='')
+    count = BooleanField(
+        'Only Count Events', false_values={False, 'false', ''}, default=False)
     enable_scroll = BooleanField(
         'Enable scroll', false_values={False, 'false', ''}, default=False)
     scroll_id = StringField('Scroll ID', default='')

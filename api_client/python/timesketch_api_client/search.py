@@ -434,13 +434,16 @@ class Search(resource.SketchResource):
 
             self.add_chip(chip)
 
-    def _execute_query(self, file_name=''):
+    def _execute_query(self, file_name='', count=False):
         """Execute a search request and store the results.
 
         Args:
             file_name (str): optional file path to a filename that
                 all the results will be saved to. If not provided
                 the results will be stored in the search object.
+            count (bool): optional boolean that determines whether
+                we want to execute the query or only count the
+                number of events that the query would produce.
         """
         query_filter = self.query_filter
         if not isinstance(query_filter, dict):
@@ -458,6 +461,7 @@ class Search(resource.SketchResource):
             'query': self._query_string,
             'filter': query_filter,
             'dsl': self._query_dsl,
+            'count': count,
             'fields': self._return_fields,
             'enable_scroll': scrolling,
             'file_name': file_name,
@@ -476,6 +480,11 @@ class Search(resource.SketchResource):
             return
 
         response_json = error.get_response_json(response, logger)
+
+        if count:
+            meta = response_json.get('meta', {})
+            self._total_elastic_size = meta.get('total_count', 0)
+            return
 
         scroll_id = response_json.get('meta', {}).get('scroll_id', '')
         form_data['scroll_id'] = scroll_id
@@ -580,20 +589,7 @@ class Search(resource.SketchResource):
         if self._total_elastic_size:
             return self._total_elastic_size
 
-        # To get the total size of the query we first need to send a query
-        # so to minimize the cost we reduce the size to 10 entries.
-        max_entries = self._max_entries
-        scrolling = self.scrolling
-
-        self._max_entries = 10
-        self._scrolling = True
-
-        self._execute_query()
-
-        self._max_entries = max_entries
-        self._raw_response = None
-        self._scrolling = scrolling
-
+        self._execute_query(count=True)
         return self._total_elastic_size
 
     def from_manual(  # pylint: disable=arguments-differ
