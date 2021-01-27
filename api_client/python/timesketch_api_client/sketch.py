@@ -885,8 +885,13 @@ class Sketch(resource.BaseResource):
         searches = []
         for saved_search in sketch['meta'].get('views', []):
             search_obj = search.Search(sketch=self)
-            search_obj.from_saved(saved_search.get('id'))
-            searches.append(search_obj)
+            try:
+                search_obj.from_saved(saved_search.get('id'))
+                searches.append(search_obj)
+            except ValueError:
+                logger.error(
+                    'Unable to load a saved search with ID: {0:d}'.format(
+                        saved_search.get('id', 0)), exc_info=True)
 
         return searches
 
@@ -930,9 +935,10 @@ class Sketch(resource.BaseResource):
         # TODO: Deprecate this function.
         logger.warning(
             'This function is about to be deprecated, please use the '
-            'timesketch_import_client instead')
+            'timesketch_import_client instead (this function is not '
+            'guaranteed to work)')
 
-        resource_url = '{0:s}/upload/'.format(self.api.api_root)
+        resource_url = f'{self.api.api_root}/upload/'
         files = {'file': open(file_path, 'rb')}
         data = {'name': timeline_name, 'sketch_id': self.id,
                 'index_name': index}

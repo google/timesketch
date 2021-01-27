@@ -79,6 +79,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
         enable_scroll = form.enable_scroll.data
         scroll_id = form.scroll_id.data
         file_name = form.file_name.data
+        count = bool(form.count.data)
 
         query_filter = request.json.get('filter', {})
 
@@ -117,12 +118,34 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # Aggregate hit count per index.
         index_stats_agg = {
-            "indices": {
-                "terms": {
-                    "field": "_index"
+            'indices': {
+                'terms': {
+                    'field': '_index'
                 }
             }
         }
+        if count:
+            # Count operations do not support size parameters.
+            if 'size' in query_filter:
+                _ = query_filter.pop('size')
+            if 'terminate_after' in query_filter:
+                _ = query_filter.pop('terminate_after')
+
+            try:
+                result = self.datastore.search(
+                    sketch_id,
+                    form.query.data,
+                    query_filter,
+                    query_dsl,
+                    indices,
+                    count=True)
+            except ValueError as e:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST, e)
+
+            # Get number of matching documents per index.
+            schema = {'meta': {'total_count': result}, 'objects': []}
+            return jsonify(schema)
 
         if file_name:
             file_object = io.BytesIO()
