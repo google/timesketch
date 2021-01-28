@@ -349,6 +349,7 @@ class ElasticsearchDataStore(object):
 
         return query_dsl
 
+    # pylint: disable=too-many-arguments
     def search(self, sketch_id, query_string, query_filter, query_dsl, indices,
                count=False, aggregations=None, return_fields=None,
                enable_scroll=False, timeline_ids=None):

@@ -321,6 +321,9 @@ class ConfigAssistant:
         if auth_mode == 'timesketch':
             auth_mode = 'userpass'
 
+        if not section:
+            section = 'timesketch'
+
         config[section] = {
             'host_uri': self._config.get('host_uri'),
             'username': self._config.get('username'),
