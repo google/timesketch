@@ -108,7 +108,7 @@ class SqlAlchemyTask(celery.Task):
     def after_return(self, *args, **kwargs):
         """Close the database session on task completion."""
         db_session.remove()
-        super(SqlAlchemyTask, self).after_return(*args, **kwargs)
+        super().after_return(*args, **kwargs)
 
 
 # pylint: disable=unused-argument
