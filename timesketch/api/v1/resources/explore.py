@@ -111,7 +111,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # If _all in indices then execute the query on all indices
         if '_all' in indices:
-            indices = sketch_indices
+            indices = list(sketch_structure.keys())
 
         # Make sure that the indices in the filter are part of the sketch.
         # This will also remove any deleted timeline from the search result.
