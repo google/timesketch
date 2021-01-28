@@ -209,12 +209,14 @@ class ElasticsearchDataStore(object):
             Elasticsearch DSL query as a dictionary
         """
 
+        # TODO: Support query DSL when it comes to timeline filtering.
         if query_dsl:
             if not isinstance(query_dsl, dict):
                 query_dsl = json.loads(query_dsl)
 
             if not query_dsl:
                 query_dsl = {}
+
             # Remove any aggregation coming from user supplied Query DSL.
             # We have no way to display this data in a good way today.
             if query_dsl.get('aggregations', None):
@@ -261,9 +263,9 @@ class ElasticsearchDataStore(object):
                 {'query_string': {'query': query_string}})
 
         if timeline_ids and isinstance(timeline_ids, (list, tuple)):
-            timeline_add = [
-                f'__timeline_id:"{t}"' for t in timeline_ids if isinstance(
-                    t, int)]
+            timeline_add = [{'query_string': {
+                'query': f'__timeline_id:"{t}"'
+            }} for t in timeline_ids if isinstance(t, int)]
             query_dsl['query']['bool']['must'].extend(timeline_add)
 
         # New UI filters
@@ -373,7 +375,6 @@ class ElasticsearchDataStore(object):
         Returns:
             Set of event documents in JSON format
         """
-
         scroll_timeout = None
         if enable_scroll:
             scroll_timeout = '1m'  # Default to 1 minute scroll timeout

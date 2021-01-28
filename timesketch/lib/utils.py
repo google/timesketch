@@ -39,7 +39,7 @@ logger = logging.getLogger('timesketch.utils')
 csv.field_size_limit(sys.maxsize)
 
 # Fields to scrub from timelines.
-FIELDS_TO_REMOVE = ['_id', '_type', '_index', '_source']
+FIELDS_TO_REMOVE = ['_id', '_type', '_index', '_source', '__timeline_id']
 
 
 def random_color():
@@ -241,35 +241,50 @@ def read_and_validate_jsonl(file_handle):
                 'Error parsing JSON at line {0:n}: {1:s}'.format(lineno, e))
 
 
-def get_validated_indices(indices, sketch_indices, sketch_timelines):
+def get_validated_indices(indices, sketch_structure):
     """Exclude any deleted search index references.
 
     Args:
         indices: List of indices from the user
-        sketch_indices: List of indices in the sketch
-        sketch_timelines: A dict with all the timelines in the sketch, with
-            timeline name as the key and the timeline ID as the value.
+        sketch_structure: A dict whose key is all valid indices in the sketch
+            and the value is a list of dicts, with two keys: "name" and "id",
+            which correspond to the timeline ID and timeline Name associated
+            with that index.
 
     Returns:
         Tuple of two items:
-          Set of indices with those removed that is not in the sketch
-          Set of timeline IDs that should be part of the output.
+          List of indices with those removed that is not in the sketch
+          List of timeline IDs that should be part of the output.
     """
-    exclude = set(indices) - set(sketch_indices)
+    sketch_indices = set(sketch_structure.keys())
+    exclude = set(indices) - sketch_indices
     timelines = set()
+
     if exclude:
         indices = [index for index in indices if index not in exclude]
         for item in exclude:
-            timeline_id = sketch_timelines.get(item)
-            if timeline_id:
-                timelines.add(timeline_id)
+            for index, timeline_list in sketch_structure.items():
+                for timeline_struct in timeline_list:
+                    timeline_id = timeline_struct.get('id')
+                    timeline_name = timeline_struct.get('name')
 
-            if isinstance(item, str) and item.isdigit():
-                timeline_id = int(item)
-                if timeline_id in sketch_timelines.values():
-                    timelines.add(timeline_id)
+                    if not timeline_id:
+                        continue
 
-    return indices, timelines
+                    if isinstance(item, str) and item.isdigit():
+                        item = int(item)
+
+                    if item == timeline_id:
+                        timelines.add(timeline_id)
+                        indices.append(index)
+
+                    if isinstance(
+                            item, str) and item.lower(
+                                ) == timeline_name.lower():
+                        timelines.add(timeline_id)
+                        indices.append(index)
+
+    return list(set(indices)), list(timelines)
 
 
 def send_email(subject, body, to_username, use_html=False):
