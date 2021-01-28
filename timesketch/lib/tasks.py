@@ -120,13 +120,14 @@ def init_worker(**kwargs):
     db_session.configure(bind=engine)
 
 
-def _set_timeline_status(index_name, status, error_msg=None):
+def _set_timeline_status(index_name, status, error_msg=None, timeline_name=''):
     """Helper function to set status for searchindex and all related timelines.
 
     Args:
         index_name: Name of the datastore index.
         status: Status to set.
         error_msg: Error message.
+        timeline_name: Optional timeline name.
     """
     searchindices = SearchIndex.query.filter_by(index_name=index_name).all()
 
@@ -140,7 +141,12 @@ def _set_timeline_status(index_name, status, error_msg=None):
 
         db_session.add(searchindex)
 
-        timelines = Timeline.query.filter_by(searchindex=searchindex).all()
+        if timeline_name:
+            timelines = Timeline.query.filter_by(
+                name=timeline_name, searchindex=searchindex).all()
+        else:
+            timelines = Timeline.query.filter_by(searchindex=searchindex).all()
+
         for timeline in timelines:
             timeline.set_status(status)
             db_session.add(timeline)
@@ -506,11 +512,14 @@ def run_plaso(
             subprocess.check_output(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
-        _set_timeline_status(index_name, status='fail', error_msg=e.output)
+        _set_timeline_status(
+            index_name, status='fail', error_msg=e.output,
+            timeline_name=timeline_name)
         return e.output
 
     # Mark the searchindex and timelines as ready
-    _set_timeline_status(index_name, status='ready')
+    _set_timeline_status(
+        index_name, status='ready', timeline_name=timeline_name)
 
     return index_name
 
@@ -576,18 +585,24 @@ def run_csv_jsonl(
             total_count=results.get('total_events', 0))
 
     except errors.DataIngestionError as e:
-        _set_timeline_status(index_name, status='fail', error_msg=str(e))
+        _set_timeline_status(
+            index_name, status='fail', error_msg=str(e),
+            timeline_name=timeline_name)
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError,
             RequestError) as e:
-        _set_timeline_status(index_name, status='fail', error_msg=str(e))
+        _set_timeline_status(
+            index_name, status='fail', error_msg=str(e),
+            timeline_name=timeline_name)
         raise
 
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
-        _set_timeline_status(index_name, status='fail', error_msg=error_msg)
+        _set_timeline_status(
+            index_name, status='fail', error_msg=error_msg,
+            timeline_name=timeline_name)
         logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         return None
 
@@ -603,7 +618,9 @@ def run_csv_jsonl(
             'events imported.'.format(timeline_name, index_name, final_counter))
 
     # Set status to ready when done
-    _set_timeline_status(index_name, status='ready', error_msg=error_msg)
+    _set_timeline_status(
+        index_name, status='ready', error_msg=error_msg,
+        timeline_name=timeline_name)
 
     return index_name
 

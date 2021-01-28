@@ -417,9 +417,6 @@ class ElasticsearchDataStore(object):
 
         # The argument " _source_include" changed to "_source_includes" in
         # ES version 7. This check add support for both version 6 and 7 clients.
-        print('DSL')
-        print(query_dsl)
-        print('DSL END')
         # pylint: disable=unexpected-keyword-arg
         try:
             if self.version.startswith('6'):
