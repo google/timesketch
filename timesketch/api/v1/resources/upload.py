@@ -91,6 +91,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         index_name = uuid.uuid4().hex
         searchindex = SearchIndex.get_or_create(
             name=name,
+            index_name=index_name,
             description=description,
             user=current_user)
 
@@ -142,6 +143,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             name=timeline_name,
             description=timeline_name,
             sketch=sketch,
+            user=current_user,
             searchindex=searchindex)
 
         if not timeline:
