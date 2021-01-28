@@ -530,8 +530,8 @@ class Sketch(resource.BaseResource):
         Returns:
             A boolean indicating whether the ACL change was successful.
         """
-        if not user_list and not group_list:
-            return True
+        if not user_list and not group_list and not make_public:
+            return False
 
         resource_url = '{0:s}/sketches/{1:d}/collaborators/'.format(
             self.api.api_root, self.id)
