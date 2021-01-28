@@ -258,15 +258,46 @@ class ElasticsearchDataStore(object):
                 }
             }]
 
-        if query_string:
+        if timeline_ids and isinstance(timeline_ids, (list, tuple)):
+            query_dsl = {
+                'query': {
+                    'bool': {
+                        'must': [],
+                        'should': [{
+                            'bool': {
+                                'must': [{
+                                    'query_string': {
+                                        'query': query_string
+                                    }
+                                }],
+                                'must_not': [{
+                                    'exists': {
+                                        'field': '__timeline_id'},
+                                }],
+                            }
+                        }, {
+                            'bool': {
+                                'must': [{
+                                    'query_string': {
+                                        'query': query_string}
+                                }, {
+                                    'terms': {
+                                        '__timeline_id': timeline_ids}
+                                }],
+                                'filter': [{
+                                    'exists': {
+                                        'field': '__timeline_id'}
+                                }]
+                            }
+                        }],
+                        'must_not': [],
+                        'filter': []
+                    }
+                }
+            }
+        elif query_string:
             query_dsl['query']['bool']['must'].append(
                 {'query_string': {'query': query_string}})
-
-        if timeline_ids and isinstance(timeline_ids, (list, tuple)):
-            timeline_add = [{'query_string': {
-                'query': f'__timeline_id:"{t}"'
-            }} for t in timeline_ids if isinstance(t, int)]
-            query_dsl['query']['bool']['must'].extend(timeline_add)
 
         # New UI filters
         if query_filter.get('chips', None):

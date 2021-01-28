@@ -92,7 +92,6 @@ class ExploreResource(resources.ResourceMixin, Resource):
             return_fields = [field['field'] for field in return_fields]
             return_fields.extend(DEFAULT_SOURCE_FIELDS)
 
-
         sketch_structure = {}
         for timeline in sketch.timelines:
             if timeline.get_status.status.lower() != 'ready':
