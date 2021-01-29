@@ -143,12 +143,12 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             if timeline.searchindex.index_name == searchindex.index_name:
                 timeline = timeline_
                 break
-            else:
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    'There is a timeline in the sketch that has the same name '
-                    'but is stored in a different index, check the data_label '
-                    'on the uploaded data')
+
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'There is a timeline in the sketch that has the same name '
+                'but is stored in a different index, check the data_label '
+                'on the uploaded data')
 
         if not timeline:
             timeline = Timeline.get_or_create(
