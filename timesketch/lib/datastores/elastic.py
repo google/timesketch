@@ -237,6 +237,10 @@ class ElasticsearchDataStore(object):
             }
         }
 
+        # TODO: Simplify this when we don't have to support both timelines
+        # that have __timeline_id set and those that don't.
+        # (query_string AND timeline_id NOT EXISTS) OR (
+        #       query_string AND timeline_id in LIST)
         if timeline_ids and isinstance(timeline_ids, (list, tuple)):
             query_dsl = {
                 'query': {
