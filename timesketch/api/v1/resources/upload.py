@@ -229,18 +229,18 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         file_path = os.path.join(upload_folder, filename)
 
         chunk_index = form.get('chunk_index')
-        if isinstance(chunk_index, str) and chunk_index.is_digit():
+        if isinstance(chunk_index, str) and chunk_index.isdigit():
             chunk_index = int(chunk_index)
         chunk_byte_offset = form.get('chunk_byte_offset')
         if isinstance(
-                chunk_byte_offset, str) and chunk_byte_offset.is_digit():
+                chunk_byte_offset, str) and chunk_byte_offset.isdigit():
             chunk_byte_offset = int(chunk_byte_offset)
         chunk_total_chunks = form.get('chunk_total_chunks')
         if isinstance(
-                chunk_total_chunks, str) and chunk_total_chunks.is_digit():
+                chunk_total_chunks, str) and chunk_total_chunks.isdigit():
             chunk_total_chunks = int(chunk_total_chunks)
         file_size = form.get('total_file_size')
-        if isinstance(file_size, str) and file_size.is_digit():
+        if isinstance(file_size, str) and file_size.isdigit():
             file_size = int(file_size)
         enable_stream = form.get('enable_stream', False)
 
