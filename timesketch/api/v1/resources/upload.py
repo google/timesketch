@@ -135,12 +135,28 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             extension=file_extension)
         searchindex.set_status('processing')
 
-        timeline = Timeline.get_or_create(
-            name=timeline_name,
-            description=timeline_name,
-            sketch=sketch,
-            user=current_user,
-            searchindex=searchindex)
+        timelines = Timeline.query.filter_by(
+            name=timeline_name, sketch=sketch).all()
+
+        timeline = None
+        for timeline_ in timelines:
+            if timeline.searchindex.index_name == searchindex.index_name:
+                timeline = timeline_
+                break
+            else:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'There is a timeline in the sketch that has the same name '
+                    'but is stored in a different index, check the data_label '
+                    'on the uploaded data')
+
+        if not timeline:
+            timeline = Timeline.get_or_create(
+                name=timeline_name,
+                description=timeline_name,
+                sketch=sketch,
+                user=current_user,
+                searchindex=searchindex)
 
         if not timeline:
             abort(
