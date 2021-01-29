@@ -65,7 +65,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             description: Description of the sketch
             user: A user (instance of timesketch.models.user.User)
         """
-        super(Sketch, self).__init__()
+        super().__init__()
         self.name = name
         self.description = description
         self.user = user
@@ -191,7 +191,7 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
             color: Color for the timeline in HEX as string (e.g. F1F1F1F1)
             description: The description for the timeline
         """
-        super(Timeline, self).__init__()
+        super().__init__()
         self.name = name
         self.description = description
 
@@ -224,7 +224,7 @@ class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             index_name: The name of the searchindex
             user: A user (instance of timesketch.models.user.User)
         """
-        super(SearchIndex, self).__init__()
+        super().__init__()
         self.name = name
         self.description = description
         self.index_name = index_name
@@ -267,7 +267,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             query_filter: The filter to apply (JSON format as string)
             query_dsl: A query DSL document (JSON format as string)
         """
-        super(View, self).__init__()
+        super().__init__()
         self.name = name
         self.sketch = sketch
         self.user = user
@@ -295,8 +295,6 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         DEFAULT_SIZE = 40 # Number of resulting documents to return
         DEFAULT_LIMIT = DEFAULT_SIZE  # Number of resulting documents to return
         DEFAULT_VALUES = {
-            'time_start': None,
-            'time_end': None,
             'from': DEFAULT_FROM,
             'size': DEFAULT_SIZE,
             'terminate_after': DEFAULT_LIMIT,
@@ -352,7 +350,7 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             query_filter: The filter to apply (JSON format as string)
             query_dsl: A query DSL document (JSON format as string)
         """
-        super(SearchTemplate, self).__init__()
+        super().__init__()
         self.name = name
         self.user = user
         self.description = description
@@ -361,8 +359,6 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             filter_template = {
                 'exclude': [],
                 'indices': '_all',
-                'time_start': None,
-                'time_end': None,
                 'terminate_after': 40,
                 'from': 0,
                 'order': 'asc',
@@ -388,7 +384,7 @@ class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):
                 (instance of timesketch.models.sketch.SearchIndex)
             document_id = String with the datastore document ID
         """
-        super(Event, self).__init__()
+        super().__init__()
         self.sketch = sketch
         self.searchindex = searchindex
         self.document_id = document_id
@@ -411,7 +407,7 @@ class Story(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             sketch: A sketch (instance of timesketch.models.sketch.Sketch)
             user: A user (instance of timesketch.models.user.User)
         """
-        super(Story, self).__init__()
+        super().__init__()
         self.title = title
         self.content = content
         self.sketch = sketch
@@ -447,7 +443,7 @@ class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             aggregationgroup (AggregationGroup): Optional, an AggregationGroup
                 that the aggregation is bound to.
         """
-        super(Aggregation, self).__init__()
+        super().__init__()
         self.name = name
         self.description = description
         self.agg_type = agg_type
@@ -488,7 +484,7 @@ class AggregationGroup(
             orientation (str): Describes how charts should be joined together.
             view (View): Optional: The view that the aggregation is bound to
         """
-        super(AggregationGroup, self).__init__()
+        super().__init__()
         self.name = name
         self.description = description
         self.aggregations = aggregations or []
@@ -528,7 +524,7 @@ class Analysis(LabelMixin, StatusMixin, CommentMixin, BaseModel):
             searchindex (SearchIndex): SearchIndex the analysis was run on
             result (str): Result report of the analysis
         """
-        super(Analysis, self).__init__()
+        super().__init__()
         self.name = name
         self.description = description
         self.analyzer_name = analyzer_name
@@ -555,7 +551,7 @@ class AnalysisSession(LabelMixin, StatusMixin, CommentMixin, BaseModel):
             user (User): The user who created the aggregation
             sketch (Sketch): The sketch that the aggregation is bound to
         """
-        super(AnalysisSession, self).__init__()
+        super().__init__()
         self.user = user
         self.sketch = sketch
 
@@ -579,7 +575,7 @@ class Attribute(BaseModel):
             ontology (str): The ontology of the value, The values that can
                 be used are defined in timesketch/lib/ontology.py (ONTOLOGY).
         """
-        super(Attribute, self).__init__()
+        super().__init__()
         self.user = user
         self.sketch = sketch
         self.name = name
@@ -603,7 +599,7 @@ class AttributeValue(BaseModel):
                 The ontology could influence how this will be cast when
                 interpreted.
         """
-        super(AttributeValue, self).__init__()
+        super().__init__()
         self.user = user
         self.attribute = attribute
         self.value = value
@@ -637,7 +633,7 @@ class Graph(LabelMixin, CommentMixin, BaseModel):
             num_nodes (int): Number of nodes in the graph.
             num_edges (int): Number of edges in the graph.
         """
-        super(Graph, self).__init__()
+        super().__init__()
         self.user = user
         self.sketch = sketch
         self.name = name
@@ -670,7 +666,7 @@ class GraphCache(BaseModel):
             num_nodes (int): Number of nodes in the graph.
             num_edges (int): Number of edges in the graph.
         """
-        super(GraphCache, self).__init__()
+        super().__init__()
         self.sketch = sketch
         self.graph_plugin = graph_plugin
         self.graph_config = graph_config

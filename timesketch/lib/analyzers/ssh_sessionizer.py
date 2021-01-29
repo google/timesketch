@@ -19,8 +19,10 @@ SSH_PATTERN = re.compile(r'^\[sshd\] \[(?P<process_id>\d+)\]:')
 # TODO Change the pattern to be compatible also with IPv6
 SSH_CONNECTION_PATTERN = \
     re.compile(r'^\[sshd\] \[(?P<process_id>\d+)\]: Connection from ' + \
-    r'(?P<client_ip>(\d{1,3}\.){3}\d{1,3}) port (?P<client_port>\d+) on ' + \
-    r'(?P<host_ip>(\d{1,3}\.){3}\d{1,3}) port (?P<host_port>\d+)' + \
+    r'(?P<client_ip>(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)) ' + \
+    r'port (?P<client_port>\d+) on ' + \
+    r'(?P<host_ip>(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)) ' + \
+    r'port (?P<host_port>\d+)' + \
     r'( rdomain (?P<rdomain>.*))?$')
 
 
