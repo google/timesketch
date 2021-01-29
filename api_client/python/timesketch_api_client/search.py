@@ -806,8 +806,6 @@ class Search(resource.SketchResource):
         """Property that returns the query filter."""
         if not self._query_filter:
             self._query_filter = {
-                'time_start': None,
-                'time_end': None,
                 'size': self.DEFAULT_SIZE_LIMIT,
                 'terminate_after': self.DEFAULT_SIZE_LIMIT,
                 'indices': self.indices,

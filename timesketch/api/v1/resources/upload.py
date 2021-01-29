@@ -42,7 +42,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
     def _get_index(
             self, name, description, sketch, index_name='',
-            label='', extension=''):
+            data_label='', extension=''):
         """Returns a SearchIndex object to be used for uploads.
 
         Args:
@@ -51,12 +51,12 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             sketch: sketch object (instance of Sketch).
             index_name: optional index name, if supplied and if it exists
                 then the index associated with that will be returned.
-            label: optional label of the data, if supplied will be used to
+            data_label: optional label of the data, if supplied will be used to
                 determine whether an already existing index can be
                 used or a new one created.
             extension: optional file extension if a file is being uploaded,
-                if supplied and no label used, then the extension will be
-                used as a label.
+                if supplied and no data label used, then the extension will be
+                used as a data label.
 
         Returns:
             A SearchIndex object.
@@ -72,15 +72,15 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                     permission='write', user=current_user):
                 return searchindex
 
-        if extension and not label:
-            label = extension
+        if extension and not data_label:
+            data_label = extension
 
-        if not label:
-            label = 'generic'
+        if not data_label:
+            data_label = 'generic'
 
         indices = [t.searchindex for t in sketch.active_timelines]
         for index in indices:
-            if index.has_label(label) and sketch.has_permission(
+            if index.has_label(data_label) and sketch.has_permission(
                     permission='write', user=current_user):
                 return index
 
@@ -99,13 +99,13 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         db_session.add(searchindex)
         db_session.commit()
 
-        searchindex.add_label(label, user=current_user)
+        searchindex.add_label(data_label, user=current_user)
 
         return searchindex
 
     def _upload_and_index(
             self, file_extension, timeline_name, index_name, sketch,
-            enable_stream, label='', file_path='', events='', meta=None):
+            enable_stream, data_label='', file_path='', events='', meta=None):
         """Creates a full pipeline for an uploaded file and returns the results.
 
         Args:
@@ -116,7 +116,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             sketch: Instance of timesketch.models.sketch.Sketch
             enable_stream: boolean indicating whether this is file is part of a
                            stream or not.
-            label: Optional string with a label for the search index.
+            data_label: Optional string with a data label for the search index.
             file_path: the path to the file to be uploaded (optional).
             events: a string with events to upload (optional).
             meta: optional dict with additional meta fields that will be
@@ -131,7 +131,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             description=timeline_name,
             sketch=sketch,
             index_name=index_name,
-            label=label,
+            data_label=data_label,
             extension=file_extension)
         searchindex.set_status('processing')
 
@@ -191,7 +191,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         """
         timeline_name = form.get('name', 'unknown_events')
         file_extension = 'jsonl'
-        label = form.get('label', '')
+        data_label = form.get('data_label', '')
 
         return self._upload_and_index(
             events=events,
@@ -199,7 +199,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             timeline_name=timeline_name,
             index_name=index_name,
             sketch=sketch,
-            label=label,
+            data_label=data_label,
             enable_stream=form.get('enable_stream', False))
 
     def _upload_file(self, file_storage, form, sketch, index_name):
@@ -244,7 +244,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             file_size = int(file_size)
         enable_stream = form.get('enable_stream', False)
 
-        label = form.get('label', '')
+        data_label = form.get('data_label', '')
 
         if chunk_total_chunks is None:
             file_storage.save(file_path)
@@ -254,7 +254,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 timeline_name=timeline_name,
                 index_name=index_name,
                 sketch=sketch,
-                label=label,
+                data_label=data_label,
                 enable_stream=enable_stream)
 
         # For file chunks we need the correct filepath, otherwise each chunk
@@ -302,7 +302,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             timeline_name=timeline_name,
             index_name=index_name,
             sketch=sketch,
-            label=label,
+            data_label=data_label,
             enable_stream=enable_stream,
             meta=meta)
 

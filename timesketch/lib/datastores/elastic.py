@@ -237,27 +237,6 @@ class ElasticsearchDataStore(object):
             }
         }
 
-        # TODO: Remove when old UI has been deprecated.
-        if query_filter.get('star', None):
-            label_query = self._build_labels_query(sketch_id, ['__ts_star'])
-            query_string = '*'
-            query_dsl['query']['bool']['must'].append(label_query)
-
-        # TODO: Remove when old UI has been deprecated.
-        if query_filter.get('time_start', None):
-            query_dsl['query']['bool']['filter'] = [{
-                'bool': {
-                    'should': [{
-                        'range': {
-                            'datetime': {
-                                'gte': query_filter['time_start'],
-                                'lte': query_filter['time_end']
-                            }
-                        }
-                    }]
-                }
-            }]
-
         if timeline_ids and isinstance(timeline_ids, (list, tuple)):
             query_dsl = {
                 'query': {

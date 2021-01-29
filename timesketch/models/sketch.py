@@ -295,8 +295,6 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         DEFAULT_SIZE = 40 # Number of resulting documents to return
         DEFAULT_LIMIT = DEFAULT_SIZE  # Number of resulting documents to return
         DEFAULT_VALUES = {
-            'time_start': None,
-            'time_end': None,
             'from': DEFAULT_FROM,
             'size': DEFAULT_SIZE,
             'terminate_after': DEFAULT_LIMIT,
@@ -361,8 +359,6 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             filter_template = {
                 'exclude': [],
                 'indices': '_all',
-                'time_start': None,
-                'time_end': None,
                 'terminate_after': 40,
                 'from': 0,
                 'order': 'asc',

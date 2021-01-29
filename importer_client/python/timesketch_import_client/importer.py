@@ -52,6 +52,7 @@ class ImportStreamer(object):
         """Initialize the upload streamer."""
         self._count = 0
         self._config_helper = None
+        self._data_label = ''
         self._dict_config_loaded = False
         self._csv_delimiter = None
         self._data_lines = []
@@ -59,7 +60,6 @@ class ImportStreamer(object):
         self._datetime_field = None
         self._format_string = None
         self._index = uuid.uuid4().hex
-        self._label = ''
         self._last_response = None
         self._resource_url = ''
         self._sketch = None
@@ -232,7 +232,7 @@ class ImportStreamer(object):
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
             'index_name': self._index,
-            'label': self._label,
+            'data_label': self._data_label,
             'events': '\n'.join([json.dumps(x) for x in self._data_lines]),
         }
         logger.debug(
@@ -274,7 +274,7 @@ class ImportStreamer(object):
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
             'index_name': self._index,
-            'label': self._label,
+            'data_label': self._data_label,
             'events': data_frame.to_json(orient='records', lines=True),
         }
 
@@ -311,7 +311,7 @@ class ImportStreamer(object):
             'name': timeline_name,
             'sketch_id': self._sketch.id,
             'total_file_size': file_size,
-            'label': self._label,
+            'data_label': self._data_label,
             'index_name': self._index,
         }
         if file_size <= self._threshold_filesize:
@@ -494,14 +494,12 @@ class ImportStreamer(object):
 
         self.add_data_frame(data_frame)
 
-    def add_file(self, filepath, delimiter=',', label=''):
+    def add_file(self, filepath, delimiter=','):
         """Add a CSV, JSONL or a PLASO file to the buffer.
 
         Args:
             filepath: the path to the file to add.
             delimiter: if this is a CSV file then a delimiter can be defined.
-            label: optional label of the timeline, used for determining whether
-                a new index is generated or not.
 
         Raises:
             TypeError: if the entry does not fulfill requirements.
@@ -517,7 +515,9 @@ class ImportStreamer(object):
             self.set_timeline_name(default_timeline_name)
 
         file_ending = filepath.lower().split('.')[-1]
-        self._label = label or file_ending
+
+        if not self._data_label:
+            self._data_label = file_ending
 
         if file_ending == 'csv':
             if self._csv_delimiter:
@@ -627,6 +627,10 @@ class ImportStreamer(object):
     def set_csv_delimiter(self, delimiter):
         """Set the CSV delimiter for CSV file parsing."""
         self._csv_delimiter = delimiter
+
+    def set_data_label(self, data_label):
+        """Set the data label of the imported data."""
+        self._data_label = data_label
 
     def set_data_type(self, data_type):
         """Sets the column where the data_type is defined in."""
