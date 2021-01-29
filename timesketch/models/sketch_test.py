@@ -103,8 +103,6 @@ class SketchModelTest(ModelBaseTest):
         DEFAULT_LIMIT = 40
         default_values = {
             'from': 0,
-            'time_start': None,
-            'time_end': None,
             'size': DEFAULT_LIMIT,
             'terminate_after': DEFAULT_LIMIT,
             'indices': [],

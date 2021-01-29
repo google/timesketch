@@ -530,8 +530,8 @@ class Sketch(resource.BaseResource):
         Returns:
             A boolean indicating whether the ACL change was successful.
         """
-        if not user_list and not group_list:
-            return True
+        if not user_list and not group_list and not make_public:
+            return False
 
         resource_url = '{0:s}/sketches/{1:d}/collaborators/'.format(
             self.api.api_root, self.id)
@@ -940,8 +940,13 @@ class Sketch(resource.BaseResource):
 
         resource_url = f'{self.api.api_root}/upload/'
         files = {'file': open(file_path, 'rb')}
-        data = {'name': timeline_name, 'sketch_id': self.id,
-                'index_name': index}
+        _, _, file_ending = file_path.rpartition('.')
+        data = {
+            'name': timeline_name,
+            'sketch_id': self.id,
+            'label': file_ending,
+            'index_name': index}
+
         response = self.api.session.post(resource_url, files=files, data=data)
         response_dict = error.get_response_json(response, logger)
         timeline_dict = response_dict['objects'][0]
@@ -951,6 +956,7 @@ class Sketch(resource.BaseResource):
             api=self.api,
             name=timeline_dict['name'],
             searchindex=timeline_dict['searchindex']['index_name'])
+
         return timeline_obj
 
     def add_timeline(self, searchindex):

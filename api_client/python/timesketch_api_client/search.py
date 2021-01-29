@@ -706,17 +706,19 @@ class Search(resource.SketchResource):
                 'Indices needs to be a list of strings (indices that were '
                 'passed in were not a list).')
             return
-        if not all([isinstance(x, str) for x in indices]):
+        if not all([isinstance(x, (str, int)) for x in indices]):
             logger.warning(
-                'Indices needs to be a list of strings, not all entries '
-                'in the indices list are strings.')
+                'Indices needs to be a list of strings or ints, not all '
+                'entries in the indices list are valid string/int.')
             return
 
-        # Indices here can be either a list of timeline names or a list of
-        # search indices. We need to verify that these exist before saving
+        # Indices here can be either a list of timeline names, IDs or a list
+        # of search indices. We need to verify that these exist before saving
         # them.
         timelines = {
             t.index_name: t.name for t in self._sketch.list_timelines()}
+
+        valid_ids = [t.id for t in self._sketch.list_timelines()]
 
         new_indices = []
         for index in indices:
@@ -724,11 +726,18 @@ class Search(resource.SketchResource):
                 new_indices.append(index)
                 continue
 
+            if isinstance(index, int):
+                if index in valid_ids:
+                    new_indices.append(str(index))
+                    continue
+
+            if index.isdigit():
+                if int(index) in valid_ids:
+                    new_indices.append(index)
+                    continue
+
             if index in timelines.values():
-                for index_name, timeline_name in timelines.items():
-                    if timeline_name == index:
-                        new_indices.append(index_name)
-                        break
+                new_indices.append(index)
 
         if not new_indices:
             logger.warning('No valid indices found, not changin the value.')
@@ -797,8 +806,6 @@ class Search(resource.SketchResource):
         """Property that returns the query filter."""
         if not self._query_filter:
             self._query_filter = {
-                'time_start': None,
-                'time_end': None,
                 'size': self.DEFAULT_SIZE_LIMIT,
                 'terminate_after': self.DEFAULT_SIZE_LIMIT,
                 'indices': self.indices,
