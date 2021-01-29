@@ -16,7 +16,6 @@
 import codecs
 import os
 import uuid
-import six
 
 from flask import jsonify
 from flask import request
@@ -63,7 +62,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             A SearchIndex object.
         """
         if index_name:
-            if not isinstance(index_name, six.text_type):
+            if not isinstance(index_name, str):
                 index_name = codecs.decode(index_name, 'utf-8')
 
             searchindex = SearchIndex.query.filter_by(
@@ -77,12 +76,9 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             label = extension
 
         if not label:
-            label = 'log'
+            label = 'generic'
 
-        timelines = Timeline.query.filter_by(
-            sketch=sketch).all()
-
-        indices = [t.searchindex for t in timelines]
+        indices = [t.searchindex for t in sketch.active_timelines]
         for index in indices:
             if index.has_label(label) and sketch.has_permission(
                     permission='write', user=current_user):
@@ -226,23 +222,25 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         # We do not need a human readable filename or
         # datastore index name, so we use UUIDs here.
         filename = uuid.uuid4().hex
-        if not isinstance(filename, six.text_type):
+        if not isinstance(filename, str):
             filename = codecs.decode(filename, 'utf-8')
 
         upload_folder = current_app.config['UPLOAD_FOLDER']
         file_path = os.path.join(upload_folder, filename)
 
         chunk_index = form.get('chunk_index')
-        if isinstance(chunk_index, six.string_types):
+        if isinstance(chunk_index, str) and chunk_index.is_digit():
             chunk_index = int(chunk_index)
         chunk_byte_offset = form.get('chunk_byte_offset')
-        if isinstance(chunk_byte_offset, six.string_types):
+        if isinstance(
+                chunk_byte_offset, str) and chunk_byte_offset.is_digit():
             chunk_byte_offset = int(chunk_byte_offset)
         chunk_total_chunks = form.get('chunk_total_chunks')
-        if isinstance(chunk_total_chunks, six.string_types):
+        if isinstance(
+                chunk_total_chunks, str) and chunk_total_chunks.is_digit():
             chunk_total_chunks = int(chunk_total_chunks)
         file_size = form.get('total_file_size')
-        if isinstance(file_size, six.string_types):
+        if isinstance(file_size, str) and file_size.is_digit():
             file_size = int(file_size)
         enable_stream = form.get('enable_stream', False)
 
