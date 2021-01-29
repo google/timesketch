@@ -21,6 +21,8 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for BrowserSearch."""
 
     NAME = 'browser_search'
+    DISPLAY_NAME = 'Browser search terms'
+    DESCRIPTION = 'Extract search terms from various search providers'
 
     DEPENDENCIES = frozenset(['domain'])
 

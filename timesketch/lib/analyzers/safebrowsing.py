@@ -20,6 +20,8 @@ class SafeBrowsingSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Safe Browsing."""
 
     NAME = 'safebrowsing'
+    DISPLAY_NAME = 'Google Safe Browsing'
+    DESCRIPTION = 'Examine if a URL has a match in the Safe Browsing service'
 
     # Safe Browsing API v4, threatMatches.find endpoint.
     _SAFE_BROWSING_THREATMATCHING_ENDPOINT = (

@@ -50,6 +50,9 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for detecting gaps in EVTX records."""
 
     NAME = 'evtx_gap'
+    DISPLAY_NAME = 'EVTX gap'
+    DESCRIPTION = 'Detect gaps in EVTX logs'
+
     DEPENDENCIES = frozenset()
 
     # The title of the story the analyzer generates.

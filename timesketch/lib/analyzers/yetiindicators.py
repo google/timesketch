@@ -15,6 +15,9 @@ class YetiIndicators(interface.BaseSketchAnalyzer):
     """Index analyzer for Yeti threat intel indicators."""
 
     NAME = 'yetiindicators'
+    DISPLAY_NAME = 'Yeti threat intel indicators'
+    DESCRIPTION = 'Mark events using Yeti threat intel indicators'
+
     DEPENDENCIES = frozenset(['domain'])
 
     def __init__(self, index_name, sketch_id):

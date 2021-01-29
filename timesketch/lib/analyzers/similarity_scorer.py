@@ -83,6 +83,9 @@ class SimilarityScorer(interface.BaseSketchAnalyzer):
     """Score events based on Jaccard distance."""
 
     NAME = 'similarity_scorer'
+    DISPLAY_NAME = 'Similarity Scorer'
+    DESCRIPTION = ('Experimental: Calculate similarity scores based on the '
+                   'Jaccard distance between events')
 
     DEPENDENCIES = frozenset()
 

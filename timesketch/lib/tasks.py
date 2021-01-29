@@ -336,7 +336,7 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
     if not tasks:
         return None, None
 
-    return chain(tasks), analysis_session.id
+    return chain(tasks), analysis_session
 
 
 @celery.task(track_started=True)

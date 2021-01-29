@@ -30,11 +30,18 @@ limitations under the License.
           <col span="1" style="width: 15%;">
           <col span="1" style="width: 80%;">
         </colgroup>
+        <thead>
+          <th></th>
+          <th>Analyzer</th>
+          <th>Result</th>
+          <th>Timeline</th>
+        </thead>
         <tbody>
         <tr v-for="row in tableData">
           <td><div style="width:10px; height: 10px; border-radius: 100%; margin-top:6px; margin-left:3px;" v-bind:class="{ pending: row.status === 'PENDING',  done: row.status === 'DONE', started: row.status === 'STARTED', error: row.status === 'ERROR'}"></div></td>
           <td>{{row.analyzer}}</td>
           <td>{{row.result}}</td>
+          <td>{{row.timeline.name}}</td>
         </tr>
         </tbody>
       </table>
@@ -46,7 +53,7 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  props: ['timeline', 'sessionId'],
+  props: ['session'],
   data () {
     return {
       analysisSession: {},
@@ -73,15 +80,6 @@ export default {
       })
       return count
     },
-    runningAnalyzer () {
-      let running = false
-      this.analyses.forEach(function (analyzer) {
-        if (analyzer.status[0].status === 'STARTED') {
-          running = analyzer.analyzer_name
-        }
-      })
-      return running
-    },
     tableData () {
       let tableArray = []
       this.analyses.forEach(function (analyzer) {
@@ -89,6 +87,7 @@ export default {
         row.status = analyzer.status[0].status
         row.analyzer = analyzer.analyzer_name
         row.result = analyzer.result
+        row.timeline = analyzer.timeline
         tableArray.push(row)
       })
       return tableArray
@@ -99,15 +98,21 @@ export default {
   },
   methods: {
     fetchData () {
-      if (!this.sessionId) {
-        return
-      }
-      ApiClient.getAnalyzerSession(this.sketch.id, this.sessionId).then((response) => {
+      ApiClient.getAnalyzerSession(this.sketch.id, this.session.id).then((response) => {
         this.analysisSession = response.data.objects[0]
         this.analyses = response.data.objects[0].analyses
         this.autoRefresh = true
       }).catch((e) => {})
     }
+  },
+  beforeDestroy() {
+    clearInterval(this.t)
+    this.t = false
+  },
+  created () {
+    this.analysisSession = this.session
+    this.analyses = this.session.analyses
+    this.autoRefresh = true
   },
   watch: {
     autoRefresh(val) {
@@ -121,11 +126,6 @@ export default {
       else {
         clearInterval(this.t)
         this.t = false
-      }
-    },
-    sessionId(val) {
-      if (val) {
-        this.fetchData()
       }
     }
   }

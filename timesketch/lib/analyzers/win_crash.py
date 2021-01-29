@@ -11,6 +11,8 @@ class WinCrashSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Windows application crashes."""
 
     NAME = 'win_crash'
+    DISPLAY_NAME = 'Windows application crashes'
+    DESCRIPTION = 'Detect Windows application crashes'
 
     DEPENDENCIES = frozenset()
 

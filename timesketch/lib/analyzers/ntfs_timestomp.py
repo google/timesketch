@@ -22,6 +22,9 @@ class NtfsTimestompSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Timestomp."""
 
     NAME = 'ntfs_timestomp'
+    DISPLAY_NAME = 'NTFS timestomp detection'
+    DESCRIPTION = 'Compares timestamps in NTFS to detect potential timestomp'
+
     STD_INFO = 16
     FILE_NAME = 48
 

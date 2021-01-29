@@ -401,6 +401,15 @@ class SketchResource(resources.ResourceMixin, Resource):
             }
             stories.append(story)
 
+        analyzers = analyzer_manager.AnalysisManager.get_analyzers()
+        analyzers_detail = []
+        for analyzer_name, analyzer_class in analyzers:
+            analyzers_detail.append({
+                'name': analyzer_name,
+                'display_name': analyzer_class.DISPLAY_NAME,
+                'description': analyzer_class.DESCRIPTION
+            })
+
         meta = dict(
             aggregators=aggregators,
             views=views,
@@ -423,6 +432,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             analyzers=[
                 x for x, y in analyzer_manager.AnalysisManager.get_analyzers()
             ],
+            analyzers_detail=analyzers_detail,
             attributes=utils.get_sketch_attributes(sketch),
             mappings=list(mappings),
             stats=stats_per_index,

@@ -8,6 +8,9 @@ class TaggerSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for tagging events."""
 
     NAME = 'tagger'
+    DISPLAY_NAME = 'Tagger'
+    DESCRIPTION = 'Tag events based on pre-defined rules'
+
     CONFIG_FILE = 'tags.yaml'
 
     def __init__(self, index_name, sketch_id, config=None):

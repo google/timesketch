@@ -17,6 +17,9 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Domain."""
 
     NAME = 'domain'
+    DISPLAY_NAME = 'Domain'
+    DESCRIPTION = ('Extract domain name from event, tag common and rare '
+                   'domains as well as mark known CDNs')
 
     DEPENDENCIES = frozenset()
 

@@ -26,6 +26,8 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for FeatureExtraction."""
 
     NAME = 'feature_extraction'
+    DISPLAY_NAME = 'Feature extractor'
+    DESCRIPTION = 'Extract features from event based on stored definitions'
 
     CONFIG_FILE = 'features.yaml'
 
