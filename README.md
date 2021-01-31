@@ -32,7 +32,7 @@ Timesketch is an open source tool for collaborative forensic timeline analysis. 
 
 #### Using Timesketch
 * [Users guide](docs/Users-Guide.md)
-* [Using Sigma Analyzer](docs/UseSigmaAnalyzer.md)
+* [Using Sigma](docs/UseSigma.md)
 
 ## Community
 * [Community guide](docs/Community-Guide.md)
