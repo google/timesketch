@@ -34,10 +34,25 @@ class TestUtils(BaseTest):
         """Test for validating indices."""
         sketch = self.sketch1
         sketch_indices = [t.searchindex.index_name for t in sketch.timelines]
+
+        sketch_structure = {}
+        for timeline in sketch.timelines:
+            if timeline.get_status.status.lower() != 'ready':
+                continue
+            index_ = timeline.searchindex.index_name
+            sketch_structure.setdefault(index_, [])
+            sketch_structure[index_].append({
+                'name': timeline.name,
+                'id': timeline.id,
+            })
+
+
         valid_indices = ['test']
         invalid_indices = ['test', 'fail']
-        self.assertListEqual(sketch_indices,
-                             get_validated_indices(valid_indices,
-                                                   sketch_indices))
-        self.assertFalse('fail' in get_validated_indices(
-            invalid_indices, sketch_indices))
+
+        test_indices, _ = get_validated_indices(valid_indices, sketch_structure)
+        self.assertListEqual(sketch_indices, test_indices)
+
+        test_indices, _ = get_validated_indices(
+            invalid_indices, sketch_structure)
+        self.assertFalse('fail' in test_indices)

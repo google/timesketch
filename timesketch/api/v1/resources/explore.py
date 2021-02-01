@@ -35,6 +35,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.models import db_session
+from timesketch.models.sketch import Event
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import View
 
@@ -79,6 +80,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
         enable_scroll = form.enable_scroll.data
         scroll_id = form.scroll_id.data
         file_name = form.file_name.data
+        count = bool(form.count.data)
 
         query_filter = request.json.get('filter', {})
 
@@ -90,23 +92,30 @@ class ExploreResource(resources.ResourceMixin, Resource):
             return_fields = [field['field'] for field in return_fields]
             return_fields.extend(DEFAULT_SOURCE_FIELDS)
 
-        sketch_indices = {
-            t.searchindex.index_name
-            for t in sketch.timelines
-            if t.get_status.status.lower() == 'ready'
-        }
+        sketch_structure = {}
+        for timeline in sketch.timelines:
+            if timeline.get_status.status.lower() != 'ready':
+                continue
+            index_ = timeline.searchindex.index_name
+            sketch_structure.setdefault(index_, [])
+            sketch_structure[index_].append({
+                'name': timeline.name,
+                'id': timeline.id,
+            })
+
         if not query_filter:
             query_filter = {}
 
-        indices = query_filter.get('indices', sketch_indices)
+        indices = query_filter.get('indices', list(sketch_structure.keys()))
 
         # If _all in indices then execute the query on all indices
         if '_all' in indices:
-            indices = sketch_indices
+            indices = list(sketch_structure.keys())
 
         # Make sure that the indices in the filter are part of the sketch.
         # This will also remove any deleted timeline from the search result.
-        indices = get_validated_indices(indices, sketch_indices)
+        indices, timeline_ids = get_validated_indices(
+            indices, sketch_structure)
 
         # Make sure we have a query string or star filter
         if not (form.query.data, query_filter.get('star'),
@@ -117,12 +126,35 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         # Aggregate hit count per index.
         index_stats_agg = {
-            "indices": {
-                "terms": {
-                    "field": "_index"
+            'indices': {
+                'terms': {
+                    'field': '_index'
                 }
             }
         }
+        if count:
+            # Count operations do not support size parameters.
+            if 'size' in query_filter:
+                _ = query_filter.pop('size')
+            if 'terminate_after' in query_filter:
+                _ = query_filter.pop('terminate_after')
+
+            try:
+                result = self.datastore.search(
+                    sketch_id=sketch_id,
+                    query_string=form.query.data,
+                    query_filter=query_filter,
+                    query_dsl=query_dsl,
+                    indices=indices,
+                    timeline_ids=timeline_ids,
+                    count=True)
+            except ValueError as e:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST, e)
+
+            # Get number of matching documents per index.
+            schema = {'meta': {'total_count': result}, 'objects': []}
+            return jsonify(schema)
 
         if file_name:
             file_object = io.BytesIO()
@@ -159,14 +191,15 @@ class ExploreResource(resources.ResourceMixin, Resource):
         else:
             try:
                 result = self.datastore.search(
-                    sketch_id,
-                    form.query.data,
-                    query_filter,
-                    query_dsl,
-                    indices,
+                    sketch_id=sketch_id,
+                    query_string=form.query.data,
+                    query_filter=query_filter,
+                    query_dsl=query_dsl,
+                    indices=indices,
                     aggregations=index_stats_agg,
                     return_fields=return_fields,
-                    enable_scroll=enable_scroll)
+                    enable_scroll=enable_scroll,
+                    timeline_ids=timeline_ids)
             except ValueError as e:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST, e)
@@ -181,6 +214,15 @@ class ExploreResource(resources.ResourceMixin, Resource):
         except KeyError:
             pass
 
+        comments = {}
+        if 'comment' in return_fields:
+            events = Event.query.filter_by(
+                sketch=sketch).all()
+            for event in events:
+                for comment in event.comments:
+                    comments.setdefault(event.document_id, [])
+                    comments[event.document_id].append(comment.comment)
+
         # Get labels for each event that matches the sketch.
         # Remove all other labels.
         for event in result['hits']['hits']:
@@ -194,6 +236,9 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 del event['_source']['timesketch_label']
             except KeyError:
                 pass
+
+            if 'comment' in return_fields:
+                event['_source']['comment'] = comments.get(event['_id'], [])
 
         # Update or create user state view. This is used in the UI to let
         # the user get back to the last state in the explore view.

@@ -346,13 +346,18 @@ class SketchResource(resources.ResourceMixin, Resource):
 
         mappings = []
 
-        for _, value in mappings_settings.items():
+        for index_name, value in mappings_settings.items():
             # The structure is different in ES version 6.x and lower. This check
             # makes sure we support both old and new versions.
             properties = value['mappings'].get('properties')
             if not properties:
                 properties = next(
                     iter(value['mappings'].values())).get('properties')
+
+            # Determine if index is from the time before multiple timelines per
+            # index. This is used in the UI to support both modes.
+            is_legacy = bool('__timeline_id' not in properties)
+            stats_per_index[index_name]['is_legacy'] = is_legacy
 
             for field, value_dict in properties.items():
                 mapping_dict = {}
