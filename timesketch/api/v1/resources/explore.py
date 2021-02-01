@@ -130,6 +130,11 @@ class ExploreResource(resources.ResourceMixin, Resource):
                 'terms': {
                     'field': '_index'
                 }
+            },
+            'timelines': {
+                'terms': {
+                    'field': '__ts_timeline_id'
+                }
             }
         }
         if count:
@@ -214,6 +219,16 @@ class ExploreResource(resources.ResourceMixin, Resource):
         except KeyError:
             pass
 
+        # Get number of matching documents per timeline.
+        count_per_timeline = {}
+        try:
+            for bucket in result['aggregations']['timelines']['buckets']:
+                key = bucket.get('key')
+                if key:
+                    count_per_timeline[key] = bucket.get('doc_count')
+        except KeyError:
+            pass
+
         comments = {}
         if 'comment' in return_fields:
             events = Event.query.filter_by(
@@ -268,6 +283,7 @@ class ExploreResource(resources.ResourceMixin, Resource):
             'timeline_colors': tl_colors,
             'timeline_names': tl_names,
             'count_per_index': count_per_index,
+            'count_per_timeline': count_per_timeline,
             'scroll_id': result.get('_scroll_id', ''),
         }
 

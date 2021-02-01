@@ -167,7 +167,7 @@ limitations under the License.
               </span>
             </div>
 
-            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateSelectedTimelines="updateSelectedTimelines($event)" :active-timelines="sketch.active_timelines" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index"></ts-explore-timeline-picker>
+            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateSelectedTimelines="updateSelectedTimelines($event)" :active-timelines="sketch.active_timelines" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index" :count-per-timeline="eventList.meta.count_per_timeline"></ts-explore-timeline-picker>
 
           </div>
 
@@ -591,7 +591,7 @@ export default {
 
       this.currentQueryFilter.chips = [startChip, endChip]
 
-      let isLegacy = this.meta.stats[this.contextEvent._index].is_legacy
+      let isLegacy = this.meta.indices_metadata[this.contextEvent._index].is_legacy
       if (isLegacy) {
         this.currentQueryFilter.indices = [this.contextEvent._index]
       } else {
@@ -613,7 +613,7 @@ export default {
     updateSelectedTimelines: function (timelines) {
       let selected = []
       timelines.forEach(timeline => {
-        let isLegacy = this.meta.stats[timeline.searchindex.index_name].is_legacy
+        let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
         if (isLegacy) {
           selected.push(timeline.searchindex.index_name)
         } else {
@@ -799,7 +799,7 @@ export default {
         return timeline.id === parseInt(this.params.indexName, 10)
       })
 
-      let isLegacy = this.meta.stats[timeline.searchindex.index_name].is_legacy
+      let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
       if (isLegacy) {
         this.currentQueryFilter.indices = [timeline.searchindex.index_name]
       } else {
