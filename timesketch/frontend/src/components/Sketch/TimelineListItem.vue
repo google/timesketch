@@ -175,7 +175,7 @@ limitations under the License.
       Unknown status: {{ timelineStatus }}
     </span>
 
-    <div v-show="showAnalysisDetail">
+    <div v-if="showAnalysisDetail">
       <ts-analyzer-session-detail :timeline="timeline" :session-id="analysisSessionId" @closeDetail="showAnalysisDetail = false"></ts-analyzer-session-detail>
     </div>
 
