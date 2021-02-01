@@ -380,7 +380,7 @@ limitations under the License.
     if (isLegacy) {
       this.timeline = this.sketch.active_timelines.filter(timeline => timeline.searchindex.index_name === this.event._index)[0]
     } else {
-      this.timeline = this.sketch.active_timelines.filter(timeline => timeline.id === this.event._source.__timeline_id)[0]
+      this.timeline = this.sketch.active_timelines.filter(timeline => timeline.id === this.event._source.__ts_timeline_id)[0]
     }
 
     this.isDarkTheme = localStorage.theme === 'dark';
