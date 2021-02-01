@@ -15,6 +15,7 @@
 from __future__ import unicode_literals
 
 from collections import Counter
+import copy
 import codecs
 import json
 import logging
@@ -237,48 +238,7 @@ class ElasticsearchDataStore(object):
             }
         }
 
-        # TODO: Simplify this when we don't have to support both timelines
-        # that have __timeline_id set and those that don't.
-        # (query_string AND timeline_id NOT EXISTS) OR (
-        #       query_string AND timeline_id in LIST)
-        if timeline_ids and isinstance(timeline_ids, (list, tuple)):
-            query_dsl = {
-                'query': {
-                    'bool': {
-                        'must': [],
-                        'should': [{
-                            'bool': {
-                                'must': [{
-                                    'query_string': {
-                                        'query': query_string
-                                    }
-                                }],
-                                'must_not': [{
-                                    'exists': {
-                                        'field': '__timeline_id'},
-                                }],
-                            }
-                        }, {
-                            'bool': {
-                                'must': [{
-                                    'query_string': {
-                                        'query': query_string}
-                                }, {
-                                    'terms': {
-                                        '__timeline_id': timeline_ids}
-                                }],
-                                'filter': [{
-                                    'exists': {
-                                        'field': '__timeline_id'}
-                                }]
-                            }
-                        }],
-                        'must_not': [],
-                        'filter': []
-                    }
-                }
-            }
-        elif query_string:
+        if query_string:
             query_dsl['query']['bool']['must'].append(
                 {'query_string': {'query': query_string}})
 
@@ -362,6 +322,52 @@ class ElasticsearchDataStore(object):
                     'post_filter']
                 query_dsl.pop('post_filter', None)
             query_dsl['aggregations'] = aggregations
+
+        # TODO: Simplify this when we don't have to support both timelines
+        # that have __ts_timeline_id set and those that don't.
+        # (query_string AND timeline_id NOT EXISTS) OR (
+        #       query_string AND timeline_id in LIST)
+        if timeline_ids and isinstance(timeline_ids, (list, tuple)):
+            must_filters_pre = copy.copy(query_dsl['query']['bool']['must'])
+            must_not_filters_pre = copy.copy(
+                query_dsl['query']['bool']['must_not'])
+
+            must_filters_post = copy.copy(query_dsl['query']['bool']['must'])
+            must_not_filters_post = copy.copy(
+                query_dsl['query']['bool']['must_not'])
+
+            must_not_filters_pre.append({
+                'exists': {
+                    'field': '__ts_timeline_id'},
+            })
+
+            must_filters_post.append({
+                'terms': {
+                    '__ts_timeline_id': timeline_ids}
+            })
+
+            query_dsl['query'] = {
+                'bool': {
+                    'must': [],
+                    'should': [{
+                        'bool': {
+                            'must': must_filters_pre,
+                            'must_not': must_not_filters_pre,
+                        }
+                    }, {
+                        'bool': {
+                            'must': must_filters_post,
+                            'must_not': must_not_filters_post,
+                            'filter': [{
+                                'exists': {
+                                    'field': '__ts_timeline_id'}
+                            }]
+                        }
+                    }],
+                    'must_not': [],
+                    'filter': []
+                }
+            }
 
         return query_dsl
 
@@ -827,7 +833,7 @@ class ElasticsearchDataStore(object):
                 header = update_header
 
             if timeline_id:
-                event['__timeline_id'] = timeline_id
+                event['__ts_timeline_id'] = timeline_id
 
             self.import_events.append(header)
             self.import_events.append(event)

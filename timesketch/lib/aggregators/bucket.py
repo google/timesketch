@@ -15,6 +15,8 @@
 
 from __future__ import unicode_literals
 
+import datetime
+
 from timesketch.lib.aggregators import manager
 from timesketch.lib.aggregators import interface
 
@@ -46,6 +48,24 @@ class TermsAggregation(interface.BaseAggregator):
             'display': True
         },
         {
+            'type': 'ts-dynamic-form-datetime-input',
+            'name': 'start_time',
+            'label': (
+                'ISO formatted timestamp for the start time '
+                'of the aggregated data'),
+            'placeholder': 'Enter a start date for the aggregation',
+            'default_value': '',
+            'display': True
+        },
+        {
+            'type': 'ts-dynamic-form-datetime-input',
+            'name': 'end_time',
+            'label': 'ISO formatted end time for the aggregation',
+            'placeholder': 'Enter an end date for the aggregation',
+            'default_value': '',
+            'display': True
+        },
+        {
             'type': 'ts-dynamic-form-text-input',
             'name': 'limit',
             'label': 'Number of results to return',
@@ -65,13 +85,17 @@ class TermsAggregation(interface.BaseAggregator):
     # pylint: disable=arguments-differ
     def run(
             self, field, limit=10, supported_charts='table',
-            order_field='count'):
+            start_time='', end_time='', order_field='count'):
         """Run the aggregation.
 
         Args:
             field: What field to aggregate on.
             limit: How many buckets to return.
             supported_charts: Chart type to render. Defaults to table.
+            start_time: Optional ISO formatted date string that limits the time
+                range for the aggregation.
+            end_time: Optional ISO formatted date string that limits the time
+                range for the aggregation.
             order_field: The name of the field that is used for the order
                 of items in the aggregation, defaults to "count".
 
@@ -108,6 +132,52 @@ class TermsAggregation(interface.BaseAggregator):
                 }
             }
         }
+
+        query_filter = None
+        if start_time:
+            try:
+                _ = datetime.datetime.fromisoformat(start_time)
+            except ValueError:
+                raise ValueError(
+                    'Start time is not ISO formatted [{0:s}'.format(
+                        start_time)) from ValueError
+
+        if end_time:
+            try:
+                _ = datetime.datetime.fromisoformat(end_time)
+            except ValueError:
+                raise ValueError(
+                    'End time is not ISO formatted [{0:s}'.format(
+                        end_time)) from ValueError
+
+        if start_time and end_time:
+            query_filter = {
+                'range': {
+                    'datetime': {
+                        'gte': start_time,
+                        'lte': end_time,
+                    }
+                }
+            }
+        elif start_time:
+            query_filter = {
+                'range': {
+                    'datetime': {
+                        'gte': start_time,
+                    }
+                }
+            }
+        elif end_time:
+            query_filter = {
+                'range': {
+                    'datetime': {
+                        'lte': end_time,
+                    }
+                }
+            }
+
+        if query_filter:
+            aggregation_spec['aggs']['my_filter'] = {'filter': query_filter}
 
         response = self.elastic_aggregation(aggregation_spec)
         aggregations = response.get('aggregations', {})

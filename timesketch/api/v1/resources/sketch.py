@@ -344,7 +344,7 @@ class SketchResource(resources.ResourceMixin, Resource):
 
             # Determine if index is from the time before multiple timelines per
             # index. This is used in the UI to support both modes.
-            is_legacy = bool('__timeline_id' not in properties)
+            is_legacy = bool('__ts_timeline_id' not in properties)
             stats_per_index[index_name]['is_legacy'] = is_legacy
 
             for field, value_dict in properties.items():
