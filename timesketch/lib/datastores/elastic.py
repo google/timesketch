@@ -341,7 +341,7 @@ class ElasticsearchDataStore(object):
                     'field': '__ts_timeline_id'},
             })
 
-            must_filters_pre.append({
+            must_filters_post.append({
                 'terms': {
                     '__ts_timeline_id': timeline_ids}
             })
@@ -352,7 +352,7 @@ class ElasticsearchDataStore(object):
                     'should': [{
                         'bool': {
                             'must': must_filters_pre,
-                            'must_not': must_not_filters_post,
+                            'must_not': must_not_filters_pre,
                         }
                     }, {
                         'bool': {
