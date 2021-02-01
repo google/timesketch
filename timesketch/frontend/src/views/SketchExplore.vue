@@ -357,8 +357,6 @@ import EventBus from "../main"
 const defaultQueryFilter = () => {
   return {
     'from': 0,
-    'time_start': null,
-    'time_end': null,
     'terminate_after': 40,
     'size': 40,
     'indices': [],
