@@ -595,7 +595,7 @@ export default {
       if (isLegacy) {
         this.currentQueryFilter.indices = [this.contextEvent._index]
       } else {
-        this.currentQueryFilter.indices = [this.contextEvent._source.__timeline_id]
+        this.currentQueryFilter.indices = [this.contextEvent._source.__ts_timeline_id]
       }
       this.currentQueryFilter.size = numContextEvents
 
