@@ -159,7 +159,7 @@ limitations under the License.
 
     <span v-if="timelineStatus === 'ready'" class="is-size-7">
       Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
-      <span class="is-small" :title="meta.stats[timeline.searchindex.index_name]['count'] + ' events in index'">({{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }})</span>
+      <span class="is-small" :title="meta.stats_per_timeline[timeline.id]['count'] + ' events in index'">({{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }})</span>
     </span>
 
     <span v-else-if="timelineStatus === 'fail'" class="is-size-7">

@@ -314,24 +314,12 @@ class SketchResource(resources.ResourceMixin, Resource):
 
         # Get event count and size on disk for each index in the sketch.
         stats_per_index = {}
+        stats_per_timeline = {}
         for timeline in sketch.active_timelines:
-            if timeline.get_status.status != 'archived':
-                continue
-            stats_per_index[timeline.searchindex.index_name] = {
-                'count': 0,
-                'bytes': 0,
-                'data_types': []
+            stats_per_index[timeline.searchindex.index_name] = {}
+            stats_per_timeline[timeline.id] = {
+                'count': 0
             }
-
-        if sketch_indices:
-            # Stats for index. Num docs per shard and size on disk.
-            for index_name in sketch_indices:
-                doc_count, bytes_on_disk = self.datastore.count(
-                    indices=index_name)
-                stats_per_index[index_name] = {
-                    'count': doc_count,
-                    'bytes': bytes_on_disk
-                }
 
         if not sketch_indices:
             mappings_settings = {}
@@ -369,6 +357,23 @@ class SketchResource(resources.ResourceMixin, Resource):
                 mapping_dict['field'] = field
                 mapping_dict['type'] = value_dict.get('type', 'n/a')
                 mappings.append(mapping_dict)
+
+        if sketch_indices:
+            # Stats for index. Num docs per shard and size on disk.
+            for timeline in sketch.active_timelines:
+                if stats_per_index[timeline.searchindex.index_name].get('is_legacy', False):
+                    doc_count, _ = self.datastore.count(
+                        indices=timeline.searchindex.index_name)
+                    stats_per_timeline[timeline.id] = {
+                        'count': doc_count
+                    }
+                else:
+                    query = f'__timeline_id:{timeline.id}'
+                    c = self.datastore.search(sketch.id, query, {}, {}, indices=[timeline.searchindex.index_name], count=True)
+                    stats_per_timeline[timeline.id] = {
+                        'count': c
+                    }
+        print(stats_per_timeline)
 
         # Make the list of dicts unique
         mappings = {v['field']: v for v in mappings}.values()
@@ -431,6 +436,7 @@ class SketchResource(resources.ResourceMixin, Resource):
             attributes=utils.get_sketch_attributes(sketch),
             mappings=list(mappings),
             stats=stats_per_index,
+            stats_per_timeline=stats_per_timeline,
             last_activity=utils.get_sketch_last_activity(sketch),
             filter_labels=self.datastore.get_filter_labels(
                 sketch.id, sketch_indices),
