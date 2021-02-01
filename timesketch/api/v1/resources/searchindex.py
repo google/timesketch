@@ -120,7 +120,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
                 'properties', {}).keys())
 
         meta = {
-            'contains_timeline_id': bool('__timeline_id' in fields),
+            'contains_timeline_id': bool('__ts_timeline_id' in fields),
         }
         return self.to_json(searchindex, meta=meta)
 
