@@ -15,6 +15,7 @@
 
 from __future__ import unicode_literals
 
+import os
 import logging
 import subprocess
 import traceback
@@ -33,6 +34,12 @@ from sqlalchemy import create_engine
 
 # Disabled until the project can provide a non-ES native import.
 # from mans_to_es import MansToEs
+
+# To be able to determine plaso's version.
+try:
+  import plaso
+except ImportError:
+  plaso = None
 
 from timesketch.app import configure_logger
 from timesketch.app import create_celery_app
@@ -53,6 +60,9 @@ from timesketch.models.user import User
 
 logger = logging.getLogger('timesketch.tasks')
 celery = create_celery_app()
+
+
+PLASO_MINIMUM_VERSION = 20201228
 
 
 # pylint: disable=unused-argument
@@ -484,12 +494,85 @@ def run_plaso(
         source_type: Type of file, csv or jsonl.
         timeline_id: ID of the timeline object this data belongs to.
 
+    Raises:
+        RuntimeError: If the function is called using events, plaso
+            is not installed or is of unsupported version.
     Returns:
         Name (str) of the index.
     """
+    if not plaso:
+        raise RuntimeError(
+            'Plaso isn\'t installed, unable to continue processing plaso '
+            'files.')
+
+    plaso_version = int(plaso.__version__)
+    # Uncomment once a new version is released.
+    #if plaso_version <= PLASO_MINIMUM_VERSION:
+    if plaso_version < PLASO_MINIMUM_VERSION:
+        raise RuntimeError(
+            'Plaso version is out of date (version {0:d}, please upgrade to a '
+            'version that is later than {1:d}'.format(
+                plaso_version, PLASO_MINIMUM_VERSION))
+
     if events:
         raise RuntimeError('Plaso uploads needs a file, not events.')
-    # Log information to Celery
+
+    event_type = 'generic_event'  # Document type for Elasticsearch
+
+    mappings = None
+    mappings_file_path = current_app.config.get('PLASO_MAPPING_FILE', '')
+    if os.path.isfile(mappings_file_path):
+        try:
+            with open(mappings_file_path, 'r') as mfh:
+                mappings = json.load(mfh)
+
+                if not isinstance(mappings, dict):
+                    raise RuntimeError(
+                        'Unable to create mappings, the mappings are not a '
+                        'dict, please look at the file: {0:s}'.format(
+                            mappings_file_path))
+        except (json.JSONDecodeError, IOError):
+            logger.error('Unable to read in mapping', exc_info=True)
+
+    elastic_server = current_app.config.get('ELASTIC_HOST')
+    if not elastic_server:
+        raise RuntimeError(
+            'Unable to connect to Elastic, no server set, unable to '
+            'process plaso file.')
+    elastic_port = current_app.config.get('ELASTIC_PORT')
+    if not elastic_port:
+        raise RuntimeError(
+            'Unable to connect to Elastic, no port set, unable to '
+            'process plaso file.')
+
+    es = ElasticsearchDataStore(
+        host=elastic_server, port=elastic_port)
+
+    try:
+        es.create_index(
+            index_name=index_name, doc_type=event_type, mappings=mappings)
+    except errors.DataIngestionError as e:
+        _set_timeline_status(
+            index_name, status='fail', error_msg=str(e),
+            timeline_name=timeline_name)
+        raise
+
+    except (RuntimeError, ImportError, NameError, UnboundLocalError,
+            RequestError) as e:
+        _set_timeline_status(
+            index_name, status='fail', error_msg=str(e),
+            timeline_name=timeline_name)
+        raise
+
+    except Exception as e:  # pylint: disable=broad-except
+        # Mark the searchindex and timelines as failed and exit the task
+        error_msg = traceback.format_exc()
+        _set_timeline_status(
+            index_name, status='fail', error_msg=error_msg,
+            timeline_name=timeline_name)
+        logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
+        return None
+
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
     logger.info(message.format(timeline_name, index_name, source_type))
 
@@ -499,17 +582,25 @@ def run_plaso(
         psort_path = 'psort.py'
 
     cmd = [
-        psort_path, '-o', 'timesketch', file_path, '--name',
-        timeline_name, '--status_view', 'none', '--index', index_name
+        psort_path, '-o', 'elastic', file_path, '--server', elastic_server,
+        '--port', str(elastic_port), '--status_view', 'none',
+        '--index_name', index_name
     ]
 
+    if mappings_file_path:
+        cmd.extend(['--elastic_mappings', mappings_file_path])
+
+    if timeline_id:
+        fields_to_add = {
+            '__ts_timeline_id': timeline_id}
+
+        cmd.extend(['--additional_fields', json.dumps(fields_to_add)])
+
+    print(cmd)
     # Run psort.py
     try:
-        if six.PY3:
-            subprocess.check_output(
-                cmd, stderr=subprocess.STDOUT, encoding='utf-8')
-        else:
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        subprocess.check_output(
+            cmd, stderr=subprocess.STDOUT, encoding='utf-8')
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
         _set_timeline_status(

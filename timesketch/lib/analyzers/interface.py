@@ -149,6 +149,7 @@ class Event(object):
             self.event_id = event['_id']
             self.event_type = event['_type']
             self.index_name = event['_index']
+            self.timeline_id = event.get('_source', {}).get('__ts_timeline_id')
             self.source = event.get('_source', None)
         except KeyError as e:
             raise KeyError('Malformed event: {0!s}'.format(e)) from e
@@ -777,14 +778,16 @@ class BaseIndexAnalyzer(object):
     SECONDS_PER_WAIT = 10
     MAXIMUM_WAITS = 360
 
-    def __init__(self, index_name):
+    def __init__(self, index_name, timeline_id=None):
         """Initialize the analyzer object.
 
         Args:
             index_name: Elasticsearch index name.
+            timeline_id: The timeline ID.
         """
         self.name = self.NAME
         self.index_name = index_name
+        self.timeline_id = timeline_id
         self.timeline_name = ''
 
         self.tagged_events = {}
@@ -837,7 +840,33 @@ class BaseIndexAnalyzer(object):
 
         # Refresh the index to make sure it is searchable.
         for index in indices:
+            # TODO FIX THIS< TRANSLATE BETWEEN TIMELINE ID AND INDEX NAME.
+            # utils.get_validated_indices
             self.datastore.client.indices.refresh(index=index)
+        # HERNA
+        # begin
+        searchindex = SearchIndex.query.filter_by(
+            index_name=self.index).first()
+        if searchindex:
+            timelines = Timeline.query.filter_by(
+                searchindex=searchindex)
+
+            sketch_structure = {}
+        for timeline in sketch.timelines:
+            if timeline.get_status.status.lower() != 'ready':
+                continue
+            index_ = timeline.searchindex.index_name
+            sketch_structure.setdefault(index_, [])
+            sketch_structure[index_].append({
+                'name': timeline.name,
+                'id': timeline.id,
+            })
+        # END
+
+        if self.timeline_id:
+            timeline_ids = [self.timeline_id]
+        else:
+            timeline_ids = None
 
         event_generator = self.datastore.search_stream(
             query_string=query_string,
@@ -846,6 +875,7 @@ class BaseIndexAnalyzer(object):
             indices=indices,
             return_fields=return_fields,
             enable_scroll=scroll,
+            timeline_ids=timeline_ids
         )
         for event in event_generator:
             yield Event(
