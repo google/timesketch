@@ -199,7 +199,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Need to provide a timeline ID')
 
-        sketch_timelines = set([t.id for t in sketch.timelines])
+        sketch_timelines = {t.id for t in sketch.timelines}
         if not set(timeline_ids).issubset(sketch_timelines):
             return abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
