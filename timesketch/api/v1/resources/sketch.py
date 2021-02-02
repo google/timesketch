@@ -37,7 +37,6 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.analyzers import manager as analyzer_manager
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.models import db_session
