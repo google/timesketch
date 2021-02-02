@@ -24,8 +24,9 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
 
     NAME = 'phishy_domains'
     DISPLAY_NAME = 'Phishy domains'
-    DESCRIPTION = ('Compare the Jaccard distance between all domains in the '
-                   'sketch with a supplied domain')
+    DESCRIPTION = ('Comparing domains visited against a list of the most '
+                   'frequently visited domains to find potentially phishy '
+                   'domains.')
 
     DEPENDENCIES = frozenset(['domain'])
 

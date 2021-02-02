@@ -225,8 +225,8 @@ class Timeline(resource.BaseResource):
             error.UnableToRunAnalyzer: if not able to run the analyzer.
 
         Returns:
-            If the analyzer runs successfully return back an AnalyzerResult
-            object.
+            If the analyzer runs successfully return back a list of
+            AnalyzerResult objects.
         """
         if self.is_archived():
             raise error.UnableToRunAnalyzer(
@@ -285,7 +285,7 @@ class Timeline(resource.BaseResource):
 
         if not analyzer_results:
             raise error.UnableToRunAnalyzer(
-                'Analyzer may have run, but there is no sessions to '
+                'Analyzer may have run, but there are no analyzer results to '
                 'verify that it has. Please verify manually.')
 
         return analyzer_results

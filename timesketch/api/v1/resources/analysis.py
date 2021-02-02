@@ -34,7 +34,7 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 
 
-logger = logging.getLogger('timesketch.sketch_api')
+logger = logging.getLogger('timesketch.analysis_api')
 
 
 class AnalysisResource(resources.ResourceMixin, Resource):
@@ -101,7 +101,7 @@ class AnalyzerSessionActiveListResource(resources.ResourceMixin, Resource):
             'objects': [{
                 'total_tasks': sum(counter.values()),
                 'total_sessions': len(active_sessions),
-                'tasks': counter,
+                'tasks_status_count': counter,
                 'sessions': list(session_ids)
             }]
         }
