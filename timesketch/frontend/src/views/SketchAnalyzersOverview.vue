@@ -32,7 +32,7 @@ limitations under the License.
       <div class="container is-fluid">
         <div class="card">
           <div class="card-content">
-            <p>Automatic analysis on your data. Get started by selecting timelines and analyzers in the lists below.</p>
+            <p>Automatic analysis. Select timelines and analyzers in the lists below.</p>
             <br>
             <button :disabled="!analyzerCheckedRows.length || !timelineCheckedRows.length" class="button is-success" v-on:click="runAnalyzers">Run {{ analyzerCheckedRows.length }} analyzers on {{ timelineCheckedRows.length }} timelines</button>
             <br>
