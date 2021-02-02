@@ -16,7 +16,7 @@ limitations under the License.
 <template>
   <div>
     <span v-for="timeline in activeTimelines" :key="timeline.id" class="tag is-medium has-text-left" style="cursor: pointer; margin-right: 7px;margin-bottom:7px;" v-bind:style="timelineColor(timeline)" v-on:click="toggleTimeline(timeline)">
-      {{ timeline.name }} <span class="tag is-small" style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);min-width:50px;"><span v-if="timelineIsEnabled(timeline.searchindex.index_name) && countPerIndex">{{ countPerIndex[timeline.searchindex.index_name] | compactNumber }}</span></span>
+      {{ timeline.name }} <span class="tag is-small" style="margin-left:10px;margin-right:-7px;background-color: rgba(255,255,255,0.5);min-width:50px;"><span v-if="timelineIsEnabled(timeline) && countPerTimeline">{{ getCount(timeline) | compactNumber }}</span></span>
     </span>
     <div v-if="activeTimelines.length > 3" style="margin-top:7px;">
       <span style="text-decoration: underline; cursor: pointer; margin-right: 10px;" v-on:click="enableAllTimelines">Enable all</span>
@@ -29,11 +29,12 @@ limitations under the License.
 import EventBus from "../../main"
 
 export default {
-  props: ['activeTimelines', 'currentQueryFilter', 'countPerIndex'],
+  props: ['activeTimelines', 'currentQueryFilter', 'countPerIndex', 'countPerTimeline'],
   data () {
     return {
       isDarkTheme: false,
-      selectedTimelines: []
+      selectedTimelines: [],
+      timelineCount: {}
     }
   },
   methods: {
@@ -86,11 +87,19 @@ export default {
       this.selectedTimelines = []
       this.$emit('updateSelectedTimelines', this.selectedTimelines)
     },
-    timelineIsEnabled: function (index) {
-      return this.selectedTimelines.includes(index)
+    timelineIsEnabled: function (timeline) {
+      return this.selectedTimelines.includes(timeline)
     },
     toggleTheme: function () {
       this.isDarkTheme =! this.isDarkTheme
+    },
+    getCount: function (timeline) {
+      let count = this.countPerTimeline[timeline.id]
+      // Support for old style indices
+      if (count === undefined) {
+        count = this.countPerIndex[timeline.searchindex.index_name]
+      }
+      return count
     },
     syncSelectedTimelines: function () {
       let timelines = []
