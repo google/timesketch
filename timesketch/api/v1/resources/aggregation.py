@@ -492,6 +492,11 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                     'Attempting to run an aggregation on a non-existing '
                     'Elastic index, index: {0:s} and parameters: {1!s}'.format(
                         index, aggregator_parameters))
+            except ValueError as exc:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Unable to run the aggregation, with error: {0!s}'.format(
+                        exc))
             time_after = time.time()
 
             aggregator_description = aggregator.describe

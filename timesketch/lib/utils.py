@@ -39,7 +39,7 @@ logger = logging.getLogger('timesketch.utils')
 csv.field_size_limit(sys.maxsize)
 
 # Fields to scrub from timelines.
-FIELDS_TO_REMOVE = ['_id', '_type', '_index', '_source', '__timeline_id']
+FIELDS_TO_REMOVE = ['_id', '_type', '_index', '_source', '__ts_timeline_id']
 
 
 def random_color():
