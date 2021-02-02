@@ -156,6 +156,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             for analysis in session.analyses:
                 if analysis.get_status.status in ('PENDING', 'STARTED'):
                     active_sessions.append(session)
+                    # Break early on first running analysis as this is enough
+                    # to mark the session as active.
                     break
         return active_sessions
 

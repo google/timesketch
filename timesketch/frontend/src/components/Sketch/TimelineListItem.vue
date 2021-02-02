@@ -188,7 +188,6 @@ import _ from 'lodash'
 
 import ApiClient from '../../utils/RestApiClient'
 
-import TsAnalyzerListDropdown from './AnalyzerListDropdown'
 import TsAnalyzerSessionDetail from './AnalyzerSessionDetail'
 import TsAnalyzerHistory from './AnalyzerHistory'
 
@@ -197,7 +196,6 @@ import EventBus from "../../main"
 export default {
   components: {
     'color-picker': Chrome,
-    TsAnalyzerListDropdown,
     TsAnalyzerSessionDetail,
     TsAnalyzerHistory
   },

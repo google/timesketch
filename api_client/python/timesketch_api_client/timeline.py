@@ -205,7 +205,6 @@ class Timeline(resource.BaseResource):
             analyzer_names=[analyzer_name], analyzer_kwargs=analyzer_kwargs,
             ignore_previous=ignore_previous)
 
-
     def run_analyzers(
             self, analyzer_names, analyzer_kwargs=None, ignore_previous=False):
         """Run an analyzer on a timeline.
@@ -260,7 +259,7 @@ class Timeline(resource.BaseResource):
                 return None
 
         data = {
-            'timeline_id': self.id,
+            'timeline_ids': [self.id],
             'analyzer_names': analyzer_names,
             'analyzer_kwargs': analyzer_kwargs,
         }
@@ -277,16 +276,19 @@ class Timeline(resource.BaseResource):
                 'No session data returned back, analyzer may have run but '
                 'unable to verify, please verify manually.')
 
-        session_id = objects[0].get('analysis_session')
-        if not session_id:
+        analyzer_results = []
+        for session in objects:
+            analyzer_result = analyzer.AnalyzerResult(
+                timeline_id=self.id, session_id=session.id,
+                sketch_id=self._sketch_id, api=self.api)
+            analyzer_results.append(analyzer_result)
+
+        if not analyzer_results:
             raise error.UnableToRunAnalyzer(
-                'Analyzer may have run, but there is no session ID to '
+                'Analyzer may have run, but there is no sessions to '
                 'verify that it has. Please verify manually.')
 
-        session = analyzer.AnalyzerResult(
-            timeline_id=self.id, session_id=session_id,
-            sketch_id=self._sketch_id, api=self.api)
-        return session
+        return analyzer_results
 
     @property
     def status(self):

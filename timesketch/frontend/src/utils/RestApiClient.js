@@ -255,6 +255,9 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
   },
+  getAnalyzers (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/')
+  },
   runAnalyzers (sketchId, timelineIds, analyzers) {
     let formData = {
       timeline_ids: timelineIds,

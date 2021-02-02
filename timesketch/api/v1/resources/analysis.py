@@ -14,6 +14,7 @@
 """Analysis resources for version 1 of the Timesketch API."""
 import fnmatch
 import collections
+import logging
 
 from flask import jsonify
 from flask import request
@@ -31,6 +32,9 @@ from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import AnalysisSession
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
+
+
+logger = logging.getLogger('timesketch.sketch_api')
 
 
 class AnalysisResource(resources.ResourceMixin, Resource):
@@ -84,10 +88,10 @@ class AnalyzerSessionActiveListResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'User does not have read access to sketch')
 
-        active_sessions = sketch.get_active_analysis_sessions()
-
         counter = collections.Counter(PENDING=0, STARTED=0, ERROR=0, DONE=0)
         session_ids = set()
+
+        active_sessions = sketch.get_active_analysis_sessions()
         for session in active_sessions:
             session_ids.add(session.id)
             for analysis in session.analyses:
@@ -151,7 +155,17 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         analyzers = [
             x for x, y in analyzer_manager.AnalysisManager.get_analyzers()]
 
-        return analyzers
+        analyzers = analyzer_manager.AnalysisManager.get_analyzers()
+        analyzers_detail = []
+        for analyzer_name, analyzer_class in analyzers:
+            analyzers_detail.append({
+                'name': analyzer_name,
+                'display_name': analyzer_class.DISPLAY_NAME,
+                'description': analyzer_class.DESCRIPTION
+            })
+
+
+        return analyzers_detail
 
     @login_required
     def post(self, sketch_id):
@@ -185,12 +199,11 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Need to provide a timeline ID')
 
-        for timeline_id in timeline_ids:
-            timeline = Timeline.query.get(timeline_id)
-            if timeline not in sketch.timelines:
-                return abort(
-                    HTTP_STATUS_CODE_FORBIDDEN,
-                    'Timeline is not part of this sketch')
+        sketch_timelines = set([t.id for t in sketch.timelines])
+        if not set(timeline_ids).issubset(sketch_timelines):
+            return abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'Timeline is not part of this sketch')
 
         analyzer_names = form.get('analyzer_names')
         if analyzer_names:
@@ -222,26 +235,29 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         # pylint: disable=import-outside-toplevel
         from timesketch.lib import tasks
 
+        # TODO: Change to run on Timeline instead of Index
         sessions = []
         for timeline_id in timeline_ids:
             timeline = Timeline.query.get(timeline_id)
+            if not timeline:
+                continue
             searchindex_id = timeline.searchindex.id
             searchindex_name = timeline.searchindex.index_name
 
             try:
-                analyzer_grp, session = tasks.build_sketch_analysis_pipeline(
+                analyzer_group, session = tasks.build_sketch_analysis_pipeline(
                     sketch_id=sketch_id, searchindex_id=searchindex_id,
                     user_id=current_user.id, analyzer_names=analyzers,
                     analyzer_kwargs=analyzer_kwargs)
             except KeyError as e:
-                return abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
+                logger.warning(
                     'Unable to build analyzer pipeline, analyzer does not '
-                    'exist. Error message: {0!s}'.format(e))
+                    'exists. Error message: {0!s}'.format(e))
+                continue
 
-            if analyzer_grp:
+            if analyzer_group:
                 pipeline = (tasks.run_sketch_init.s(
-                    [searchindex_name]) | analyzer_grp)
+                    [searchindex_name]) | analyzer_group)
                 pipeline.apply_async()
 
             sessions.append(session)

@@ -72,7 +72,7 @@ limitations under the License.
             <br>
             <br>
             <b-table
-              :data="meta.analyzers_detail"
+              :data="availableAnalyzers"
               :columns="analyzerColumns"
               :checked-rows.sync="analyzerCheckedRows"
               default-sort="display_name"
@@ -96,6 +96,7 @@ export default {
   components: {TsAnalysisSessionDetail},
   data () {
     return {
+      availableAnalyzers: [],
       timelineCheckedRows: [],
       analyzerCheckedRows: [],
       sessions: [],
@@ -146,6 +147,13 @@ export default {
         this.sessions = response.data.objects[0]
       }).catch((e) => {})
     }
+  },
+  created: function () {
+    ApiClient.getAnalyzers(this.sketch.id).then((response) => {
+      this.availableAnalyzers = response.data
+    }).catch((e) => {
+      console.error(e)
+    })
   }
 }
 </script>
