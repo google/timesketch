@@ -359,22 +359,28 @@ class SketchResource(resources.ResourceMixin, Resource):
                 mappings.append(mapping_dict)
 
         if sketch_indices:
-            # Stats for index. Num docs per shard and size on disk.
+            # Stats for index. Num docs per shard.
             for timeline in sketch.active_timelines:
-                if indices_metadata[timeline.searchindex.index_name].get('is_legacy', False):
-                    doc_count, _ = self.datastore.count(
-                        indices=timeline.searchindex.index_name)
-                    stats_per_timeline[timeline.id] = {
-                        'count': doc_count
-                    }
+                index_name = timeline.searchindex.index_name
+                if indices_metadata[index_name].get('is_legacy', False):
+                    doc_count, _ = self.datastore.count(indices=index_name)
+                    stats_per_timeline[timeline.id] = {'count': doc_count}
                 else:
                     # TODO: Consider using an aggregation here instead?
-                    query_string = f'__ts_timeline_id:{timeline.id}'
+                    query_dsl = {
+                        'query': {
+                            'term': {
+                                '__ts_timeline_id': {
+                                    'value': timeline.id
+                                }
+                            }
+                        }
+                    }
                     count = self.datastore.search(
                         sketch_id=sketch.id,
-                        query_string=query_string,
+                        query_string=None,
                         query_filter={},
-                        query_dsl={},
+                        query_dsl=query_dsl,
                         indices=[timeline.searchindex.index_name],
                         count=True)
                     stats_per_timeline[timeline.id] = {
