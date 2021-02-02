@@ -83,6 +83,9 @@ class SimilarityScorer(interface.BaseSketchAnalyzer):
     """Score events based on Jaccard distance."""
 
     NAME = 'similarity_scorer'
+    DISPLAY_NAME = 'Similarity Scorer'
+    DESCRIPTION = ('Experimental: Calculate similarity scores based on the '
+                   'Jaccard distance between events')
 
     DEPENDENCIES = frozenset()
 
@@ -96,7 +99,7 @@ class SimilarityScorer(interface.BaseSketchAnalyzer):
         self._config = None
         if data_type:
             self._config = SimilarityScorerConfig(index_name, data_type)
-        super(SimilarityScorer, self).__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id)
 
     def run(self):
         """Entry point for the SimilarityScorer.

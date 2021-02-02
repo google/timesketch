@@ -255,15 +255,21 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
   },
-  runAnalyzers (sketchId, timelineId, analyzers) {
+  getAnalyzers (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/')
+  },
+  runAnalyzers (sketchId, timelineIds, analyzers) {
     let formData = {
-      timeline_id: timelineId,
+      timeline_ids: timelineIds,
       analyzer_names: analyzers
     }
     return RestApiClient.post('/sketches/' + sketchId + /analyzer/, formData)
   },
   getAnalyzerSession (sketchId, sessionId) {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/' + sessionId + '/')
+  },
+  getActiveAnalyzerSessions (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/active/')
   },
   getLoggedInUser () {
     return RestApiClient.get('/users/me/')

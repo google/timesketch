@@ -119,6 +119,9 @@ class LoginSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Login and Logoff related activity."""
 
     NAME = 'login'
+    DISPLAY_NAME = 'Windows logon/logoff events'
+    DESCRIPTION = 'Mark Windows logon and logoff events'
+
     DEPENDENCIES = frozenset()
 
     def __init__(self, index_name, sketch_id):
@@ -129,7 +132,7 @@ class LoginSketchPlugin(interface.BaseSketchAnalyzer):
             sketch_id: Sketch ID
         """
         self.index_name = index_name
-        super(LoginSketchPlugin, self).__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id)
 
     def run(self):
         """Entry point for the analyzer.

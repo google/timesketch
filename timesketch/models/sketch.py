@@ -56,6 +56,8 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     aggregationgroups = relationship(
         'AggregationGroup', backref='sketch', lazy='select')
     analysis = relationship('Analysis', backref='sketch', lazy='select')
+    analysissessions = relationship(
+        'AnalysisSession', backref='sketch', lazy='select')
 
     def __init__(self, name, description, user):
         """Initialize the Sketch object.
@@ -142,6 +144,22 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
                 continue
             _timelines.append(timeline)
         return _timelines
+
+    def get_active_analysis_sessions(self):
+        """List active analysis sessions.
+
+        Returns:
+            List of instances of timesketch.models.sketch.AnalysisSession
+        """
+        active_sessions = []
+        for session in self.analysissessions:
+            for analysis in session.analyses:
+                if analysis.get_status.status in ('PENDING', 'STARTED'):
+                    active_sessions.append(session)
+                    # Break early on first running analysis as this is enough
+                    # to mark the session as active.
+                    break
+        return active_sessions
 
     @property
     def get_search_templates(self):

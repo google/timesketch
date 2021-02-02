@@ -19,6 +19,8 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
     """Index analyzer for Sigma."""
 
     NAME = 'sigma'
+    DISPLAY_NAME = 'Sigma'
+    DESCRIPTION = 'Run pre-defined Sigma rules and tag matching events'
 
     def run_sigma_rule(self, query, tag_name):
         """Runs a sigma rule and applies the appropriate tags.
