@@ -480,7 +480,8 @@ class ElasticsearchDataStore(object):
 
         # Only return how many documents matches the query.
         if count:
-            del query_dsl['sort']
+            if 'sort' in query_dsl:
+                del query_dsl['sort']
             count_result = self.client.count(
                 body=query_dsl, index=list(indices))
             return count_result.get('count', 0)

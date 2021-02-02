@@ -29,8 +29,7 @@ limitations under the License.
             <div class="content">
               <ul>
                 <li>Elasticsearch index: {{ timeline.searchindex.index_name }}</li>
-                <li v-if="meta.stats[timeline.searchindex.index_name]">Number of events: {{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }} ({{ meta.stats[timeline.searchindex.index_name]['count']}})</li>
-                <li v-if="meta.stats[timeline.searchindex.index_name]">Size on disk: {{ meta.stats[timeline.searchindex.index_name]['bytes'] | compactBytes }} ({{ meta.stats[timeline.searchindex.index_name]['bytes']}})</li>
+                <li v-if="meta.stats_per_timeline[timeline.id]">Number of events: {{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} ({{ meta.stats_per_timeline[timeline.id]['count']}})</li>
                 <li>Original name: {{ timeline.searchindex.name }}</li>
                 <li>Added by: {{ timeline.searchindex.user.username }}</li>
                 <li>Added: {{ timeline.searchindex.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
@@ -124,7 +123,7 @@ limitations under the License.
           </button>
           <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
             <div style="width:350px;">
-              <div class="field" v-for="(dt) in meta.stats[timeline.searchindex.index_name]['data_types']" :key="dt.data_type">
+              <div class="field" v-for="(dt) in meta.indices_metadata[timeline.searchindex.index_name]['data_types']" :key="dt.data_type">
                 <b-checkbox v-model="checkedDataTypes" :native-value="dt.data_type" type="is-info">{{ dt.data_type }} ({{ dt.count | compactNumber }})</b-checkbox>
               </div>
               <button class="button is-success is-fullwidth" v-on:click="openFilteredTimeline(timeline.searchindex.index_name, checkedDataTypes)" :disabled="!checkedDataTypes.length">Open Filtered</button>
@@ -159,7 +158,7 @@ limitations under the License.
 
     <span v-if="timelineStatus === 'ready'" class="is-size-7">
       Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
-      <span class="is-small" :title="meta.stats[timeline.searchindex.index_name]['count'] + ' events in index'">({{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }})</span>
+      <span class="is-small" :title="meta.stats_per_timeline[timeline.id]['count'] + ' events in index'">({{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }})</span>
     </span>
 
     <span v-else-if="timelineStatus === 'fail'" class="is-size-7">

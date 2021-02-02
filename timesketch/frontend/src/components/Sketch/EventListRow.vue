@@ -376,7 +376,7 @@ limitations under the License.
     EventBus.$on('toggleStar', this.toggleStarOnSelect)
     EventBus.$on('isDarkTheme', this.toggleTheme)
 
-    let isLegacy = this.meta.stats[this.event._index].is_legacy
+    let isLegacy = this.meta.indices_metadata[this.event._index].is_legacy
     if (isLegacy) {
       this.timeline = this.sketch.active_timelines.filter(timeline => timeline.searchindex.index_name === this.event._index)[0]
     } else {
