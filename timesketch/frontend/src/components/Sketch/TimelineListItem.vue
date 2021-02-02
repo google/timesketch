@@ -115,8 +115,9 @@ limitations under the License.
           <span>Rename</span>
         </button>
       </p>
+
+      <!-- Disabled 2020-12-17. Too expensive for large sketches. TODO: Refactor to do lazy loading instead.
       <p v-if="timelineStatus === 'ready'" class="control">
-        <!-- Disabled 2020-12-17. Too expensive for large sketches. TODO: Refactor to do lazy loading instead.
         <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body :scrollable="true" :max-height="300">
           <button class="button is-outlined is-rounded is-small" slot="trigger">
             <span class="icon is-small">
@@ -133,16 +134,15 @@ limitations under the License.
             </div>
           </b-dropdown-item>
         </b-dropdown>
-        -->
-        <ts-analyzer-list-dropdown v-if="controls" :timeline="timeline" @newAnalysisSession="setAnalysisSession($event)"></ts-analyzer-list-dropdown>
       </p>
+       -->
 
       <p v-if="timelineStatus === 'ready' && controls" class="control">
         <button class="button is-small is-rounded is-outlined" @click="showAnalysisHistory = !showAnalysisHistory">
           <span class="icon is-small">
             <i class="fas fa-history"></i>
           </span>
-          <span>History</span>
+          <span>Analysis History</span>
         </button>
       </p>
 
@@ -161,8 +161,7 @@ limitations under the License.
     <br>
 
     <span v-if="timelineStatus === 'ready'" class="is-size-7">
-      Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
-      <span class="is-small" :title="meta.stats_per_timeline[timeline.id]['count'] + ' events in index'">({{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }})</span>
+      <span class="is-small" :title="meta.stats_per_timeline[timeline.id]['count'] + ' events in index'">{{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} events</span>
     </span>
 
     <span v-else-if="timelineStatus === 'fail'" class="is-size-7">
@@ -174,10 +173,6 @@ limitations under the License.
     <span v-else class="is-size-7">
       Unknown status: {{ timelineStatus }}
     </span>
-
-    <div v-if="showAnalysisDetail">
-      <ts-analyzer-session-detail :timeline="timeline" :session-id="analysisSessionId" @closeDetail="showAnalysisDetail = false"></ts-analyzer-session-detail>
-    </div>
 
     <div v-if="showAnalysisHistory">
       <ts-analyzer-history :timeline="timeline" @closeHistory="showAnalysisHistory = false"></ts-analyzer-history>

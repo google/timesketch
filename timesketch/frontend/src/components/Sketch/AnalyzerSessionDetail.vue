@@ -17,7 +17,7 @@ limitations under the License.
   <div class="card card-accent-background" style="margin-top:15px;">
     <header class="card-header">
       <p class="card-header-title">
-        {{ messageTitle }}
+        {{ messageTitle }} [<span v-for="timeline in timelines" :key="timeline">{{ timeline }}</span>]
       </p>
       <span class="card-header-icon" aria-label="close">
         <span class="delete" v-on:click="$emit('closeDetail')"></span>
@@ -25,11 +25,6 @@ limitations under the License.
     </header>
     <div class="card-content">
       <table class="table is-fullwidth">
-        <colgroup>
-          <col span="1" style="width: 5%;">
-          <col span="1" style="width: 15%;">
-          <col span="1" style="width: 80%;">
-        </colgroup>
         <thead>
           <th></th>
           <th>Analyzer</th>
@@ -79,6 +74,14 @@ export default {
         }
       })
       return count
+    },
+    timelines () {
+      let timelineSet = new Set()
+      this.analyses.forEach(function (analyzer) {
+        timelineSet.add(analyzer.timeline.name)
+      })
+      return timelineSet
+
     },
     tableData () {
       let tableArray = []

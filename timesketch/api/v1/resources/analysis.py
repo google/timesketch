@@ -101,7 +101,7 @@ class AnalyzerSessionActiveListResource(resources.ResourceMixin, Resource):
                 'sessions': list(session_ids)
             }]
         }
-        return(jsonify(schema))
+        return jsonify(schema)
 
 
 class AnalyzerSessionResource(resources.ResourceMixin, Resource):
@@ -191,8 +191,6 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
                 return abort(
                     HTTP_STATUS_CODE_FORBIDDEN,
                     'Timeline is not part of this sketch')
-
-        #search_index = timeline.searchindex
 
         analyzer_names = form.get('analyzer_names')
         if analyzer_names:

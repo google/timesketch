@@ -49,7 +49,7 @@ limitations under the License.
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
-          <div class="card-content">
+          <div class="card-content" style="max-height: 500px; overflow-y: auto;">
             <span class="title is-6 is-uppercase">1. Select timelines to analyze</span>
             <br>
             <br>
