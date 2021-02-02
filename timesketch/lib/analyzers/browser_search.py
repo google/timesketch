@@ -66,7 +66,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
             sketch_id: Sketch ID
         """
         self.index_name = index_name
-        super(BrowserSearchSketchPlugin, self).__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id)
 
     def _decode_url(self, url):
         """Decodes the URL, replaces %XX to their corresponding characters.

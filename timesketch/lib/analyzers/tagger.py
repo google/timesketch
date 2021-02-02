@@ -24,7 +24,7 @@ class TaggerSketchPlugin(interface.BaseSketchAnalyzer):
         """
         self.index_name = index_name
         self._config = config
-        super(TaggerSketchPlugin, self).__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id)
 
     def run(self):
         """Entry point for the analyzer.

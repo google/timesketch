@@ -46,7 +46,7 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
         self.index_name = index_name
         self._chain_plugins = (
             chain_manager.ChainPluginsManager.get_plugins(self))
-        super(ChainSketchPlugin, self).__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id)
 
     def run(self):
         """Entry point for the analyzer.

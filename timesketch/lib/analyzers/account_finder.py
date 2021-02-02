@@ -22,8 +22,7 @@ class AccountFinderSketchPlugin(interface.BaseSketchAnalyzer):
             sketch_id: Sketch ID
         """
         self.index_name = index_name
-        super(AccountFinderSketchPlugin, self).__init__(
-            index_name, sketch_id)
+        super().__init__(index_name, sketch_id)
 
     def run(self):
         """Entry point for the analyzer.

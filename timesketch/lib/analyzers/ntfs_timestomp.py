@@ -38,7 +38,7 @@ class NtfsTimestompSketchPlugin(interface.BaseSketchAnalyzer):
         self.index_name = index_name
         self.threshold = current_app.config.get(
             'NTFS_TIMESTOMP_ANALYZER_THRESHOLD', 10) * 60000000
-        super(NtfsTimestompSketchPlugin, self).__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id)
 
     def is_suspicious(self, file_info):
         """Compares timestamps to detect timestomping.

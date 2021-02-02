@@ -158,8 +158,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
                 loaded up.
         """
         self.index_name = index_name
-        super().__init__(
-            index_name, sketch_id)
+        super().__init__(index_name, sketch_id)
         self._config = config
 
     def run(self):
