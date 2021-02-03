@@ -46,7 +46,6 @@ export default {
   methods: {
     remove (timeline) {
       ApiClient.deleteSketchTimeline(this.sketch.id, timeline.id).then((response) => {
-        this.$emit('remove-timeline', timeline)
         this.$store.dispatch('updateSketch', this.sketch.id)
       }).catch((e) => {
         console.error(e)
