@@ -22,6 +22,7 @@ import SketchOverview from './views/SketchOverview'
 import SketchManage from './views/SketchManage'
 import SketchManageViews from "./views/SketchManageViews"
 import SketchManageTimelines from "./views/SketchManageTimelines"
+import SketchAggregate from './views/SketchAggregate'
 import SketchExplore from './views/SketchExplore'
 import SketchGraph from './views/SketchGraph'
 import SketchGraphOverview from './views/SketchGraphOverview'
@@ -73,6 +74,12 @@ const routes = [
             component: SketchGraphExplore,
             props: true
           }]
+      },
+      {
+        path: 'aggregate',
+        name: 'SketchAggregate',
+        component: SketchAggregate,
+        props: true
       },
       {
         path: 'analyzers',
