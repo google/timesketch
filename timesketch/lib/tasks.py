@@ -37,9 +37,9 @@ from sqlalchemy import create_engine
 
 # To be able to determine plaso's version.
 try:
-  import plaso
+    import plaso
 except ImportError:
-  plaso = None
+    plaso = None
 
 from timesketch.app import configure_logger
 from timesketch.app import create_celery_app
