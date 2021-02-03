@@ -588,19 +588,16 @@ def run_plaso(
         psort_path = 'psort.py'
 
     cmd = [
-        psort_path, '-o', 'elastic', file_path, '--server', elastic_server,
+        psort_path, '-o', 'elastic_ts', file_path, '--server', elastic_server,
         '--port', str(elastic_port), '--status_view', 'none',
-        '--index_name', index_name
+        '--index_name', index_name,
     ]
 
     if mappings_file_path:
         cmd.extend(['--elastic_mappings', mappings_file_path])
 
     if timeline_id:
-        fields_to_add = {
-            '__ts_timeline_id': timeline_id}
-
-        cmd.extend(['--additional_fields', json.dumps(fields_to_add)])
+        cmd.extend(['--timeline_id', str(timeline_id)])
 
     # Run psort.py
     try:
