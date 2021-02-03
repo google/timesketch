@@ -532,10 +532,15 @@ export default {
           this.currentQueryFilter.fields = [{field: 'message', type: 'text'}]
         }
         this.selectedFields = this.currentQueryFilter.fields
-        if (this.currentQueryFilter.indices === '_all') {
+        if (this.currentQueryFilter.indices[0] === '_all') {
           let allIndices = []
-          this.sketch.active_timelines.forEach(function (timeline) {
-            allIndices.push(timeline.searchindex.index_name)
+          this.sketch.active_timelines.forEach((timeline) => {
+            let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+            if (isLegacy) {
+              allIndices.push(timeline.searchindex.index_name)
+            } else {
+              allIndices.push(timeline.id)
+            }
           })
           this.currentQueryFilter.indices = allIndices
         }
