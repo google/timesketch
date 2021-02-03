@@ -175,11 +175,6 @@ limitations under the License.
       </div>
     </section>
 
-
-    <!-- Aggregations -->
-    <ts-sketch-explore-aggregation></ts-sketch-explore-aggregation>
-    <!-- End Aggregations -->
-
     <section class="section" id="context" v-show="contextEvent">
       <div class="container is-fluid">
         <b-message type="is-warning" aria-close-label="Close message">

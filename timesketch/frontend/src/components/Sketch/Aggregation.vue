@@ -44,19 +44,13 @@ limitations under the License.
     <section class="section">
       <div class="container is-fluid">
         <div class="card">
-          <header class="card-header" v-on:click="showAggregations = !showAggregations" style="cursor: pointer">
+          <header class="card-header">
             <span class="card-header-title">
               <span class="icon is-small"><i class="fas fa-chart-bar"></i></span>
-              <span style="margin-left:10px;">Aggregations</span>
-            </span>
-            <span class="card-header-icon">
-              <span class="icon">
-                <i class="fas fa-angle-down" v-if="!showAggregations" aria-hidden="true"></i>
-                <i class="fas fa-angle-up" v-if="showAggregations" aria-hidden="true"></i>
-              </span>
+              <span style="margin-left:10px;">New Aggregation</span>
             </span>
           </header>
-          <div class="card-content" v-show="showAggregations">
+          <div class="card-content">
             <ts-sketch-explore-aggregator-list-dropdown @setActiveAggregator="updateAggregatorFormFields"></ts-sketch-explore-aggregator-list-dropdown>
             <br>
             <ts-dynamic-form :schema="schema" v-model="formData" @formSubmitted="getVegaSpec" :key="selectedAggregator.name" ref="vegaChart"></ts-dynamic-form>
@@ -64,7 +58,8 @@ limitations under the License.
         </div>
       </div>
     </section>
-    <section class="section" v-show="showChart && showAggregations && Object.keys(vegaSpec).length !== 0">
+
+    <section class="section" v-show="showChart && Object.keys(vegaSpec).length !== 0">
       <div class="container is-fluid">
         <div class="card">
           <header class="card-header">
@@ -116,7 +111,6 @@ export default {
       aggregationName: '',
       chartType: '',
       chartData: {},
-      showAggregations: false
     }
   },
   computed: {
@@ -160,6 +154,5 @@ export default {
       }).catch((e) => {})
     }
   }
-
 }
 </script>
