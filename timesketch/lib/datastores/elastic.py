@@ -15,6 +15,7 @@
 from __future__ import unicode_literals
 
 from collections import Counter
+import copy
 import codecs
 import json
 import logging
@@ -193,7 +194,7 @@ class ElasticsearchDataStore(object):
         return start_range.strftime(TS_FORMAT), end_range.strftime(TS_FORMAT)
 
     def build_query(self, sketch_id, query_string, query_filter, query_dsl=None,
-                    aggregations=None):
+                    aggregations=None, timeline_ids=None):
         """Build Elasticsearch DSL query.
 
         Args:
@@ -202,17 +203,21 @@ class ElasticsearchDataStore(object):
             query_filter: Dictionary containing filters to apply
             query_dsl: Dictionary containing Elasticsearch DSL query
             aggregations: Dict of Elasticsearch aggregations
+            timeline_ids: Optional list of IDs of Timeline objects that should
+                be queried as part of the search.
 
         Returns:
             Elasticsearch DSL query as a dictionary
         """
 
+        # TODO: Support query DSL when it comes to timeline filtering.
         if query_dsl:
             if not isinstance(query_dsl, dict):
                 query_dsl = json.loads(query_dsl)
 
             if not query_dsl:
                 query_dsl = {}
+
             # Remove any aggregation coming from user supplied Query DSL.
             # We have no way to display this data in a good way today.
             if query_dsl.get('aggregations', None):
@@ -232,27 +237,6 @@ class ElasticsearchDataStore(object):
                 }
             }
         }
-
-        # TODO: Remove when old UI has been deprecated.
-        if query_filter.get('star', None):
-            label_query = self._build_labels_query(sketch_id, ['__ts_star'])
-            query_string = '*'
-            query_dsl['query']['bool']['must'].append(label_query)
-
-        # TODO: Remove when old UI has been deprecated.
-        if query_filter.get('time_start', None):
-            query_dsl['query']['bool']['filter'] = [{
-                'bool': {
-                    'should': [{
-                        'range': {
-                            'datetime': {
-                                'gte': query_filter['time_start'],
-                                'lte': query_filter['time_end']
-                            }
-                        }
-                    }]
-                }
-            }]
 
         if query_string:
             query_dsl['query']['bool']['must'].append(
@@ -339,11 +323,58 @@ class ElasticsearchDataStore(object):
                 query_dsl.pop('post_filter', None)
             query_dsl['aggregations'] = aggregations
 
+        # TODO: Simplify this when we don't have to support both timelines
+        # that have __ts_timeline_id set and those that don't.
+        # (query_string AND timeline_id NOT EXISTS) OR (
+        #       query_string AND timeline_id in LIST)
+        if timeline_ids and isinstance(timeline_ids, (list, tuple)):
+            must_filters_pre = copy.copy(query_dsl['query']['bool']['must'])
+            must_not_filters_pre = copy.copy(
+                query_dsl['query']['bool']['must_not'])
+
+            must_filters_post = copy.copy(query_dsl['query']['bool']['must'])
+            must_not_filters_post = copy.copy(
+                query_dsl['query']['bool']['must_not'])
+
+            must_not_filters_pre.append({
+                'exists': {
+                    'field': '__ts_timeline_id'},
+            })
+
+            must_filters_post.append({
+                'terms': {
+                    '__ts_timeline_id': timeline_ids}
+            })
+
+            query_dsl['query'] = {
+                'bool': {
+                    'must': [],
+                    'should': [{
+                        'bool': {
+                            'must': must_filters_pre,
+                            'must_not': must_not_filters_pre,
+                        }
+                    }, {
+                        'bool': {
+                            'must': must_filters_post,
+                            'must_not': must_not_filters_post,
+                            'filter': [{
+                                'exists': {
+                                    'field': '__ts_timeline_id'}
+                            }]
+                        }
+                    }],
+                    'must_not': [],
+                    'filter': []
+                }
+            }
+
         return query_dsl
 
+    # pylint: disable=too-many-arguments
     def search(self, sketch_id, query_string, query_filter, query_dsl, indices,
                count=False, aggregations=None, return_fields=None,
-               enable_scroll=False):
+               enable_scroll=False, timeline_ids=None):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -358,11 +389,12 @@ class ElasticsearchDataStore(object):
             aggregations: Dict of Elasticsearch aggregations
             return_fields: List of fields to return
             enable_scroll: If Elasticsearch scroll API should be used
+            timeline_ids: Optional list of IDs of Timeline objects that should
+                be queried as part of the search.
 
         Returns:
             Set of event documents in JSON format
         """
-
         scroll_timeout = None
         if enable_scroll:
             scroll_timeout = '1m'  # Default to 1 minute scroll timeout
@@ -379,15 +411,18 @@ class ElasticsearchDataStore(object):
                 if event['index'] in indices
             }
 
-        query_dsl = self.build_query(sketch_id, query_string, query_filter,
-                                     query_dsl, aggregations)
+        query_dsl = self.build_query(
+            sketch_id=sketch_id, query_string=query_string,
+            query_filter=query_filter, query_dsl=query_dsl,
+            aggregations=aggregations, timeline_ids=timeline_ids)
 
         # Default search type for elasticsearch is query_then_fetch.
         search_type = 'query_then_fetch'
 
         # Only return how many documents matches the query.
         if count:
-            del query_dsl['sort']
+            if 'sort' in query_dsl:
+                del query_dsl['sort']
             count_result = self.client.count(
                 body=query_dsl, index=list(indices))
             return count_result.get('count', 0)
@@ -748,7 +783,7 @@ class ElasticsearchDataStore(object):
                 ) from e
 
     def import_event(self, index_name, event_type, event=None, event_id=None,
-                     flush_interval=DEFAULT_FLUSH_INTERVAL):
+                     flush_interval=DEFAULT_FLUSH_INTERVAL, timeline_id=None):
         """Add event to Elasticsearch.
 
         Args:
@@ -757,6 +792,9 @@ class ElasticsearchDataStore(object):
             event: Event dictionary
             event_id: Event Elasticsearch ID
             flush_interval: Number of events to queue up before indexing
+            timeline_id: Optional ID number of a Timeline object this event
+                belongs to. If supplied an additional field will be added to
+                the store indicating the timeline this belongs to.
         """
         if event:
             for k, v in event.items():
@@ -794,6 +832,9 @@ class ElasticsearchDataStore(object):
                 else:
                     event = {'doc': event}
                 header = update_header
+
+            if timeline_id:
+                event['__ts_timeline_id'] = timeline_id
 
             self.import_events.append(header)
             self.import_events.append(event)

@@ -56,6 +56,19 @@ class SearchIndex(resource.BaseResource):
         return objects[0]
 
     @property
+    def has_timeline_id(self):
+        """Property that returns back whether a __timeline_id field is present.
+
+        Returns:
+            bool: True if the data uses __timeline_id field to distinguish
+                different data sets in an index, False if the entire index
+                is the data set.
+        """
+        index_data = self.data
+        meta = index_data.get('meta', {})
+        return meta.get('contains_timeline_id', False)
+
+    @property
     def labels(self):
         """Property that returns the SearchIndex labels."""
         if self._labels:

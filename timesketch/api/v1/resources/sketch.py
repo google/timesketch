@@ -37,7 +37,6 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.analyzers import manager as analyzer_manager
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.models import db_session
@@ -207,7 +206,8 @@ class SketchListResource(resources.ResourceMixin, Resource):
 class SketchResource(resources.ResourceMixin, Resource):
     """Resource to get a sketch."""
 
-    def _add_label(self, sketch, label):
+    @staticmethod
+    def _add_label(sketch, label):
         """Add a label to the sketch."""
         if sketch.has_label(label):
             logger.warning(
@@ -217,7 +217,8 @@ class SketchResource(resources.ResourceMixin, Resource):
         sketch.add_label(label, user=current_user)
         return True
 
-    def _remove_label(self, sketch, label):
+    @staticmethod
+    def _remove_label(sketch, label):
         """Removes a label to the sketch."""
         if not sketch.has_label(label):
             logger.warning(
@@ -227,7 +228,8 @@ class SketchResource(resources.ResourceMixin, Resource):
         sketch.remove_label(label)
         return True
 
-    def _get_sketch_for_admin(self, sketch):
+    @staticmethod
+    def _get_sketch_for_admin(sketch):
         """Returns a limited sketch view for adminstrators.
 
         An administrator needs to get information about all sketches
@@ -313,25 +315,13 @@ class SketchResource(resources.ResourceMixin, Resource):
         ]
 
         # Get event count and size on disk for each index in the sketch.
-        stats_per_index = {}
+        indices_metadata = {}
+        stats_per_timeline = {}
         for timeline in sketch.active_timelines:
-            if timeline.get_status.status != 'archived':
-                continue
-            stats_per_index[timeline.searchindex.index_name] = {
-                'count': 0,
-                'bytes': 0,
-                'data_types': []
+            indices_metadata[timeline.searchindex.index_name] = {}
+            stats_per_timeline[timeline.id] = {
+                'count': 0
             }
-
-        if sketch_indices:
-            # Stats for index. Num docs per shard and size on disk.
-            for index_name in sketch_indices:
-                doc_count, bytes_on_disk = self.datastore.count(
-                    indices=index_name)
-                stats_per_index[index_name] = {
-                    'count': doc_count,
-                    'bytes': bytes_on_disk
-                }
 
         if not sketch_indices:
             mappings_settings = {}
@@ -346,13 +336,18 @@ class SketchResource(resources.ResourceMixin, Resource):
 
         mappings = []
 
-        for _, value in mappings_settings.items():
+        for index_name, value in mappings_settings.items():
             # The structure is different in ES version 6.x and lower. This check
             # makes sure we support both old and new versions.
             properties = value['mappings'].get('properties')
             if not properties:
                 properties = next(
                     iter(value['mappings'].values())).get('properties')
+
+            # Determine if index is from the time before multiple timelines per
+            # index. This is used in the UI to support both modes.
+            is_legacy = bool('__ts_timeline_id' not in properties)
+            indices_metadata[index_name]['is_legacy'] = is_legacy
 
             for field, value_dict in properties.items():
                 mapping_dict = {}
@@ -364,6 +359,35 @@ class SketchResource(resources.ResourceMixin, Resource):
                 mapping_dict['field'] = field
                 mapping_dict['type'] = value_dict.get('type', 'n/a')
                 mappings.append(mapping_dict)
+
+        if sketch_indices:
+            # Stats for index. Num docs per shard.
+            for timeline in sketch.active_timelines:
+                index_name = timeline.searchindex.index_name
+                if indices_metadata[index_name].get('is_legacy', False):
+                    doc_count, _ = self.datastore.count(indices=index_name)
+                    stats_per_timeline[timeline.id] = {'count': doc_count}
+                else:
+                    # TODO: Consider using an aggregation here instead?
+                    query_dsl = {
+                        'query': {
+                            'term': {
+                                '__ts_timeline_id': {
+                                    'value': timeline.id
+                                }
+                            }
+                        }
+                    }
+                    count = self.datastore.search(
+                        sketch_id=sketch.id,
+                        query_string=None,
+                        query_filter={},
+                        query_dsl=query_dsl,
+                        indices=[timeline.searchindex.index_name],
+                        count=True)
+                    stats_per_timeline[timeline.id] = {
+                        'count': count
+                    }
 
         # Make the list of dicts unique
         mappings = {v['field']: v for v in mappings}.values()
@@ -420,12 +444,10 @@ class SketchResource(resources.ResourceMixin, Resource):
                 'users': [user.username for user in sketch.collaborators],
                 'groups': [group.name for group in sketch.groups],
             },
-            analyzers=[
-                x for x, y in analyzer_manager.AnalysisManager.get_analyzers()
-            ],
             attributes=utils.get_sketch_attributes(sketch),
             mappings=list(mappings),
-            stats=stats_per_index,
+            indices_metadata=indices_metadata,
+            stats_per_timeline=stats_per_timeline,
             last_activity=utils.get_sketch_last_activity(sketch),
             filter_labels=self.datastore.get_filter_labels(
                 sketch.id, sketch_indices),

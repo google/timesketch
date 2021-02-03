@@ -22,6 +22,10 @@ class SessionizerSketchPlugin(interface.BaseSketchAnalyzer):
     """
 
     NAME = 'sessionizer'
+    DISPLAY_NAME = 'Time based sessions'
+    DESCRIPTION = ('Events are grouped in sessions based on the time difference'
+                   ' between them')
+
     # TODO max_time_diff_micros should be configurable
     max_time_diff_micros = 300000000
     query = '*'
