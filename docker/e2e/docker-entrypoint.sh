@@ -61,17 +61,6 @@ if [ "$1" = 'timesketch' ]; then
   tsctl add_user --username "$TIMESKETCH_USER" --password "$TIMESKETCH_PASSWORD"
   unset TIMESKETCH_PASSWORD
 
-  # TODO: This is only to enable e2e tests to run until a new dev release of
-  # plaso has been released, REMOVE IMMEDIATELY AFTER THAT HAS BEEN DONE.
-  # This will also fail as soon as the feature branch has been deleted.
-  cd
-  git clone https://github.com/kiddinn/plaso.git
-  git checkout elastic_ts
-  cd plaso
-  apt-get remove -y plaso-tools
-  python setup.py build && python setup.py install
-  # END Temporary Hack to make plaso work in the e2e test.
-
   # Run the Timesketch server (without SSL)
   cd /tmp
   exec `bash -c "/usr/local/bin/celery -A timesketch.lib.tasks worker --uid nobody --loglevel info & \
