@@ -104,6 +104,7 @@ class MockDataStore(object):
         '_id': 'adc123',
         '_type': 'plaso_event',
         '_source': {
+            '__ts_timeline_id': 1,
             'es_index': '',
             'es_id': '',
             'label': '',
@@ -141,6 +142,7 @@ class MockDataStore(object):
                     'Content Modification Time',
                     'datetime':
                     '2014-09-13T07:27:03+00:00'
+                    '__ts_timeline_id': 1,
                 },
                 '_score': 'null',
                 '_index': 'test',
