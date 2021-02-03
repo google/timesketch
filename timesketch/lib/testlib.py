@@ -141,7 +141,7 @@ class MockDataStore(object):
                     'timestamp_desc':
                     'Content Modification Time',
                     'datetime':
-                    '2014-09-13T07:27:03+00:00'
+                    '2014-09-13T07:27:03+00:00',
                     '__ts_timeline_id': 1,
                 },
                 '_score': 'null',

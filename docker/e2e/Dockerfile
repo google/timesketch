@@ -43,7 +43,7 @@ RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
 # This will also fail as soon as the feature branch has been deleted.
 RUN cd && apt-get install -y git && \
     git clone https://github.com/kiddinn/plaso.git && \
-    git checkout elastic_ts && cd plaso && \
+    cd plaso && git checkout elastic_ts && \
     apt-get remove -y plaso-tools && \
     python setup.py build && python setup.py install
 # END Temporary Hack to make plaso work in the e2e test.
