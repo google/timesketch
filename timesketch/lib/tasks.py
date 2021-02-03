@@ -590,13 +590,14 @@ def run_plaso(
     if mappings_file_path:
         cmd.extend(['--elastic_mappings', mappings_file_path])
 
+    """
     if timeline_id:
         fields_to_add = {
             '__ts_timeline_id': timeline_id}
 
         cmd.extend(['--additional_fields', json.dumps(fields_to_add)])
+    """
 
-    print(cmd)
     # Run psort.py
     try:
         subprocess.check_output(
