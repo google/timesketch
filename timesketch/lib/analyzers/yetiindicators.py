@@ -15,6 +15,9 @@ class YetiIndicators(interface.BaseSketchAnalyzer):
     """Index analyzer for Yeti threat intel indicators."""
 
     NAME = 'yetiindicators'
+    DISPLAY_NAME = 'Yeti threat intel indicators'
+    DESCRIPTION = 'Mark events using Yeti threat intel indicators'
+
     DEPENDENCIES = frozenset(['domain'])
 
     def __init__(self, index_name, sketch_id):
@@ -23,7 +26,7 @@ class YetiIndicators(interface.BaseSketchAnalyzer):
         Args:
             index_name: Elasticsearch index name
         """
-        super(YetiIndicators, self).__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id)
         self.intel = {}
         self.yeti_api_root = current_app.config.get('YETI_API_ROOT')
         self.yeti_api_key = current_app.config.get('YETI_API_KEY')

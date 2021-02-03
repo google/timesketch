@@ -41,6 +41,9 @@ class SSHSessionizerSketchPlugin(sessionizer.SessionizerSketchPlugin):
     """
 
     NAME = 'ssh_sessionizer'
+    DISPLAY_NAME = 'SSH sessions'
+    DESCRIPTION = 'SSH sessions based on client IP address and port number'
+
     query = 'reporter:"sshd"'
     session_num = 0
     session_type = 'ssh_session'

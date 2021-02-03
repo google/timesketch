@@ -26,6 +26,8 @@ import SketchExplore from './views/SketchExplore'
 import SketchGraph from './views/SketchGraph'
 import SketchGraphOverview from './views/SketchGraphOverview'
 import SketchGraphExplore from './views/SketchGraphExplore'
+import SketchAnalyzers from './views/SketchAnalyzers'
+import SketchAnalyzersOverview from './views/SketchAnalyzersOverview'
 import SketchStory from './views/SketchStory'
 import SketchStoryOverview from './views/SketchStoryOverview'
 import SketchStoryContent from './views/SketchStoryContent'
@@ -70,6 +72,17 @@ const routes = [
             name: 'SketchGraphExplore',
             component: SketchGraphExplore,
             props: true
+          }]
+      },
+      {
+        path: 'analyzers',
+        component: SketchAnalyzers,
+        props: true,
+        children: [
+          {
+            path: '',
+            name: 'SketchAnalyzersOverview',
+            component: SketchAnalyzersOverview
           }]
       },
       {

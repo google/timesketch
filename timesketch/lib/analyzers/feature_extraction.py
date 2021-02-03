@@ -26,6 +26,8 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for FeatureExtraction."""
 
     NAME = 'feature_extraction'
+    DISPLAY_NAME = 'Feature extractor'
+    DESCRIPTION = 'Extract features from event based on stored definitions'
 
     CONFIG_FILE = 'features.yaml'
 
@@ -156,8 +158,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
                 loaded up.
         """
         self.index_name = index_name
-        super().__init__(
-            index_name, sketch_id)
+        super().__init__(index_name, sketch_id)
         self._config = config
 
     def run(self):
