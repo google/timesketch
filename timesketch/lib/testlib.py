@@ -272,7 +272,8 @@ class MockDataStore(object):
 
     # pylint: disable=unused-argument
     def search_stream(self, query_string, query_filter, query_dsl,
-                      indices, return_fields, enable_scroll=True):
+                      indices, return_fields, enable_scroll=True,
+                      timeline_ids=None):
         for i in range(len(self.event_store)):
             yield self.event_store[str(i)]
 

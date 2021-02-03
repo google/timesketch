@@ -169,10 +169,10 @@ class ElasticsearchDataStore(object):
             return query_dsl
 
         if not isinstance(timeline_ids, (list, tuple)):
-           es_logger.error(
-               'Attempting to pass in timelines to a query DSL, but the '
-               'passed timelines are not a list.')
-           return query_dsl
+            es_logger.error(
+                'Attempting to pass in timelines to a query DSL, but the '
+                'passed timelines are not a list.')
+            return query_dsl
 
         if not all([isinstance(x, int) for x in timeline_ids]):
             es_logger.error(
