@@ -758,6 +758,7 @@ class BaseIndexAnalyzer(object):
         index_name: Name if Elasticsearch index.
         datastore: Elasticsearch datastore client.
         sketch: Instance of Sketch object.
+        timeline_id: The ID of the timeline the analyzer runs on.
         tagged_events: Dict with all events to add tags and those tags.
         emoji_events: Dict with all events to add emojis and those emojis.
     """
@@ -843,28 +844,7 @@ class BaseIndexAnalyzer(object):
 
         # Refresh the index to make sure it is searchable.
         for index in indices:
-            # TODO FIX THIS< TRANSLATE BETWEEN TIMELINE ID AND INDEX NAME.
-            # utils.get_validated_indices
             self.datastore.client.indices.refresh(index=index)
-        # HERNA
-        # begin
-        searchindex = SearchIndex.query.filter_by(
-            index_name=self.index).first()
-        if searchindex:
-            timelines = Timeline.query.filter_by(
-                searchindex=searchindex)
-
-            sketch_structure = {}
-        for timeline in sketch.timelines:
-            if timeline.get_status.status.lower() != 'ready':
-                continue
-            index_ = timeline.searchindex.index_name
-            sketch_structure.setdefault(index_, [])
-            sketch_structure[index_].append({
-                'name': timeline.name,
-                'id': timeline.id,
-            })
-        # END
 
         if self.timeline_id:
             timeline_ids = [self.timeline_id]
@@ -950,12 +930,13 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
 
     Attributes:
         sketch: A Sketch instance.
+        timeline_id: The ID of the timeline the analyzer runs on.
     """
 
     NAME = 'name'
     IS_SKETCH_ANALYZER = True
 
-    def __init__(self, index_name, sketch_id):
+    def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize the analyzer object.
 
         Args:
@@ -963,7 +944,7 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             sketch_id: Sketch ID.
         """
         self.sketch = Sketch(sketch_id=sketch_id)
-        super().__init__(index_name)
+        super().__init__(index_name, timeline_id=timeline_id)
 
     def event_pandas(
             self, query_string=None, query_filter=None, query_dsl=None,
@@ -993,6 +974,11 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
         if not indices:
             indices = [self.index_name]
 
+        if self.timeline_id:
+            timeline_ids = [self.timeline_id]
+        else:
+            timeline_ids = None
+
         # Refresh the index to make sure it is searchable.
         for index in indices:
             self.datastore.client.indices.refresh(index=index)
@@ -1009,6 +995,7 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             query_filter=query_filter,
             query_dsl=query_dsl,
             indices=indices,
+            timeline_ids=timeline_ids,
             return_fields=return_fields,
         )
 

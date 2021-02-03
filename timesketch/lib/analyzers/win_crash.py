@@ -83,16 +83,6 @@ class WinCrashSketchPlugin(interface.BaseSketchAnalyzer):
         ),
     }
 
-    def __init__(self, index_name, sketch_id):
-        """Initialize The Sketch Analyzer.
-
-        Args:
-            index_name: Elasticsearch index name
-            sketch_id: Sketch ID
-        """
-        self.index_name = index_name
-        super().__init__(index_name, sketch_id)
-
     def formulate_query(self, elements):
         """Generates the Elasticsearch query.
 

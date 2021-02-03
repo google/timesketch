@@ -20,13 +20,15 @@ class YetiIndicators(interface.BaseSketchAnalyzer):
 
     DEPENDENCIES = frozenset(['domain'])
 
-    def __init__(self, index_name, sketch_id):
+    def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize the Index Analyzer.
 
         Args:
             index_name: Elasticsearch index name
+            sketch_id: The ID of the sketch.
+            timeline_id: The ID of the timeline.
         """
-        super().__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id, timeline_id=timeline_id)
         self.intel = {}
         self.yeti_api_root = current_app.config.get('YETI_API_ROOT')
         self.yeti_api_key = current_app.config.get('YETI_API_KEY')

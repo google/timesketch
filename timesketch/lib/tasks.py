@@ -274,8 +274,9 @@ def build_index_pipeline(
     return chain(index_task, index_analyzer_chain)
 
 
-def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
-                                   analyzer_names=None, analyzer_kwargs=None):
+def build_sketch_analysis_pipeline(
+        sketch_id, searchindex_id, user_id, analyzer_names=None,
+        analyzer_kwargs=None, timeline_id=None):
     """Build a pipeline for sketch analysis.
 
     If no analyzer_names is passed in then we assume auto analyzers should be
@@ -290,6 +291,7 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
         user_id (int): The ID of the user who started the analyzer.
         analyzer_names (list): List of analyzers to run.
         analyzer_kwargs (dict): Arguments to the analyzers.
+        timeline_id (int): Optional int of the timeline to run the analyzer on.
 
     Returns:
         A tuple with a Celery group with analysis tasks or None if no analyzers
@@ -342,7 +344,8 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
         db_session.commit()
 
         tasks.append(run_sketch_analyzer.s(
-            sketch_id, analysis.id, analyzer_name, **kwargs))
+            sketch_id, analysis.id, analyzer_name,
+            timeline_id=timeline_id, **kwargs))
 
     # Commit the analysis session to the database.
     db_session.add(analysis_session)
@@ -459,8 +462,9 @@ def run_index_analyzer(index_name, analyzer_name, **kwargs):
 
 
 @celery.task(track_started=True)
-def run_sketch_analyzer(index_name, sketch_id, analysis_id, analyzer_name,
-                        **kwargs):
+def run_sketch_analyzer(
+        index_name, sketch_id, analysis_id, analyzer_name,
+        timeline_id=None, **kwargs):
     """Create a Celery task for a sketch analyzer.
 
     Args:
@@ -468,13 +472,15 @@ def run_sketch_analyzer(index_name, sketch_id, analysis_id, analyzer_name,
         sketch_id: ID of the sketch to analyze.
         analysis_id: ID of the analysis.
         analyzer_name: Name of the analyzer.
+        timeline_id: Int of the timeline this analyzer belongs to.
 
     Returns:
       Name (str) of the index.
     """
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
     analyzer = analyzer_class(
-        sketch_id=sketch_id, index_name=index_name, **kwargs)
+        sketch_id=sketch_id, index_name=index_name,
+        timeline_id=timeline_id, **kwargs)
 
     result = analyzer.run_wrapper(analysis_id)
     logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
@@ -590,13 +596,11 @@ def run_plaso(
     if mappings_file_path:
         cmd.extend(['--elastic_mappings', mappings_file_path])
 
-    """
     if timeline_id:
         fields_to_add = {
             '__ts_timeline_id': timeline_id}
 
         cmd.extend(['--additional_fields', json.dumps(fields_to_add)])
-    """
 
     # Run psort.py
     try:
