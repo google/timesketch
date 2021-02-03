@@ -128,12 +128,14 @@ class ExploreResource(resources.ResourceMixin, Resource):
         index_stats_agg = {
             'indices': {
                 'terms': {
-                    'field': '_index'
+                    'field': '_index',
+                    'min_doc_count': 0
                 }
             },
             'timelines': {
                 'terms': {
-                    'field': '__ts_timeline_id'
+                    'field': '__ts_timeline_id',
+                    'min_doc_count': 0
                 }
             }
         }
