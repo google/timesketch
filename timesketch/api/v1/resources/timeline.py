@@ -136,7 +136,8 @@ class TimelineListResource(resources.ResourceMixin, Resource):
             # pylint: disable=import-outside-toplevel
             from timesketch.lib import tasks
             sketch_analyzer_group, _ = tasks.build_sketch_analysis_pipeline(
-                sketch_id, searchindex_id, current_user.id, timeline_id=timeline_id)
+                sketch_id, searchindex_id, current_user.id,
+                timeline_id=timeline_id)
             if sketch_analyzer_group:
                 pipeline = (tasks.run_sketch_init.s(
                     [searchindex.index_name]) | sketch_analyzer_group)
