@@ -96,21 +96,11 @@ export default {
     }
     return RestApiBlobClient.post('/sketches/' + sketchId + '/archive/', formData)
   },
-  getSketchTimelines (sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/timelines/')
-  },
   getSketchTimeline (sketchId, timelineId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/')
   },
   getSketchTimelineAnalysis (sketchId, timelineId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/analysis/')
-  },
-  // Add or remove timeline to sketch
-  createSketchTimeline (sketchId, searchIndexId) {
-    let formData = {
-      timeline: searchIndexId
-    }
-    return RestApiClient.post('/sketches/' + sketchId + /timelines/, formData)
   },
   saveSketchTimeline (sketchId, timelineId, name, description, color) {
     let formData = {
@@ -129,10 +119,6 @@ export default {
   },
   deleteSketchTimeline (sketchId, timelineId) {
     return RestApiClient.delete('/sketches/' + sketchId + /timelines/ + timelineId + '/')
-  },
-  // Searchindices
-  getSearchIndexList () {
-    return RestApiClient.get('/searchindices/')
   },
   // Get details about an event
   getEvent (sketchId, searchindexId, eventId) {
