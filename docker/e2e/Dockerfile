@@ -45,7 +45,7 @@ RUN cd && apt-get install -y git && \
     git clone https://github.com/kiddinn/plaso.git && \
     cd plaso && git checkout elastic_ts && \
     apt-get remove -y plaso-tools && \
-    python setup.py build && python setup.py install
+    python3 setup.py build && python3 setup.py install
 # END Temporary Hack to make plaso work in the e2e test.
 
 
