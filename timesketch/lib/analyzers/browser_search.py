@@ -21,6 +21,8 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for BrowserSearch."""
 
     NAME = 'browser_search'
+    DISPLAY_NAME = 'Browser search terms'
+    DESCRIPTION = 'Extract search terms from various search providers'
 
     DEPENDENCIES = frozenset(['domain'])
 
@@ -64,7 +66,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
             sketch_id: Sketch ID
         """
         self.index_name = index_name
-        super(BrowserSearchSketchPlugin, self).__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id)
 
     def _decode_url(self, url):
         """Decodes the URL, replaces %XX to their corresponding characters.

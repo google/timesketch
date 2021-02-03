@@ -763,6 +763,9 @@ class BaseIndexAnalyzer(object):
     """
 
     NAME = 'name'
+    DISPLAY_NAME = None
+    DESCRIPTION = None
+
     IS_SKETCH_ANALYZER = False
 
     # If this analyzer depends on another analyzer

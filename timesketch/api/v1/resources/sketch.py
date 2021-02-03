@@ -37,7 +37,6 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.analyzers import manager as analyzer_manager
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.models import db_session
@@ -207,7 +206,8 @@ class SketchListResource(resources.ResourceMixin, Resource):
 class SketchResource(resources.ResourceMixin, Resource):
     """Resource to get a sketch."""
 
-    def _add_label(self, sketch, label):
+    @staticmethod
+    def _add_label(sketch, label):
         """Add a label to the sketch."""
         if sketch.has_label(label):
             logger.warning(
@@ -217,7 +217,8 @@ class SketchResource(resources.ResourceMixin, Resource):
         sketch.add_label(label, user=current_user)
         return True
 
-    def _remove_label(self, sketch, label):
+    @staticmethod
+    def _remove_label(sketch, label):
         """Removes a label to the sketch."""
         if not sketch.has_label(label):
             logger.warning(
@@ -227,7 +228,8 @@ class SketchResource(resources.ResourceMixin, Resource):
         sketch.remove_label(label)
         return True
 
-    def _get_sketch_for_admin(self, sketch):
+    @staticmethod
+    def _get_sketch_for_admin(sketch):
         """Returns a limited sketch view for adminstrators.
 
         An administrator needs to get information about all sketches
@@ -442,9 +444,6 @@ class SketchResource(resources.ResourceMixin, Resource):
                 'users': [user.username for user in sketch.collaborators],
                 'groups': [group.name for group in sketch.groups],
             },
-            analyzers=[
-                x for x, y in analyzer_manager.AnalysisManager.get_analyzers()
-            ],
             attributes=utils.get_sketch_attributes(sketch),
             mappings=list(mappings),
             indices_metadata=indices_metadata,

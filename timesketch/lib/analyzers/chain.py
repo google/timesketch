@@ -15,7 +15,7 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for chained events.
 
     The purpose of the chain analyzer is to chain together events that can
-    be described as linked, either by sharing some common entitites, or
+    be described as linked, either by sharing some common entities, or
     one event being a derivative of another event. An example of this
     would be that a browser downloads an executable, which then later gets
     executed. The signs of execution could lie in multiple events, from
@@ -29,6 +29,10 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
     """
 
     NAME = 'chain'
+    DISPLAY_NAME = 'Chain linked events'
+    DESCRIPTION = ('Chain together events that can be described as linked, '
+                   'either by sharing some common entities, or one event being '
+                   'a derivative of another event')
 
     DEPENDENCIES = frozenset()
 
@@ -42,8 +46,7 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
         self.index_name = index_name
         self._chain_plugins = (
             chain_manager.ChainPluginsManager.get_plugins(self))
-        super(ChainSketchPlugin, self).__init__(index_name, sketch_id)
-
+        super().__init__(index_name, sketch_id)
 
     def run(self):
         """Entry point for the analyzer.

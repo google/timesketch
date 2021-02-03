@@ -13,6 +13,8 @@
 # limitations under the License.
 """Analysis resources for version 1 of the Timesketch API."""
 import fnmatch
+import collections
+import logging
 
 from flask import jsonify
 from flask import request
@@ -30,6 +32,9 @@ from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import AnalysisSession
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
+
+
+logger = logging.getLogger('timesketch.analysis_api')
 
 
 class AnalysisResource(resources.ResourceMixin, Resource):
@@ -60,6 +65,47 @@ class AnalysisResource(resources.ResourceMixin, Resource):
         analysis_history = Analysis.query.filter_by(timeline=timeline).all()
 
         return self.to_json(analysis_history)
+
+
+class AnalyzerSessionActiveListResource(resources.ResourceMixin, Resource):
+    """Resource to get analyzer session."""
+
+    @login_required
+    def get(self, sketch_id):
+        """Handles GET request to the resource.
+
+        Returns:
+            A analyzer session in JSON (instance of flask.wrappers.Response)
+        """
+        sketch = Sketch.query.get_with_acl(sketch_id)
+
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        if not sketch.has_permission(current_user, 'read'):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                'User does not have read access to sketch')
+
+        counter = collections.Counter(PENDING=0, STARTED=0, ERROR=0, DONE=0)
+        session_ids = set()
+
+        active_sessions = sketch.get_active_analysis_sessions()
+        for session in active_sessions:
+            session_ids.add(session.id)
+            for analysis in session.analyses:
+                counter[analysis.get_status.status] += 1
+
+        schema = {
+            'objects': [{
+                'total_tasks': sum(counter.values()),
+                'total_sessions': len(active_sessions),
+                'tasks_status_count': counter,
+                'sessions': list(session_ids)
+            }]
+        }
+        return jsonify(schema)
 
 
 class AnalyzerSessionResource(resources.ResourceMixin, Resource):
@@ -109,7 +155,17 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         analyzers = [
             x for x, y in analyzer_manager.AnalysisManager.get_analyzers()]
 
-        return analyzers
+        analyzers = analyzer_manager.AnalysisManager.get_analyzers()
+        analyzers_detail = []
+        for analyzer_name, analyzer_class in analyzers:
+            analyzers_detail.append({
+                'name': analyzer_name,
+                'display_name': analyzer_class.DISPLAY_NAME,
+                'description': analyzer_class.DESCRIPTION
+            })
+
+
+        return analyzers_detail
 
     @login_required
     def post(self, sketch_id):
@@ -137,25 +193,17 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'Unable to run an analyzer without any data submitted.')
 
-        timeline_id = form.get('timeline_id')
-        if not timeline_id:
+        timeline_ids = form.get('timeline_ids')
+        if not timeline_ids:
             return abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Need to provide a timeline ID')
 
-        timeline = Timeline.query.get(timeline_id)
-        if timeline not in sketch.timelines:
+        sketch_timelines = {t.id for t in sketch.timelines}
+        if not set(timeline_ids).issubset(sketch_timelines):
             return abort(
                 HTTP_STATUS_CODE_FORBIDDEN,
                 'Timeline is not part of this sketch')
-
-        search_index = timeline.searchindex
-
-        if not search_index:
-            return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, (
-                    'No timeline was found, make sure you\'ve got the correct '
-                    'timeline ID or timeline name.'))
 
         analyzer_names = form.get('analyzer_names')
         if analyzer_names:
@@ -186,25 +234,32 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
         # Import here to avoid circular imports.
         # pylint: disable=import-outside-toplevel
         from timesketch.lib import tasks
-        try:
-            analyzer_group, session_id = tasks.build_sketch_analysis_pipeline(
-                sketch_id=sketch_id, searchindex_id=search_index.id,
-                user_id=current_user.id, analyzer_names=analyzers,
-                analyzer_kwargs=analyzer_kwargs)
-        except KeyError as e:
-            return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Unable to build analyzer pipeline, analyzer does not exist. '
-                'Error message: {0!s}'.format(e))
 
-        if analyzer_group:
-            pipeline = (tasks.run_sketch_init.s(
-                [search_index.index_name]) | analyzer_group)
-            pipeline.apply_async()
+        # TODO: Change to run on Timeline instead of Index
+        sessions = []
+        for timeline_id in timeline_ids:
+            timeline = Timeline.query.get(timeline_id)
+            if not timeline:
+                continue
+            searchindex_id = timeline.searchindex.id
+            searchindex_name = timeline.searchindex.index_name
 
-        schema = {
-            'objects': [{
-                'analysis_session': session_id
-            }]
-        }
-        return jsonify(schema)
+            try:
+                analyzer_group, session = tasks.build_sketch_analysis_pipeline(
+                    sketch_id=sketch_id, searchindex_id=searchindex_id,
+                    user_id=current_user.id, analyzer_names=analyzers,
+                    analyzer_kwargs=analyzer_kwargs)
+            except KeyError as e:
+                logger.warning(
+                    'Unable to build analyzer pipeline, analyzer does not '
+                    'exists. Error message: {0!s}'.format(e))
+                continue
+
+            if analyzer_group:
+                pipeline = (tasks.run_sketch_init.s(
+                    [searchindex_name]) | analyzer_group)
+                pipeline.apply_async()
+
+            sessions.append(session)
+
+        return self.to_json(sessions)
