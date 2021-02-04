@@ -544,24 +544,18 @@ def run_plaso(
         es.create_index(
             index_name=index_name, doc_type=event_type, mappings=mappings)
     except errors.DataIngestionError as e:
-        _set_timeline_status(
-            index_name, status='fail', error_msg=str(e),
-            timeline_name=timeline_name)
+        _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError,
             RequestError) as e:
-        _set_timeline_status(
-            index_name, status='fail', error_msg=str(e),
-            timeline_name=timeline_name)
+        _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
         raise
 
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
-        _set_timeline_status(
-            index_name, status='fail', error_msg=error_msg,
-            timeline_name=timeline_name)
+        _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
         logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         return None
 
