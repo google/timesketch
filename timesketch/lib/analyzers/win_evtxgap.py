@@ -192,8 +192,8 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
         params = {
             'field': 'source_name',
             'supported_charts': 'hbarchart',
+            'index': [self.timeline_id],
             'query_string': 'data_type:"windows:evtx:record"'
-
         }
         agg_sources = self.sketch.add_aggregation(
             name='Top EVTX Sources', agg_name='query_bucket',

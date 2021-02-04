@@ -98,6 +98,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
             agg_params = {
                 'field': 'tag',
                 'limit': 20,
+                'index': [self.timeline_id],
             }
             agg_obj = self.sketch.add_aggregation(
                 name='Top 20 Sigma tags', agg_name='field_bucket',
