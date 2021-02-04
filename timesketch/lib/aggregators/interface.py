@@ -143,13 +143,17 @@ class BaseAggregator(object):
     # List of supported chart types.
     SUPPORTED_CHARTS = frozenset()
 
-    def __init__(self, sketch_id=None, index=None):
+    def __init__(self, sketch_id=None, indices=None, timeline_ids=None):
         """Initialize the aggregator object.
 
         Args:
             field: String that contains the field name used for URL generation.
             sketch_id: Sketch ID.
-            index: List of elasticsearch index names.
+            indices: Optional list of elasticsearch index names. If not provided
+                the default behavior is to include all the indices in a sketch.
+            timeline_ids: Optional list of timeline IDs, if not provided the
+                default behavior is to query all the data in the provided
+                search indices.
         """
         if not sketch_id and not index:
             raise RuntimeError('Need at least sketch_id or index')
@@ -158,14 +162,19 @@ class BaseAggregator(object):
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
 
-        self.field = ''
-        self.index = index
-        self.sketch = SQLSketch.query.get(sketch_id)
         self._sketch_url = '/sketch/{0:d}/explore'.format(sketch_id)
+        self.field = ''
+        self.indices = indices
+        self.sketch = SQLSketch.query.get(sketch_id)
+        self.timeline_ids = None
 
-        if not self.index:
-            active_timelines = self.sketch.active_timelines
-            self.index = [t.searchindex.index_name for t in active_timelines]
+        active_timelines = self.sketch.active_timelines
+        if not self.indices:
+            self.indices = [t.searchindex.index_name for t in active_timelines]
+
+        if timeline_ids:
+            valid_ids = [t.id for t in active_timelines]
+            self.timeline_ids = [t for t in timeline_ids if t in valid_ids]
 
     @property
     def chart_title(self):
@@ -200,7 +209,7 @@ class BaseAggregator(object):
 
         # Get the mapping for the field.
         mapping = self.elastic.client.indices.get_field_mapping(
-            index=self.index, fields=field_name)
+            index=self.indices, fields=field_name)
 
         # The returned structure is nested so we need to unpack it.
         # Example:
@@ -224,7 +233,7 @@ class BaseAggregator(object):
                 break
 
         if field_type == 'text':
-            field_format = '{0:s}.keyword'.format(field_name)
+            field_format = f'{field_name}.keyword'
 
         return field_format
 
@@ -237,9 +246,13 @@ class BaseAggregator(object):
         Returns:
             Elasticsearch aggregation result.
         """
+        if self.timeline_ids:
+           aggregation_spec = self.elastic.build_query_dsl(
+               aggregation_spec, self.timeline_ids)
+
         # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
         aggregation = self.elastic.client.search(
-            index=self.index, body=aggregation_spec, size=0)
+            index=self.indices, body=aggregation_spec, size=0)
         return aggregation
 
     def run(self, *args, **kwargs):
