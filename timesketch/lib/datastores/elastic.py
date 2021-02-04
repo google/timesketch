@@ -158,7 +158,7 @@ class ElasticsearchDataStore(object):
             timeline_ids: Either a list of timeline IDs (int) or None.
 
         Returns:
-            Elasticsearch query as a dictionary.
+            Elasticsearch query DSL as a dictionary.
         """
         # Remove any aggregation coming from user supplied Query DSL.
         # We have no way to display this data in a good way today.
