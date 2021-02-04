@@ -201,6 +201,7 @@ limitations under the License.
                 </div>
                 <div class="level-item">
                   <span v-if="!toEvent && !searchInProgress">{{ totalHits }} events ({{ totalTime }}s)</span>
+                  <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
                 </div>
                 <div class="level-item" v-if="numSelectedEvents" style="margin-right:50px;">
                   <button class="button is-small is-outlined" style="border-radius: 4px;" v-on:click="toggleStar">
@@ -305,7 +306,6 @@ limitations under the License.
               </div>
             </nav>
 
-            <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
             <div v-if="totalHits > 0" style="margin-top:20px;"></div>
 
             <ts-sketch-explore-event-list v-if="eventList.objects.length"
@@ -454,6 +454,7 @@ export default {
       this.$refs['NewTimeFilter'].isActive = false
     },
     search: function (emitEvent=true, resetPagination=true) {
+      this.searchInProgress = true
       if (!this.currentQueryString) {
         return
       }
@@ -492,6 +493,7 @@ export default {
       ApiClient.search(this.sketchId, formData).then((response) => {
         this.eventList.objects = response.data.objects
         this.eventList.meta = response.data.meta
+        this.searchInProgress = false
       }).catch((e) => {})
     },
     exportSearchResult: function () {
