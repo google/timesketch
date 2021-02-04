@@ -147,18 +147,19 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
     ]
 
 
-    def __init__(self, index_name, sketch_id, config=None):
+    def __init__(self, index_name, sketch_id, timeline_id=None, config=None):
         """Initialize The Sketch Analyzer.
 
         Args:
             index_name: Elasticsearch index name
             sketch_id: Sketch ID
+            timeline_id: The ID of the timeline.
             config: Optional dict that contains the configuration for the
                 analyzer. If not provided, the default YAML file will be
                 loaded up.
         """
         self.index_name = index_name
-        super().__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id, timeline_id=timeline_id)
         self._config = config
 
     def run(self):

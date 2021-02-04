@@ -248,7 +248,7 @@ class AnalyzerRunResource(resources.ResourceMixin, Resource):
                 analyzer_group, session = tasks.build_sketch_analysis_pipeline(
                     sketch_id=sketch_id, searchindex_id=searchindex_id,
                     user_id=current_user.id, analyzer_names=analyzers,
-                    analyzer_kwargs=analyzer_kwargs)
+                    analyzer_kwargs=analyzer_kwargs, timeline_id=timeline_id)
             except KeyError as e:
                 logger.warning(
                     'Unable to build analyzer pipeline, analyzer does not '

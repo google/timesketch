@@ -36,17 +36,18 @@ class ChainSketchPlugin(interface.BaseSketchAnalyzer):
 
     DEPENDENCIES = frozenset()
 
-    def __init__(self, index_name, sketch_id):
+    def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize The Sketch Analyzer.
 
         Args:
             index_name: Elasticsearch index name
             sketch_id: Sketch ID
+            timeline_id: The ID of the timeline.
         """
         self.index_name = index_name
         self._chain_plugins = (
             chain_manager.ChainPluginsManager.get_plugins(self))
-        super().__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
     def run(self):
         """Entry point for the analyzer.
