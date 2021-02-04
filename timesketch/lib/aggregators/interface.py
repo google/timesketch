@@ -154,7 +154,7 @@ class BaseAggregator(object):
                 default behavior is to query all the data in the provided
                 search indices.
         """
-        if not sketch_id and not index:
+        if not sketch_id and not indices:
             raise RuntimeError('Need at least sketch_id or index')
 
         self.elastic = ElasticsearchDataStore(
