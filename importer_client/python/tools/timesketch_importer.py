@@ -114,6 +114,10 @@ def upload_file(
         if size_threshold:
             streamer.set_filesize_threshold(size_threshold)
 
+        data_label = config_dict.get('data_label')
+        if data_label:
+            streamer.set_data_label(data_label)
+
         streamer.add_file(file_path)
 
     return 'File got successfully uploaded to sketch: {0:d}'.format(
@@ -191,6 +195,14 @@ def main(args=None):
         '--timeline_name', '--timeline-name', action='store', type=str,
         dest='timeline_name', default='', help=(
             'String that will be used as the timeline name.'))
+    config_group.add_argument(
+        '--data_label', '--data-label', action='store', type=str,
+        dest='data_label', default='', help=(
+            'The data label is used by the API to determine whether a new '
+            'search index needs to be created or if the data can be appended '
+            'to an already existing index. If a file is added this defaults '
+            'to the file extension, otherwise a default value of generic is '
+            'applied.'))
     config_group.add_argument(
         '--config_section', '--config-section', action='store', type=str,
         dest='config_section', default='', help=(
@@ -368,6 +380,7 @@ def main(args=None):
         'entry_threshold': options.entry_threshold,
         'size_threshold': options.size_threshold,
         'log_config_file': options.log_config_file,
+        'data_label': options.data_label,
     }
 
     logger.info('Uploading file.')

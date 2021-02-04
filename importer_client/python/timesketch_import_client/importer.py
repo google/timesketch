@@ -52,6 +52,7 @@ class ImportStreamer(object):
         """Initialize the upload streamer."""
         self._count = 0
         self._config_helper = None
+        self._data_label = ''
         self._dict_config_loaded = False
         self._csv_delimiter = None
         self._data_lines = []
@@ -231,6 +232,7 @@ class ImportStreamer(object):
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
             'index_name': self._index,
+            'data_label': self._data_label,
             'events': '\n'.join([json.dumps(x) for x in self._data_lines]),
         }
         logger.debug(
@@ -272,6 +274,7 @@ class ImportStreamer(object):
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
             'index_name': self._index,
+            'data_label': self._data_label,
             'events': data_frame.to_json(orient='records', lines=True),
         }
 
@@ -308,6 +311,7 @@ class ImportStreamer(object):
             'name': timeline_name,
             'sketch_id': self._sketch.id,
             'total_file_size': file_size,
+            'data_label': self._data_label,
             'index_name': self._index,
         }
         if file_size <= self._threshold_filesize:
@@ -511,6 +515,10 @@ class ImportStreamer(object):
             self.set_timeline_name(default_timeline_name)
 
         file_ending = filepath.lower().split('.')[-1]
+
+        if not self._data_label:
+            self._data_label = file_ending
+
         if file_ending == 'csv':
             if self._csv_delimiter:
                 delimiter = self._csv_delimiter
@@ -554,7 +562,7 @@ class ImportStreamer(object):
         try:
             json_obj = json.loads(json_entry)
         except json.JSONDecodeError as e:
-            raise TypeError('Data not as JSON, error: {0!s}'.format(e))
+            raise TypeError('Data not as JSON, error: {0!s}'.format(e)) from e
 
         json_dict = {}
         if isinstance(json_obj, (list, tuple)):
@@ -620,6 +628,10 @@ class ImportStreamer(object):
         """Set the CSV delimiter for CSV file parsing."""
         self._csv_delimiter = delimiter
 
+    def set_data_label(self, data_label):
+        """Set the data label of the imported data."""
+        self._data_label = data_label
+
     def set_data_type(self, data_type):
         """Sets the column where the data_type is defined in."""
         self._data_type = data_type
@@ -673,6 +685,10 @@ class ImportStreamer(object):
     @property
     def timeline(self):
         """Returns a timeline object."""
+        if not self._timeline_id:
+            logger.warning('No timeline ID has been stored as of yet.')
+            return None
+
         timeline_obj = timeline.Timeline(
             timeline_id=self._timeline_id,
             sketch_id=self._sketch.id,

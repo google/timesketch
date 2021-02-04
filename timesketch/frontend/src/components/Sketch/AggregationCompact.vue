@@ -15,6 +15,11 @@ limitations under the License.
 -->
 <template>
   <div class="card">
+    <header class="card-header">
+      <span class="card-header-title">
+        {{ aggregation.name }}
+      </span>
+    </header>
     <div class="card-content" ref="vegaChart">
       <ts-table-chart v-if="chartType === 'table'" :table-data="chartData"></ts-table-chart>
       <ts-vega-lite-chart v-if="chartType !== 'table'" :vegaSpec="vegaSpec"></ts-vega-lite-chart>
@@ -28,7 +33,7 @@ import TsVegaLiteChart from './VegaLiteChart'
 import TsTableChart from './TableChart'
 
 export default {
-  props: ['aggregation'],
+  props: ['aggregation', 'cardHeader'],
   components: {TsVegaLiteChart, TsTableChart},
   data () {
     return {

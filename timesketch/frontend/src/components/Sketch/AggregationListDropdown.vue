@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <b-dropdown ref="dropdown" animation="none" aria-role="menu" append-to-body>
+  <b-dropdown ref="dropdown" animation="none" aria-role="menu" :position="position">
     <a class="button" v-bind:class="{ 'is-rounded': isRounded}" slot="trigger">
       <span>+ Aggregation</span>
       <b-icon :icon="active ? 'chevron-up' : 'chevron-down'" style="font-size: 0.6em;"></b-icon>
@@ -32,14 +32,25 @@ limitations under the License.
 
 <script>
 export default {
-  props: ['isRounded', 'aggregations'],
+  props: ['isRounded', 'aggregations', 'isLast'],
+  data () {
+    return {
+      position: "is-bottom-right"
+    }
+  },
   methods: {
     setActiveAggregation: function (aggregation) {
       this.$emit('addAggregation', aggregation)
     }
+  },
+  created: function () {
+    if (this.isLast) {
+      this.position = 'is-top-right'
+    }
   }
 }
 </script>
+
 
 <!-- CSS scoped to this component only -->
 <style scoped lang="scss"></style>

@@ -48,6 +48,7 @@ export default {
         let newStoryId = response.data.objects[0].id
         this.clearFormData()
         this.$router.push({ name: 'SketchStoryContent', params: { storyId: newStoryId } })
+        this.$store.dispatch('updateSketch', this.sketch.id)
       }).catch((e) => {})
     }
   },

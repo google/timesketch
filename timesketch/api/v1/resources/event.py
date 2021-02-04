@@ -607,11 +607,13 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     label=form.annotation.data, user=current_user)
                 if annotation not in event.labels:
                     event.labels.append(annotation)
+
                 toggle = False
                 if '__ts_star' or '__ts_hidden' in form.annotation.data:
                     toggle = True
                 if form.remove.data:
                     toggle = True
+
                 self.datastore.set_label(
                     searchindex_id,
                     event_id,

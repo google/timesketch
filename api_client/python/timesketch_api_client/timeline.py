@@ -14,7 +14,6 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
-import fnmatch
 import json
 import logging
 
@@ -169,7 +168,7 @@ class Timeline(resource.BaseResource):
         """Run an analyzer on a timeline.
 
         Args:
-            analyzer_name: the name of the analyzer class to run against the
+            analyzer_name: a name of an analyzer class to run against the
                 timeline.
             analyzer_kwargs: optional dict with parameters for the analyzer.
                 This is optional and just for those analyzers that can accept
@@ -189,40 +188,79 @@ class Timeline(resource.BaseResource):
             raise error.UnableToRunAnalyzer(
                 'Unable to run an analyzer on an archived timeline.')
 
-        resource_url = '{0:s}/sketches/{1:d}/analyzer/'.format(
-            self.api.api_root, self._sketch_id)
-
-        # The analyzer_kwargs is expected to be a dict with the key
-        # being the analyzer name, and the value being the key/value dict
-        # with parameters for the analyzer.
         if analyzer_kwargs:
             if not isinstance(analyzer_kwargs, dict):
                 raise error.UnableToRunAnalyzer(
                     'Unable to run analyzer, analyzer kwargs needs to be a '
                     'dict')
+
             if analyzer_name not in analyzer_kwargs:
                 analyzer_kwargs = {analyzer_name: analyzer_kwargs}
+            elif not isinstance(analyzer_kwargs[analyzer_name], dict):
+                raise error.UnableToRunAnalyzer(
+                    'Unable to run analyzer, analyzer kwargs needs to be a '
+                    'dict where the value for the analyzer is also a dict.')
+
+        return self.run_analyzers(
+            analyzer_names=[analyzer_name], analyzer_kwargs=analyzer_kwargs,
+            ignore_previous=ignore_previous)
+
+    def run_analyzers(
+            self, analyzer_names, analyzer_kwargs=None, ignore_previous=False):
+        """Run an analyzer on a timeline.
+
+        Args:
+            analyzer_names: a list of analyzer class names to run against the
+                timeline.
+            analyzer_kwargs: optional dict with parameters for the analyzer.
+                This is optional and just for those analyzers that can accept
+                further parameters. It is expected that this is a dict with
+                the key value being the analyzer name, and the value being
+                another key/value dict with the parameters for that analyzer.
+            ignore_previous (bool): an optional bool, if set to True then
+                analyzer is run irrelevant on whether it has been previously
+                been run.
+
+        Raises:
+            error.UnableToRunAnalyzer: if not able to run the analyzer.
+
+        Returns:
+            If the analyzer runs successfully return back a list of
+            AnalyzerResult objects.
+        """
+        if self.is_archived():
+            raise error.UnableToRunAnalyzer(
+                'Unable to run an analyzer on an archived timeline.')
+
+        resource_url = '{0:s}/sketches/{1:d}/analyzer/'.format(
+            self.api.api_root, self._sketch_id)
 
         if not ignore_previous:
+            all_names = {x.lower() for x in analyzer_names}
+            done_names = set()
+
             response = self.api.fetch_resource_data(
                 f'sketches/{self._sketch_id}/timelines/{self.id}/analysis/')
             analyzer_data = response.get('objects', [[]])
-            stop_running = False
-            for result in analyzer_data[0]:
-                result_analyzer = result.get('analyzer_name', 'N/A')
-                if fnmatch.fnmatch(result_analyzer, analyzer_name):
-                    logger.error(
-                        'Analyzer {0:s} has already been run on the timeline, '
-                        'use "ignore_previous=True" to overwrite'.format(
-                            result_analyzer))
-                    stop_running = True
 
-            if stop_running:
+            if analyzer_data:
+                for result in analyzer_data[0]:
+                    result_analyzer = result.get('analyzer_name', 'N/A')
+                    done_names.add(result_analyzer.lower())
+
+            analyzer_names = list(all_names.difference(done_names))
+            for name in all_names.intersection(done_names):
+                logger.error(
+                    f'Analyzer {0:s} has already been run on the timeline, '
+                    'use "ignore_previous=True" to overwrite'.format(
+                        name))
+
+            if not analyzer_names:
                 return None
 
         data = {
-            'timeline_id': self.id,
-            'analyzer_names': [analyzer_name],
+            'timeline_ids': [self.id],
+            'analyzer_names': analyzer_names,
             'analyzer_kwargs': analyzer_kwargs,
         }
         response = self.api.session.post(resource_url, json=data)
@@ -238,16 +276,19 @@ class Timeline(resource.BaseResource):
                 'No session data returned back, analyzer may have run but '
                 'unable to verify, please verify manually.')
 
-        session_id = objects[0].get('analysis_session')
-        if not session_id:
+        analyzer_results = []
+        for session in objects:
+            analyzer_result = analyzer.AnalyzerResult(
+                timeline_id=self.id, session_id=session.id,
+                sketch_id=self._sketch_id, api=self.api)
+            analyzer_results.append(analyzer_result)
+
+        if not analyzer_results:
             raise error.UnableToRunAnalyzer(
-                'Analyzer may have run, but there is no session ID to '
+                'Analyzer may have run, but there are no analyzer results to '
                 'verify that it has. Please verify manually.')
 
-        session = analyzer.AnalyzerResult(
-            timeline_id=self.id, session_id=session_id,
-            sketch_id=self._sketch_id, api=self.api)
-        return session
+        return analyzer_results
 
     @property
     def status(self):

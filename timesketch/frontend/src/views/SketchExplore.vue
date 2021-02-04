@@ -167,18 +167,13 @@ limitations under the License.
               </span>
             </div>
 
-            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateSelectedIndices="updateSelectedIndices($event)" :active-timelines="sketch.active_timelines" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index"></ts-explore-timeline-picker>
+            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateSelectedTimelines="updateSelectedTimelines($event)" :active-timelines="sketch.active_timelines" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index" :count-per-timeline="eventList.meta.count_per_timeline"></ts-explore-timeline-picker>
 
           </div>
 
         </div>
       </div>
     </section>
-
-
-    <!-- Aggregations -->
-    <ts-sketch-explore-aggregation></ts-sketch-explore-aggregation>
-    <!-- End Aggregations -->
 
     <section class="section" id="context" v-show="contextEvent">
       <div class="container is-fluid">
@@ -357,11 +352,9 @@ import EventBus from "../main"
 const defaultQueryFilter = () => {
   return {
     'from': 0,
-    'time_start': null,
-    'time_end': null,
     'terminate_after': 40,
     'size': 40,
-    'indices': ['_all'],
+    'indices': [],
     'order': 'asc',
     'chips': [],
   }
@@ -539,10 +532,15 @@ export default {
           this.currentQueryFilter.fields = [{field: 'message', type: 'text'}]
         }
         this.selectedFields = this.currentQueryFilter.fields
-        if (this.currentQueryFilter.indices === '_all') {
+        if (this.currentQueryFilter.indices[0] === '_all') {
           let allIndices = []
-          this.sketch.active_timelines.forEach(function (timeline) {
-            allIndices.push(timeline.searchindex.index_name)
+          this.sketch.active_timelines.forEach((timeline) => {
+            let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+            if (isLegacy) {
+              allIndices.push(timeline.searchindex.index_name)
+            } else {
+              allIndices.push(timeline.id)
+            }
           })
           this.currentQueryFilter.indices = allIndices
         }
@@ -592,7 +590,13 @@ export default {
       this.currentQueryString = '* OR ' + '_id:' + this.contextEvent._id
 
       this.currentQueryFilter.chips = [startChip, endChip]
-      this.currentQueryFilter.indices = [this.contextEvent._index]
+
+      let isLegacy = this.meta.indices_metadata[this.contextEvent._index].is_legacy
+      if (isLegacy) {
+        this.currentQueryFilter.indices = [this.contextEvent._index]
+      } else {
+        this.currentQueryFilter.indices = [this.contextEvent._source.__ts_timeline_id]
+      }
       this.currentQueryFilter.size = numContextEvents
 
       this.search()
@@ -606,17 +610,23 @@ export default {
     scrollToContextEvent: function () {
       this.$scrollTo('#' + this.contextEvent._id, 200, {offset: -300})
     },
-    updateQueryFilter: function (filter) {
-      this.currentQueryFilter = filter
-      this.search()
-    },
-    updateSelectedIndices: function (indices) {
-      this.currentQueryFilter.indices = indices
+    updateSelectedTimelines: function (timelines) {
+      let selected = []
+      timelines.forEach(timeline => {
+        let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+        if (isLegacy) {
+          selected.push(timeline.searchindex.index_name)
+        } else {
+          selected.push(timeline.id)
+        }
+      })
+      this.currentQueryFilter.indices = selected
       this.search()
     },
     clearSearch: function () {
       this.currentQueryString = ''
       this.currentQueryFilter = defaultQueryFilter()
+      this.currentQueryFilter.indices = '_all'
       this.eventList = emptyEventList()
       this.$router.replace({'query': null})
     },
@@ -765,7 +775,7 @@ export default {
 
     this.params = {
       viewId: this.$route.query.view,
-      indexName: this.$route.query.index,
+      indexName: this.$route.query.timeline,
       resultLimit: this.$route.query.limit,
       queryString: this.$route.query.q
     }
@@ -784,7 +794,17 @@ export default {
       if (!this.params.queryString) {
         this.currentQueryString = '*'
       }
-      this.currentQueryFilter.indices = [this.params.indexName]
+
+      let timeline = this.sketch.active_timelines.find((timeline) => {
+        return timeline.id === parseInt(this.params.indexName, 10)
+      })
+
+      let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+      if (isLegacy) {
+        this.currentQueryFilter.indices = [timeline.searchindex.index_name]
+      } else {
+        this.currentQueryFilter.indices = [timeline.id]
+      }
       doSearch = true
     }
 
@@ -794,6 +814,9 @@ export default {
     }
 
     if (doSearch) {
+      if (!this.currentQueryFilter.indices.length) {
+        this.currentQueryFilter.indices = ['_all']
+      }
       this.search()
     }
 

@@ -114,6 +114,7 @@ $card-shadow: 0 0 1px rgba(0,0,0,0.15);
 $card-header-shadow: none;
 $section-padding: 15px 15px 0 15px;
 $info: #0070bd;
+$primary: #0070bd;
 $success: #41ad49;
 $table-cell-padding: 10px;
 
@@ -149,8 +150,9 @@ $fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
 @import "../../node_modules/@fortawesome/fontawesome-free/scss/fontawesome";
 @import "../../node_modules/@fortawesome/fontawesome-free/scss/solid";
 
-// Import Bulma CSS
-@import '../../node_modules/bulma/bulma';
+// Import Bulma and Buefy styles
+@import "~bulma";
+@import "~buefy/src/scss/buefy";
 
 // Global CSS
 html, body {
