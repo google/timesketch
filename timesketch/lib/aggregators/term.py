@@ -19,7 +19,7 @@ from timesketch.lib.aggregators import manager
 from timesketch.lib.aggregators import interface
 
 
-def get_spec(field, query='', query_dsl=''):
+def get_spec(field, limit=10, query='', query_dsl=''):
     """Returns aggregation specs for a term of filtered events.
 
     The aggregation spec will summarize values of an attribute
@@ -28,6 +28,7 @@ def get_spec(field, query='', query_dsl=''):
     Args:
         field (str): this denotes the event attribute that is used
             for aggregation.
+        limit (int): How many buckets to return, defaults to 10.
         query (str): the query field to run on all documents prior to
             aggregating the results.
         query_dsl (str): the query DSL field to run on all documents prior
@@ -64,6 +65,7 @@ def get_spec(field, query='', query_dsl=''):
             'aggregation': {
                 'terms': {
                     'field': field,
+                    'size': limit
                 }
             }
         }
@@ -127,6 +129,14 @@ class FilteredTermsAggregation(interface.BaseAggregator):
             'placeholder': 'Enter an end date for the aggregation',
             'default_value': '',
             'display': True
+        },
+        {
+            'type': 'ts-dynamic-form-text-input',
+            'name': 'limit',
+            'label': 'Number of results to return',
+            'placeholder': 'Enter number of results to return',
+            'default_value': '10',
+            'display': True
         }
     ]
 
@@ -140,7 +150,7 @@ class FilteredTermsAggregation(interface.BaseAggregator):
     # pylint: disable=arguments-differ
     def run(
             self, field, query_string='', query_dsl='',
-            supported_charts='table', start_time='', end_time=''):
+            supported_charts='table', start_time='', end_time='', limit=10):
         """Run the aggregation.
 
         Args:
@@ -156,6 +166,7 @@ class FilteredTermsAggregation(interface.BaseAggregator):
                 range for the aggregation.
             end_time: Optional ISO formatted date string that limits the time
                 range for the aggregation.
+            limit (int): How many buckets to return, defaults to 10.
 
         Returns:
             Instance of interface.AggregationResult with aggregation result.
@@ -170,7 +181,8 @@ class FilteredTermsAggregation(interface.BaseAggregator):
         formatted_field_name = self.format_field_by_type(field)
 
         aggregation_spec = get_spec(
-            field=formatted_field_name, query=query_string, query_dsl=query_dsl)
+            field=formatted_field_name, limit=limit, query=query_string,
+            query_dsl=query_dsl)
 
         aggregation_spec = self._add_query_to_aggregation_spec(
             aggregation_spec, start_time=start_time, end_time=end_time)
