@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Interface for aggregators."""
-
-from __future__ import unicode_literals
+import datetime
 
 from flask import current_app
 
@@ -189,6 +188,100 @@ class BaseAggregator(object):
             'description': self.DESCRIPTION,
         }
 
+    def _add_query_to_aggregation_spec(
+            self, aggregation_spec, start_time='', end_time=''):
+        """Returns an aggregation spec, adjusted for constraints.
+
+        This function will take an aggregation spec, alongside information
+        about start and end time and timeline constraints. It will adjust the
+        aggregation spec so that these constraints will be taken into
+        consideration when running the aggregation.
+
+        Args:
+            aggregation_spec: A dict with the query_dsl for the aggregation.
+            start_time: Optional ISO formatted date string that limits the time
+                range for the aggregation.
+            end_time: Optional ISO formatted date string that limits the time
+                range for the aggregation.
+
+        Raises:
+            ValueError: If the date strings are badly formatted.
+
+        Returns:
+            Dict: The aggregation spec, adjusted to query for additional
+                constraints.
+        """
+        query_filters = []
+
+        if self.timeline_ids:
+            query_filters.append({
+                'terms': {
+                    '__ts_timeline_id': self.timeline_ids,
+                }
+            })
+
+        if start_time:
+            try:
+                _ = datetime.datetime.fromisoformat(start_time)
+            except ValueError:
+                raise ValueError(
+                    'Start time is not ISO formatted [{0:s}'.format(
+                        start_time)) from ValueError
+
+        if end_time:
+            try:
+                _ = datetime.datetime.fromisoformat(end_time)
+            except ValueError:
+                raise ValueError(
+                    'End time is not ISO formatted [{0:s}'.format(
+                        end_time)) from ValueError
+
+        if start_time and end_time:
+            query_filters.append({
+                'range': {
+                    'datetime': {
+                        'gte': start_time,
+                        'lte': end_time,
+                    }
+                }
+            })
+        elif start_time:
+            query_filters.append({
+                'range': {
+                    'datetime': {
+                        'gte': start_time,
+                    }
+                }
+            })
+
+        elif end_time:
+            query_filters.append({
+                'range': {
+                    'datetime': {
+                        'lte': end_time,
+                    }
+                }
+            })
+
+        if query_filters:
+            if 'query' in aggregation_spec:
+                original_query = aggregation_spec['query']
+                query_filters.append(original_query)
+
+
+            if len(query_filters) > 1:
+                aggregation_spec['query'] = {
+                    'bool': {
+                        'must': query_filters,
+                        'must_not': [],
+                        'should': [],
+                    }
+                }
+            else:
+                aggregation_spec['query'] = query_filters[0]
+
+        return aggregation_spec
+
     def format_field_by_type(self, field_name):
         """Format field name based on mapping type.
 
@@ -246,10 +339,6 @@ class BaseAggregator(object):
         Returns:
             Elasticsearch aggregation result.
         """
-        if self.timeline_ids:
-           aggregation_spec = self.elastic.build_query_dsl(
-               aggregation_spec, self.timeline_ids)
-
         # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
         aggregation = self.elastic.client.search(
             index=self.indices, body=aggregation_spec, size=0)

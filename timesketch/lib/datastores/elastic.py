@@ -150,7 +150,7 @@ class ElasticsearchDataStore(object):
         return query_dict
 
     @staticmethod
-    def build_query_dsl(query_dsl, timeline_ids):
+    def _build_query_dsl(query_dsl, timeline_ids):
         """Build Elastic Search DSL query by adding in timeline filtering.
 
         Args:
@@ -281,7 +281,7 @@ class ElasticsearchDataStore(object):
             if not query_dsl:
                 query_dsl = {}
 
-            return self.build_query_dsl(query_dsl, timeline_ids)
+            return self._build_query_dsl(query_dsl, timeline_ids)
 
         if query_filter.get('events', None):
             events = query_filter['events']

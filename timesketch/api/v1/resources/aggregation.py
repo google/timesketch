@@ -498,7 +498,7 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_NOT_FOUND,
                     'Attempting to run an aggregation on a non-existing '
                     'Elastic index, index: {0:s} and parameters: {1!s}'.format(
-                        index, aggregator_parameters))
+                        ','.join(indices), aggregator_parameters))
             except ValueError as exc:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
