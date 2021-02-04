@@ -95,8 +95,8 @@ class ExploreResource(resources.ResourceMixin, Resource):
         if not query_filter:
             query_filter = {}
 
-        all_indices = list(set(
-            [t.searchindex.index_name for t in sketch.timelines]))
+        all_indices = list({
+            t.searchindex.index_name for t in sketch.timelines})
         indices = query_filter.get('indices', all_indices)
 
         # If _all in indices then execute the query on all indices
