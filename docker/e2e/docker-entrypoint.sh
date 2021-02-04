@@ -2,6 +2,8 @@
 
 # Run the container the default way
 if [ "$1" = 'timesketch' ]; then
+  # Copy the mappings for plaso ingestion.
+  cp /usr/local/src/timesketch/data/plaso.mappings /etc/timesketch/
 
   # Set SECRET_KEY in /etc/timesketch/timesketch.conf if it isn't already set
   if grep -q "SECRET_KEY = '<KEY_GOES_HERE>'" /etc/timesketch/timesketch.conf; then

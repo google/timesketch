@@ -15,6 +15,7 @@
 
 from __future__ import unicode_literals
 
+import os
 import logging
 import subprocess
 import traceback
@@ -30,6 +31,12 @@ from flask import current_app
 from celery import chain
 from celery import signals
 from sqlalchemy import create_engine
+
+# To be able to determine plaso's version.
+try:
+    import plaso
+except ImportError:
+    plaso = None
 
 from timesketch.app import configure_logger
 from timesketch.app import create_celery_app
@@ -50,6 +57,9 @@ from timesketch.models.user import User
 
 logger = logging.getLogger('timesketch.tasks')
 celery = create_celery_app()
+
+
+PLASO_MINIMUM_VERSION = 20201228
 
 
 # pylint: disable=unused-argument
@@ -250,8 +260,9 @@ def build_index_pipeline(
     return chain(index_task, index_analyzer_chain)
 
 
-def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
-                                   analyzer_names=None, analyzer_kwargs=None):
+def build_sketch_analysis_pipeline(
+        sketch_id, searchindex_id, user_id, analyzer_names=None,
+        analyzer_kwargs=None, timeline_id=None):
     """Build a pipeline for sketch analysis.
 
     If no analyzer_names is passed in then we assume auto analyzers should be
@@ -266,6 +277,7 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
         user_id (int): The ID of the user who started the analyzer.
         analyzer_names (list): List of analyzers to run.
         analyzer_kwargs (dict): Arguments to the analyzers.
+        timeline_id (int): Optional int of the timeline to run the analyzer on.
 
     Returns:
         A tuple with a Celery group with analysis tasks or None if no analyzers
@@ -318,7 +330,8 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
         db_session.commit()
 
         tasks.append(run_sketch_analyzer.s(
-            sketch_id, analysis.id, analyzer_name, **kwargs))
+            sketch_id, analysis.id, analyzer_name,
+            timeline_id=timeline_id, **kwargs))
 
     # Commit the analysis session to the database.
     db_session.add(analysis_session)
@@ -435,8 +448,9 @@ def run_index_analyzer(index_name, analyzer_name, **kwargs):
 
 
 @celery.task(track_started=True)
-def run_sketch_analyzer(index_name, sketch_id, analysis_id, analyzer_name,
-                        **kwargs):
+def run_sketch_analyzer(
+        index_name, sketch_id, analysis_id, analyzer_name,
+        timeline_id=None, **kwargs):
     """Create a Celery task for a sketch analyzer.
 
     Args:
@@ -444,13 +458,15 @@ def run_sketch_analyzer(index_name, sketch_id, analysis_id, analyzer_name,
         sketch_id: ID of the sketch to analyze.
         analysis_id: ID of the analysis.
         analyzer_name: Name of the analyzer.
+        timeline_id: Int of the timeline this analyzer belongs to.
 
     Returns:
       Name (str) of the index.
     """
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
     analyzer = analyzer_class(
-        sketch_id=sketch_id, index_name=index_name, **kwargs)
+        sketch_id=sketch_id, index_name=index_name,
+        timeline_id=timeline_id, **kwargs)
 
     result = analyzer.run_wrapper(analysis_id)
     logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
@@ -470,12 +486,85 @@ def run_plaso(
         source_type: Type of file, csv or jsonl.
         timeline_id: ID of the timeline object this data belongs to.
 
+    Raises:
+        RuntimeError: If the function is called using events, plaso
+            is not installed or is of unsupported version.
     Returns:
         Name (str) of the index.
     """
+    if not plaso:
+        raise RuntimeError(
+            'Plaso isn\'t installed, unable to continue processing plaso '
+            'files.')
+
+    plaso_version = int(plaso.__version__)
+    # Uncomment once a new version is released.
+    #if plaso_version <= PLASO_MINIMUM_VERSION:
+    if plaso_version < PLASO_MINIMUM_VERSION:
+        raise RuntimeError(
+            'Plaso version is out of date (version {0:d}, please upgrade to a '
+            'version that is later than {1:d}'.format(
+                plaso_version, PLASO_MINIMUM_VERSION))
+
     if events:
         raise RuntimeError('Plaso uploads needs a file, not events.')
-    # Log information to Celery
+
+    event_type = 'generic_event'  # Document type for Elasticsearch
+
+    mappings = None
+    mappings_file_path = current_app.config.get('PLASO_MAPPING_FILE', '')
+    if os.path.isfile(mappings_file_path):
+        try:
+            with open(mappings_file_path, 'r') as mfh:
+                mappings = json.load(mfh)
+
+                if not isinstance(mappings, dict):
+                    raise RuntimeError(
+                        'Unable to create mappings, the mappings are not a '
+                        'dict, please look at the file: {0:s}'.format(
+                            mappings_file_path))
+        except (json.JSONDecodeError, IOError):
+            logger.error('Unable to read in mapping', exc_info=True)
+
+    elastic_server = current_app.config.get('ELASTIC_HOST')
+    if not elastic_server:
+        raise RuntimeError(
+            'Unable to connect to Elastic, no server set, unable to '
+            'process plaso file.')
+    elastic_port = current_app.config.get('ELASTIC_PORT')
+    if not elastic_port:
+        raise RuntimeError(
+            'Unable to connect to Elastic, no port set, unable to '
+            'process plaso file.')
+
+    es = ElasticsearchDataStore(
+        host=elastic_server, port=elastic_port)
+
+    try:
+        es.create_index(
+            index_name=index_name, doc_type=event_type, mappings=mappings)
+    except errors.DataIngestionError as e:
+        _set_timeline_status(
+            index_name, status='fail', error_msg=str(e),
+            timeline_name=timeline_name)
+        raise
+
+    except (RuntimeError, ImportError, NameError, UnboundLocalError,
+            RequestError) as e:
+        _set_timeline_status(
+            index_name, status='fail', error_msg=str(e),
+            timeline_name=timeline_name)
+        raise
+
+    except Exception as e:  # pylint: disable=broad-except
+        # Mark the searchindex and timelines as failed and exit the task
+        error_msg = traceback.format_exc()
+        _set_timeline_status(
+            index_name, status='fail', error_msg=error_msg,
+            timeline_name=timeline_name)
+        logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
+        return None
+
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
     logger.info(message.format(timeline_name, index_name, source_type))
 
@@ -485,17 +574,21 @@ def run_plaso(
         psort_path = 'psort.py'
 
     cmd = [
-        psort_path, '-o', 'timesketch', file_path, '--name',
-        timeline_name, '--status_view', 'none', '--index', index_name
+        psort_path, '-o', 'elastic_ts', file_path, '--server', elastic_server,
+        '--port', str(elastic_port), '--status_view', 'none',
+        '--index_name', index_name,
     ]
+
+    if mappings_file_path:
+        cmd.extend(['--elastic_mappings', mappings_file_path])
+
+    if timeline_id:
+        cmd.extend(['--timeline_id', str(timeline_id)])
 
     # Run psort.py
     try:
-        if six.PY3:
-            subprocess.check_output(
-                cmd, stderr=subprocess.STDOUT, encoding='utf-8')
-        else:
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        subprocess.check_output(
+            cmd, stderr=subprocess.STDOUT, encoding='utf-8')
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
         _set_timeline_status(timeline_id, status='fail', error_msg=e.output)

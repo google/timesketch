@@ -58,16 +58,6 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
          '_extract_search_query_from_url', 'search_query'),
     ])
 
-    def __init__(self, index_name, sketch_id):
-        """Initialize The Sketch Analyzer.
-
-        Args:
-            index_name: Elasticsearch index name
-            sketch_id: Sketch ID
-        """
-        self.index_name = index_name
-        super().__init__(index_name, sketch_id)
-
     def _decode_url(self, url):
         """Decodes the URL, replaces %XX to their corresponding characters.
 

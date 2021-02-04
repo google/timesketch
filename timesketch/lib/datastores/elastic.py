@@ -150,6 +150,70 @@ class ElasticsearchDataStore(object):
         return query_dict
 
     @staticmethod
+    def _build_query_dsl(query_dsl, timeline_ids):
+        """Build Elastic Search DSL query by adding in timeline filtering.
+
+        Args:
+            query_dsl: A dict with the current query_dsl
+            timeline_ids: Either a list of timeline IDs (int) or None.
+
+        Returns:
+            Elasticsearch query DSL as a dictionary.
+        """
+        # Remove any aggregation coming from user supplied Query DSL.
+        # We have no way to display this data in a good way today.
+        if query_dsl.get('aggregations', None):
+            del query_dsl['aggregations']
+
+        if not timeline_ids:
+            return query_dsl
+
+        if not isinstance(timeline_ids, (list, tuple)):
+            es_logger.error(
+                'Attempting to pass in timelines to a query DSL, but the '
+                'passed timelines are not a list.')
+            return query_dsl
+
+        if not all([isinstance(x, int) for x in timeline_ids]):
+            es_logger.error(
+                'All timeline IDs need to be an integer.')
+            return query_dsl
+
+        old_query = query_dsl.get('query')
+        if not old_query:
+            return query_dsl
+
+        query_dsl['query'] = {
+            'bool': {
+                'must': [],
+                'should': [{
+                    'bool': {
+                        'must': old_query,
+                        'must_not': [{
+                            'exists': {
+                                'field': '__ts_timeline_id'},
+                        }],
+                    }
+                }, {
+                    'bool': {
+                        'must': [{
+                            'terms': {
+                                '__ts_timeline_id': timeline_ids}
+                        }, old_query],
+                        'must_not': [],
+                        'filter': [{
+                            'exists': {
+                                'field': '__ts_timeline_id'}
+                        }]
+                    }
+                }],
+                'must_not': [],
+                'filter': []
+            }
+        }
+        return query_dsl
+
+    @staticmethod
     def _convert_to_time_range(interval):
         """Convert an interval timestamp into start and end dates.
 
@@ -210,7 +274,6 @@ class ElasticsearchDataStore(object):
             Elasticsearch DSL query as a dictionary
         """
 
-        # TODO: Support query DSL when it comes to timeline filtering.
         if query_dsl:
             if not isinstance(query_dsl, dict):
                 query_dsl = json.loads(query_dsl)
@@ -218,11 +281,7 @@ class ElasticsearchDataStore(object):
             if not query_dsl:
                 query_dsl = {}
 
-            # Remove any aggregation coming from user supplied Query DSL.
-            # We have no way to display this data in a good way today.
-            if query_dsl.get('aggregations', None):
-                del query_dsl['aggregations']
-            return query_dsl
+            return self._build_query_dsl(query_dsl, timeline_ids)
 
         if query_filter.get('events', None):
             events = query_filter['events']
@@ -474,9 +533,11 @@ class ElasticsearchDataStore(object):
 
         return _search_result
 
+    # pylint: disable=too-many-arguments
     def search_stream(self, sketch_id=None, query_string=None,
                       query_filter=None, query_dsl=None, indices=None,
-                      return_fields=None, enable_scroll=True):
+                      return_fields=None, enable_scroll=True,
+                      timeline_ids=None):
         """Search ElasticSearch. This will take a query string from the UI
         together with a filter definition. Based on this it will execute the
         search request on ElasticSearch and get result back.
@@ -489,6 +550,8 @@ class ElasticsearchDataStore(object):
             indices: List of indices to query
             return_fields: List of fields to return
             enable_scroll: Boolean determing whether scrolling is enabled.
+            timeline_ids: Optional list of IDs of Timeline objects that should
+                be queried as part of the search.
 
         Returns:
             Generator of event documents in JSON format
@@ -507,7 +570,8 @@ class ElasticsearchDataStore(object):
             query_filter=query_filter,
             indices=indices,
             return_fields=return_fields,
-            enable_scroll=enable_scroll)
+            enable_scroll=enable_scroll,
+            timeline_ids=timeline_ids)
 
         if enable_scroll:
             scroll_id = result['_scroll_id']
@@ -719,27 +783,33 @@ class ElasticsearchDataStore(object):
 
         return None
 
-    def create_index(self, index_name=uuid4().hex, doc_type='generic_event'):
+    def create_index(
+            self, index_name=uuid4().hex, doc_type='generic_event',
+            mappings=None):
         """Create index with Timesketch settings.
 
         Args:
             index_name: Name of the index. Default is a generated UUID.
             doc_type: Name of the document type. Default id generic_event.
+            mappings: Optional dict with the document mapping for Elastic.
 
         Returns:
             Index name in string format.
             Document type in string format.
         """
-        _document_mapping = {
-            'properties': {
-                'timesketch_label': {
-                    'type': 'nested'
-                },
-                'datetime': {
-                    'type': 'date'
+        if mappings:
+            _document_mapping = mappings
+        else:
+            _document_mapping = {
+                'properties': {
+                    'timesketch_label': {
+                        'type': 'nested'
+                    },
+                    'datetime': {
+                        'type': 'date'
+                    }
                 }
             }
-        }
 
         # TODO: Remove when we deprecate Elasticsearch version 6.x
         if self.version.startswith('6'):
@@ -757,14 +827,6 @@ class ElasticsearchDataStore(object):
                 es_logger.warning(
                     'Attempting to create an index that already exists '
                     '({0:s} - {1:s})'.format(index_name, str(index_exists)))
-
-        # We want to return unicode here to keep SQLalchemy happy.
-        if six.PY2:
-            if not isinstance(index_name, six.text_type):
-                index_name = codecs.decode(index_name, 'utf-8')
-
-            if not isinstance(doc_type, six.text_type):
-                doc_type = codecs.decode(doc_type, 'utf-8')
 
         return index_name, doc_type
 

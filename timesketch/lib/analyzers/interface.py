@@ -149,6 +149,7 @@ class Event(object):
             self.event_id = event['_id']
             self.event_type = event['_type']
             self.index_name = event['_index']
+            self.timeline_id = event.get('_source', {}).get('__ts_timeline_id')
             self.source = event.get('_source', None)
         except KeyError as e:
             raise KeyError('Malformed event: {0!s}'.format(e)) from e
@@ -757,6 +758,7 @@ class BaseIndexAnalyzer(object):
         index_name: Name if Elasticsearch index.
         datastore: Elasticsearch datastore client.
         sketch: Instance of Sketch object.
+        timeline_id: The ID of the timeline the analyzer runs on.
         tagged_events: Dict with all events to add tags and those tags.
         emoji_events: Dict with all events to add emojis and those emojis.
     """
@@ -780,14 +782,16 @@ class BaseIndexAnalyzer(object):
     SECONDS_PER_WAIT = 10
     MAXIMUM_WAITS = 360
 
-    def __init__(self, index_name):
+    def __init__(self, index_name, timeline_id=None):
         """Initialize the analyzer object.
 
         Args:
             index_name: Elasticsearch index name.
+            timeline_id: The timeline ID.
         """
         self.name = self.NAME
         self.index_name = index_name
+        self.timeline_id = timeline_id
         self.timeline_name = ''
 
         self.tagged_events = {}
@@ -842,6 +846,11 @@ class BaseIndexAnalyzer(object):
         for index in indices:
             self.datastore.client.indices.refresh(index=index)
 
+        if self.timeline_id:
+            timeline_ids = [self.timeline_id]
+        else:
+            timeline_ids = None
+
         event_generator = self.datastore.search_stream(
             query_string=query_string,
             query_filter=query_filter,
@@ -849,6 +858,7 @@ class BaseIndexAnalyzer(object):
             indices=indices,
             return_fields=return_fields,
             enable_scroll=scroll,
+            timeline_ids=timeline_ids
         )
         for event in event_generator:
             yield Event(
@@ -920,12 +930,13 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
 
     Attributes:
         sketch: A Sketch instance.
+        timeline_id: The ID of the timeline the analyzer runs on.
     """
 
     NAME = 'name'
     IS_SKETCH_ANALYZER = True
 
-    def __init__(self, index_name, sketch_id):
+    def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize the analyzer object.
 
         Args:
@@ -933,7 +944,7 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             sketch_id: Sketch ID.
         """
         self.sketch = Sketch(sketch_id=sketch_id)
-        super().__init__(index_name)
+        super().__init__(index_name, timeline_id=timeline_id)
 
     def event_pandas(
             self, query_string=None, query_filter=None, query_dsl=None,
@@ -963,6 +974,11 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
         if not indices:
             indices = [self.index_name]
 
+        if self.timeline_id:
+            timeline_ids = [self.timeline_id]
+        else:
+            timeline_ids = None
+
         # Refresh the index to make sure it is searchable.
         for index in indices:
             self.datastore.client.indices.refresh(index=index)
@@ -979,6 +995,7 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             query_filter=query_filter,
             query_dsl=query_dsl,
             indices=indices,
+            timeline_ids=timeline_ids,
             return_fields=return_fields,
         )
 
