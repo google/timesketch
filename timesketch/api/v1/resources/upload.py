@@ -140,7 +140,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         timeline = None
         for timeline_ in timelines:
-            if timeline.searchindex.index_name == searchindex.index_name:
+            if timeline_.searchindex.index_name == searchindex.index_name:
                 timeline = timeline_
                 break
 
