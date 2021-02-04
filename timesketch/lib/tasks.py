@@ -32,9 +32,6 @@ from celery import chain
 from celery import signals
 from sqlalchemy import create_engine
 
-# Disabled until the project can provide a non-ES native import.
-# from mans_to_es import MansToEs
-
 # To be able to determine plaso's version.
 try:
     import plaso
@@ -130,38 +127,30 @@ def init_worker(**kwargs):
     db_session.configure(bind=engine)
 
 
-def _set_timeline_status(index_name, status, error_msg=None, timeline_name=''):
+def _set_timeline_status(timeline_id, status, error_msg=None):
     """Helper function to set status for searchindex and all related timelines.
 
     Args:
-        index_name: Name of the datastore index.
+        timeline_id: Timeline ID.
         status: Status to set.
         error_msg: Error message.
-        timeline_name: Optional timeline name.
     """
-    searchindices = SearchIndex.query.filter_by(index_name=index_name).all()
+    timeline = Timeline.query.get(timeline_id)
 
-    for searchindex in searchindices:
-        searchindex.set_status(status)
+    if not timeline:
+        logger.warning('Cannot set status: No such timeline')
+        return
 
-        # Update description if there was a failure in ingestion.
-        if error_msg:
-            # TODO: Don't overload the description field.
-            searchindex.description = error_msg
+    timeline.set_status(status)
+    timeline.searchindex.set_status(status)
 
-        db_session.add(searchindex)
-
-        if timeline_name:
-            timelines = Timeline.query.filter_by(
-                name=timeline_name, searchindex=searchindex).all()
-        else:
-            timelines = Timeline.query.filter_by(searchindex=searchindex).all()
-
-        for timeline in timelines:
-            timeline.set_status(status)
-            db_session.add(timeline)
+    # Update description if there was a failure in ingestion.
+    if error_msg:
+        # TODO: Don't overload the description field.
+        timeline.description = error_msg
 
     # Commit changes to database
+    db_session.add(timeline)
     db_session.commit()
 
 
@@ -181,9 +170,6 @@ def _get_index_task_class(file_extension):
         index_class = run_plaso
     elif file_extension in ['csv', 'jsonl']:
         index_class = run_csv_jsonl
-    # Disabled
-    # elif file_extension == 'mans':
-    #    index_class = run_mans
     else:
         raise KeyError('No task that supports {0:s}'.format(file_extension))
     return index_class
@@ -558,24 +544,18 @@ def run_plaso(
         es.create_index(
             index_name=index_name, doc_type=event_type, mappings=mappings)
     except errors.DataIngestionError as e:
-        _set_timeline_status(
-            index_name, status='fail', error_msg=str(e),
-            timeline_name=timeline_name)
+        _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError,
             RequestError) as e:
-        _set_timeline_status(
-            index_name, status='fail', error_msg=str(e),
-            timeline_name=timeline_name)
+        _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
         raise
 
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
-        _set_timeline_status(
-            index_name, status='fail', error_msg=error_msg,
-            timeline_name=timeline_name)
+        _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
         logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         return None
 
@@ -605,14 +585,11 @@ def run_plaso(
             cmd, stderr=subprocess.STDOUT, encoding='utf-8')
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
-        _set_timeline_status(
-            index_name, status='fail', error_msg=e.output,
-            timeline_name=timeline_name)
+        _set_timeline_status(timeline_id, status='fail', error_msg=e.output)
         return e.output
 
     # Mark the searchindex and timelines as ready
-    _set_timeline_status(
-        index_name, status='ready', timeline_name=timeline_name)
+    _set_timeline_status(timeline_id, status='ready')
 
     return index_name
 
@@ -678,24 +655,18 @@ def run_csv_jsonl(
             total_count=results.get('total_events', 0))
 
     except errors.DataIngestionError as e:
-        _set_timeline_status(
-            index_name, status='fail', error_msg=str(e),
-            timeline_name=timeline_name)
+        _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError,
             RequestError) as e:
-        _set_timeline_status(
-            index_name, status='fail', error_msg=str(e),
-            timeline_name=timeline_name)
+        _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
         raise
 
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
-        _set_timeline_status(
-            index_name, status='fail', error_msg=error_msg,
-            timeline_name=timeline_name)
+        _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
         logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         return None
 
@@ -711,37 +682,6 @@ def run_csv_jsonl(
             'events imported.'.format(timeline_name, index_name, final_counter))
 
     # Set status to ready when done
-    _set_timeline_status(
-        index_name, status='ready', error_msg=error_msg,
-        timeline_name=timeline_name)
+    _set_timeline_status(timeline_id, status='ready', error_msg=error_msg)
 
     return index_name
-
-
-# Disabled until mans_to_es can produce a stream of events instead of doing
-# raw Elasticsearch operations.
-# pylint: disable=pointless-string-statement
-"""
-def run_mans(file_path, events, timeline_name, index_name, source_type):
-    # Log information to Celery
-    message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
-    logger.info(message.format(timeline_name, index_name, source_type))
-
-    elastic_host = current_app.config['ELASTIC_HOST']
-    elastic_port = int(current_app.config['ELASTIC_PORT'])
-    try:
-        mte = MansToEs(filename=file_path, name=timeline_name, index=index_name,
-                       es_host=elastic_host, es_port=elastic_port)
-        mte.run()
-    except Exception as e:  # pylint: disable=broad-except
-        # Mark the searchindex and timelines as failed and exit the task
-        error_msg = traceback.format_exc()
-        _set_timeline_status(index_name, status='fail', error_msg=error_msg)
-        logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
-        return None
-
-    # Mark the searchindex and timelines as ready
-    _set_timeline_status(index_name, status='ready')
-
-    return index_name
-"""
