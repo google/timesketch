@@ -23,6 +23,10 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for phishy domains."""
 
     NAME = 'phishy_domains'
+    DISPLAY_NAME = 'Phishy domains'
+    DESCRIPTION = ('Comparing domains visited against a list of the most '
+                   'frequently visited domains to find potentially phishy '
+                   'domains.')
 
     DEPENDENCIES = frozenset(['domain'])
 
@@ -34,15 +38,16 @@ class PhishyDomainsSketchPlugin(interface.BaseSketchAnalyzer):
         'wikipedia.org', 'qq.com', 'amazon.com', 'yahoo.com', 'taobao.com',
         'reddit.com']
 
-    def __init__(self, index_name, sketch_id):
+    def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize The Sketch Analyzer.
 
         Args:
             index_name: Elasticsearch index name
             sketch_id: Sketch ID
+            timeline_id: The ID of the timeline.
         """
         self.index_name = index_name
-        super(PhishyDomainsSketchPlugin, self).__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
         self.domain_scoring_threshold = current_app.config.get(
             'DOMAIN_ANALYZER_WATCHED_DOMAINS_SCORE_THRESHOLD', 0.75)

@@ -104,6 +104,7 @@ class MockDataStore(object):
         '_id': 'adc123',
         '_type': 'plaso_event',
         '_source': {
+            '__ts_timeline_id': 1,
             'es_index': '',
             'es_id': '',
             'label': '',
@@ -140,7 +141,8 @@ class MockDataStore(object):
                     'timestamp_desc':
                     'Content Modification Time',
                     'datetime':
-                    '2014-09-13T07:27:03+00:00'
+                    '2014-09-13T07:27:03+00:00',
+                    '__ts_timeline_id': 1,
                 },
                 '_score': 'null',
                 '_index': 'test',
@@ -197,6 +199,18 @@ class MockDataStore(object):
             A dictionary with event data.
         """
         return self.event_dict
+
+    @staticmethod
+    def count(indices):
+        """Mock returning a single event from the datastore.
+
+        Args:
+            indices: List of indices.
+
+        Returns:
+            A tuple with count and bytes.
+        """
+        return 1, 1
 
     @staticmethod
     def get_filter_labels(sketch_id, indices):
@@ -260,7 +274,8 @@ class MockDataStore(object):
 
     # pylint: disable=unused-argument
     def search_stream(self, query_string, query_filter, query_dsl,
-                      indices, return_fields, enable_scroll=True):
+                      indices, return_fields, enable_scroll=True,
+                      timeline_ids=None):
         for i in range(len(self.event_store)):
             yield self.event_store[str(i)]
 

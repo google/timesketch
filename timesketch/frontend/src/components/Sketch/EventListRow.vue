@@ -48,7 +48,7 @@ limitations under the License.
               <i class="fas fa-search" style="color: #d3d3d3;"></i>
             </span>
             <span class="icon control">
-                <b-dropdown ref="labelDropdown" aria-role="list">
+                <b-dropdown ref="labelDropdown" aria-role="list" append-to-body>
                   <i class="fas fa-tag" style="color: #d3d3d3;" slot="trigger"></i>
                   <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
                     <section class="modal-card-body">
@@ -203,7 +203,7 @@ limitations under the License.
       return this.$store.state.meta
     },
     timelineColor () {
-      let backgroundColor = this.timeline(this.event._index).color
+      let backgroundColor = this.timeline.color
       if (!backgroundColor.startsWith('#')) {
         backgroundColor = '#' + backgroundColor
       }
@@ -256,7 +256,7 @@ limitations under the License.
       }
     },
     timelineName () {
-      return this.timeline(this.event._index).name
+      return this.timeline.name
     },
     deltaDays () {
       if (!this.prevEvent) {
@@ -292,11 +292,6 @@ limitations under the License.
     }
   },
   methods: {
-    timeline (indexName) {
-      return this.sketch.timelines.find(function (timeline) {
-        return timeline.searchindex.index_name === indexName
-      })
-    },
     toggleStar () {
       this.isStarred =! this.isStarred
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.event).then((response) => {
@@ -380,6 +375,13 @@ limitations under the License.
     EventBus.$on('clearSelectedEvents', this.unSelectEvent)
     EventBus.$on('toggleStar', this.toggleStarOnSelect)
     EventBus.$on('isDarkTheme', this.toggleTheme)
+
+    let isLegacy = this.meta.indices_metadata[this.event._index].is_legacy
+    if (isLegacy) {
+      this.timeline = this.sketch.active_timelines.filter(timeline => timeline.searchindex.index_name === this.event._index)[0]
+    } else {
+      this.timeline = this.sketch.active_timelines.filter(timeline => timeline.id === this.event._source.__ts_timeline_id)[0]
+    }
 
     this.isDarkTheme = localStorage.theme === 'dark';
 

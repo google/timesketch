@@ -29,17 +29,15 @@ limitations under the License.
             <div class="content">
               <ul>
                 <li>Elasticsearch index: {{ timeline.searchindex.index_name }}</li>
-                <li v-if="meta.stats[timeline.searchindex.index_name]">Number of events: {{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }} ({{ meta.stats[timeline.searchindex.index_name]['count']}})</li>
-                <li v-if="meta.stats[timeline.searchindex.index_name]">Size on disk: {{ meta.stats[timeline.searchindex.index_name]['bytes'] | compactBytes }} ({{ meta.stats[timeline.searchindex.index_name]['bytes']}})</li>
-                <li>Original name: {{ timeline.searchindex.name }}</li>
-                <li>Added by: {{ timeline.searchindex.user.username }}</li>
-                <li>Added: {{ timeline.searchindex.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
+                <li v-if="meta.stats_per_timeline[timeline.id]">Number of events: {{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} ({{ meta.stats_per_timeline[timeline.id]['count']}})</li>
+                <li>Added by: {{ timeline.user.username }}</li>
+                <li>Added: {{ timeline.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
                 <li v-if="timelineStatus === 'ready' && (timeline.searchindex.description !== '' && timeline.searchindex.description !== timeline.name)">Import errors: <b>{{ timeline.searchindex.description }}</b></li>
               </ul>
 
               <span v-if="timelineStatus === 'fail'">
                 <h5 style="color:red;">Error detail</h5>
-                <pre>{{ timeline.searchindex.description }}</pre>
+                <pre>{{ timeline.description }}</pre>
               </span>
 
             </div>
@@ -50,7 +48,7 @@ limitations under the License.
     </b-modal>
 
     <!-- Timeline edit modal -->
-    <b-modal :active.sync="showEditModal" :width="640" scroll="keep">
+    <b-modal v-if="controls" :active.sync="showEditModal" :width="640" scroll="keep">
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -80,7 +78,7 @@ limitations under the License.
 
     <div v-if="timelineStatus === 'processing'" class="ts-timeline-color-box is-pulled-left blink" style="background-color: #f5f5f5;"></div>
     <div v-else-if="timelineStatus === 'fail'" v-on:click="showInfoModal =! showInfoModal" class="ts-timeline-color-box is-pulled-left" style="background-color: #f5f5f5;"></div>
-    <div v-else-if="timelineStatus === 'ready'" class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
+    <div v-else-if="timelineStatus === 'ready' && controls" class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
       <div class="dropdown-trigger">
         <div class="ts-timeline-color-box" v-bind:style="timelineColorStyle" v-on:click="colorPickerActive = !colorPickerActive"></div>
       </div>
@@ -92,8 +90,12 @@ limitations under the License.
         </div>
       </div>
     </div>
+    <div v-else-if="timelineStatus === 'ready'" class="ts-timeline-color-box is-pulled-left" v-bind:style="timelineColorStyle" v-on:click="colorPickerActive = !colorPickerActive"></div>
     <div v-else class="ts-timeline-color-box is-pulled-left" style="background-color: #f5f5f5;"></div>
 
+    <div v-if="!controls" class="field is-grouped is-pulled-right" style="margin-top:10px;">
+      <span class="is-size-7">{{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}</span>
+    </div>
 
     <div v-if="controls" class="field is-grouped is-pulled-right" style="margin-top:10px;">
       <p v-if="!isCompact" class="control">
@@ -104,7 +106,7 @@ limitations under the License.
           <span>Info</span>
         </button>
       </p>
-      <p v-if="meta.permissions.write && timelineStatus === 'ready' && !isCompact" class="control">
+      <p v-if="meta.permissions.write && timelineStatus === 'ready' && controls" class="control">
         <button class="button is-rounded is-small is-outlined" v-on:click="showEditModal = !showEditModal">
           <span class="icon is-small">
             <i class="fas fa-edit"></i>
@@ -112,8 +114,9 @@ limitations under the License.
           <span>Rename</span>
         </button>
       </p>
-      <p v-if="timelineStatus === 'ready'" class="control">
 
+      <!-- Disabled 2020-12-17. Too expensive for large sketches. TODO: Refactor to do lazy loading instead.
+      <p v-if="timelineStatus === 'ready'" class="control">
         <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body :scrollable="true" :max-height="300">
           <button class="button is-outlined is-rounded is-small" slot="trigger">
             <span class="icon is-small">
@@ -123,25 +126,26 @@ limitations under the License.
           </button>
           <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
             <div style="width:350px;">
-              <div class="field" v-for="(dt) in meta.stats[timeline.searchindex.index_name]['data_types']" :key="dt.data_type">
+              <div class="field" v-for="(dt) in meta.indices_metadata[timeline.searchindex.index_name]['data_types']" :key="dt.data_type">
                 <b-checkbox v-model="checkedDataTypes" :native-value="dt.data_type" type="is-info">{{ dt.data_type }} ({{ dt.count | compactNumber }})</b-checkbox>
               </div>
               <button class="button is-success is-fullwidth" v-on:click="openFilteredTimeline(timeline.searchindex.index_name, checkedDataTypes)" :disabled="!checkedDataTypes.length">Open Filtered</button>
             </div>
           </b-dropdown-item>
         </b-dropdown>
-
-        <ts-analyzer-list-dropdown :timeline="timeline" @newAnalysisSession="setAnalysisSession($event)"></ts-analyzer-list-dropdown>
       </p>
-      <p v-if="timelineStatus === 'ready' && !isCompact" class="control">
+       -->
+
+      <p v-if="timelineStatus === 'ready' && controls" class="control">
         <button class="button is-small is-rounded is-outlined" @click="showAnalysisHistory = !showAnalysisHistory">
           <span class="icon is-small">
             <i class="fas fa-history"></i>
           </span>
-          <span>History</span>
+          <span>Analysis History</span>
         </button>
       </p>
-      <p v-if="meta.permissions.write && !isCompact" class="control">
+
+      <p v-if="meta.permissions.write && controls" class="control">
         <button v-on:click="remove(timeline)" class="button is-small is-rounded is-danger">
           <span class="icon is-small">
             <i class="fas fa-trash"></i>
@@ -151,13 +155,12 @@ limitations under the License.
       </p>
     </div>
 
-    <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: {index: timeline.searchindex.index_name}}"><strong>{{ timeline.name }}</strong></router-link>
+    <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: {timeline: timeline.id}}"><strong>{{ timeline.name }}</strong></router-link>
     <strong v-if="timelineStatus !== 'ready'">{{ timeline.name }}</strong>
     <br>
 
     <span v-if="timelineStatus === 'ready'" class="is-size-7">
-      Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
-      <span class="is-small" :title="meta.stats[timeline.searchindex.index_name]['count'] + ' events in index'">({{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }})</span>
+      <span class="is-small" :title="meta.stats_per_timeline[timeline.id]['count'] + ' events in index'">{{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} events</span>
     </span>
 
     <span v-else-if="timelineStatus === 'fail'" class="is-size-7">
@@ -169,10 +172,6 @@ limitations under the License.
     <span v-else class="is-size-7">
       Unknown status: {{ timelineStatus }}
     </span>
-
-    <div v-show="showAnalysisDetail">
-      <ts-analyzer-session-detail :timeline="timeline" :session-id="analysisSessionId" @closeDetail="showAnalysisDetail = false"></ts-analyzer-session-detail>
-    </div>
 
     <div v-if="showAnalysisHistory">
       <ts-analyzer-history :timeline="timeline" @closeHistory="showAnalysisHistory = false"></ts-analyzer-history>
@@ -188,7 +187,6 @@ import _ from 'lodash'
 
 import ApiClient from '../../utils/RestApiClient'
 
-import TsAnalyzerListDropdown from './AnalyzerListDropdown'
 import TsAnalyzerSessionDetail from './AnalyzerSessionDetail'
 import TsAnalyzerHistory from './AnalyzerHistory'
 
@@ -197,7 +195,6 @@ import EventBus from "../../main"
 export default {
   components: {
     'color-picker': Chrome,
-    TsAnalyzerListDropdown,
     TsAnalyzerSessionDetail,
     TsAnalyzerHistory
   },
@@ -260,13 +257,9 @@ export default {
       this.showEditModal = false
       this.$emit('save', this.timeline)
     },
-    setAnalysisSession (sessionId) {
-      this.analysisSessionId = sessionId
-      this.showAnalysisDetail = true
-    },
     fetchData () {
       ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id).then((response) => {
-        this.timelineStatus = response.data.objects[0].searchindex.status[0].status
+        this.timelineStatus = response.data.objects[0].status[0].status
         if (this.timelineStatus !== 'ready') {
           this.autoRefresh = true
         }
@@ -307,7 +300,7 @@ export default {
     this.initialColor = {
       hex: this.timeline.color
     }
-    this.timelineStatus = this.timeline.searchindex.status[0].status
+    this.timelineStatus = this.timeline.status[0].status
     if (this.timelineStatus !== 'ready') {
       this.autoRefresh = true
     }

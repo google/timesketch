@@ -40,13 +40,14 @@ class TestUtils(BaseTest):
         """Test for validating indices."""
         sketch = self.sketch1
         sketch_indices = [t.searchindex.index_name for t in sketch.timelines]
+
         valid_indices = ['test']
         invalid_indices = ['test', 'fail']
-        self.assertListEqual(sketch_indices,
-                             get_validated_indices(valid_indices,
-                                                   sketch_indices))
-        self.assertFalse('fail' in get_validated_indices(
-            invalid_indices, sketch_indices))
+        test_indices, _ = get_validated_indices(valid_indices, sketch)
+        self.assertListEqual(sketch_indices, test_indices)
+
+        test_indices, _ = get_validated_indices(invalid_indices, sketch)
+        self.assertFalse('fail' in test_indices)
 
     def test_header_validation(self):
         """Test for Timesketch header validation."""

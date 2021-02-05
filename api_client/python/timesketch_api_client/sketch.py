@@ -14,6 +14,7 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
+import copy
 import os
 import json
 import logging
@@ -195,6 +196,17 @@ class Sketch(resource.BaseResource):
             return json.loads(label_string)
 
         return []
+
+    @property
+    def last_activity(self):
+        """Property that returns the last activity.
+
+        Returns:
+            Sketch last activity as a string.
+        """
+        data = self.lazyload_data(refresh_cache=True)
+        meta = data.get('meta', {})
+        return meta.get('last_activity', '')
 
     @property
     def my_acl(self):
@@ -519,8 +531,8 @@ class Sketch(resource.BaseResource):
         Returns:
             A boolean indicating whether the ACL change was successful.
         """
-        if not user_list and not group_list:
-            return True
+        if not user_list and not group_list and not make_public:
+            return False
 
         resource_url = '{0:s}/sketches/{1:d}/collaborators/'.format(
             self.api.api_root, self.id)
@@ -570,15 +582,14 @@ class Sketch(resource.BaseResource):
             raise RuntimeError(
                 'Unable to list aggregation groups on an archived sketch.')
         groups = []
-        resource_url = '{0:s}/sketches/{1:d}/aggregation/group/'.format(
-            self.api.api_root, self.id)
-        response = self.api.session.get(resource_url)
-        data = error.get_response_json(response, logger)
+        data = self.api.fetch_resource_data(
+            f'sketches/{self.id}/aggregation/group/')
+
         for group_dict in data.get('objects', []):
             if not group_dict.get('id'):
                 continue
             group = aggregation.AggregationGroup(sketch=self)
-            group.from_dict(group_dict)
+            group.from_saved(group_dict.get('id'))
             groups.append(group)
         return groups
 
@@ -600,8 +611,8 @@ class Sketch(resource.BaseResource):
             raise RuntimeError(
                 'Unable to list aggregations on an archived sketch.')
         aggregations = []
-        data = self.lazyload_data(refresh_cache=True)
 
+        data = self.api.fetch_resource_data(f'sketches/{self.id}/aggregation/')
         objects = data.get('objects')
         if not objects:
             return aggregations
@@ -609,22 +620,14 @@ class Sketch(resource.BaseResource):
         if not isinstance(objects, (list, tuple)):
             return aggregations
 
-        first_object = objects[0]
-        if not isinstance(first_object, dict):
+        object_list = objects[0]
+        if not isinstance(object_list, (list, tuple)):
             return aggregations
 
-        aggregation_groups = first_object.get('aggregationgroups')
-        if aggregation_groups:
-            aggregation_groups = aggregation_groups[0]
-            groups = [
-                x.get('id', 0) for x in aggregation_groups.get(
-                    'aggregations', [])]
-        else:
-            groups = tuple()
-
-        for aggregation_dict in first_object.get('aggregations', []):
+        for aggregation_dict in object_list:
             agg_id = aggregation_dict.get('id')
-            if agg_id in groups:
+            group_id = aggregation_dict.get('aggregationgroup_id')
+            if group_id:
                 continue
             label_string = aggregation_dict.get('label_string', '')
             if label_string:
@@ -883,8 +886,13 @@ class Sketch(resource.BaseResource):
         searches = []
         for saved_search in sketch['meta'].get('views', []):
             search_obj = search.Search(sketch=self)
-            search_obj.from_saved(saved_search.get('id'))
-            searches.append(search_obj)
+            try:
+                search_obj.from_saved(saved_search.get('id'))
+                searches.append(search_obj)
+            except ValueError:
+                logger.error(
+                    'Unable to load a saved search with ID: {0:d}'.format(
+                        saved_search.get('id', 0)), exc_info=True)
 
         return searches
 
@@ -928,12 +936,18 @@ class Sketch(resource.BaseResource):
         # TODO: Deprecate this function.
         logger.warning(
             'This function is about to be deprecated, please use the '
-            'timesketch_import_client instead')
+            'timesketch_import_client instead (this function is not '
+            'guaranteed to work)')
 
-        resource_url = '{0:s}/upload/'.format(self.api.api_root)
+        resource_url = f'{self.api.api_root}/upload/'
         files = {'file': open(file_path, 'rb')}
-        data = {'name': timeline_name, 'sketch_id': self.id,
-                'index_name': index}
+        _, _, file_ending = file_path.rpartition('.')
+        data = {
+            'name': timeline_name,
+            'sketch_id': self.id,
+            'label': file_ending,
+            'index_name': index}
+
         response = self.api.session.post(resource_url, files=files, data=data)
         response_dict = error.get_response_json(response, logger)
         timeline_dict = response_dict['objects'][0]
@@ -943,6 +957,7 @@ class Sketch(resource.BaseResource):
             api=self.api,
             name=timeline_dict['name'],
             searchindex=timeline_dict['searchindex']['index_name'])
+
         return timeline_obj
 
     def add_timeline(self, searchindex):
@@ -1212,6 +1227,13 @@ class Sketch(resource.BaseResource):
         """Return a list of all available aggregators in the sketch."""
         data = self.lazyload_data()
         meta = data.get('meta', {})
+        always_supported = [{
+            'parameter': 'index',
+            'notes': (
+                'List of indices or timeline IDS to limit the aggregation'),
+            'type': 'text-input',
+        }]
+
         entries = []
         for name, options in iter(meta.get('aggregators', {}).items()):
             for field in options.get('form_fields', []):
@@ -1227,6 +1249,12 @@ class Sketch(resource.BaseResource):
                     _, _, entry['type'] = field.get('type').partition(
                         'ts-dynamic-form-')
                 entries.append(entry)
+
+            for entry_dict in always_supported:
+                entry = copy.copy(entry_dict)
+                entry['aggregator_name'] = name
+                entries.append(entry)
+
         return pandas.DataFrame(entries)
 
     def run_aggregator(

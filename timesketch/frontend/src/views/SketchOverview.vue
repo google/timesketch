@@ -52,7 +52,7 @@ limitations under the License.
               </a>
             </b-tooltip>
 
-            <b-dropdown v-if="meta.permissions.write" aria-role="list" position="is-bottom-left">
+            <b-dropdown v-if="meta.permissions.write" aria-role="list" append-to-body position="is-bottom-left">
               <a class="button ts-dropdown-button" style="background:transparent;border:none;" slot="trigger" slot-scope="{ active }">
                   <span class="icon is-small">
                     <i :class="active ? 'fas fa-angle-up' : 'fas fa-angle-down'"></i>
@@ -179,7 +179,7 @@ limitations under the License.
         <div class="container is-fluid">
           <div class="tile-box">
             <div style="padding:1.25em;">
-              <ts-sketch-metrics :timelines="sketch.active_timelines" :views="meta.views" :stories="sketch.stories" :count="count"></ts-sketch-metrics>
+              <ts-sketch-metrics :timelines="sketch.active_timelines" :views="meta.views" :stories="meta.stories" :count="count"></ts-sketch-metrics>
             </div>
           </div>
         </div>
@@ -218,11 +218,18 @@ limitations under the License.
                       </div>
                     </header>
                     <div style="padding:1.25em;">
-                      <ts-timeline-list :timelines="sketch.timelines" :controls="true" :is-compact="true"></ts-timeline-list>
+                      <ts-timeline-list :timelines="sketch.timelines" :controls="false" :is-compact="true"></ts-timeline-list>
+                      <ul v-if="sketch.timelines.length > 9" class="content-list">
+                        <li style="padding:10px;">
+                          <router-link :to="{ name: 'SketchManageTimelines' }">
+                            <span>There are {{ sketch.timelines.length - 10 }} more timelines in this sketch. <span style="text-decoration: underline">Click here to see them all</span></span>
+                          </router-link>
+                        </li>
+                      </ul>
                     </div>
                   </div>
 
-                  <div class="tile is-child tile-box" v-if="sketch.stories.length">
+                  <div class="tile is-child tile-box" v-if="meta.stories.length">
                     <header class="card-header">
                       <p class="card-header-title">Stories</p>
                       <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
@@ -237,7 +244,7 @@ limitations under the License.
                       </div>
                     </header>
                     <div style="padding:1.25em;">
-                      <span v-if="!sketch.stories.length">No stories</span>
+                      <span v-if="!meta.stories.length">No stories</span>
                       <ts-sketch-story-list :controls="false"></ts-sketch-story-list>
                     </div>
                   </div>
@@ -271,7 +278,7 @@ limitations under the License.
                     <header class="card-header">
                       <p class="card-header-title">Saved searches</p>
                       <div class="field is-grouped is-pulled-right" style="padding: 0.75rem;">
-                        <p class="control" v-if="sketch.stories.length">
+                        <p class="control" v-if="meta.views.length">
                           <router-link class="button is-rounded is-small" :to="{ name: 'SketchManageViews' }">
                             <span class="icon is-small">
                               <i class="fas fa-cog"></i>
