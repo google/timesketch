@@ -47,7 +47,7 @@ class AggregationTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(
             computer_names[0], 'WKS-WIN764BITB.shieldbase.local')
         count = list(df['count'].values)[0]
-        self.assertEqual(count, 13202)
+        self.assertions.assertEqual(count, 3215)
 
     def test_partial_set(self):
         """Test partial aggregation sets."""
@@ -68,7 +68,7 @@ class AggregationTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(
             computer_names[0], 'WKS-WIN764BITB.shieldbase.local')
         count = list(df['count'].values)[0]
-        self.assertEqual(count, 3202)
+        self.assertions.assertEqual(count, 3202)
 
         agg_obj = aggregation.Aggregation(self.sketch)
         parameters = {
@@ -87,7 +87,7 @@ class AggregationTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(
             computer_names[0], 'WKS-WIN764BITB.shieldbase.local')
         count = list(df['count'].values)[0]
-        self.assertEqual(count, 10000)
+        self.assertions.assertEqual(count, 13)
 
 
 manager.EndToEndTestManager.register_test(AggregationTest)
