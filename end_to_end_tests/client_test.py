@@ -39,10 +39,6 @@ class ClientTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(
             new_sketch.description, sketch_description)
 
-        first_sketch = self.api.get_sketch(1)
-        self.assertions.assertEqual(
-            self.sketch.name, first_sketch.name)
-
         sketches = list(self.api.list_sketches())
         self.assertions.assertEqual(len(sketches), 2)
 
