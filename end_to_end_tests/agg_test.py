@@ -51,11 +51,14 @@ class AggregationTest(interface.BaseEndToEndTest):
 
     def test_partial_set(self):
         """Test partial aggregation sets."""
+        timelines = {t.name: t.id for t in self.sketch.list_timelines()}
+        evtx_part_id = timelines.get('evtx_part', 'evtx_part')
+
         agg_obj = aggregation.Aggregation(self.sketch)
         parameters = {
             'supported_charts': 'table',
             'field': 'computer_name',
-            'index': ['evtx_part'],
+            'index': [evtx_part_id],
             'limit': 5,
         }
         agg_obj.from_aggregator_run('field_bucket', parameters)
