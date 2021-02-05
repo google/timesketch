@@ -31,6 +31,7 @@ import six
 
 from dateutil import parser
 from flask import current_app
+from pandas import Timestamp
 
 from timesketch.lib import errors
 
@@ -56,7 +57,7 @@ def random_color():
         Color as string in HEX
     """
     hue = random.random()
-    golden_ratio_conjugate = (1 + 5**0.5) / 2
+    golden_ratio_conjugate = (1 + 5 ** 0.5) / 2
     hue += golden_ratio_conjugate
     hue %= 1
     rgb = tuple(int(i * 256) for i in colorsys.hsv_to_rgb(hue, 0.5, 0.95))
@@ -88,12 +89,6 @@ def _scrub_special_tags(dict_obj):
     for field in FIELDS_TO_REMOVE:
         if field in dict_obj:
             _ = dict_obj.pop(field)
-
-
-def _get_unix_time(date):
-    """Convert a Pandas Timestamp object to a UNIX time in microseconds"""
-    return str(time.mktime(
-        date.to_pydatetime().utctimetuple()) * 1e6 + date.microsecond)
 
 
 def _validate_csv_fields(mandatory_fields, data):
@@ -140,23 +135,24 @@ def read_and_validate_csv(file_handle, delimiter=',',
                                  chunksize=DEFAULT_CHUNK_SIZE)
         for chunk in reader:
             skipped_rows = chunk[chunk['datetime'].isnull()]
-            for row in skipped_rows.iterrows():
+            if not skipped_rows.empty:
                 logger.warning(
-                    'Row missing a datetime object, skipping [{0:s}]'.format(
-                        ','.join([str(x).replace(
-                            '\n', '').strip() for x in row.values()])))
+                    '{0} rows skipped since they were missing a datetime field '
+                    'or it was empty '.format(len(skipped_rows)))
 
             # Normalize datetime to ISO 8601 format if it's not the case.
-            chunk['datetime'] = pandas.to_datetime(chunk['datetime'])
+            try:
+                chunk['datetime'] = pandas.to_datetime(chunk['datetime'])
 
-            chunk['timestamp'] = chunk['datetime'].apply(_get_unix_time)
-            chunk['datetime'] = chunk['datetime'].apply(pandas.Timestamp
-                                                        .isoformat).astype(str)
-
+                chunk['timestamp'] = chunk['datetime'].dt.strftime(
+                    '%s%f').astype(int)
+                chunk['datetime'] = chunk['datetime'].apply(
+                    Timestamp.isoformat).astype(str)
+            except ValueError:
+                logger.warning('Chunk skipped due to malformed datetime values')
+                continue
             if 'tag' in chunk:
-                chunk['tag'] = chunk['tag'].apply(
-                    lambda tag: [x for x in _parse_tag_field(tag) if x]
-                    if tag else None)
+                chunk['tag'] = chunk['tag'].apply(_parse_tag_field)
             for _, row in chunk.iterrows():
                 _scrub_special_tags(row)
                 yield row
@@ -195,12 +191,12 @@ def read_and_validate_redline(file_handle):
 
         row_to_yield = {}
         row_to_yield["message"] = summary
-        row_to_yield["timestamp"] = timestamp
-        row_to_yield["datetime"] = dt_iso_format
-        row_to_yield["timestamp_desc"] = timestamp_desc
-        row_to_yield["alert"] = alert  # Extra field
+        row_to_yield['timestamp'] = timestamp
+        row_to_yield['datetime'] = dt_iso_format
+        row_to_yield['timestamp_desc'] = timestamp_desc
         tags = [tag]
-        row_to_yield["tag"] = tags  # Extra field
+        row_to_yield['alert'] = alert  # Extra field
+        row_to_yield['tag'] = tags  # Extra field
 
         yield row_to_yield
 
