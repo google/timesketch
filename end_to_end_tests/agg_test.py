@@ -13,7 +13,6 @@
 # limitations under the License.
 """End to end tests of Timesketch aggregation functionality."""
 
-import pandas as pd
 from timesketch_api_client import aggregation
 
 from . import interface
@@ -38,7 +37,7 @@ class AggregationTest(interface.BaseEndToEndTest):
             'field': 'computer_name',
             'limit': 5,
         }
-        agg_obj.from_aggregator_run('field_bucket', params)
+        agg_obj.from_aggregator_run('field_bucket', parameters)
         df = agg_obj.table
 
         self.assertions.assertEqual(df.shape, (1, 3))
@@ -56,10 +55,10 @@ class AggregationTest(interface.BaseEndToEndTest):
         parameters = {
             'supported_charts': 'table',
             'field': 'computer_name',
-            'index': ['evtx']
+            'index': ['evtx'],
             'limit': 5,
         }
-        agg_obj.from_aggregator_run('field_bucket', params)
+        agg_obj.from_aggregator_run('field_bucket', parameters)
         df = agg_obj.table
 
         self.assertions.assertEqual(df.shape, (1, 3))
@@ -75,10 +74,10 @@ class AggregationTest(interface.BaseEndToEndTest):
         parameters = {
             'supported_charts': 'table',
             'field': 'computer_name',
-            'index': ['evtx_part']
+            'index': ['evtx_part'],
             'limit': 5,
         }
-        agg_obj.from_aggregator_run('field_bucket', params)
+        agg_obj.from_aggregator_run('field_bucket', parameters)
         df = agg_obj.table
 
         self.assertions.assertEqual(df.shape, (1, 3))
@@ -91,4 +90,4 @@ class AggregationTest(interface.BaseEndToEndTest):
         self.assertEqual(count, 10000)
 
 
-manager.EndToEndTestManager.register_test(QueryTest)
+manager.EndToEndTestManager.register_test(AggregationTest)
