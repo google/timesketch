@@ -23,6 +23,7 @@ from .resources.aggregation import AggregationInfoResource
 from .resources.aggregation import AggregationResource
 from .resources.analysis import AnalysisResource
 from .resources.analysis import AnalyzerRunResource
+from .resources.analysis import AnalyzerSessionActiveListResource
 from .resources.analysis import AnalyzerSessionResource
 from .resources.attribute import AttributeResource
 from .resources.explore import ExploreResource
@@ -53,6 +54,8 @@ from .resources.user import UserListResource
 from .resources.user import GroupListResource
 from .resources.user import CollaboratorResource
 from .resources.user import LoggedInUserResource
+from .resources.sigma import SigmaResource
+from .resources.sigma import SigmaListResource
 from .resources.graph import GraphListResource
 from .resources.graph import GraphResource
 from .resources.graph import GraphPluginListResource
@@ -68,6 +71,7 @@ API_ROUTES = [
     (SketchArchiveResource, '/sketches/<int:sketch_id>/archive/'),
     (AnalysisResource, '/sketches/<int:sketch_id>/timelines/<int:timeline_id>/analysis/'),
     (AnalyzerRunResource, '/sketches/<int:sketch_id>/analyzer/'),
+    (AnalyzerSessionActiveListResource, '/sketches/<int:sketch_id>/analyzer/sessions/active/'),
     (AnalyzerSessionResource, '/sketches/<int:sketch_id>/analyzer/sessions/<int:session_id>/'),
     (AggregationListResource, '/sketches/<int:sketch_id>/aggregation/'),
     (AggregationGroupResource, '/sketches/<int:sketch_id>/aggregation/group/<int:group_id>/'),
@@ -100,9 +104,11 @@ API_ROUTES = [
     (GroupListResource, '/groups/'),
     (CollaboratorResource, '/sketches/<int:sketch_id>/collaborators/'),
     (VersionResource, '/version/'),
+    (SigmaListResource, '/sigma/'),
+    (SigmaResource, '/sigma/<string:rule_uuid>/'),
     (LoggedInUserResource, '/users/me/'),
     (GraphListResource, '/sketches/<int:sketch_id>/graphs/'),
     (GraphResource, '/sketches/<int:sketch_id>/graphs/<int:graph_id>/'),
     (GraphPluginListResource, '/graphs/'),
-    (GraphCacheResource, '/sketches/<int:sketch_id>/graph/'),
+    (GraphCacheResource, '/sketches/<int:sketch_id>/graph/')
 ]

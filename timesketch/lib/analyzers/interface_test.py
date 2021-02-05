@@ -35,7 +35,8 @@ class TestAnalysisEvent(BaseTest):
         sketch = interface.Sketch(sketch_id=self.SKETCH_ID)
         datastore = MockDataStore('127.0.0.1', 4711)
         valid_event = dict(
-            _id='1', _type='test', _index='test', _source='test')
+            _id='1', _type='test', _index='test',
+            _source={'__ts_timeline_id': 1, 'test': True})
         invalid_event = dict(_id='1')
         event = interface.Event(valid_event, datastore, sketch=None)
         sketch_event = interface.Event(valid_event, datastore, sketch=sketch)

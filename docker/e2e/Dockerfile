@@ -27,11 +27,8 @@ RUN pip3 install -r requirements.txt
 
 # Install timesketch from the current branch (In the context of CI platform)
 ADD . /tmp/timesketch
-RUN pip3 install /tmp/timesketch
-
-# Install Timesketch API and import clients
-RUN pip3 install timesketch-api-client
-RUN pip3 install timesketch-import-client
+RUN pip3 install /tmp/timesketch && pip3 install /tmp/timesketch/api_client/python && \
+    pip3 install /tmp/timesketch/importer_client/python
 
 # Copy Timesketch config files into /etc/timesketch
 RUN mkdir /etc/timesketch
@@ -40,6 +37,17 @@ RUN cp /tmp/timesketch/data/ontology.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/tags.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/features.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
+
+# TODO: This is only to enable e2e tests to run until a new dev release of
+# plaso has been released, REMOVE IMMEDIATELY AFTER THAT HAS BEEN DONE.
+# This will also fail as soon as the feature branch has been deleted.
+RUN cd && apt-get install -y git && \
+    git clone https://github.com/kiddinn/plaso.git && \
+    cd plaso && git checkout elastic_ts && \
+    apt-get remove -y plaso-tools && \
+    python3 setup.py build && python3 setup.py install
+# END Temporary Hack to make plaso work in the e2e test.
+
 
 # Copy the entrypoint script into the container
 COPY docker/e2e/docker-entrypoint.sh /

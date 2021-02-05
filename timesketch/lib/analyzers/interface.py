@@ -49,6 +49,20 @@ def _flush_datastore_decorator(func):
     """Decorator that flushes the bulk insert queue in the datastore."""
     def wrapper(self, *args, **kwargs):
         func_return = func(self, *args, **kwargs)
+
+        # Add in tagged events and emojis.
+        for event_dict in self.tagged_events.values():
+            event = event_dict.get('event')
+            tags = event_dict.get('tags')
+
+            event.commit({'tag': tags})
+
+        for event_dict in self.emoji_events.values():
+            event = event_dict.get('event')
+            emojis = event_dict.get('emojis')
+
+            event.commit({'__ts_emojis': emojis})
+
         self.datastore.flush_queued_events()
         return func_return
     return wrapper
@@ -113,17 +127,19 @@ class Event(object):
         index_name: The name of the Elasticsearch index.
         source: Source document from Elasticsearch.
     """
-    def __init__(self, event, datastore, sketch=None):
+    def __init__(self, event, datastore, sketch=None, analyzer=None):
         """Initialize Event object.
 
         Args:
             event: Dictionary of event from Elasticsearch.
             datastore: Instance of ElasticsearchDatastore.
             sketch: Optional instance of a Sketch object.
+            analyzer: Optional instance of a BaseIndexAnalyzer object.
 
         Raises:
             KeyError if event dictionary is missing mandatory fields.
         """
+        self._analyzer = analyzer
         self.datastore = datastore
         self.sketch = sketch
 
@@ -133,6 +149,7 @@ class Event(object):
             self.event_id = event['_id']
             self.event_type = event['_type']
             self.index_name = event['_index']
+            self.timeline_id = event.get('_source', {}).get('__ts_timeline_id')
             self.source = event.get('_source', None)
         except KeyError as e:
             raise KeyError('Malformed event: {0!s}'.format(e)) from e
@@ -162,7 +179,7 @@ class Event(object):
 
         self.datastore.import_event(
             self.index_name, self.event_type, event_id=self.event_id,
-            event=event_to_commit, flush_interval=1)
+            event=event_to_commit)
         self.updated_event = {}
 
     def add_attributes(self, attributes):
@@ -201,9 +218,20 @@ class Event(object):
             return
 
         existing_tags = self.source.get('tag', [])
+        if self._analyzer:
+            if self.event_id in self._analyzer.tagged_events:
+                existing_tags = self._analyzer.tagged_events[
+                    self.event_id].get('tags')
+            else:
+                self._analyzer.tagged_events[self.event_id] = {
+                    'event': self, 'tags': existing_tags}
+
         new_tags = list(set().union(existing_tags, tags))
-        updated_event_attribute = {'tag': new_tags}
-        self._update(updated_event_attribute)
+        if self._analyzer:
+            self._analyzer.tagged_events[self.event_id]['tags'] = new_tags
+        else:
+            updated_event_attribute = {'tag': new_tags}
+            self._update(updated_event_attribute)
 
     def add_emojis(self, emojis):
         """Add emojis to the Event.
@@ -217,9 +245,23 @@ class Event(object):
         existing_emoji_list = self.source.get('__ts_emojis', [])
         if not isinstance(existing_emoji_list, (list, tuple)):
             existing_emoji_list = []
+
+        if self._analyzer:
+            if self.event_id in self._analyzer.emoji_events:
+                existing_emoji_list = self._analyzer.emoji_events[
+                    self.event_id].get('emojis')
+            else:
+                self._analyzer.emoji_events[self.event_id] = {
+                    'event': self, 'emojis': existing_emoji_list}
+
         new_emoji_list = list(set().union(existing_emoji_list, emojis))
-        updated_event_attribute = {'__ts_emojis': new_emoji_list}
-        self._update(updated_event_attribute)
+
+        if self._analyzer:
+            self._analyzer.emoji_events[
+                self.event_id]['emojis'] = new_emoji_list
+        else:
+            updated_event_attribute = {'__ts_emojis': new_emoji_list}
+            self._update(updated_event_attribute)
 
     def add_star(self):
         """Star event."""
@@ -716,9 +758,15 @@ class BaseIndexAnalyzer(object):
         index_name: Name if Elasticsearch index.
         datastore: Elasticsearch datastore client.
         sketch: Instance of Sketch object.
+        timeline_id: The ID of the timeline the analyzer runs on.
+        tagged_events: Dict with all events to add tags and those tags.
+        emoji_events: Dict with all events to add emojis and those emojis.
     """
 
     NAME = 'name'
+    DISPLAY_NAME = None
+    DESCRIPTION = None
+
     IS_SKETCH_ANALYZER = False
 
     # If this analyzer depends on another analyzer
@@ -734,15 +782,21 @@ class BaseIndexAnalyzer(object):
     SECONDS_PER_WAIT = 10
     MAXIMUM_WAITS = 360
 
-    def __init__(self, index_name):
+    def __init__(self, index_name, timeline_id=None):
         """Initialize the analyzer object.
 
         Args:
             index_name: Elasticsearch index name.
+            timeline_id: The timeline ID.
         """
         self.name = self.NAME
         self.index_name = index_name
+        self.timeline_id = timeline_id
         self.timeline_name = ''
+
+        self.tagged_events = {}
+        self.emoji_events = {}
+
         self.datastore = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
@@ -792,6 +846,11 @@ class BaseIndexAnalyzer(object):
         for index in indices:
             self.datastore.client.indices.refresh(index=index)
 
+        if self.timeline_id:
+            timeline_ids = [self.timeline_id]
+        else:
+            timeline_ids = None
+
         event_generator = self.datastore.search_stream(
             query_string=query_string,
             query_filter=query_filter,
@@ -799,9 +858,11 @@ class BaseIndexAnalyzer(object):
             indices=indices,
             return_fields=return_fields,
             enable_scroll=scroll,
+            timeline_ids=timeline_ids
         )
         for event in event_generator:
-            yield Event(event, self.datastore, sketch=self.sketch)
+            yield Event(
+                event, self.datastore, sketch=self.sketch, analyzer=self)
 
     @_flush_datastore_decorator
     def run_wrapper(self, analysis_id):
@@ -869,12 +930,13 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
 
     Attributes:
         sketch: A Sketch instance.
+        timeline_id: The ID of the timeline the analyzer runs on.
     """
 
     NAME = 'name'
     IS_SKETCH_ANALYZER = True
 
-    def __init__(self, index_name, sketch_id):
+    def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize the analyzer object.
 
         Args:
@@ -882,7 +944,7 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             sketch_id: Sketch ID.
         """
         self.sketch = Sketch(sketch_id=sketch_id)
-        super().__init__(index_name)
+        super().__init__(index_name, timeline_id=timeline_id)
 
     def event_pandas(
             self, query_string=None, query_filter=None, query_dsl=None,
@@ -912,6 +974,11 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
         if not indices:
             indices = [self.index_name]
 
+        if self.timeline_id:
+            timeline_ids = [self.timeline_id]
+        else:
+            timeline_ids = None
+
         # Refresh the index to make sure it is searchable.
         for index in indices:
             self.datastore.client.indices.refresh(index=index)
@@ -928,6 +995,7 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             query_filter=query_filter,
             query_dsl=query_dsl,
             indices=indices,
+            timeline_ids=timeline_ids,
             return_fields=return_fields,
         )
 

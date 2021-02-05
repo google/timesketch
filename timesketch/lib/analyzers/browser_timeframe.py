@@ -154,18 +154,11 @@ class BrowserTimeframeSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for BrowserTimeframe."""
 
     NAME = 'browser_timeframe'
+    DISPLAY_NAME = 'Browser timeframe'
+    DESCRIPTION = ('Determine user activity hours by finding the frequency of'
+                   'browsing events')
+
     DEPENDENCIES = frozenset()
-
-    def __init__(self, index_name, sketch_id):
-        """Initialize The Sketch Analyzer.
-
-        Args:
-            index_name: Elasticsearch index name
-            sketch_id: Sketch ID
-        """
-        self.index_name = index_name
-        super(BrowserTimeframeSketchPlugin, self).__init__(
-            index_name, sketch_id)
 
     def run(self):
         """Entry point for the analyzer.

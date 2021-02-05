@@ -36,7 +36,20 @@ class AnalyzerResult(resource.BaseResource):
         resource_uri = (
             '{0:s}/sketches/{1:d}/timelines/{2:d}/analysis/').format(
                 api.api_root, sketch_id, timeline_id)
-        super(AnalyzerResult, self).__init__(api, resource_uri)
+        super().__init__(api, resource_uri)
+
+    def _get_status_data(self):
+        """Yields a dict for each analyzer status."""
+        data = self._fetch_data()
+        for entry in data.get('analyzers', []):
+            yield {
+                'log': entry.get('log', 'No recorded logs.'),
+                'name': entry.get('name', 'No Name'),
+                'results': entry.get('results', ''),
+                'status': entry.get('status', 'Unknown'),
+                'date': entry.get(
+                    'status_date', datetime.datetime.utcnow().isoformat()),
+            }
 
     def _fetch_data(self):
         """Returns a dict with the analyzer results."""
@@ -92,9 +105,8 @@ class AnalyzerResult(resource.BaseResource):
     @property
     def log(self):
         """Returns back logs from the analyzer session, if there are any."""
-        data = self._fetch_data()
         return_strings = []
-        for entry in data.get('analyzers', []):
+        for entry in self._get_status_data():
             return_strings.append(
                 '[{0:s}] = {1:s}'.format(
                     entry.get('name', 'No Name'),
@@ -104,9 +116,8 @@ class AnalyzerResult(resource.BaseResource):
     @property
     def results(self):
         """Returns the results from the analyzer session."""
-        data = self._fetch_data()
         return_strings = []
-        for entry in data.get('analyzers', []):
+        for entry in self._get_status_data():
             results = entry.get('results')
             if not results:
                 results = 'No results yet.'
@@ -116,11 +127,23 @@ class AnalyzerResult(resource.BaseResource):
         return '\n'.join(return_strings)
 
     @property
+    def results_dict(self):
+        """Returns the results from the analyzer session as a dict."""
+        result_dict = {}
+        for entry in self._get_status_data():
+            results = entry.get('results')
+            if not results:
+                results = 'No results yet.'
+            name = entry.get('name', 'No Name')
+            result_dict.setdefault(name, [])
+            result_dict[name].append(results)
+        return result_dict
+
+    @property
     def status(self):
         """Returns the current status of the analyzer run."""
-        data = self._fetch_data()
         return_strings = []
-        for entry in data.get('analyzers', []):
+        for entry in self._get_status_data():
             return_strings.append(
                 '[{0:s}] = {1:s}'.format(
                     entry.get('name', 'No Name'),
@@ -128,11 +151,21 @@ class AnalyzerResult(resource.BaseResource):
         return '\n'.join(return_strings)
 
     @property
+    def status_dict(self):
+        """Returns the current status of the analyzers run as a dict."""
+        return_dict = {}
+        for entry in self._get_status_data():
+            name = entry.get('name', 'No Name')
+
+            return_dict.setdefault(name, [])
+            return_dict[name].append(entry.get('status', 'Unknown'))
+        return return_dict
+
+    @property
     def status_string(self):
         """Returns a longer version of a status string."""
-        data = self._fetch_data()
         return_strings = []
-        for entry in data.get('analyzers', []):
+        for entry in self._get_status_data():
             return_strings.append(
                 '{0:s} - {1:s}: {2:s}'.format(
                     entry.get('name', 'No Name'),

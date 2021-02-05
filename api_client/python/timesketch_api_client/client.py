@@ -35,13 +35,15 @@ from . import definitions
 from . import error
 from . import index
 from . import sketch
+from . import user
 from . import version
+from . import sigma
 
 
 logger = logging.getLogger('timesketch_api.client')
 
 
-class TimesketchApi(object):
+class TimesketchApi:
     """Timesketch API object
 
     Attributes:
@@ -109,6 +111,11 @@ class TimesketchApi(object):
         except RuntimeError as e:
             raise RuntimeError(
                 'Unable to connect to server, error: {0!s}'.format(e)) from e
+
+    @property
+    def current_user(self):
+        """Property that returns the user object of the logged in user."""
+        return user.User(self)
 
     @property
     def version(self):
@@ -308,17 +315,18 @@ class TimesketchApi(object):
 
         return session
 
-    def fetch_resource_data(self, resource_uri):
+    def fetch_resource_data(self, resource_uri, params=None):
         """Make a HTTP GET request.
 
         Args:
             resource_uri: The URI to the resource to be fetched.
+            params: Dict of URL parameters to send in the GET request.
 
         Returns:
             Dictionary with the response data.
         """
         resource_url = '{0:s}/{1:s}'.format(self.api_root, resource_uri)
-        response = self.session.get(resource_url)
+        response = self.session.get(resource_url, params=params)
         return error.get_response_json(response, logger)
 
     def create_sketch(self, name, description=None):
@@ -407,21 +415,41 @@ class TimesketchApi(object):
 
         return pandas.DataFrame(lines)
 
-    def list_sketches(self):
+    def list_sketches(self, per_page=50, scope='user', include_archived=True):
         """Get a list of all open sketches that the user has access to.
 
-        Returns:
-            List of Sketch objects instances.
+        Args:
+            per_page: Number of items per page when paginating. Default is 50.
+            scope: What scope to get sketches as. Default to user.
+            include_archived: If archived sketches should be returned.
+
+        Yields:
+            Sketch objects instances.
         """
-        sketches = []
-        response = self.fetch_resource_data('sketches/')
-        for sketch_dict in response['objects']:
-            sketch_id = sketch_dict['id']
-            sketch_name = sketch_dict['name']
-            sketch_obj = sketch.Sketch(
-                sketch_id=sketch_id, api=self, sketch_name=sketch_name)
-            sketches.append(sketch_obj)
-        return sketches
+        url_params = {
+            'per_page': per_page,
+            'scope': scope,
+            'include_archived': include_archived
+        }
+        # Start with the first page
+        page = 1
+        has_next_page = True
+
+        while has_next_page:
+            url_params['page'] = page
+            response = self.fetch_resource_data('sketches/', params=url_params)
+            meta = response.get('meta', {})
+
+            page = meta.get('next_page')
+            if not page:
+                has_next_page = False
+
+            for sketch_dict in response.get('objects', []):
+                sketch_id = sketch_dict['id']
+                sketch_name = sketch_dict['name']
+                sketch_obj = sketch.Sketch(
+                    sketch_id=sketch_id, api=self, sketch_name=sketch_name)
+                yield sketch_obj
 
     def get_searchindex(self, searchindex_id):
         """Get a searchindex.
@@ -479,7 +507,11 @@ class TimesketchApi(object):
         """
         indices = []
         response = self.fetch_resource_data('searchindices/')
-        for index_dict in response['objects'][0]:
+        response_objects = response.get('objects')
+        if not response_objects:
+            return indices
+
+        for index_dict in response_objects[0]:
             index_id = index_dict['id']
             index_name = index_dict['name']
             index_obj = index.SearchIndex(
@@ -493,3 +525,52 @@ class TimesketchApi(object):
             return
         request = google.auth.transport.requests.Request()
         self.credentials.credential.refresh(request)
+
+    def list_sigma_rules(self, as_pandas=False):
+        """Get a list of sigma objects.
+
+        Args:
+            as_pandas: Boolean indicating that the results will be returned
+                as a Pandas DataFrame instead of a list of dicts.
+
+        Returns:
+            List of Sigme rule object instances or a pandas Dataframe with all
+            rules if as_pandas is True.
+
+        Raises:
+            ValueError: If no rules are found.
+        """
+        rules = []
+        response = self.fetch_resource_data('sigma/')
+
+        if not response:
+            raise ValueError('No rules found.')
+
+        if as_pandas:
+            return pandas.DataFrame.from_records(response.get('objects'))
+
+        for rule_dict in response['objects']:
+            rule_uuid = rule_dict.get('id')
+            title = rule_dict.get('title')
+            es_query = rule_dict.get('es_query')
+            file_name = rule_dict.get('file_name')
+            description = rule_dict.get('description')
+            file_relpath = rule_dict.get('file_relpath')
+            index_obj = sigma.Sigma(
+                rule_uuid, api=self, es_query=es_query, file_name=file_name,
+                title=title, description=description,
+                file_relpath=file_relpath)
+            rules.append(index_obj)
+        return rules
+
+
+    def get_sigma_rule(self, rule_uuid):
+        """Get a sigma rule.
+
+        Args:
+            rule_uuid: UUID of the Sigma rule.
+
+        Returns:
+            Instance of a Sigma object.
+        """
+        return sigma.Sigma(rule_uuid, api=self)

@@ -57,7 +57,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
     }
 
     def __init__(self, **kwargs):
-        super(SketchArchiveResource, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._sketch = None
         self._sketch_indices = None
 
@@ -98,10 +98,15 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                         'User does not have sufficient access rights to '
                         'read the sketch.'))
 
+        timelines = {
+            t.searchindex.index_name: t.get_status.status == 'archived'
+            for t in sketch.timelines}
+
         meta = {
             'is_archived': sketch.get_status.status == 'archived',
             'sketch_id': sketch.id,
             'sketch_name': sketch.name,
+            'timelines': timelines,
         }
         schema = {
             'meta': meta,

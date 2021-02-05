@@ -184,15 +184,15 @@ Advanced search queries are in JSON format,  and let you use the full power of E
 
 [Full Elasticsearch guide](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html)
 
-## Views
+## Saved Searches
 
-Views are saved results of your search queries, for easier access later. 
+Saved Searches are saved results of your search queries, for easier access later. A saved Search does not only include the query but also specifics like displayed columns.
 
-To save search results as a view, run your search query, apply filters if needed, and click the “Save view” button under the query field. Now you can access this view from Overview page, from the “Views” tab, and from “Saved views” drop-down menu on Explore page of your sketch.
+To save search results, run your search query, apply filters if needed, and click the “Save” button under the query field. Now you can access this Search from “Saved Searches” drop-down menu on Explore page of your sketch.
 
 You can further refine the data in your views by manually hiding certain events. To do it, click a small eye icon next to the icon. If you have hidden events in your view, they can be un-hidden by clicking red button “Show hidden events” in the upper right corner of your timeline.
 
-You can save changes to your views by clicking “Update View” button
+You can save changes to your views by clicking “Save Changes” button
 
 
 ## Search templates

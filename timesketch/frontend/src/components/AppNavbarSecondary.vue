@@ -31,9 +31,27 @@ limitations under the License.
             </router-link>
           </li>
           <li v-bind:class="{'is-active': currentPage === 'graph'}">
-            <router-link :to="{ name: 'SketchGraph' }">
+            <router-link :to="{ name: 'SketchGraphOverview' }">
               <span class="icon is-small"><i class="fas fa-project-diagram" aria-hidden="true"></i></span>
               <span>Graph</span>
+            </router-link>
+          </li>
+          <li v-bind:class="{'is-active': currentPage === 'aggregate'}">
+            <router-link :to="{ name: 'SketchAggregate' }">
+              <span class="icon is-small"><i class="fas fa-chart-bar" aria-hidden="true"></i></span>
+              <span>Aggregate</span>
+            </router-link>
+          </li>
+          <li v-bind:class="{'is-active': currentPage === 'analyzers'}">
+            <router-link :to="{ name: 'SketchAnalyzersOverview' }">
+              <span class="icon is-small"><i class="fas fa-magic" aria-hidden="true"></i></span>
+              <span>Analyze</span>
+            </router-link>
+          </li>
+          <li v-bind:class="{'is-active': currentPage === 'timelines'}">
+            <router-link :to="{ name: 'SketchManageTimelines' }">
+              <span class="icon is-small"><i class="fas fa-stream" aria-hidden="true"></i></span>
+              <span>Timelines</span>
             </router-link>
           </li>
           <li v-bind:class="{'is-active': currentPage === 'stories'}">

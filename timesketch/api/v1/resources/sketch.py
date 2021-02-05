@@ -16,7 +16,6 @@
 import logging
 
 import elasticsearch
-import six
 
 from flask import jsonify
 from flask import request
@@ -24,9 +23,11 @@ from flask import abort
 from flask import current_app
 from flask_restful import Resource
 from flask_restful import reqparse
+from flask_restful import inputs
 from flask_login import login_required
 from flask_login import current_user
 from sqlalchemy import not_
+from sqlalchemy import or_
 
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
@@ -36,12 +37,12 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.analyzers import manager as analyzer_manager
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.emojis import get_emojis_as_dict
 from timesketch.models import db_session
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
+from timesketch.models.sketch import View
 
 
 logger = logging.getLogger('timesketch.sketch_api')
@@ -50,13 +51,23 @@ logger = logging.getLogger('timesketch.sketch_api')
 class SketchListResource(resources.ResourceMixin, Resource):
     """Resource for listing sketches."""
 
+    DEFAULT_SKETCHES_PER_PAGE = 10
+
     def __init__(self):
-        super(SketchListResource, self).__init__()
+        super().__init__()
         self.parser = reqparse.RequestParser()
         self.parser.add_argument(
-            'name', type=six.text_type, required=True)
+            'scope', type=str, required=False, default='user')
         self.parser.add_argument(
-            'description', type=six.text_type, required=False)
+            'page', type=int, required=False, default=1)
+        self.parser.add_argument(
+            'per_page', type=int, required=False,
+            default=self.DEFAULT_SKETCHES_PER_PAGE)
+        self.parser.add_argument(
+            'search_query', type=str, required=False, default=None)
+        self.parser.add_argument(
+            'include_archived', type=inputs.boolean, required=False,
+            default=False)
 
     @login_required
     def get(self):
@@ -65,28 +76,106 @@ class SketchListResource(resources.ResourceMixin, Resource):
         Returns:
             List of sketches (instance of flask.wrappers.Response)
         """
-        if current_user.admin:
+        args = self.parser.parse_args()
+        scope = args.get('scope')
+        page = args.get('page')
+        per_page = args.get('per_page')
+        search_query = args.get('search_query')
+        include_archived = args.get('include_archived')
+
+        if current_user.admin and scope == 'admin':
             sketch_query = Sketch.query
         else:
             sketch_query = Sketch.all_with_acl()
 
-        filtered_sketches = sketch_query.filter(
+        base_filter = sketch_query.filter(
             not_(Sketch.Status.status == 'deleted'),
-            Sketch.Status.parent).order_by(Sketch.updated_at.desc()).all()
+            not_(Sketch.Status.status == 'archived'),
+            Sketch.Status.parent).order_by(Sketch.updated_at.desc())
 
-        # Just return a subset of the sketch objects to reduce the amount of
-        # data returned.
+        base_filter_with_archived = sketch_query.filter(
+            not_(Sketch.Status.status == 'deleted'),
+            Sketch.Status.parent).order_by(Sketch.updated_at.desc())
+
+        filtered_sketches = base_filter_with_archived
         sketches = []
-        for sketch in filtered_sketches:
-            sketches.append({
-                'name': sketch.name,
-                'updated_at': str(sketch.updated_at),
-                'user': sketch.user.username,
+        return_sketches = []
+
+        has_next = False
+        has_prev = False
+        next_page = None
+        prev_page = None
+        current_page = 1
+        total_pages = 0
+        total_items = 0
+
+        if scope == 'recent':
+            # Get list of sketches that the user has actively searched in.
+            # TODO: Make this cover more actions such as story updates etc.
+            # TODO: Right now we only return the top 3, make this configurable.
+            views = View.query.filter_by(
+                user=current_user, name='').order_by(
+                View.updated_at.desc()).limit(3)
+            sketches = [view.sketch for view in views]
+            total_items = len(sketches)
+        elif scope == 'admin':
+            if not current_user.admin:
+                abort(HTTP_STATUS_CODE_FORBIDDEN, 'User is not an admin.')
+            if include_archived:
+                filtered_sketches = base_filter_with_archived
+            else:
+                filtered_sketches = base_filter
+        elif scope == 'user':
+            filtered_sketches = base_filter.filter_by(user=current_user)
+        elif scope == 'archived':
+            filtered_sketches = sketch_query.filter(
+                Sketch.status.any(status='archived'))
+        elif scope == 'shared':
+            filtered_sketches = base_filter.filter(Sketch.user != current_user)
+        elif scope == 'search':
+            filtered_sketches = base_filter_with_archived.filter(
+                or_(
+                    Sketch.name.ilike(f'%{search_query}%'),
+                    Sketch.description.ilike(f'%{search_query}%')
+                )
+            )
+
+        if not sketches:
+            pagination = filtered_sketches.paginate(
+                page=page, per_page=per_page)
+            sketches = pagination.items
+            has_next = pagination.has_next
+            has_prev = pagination.has_prev
+            next_page = pagination.next_num
+            prev_page = pagination.prev_num
+            current_page = pagination.page
+            total_pages = pagination.pages
+            total_items = pagination.total
+
+        for sketch in sketches:
+            # Return a subset of the sketch objects to reduce the amount of
+            # data sent to the client.
+            return_sketches.append({
                 'id': sketch.id,
+                'name': sketch.name,
+                'description': sketch.description,
+                'created_at': str(sketch.created_at),
+                'last_activity': utils.get_sketch_last_activity(sketch),
+                'user': sketch.user.username,
                 'status': sketch.get_status.status
             })
-        meta = {'current_user': current_user.username}
-        return jsonify({'objects': sketches, 'meta': meta})
+
+        meta = {
+            'current_user': current_user.username,
+            'has_next': has_next,
+            'has_prev': has_prev,
+            'next_page': next_page,
+            'prev_page': prev_page,
+            'current_page': current_page,
+            'total_pages': total_pages,
+            'total_items': total_items
+        }
+        return jsonify({'objects': return_sketches, 'meta': meta})
 
     @login_required
     def post(self):
@@ -117,7 +206,8 @@ class SketchListResource(resources.ResourceMixin, Resource):
 class SketchResource(resources.ResourceMixin, Resource):
     """Resource to get a sketch."""
 
-    def _add_label(self, sketch, label):
+    @staticmethod
+    def _add_label(sketch, label):
         """Add a label to the sketch."""
         if sketch.has_label(label):
             logger.warning(
@@ -127,7 +217,8 @@ class SketchResource(resources.ResourceMixin, Resource):
         sketch.add_label(label, user=current_user)
         return True
 
-    def _remove_label(self, sketch, label):
+    @staticmethod
+    def _remove_label(sketch, label):
         """Removes a label to the sketch."""
         if not sketch.has_label(label):
             logger.warning(
@@ -137,7 +228,8 @@ class SketchResource(resources.ResourceMixin, Resource):
         sketch.remove_label(label)
         return True
 
-    def _get_sketch_for_admin(self, sketch):
+    @staticmethod
+    def _get_sketch_for_admin(sketch):
         """Returns a limited sketch view for adminstrators.
 
         An administrator needs to get information about all sketches
@@ -167,8 +259,6 @@ class SketchResource(resources.ResourceMixin, Resource):
             'user': {'username': current_user.username},
             'timelines': [],
             'stories': [],
-            'aggregations': [],
-            'aggregationgroups': [],
             'active_timelines': [],
             'label_string': sketch.label_string,
             'status': [{
@@ -179,7 +269,10 @@ class SketchResource(resources.ResourceMixin, Resource):
             'updated_at': sketch.updated_at,
         }
 
-        meta = {'current_user': current_user.username}
+        meta = {
+            'current_user': current_user.username,
+            'last_activity': utils.get_sketch_last_activity(sketch),
+        }
         return jsonify(
             {
                 'objects': [sketch_fields],
@@ -222,49 +315,13 @@ class SketchResource(resources.ResourceMixin, Resource):
         ]
 
         # Get event count and size on disk for each index in the sketch.
-        stats_per_index = {}
+        indices_metadata = {}
+        stats_per_timeline = {}
         for timeline in sketch.active_timelines:
-            if timeline.get_status.status != 'archived':
-                continue
-            stats_per_index[timeline.searchindex.index_name] = {
-                'count': 0,
-                'bytes': 0,
-                'data_types': []
+            indices_metadata[timeline.searchindex.index_name] = {}
+            stats_per_timeline[timeline.id] = {
+                'count': 0
             }
-
-        if sketch_indices:
-            try:
-                es_stats = self.datastore.client.indices.stats(
-                    index=sketch_indices, metric='docs, store')
-            except elasticsearch.NotFoundError:
-                es_stats = {}
-                logger.error(
-                    'Unable to find index in datastore', exc_info=True)
-
-            # Stats for index. Num docs per shard and size on disk.
-            for index_name, stats in es_stats.get('indices', {}).items():
-                doc_count_all_shards = stats.get(
-                    'total', {}).get('docs', {}).get('count', 0)
-                bytes_on_disk = stats.get(
-                    'total', {}).get('store', {}).get('size_in_bytes', 0)
-                num_shards = stats.get('_shards', {}).get('total', 1)
-                doc_count = int(doc_count_all_shards / num_shards)
-
-                stats_per_index[index_name] = {
-                    'count': doc_count,
-                    'bytes': bytes_on_disk
-                }
-
-                # Stats per data type in the index.
-                parameters = {
-                    'limit': '100',
-                    'field': 'data_type'
-                }
-                result_obj, _ = utils.run_aggregator(
-                    sketch.id, aggregator_name='field_bucket',
-                    aggregator_parameters=parameters,
-                    index=[index_name])
-                stats_per_index[index_name]['data_types'] = result_obj.values
 
         if not sketch_indices:
             mappings_settings = {}
@@ -279,13 +336,18 @@ class SketchResource(resources.ResourceMixin, Resource):
 
         mappings = []
 
-        for _, value in mappings_settings.items():
+        for index_name, value in mappings_settings.items():
             # The structure is different in ES version 6.x and lower. This check
             # makes sure we support both old and new versions.
             properties = value['mappings'].get('properties')
             if not properties:
                 properties = next(
                     iter(value['mappings'].values())).get('properties')
+
+            # Determine if index is from the time before multiple timelines per
+            # index. This is used in the UI to support both modes.
+            is_legacy = bool('__ts_timeline_id' not in properties)
+            indices_metadata[index_name]['is_legacy'] = is_legacy
 
             for field, value_dict in properties.items():
                 mapping_dict = {}
@@ -297,6 +359,35 @@ class SketchResource(resources.ResourceMixin, Resource):
                 mapping_dict['field'] = field
                 mapping_dict['type'] = value_dict.get('type', 'n/a')
                 mappings.append(mapping_dict)
+
+        if sketch_indices:
+            # Stats for index. Num docs per shard.
+            for timeline in sketch.active_timelines:
+                index_name = timeline.searchindex.index_name
+                if indices_metadata[index_name].get('is_legacy', False):
+                    doc_count, _ = self.datastore.count(indices=index_name)
+                    stats_per_timeline[timeline.id] = {'count': doc_count}
+                else:
+                    # TODO: Consider using an aggregation here instead?
+                    query_dsl = {
+                        'query': {
+                            'term': {
+                                '__ts_timeline_id': {
+                                    'value': timeline.id
+                                }
+                            }
+                        }
+                    }
+                    count = self.datastore.search(
+                        sketch_id=sketch.id,
+                        query_string=None,
+                        query_filter={},
+                        query_dsl=query_dsl,
+                        indices=[timeline.searchindex.index_name],
+                        count=True)
+                    stats_per_timeline[timeline.id] = {
+                        'count': count
+                    }
 
         # Make the list of dicts unique
         mappings = {v['field']: v for v in mappings}.values()
@@ -319,9 +410,25 @@ class SketchResource(resources.ResourceMixin, Resource):
             }
             views.append(view)
 
+        stories = []
+        for story in sketch.stories:
+            if not story.user:
+                username = 'System'
+            else:
+                username = story.user.username
+            story = {
+                'id': story.id,
+                'title': story.title,
+                'user': username,
+                'created_at': story.created_at,
+                'updated_at': story.updated_at
+            }
+            stories.append(story)
+
         meta = dict(
             aggregators=aggregators,
             views=views,
+            stories=stories,
             searchtemplates=[{
                 'name': searchtemplate.name,
                 'id': searchtemplate.id
@@ -337,12 +444,11 @@ class SketchResource(resources.ResourceMixin, Resource):
                 'users': [user.username for user in sketch.collaborators],
                 'groups': [group.name for group in sketch.groups],
             },
-            analyzers=[
-                x for x, y in analyzer_manager.AnalysisManager.get_analyzers()
-            ],
             attributes=utils.get_sketch_attributes(sketch),
             mappings=list(mappings),
-            stats=stats_per_index,
+            indices_metadata=indices_metadata,
+            stats_per_timeline=stats_per_timeline,
+            last_activity=utils.get_sketch_last_activity(sketch),
             filter_labels=self.datastore.get_filter_labels(
                 sketch.id, sketch_indices),
             sketch_labels=[label.label for label in sketch.labels]

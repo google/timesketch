@@ -120,7 +120,7 @@ If you want to export a story, export the whole Sketch. The zip file will contai
 
 ## Demo
 
-To play with timesketch without any installation visit [demo.timesketch.org](https://demo.timesketch.org)
+To play with timesketch without any installation visit [demo.timesketch.org](https://demo.timesketch.org) as `demo/demo`.
 
 ## Searching
 

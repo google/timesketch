@@ -248,7 +248,7 @@ class EventResource(resources.ResourceMixin, Resource):
         event_id: The datastore event id as string
     """
     def __init__(self):
-        super(EventResource, self).__init__()
+        super().__init__()
         self.parser = reqparse.RequestParser()
         self.parser.add_argument(
             'searchindex_id', type=six.text_type, required=True)
@@ -607,11 +607,13 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                     label=form.annotation.data, user=current_user)
                 if annotation not in event.labels:
                     event.labels.append(annotation)
+
                 toggle = False
                 if '__ts_star' or '__ts_hidden' in form.annotation.data:
                     toggle = True
                 if form.remove.data:
                     toggle = True
+
                 self.datastore.set_label(
                     searchindex_id,
                     event_id,
@@ -660,7 +662,7 @@ class CountEventsResource(resources.ResourceMixin, Resource):
             t.searchindex.index_name for t in sketch.active_timelines
             if t.get_status.status != 'archived'
         ]
-        count = self.datastore.count(indices)
-        meta = dict(count=count)
+        count, bytes_on_disk = self.datastore.count(indices)
+        meta = dict(count=count, bytes=bytes_on_disk)
         schema = dict(meta=meta, objects=[])
         return jsonify(schema)

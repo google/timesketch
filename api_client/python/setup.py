@@ -57,6 +57,7 @@ setup(
         'requests',
         'altair',
         'google-auth',
+        'networkx',
         'google_auth_oauthlib',
         'beautifulsoup4']),
     )

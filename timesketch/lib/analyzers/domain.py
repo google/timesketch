@@ -17,18 +17,11 @@ class DomainSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Domain."""
 
     NAME = 'domain'
+    DISPLAY_NAME = 'Domain'
+    DESCRIPTION = ('Extract domain name from event, tag common and rare '
+                   'domains as well as mark known CDNs')
 
     DEPENDENCIES = frozenset()
-
-    def __init__(self, index_name, sketch_id):
-        """Initialize The Sketch Analyzer.
-
-        Args:
-            index_name: Elasticsearch index name
-            sketch_id: Sketch ID
-        """
-        self.index_name = index_name
-        super(DomainSketchPlugin, self).__init__(index_name, sketch_id)
 
     def run(self):
         """Entry point for the analyzer.

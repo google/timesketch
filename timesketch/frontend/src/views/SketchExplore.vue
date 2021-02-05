@@ -15,6 +15,13 @@ limitations under the License.
 -->
 <template>
   <div>
+
+    <ts-navbar-main>
+      <template v-slot:left>
+        {{ sketch.name }}
+      </template>
+    </ts-navbar-main>
+
     <section class="section">
         <div class="container is-fluid">
           <ts-navbar-secondary currentAppContext="sketch" currentPage="explore"></ts-navbar-secondary>
@@ -160,18 +167,13 @@ limitations under the License.
               </span>
             </div>
 
-            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateSelectedIndices="updateSelectedIndices($event)" :active-timelines="sketch.active_timelines" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index"></ts-explore-timeline-picker>
+            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateSelectedTimelines="updateSelectedTimelines($event)" :active-timelines="sketch.active_timelines" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index" :count-per-timeline="eventList.meta.count_per_timeline"></ts-explore-timeline-picker>
 
           </div>
 
         </div>
       </div>
     </section>
-
-
-    <!-- Aggregations -->
-    <ts-sketch-explore-aggregation></ts-sketch-explore-aggregation>
-    <!-- End Aggregations -->
 
     <section class="section" id="context" v-show="contextEvent">
       <div class="container is-fluid">
@@ -199,6 +201,7 @@ limitations under the License.
                 </div>
                 <div class="level-item">
                   <span v-if="!toEvent && !searchInProgress">{{ totalHits }} events ({{ totalTime }}s)</span>
+                  <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
                 </div>
                 <div class="level-item" v-if="numSelectedEvents" style="margin-right:50px;">
                   <button class="button is-small is-outlined" style="border-radius: 4px;" v-on:click="toggleStar">
@@ -229,7 +232,7 @@ limitations under the License.
                 </div>
                 <div class="level-item">
                   <div v-if="eventList.objects.length" class="select is-small">
-                    <select v-model="currentQueryFilter.size" @change="resetPagination">
+                    <select v-model="currentQueryFilter.size" @change="search">
                       <option v-bind:value="currentQueryFilter.size">{{ currentQueryFilter.size }}</option>
                       <option value="10">10</option>
                       <option value="20">20</option>
@@ -248,7 +251,7 @@ limitations under the License.
                 </div>
                 <div class="level-item">
                   <div v-if="eventList.objects.length">
-                    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus :can-close="true">
+                    <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body :can-close="true">
                       <button class="button is-outlined is-small" style="border-radius: 4px;" slot="trigger">
                     <span class="icon is-small">
                       <i class="fas fa-table"></i>
@@ -303,7 +306,6 @@ limitations under the License.
               </div>
             </nav>
 
-            <div v-if="searchInProgress"><span class="icon"><i class="fas fa-circle-notch fa-pulse"></i></span> Searching..</div>
             <div v-if="totalHits > 0" style="margin-top:20px;"></div>
 
             <ts-sketch-explore-event-list v-if="eventList.objects.length"
@@ -350,11 +352,9 @@ import EventBus from "../main"
 const defaultQueryFilter = () => {
   return {
     'from': 0,
-    'time_start': null,
-    'time_end': null,
     'terminate_after': 40,
     'size': 40,
-    'indices': ['_all'],
+    'indices': [],
     'order': 'asc',
     'chips': [],
   }
@@ -396,7 +396,6 @@ export default {
         objects: []
       },
       currentQueryString: "",
-      previousQueryString: "",
       currentQueryFilter: defaultQueryFilter(),
       selectedFields: [{field: 'message', type: 'text'}],
       selectedFieldsProxy: [],
@@ -454,7 +453,8 @@ export default {
     hideDropdown: function() {
       this.$refs['NewTimeFilter'].isActive = false
     },
-    search: function (emitEvent=true) {
+    search: function (emitEvent=true, resetPagination=true) {
+      this.searchInProgress = true
       if (!this.currentQueryString) {
         return
       }
@@ -469,13 +469,14 @@ export default {
 
       this.eventList = emptyEventList()
 
-      // Reset pagination when a new query string is entered.
-      if (this.previousQueryString !== this.currentQueryString) {
-        this.currentQueryFilter.from = 0
-      }
 
-      // Save the query string for later check if pagination should be reset.
-      this.previousQueryString = this.currentQueryString
+      if (resetPagination) {
+        // TODO: Can we keep position of the pagination when changing page size?
+        // We need to calculate the new position in the page range and it is not
+        // trivial with the current pagination UI component we use.
+        this.currentQueryFilter.from = 0
+        this.currentPage = 1
+      }
 
       // Update with selected fields
       this.currentQueryFilter.fields = this.selectedFields
@@ -492,6 +493,7 @@ export default {
       ApiClient.search(this.sketchId, formData).then((response) => {
         this.eventList.objects = response.data.objects
         this.eventList.meta = response.data.meta
+        this.searchInProgress = false
       }).catch((e) => {})
     },
     exportSearchResult: function () {
@@ -532,10 +534,15 @@ export default {
           this.currentQueryFilter.fields = [{field: 'message', type: 'text'}]
         }
         this.selectedFields = this.currentQueryFilter.fields
-        if (this.currentQueryFilter.indices === '_all') {
+        if (this.currentQueryFilter.indices[0] === '_all') {
           let allIndices = []
-          this.sketch.active_timelines.forEach(function (timeline) {
-            allIndices.push(timeline.searchindex.index_name)
+          this.sketch.active_timelines.forEach((timeline) => {
+            let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+            if (isLegacy) {
+              allIndices.push(timeline.searchindex.index_name)
+            } else {
+              allIndices.push(timeline.id)
+            }
           })
           this.currentQueryFilter.indices = allIndices
         }
@@ -585,7 +592,13 @@ export default {
       this.currentQueryString = '* OR ' + '_id:' + this.contextEvent._id
 
       this.currentQueryFilter.chips = [startChip, endChip]
-      this.currentQueryFilter.indices = [this.contextEvent._index]
+
+      let isLegacy = this.meta.indices_metadata[this.contextEvent._index].is_legacy
+      if (isLegacy) {
+        this.currentQueryFilter.indices = [this.contextEvent._index]
+      } else {
+        this.currentQueryFilter.indices = [this.contextEvent._source.__ts_timeline_id]
+      }
       this.currentQueryFilter.size = numContextEvents
 
       this.search()
@@ -599,17 +612,23 @@ export default {
     scrollToContextEvent: function () {
       this.$scrollTo('#' + this.contextEvent._id, 200, {offset: -300})
     },
-    updateQueryFilter: function (filter) {
-      this.currentQueryFilter = filter
-      this.search()
-    },
-    updateSelectedIndices: function (indices) {
-      this.currentQueryFilter.indices = indices
+    updateSelectedTimelines: function (timelines) {
+      let selected = []
+      timelines.forEach(timeline => {
+        let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+        if (isLegacy) {
+          selected.push(timeline.searchindex.index_name)
+        } else {
+          selected.push(timeline.id)
+        }
+      })
+      this.currentQueryFilter.indices = selected
       this.search()
     },
     clearSearch: function () {
       this.currentQueryString = ''
       this.currentQueryFilter = defaultQueryFilter()
+      this.currentQueryFilter.indices = '_all'
       this.eventList = emptyEventList()
       this.$router.replace({'query': null})
     },
@@ -684,15 +703,7 @@ export default {
     },
     paginate: function (pageNum) {
       this.currentQueryFilter.from  = ((pageNum * this.currentQueryFilter.size) - this.currentQueryFilter.size)
-      this.search()
-    },
-    resetPagination: function () {
-      // TODO: Can we keep position of the pagination when changing page size?
-      // We need to calculate the new position in the page range and it is not
-      // trivial with the current pagination UI component we use.
-      this.currentQueryFilter.from = 0
-      this.currentPage = 1
-      this.search()
+      this.search(true, false)
     },
     updateSelectedFields: function (value) {
       // If we haven't fetched the field before, do an new search.
@@ -766,7 +777,7 @@ export default {
 
     this.params = {
       viewId: this.$route.query.view,
-      indexName: this.$route.query.index,
+      indexName: this.$route.query.timeline,
       resultLimit: this.$route.query.limit,
       queryString: this.$route.query.q
     }
@@ -785,7 +796,17 @@ export default {
       if (!this.params.queryString) {
         this.currentQueryString = '*'
       }
-      this.currentQueryFilter.indices = [this.params.indexName]
+
+      let timeline = this.sketch.active_timelines.find((timeline) => {
+        return timeline.id === parseInt(this.params.indexName, 10)
+      })
+
+      let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+      if (isLegacy) {
+        this.currentQueryFilter.indices = [timeline.searchindex.index_name]
+      } else {
+        this.currentQueryFilter.indices = [timeline.id]
+      }
       doSearch = true
     }
 
@@ -795,6 +816,9 @@ export default {
     }
 
     if (doSearch) {
+      if (!this.currentQueryFilter.indices.length) {
+        this.currentQueryFilter.indices = ['_all']
+      }
       this.search()
     }
 

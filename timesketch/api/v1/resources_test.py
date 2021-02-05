@@ -184,6 +184,7 @@ class ExploreResourceTest(BaseTest):
             'es_total_count': 1,
             'es_time': 5,
             'count_per_index': {},
+            'count_per_timeline': {},
             'scroll_id': ''
         },
         'objects': [{
@@ -194,7 +195,8 @@ class ExploreResourceTest(BaseTest):
                 'message': 'Test event',
                 'label': ['__ts_star'],
                 'timestamp_desc': 'Content Modification Time',
-                'datetime': '2014-09-13T07:27:03+00:00'
+                'datetime': '2014-09-13T07:27:03+00:00',
+                '__ts_timeline_id': 1,
             },
             '_score': 'null',
             'selected': False,
@@ -248,7 +250,8 @@ class EventResourceTest(BaseTest):
             'es_index': '',
             'es_id': '',
             'message': '',
-            'datetime': '2014-09-16T19:23:40+00:00'
+            'datetime': '2014-09-16T19:23:40+00:00',
+            '__ts_timeline_id': 1,
         }
     }
 
