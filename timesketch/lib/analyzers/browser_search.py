@@ -224,7 +224,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
             params = {
                 'field': 'search_string',
                 'limit': 20,
-                'index': self.index_name,
+                'index': [self.timeline_id],
             }
             agg_obj = self.sketch.add_aggregation(
                 name='Top 20 browser search queries ({0:s})'.format(
@@ -235,7 +235,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
             params = {
                 'field': 'search_day',
-                'index': self.index_name,
+                'index': [self.timeline_id],
                 'limit': 20,
             }
             agg_days = self.sketch.add_aggregation(
@@ -247,7 +247,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
             params = {
                 'query_string': 'tag:"browser-search"',
-                'index': self.index_name,
+                'index': [self.timeline_id],
                 'field': 'domain',
             }
             agg_engines = self.sketch.add_aggregation(

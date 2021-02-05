@@ -241,21 +241,29 @@ def read_and_validate_jsonl(file_handle):
                 'Error parsing JSON at line {0:n}: {1:s}'.format(lineno, e))
 
 
-def get_validated_indices(indices, sketch_structure):
+def get_validated_indices(indices, sketch):
     """Exclude any deleted search index references.
 
     Args:
         indices: List of indices from the user
-        sketch_structure: A dict whose key is all valid indices in the sketch
-            and the value is a list of dicts, with two keys: "name" and "id",
-            which correspond to the timeline ID and timeline Name associated
-            with that index.
+        sketch: A sketch object (instance of models.sketch.Sketch).
 
     Returns:
         Tuple of two items:
           List of indices with those removed that is not in the sketch
           List of timeline IDs that should be part of the output.
     """
+    sketch_structure = {}
+    for timeline in sketch.timelines:
+        if timeline.get_status.status.lower() != 'ready':
+            continue
+        index_ = timeline.searchindex.index_name
+        sketch_structure.setdefault(index_, [])
+        sketch_structure[index_].append({
+            'name': timeline.name,
+            'id': timeline.id,
+        })
+
     sketch_indices = set(sketch_structure.keys())
     exclude = set(indices) - sketch_indices
     timelines = set()
