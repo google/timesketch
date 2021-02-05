@@ -61,6 +61,7 @@ class AggregationTest(interface.BaseEndToEndTest):
             'index': [evtx_part_id],
             'limit': 5,
         }
+        self.assertions.assertEqual(parameters, 'asdfsd')
         agg_obj.from_aggregator_run('field_bucket', parameters)
         df = agg_obj.table
 

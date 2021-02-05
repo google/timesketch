@@ -205,11 +205,12 @@ class BaseGraphPlugin:
     # https://networkx.org/documentation/stable/reference/classes/index.html
     GRAPH_TYPE = 'MultiDiGraph'
 
-    def __init__(self, sketch=None):
+    def __init__(self, sketch=None, timeline_ids=None):
         """Initialize the graph object.
 
         Args:
             sketch (Sketch): Sketch object.
+            timeline_ids (List[int]): An optional list of timeline IDs.
 
         Raises:
             KeyError if graph type specified is not supported.
@@ -221,14 +222,22 @@ class BaseGraphPlugin:
             raise KeyError(f'Graph type {self.GRAPH_TYPE} is not supported')
         self.graph = Graph(self.GRAPH_TYPE)
         self.sketch = sketch
+        self.timeline_ids = timeline_ids
 
-    def _get_all_sketch_indices(self):
-        """List all indices in the Sketch.
+    def _get_sketch_indices(self):
+        """List all indices in the Sketch, or those that belong to a timeline.
+
         Returns:
             List of index names.
         """
         active_timelines = self.sketch.active_timelines
-        indices = [t.searchindex.index_name for t in active_timelines]
+
+        if self.timeline_ids:
+            indices = [t.searchindex.index_name for t in active_timelines
+                       if t.id in self.timeline_ids]
+        else:
+            indices = [t.searchindex.index_name for t in active_timelines]
+
         return indices
 
     # TODO: Refactor this to reuse across analyzers and graphs.
@@ -264,12 +273,18 @@ class BaseGraphPlugin:
 
         return_fields = list(set(return_fields))
 
+        if self.timeline_ids:
+            timeline_ids = self.timeline_ids
+        else:
+            timeline_ids = None
+
         event_generator = self.datastore.search_stream(
             query_string=query_string,
             query_filter=query_filter,
             query_dsl=query_dsl,
             indices=indices,
             return_fields=return_fields,
+            timeline_ids=timeline_ids,
             enable_scroll=scroll,
         )
         return event_generator

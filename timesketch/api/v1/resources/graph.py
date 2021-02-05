@@ -304,6 +304,18 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
         plugin_name = form.get('plugin')
         graph_config = form.get('config')
         refresh = form.get('refresh')
+        timeline_ids = form.get('timeline_ids', None)
+
+        if timeline_ids and not isinstance(timeline_ids, (list, tuple)):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Timeline IDs if supplied need to be a list.')
+
+        if timeline_ids and not all(
+                [isinstance(x, int) for x in timeline_ids]):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Timeline IDs needs to be a list of integers.')
 
         sketch_indices = [
             timeline.searchindex.index_name
@@ -332,7 +344,7 @@ class GraphCacheResource(resources.ResourceMixin, Resource):
             return self.to_json(cache)
 
         graph_class = manager.GraphManager.get_graph(plugin_name)
-        graph = graph_class(sketch=sketch)
+        graph = graph_class(sketch=sketch, timeline_ids=timeline_ids)
         cytoscape_json = graph.generate().to_cytoscape()
 
         if cytoscape_json:
