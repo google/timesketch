@@ -111,8 +111,8 @@ def _validate_csv_fields(mandatory_fields, data):
         ','.join(list(mandatory_set.difference(parsed_set)))))
 
 
-def read_and_validate_csv(file_handle, delimiter=',',
-                          mandatory_fields=TIMESKETCH_FIELDS):
+def read_and_validate_csv(
+        file_handle, delimiter=',', mandatory_fields=TIMESKETCH_FIELDS):
     """Generator for reading a CSV file.
 
     Args:
