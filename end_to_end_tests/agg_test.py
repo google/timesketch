@@ -51,8 +51,12 @@ class AggregationTest(interface.BaseEndToEndTest):
 
     def test_partial_set(self):
         """Test partial aggregation sets."""
+        self.assertions.assertEqual(self.sketch.name, self.NAME)
+        self.assertions.assertEqual(self._imported_files, ['evtx.plaso', 'evtx_part.csv'])
+
         timelines = {t.name: t.id for t in self.sketch.list_timelines()}
         evtx_part_id = timelines.get('evtx_part', 'evtx_part')
+        self.assertions.assertEqual(len(timelines.values()), 2)
 
         partial_agg = aggregation.Aggregation(self.sketch)
         partial_parameters = {
