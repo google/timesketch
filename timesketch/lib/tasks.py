@@ -577,7 +577,7 @@ def run_plaso(
         cmd.extend(['--elastic_mappings', mappings_file_path])
 
     if timeline_id:
-        cmd.extend(['--timeline_id', str(timeline_id)])
+        cmd.extend(['--timeline_identifier', str(timeline_id)])
 
     # Run psort.py
     try:
