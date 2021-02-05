@@ -133,7 +133,7 @@ def read_and_validate_csv(file_handle, delimiter=',',
     try:
         reader = pandas.read_csv(file_handle, sep=delimiter,
                                  chunksize=DEFAULT_CHUNK_SIZE)
-        for chunk in reader:
+        for idx, chunk in enumerate(reader):
             skipped_rows = chunk[chunk['datetime'].isnull()]
             if not skipped_rows.empty:
                 logger.warning(
@@ -149,7 +149,10 @@ def read_and_validate_csv(file_handle, delimiter=',',
                 chunk['datetime'] = chunk['datetime'].apply(
                     Timestamp.isoformat).astype(str)
             except ValueError:
-                logger.warning('Chunk skipped due to malformed datetime values')
+                warning_string = 'Rows {0} to {1} skipped due to malformed ' \
+                                 'datetime values '
+                logger.warning(warning_string.format(idx * reader.chunksize,
+                                                     chunk.shape[0]))
                 continue
             if 'tag' in chunk:
                 chunk['tag'] = chunk['tag'].apply(_parse_tag_field)
