@@ -130,9 +130,10 @@ def read_and_validate_csv(file_handle, delimiter=',',
 
     header_reader = pandas.read_csv(file_handle, sep=delimiter, nrows=0)
     _validate_csv_fields(mandatory_fields, header_reader)
+
     try:
-        reader = pandas.read_csv(file_handle, sep=delimiter,
-                                 chunksize=DEFAULT_CHUNK_SIZE)
+        reader = pandas.read_csv(
+            file_handle, sep=delimiter, chunksize=DEFAULT_CHUNK_SIZE)
         for idx, chunk in enumerate(reader):
             skipped_rows = chunk[chunk['datetime'].isnull()]
             if not skipped_rows.empty:
@@ -149,10 +150,11 @@ def read_and_validate_csv(file_handle, delimiter=',',
                 chunk['datetime'] = chunk['datetime'].apply(
                     Timestamp.isoformat).astype(str)
             except ValueError:
-                warning_string = 'Rows {0} to {1} skipped due to malformed ' \
-                                 'datetime values '
-                logger.warning(warning_string.format(idx * reader.chunksize,
-                                                     chunk.shape[0]))
+                warning_string = (
+                    'Rows {0} to {1} skipped due to malformed '
+                    'datetime values ')
+                logger.warning(warning_string.format(
+                    idx * reader.chunksize, chunk.shape[0]))
                 continue
             if 'tag' in chunk:
                 chunk['tag'] = chunk['tag'].apply(_parse_tag_field)
@@ -193,7 +195,7 @@ def read_and_validate_redline(file_handle):
         tag = row['Tag']
 
         row_to_yield = {}
-        row_to_yield["message"] = summary
+        row_to_yield['message'] = summary
         row_to_yield['timestamp'] = timestamp
         row_to_yield['datetime'] = dt_iso_format
         row_to_yield['timestamp_desc'] = timestamp_desc
