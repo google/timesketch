@@ -112,7 +112,7 @@ def _validate_csv_fields(mandatory_fields, data):
 
 
 def read_and_validate_csv(
-        file_handle, delimiter=',', mandatory_fields=None):
+        file_handle, delimiter=',', mandatory_fields=None):
     """Generator for reading a CSV file.
 
     Args:
