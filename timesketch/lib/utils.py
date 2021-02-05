@@ -112,7 +112,7 @@ def _validate_csv_fields(mandatory_fields, data):
 
 
 def read_and_validate_csv(
-        file_handle, delimiter=',', mandatory_fields=TIMESKETCH_FIELDS):
+        file_handle, delimiter=',', mandatory_fields=None):
     """Generator for reading a CSV file.
 
     Args:
@@ -124,6 +124,8 @@ def read_and_validate_csv(
         RuntimeError: when there are missing fields.
         DataIngestionError: when there are issues with the data ingestion.
     """
+    if not mandatory_fields:
+        mandatory_fields = TIMESKETCH_FIELDS
     # Ensures delimiter is a string.
     if not isinstance(delimiter, six.text_type):
         delimiter = codecs.decode(delimiter, 'utf8')
