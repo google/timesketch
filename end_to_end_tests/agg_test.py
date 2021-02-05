@@ -55,25 +55,6 @@ class AggregationTest(interface.BaseEndToEndTest):
         parameters = {
             'supported_charts': 'table',
             'field': 'computer_name',
-            'index': ['evtx'],
-            'limit': 5,
-        }
-        agg_obj.from_aggregator_run('field_bucket', parameters)
-        df = agg_obj.table
-
-        self.assertions.assertEqual(df.shape, (1, 3))
-
-        computer_names = list(df.computer_name.values)
-        self.assertions.assertEqual(len(computer_names), 1)
-        self.assertions.assertEqual(
-            computer_names[0], 'WKS-WIN764BITB.shieldbase.local')
-        count = list(df['count'].values)[0]
-        self.assertions.assertEqual(count, 3202)
-
-        agg_obj = aggregation.Aggregation(self.sketch)
-        parameters = {
-            'supported_charts': 'table',
-            'field': 'computer_name',
             'index': ['evtx_part'],
             'limit': 5,
         }
@@ -88,6 +69,25 @@ class AggregationTest(interface.BaseEndToEndTest):
             computer_names[0], 'WKS-WIN764BITB.shieldbase.local')
         count = list(df['count'].values)[0]
         self.assertions.assertEqual(count, 13)
+
+        agg_obj = aggregation.Aggregation(self.sketch)
+        parameters = {
+            'supported_charts': 'table',
+            'field': 'computer_name',
+            'index': ['evtx'],
+            'limit': 5,
+        }
+        agg_obj.from_aggregator_run('field_bucket', parameters)
+        df = agg_obj.table
+
+        self.assertions.assertEqual(df.shape, (1, 3))
+
+        computer_names = list(df.computer_name.values)
+        self.assertions.assertEqual(len(computer_names), 1)
+        self.assertions.assertEqual(
+            computer_names[0], 'WKS-WIN764BITB.shieldbase.local')
+        count = list(df['count'].values)[0]
+        self.assertions.assertEqual(count, 3202)
 
 
 manager.EndToEndTestManager.register_test(AggregationTest)

@@ -30,6 +30,9 @@ class ClientTest(interface.BaseEndToEndTest):
         self.assertions.assertEqual(user.is_admin, False)
         self.assertions.assertEqual(user.is_active, True)
 
+        sketches = list(self.api.list_sketches())
+        number_of_sketches = len(sketches)
+
         sketch_name = 'Testing'
         sketch_description = 'This is truly a foobar'
         new_sketch = self.api.create_sketch(
@@ -40,7 +43,7 @@ class ClientTest(interface.BaseEndToEndTest):
             new_sketch.description, sketch_description)
 
         sketches = list(self.api.list_sketches())
-        self.assertions.assertEqual(len(sketches), 2)
+        self.assertions.assertEqual(len(sketches), number_of_sketches + 1)
 
         for index in self.api.list_searchindices():
             self.assertions.assertTrue(bool(index.name))

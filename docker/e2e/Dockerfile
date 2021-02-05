@@ -36,6 +36,7 @@ RUN cp /tmp/timesketch/data/timesketch.conf /etc/timesketch/
 RUN cp /tmp/timesketch/data/ontology.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/tags.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/features.yaml /etc/timesketch/
+RUN cp /tmp/timesketch/data/plaso.mappings /etc/timesketch/
 RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
 
 # TODO: This is only to enable e2e tests to run until a new dev release of
@@ -46,7 +47,6 @@ RUN cd && apt-get install -y git && \
     cd plaso && apt-get remove -y plaso-tools && \
     python3 setup.py build && python3 setup.py install
 # END Temporary Hack to make plaso work in the e2e test.
-
 
 # Copy the entrypoint script into the container
 COPY docker/e2e/docker-entrypoint.sh /
