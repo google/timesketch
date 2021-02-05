@@ -54,17 +54,16 @@ class AggregationTest(interface.BaseEndToEndTest):
         timelines = {t.name: t.id for t in self.sketch.list_timelines()}
         evtx_part_id = timelines.get('evtx_part', 'evtx_part')
 
-        agg_obj = aggregation.Aggregation(self.sketch)
-        parameters = {
+        partial_agg = aggregation.Aggregation(self.sketch)
+        partial_parameters = {
             'supported_charts': 'table',
             'field': 'computer_name',
             'index': [evtx_part_id],
             'limit': 5,
         }
-        self.assertions.assertEqual(parameters, 'asdfsd')
-        agg_obj.from_aggregator_run('field_bucket', parameters)
-        df = agg_obj.table
+        partial_agg.from_aggregator_run('field_bucket', partial_parameters)
 
+        df = partial_agg.table
         self.assertions.assertEqual(df.shape, (1, 3))
 
         computer_names = list(df.computer_name.values)
