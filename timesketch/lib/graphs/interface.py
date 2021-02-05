@@ -266,7 +266,7 @@ class BaseGraphPlugin:
 
         # Query all sketch indices if none are specified.
         if not indices:
-            indices = self._get_all_sketch_indices()
+            indices = self._get_sketch_indices()
 
         if not query_filter:
             query_filter = {}
