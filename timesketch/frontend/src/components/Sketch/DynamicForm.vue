@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <template>
-  <form v-if="schema.length" v-on:submit.prevent="submitForm">
+  <form v-if="schema.length" v-on:submit.prevent="submitForm" v-on:keydown.enter.prevent="">
       <component v-for="(field, index) in schema"
                  :key="index"
                  :is="field.type"
@@ -32,9 +32,14 @@ limitations under the License.
 <script>
 import TsDynamicFormTextInput from './DynamicFormTextInput'
 import TsDynamicFormSelectInput from './DynamicFormSelectInput'
+import TsDynamicFormDatetimeInput from './DynamicFormDatetimeInput'
 
 export default {
-  components: { TsDynamicFormTextInput, TsDynamicFormSelectInput },
+  components: {
+    TsDynamicFormTextInput,
+    TsDynamicFormSelectInput,
+    TsDynamicFormDatetimeInput
+  },
   props: ['schema', 'value'],
   data () {
     return {
