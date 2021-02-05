@@ -18,6 +18,8 @@ limitations under the License.
     <header class="card-header">
       <span class="card-header-title">
         {{ aggregation.name }}
+        <span style="margin-left:15px; font-weight: normal;" v-if="aggParameters.start_time && aggParameters.end_time">[{{ aggParameters.start_time }} &rarr; {{ aggParameters.end_time }}]</span>
+        <ts-timeline-chip v-for="timeline in timelines" :key="timeline.id" :timeline="timeline" style="margin-left:10px;"></ts-timeline-chip>
       </span>
     </header>
     <div class="card-content" ref="vegaChart">
@@ -31,10 +33,11 @@ limitations under the License.
 import ApiClient from '../../utils/RestApiClient'
 import TsVegaLiteChart from './VegaLiteChart'
 import TsTableChart from './TableChart'
+import TsTimelineChip from './TimelineChip'
 
 export default {
   props: ['aggregation', 'cardHeader'],
-  components: {TsVegaLiteChart, TsTableChart},
+  components: {TsVegaLiteChart, TsTableChart, TsTimelineChip},
   data () {
     return {
       vegaSpec: {},
@@ -46,6 +49,19 @@ export default {
   computed: {
     sketch () {
       return this.$store.state.sketch
+    },
+    aggParameters () {
+      return JSON.parse(this.aggregation.parameters)
+    },
+    timelines () {
+      let timelines = []
+      if (this.aggParameters.index && Array.isArray(this.aggParameters.index)) {
+        this.aggParameters.index.forEach((timelineId) => {
+          let timeline = this.sketch.active_timelines.find(timeline => timeline.id === timelineId);
+          timelines.push(timeline)
+        })
+      }
+      return timelines
     }
   },
   methods: {
