@@ -16,17 +16,12 @@
 from __future__ import unicode_literals
 
 import codecs
-import os
-import pwd
-import re
 import sys
-import uuid
 import yaml
 
 import six
 
 from flask import current_app
-from werkzeug.exceptions import Forbidden
 
 from flask_migrate import MigrateCommand
 from flask_script import Command
@@ -431,7 +426,7 @@ class ImportTimeline(Command):
                required=False),
     )
 
-    # pylint: disable=arguments-differ, method-hidden
+    # pylint: disable=arguments-differ, method-hidden, unused-argument
     def run(self, file_path, sketch_id, username, timeline_name):
         """This is the run method."""
         print(
