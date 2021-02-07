@@ -3,7 +3,7 @@ FROM ubuntu:18.04
 
 MAINTAINER Timesketch <timesketch-dev@googlegroups.com>
 
-ARG PPA_TRACK=stable
+ARG PPA_TRACK=dev
 
 ENV DEBIAN_FRONTEND=noninteractive
 
