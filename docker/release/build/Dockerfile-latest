@@ -2,6 +2,8 @@
 FROM ubuntu:20.04
 
 MAINTAINER Timesketch <timesketch-dev@googlegroups.com>
+TODO: Change back to Plaso stable track once version 20201228 is released.
+ARG PPA_TRACK=dev
 
 # Prevent needing to configure debian packages, stopping the setup of
 # the docker container.
@@ -22,7 +24,7 @@ RUN pip3 install -r requirements.txt
 RUN pip3 install https://github.com/google/timesketch/archive/master.zip
 
 # Install Plaso
-RUN add-apt-repository -y ppa:gift/stable
+RUN add-apt-repository -y ppa:gift/$PPA_TRACK
 RUN apt-get update && apt-get install -y --no-install-recommends \
     plaso-tools \
   && rm -rf /var/lib/apt/lists/*
