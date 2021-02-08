@@ -1,7 +1,9 @@
 # Use the official Docker Hub Ubuntu 20.04 base image
 FROM ubuntu:20.04
 
+# TODO: Change back to Plaso stable track once version 20201228 is released.
 ARG PPA_TRACK=dev
+
 # Prevent needing to configure debian packages, stopping the setup of
 # the docker container.
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
