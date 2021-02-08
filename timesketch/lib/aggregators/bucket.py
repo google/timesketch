@@ -13,10 +13,6 @@
 # limitations under the License.
 """Bucket aggregations."""
 
-from __future__ import unicode_literals
-
-import datetime
-
 from timesketch.lib.aggregators import manager
 from timesketch.lib.aggregators import interface
 
@@ -79,7 +75,7 @@ class TermsAggregation(interface.BaseAggregator):
     def chart_title(self):
         """Returns a title for the chart."""
         if self.field:
-            return 'Top results for "{0:s}"'.format(self.field)
+            return f'Top results for "{self.field:s}"'
         return 'Top results for an unknown field'
 
     # pylint: disable=arguments-differ
@@ -133,55 +129,13 @@ class TermsAggregation(interface.BaseAggregator):
             }
         }
 
-        query_filter = None
-        if start_time:
-            try:
-                _ = datetime.datetime.fromisoformat(start_time)
-            except ValueError:
-                raise ValueError(
-                    'Start time is not ISO formatted [{0:s}'.format(
-                        start_time)) from ValueError
-
-        if end_time:
-            try:
-                _ = datetime.datetime.fromisoformat(end_time)
-            except ValueError:
-                raise ValueError(
-                    'End time is not ISO formatted [{0:s}'.format(
-                        end_time)) from ValueError
-
-        if start_time and end_time:
-            query_filter = {
-                'range': {
-                    'datetime': {
-                        'gte': start_time,
-                        'lte': end_time,
-                    }
-                }
-            }
-        elif start_time:
-            query_filter = {
-                'range': {
-                    'datetime': {
-                        'gte': start_time,
-                    }
-                }
-            }
-        elif end_time:
-            query_filter = {
-                'range': {
-                    'datetime': {
-                        'lte': end_time,
-                    }
-                }
-            }
-
-        if query_filter:
-            aggregation_spec['aggs']['my_filter'] = {'filter': query_filter}
+        aggregation_spec = self._add_query_to_aggregation_spec(
+            aggregation_spec, start_time, end_time)
 
         response = self.elastic_aggregation(aggregation_spec)
         aggregations = response.get('aggregations', {})
         aggregation = aggregations.get('aggregation', {})
+
         buckets = aggregation.get('buckets', [])
         values = []
         for bucket in buckets:

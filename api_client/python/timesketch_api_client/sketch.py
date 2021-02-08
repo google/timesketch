@@ -14,6 +14,7 @@
 """Timesketch API client library."""
 from __future__ import unicode_literals
 
+import copy
 import os
 import json
 import logging
@@ -1226,6 +1227,13 @@ class Sketch(resource.BaseResource):
         """Return a list of all available aggregators in the sketch."""
         data = self.lazyload_data()
         meta = data.get('meta', {})
+        always_supported = [{
+            'parameter': 'index',
+            'notes': (
+                'List of indices or timeline IDS to limit the aggregation'),
+            'type': 'text-input',
+        }]
+
         entries = []
         for name, options in iter(meta.get('aggregators', {}).items()):
             for field in options.get('form_fields', []):
@@ -1241,6 +1249,12 @@ class Sketch(resource.BaseResource):
                     _, _, entry['type'] = field.get('type').partition(
                         'ts-dynamic-form-')
                 entries.append(entry)
+
+            for entry_dict in always_supported:
+                entry = copy.copy(entry_dict)
+                entry['aggregator_name'] = name
+                entries.append(entry)
+
         return pandas.DataFrame(entries)
 
     def run_aggregator(

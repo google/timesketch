@@ -28,7 +28,7 @@ limitations under the License.
       </div>
     </section>
 
-    <ts-sketch-explore-aggregation></ts-sketch-explore-aggregation>
+    <ts-sketch-explore-aggregation @newAggregation="addAggregation($event)"></ts-sketch-explore-aggregation>
 
     <br><br>
 
@@ -70,6 +70,11 @@ export default {
     allAggregations () {
       const concat = (...arrays) => [].concat(...arrays.filter(Array.isArray));
       return concat(this.aggregations, this.aggregationGroups).slice().reverse()
+    }
+  },
+  methods: {
+    addAggregation (aggregation) {
+      this.aggregations.push(aggregation)
     }
   },
   created: function () {
