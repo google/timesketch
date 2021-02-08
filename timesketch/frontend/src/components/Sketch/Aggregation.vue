@@ -51,6 +51,9 @@ limitations under the License.
             </span>
           </header>
           <div class="card-content">
+            <label class="label">Optional: Select timelines</label>
+            <ts-timeline-list-dropdown @selectedTimelines="selectedTimelines = $event"></ts-timeline-list-dropdown>
+            <br>
             <ts-sketch-explore-aggregator-list-dropdown @setActiveAggregator="updateAggregatorFormFields"></ts-sketch-explore-aggregator-list-dropdown>
             <br>
             <ts-dynamic-form :schema="schema" v-model="formData" @formSubmitted="getVegaSpec" :key="selectedAggregator.name" ref="vegaChart"></ts-dynamic-form>
@@ -91,14 +94,15 @@ import TsVegaLiteChart from './VegaLiteChart'
 import TsDynamicForm from './DynamicForm'
 import TsSketchExploreAggregatorListDropdown from './AggregatorListDropdown'
 import TsTableChart from './TableChart'
+import TsTimelineListDropdown from './TimelineListDropdown'
 
 export default {
-  //props: [],
   components: {
     TsDynamicForm,
     TsVegaLiteChart,
     TsSketchExploreAggregatorListDropdown,
-    TsTableChart
+    TsTableChart,
+    TsTimelineListDropdown
   },
   data () {
     return {
@@ -111,6 +115,7 @@ export default {
       aggregationName: '',
       chartType: '',
       chartData: {},
+      selectedTimelines: []
     }
   },
   computed: {
@@ -131,6 +136,7 @@ export default {
     },
     getVegaSpec: function () {
       this.showChart = true
+      this.formData['index'] = this.selectedTimelines
       let d = {
         'aggregator_name': this.selectedAggregator.name,
         'aggregator_parameters': this.formData
@@ -149,7 +155,7 @@ export default {
       this.showSaveModal = false
       ApiClient.saveAggregation(this.sketch.id, this.selectedAggregator, this.aggregationName, this.formData).then((response) => {
         let aggregation = response.data.objects[0]
-        this.$store.state.sketch.aggregations.push(aggregation)
+        this.$emit('newAggregation', aggregation)
         this.aggregationName = ''
       }).catch((e) => {})
     }

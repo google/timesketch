@@ -92,30 +92,20 @@ class ExploreResource(resources.ResourceMixin, Resource):
             return_fields = [field['field'] for field in return_fields]
             return_fields.extend(DEFAULT_SOURCE_FIELDS)
 
-        sketch_structure = {}
-        for timeline in sketch.timelines:
-            if timeline.get_status.status.lower() != 'ready':
-                continue
-            index_ = timeline.searchindex.index_name
-            sketch_structure.setdefault(index_, [])
-            sketch_structure[index_].append({
-                'name': timeline.name,
-                'id': timeline.id,
-            })
-
         if not query_filter:
             query_filter = {}
 
-        indices = query_filter.get('indices', list(sketch_structure.keys()))
+        all_indices = list({
+            t.searchindex.index_name for t in sketch.timelines})
+        indices = query_filter.get('indices', all_indices)
 
         # If _all in indices then execute the query on all indices
         if '_all' in indices:
-            indices = list(sketch_structure.keys())
+            indices = all_indices
 
         # Make sure that the indices in the filter are part of the sketch.
         # This will also remove any deleted timeline from the search result.
-        indices, timeline_ids = get_validated_indices(
-            indices, sketch_structure)
+        indices, timeline_ids = get_validated_indices(indices, sketch)
 
         # Make sure we have a query string or star filter
         if not (form.query.data, query_filter.get('star'),

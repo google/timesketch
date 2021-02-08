@@ -353,6 +353,7 @@ class FeatureExtractionSketchPlugin(interface.BaseSketchAnalyzer):
                 params = {
                     'field': store_as,
                     'limit': 20,
+                    'index': [self.timeline_id],
                 }
                 self.sketch.add_aggregation(
                     name='Top 20 for: {0:s} [{1:s}]'.format(store_as, name),
