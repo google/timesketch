@@ -498,9 +498,7 @@ def run_plaso(
             'files.')
 
     plaso_version = int(plaso.__version__)
-    # Uncomment once a new version is released.
-    #if plaso_version <= PLASO_MINIMUM_VERSION:
-    if plaso_version < PLASO_MINIMUM_VERSION:
+    if plaso_version <= PLASO_MINIMUM_VERSION:
         raise RuntimeError(
             'Plaso version is out of date (version {0:d}, please upgrade to a '
             'version that is later than {1:d}'.format(
