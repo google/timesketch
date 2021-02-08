@@ -431,7 +431,7 @@ class ImportTimeline(Command):
         """This is the run method."""
         print(
             'This function has been deprecated, please use the '
-            'timesketch_importer instead.')
+            'timesketch_importer instead: https://github.com/google/timesketch/blob/master/docs/UploadData.md')
 
 
 def main():
