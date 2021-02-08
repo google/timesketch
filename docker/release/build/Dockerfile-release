@@ -3,6 +3,7 @@ FROM ubuntu:18.04
 
 MAINTAINER Timesketch <timesketch-dev@googlegroups.com>
 
+TODO: Change back to Plaso stable track once version 20201228 is released.
 ARG PPA_TRACK=dev
 
 ENV DEBIAN_FRONTEND=noninteractive
