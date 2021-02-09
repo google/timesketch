@@ -42,9 +42,9 @@ class SearchIndex(resource.BaseResource):
         self.id = searchindex_id
         self._labels = []
         self._searchindex_name = searchindex_name
-        self._resource_uri = 'searchindices/{0:d}'.format(self.id)
+        resource_uri = 'searchindices/{0:d}'.format(self.id)
         super().__init__(
-            api=api, resource_uri=self._resource_uri)
+            api=api, resource_uri=resource_uri)
 
     def _get_object_dict(self):
         """Returns the object dict from the resources dict."""

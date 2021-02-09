@@ -52,9 +52,8 @@ class Sigma(resource.BaseResource):
         self._file_name = file_name
         self._title = title
         self._file_relpath = file_relpath
-        self._resource_uri = f'sigma/{self.rule_uuid}'
         super().__init__(
-            api=api, resource_uri=self._resource_uri)
+            api=api, resource_uri=f'sigma/{self.rule_uuid}')
 
     @property
     def es_query(self):
