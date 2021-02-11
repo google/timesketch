@@ -45,7 +45,7 @@ def describe_sketch(ctx):
     sketch = ctx.obj.sketch
     # TODO (berggren): Add more details to the output.
     click.echo(f'Name: {sketch.name}')
-    click.echo('Description: {}'.format(sketch.description))
+    click.echo(f'Description: {sketch.description}')
 
 
 @sketch_group.command('create')
@@ -67,4 +67,4 @@ def create_sketch(ctx, name, description):
     if not description:
         description = name
     sketch = api_client.create_sketch(name=name, description=description)
-    click.echo('Sketch created: {}'.format(sketch.name))
+    click.echo(f'Sketch created: {sketch.name}')

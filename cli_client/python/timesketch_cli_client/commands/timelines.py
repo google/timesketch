@@ -31,7 +31,7 @@ def list_timelines(ctx):
     """
     sketch = ctx.obj.sketch
     for timeline in sketch.list_timelines():
-        click.echo('{} {}'.format(timeline.id, timeline.name))
+        click.echo(f'{timeline.id} {timeline.name}')
 
 
 @timelines_group.command('describe')
@@ -50,5 +50,5 @@ def describe_timeline(ctx, timeline_id):
     if not timeline:
         click.echo('No such timeline')
         return
-    click.echo('Name: {}'.format(timeline.name))
-    click.echo('Index: {}'.format(timeline.index_name))
+    click.echo(f'Name: {timeline.name}')
+    click.echo(f'Index: {timeline.index_name}')

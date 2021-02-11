@@ -60,10 +60,10 @@ def describe_query(search_obj):
     Args:
         search_obj: API Search object.
     """
-    click.echo('Query string: {}'.format(search_obj.query_string))
-    click.echo('Return fields: {}'.format(search_obj.return_fields))
-    click.echo('Filter: {}'.format(
-        json.dumps(search_obj.query_filter, indent=2)))
+    filter_pretty = json.dumps(search_obj.query_filter, indent=2)
+    click.echo(f'Query string: {search_obj.query_string}')
+    click.echo(f'Return fields: {search_obj.return_fields}')
+    click.echo(f'Filter: {filter_pretty}')
 
 
 @click.command('search')
@@ -205,6 +205,6 @@ def describe_saved_search(ctx, search_id):
     if not saved_search:
         click.echo('No such view')
         return
-    click.echo('query_string: {}'.format(saved_search.query_string))
-    click.echo('query_filter: {}'.format(
-        json.dumps(saved_search.query_filter, indent=2)))
+    filter_pretty = json.dumps(saved_search.query_filter, indent=2)
+    click.echo(f'query_string: {saved_search.query_string}')
+    click.echo(f'query_filter: {filter_pretty}')

@@ -399,7 +399,7 @@ def get_client(
             a choice to change the value for all already configured parameters.
             This defaults to False.
         load_cli_config (bool): Determine if the CLI config section should
-            be loaded. This is optional and defaults to False.           
+            be loaded. This is optional and defaults to False.       
 
     Returns:
         A timesketch client (TimesketchApi) or None if not possible.
