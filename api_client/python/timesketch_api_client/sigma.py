@@ -41,6 +41,7 @@ class Sigma(resource.BaseResource):
         """
         self.api = api
         self._rule_uuid = None
+        self._id = None
         self._file_name = None
         self._title = None
         self._file_relpath = None
@@ -137,6 +138,7 @@ class Sigma(resource.BaseResource):
         data = {'title': 'Get_Sigma_by_text', 'content': rule_text}
         response = self.api.session.post(self.resource_uri, data=data)
         response_dict = error.get_response_json(response, logger)
+        print("response dict")
         print(f'dict: {response_dict}')
 
         objects = response_dict.get('objects')

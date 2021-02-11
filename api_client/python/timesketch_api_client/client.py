@@ -550,16 +550,18 @@ class TimesketchApi:
             return pandas.DataFrame.from_records(response.get('objects'))
 
         for rule_dict in response['objects']:
+            if not rule_dict:
+                raise ValueError('No rules found.')         
             # TODO: fix that below to reflect only one arg for the _init method
             # this way it initialices the objects, but does
             #  not pull the data for each
             index_obj = sigma.Sigma(api=self)
-            index_obj.rule_uuid = rule_dict.get('id', '')
-            index_obj.title = rule_dict.get('title', '')
-            index_obj.es_query = rule_dict.get('es_query', '')
-            index_obj.file_name = rule_dict.get('file_name', '')
-            index_obj.description = rule_dict.get('description', '')
-            index_obj.file_relpath = rule_dict.get('file_relpath', '')
+            index_obj.rule_uuid = rule_dict['id']
+            #index_obj.title = rule_dict['title']
+            #index_obj.es_query = rule_dict['es_query']
+            #index_obj.file_name = rule_dict['file_name']
+            #index_obj.description = rule_dict['description']
+            #index_obj.file_relpath = rule_dict['file_relpath']
             rules.append(index_obj)
         return rules
 
