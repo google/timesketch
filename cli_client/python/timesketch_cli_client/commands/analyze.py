@@ -52,7 +52,9 @@ def run_analyzer(ctx, analyzer_name, timeline_id):
         timelines.append(timeline)
 
     for timeline in timelines:
-        click.echo(f'Running analyzer [{analyzer_name}] on timeline [{timeline.name}]: ', nl=False)
+        click.echo(
+            f'Running analyzer [{analyzer_name}] on [{timeline.name}]: ',
+            nl=False)
         try:
             session = sketch.run_analyzer(
                 analyzer_name=analyzer_name, timeline_id=timeline.id)
