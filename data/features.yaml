@@ -103,11 +103,18 @@ linkedin_accounts:
         tags: ['linkedin-account']
         emojis: ['ID_BUTTON']
 
-rdp_ipv4_addresses:
+rdp_ts_ipv4_addresses:
         query_string: 'data_type:"windows:evtx:record" AND
           source_name:"Microsoft-Windows-TerminalServices-LocalSessionManager"'
         attribute: 'strings'
         store_as: 'ip_address'
+        re: '(?:[0-9]{1,3}\.){3}[0-9]{1,3}'
+
+rdp_rds_ipv4_addresses:
+        query_string: 'data_type:"windows:evtx:record" AND
+          source_name:"Microsoft-Windows-RemoteDesktopServices-RdpCoreTS"'
+        attribute: 'strings'
+        store_as: 'client_ip'
         re: '(?:[0-9]{1,3}\.){3}[0-9]{1,3}'
 
 ssh_client_ipv4_addresses:

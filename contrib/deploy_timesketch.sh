@@ -79,6 +79,7 @@ curl -s $GITHUB_BASE_URL/docker/release/config.env > timesketch/config.env
 # Fetch default Timesketch config files
 curl -s $GITHUB_BASE_URL/data/timesketch.conf > timesketch/etc/timesketch/timesketch.conf
 curl -s $GITHUB_BASE_URL/data/tags.yaml > timesketch/etc/timesketch/tags.yaml
+curl -s $GITHUB_BASE_URL/data/plaso.mappings > timesketch/etc/timesketch/plaso.mappings
 curl -s $GITHUB_BASE_URL/data/features.yaml > timesketch/etc/timesketch/features.yaml
 curl -s $GITHUB_BASE_URL/data/sigma_config.yaml > timesketch/etc/timesketch/sigma_config.yaml
 curl -s $GITHUB_BASE_URL/data/sigma/rules/lnx_susp_zenmap.yml > timesketch/etc/timesketch/sigma/rules/lnx_susp_zenmap.yml
