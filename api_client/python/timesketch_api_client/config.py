@@ -206,7 +206,8 @@ class ConfigAssistant:
 
     def load_config_file(
             self, config_file_path: Optional[Text] = '',
-            section: Optional[Text] = 'timesketch'):
+            section: Optional[Text] = 'timesketch',
+            load_cli_config: Optional[bool] = False):
         """Load the config from file.
 
         Args:
@@ -218,6 +219,8 @@ class ConfigAssistant:
                 useful if you have mutiple Timesketch servers to connect to,
                 with each one of them having a separate section in the config
                 file.
+            load_cli_config (bool): Determine if the CLI config section should
+                be loaded. This is optional and defaults to False.
 
         Raises:
           IOError if the file does not exist or config does not load.
@@ -259,13 +262,17 @@ class ConfigAssistant:
         for name, value in timesketch_config.items():
             self.set_config(name, value)
 
-        if 'cli' not in config.sections():
-            logger.warning('No cli section in the config')
-            return
+        if load_cli_config:
+            if 'cli' not in config.sections():
+                # Set default CLI config section
+                config['cli'] = {
+                    'sketch': '',
+                    'output_format': 'tabular'
+                }
 
-        cli_config = config['cli']
-        for name, value in cli_config.items():
-            self.set_config(name, value)
+            cli_config = config['cli']
+            for name, value in cli_config.items():
+                self.set_config(name, value)
 
     def load_config_dict(self, config_dict: Dict[Text, Text]):
         """Loads configuration from a dictionary.

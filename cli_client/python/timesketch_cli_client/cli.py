@@ -19,13 +19,13 @@ import click
 from requests.exceptions import ConnectionError as RequestConnectionError
 
 from timesketch_api_client import config as timesketch_config
-from timesketch_cli_client.commands.config import config_group
-from timesketch_cli_client.commands.timelines import timelines_group
-from timesketch_cli_client.commands.search import search_group
-from timesketch_cli_client.commands.search import saved_searches_group
-from timesketch_cli_client.commands.analyze import analysis_group
-from timesketch_cli_client.commands.sketch import sketch_group
-from timesketch_cli_client.commands.importer import importer
+
+from timesketch_cli_client.commands import config
+from timesketch_cli_client.commands import timelines
+from timesketch_cli_client.commands import search
+from timesketch_cli_client.commands import analyze
+from timesketch_cli_client.commands import sketch
+from timesketch_cli_client.commands import importer
 
 from .definitions import DEFAULT_OUTPUT_FORMAT
 from .version import get_version
@@ -53,6 +53,7 @@ class TimesketchCli(object):
                 if not self.api:
                     raise RequestConnectionError
             except RequestConnectionError:
+                click.echo('ERROR: Cannot connect to the Timesketch server.')
                 sys.exit(1)
 
         self.config_assistant = timesketch_config.ConfigAssistant()
@@ -82,6 +83,7 @@ class TimesketchCli(object):
         try:
             active_sketch.name
         except KeyError:
+            click.echo('ERROR: No such sketch or you don\'t have access.')
             sys.exit(1)
 
         return active_sketch
@@ -124,13 +126,14 @@ def cli(ctx, sketch):
 
 
 # Register all commands.
-cli.add_command(config_group)
-cli.add_command(timelines_group)
-cli.add_command(search_group)
-cli.add_command(saved_searches_group)
-cli.add_command(analysis_group)
-cli.add_command(sketch_group)
-cli.add_command(importer)
+cli.add_command(config.config_group)
+cli.add_command(timelines.timelines_group)
+cli.add_command(search.search_group)
+cli.add_command(search.saved_searches_group)
+cli.add_command(analyze.analysis_group)
+cli.add_command(sketch.sketch_group)
+cli.add_command(importer.importer)
+
 
 # pylint: disable=no-value-for-parameter
 if __name__ == '__main__':

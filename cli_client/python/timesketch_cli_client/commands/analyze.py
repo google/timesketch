@@ -25,6 +25,8 @@ def analysis_group():
     """Analyze timelines."""
 
 
+# TODO (berggren) Add --timeline-name as well, to select timeline based on name
+# instead of ID.
 @analysis_group.command('run')
 @click.option(
     '--analyzer', 'analyzer_name', required=True,
@@ -50,8 +52,7 @@ def run_analyzer(ctx, analyzer_name, timeline_id):
         timelines.append(timeline)
 
     for timeline in timelines:
-        click.echo('Running analyzer [{}] on timeline [{}]: '.format(
-            analyzer_name, timeline.name), nl=False)
+        click.echo(f'Running analyzer [{analyzer_name}] on timeline [{timeline.name}]: ', nl=False)
         try:
             session = sketch.run_analyzer(
                 analyzer_name=analyzer_name, timeline_id=timeline.id)
@@ -61,8 +62,10 @@ def run_analyzer(ctx, analyzer_name, timeline_id):
                 if status == 'DONE':
                     click.echo(session.results)
                     break
+                click.echo('.', nl=False)
                 time.sleep(3)
-        except error.UnableToRunAnalyzer:
+        except error.UnableToRunAnalyzer as e:
+            click.echo(f'Unable to run analyzer: {e}')
             sys.exit(1)
 
 

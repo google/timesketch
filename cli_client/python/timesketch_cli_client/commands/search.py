@@ -126,6 +126,7 @@ def search_group(ctx, query, times, time_ranges, labels, header, output,
         return
 
     # Construct the query from flags.
+    # TODO (berggren): Add support for query DSL.
     search_obj.query_string = query
     search_obj.return_fields = return_fields
     search_obj.max_entries = limit
@@ -143,6 +144,8 @@ def search_group(ctx, query, times, time_ranges, labels, header, output,
             range_chip.end_time = time_range[1]
             search_obj.add_chip(range_chip)
 
+    # TODO (berggren): This should support dates like 2021-02-12 and then
+    # convert to ISO format.
     if times:
         for time in times:
             range_chip = search.DateRangeChip()
@@ -183,7 +186,7 @@ def list_saved_searches(ctx):
     """
     sketch = ctx.obj.sketch
     for saved_search in sketch.list_views():
-        click.echo('{} {}'.format(saved_search.id, saved_search.name))
+        click.echo(f'{saved_search.id} {saved_search.name}')
 
 
 @saved_searches_group.command('describe')
