@@ -47,7 +47,6 @@ class SearchTest(unittest.TestCase):
         """Test to list saved searches."""
         runner = CliRunner()
         result = runner.invoke(saved_searches_group, ['list'], obj=self.ctx)
-        print(result)
         assert result.output == '1 test\n2 more test\n'
 
     def test_describe_saved_search(self):
@@ -55,5 +54,4 @@ class SearchTest(unittest.TestCase):
         runner = CliRunner()
         result = runner.invoke(
             saved_searches_group, ['describe', '1'], obj=self.ctx)
-        print(result.output)
         assert result.output == EXPECTED_OUTPUT
