@@ -19,7 +19,13 @@ import click
 from requests.exceptions import ConnectionError as RequestConnectionError
 
 from timesketch_api_client import config as timesketch_config
-from timesketch_cli_client import commands
+
+from timesketch_cli_client.commands import analyze
+from timesketch_cli_client.commands import config
+from timesketch_cli_client.commands import importer
+from timesketch_cli_client.commands import search
+from timesketch_cli_client.commands import sketch as sketch_command
+from timesketch_cli_client.commands import timelines
 
 from .definitions import DEFAULT_OUTPUT_FORMAT
 from .version import get_version
@@ -43,7 +49,7 @@ class TimesketchCli(object):
 
         if not api_client:
             try:
-                self.api = timesketch_config.get_client()
+                self.api = timesketch_config.get_client(load_cli_config=True)
                 if not self.api:
                     raise RequestConnectionError
             except RequestConnectionError:
@@ -52,9 +58,10 @@ class TimesketchCli(object):
 
         self.config_assistant = timesketch_config.ConfigAssistant()
         if conf_file:
-            self.config_assistant.load_config_file(conf_file)
+            self.config_assistant.load_config_file(
+                conf_file, load_cli_config=True)
         else:
-            self.config_assistant.load_config_file()
+            self.config_assistant.load_config_file(load_cli_config=True)
 
     @property
     def sketch(self):
@@ -72,6 +79,11 @@ class TimesketchCli(object):
         elif sketch_from_config:
             active_sketch = self.api.get_sketch(
                 sketch_id=int(sketch_from_config))
+
+        if not active_sketch:
+            click.echo(('ERROR: You need to specify a sketch, either with a '
+                        'flag (--sketch <SKETCH ID>) or update the config.'))
+            sys.exit(1)
 
         # Make sure we have access to the sketch.
         try:
@@ -116,17 +128,17 @@ def cli(ctx, sketch):
 
     For detailed help on each command, run  <command> --help
     """
-    ctx.obj = TimesketchCli(sketch)
+    ctx.obj = TimesketchCli(sketch_from_flag=sketch)
 
 
 # Register all commands.
-cli.add_command(commands.config.config_group)
-cli.add_command(commands.timelines.timelines_group)
-cli.add_command(commands.search.search_group)
-cli.add_command(commands.search.saved_searches_group)
-cli.add_command(commands.analyze.analysis_group)
-cli.add_command(commands.sketch.sketch_group)
-cli.add_command(commands.importer.importer)
+cli.add_command(config.config_group)
+cli.add_command(timelines.timelines_group)
+cli.add_command(search.search_group)
+cli.add_command(search.saved_searches_group)
+cli.add_command(analyze.analysis_group)
+cli.add_command(sketch_command.sketch_group)
+cli.add_command(importer.importer)
 
 
 # pylint: disable=no-value-for-parameter

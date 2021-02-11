@@ -378,7 +378,8 @@ def get_client(
         config_path: Optional[Text] = '',
         config_section: Optional[Text] = 'timesketch',
         token_password: Optional[Text] = '',
-        confirm_choices: Optional[bool] = False
+        confirm_choices: Optional[bool] = False,
+        load_cli_config: Optional[bool] = False
         ) -> Optional[client.TimesketchApi]:
     """Returns a Timesketch API client using the configuration assistant.
 
@@ -397,13 +398,17 @@ def get_client(
         confirm_choices (bool): an optional bool. if set to the user is given
             a choice to change the value for all already configured parameters.
             This defaults to False.
+        load_cli_config (bool): Determine if the CLI config section should
+            be loaded. This is optional and defaults to False.           
 
     Returns:
         A timesketch client (TimesketchApi) or None if not possible.
     """
     assistant = ConfigAssistant()
     try:
-        assistant.load_config_file(config_path, section=config_section)
+        assistant.load_config_file(
+            config_path, section=config_section,
+            load_cli_config=load_cli_config)
         if config_dict:
             assistant.load_config_dict(config_dict)
     except IOError as e:

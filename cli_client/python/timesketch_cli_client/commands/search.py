@@ -197,11 +197,11 @@ def describe_saved_search(ctx, search_id):
 
     Args:
         ctx: Click CLI context object.
-        search_id: View ID from argument.
+        search_id: Search ID from argument.
     """
     sketch = ctx.obj.sketch
     # TODO (berggren): Add support for view_name.
-    saved_search = sketch.get_saved_search(view_id=search_id)
+    saved_search = sketch.get_saved_search(search_id=search_id)
     if not saved_search:
         click.echo('No such view')
         return

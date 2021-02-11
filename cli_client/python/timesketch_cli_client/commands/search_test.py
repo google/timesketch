@@ -26,8 +26,6 @@ from .search import saved_searches_group
 
 EXPECTED_OUTPUT = """query_string: test:"foobar"
 query_filter: {
-  "time_start": null,
-  "time_end": null,
   "size": 10000,
   "terminate_after": 10000,
   "indices": "_all",
@@ -49,11 +47,13 @@ class SearchTest(unittest.TestCase):
         """Test to list saved searches."""
         runner = CliRunner()
         result = runner.invoke(saved_searches_group, ['list'], obj=self.ctx)
+        print(result)
         assert result.output == '1 test\n2 more test\n'
 
     def test_describe_saved_search(self):
         """Test to get details for a saved search."""
         runner = CliRunner()
         result = runner.invoke(
-            saved_searches_group, ['describe', "1"], obj=self.ctx)
+            saved_searches_group, ['describe', '1'], obj=self.ctx)
+        print(result.output)
         assert result.output == EXPECTED_OUTPUT
