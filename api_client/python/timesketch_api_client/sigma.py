@@ -103,13 +103,23 @@ class Sigma(resource.BaseResource):
 
     @property
     def rule_uuid(self):
-        """Returns the elastic search query."""
+        """Returns the rule id."""
         sigma_data = self.data
 
         if not sigma_data:
             return ''
 
         return sigma_data.get('id', '')
+
+    @property
+    def es_query(self):
+        """Returns the elastic search query."""
+        sigma_data = self.data
+
+        if not sigma_data:
+            return ''
+
+        return sigma_data.get('es_query', '')
 
     def from_rule_uuid(self, rule_uuid):
         """Get a Sigma object from a rule uuid.
