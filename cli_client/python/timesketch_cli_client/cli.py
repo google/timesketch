@@ -19,13 +19,7 @@ import click
 from requests.exceptions import ConnectionError as RequestConnectionError
 
 from timesketch_api_client import config as timesketch_config
-
-from timesketch_cli_client.commands import config
-from timesketch_cli_client.commands import timelines
-from timesketch_cli_client.commands import search
-from timesketch_cli_client.commands import analyze
-from timesketch_cli_client.commands import sketch
-from timesketch_cli_client.commands import importer
+from timesketch_cli_client import commands
 
 from .definitions import DEFAULT_OUTPUT_FORMAT
 from .version import get_version
@@ -126,13 +120,13 @@ def cli(ctx, sketch):
 
 
 # Register all commands.
-cli.add_command(config.config_group)
-cli.add_command(timelines.timelines_group)
-cli.add_command(search.search_group)
-cli.add_command(search.saved_searches_group)
-cli.add_command(analyze.analysis_group)
-cli.add_command(sketch.sketch_group)
-cli.add_command(importer.importer)
+cli.add_command(commands.config.config_group)
+cli.add_command(commands.timelines.timelines_group)
+cli.add_command(commands.search.search_group)
+cli.add_command(commands.search.saved_searches_group)
+cli.add_command(commands.analyze.analysis_group)
+cli.add_command(commands.sketch.sketch_group)
+cli.add_command(commands.importer.importer)
 
 
 # pylint: disable=no-value-for-parameter
