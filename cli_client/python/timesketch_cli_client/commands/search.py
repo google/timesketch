@@ -200,7 +200,8 @@ def describe_saved_search(ctx, search_id):
         search_id: View ID from argument.
     """
     sketch = ctx.obj.sketch
-    saved_search = sketch.get_view(view_id=search_id)
+    # TODO (berggren): Add support for view_name.
+    saved_search = sketch.get_saved_search(view_id=search_id)
     if not saved_search:
         click.echo('No such view')
         return

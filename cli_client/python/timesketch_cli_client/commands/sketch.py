@@ -31,7 +31,7 @@ def list_sketches(ctx):
     """
     api_client = ctx.obj.api
     for sketch in api_client.list_sketches():
-        click.echo('{} {}'.format(sketch.id, sketch.name))
+        click.echo(f'{sketch.id} {sketch.name}')
 
 
 @sketch_group.command('describe')
@@ -43,7 +43,8 @@ def describe_sketch(ctx):
         ctx: Click CLI context object.
     """
     sketch = ctx.obj.sketch
-    click.echo('Name: {}'.format(sketch.name))
+    # TODO (berggren): Add more details to the output.
+    click.echo(f'Name: {sketch.name}')
     click.echo('Description: {}'.format(sketch.description))
 
 

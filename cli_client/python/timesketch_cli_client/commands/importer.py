@@ -23,7 +23,7 @@ from timesketch_import_client import importer as import_client
 @click.command('import')
 @click.option('--name', help='Name of the timeline.')
 @click.option(
-    '--timeout', type=int, default=3600, help='Seconds to wait for indexing.')
+    '--timeout', type=int, default=600, help='Seconds to wait for indexing.')
 @click.argument('file_path', type=click.Path(exists=True))
 @click.pass_context
 def importer(ctx, name, timeout, file_path):
@@ -62,8 +62,7 @@ def importer(ctx, name, timeout, file_path):
         if retry_count >= max_retries:
             click.echo(
                 ('WARNING: The command timed out before indexing finished. '
-                 'The timeline will continue to be indexed in the background')
-            )
+                 'The timeline will continue to be indexed in the background'))
             break
         _ = timeline.lazyload_data(refresh_cache=True)
         status = timeline.status

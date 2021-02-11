@@ -55,8 +55,8 @@ def set_output_format(ctx, output_format):
         output_format: Format to use for output text.
     """
     if output_format not in SUPPORTED_OUTPUT_FORMATS:
-        _supported_formats = ' '.join(SUPPORTED_OUTPUT_FORMATS)
-        click.echo(f'Unsupported format. Choose between {_supported_formats}')
+        supported_formats = ' '.join(SUPPORTED_OUTPUT_FORMATS)
+        click.echo(f'Unsupported format. Choose between {supported_formats}')
         sys.exit(1)
 
     ctx.obj.config_assistant.set_config('output_format', output_format)
