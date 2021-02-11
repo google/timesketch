@@ -71,8 +71,8 @@ output_format = tabular
             fw.seek(0)
             config_obj.load_config_file(fw.name)
         expected_fields = [
-            'host_uri', 'auth_mode', 'verify', 'client_id',
-            'client_secret', 'username', 'sketch', 'output_format']
+            'host_uri', 'auth_mode', 'verify', 'client_id', 'client_secret',
+            'username']
         self.assertEqual(set(expected_fields), set(config_obj.parameters))
 
         self.assertEqual(config_obj.get_config('host_uri'), 'http://127.0.0.1')
