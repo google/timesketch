@@ -18,7 +18,7 @@ limitations under the License.
   <div>
 
     <!-- Timeline detail modal -->
-    <b-modal v-if="controls" :active.sync="showInfoModal" :width="1024" scroll="keep">
+    <b-modal :active.sync="showInfoModal" :width="1024" scroll="keep">
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -30,15 +30,14 @@ limitations under the License.
               <ul>
                 <li>Elasticsearch index: {{ timeline.searchindex.index_name }}</li>
                 <li v-if="meta.stats_per_timeline[timeline.id]">Number of events: {{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} ({{ meta.stats_per_timeline[timeline.id]['count']}})</li>
-                <li>Original name: {{ timeline.searchindex.name }}</li>
-                <li>Added by: {{ timeline.searchindex.user.username }}</li>
-                <li>Added: {{ timeline.searchindex.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
+                <li>Added by: {{ timeline.user.username }}</li>
+                <li>Added: {{ timeline.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
                 <li v-if="timelineStatus === 'ready' && (timeline.searchindex.description !== '' && timeline.searchindex.description !== timeline.name)">Import errors: <b>{{ timeline.searchindex.description }}</b></li>
               </ul>
 
               <span v-if="timelineStatus === 'fail'">
                 <h5 style="color:red;">Error detail</h5>
-                <pre>{{ timeline.searchindex.description }}</pre>
+                <pre>{{ timeline.description }}</pre>
               </span>
 
             </div>
@@ -258,13 +257,9 @@ export default {
       this.showEditModal = false
       this.$emit('save', this.timeline)
     },
-    setAnalysisSession (sessionId) {
-      this.analysisSessionId = sessionId
-      this.showAnalysisDetail = true
-    },
     fetchData () {
       ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id).then((response) => {
-        this.timelineStatus = response.data.objects[0].searchindex.status[0].status
+        this.timelineStatus = response.data.objects[0].status[0].status
         if (this.timelineStatus !== 'ready') {
           this.autoRefresh = true
         }
@@ -305,7 +300,7 @@ export default {
     this.initialColor = {
       hex: this.timeline.color
     }
-    this.timelineStatus = this.timeline.searchindex.status[0].status
+    this.timelineStatus = this.timeline.status[0].status
     if (this.timelineStatus !== 'ready') {
       this.autoRefresh = true
     }

@@ -58,16 +58,6 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
     # The title of the story the analyzer generates.
     STORY_TITLE = 'EVTX Gap Analysis'
 
-    def __init__(self, index_name, sketch_id):
-        """Initialize The Sketch Analyzer.
-
-        Args:
-            index_name: Elasticsearch index name
-            sketch_id: Sketch ID
-        """
-        self.index_name = index_name
-        super().__init__(index_name, sketch_id)
-
     def run(self):
         """Entry point for the analyzer.
 
@@ -202,8 +192,8 @@ class EvtxGapPlugin(interface.BaseSketchAnalyzer):
         params = {
             'field': 'source_name',
             'supported_charts': 'hbarchart',
+            'index': [self.timeline_id],
             'query_string': 'data_type:"windows:evtx:record"'
-
         }
         agg_sources = self.sketch.add_aggregation(
             name='Top EVTX Sources', agg_name='query_bucket',

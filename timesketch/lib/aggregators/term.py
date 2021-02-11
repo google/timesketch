@@ -19,7 +19,7 @@ from timesketch.lib.aggregators import manager
 from timesketch.lib.aggregators import interface
 
 
-def get_spec(field, query='', query_dsl=''):
+def get_spec(field, limit=10, query='', query_dsl=''):
     """Returns aggregation specs for a term of filtered events.
 
     The aggregation spec will summarize values of an attribute
@@ -28,6 +28,7 @@ def get_spec(field, query='', query_dsl=''):
     Args:
         field (str): this denotes the event attribute that is used
             for aggregation.
+        limit (int): How many buckets to return, defaults to 10.
         query (str): the query field to run on all documents prior to
             aggregating the results.
         query_dsl (str): the query DSL field to run on all documents prior
@@ -57,16 +58,14 @@ def get_spec(field, query='', query_dsl=''):
     else:
         raise ValueError('Neither query nor query DSL provided.')
 
+
     return {
-        'aggregations': {
-            'term_count': {
-                'filter': query_filter,
-                'aggregations': {
-                    'term_count': {
-                        'terms': {
-                            'field': field
-                        }
-                    }
+        'query': query_filter,
+        'aggs': {
+            'aggregation': {
+                'terms': {
+                    'field': field,
+                    'size': limit
                 }
             }
         }
@@ -112,6 +111,32 @@ class FilteredTermsAggregation(interface.BaseAggregator):
             'type': 'ts-dynamic-form-text-input',
             'label': 'What field to aggregate.',
             'display': True
+        },
+        {
+            'type': 'ts-dynamic-form-datetime-input',
+            'name': 'start_time',
+            'label': (
+                'ISO formatted timestamp for the start time '
+                'of the aggregated data'),
+            'placeholder': 'Enter a start date for the aggregation',
+            'default_value': '',
+            'display': True
+        },
+        {
+            'type': 'ts-dynamic-form-datetime-input',
+            'name': 'end_time',
+            'label': 'ISO formatted end time for the aggregation',
+            'placeholder': 'Enter an end date for the aggregation',
+            'default_value': '',
+            'display': True
+        },
+        {
+            'type': 'ts-dynamic-form-text-input',
+            'name': 'limit',
+            'label': 'Number of results to return',
+            'placeholder': 'Enter number of results to return',
+            'default_value': '10',
+            'display': True
         }
     ]
 
@@ -125,7 +150,7 @@ class FilteredTermsAggregation(interface.BaseAggregator):
     # pylint: disable=arguments-differ
     def run(
             self, field, query_string='', query_dsl='',
-            supported_charts='table'):
+            supported_charts='table', start_time='', end_time='', limit=10):
         """Run the aggregation.
 
         Args:
@@ -137,6 +162,11 @@ class FilteredTermsAggregation(interface.BaseAggregator):
                 to aggregating the results. Either a query string or a query
                 DSL has to be present.
             supported_charts: Chart type to render. Defaults to table.
+            start_time: Optional ISO formatted date string that limits the time
+                range for the aggregation.
+            end_time: Optional ISO formatted date string that limits the time
+                range for the aggregation.
+            limit (int): How many buckets to return, defaults to 10.
 
         Returns:
             Instance of interface.AggregationResult with aggregation result.
@@ -151,7 +181,11 @@ class FilteredTermsAggregation(interface.BaseAggregator):
         formatted_field_name = self.format_field_by_type(field)
 
         aggregation_spec = get_spec(
-            field=formatted_field_name, query=query_string, query_dsl=query_dsl)
+            field=formatted_field_name, limit=limit, query=query_string,
+            query_dsl=query_dsl)
+
+        aggregation_spec = self._add_query_to_aggregation_spec(
+            aggregation_spec, start_time=start_time, end_time=end_time)
 
         # Encoding information for Vega-Lite.
         encoding = {
@@ -172,14 +206,9 @@ class FilteredTermsAggregation(interface.BaseAggregator):
 
         response = self.elastic_aggregation(aggregation_spec)
         aggregations = response.get('aggregations', {})
-        term_count = aggregations.get('term_count', {})
+        aggregation = aggregations.get('aggregation', {})
 
-        # If we are doing the aggregation of a specific term we have an extra
-        # layer.
-        if 'term_count' in term_count:
-            term_count = term_count.get('term_count', {})
-
-        buckets = term_count.get('buckets', [])
+        buckets = aggregation.get('buckets', [])
         values = []
         for bucket in buckets:
             d = {

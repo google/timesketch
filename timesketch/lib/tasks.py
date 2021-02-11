@@ -15,6 +15,7 @@
 
 from __future__ import unicode_literals
 
+import os
 import logging
 import subprocess
 import traceback
@@ -31,8 +32,11 @@ from celery import chain
 from celery import signals
 from sqlalchemy import create_engine
 
-# Disabled until the project can provide a non-ES native import.
-# from mans_to_es import MansToEs
+# To be able to determine plaso's version.
+try:
+    import plaso
+except ImportError:
+    plaso = None
 
 from timesketch.app import configure_logger
 from timesketch.app import create_celery_app
@@ -53,6 +57,9 @@ from timesketch.models.user import User
 
 logger = logging.getLogger('timesketch.tasks')
 celery = create_celery_app()
+
+
+PLASO_MINIMUM_VERSION = 20201228
 
 
 # pylint: disable=unused-argument
@@ -120,38 +127,30 @@ def init_worker(**kwargs):
     db_session.configure(bind=engine)
 
 
-def _set_timeline_status(index_name, status, error_msg=None, timeline_name=''):
+def _set_timeline_status(timeline_id, status, error_msg=None):
     """Helper function to set status for searchindex and all related timelines.
 
     Args:
-        index_name: Name of the datastore index.
+        timeline_id: Timeline ID.
         status: Status to set.
         error_msg: Error message.
-        timeline_name: Optional timeline name.
     """
-    searchindices = SearchIndex.query.filter_by(index_name=index_name).all()
+    timeline = Timeline.query.get(timeline_id)
 
-    for searchindex in searchindices:
-        searchindex.set_status(status)
+    if not timeline:
+        logger.warning('Cannot set status: No such timeline')
+        return
 
-        # Update description if there was a failure in ingestion.
-        if error_msg:
-            # TODO: Don't overload the description field.
-            searchindex.description = error_msg
+    timeline.set_status(status)
+    timeline.searchindex.set_status(status)
 
-        db_session.add(searchindex)
-
-        if timeline_name:
-            timelines = Timeline.query.filter_by(
-                name=timeline_name, searchindex=searchindex).all()
-        else:
-            timelines = Timeline.query.filter_by(searchindex=searchindex).all()
-
-        for timeline in timelines:
-            timeline.set_status(status)
-            db_session.add(timeline)
+    # Update description if there was a failure in ingestion.
+    if error_msg:
+        # TODO: Don't overload the description field.
+        timeline.description = error_msg
 
     # Commit changes to database
+    db_session.add(timeline)
     db_session.commit()
 
 
@@ -171,9 +170,6 @@ def _get_index_task_class(file_extension):
         index_class = run_plaso
     elif file_extension in ['csv', 'jsonl']:
         index_class = run_csv_jsonl
-    # Disabled
-    # elif file_extension == 'mans':
-    #    index_class = run_mans
     else:
         raise KeyError('No task that supports {0:s}'.format(file_extension))
     return index_class
@@ -264,8 +260,9 @@ def build_index_pipeline(
     return chain(index_task, index_analyzer_chain)
 
 
-def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
-                                   analyzer_names=None, analyzer_kwargs=None):
+def build_sketch_analysis_pipeline(
+        sketch_id, searchindex_id, user_id, analyzer_names=None,
+        analyzer_kwargs=None, timeline_id=None):
     """Build a pipeline for sketch analysis.
 
     If no analyzer_names is passed in then we assume auto analyzers should be
@@ -280,6 +277,7 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
         user_id (int): The ID of the user who started the analyzer.
         analyzer_names (list): List of analyzers to run.
         analyzer_kwargs (dict): Arguments to the analyzers.
+        timeline_id (int): Optional int of the timeline to run the analyzer on.
 
     Returns:
         A tuple with a Celery group with analysis tasks or None if no analyzers
@@ -332,7 +330,8 @@ def build_sketch_analysis_pipeline(sketch_id, searchindex_id, user_id,
         db_session.commit()
 
         tasks.append(run_sketch_analyzer.s(
-            sketch_id, analysis.id, analyzer_name, **kwargs))
+            sketch_id, analysis.id, analyzer_name,
+            timeline_id=timeline_id, **kwargs))
 
     # Commit the analysis session to the database.
     db_session.add(analysis_session)
@@ -449,8 +448,9 @@ def run_index_analyzer(index_name, analyzer_name, **kwargs):
 
 
 @celery.task(track_started=True)
-def run_sketch_analyzer(index_name, sketch_id, analysis_id, analyzer_name,
-                        **kwargs):
+def run_sketch_analyzer(
+        index_name, sketch_id, analysis_id, analyzer_name,
+        timeline_id=None, **kwargs):
     """Create a Celery task for a sketch analyzer.
 
     Args:
@@ -458,13 +458,15 @@ def run_sketch_analyzer(index_name, sketch_id, analysis_id, analyzer_name,
         sketch_id: ID of the sketch to analyze.
         analysis_id: ID of the analysis.
         analyzer_name: Name of the analyzer.
+        timeline_id: Int of the timeline this analyzer belongs to.
 
     Returns:
       Name (str) of the index.
     """
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
     analyzer = analyzer_class(
-        sketch_id=sketch_id, index_name=index_name, **kwargs)
+        sketch_id=sketch_id, index_name=index_name,
+        timeline_id=timeline_id, **kwargs)
 
     result = analyzer.run_wrapper(analysis_id)
     logger.info('[{0:s}] result: {1:s}'.format(analyzer_name, result))
@@ -484,12 +486,77 @@ def run_plaso(
         source_type: Type of file, csv or jsonl.
         timeline_id: ID of the timeline object this data belongs to.
 
+    Raises:
+        RuntimeError: If the function is called using events, plaso
+            is not installed or is of unsupported version.
     Returns:
         Name (str) of the index.
     """
+    if not plaso:
+        raise RuntimeError(
+            'Plaso isn\'t installed, unable to continue processing plaso '
+            'files.')
+
+    plaso_version = int(plaso.__version__)
+    if plaso_version <= PLASO_MINIMUM_VERSION:
+        raise RuntimeError(
+            'Plaso version is out of date (version {0:d}, please upgrade to a '
+            'version that is later than {1:d}'.format(
+                plaso_version, PLASO_MINIMUM_VERSION))
+
     if events:
         raise RuntimeError('Plaso uploads needs a file, not events.')
-    # Log information to Celery
+
+    event_type = 'generic_event'  # Document type for Elasticsearch
+
+    mappings = None
+    mappings_file_path = current_app.config.get('PLASO_MAPPING_FILE', '')
+    if os.path.isfile(mappings_file_path):
+        try:
+            with open(mappings_file_path, 'r') as mfh:
+                mappings = json.load(mfh)
+
+                if not isinstance(mappings, dict):
+                    raise RuntimeError(
+                        'Unable to create mappings, the mappings are not a '
+                        'dict, please look at the file: {0:s}'.format(
+                            mappings_file_path))
+        except (json.JSONDecodeError, IOError):
+            logger.error('Unable to read in mapping', exc_info=True)
+
+    elastic_server = current_app.config.get('ELASTIC_HOST')
+    if not elastic_server:
+        raise RuntimeError(
+            'Unable to connect to Elastic, no server set, unable to '
+            'process plaso file.')
+    elastic_port = current_app.config.get('ELASTIC_PORT')
+    if not elastic_port:
+        raise RuntimeError(
+            'Unable to connect to Elastic, no port set, unable to '
+            'process plaso file.')
+
+    es = ElasticsearchDataStore(
+        host=elastic_server, port=elastic_port)
+
+    try:
+        es.create_index(
+            index_name=index_name, doc_type=event_type, mappings=mappings)
+    except errors.DataIngestionError as e:
+        _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        raise
+
+    except (RuntimeError, ImportError, NameError, UnboundLocalError,
+            RequestError) as e:
+        _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
+        raise
+
+    except Exception as e:  # pylint: disable=broad-except
+        # Mark the searchindex and timelines as failed and exit the task
+        error_msg = traceback.format_exc()
+        _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
+        logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
+        return None
+
     message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
     logger.info(message.format(timeline_name, index_name, source_type))
 
@@ -499,27 +566,28 @@ def run_plaso(
         psort_path = 'psort.py'
 
     cmd = [
-        psort_path, '-o', 'timesketch', file_path, '--name',
-        timeline_name, '--status_view', 'none', '--index', index_name
+        psort_path, '-o', 'elastic_ts', file_path, '--server', elastic_server,
+        '--port', str(elastic_port), '--status_view', 'none',
+        '--index_name', index_name,
     ]
+
+    if mappings_file_path:
+        cmd.extend(['--elastic_mappings', mappings_file_path])
+
+    if timeline_id:
+        cmd.extend(['--timeline_identifier', str(timeline_id)])
 
     # Run psort.py
     try:
-        if six.PY3:
-            subprocess.check_output(
-                cmd, stderr=subprocess.STDOUT, encoding='utf-8')
-        else:
-            subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        subprocess.check_output(
+            cmd, stderr=subprocess.STDOUT, encoding='utf-8')
     except subprocess.CalledProcessError as e:
         # Mark the searchindex and timelines as failed and exit the task
-        _set_timeline_status(
-            index_name, status='fail', error_msg=e.output,
-            timeline_name=timeline_name)
+        _set_timeline_status(timeline_id, status='fail', error_msg=e.output)
         return e.output
 
     # Mark the searchindex and timelines as ready
-    _set_timeline_status(
-        index_name, status='ready', timeline_name=timeline_name)
+    _set_timeline_status(timeline_id, status='ready')
 
     return index_name
 
@@ -585,24 +653,18 @@ def run_csv_jsonl(
             total_count=results.get('total_events', 0))
 
     except errors.DataIngestionError as e:
-        _set_timeline_status(
-            index_name, status='fail', error_msg=str(e),
-            timeline_name=timeline_name)
+        _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
         raise
 
     except (RuntimeError, ImportError, NameError, UnboundLocalError,
             RequestError) as e:
-        _set_timeline_status(
-            index_name, status='fail', error_msg=str(e),
-            timeline_name=timeline_name)
+        _set_timeline_status(timeline_id, status='fail', error_msg=str(e))
         raise
 
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
-        _set_timeline_status(
-            index_name, status='fail', error_msg=error_msg,
-            timeline_name=timeline_name)
+        _set_timeline_status(timeline_id, status='fail', error_msg=error_msg)
         logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
         return None
 
@@ -618,37 +680,6 @@ def run_csv_jsonl(
             'events imported.'.format(timeline_name, index_name, final_counter))
 
     # Set status to ready when done
-    _set_timeline_status(
-        index_name, status='ready', error_msg=error_msg,
-        timeline_name=timeline_name)
+    _set_timeline_status(timeline_id, status='ready', error_msg=error_msg)
 
     return index_name
-
-
-# Disabled until mans_to_es can produce a stream of events instead of doing
-# raw Elasticsearch operations.
-# pylint: disable=pointless-string-statement
-"""
-def run_mans(file_path, events, timeline_name, index_name, source_type):
-    # Log information to Celery
-    message = 'Index timeline [{0:s}] to index [{1:s}] (source: {2:s})'
-    logger.info(message.format(timeline_name, index_name, source_type))
-
-    elastic_host = current_app.config['ELASTIC_HOST']
-    elastic_port = int(current_app.config['ELASTIC_PORT'])
-    try:
-        mte = MansToEs(filename=file_path, name=timeline_name, index=index_name,
-                       es_host=elastic_host, es_port=elastic_port)
-        mte.run()
-    except Exception as e:  # pylint: disable=broad-except
-        # Mark the searchindex and timelines as failed and exit the task
-        error_msg = traceback.format_exc()
-        _set_timeline_status(index_name, status='fail', error_msg=error_msg)
-        logger.error('Error: {0!s}\n{1:s}'.format(e, error_msg))
-        return None
-
-    # Mark the searchindex and timelines as ready
-    _set_timeline_status(index_name, status='ready')
-
-    return index_name
-"""

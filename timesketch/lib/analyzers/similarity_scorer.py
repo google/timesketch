@@ -89,17 +89,19 @@ class SimilarityScorer(interface.BaseSketchAnalyzer):
 
     DEPENDENCIES = frozenset()
 
-    def __init__(self, index_name, sketch_id, data_type=None):
+    def __init__(self, index_name, sketch_id, timeline_id=None, data_type=None):
         """Initializes a similarity scorer.
 
         Args:
             index_name: Elasticsearch index name.
+            sketch_id: The ID of the sketch.
+            timeline_id: The ID of the timeline.
             data_type: Name of the data_type.
         """
         self._config = None
         if data_type:
             self._config = SimilarityScorerConfig(index_name, data_type)
-        super().__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
     def run(self):
         """Entry point for the SimilarityScorer.

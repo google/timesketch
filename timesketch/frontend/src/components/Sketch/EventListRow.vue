@@ -41,15 +41,15 @@ limitations under the License.
               <input type="checkbox" :checked="isSelected" v-on:click="toggleSelect">
             </span>
             <span class="icon control" v-on:click="toggleStar" style="margin-right: 3px; cursor: pointer;">
-              <i class="fas fa-star" v-if="isStarred" style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"></i>
-              <i class="fas fa-star" v-if="!isStarred" style="color: #d3d3d3;"></i>
+              <i class="fas fa-star" v-if="isStarred" title="Unstar the event" style="color: #ffe300; -webkit-text-stroke-width: 1px; -webkit-text-stroke-color: #d1d1d1;"></i>
+              <i class="fas fa-star" v-if="!isStarred" title="Star the event" style="color: #d3d3d3;"></i>
             </span>
             <span v-if="displayControls" class="icon control" style="margin-right: 3px; cursor: pointer;" v-on:click="searchContext">
-              <i class="fas fa-search" style="color: #d3d3d3;"></i>
+              <i class="fas fa-search" title="Search +/- 5min" style="color: #d3d3d3;"></i>
             </span>
             <span class="icon control">
                 <b-dropdown ref="labelDropdown" aria-role="list" append-to-body>
-                  <i class="fas fa-tag" style="color: #d3d3d3;" slot="trigger"></i>
+                  <i class="fas fa-tag" title="Labels" style="color: #d3d3d3;" slot="trigger"></i>
                   <div class="modal-card" style="width:300px;color: var(--font-color-dark);">
                     <section class="modal-card-body">
                       <b-dropdown-item custom :focusable="false">

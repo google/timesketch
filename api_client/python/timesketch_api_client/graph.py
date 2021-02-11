@@ -58,6 +58,7 @@ class Graph(resource.SketchResource):
         self._description = ''
         self._layout = None
         self._name = ''
+        self._timelines = []
         self._updated_at = None
         self._graph_config = {}
 
@@ -283,6 +284,10 @@ class Graph(resource.SketchResource):
             'config': plugin_config,
             'refresh': bool(refresh),
         }
+
+        if self.timelines:
+            data['timeline_ids'] = self.timelines
+
         if plugin_config:
             if isinstance(plugin_config, str):
                 self._graph_config = json.loads(plugin_config)
@@ -427,6 +432,25 @@ class Graph(resource.SketchResource):
         layout = self._GRAPH_LAYOUTS.get(layout_string)
         if layout:
             self.layout = layout(self.graph)
+
+    @property
+    def timelines(self):
+        """Property that returns the set of timelines this graph uses."""
+        return self._timelines
+
+    @timelines.setter
+    def timelines(self, timelines):
+        """Sets the timelines."""
+        if not isinstance(timelines, (list, tuple)):
+            logger.error('Unable to add timelines, this needs to be a list')
+
+        for timeline in timelines:
+            if isinstance(timeline, int):
+                self._timelines.append(timeline)
+                continue
+
+            if hasattr(timeline, 'id') and hasattr(timeline, 'index_name'):
+                self._timelines.append(timeline.id)
 
     def to_dict(self):
         """Returns a dict with the graph content."""
