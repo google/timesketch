@@ -66,7 +66,7 @@ class Sigma(resource.BaseResource):
 
         if not self.data or self.data is None:
             self.lazyload_data(refresh_cache=True)
-     
+
         try:
             self._es_query = self.data.get('es_query', '')
         except AttributeError: # in case self.data is Nonetype
@@ -81,7 +81,7 @@ class Sigma(resource.BaseResource):
 
         if not self.data or self.data is None:
             self.lazyload_data(refresh_cache=True)
-     
+
         try:
             self._title = self.data.get('title', '')
         except AttributeError: # in case self.data is Nonetype
@@ -91,6 +91,8 @@ class Sigma(resource.BaseResource):
     @property
     def id(self):
         """Returns the sigma rule id."""
+        if self._id:
+            return self._id
         sigma_data = self.data
 
         if not sigma_data:
@@ -102,6 +104,8 @@ class Sigma(resource.BaseResource):
     @property
     def file_relpath(self):
         """Returns the relative filepath of the rule."""
+        if self._file_relpath:
+            return self._file_relpath
         sigma_data = self.data
 
         if not sigma_data:
@@ -112,6 +116,8 @@ class Sigma(resource.BaseResource):
     @property
     def rule_uuid(self):
         """Returns the rule id."""
+        if self._id:
+            return self._id
         sigma_data = self.data
 
         if not sigma_data:
@@ -122,6 +128,8 @@ class Sigma(resource.BaseResource):
     @property
     def file_name(self):
         """Returns the rule filename."""
+        if self._file_name:
+            return self._file_name
         sigma_data = self.data
 
         if not sigma_data:
@@ -132,16 +140,20 @@ class Sigma(resource.BaseResource):
     @property
     def description(self):
         """Returns the rule description."""
+        if self._description:
+            return self._description
         sigma_data = self.data
 
         if not sigma_data:
             return ''
 
         return sigma_data.get('description', '')
-    
+
     @property
     def level(self):
         """Returns the rule confidence level."""
+        if self._level:
+            return self._level
         sigma_data = self.data
 
         if not sigma_data:
@@ -152,6 +164,8 @@ class Sigma(resource.BaseResource):
     @property
     def falsepositives(self):
         """Returns the rule falsepositives."""
+        if self._falsepositives:
+            return self._falsepositives
         sigma_data = self.data
 
         if not sigma_data:
@@ -162,6 +176,8 @@ class Sigma(resource.BaseResource):
     @property
     def author(self):
         """Returns the rule author."""
+        if self._author:
+            return self._author
         sigma_data = self.data
 
         if not sigma_data:
@@ -172,16 +188,20 @@ class Sigma(resource.BaseResource):
     @property
     def date(self):
         """Returns the rule date."""
+        if self._date:
+            return self._date
         sigma_data = self.data
 
         if not sigma_data:
             return ''
 
         return sigma_data.get('date', '')
-    
+
     @property
     def modified(self):
         """Returns the rule modified date."""
+        if self._modified:
+            return self._modified
         sigma_data = self.data
 
         if not sigma_data:
@@ -192,6 +212,8 @@ class Sigma(resource.BaseResource):
     @property
     def logsource(self):
         """Returns the rule logsource."""
+        if self._logsource:
+            return self._logsource
         sigma_data = self.data
 
         if not sigma_data:
@@ -202,14 +224,14 @@ class Sigma(resource.BaseResource):
     @property
     def detection(self):
         """Returns the rule detection."""
+        if self._detection:
+            return self._detection
         sigma_data = self.data
 
         if not sigma_data:
             return ''
 
         return sigma_data.get('detection', '')
-    
-
 
     def from_rule_uuid(self, rule_uuid):
         """Get a Sigma object from a rule uuid.
@@ -219,7 +241,6 @@ class Sigma(resource.BaseResource):
 
         """
         self._rule_uuid = rule_uuid
-        # TODO: not sure which one is the better one
         self.resource_uri = f'sigma/rule/{rule_uuid}'
         super().__init__(
             api=self.api, resource_uri=self.resource_uri)
@@ -233,13 +254,10 @@ class Sigma(resource.BaseResource):
             rule_text: Rule text to be parsed.
 
         """
-        print(rule_text)
         self.resource_uri = '{0:s}/sigma/text/'.format(self.api.api_root)
         data = {'title': 'Get_Sigma_by_text', 'content': rule_text}
         response = self.api.session.post(self.resource_uri, data=data)
         response_dict = error.get_response_json(response, logger)
-        print("response dict")
-        print(f'dict: {response_dict}')
 
         objects = response_dict.get('objects')
 
@@ -248,7 +266,21 @@ class Sigma(resource.BaseResource):
                 'Unable to parse rule with given text')
 
         rule_dict = objects[0]
-        self._rule_uuid = '' # rule has no id, or maybe it has?
+        #breakpoint()
+        self._rule_uuid = rule_dict.get('id', '')
+        self._id = rule_dict.get('id', '')
         self._title = rule_dict.get('title', '')
         self._es_query = rule_dict.get('es_query', '')
-        return response_dict
+        self._file_relpath = rule_dict.get('file_relpath', '')
+        self._description = rule_dict.get('description', '')
+        self._level = rule_dict.get('level', '')
+        self._falsepositives = rule_dict.get('falsepositives', '')
+        self._author = rule_dict.get('author', '')
+        self._date = rule_dict.get('date', '')
+        self._modified = rule_dict.get('modified', '')
+        self._logsource = rule_dict.get('logsource', '')
+        self._detection = rule_dict.get('detection', '')
+        self._file_name = rule_dict.get('file_name', '')
+
+        #breakpoint()
+

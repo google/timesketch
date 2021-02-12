@@ -156,7 +156,7 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
         except yaml.parser.ParserError as exception:
             logger.error(
                 'Sigma Parsing error: an invalid yml file has been provided',
-                    exc_info=True)
+                exc_info=True)
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Sigma parsing error: invalid yaml provided {0!s}'

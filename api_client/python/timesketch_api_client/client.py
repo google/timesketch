@@ -596,7 +596,6 @@ class TimesketchApi:
         try:
             sigma_obj = sigma.Sigma(api=self)
             sigma_obj.from_text(rule_text)
-
         except ValueError:
             logger.error('Parsing Error, unable to parse the Sigma rule',
                          exc_info=True)

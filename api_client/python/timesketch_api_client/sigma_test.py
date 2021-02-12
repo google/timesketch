@@ -28,7 +28,7 @@ references:
     - https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html
 author: Alexander Jaeger
 date: 2020/06/26
-modified: 2020/06/26
+modified: 2021/01/01
 logsource:
     product: linux
     service: shell
@@ -81,14 +81,14 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertIn('sigma/rule/5266a592', rule.resource_uri)
         self.assertIn('suspicious installation of Zenmap', rule.description)
         self.assertIn('high', rule.level)
-        self.assertEqual(len(rule.falsepositives),1)
+        self.assertEqual(len(rule.falsepositives), 1)
         self.assertIn('Unknown', rule.falsepositives[0])
         self.assertIn('susp_zenmap', rule.file_name)
         self.assertIn('Alexander', rule.author)
         self.assertIn('2020/06/26', rule.date)
-        self.assertIn('2020/06/26', rule.modified)
-        self.assertEqual(len(rule.detection),2)
-        self.assertEqual(len(rule.logsource),2)
+        self.assertIn('2021/01/01', rule.modified)
+        self.assertEqual(len(rule.detection), 2)
+        self.assertEqual(len(rule.logsource), 2)
 
 
     def test_sigma_rules(self):
@@ -98,7 +98,6 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertIsNotNone(rules)
 
         rule1 = rules[0]
-        print("aaa" +rule1.id)
         self.assertEqual(
             rule1.title, 'Suspicious Installation of Zenmap',
             'Title of the rule does not match: ')
@@ -106,10 +105,22 @@ class TimesketchSigmaTest(unittest.TestCase):
         self.assertIn('b793', rule1.id)
 
     def test_get_sigma_rule_by_text(self):
-        rule = self.api_client.get_sigma_rule_by_text(MOCK_SIGMA_RULE)
-        self.assertIsNotNone(rule)
-        print(rule.__dict__)
-        print(f'title: {rule.title} id: {rule.id}')
 
-        self.assertIn('zmap', rule.es_query, 'ES_Query does not match')
-        self.assertIn('Zenmap', rule.title, 'Title does not match')
+        rule = self.api_client.get_sigma_rule_by_text(MOCK_SIGMA_RULE)
+        
+        self.assertIsNotNone(rule)
+        self.assertIn('zsh', rule.es_query)
+        self.assertIn('Installation of foobar', rule.title, 'Title does not match')
+        self.assertIn('', rule.id)
+        self.assertIn('', rule.file_relpath)
+        self.assertIn('http://127.0.0.1/api/v1/sigma/text/', rule.resource_uri)
+        self.assertIn('suspicious installation of foobar', rule.description)
+        self.assertIn('high', rule.level)
+        self.assertEqual(len(rule.falsepositives), 1)
+        self.assertIn('Unknown', rule.falsepositives[0])
+        self.assertIn('N/A', rule.file_name)
+        self.assertIn('Alexander', rule.author)
+        self.assertIn('2020/12/10', rule.date)
+        self.assertIn('2021/01/01', rule.modified)
+        self.assertEqual(len(rule.detection), 2)
+        self.assertEqual(len(rule.logsource), 2)
