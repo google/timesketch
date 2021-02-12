@@ -65,12 +65,10 @@ class TimesketchSigmaTest(unittest.TestCase):
     def test_sigma_rule(self):
         """Test single Sigma rule."""
 
-        # not sure which is the better way to do things here.
         rule = self.api_client.get_sigma_rule(
             rule_uuid='5266a592-b793-11ea-b3de-0242ac130004')
         rule.from_rule_uuid('5266a592-b793-11ea-b3de-0242ac130004')
         self.assertIsNotNone(rule)
-
         self.assertEqual(
             rule.title, 'Suspicious Installation of Zenmap',
             'Title of the rule does not match')
@@ -79,6 +77,19 @@ class TimesketchSigmaTest(unittest.TestCase):
             'Id of the rule does not match')
         self.assertIn('zmap', rule.es_query, 'ES_Query does not match')
         self.assertIn('b793', rule.id)
+        self.assertIn('/syslog/foobar/', rule.file_relpath)
+        self.assertIn('sigma/rule/5266a592', rule.resource_uri)
+        self.assertIn('suspicious installation of Zenmap', rule.description)
+        self.assertIn('high', rule.level)
+        self.assertEqual(len(rule.falsepositives),1)
+        self.assertIn('Unknown', rule.falsepositives[0])
+        self.assertIn('susp_zenmap', rule.file_name)
+        self.assertIn('Alexander', rule.author)
+        self.assertIn('2020/06/26', rule.date)
+        self.assertIn('2020/06/26', rule.modified)
+        self.assertEqual(len(rule.detection),2)
+        self.assertEqual(len(rule.logsource),2)
+
 
     def test_sigma_rules(self):
         '''Testing the Sigma rules list'''

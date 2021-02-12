@@ -46,6 +46,14 @@ class Sigma(resource.BaseResource):
         self._title = None
         self._file_relpath = None
         self._es_query = None
+        self._description = None
+        self._level = None
+        self._falsepositives = None
+        self._author = None
+        self._date = None
+        self._modified = None
+        self._logsource = None
+        self._detection = None
         self._resource_uri = 'sigma/' # TODO: clarify: is that okay?
         super().__init__(
             api=api, resource_uri=self._resource_uri)
@@ -110,6 +118,98 @@ class Sigma(resource.BaseResource):
             return ''
 
         return sigma_data.get('id', '')
+
+    @property
+    def file_name(self):
+        """Returns the rule filename."""
+        sigma_data = self.data
+
+        if not sigma_data:
+            return ''
+
+        return sigma_data.get('file_name', '')
+
+    @property
+    def description(self):
+        """Returns the rule description."""
+        sigma_data = self.data
+
+        if not sigma_data:
+            return ''
+
+        return sigma_data.get('description', '')
+    
+    @property
+    def level(self):
+        """Returns the rule confidence level."""
+        sigma_data = self.data
+
+        if not sigma_data:
+            return ''
+
+        return sigma_data.get('level', '')
+
+    @property
+    def falsepositives(self):
+        """Returns the rule falsepositives."""
+        sigma_data = self.data
+
+        if not sigma_data:
+            return ''
+
+        return sigma_data.get('falsepositives', '')
+
+    @property
+    def author(self):
+        """Returns the rule author."""
+        sigma_data = self.data
+
+        if not sigma_data:
+            return ''
+
+        return sigma_data.get('author', '')
+
+    @property
+    def date(self):
+        """Returns the rule date."""
+        sigma_data = self.data
+
+        if not sigma_data:
+            return ''
+
+        return sigma_data.get('date', '')
+    
+    @property
+    def modified(self):
+        """Returns the rule modified date."""
+        sigma_data = self.data
+
+        if not sigma_data:
+            return ''
+
+        return sigma_data.get('modified', '')
+
+    @property
+    def logsource(self):
+        """Returns the rule logsource."""
+        sigma_data = self.data
+
+        if not sigma_data:
+            return ''
+
+        return sigma_data.get('logsource', '')
+
+    @property
+    def detection(self):
+        """Returns the rule detection."""
+        sigma_data = self.data
+
+        if not sigma_data:
+            return ''
+
+        return sigma_data.get('detection', '')
+    
+
 
     def from_rule_uuid(self, rule_uuid):
         """Get a Sigma object from a rule uuid.
