@@ -266,7 +266,6 @@ class Sigma(resource.BaseResource):
                 'Unable to parse rule with given text')
 
         rule_dict = objects[0]
-        #breakpoint()
         self._rule_uuid = rule_dict.get('id', '')
         self._id = rule_dict.get('id', '')
         self._title = rule_dict.get('title', '')
@@ -281,6 +280,4 @@ class Sigma(resource.BaseResource):
         self._logsource = rule_dict.get('logsource', '')
         self._detection = rule_dict.get('detection', '')
         self._file_name = rule_dict.get('file_name', '')
-
-        #breakpoint()
 

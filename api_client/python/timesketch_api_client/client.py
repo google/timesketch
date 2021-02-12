@@ -552,7 +552,7 @@ class TimesketchApi:
         for rule_dict in response['objects']:
             if not rule_dict:
                 raise ValueError('No rules found.')
-            
+
             index_obj = sigma.Sigma(api=self)
             index_obj.data['id'] = rule_dict['id']
             index_obj.data['title'] = rule_dict['title']

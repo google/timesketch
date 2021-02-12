@@ -110,7 +110,7 @@ class TimesketchSigmaTest(unittest.TestCase):
         
         self.assertIsNotNone(rule)
         self.assertIn('zsh', rule.es_query)
-        self.assertIn('Installation of foobar', rule.title, 'Title does not match')
+        self.assertIn('Installation of foobar', rule.title)
         self.assertIn('', rule.id)
         self.assertIn('', rule.file_relpath)
         self.assertIn('http://127.0.0.1/api/v1/sigma/text/', rule.resource_uri)
