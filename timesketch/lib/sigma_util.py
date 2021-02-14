@@ -175,10 +175,9 @@ def get_sigma_rule(filepath, sigma_config=None):
             sigma_conf_obj = sigma_config
         else:
             sigma_conf_obj = get_sigma_config_file()
-    except ValueError:
+    except ValueError as e:
         logger.error(
-            'Problem reading the Sigma config {0:s}: '
-            .format(e), exc_info=True)
+            'Problem reading the Sigma config', exc_info=True)
         raise ValueError('Problem reading the Sigma config') from e
 
 

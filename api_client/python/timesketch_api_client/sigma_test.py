@@ -107,7 +107,7 @@ class TimesketchSigmaTest(unittest.TestCase):
     def test_get_sigma_rule_by_text(self):
 
         rule = self.api_client.get_sigma_rule_by_text(MOCK_SIGMA_RULE)
-        
+
         self.assertIsNotNone(rule)
         self.assertIn('zsh', rule.es_query)
         self.assertIn('Installation of foobar', rule.title)
