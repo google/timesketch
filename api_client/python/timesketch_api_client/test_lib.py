@@ -352,7 +352,7 @@ def mock_response(*args, **kwargs):
         MockResponse(json_data=story_data),
         'http://127.0.0.1/api/v1/sketches/1/archive/':
         MockResponse(json_data=archive_data),
-        'http://127.0.0.1/api/v1/sigma/rule/5266a592-b793-11ea-b3de-0242ac130004':
+        'http://127.0.0.1/api/v1/sigma/rule/5266a592-b793-11ea-b3de-0242ac130004':# pylint: disable=line-too-long
         MockResponse(json_data=sigma_rule),
         'http://127.0.0.1/api/v1/sigma/':
         MockResponse(json_data=sigma_list),
