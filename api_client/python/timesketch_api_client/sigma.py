@@ -280,4 +280,3 @@ class Sigma(resource.BaseResource):
         self._logsource = rule_dict.get('logsource', '')
         self._detection = rule_dict.get('detection', '')
         self._file_name = rule_dict.get('file_name', '')
-
