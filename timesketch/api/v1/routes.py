@@ -23,6 +23,7 @@ from .resources.aggregation import AggregationInfoResource
 from .resources.aggregation import AggregationResource
 from .resources.analysis import AnalysisResource
 from .resources.analysis import AnalyzerRunResource
+from .resources.analysis import AnalyzerSessionActiveListResource
 from .resources.analysis import AnalyzerSessionResource
 from .resources.attribute import AttributeResource
 from .resources.explore import ExploreResource
@@ -71,6 +72,7 @@ API_ROUTES = [
     (SketchArchiveResource, '/sketches/<int:sketch_id>/archive/'),
     (AnalysisResource, '/sketches/<int:sketch_id>/timelines/<int:timeline_id>/analysis/'),
     (AnalyzerRunResource, '/sketches/<int:sketch_id>/analyzer/'),
+    (AnalyzerSessionActiveListResource, '/sketches/<int:sketch_id>/analyzer/sessions/active/'),
     (AnalyzerSessionResource, '/sketches/<int:sketch_id>/analyzer/sessions/<int:session_id>/'),
     (AggregationListResource, '/sketches/<int:sketch_id>/aggregation/'),
     (AggregationGroupResource, '/sketches/<int:sketch_id>/aggregation/group/<int:group_id>/'),

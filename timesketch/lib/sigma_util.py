@@ -175,11 +175,12 @@ def get_sigma_rule(filepath, sigma_config=None):
             sigma_conf_obj = sigma_config
         else:
             sigma_conf_obj = get_sigma_config_file()
-    except ValueError as e:
+    except ValueError:
         logger.error(
             'Problem reading the Sigma config {0:s}: '
             .format(e), exc_info=True)
         raise ValueError('Problem reading the Sigma config') from e
+
 
     sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
 

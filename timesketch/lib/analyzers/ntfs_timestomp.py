@@ -22,20 +22,24 @@ class NtfsTimestompSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Timestomp."""
 
     NAME = 'ntfs_timestomp'
+    DISPLAY_NAME = 'NTFS timestomp detection'
+    DESCRIPTION = 'Compares timestamps in NTFS to detect potential timestomp'
+
     STD_INFO = 16
     FILE_NAME = 48
 
-    def __init__(self, index_name, sketch_id):
+    def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize The Sketch Analyzer.
 
         Args:
             index_name: Elasticsearch index name
             sketch_id: Sketch ID
+            timeline_id: The ID of the timeline.
         """
         self.index_name = index_name
         self.threshold = current_app.config.get(
             'NTFS_TIMESTOMP_ANALYZER_THRESHOLD', 10) * 60000000
-        super(NtfsTimestompSketchPlugin, self).__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
     def is_suspicious(self, file_info):
         """Compares timestamps to detect timestomping.

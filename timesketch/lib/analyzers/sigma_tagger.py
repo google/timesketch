@@ -19,6 +19,8 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
     """Index analyzer for Sigma."""
 
     NAME = 'sigma'
+    DISPLAY_NAME = 'Sigma'
+    DESCRIPTION = 'Run pre-defined Sigma rules and tag matching events'
 
     def run_sigma_rule(self, query, tag_name):
         """Runs a sigma rule and applies the appropriate tags.
@@ -96,6 +98,7 @@ class SigmaPlugin(interface.BaseSketchAnalyzer):
             agg_params = {
                 'field': 'tag',
                 'limit': 20,
+                'index': [self.timeline_id],
             }
             agg_obj = self.sketch.add_aggregation(
                 name='Top 20 Sigma tags', agg_name='field_bucket',

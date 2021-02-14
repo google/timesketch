@@ -52,7 +52,7 @@ limitations under the License.
 
         <div class="card" style="margin-top: 20px;">
           <div class="card-content">
-            <div v-if="!sketch.stories.length">
+            <div v-if="!meta.stories.length">
               There are no stories in this sketch yet
             </div>
             <ts-story-list :controls="true"></ts-story-list>
@@ -83,6 +83,9 @@ export default {
   computed: {
     sketch () {
       return this.$store.state.sketch
+    },
+    meta () {
+      return this.$store.state.meta
     }
   }
 }

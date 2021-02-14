@@ -57,6 +57,11 @@ class ConfigAssistant:
         'client_secret',
     ])
 
+    EXTRA_FIELDS = frozenset([
+        'token_file_path',
+        'verify',
+    ])
+
     CONFIG_ORDERING = {
         'host_uri': 1,
         'auth_mode': 2,
@@ -265,6 +270,7 @@ class ConfigAssistant:
         """
         fields = list(self.CLIENT_NEEDED)
         fields.extend(list(self.OAUTH_CLIENT_NEEDED))
+        fields.extend(list(self.EXTRA_FIELDS))
 
         for key, value in config_dict.items():
             key = key.lower()
@@ -314,6 +320,9 @@ class ConfigAssistant:
         auth_mode = self._config.get('auth_mode', 'userpass')
         if auth_mode == 'timesketch':
             auth_mode = 'userpass'
+
+        if not section:
+            section = 'timesketch'
 
         config[section] = {
             'host_uri': self._config.get('host_uri'),

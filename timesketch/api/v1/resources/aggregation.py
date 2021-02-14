@@ -16,6 +16,8 @@
 import json
 import time
 
+from elasticsearch.exceptions import NotFoundError
+
 from flask import jsonify
 from flask import request
 from flask import abort
@@ -27,6 +29,7 @@ from flask_login import current_user
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
 from timesketch.lib import forms
+from timesketch.lib import utils as lib_utils
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -456,7 +459,6 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             for t in sketch.timelines
             if t.get_status.status.lower() == 'ready'
         }
-        indices_string = ','.join(sketch_indices)
 
         aggregation_dsl = form.aggregation_dsl.data
         aggregator_name = form.aggregator_name.data
@@ -475,14 +477,33 @@ class AggregationExploreResource(resources.ResourceMixin, Resource):
             if not aggregator_parameters:
                 aggregator_parameters = {}
 
-            index = aggregator_parameters.pop('index', indices_string)
-            aggregator = agg_class(sketch_id=sketch_id, index=index)
+            indices = aggregator_parameters.pop('index', sketch_indices)
+            indices, timeline_ids = lib_utils.get_validated_indices(
+                indices, sketch)
+
+            aggregator = agg_class(
+                sketch_id=sketch_id, indices=indices,
+                timeline_ids=timeline_ids)
+
             chart_type = aggregator_parameters.pop('supported_charts', None)
             chart_color = aggregator_parameters.pop('chart_color', '')
             chart_title = aggregator_parameters.pop(
                 'chart_title', aggregator.chart_title)
+
             time_before = time.time()
-            result_obj = aggregator.run(**aggregator_parameters)
+            try:
+                result_obj = aggregator.run(**aggregator_parameters)
+            except NotFoundError:
+                abort(
+                    HTTP_STATUS_CODE_NOT_FOUND,
+                    'Attempting to run an aggregation on a non-existing '
+                    'Elastic index, index: {0:s} and parameters: {1!s}'.format(
+                        ','.join(indices), aggregator_parameters))
+            except ValueError as exc:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    'Unable to run the aggregation, with error: {0!s}'.format(
+                        exc))
             time_after = time.time()
 
             aggregator_description = aggregator.describe

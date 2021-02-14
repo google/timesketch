@@ -112,7 +112,17 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
             Search index in JSON (instance of flask.wrappers.Response)
         """
         searchindex = SearchIndex.query.get_with_acl(searchindex_id)
-        return self.to_json(searchindex)
+
+        mapping = self.datastore.client.indices.get_mapping(
+            searchindex.index_name)
+        fields = list(mapping.get(
+            searchindex.index_name, {}).get('mappings', {}).get(
+                'properties', {}).keys())
+
+        meta = {
+            'contains_timeline_id': bool('__ts_timeline_id' in fields),
+        }
+        return self.to_json(searchindex, meta=meta)
 
     @login_required
     def delete(self, searchindex_id):

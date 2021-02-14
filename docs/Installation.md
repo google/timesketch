@@ -17,15 +17,15 @@ This guide setup the following services:
 * Nginx
 
 NOTE: This guide sets up  single node Elasticsearch cluster. This is OK for smaller installations but in order to scale and have better performance you need to setup a multi node Elasticsearch cluster. This is out of scope for this guide but the official documentation will get you started:
-https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html  
+https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html
 
 #### 1. Install Docker
 
 Follow the official installation instructions for Docker on Ubuntu:
-https://docs.docker.com/engine/install/ubuntu/ 
+https://docs.docker.com/engine/install/ubuntu/
 
 #### 2. Install docker-compose
-    
+
 ```shell
     $ sudo apt-get install docker-compose
 ```
@@ -44,7 +44,7 @@ You can choose to host the Timeksetch data directory anywhere but note that by d
 
 Example:
 
-```shell    
+```shell
     $ cd /opt
 ```
 
@@ -52,8 +52,8 @@ Example:
 
 ```shell
     $ sudo ~/deploy_timesketch.sh
-```    
-    
+```
+
 Example output:
 
     * Setting vm.max_map_count for Elasticsearch
@@ -92,7 +92,7 @@ Edit timesketch/etc/nginx.conf (HOSTNAME is the DNS name of your server):
     events {
             worker_connections 768;
     }
-    
+
     http {
         server {
           listen 80;
@@ -101,8 +101,8 @@ Edit timesketch/etc/nginx.conf (HOSTNAME is the DNS name of your server):
           ssl_certificate /etc/letsencrypt/live/<HOSTNAME>>/fullchain.pem;
           ssl_certificate_key /etc/letsencrypt/live/<HOSTNAME>>/privkey.pem;
           client_max_body_size 0m;
-        
-          location / {        
+
+          location / {
             proxy_buffer_size       128k;
             proxy_buffers           4 256k;
             proxy_busy_buffers_size 256k;
@@ -115,7 +115,7 @@ Edit timesketch/etc/nginx.conf (HOSTNAME is the DNS name of your server):
             return 301 https://$host$request_uri;
           }
         }
-    } 
+    }
 ```
 
 Make the certificate and key available to the Nginx Docker container. Edit timesketch/docker-compose.yml and mount /etc/letsencrypt:
@@ -140,7 +140,7 @@ Restart the system:
     # docker-compose down
     # docker-compose up -d
  ```
- 
-Congratulations, your Timesketch system is operational and ready to use. 
+
+Congratulations, your Timesketch system is operational and ready to use.
 
     https://<HOSTNAME>

@@ -8,20 +8,24 @@ class TaggerSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for tagging events."""
 
     NAME = 'tagger'
+    DISPLAY_NAME = 'Tagger'
+    DESCRIPTION = 'Tag events based on pre-defined rules'
+
     CONFIG_FILE = 'tags.yaml'
 
-    def __init__(self, index_name, sketch_id, config=None):
+    def __init__(self, index_name, sketch_id, timeline_id=None, config=None):
         """Initialize The Sketch Analyzer.
 
         Args:
             index_name: Elasticsearch index name
             sketch_id: Sketch ID
+            timeline_id: The ID of the timeline.
             config: Optional dict that contains the configuration for the
                 analyzer. If not provided, the default YAML file will be used.
         """
         self.index_name = index_name
         self._config = config
-        super(TaggerSketchPlugin, self).__init__(index_name, sketch_id)
+        super().__init__(index_name, sketch_id, timeline_id=timeline_id)
 
     def run(self):
         """Entry point for the analyzer.

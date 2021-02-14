@@ -1,0 +1,83 @@
+{
+  "properties": {
+    "application": {
+      "type": "text",
+      "fields": {
+        "keyword": {"type": "keyword"}}
+    },
+    "timesketch_label": {
+      "type": "nested"
+     },
+    "datetime": {
+      "type": "date"
+    },
+    "data": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "doc_type": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "event_type": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "exit_status": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "facility": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "file_reference": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "file_size": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "flags": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "identifier": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "message_status": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "message_type": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "offset": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "sequence_number": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "severity": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "source_port": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "user_identifier": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    },
+    "version": {
+      "type": "text",
+      "fields": {"keyword": {"type": "keyword"}}
+    }
+  }
+}

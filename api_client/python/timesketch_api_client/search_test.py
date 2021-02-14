@@ -41,7 +41,6 @@ class SearchTest(unittest.TestCase):
         query_filter = search_obj.query_filter
 
         self.assertEqual(query_filter.get('chips'), [])
-        self.assertIsNone(query_filter.get('time_start', 'AA'))
 
     def test_from_manual(self):
         """Test fetching data."""

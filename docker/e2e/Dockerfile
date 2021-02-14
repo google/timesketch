@@ -1,6 +1,9 @@
 # Use the official Docker Hub Ubuntu 20.04 base image
 FROM ubuntu:20.04
 
+# TODO: Change back to Plaso stable track once version 20201228 is released.
+ARG PPA_TRACK=dev
+
 # Prevent needing to configure debian packages, stopping the setup of
 # the docker container.
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
@@ -16,7 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Plaso
-RUN add-apt-repository -y ppa:gift/stable
+RUN add-apt-repository -y ppa:gift/$PPA_TRACK
 RUN apt-get update && apt-get install -y --no-install-recommends \
     plaso-tools \
   && rm -rf /var/lib/apt/lists/*
@@ -36,6 +39,7 @@ RUN cp /tmp/timesketch/data/timesketch.conf /etc/timesketch/
 RUN cp /tmp/timesketch/data/ontology.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/tags.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/features.yaml /etc/timesketch/
+RUN cp /tmp/timesketch/data/plaso.mappings /etc/timesketch/
 RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
 
 # Copy the entrypoint script into the container

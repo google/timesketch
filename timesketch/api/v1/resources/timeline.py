@@ -136,7 +136,8 @@ class TimelineListResource(resources.ResourceMixin, Resource):
             # pylint: disable=import-outside-toplevel
             from timesketch.lib import tasks
             sketch_analyzer_group, _ = tasks.build_sketch_analysis_pipeline(
-                sketch_id, searchindex_id, current_user.id)
+                sketch_id, searchindex_id, current_user.id,
+                timeline_id=timeline_id)
             if sketch_analyzer_group:
                 pipeline = (tasks.run_sketch_init.s(
                     [searchindex.index_name]) | sketch_analyzer_group)
@@ -184,11 +185,17 @@ class TimelineResource(resources.ResourceMixin, Resource):
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
-        timeline = Timeline.query.get(timeline_id)
 
+        timeline = Timeline.query.get(timeline_id)
         if not timeline:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No Timeline found with this ID.')
+
+        if not timeline.sketch_id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f'The timeline {timeline_id} does not have an associated '
+                'sketch, does it belong to a sketch?')
 
         # Check that this timeline belongs to the sketch
         if timeline.sketch_id != sketch.id:

@@ -385,6 +385,7 @@ class Search(resource.SketchResource):
         self._chips = []
         self._created_at = ''
         self._description = ''
+        self._indices = '_all'
         self._max_entries = self.DEFAULT_SIZE_LIMIT
         self._name = ''
         self._query_dsl = ''
@@ -394,6 +395,7 @@ class Search(resource.SketchResource):
         self._return_fields = ''
         self._scrolling = None
         self._searchtemplate = ''
+        self._total_elastic_size = 0
         self._updated_at = ''
 
     def _extract_chips(self, query_filter):
@@ -432,13 +434,16 @@ class Search(resource.SketchResource):
 
             self.add_chip(chip)
 
-    def _execute_query(self, file_name=''):
+    def _execute_query(self, file_name='', count=False):
         """Execute a search request and store the results.
 
         Args:
             file_name (str): optional file path to a filename that
                 all the results will be saved to. If not provided
                 the results will be stored in the search object.
+            count (bool): optional boolean that determines whether
+                we want to execute the query or only count the
+                number of events that the query would produce.
         """
         query_filter = self.query_filter
         if not isinstance(query_filter, dict):
@@ -456,6 +461,7 @@ class Search(resource.SketchResource):
             'query': self._query_string,
             'filter': query_filter,
             'dsl': self._query_dsl,
+            'count': count,
             'fields': self._return_fields,
             'enable_scroll': scrolling,
             'file_name': file_name,
@@ -474,6 +480,11 @@ class Search(resource.SketchResource):
             return
 
         response_json = error.get_response_json(response, logger)
+
+        if count:
+            meta = response_json.get('meta', {})
+            self._total_elastic_size = meta.get('total_count', 0)
+            return
 
         scroll_id = response_json.get('meta', {}).get('scroll_id', '')
         form_data['scroll_id'] = scroll_id
@@ -503,13 +514,13 @@ class Search(resource.SketchResource):
             added_time = more_meta.get('es_time', 0)
             response_json['meta']['es_time'] += added_time
 
-        total_elastic_count = response_json.get(
+        self._total_elastic_size = response_json.get(
             'meta', {}).get('es_total_count', 0)
-        if total_elastic_count != total_count:
+        if self._total_elastic_size != total_count:
             logger.info(
                 '%d results were returned, but '
                 '%d records matched the search query',
-                total_count, total_elastic_count)
+                total_count, self._total_elastic_size)
 
         self._raw_response = response_json
 
@@ -571,6 +582,15 @@ class Search(resource.SketchResource):
         """Make changes to the saved search description field."""
         self._description = description
         self.commit()
+
+    @property
+    def expected_size(self):
+        """Property that returns the expected size of the search query."""
+        if self._total_elastic_size:
+            return self._total_elastic_size
+
+        self._execute_query(count=True)
+        return self._total_elastic_size
 
     def from_manual(  # pylint: disable=arguments-differ
             self,
@@ -674,6 +694,58 @@ class Search(resource.SketchResource):
         self.resource_data = data
 
     @property
+    def indices(self):
+        """Return the current set of indices used in the search."""
+        return self._indices
+
+    @indices.setter
+    def indices(self, indices):
+        """Make changes to the current set of indices."""
+        if not isinstance(indices, list):
+            logger.warning(
+                'Indices needs to be a list of strings (indices that were '
+                'passed in were not a list).')
+            return
+        if not all([isinstance(x, (str, int)) for x in indices]):
+            logger.warning(
+                'Indices needs to be a list of strings or ints, not all '
+                'entries in the indices list are valid string/int.')
+            return
+
+        # Indices here can be either a list of timeline names, IDs or a list
+        # of search indices. We need to verify that these exist before saving
+        # them.
+        timelines = {
+            t.index_name: t.name for t in self._sketch.list_timelines()}
+
+        valid_ids = [t.id for t in self._sketch.list_timelines()]
+
+        new_indices = []
+        for index in indices:
+            if index in timelines:
+                new_indices.append(index)
+                continue
+
+            if isinstance(index, int):
+                if index in valid_ids:
+                    new_indices.append(str(index))
+                    continue
+
+            if index.isdigit():
+                if int(index) in valid_ids:
+                    new_indices.append(index)
+                    continue
+
+            if index in timelines.values():
+                new_indices.append(index)
+
+        if not new_indices:
+            logger.warning('No valid indices found, not changin the value.')
+            return
+
+        self._indices = new_indices
+
+    @property
     def max_entries(self):
         """Return the maximum number of entries in the return value."""
         return self._max_entries
@@ -734,16 +806,16 @@ class Search(resource.SketchResource):
         """Property that returns the query filter."""
         if not self._query_filter:
             self._query_filter = {
-                'time_start': None,
-                'time_end': None,
                 'size': self.DEFAULT_SIZE_LIMIT,
                 'terminate_after': self.DEFAULT_SIZE_LIMIT,
-                'indices': '_all',
+                'indices': self.indices,
                 'order': 'asc',
                 'chips': [],
             }
+
         query_filter = self._query_filter
         query_filter['chips'] = [x.chip for x in self._chips]
+        query_filter['indices'] = self.indices
         return query_filter
 
     @query_filter.setter

@@ -11,6 +11,8 @@ class WinCrashSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for Windows application crashes."""
 
     NAME = 'win_crash'
+    DISPLAY_NAME = 'Windows application crashes'
+    DESCRIPTION = 'Detect Windows application crashes'
 
     DEPENDENCIES = frozenset()
 
@@ -80,16 +82,6 @@ class WinCrashSketchPlugin(interface.BaseSketchAnalyzer):
             'values:("DoReport: REG_DWORD_LE 0" OR "ShowUI: REG_DWORD_LE 0")',
         ),
     }
-
-    def __init__(self, index_name, sketch_id):
-        """Initialize The Sketch Analyzer.
-
-        Args:
-            index_name: Elasticsearch index name
-            sketch_id: Sketch ID
-        """
-        self.index_name = index_name
-        super(WinCrashSketchPlugin, self).__init__(index_name, sketch_id)
 
     def formulate_query(self, elements):
         """Generates the Elasticsearch query.
