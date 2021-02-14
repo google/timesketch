@@ -1,0 +1,8 @@
+global:
+    scrape_interval: 5s
+    external_labels:
+        monitor: 'lambda-monitor'
+scrape_configs:
+    - job_name: 'es-metrics-exporter'
+      static_configs:
+          - targets: ['es-metrics-exporter:9114']

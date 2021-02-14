@@ -1,10 +1,11 @@
 version: '3'
 services:
   timesketch:
+    container_name: timesketch-dev
     image: us-docker.pkg.dev/osdfir-registry/timesketch/dev:latest
     command: timesketch
     ports:
-      - "127.0.0.1:5000:5000"
+      - 127.0.0.1:5000:5000
     links:
       - elasticsearch
       - postgres
@@ -26,8 +27,9 @@ services:
     volumes:
       - ../../:/usr/local/src/timesketch/
 
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.2
+  elasticsearch:    
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.2
     restart: always
     environment:
       - discovery.type=single-node
@@ -40,21 +42,45 @@ services:
         hard: -1
 
   postgres:
-    image: postgres
+    container_name: postgres
+    image: postgres:13.1-alpine
     environment:
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password
     restart: always
 
   redis:
-    image: redis
+    container_name: redis
+    image: redis:6.0.10-alpine
     restart: always
 
   notebook:
+    container_name: picatrix
     image: us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest
     ports:
-      - "127.0.0.1:8844:8844"
+      - 127.0.0.1:8844:8844
     restart: on-failure
     volumes:
       - ../../:/usr/local/src/timesketch/:ro
       - /tmp/:/usr/local/src/picadata/
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v2.24.1
+    volumes:
+      - ./prometheus:/etc/prometheus
+    command: --config.file=/etc/prometheus/prometheus.yml
+
+  es-metrics-exporter:
+    container_name: es-metrics-exporter
+    image: justwatch/elasticsearch_exporter:1.1.0
+    command:
+      - '--es.uri=http://elasticsearch:9200'
+    restart: always
+
+  grafana:
+    container_name: grafana
+    image: "grafana/grafana:latest"
+    restart: always
+    ports:
+      - "127.0.0.1:3000:3000"
