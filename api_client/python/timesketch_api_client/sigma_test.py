@@ -69,12 +69,8 @@ class TimesketchSigmaTest(unittest.TestCase):
             rule_uuid='5266a592-b793-11ea-b3de-0242ac130004')
         rule.from_rule_uuid('5266a592-b793-11ea-b3de-0242ac130004')
         self.assertIsNotNone(rule)
-        self.assertEqual(
-            rule.title, 'Suspicious Installation of Zenmap',
-            'Title of the rule does not match')
-        self.assertEqual(
-            rule.id, '5266a592-b793-11ea-b3de-0242ac130004',
-            'Id of the rule does not match')
+        self.assertEqual(rule.title, 'Suspicious Installation of Zenmap')
+        self.assertEqual(rule.id, '5266a592-b793-11ea-b3de-0242ac130004')
         self.assertIn('zmap', rule.es_query, 'ES_Query does not match')
         self.assertIn('b793', rule.id)
         self.assertIn('/syslog/foobar/', rule.file_relpath)
@@ -96,13 +92,25 @@ class TimesketchSigmaTest(unittest.TestCase):
 
         rules = self.api_client.list_sigma_rules()
         self.assertIsNotNone(rules)
+        self.assertEqual(len(rules), 2)
+        rule = rules[0]
+        self.assertEqual(rule.title, 'Suspicious Installation of Zenmap')
+        self.assertIn('zmap', rule.es_query, 'ES_Query does not match')
+        self.assertIn('b793', rule.id)
+        self.assertIn('Alexander', rule.author)
+        self.assertIn('2020/06/26',rule.date)
+        self.assertIn('installation of Zenmap', rule.description)
+        self.assertEqual(len(rule.detection), 2)
+        self.assertIn('zmap*', rule.es_query)
+        self.assertIn('Unknown', rule.falsepositives[0])
+        self.assertEqual(len(rule.detection), 2)
+        self.assertEqual(len(rule.logsource), 2)
+        self.assertIn('2020/06/26', rule.modified)
+        self.assertIn('/linux/syslog/foobar', rule.file_relpath)
+        self.assertIn('lnx_susp_zenmap', rule.file_name)
+        self.assertIn('high', rule.level)
+        self.assertIn('foobar.com', rule.references[0])
 
-        rule1 = rules[0]
-        self.assertEqual(
-            rule1.title, 'Suspicious Installation of Zenmap',
-            'Title of the rule does not match: ')
-        self.assertIn('zmap', rule1.es_query, 'ES_Query does not match')
-        self.assertIn('b793', rule1.id)
 
     def test_get_sigma_rule_by_text(self):
 

@@ -54,6 +54,7 @@ class Sigma(resource.BaseResource):
         self._modified = None
         self._logsource = None
         self._detection = None
+        self._references = None
         self._resource_uri = 'sigma/' # TODO: clarify: is that okay?
         super().__init__(
             api=api, resource_uri=self._resource_uri)
@@ -233,6 +234,19 @@ class Sigma(resource.BaseResource):
 
         return sigma_data.get('detection', '')
 
+    @property
+    def references(self):
+        """Returns the rule references."""
+        if self._references:
+            return self._references
+        sigma_data = self.data
+
+        if not sigma_data:
+            return ''
+
+        return sigma_data.get('references', '')
+
+
     def from_rule_uuid(self, rule_uuid):
         """Get a Sigma object from a rule uuid.
 
@@ -280,3 +294,4 @@ class Sigma(resource.BaseResource):
         self._logsource = rule_dict.get('logsource', '')
         self._detection = rule_dict.get('detection', '')
         self._file_name = rule_dict.get('file_name', '')
+        self._references = rule_dict.get('references', '')
