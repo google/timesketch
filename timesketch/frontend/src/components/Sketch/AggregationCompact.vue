@@ -37,7 +37,7 @@ import TsTimelineChip from './TimelineChip'
 
 export default {
   props: ['aggregation', 'cardHeader'],
-  components: {TsVegaLiteChart, TsTableChart, TsTimelineChip},
+  components: { TsVegaLiteChart, TsTableChart, TsTimelineChip },
   data () {
     return {
       vegaSpec: {},
@@ -57,7 +57,7 @@ export default {
       let timelines = []
       if (this.aggParameters.index && Array.isArray(this.aggParameters.index)) {
         this.aggParameters.index.forEach((timelineId) => {
-          let timeline = this.sketch.active_timelines.find(timeline => timeline.id === timelineId);
+          let timeline = this.sketch.active_timelines.find(timeline => timeline.id === timelineId)
           timelines.push(timeline)
         })
       }

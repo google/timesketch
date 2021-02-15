@@ -18,6 +18,7 @@ limitations under the License.
 </template>
 
 <script>
+// eslint-disable-next-line import/no-named-default
 import { default as vegaEmbed } from 'vega-embed'
 
 export default {
@@ -29,7 +30,7 @@ export default {
   },
   watch: {
     vegaSpec: function (newVal, oldVal) {
-      vegaEmbed('#'+ this.vegaId, JSON.parse(this.vegaSpec), { actions: false })
+      vegaEmbed('#' + this.vegaId, JSON.parse(this.vegaSpec), { actions: false })
     }
   }
 }

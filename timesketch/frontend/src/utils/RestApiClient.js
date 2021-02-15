@@ -14,8 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import axios from 'axios'
-import { ToastProgrammatic as Toast } from 'buefy'
-import { SnackbarProgrammatic as Snackbar } from 'buefy'
+import { ToastProgrammatic as Toast, SnackbarProgrammatic as Snackbar } from 'buefy'
 
 const RestApiClient = axios.create({
   baseURL: '/api/v1',
@@ -38,7 +37,7 @@ const RestApiBlobClient = axios.create({
 
 // Show message on errors.
 RestApiClient.interceptors.response.use(function (response) {
-  return response;
+  return response
 }, function (error) {
   if (error.response.data.message === 'The CSRF token has expired') {
     Snackbar.open({
@@ -49,13 +48,13 @@ RestApiClient.interceptors.response.use(function (response) {
       indefinite: true,
       onAction: () => {
         location.reload()
-      }}
+      } }
     )
   } else {
     Toast.open(error.response.data.message)
   }
-  return Promise.reject(error);
-});
+  return Promise.reject(error)
+})
 
 export default {
   // Sketch
@@ -130,7 +129,7 @@ export default {
     }
     return RestApiClient.get('/sketches/' + sketchId + '/event/', params)
   },
-  saveEventAnnotation (sketchId, annotationType, annotation, events, remove=false) {
+  saveEventAnnotation (sketchId, annotationType, annotation, events, remove = false) {
     let formData = {
       annotation: annotation,
       annotation_type: annotationType,
@@ -161,7 +160,7 @@ export default {
     return RestApiClient.post('/sketches/' + sketchId + /stories/ + storyId + '/', formData)
   },
   deleteStory (sketchId, storyId) {
-  	return RestApiClient.delete('/sketches/' + sketchId + /stories/ + storyId + '/')
+    return RestApiClient.delete('/sketches/' + sketchId + /stories/ + storyId + '/')
   },
   // Saved views
   getView (sketchId, viewId) {
@@ -179,7 +178,7 @@ export default {
   updateView (sketchId, viewId, queryString, queryFilter) {
     let formData = {
       query: queryString,
-      filter: queryFilter,
+      filter: queryFilter
     }
     return RestApiClient.post('/sketches/' + sketchId + /views/ + viewId + '/', formData)
   },
@@ -206,14 +205,14 @@ export default {
     return RestApiClient.get('/sketches/' + sketchId + '/aggregation/group/' + groupId + '/')
   },
   saveAggregation (sketchId, aggregation, name, formData) {
-    let form_data = {
+    let newFormData = {
       'name': name,
       'description': aggregation.description,
       'agg_type': aggregation.name,
       'chart_type': formData['supported_charts'],
       'parameters': formData
     }
-    return RestApiClient.post('/sketches/' + sketchId + '/aggregation/', form_data)
+    return RestApiClient.post('/sketches/' + sketchId + '/aggregation/', newFormData)
   },
   // Misc resources
   countSketchEvents (sketchId) {
@@ -270,20 +269,20 @@ export default {
       },
       refresh: refresh
     }
-    return  RestApiClient.post('/sketches/' + sketchId + /graph/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + /graph/, formData)
   },
   getGraphPluginList () {
-    return  RestApiClient.get('/graphs/')
+    return RestApiClient.get('/graphs/')
   },
   saveGraph (sketchId, name, elements) {
     let formData = {
       'name': name,
       'elements': elements
     }
-    return  RestApiClient.post('/sketches/' + sketchId + /graphs/, formData)
+    return RestApiClient.post('/sketches/' + sketchId + /graphs/, formData)
   },
   getSavedGraphList (sketchId) {
-    return  RestApiClient.get('/sketches/' + sketchId + /graphs/)
+    return RestApiClient.get('/sketches/' + sketchId + /graphs/)
   },
   getSavedGraph (sketchId, graphId) {
     let params = {
@@ -291,6 +290,6 @@ export default {
         format: 'cytoscape'
       }
     }
-    return  RestApiClient.get('/sketches/' + sketchId + /graphs/ + graphId + '/', params)
-  },
+    return RestApiClient.get('/sketches/' + sketchId + /graphs/ + graphId + '/', params)
+  }
 }

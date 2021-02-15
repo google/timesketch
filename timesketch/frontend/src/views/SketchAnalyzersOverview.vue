@@ -88,12 +88,12 @@ limitations under the License.
 </template>
 
 <script>
-import TsAnalysisSessionDetail from "../components/Sketch/AnalyzerSessionDetail"
-import ApiClient from "../utils/RestApiClient"
+import TsAnalysisSessionDetail from '../components/Sketch/AnalyzerSessionDetail'
+import ApiClient from '../utils/RestApiClient'
 
 export default {
   props: ['sketchId'],
-  components: {TsAnalysisSessionDetail},
+  components: { TsAnalysisSessionDetail },
   data () {
     return {
       availableAnalyzers: [],
@@ -103,7 +103,7 @@ export default {
       timelineColumns: [
         {
           field: 'name',
-          label: 'Timeline',
+          label: 'Timeline'
         }
       ],
       analyzerColumns: [
@@ -114,7 +114,7 @@ export default {
         },
         {
           field: 'description',
-          label: 'Description',
+          label: 'Description'
         }
       ]
     }
