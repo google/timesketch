@@ -32,7 +32,7 @@ limitations under the License.
           <th>Timeline</th>
         </thead>
         <tbody>
-        <tr v-for="row in tableData">
+        <tr v-for="(row, index) in tableData" :key="index">
           <td><div style="width:10px; height: 10px; border-radius: 100%; margin-top:6px; margin-left:3px;" v-bind:class="{ pending: row.status === 'PENDING',  done: row.status === 'DONE', started: row.status === 'STARTED', error: row.status === 'ERROR'}"></div></td>
           <td>{{row.analyzer}}</td>
           <td>{{row.result}}</td>
