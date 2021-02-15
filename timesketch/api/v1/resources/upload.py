@@ -84,7 +84,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                     permission='write', user=current_user):
                 return index
 
-        index_name = uuid.uuid4().hex
+        index_name = index_name or uuid.uuid4().hex
         searchindex = SearchIndex.get_or_create(
             name=name,
             index_name=index_name,
