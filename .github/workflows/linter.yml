@@ -33,6 +33,9 @@ jobs:
   
   eslint:
     runs-on: ubuntu-20.04
+    defaults:
+      run:
+        working-directory: ./timesketch/frontend
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies
@@ -40,4 +43,4 @@ jobs:
     - name: Run eslint
       run: |
         git config pull.rebase false && git fetch -p origin master
-        for FILE in `git --no-pager diff origin/master --name-only | grep \.vue$`; do echo "Running eslint against ${FILE}"; eslint ${FILE}; done
+        for FILE in `git --no-pager diff origin/master --name-only | grep \.vue$`; do echo "Running eslint against ${FILE}"; yarn run eslint ${FILE}; done
