@@ -37,18 +37,18 @@ export default {
     }
   },
   computed: {
-    sketch() {
+    sketch () {
       return this.$store.state.sketch
     },
-    meta() {
+    meta () {
       return this.$store.state.meta
-    },
+    }
   },
-  created() {
+  created () {
     ApiClient.getGraphPluginList().then((response) => {
-        this.graphs = response.data
-      }).catch((e) => {
-        console.error(e)
+      this.graphs = response.data
+    }).catch((e) => {
+      console.error(e)
     })
   }
 }

@@ -85,7 +85,7 @@ export default {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
-        onUploadProgress: function(progressEvent) {
+        onUploadProgress: function (progressEvent) {
           this.percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
         }.bind(this)
       }
