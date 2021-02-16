@@ -313,8 +313,14 @@ def build_sketch_analysis_pipeline(
 
         kwargs = analyzer_kwargs.get(analyzer_name, {})
         searchindex = SearchIndex.query.get(searchindex_id)
-        timeline = Timeline.query.filter_by(
-            sketch=sketch, searchindex=searchindex).first()
+
+        timeline = None
+        if timeline_id:
+            timeline = Timeline.query.get(timeline_id)
+
+        if not timeline:
+            timeline = Timeline.query.filter_by(
+                sketch=sketch, searchindex=searchindex).first()
 
         analysis = Analysis(
             name=analyzer_name,
