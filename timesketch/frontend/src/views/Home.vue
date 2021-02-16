@@ -133,7 +133,7 @@ limitations under the License.
 <script>
 import TsSketchList from '../components/Home/SketchList'
 import TsCreateSketchForm from '../components/Home/CreateSketchForm'
-import TsNavbarMain from "../components/AppNavbarMain"
+import TsNavbarMain from '../components/AppNavbarMain'
 
 export default {
   components: {
@@ -156,7 +156,7 @@ export default {
     }
   },
   computed: {
-    filteredList() {
+    filteredList () {
       return this.allSketches.filter(sketch => {
         return sketch.name.toLowerCase().includes(this.search.toLowerCase())
       })

@@ -66,12 +66,12 @@ export default {
     },
     addFilter: function (field, value, operator) {
       let chip = {
-          'field': field,
-          'value': value,
-          'type': 'term',
-          'operator': operator,
-          'active': true
-        }
+        'field': field,
+        'value': value,
+        'type': 'term',
+        'operator': operator,
+        'active': true
+      }
       this.$emit('addChip', chip)
     }
   },

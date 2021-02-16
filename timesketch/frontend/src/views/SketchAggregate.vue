@@ -48,9 +48,9 @@ limitations under the License.
 </template>
 
 <script>
-import TsSketchExploreAggregation from "../components/Sketch/Aggregation"
-import ApiClient from "../utils/RestApiClient"
-import TsAggregationCompact from "../components/Sketch/AggregationCompact"
+import TsSketchExploreAggregation from '../components/Sketch/Aggregation'
+import ApiClient from '../utils/RestApiClient'
+import TsAggregationCompact from '../components/Sketch/AggregationCompact'
 
 export default {
   components: { TsSketchExploreAggregation, TsAggregationCompact },
@@ -68,7 +68,7 @@ export default {
       return this.$store.state.meta
     },
     allAggregations () {
-      const concat = (...arrays) => [].concat(...arrays.filter(Array.isArray));
+      const concat = (...arrays) => [].concat(...arrays.filter(Array.isArray))
       return concat(this.aggregations, this.aggregationGroups).slice().reverse()
     }
   },
