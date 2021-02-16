@@ -134,7 +134,7 @@ export default {
       this.formData = data
       this.selectedAggregator = aggregator
     },
-    getVegaSpec: function () {
+    getVegaSpec: function() {
       this.showChart = true
       this.formData['index'] = this.selectedTimelines
       let d = {
