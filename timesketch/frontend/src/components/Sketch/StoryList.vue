@@ -48,7 +48,7 @@ export default {
     }
   },
   methods: {
-    remove(story) {
+    remove (story) {
       ApiClient.deleteStory(this.sketch.id, story.id)
         .then((response) => {
           this.$store.dispatch('updateSketch', this.sketch.id)

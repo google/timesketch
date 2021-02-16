@@ -16,4 +16,3 @@ limitations under the License.
 <template>
   <router-view></router-view>
 </template>
-

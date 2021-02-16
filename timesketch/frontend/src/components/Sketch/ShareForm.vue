@@ -35,11 +35,11 @@ limitations under the License.
           Who has access
           <br><br>
           <table class="table is-hoverable">
-            <tr v-for="(user, index) in currentUsers">
+            <tr v-for="(user, index) in currentUsers" :key='index'>
               <td>{{ user }}</td>
               <td width="10px" style="cursor: pointer;" v-on:click="removeUser(user, index)"><i class="fa fa-trash"></i></td>
             </tr>
-            <tr v-for="(group, index) in currentGroups">
+            <tr v-for="(group, index) in currentGroups" :key='index'>
               <td>{{ group }}</td>
               <td width="10px" style="cursor: pointer;" v-on:click="removeGroup(group, index)"><i class="fa fa-trash"></i></td>
             </tr>
@@ -131,13 +131,13 @@ export default {
     meta () {
       return this.$store.state.meta
     },
-    currentUsers() {
-      return this.meta.collaborators.users.filter(f => !this.usersToRemove.includes(f));
+    currentUsers () {
+      return this.meta.collaborators.users.filter(f => !this.usersToRemove.includes(f))
     },
-    currentGroups() {
-      return this.meta.collaborators.groups.filter(f => !this.groupsToRemove.includes(f));
+    currentGroups () {
+      return this.meta.collaborators.groups.filter(f => !this.groupsToRemove.includes(f))
     },
-    filteredUserArray() {
+    filteredUserArray () {
       return this.systemUsers.filter((option) => {
         return option
           .toString()
@@ -145,7 +145,7 @@ export default {
           .indexOf(this.userNameInput.toLowerCase()) >= 0
       })
     },
-    filteredGroupArray() {
+    filteredGroupArray () {
       return this.systemGroups.filter((option) => {
         return option
           .toString()
@@ -178,19 +178,19 @@ export default {
       this.$emit('closeShareModal')
     }
   },
-  mounted() {
+  mounted () {
     if (this.meta.permissions.public) {
       this.isPublic = true
     }
     ApiClient.getUsers().then((response) => {
-      response.data.objects[0].forEach((user => {
+      response.data.objects[0].forEach(user => {
         this.systemUsers.push(user.username)
-      }))
+      })
     }).catch((e) => {})
     ApiClient.getGroups().then((response) => {
-      response.data.objects[0].forEach((group => {
+      response.data.objects[0].forEach(group => {
         this.systemGroups.push(group.name)
-      }))
+      })
     }).catch((e) => {})
   }
 }

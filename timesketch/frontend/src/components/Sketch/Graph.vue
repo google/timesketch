@@ -41,7 +41,7 @@ limitations under the License.
 
                 </div>
 
-                <input class="ts-search-input" v-if="currentGraph" v-model="filterString" v-on:keyup="filterGraphByInput" style="border-radius: 0; padding:25px;" placeholder="Filter nodes and edges"></input>
+                <input class="ts-search-input" v-if="currentGraph" v-model="filterString" v-on:keyup="filterGraphByInput" style="border-radius: 0; padding:25px;" placeholder="Filter nodes and edges">
 
                 <span class="card-header-icon" v-if="currentGraph">
                   <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body>
@@ -162,20 +162,16 @@ limitations under the License.
 </template>
 
 <script>
-import spread from "cytoscape-spread"
-import dagre from "cytoscape-dagre"
-import ApiClient from "../../utils/RestApiClient"
-import TsEventListCompact from "./EventListCompact"
-import EventBus from "../../main"
-import SessionChart from "./SessionChart"
+import spread from 'cytoscape-spread'
+import dagre from 'cytoscape-dagre'
+import ApiClient from '../../utils/RestApiClient'
+import TsEventListCompact from './EventListCompact'
+import EventBus from '../../main'
 import _ from 'lodash'
 
 export default {
-  components: {
-    SessionChart,
-    TsEventListCompact
-  },
-  data() {
+  components: { TsEventListCompact },
+  data () {
     return {
       showGraph: true,
       isLoading: false,
@@ -222,35 +218,35 @@ export default {
             style: {
               'overlay-color': 'black',
               'overlay-opacity': '0.3',
-              'overlay-padding': '7px',
+              'overlay-padding': '7px'
             }
           },
           {
             selector: "node[type = 'user']",
             style: {
               'background-color': '#FF756E',
-              'text-outline-color': '#FF756E',
+              'text-outline-color': '#FF756E'
             }
           },
           {
             selector: "node[type = 'computer']",
             style: {
               'background-color': '#6992f3',
-              'text-outline-color': '#ffffff',
+              'text-outline-color': '#ffffff'
             }
           },
           {
             selector: "node[type = 'file']",
             style: {
               'background-color': '#82b578',
-              'text-outline-color': '#2b2b2b',
+              'text-outline-color': '#2b2b2b'
             }
           },
           {
             selector: "node[type = 'winservice']",
             style: {
               'background-color': '#9d8f35',
-              'text-outline-color': '#2b2b2b',
+              'text-outline-color': '#2b2b2b'
             }
           },
           {
@@ -273,14 +269,14 @@ export default {
               'width': 2,
               'line-color': '#333333',
               'source-arrow-color': '#333333',
-              'target-arrow-color': '#333333',
+              'target-arrow-color': '#333333'
             }
           },
           {
             selector: '.faded',
             style: {
               'opacity': 0.07,
-              'color': '#333333',
+              'color': '#333333'
             }
           }
         ],
@@ -314,20 +310,20 @@ export default {
         textureOnViewport: false,
         motionBlur: false,
         motionBlurOpacity: 0.2,
-        pixelRatio: 'auto',
+        pixelRatio: 'auto'
       }
     }
   },
   computed: {
     sketch () {
-        return this.$store.state.sketch
+      return this.$store.state.sketch
     },
     hasGraphCache () {
       return Object.keys(this.currentGraphCache).length !== 0
     }
   },
   methods: {
-    buildGraph: function (graphPlugin, refresh=false) {
+    buildGraph: function (graphPlugin, refresh = false) {
       this.config.layout.name = this.layoutName
 
       let edgeStyle = this.config.style.filter(selector => selector.selector === 'edge')
@@ -341,11 +337,11 @@ export default {
 
       this.showGraph = false
       this.elements = []
-      this.loadingTimeout = setTimeout(()=>{
+      this.loadingTimeout = setTimeout(() => {
         if (!this.elements.length) {
           this.isLoading = true
         }
-      },600)
+      }, 600)
       this.edgeQuery = ''
       let currentIndices = []
       this.sketch.timelines.forEach((timeline) => {
@@ -366,10 +362,10 @@ export default {
           edges = elementsCache['edges']
         }
         nodes.forEach((node) => {
-          elements.push({data: node.data, group:'nodes'})
+          elements.push({ data: node.data, group: 'nodes' })
         })
         edges.forEach((edge) => {
-          elements.push({data: edge.data, group:'edges'})
+          elements.push({ data: edge.data, group: 'edges' })
         })
         delete graphCache.graph_elements
         this.currentGraphCache = graphCache
@@ -378,7 +374,7 @@ export default {
         this.showGraph = true
         this.isLoading = false
       }).catch((e) => {
-          console.error(e)
+        console.error(e)
       })
     },
     buildSavedGraph: function (savedGraph) {
@@ -387,11 +383,11 @@ export default {
       this.currentGraphCache = {}
       this.showGraph = false
       this.elements = []
-      this.loadingTimeout = setTimeout(()=>{
+      this.loadingTimeout = setTimeout(() => {
         if (!this.elements.length) {
           this.isLoading = true
         }
-      },600)
+      }, 600)
       this.edgeQuery = ''
 
       let graphId = ''
@@ -461,9 +457,9 @@ export default {
             let boolMustQuery = {
               'bool': {
                 'must': [
-                    {'ids': {'values': element.data().events[index]}},
-                    {'term': {'_index': {'value': index}}}
-                  ]
+                  { 'ids': { 'values': element.data().events[index] } },
+                  { 'term': { '_index': { 'value': index } } }
+                ]
               }
             }
             queryDsl.query.bool.should.push(boolMustQuery)
@@ -519,13 +515,13 @@ export default {
         }).update()
     },
     resizeCanvas: function () {
-      let canvasHeight = this.$refs.graphContainer.clientHeight - 100;
-      let canvasWidth = this.$refs.graphContainer.clientWidth - 100;
-      let canvas = document.getElementById("cytoscape-div")
-      canvas.style.minHeight = canvasHeight + "px";
-      canvas.style.height = canvasHeight + "px";
-      canvas.style.minWidth = canvasWidth + "px";
-      canvas.style.width = canvasWidth + "px";
+      let canvasHeight = this.$refs.graphContainer.clientHeight - 100
+      let canvasWidth = this.$refs.graphContainer.clientWidth - 100
+      let canvas = document.getElementById('cytoscape-div')
+      canvas.style.minHeight = canvasHeight + 'px'
+      canvas.style.height = canvasHeight + 'px'
+      canvas.style.minWidth = canvasWidth + 'px'
+      canvas.style.width = canvasWidth + 'px'
     },
     // vue-cytoscape life-cycle hook, runs before graph is created.
     preConfig (cytoscape) {
@@ -534,12 +530,12 @@ export default {
       this.resizeCanvas()
     },
     // vue-cytoscape life-cycle hook, runs after graph is created.
-    async afterCreated(cy=null) {
+    async afterCreated (cy = null) {
       // Add Cytoscape "cy" objects to this component instance.
       if (cy !== null) {
-          this.cy = cy
+        this.cy = cy
       } else {
-          cy = this.cy
+        cy = this.cy
       }
       await cy
       this.setTheme()
@@ -566,22 +562,22 @@ export default {
       }
     }
   },
-  created() {
+  created () {
     window.addEventListener('resize', _.debounce(() => {
       this.resizeCanvas()
     }, 250))
     ApiClient.getGraphPluginList().then((response) => {
-        this.graphs = response.data
-      }).catch((e) => {
-        console.error(e)
+      this.graphs = response.data
+    }).catch((e) => {
+      console.error(e)
     })
     ApiClient.getSavedGraphList(this.sketch.id).then((response) => {
       let graphs = response.data['objects'][0]
       if (graphs !== undefined) {
         this.savedGraphs = response.data['objects'][0]
       }
-      }).catch((e) => {
-        console.error(e)
+    }).catch((e) => {
+      console.error(e)
     })
     EventBus.$on('isDarkTheme', this.setTheme)
 

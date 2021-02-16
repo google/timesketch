@@ -32,10 +32,10 @@ limitations under the License.
 </template>
 
 <script>
-import TsGraph from "../components/Sketch/Graph"
+import TsGraph from '../components/Sketch/Graph'
 
 export default {
-  components: {TsGraph},
+  components: { TsGraph },
   props: ['sketchId'],
   computed: {
     sketch () {
