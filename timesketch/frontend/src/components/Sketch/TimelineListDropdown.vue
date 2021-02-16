@@ -45,9 +45,9 @@ export default {
       selected: [],
       timelineColumns: [
         {
-          field: 'name',
+          field: 'name'
         }
-      ],
+      ]
     }
   },
   computed: {

@@ -61,13 +61,13 @@ export default {
     }
   },
   methods: {
-    search: function (query, queryFilter={}) {
+    search: function (query, queryFilter = {}) {
       if (!Object.keys(queryFilter).length) {
         queryFilter = {}
-        this.selectedFields = [{field: 'message', type: 'text'}]
+        this.selectedFields = [{ field: 'message', type: 'text' }]
       }
 
-      let formData = {'filter': queryFilter}
+      let formData = { 'filter': queryFilter }
       if (typeof query === 'object') {
         formData['dsl'] = query
       } else {
@@ -84,7 +84,7 @@ export default {
         let queryString = view.query_string
         let queryFilter = JSON.parse(view.query_filter)
         if (!queryFilter.fields || !queryFilter.fields.length) {
-          queryFilter.fields = [{field: 'message', type: 'text'}]
+          queryFilter.fields = [{ field: 'message', type: 'text' }]
         }
         this.selectedFields = queryFilter.fields
         this.search(queryString, queryFilter)

@@ -20,8 +20,8 @@ import Home from './views/Home'
 import Sketch from './views/Sketch'
 import SketchOverview from './views/SketchOverview'
 import SketchManage from './views/SketchManage'
-import SketchManageViews from "./views/SketchManageViews"
-import SketchManageTimelines from "./views/SketchManageTimelines"
+import SketchManageViews from './views/SketchManageViews'
+import SketchManageTimelines from './views/SketchManageTimelines'
 import SketchAggregate from './views/SketchAggregate'
 import SketchExplore from './views/SketchExplore'
 import SketchGraph from './views/SketchGraph'
