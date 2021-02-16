@@ -554,12 +554,8 @@ class TimesketchApi:
                 raise ValueError('No rules found.')
 
             index_obj = sigma.Sigma(api=self)
-            index_obj.data['id'] = rule_dict['id']
-            index_obj.data['title'] = rule_dict['title']
-            index_obj.data['es_query'] = rule_dict['es_query']
-            index_obj.data['file_name'] = rule_dict['file_name']
-            index_obj.data['description'] = rule_dict['description']
-            index_obj.data['file_relpath'] = rule_dict['file_relpath']
+            for key, value in rule_dict.items():
+                index_obj.data[key] = value
             rules.append(index_obj)
         return rules
 
