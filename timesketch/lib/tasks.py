@@ -317,7 +317,7 @@ def build_sketch_analysis_pipeline(
         timeline = None
         if timeline_id:
             timeline = Timeline.query.get(timeline_id)
-                
+
         if not timeline:
             timeline = Timeline.query.filter_by(
                 sketch=sketch, searchindex=searchindex).first()
