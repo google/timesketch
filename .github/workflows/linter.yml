@@ -1,11 +1,11 @@
-name: pylint
+name: linter
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
-  linter:
+  pylint:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -26,8 +26,18 @@ jobs:
         pip install -e .
         pip install -e api_client/python
         pip install -e importer_client/python
-    - name: Run linter
+    - name: Run pylint
       run: |
         git config pull.rebase false && git fetch -p origin master
-        for FILE in `git --no-pager diff origin/master --name-only | grep \.py$`; do echo "Running linter against ${FILE}"; pylint --rcfile=.pylintrc ${FILE}; done
-        
+        for FILE in `git --no-pager diff origin/master --name-only | grep \.py$`; do echo "Running pylint against ${FILE}"; pylint --rcfile=.pylintrc ${FILE}; done
+  
+  eslint:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: yarn
+    - name: Run eslint
+      run: |
+        git config pull.rebase false && git fetch -p origin master
+        for FILE in `git --no-pager diff origin/master --name-only | grep \.vue$`; do echo "Running eslint against ${FILE}"; eslint ${FILE}; done
