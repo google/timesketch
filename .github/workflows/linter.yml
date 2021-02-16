@@ -39,7 +39,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies
-      run: yarn
+      run: yarn add eslint
     - name: Run eslint
       run: |
         git config pull.rebase false && git fetch -p origin master
