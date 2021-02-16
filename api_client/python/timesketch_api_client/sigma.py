@@ -40,22 +40,23 @@ class Sigma(resource.BaseResource):
 
         """
         self.api = api
-        self._rule_uuid = None
-        self._id = None
-        self._file_name = None
-        self._title = None
-        self._file_relpath = None
-        self._es_query = None
-        self._description = None
-        self._level = None
-        self._falsepositives = None
         self._author = None
         self._date = None
-        self._modified = None
-        self._logsource = None
+        self._description = None
         self._detection = None
+        self._es_query = None
+        self._falsepositives = None
+        self._file_name = None
+        self._file_relpath = None
+        self._id = None
+        self._level = None
+        self._logsource = None
+        self._modified = None
+        self._rule_uuid = None
         self._references = None
         self._resource_uri = 'sigma/' # TODO: clarify: is that okay?
+        self._title = None
+
         super().__init__(
             api=api, resource_uri=self._resource_uri)
 
@@ -280,18 +281,18 @@ class Sigma(resource.BaseResource):
                 'Unable to parse rule with given text')
 
         rule_dict = objects[0]
-        self._rule_uuid = rule_dict.get('id', '')
-        self._id = rule_dict.get('id', '')
-        self._title = rule_dict.get('title', '')
-        self._es_query = rule_dict.get('es_query', '')
-        self._file_relpath = rule_dict.get('file_relpath', '')
-        self._description = rule_dict.get('description', '')
-        self._level = rule_dict.get('level', '')
-        self._falsepositives = rule_dict.get('falsepositives', '')
         self._author = rule_dict.get('author', '')
         self._date = rule_dict.get('date', '')
-        self._modified = rule_dict.get('modified', '')
-        self._logsource = rule_dict.get('logsource', '')
+        self._description = rule_dict.get('description', '')
         self._detection = rule_dict.get('detection', '')
+        self._es_query = rule_dict.get('es_query', '')
+        self._falsepositives = rule_dict.get('falsepositives', '')
+        self._file_relpath = rule_dict.get('file_relpath', '')
         self._file_name = rule_dict.get('file_name', '')
+        self._id = rule_dict.get('id', '')
+        self._level = rule_dict.get('level', '')
+        self._logsource = rule_dict.get('logsource', '')
+        self._modified = rule_dict.get('modified', '')
         self._references = rule_dict.get('references', '')
+        self._rule_uuid = rule_dict.get('id', '')
+        self._title = rule_dict.get('title', '')
