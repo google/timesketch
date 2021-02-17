@@ -74,8 +74,7 @@ services:
   es-metrics-exporter:
     container_name: es-metrics-exporter
     image: justwatch/elasticsearch_exporter:1.1.0
-    command:
-      - '--es.uri=http://elasticsearch:9200'
+    command: --es.uri=http://elasticsearch:9200 --es.all
     restart: always
 
   grafana:
