@@ -341,6 +341,17 @@ class TimelineResource(resources.ResourceMixin, Resource):
                     'Timelines with label [{0:s}] cannot be deleted.'.format(
                         label))
 
+        searchindex = timeline.searchindex
+
+        # Check if this searchindex is used in other sketches.
+        close_index = True
+        for timeline_ in searchindex.timelines:
+            if timeline_.sketch.id != sketch.id:
+                close_index = False
+                break
+
+        if close_index:
+            self.datastore.client.indices.close(searchindex.index_name)
         sketch.timelines.remove(timeline)
         db_session.commit()
 
