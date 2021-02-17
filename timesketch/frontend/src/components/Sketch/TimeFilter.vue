@@ -131,8 +131,8 @@ export default {
       this.radio = 'interval'
       let offset = this.chip.value
       this.offsetStart = offset.match(/^\s*(([0-9/:-]{4,10})(:?[ T]([0-9]{2}:){2}([0-9]{2}))?)/)[1]
-      this.offsetPlus = offset.match(/\s\+([0-9]+)/)[1]
-      this.offsetMinus = offset.match(/\s\-([0-9]+)/)[1]
+      this.offsetPlus = offset.match(/\s[+]([0-9]+)/)[1]
+      this.offsetMinus = offset.match(/\s[-]([0-9]+)/)[1]
       this.selectedInterval = offset.match(/\s\+[0-9]+([a-zA-Z])/)[1] // interval type (day, minute, etc.)
       this.formatDateTime()
     }
