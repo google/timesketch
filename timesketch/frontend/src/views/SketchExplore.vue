@@ -167,7 +167,7 @@ limitations under the License.
               </span>
             </div>
 
-            <ts-explore-timeline-picker v-if="currentQueryFilter.indices.length" @updateSelectedTimelines="updateSelectedTimelines($event)" :active-timelines="sketch.active_timelines" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index" :count-per-timeline="eventList.meta.count_per_timeline"></ts-explore-timeline-picker>
+            <ts-explore-timeline-picker v-if="sketch.active_timelines" @updateSelectedTimelines="updateSelectedTimelines($event)" :active-timelines="sketch.active_timelines" :current-query-filter="currentQueryFilter" :count-per-index="eventList.meta.count_per_index" :count-per-timeline="eventList.meta.count_per_timeline"></ts-explore-timeline-picker>
 
           </div>
 
@@ -528,7 +528,7 @@ export default {
           this.currentQueryFilter.fields = [{ field: 'message', type: 'text' }]
         }
         this.selectedFields = this.currentQueryFilter.fields
-        if (this.currentQueryFilter.indices[0] === '_all') {
+        if (this.currentQueryFilter.indices[0] === '_all' || this.currentQueryFilter.indices === '_all') {
           let allIndices = []
           this.sketch.active_timelines.forEach((timeline) => {
             let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy

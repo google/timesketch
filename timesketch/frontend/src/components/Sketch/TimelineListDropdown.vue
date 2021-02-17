@@ -58,14 +58,20 @@ export default {
       return this.$store.state.meta
     },
     timelines () {
-      let t = []
+      let timelines = []
       this.sketch.timelines.forEach(timeline => {
-        t.push({
-          'id': timeline.id,
+        let timelineId = timeline.id
+        // Support for legacy timelines with 1:1 mapping to index_name
+        let isLegacy = this.meta.indices_metadata[timeline.searchindex.index_name].is_legacy
+        if (isLegacy) {
+          timelineId = timeline.searchindex.index_name
+        }
+        timelines.push({
+          'id': timelineId,
           'name': timeline.name
         })
       })
-      return t
+      return timelines
     },
     label () {
       let label = 'Select individual timelines'
