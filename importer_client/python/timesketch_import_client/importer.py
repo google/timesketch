@@ -336,6 +336,8 @@ class ImportStreamer(object):
             chunks = int(
                 math.ceil(float(file_size) / self._threshold_filesize))
             data['chunk_total_chunks'] = chunks
+            data['chunk_index_name'] = uuid.uuid4().hex
+
             for index in range(0, chunks):
                 data['chunk_index'] = index
                 start = self._threshold_filesize * index

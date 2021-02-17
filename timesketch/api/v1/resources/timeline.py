@@ -351,7 +351,10 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 break
 
         if close_index:
-            self.datastore.client.indices.close(searchindex.index_name)
+            self.datastore.client.indices.close(index=searchindex.index_name)
+            searchindex.set_status(status='archived')
+            timeline.set_status(status='archived')
+
         sketch.timelines.remove(timeline)
         db_session.commit()
 
