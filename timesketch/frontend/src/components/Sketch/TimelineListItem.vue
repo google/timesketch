@@ -187,15 +187,13 @@ import _ from 'lodash'
 
 import ApiClient from '../../utils/RestApiClient'
 
-import TsAnalyzerSessionDetail from './AnalyzerSessionDetail'
 import TsAnalyzerHistory from './AnalyzerHistory'
 
-import EventBus from "../../main"
+import EventBus from '../../main'
 
 export default {
   components: {
     'color-picker': Chrome,
-    TsAnalyzerSessionDetail,
     TsAnalyzerHistory
   },
   props: ['timeline', 'controls', 'isCompact'],
@@ -268,20 +266,20 @@ export default {
     },
     openFilteredTimeline: function (index, dataTypes) {
       if (dataTypes.length === 0) {
-        return false;
+        return false
       }
       let searchQuery = ''
       for (let i = 0; i < dataTypes.length; i++) {
-        const dt = dataTypes[i];
-        if (i != 0) {
+        const dt = dataTypes[i]
+        if (i !== 0) {
           searchQuery += ' OR '
         }
         searchQuery += 'data_type:"' + dt + '"'
       }
-      this.$router.push({name: 'SketchExplore', query: { index: index, q: searchQuery }})
+      this.$router.push({ name: 'SketchExplore', query: { index: index, q: searchQuery } })
     },
     toggleTheme: function () {
-      this.isDarkTheme =! this.isDarkTheme
+      this.isDarkTheme = !this.isDarkTheme
     }
   },
   mounted () {
@@ -294,7 +292,7 @@ export default {
     })
   },
   created () {
-    this.isDarkTheme = localStorage.theme === 'dark';
+    this.isDarkTheme = localStorage.theme === 'dark'
     EventBus.$on('isDarkTheme', this.toggleTheme)
 
     this.initialColor = {
@@ -305,7 +303,7 @@ export default {
       this.autoRefresh = true
     }
   },
-  beforeDestroy() {
+  beforeDestroy () {
     clearInterval(this.t)
     this.t = false
   },
@@ -317,8 +315,8 @@ export default {
           if (this.timelineStatus === 'ready') {
             this.autoRefresh = false
           }
-        }.bind(this), 5000)}
-      else {
+        }.bind(this), 5000)
+      } else {
         clearInterval(this.t)
         this.t = false
       }
@@ -353,7 +351,6 @@ export default {
 .small-top-margin {
   margin-top: 4px;
 }
-
 
 @keyframes blinker {
   50% {

@@ -23,7 +23,7 @@ limitations under the License.
 export default {
   props: ['placeholder', 'label', 'name', 'value', 'display'],
   methods: {
-    dateFormatter(dt) {
+    dateFormatter (dt) {
       let dateString = dt.toISOString().replace('.000Z', '')
       this.$emit('input', dateString)
       return dateString

@@ -84,7 +84,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                     permission='write', user=current_user):
                 return index
 
-        index_name = uuid.uuid4().hex
+        index_name = index_name or uuid.uuid4().hex
         searchindex = SearchIndex.get_or_create(
             name=name,
             index_name=index_name,
@@ -218,7 +218,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             data_label=data_label,
             enable_stream=form.get('enable_stream', False))
 
-    def _upload_file(self, file_storage, form, sketch, index_name):
+    def _upload_file(
+            self, file_storage, form, sketch, index_name, chunk_index_name=''):
         """Upload a file.
 
         Args:
@@ -226,6 +227,8 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             form: a dict with the configuration for the upload.
             sketch: Instance of timesketch.models.sketch.Sketch
             index_name: the Elastic index name for the timeline.
+            chunk_index_name: A unique identifier for a file if
+                chunks are used.
 
         Returns:
             A timeline if created otherwise a search index in JSON (instance
@@ -275,7 +278,13 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         # For file chunks we need the correct filepath, otherwise each chunk
         # will get their own UUID as a filename.
-        file_path = os.path.join(upload_folder, index_name)
+        if index_name:
+            file_path = os.path.join(upload_folder, index_name)
+        elif chunk_index_name:
+            file_path = os.path.join(upload_folder, chunk_index_name)
+        else:
+            file_path = os.path.join(upload_folder, uuid.uuid4().hex)
+
         try:
             with open(file_path, 'ab') as fh:
                 fh.seek(chunk_byte_offset)
@@ -369,8 +378,9 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         index_name = form.get('index_name', '')
         file_storage = request.files.get('file')
         if file_storage:
+            chunk_index_name = form.get('chunk_index_name', uuid.uuid4().hex)
             return self._upload_file(
-                file_storage=file_storage,
+                file_storage=file_storage, chunk_index_name=chunk_index_name,
                 form=form, sketch=sketch, index_name=index_name)
 
         events = form.get('events')

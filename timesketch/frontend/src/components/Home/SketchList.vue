@@ -64,11 +64,9 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from "../../utils/RestApiClient"
-import StoryList from "../Sketch/StoryList"
+import ApiClient from '../../utils/RestApiClient'
 
 export default {
-  components: {StoryList},
   props: ['scope', 'searchQuery'],
   data () {
     return {
@@ -89,10 +87,10 @@ export default {
     },
     paginate: function () {
       this.getSketches()
-    },
+    }
   },
-  created() {
-      this.getSketches()
+  created () {
+    this.getSketches()
   },
   watch: {
     searchQuery: function () {

@@ -54,16 +54,15 @@ limitations under the License.
 </template>
 
 <script>
-import EventBus from "../main"
+import EventBus from '../main'
 
 export default {
   name: 'ts-navbar-main',
   data () {
     return {
-      isDarkTheme: null,
+      isDarkTheme: null
     }
   },
-
 
   computed: {
     currentUser () {
@@ -74,14 +73,14 @@ export default {
     switchTheme () {
       let element = document.body
       switch (element.dataset.theme) {
-        case "light":
-          element.dataset.theme = "dark"
+        case 'light':
+          element.dataset.theme = 'dark'
           localStorage.theme = 'dark'
           this.isDarkTheme = true
           EventBus.$emit('isDarkTheme', true)
           break
-        case "dark":
-          element.dataset.theme = "light"
+        case 'dark':
+          element.dataset.theme = 'light'
           localStorage.theme = 'light'
           this.isDarkTheme = false
           EventBus.$emit('isDarkTheme', false)
