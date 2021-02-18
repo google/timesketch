@@ -97,16 +97,8 @@ def refresh_and_validate_list_of_indices(indices, datastore):
     Returns:
         list of indices that are discovered.
     """
-    for index in indices:
-        try:
-            datastore.client.indices.refresh(index=index)
-        except elasticsearch.NotFoundError:
-            logger.error(
-                'Unable to find index: {0:s}, removing from '
-                'result set.'.format(index))
-            broken_index = indices.index(index)
-            _ = indices.pop(broken_index)
-    return indices
+    return [
+        i for i in indices if datastore.client.indices.exists(index=i)]
 
 
 def read_and_validate_csv(file_handle, delimiter=','):
