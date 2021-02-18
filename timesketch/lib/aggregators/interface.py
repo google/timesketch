@@ -13,6 +13,7 @@
 # limitations under the License.
 """Interface for aggregators."""
 import datetime
+import logging
 
 from flask import current_app
 
@@ -22,6 +23,9 @@ import pandas
 from timesketch.lib.charts import manager as chart_manager
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models.sketch import Sketch as SQLSketch
+
+
+logger = logging.getLogger('timesketch.aggregator_interface')
 
 
 class AggregationResult(object):
