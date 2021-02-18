@@ -84,7 +84,7 @@ def _scrub_special_tags(dict_obj):
             _ = dict_obj.pop(field)
 
 
-def validate_list_of_indices(indices, datastore):
+def validate_indices(indices, datastore):
     """Returns a list of valid indices.
 
     This function takes a list of indices, checks to see if they exist
