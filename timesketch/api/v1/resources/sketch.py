@@ -331,7 +331,8 @@ class SketchResource(resources.ResourceMixin, Resource):
                     index=sketch_indices)
             except elasticsearch.NotFoundError:
                 logger.error(
-                    'Unable to get indices mapping in datastore', exc_info=True)
+                    'Unable to get indices mapping in datastore, for '
+                    'indices: {0:s}'.format(','.join(sketch_indices)))
                 mappings_settings = {}
 
         mappings = []
@@ -378,12 +379,17 @@ class SketchResource(resources.ResourceMixin, Resource):
                             }
                         }
                     }
+                    try:
+                        searchindex_name = timeline.searchindex.index_name
+                    except elasticsearch.NotFoundError:
+                        searchindex_name = ''
+
                     count = self.datastore.search(
                         sketch_id=sketch.id,
                         query_string=None,
                         query_filter={},
                         query_dsl=query_dsl,
-                        indices=[timeline.searchindex.index_name],
+                        indices=[searchindex_name],
                         count=True)
                     stats_per_timeline[timeline.id] = {
                         'count': count

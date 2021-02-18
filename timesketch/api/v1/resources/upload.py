@@ -133,6 +133,15 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             index_name=index_name,
             data_label=data_label,
             extension=file_extension)
+
+        if not searchindex:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'We were unable to acquire a searchindex and therefore not '
+                'able to upload data, please try again. If this error persist '
+                'please create an issue on Github: https://github.com/'
+                'google/timesketch/issues/new/choose')
+
         searchindex.set_status('processing')
 
         timelines = Timeline.query.filter_by(
