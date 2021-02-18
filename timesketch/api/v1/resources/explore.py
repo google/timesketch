@@ -104,13 +104,17 @@ class ExploreResource(resources.ResourceMixin, Resource):
         if '_all' in indices:
             indices = all_indices
 
-        # Check if indices are valid.
-        indices = utils.refresh_and_validate_list_of_indices(
-            indices, self.datastore)
+        # Remove indices that don't exist from search.
+        indices = utils.validate_list_of_indices(indices, self.datastore)
 
         # Make sure that the indices in the filter are part of the sketch.
         # This will also remove any deleted timeline from the search result.
         indices, timeline_ids = get_validated_indices(indices, sketch)
+
+        if not indices:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'No valid search indices were found to perform the search on.')
 
         # Make sure we have a query string or star filter
         if not (form.query.data, query_filter.get('star'),

@@ -84,18 +84,18 @@ def _scrub_special_tags(dict_obj):
             _ = dict_obj.pop(field)
 
 
-def refresh_and_validate_list_of_indices(indices, datastore):
+def validate_list_of_indices(indices, datastore):
     """Returns a list of valid indices.
 
-    This function takes a list of indices, tries to refresh them
-    and remove indices that are not found.
+    This function takes a list of indices, checks to see if they exist
+    and then returns the list of indices that exist within the datastore.
 
     Args:
         indices (list): List of indices.
         datastore (ElasticsearchDataStore): a data store object.
 
     Returns:
-        list of indices that are discovered.
+        list of indices that exist within the datastore.
     """
     return [
         i for i in indices if datastore.client.indices.exists(index=i)]
