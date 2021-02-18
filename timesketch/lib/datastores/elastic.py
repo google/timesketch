@@ -76,7 +76,7 @@ class ElasticsearchDataStore(object):
     DEFAULT_STREAM_LIMIT = 5000 # Max events to return when streaming results
 
     DEFAULT_FLUSH_RETRY_LIMIT = 3 # Max retries for flushing the queue.
-    DEFAULT_EVENT_IMPORT_TIMEOUT = 30 # Max timeout value for importing events.
+    DEFAULT_EVENT_IMPORT_TIMEOUT = '3m' # Timeout value for importing events.
 
     def __init__(self, host='127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
@@ -950,7 +950,7 @@ class ElasticsearchDataStore(object):
         try:
             # pylint: disable=unexpected-keyword-arg
             results = self.client.bulk(
-                body=self.import_events, request_timeout=self._request_timeout)
+                body=self.import_events, timeout=self._request_timeout)
         except (ConnectionTimeout, socket.timeout):
             if retry_count >= self.DEFAULT_FLUSH_RETRY_LIMIT:
                 es_logger.error(
