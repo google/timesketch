@@ -133,6 +133,14 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             index_name=index_name,
             data_label=data_label,
             extension=file_extension)
+
+        if not searchindex:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'We were unable to acquire a searchindex, and therefore not '
+                'able to upload data, try again? Please create an issue on '
+                'Github.')
+
         searchindex.set_status('processing')
 
         timelines = Timeline.query.filter_by(
