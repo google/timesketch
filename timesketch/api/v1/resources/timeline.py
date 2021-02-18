@@ -19,6 +19,7 @@ import logging
 import uuid
 import six
 
+import elasticsearch
 from flask import request
 from flask import abort
 from flask import current_app
@@ -340,6 +341,33 @@ class TimelineResource(resources.ResourceMixin, Resource):
                     HTTP_STATUS_CODE_FORBIDDEN,
                     'Timelines with label [{0:s}] cannot be deleted.'.format(
                         label))
+
+        # Check if this searchindex is used in other sketches.
+        close_index = True
+        searchindex = timeline.searchindex
+        for timeline_ in searchindex.timelines:
+            if timeline_.sketch.id != sketch.id:
+                close_index = False
+                break
+
+            if timeline_.id != timeline_id:
+                # There are more than a single timeline using this index_name,
+                # we can't close it (unless this timeline is archived).
+                if timeline_.get_status.status != 'archived':
+                    close_index = False
+                    break
+
+        if close_index:
+            try:
+                self.datastore.client.indices.close(
+                    index=searchindex.index_name)
+            except elasticsearch.NotFoundError:
+                logger.error(
+                    'Unable to close index: {0:s} - index not '
+                    'found'.format(searchindex.index_name))
+
+            searchindex.set_status(status='archived')
+            timeline.set_status(status='archived')
 
         sketch.timelines.remove(timeline)
         db_session.commit()

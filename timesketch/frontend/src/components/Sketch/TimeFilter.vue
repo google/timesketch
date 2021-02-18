@@ -102,14 +102,14 @@ export default {
       offsetMinus: 5,
       offsetPlus: 5,
       intervals: [
-        {'text': 'Second', 'value' : 's'},
-        {'text': 'Minute', 'value' : 'm'},
-        {'text': 'Hour', 'value': 'h'},
-        {'text': 'Day', 'value': 'd'},
+        { 'text': 'Second', 'value': 's' },
+        { 'text': 'Minute', 'value': 'm' },
+        { 'text': 'Hour', 'value': 'h' },
+        { 'text': 'Day', 'value': 'd' }
       ],
       selectedInterval: 'm',
       ready: false,
-      now: this.$moment.utc().format('YYYY-MM-DD[T]hh:mm:ss'),
+      now: this.$moment.utc().format('YYYY-MM-DD[T]hh:mm:ss')
     }
   },
   created: function () {
@@ -118,16 +118,15 @@ export default {
     }
 
     // Clone the object to avoid mutating it
-    this.chip = {...this.selectedChip}
+    this.chip = { ...this.selectedChip }
 
     // Restoring the component's state from the chip
     if (this.chip.type === 'datetime_range') {
       this.radio = 'range'
       let range = this.chip.value.split(',')
-      this.startDateTime = range[0],
+      this.startDateTime = range[0]
       this.endDateTime = range[1]
-    }
-    else {
+    } else {
       this.radio = 'interval'
       let offset = this.chip.value.split(' ')
       this.offsetStart = offset[0]
@@ -143,22 +142,21 @@ export default {
         if (this.offsetStart && this.offsetMinus && this.offsetPlus) {
           return true
         }
-      }
-      else if (this.isSelected('range')) {
-        if (this.startDateTime && this.endDateTime){
+      } else if (this.isSelected('range')) {
+        if (this.startDateTime && this.endDateTime) {
           return true
         }
       }
       return false
     },
     getPlaceholder: function (radioName) {
-      return (this.radio == radioName) ? this.now : ''
+      return (this.radio === radioName) ? this.now : ''
     },
     getOffsetDateTime: function () {
-       return `${this.offsetStart} -${this.offsetMinus}${this.selectedInterval} +${this.offsetPlus}${this.selectedInterval}`
+      return `${this.offsetStart} -${this.offsetMinus}${this.selectedInterval} +${this.offsetPlus}${this.selectedInterval}`
     },
     formatDateTime: function (skipCheck = false) {
-      this.ready = false;
+      this.ready = false
 
       // Exit early if user inputs are missing
       if (!skipCheck && !this.hasAllInputs()) {
@@ -211,9 +209,9 @@ export default {
       let startDateTimeMoment = this.$moment.utc(startDateTimeString)
       let endDateTimeMoment = this.$moment.utc(endDateTimeString)
 
-      if (!(startDateTimeMoment.hour() || startDateTimeMoment.minute() || startDateTimeMoment.second()
-          || endDateTimeMoment.hour() || endDateTimeMoment.minute() || endDateTimeMoment.second())) {
-          dateTimeTemplate = 'YYYY-MM-DD'
+      if (!(startDateTimeMoment.hour() || startDateTimeMoment.minute() || startDateTimeMoment.second() ||
+          endDateTimeMoment.hour() || endDateTimeMoment.minute() || endDateTimeMoment.second())) {
+        dateTimeTemplate = 'YYYY-MM-DD'
       }
 
       // Only overwrite the timestamp if it's valid
@@ -242,32 +240,30 @@ export default {
         [this.startDateTime, this.endDateTime] = [this.endDateTime, this.startDateTime]
       }
 
-      let chip_type = ''
-      let chip_value = ''
+      let chipType = ''
+      let chipValue = ''
 
       // Set the right chip type and value
-      if (this.radio == 'interval') {
-        chip_type = 'datetime_interval'
-        chip_value = this.getOffsetDateTime()
-      }
-      else {
-        chip_type = 'datetime_range'
-        chip_value = this.startDateTime + ',' + this.endDateTime
+      if (this.radio === 'interval') {
+        chipType = 'datetime_interval'
+        chipValue = this.getOffsetDateTime()
+      } else {
+        chipType = 'datetime_range'
+        chipValue = this.startDateTime + ',' + this.endDateTime
       }
 
       // Update or creating a chip
       if (this.chip) {
-        this.chip['type'] = chip_type
-        this.chip['value'] = chip_value
+        this.chip['type'] = chipType
+        this.chip['value'] = chipValue
         this.$emit('updateChip', this.chip)
-      }
-      else {
+      } else {
         this.chip = {
           'field': '',
-          'type': chip_type,
-          'value': chip_value,
+          'type': chipType,
+          'value': chipValue,
           'operator': 'must',
-          'active' : true
+          'active': true
         }
         this.$emit('addChip', this.chip)
 
@@ -278,13 +274,13 @@ export default {
       // Close the menu
       this.$emit('hideDropdown')
     },
-    resetInterface: function() {
+    resetInterface: function () {
       Object.assign(this.$data, this.$options.data.apply(this))
     },
-    isSelected: function(radioName) {
+    isSelected: function (radioName) {
       return this.radio === radioName
     },
-    jumpTo: function(name) {
+    jumpTo: function (name) {
       // Move cursor to the specified form input
       this.$refs[name].focus()
     }

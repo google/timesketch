@@ -111,6 +111,23 @@ def _validate_csv_fields(mandatory_fields, data):
         ','.join(list(mandatory_set.difference(parsed_set)))))
 
 
+def validate_indices(indices, datastore):
+    """Returns a list of valid indices.
+
+    This function takes a list of indices, checks to see if they exist
+    and then returns the list of indices that exist within the datastore.
+
+    Args:
+        indices (list): List of indices.
+        datastore (ElasticsearchDataStore): a data store object.
+
+    Returns:
+        list of indices that exist within the datastore.
+    """
+    return [
+        i for i in indices if datastore.client.indices.exists(index=i)]
+
+
 def read_and_validate_csv(
         file_handle, delimiter=',', mandatory_fields=None):
     """Generator for reading a CSV file.

@@ -313,8 +313,14 @@ def build_sketch_analysis_pipeline(
 
         kwargs = analyzer_kwargs.get(analyzer_name, {})
         searchindex = SearchIndex.query.get(searchindex_id)
-        timeline = Timeline.query.filter_by(
-            sketch=sketch, searchindex=searchindex).first()
+
+        timeline = None
+        if timeline_id:
+            timeline = Timeline.query.get(timeline_id)
+
+        if not timeline:
+            timeline = Timeline.query.filter_by(
+                sketch=sketch, searchindex=searchindex).first()
 
         analysis = Analysis(
             name=analyzer_name,
@@ -498,9 +504,7 @@ def run_plaso(
             'files.')
 
     plaso_version = int(plaso.__version__)
-    # Uncomment once a new version is released.
-    #if plaso_version <= PLASO_MINIMUM_VERSION:
-    if plaso_version < PLASO_MINIMUM_VERSION:
+    if plaso_version <= PLASO_MINIMUM_VERSION:
         raise RuntimeError(
             'Plaso version is out of date (version {0:d}, please upgrade to a '
             'version that is later than {1:d}'.format(

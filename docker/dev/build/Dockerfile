@@ -1,6 +1,8 @@
 # Use the official Docker Hub Ubuntu 20.04 base image
 FROM ubuntu:20.04
 
+ARG PPA_TRACK=stable
+
 # Prevent needing to configure debian packages, stopping the setup of
 # the docker container.
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
@@ -21,7 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Plaso
-RUN add-apt-repository -y ppa:gift/stable
+RUN add-apt-repository -y ppa:gift/$PPA_TRACK
 RUN apt-get update && apt-get install -y --no-install-recommends \
     plaso-tools \
   && rm -rf /var/lib/apt/lists/*

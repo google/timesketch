@@ -79,7 +79,7 @@ limitations under the License.
 </template>
 
 <script>
-import ApiClient from "../../utils/RestApiClient"
+import ApiClient from '../../utils/RestApiClient'
 import TsCreateViewForm from './CreateViewForm'
 
 export default {
@@ -91,17 +91,16 @@ export default {
     return {
       activeView: null,
       showCreateViewModal: false,
-      position: "is-bottom-right"
+      position: 'is-bottom-right'
     }
   },
   methods: {
-    setActiveView: function (view, doSearch=true) {
+    setActiveView: function (view, doSearch = true) {
       this.showCreateViewModal = false
       this.activeView = view
       if (doSearch) {
         this.$emit('setActiveView', view)
       }
-
     },
     clearSearch: function () {
       this.$emit('clearSearch')
@@ -120,10 +119,10 @@ export default {
       this.activeView.query = this.currentQueryString
       this.activeView.filter = JSON.stringify(this.currentQueryFilter)
       ApiClient.updateView(this.sketchId, this.activeView.id, this.currentQueryString, this.currentQueryFilter)
-       .then((response) => {
-         this.$buefy.toast.open('Saved search has been updated')
-       })
-       .catch((e) => {})
+        .then((response) => {
+          this.$buefy.toast.open('Saved search has been updated')
+        })
+        .catch((e) => {})
     }
   },
   computed: {
@@ -137,8 +136,8 @@ export default {
     }
     let queryViewId = this.$route.query.view
     if (queryViewId) {
-      let view =  this.meta.views.filter(function(view) {
-        return view.id === parseInt(queryViewId);
+      let view = this.meta.views.filter(function (view) {
+        return view.id === parseInt(queryViewId)
       })
       this.setActiveView(view[0], false)
     }

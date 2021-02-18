@@ -117,8 +117,8 @@ import ApiClient from '../utils/RestApiClient'
 import marked from 'marked'
 import _ from 'lodash'
 import TsAggregationListDropdown from '../components/Sketch/AggregationListDropdown'
-import TsAggregationCompact from "../components/Sketch/AggregationCompact"
-import TsAggregationGroupCompact from "../components/Sketch/AggregationGroupCompact"
+import TsAggregationCompact from '../components/Sketch/AggregationCompact'
+import TsAggregationGroupCompact from '../components/Sketch/AggregationGroupCompact'
 import TsViewListDropdown from '../components/Sketch/ViewListDropdown'
 import TsViewEventList from '../components/Sketch/EventListCompact'
 
@@ -213,7 +213,7 @@ export default {
       return this.$store.state.meta
     },
     allAggregations () {
-      const concat = (...arrays) => [].concat(...arrays.filter(Array.isArray));
+      const concat = (...arrays) => [].concat(...arrays.filter(Array.isArray))
       return concat(this.aggregations, this.aggregationGroups)
     }
   },

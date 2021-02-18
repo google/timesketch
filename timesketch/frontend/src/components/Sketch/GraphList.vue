@@ -37,14 +37,14 @@ export default {
     }
   },
   computed: {
-    sketch() {
+    sketch () {
       return this.$store.state.sketch
     },
-    meta() {
+    meta () {
       return this.$store.state.meta
-    },
+    }
   },
-  created() {
+  created () {
     ApiClient.getSavedGraphList(this.sketch.id).then((response) => {
       let graphs = response.data['objects'][0]
       if (graphs !== undefined) {
