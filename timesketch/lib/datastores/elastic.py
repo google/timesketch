@@ -948,6 +948,7 @@ class ElasticsearchDataStore(object):
         }
 
         try:
+            # pylint: disable=unexpected-keyword-arg
             results = self.client.bulk(
                 body=self.import_events, request_timeout=self._request_timeout)
         except (ConnectionTimeout, socket.timeout):
