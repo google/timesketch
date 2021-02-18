@@ -95,6 +95,9 @@ class MockElasticIndices(object):
     def stats(self, *args, **kwargs):
         return {'indices': {}}
 
+    def refresh(self, *args, **kwargs):
+        return
+
 
 class MockDataStore(object):
     """A mock implementation of a Datastore."""
