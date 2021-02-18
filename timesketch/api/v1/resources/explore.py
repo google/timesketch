@@ -29,6 +29,7 @@ from flask_login import current_user
 from timesketch.api.v1 import export
 from timesketch.api.v1 import resources
 from timesketch.lib import forms
+from timesketch.lib import utils
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -102,6 +103,10 @@ class ExploreResource(resources.ResourceMixin, Resource):
         # If _all in indices then execute the query on all indices
         if '_all' in indices:
             indices = all_indices
+
+        # Check if indices are valid.
+        indices = utils.refresh_and_validate_list_of_indices(
+            indices, self.datastore)
 
         # Make sure that the indices in the filter are part of the sketch.
         # This will also remove any deleted timeline from the search result.

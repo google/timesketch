@@ -331,7 +331,8 @@ class SketchResource(resources.ResourceMixin, Resource):
                     index=sketch_indices)
             except elasticsearch.NotFoundError:
                 logger.error(
-                    'Unable to get indices mapping in datastore', exc_info=True)
+                    'Unable to get indices mapping in datastore, for '
+                    'indices: {0:s}'.format(','.join(sketch_indices)))
                 mappings_settings = {}
 
         mappings = []

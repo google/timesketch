@@ -359,7 +359,8 @@ class TimelineResource(resources.ResourceMixin, Resource):
 
         if close_index:
             try:
-                self.datastore.client.indices.close(index=searchindex.index_name)
+                self.datastore.client.indices.close(
+                    index=searchindex.index_name)
             except elasticsearch.NotFoundError:
                 logger.error(
                     'Unable to close index: {0:s} - index not '

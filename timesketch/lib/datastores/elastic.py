@@ -484,8 +484,14 @@ class ElasticsearchDataStore(object):
         if count:
             if 'sort' in query_dsl:
                 del query_dsl['sort']
-            count_result = self.client.count(
-                body=query_dsl, index=list(indices))
+            try:
+                count_result = self.client.count(
+                    body=query_dsl, index=list(indices))
+            except NotFoundError:
+                es_logger.error(
+                    'Unable to count due to an index not found: {0:s}'.format(
+                        ','.join(indices)))
+                return 0
             return count_result.get('count', 0)
 
         if not return_fields:
@@ -715,8 +721,7 @@ class ElasticsearchDataStore(object):
                 index=indices, metric='docs, store')
         except NotFoundError:
             es_logger.error(
-                'Unable to count indexes (index not found)',
-                exc_info=True)
+                'Unable to count indexes (index not found)')
             es_stats = {}
 
         doc_count_total = es_stats.get(

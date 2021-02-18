@@ -28,6 +28,7 @@ import time
 import codecs
 import six
 
+import elasticsearch
 from dateutil import parser
 from flask import current_app
 
@@ -81,6 +82,31 @@ def _scrub_special_tags(dict_obj):
     for field in FIELDS_TO_REMOVE:
         if field in dict_obj:
             _ = dict_obj.pop(field)
+
+
+def refresh_and_validate_list_of_indices(indices, datastore):
+    """Returns a list of valid indices.
+
+    This function takes a list of indices, tries to refresh them
+    and remove indices that are not found.
+
+    Args:
+        indices (list): List of indices.
+        datastore (ElasticsearchDataStore): a data store object.
+
+    Returns:
+        list of indices that are discovered.
+    """
+    for index in indices:
+        try:
+            datastore.client.indices.refresh(index=index)
+        except elasticsearch.NotFoundError:
+            logger.error(
+                'Unable to find index: {0:s}, removing from '
+                'result set.'.format(index))
+            broken_index = indices.index(index)
+            _ = indices.pop(broken_index)
+    return indices
 
 
 def read_and_validate_csv(file_handle, delimiter=','):
