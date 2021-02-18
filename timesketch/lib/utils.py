@@ -83,6 +83,23 @@ def _scrub_special_tags(dict_obj):
             _ = dict_obj.pop(field)
 
 
+def validate_indices(indices, datastore):
+    """Returns a list of valid indices.
+
+    This function takes a list of indices, checks to see if they exist
+    and then returns the list of indices that exist within the datastore.
+
+    Args:
+        indices (list): List of indices.
+        datastore (ElasticsearchDataStore): a data store object.
+
+    Returns:
+        list of indices that exist within the datastore.
+    """
+    return [
+        i for i in indices if datastore.client.indices.exists(index=i)]
+
+
 def read_and_validate_csv(file_handle, delimiter=','):
     """Generator for reading a CSV file.
 

@@ -21,6 +21,8 @@ import json
 import logging
 import zipfile
 
+import elasticsearch
+
 from flask import abort
 from flask import current_app
 from flask import jsonify
@@ -458,7 +460,12 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         # TODO (kiddi): Move this to lib/datastores/elastic.py.
         if indexes_to_open:
-            self.datastore.client.indices.open(','.join(indexes_to_open))
+            try:
+                self.datastore.client.indices.open(','.join(indexes_to_open))
+            except elasticsearch.NotFoundError:
+                logger.error('Unable to open index, not found: {0:s}'.format(
+                    ','.join(indexes_to_open)))
+
         return HTTP_STATUS_CODE_OK
 
     def _archive_sketch(self, sketch):
@@ -506,5 +513,10 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         # TODO (kiddi): Move this to lib/datastores/elastic.py.
         if indexes_to_close:
-            self.datastore.client.indices.close(','.join(indexes_to_close))
+            try:
+                self.datastore.client.indices.close(','.join(indexes_to_close))
+            except elasticsearch.NotFoundError:
+                logger.error(
+                    'Unable to close indices, not found: {0:s}'.format(
+                        ','.join(indexes_to_close)))
         return HTTP_STATUS_CODE_OK
