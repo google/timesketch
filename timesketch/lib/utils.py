@@ -28,7 +28,6 @@ import time
 import codecs
 import six
 
-import elasticsearch
 from dateutil import parser
 from flask import current_app
 
