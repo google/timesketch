@@ -555,7 +555,8 @@ class TimesketchApi:
 
             index_obj = sigma.Sigma(api=self)
             for key, value in rule_dict.items():
-                index_obj.data[key] = value
+                #index_obj.data[key] = value
+                index_obj.set_value(key, value)
             rules.append(index_obj)
         return rules
 
@@ -575,7 +576,7 @@ class TimesketchApi:
         return sigma_obj
 
     def get_sigma_rule_by_text(self, rule_text):
-        """Returns a Sigma Object based on a sigma rule.
+        """Returns a Sigma Object based on a sigma rule test.
 
         Args:
             rule_text: Full Sigma rule text.
@@ -593,7 +594,7 @@ class TimesketchApi:
             sigma_obj = sigma.Sigma(api=self)
             sigma_obj.from_text(rule_text)
         except ValueError:
-            logger.error('Parsing Error, unable to parse the Sigma rule',
-                         exc_info=True)
+            logger.error(
+                'Parsing Error, unable to parse the Sigma rule',exc_info=True)
 
         return sigma_obj

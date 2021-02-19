@@ -39,7 +39,6 @@ class Sigma(resource.BaseResource):
             api: An instance of TimesketchApi object.
 
         """
-        self.api = api
         self._author = None
         self._date = None
         self._description = None
@@ -247,6 +246,15 @@ class Sigma(resource.BaseResource):
 
         return sigma_data.get('references', '')
 
+    def set_value(self, key, value):
+        """Sets the value for a given key
+
+        Args:
+            key: key to set the value
+            value: value to set
+
+        """
+        self.data[key] = value
 
     def from_rule_uuid(self, rule_uuid):
         """Get a Sigma object from a rule uuid.
