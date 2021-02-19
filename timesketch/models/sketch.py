@@ -27,6 +27,9 @@ from sqlalchemy import Unicode
 from sqlalchemy import UnicodeText
 from sqlalchemy.orm import relationship
 
+from sqlalchemy.orm import backref
+from sqlalchemy.orm.collections import attribute_mapped_collection
+
 from timesketch.models import BaseModel
 from timesketch.models.acl import AccessControlMixin
 from timesketch.models.annotations import LabelMixin
@@ -691,3 +694,99 @@ class GraphCache(BaseModel):
         self.graph_elements = graph_elements
         self.num_nodes = num_nodes
         self.num_edges = num_edges
+
+
+# TODO: This is WIP
+
+class AggregationTemplate(LabelMixin, StatusMixin, BaseModel):
+    """Implements the Aggregation Template model."""
+    name = Column(Unicode(255))
+    description = Column(UnicodeText())
+    agg_type = Column(Unicode(255))
+    parameters = Column(UnicodeText())
+    chart_type = Column(Unicode(255))
+
+    def __init__(self, name, description, agg_type, parameters, chart_type):
+        """Initialize the Aggregation Template object.
+
+        Args:
+            name (str): Name of the aggregation
+            description (str): Description of the aggregation
+            agg_type (str): Aggregation plugin type
+            parameters (str): JSON serialized dict with aggregation parameters
+            chart_type (str): Chart plugin type
+        """
+        super().__init__()
+        self.name = name
+        self.description = description
+        self.agg_type = agg_type
+        self.aggregationgroup = aggregationgroup
+        self.parameters = parameters
+        self.chart_type = chart_type
+
+
+class InvestigativeQuestion(BaseModel):
+    question = Column(UnicodeText())
+    description = Column(UnicodeText())
+    analyzers = Column(UnicodeText())
+    graphs = Column(UnicodeText())
+    datasources = 
+    aggregationtemplates = Column(
+        Integer, ForeignKey('aggregationtemplate.id'))
+    searchtemplates = Column(
+        Integer, ForeignKey('searchtemplate.id'))
+
+
+class SearchHistory(BaseModel):
+    id = Column(Integer, primary_key=True)
+    parent_id = Column(Integer, ForeignKey(id))
+
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    query_string = Column(UnicodeText())
+    query_filter = Column(UnicodeText())
+    query_dsl = Column(UnicodeText())
+    
+    events = relationship(
+        'Event',
+        backref='sketch',
+        lazy='select'
+    )
+
+    children = relationship(
+        'SearchHistory',
+        # cascade deletions
+        cascade="all, delete-orphan",
+        # many to one + adjacency list - remote_side
+        # is required to reference the 'remote'
+        # column in the join condition.
+        backref=backref("parent", remote_side=id),
+        # children will be represented as a dictionary
+        # on the "id" attribute.
+        collection_class=attribute_mapped_collection('id'),
+    )
+
+    def __init__(
+        self, user, sketch, query_string, query_filter=None, query_dsl=None,
+        parent=None):
+        self.user = user
+        self.sketch = sketch
+        self.query_string = query_string
+        self.query_filter = query_filter
+        self.query_dsl = query_dsl
+        self.parent = parent
+
+    def __repr__(self):
+        return "SearchHistory(query_string=%r, id=%r, parent_id=%r)" % (
+            self.query_string,
+            self.id,
+            self.parent_id,
+        )
+
+    def dump(self, _indent=0):
+        return (
+            "   " * _indent
+            + repr(self)
+            + "\n"
+            + "".join([c.dump(_indent + 1) for c in self.children.values()])
+        )
