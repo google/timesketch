@@ -143,7 +143,7 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
                 'Sigma Parsing error: Feature in the rule provided '
                 ' is not implemented in this backend', exc_info=True)
             abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 
+                HTTP_STATUS_CODE_BAD_REQUEST,
                 'Error generating rule {0!s}'.format(exception))
 
         except sigma_exceptions.SigmaParseError as exception:
