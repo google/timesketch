@@ -4,6 +4,17 @@ It is recommended to develop Timesketch using a docker container. Refer to [Dock
 
 Note: Exclamation mark `!` denotes commands that should run in the docker container shell, dollar sign `$` denotes commands to run in your local shell.
 
+#### Locations and concepts
+
+* Timesketch provides a webinterface and a REST API
+* The configurations is located at ```/data``` sourcecode folder
+* The front end uses ```Vue.js``` framework and is stored at ```/timesketch/frontend```
+* Code that is used in potentially multiple locations is stored in ```/timesketch/lib``` 
+* Analyzers are located at ```/timesketch/lib/analyzers```
+* The API methods are defined in ```/timesketch/api``` 
+* API client code is in ```/api_client/python/timesketch_api_client```
+* Data models are defined in ```/timesketch/models```
+
 #### Frontend development
 
 First we need to get an interactive shell to the container to install the frontend modules:
@@ -56,6 +67,15 @@ And execute the single test
 ```
 nosetests timesketch/lib/emojis_test.py -v
 ```
+
+##### Writing tests
+It is recommended to write unittests as much as possible.
+
+Test files in Timesketch have the naming convention ```_test.py``` and are stored next to the files they test. E.g. a test file for ```/timesketch/lib/emojis.py``` is stored as ```/timesketch/lib/emojis_test.py```
+
+The unittests for the api client can use ```mock``` to emulate responses from the server. The mocked answers are written in: ```api_client/python/timesketch_api_client/test_lib.py```. 
+
+To introduce a new API endpoint to be tested, the endpoint needs to be registered in the ```url_router``` section in ```/api_client/python/timesketch_api_client/test_lib.py``` and the response needs to be defined in the same file.
 
 #### Building Timesketch frontend
 
@@ -159,3 +179,28 @@ effect. In the menu select `Kernel | Restart`, now you should be able to go back
 into the notebook and make use of the latest changes in the API client.
 
 ![Restarting Kernel](images/kernel_restart.png)
+
+#### API development
+
+Exposing new functionality via the API starts at ```/timesketch/api/v1/routes.py```. In that file the different routes / endpoints are defined that can be used.
+Typically every route has a dedicated Resource file in ```/timesketch/api/v1/resources```.
+
+A resource can have ```GET``` as well as ```POST```or other HTTP methods each defined in the same resource file. A good example of a resource that has a mixture is ```/timesketch/api/v1/resources/archive.py```.
+
+To write tests for the resource, add a section in ```/timesketch/api/v1/resources_test.py```
+
+##### Error handling
+
+It is recommended to expose the error with as much detail as possible to the user / tool that is trying to access the resource.
+
+For example the following will give a human readable information as well as a HTTP status code that client code can react on
+```python
+if not sketch:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+```
+On the opposite side the following is not recommended:
+```python
+if not sketch:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'Error')
+```
+
