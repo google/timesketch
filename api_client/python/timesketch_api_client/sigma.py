@@ -44,7 +44,7 @@ class Sigma(resource.BaseResource):
         super().__init__(
             api=api, resource_uri=resource_uri)
 
-    @property 
+    @property
     def attributes(self):
         """Returns a list of all attribute keys for the rule"""
         return list(self._attr_dict.keys())
