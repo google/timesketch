@@ -555,7 +555,6 @@ class TimesketchApi:
 
             index_obj = sigma.Sigma(api=self)
             for key, value in rule_dict.items():
-                #index_obj.data[key] = value
                 index_obj.set_value(key, value)
             rules.append(index_obj)
         return rules

@@ -68,8 +68,10 @@ class TimesketchSigmaTest(unittest.TestCase):
         rule = self.api_client.get_sigma_rule(
             rule_uuid='5266a592-b793-11ea-b3de-0242ac130004')
         rule.from_rule_uuid('5266a592-b793-11ea-b3de-0242ac130004')
+        self.assertGreater(len(rule.attributes),5)
         self.assertIsNotNone(rule)
         self.assertIn('Alexander', rule.author)
+        self.assertIn('Alexander', rule.get_attribute('author'))
         self.assertEqual(rule.id, '5266a592-b793-11ea-b3de-0242ac130004')
         self.assertEqual(rule.title, 'Suspicious Installation of Zenmap')
         self.assertIn('zmap', rule.es_query, 'ES_Query does not match')
@@ -119,6 +121,7 @@ class TimesketchSigmaTest(unittest.TestCase):
         rule = self.api_client.get_sigma_rule_by_text(MOCK_SIGMA_RULE)
 
         self.assertIsNotNone(rule)
+        self.assertGreater(len(rule.attributes),5)
         self.assertIn('zsh', rule.es_query)
         self.assertIn('Installation of foobar', rule.title)
         self.assertIn('', rule.id)

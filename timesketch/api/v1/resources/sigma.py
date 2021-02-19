@@ -143,16 +143,16 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
                 'Sigma Parsing error: Feature in the rule provided '
                 ' is not implemented in this backend', exc_info=True)
             abort(
-                HTTP_STATUS_CODE_BAD_REQUEST, 'Error generating rule {0!s}'
-                .format(exception))
+                HTTP_STATUS_CODE_BAD_REQUEST, 
+                'Error generating rule {0!s}'.format(exception))
 
         except sigma_exceptions.SigmaParseError as exception:
             logger.error(
                 'Sigma Parsing error: unknown error', exc_info=True)
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Sigma parsing error generating rule  with error: {0!s}'
-                .format(exception))
+                'Sigma parsing error generating rule  with error: {0!s}'.format(
+                    exception))
 
         except yaml.parser.ParserError as exception:
             logger.error(
@@ -160,8 +160,8 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
                 exc_info=True)
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
-                'Sigma parsing error: invalid yaml provided {0!s}'
-                .format(exception))
+                'Sigma parsing error: invalid yaml provided {0!s}'.format(
+                    exception))
 
         if sigma_rule is None:
             abort(
