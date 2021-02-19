@@ -140,7 +140,8 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
 
         except NotImplementedError as exception:
             logger.error(
-                'Sigma Parsing error: Feature in the rule provided is not implemented in this backend', exc_info=True) # pylint: disable=line-too-long
+                'Sigma Parsing error: Feature in the rule provided '
+                ' is not implemented in this backend', exc_info=True)
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST, 'Error generating rule {0!s}'
                 .format(exception))

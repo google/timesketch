@@ -53,41 +53,29 @@ class Sigma(resource.BaseResource):
         self._modified = None
         self._rule_uuid = None
         self._references = None
-        self._resource_uri = 'sigma/' # TODO: clarify: is that okay?
         self._title = None
+        resource_uri = 'sigma/'
 
         super().__init__(
-            api=api, resource_uri=self._resource_uri)
+            api=api, resource_uri=resource_uri)
 
     @property
     def es_query(self):
         """Returns the elastic search query."""
         if self._es_query:
             return self._es_query
+        sigma_data = self.data
 
-        if not self.data or self.data is None:
-            self.lazyload_data(refresh_cache=True)
-
-        try:
-            self._es_query = self.data.get('es_query', '')
-        except AttributeError: # in case self.data is Nonetype
-            self._es_query = ''
-        return self._es_query
+        return sigma_data.get('es_query', '')
 
     @property
     def title(self):
         """Returns the sigma rule title."""
         if self._title:
             return self._title
+        sigma_data = self.data
 
-        if not self.data or self.data is None:
-            self.lazyload_data(refresh_cache=True)
-
-        try:
-            self._title = self.data.get('title', '')
-        except AttributeError: # in case self.data is Nonetype
-            self._title = ''
-        return self._title
+        return sigma_data.get('title', '')
 
     @property
     def id(self):
@@ -95,10 +83,6 @@ class Sigma(resource.BaseResource):
         if self._id:
             return self._id
         sigma_data = self.data
-
-        if not sigma_data:
-            self.lazyload_data()
-            return ''
 
         return sigma_data.get('id', '')
 
