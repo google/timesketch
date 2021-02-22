@@ -23,7 +23,7 @@ services:
       - ./logs:/var/log/timesketch/
 
   elasticsearch:
-    image: elasticsearch:${ELASTIC_VERSION}
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:${ELASTIC_VERSION}
     environment:
       - discovery.type=single-node
       - bootstrap.memory_lock=true
