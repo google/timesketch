@@ -41,3 +41,6 @@ DEFAULT_SOURCE_FIELDS = DEFAULT_FIELDS + [
     'similarity_score',
     'human_readable',
     '__ts_emojis']
+
+# Prometheus metrics
+METRICS_NAMESPACE = 'timesketch'
