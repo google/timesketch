@@ -36,7 +36,6 @@ logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
 logger = logging.getLogger('timesketch_api.sketch')
 
 
-#pylint: disable=use-a-generator
 class Sketch(resource.BaseResource):
     """Timesketch sketch object.
 
