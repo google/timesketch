@@ -384,6 +384,9 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         utils.update_sketch_last_activity(sketch)
 
+        # TODO: Read the data reason and save into the database.
+        # reason = form.get('reason', '')
+
         index_name = form.get('index_name', '')
         file_storage = request.files.get('file')
         if file_storage:

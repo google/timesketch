@@ -61,6 +61,7 @@ class ImportStreamer(object):
         self._format_string = None
         self._index = ''
         self._last_response = None
+        self._reason = 'Importer via the importer.'
         self._resource_url = ''
         self._sketch = None
         self._timeline_id = None
@@ -232,6 +233,7 @@ class ImportStreamer(object):
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
             'data_label': self._data_label,
+            'reason': self._reason,
             'events': '\n'.join([json.dumps(x) for x in self._data_lines]),
         }
         if self._index:
@@ -281,6 +283,7 @@ class ImportStreamer(object):
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
             'data_label': self._data_label,
+            'reason': self._reason,
             'events': data_frame.to_json(orient='records', lines=True),
         }
         if self._index:
@@ -322,6 +325,7 @@ class ImportStreamer(object):
             'name': timeline_name,
             'sketch_id': self._sketch.id,
             'total_file_size': file_size,
+            'reason': self._reason,
             'data_label': self._data_label,
         }
         if self._index:
@@ -673,6 +677,10 @@ class ImportStreamer(object):
     def set_index_name(self, index):
         """Set the index name."""
         self._index = index
+
+    def set_reason(self, reason):
+        """Set the import reason."""
+        self._reason = reason
 
     def generate_index_name(self):
         """Generates a new index name."""
