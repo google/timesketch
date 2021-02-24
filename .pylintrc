@@ -99,7 +99,6 @@ disable=assignment-from-none,
         unsubscriptable-object,
         useless-object-inheritance,
         useless-suppression,
-        inconsistent-return-statements
 
 
 # Enable the message, report, category or checker with the given id(s). You can
