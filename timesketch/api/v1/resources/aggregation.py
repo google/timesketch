@@ -52,8 +52,9 @@ class AggregationResource(resources.ResourceMixin, Resource):
         Handler for /api/v1/sketches/:sketch_id/aggregation/:aggregation_id
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
-            aggregation_id: Integer primary key for an aggregation database model
+            sketch_id: Integer primary key for a sketch database model.
+            aggregation_id: Integer primary key for an aggregation database
+                model.
 
         Returns:
             JSON with aggregation results
