@@ -210,6 +210,7 @@ class ElasticsearchDataStore(object):
                 'passed timelines are not a list.')
             return query_dsl
 
+        # pylint: disable=use-a-generator
         if not all([isinstance(x, int) for x in timeline_ids]):
             es_logger.error(
                 'All timeline IDs need to be an integer.')
@@ -712,6 +713,7 @@ class ElasticsearchDataStore(object):
             labels.append(bucket['key'])
         return labels
 
+    # pylint: disable=inconsistent-return-statements
     def get_event(self, searchindex_id, event_id):
         """Get one event from the datastore.
 
@@ -745,6 +747,7 @@ class ElasticsearchDataStore(object):
 
         except NotFoundError:
             abort(HTTP_STATUS_CODE_NOT_FOUND)
+
 
     def count(self, indices):
         """Count number of documents.
