@@ -27,6 +27,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN wget https://raw.githubusercontent.com/google/timesketch/master/requirements.txt
 RUN pip3 install -r requirements.txt
 
+# TODO: Remove when there is a dpkg package built
+RUN pip3 install prometheus-flask-exporter
+
 # Install timesketch from the current branch (In the context of CI platform)
 ADD . /tmp/timesketch
 RUN pip3 install /tmp/timesketch && pip3 install /tmp/timesketch/api_client/python && \
