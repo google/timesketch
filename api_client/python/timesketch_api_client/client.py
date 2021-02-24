@@ -140,7 +140,7 @@ class TimesketchApi:
         self.session = session_object
 
     def _authenticate_session(self, session, username, password):
-        """Post username/password to authenticate the HTTP seesion.
+        """Post username/password to authenticate the HTTP session.
 
         Args:
             session: Instance of requests.Session.
