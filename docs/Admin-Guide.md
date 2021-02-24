@@ -20,6 +20,7 @@
   - [search_template](#search_template)
   - [import](#import)
   - [similarity_score](#similarity_score)
+  - [Upgrade DB After Schema Change](#upgrade-db-after-schema-change)
 
 ## Installation
 
@@ -176,7 +177,7 @@ tsctl db
 
 Will drop all databases.
 
-Comand:
+Command:
 
 ```shell
 tsctl drop_db
@@ -199,7 +200,7 @@ Delete timeline permanently from Timesketch and Elasticsearch. It will alert if 
    index_name: The name of the index in Elasticsearch
 ```
 
-Comand:
+Command:
 
 ```shell
 tsctl purge

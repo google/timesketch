@@ -244,7 +244,7 @@ class Event(object):
         """Update the status of an event.
 
         Args:
-            change: optional change object (instace of a namedtuple).
+            change: optional change object (instance of a namedtuple).
                     If supplied the context will be updated with the
                     change information.
         """
