@@ -61,10 +61,12 @@ class ImportStreamer(object):
         self._format_string = None
         self._index = ''
         self._last_response = None
+        self._provider = 'Imported via the importer library.'
         self._resource_url = ''
         self._sketch = None
         self._timeline_id = None
         self._timeline_name = None
+        self._upload_context = ''
 
         self._chunk = 1
 
@@ -232,10 +234,14 @@ class ImportStreamer(object):
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
             'data_label': self._data_label,
+            'provider': self._provider,
             'events': '\n'.join([json.dumps(x) for x in self._data_lines]),
         }
         if self._index:
             data['index_name'] = self._index
+
+        if self._upload_context:
+            data['context'] = self._upload_context
 
         logger.debug(
             'Data buffer ready for upload, took {0:.2f} seconds to '
@@ -281,10 +287,14 @@ class ImportStreamer(object):
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
             'data_label': self._data_label,
+            'provider': self._provider,
             'events': data_frame.to_json(orient='records', lines=True),
         }
         if self._index:
             data['index_name'] = self._index
+
+        if self._upload_context:
+            data['context'] = self._upload_context
 
         response = self._sketch.api.session.post(self._resource_url, data=data)
         self._chunk += 1
@@ -322,10 +332,14 @@ class ImportStreamer(object):
             'name': timeline_name,
             'sketch_id': self._sketch.id,
             'total_file_size': file_size,
+            'provider': self._provider,
             'data_label': self._data_label,
         }
         if self._index:
             data['index_name'] = self._index
+
+        if self._upload_context:
+            data['context'] = self._upload_context
 
         if file_size <= self._threshold_filesize:
             file_dict = {
@@ -673,6 +687,14 @@ class ImportStreamer(object):
     def set_index_name(self, index):
         """Set the index name."""
         self._index = index
+
+    def set_provider(self, provider):
+        """Set the data provider."""
+        self._provider = provider
+
+    def set_upload_context(self, upload_context):
+        """Set the upload context for the data import."""
+        self._upload_context = upload_context
 
     def generate_index_name(self):
         """Generates a new index name."""
