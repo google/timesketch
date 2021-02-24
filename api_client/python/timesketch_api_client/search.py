@@ -28,7 +28,7 @@ logger = logging.getLogger('timesketch_api.search')
 class Chip:
     """Class definition for a query filter chip."""
 
-    # The type of a chip that is defiend.
+    # The type of a chip that is defined.
     CHIP_TYPE = ''
 
     # The chip value defines what property or attribute of the

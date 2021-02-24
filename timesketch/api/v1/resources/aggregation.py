@@ -53,7 +53,7 @@ class AggregationResource(resources.ResourceMixin, Resource):
 
         Args:
             sketch_id: Integer primary key for a sketch database model
-            aggregation_id: Integer primary key for an agregation database model
+            aggregation_id: Integer primary key for an aggregation database model
 
         Returns:
             JSON with aggregation results

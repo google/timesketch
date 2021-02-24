@@ -412,7 +412,7 @@ class ImportStreamer(object):
                 'formatted according using this format string: '
                 '%Y-%m-%dT%H:%M:%S%z. If that is not provided the data frame '
                 'needs to have a column that has the word "time" in it, '
-                'that can be used to conver to a datetime field.')
+                'that can be used to convert to a datetime field.')
 
         if 'message' not in data_frame_use:
             raise ValueError(
@@ -483,7 +483,7 @@ class ImportStreamer(object):
                 header : int, list of int, default 0
                     Row (0-indexed) to use for the column labels of the
                     parsed DataFrame. If a list of integers is passed those
-                    row positions wil be combined into a ``MultiIndex``. Use
+                    row positions will be combined into a ``MultiIndex``. Use
                     None if there is no header.
                 names : array-like, default None
                     List of column names to use. If file contains no header
