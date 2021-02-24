@@ -604,7 +604,7 @@ class ElasticsearchDataStore(object):
             Generator of event documents in JSON format
         """
         # Increase metrics counter
-        METRICS['search_resuests'].labels(type='streaming').inc()
+        METRICS['search_requests'].labels(type='streaming').inc()
 
         if not query_filter.get('size'):
             query_filter['size'] = self.DEFAULT_STREAM_LIMIT
