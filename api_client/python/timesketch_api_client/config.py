@@ -215,7 +215,7 @@ class ConfigAssistant:
                 the file RC_FILENAME inside the user's home directory.
             section (str): The configuration section to read from. This
                 is optional and defaults to timesketch. This can be
-                useful if you have mutiple Timesketch servers to connect to,
+                useful if you have multiple Timesketch servers to connect to,
                 with each one of them having a separate section in the config
                 file.
 
@@ -293,7 +293,7 @@ class ConfigAssistant:
                 default location will be used.
             section (str): The configuration section to write to. This
                 is optional and defaults to timesketch. This can be
-                useful if you have mutiple Timesketch servers to connect to,
+                useful if you have multiple Timesketch servers to connect to,
                 with each one of them having a separate section in the config
                 file.
             token_file_path (str): Optional path to the location of the token
@@ -370,7 +370,7 @@ def get_client(
             not supplied a default path will be used.
         config_section (str): The configuration section to read from. This
             is optional and defaults to timesketch. This can be
-            useful if you have mutiple Timesketch servers to connect to,
+            useful if you have multiple Timesketch servers to connect to,
             with each one of them having a separate section in the config
             file.
         token_password (str): an optional password to decrypt
@@ -438,7 +438,7 @@ def configure_missing_parameters(
             This defaults to False.
         config_section (str): The configuration section to read from. This
             is optional and defaults to timesketch. This can be
-            useful if you have mutiple Timesketch servers to connect to,
+            useful if you have multiple Timesketch servers to connect to,
             with each one of them having a separate section in the config
             file.
     """

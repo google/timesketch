@@ -548,7 +548,7 @@ class AggregationGroup(object):
         """Add an aggregation object to the group.
 
         Args:
-            aggregation_obj (Aggregation): the Aggregation objec.
+            aggregation_obj (Aggregation): the Aggregation object.
         """
         self.group.aggregations.append(aggregation_obj)
         self.group.orientation = self._orientation
@@ -567,7 +567,7 @@ class AggregationGroup(object):
         """Sets how charts should be joined.
 
         Args:
-            orienation: string that contains how they should be connected
+            orientation: string that contains how they should be connected
                 together, That is the chart orientation,  the options are:
                 "layer", "horizontal" and "vertical". The default behavior
                 is "layer".
@@ -582,7 +582,7 @@ class AggregationGroup(object):
         self.commit()
 
     def set_vertical(self):
-        """Sets the "orienation" to vertical."""
+        """Sets the "orientation" to vertical."""
         self._orientation = 'vertical'
         self.commit()
 

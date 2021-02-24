@@ -28,7 +28,7 @@ logger = logging.getLogger('timesketch_api.search')
 class Chip:
     """Class definition for a query filter chip."""
 
-    # The type of a chip that is defiend.
+    # The type of a chip that is defined.
     CHIP_TYPE = ''
 
     # The chip value defines what property or attribute of the
@@ -701,12 +701,15 @@ class Search(resource.SketchResource):
     @indices.setter
     def indices(self, indices):
         """Make changes to the current set of indices."""
+        def _is_string_or_int(item):
+            return isinstance(item, (str, int))
+
         if not isinstance(indices, list):
             logger.warning(
                 'Indices needs to be a list of strings (indices that were '
                 'passed in were not a list).')
             return
-        if not all([isinstance(x, (str, int)) for x in indices]):
+        if not all(map(_is_string_or_int, indices)):
             logger.warning(
                 'Indices needs to be a list of strings or ints, not all '
                 'entries in the indices list are valid string/int.')

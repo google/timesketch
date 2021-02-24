@@ -388,7 +388,7 @@ class Sketch(resource.BaseResource):
 
         status = error.check_return_status(response, logger)
         if not status:
-            logger.error('Unable to remove the attriubute from the sketch.')
+            logger.error('Unable to remove the attribute from the sketch.')
 
         return status
 
@@ -772,7 +772,7 @@ class Sketch(resource.BaseResource):
 
         Returns:
             A story object (instance of Story) if one is found. Returns
-            a None if neiter story_id or story_title is defined or if
+            a None if neither story_id or story_title is defined or if
             the view does not exist. If a story title is defined and
             not a story id, the first story that is found with the same
             title will be returned.
@@ -802,7 +802,7 @@ class Sketch(resource.BaseResource):
 
         Returns:
             A search object (instance of search.Search) if one is found.
-            Returns a None if neiter view_id or view_name is defined or if
+            Returns a None if neither view_id or view_name is defined or if
             the search does not exist.
         """
         return self.get_saved_search(search_id=view_id, search_name=view_name)
@@ -818,7 +818,7 @@ class Sketch(resource.BaseResource):
 
         Returns:
             A search object (instance of search.Search) if one is found.
-            Returns a None if neiter search_id or search_name is defined or if
+            Returns a None if neither search_id or search_name is defined or if
             the search does not exist.
         """
         if self.is_archived():
@@ -1537,7 +1537,7 @@ class Sketch(resource.BaseResource):
         return self._archived
 
     def archive(self):
-        """Archive a sketch and return a boolean whether it was succesful."""
+        """Archive a sketch and return a boolean whether it was successful."""
         if self.is_archived():
             logger.error('Sketch already archived.')
             return False
@@ -1554,7 +1554,7 @@ class Sketch(resource.BaseResource):
         return return_status
 
     def unarchive(self):
-        """Unarchives a sketch and return boolean whether it was succesful."""
+        """Unarchives a sketch and return boolean whether it was successful."""
         if not self.is_archived():
             logger.error('Sketch wasn\'t archived.')
             return False

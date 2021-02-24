@@ -230,7 +230,7 @@ class SketchResource(resources.ResourceMixin, Resource):
 
     @staticmethod
     def _get_sketch_for_admin(sketch):
-        """Returns a limited sketch view for adminstrators.
+        """Returns a limited sketch view for administrators.
 
         An administrator needs to get information about all sketches
         that are stored on the backend. However that view should be
