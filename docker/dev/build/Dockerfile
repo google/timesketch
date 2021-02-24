@@ -44,10 +44,6 @@ RUN pip3 install -r /timesketch-requirements.txt
 COPY ./test_requirements.txt /timesketch-test-requirements.txt
 RUN pip3 install -r /timesketch-test-requirements.txt
 
-# Install metrics dependencies
-# TODO: Remove this and move to requirements.txt when metrics is in production.
-RUN pip3 install prometheus-flask-exporter
-
 # Copy the entrypoint script into the container
 COPY ./docker/dev/build/docker-entrypoint.sh /
 RUN chmod a+x /docker-entrypoint.sh
