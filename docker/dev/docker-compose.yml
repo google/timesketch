@@ -57,7 +57,7 @@ services:
     restart: always
 
   notebook:
-    container_name: picatrix
+    container_name: notebook
     image: us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest
     ports:
       - 127.0.0.1:8844:8844
@@ -74,7 +74,7 @@ services:
     volumes:
       - ./prometheus:/etc/prometheus
     ports:
-      - "127.0.0.1:9090:9090"
+      - 127.0.0.1:9090:9090
     command: --config.file=/etc/prometheus/prometheus.yml
 
   es-metrics-exporter:
@@ -102,4 +102,4 @@ services:
       - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/dashboards/timesketch.json
     restart: always
     ports:
-      - "127.0.0.1:3000:3000"
+      - 127.0.0.1:3000:3000

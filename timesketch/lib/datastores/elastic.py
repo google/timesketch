@@ -210,7 +210,6 @@ class ElasticsearchDataStore(object):
                 'passed timelines are not a list.')
             return query_dsl
 
-        # pylint: disable=use-a-generator
         if not all([isinstance(x, int) for x in timeline_ids]):
             es_logger.error(
                 'All timeline IDs need to be an integer.')
