@@ -596,7 +596,7 @@ class ElasticsearchDataStore(object):
             query_dsl: Dictionary containing Elasticsearch DSL query
             indices: List of indices to query
             return_fields: List of fields to return
-            enable_scroll: Boolean determing whether scrolling is enabled.
+            enable_scroll: Boolean determining whether scrolling is enabled.
             timeline_ids: Optional list of IDs of Timeline objects that should
                 be queried as part of the search.
 
