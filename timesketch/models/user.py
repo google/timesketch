@@ -125,7 +125,7 @@ class Group(LabelMixin, StatusMixin, BaseModel):
             description: Description of the group
             user: Creator (instance of timesketch.models.user.User)
         """
-        super().__init__()        
+        super().__init__()
         self.name = name
         self.display_name = display_name or name
         self.description = description or name
