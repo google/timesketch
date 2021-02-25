@@ -407,7 +407,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         utils.update_sketch_last_activity(sketch)
 
-        # TODO: Read the data provider and save the information to the DB.
+     
 
         index_name = form.get('index_name', '')
         file_storage = request.files.get('file')
