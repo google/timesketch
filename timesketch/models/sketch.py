@@ -691,3 +691,23 @@ class GraphCache(BaseModel):
         self.graph_elements = graph_elements
         self.num_nodes = num_nodes
         self.num_edges = num_edges
+
+
+class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
+    """Implements the datasource model."""
+    timeline_id = Column(Integer, ForeignKey('timeline.id'))
+    provider = Column(UnicodeText())
+    context = Column(UnicodeText())
+
+    def __init__(self, timeline, provider='N/A', context='N/A'):
+        """Initialize the DataSource object.
+
+        Args:
+            timeline (Timeline): Timeline that this datasource is part of.
+            provider (str): Name of the application that collected the data.
+            context (str): Context on how the data was collected.
+        """
+        super().__init__()
+        self.timeline = timeline
+        self.provider = provider
+        self.context = context
