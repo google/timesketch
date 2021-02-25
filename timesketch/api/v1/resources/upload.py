@@ -103,6 +103,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         return searchindex
 
+    # pylint: disable=too-many-arguments
     def _upload_and_index(
             self, file_extension, timeline_name, index_name, sketch, form,
             enable_stream, original_filename='', data_label='', file_path='',
