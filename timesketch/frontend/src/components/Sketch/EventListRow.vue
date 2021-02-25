@@ -85,7 +85,7 @@ limitations under the License.
                         </span>
                         <div class="field is-grouped">
                           <p class="control is-expanded">
-                            <input class="input" v-model="labelToAdd" placeholder="Create new"></input>
+                            <input class="input" v-model="labelToAdd" placeholder="Create new">
                           </p>
                           <p class="control">
                             <button v-on:click="addLabels(labelToAdd)" class="button">Save</button>
@@ -109,9 +109,12 @@ limitations under the License.
           <span v-bind:class="{ 'ts-event-field-container': selectedFields.length === 1 }">
             <span v-bind:class="{ 'ts-event-field-ellipsis': selectedFields.length === 1 }">
               <span v-if="index === 0">
+                <!--eslint-disable-next-line vue/no-use-v-if-with-v-for-->
                 <span v-if="displayOptions.showEmojis" v-for="emoji in event._source.__ts_emojis" :key="emoji" v-html="emoji" :title="meta.emojis[emoji]">{{ emoji }}</span>
                 <span style="margin-left:10px;"></span>
+                <!--eslint-disable-next-line vue/no-use-v-if-with-v-for-->
                 <span v-if="displayOptions.showTags" v-for="tag in event._source.tag" :key="tag" class="tag is-small is-light" style="margin-right:5px; border:1px solid #d1d1d1;">{{ tag }}</span>
+                <!--eslint-disable-next-line vue/no-use-v-if-with-v-for-->
                 <span v-if="displayOptions.showTags" v-for="label in filteredLabels" :key="label" class="tag is-small is-light" style="margin-right:5px; border:1px solid #d1d1d1;">{{ label }}</span>
               </span>
               <span style="word-break: break-word;" :title="event._source[field.field]">
@@ -172,12 +175,12 @@ limitations under the License.
 </template>
 
 <script>
-  import ApiClient from '../../utils/RestApiClient'
-  import TsSketchExploreEventListRowDetail from './EventListRowDetail'
-  import EventBus from "../../main"
-  import { ToastProgrammatic as Toast } from 'buefy'
+import ApiClient from '../../utils/RestApiClient'
+import TsSketchExploreEventListRowDetail from './EventListRowDetail'
+import EventBus from '../../main'
+import { ToastProgrammatic as Toast } from 'buefy'
 
-  export default {
+export default {
   components: {
     TsSketchExploreEventListRowDetail
   },
@@ -240,12 +243,12 @@ limitations under the License.
       if (this.isDarkTheme) {
         return {
           'background-color': backgroundColor,
-          'color': fontColor,
+          'color': fontColor
         }
       }
       return {
         'background-color': backgroundColor,
-        'color': fontColor,
+        'color': fontColor
       }
     },
     datetimeFormat () {
@@ -293,7 +296,7 @@ limitations under the License.
   },
   methods: {
     toggleStar () {
-      this.isStarred =! this.isStarred
+      this.isStarred = !this.isStarred
       ApiClient.saveEventAnnotation(this.sketch.id, 'label', '__ts_star', this.event).then((response) => {
       }).catch((e) => {
         console.error(e)
@@ -301,7 +304,7 @@ limitations under the License.
     },
     toggleStarOnSelect () {
       if (this.isSelected) {
-        this.isStarred =! this.isStarred
+        this.isStarred = !this.isStarred
       }
     },
     postComment: function (comment) {
@@ -362,7 +365,7 @@ limitations under the License.
       }
     },
     toggleTheme: function () {
-      this.isDarkTheme =! this.isDarkTheme
+      this.isDarkTheme = !this.isDarkTheme
     }
   },
   beforeDestroy () {
@@ -383,17 +386,17 @@ limitations under the License.
       this.timeline = this.sketch.active_timelines.filter(timeline => timeline.id === this.event._source.__ts_timeline_id)[0]
     }
 
-    this.isDarkTheme = localStorage.theme === 'dark';
+    this.isDarkTheme = localStorage.theme === 'dark'
 
     if (this.event._source.label.indexOf('__ts_star') > -1) {
-        this.isStarred = true
+      this.isStarred = true
     }
     if (this.event._source.label.indexOf('__ts_comment') > -1) {
-        let searchindexId = this.event._index
-        let eventId = this.event._id
-        ApiClient.getEvent(this.sketch.id, searchindexId, eventId).then((response) => {
-          this.comments = response.data.meta.comments
-        }).catch((e) => {})
+      let searchindexId = this.event._index
+      let eventId = this.event._id
+      ApiClient.getEvent(this.sketch.id, searchindexId, eventId).then((response) => {
+        this.comments = response.data.meta.comments
+      }).catch((e) => {})
     }
   }
 }

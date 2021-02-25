@@ -113,8 +113,16 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
         """
         searchindex = SearchIndex.query.get_with_acl(searchindex_id)
 
-        mapping = self.datastore.client.indices.get_mapping(
-            searchindex.index_name)
+        try:
+            mapping = self.datastore.client.indices.get_mapping(
+                searchindex.index_name)
+        except elasticsearch.NotFoundError:
+            logger.error('Unable to find index: {0:s}'.format(
+                searchindex.index_name))
+            mapping = {}
+            searchindex.set_status('fail')
+            db_session.commit()
+
         fields = list(mapping.get(
             searchindex.index_name, {}).get('mappings', {}).get(
                 'properties', {}).keys())

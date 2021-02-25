@@ -75,6 +75,9 @@ class ElasticsearchDataStore(object):
     DEFAULT_FROM = 0
     DEFAULT_STREAM_LIMIT = 5000 # Max events to return when streaming results
 
+    DEFAULT_FLUSH_RETRY_LIMIT = 3 # Max retries for flushing the queue.
+    DEFAULT_EVENT_IMPORT_TIMEOUT = '3m' # Timeout value for importing events.
+
     def __init__(self, host='127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
         super().__init__()
@@ -95,6 +98,8 @@ class ElasticsearchDataStore(object):
 
         self.import_counter = Counter()
         self.import_events = []
+        self._request_timeout = current_app.config.get(
+            'TIMEOUT_FOR_EVENT_IMPORT', self.DEFAULT_EVENT_IMPORT_TIMEOUT)
 
     @staticmethod
     def _build_labels_query(sketch_id, labels):
@@ -482,8 +487,14 @@ class ElasticsearchDataStore(object):
         if count:
             if 'sort' in query_dsl:
                 del query_dsl['sort']
-            count_result = self.client.count(
-                body=query_dsl, index=list(indices))
+            try:
+                count_result = self.client.count(
+                    body=query_dsl, index=list(indices))
+            except NotFoundError:
+                es_logger.error(
+                    'Unable to count due to an index not found: {0:s}'.format(
+                        ','.join(indices)))
+                return 0
             return count_result.get('count', 0)
 
         if not return_fields:
@@ -549,7 +560,7 @@ class ElasticsearchDataStore(object):
             query_dsl: Dictionary containing Elasticsearch DSL query
             indices: List of indices to query
             return_fields: List of fields to return
-            enable_scroll: Boolean determing whether scrolling is enabled.
+            enable_scroll: Boolean determining whether scrolling is enabled.
             timeline_ids: Optional list of IDs of Timeline objects that should
                 be queried as part of the search.
 
@@ -646,7 +657,14 @@ class ElasticsearchDataStore(object):
 
         labels = []
         # pylint: disable=unexpected-keyword-arg
-        result = self.client.search(index=indices, body=aggregation, size=0)
+        try:
+            result = self.client.search(
+                index=indices, body=aggregation, size=0)
+        except NotFoundError:
+            es_logger.error('Unable to find the index/indices: {0:s}'.format(
+                ','.join(indices)))
+            return labels
+
         buckets = result.get(
             'aggregations', {}).get('nested', {}).get('inner', {}).get(
                 'labels', {}).get('buckets', [])
@@ -706,8 +724,7 @@ class ElasticsearchDataStore(object):
                 index=indices, metric='docs, store')
         except NotFoundError:
             es_logger.error(
-                'Unable to count indexes (index not found)',
-                exc_info=True)
+                'Unable to count indexes (index not found)')
             es_stats = {}
 
         doc_count_total = es_stats.get(
@@ -912,7 +929,7 @@ class ElasticsearchDataStore(object):
 
         return self.import_counter['events']
 
-    def flush_queued_events(self):
+    def flush_queued_events(self, retry_count=0):
         """Flush all queued events.
 
         Returns:
@@ -920,6 +937,7 @@ class ElasticsearchDataStore(object):
                 that were sent to Elastic as well as information
                 on whether there were any errors, and what the
                 details of these errors if any.
+            retry_count: optional int indicating whether this is a retry.
         """
         if not self.import_events:
             return {}
@@ -930,11 +948,19 @@ class ElasticsearchDataStore(object):
         }
 
         try:
-            results = self.client.bulk(body=self.import_events)
+            # pylint: disable=unexpected-keyword-arg
+            results = self.client.bulk(
+                body=self.import_events, timeout=self._request_timeout)
         except (ConnectionTimeout, socket.timeout):
-            # TODO: Add a retry here.
-            es_logger.error('Unable to add events', exc_info=True)
-            return {}
+            if retry_count >= self.DEFAULT_FLUSH_RETRY_LIMIT:
+                es_logger.error(
+                    'Unable to add events, reached recount max.',
+                    exc_info=True)
+                return {}
+
+            es_logger.error('Unable to add events (retry {0:d}/{1:d})'.format(
+                retry_count, self.DEFAULT_FLUSH_RETRY_LIMIT))
+            return self.flush_queued_events(retry_count + 1)
 
         errors_in_upload = results.get('errors', False)
         return_dict['errors_in_upload'] = errors_in_upload

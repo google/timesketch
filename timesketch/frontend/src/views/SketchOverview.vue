@@ -336,13 +336,10 @@ import TsSketchStoryList from '../components/Sketch/StoryList'
 import TsUploadTimelineForm from '../components/Sketch/UploadForm'
 import TsSketchTimelinesManage from './SketchManageTimelines'
 import TsShareForm from '../components/Sketch/ShareForm'
-import SessionChart from "../components/Sketch/SessionChart"
-import TsGraphList from "../components/Sketch/GraphList"
-
+import TsGraphList from '../components/Sketch/GraphList'
 
 export default {
   components: {
-    SessionChart,
     TsSketchMetrics,
     TsSketchSummary,
     TsTimelineList,
@@ -417,13 +414,13 @@ export default {
     exportSketch: function () {
       this.loadingOpen()
       ApiClient.exportSketch(this.sketch.id).then((response) => {
-        let fileURL = window.URL.createObjectURL(new Blob([response.data]));
-        let fileLink = document.createElement('a');
+        let fileURL = window.URL.createObjectURL(new Blob([response.data]))
+        let fileLink = document.createElement('a')
         let fileName = 'sketch-' + this.sketch.id + '-export.zip'
-        fileLink.href = fileURL;
-        fileLink.setAttribute('download', fileName);
-        document.body.appendChild(fileLink);
-        fileLink.click();
+        fileLink.href = fileURL
+        fileLink.setAttribute('download', fileName)
+        document.body.appendChild(fileLink)
+        fileLink.click()
         this.loadingClose()
       }).catch((e) => {
         console.error(e)
@@ -431,11 +428,11 @@ export default {
       })
     },
     sortedUserList: function () {
-      const userArrayCopy = [...this.$store.state.meta.collaborators.users];
+      const userArrayCopy = [...this.$store.state.meta.collaborators.users]
       return userArrayCopy.sort()
     },
     sortedGroupList: function () {
-      const groupArrayCopy = [...this.$store.state.meta.collaborators.groups];
+      const groupArrayCopy = [...this.$store.state.meta.collaborators.groups]
       return groupArrayCopy.sort()
     },
     closeShareModal: function () {
@@ -494,6 +491,5 @@ export default {
     background-color: var(--card-background-color);
     color: var(--default-font-color);
   }
-
 
 </style>

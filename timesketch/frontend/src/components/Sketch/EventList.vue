@@ -43,7 +43,7 @@ limitations under the License.
 
 <script>
 import TsSketchExploreEventListRow from './EventListRow'
-import EventBus from "../../main"
+import EventBus from '../../main'
 
 export default {
   components: { TsSketchExploreEventListRow },

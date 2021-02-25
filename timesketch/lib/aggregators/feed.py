@@ -42,15 +42,19 @@ class ManualFeedAggregation(interface.BaseAggregator):
     # No Form fields since this is not meant to be used in the UI.
     FORM_FIELDS = []
 
-    def __init__(self, sketch_id=None, index=None):
+    def __init__(self, sketch_id=None, indices=None, timeline_ids=None):
         """Initialize the aggregator object.
 
         Args:
             sketch_id: Sketch ID.
-            index: List of elasticsearch index names.
+            indices: Optional list of elasticsearch index names. If not provided
+                the default behavior is to include all the indices in a sketch.
+            timeline_ids: Optional list of timeline IDs, if not provided the
+                default behavior is to query all the data in the provided
+                search indices.
         """
-        super(ManualFeedAggregation, self).__init__(
-            sketch_id=sketch_id, index=index)
+        super().__init__(
+            sketch_id=sketch_id, indices=indices, timeline_ids=timeline_ids)
         self.title = ''
 
     @property

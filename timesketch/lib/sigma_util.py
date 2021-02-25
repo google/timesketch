@@ -159,7 +159,8 @@ def get_all_sigma_rules():
 
 
 def get_sigma_rule(filepath, sigma_config=None):
-    """ Returns a JSON represenation for a rule
+    """ Returns a JSON representation for a rule
+
     Args:
         filepath: path to the sigma rule to be parsed
         sigma_config: optional argument to pass a

@@ -23,6 +23,7 @@ import time
 import traceback
 import yaml
 
+import elasticsearch
 from flask import current_app
 
 import pandas
@@ -547,7 +548,7 @@ class AggregationGroup(object):
         """Add an aggregation object to the group.
 
         Args:
-            aggregation_obj (Aggregation): the Aggregation objec.
+            aggregation_obj (Aggregation): the Aggregation object.
         """
         self.group.aggregations.append(aggregation_obj)
         self.group.orientation = self._orientation
@@ -566,7 +567,7 @@ class AggregationGroup(object):
         """Sets how charts should be joined.
 
         Args:
-            orienation: string that contains how they should be connected
+            orientation: string that contains how they should be connected
                 together, That is the chart orientation,  the options are:
                 "layer", "horizontal" and "vertical". The default behavior
                 is "layer".
@@ -581,7 +582,7 @@ class AggregationGroup(object):
         self.commit()
 
     def set_vertical(self):
-        """Sets the "orienation" to vertical."""
+        """Sets the "orientation" to vertical."""
         self._orientation = 'vertical'
         self.commit()
 
@@ -844,7 +845,17 @@ class BaseIndexAnalyzer(object):
 
         # Refresh the index to make sure it is searchable.
         for index in indices:
-            self.datastore.client.indices.refresh(index=index)
+            try:
+                self.datastore.client.indices.refresh(index=index)
+            except elasticsearch.NotFoundError:
+                logger.error(
+                    'Unable to find index: {0:s}, removing from '
+                    'result set.'.format(index))
+                broken_index = indices.index(index)
+                _ = indices.pop(broken_index)
+        if not indices:
+            raise ValueError(
+                'Unable to query for analyzers, discovered no index to query.')
 
         if self.timeline_id:
             timeline_ids = [self.timeline_id]
@@ -981,7 +992,17 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
 
         # Refresh the index to make sure it is searchable.
         for index in indices:
-            self.datastore.client.indices.refresh(index=index)
+            try:
+                self.datastore.client.indices.refresh(index=index)
+            except elasticsearch.NotFoundError:
+                logger.error(
+                    'Unable to refresh index: {0:s}, not found, '
+                    'removing from list.'.format(index))
+                broken_index = indices.index(index)
+                _ = indices.pop(broken_index)
+
+        if not indices:
+            raise ValueError('Unable to get events, no indices to query.')
 
         if return_fields:
             default_fields = definitions.DEFAULT_SOURCE_FIELDS

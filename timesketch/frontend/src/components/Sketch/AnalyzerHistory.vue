@@ -80,11 +80,11 @@ export default {
     }
   },
   methods: {
-    dateSort(a, b, key) {
-      return a[key] - b[key];
-    },
+    dateSort (a, b, key) {
+      return a[key] - b[key]
+    }
   },
-  created() {
+  created () {
     ApiClient.getSketchTimelineAnalysis(this.sketch.id, this.timeline.id).then((response) => {
       this.analyses = response.data.objects[0]
     }).catch((e) => {})

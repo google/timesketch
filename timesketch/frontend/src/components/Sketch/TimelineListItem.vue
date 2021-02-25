@@ -30,10 +30,31 @@ limitations under the License.
               <ul>
                 <li>Elasticsearch index: {{ timeline.searchindex.index_name }}</li>
                 <li v-if="meta.stats_per_timeline[timeline.id]">Number of events: {{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} ({{ meta.stats_per_timeline[timeline.id]['count']}})</li>
-                <li>Added by: {{ timeline.user.username }}</li>
-                <li>Added: {{ timeline.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
+                <li>Created by: {{ timeline.user.username }}</li>
+                <li>Created at: {{ timeline.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
                 <li v-if="timelineStatus === 'ready' && (timeline.searchindex.description !== '' && timeline.searchindex.description !== timeline.name)">Import errors: <b>{{ timeline.searchindex.description }}</b></li>
               </ul>
+              <br>
+              <table class="table">
+                <th style="width:200px;">Imported</th>
+                <th>Provider</th>
+                <th>Context</th>
+                <th>User</th>
+                <th>File on disk</th>
+                <th>File size</th>
+                <th>Original filename</th>
+                <th>Data label</th>
+                <tr v-for="datasource in timeline.datasources" :key="datasource.id">
+                  <td>{{ datasource.created_at | moment("YYYY-MM-DD HH:mm:ss") }}</td>
+                  <td>{{ datasource.provider }}</td>
+                  <td>{{ datasource.context }}</td>
+                  <td>{{ datasource.user.username }}</td>
+                  <td>{{ datasource.file_on_disk }}</td>
+                  <td>{{ datasource.file_size | compactBytes }}</td>
+                  <td>{{ datasource.original_filename }}</td>
+                  <td>{{ datasource.data_label }}</td>
+                </tr>
+              </table>
 
               <span v-if="timelineStatus === 'fail'">
                 <h5 style="color:red;">Error detail</h5>
@@ -187,15 +208,13 @@ import _ from 'lodash'
 
 import ApiClient from '../../utils/RestApiClient'
 
-import TsAnalyzerSessionDetail from './AnalyzerSessionDetail'
 import TsAnalyzerHistory from './AnalyzerHistory'
 
-import EventBus from "../../main"
+import EventBus from '../../main'
 
 export default {
   components: {
     'color-picker': Chrome,
-    TsAnalyzerSessionDetail,
     TsAnalyzerHistory
   },
   props: ['timeline', 'controls', 'isCompact'],
@@ -268,20 +287,20 @@ export default {
     },
     openFilteredTimeline: function (index, dataTypes) {
       if (dataTypes.length === 0) {
-        return false;
+        return false
       }
       let searchQuery = ''
       for (let i = 0; i < dataTypes.length; i++) {
-        const dt = dataTypes[i];
-        if (i != 0) {
+        const dt = dataTypes[i]
+        if (i !== 0) {
           searchQuery += ' OR '
         }
         searchQuery += 'data_type:"' + dt + '"'
       }
-      this.$router.push({name: 'SketchExplore', query: { index: index, q: searchQuery }})
+      this.$router.push({ name: 'SketchExplore', query: { index: index, q: searchQuery } })
     },
     toggleTheme: function () {
-      this.isDarkTheme =! this.isDarkTheme
+      this.isDarkTheme = !this.isDarkTheme
     }
   },
   mounted () {
@@ -294,7 +313,7 @@ export default {
     })
   },
   created () {
-    this.isDarkTheme = localStorage.theme === 'dark';
+    this.isDarkTheme = localStorage.theme === 'dark'
     EventBus.$on('isDarkTheme', this.toggleTheme)
 
     this.initialColor = {
@@ -305,7 +324,7 @@ export default {
       this.autoRefresh = true
     }
   },
-  beforeDestroy() {
+  beforeDestroy () {
     clearInterval(this.t)
     this.t = false
   },
@@ -317,8 +336,8 @@ export default {
           if (this.timelineStatus === 'ready') {
             this.autoRefresh = false
           }
-        }.bind(this), 5000)}
-      else {
+        }.bind(this), 5000)
+      } else {
         clearInterval(this.t)
         this.t = false
       }
@@ -353,7 +372,6 @@ export default {
 .small-top-margin {
   margin-top: 4px;
 }
-
 
 @keyframes blinker {
   50% {
