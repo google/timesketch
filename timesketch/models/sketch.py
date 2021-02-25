@@ -190,6 +190,7 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     searchindex_id = Column(Integer, ForeignKey('searchindex.id'))
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     analysis = relationship('Analysis', backref='timeline', lazy='select')
+    datasources = relationship('DataSource', backref='sketch', lazy='select')
 
     def __init__(self,
                  name,
@@ -696,18 +697,34 @@ class GraphCache(BaseModel):
 class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the datasource model."""
     timeline_id = Column(Integer, ForeignKey('timeline.id'))
+    user_id = Column(Integer, ForeignKey('user.id'))
     provider = Column(UnicodeText())
     context = Column(UnicodeText())
+    file_on_disk = Column(UnicodeText())
+    file_size = Column(Integer)
+    original_filename = Column(UnicodeText())
+    data_label = Column(UnicodeText())
 
-    def __init__(self, timeline, provider='N/A', context='N/A'):
+    def __init__(self, timeline, user, provider, context, file_on_disk,
+                 file_size, original_filename, data_label):
         """Initialize the DataSource object.
 
         Args:
             timeline (Timeline): Timeline that this datasource is part of.
+            user (User): The user who imported the data.
             provider (str): Name of the application that collected the data.
             context (str): Context on how the data was collected.
+            file_on_disk (str): Path to uploaded file.
+            file_size (int): Size on disk for uploaded file.
+            original_filename (str): Original filename for uploaded file.
+            data_label (str): Data label for the uploaded data.
         """
         super().__init__()
         self.timeline = timeline
+        self.user = user
         self.provider = provider
         self.context = context
+        self.file_on_disk = file_on_disk
+        self.file_size = file_size
+        self.original_filename = original_filename
+        self.data_label = data_label
