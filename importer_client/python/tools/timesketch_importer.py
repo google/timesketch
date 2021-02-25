@@ -257,7 +257,7 @@ def main(args=None):
         '--context', action='store', type=str, default='', dest='context',
         help=(
             'Set a context for the file upload. This could be a text '
-            'describing howt the data got collected or parameters to '
+            'describing how the data got collected or parameters to '
             'the tool. Defaults to how the CLI tool got run.'))
 
     argument_parser.add_argument(
