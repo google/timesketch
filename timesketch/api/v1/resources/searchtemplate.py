@@ -60,6 +60,10 @@ class SearchTemplateResource(resources.ResourceMixin, Resource):
         Returns:
             Search template in JSON (instance of flask.wrappers.Response)
         """
+        searchtemplate = SearchTemplate.query.get(searchtemplate_id)
+        if not searchtemplate:
+            abort(HTTP_STATUS_CODE_NOT_FOUND, 'Search template was not found')
+
         abort(
             HTTP_STATUS_CODE_NOT_FOUND,
             'Not yet implemented, stay tuned for id: {0:d}'.format(
