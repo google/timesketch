@@ -88,7 +88,11 @@ class ElasticsearchDataStore(object):
         self.ssl = current_app.config.get('ELASTIC_SSL', False)
         self.verify = current_app.config.get('ELASTIC_VERIFY_CERTS', True)
 
-        if self.ssl:
+        if self.ssl and not self.user and not self.password:
+            self.client = Elasticsearch([{'host': host, 'port': port}],
+                                        use_ssl=self.ssl,
+                                        verify_certs=self.verify)
+        elif self.ssl:
             self.client = Elasticsearch([{'host': host, 'port': port}],
                                         http_auth=(self.user, self.password),
                                         use_ssl=self.ssl,
