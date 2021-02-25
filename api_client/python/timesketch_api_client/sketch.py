@@ -896,6 +896,33 @@ class Sketch(resource.BaseResource):
 
         return searches
 
+    def list_search_templates(self):
+        """Get a list of all search templates that are available.
+
+        Returns:
+            List of search.Search object instances.
+        """
+        response = self.api.fetch_resource_data('searchtemplate/')
+        objects = response.get('objects', [])
+        if not objects:
+            return []
+
+        template_dicts = objects[0]
+
+        search_objects = []
+        for template_dict in template_dicts:
+            search_obj = search.Search(sketch=self)
+            search_obj.from_manual(
+                query_string=template_dict.get('query_string'),
+                query_dsl=template_dict.get('query_dsl'),
+                query_filter=template_dict.get('query_filter'))
+            search_obj.name = template_dict.get('name', 'No Name')
+            search_obj.description = template_dict.get(
+                'description', 'No Description')
+            search_objects.append(search_obj)
+
+        return search_objects
+
     def list_timelines(self):
         """List all timelines for this sketch.
 

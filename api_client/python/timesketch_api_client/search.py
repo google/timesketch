@@ -887,8 +887,12 @@ class Search(resource.SketchResource):
     def save(self):
         """Save the search in the database.
 
+        Returns:
+            String with the identification of the saved search.
+
         Raises:
             ValueError: if there are values missing in order to save the query.
+            RuntimeError: if the search could not be saved.
         """
         if not self.name:
             raise ValueError(
@@ -943,6 +947,39 @@ class Search(resource.SketchResource):
         search_dict = response_json.get('objects', [{}])[0]
         self._resource_id = search_dict.get('id', 0)
         return f'Saved search to ID: {self._resource_id}'
+
+    def save_as_template(self):
+        """Save the search as a search template.
+
+        Returns:
+            A string indicating the search template ID.
+
+        Raises:
+            ValueError: if the search hasn't been saved first.
+            RuntimeError: If the search could not be saved as a template.
+        """
+        if not self._resource_id:
+            raise ValueError(
+                'The search needs to be first saved, then it can be saved '
+                'as a template. Use .save() and then try again.')
+
+        data = {
+            'search_id': self._resource_id,
+            'sketch_id': self._sketch.id,
+        }
+        resource_url = f'{self.api.api_root}/searchtemplate/'
+        response = self.api.session.post(resource_url, json=data)
+        status = error.check_return_status(response, logger)
+        if not status:
+            error.error_message(
+                response, 'Unable to save search as a template',
+                error=RuntimeError)
+
+        response_json = error.get_response_json(response, logger)
+        template_dict = response_json.get('objects', [{}])[0]
+
+        template_id = template_dict.get('id', 0)
+        return f'Saved search as a template to ID: {template_id}'
 
     @property
     def scrolling(self):

@@ -13,13 +13,23 @@
 # limitations under the License.
 """SearchTemplate resources for version 1 of the Timesketch API."""
 
+import json
+
 from flask import abort
+from flask import request
 from flask_restful import Resource
+from flask_login import current_user
 from flask_login import login_required
 
 from timesketch.api.v1 import resources
+from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
+from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+
+from timesketch.models import db_session
 from timesketch.models.sketch import SearchTemplate
+from timesketch.models.sketch import Sketch
+from timesketch.models.sketch import View
 
 
 class SearchTemplateResource(resources.ResourceMixin, Resource):
@@ -40,6 +50,20 @@ class SearchTemplateResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_NOT_FOUND, 'Search template was not found')
         return self.to_json(searchtemplate)
 
+    @login_required
+    def post(self, searchtemplate_id):
+        """Handles GET request to the resource.
+
+        Args:
+            searchtemplate_id: Primary key for a search template database model
+
+        Returns:
+            Search template in JSON (instance of flask.wrappers.Response)
+        """
+        abort(
+            HTTP_STATUS_CODE_NOT_FOUND,
+            'Not yet implemented, stay tuned.')
+
 
 class SearchTemplateListResource(resources.ResourceMixin, Resource):
     """Resource to create a search template."""
@@ -51,4 +75,100 @@ class SearchTemplateListResource(resources.ResourceMixin, Resource):
         Returns:
             View in JSON (instance of flask.wrappers.Response)
         """
-        return self.to_json(SearchTemplate.query.all())
+        templates = SearchTemplate.query.all()
+        meta = {
+            'collection': []
+        }
+        for template in templates:
+            saved_searches = View.query.filter_by(
+                searchtemplate=template)
+            for saved_search in saved_searches:
+                data = {
+                    'search_id': saved_search.id, 'template_id': template.id}
+                meta['collection'].append(data)
+
+        return self.to_json(templates, meta=meta)
+
+    @login_required
+    def post(self):
+        """Handles POST request to the resource.
+
+        Returns:
+            View in JSON (instance of flask.wrappers.Response)
+        """
+        form = request.json
+        if not form:
+            form = request.data
+
+        search_id = form.get('search_id')
+        if not search_id:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to save the searchtemplate, the search has not '
+                'been saved first')
+
+        sketch_id = form.get('sketch_id')
+        if not sketch_id:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'We need to have a sketch associated with the saved search '
+                'in order to create a search template.')
+
+        sketch = Sketch.query.get_with_acl(sketch_id)
+        if not sketch:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
+        if not sketch.has_permission(current_user, 'read'):
+            abort(HTTP_STATUS_CODE_FORBIDDEN,
+                  'User does not have read access controls on sketch.')
+
+        if sketch.get_status.status == 'archived':
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to query on an archived sketch.')
+
+        search_obj = View.query.get(search_id)
+
+        if not search_obj:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No search found with this ID.')
+
+        templates = SearchTemplate.query.filter_by(
+            name=search_obj.name,
+            description=search_obj.description
+        ).all()
+
+        if templates:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'This search has already been saved as a template.')
+
+        # Remove date filter chips from the saved search.
+        query_filter_dict = json.loads(search_obj.query_filter)
+        chips = []
+        for chip in query_filter_dict.get('chips', []):
+            chip_type = chip.get('type', '')
+            if not chip_type.startswith('datetime'):
+              chips.append(chip)
+
+        query_filter_dict['chips'] = chips
+        query_filter = json.dumps(query_filter_dict, ensure_ascii=False)
+
+        searchtemplate = SearchTemplate(
+            name=search_obj.name,
+            description=search_obj.description,
+            user=current_user,
+            query_string=search_obj.query_string,
+            query_filter=query_filter,
+            query_dsl=search_obj.query_dsl)
+
+        db_session.add(searchtemplate)
+        db_session.commit()
+
+        search_obj.searchtemplate = searchtemplate
+        db_session.add(search_obj)
+        db_session.commit()
+
+
+        return self.to_json(searchtemplate)
