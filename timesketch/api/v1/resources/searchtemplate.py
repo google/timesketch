@@ -62,7 +62,8 @@ class SearchTemplateResource(resources.ResourceMixin, Resource):
         """
         abort(
             HTTP_STATUS_CODE_NOT_FOUND,
-            'Not yet implemented, stay tuned.')
+            'Not yet implemented, stay tuned for id: {0:d}'.format(
+                searchtemplate_id))
 
 
 class SearchTemplateListResource(resources.ResourceMixin, Resource):
@@ -150,7 +151,7 @@ class SearchTemplateListResource(resources.ResourceMixin, Resource):
         for chip in query_filter_dict.get('chips', []):
             chip_type = chip.get('type', '')
             if not chip_type.startswith('datetime'):
-              chips.append(chip)
+                chips.append(chip)
 
         query_filter_dict['chips'] = chips
         query_filter = json.dumps(query_filter_dict, ensure_ascii=False)
