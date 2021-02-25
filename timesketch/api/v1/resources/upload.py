@@ -37,6 +37,7 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import DataSource
 
+
 class UploadFileResource(resources.ResourceMixin, Resource):
     """Resource that processes uploaded files."""
 
@@ -406,8 +407,6 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 'write access.')
 
         utils.update_sketch_last_activity(sketch)
-
-     
 
         index_name = form.get('index_name', '')
         file_storage = request.files.get('file')
