@@ -395,7 +395,7 @@ class SigmaListResourceTest(BaseTest):
         'meta': {
             'current_user': 'test1', 'rules_count': 1
             },
-        'objects':[[{
+        'objects':[{
             'author': 'Alexander Jaeger',
             'date': '2020/06/26',
             'description': 'Detects suspicious installation of Zenmap',
@@ -420,7 +420,7 @@ class SigmaListResourceTest(BaseTest):
                 'https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'
             ],
             'title': 'Suspicious Installation of Zenmap'
-        }]]}
+        }]}
     def test_get_sigma_rule_list(self):
         self.login()
         response = self.client.get(self.resource_url)
