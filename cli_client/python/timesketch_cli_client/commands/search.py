@@ -129,10 +129,10 @@ def search_group(ctx, query, times, time_ranges, labels, header, output,
     # Construct the query from flags.
     # TODO (berggren): Add support for query DSL.
     search_obj.query_string = query
-    
+
     if return_fields:
         search_obj.return_fields = return_fields
-    
+
     if limit:
         search_obj.max_entries = limit
 
@@ -155,7 +155,7 @@ def search_group(ctx, query, times, time_ranges, labels, header, output,
                 sys.exit(1)
 
     # TODO (berggren): This should support dates like 2021-02-12 and then
-    # convert to ISO format. 
+    # convert to ISO format.
     if times:
         for time in times:
             try:
