@@ -572,6 +572,35 @@ class Search(resource.SketchResource):
         response = self.api.session.delete(resource_url)
         return error.check_return_status(response, logger)
 
+    def delete_as_template(self):
+        """Delete this search as a search template."""
+        if not self._resource_id:
+            raise ValueError(
+                'Unable to delete the search template, since the search '
+                'does not seem to be saved, which is required.')
+
+        template_id = 0
+        if self._searchtemplate:
+            template_id = self._searchtemplate
+        else:
+            response = self.api.fetch_resource_data('searchtemplate/')
+            meta = response.get('meta', {})
+            collections = meta.get('collection', [])
+            for collection in collections:
+                if collection.get('search_id', 0) == self._resource_id:
+                    template_id = collection.get('template_id')
+                    break
+
+        if not template_id:
+            raise ValueError(
+                'Unable to find this search as a template, are you sure '
+                'it saved as one?')
+
+        resource_url = (
+            f'{self.api.api_root}/searchtemplate/{template_id}/')
+        response = self.api.session.delete(resource_url)
+        return error.check_return_status(response, logger)
+
     @property
     def description(self):
         """Property that returns back the description of the saved search."""
@@ -979,6 +1008,7 @@ class Search(resource.SketchResource):
         template_dict = response_json.get('objects', [{}])[0]
 
         template_id = template_dict.get('id', 0)
+        self._searchtemplate = template_id
         return f'Saved search as a template to ID: {template_id}'
 
     @property

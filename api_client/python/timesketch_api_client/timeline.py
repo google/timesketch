@@ -82,6 +82,17 @@ class Timeline(resource.BaseResource):
         return self._color
 
     @property
+    def data_sources(self):
+        """Property that returns the timeline data sources."""
+        data = self.lazyload_data(refresh_cache=True)
+        objects = data.get('objects', [])
+        if not objects:
+            return []
+
+        timeline_data = objects[0]
+        return timeline_data.get('datasources', [])
+
+    @property
     def description(self):
         """Property that returns timeline description.
 
