@@ -51,23 +51,27 @@ class SearchTemplateResource(resources.ResourceMixin, Resource):
         return self.to_json(searchtemplate)
 
     @login_required
-    def post(self, searchtemplate_id):
-        """Handles GET request to the resource.
+    def delete(self, searchtemplate_id):
+        """Handles DELETE request to the resource.
 
         Args:
             searchtemplate_id: Primary key for a search template database model
 
         Returns:
-            Search template in JSON (instance of flask.wrappers.Response)
+            HTTP status 200 if successful, otherwise error messages.
         """
         searchtemplate = SearchTemplate.query.get(searchtemplate_id)
         if not searchtemplate:
             abort(HTTP_STATUS_CODE_NOT_FOUND, 'Search template was not found')
 
-        abort(
-            HTTP_STATUS_CODE_NOT_FOUND,
-            'Not yet implemented, stay tuned for id: {0:d}'.format(
-                searchtemplate_id))
+        saved_searches = View.query.filter_by(searchtemplate=searchtemplate)
+        for saved_search in saved_searches:
+            saved_search.searchtemplate.remove(searchtemplate)
+
+        db_session.delete(searchtemplate)
+        db_session.commit()
+
+        return HTTP_STATUS_CODE_OK
 
 
 class SearchTemplateListResource(resources.ResourceMixin, Resource):
