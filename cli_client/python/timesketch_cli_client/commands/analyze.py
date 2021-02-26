@@ -62,7 +62,7 @@ def run_analyzer(ctx, analyzer_name, timeline_id):
                 status = sessions[0].status.split()[2]
                 # TODO: Do something with other statuses?
                 if status == 'DONE':
-                    click.echo(session.results)
+                    click.echo(sessions[0].results)
                     break
                 click.echo('.', nl=False)
                 time.sleep(3)
