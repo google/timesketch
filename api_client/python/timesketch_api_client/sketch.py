@@ -835,6 +835,35 @@ class Sketch(resource.BaseResource):
                 return search_obj
         return None
 
+    def get_timeline(self, timeline_id=None, timeline_name=None):
+        """Returns a timeline object that is stored in the sketch.
+
+        Args:
+            timeline_id: an integer indicating the ID of the timeline to
+                be fetched. Defaults to None.
+            timeline_name: a string with the name of the timeline. Optional
+                and defaults to None.
+
+        Returns:
+            A timeline object (instance of Timeline) if one is found. Returns
+            a None if neither timeline_id or timeline_name is defined or if
+            the timeline does not exist.
+        """
+        if self.is_archived():
+            raise RuntimeError(
+                'Unable to get timelines on an archived sketch.')
+
+        if timeline_id is None and timeline_name is None:
+            return None
+
+        for timeline_ in self.list_timelines():
+            if timeline_id and timeline_id == timeline_.id:
+                return timeline_
+            if timeline_name:
+                if timeline_name.lower() == timeline_.name.lower():
+                    return timeline_
+        return None
+
     def list_stories(self):
         """Get a list of all stories that are attached to the sketch.
 
