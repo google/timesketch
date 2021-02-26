@@ -84,7 +84,6 @@ class SigmaResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'OS Error, unable to get the path to the Sigma rules')
-        print(rule_uuid)
         for rule in sigma_rules:
             if rule is not None:
                 if rule_uuid == rule.get('id'):
@@ -96,7 +95,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
 
         meta = {'current_user': current_user.username,
                 'rules_count': len(sigma_rules)}
-        return jsonify({'objects': return_rule, 'meta': meta})
+        return jsonify({'objects': [return_rule], 'meta': meta})
 
 
 class SigmaByTextResource(resources.ResourceMixin, Resource):
