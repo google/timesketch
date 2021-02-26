@@ -45,7 +45,7 @@ def importer(ctx, name, timeout, file_path):
         streamer.set_sketch(sketch)
         streamer.set_timeline_name(name)
         streamer.set_provider('Timesketch CLI client')
-        # TODO: Consider the whole cmd ad context instead of the file path
+        # TODO: Consider using the whole command as upload context instead of the file path.
         streamer.set_upload_context(file_path)
         streamer.add_file(file_path)
         timeline = streamer.timeline
