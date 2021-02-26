@@ -1,3 +1,0 @@
-[console_scripts]
-timesketch = timesketch_cli_client.cli:cli
-
