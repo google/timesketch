@@ -37,7 +37,9 @@ setup(
     zip_safe=False,
     entry_points={
         'console_scripts': [
-            'timesketch = timesketch_cli_client.cli:cli']},
+            'timesketch = timesketch_cli_client.cli:cli'
+        ]
+    },
     install_requires=frozenset([
         'click',
         'tabulate',
@@ -45,4 +47,4 @@ setup(
         'timesketch-api-client',
         'timesketch-import-client',
     ]),
-    )
+)
