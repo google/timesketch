@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Commands for explore and search."""
+"""Commands for searching Timesketch data."""
 
 import json
+import sys
 
 import click
 from tabulate import tabulate
@@ -128,8 +129,12 @@ def search_group(ctx, query, times, time_ranges, labels, header, output,
     # Construct the query from flags.
     # TODO (berggren): Add support for query DSL.
     search_obj.query_string = query
-    search_obj.return_fields = return_fields
-    search_obj.max_entries = limit
+    
+    if return_fields:
+        search_obj.return_fields = return_fields
+    
+    if limit:
+        search_obj.max_entries = limit
 
     if order == 'asc':
         search_obj.order_ascending()
@@ -139,19 +144,29 @@ def search_group(ctx, query, times, time_ranges, labels, header, output,
     # TODO: Add term chips.
     if time_ranges:
         for time_range in time_ranges:
-            range_chip = search.DateRangeChip()
-            range_chip.start_time = time_range[0]
-            range_chip.end_time = time_range[1]
-            search_obj.add_chip(range_chip)
+            try:
+                range_chip = search.DateRangeChip()
+                range_chip.add_start_time = time_range[0]
+                range_chip.add_end_time = time_range[1]
+                search_obj.add_chip(range_chip)
+            except ValueError:
+                click.echo(
+                    "Error parsing date (make sure it is ISO formatted)")
+                sys.exit(1)
 
     # TODO (berggren): This should support dates like 2021-02-12 and then
-    # convert to ISO format.
+    # convert to ISO format. 
     if times:
         for time in times:
-            range_chip = search.DateRangeChip()
-            range_chip.start_time = time
-            range_chip.end_time = time
-            search_obj.add_chip(range_chip)
+            try:
+                range_chip = search.DateRangeChip()
+                range_chip.add_start_time = time
+                range_chip.add_end_time = time
+                search_obj.add_chip(range_chip)
+            except ValueError:
+                click.echo(
+                    "Error parsing date (make sure it is ISO formatted)")
+                sys.exit(1)
 
     if labels:
         for label in labels:

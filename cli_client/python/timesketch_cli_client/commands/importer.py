@@ -45,6 +45,7 @@ def importer(ctx, name, timeout, file_path):
         streamer.set_sketch(sketch)
         streamer.set_timeline_name(name)
         streamer.set_provider('Timesketch CLI client')
+        # TODO: Consider the whole cmd ad context instead of the file path
         streamer.set_upload_context(file_path)
         streamer.add_file(file_path)
         timeline = streamer.timeline
@@ -66,7 +67,6 @@ def importer(ctx, name, timeout, file_path):
                 ('WARNING: The command timed out before indexing finished. '
                  'The timeline will continue to be indexed in the background'))
             break
-        _ = timeline.lazyload_data(refresh_cache=True)
         status = timeline.status
         # TODO: Do something with other statuses? (e.g. failed)
         if status == 'ready':

@@ -52,16 +52,28 @@ def run_analyzer(ctx, analyzer_name, timeline_id):
         timelines.append(timeline)
 
     for timeline in timelines:
-        click.echo(
-            f'Running analyzer [{analyzer_name}] on [{timeline.name}]: ',
-            nl=False)
         try:
-            # TODO: Add support for running multiple analyzers
-            sessions = timeline.run_analyzer(analyzer_name)
-            while True:
-                status = sessions[0].status.split()[2]
-                # TODO: Do something with other statuses?
-                if status == 'DONE':
+            # TODO: Add support for running multiple analyzers.
+            # TODO: Make progress pretty
+            sessions = timeline.run_analyzer(
+                analyzer_name, ignore_previous=True)
+            session_statuses = sessions[0].status_dict
+            total_tasks = len(session_statuses.values())
+
+            for analyzer, status in session_statuses.items():
+                click.echo(
+                    f'Running analyzer [{analyzer}] on [{timeline.name}]:')
+            
+            while True:                
+                # Count all analysis tasks that has the status DONE
+                completed_tasks = len(
+                    [
+                        x[0] for x in sessions[0].status_dict.values()
+                        if x[0] == 'DONE'
+                    ]
+                )
+                if completed_tasks == total_tasks:
+                    click.echo(f'\nResults')
                     click.echo(sessions[0].results)
                     break
                 click.echo('.', nl=False)

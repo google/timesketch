@@ -45,7 +45,7 @@ def describe_timeline(ctx, timeline_id):
         timeline_id: Timeline ID from argument.
     """
     sketch = ctx.obj.sketch
-    # TODO (berggren): Add more details to the output.
+    # TODO (berggren): Add more details to the output, e.g. the data_sources
     timeline = sketch.get_timeline(timeline_id=timeline_id)
     if not timeline:
         click.echo('No such timeline')
