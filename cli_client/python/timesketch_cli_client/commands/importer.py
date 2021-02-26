@@ -44,6 +44,8 @@ def importer(ctx, name, timeout, file_path):
         click.echo('Uploading to server .. ', nl=False)
         streamer.set_sketch(sketch)
         streamer.set_timeline_name(name)
+        streamer.set_provider('Timesketch CLI client')
+        streamer.set_upload_context(file_path)
         streamer.add_file(file_path)
         timeline = streamer.timeline
         if not timeline:
