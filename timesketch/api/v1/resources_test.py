@@ -489,7 +489,7 @@ class SigmaByTextResourceTest(BaseTest):
         """Authenticated request to get an sigma rule by text."""
         self.login()
 
-        data = dict(action='post', content=self.correct_rule)
+        data = dict(content=self.correct_rule)
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -500,7 +500,7 @@ class SigmaByTextResourceTest(BaseTest):
         self.assert200(response)
 
         # wrong sigma rule
-        data = dict(action='post', content='foobar: asd')
+        data = dict(content='foobar: asd')
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data, ensure_ascii=False),
@@ -508,17 +508,6 @@ class SigmaByTextResourceTest(BaseTest):
         data = json.loads(response.get_data(as_text=True))
 
         self.assertIn('No detection definitions found', data['message'])
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
-
-        # wrong action
-        data = dict(action='get', content=self.correct_rule)
-        response = self.client.post(
-            self.resource_url,
-            data=json.dumps(data, ensure_ascii=False),
-            content_type='application/json')
-        data = json.loads(response.get_data(as_text=True))
-
-        self.assertIn('Action needs to be "post"', data['message'])
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
 
         # no content given
