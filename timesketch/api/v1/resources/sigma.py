@@ -84,7 +84,7 @@ class SigmaResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND,
                 'OS Error, unable to get the path to the Sigma rules')
-
+        print(rule_uuid)
         for rule in sigma_rules:
             if rule is not None:
                 if rule_uuid == rule.get('id'):
@@ -113,14 +113,6 @@ class SigmaByTextResource(resources.ResourceMixin, Resource):
         form = request.json
         if not form:
             form = request.data
-
-        action = form.get('action', '')
-
-        # TODO: that can eventually go away since there are no other actions
-        if action != 'post':
-            return abort(
-                HTTP_STATUS_CODE_BAD_REQUEST,
-                'Action needs to be "post"')
 
         content = form.get('content')
         if not content:
