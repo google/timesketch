@@ -585,11 +585,11 @@ class Search(resource.SketchResource):
         else:
             response = self.api.fetch_resource_data('searchtemplate/')
             meta = response.get('meta', {})
-                collections = meta.get('collection', [])
-                for collection in collections:
-                    if collection.get('search_id', 0) == self._resource_id:
-                        template_id = collection.get('template_id')
-                        break
+            collections = meta.get('collection', [])
+            for collection in collections:
+                if collection.get('search_id', 0) == self._resource_id:
+                    template_id = collection.get('template_id')
+                    break
 
         if not template_id:
             raise ValueError(
