@@ -13,14 +13,19 @@
 # limitations under the License.
 """Interface for aggregators."""
 import datetime
+import logging
 
 from flask import current_app
 
+import elasticsearch
 import pandas
 
 from timesketch.lib.charts import manager as chart_manager
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models.sketch import Sketch as SQLSketch
+
+
+logger = logging.getLogger('timesketch.aggregator_interface')
 
 
 class AggregationResult(object):
@@ -301,8 +306,11 @@ class BaseAggregator(object):
         field_type = None
 
         # Get the mapping for the field.
-        mapping = self.elastic.client.indices.get_field_mapping(
-            index=self.indices, fields=field_name)
+        try:
+            mapping = self.elastic.client.indices.get_field_mapping(
+                index=self.indices, fields=field_name)
+        except elasticsearch.NotFoundError:
+            mapping = {}
 
         # The returned structure is nested so we need to unpack it.
         # Example:
@@ -340,8 +348,13 @@ class BaseAggregator(object):
             Elasticsearch aggregation result.
         """
         # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
-        aggregation = self.elastic.client.search(
-            index=self.indices, body=aggregation_spec, size=0)
+        try:
+            aggregation = self.elastic.client.search(
+                index=self.indices, body=aggregation_spec, size=0)
+        except elasticsearch.NotFoundError:
+            logger.error('Unable to find indices: {0:s}'.format(
+                ','.join(self.indices)))
+            raise
         return aggregation
 
     def run(self, *args, **kwargs):

@@ -59,12 +59,14 @@ class ImportStreamer(object):
         self._data_type = None
         self._datetime_field = None
         self._format_string = None
-        self._index = uuid.uuid4().hex
+        self._index = ''
         self._last_response = None
+        self._provider = 'Imported via the importer library.'
         self._resource_url = ''
         self._sketch = None
         self._timeline_id = None
         self._timeline_name = None
+        self._upload_context = ''
 
         self._chunk = 1
 
@@ -231,20 +233,28 @@ class ImportStreamer(object):
             'name': self._timeline_name,
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
-            'index_name': self._index,
             'data_label': self._data_label,
+            'provider': self._provider,
             'events': '\n'.join([json.dumps(x) for x in self._data_lines]),
         }
+        if self._index:
+            data['index_name'] = self._index
+
+        if self._upload_context:
+            data['context'] = self._upload_context
+
         logger.debug(
             'Data buffer ready for upload, took {0:.2f} seconds to '
             'prepare.'.format(time.time() - start_time))
 
         response = self._sketch.api.session.post(self._resource_url, data=data)
+
         # TODO: Investigate why the sleep is needed, fix the underlying issue
         # and get rid of it here.
         # To prevent unexpected errors with connection refusal adding a quick
         # sleep.
         time.sleep(2)
+
         # TODO: Add in the ability to re-upload failed file.
         if response.status_code not in definitions.HTTP_STATUS_CODE_20X:
             raise RuntimeError(
@@ -258,7 +268,10 @@ class ImportStreamer(object):
                 self._chunk, time.time() - start_time))
         self._chunk += 1
         response_dict = response.json()
-        self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
+        object_dict = response_dict.get('objects', [{}])[0]
+
+        self._timeline_id = object_dict.get('id')
+        self._index = object_dict.get('searchindex', {}).get('index_name')
         self._last_response = response_dict
 
     def _upload_data_frame(self, data_frame, end_stream):
@@ -273,10 +286,15 @@ class ImportStreamer(object):
             'name': self._timeline_name,
             'sketch_id': self._sketch.id,
             'enable_stream': not end_stream,
-            'index_name': self._index,
             'data_label': self._data_label,
+            'provider': self._provider,
             'events': data_frame.to_json(orient='records', lines=True),
         }
+        if self._index:
+            data['index_name'] = self._index
+
+        if self._upload_context:
+            data['context'] = self._upload_context
 
         response = self._sketch.api.session.post(self._resource_url, data=data)
         self._chunk += 1
@@ -289,7 +307,10 @@ class ImportStreamer(object):
                     self._index))
 
         response_dict = response.json()
-        self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
+        object_dict = response_dict.get('objects', [{}])[0]
+
+        self._timeline_id = object_dict.get('id')
+        self._index = object_dict.get('searchindex', {}).get('index_name')
         self._last_response = response_dict
 
     def _upload_binary_file(self, file_path):
@@ -311,9 +332,15 @@ class ImportStreamer(object):
             'name': timeline_name,
             'sketch_id': self._sketch.id,
             'total_file_size': file_size,
+            'provider': self._provider,
             'data_label': self._data_label,
-            'index_name': self._index,
         }
+        if self._index:
+            data['index_name'] = self._index
+
+        if self._upload_context:
+            data['context'] = self._upload_context
+
         if file_size <= self._threshold_filesize:
             file_dict = {
                 'file': open(file_path, 'rb')}
@@ -323,6 +350,8 @@ class ImportStreamer(object):
             chunks = int(
                 math.ceil(float(file_size) / self._threshold_filesize))
             data['chunk_total_chunks'] = chunks
+            data['chunk_index_name'] = uuid.uuid4().hex
+
             for index in range(0, chunks):
                 data['chunk_index'] = index
                 start = self._threshold_filesize * index
@@ -352,8 +381,11 @@ class ImportStreamer(object):
                     file_path, self._index))
 
         response_dict = response.json()
+        object_dict = response_dict.get('objects', [{}])[0]
+
+        self._timeline_id = object_dict.get('id')
+        self._index = object_dict.get('searchindex', {}).get('index_name')
         self._last_response = response_dict
-        self._timeline_id = response_dict.get('objects', [{}])[0].get('id')
 
     def add_data_frame(self, data_frame, part_of_iter=False):
         """Add a data frame into the buffer.
@@ -394,7 +426,7 @@ class ImportStreamer(object):
                 'formatted according using this format string: '
                 '%Y-%m-%dT%H:%M:%S%z. If that is not provided the data frame '
                 'needs to have a column that has the word "time" in it, '
-                'that can be used to conver to a datetime field.')
+                'that can be used to convert to a datetime field.')
 
         if 'message' not in data_frame_use:
             raise ValueError(
@@ -465,7 +497,7 @@ class ImportStreamer(object):
                 header : int, list of int, default 0
                     Row (0-indexed) to use for the column labels of the
                     parsed DataFrame. If a list of integers is passed those
-                    row positions wil be combined into a ``MultiIndex``. Use
+                    row positions will be combined into a ``MultiIndex``. Use
                     None if there is no header.
                 names : array-like, default None
                     List of column names to use. If file contains no header
@@ -655,6 +687,18 @@ class ImportStreamer(object):
     def set_index_name(self, index):
         """Set the index name."""
         self._index = index
+
+    def set_provider(self, provider):
+        """Set the data provider."""
+        self._provider = provider
+
+    def set_upload_context(self, upload_context):
+        """Set the upload context for the data import."""
+        self._upload_context = upload_context
+
+    def generate_index_name(self):
+        """Generates a new index name."""
+        self._index = uuid.uuid4().hex
 
     def set_message_format_string(self, format_string):
         """Set the message format string."""
