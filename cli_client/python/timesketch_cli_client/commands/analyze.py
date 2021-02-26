@@ -63,8 +63,8 @@ def run_analyzer(ctx, analyzer_name, timeline_id):
             for analyzer, _ in session_statuses.items():
                 click.echo(
                     f'Running analyzer [{analyzer}] on [{timeline.name}]:')
-            
-            while True:                
+
+            while True:
                 # Count all analysis tasks that has the status DONE
                 completed_tasks = len(
                     [
@@ -73,7 +73,7 @@ def run_analyzer(ctx, analyzer_name, timeline_id):
                     ]
                 )
                 if completed_tasks == total_tasks:
-                    click.echo(f'\nResults')
+                    click.echo('\nResults')
                     click.echo(sessions[0].results)
                     break
                 click.echo('.', nl=False)
