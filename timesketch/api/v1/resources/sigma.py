@@ -58,7 +58,7 @@ class SigmaListResource(resources.ResourceMixin, Resource):
         # TODO: idea for meta: add a list of folders that have been parsed
         meta = {'current_user': current_user.username,
                 'rules_count': len(sigma_rules)}
-        return jsonify({'objects': [sigma_rules], 'meta': meta})
+        return jsonify({'objects': sigma_rules, 'meta': meta})
 
 
 class SigmaResource(resources.ResourceMixin, Resource):

@@ -161,7 +161,6 @@ class Sigma(resource.BaseResource):
         for key, value in self.resource_data.items():
             self.set_value(key, value)
 
-
     def from_text(self, rule_text):
         """Get a Sigma object from a rule text.
 
@@ -173,11 +172,10 @@ class Sigma(resource.BaseResource):
         """
         self.resource_uri = '{0:s}/sigma/text/'.format(self.api.api_root)
         data = {'title': 'Get_Sigma_by_text', 'content': rule_text}
-        response = self.api.session.post(self.resource_uri, data=data)
+        response = self.api.session.post(self.resource_uri, json=data)
         response_dict = error.get_response_json(response, logger)
 
         objects = response_dict.get('objects')
-
         if not objects:
             logger.warning(
                 'Unable to parse rule with given text')
