@@ -76,6 +76,7 @@ class ElasticsearchDataStore(object):
     DEFAULT_STREAM_LIMIT = 5000 # Max events to return when streaming results
 
     DEFAULT_FLUSH_RETRY_LIMIT = 3 # Max retries for flushing the queue.
+    DEFAULT_EVENT_IMPORT_TIMEOUT = '3m' # Timeout value for importing events.
 
     def __init__(self, host='127.0.0.1', port=9200):
         """Create a Elasticsearch client."""
@@ -97,6 +98,8 @@ class ElasticsearchDataStore(object):
 
         self.import_counter = Counter()
         self.import_events = []
+        self._request_timeout = current_app.config.get(
+            'TIMEOUT_FOR_EVENT_IMPORT', self.DEFAULT_EVENT_IMPORT_TIMEOUT)
 
     @staticmethod
     def _build_labels_query(sketch_id, labels):
@@ -557,7 +560,7 @@ class ElasticsearchDataStore(object):
             query_dsl: Dictionary containing Elasticsearch DSL query
             indices: List of indices to query
             return_fields: List of fields to return
-            enable_scroll: Boolean determing whether scrolling is enabled.
+            enable_scroll: Boolean determining whether scrolling is enabled.
             timeline_ids: Optional list of IDs of Timeline objects that should
                 be queried as part of the search.
 
@@ -945,7 +948,9 @@ class ElasticsearchDataStore(object):
         }
 
         try:
-            results = self.client.bulk(body=self.import_events)
+            # pylint: disable=unexpected-keyword-arg
+            results = self.client.bulk(
+                body=self.import_events, timeout=self._request_timeout)
         except (ConnectionTimeout, socket.timeout):
             if retry_count >= self.DEFAULT_FLUSH_RETRY_LIMIT:
                 es_logger.error(

@@ -244,7 +244,7 @@ class Event(object):
         """Update the status of an event.
 
         Args:
-            change: optional change object (instace of a namedtuple).
+            change: optional change object (instance of a namedtuple).
                     If supplied the context will be updated with the
                     change information.
         """
@@ -710,7 +710,7 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             sketch_id: Sketch ID.
         """
         self.sketch = Sketch(sketch_id=sketch_id)
-        super(BaseSketchAnalyzer, self).__init__(file_name)
+        super().__init__(file_name)
 
     def set_context(self, context):
         """Sets the context of the analyzer.
@@ -718,7 +718,7 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
         Args:
             context: Context object (instance of AnalyzerContext).
         """
-        super(BaseSketchAnalyzer, self).set_context(context)
+        super().set_context(context)
         self._context.sketch = self.sketch
         self.sketch.set_context(self._context)
 

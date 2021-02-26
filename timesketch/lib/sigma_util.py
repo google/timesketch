@@ -25,6 +25,7 @@ import sigma.configuration as sigma_configuration
 from sigma.backends import elasticsearch as sigma_es
 from sigma.parser import collection as sigma_collection
 from sigma.parser import exceptions as sigma_exceptions
+from sigma.config.exceptions import SigmaConfigParseError
 
 logger = logging.getLogger('timesketch.lib.sigma')
 
@@ -34,21 +35,21 @@ def get_sigma_config_file(config_file=None):
 
     Args:
         config_file: Optional path to a config file
-
     Returns:
         A sigma.configuration.SigmaConfiguration object
-
     Raises:
         ValueError: If SIGMA_CONFIG is not found in the config file.
             or the Sigma config file is not readabale.
+        SigmaConfigParseError: If config file could not be parsed.
     """
     if config_file:
         config_file_path = config_file
     else:
-        config_file_path = current_app.config.get('SIGMA_CONFIG')
-        if not config_file_path:
-            raise ValueError(
-                'SIGMA_CONFIG not found in config file')
+        config_file_path = current_app.config.get(
+            'SIGMA_CONFIG', './data/sigma_config.yaml')
+
+    if not config_file_path:
+        raise ValueError('No config_file_path set via param or config file')
 
     if not os.path.isfile(config_file_path):
         raise ValueError(
@@ -63,7 +64,11 @@ def get_sigma_config_file(config_file=None):
     with open(config_file_path, 'r') as config_file_read:
         sigma_config_file = config_file_read.read()
 
-    sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
+    try:
+        sigma_config = sigma_configuration.SigmaConfiguration(sigma_config_file)
+    except SigmaConfigParseError:
+        logger.error('Parsing error with {0:s}'.format(sigma_config_file))
+        raise
 
     return sigma_config
 
@@ -103,15 +108,12 @@ def get_sigma_rules_path():
 
 def get_sigma_rules(rule_folder, sigma_config=None):
     """Returns the Sigma rules for a folder including subfolders.
-
     Args:
         rule_folder: folder to be checked for rules
         sigma_config: optional argument to pass a
                 sigma.configuration.SigmaConfiguration object
-
     Returns:
         A array of Sigma rules as JSON
-
     Raises:
         ValueError: If SIGMA_RULES_FOLDERS is not found in the config file.
             or the folders are not readabale.
@@ -157,25 +159,27 @@ def get_all_sigma_rules():
 
 
 def get_sigma_rule(filepath, sigma_config=None):
-    """ Returns a JSON represenation for a rule
-
+    """Returns a JSON represenation for a rule
     Args:
         filepath: path to the sigma rule to be parsed
         sigma_config: optional argument to pass a
                 sigma.configuration.SigmaConfiguration object
-
     Returns:
         Json representation of the parsed rule
+    Raises:
+        ValueError: Parsing error
+        IsADirectoryError: If a directory is passed as filepath
     """
     try:
         if sigma_config:
             sigma_conf_obj = sigma_config
         else:
             sigma_conf_obj = get_sigma_config_file()
-    except ValueError:
+    except ValueError as e:
         logger.error(
             'Problem reading the Sigma config', exc_info=True)
-        return None
+        raise ValueError('Problem reading the Sigma config') from e
+
 
     sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_conf_obj, {})
 
@@ -185,11 +189,11 @@ def get_sigma_rule(filepath, sigma_config=None):
         sigma_rules_paths = None
 
     if not filepath.lower().endswith('.yml'):
-        return None
+        raise ValueError(f'{filepath} does not end with .yml')
 
     # if a sub dir is found, nothing can be parsed
     if os.path.isdir(filepath):
-        return None
+        raise IsADirectoryError(f'{filepath} is a directory - must be a file')
 
     abs_path = os.path.abspath(filepath)
 
@@ -208,13 +212,13 @@ def get_sigma_rule(filepath, sigma_config=None):
             logger.error(
                 'Error generating rule in file {0:s}: {1!s}'
                 .format(abs_path, exception))
-            return None
+            raise
 
         except sigma_exceptions.SigmaParseError as exception:
             logger.error(
                 'Sigma parsing error generating rule in file {0:s}: {1!s}'
                 .format(abs_path, exception))
-            return None
+            raise
 
         except yaml.parser.ParserError as exception:
             logger.error(
@@ -243,3 +247,64 @@ def get_sigma_rule(filepath, sigma_config=None):
             {'file_relpath':file_relpath})
 
         return rule_return
+
+def get_sigma_rule_by_text(rule_text, sigma_config=None):
+    """Returns a JSON represenation for a rule
+
+    Args:
+        rule_text: Text of the sigma rule to be parsed
+        sigma_config: config file object
+
+    Returns:
+        Json representation of the parsed rule
+    Raises:
+        sigma_exceptions.SigmaParseError: Issue with parsing the given rule
+        yaml.parser.ParserError: Not a correct YAML text provided
+        NotImplementedError: A feature in the provided Sigma rule is not
+            implemented in Sigma for Timesketch
+    """
+    if sigma_config is None:
+        sigma_config = get_sigma_config_file()
+
+    sigma_backend = sigma_es.ElasticsearchQuerystringBackend(sigma_config, {})
+
+    rule_return = {}
+
+    # TODO check if input validation is needed / useful.
+    try:
+        parser = sigma_collection.SigmaCollectionParser(
+            rule_text, sigma_config, None)
+        parsed_sigma_rules = parser.generate(sigma_backend)
+        rule_yaml_data = yaml.safe_load_all(rule_text)
+        for doc in rule_yaml_data:
+            rule_return.update(doc)
+
+    except NotImplementedError as exception:
+        logger.error(
+            'Error generating rule {0!s}'.format(exception))
+        raise
+
+    except sigma_exceptions.SigmaParseError as exception:
+        logger.error(
+            'Sigma parsing error generating rule {0!s}'
+            .format(exception))
+        raise
+
+    except yaml.parser.ParserError as exception:
+        logger.error(
+            'Yaml parsing error generating rule {0!s}'.format(exception))
+        raise
+
+    sigma_es_query = ''
+
+    for sigma_rule in parsed_sigma_rules:
+        sigma_es_query = sigma_rule
+
+    rule_return.update(
+        {'es_query':sigma_es_query})
+    rule_return.update(
+        {'file_name':'N/A'})
+    rule_return.update(
+        {'file_relpath':'N/A'})
+
+    return rule_return
