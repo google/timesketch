@@ -185,7 +185,7 @@ def list_saved_searches(ctx):
         ctx: Click CLI context object.
     """
     sketch = ctx.obj.sketch
-    for saved_search in sketch.list_views():
+    for saved_search in sketch.list_saved_searches():
         click.echo(f'{saved_search.id} {saved_search.name}')
 
 
@@ -193,17 +193,17 @@ def list_saved_searches(ctx):
 @click.argument('search_id', type=int, required=False)
 @click.pass_context
 def describe_saved_search(ctx, search_id):
-    """Show details for a view.
+    """Show details for saved search.
 
     Args:
         ctx: Click CLI context object.
         search_id: Search ID from argument.
     """
     sketch = ctx.obj.sketch
-    # TODO (berggren): Add support for view_name.
+    # TODO (berggren): Add support for saved search name.
     saved_search = sketch.get_saved_search(search_id=search_id)
     if not saved_search:
-        click.echo('No such view')
+        click.echo('No such saved search')
         return
     filter_pretty = json.dumps(saved_search.query_filter, indent=2)
     click.echo(f'query_string: {saved_search.query_string}')

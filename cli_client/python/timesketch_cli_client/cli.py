@@ -81,8 +81,9 @@ class TimesketchCli(object):
                 sketch_id=int(sketch_from_config))
 
         if not active_sketch:
-            click.echo(('ERROR: You need to specify a sketch, either with a '
-                        'flag (--sketch <SKETCH ID>) or update the config.'))
+            click.echo(
+                'ERROR: You need to specify a sketch, either with a '
+                'flag (--sketch <SKETCH ID>) or update the config.')
             sys.exit(1)
 
         # Make sure we have access to the sketch.
@@ -96,7 +97,7 @@ class TimesketchCli(object):
 
     @property
     def output_format(self):
-        """Get or set the default output format.
+        """Get the configured output format, or the default format if missing.
 
         Returns:
             Output format as a string.
@@ -114,8 +115,7 @@ class TimesketchCli(object):
 @click.option('--sketch', type=int, default=None, help='Sketch to work in.')
 @click.pass_context
 def cli(ctx, sketch):
-    """
-    Timesketch CLI client.
+    """Timesketch CLI client.
 
     This tool provides similar features as the web client does.
     It operates within the context of a sketch so you either need to

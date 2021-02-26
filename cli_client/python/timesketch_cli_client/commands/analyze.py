@@ -56,10 +56,10 @@ def run_analyzer(ctx, analyzer_name, timeline_id):
             f'Running analyzer [{analyzer_name}] on [{timeline.name}]: ',
             nl=False)
         try:
-            session = sketch.run_analyzer(
-                analyzer_name=analyzer_name, timeline_id=timeline.id)
+            # TODO: Add support for running multiple analyzers
+            sessions = timeline.run_analyzer(analyzer_name)
             while True:
-                status = session.status.split()[2]
+                status = sessions[0].status.split()[2]
                 # TODO: Do something with other statuses?
                 if status == 'DONE':
                     click.echo(session.results)
