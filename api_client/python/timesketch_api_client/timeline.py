@@ -181,8 +181,7 @@ class Timeline(resource.BaseResource):
             error.UnableToRunAnalyzer: if not able to run the analyzer.
 
         Returns:
-            If the analyzer runs successfully return back an AnalyzerResult
-            object.
+            A list of AnalyzerResult objects.
         """
         if self.is_archived():
             raise error.UnableToRunAnalyzer(
