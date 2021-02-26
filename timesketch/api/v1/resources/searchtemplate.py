@@ -22,9 +22,10 @@ from flask_login import current_user
 from flask_login import login_required
 
 from timesketch.api.v1 import resources
+from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
-from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchTemplate
