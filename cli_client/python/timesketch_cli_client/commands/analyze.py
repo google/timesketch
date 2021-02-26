@@ -60,7 +60,7 @@ def run_analyzer(ctx, analyzer_name, timeline_id):
             session_statuses = sessions[0].status_dict
             total_tasks = len(session_statuses.values())
 
-            for analyzer, status in session_statuses.items():
+            for analyzer, _ in session_statuses.items():
                 click.echo(
                     f'Running analyzer [{analyzer}] on [{timeline.name}]:')
             
