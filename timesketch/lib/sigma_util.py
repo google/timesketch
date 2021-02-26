@@ -159,8 +159,7 @@ def get_all_sigma_rules():
 
 
 def get_sigma_rule(filepath, sigma_config=None):
-    """ Returns a JSON representation for a rule
-
+    """Returns a JSON represenation for a rule
     Args:
         filepath: path to the sigma rule to be parsed
         sigma_config: optional argument to pass a
@@ -250,7 +249,7 @@ def get_sigma_rule(filepath, sigma_config=None):
         return rule_return
 
 def get_sigma_rule_by_text(rule_text, sigma_config=None):
-    """ Returns a JSON represenation for a rule
+    """Returns a JSON represenation for a rule
 
     Args:
         rule_text: Text of the sigma rule to be parsed

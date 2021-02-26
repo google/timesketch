@@ -87,7 +87,7 @@ def run_verifier(rules_path, config_file_path):
 
 
 def move_problematic_rule(filepath, move_to_path, reason=None):
-    """ Moves a problematic rule to a subfolder so it is not used again
+    """Moves a problematic rule to a subfolder so it is not used again
 
     Args:
         filepath: path to the sigma rule that caused problems

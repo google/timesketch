@@ -575,7 +575,7 @@ class TimesketchApi:
         return sigma_obj
 
     def get_sigma_rule_by_text(self, rule_text):
-        """Returns a Sigma Object based on a sigma rule test.
+        """Returns a Sigma Object based on a sigma rule text.
 
         Args:
             rule_text: Full Sigma rule text.

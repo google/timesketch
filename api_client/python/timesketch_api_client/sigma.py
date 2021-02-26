@@ -58,108 +58,78 @@ class Sigma(resource.BaseResource):
     @property
     def es_query(self):
         """Returns the ElasticSearch query."""
-        if not self._attr_dict:
-            return ''
-        return self._attr_dict.get('es_query', '')
+        return self.get_attribute('es_query')
 
     @property
     def title(self):
         """Returns the sigma rule title."""
-        if not self._attr_dict:
-            return ''
-        return self._attr_dict.get('title', '')
+        return self.get_attribute('title')
 
     @property
     def id(self):
         """Returns the sigma rule id."""
-        if not self._attr_dict:
-            return ''
-        return self._attr_dict.get('id', '')
+        return self.get_attribute('id')
 
     @property
     def file_relpath(self):
         """Returns the relative filepath of the rule."""
-        if not self._attr_dict:
-            return ''
-        return self._attr_dict.get('file_relpath', '')
+        return self.get_attribute('file_relpath')
 
     @property
     def rule_uuid(self):
         """Returns the rule id."""
-        if not self._attr_dict:
-            return ''
-        return self._attr_dict.get('rule_uuid', '')
+        return self.get_attribute('rule_uuid')
 
     @property
     def file_name(self):
         """Returns the rule filename."""
-        if not self._attr_dict:
-            return ''
-        return self._attr_dict.get('file_name', '')
+        return self.get_attribute('file_name')
 
     @property
     def description(self):
         """Returns the rule description."""
-        if not self._attr_dict:
-            return ''
-        return self._attr_dict.get('description', '')
+        return self.get_attribute('description')
 
     @property
     def level(self):
         """Returns the rule confidence level."""
-        if not self._attr_dict:
-            return ''
-        return self._attr_dict.get('level', '')
+        return self.get_attribute('level')
 
     @property
     def falsepositives(self):
         """Returns the rule falsepositives."""
-        if not self._attr_dict:
-            return ''
-        return self._attr_dict.get('falsepositives', '')
+        return self.get_attribute('falsepositives')
 
     @property
     def author(self):
         """Returns the rule author."""
-        if not self._attr_dict:
-            return ''
-        return self._attr_dict.get('author', '')
+        return self.get_attribute('author')
 
     @property
     def date(self):
         """Returns the rule date."""
-        if not self._attr_dict:
-            return ''
-        return self._attr_dict.get('date', '')
+        return self.get_attribute('date')
 
     @property
     def modified(self):
         """Returns the rule modified date."""
-        if not self._attr_dict:
-            return ''
-        return self._attr_dict.get('modified', '')
+        return self.get_attribute('modified')
 
 
     @property
     def logsource(self):
         """Returns the rule logsource."""
-        if not self._attr_dict:
-            return ''
-        return self._attr_dict.get('logsource', '')
+        return self.get_attribute('logsource')
 
     @property
     def detection(self):
         """Returns the rule detection."""
-        if not self._attr_dict:
-            return ''
-        return self._attr_dict.get('detection', '')
+        return self.get_attribute('detection')
 
     @property
     def references(self):
         """Returns the rule references."""
-        if not self._attr_dict:
-            return ''
-        return self._attr_dict.get('references', '')
+        return self.get_attribute('references')
 
     def set_value(self, key, value):
         """Sets the value for a given key
@@ -172,9 +142,9 @@ class Sigma(resource.BaseResource):
         self._attr_dict[key] = value
 
     def _load_rule_dict(self, rule_dict):
-        """ Load a dict into a rule """
-        for key,value in rule_dict.items():
-            self.set_value(key,value)
+        """Load a dict into a rule"""
+        for key, value in rule_dict.items():
+            self.set_value(key, value)
 
     def from_rule_uuid(self, rule_uuid):
         """Get a Sigma object from a rule uuid.
@@ -189,7 +159,7 @@ class Sigma(resource.BaseResource):
 
         self.lazyload_data(refresh_cache=True)
         for key, value in self.resource_data.items():
-            self.set_value(key,value)
+            self.set_value(key, value)
 
 
     def from_text(self, rule_text):
@@ -215,4 +185,4 @@ class Sigma(resource.BaseResource):
 
         rule_dict = objects[0]
         for key, value in rule_dict.items():
-            self.set_value(key,value)
+            self.set_value(key, value)
