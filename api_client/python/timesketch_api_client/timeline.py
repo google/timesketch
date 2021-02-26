@@ -90,8 +90,6 @@ class Timeline(resource.BaseResource):
             return []
 
         timeline_data = objects[0]
-        data_sources = []
-
         return timeline_data.get('datasources', [])
 
     @property
