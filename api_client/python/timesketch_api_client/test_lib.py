@@ -276,27 +276,33 @@ def mock_response(*args, **kwargs):
     }
 
     sigma_rule = {
-        'title': 'Suspicious Installation of Zenmap',
-        'id': '5266a592-b793-11ea-b3de-0242ac130004',
-        'description': 'Detects suspicious installation of Zenmap',
-        'references': ['httpx://foobar.com'],
-        'author': 'Alexander Jaeger',
-        'date': '2020/06/26',
-        'modified': '2021/01/01',
-        'logsource': {
-            'product': 'linux', 'service': 'shell'
-            },
-        'detection': {
-            'keywords': ['*apt-get install zmap*'],
-            'condition': 'keywords'
-            },
-        'falsepositives': ['Unknown'],
-        'level': 'high',
-        'es_query': '("*apt\\-get\\ install\\ zmap*")',
-        'file_name': 'lnx_susp_zenmap',
-        'file_relpath' : '/linux/syslog/foobar/'
+        'meta': {
+            'parsed': True
+        },
+        'objects':[
+            {
+            'title': 'Suspicious Installation of Zenmap',
+            'id': '5266a592-b793-11ea-b3de-0242ac130004',
+            'description': 'Detects suspicious installation of Zenmap',
+            'references': ['httpx://foobar.com'],
+            'author': 'Alexander Jaeger',
+            'date': '2020/06/26',
+            'modified': '2021/01/01',
+            'logsource': {
+                'product': 'linux', 'service': 'shell'
+                },
+            'detection': {
+                'keywords': ['*apt-get install zmap*'],
+                'condition': 'keywords'
+                },
+            'falsepositives': ['Unknown'],
+            'level': 'high',
+            'es_query': '("*apt\\-get\\ install\\ zmap*")',
+            'file_name': 'lnx_susp_zenmap',
+            'file_relpath' : '/linux/syslog/foobar/'
+            }
+        ]
     }
-
     sigma_rule_text_mock = {
         'meta': {
             'parsed': True
