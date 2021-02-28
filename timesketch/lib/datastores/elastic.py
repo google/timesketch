@@ -90,14 +90,14 @@ class ElasticsearchDataStore(object):
 
         if self.ssl:
             if self.user and self.password:
-                self.client = Elasticsearch([{'host': host, 'port': port}],
-                                        http_auth=(self.user, self.password),
-                                        use_ssl=self.ssl,
-                                        verify_certs=self.verify)
+                self.client = Elasticsearch(
+                    [{'host': host, 'port': port}],
+                    http_auth=(self.user, self.password),
+                    use_ssl=self.ssl, verify_certs=self.verify)
             else:
-                self.client = Elasticsearch([{'host': host, 'port': port}],
-                                        use_ssl=self.ssl,
-                                        verify_certs=self.verify)
+                self.client = Elasticsearch(
+                    [{'host': host, 'port': port}],
+                    use_ssl=self.ssl, verify_certs=self.verify)
         else:
             self.client = Elasticsearch([{'host': host, 'port': port}])
 
