@@ -134,7 +134,6 @@ def get_sigma_rules(rule_folder, sigma_config=None):
                 parsed_rule = get_sigma_rule(rule_file_path, sigma_config)
                 if parsed_rule:
                     return_array.append(parsed_rule)
-
     return return_array
 
 
