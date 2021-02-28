@@ -363,3 +363,171 @@ class TimelineListResourceTest(BaseTest):
             data=json.dumps(data, ensure_ascii=False),
             content_type='application/json')
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+
+class SigmaResourceTest(BaseTest):
+    """Test Sigma resource."""
+    resource_url = '/api/v1/sigma/rule/'
+    expected_response = {
+        'objects': {
+            'description': 'Detects suspicious installation of Zenmap',
+            'id': '5266a592-b793-11ea-b3de-0242ac130004',
+            'level': 'high',
+            'logsource': {
+                'product': 'linux', 'service': 'shell'
+                },
+            'title': 'Suspicious Installation of Zenmap',
+        }
+    }
+
+    def test_get_sigma_rule(self):
+        """Authenticated request to get an sigma rule."""
+        self.login()
+        response = self.client.get(self.resource_url +
+                                   '5266a592-b793-11ea-b3de-0242ac130004')
+        self.assertIsNotNone(response)
+
+
+class SigmaListResourceTest(BaseTest):
+    """Test Sigma resource."""
+    resource_url = '/api/v1/sigma/'
+    expected_response = {
+        'meta': {
+            'current_user': 'test1', 'rules_count': 1
+            },
+        'objects':[{
+            'author': 'Alexander Jaeger',
+            'date': '2020/06/26',
+            'description': 'Detects suspicious installation of Zenmap',
+            'detection': {
+                'condition': 'keywords',
+                'keywords': [
+                    '*apt-get install zmap*'
+                    ]
+                },
+            'es_query': '*apt\\-get\\ install\\ zmap*',
+            'falsepositives': ['Unknown'],
+            'file_name': 'lnx_susp_zenmap.yml',
+            'file_relpath': 'lnx_susp_zenmap.yml',
+            'id': '5266a592-b793-11ea-b3de-0242ac130004',
+            'level': 'high',
+            'logsource': {
+                'product': 'linux',
+                'service': 'shell'
+            },
+            'modified': '2020/06/26',
+            'references': [
+                'https://rmusser.net/docs/ATT&CK-Stuff/ATT&CK/Discovery.html'
+            ],
+            'title': 'Suspicious Installation of Zenmap'
+        }]}
+    def test_get_sigma_rule_list(self):
+        self.login()
+        response = self.client.get(self.resource_url)
+        data = json.loads(response.get_data(as_text=True))
+        print(data)
+        self.assertDictContainsSubset(self.expected_response, response.json)
+        self.assertIsNotNone(response)
+
+class SigmaByTextResourceTest(BaseTest):
+    """Test Sigma by text resource."""
+
+    resource_url = '/api/v1/sigma/text/'
+    correct_rule = '''
+        title: Installation of foobar
+        id: bb1e0d1d-cd13-4b65-bf7e-69b4e740266b
+        description: Detects suspicious installation of foobar
+        references:
+            - https://samle.com/foobar
+        author: Alexander Jaeger
+        date: 2020/12/10
+        modified: 2020/12/10
+        logsource:
+            product: linux
+            service: shell
+        detection:
+            keywords:
+                # Generic suspicious commands
+                - '*apt-get install foobar*'
+            condition: keywords
+        falsepositives:
+            - Unknown
+        level: high
+        '''
+    expected_response = {
+        'meta': {
+            'parsed': True
+        },
+        'objects':[
+            {
+                'title': 'Installation of foobar',
+                'id': 'bb1e0d1d-cd13-4b65-bf7e-69b4e740266b',
+                'description': 'Detects suspicious installation of foobar',
+                'references': ['https://samle.com/foobar'],
+                'author': 'Alexander Jaeger',
+                'date': '2020/12/10',
+                'modified': '2020/12/10',
+                'logsource': {
+                    'product': 'linux',
+                    'service': 'shell'
+                },
+                'detection': {
+                    'keywords': ['*apt-get install foobar*'],
+                    'condition': 'keywords'
+                },
+                'falsepositives': ['Unknown'],
+                'level': 'high',
+                'es_query':
+                    '(data_type:("shell\\:zsh\\:history" OR "bash\\:history\\:command" OR "apt\\:history\\:line" OR "selinux\\:line") AND "*apt\\-get\\ install\\ foobar*")',# pylint: disable=line-too-long
+                'file_name': 'N/A',
+                'file_relpath': 'N/A'
+            }
+        ]
+    }
+
+    def test_get_sigma_rule(self):
+        """Authenticated request to get an sigma rule by text."""
+        self.login()
+
+        data = dict(action='post', content=self.correct_rule)
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type='application/json')
+        self.assertIsNotNone(response)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertDictContainsSubset(self.expected_response, response.json)
+        self.assert200(response)
+
+        # wrong sigma rule
+        data = dict(action='post', content='foobar: asd')
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type='application/json')
+        data = json.loads(response.get_data(as_text=True))
+
+        self.assertIn('No detection definitions found', data['message'])
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+
+        # wrong action
+        data = dict(action='get', content=self.correct_rule)
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type='application/json')
+        data = json.loads(response.get_data(as_text=True))
+
+        self.assertIn('Action needs to be "post"', data['message'])
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+
+        # no content given
+        data = dict(action='post')
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type='application/json')
+        data = json.loads(response.get_data(as_text=True))
+
+        self.assertIn('Missing values from the request', data['message'])
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
