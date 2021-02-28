@@ -57,13 +57,13 @@ For more information:
 
 To run frontend tests in watch mode, cd to `frontend` directory and use
 
-```python
+```bash
 ! yarn run test --watch
 ```
 
 To run TSLint in watch mode, use
 
-```python
+```bash
 ! yarn run lint --watch
 ```
 
@@ -83,6 +83,12 @@ And execute the single test
 
 ```shell
 ! nosetests timesketch/lib/emojis_test.py -v
+```
+
+Or all in one:
+
+```bash
+$ sudo docker exec -it $CONTAINER_ID nosetests /usr/local/src/timesketch/timesketch/lib/emojis_test.py -v
 ```
 
 ##### Writing unittests
@@ -118,7 +124,7 @@ end_to_end_tests/test_data/
 
 #### Writing end2end tests
 
-While writing end2end tests it is recommended to create a symling to the source files.
+While writing end2end tests one approach to make it easier to develop these e2e tests is to create a simlink to the source files, in order for the changes to the files being reflected in the container. Another way is to mount the Timesketch source code from ```/usr/local/src/timesketch/``` to ```/usr/local/lib/python3.8/dist-packages/```
 
 The following example is for changing / adding tests to ```client_test.py```
 ```shell
@@ -132,6 +138,11 @@ From now on you can edit the ```client_test.py``` file outside of the docker ins
 
 ```shell
 ! python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
+```
+
+or run the following outside of the container:
+```bash
+$ sudo docker exec -it $CONTAINER_ID python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
 ```
 
 #### Building Timesketch frontend
