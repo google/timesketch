@@ -160,7 +160,7 @@ class Sigma(resource.BaseResource):
         self.lazyload_data(refresh_cache=True)
         objects = self.data.get('objects')
         if not objects:
-            logger.warning(
+            logger.error('Unable to parse rule with given text')
                 'Unable to parse rule with given text')
             raise ValueError('No rules found.')
         rule_dict = objects[0]
