@@ -14,7 +14,8 @@ if [ "$1" = 'timesketch' ]; then
   cp /usr/local/src/timesketch/data/plaso.mappings /etc/timesketch/
   cp /usr/local/src/timesketch/data/ontology.yaml /etc/timesketch/
   ln -s /usr/local/src/timesketch/data/sigma_config.yaml /etc/timesketch/sigma_config.yaml
-  ln -s /usr/local/src/timesketch/data/ /etc/timesketch/data/
+  mkdir /etc/timesketch/data
+  ln -s /usr/local/src/timesketch/data/sigma/ /etc/timesketch/data/
 
   # Set SECRET_KEY in /etc/timesketch/timesketch.conf if it isn't already set
   if grep -q "SECRET_KEY = '<KEY_GOES_HERE>'" /etc/timesketch/timesketch.conf; then
