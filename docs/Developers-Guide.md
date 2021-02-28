@@ -97,7 +97,7 @@ To introduce a new API endpoint to be tested, the endpoint needs to be registere
 
 #### end2end tests
 
-End2end (e2e) tests are used at Github with every commit. Those tests will setup and run with a real elasticsearch and data imported. 
+End2end (e2e) tests are run on Github with every commit. Those tests will setup and run a full Timesketch instance, with the ability to import data and perform actions with it.
 To run the e2e-tests locally execute to setup the e2e docker images and run them:
 
 ```bash
