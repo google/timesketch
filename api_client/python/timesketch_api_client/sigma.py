@@ -161,7 +161,6 @@ class Sigma(resource.BaseResource):
         objects = self.data.get('objects')
         if not objects:
             logger.error('Unable to parse rule with given text')
-                'Unable to parse rule with given text')
             raise ValueError('No rules found.')
         rule_dict = objects[0]
         for key, value in rule_dict.items():
