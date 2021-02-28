@@ -1162,6 +1162,13 @@ class Sketch(resource.BaseResource):
             If the analyzer runs successfully return back an AnalyzerResult
             object.
         """
+        # TODO: Deprecate this function.
+        logger.warning(
+            'This function is about to be deprecated, please use the '
+            '`.run_analyzer()` function of a timeline object instead. '
+            'This function does not support all functionality of the newer '
+            'implementation in the timeline object.')
+
         if self.is_archived():
             raise error.UnableToRunAnalyzer(
                 'Unable to run an analyzer on an archived sketch.')
