@@ -15,6 +15,13 @@ limitations under the License.
 -->
 <template>
   <div>
+
+    <ts-navbar-main>
+      <template v-slot:left>
+        {{ sketch.name }}
+      </template>
+    </ts-navbar-main>
+
     <section class="section">
       <div class="container is-fluid">
         <ts-navbar-secondary currentAppContext="sketch" currentPage=""></ts-navbar-secondary>
@@ -42,6 +49,9 @@ import TsViewList from '../components/Sketch/ViewList'
 export default {
   components: { TsViewList },
   computed: {
+    sketch () {
+      return this.$store.state.sketch
+    },
     meta () {
       return this.$store.state.meta
     }

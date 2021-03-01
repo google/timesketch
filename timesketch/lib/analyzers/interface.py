@@ -23,6 +23,7 @@ import time
 import traceback
 import yaml
 
+import elasticsearch
 from flask import current_app
 
 import pandas
@@ -31,6 +32,8 @@ from timesketch.lib import definitions
 from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models import db_session
 from timesketch.models.sketch import Aggregation
+from timesketch.models.sketch import Attribute
+from timesketch.models.sketch import AttributeValue
 from timesketch.models.sketch import AggregationGroup as SQLAggregationGroup
 from timesketch.models.sketch import Event as SQLEvent
 from timesketch.models.sketch import Sketch as SQLSketch
@@ -47,6 +50,20 @@ def _flush_datastore_decorator(func):
     """Decorator that flushes the bulk insert queue in the datastore."""
     def wrapper(self, *args, **kwargs):
         func_return = func(self, *args, **kwargs)
+
+        # Add in tagged events and emojis.
+        for event_dict in self.tagged_events.values():
+            event = event_dict.get('event')
+            tags = event_dict.get('tags')
+
+            event.commit({'tag': tags})
+
+        for event_dict in self.emoji_events.values():
+            event = event_dict.get('event')
+            emojis = event_dict.get('emojis')
+
+            event.commit({'__ts_emojis': emojis})
+
         self.datastore.flush_queued_events()
         return func_return
     return wrapper
@@ -111,17 +128,19 @@ class Event(object):
         index_name: The name of the Elasticsearch index.
         source: Source document from Elasticsearch.
     """
-    def __init__(self, event, datastore, sketch=None):
+    def __init__(self, event, datastore, sketch=None, analyzer=None):
         """Initialize Event object.
 
         Args:
             event: Dictionary of event from Elasticsearch.
             datastore: Instance of ElasticsearchDatastore.
             sketch: Optional instance of a Sketch object.
+            analyzer: Optional instance of a BaseIndexAnalyzer object.
 
         Raises:
             KeyError if event dictionary is missing mandatory fields.
         """
+        self._analyzer = analyzer
         self.datastore = datastore
         self.sketch = sketch
 
@@ -131,9 +150,10 @@ class Event(object):
             self.event_id = event['_id']
             self.event_type = event['_type']
             self.index_name = event['_index']
+            self.timeline_id = event.get('_source', {}).get('__ts_timeline_id')
             self.source = event.get('_source', None)
         except KeyError as e:
-            raise KeyError('Malformed event: {0!s}'.format(e))
+            raise KeyError('Malformed event: {0!s}'.format(e)) from e
 
     def _update(self, event):
         """Update event attributes to add.
@@ -199,9 +219,20 @@ class Event(object):
             return
 
         existing_tags = self.source.get('tag', [])
+        if self._analyzer:
+            if self.event_id in self._analyzer.tagged_events:
+                existing_tags = self._analyzer.tagged_events[
+                    self.event_id].get('tags')
+            else:
+                self._analyzer.tagged_events[self.event_id] = {
+                    'event': self, 'tags': existing_tags}
+
         new_tags = list(set().union(existing_tags, tags))
-        updated_event_attribute = {'tag': new_tags}
-        self._update(updated_event_attribute)
+        if self._analyzer:
+            self._analyzer.tagged_events[self.event_id]['tags'] = new_tags
+        else:
+            updated_event_attribute = {'tag': new_tags}
+            self._update(updated_event_attribute)
 
     def add_emojis(self, emojis):
         """Add emojis to the Event.
@@ -215,9 +246,23 @@ class Event(object):
         existing_emoji_list = self.source.get('__ts_emojis', [])
         if not isinstance(existing_emoji_list, (list, tuple)):
             existing_emoji_list = []
+
+        if self._analyzer:
+            if self.event_id in self._analyzer.emoji_events:
+                existing_emoji_list = self._analyzer.emoji_events[
+                    self.event_id].get('emojis')
+            else:
+                self._analyzer.emoji_events[self.event_id] = {
+                    'event': self, 'emojis': existing_emoji_list}
+
         new_emoji_list = list(set().union(existing_emoji_list, emojis))
-        updated_event_attribute = {'__ts_emojis': new_emoji_list}
-        self._update(updated_event_attribute)
+
+        if self._analyzer:
+            self._analyzer.emoji_events[
+                self.event_id]['emojis'] = new_emoji_list
+        else:
+            updated_event_attribute = {'__ts_emojis': new_emoji_list}
+            self._update(updated_event_attribute)
 
     def add_star(self):
         """Star event."""
@@ -404,6 +449,41 @@ class Sketch(object):
         db_session.commit()
         return view
 
+    def add_sketch_attribute(self, name, values, ontology='text'):
+        """Add an attribute to the sketch.
+
+        Args:
+            name (str): The name of the attribute
+            values (list): A list of strings, which contains the values of the
+                attribute.
+            ontology (str): Ontology of the attribute, matches with
+                data/ontology.yaml.
+        """
+        # Check first whether the attribute already exists.
+        attribute = Attribute.query.filter_by(name=name).first()
+
+        if not attribute:
+            attribute = Attribute(
+                user=None,
+                sketch=self.sql_sketch,
+                name=name,
+                ontology=ontology)
+            db_session.add(attribute)
+            db_session.commit()
+
+        for value in values:
+            attribute_value = AttributeValue(
+                user=None,
+                attribute=attribute,
+                value=value)
+
+            attribute.values.append(attribute_value)
+            db_session.add(attribute_value)
+            db_session.commit()
+
+        db_session.add(attribute)
+        db_session.commit()
+
     def add_story(self, title):
         """Add a story to the Sketch.
 
@@ -468,7 +548,7 @@ class AggregationGroup(object):
         """Add an aggregation object to the group.
 
         Args:
-            aggregation_obj (Aggregation): the Aggregation objec.
+            aggregation_obj (Aggregation): the Aggregation object.
         """
         self.group.aggregations.append(aggregation_obj)
         self.group.orientation = self._orientation
@@ -487,7 +567,7 @@ class AggregationGroup(object):
         """Sets how charts should be joined.
 
         Args:
-            orienation: string that contains how they should be connected
+            orientation: string that contains how they should be connected
                 together, That is the chart orientation,  the options are:
                 "layer", "horizontal" and "vertical". The default behavior
                 is "layer".
@@ -502,7 +582,7 @@ class AggregationGroup(object):
         self.commit()
 
     def set_vertical(self):
-        """Sets the "orienation" to vertical."""
+        """Sets the "orientation" to vertical."""
         self._orientation = 'vertical'
         self.commit()
 
@@ -679,9 +759,15 @@ class BaseIndexAnalyzer(object):
         index_name: Name if Elasticsearch index.
         datastore: Elasticsearch datastore client.
         sketch: Instance of Sketch object.
+        timeline_id: The ID of the timeline the analyzer runs on.
+        tagged_events: Dict with all events to add tags and those tags.
+        emoji_events: Dict with all events to add emojis and those emojis.
     """
 
     NAME = 'name'
+    DISPLAY_NAME = None
+    DESCRIPTION = None
+
     IS_SKETCH_ANALYZER = False
 
     # If this analyzer depends on another analyzer
@@ -697,15 +783,21 @@ class BaseIndexAnalyzer(object):
     SECONDS_PER_WAIT = 10
     MAXIMUM_WAITS = 360
 
-    def __init__(self, index_name):
+    def __init__(self, index_name, timeline_id=None):
         """Initialize the analyzer object.
 
         Args:
             index_name: Elasticsearch index name.
+            timeline_id: The timeline ID.
         """
         self.name = self.NAME
         self.index_name = index_name
+        self.timeline_id = timeline_id
         self.timeline_name = ''
+
+        self.tagged_events = {}
+        self.emoji_events = {}
+
         self.datastore = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
@@ -753,7 +845,22 @@ class BaseIndexAnalyzer(object):
 
         # Refresh the index to make sure it is searchable.
         for index in indices:
-            self.datastore.client.indices.refresh(index=index)
+            try:
+                self.datastore.client.indices.refresh(index=index)
+            except elasticsearch.NotFoundError:
+                logger.error(
+                    'Unable to find index: {0:s}, removing from '
+                    'result set.'.format(index))
+                broken_index = indices.index(index)
+                _ = indices.pop(broken_index)
+        if not indices:
+            raise ValueError(
+                'Unable to query for analyzers, discovered no index to query.')
+
+        if self.timeline_id:
+            timeline_ids = [self.timeline_id]
+        else:
+            timeline_ids = None
 
         event_generator = self.datastore.search_stream(
             query_string=query_string,
@@ -762,9 +869,11 @@ class BaseIndexAnalyzer(object):
             indices=indices,
             return_fields=return_fields,
             enable_scroll=scroll,
+            timeline_ids=timeline_ids
         )
         for event in event_generator:
-            yield Event(event, self.datastore, sketch=self.sketch)
+            yield Event(
+                event, self.datastore, sketch=self.sketch, analyzer=self)
 
     @_flush_datastore_decorator
     def run_wrapper(self, analysis_id):
@@ -832,12 +941,13 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
 
     Attributes:
         sketch: A Sketch instance.
+        timeline_id: The ID of the timeline the analyzer runs on.
     """
 
     NAME = 'name'
     IS_SKETCH_ANALYZER = True
 
-    def __init__(self, index_name, sketch_id):
+    def __init__(self, index_name, sketch_id, timeline_id=None):
         """Initialize the analyzer object.
 
         Args:
@@ -845,7 +955,7 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             sketch_id: Sketch ID.
         """
         self.sketch = Sketch(sketch_id=sketch_id)
-        super(BaseSketchAnalyzer, self).__init__(index_name)
+        super().__init__(index_name, timeline_id=timeline_id)
 
     def event_pandas(
             self, query_string=None, query_filter=None, query_dsl=None,
@@ -875,9 +985,24 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
         if not indices:
             indices = [self.index_name]
 
+        if self.timeline_id:
+            timeline_ids = [self.timeline_id]
+        else:
+            timeline_ids = None
+
         # Refresh the index to make sure it is searchable.
         for index in indices:
-            self.datastore.client.indices.refresh(index=index)
+            try:
+                self.datastore.client.indices.refresh(index=index)
+            except elasticsearch.NotFoundError:
+                logger.error(
+                    'Unable to refresh index: {0:s}, not found, '
+                    'removing from list.'.format(index))
+                broken_index = indices.index(index)
+                _ = indices.pop(broken_index)
+
+        if not indices:
+            raise ValueError('Unable to get events, no indices to query.')
 
         if return_fields:
             default_fields = definitions.DEFAULT_SOURCE_FIELDS
@@ -891,6 +1016,7 @@ class BaseSketchAnalyzer(BaseIndexAnalyzer):
             query_filter=query_filter,
             query_dsl=query_dsl,
             indices=indices,
+            timeline_ids=timeline_ids,
             return_fields=return_fields,
         )
 

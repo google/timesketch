@@ -21,6 +21,8 @@ import json
 import logging
 import zipfile
 
+import elasticsearch
+
 from flask import abort
 from flask import current_app
 from flask import jsonify
@@ -57,7 +59,7 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
     }
 
     def __init__(self, **kwargs):
-        super(SketchArchiveResource, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._sketch = None
         self._sketch_indices = None
 
@@ -98,10 +100,15 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                         'User does not have sufficient access rights to '
                         'read the sketch.'))
 
+        timelines = {
+            t.searchindex.index_name: t.get_status.status == 'archived'
+            for t in sketch.timelines}
+
         meta = {
             'is_archived': sketch.get_status.status == 'archived',
             'sketch_id': sketch.id,
             'sketch_name': sketch.name,
+            'timelines': timelines,
         }
         schema = {
             'meta': meta,
@@ -453,7 +460,12 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         # TODO (kiddi): Move this to lib/datastores/elastic.py.
         if indexes_to_open:
-            self.datastore.client.indices.open(','.join(indexes_to_open))
+            try:
+                self.datastore.client.indices.open(','.join(indexes_to_open))
+            except elasticsearch.NotFoundError:
+                logger.error('Unable to open index, not found: {0:s}'.format(
+                    ','.join(indexes_to_open)))
+
         return HTTP_STATUS_CODE_OK
 
     def _archive_sketch(self, sketch):
@@ -501,5 +513,10 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         # TODO (kiddi): Move this to lib/datastores/elastic.py.
         if indexes_to_close:
-            self.datastore.client.indices.close(','.join(indexes_to_close))
+            try:
+                self.datastore.client.indices.close(','.join(indexes_to_close))
+            except elasticsearch.NotFoundError:
+                logger.error(
+                    'Unable to close indices, not found: {0:s}'.format(
+                        ','.join(indexes_to_close)))
         return HTTP_STATUS_CODE_OK

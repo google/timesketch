@@ -50,9 +50,14 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
     events = relationship('Event', backref='sketch', lazy='select')
     stories = relationship('Story', backref='sketch', lazy='select')
     aggregations = relationship('Aggregation', backref='sketch', lazy='select')
+    attributes = relationship('Attribute', backref='sketch', lazy='select')
+    graphs = relationship('Graph', backref='sketch', lazy='select')
+    graphcaches = relationship('GraphCache', backref='sketch', lazy='select')
     aggregationgroups = relationship(
         'AggregationGroup', backref='sketch', lazy='select')
     analysis = relationship('Analysis', backref='sketch', lazy='select')
+    analysissessions = relationship(
+        'AnalysisSession', backref='sketch', lazy='select')
 
     def __init__(self, name, description, user):
         """Initialize the Sketch object.
@@ -62,7 +67,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             description: Description of the sketch
             user: A user (instance of timesketch.models.user.User)
         """
-        super(Sketch, self).__init__()
+        super().__init__()
         self.name = name
         self.description = description
         self.user = user
@@ -140,6 +145,22 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             _timelines.append(timeline)
         return _timelines
 
+    def get_active_analysis_sessions(self):
+        """List active analysis sessions.
+
+        Returns:
+            List of instances of timesketch.models.sketch.AnalysisSession
+        """
+        active_sessions = []
+        for session in self.analysissessions:
+            for analysis in session.analyses:
+                if analysis.get_status.status in ('PENDING', 'STARTED'):
+                    active_sessions.append(session)
+                    # Break early on first running analysis as this is enough
+                    # to mark the session as active.
+                    break
+        return active_sessions
+
     @property
     def get_search_templates(self):
         """Get search templates."""
@@ -169,6 +190,7 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     searchindex_id = Column(Integer, ForeignKey('searchindex.id'))
     sketch_id = Column(Integer, ForeignKey('sketch.id'))
     analysis = relationship('Analysis', backref='timeline', lazy='select')
+    datasources = relationship('DataSource', backref='sketch', lazy='select')
 
     def __init__(self,
                  name,
@@ -188,7 +210,7 @@ class Timeline(LabelMixin, StatusMixin, CommentMixin, BaseModel):
             color: Color for the timeline in HEX as string (e.g. F1F1F1F1)
             description: The description for the timeline
         """
-        super(Timeline, self).__init__()
+        super().__init__()
         self.name = name
         self.description = description
 
@@ -221,7 +243,7 @@ class SearchIndex(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             index_name: The name of the searchindex
             user: A user (instance of timesketch.models.user.User)
         """
-        super(SearchIndex, self).__init__()
+        super().__init__()
         self.name = name
         self.description = description
         self.index_name = index_name
@@ -264,7 +286,7 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             query_filter: The filter to apply (JSON format as string)
             query_dsl: A query DSL document (JSON format as string)
         """
-        super(View, self).__init__()
+        super().__init__()
         self.name = name
         self.sketch = sketch
         self.user = user
@@ -292,8 +314,6 @@ class View(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
         DEFAULT_SIZE = 40 # Number of resulting documents to return
         DEFAULT_LIMIT = DEFAULT_SIZE  # Number of resulting documents to return
         DEFAULT_VALUES = {
-            'time_start': None,
-            'time_end': None,
             'from': DEFAULT_FROM,
             'size': DEFAULT_SIZE,
             'terminate_after': DEFAULT_LIMIT,
@@ -349,7 +369,7 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             query_filter: The filter to apply (JSON format as string)
             query_dsl: A query DSL document (JSON format as string)
         """
-        super(SearchTemplate, self).__init__()
+        super().__init__()
         self.name = name
         self.user = user
         self.description = description
@@ -358,8 +378,6 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             filter_template = {
                 'exclude': [],
                 'indices': '_all',
-                'time_start': None,
-                'time_end': None,
                 'terminate_after': 40,
                 'from': 0,
                 'order': 'asc',
@@ -385,7 +403,7 @@ class Event(LabelMixin, StatusMixin, CommentMixin, BaseModel):
                 (instance of timesketch.models.sketch.SearchIndex)
             document_id = String with the datastore document ID
         """
-        super(Event, self).__init__()
+        super().__init__()
         self.sketch = sketch
         self.searchindex = searchindex
         self.document_id = document_id
@@ -408,7 +426,7 @@ class Story(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             sketch: A sketch (instance of timesketch.models.sketch.Sketch)
             user: A user (instance of timesketch.models.user.User)
         """
-        super(Story, self).__init__()
+        super().__init__()
         self.title = title
         self.content = content
         self.sketch = sketch
@@ -444,7 +462,7 @@ class Aggregation(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
             aggregationgroup (AggregationGroup): Optional, an AggregationGroup
                 that the aggregation is bound to.
         """
-        super(Aggregation, self).__init__()
+        super().__init__()
         self.name = name
         self.description = description
         self.agg_type = agg_type
@@ -485,7 +503,7 @@ class AggregationGroup(
             orientation (str): Describes how charts should be joined together.
             view (View): Optional: The view that the aggregation is bound to
         """
-        super(AggregationGroup, self).__init__()
+        super().__init__()
         self.name = name
         self.description = description
         self.aggregations = aggregations or []
@@ -525,7 +543,7 @@ class Analysis(LabelMixin, StatusMixin, CommentMixin, BaseModel):
             searchindex (SearchIndex): SearchIndex the analysis was run on
             result (str): Result report of the analysis
         """
-        super(Analysis, self).__init__()
+        super().__init__()
         self.name = name
         self.description = description
         self.analyzer_name = analyzer_name
@@ -552,6 +570,161 @@ class AnalysisSession(LabelMixin, StatusMixin, CommentMixin, BaseModel):
             user (User): The user who created the aggregation
             sketch (Sketch): The sketch that the aggregation is bound to
         """
-        super(AnalysisSession, self).__init__()
+        super().__init__()
         self.user = user
         self.sketch = sketch
+
+
+class Attribute(BaseModel):
+    """Implements the attribute model."""
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    name = Column(UnicodeText())
+    ontology = Column(UnicodeText())
+    values = relationship(
+        'AttributeValue', backref='attribute', lazy='select')
+
+    def __init__(self, user, sketch, name, ontology):
+        """Initialize the Attribute object.
+
+        Args:
+            user (User): The user who created the attribute
+            sketch (Sketch): The sketch that the attribute is bound to
+            name (str): the name of the attribute.
+            ontology (str): The ontology of the value, The values that can
+                be used are defined in timesketch/lib/ontology.py (ONTOLOGY).
+        """
+        super().__init__()
+        self.user = user
+        self.sketch = sketch
+        self.name = name
+        self.ontology = ontology
+
+
+class AttributeValue(BaseModel):
+    """Implements the attribute value model."""
+    user_id = Column(Integer, ForeignKey('user.id'))
+    attribute_id = Column(Integer, ForeignKey('attribute.id'))
+    value = Column(UnicodeText())
+
+    def __init__(
+            self, user, attribute, value):
+        """Initialize the Attribute value object.
+
+        Args:
+            user (User): The user who created the attribute value.
+            attribute (Attribute): The attribute this value is bound to.
+            value (str): a string that contains the value for the attribute.
+                The ontology could influence how this will be cast when
+                interpreted.
+        """
+        super().__init__()
+        self.user = user
+        self.attribute = attribute
+        self.value = value
+
+
+class Graph(LabelMixin, CommentMixin, BaseModel):
+    """Implements the graph model."""
+    user_id = Column(Integer, ForeignKey('user.id'))
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    name = Column(UnicodeText())
+    description = Column(UnicodeText())
+    graph_config = Column(UnicodeText())
+    graph_elements = Column(UnicodeText())
+    graph_thumbnail = Column(UnicodeText())
+    num_nodes = Column(Integer)
+    num_edges = Column(Integer)
+
+    def __init__(self, user, sketch, name, description=None, graph_config=None,
+                 graph_elements=None, graph_thumbnail=None, num_nodes=None,
+                 num_edges=None):
+        """Initialize the Graph object.
+
+        Args:
+            user (User): The user who created the graph.
+            sketch (Sketch): The sketch that the graph is bound to.
+            name (str): Name of the graph.
+            description (str): Description of the graph.
+            graph_config (dict): Config used when generating the graph.
+            graph_elements (str): Graph in json string format.
+            graph_thumbnail (str): Image of graph in Base64 format.
+            num_nodes (int): Number of nodes in the graph.
+            num_edges (int): Number of edges in the graph.
+        """
+        super().__init__()
+        self.user = user
+        self.sketch = sketch
+        self.name = name
+        self.description = description
+        self.graph_config = graph_config
+        self.graph_elements = graph_elements
+        self.graph_thumbnail = graph_thumbnail
+        self.num_nodes = num_nodes
+        self.num_edges = num_edges
+
+
+class GraphCache(BaseModel):
+    """Implements the graph cache model."""
+    sketch_id = Column(Integer, ForeignKey('sketch.id'))
+    graph_plugin = Column(UnicodeText())
+    graph_config = Column(UnicodeText())
+    graph_elements = Column(UnicodeText())
+    num_nodes = Column(Integer)
+    num_edges = Column(Integer)
+
+    def __init__(self, sketch, graph_plugin=None, graph_config=None,
+                 graph_elements=None, num_nodes=None, num_edges=None):
+        """Initialize the GraphCache object.
+
+        Args:
+            sketch (Sketch): The sketch that the graph is bound to.
+            graph_plugin (str): Name of the graph plugin that was used.
+            graph_config (dict): Config used when generating the graph.
+            graph_elements (str): Graph in json string format.
+            num_nodes (int): Number of nodes in the graph.
+            num_edges (int): Number of edges in the graph.
+        """
+        super().__init__()
+        self.sketch = sketch
+        self.graph_plugin = graph_plugin
+        self.graph_config = graph_config
+        self.graph_elements = graph_elements
+        self.num_nodes = num_nodes
+        self.num_edges = num_edges
+
+
+class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
+    """Implements the datasource model."""
+    timeline_id = Column(Integer, ForeignKey('timeline.id'))
+    user_id = Column(Integer, ForeignKey('user.id'))
+    provider = Column(UnicodeText())
+    context = Column(UnicodeText())
+    file_on_disk = Column(UnicodeText())
+    file_size = Column(Integer)
+    original_filename = Column(UnicodeText())
+    data_label = Column(UnicodeText())
+
+    def __init__(self, timeline, user, provider, context, file_on_disk,
+                 file_size, original_filename, data_label):
+        """Initialize the DataSource object.
+
+        Args:
+            timeline (Timeline): Timeline that this datasource is part of.
+            user (User): The user who imported the data.
+            provider (str): Name of the application that collected the data.
+            context (str): Context on how the data was collected.
+            file_on_disk (str): Path to uploaded file.
+            file_size (int): Size on disk for uploaded file.
+            original_filename (str): Original filename for uploaded file.
+            data_label (str): Data label for the uploaded data.
+        """
+        super().__init__()
+        self.timeline = timeline
+        self.user = user
+        self.provider = provider
+        self.context = context
+        self.file_on_disk = file_on_disk
+        self.file_size = file_size
+        self.original_filename = original_filename
+        self.data_label = data_label

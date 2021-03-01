@@ -1,7 +1,7 @@
 alembic==1.3.2
 altair==4.1.0
 celery==4.4.0
-cryptography==2.3
+cryptography==3.3.2
 datasketch==1.5.0
 elasticsearch==7.5.1
 Flask==1.1.1
@@ -15,16 +15,15 @@ flask_wtf==0.14.2
 google-auth==1.7.0
 google_auth_oauthlib==0.4.1
 gunicorn==19.10.0  # Note: Last version to support py2
-neo4jrestclient==2.1.1
 numpy==1.19.0
 oauthlib==3.1.0
 pandas==1.1.3
 PyJWT==1.7.1
 python_dateutil==2.8.1
-PyYAML==5.3
+PyYAML==5.4.1
 redis==3.3.11
-requests==2.23.0
-sigmatools==0.14 ; python_version > '3.4'
+requests==2.25.0
+sigmatools==0.19.1 ; python_version > '3.4'
 six==1.12.0
 SQLAlchemy==1.3.12
 Werkzeug==0.16.0
@@ -32,3 +31,4 @@ WTForms==2.2.1
 xlrd==1.2.0
 tabulate==0.8.6
 markdown==3.2.2
+networkx==2.5

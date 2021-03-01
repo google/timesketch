@@ -21,6 +21,8 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for BrowserSearch."""
 
     NAME = 'browser_search'
+    DISPLAY_NAME = 'Browser search terms'
+    DESCRIPTION = 'Extract search terms from various search providers'
 
     DEPENDENCIES = frozenset(['domain'])
 
@@ -55,16 +57,6 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
         ('Youtube', re.compile(r'youtube\.com'),
          '_extract_search_query_from_url', 'search_query'),
     ])
-
-    def __init__(self, index_name, sketch_id):
-        """Initialize The Sketch Analyzer.
-
-        Args:
-            index_name: Elasticsearch index name
-            sketch_id: Sketch ID
-        """
-        self.index_name = index_name
-        super(BrowserSearchSketchPlugin, self).__init__(index_name, sketch_id)
 
     def _decode_url(self, url):
         """Decodes the URL, replaces %XX to their corresponding characters.
@@ -232,7 +224,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
             params = {
                 'field': 'search_string',
                 'limit': 20,
-                'index': self.index_name,
+                'index': [self.timeline_id],
             }
             agg_obj = self.sketch.add_aggregation(
                 name='Top 20 browser search queries ({0:s})'.format(
@@ -243,7 +235,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
             params = {
                 'field': 'search_day',
-                'index': self.index_name,
+                'index': [self.timeline_id],
                 'limit': 20,
             }
             agg_days = self.sketch.add_aggregation(
@@ -255,7 +247,7 @@ class BrowserSearchSketchPlugin(interface.BaseSketchAnalyzer):
 
             params = {
                 'query_string': 'tag:"browser-search"',
-                'index': self.index_name,
+                'index': [self.timeline_id],
                 'field': 'domain',
             }
             agg_engines = self.sketch.add_aggregation(

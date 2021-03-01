@@ -12,16 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Interface for aggregators."""
+import datetime
+import logging
 
-from __future__ import unicode_literals
-
-from elasticsearch import Elasticsearch
 from flask import current_app
 
+import elasticsearch
 import pandas
 
 from timesketch.lib.charts import manager as chart_manager
+from timesketch.lib.datastores.elastic import ElasticsearchDataStore
 from timesketch.models.sketch import Sketch as SQLSketch
+
+
+logger = logging.getLogger('timesketch.aggregator_interface')
 
 
 class AggregationResult(object):
@@ -143,28 +147,38 @@ class BaseAggregator(object):
     # List of supported chart types.
     SUPPORTED_CHARTS = frozenset()
 
-    def __init__(self, sketch_id=None, index=None):
+    def __init__(self, sketch_id=None, indices=None, timeline_ids=None):
         """Initialize the aggregator object.
 
         Args:
             field: String that contains the field name used for URL generation.
             sketch_id: Sketch ID.
-            index: List of elasticsearch index names.
+            indices: Optional list of elasticsearch index names. If not provided
+                the default behavior is to include all the indices in a sketch.
+            timeline_ids: Optional list of timeline IDs, if not provided the
+                default behavior is to query all the data in the provided
+                search indices.
         """
-        if not sketch_id and not index:
+        if not sketch_id and not indices:
             raise RuntimeError('Need at least sketch_id or index')
 
-        self.elastic = Elasticsearch(
+        self.elastic = ElasticsearchDataStore(
             host=current_app.config['ELASTIC_HOST'],
             port=current_app.config['ELASTIC_PORT'])
-        self.field = ''
-        self.index = index
-        self.sketch = SQLSketch.query.get(sketch_id)
-        self._sketch_url = '/sketch/{0:d}/explore'.format(sketch_id)
 
-        if not self.index:
-            active_timelines = self.sketch.active_timelines
-            self.index = [t.searchindex.index_name for t in active_timelines]
+        self._sketch_url = '/sketch/{0:d}/explore'.format(sketch_id)
+        self.field = ''
+        self.indices = indices
+        self.sketch = SQLSketch.query.get(sketch_id)
+        self.timeline_ids = None
+
+        active_timelines = self.sketch.active_timelines
+        if not self.indices:
+            self.indices = [t.searchindex.index_name for t in active_timelines]
+
+        if timeline_ids:
+            valid_ids = [t.id for t in active_timelines]
+            self.timeline_ids = [t for t in timeline_ids if t in valid_ids]
 
     @property
     def chart_title(self):
@@ -178,6 +192,100 @@ class BaseAggregator(object):
             'name': self.NAME,
             'description': self.DESCRIPTION,
         }
+
+    def _add_query_to_aggregation_spec(
+            self, aggregation_spec, start_time='', end_time=''):
+        """Returns an aggregation spec, adjusted for constraints.
+
+        This function will take an aggregation spec, alongside information
+        about start and end time and timeline constraints. It will adjust the
+        aggregation spec so that these constraints will be taken into
+        consideration when running the aggregation.
+
+        Args:
+            aggregation_spec: A dict with the query_dsl for the aggregation.
+            start_time: Optional ISO formatted date string that limits the time
+                range for the aggregation.
+            end_time: Optional ISO formatted date string that limits the time
+                range for the aggregation.
+
+        Raises:
+            ValueError: If the date strings are badly formatted.
+
+        Returns:
+            Dict: The aggregation spec, adjusted to query for additional
+                constraints.
+        """
+        query_filters = []
+
+        if self.timeline_ids:
+            query_filters.append({
+                'terms': {
+                    '__ts_timeline_id': self.timeline_ids,
+                }
+            })
+
+        if start_time:
+            try:
+                _ = datetime.datetime.fromisoformat(start_time)
+            except ValueError:
+                raise ValueError(
+                    'Start time is not ISO formatted [{0:s}'.format(
+                        start_time)) from ValueError
+
+        if end_time:
+            try:
+                _ = datetime.datetime.fromisoformat(end_time)
+            except ValueError:
+                raise ValueError(
+                    'End time is not ISO formatted [{0:s}'.format(
+                        end_time)) from ValueError
+
+        if start_time and end_time:
+            query_filters.append({
+                'range': {
+                    'datetime': {
+                        'gte': start_time,
+                        'lte': end_time,
+                    }
+                }
+            })
+        elif start_time:
+            query_filters.append({
+                'range': {
+                    'datetime': {
+                        'gte': start_time,
+                    }
+                }
+            })
+
+        elif end_time:
+            query_filters.append({
+                'range': {
+                    'datetime': {
+                        'lte': end_time,
+                    }
+                }
+            })
+
+        if query_filters:
+            if 'query' in aggregation_spec:
+                original_query = aggregation_spec['query']
+                query_filters.append(original_query)
+
+
+            if len(query_filters) > 1:
+                aggregation_spec['query'] = {
+                    'bool': {
+                        'must': query_filters,
+                        'must_not': [],
+                        'should': [],
+                    }
+                }
+            else:
+                aggregation_spec['query'] = query_filters[0]
+
+        return aggregation_spec
 
     def format_field_by_type(self, field_name):
         """Format field name based on mapping type.
@@ -198,8 +306,11 @@ class BaseAggregator(object):
         field_type = None
 
         # Get the mapping for the field.
-        mapping = self.elastic.indices.get_field_mapping(
-            index=self.index, fields=field_name)
+        try:
+            mapping = self.elastic.client.indices.get_field_mapping(
+                index=self.indices, fields=field_name)
+        except elasticsearch.NotFoundError:
+            mapping = {}
 
         # The returned structure is nested so we need to unpack it.
         # Example:
@@ -223,7 +334,7 @@ class BaseAggregator(object):
                 break
 
         if field_type == 'text':
-            field_format = '{0:s}.keyword'.format(field_name)
+            field_format = f'{field_name}.keyword'
 
         return field_format
 
@@ -236,9 +347,14 @@ class BaseAggregator(object):
         Returns:
             Elasticsearch aggregation result.
         """
-        # pylint: disable=unexpected-keyword-arg
-        aggregation = self.elastic.search(
-            index=self.index, body=aggregation_spec, size=0)
+        # pylint: disable=unexpected-keyword-arg, no-value-for-parameter
+        try:
+            aggregation = self.elastic.client.search(
+                index=self.indices, body=aggregation_spec, size=0)
+        except elasticsearch.NotFoundError:
+            logger.error('Unable to find indices: {0:s}'.format(
+                ','.join(self.indices)))
+            raise
         return aggregation
 
     def run(self, *args, **kwargs):

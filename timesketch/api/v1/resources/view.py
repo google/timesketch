@@ -23,6 +23,7 @@ from flask_login import login_required
 from flask_login import current_user
 
 from timesketch.api.v1 import resources
+from timesketch.api.v1 import utils
 from timesketch.lib import forms
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
@@ -52,7 +53,12 @@ class ViewListResource(resources.ResourceMixin, Resource):
         # Default to user supplied data
         view_name = form.name.data
         query_string = form.query.data
-        query_filter = json.dumps(form.filter.data, ensure_ascii=False)
+
+        query_filter_dict = form.filter.data
+        # Stripping potential pagination from views before saving it.
+        if 'from' in query_filter_dict:
+            del query_filter_dict['from']
+        query_filter = json.dumps(query_filter_dict, ensure_ascii=False)
         query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
 
         if isinstance(query_filter, tuple):
@@ -77,6 +83,9 @@ class ViewListResource(resources.ResourceMixin, Resource):
             # compatible with SQLAlchemy.
             if isinstance(query_filter, tuple):
                 query_filter = query_filter[0]
+
+        if not view_name:
+            abort(HTTP_STATUS_CODE_BAD_REQUEST, 'View name is missing.')
 
         # Create a new search template based on this view (only if requested by
         # the user).
@@ -144,14 +153,21 @@ class ViewListResource(resources.ResourceMixin, Resource):
             abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Unable to save view, not able to validate form data.')
+
         sketch = Sketch.query.get_with_acl(sketch_id)
         if not sketch:
             abort(
                 HTTP_STATUS_CODE_NOT_FOUND, 'No sketch found with this ID.')
+
         if not sketch.has_permission(current_user, 'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have write access controls on sketch.')
+
         view = self.create_view_from_form(sketch, form)
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)
 
 
@@ -242,6 +258,10 @@ class ViewResource(resources.ResourceMixin, Resource):
                 'User does not have write permission on sketch.')
 
         view.set_status(status='deleted')
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return HTTP_STATUS_CODE_OK
 
     @login_required
@@ -267,10 +287,36 @@ class ViewResource(resources.ResourceMixin, Resource):
         if not sketch.has_permission(current_user, 'write'):
             abort(HTTP_STATUS_CODE_FORBIDDEN,
                   'User does not have write access controls on sketch.')
+
         view = View.query.get(view_id)
+        if not view:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND, 'No view found with this ID.')
+
+        if view.sketch.id != sketch.id:
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                'Unable to update view, view not attached to sketch.')
+
         view.query_string = form.query.data
-        view.query_filter = json.dumps(form.filter.data, ensure_ascii=False)
+        description = form.description.data
+        if description:
+            view.description = description
+
+        query_filter = form.filter.data
+
+        # Stripping potential pagination from views before saving it.
+        if 'from' in query_filter:
+            del query_filter['from']
+
+        view.query_filter = json.dumps(query_filter, ensure_ascii=False)
+
         view.query_dsl = json.dumps(form.dsl.data, ensure_ascii=False)
+
+        name = form.name.data
+        if name:
+            view.name = name
+
         view.user = current_user
         view.sketch = sketch
 
@@ -279,4 +325,8 @@ class ViewResource(resources.ResourceMixin, Resource):
 
         db_session.add(view)
         db_session.commit()
+
+        # Update the last activity of a sketch.
+        utils.update_sketch_last_activity(sketch)
+
         return self.to_json(view, status_code=HTTP_STATUS_CODE_CREATED)

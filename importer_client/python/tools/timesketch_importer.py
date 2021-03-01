@@ -89,6 +89,7 @@ def upload_file(
     with importer.ImportStreamer() as streamer:
         streamer.set_sketch(my_sketch)
         streamer.set_config_helper(import_helper)
+        streamer.set_provider('CLI importer tool')
 
         format_string = config_dict.get('message_format_string')
         if format_string:
@@ -113,6 +114,16 @@ def upload_file(
         size_threshold = config_dict.get('size_threshold')
         if size_threshold:
             streamer.set_filesize_threshold(size_threshold)
+
+        data_label = config_dict.get('data_label')
+        if data_label:
+            streamer.set_data_label(data_label)
+
+        context = config_dict.get('context')
+        if context:
+            streamer.set_upload_context(context)
+        else:
+            streamer.set_upload_context(' '.join(sys.argv))
 
         streamer.add_file(file_path)
 
@@ -170,6 +181,7 @@ def main(args=None):
 
     config_group = argument_parser.add_argument_group(
         'Configuration Arguments')
+
     config_group.add_argument(
         '--log-config-file', '--log_config_file', '--lc', action='store',
         type=str, default='', metavar='FILEPATH', dest='log_config_file',
@@ -177,20 +189,39 @@ def main(args=None):
             'Path to a YAML config file that defines the config for parsing '
             'and setting up file parsing. By default formatter.yaml that '
             'comes with the importer will be used.'))
+
     config_group.add_argument(
         '--host', '--hostname', '--host-uri', '--host_uri', dest='host_uri',
         type=str, default='', action='store',
         help='The URI to the Timesketch instance')
+
     config_group.add_argument(
         '--format_string', '--format-string', type=str, action='store',
         dest='format_string', default='', help=(
             'Formatting string for the message field. If there is no message '
             'field in the input data a message string can be composed using '
             'a format string.'))
+
     config_group.add_argument(
         '--timeline_name', '--timeline-name', action='store', type=str,
         dest='timeline_name', default='', help=(
             'String that will be used as the timeline name.'))
+
+    config_group.add_argument(
+        '--data_label', '--data-label', action='store', type=str,
+        dest='data_label', default='', help=(
+            'The data label is used by the API to determine whether a new '
+            'search index needs to be created or if the data can be appended '
+            'to an already existing index. If a file is added this defaults '
+            'to the file extension, otherwise a default value of generic is '
+            'applied.'))
+
+    config_group.add_argument(
+        '--config_section', '--config-section', action='store', type=str,
+        dest='config_section', default='', help=(
+            'The config section in the RC file that will be used to '
+            'define server information.'))
+
     config_group.add_argument(
         '--index-name', '--index_name', action='store', type=str, default='',
         dest='index_name', help=(
@@ -201,23 +232,33 @@ def main(args=None):
         '--timestamp_description', '--timestamp-description', '--time-desc',
         '--time_desc', action='store', type=str, default='', dest='time_desc',
         help='Value for the timestamp_description field.')
+
     config_group.add_argument(
         '--threshold_entry', '--threshold-entry', '--entries', action='store',
         type=int, default=0, dest='entry_threshold',
         help=(
             'How many entries should be buffered up before being '
             'sent to server.'))
+
     config_group.add_argument(
         '--threshold_size', '--threshold-size', '--filesize', action='store',
         type=int, default=0, dest='size_threshold',
         help=(
             'For binary file transfer, how many bytes should be transferred '
             'per chunk.'))
+
     config_group.add_argument(
         '--sketch_id', '--sketch-id', type=int, default=0, dest='sketch_id',
         action='store', help=(
             'The sketch ID to store the timeline in, if no sketch ID is '
             'provided a new sketch will be created.'))
+
+    config_group.add_argument(
+        '--context', action='store', type=str, default='', dest='context',
+        help=(
+            'Set a context for the file upload. This could be a text '
+            'describing how the data got collected or parameters to '
+            'the tool. Defaults to how the CLI tool got run.'))
 
     argument_parser.add_argument(
         'path', action='store', nargs='?', type=str, help=(
@@ -246,11 +287,17 @@ def main(args=None):
             options.path))
         sys.exit(1)
 
+    config_section = options.config_section
     assistant = config.ConfigAssistant()
-    assistant.load_config_file()
+    assistant.load_config_file(section=config_section)
     assistant.load_config_dict(vars(options))
 
-    cred_storage = crypto.CredentialStorage()
+    try:
+        file_path = assistant.get_config('token_file_path')
+    except KeyError:
+        file_path = ''
+
+    cred_storage = crypto.CredentialStorage(file_path=file_path)
     token_password = ''
     if options.cred_prompt:
         token_password = cli_input.ask_question(
@@ -304,6 +351,7 @@ def main(args=None):
         logger.info('Saving Credentials.')
         cred_storage.save_credentials(
             credentials, password=token_password,
+            file_path=file_path,
             config_assistant=assistant)
 
     # Gather all questions that are missing.
@@ -318,12 +366,14 @@ def main(args=None):
 
     logger.info('Client created.')
     logger.info('Saving TS config.')
-    assistant.save_config()
+    assistant.save_config(
+        section=config_section, token_file_path=file_path)
 
     if ts_client.credentials:
         logger.info('Saving Credentials.')
         cred_storage.save_credentials(
             ts_client.credentials, password=token_password,
+            file_path=file_path,
             config_assistant=assistant)
 
     sketch_id = options.sketch_id
@@ -354,6 +404,8 @@ def main(args=None):
         'entry_threshold': options.entry_threshold,
         'size_threshold': options.size_threshold,
         'log_config_file': options.log_config_file,
+        'data_label': options.data_label,
+        'context': options.context,
     }
 
     logger.info('Uploading file.')

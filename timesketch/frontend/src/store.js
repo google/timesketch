@@ -58,13 +58,9 @@ export default new Vuex.Store({
       ApiClient.countSketchEvents(sketchId).then((response) => {
         context.commit('SET_COUNT', response.data.meta.count)
       }).catch((e) => {})
-
     },
     resetState (context) {
       context.commit('RESET_STATE')
     }
   }
 })
-
-
-

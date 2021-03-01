@@ -29,17 +29,36 @@ limitations under the License.
             <div class="content">
               <ul>
                 <li>Elasticsearch index: {{ timeline.searchindex.index_name }}</li>
-                <li v-if="meta.stats[timeline.searchindex.index_name]">Number of events: {{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }} ({{ meta.stats[timeline.searchindex.index_name]['count']}})</li>
-                <li v-if="meta.stats[timeline.searchindex.index_name]">Size on disk: {{ meta.stats[timeline.searchindex.index_name]['bytes'] | compactBytes }} ({{ meta.stats[timeline.searchindex.index_name]['bytes']}})</li>
-                <li>Original name: {{ timeline.searchindex.name }}</li>
-                <li>Added by: {{ timeline.searchindex.user.username }}</li>
-                <li>Added: {{ timeline.searchindex.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
+                <li v-if="meta.stats_per_timeline[timeline.id]">Number of events: {{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} ({{ meta.stats_per_timeline[timeline.id]['count']}})</li>
+                <li>Created by: {{ timeline.user.username }}</li>
+                <li>Created at: {{ timeline.created_at | moment("YYYY-MM-DD HH:mm") }}</li>
                 <li v-if="timelineStatus === 'ready' && (timeline.searchindex.description !== '' && timeline.searchindex.description !== timeline.name)">Import errors: <b>{{ timeline.searchindex.description }}</b></li>
               </ul>
+              <br>
+              <table class="table">
+                <th style="width:200px;">Imported</th>
+                <th>Provider</th>
+                <th>Context</th>
+                <th>User</th>
+                <th>File on disk</th>
+                <th>File size</th>
+                <th>Original filename</th>
+                <th>Data label</th>
+                <tr v-for="datasource in timeline.datasources" :key="datasource.id">
+                  <td>{{ datasource.created_at | moment("YYYY-MM-DD HH:mm:ss") }}</td>
+                  <td>{{ datasource.provider }}</td>
+                  <td>{{ datasource.context }}</td>
+                  <td>{{ datasource.user.username }}</td>
+                  <td>{{ datasource.file_on_disk }}</td>
+                  <td>{{ datasource.file_size | compactBytes }}</td>
+                  <td>{{ datasource.original_filename }}</td>
+                  <td>{{ datasource.data_label }}</td>
+                </tr>
+              </table>
 
               <span v-if="timelineStatus === 'fail'">
                 <h5 style="color:red;">Error detail</h5>
-                <pre>{{ timeline.searchindex.description }}</pre>
+                <pre>{{ timeline.description }}</pre>
               </span>
 
             </div>
@@ -50,7 +69,7 @@ limitations under the License.
     </b-modal>
 
     <!-- Timeline edit modal -->
-    <b-modal :active.sync="showEditModal" :width="640" scroll="keep">
+    <b-modal v-if="controls" :active.sync="showEditModal" :width="640" scroll="keep">
       <div class="modal-background"></div>
       <div class="modal-content">
         <div class="card">
@@ -80,7 +99,7 @@ limitations under the License.
 
     <div v-if="timelineStatus === 'processing'" class="ts-timeline-color-box is-pulled-left blink" style="background-color: #f5f5f5;"></div>
     <div v-else-if="timelineStatus === 'fail'" v-on:click="showInfoModal =! showInfoModal" class="ts-timeline-color-box is-pulled-left" style="background-color: #f5f5f5;"></div>
-    <div v-else-if="timelineStatus === 'ready'" class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
+    <div v-else-if="timelineStatus === 'ready' && controls" class="dropdown is-pulled-left" v-bind:class="{'is-active': colorPickerActive}">
       <div class="dropdown-trigger">
         <div class="ts-timeline-color-box" v-bind:style="timelineColorStyle" v-on:click="colorPickerActive = !colorPickerActive"></div>
       </div>
@@ -92,8 +111,12 @@ limitations under the License.
         </div>
       </div>
     </div>
+    <div v-else-if="timelineStatus === 'ready'" class="ts-timeline-color-box is-pulled-left" v-bind:style="timelineColorStyle" v-on:click="colorPickerActive = !colorPickerActive"></div>
     <div v-else class="ts-timeline-color-box is-pulled-left" style="background-color: #f5f5f5;"></div>
 
+    <div v-if="!controls" class="field is-grouped is-pulled-right" style="margin-top:10px;">
+      <span class="is-size-7">{{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}</span>
+    </div>
 
     <div v-if="controls" class="field is-grouped is-pulled-right" style="margin-top:10px;">
       <p v-if="!isCompact" class="control">
@@ -104,7 +127,7 @@ limitations under the License.
           <span>Info</span>
         </button>
       </p>
-      <p v-if="meta.permissions.write && timelineStatus === 'ready' && !isCompact" class="control">
+      <p v-if="meta.permissions.write && timelineStatus === 'ready' && controls" class="control">
         <button class="button is-rounded is-small is-outlined" v-on:click="showEditModal = !showEditModal">
           <span class="icon is-small">
             <i class="fas fa-edit"></i>
@@ -112,26 +135,38 @@ limitations under the License.
           <span>Rename</span>
         </button>
       </p>
+
+      <!-- Disabled 2020-12-17. Too expensive for large sketches. TODO: Refactor to do lazy loading instead.
       <p v-if="timelineStatus === 'ready'" class="control">
-        <span style="margin-right:7px;">
-          <button class="button is-small is-rounded is-outlined" @click="isOpen = !isOpen" :disabled="meta.stats[timeline.searchindex.index_name]['data_types'].length === 0">
+        <b-dropdown position="is-bottom-left" aria-role="menu" trap-focus append-to-body :scrollable="true" :max-height="300">
+          <button class="button is-outlined is-rounded is-small" slot="trigger">
             <span class="icon is-small">
-              <i :class="[isOpen ? 'fas fa-minus-circle' : 'fas fa-plus-circle']"></i>
+              <i class="fas fa-info-circle"></i>
             </span>
             <span>Data types</span>
           </button>
-        </span>
-        <ts-analyzer-list-dropdown :timeline="timeline" @newAnalysisSession="setAnalysisSession($event)"></ts-analyzer-list-dropdown>
+          <b-dropdown-item aria-role="menu-item" :focusable="false" custom>
+            <div style="width:350px;">
+              <div class="field" v-for="(dt) in meta.indices_metadata[timeline.searchindex.index_name]['data_types']" :key="dt.data_type">
+                <b-checkbox v-model="checkedDataTypes" :native-value="dt.data_type" type="is-info">{{ dt.data_type }} ({{ dt.count | compactNumber }})</b-checkbox>
+              </div>
+              <button class="button is-success is-fullwidth" v-on:click="openFilteredTimeline(timeline.searchindex.index_name, checkedDataTypes)" :disabled="!checkedDataTypes.length">Open Filtered</button>
+            </div>
+          </b-dropdown-item>
+        </b-dropdown>
       </p>
-      <p v-if="timelineStatus === 'ready' && !isCompact" class="control">
+       -->
+
+      <p v-if="timelineStatus === 'ready' && controls" class="control">
         <button class="button is-small is-rounded is-outlined" @click="showAnalysisHistory = !showAnalysisHistory">
           <span class="icon is-small">
             <i class="fas fa-history"></i>
           </span>
-          <span>History</span>
+          <span>Analysis History</span>
         </button>
       </p>
-      <p v-if="meta.permissions.write && !isCompact" class="control">
+
+      <p v-if="meta.permissions.write && controls" class="control">
         <button v-on:click="remove(timeline)" class="button is-small is-rounded is-danger">
           <span class="icon is-small">
             <i class="fas fa-trash"></i>
@@ -141,33 +176,14 @@ limitations under the License.
       </p>
     </div>
 
-    <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: {index: timeline.searchindex.index_name}}"><strong>{{ timeline.name }}</strong></router-link>
+    <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: {timeline: timeline.id}}"><strong>{{ timeline.name }}</strong></router-link>
     <strong v-if="timelineStatus !== 'ready'">{{ timeline.name }}</strong>
     <br>
 
     <span v-if="timelineStatus === 'ready'" class="is-size-7">
-      Added {{ timeline.updated_at | moment("YYYY-MM-DD HH:mm") }}
-      <span class="is-small" :title="meta.stats[timeline.searchindex.index_name]['count'] + ' events in index'">({{ meta.stats[timeline.searchindex.index_name]['count'] | compactNumber }})</span>
-      <b-collapse :open="isOpen" class="panel" animation="slide">
-        <div class="small-top-margin">
-          <ul>
-            <li v-for="dt in meta.stats[timeline.searchindex.index_name]['data_types']" :key="dt.data_type">
-              <input type="checkbox" class="checkbox-margin" :id="dt.data_type" :value="dt.data_type" v-model="checkedDataTypes">
-                <label :for="dt.data_type">
-                  <router-link v-if="timelineStatus === 'ready'" :to="{ name: 'SketchExplore', query: { index: timeline.searchindex.index_name, q: 'data_type:&quot;'+dt.data_type+'&quot;' }}">{{ dt.data_type }} </router-link>
-                </label>
-              <span class="tag is-small" :title="dt.count + ' events in index'">{{ dt.count | compactNumber }}</span>
-            </li>
-          </ul>
-          <a class="button is-rounded is-small small-top-margin checkbox-margin" @click="openFilteredTimeline(timeline.searchindex.index_name, checkedDataTypes)" :disabled="checkedDataTypes.length === 0">
-            <span class="icon is-small">
-              <i class="fas fa-check-square"></i>
-            </span>
-            <span>Open Filtered</span>
-          </a>
-        </div>
-      </b-collapse>
+      <span class="is-small" :title="meta.stats_per_timeline[timeline.id]['count'] + ' events in index'">{{ meta.stats_per_timeline[timeline.id]['count'] | compactNumber }} events</span>
     </span>
+
     <span v-else-if="timelineStatus === 'fail'" class="is-size-7">
       ERROR: <span v-on:click="showInfoModal =! showInfoModal" style="cursor:pointer;text-decoration: underline">Click here for details</span>
     </span>
@@ -177,10 +193,6 @@ limitations under the License.
     <span v-else class="is-size-7">
       Unknown status: {{ timelineStatus }}
     </span>
-
-    <div v-show="showAnalysisDetail">
-      <ts-analyzer-session-detail :timeline="timeline" :session-id="analysisSessionId" @closeDetail="showAnalysisDetail = false"></ts-analyzer-session-detail>
-    </div>
 
     <div v-if="showAnalysisHistory">
       <ts-analyzer-history :timeline="timeline" @closeHistory="showAnalysisHistory = false"></ts-analyzer-history>
@@ -196,17 +208,13 @@ import _ from 'lodash'
 
 import ApiClient from '../../utils/RestApiClient'
 
-import TsAnalyzerListDropdown from './AnalyzerListDropdown'
-import TsAnalyzerSessionDetail from './AnalyzerSessionDetail'
 import TsAnalyzerHistory from './AnalyzerHistory'
 
-import EventBus from "../../main"
+import EventBus from '../../main'
 
 export default {
   components: {
     'color-picker': Chrome,
-    TsAnalyzerListDropdown,
-    TsAnalyzerSessionDetail,
     TsAnalyzerHistory
   },
   props: ['timeline', 'controls', 'isCompact'],
@@ -268,13 +276,9 @@ export default {
       this.showEditModal = false
       this.$emit('save', this.timeline)
     },
-    setAnalysisSession (sessionId) {
-      this.analysisSessionId = sessionId
-      this.showAnalysisDetail = true
-    },
     fetchData () {
       ApiClient.getSketchTimeline(this.sketch.id, this.timeline.id).then((response) => {
-        this.timelineStatus = response.data.objects[0].searchindex.status[0].status
+        this.timelineStatus = response.data.objects[0].status[0].status
         if (this.timelineStatus !== 'ready') {
           this.autoRefresh = true
         }
@@ -283,20 +287,20 @@ export default {
     },
     openFilteredTimeline: function (index, dataTypes) {
       if (dataTypes.length === 0) {
-        return false;
+        return false
       }
       let searchQuery = ''
       for (let i = 0; i < dataTypes.length; i++) {
-        const dt = dataTypes[i];
-        if (i != 0) {
+        const dt = dataTypes[i]
+        if (i !== 0) {
           searchQuery += ' OR '
         }
         searchQuery += 'data_type:"' + dt + '"'
       }
-      this.$router.push({name: 'SketchExplore', query: { index: index, q: searchQuery }})
+      this.$router.push({ name: 'SketchExplore', query: { index: index, q: searchQuery } })
     },
     toggleTheme: function () {
-      this.isDarkTheme =! this.isDarkTheme
+      this.isDarkTheme = !this.isDarkTheme
     }
   },
   mounted () {
@@ -309,18 +313,18 @@ export default {
     })
   },
   created () {
-    this.isDarkTheme = localStorage.theme === 'dark';
+    this.isDarkTheme = localStorage.theme === 'dark'
     EventBus.$on('isDarkTheme', this.toggleTheme)
 
     this.initialColor = {
       hex: this.timeline.color
     }
-    this.timelineStatus = this.timeline.searchindex.status[0].status
+    this.timelineStatus = this.timeline.status[0].status
     if (this.timelineStatus !== 'ready') {
       this.autoRefresh = true
     }
   },
-  beforeDestroy() {
+  beforeDestroy () {
     clearInterval(this.t)
     this.t = false
   },
@@ -332,8 +336,8 @@ export default {
           if (this.timelineStatus === 'ready') {
             this.autoRefresh = false
           }
-        }.bind(this), 5000)}
-      else {
+        }.bind(this), 5000)
+      } else {
         clearInterval(this.t)
         this.t = false
       }
@@ -368,7 +372,6 @@ export default {
 .small-top-margin {
   margin-top: 4px;
 }
-
 
 @keyframes blinker {
   50% {

@@ -9,16 +9,8 @@ class GcpServiceKeySketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for GCP Service Key usage."""
 
     NAME = 'gcp_servicekey'
-
-    def __init__(self, index_name, sketch_id):
-        """Initialize The Sketch Analyzer.
-
-        Args:
-            index_name: Elasticsearch index name
-            sketch_id: Sketch ID
-        """
-        self.index_name = index_name
-        super(GcpServiceKeySketchPlugin, self).__init__(index_name, sketch_id)
+    DISPLAY_NAME = 'Google Compute Engine actions'
+    DESCRIPTION = 'Extract GCE actions from Stackdriver logs'
 
     def run(self):
         """Entry point for the analyzer.

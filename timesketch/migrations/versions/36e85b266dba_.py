@@ -1,4 +1,4 @@
-"""empty message
+"""Add query_dsl to View model
 
 Revision ID: 36e85b266dba
 Revises: be32626451fb

@@ -95,8 +95,8 @@ class TimesketchPwdCredentials(TimesketchCredentials):
 
         try:
             data_dict = json.loads(data.decode('utf-8'))
-        except ValueError:
-            raise TypeError('Unable to parse the byte string.')
+        except ValueError as exc:
+            raise TypeError('Unable to parse the byte string.') from exc
 
         if not 'username' in data_dict:
             raise TypeError('Username is not set.')
@@ -132,8 +132,8 @@ class TimesketchOAuthCredentials(TimesketchCredentials):
 
         try:
             token_dict = json.loads(data.decode('utf-8'))
-        except ValueError:
-            raise TypeError('Unable to parse the byte string.')
+        except ValueError as exc:
+            raise TypeError('Unable to parse the byte string.') from exc
 
         self._credential = credentials.Credentials(
             token=token_dict.get('token'),

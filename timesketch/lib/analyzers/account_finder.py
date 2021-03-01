@@ -9,18 +9,10 @@ class AccountFinderSketchPlugin(interface.BaseSketchAnalyzer):
     """Sketch analyzer for AccountFinder."""
 
     NAME = 'account_finder'
+    DISPLAY_NAME = 'Account finder'
+    DESCRIPTION = 'List accounts detected by feature extraction analyzer'
+
     DEPENDENCIES = frozenset(['feature_extraction'])
-
-    def __init__(self, index_name, sketch_id):
-        """Initialize The Sketch Analyzer.
-
-        Args:
-            index_name: Elasticsearch index name
-            sketch_id: Sketch ID
-        """
-        self.index_name = index_name
-        super(AccountFinderSketchPlugin, self).__init__(
-            index_name, sketch_id)
 
     def run(self):
         """Entry point for the analyzer.

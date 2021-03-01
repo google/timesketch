@@ -1,9 +1,11 @@
-# Use the official Docker Hub Ubuntu 18.04 base image
-FROM ubuntu:18.04
+# Use the official Docker Hub Ubuntu 20.04 base image
+FROM ubuntu:20.04
 
-# Workaround for bug in setuptools v50.
-# Ref: https://github.com/pypa/setuptools/issues/2350
-ENV SETUPTOOLS_USE_DISTUTILS=stdlib
+ARG PPA_TRACK=stable
+
+# Prevent needing to configure debian packages, stopping the setup of
+# the docker container.
+RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common \
@@ -16,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Plaso
-RUN add-apt-repository -y ppa:gift/stable
+RUN add-apt-repository -y ppa:gift/$PPA_TRACK
 RUN apt-get update && apt-get install -y --no-install-recommends \
     plaso-tools \
   && rm -rf /var/lib/apt/lists/*
@@ -27,17 +29,19 @@ RUN pip3 install -r requirements.txt
 
 # Install timesketch from the current branch (In the context of CI platform)
 ADD . /tmp/timesketch
-RUN pip3 install /tmp/timesketch
-
-# Install Timesketch API and import clients
-RUN pip3 install timesketch-api-client
-RUN pip3 install timesketch-import-client
+RUN pip3 install /tmp/timesketch && pip3 install /tmp/timesketch/api_client/python && \
+    pip3 install /tmp/timesketch/importer_client/python
 
 # Copy Timesketch config files into /etc/timesketch
 RUN mkdir /etc/timesketch
 RUN cp /tmp/timesketch/data/timesketch.conf /etc/timesketch/
+RUN cp /tmp/timesketch/data/ontology.yaml /etc/timesketch/
+RUN cp /tmp/timesketch/data/tags.yaml /etc/timesketch/
 RUN cp /tmp/timesketch/data/features.yaml /etc/timesketch/
+RUN cp /tmp/timesketch/data/plaso.mappings /etc/timesketch/
 RUN cp /tmp/timesketch/data/sigma_config.yaml /etc/timesketch/
+RUN mkdir /etc/timesketch/data
+RUN cp -r /tmp/timesketch/data/sigma /etc/timesketch/data/
 
 # Copy the entrypoint script into the container
 COPY docker/e2e/docker-entrypoint.sh /

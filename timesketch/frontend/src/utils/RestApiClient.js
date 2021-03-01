@@ -14,8 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import axios from 'axios'
-import { ToastProgrammatic as Toast } from 'buefy'
-import { SnackbarProgrammatic as Snackbar } from 'buefy'
+import { ToastProgrammatic as Toast, SnackbarProgrammatic as Snackbar } from 'buefy'
 
 const RestApiClient = axios.create({
   baseURL: '/api/v1',
@@ -38,7 +37,7 @@ const RestApiBlobClient = axios.create({
 
 // Show message on errors.
 RestApiClient.interceptors.response.use(function (response) {
-  return response;
+  return response
 }, function (error) {
   if (error.response.data.message === 'The CSRF token has expired') {
     Snackbar.open({
@@ -49,18 +48,25 @@ RestApiClient.interceptors.response.use(function (response) {
       indefinite: true,
       onAction: () => {
         location.reload()
-      }}
+      } }
     )
   } else {
     Toast.open(error.response.data.message)
   }
-  return Promise.reject(error);
-});
+  return Promise.reject(error)
+})
 
 export default {
   // Sketch
-  getSketchList () {
-    return RestApiClient.get('/sketches/')
+  getSketchList (scope, page, searchQuery) {
+    let params = {
+      params: {
+        scope: scope,
+        page: page,
+        search_query: searchQuery
+      }
+    }
+    return RestApiClient.get('/sketches/', params)
   },
   getSketch (sketchId) {
     return RestApiClient.get('/sketches/' + sketchId + '/')
@@ -89,21 +95,11 @@ export default {
     }
     return RestApiBlobClient.post('/sketches/' + sketchId + '/archive/', formData)
   },
-  getSketchTimelines (sketchId) {
-    return RestApiClient.get('/sketches/' + sketchId + '/timelines/')
-  },
   getSketchTimeline (sketchId, timelineId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/')
   },
   getSketchTimelineAnalysis (sketchId, timelineId) {
     return RestApiClient.get('/sketches/' + sketchId + '/timelines/' + timelineId + '/analysis/')
-  },
-  // Add or remove timeline to sketch
-  createSketchTimeline (sketchId, searchIndexId) {
-    let formData = {
-      timeline: searchIndexId
-    }
-    return RestApiClient.post('/sketches/' + sketchId + /timelines/, formData)
   },
   saveSketchTimeline (sketchId, timelineId, name, description, color) {
     let formData = {
@@ -123,10 +119,6 @@ export default {
   deleteSketchTimeline (sketchId, timelineId) {
     return RestApiClient.delete('/sketches/' + sketchId + /timelines/ + timelineId + '/')
   },
-  // Searchindices
-  getSearchIndexList () {
-    return RestApiClient.get('/searchindices/')
-  },
   // Get details about an event
   getEvent (sketchId, searchindexId, eventId) {
     let params = {
@@ -137,7 +129,7 @@ export default {
     }
     return RestApiClient.get('/sketches/' + sketchId + '/event/', params)
   },
-  saveEventAnnotation (sketchId, annotationType, annotation, events, remove=false) {
+  saveEventAnnotation (sketchId, annotationType, annotation, events, remove = false) {
     let formData = {
       annotation: annotation,
       annotation_type: annotationType,
@@ -168,7 +160,7 @@ export default {
     return RestApiClient.post('/sketches/' + sketchId + /stories/ + storyId + '/', formData)
   },
   deleteStory (sketchId, storyId) {
-  	return RestApiClient.delete('/sketches/' + sketchId + /stories/ + storyId + '/')
+    return RestApiClient.delete('/sketches/' + sketchId + /stories/ + storyId + '/')
   },
   // Saved views
   getView (sketchId, viewId) {
@@ -186,7 +178,7 @@ export default {
   updateView (sketchId, viewId, queryString, queryFilter) {
     let formData = {
       query: queryString,
-      filter: queryFilter,
+      filter: queryFilter
     }
     return RestApiClient.post('/sketches/' + sketchId + /views/ + viewId + '/', formData)
   },
@@ -213,14 +205,14 @@ export default {
     return RestApiClient.get('/sketches/' + sketchId + '/aggregation/group/' + groupId + '/')
   },
   saveAggregation (sketchId, aggregation, name, formData) {
-    let form_data = {
+    let newFormData = {
       'name': name,
       'description': aggregation.description,
       'agg_type': aggregation.name,
       'chart_type': formData['supported_charts'],
       'parameters': formData
     }
-    return RestApiClient.post('/sketches/' + sketchId + '/aggregation/', form_data)
+    return RestApiClient.post('/sketches/' + sketchId + '/aggregation/', newFormData)
   },
   // Misc resources
   countSketchEvents (sketchId) {
@@ -248,9 +240,12 @@ export default {
     }
     return RestApiClient.post('/sketches/' + sketchId + /collaborators/, formData)
   },
-  runAnalyzers (sketchId, timelineId, analyzers) {
+  getAnalyzers (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/')
+  },
+  runAnalyzers (sketchId, timelineIds, analyzers) {
     let formData = {
-      timeline_id: timelineId,
+      timeline_ids: timelineIds,
       analyzer_names: analyzers
     }
     return RestApiClient.post('/sketches/' + sketchId + /analyzer/, formData)
@@ -258,7 +253,43 @@ export default {
   getAnalyzerSession (sketchId, sessionId) {
     return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/' + sessionId + '/')
   },
+  getActiveAnalyzerSessions (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + '/analyzer/sessions/active/')
+  },
   getLoggedInUser () {
     return RestApiClient.get('/users/me/')
+  },
+  generateGraphFromPlugin (sketchId, graphPlugin, currentIndices, refresh) {
+    let formData = {
+      plugin: graphPlugin,
+      config: {
+        filter: {
+          indices: currentIndices
+        }
+      },
+      refresh: refresh
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /graph/, formData)
+  },
+  getGraphPluginList () {
+    return RestApiClient.get('/graphs/')
+  },
+  saveGraph (sketchId, name, elements) {
+    let formData = {
+      'name': name,
+      'elements': elements
+    }
+    return RestApiClient.post('/sketches/' + sketchId + /graphs/, formData)
+  },
+  getSavedGraphList (sketchId) {
+    return RestApiClient.get('/sketches/' + sketchId + /graphs/)
+  },
+  getSavedGraph (sketchId, graphId) {
+    let params = {
+      params: {
+        format: 'cytoscape'
+      }
+    }
+    return RestApiClient.get('/sketches/' + sketchId + /graphs/ + graphId + '/', params)
   }
 }

@@ -1,4 +1,4 @@
-"""Adding Admin bit to the User table.
+"""Add admin bit to the User model
 
 Revision ID: c380f6dff0bd
 Revises: 58754b577173
