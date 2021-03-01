@@ -20,6 +20,7 @@ import pandas
 
 from . import error
 from . import resource
+from . import searchtemplate
 
 
 logger = logging.getLogger('timesketch_api.search')
@@ -634,7 +635,7 @@ class Search(resource.SketchResource):
             self.query_filter = query_filter
 
         self._query_string = query_string
-        self._query_dsl = query_dsl
+        self.query_dsl = query_dsl
         self._return_fields = return_fields
 
         if max_entries:
@@ -887,8 +888,12 @@ class Search(resource.SketchResource):
     def save(self):
         """Save the search in the database.
 
+        Returns:
+            String with the identification of the saved search.
+
         Raises:
             ValueError: if there are values missing in order to save the query.
+            RuntimeError: if the search could not be saved.
         """
         if not self.name:
             raise ValueError(
@@ -943,6 +948,24 @@ class Search(resource.SketchResource):
         search_dict = response_json.get('objects', [{}])[0]
         self._resource_id = search_dict.get('id', 0)
         return f'Saved search to ID: {self._resource_id}'
+
+    def save_as_template(self):
+        """Save the search as a search template.
+
+        Returns:
+            A search template object (searchtemplate.SearchTemplate).
+        """
+        if not self._resource_id:
+            logger.warning('Search has not been saved first, saving now.')
+            return_string = self.save()
+            logger.info(return_string)
+
+        template = searchtemplate.SearchTemplate(self.api)
+        template.from_search_object(self)
+
+        print(template.save())
+        self._searchtemplate = template.id
+        return template
 
     @property
     def scrolling(self):

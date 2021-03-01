@@ -379,7 +379,6 @@ class SearchTemplate(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin,
                 'exclude': [],
                 'indices': '_all',
                 'terminate_after': 40,
-                'from': 0,
                 'order': 'asc',
                 'size': '40'
             }

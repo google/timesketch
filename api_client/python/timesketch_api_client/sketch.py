@@ -28,6 +28,7 @@ from . import error
 from . import graph
 from . import resource
 from . import search
+from . import searchtemplate
 from . import story
 from . import timeline
 
@@ -925,6 +926,28 @@ class Sketch(resource.BaseResource):
 
         return searches
 
+    def list_search_templates(self):
+        """Get a list of all search templates that are available.
+
+        Returns:
+            List of searchtemplate.SearchTemplate object instances.
+        """
+        response = self.api.fetch_resource_data('searchtemplate/')
+        objects = response.get('objects', [])
+        if not objects:
+            return []
+
+        template_dicts = objects[0]
+
+        template_list = []
+        for template_dict in template_dicts:
+            template_obj = searchtemplate.SearchTemplate(api=self.api)
+            template_obj.from_saved(template_dict.get('id'), sketch_id=self.id)
+
+            template_list.append(template_obj)
+
+        return template_list
+
     def list_timelines(self):
         """List all timelines for this sketch.
 
@@ -1135,6 +1158,13 @@ class Sketch(resource.BaseResource):
             If the analyzer runs successfully return back an AnalyzerResult
             object.
         """
+        # TODO: Deprecate this function.
+        logger.warning(
+            'This function is about to be deprecated, please use the '
+            '`.run_analyzer()` function of a timeline object instead. '
+            'This function does not support all functionality of the newer '
+            'implementation in the timeline object.')
+
         if self.is_archived():
             raise error.UnableToRunAnalyzer(
                 'Unable to run an analyzer on an archived sketch.')
