@@ -147,7 +147,7 @@ class SearchIndexResource(resources.ResourceMixin, Resource):
             form = request.data
 
         if not searchindex_id:
-          abort(
+            abort(
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 'Need to define a search index ID')
 
