@@ -607,7 +607,6 @@ class ElasticsearchDataStore(object):
         Returns:
             Generator of event documents in JSON format
         """
-        # Increase metrics counter
         METRICS['search_requests'].labels(type='streaming').inc()
 
         if not query_filter.get('size'):
@@ -728,7 +727,6 @@ class ElasticsearchDataStore(object):
         Returns:
             Event document in JSON format
         """
-        # Increase metrics counter
         METRICS['search_get_event'].inc()
         try:
             # Suppress the lint error because elasticsearch-py adds parameters
