@@ -635,7 +635,7 @@ class Search(resource.SketchResource):
             self.query_filter = query_filter
 
         self._query_string = query_string
-        self._query_dsl = query_dsl
+        self.query_dsl = query_dsl
         self._return_fields = return_fields
 
         if max_entries:
